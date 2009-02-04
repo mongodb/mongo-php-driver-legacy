@@ -71,8 +71,7 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
 }
 
 PHP_FUNCTION(mongo___construct) {
-  zval *objvar = getThis(); 
-  add_property_string( objvar, "hello", "world", 1 );
+  // nothing needed here, yet
 }
 
 PHP_FUNCTION(mongo_connect) {
@@ -104,18 +103,12 @@ PHP_FUNCTION(mongo_connect) {
   }
   
   // return db
-  ZEND_REGISTER_RESOURCE( return_value, conn, le_db_client_connection );
-  add_property_resource( getThis(), "connection", le_db_client_connection );
+  int resource_num = ZEND_REGISTER_RESOURCE( NULL, conn, le_db_client_connection );
+  add_property_resource( getThis(), "connection", resource_num );
 }
 
 PHP_FUNCTION(mongo_close) {
-  mongo::DBClientConnection *conn;
-  php_printf("hello is getting zval\n");
-  zval *hello = zend_read_property( mongo_class, getThis(), "hello", 5, 1 TSRMLS_CC );
-  php_printf( "got property %s from obj\n", hello->value.str.val );
-
   zval *zconn = zend_read_property( mongo_class, getThis(), "connection", 10, 0 TSRMLS_CC );
-  ZEND_FETCH_RESOURCE(conn, mongo::DBClientConnection*, &zconn, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, le_db_client_connection);
   zval_dtor( zconn );
   RETURN_TRUE;
 }
