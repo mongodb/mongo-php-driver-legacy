@@ -12,24 +12,24 @@
 #include "mongo.h"
 #include "bson.h"
 
-
+zend_class_entry *mongo_class; 
 int le_db_client_connection;
 
 static function_entry mongo_functions[] = {
-  PHP_FE( mongo_connect, NULL )
-  PHP_FE( mongo_close, NULL )
-  PHP_FE( mongo_ensure_index, NULL )
-  PHP_FE( mongo_find, NULL )
-  PHP_FE( mongo_find_one, NULL )
-  PHP_FE( mongo_has_next, NULL )
-  PHP_FE( mongo_kill_cursors, NULL )
-  PHP_FE( mongo_next, NULL )
-  PHP_FE( mongo_remove, NULL )
-  PHP_FE( mongo_insert, NULL )
-  PHP_FE( mongo_update, NULL )
-  PHP_FE( mongo_limit, NULL )
-  PHP_FE( mongo_sort, NULL )
-  PHP_FE( temp, NULL )
+  PHP_NAMED_FE( __construct, PHP_FN( mongo___construct ), NULL) 
+  PHP_NAMED_FE( connect, PHP_FN( mongo_connect ), NULL )
+  PHP_NAMED_FE( close, PHP_FN( mongo_close ), NULL )
+  PHP_NAMED_FE( ensure_index, PHP_FN( mongo_ensure_index ), NULL )
+  PHP_NAMED_FE( find, PHP_FN( mongo_find ), NULL )
+  PHP_NAMED_FE( find_one, PHP_FN( mongo_find_one ), NULL )
+  PHP_NAMED_FE( has_next, PHP_FN( mongo_has_next ), NULL )
+  PHP_NAMED_FE( kill, PHP_FN( mongo_kill_cursors ), NULL )
+  PHP_NAMED_FE( next2, PHP_FN( mongo_next ), NULL )
+  PHP_NAMED_FE( remove, PHP_FN( mongo_remove ), NULL )
+  PHP_NAMED_FE( insert, PHP_FN( mongo_insert ), NULL )
+  PHP_NAMED_FE( update, PHP_FN( mongo_update ), NULL )
+  PHP_NAMED_FE( limit, PHP_FN( mongo_limit ), NULL )
+  PHP_NAMED_FE( sort2, PHP_FN( mongo_sort ), NULL )
   {NULL, NULL, NULL}
 };
 
@@ -40,7 +40,7 @@ zend_module_entry mongo_module_entry = {
   PHP_MONGO_EXTNAME,
   mongo_functions,
   PHP_MINIT(mongo),
-  NULL,
+  PHP_MSHUTDOWN(mongo),
   NULL,
   NULL,
   NULL,
@@ -57,9 +57,23 @@ ZEND_GET_MODULE(mongo)
 
 PHP_MINIT_FUNCTION(mongo) {
   le_db_client_connection = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CLIENT_CONNECTION_RES_NAME, module_number);
+
+  zend_class_entry db; 
+  INIT_CLASS_ENTRY(db, "Mongo", mongo_functions); 
+  mongo_class = zend_register_internal_class(&db TSRMLS_CC);
+  
   return SUCCESS;
 }
 
+PHP_MSHUTDOWN_FUNCTION(mongo) { 
+  mongo_class = null;
+  return SUCCESS; 
+}
+
+PHP_FUNCTION(mongo___construct) {
+  zval *objvar = getThis(); 
+  add_property_string( objvar, "hello", "world", 1 );
+}
 
 PHP_FUNCTION(mongo_connect) {
   mongo::DBClientConnection *conn = new mongo::DBClientConnection( 1, 0 );
@@ -91,15 +105,16 @@ PHP_FUNCTION(mongo_connect) {
   
   // return db
   ZEND_REGISTER_RESOURCE( return_value, conn, le_db_client_connection );
+  add_property_resource( getThis(), "connection", le_db_client_connection );
 }
 
 PHP_FUNCTION(mongo_close) {
   mongo::DBClientConnection *conn;
-  zval *zconn;
+  php_printf("hello is getting zval\n");
+  zval *hello = zend_read_property( mongo_class, getThis(), "hello", 5, 1 TSRMLS_CC );
+  php_printf( "got property %s from obj\n", hello->value.str.val );
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zconn) == FAILURE) {
-    RETURN_FALSE;
-  }
+  zval *zconn = zend_read_property( mongo_class, getThis(), "connection", 10, 0 TSRMLS_CC );
   ZEND_FETCH_RESOURCE(conn, mongo::DBClientConnection*, &zconn, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, le_db_client_connection);
   zval_dtor( zconn );
   RETURN_TRUE;
@@ -373,14 +388,14 @@ PHP_FUNCTION(mongo_sort) {
 }
 
 PHP_FUNCTION( temp ) {
-  zval *zarray;
+  /*zval *zarray;
   HashTable *arr_hash;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &zarray) == FAILURE) {
     RETURN_FALSE;
   }
 
-  /*  arr_hash = Z_ARRVAL_P(zarray);
+  arr_hash = Z_ARRVAL_P(zarray);
   mongo::BSONObj obj = php_array_to_bson( arr_hash );
   zval *ret_array = bson_to_php_array( obj );
   RETURN_ZVAL( ret_array, 0, 1 );*/
