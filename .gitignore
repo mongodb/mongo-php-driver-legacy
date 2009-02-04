@@ -1,0 +1,8 @@
+
+*~
+*.o
+*.os
+*.loT
+
+.sconf_temp
+.sconsign.dblite
