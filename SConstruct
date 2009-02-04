@@ -53,7 +53,7 @@ elif "linux2" == os.sys.platform:
     nix = True
 
 if nix:
-    env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -ggdb -pthread -O3 -Wall -Wsign-compare -Wno-non-virtual-dtor" )
+    env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -ggdb -pthread -O3 -Wall -Wsign-compare -Wno-non-virtual-dtor -DHAVE_CONFIG_H -g -O0 -DPHP_ATOM_INC" )
 
 env.Append( CPPPATH=[ mongoHome + "/include"] )
 env.Append( LIBPATH=[ mongoHome + "/lib" ] )
