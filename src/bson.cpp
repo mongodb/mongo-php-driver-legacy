@@ -26,15 +26,13 @@ void php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash 
 
     // make \0 safe
     if( key_type == HASH_KEY_IS_STRING ) {
-      php_printf( "key: %s", key );
       strcpy( field_name, key );
     }
     else if( key_type == HASH_KEY_IS_LONG ) {
       sprintf( field_name, "%ld", index );
-      php_printf( "key %s", field_name );
     }
     else {
-      php_printf( "key fail" );
+      zend_error( E_ERROR, "key fail" );
       break;
     }
 
@@ -73,8 +71,6 @@ void php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash 
 }
 
 zval *bson_to_php_array( mongo::BSONObj obj ) {
-  php_printf("deserializing\n");
-
   zval *array;
   ALLOC_INIT_ZVAL( array );
   array_init(array);
@@ -84,7 +80,6 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
     mongo::BSONElement elem = it.next();
 
     char *key = (char*)elem.fieldName();
-    php_printf( "key: %s\n", key );
     int index = atoi( key );
     // check if 0 index is valid, or just a failed 
     // string conversion
