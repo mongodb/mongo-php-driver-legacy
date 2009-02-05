@@ -9,8 +9,15 @@
 
 PHP_MINIT_FUNCTION(mongo);
 
+/** mongo::DBClientConnection mongo_connect() // connects to localhost
+ *  mongo::DBClientConnection mongo_connect( "host" )
+ */
 PHP_FUNCTION(mongo_connect);
+/** bool mongo_close( mongo::DBClientConnection )
+ */
 PHP_FUNCTION(mongo_close);
+/** mongo::DBClientConnection mongo_query( mongo::DBClientConnection, char* collection, zval *query, int limit, int skip, zval *fields, int opts )
+ */
 PHP_FUNCTION(mongo_query);
 PHP_FUNCTION(mongo_remove);
 PHP_FUNCTION(mongo_insert);

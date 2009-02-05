@@ -101,63 +101,67 @@ PHP_FUNCTION(mongo_query) {
   zval *zconn, *zquery, *zfields;
   char *collection;
   int limit, skip, collection_len, opts;
+  mongo::BSONObj query, fields;
 
   int num_args = ZEND_NUM_ARGS();
   switch( num_args ) {
   case 0:
   case 1:
-  // TODO: add find( db, ns ) (find all)
   case 2:
-    php_printf( "mongo_find: too few args\n" );
+    zend_error( E_WARNING, "too few args" );
     RETURN_FALSE;
     break;
   case 3:
     if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery) == FAILURE) {
-      php_printf( "mongo_find: parameter parse failure\n" );
+      zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
     break;
   case 4:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery, &limit) == FAILURE) {
-      php_printf( "mongo_find: parameter parse failure\n" );
+    if (zend_parse_parameters(num_args TSRMLS_CC, "rsal", &zconn, &collection, &collection_len, &zquery, &limit) == FAILURE) {
+      zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
     break;
   case 5:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery, &limit, &skip) == FAILURE) {
-      php_printf( "mongo_find: parameter parse failure\n" );
+    if (zend_parse_parameters(num_args TSRMLS_CC, "rsall", &zconn, &collection, &collection_len, &zquery, &limit, &skip) == FAILURE) {
+      zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
     break;
   case 6:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery, &limit, &skip, &zfields) == FAILURE) {
-      php_printf( "mongo_find: parameter parse failure\n" );
+    if (zend_parse_parameters(num_args TSRMLS_CC, "rsalla", &zconn, &collection, &collection_len, &zquery, &limit, &skip, &zfields) == FAILURE) {
+      zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
     break;
   case 7:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery, &limit, &skip, &zfields, &opts) == FAILURE) {
-      php_printf( "mongo_find: parameter parse failure\n" );
+    if (zend_parse_parameters(num_args TSRMLS_CC, "rsallal", &zconn, &collection, &collection_len, &zquery, &limit, &skip, &zfields, &opts) == FAILURE) {
+      zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
     break;
   default:
-    php_printf( "mongo_find: too many args\n" );
+    zend_error( E_WARNING, "too many args\n" );
     RETURN_FALSE;
     break;
   }
 
   mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
   if (!conn_ptr) {
-    php_printf( "mongo_find: no db connection\n" );
+    zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;
   }
 
-  /*mongo::BSONObj bquery = php_array_to_bson( Z_ARRVAL_P( zquery ) );
-  if( zfields )
-    mongo::BSONObj bfields = php_array_to_bson( Z_ARRVAL_P( zfields ) );
-  
-    conn_ptr->query( collection, bquery, limit, skip, new mongo::BSONObj(), opts);*/
+  mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
+  php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
+  query = bquery->done();
+  if( zfields ) {
+    mongo::BSONObjBuilder *bfields = new mongo::BSONObjBuilder();
+    php_array_to_bson( bfields, Z_ARRVAL_P( zfields ) );
+    fields = bfields->done();
+  }
+  conn_ptr->query( (const char*)collection, query, limit, skip, &fields, opts);
   RETURN_TRUE;
 }
 
