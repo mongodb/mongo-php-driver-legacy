@@ -13,6 +13,8 @@ PHP_MSHUTDOWN_FUNCTION(mongo);
 PHP_FUNCTION(mongo___construct);
 PHP_FUNCTION(mongo_connect);
 PHP_FUNCTION(mongo_close);
+PHP_FUNCTION(mongo_set_db);
+PHP_FUNCTION(mongo_get_db);
 PHP_FUNCTION(mongo_ensure_index);
 PHP_FUNCTION(mongo_find);
 PHP_FUNCTION(mongo_find_one);

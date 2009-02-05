@@ -11,14 +11,25 @@
 
 #include "mongo.h"
 #include "bson.h"
+#include "db.h"
+#include "collection.h"
+#include "cursor.h"
 
+/** Objects */
 zend_class_entry *mongo_class; 
+zend_class_entry *db_class; 
+zend_class_entry *collection_class; 
+zend_class_entry *cursor_class; 
+
+/** Resources */
 int le_db_client_connection;
 
 static function_entry mongo_functions[] = {
   PHP_NAMED_FE( __construct, PHP_FN( mongo___construct ), NULL) 
   PHP_NAMED_FE( connect, PHP_FN( mongo_connect ), NULL )
   PHP_NAMED_FE( close, PHP_FN( mongo_close ), NULL )
+  PHP_NAMED_FE( set_db, PHP_FN( mongo_set_db ), NULL )
+  PHP_NAMED_FE( get_db, PHP_FN( mongo_get_db ), NULL )
   PHP_NAMED_FE( ensure_index, PHP_FN( mongo_ensure_index ), NULL )
   PHP_NAMED_FE( find, PHP_FN( mongo_find ), NULL )
   PHP_NAMED_FE( find_one, PHP_FN( mongo_find_one ), NULL )
@@ -30,6 +41,21 @@ static function_entry mongo_functions[] = {
   PHP_NAMED_FE( update, PHP_FN( mongo_update ), NULL )
   PHP_NAMED_FE( limit, PHP_FN( mongo_limit ), NULL )
   PHP_NAMED_FE( sort2, PHP_FN( mongo_sort ), NULL )
+  {NULL, NULL, NULL}
+};
+
+static function_entry db_functions[] = {
+  PHP_NAMED_FE( __construct, PHP_FN( db___construct ), NULL) 
+  {NULL, NULL, NULL}
+};
+
+static function_entry collection_functions[] = {
+  PHP_NAMED_FE( __construct, PHP_FN( collection___construct ), NULL) 
+  {NULL, NULL, NULL}
+};
+
+static function_entry cursor_functions[] = {
+  PHP_NAMED_FE( __construct, PHP_FN( cursor___construct ), NULL) 
   {NULL, NULL, NULL}
 };
 
@@ -58,9 +84,21 @@ ZEND_GET_MODULE(mongo)
 PHP_MINIT_FUNCTION(mongo) {
   le_db_client_connection = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CLIENT_CONNECTION_RES_NAME, module_number);
 
+  zend_class_entry mongo; 
+  INIT_CLASS_ENTRY(mongo, "Mongo", mongo_functions); 
+  mongo_class = zend_register_internal_class(&mongo TSRMLS_CC);
+
   zend_class_entry db; 
-  INIT_CLASS_ENTRY(db, "Mongo", mongo_functions); 
-  mongo_class = zend_register_internal_class(&db TSRMLS_CC);
+  INIT_CLASS_ENTRY(db, "DB", db_functions); 
+  db_class = zend_register_internal_class(&db TSRMLS_CC);
+
+  zend_class_entry collection; 
+  INIT_CLASS_ENTRY(collection, "Collection", collection_functions); 
+  collection_class = zend_register_internal_class(&collection TSRMLS_CC);
+
+  zend_class_entry cursor; 
+  INIT_CLASS_ENTRY(cursor, "Cursor", cursor_functions); 
+  cursor_class = zend_register_internal_class(&cursor TSRMLS_CC);
   
   return SUCCESS;
 }
@@ -102,7 +140,7 @@ PHP_FUNCTION(mongo_connect) {
     RETURN_FALSE;
   }
   
-  // return db
+  // return connection
   int resource_num = ZEND_REGISTER_RESOURCE( NULL, conn, le_db_client_connection );
   add_property_resource( getThis(), "connection", resource_num );
 }
@@ -111,6 +149,30 @@ PHP_FUNCTION(mongo_close) {
   zval *zconn = zend_read_property( mongo_class, getThis(), "connection", 10, 0 TSRMLS_CC );
   zval_dtor( zconn );
   RETURN_TRUE;
+}
+
+PHP_FUNCTION(mongo_set_db) {
+  char *dbname;
+  int dbname_len;
+  int argc = ZEND_NUM_ARGS();
+  if( argc == 0 ) {
+    zend_error( E_ERROR, "incorrect parameters" );
+    RETURN_FALSE;
+  }
+  else if( argc > 1 || zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &dbname, &dbname_len) == FAILURE ) {
+    zend_error( E_ERROR, "incorrect parameters" );
+    RETURN_FALSE;
+  }
+
+  if( dbname_len == 0 )
+    zend_error( E_ERROR, "invalid db name" );
+
+  add_property_stringl( getThis(), "db", dbname, dbname_len, 1 );
+}
+
+PHP_FUNCTION(mongo_get_db) {
+  zval *zdb = zend_read_property( mongo_class, getThis(), "db", 2, 0 TSRMLS_CC );
+  php_printf( "db: %s\n", Z_STRVAL_P( zdb ) );
 }
 
 PHP_FUNCTION(mongo_ensure_index) {
@@ -393,3 +455,5 @@ PHP_FUNCTION( temp ) {
   zval *ret_array = bson_to_php_array( obj );
   RETURN_ZVAL( ret_array, 0, 1 );*/
 }
+
+
