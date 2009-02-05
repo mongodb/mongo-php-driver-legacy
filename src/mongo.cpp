@@ -14,6 +14,7 @@
 
 /** Resources */
 int le_db_client_connection;
+int le_db_cursor;
 
 static function_entry mongo_functions[] = {
   PHP_FE( mongo_connect , NULL )
@@ -22,6 +23,8 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_query , NULL )
   PHP_FE( mongo_insert , NULL )
   PHP_FE( mongo_update , NULL )
+  PHP_FE( mongo_has_next , NULL )
+  PHP_FE( mongo_next , NULL )
   {NULL, NULL, NULL}
 };
 
@@ -49,6 +52,7 @@ ZEND_GET_MODULE(mongo)
 
 PHP_MINIT_FUNCTION(mongo) {
   le_db_client_connection = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CLIENT_CONNECTION_RES_NAME, module_number);
+  le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
   return SUCCESS;
 }
 
@@ -156,13 +160,17 @@ PHP_FUNCTION(mongo_query) {
   mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
   php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
   query = bquery->done();
-  if( zfields ) {
+  if( num_args >= 6 ) {
     mongo::BSONObjBuilder *bfields = new mongo::BSONObjBuilder();
     php_array_to_bson( bfields, Z_ARRVAL_P( zfields ) );
     fields = bfields->done();
   }
-  conn_ptr->query( (const char*)collection, query, limit, skip, &fields, opts);
-  RETURN_TRUE;
+
+  //  std::auto_ptr<mongo::DBClientCursor> cursor = conn_ptr->query( (const char*)collection, query, limit, skip, &fields, opts);
+  std::auto_ptr<mongo::DBClientCursor> cursor = conn_ptr->query( (const char*)collection, query );
+
+  mongo::DBClientCursor *c = cursor.get();
+  ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
 }
 
 PHP_FUNCTION(mongo_remove) {
@@ -173,13 +181,13 @@ PHP_FUNCTION(mongo_remove) {
 
   if ( ZEND_NUM_ARGS() == 3 ) {
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zarray) == FAILURE) {
-      php_printf( "mongo_remove: parameter parse failure (3)\n" );
+      zend_error( E_WARNING, "parameter parse failure (3)" );
       RETURN_FALSE;
     }
   }
   else if( ZEND_NUM_ARGS() == 4 ) {
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsab", &zconn, &collection, &collection_len, &zarray, &justOne) == FAILURE) {
-      php_printf( "mongo_remove: parameter parse failure (4)\n" );
+      zend_error( E_WARNING, "parameter parse failure (4)" );
       RETURN_FALSE;
     }
   }
@@ -262,4 +270,58 @@ PHP_FUNCTION(mongo_update) {
   RETURN_TRUE;*/
 }
 
+PHP_FUNCTION( mongo_has_next ) {
+  zval *zcursor;
+
+  int argc = ZEND_NUM_ARGS();
+  switch( argc ) {
+  case 0:
+    zend_error( E_WARNING, "too few args" );
+    RETURN_FALSE;
+    break;
+  case 1:
+    if (zend_parse_parameters(argc TSRMLS_CC, "r", &zcursor) == FAILURE) {
+      zend_error( E_WARNING, "parameter parse failure\n" );
+      RETURN_FALSE;
+    }
+    break;
+  default:
+    zend_error( E_WARNING, "too many args\n" );
+    RETURN_FALSE;
+    break;
+  }
+
+  mongo::DBClientCursor *c = (mongo::DBClientCursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
+
+  bool more = c->more();
+  RETURN_BOOL(more);
+}
+
+PHP_FUNCTION( mongo_next ) {
+  zval *zcursor;
+
+  int argc = ZEND_NUM_ARGS();
+  switch( argc ) {
+  case 0:
+    zend_error( E_WARNING, "too few args" );
+    RETURN_FALSE;
+    break;
+  case 1:
+    if (zend_parse_parameters(argc TSRMLS_CC, "r", &zcursor) == FAILURE) {
+      zend_error( E_WARNING, "parameter parse failure\n" );
+      RETURN_FALSE;
+    }
+    break;
+  default:
+    zend_error( E_WARNING, "too many args\n" );
+    RETURN_FALSE;
+    break;
+  }
+
+  mongo::DBClientCursor *c = (mongo::DBClientCursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
+
+  mongo::BSONObj bson = c->next();
+  zval *array = bson_to_php_array( bson );
+  RETURN_ZVAL( array, 0, 1 );
+}
 
