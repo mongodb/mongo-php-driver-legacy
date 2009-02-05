@@ -3,6 +3,9 @@
 *.o
 *.os
 *.loT
+*.so
+*.dylib
 
 .sconf_temp
 .sconsign.dblite
+config.log
