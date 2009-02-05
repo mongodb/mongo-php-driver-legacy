@@ -196,12 +196,14 @@ PHP_FUNCTION(mongo_remove) {
 
   mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
   if (!conn_ptr) {
+    zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;
   }
 
-  /*  mongo::BSONObj rarray = php_array_to_bson( Z_ARRVAL_P(zarray) );
-  conn_ptr->remove( collection, rarray, justOne );
-  RETURN_TRUE;*/
+  mongo::BSONObjBuilder *rarray = new mongo::BSONObjBuilder(); 
+  php_array_to_bson( rarray, Z_ARRVAL_P(zarray) );
+  conn_ptr->remove( collection, rarray->done(), justOne );
+  RETURN_TRUE;
 }
 
 PHP_FUNCTION(mongo_insert) {
@@ -210,12 +212,13 @@ PHP_FUNCTION(mongo_insert) {
   int collection_len;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zarray) == FAILURE) {
-    php_printf( "mongo_insert: parameter parse failure\n" );
+    zend_error( E_WARNING, "mongo_insert: parameter parse failure\n" );
     RETURN_FALSE;
   }
 
   mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
   if (!conn_ptr) {
+    zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;
   }
 
@@ -225,7 +228,7 @@ PHP_FUNCTION(mongo_insert) {
       prep_obj_for_db( obj_builder );
   php_array_to_bson( obj_builder, php_array );
   conn_ptr->insert( collection, obj_builder->doneAndDecouple() );
-  php_printf("kisses! xoxoxoxo\n");
+  RETURN_TRUE;
 }
 
 PHP_FUNCTION(mongo_update) {
@@ -240,23 +243,23 @@ PHP_FUNCTION(mongo_update) {
   case 1:
   case 2:
   case 3:
-    php_printf( "mongo_update: too few args\n" );
+    zend_error( E_WARNING, "too few args\n" );
     RETURN_FALSE;
     break;
   case 4:
     if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery, &zobj) == FAILURE) {
-      php_printf( "mongo_update: parameter parse failure\n" );
+      zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
     break;
   case 5:
     if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery, &zobj, &upsert) == FAILURE) {
-      php_printf( "mongo_update: parameter parse failure\n" );
+      zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
     break;
   default:
-    php_printf( "mongo_update: too many args\n" );
+    zend_error( E_WARNING, "too many args\n" );
     RETURN_FALSE;
     break;
   }
@@ -265,11 +268,13 @@ PHP_FUNCTION(mongo_update) {
   if (!conn_ptr) {
     RETURN_FALSE;
   }
-  /*
-  mongo::BSONObj bquery = php_array_to_bson( Z_ARRVAL_P( zquery ) );
-  mongo::BSONObj bobj = php_array_to_bson( Z_ARRVAL_P( zobj ) );
-  conn_ptr->update( collection, bquery, bobj, upsert );
-  RETURN_TRUE;*/
+
+  mongo::BSONObjBuilder *bquery =  new mongo::BSONObjBuilder();
+  php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
+  mongo::BSONObjBuilder *bfields = new mongo::BSONObjBuilder();
+  php_array_to_bson( bfields, Z_ARRVAL_P( zobj ) );
+  conn_ptr->update( collection, bquery->done(), bfields->done(), upsert );
+  RETURN_TRUE;
 }
 
 PHP_FUNCTION( mongo_has_next ) {
