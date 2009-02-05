@@ -23,6 +23,7 @@ PHP_FUNCTION(mongo_close);
 /** mongo::DBClientConnection mongo_query( mongo::DBClientConnection, char* collection, zval *query, int limit, int skip, zval *fields, int opts )
  */
 PHP_FUNCTION(mongo_query);
+PHP_FUNCTION(mongo_find_one);
 PHP_FUNCTION(mongo_remove);
 PHP_FUNCTION(mongo_insert);
 PHP_FUNCTION(mongo_update);

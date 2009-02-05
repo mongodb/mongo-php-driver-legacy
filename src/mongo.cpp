@@ -22,6 +22,7 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_close , NULL )
   PHP_FE( mongo_remove , NULL )
   PHP_FE( mongo_query , NULL )
+  PHP_FE( mongo_find_one , NULL )
   PHP_FE( mongo_insert , NULL )
   PHP_FE( mongo_update , NULL )
   PHP_FE( mongo_has_next , NULL )
@@ -174,6 +175,50 @@ PHP_FUNCTION(mongo_query) {
   mongo::DBClientCursor *c = cursor.get();
   ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
 }
+
+
+PHP_FUNCTION(mongo_find_one) {
+  zval *zconn, *zquery;
+  char *collection;
+  int collection_len;
+  mongo::BSONObj query;
+
+  int num_args = ZEND_NUM_ARGS();
+  switch( num_args ) {
+  case 0:
+  case 1:
+  case 2:
+    zend_error( E_WARNING, "too few args" );
+    RETURN_FALSE;
+    break;
+  case 3:
+    if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery) == FAILURE) {
+      zend_error( E_WARNING, "parameter parse failure\n" );
+      RETURN_FALSE;
+    }
+    break;
+  default:
+    zend_error( E_WARNING, "too many args\n" );
+    RETURN_FALSE;
+    break;
+  }
+
+  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
+  if (!conn_ptr) {
+    zend_error( E_WARNING, "no db connection\n" );
+    RETURN_FALSE;
+  }
+
+  mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
+  php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
+  query = bquery->done();
+
+  mongo::BSONObj obj = conn_ptr->findOne( (const char*)collection, query );
+  zval *array = bson_to_php_array( obj );
+  RETURN_ZVAL( array, 0, 1 );
+}
+
+
 
 PHP_FUNCTION(mongo_remove) {
   zval *zconn, *zarray;
