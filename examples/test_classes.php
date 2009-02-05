@@ -6,17 +6,22 @@ function listDBs() {
   $m = new Mongo();
   $m->setDatabase( "admin" );
   $x=$m->listDatabases();
-  if( $x && $x[ "ok" ] == 1 ) {
-    $arr = $x[ "databases" ];
-    foreach( $arr as $k => $v ) {
-      foreach( $arr[ $k ] as $k2=>$v2 ) {
-        echo "$k2=$v2\n";
-      }
+  if( $x ) {
+    foreach( $x as $k => $v ) {
+      echo $v["name"] . "\n";
     }
   }
   $m->close();
 }
 
+function createColl() {
+  $m = new Mongo();
+  $m->setDatabase( "driver_test_framework" );
+  $x=$m->createCollection( "mooo" );
+  $m->close();
+}
+
 listDBs();
+//createColl();
 
 ?>
