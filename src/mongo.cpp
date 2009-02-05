@@ -11,15 +11,6 @@
 
 #include "mongo.h"
 #include "bson.h"
-#include "db.h"
-#include "collection.h"
-#include "cursor.h"
-
-/** Objects */
-zend_class_entry *mongo_class; 
-zend_class_entry *db_class; 
-zend_class_entry *collection_class; 
-zend_class_entry *cursor_class; 
 
 /** Resources */
 int le_db_client_connection;
@@ -86,16 +77,22 @@ PHP_FUNCTION(mongo_connect) {
   }
 
   if ( ! conn->connect( server, error ) ){
+    zend_error( E_WARNING, "%s", error.c_str() );
     RETURN_FALSE;
   }
   
   // return connection
-  int resource_num = ZEND_REGISTER_RESOURCE( NULL, conn, le_db_client_connection );
-  add_property_resource( getThis(), "connection", resource_num );
+  ZEND_REGISTER_RESOURCE( return_value, conn, le_db_client_connection );
 }
 
 PHP_FUNCTION(mongo_close) {
-  zval *zconn = zend_read_property( mongo_class, getThis(), "connection", 10, 0 TSRMLS_CC );
+  mongo::DBClientConnection *conn;
+  zval *zconn;
+ 
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zconn) == FAILURE) {
+    RETURN_FALSE;
+  }
+  ZEND_FETCH_RESOURCE(conn, mongo::DBClientConnection*, &zconn, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, le_db_client_connection);
   zval_dtor( zconn );
   RETURN_TRUE;
 }
