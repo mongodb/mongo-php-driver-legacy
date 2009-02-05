@@ -10,7 +10,11 @@ if( !($db = mongo_connect( "127.0.0.1" ) ) ) {
 echo "querying...\n";
 $cursor = mongo_query( $db, "driver_test_framework.test", array( "a" => 2 ) );
 while( mongo_has_next( $cursor ) ){
-  echo "cursor: " . mongo_next( $cursor ) . "\n";
+  $n = mongo_next( $cursor );
+  foreach( $n as $k=>$v) {
+    echo "$k=$v\n";
+  }
+  echo "done with an element.\n";
 }
 
 ?>

@@ -15,6 +15,7 @@
 /** Resources */
 int le_db_client_connection;
 int le_db_cursor;
+int le_db_oid;
 
 static function_entry mongo_functions[] = {
   PHP_FE( mongo_connect , NULL )
@@ -53,6 +54,7 @@ ZEND_GET_MODULE(mongo)
 PHP_MINIT_FUNCTION(mongo) {
   le_db_client_connection = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CLIENT_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
+  le_db_oid = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_OID_RES_NAME, module_number);
   return SUCCESS;
 }
 

@@ -7,6 +7,8 @@
 
 #define PHP_DB_CLIENT_CONNECTION_RES_NAME "mongo connection"
 #define PHP_DB_CURSOR_RES_NAME "mongo cursor"
+#define PHP_DB_OID_RES_NAME "mongo object id"
+
 
 PHP_MINIT_FUNCTION(mongo);
 
@@ -25,9 +27,11 @@ PHP_FUNCTION(mongo_remove);
 PHP_FUNCTION(mongo_insert);
 PHP_FUNCTION(mongo_update);
 
-/** 
+/** bool mongo_has_next( mongo::DBClientCursor ) 
  */
 PHP_FUNCTION(mongo_has_next);
+/** zval mongo_next( mongo::DBClientCursor ) 
+ */
 PHP_FUNCTION(mongo_next);
 
 extern zend_module_entry mongo_module_entry;

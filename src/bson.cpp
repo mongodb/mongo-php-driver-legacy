@@ -5,6 +5,8 @@
 #include <php.h>
 #include <mongo/client/dbclient.h>
 
+extern int le_db_oid;
+
 void php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash ) {
   zval **data;
   char *key;
@@ -137,6 +139,15 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
         add_assoc_zval( array, key, subarray );
       else 
         add_index_zval( array, index, subarray );
+      break;
+    }
+    case mongo::jstOID: {
+      mongo::OID oid = elem.__oid();
+      ZEND_REGISTER_RESOURCE( NULL, &oid, le_db_oid );
+      if( assoc ) 
+        add_assoc_resource( array, key, le_db_oid );
+      else 
+        add_index_resource( array, index, le_db_oid );
       break;
     }
     case mongo::EOO: {
