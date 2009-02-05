@@ -133,6 +133,7 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
         add_index_string( array, index, value, 1 );
       break;
     }
+    case mongo::Array:
     case mongo::Object: {
       zval *subarray = bson_to_php_array( elem.embeddedObject() );
       if( assoc ) 
