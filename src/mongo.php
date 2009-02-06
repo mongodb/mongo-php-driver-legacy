@@ -55,12 +55,33 @@ class mongo extends mongo_api {
   }
 
   /**
+   * Drops a database.
+   * @param mongo_db $db the database to drop
+   * @return array db response
+   */
+  public function drop_database( mongo_db $db ) {
+    return $db->drop();
+  }
+
+  /**
+   * Repairs and compacts a database.
+   * @param mongo_db $db the database to drop
+   * @param bool $preserve_cloned_files if cloned files should be kept if the repair fails
+   * @param bool $backup_original_files if original files should be backed up
+   * @return array db response
+   */
+  public function repair_database( mongo_db $db, $preserve_cloned_files = false, $backup_original_files = false ) {
+    return $db->repair( $preserve_cloned_files, $backup_original_files );
+  }
+
+  /**
    * Closes this database connection.
    * @return bool if the connection was successfully closed
    */
   public function close() {
     mongo_close( $this->connection );
   }
+
 }
 
 class mongo_db extends mongo_api{
@@ -83,6 +104,31 @@ class mongo_db extends mongo_api{
   public function get_name() {
     return $this->name;
   }
+
+  /**
+   * Drops this database.
+   * @return array db response
+   */
+  public function drop() {
+    $data = array( mongo_api::$DROP_DATABASE => $this->name );
+    return $this->db_command( $data );
+  }
+
+  /**
+   * Repairs and compacts this database.
+   * @param bool $preserve_cloned_files if cloned files should be kept if the repair fails (optional)
+   * @param bool $backup_original_files if original files should be backed up (optional)
+   * @return array db response
+   */
+  function repair( $preserve_cloned_files = false, $backup_original_files = false ) {
+    $data = array( mongo_api::$REPAIR_DATABASE => 1 );
+    if( $preserve_cloned_files )
+      $data[ "preserveClonedFilesOnFailure" ] = true;
+    if( $backup_original_files )
+      $data[ "backupOriginalFiles" ] = true;
+    return $this->db_command( $data, $this->name );
+  }
+
 
   /** 
    * Gets a collection.
@@ -114,6 +160,11 @@ class mongo_db extends mongo_api{
     return new mongo_collection( $this, $name );
   }
 
+  /**
+   * Drops a collection.
+   * @param mongo_collection $coll
+   * @return array the db response
+   */
   public function drop_collection( mongo_collection $coll ) {
     return $coll->drop();
   }
@@ -138,12 +189,12 @@ class mongo_collection extends mongo_api {
 
   /**
    * Drops this collection.
+   * @return array the db response
    */
   function drop() {
     $data = array( mongo_api::$DROP => $this->name );
     return $this->db_command( $data, $this->db );
   }
-
 
   /**
    * Validates this collection.
@@ -208,7 +259,9 @@ class mongo_api {
   /* Commands */
   public static $CREATE_COLLECTION = "create";
   public static $DROP = "drop";
+  public static $DROP_DATABASE = "dropDatabase";
   public static $LIST_DATABASES = "listDatabases";
+  public static $REPAIR_DATABASE = "repairDatabase";
   public static $VALIDATE = "validate";
 
 }
