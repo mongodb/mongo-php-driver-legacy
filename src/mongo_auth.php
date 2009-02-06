@@ -36,19 +36,26 @@ class mongo_auth {
            "key" => $digest );
 
     // send everything to the db and pray
-    echo "login\n";
     $result = mongo_util::db_command( $conn, $data, $db );
     if( !$result[ "ok" ] ) {
       return false;
     }
 
-    // create a new authenticated instance
-    return new mongo_auth( $conn, $db );
+    // check if we need an admin instance
+    if( $db == "admin" ) {
+      $auth_obj = mongo_admin::get_auth();
+    }
+    else {
+      $auth_obj = new mongo_auth( $conn, $db );
+    }
+
+    // return a new authenticated instance
+    $auth_obj->connection = $conn;
+    $auth_obj->db = $db;
+    return $auth_obj;
   }
 
   private function __construct( $conn, $db ) {
-    $this->connection = $conn;
-    $this->db = $db;
   }
 
   public function __destruct() {
@@ -66,7 +73,7 @@ class mongo_auth {
    */
   public function logout() {
     $data = array( mongo_util::$LOGOUT => 1 );
-    $result = mongo_util::db_command( $this->connection, $data, $db );
+    $result = mongo_util::db_command( $this->connection, $data, $this->db );
 
     if( !$result[ "ok" ] ) {
       // trapped in the system forever
@@ -76,6 +83,22 @@ class mongo_auth {
     $this->__destruct();
     return true;
   }
+}
+
+class mongo_admin extends mongo_auth {
+
+  public static function get_auth() {
+    return new mongo_admin();
+  }
+
+  private function __construct() {
+  }
+
+  public function shutdown() {
+    $result = mongo_util::db_command( $this->connection, array( "shutdown" => 1 ), $this->db );
+    return $result[ "ok" ];
+  }
+
 }
 
 ?>

@@ -414,8 +414,9 @@ class mongo_util {
 
   /* Command collection */
   private static $CMD = ".\$cmd";
+
   /* Admin database */
-  private static $ADMIN = "admin";
+  public static $ADMIN = "admin";
 
   /* Commands */
   public static $AUTHENTICATE = "authenticate";
