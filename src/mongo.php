@@ -2,84 +2,52 @@
 
 dl("libmongo.so");
 
-class Mongo {
+class mongo extends mongo_api {
 
-  var $dbname = NULL;
   var $host = "localhost";
   var $port = "27017";
+  var $connection = NULL;
 
-  public function __construct( $_host = "localhost", $_dbname = NULL ) {
-    $this->host = $_host;
-    $this->db = mongo_connect( $this->host );
-    $this->dbname = $_dbname;
+  /** Creates a new database connection.
+   * @param string $host the host name (optional)
+   * @param int $port the db port (optional)
+   */
+  public function __construct( $host = "localhost", $port = NULL ) {
+    $addr = $host;
+    $this->host = $host;
+    if( $port ) {
+      $addr .= ":$port";
+      $this->port = $port;
+    }
+
+    $this->connection = mongo_connect( $addr );
+    parent::__construct( $this->connection );
   }
 
   public function __toString() {
-    $str = $this->host . ":" . $this->port;
-    if( $dbname != NULL )
-      return $str . "/" . $this->dbname;
-    return $str;
+    return $this->host . ":" . $this->port;
   }
 
   /** 
-   * Sets the database to use.
-   * @param string $_dbname the database name
-   * @return boolean if the database name was valid
+   * Gets a database.
+   * @param string $dbname the database name
+   * @return mongo_db a new db object
    */
-  public function setDatabase( $_dbname = NULL ) {
-    if( $_dbname == NULL || $_dbname == "" ) {
+  public function select_database( $dbname = NULL ) {
+    if( $dbname == NULL || $dbname == "" ) {
       trigger_error( "Invalid database name.", E_USER_WARNING );
       return false;
     }
-    $this->dbname = $_dbname;
-    return true;
-  }
-
-  /** 
-   * Returns the name of the database currently in use.
-   * @return string the name of the database
-   */
-  public function getDatabase() {
-    return $this->dbname;
-  }
-
-  /** 
-   * Gets a collection.
-   * @param string $name the name of the collection
-   */
-  public function getCollection( $name ) {
-    return new Collection( $this, $name );
-  }
-
-  /** 
-   * Creates a collection.
-   * @param string $name the name of the collection
-   * @param bool $capped if the collection should be a fixed size
-   * @param int $size if the collection is fixed size, its size in bytes
-   * @param int $max if the collection is fixed size, the maximum 
-   *     number of elements to store in the collection
-   * @return Collection a collection object representing the new collection
-   */
-  public function createCollection( $name, $capped = false, $size = 0, $max = 0 ) {
-    $data = array( Mongo::$CREATE_COLLECTION => $name );
-    if( $capped && $size ) {
-      $data[ "capped" ] = true;
-      $data[ "size" ] = $size;
-      if( $max )
-        $data[ "max" ] = $max;
-    }
-
-    $this->dbCommand( Mongo::$CREATE_COLLECTION, $data );
-    return new Collection( $this, $name );
+    return new mongo_db( $this, $dbname );
   }
 
   /** 
    * Lists all of the databases.
    * @return Array each database with its size and name
    */
-  public function listDatabases() {
-    $data = array( Mongo::$LIST_DATABASES => 1 );
-    $result = $this->dbCommand( Mongo::$LIST_DATABASES, $data );
+  public function list_databases() {
+    $data = array( mongo_api::$LIST_DATABASES => 1 );
+    $result = $this->dbCommand( $data );
     if( $result )
       return $result[ "databases" ];
     else
@@ -91,19 +59,111 @@ class Mongo {
    * @return bool if the connection was successfully closed
    */
   public function close() {
-    mongo_close( $this->db );
+    mongo_close( $this->connection );
+  }
+}
+
+class mongo_db extends mongo_api{
+
+  var $name = NULL;
+
+  public function __construct( mongo $conn, $name ) {
+    parent::__construct( $conn->connection );
+    $this->$name = $name;
   }
 
-  public function dbCommand( $name, $data ) {
-    $dbname = $this->dbname;
-    // check if dbname is set
-    if( $dbname == "" ) {
-      // default to admin?
-      $dbname = Mongo::$ADMIN;
+  /** 
+   * Returns the name of the database currently in use.
+   * @return string the name of the database
+   */
+  public function get_name() {
+    return $this->name;
+  }
+
+  /** 
+   * Gets a collection.
+   * @param string $name the name of the collection
+   */
+  public function select_collection( $name ) {
+    return new mongo_collection( $this, $name );
+  }
+
+  /** 
+   * Creates a collection.
+   * @param string $name the name of the collection
+   * @param bool $capped if the collection should be a fixed size
+   * @param int $size if the collection is fixed size, its size in bytes
+   * @param int $max if the collection is fixed size, the maximum 
+   *     number of elements to store in the collection
+   * @return Collection a collection object representing the new collection
+   */
+  public function create_collection( $name, $capped = false, $size = 0, $max = 0 ) {
+    $data = array( mongo_api::$CREATE_COLLECTION => $name );
+    if( $capped && $size ) {
+      $data[ "capped" ] = true;
+      $data[ "size" ] = $size;
+      if( $max )
+        $data[ "max" ] = $max;
     }
 
-    $cmd_collection = $dbname . Mongo::$CMD;
-    $obj = mongo_find_one( $this->db, $cmd_collection, $data );
+    $this->dbCommand( $data );
+    return new mongo_collection( $this, $name );
+  }
+}
+
+
+class mongo_collection extends mongo_api {
+
+  var $name = "";
+  private $db;
+
+  function __construct( mongo_db $db, $name ) {
+    parent::__construct( $db->connection );
+    $this->db = $db->name;
+    $this->name = $name;
+  }
+
+  /**
+   * Validates this collection.
+   * @return array the database's evaluation of this object
+   */
+  function validate() {
+    $data = array( mongo_api::$VALIDATE => $this->name );
+    return $this->dbCommand( $data, $this->db );
+  }
+}
+
+
+class mongo_cursor {
+  var $cursor = NULL;
+
+}
+
+
+class mongo_api {
+
+  var $connection = NULL;
+
+  /** Creates a new access point to the api
+   * @param resource $conn a mongo db connection
+   */
+  public function __construct( $conn ) {
+    $this->connection = $conn;
+  }
+  
+  /** Execute a db command
+   * @param array $data the query to send
+   * @param string $db the database name
+   */
+  public function dbCommand( $data, $db = NULL ) {
+    // check if dbname is set
+    if( !$db ) {
+      // default to admin?
+      $db = mongo_api::$ADMIN;
+    }
+
+    $cmd_collection = $db . mongo_api::$CMD;
+    $obj = mongo_find_one( $this->connection, $cmd_collection, $data );
 
     if( $obj ) {
       return $obj;
@@ -114,40 +174,16 @@ class Mongo {
     }
   }
 
-  /* Constants */
+  /* Command collection */
   private static $CMD = ".\$cmd";
-  /* Commands */
-  private static $CREATE_COLLECTION = "create";
-  private static $LIST_DATABASES = "listDatabases";
-
   /* Admin database */
   private static $ADMIN = "admin";
-}
 
-
-class Collection {
-
-  var $collection = "";
-  private $db;
-
-  function __construct( Mongo $db, $name ) {
-    $this->db = $db;
-    $this->collection = $name;
-  }
-
-  /**
-   * Validates this collection.
-   * @return array the database's evaluation of this object
-   */
-  function validate() {
-    $dbname = $this->db->getDatabase();
-    $data = array( Collection::$VALIDATE => $this->collection );
-    return $this->db->dbCommand( Collection::$VALIDATE, $data );
-  }
-
-  private static $VALIDATE = "validate";
+  /* Commands */
+  public static $CREATE_COLLECTION = "create";
+  public static $LIST_DATABASES = "listDatabases";
+  public static $VALIDATE = "validate";
 
 }
-
 
 ?>

@@ -2,29 +2,28 @@
 
 require "src/mongo.php";
 
+$m = new mongo();
+
 function listDBs() {
-  $m = new Mongo();
-  $m->setDatabase( "admin" );
-  $x=$m->listDatabases();
+  global $m;
+  $x = $m->list_databases();
   if( $x ) {
     foreach( $x as $k => $v ) {
       echo $v["name"] . "\n";
     }
   }
-  $m->close();
 }
 
 function createColl() {
-  $m = new Mongo();
-  $m->setDatabase( "driver_test_framework" );
-  $x=$m->createCollection( "mooo" );
-  $m->close();
+  global $m;
+  $db = $m->select_database( "driver_test_framework" );
+  $x = $db->create_collection( "mooo" );
 }
 
 function valid() {
-  $m = new Mongo();
-  $m->setDatabase( "driver_test_framework" );
-  $collection = $m->getCollection( "mooo" );
+  global $m;
+  $db = $m->select_database( "driver_test_framework" );
+  $collection = $db->select_collection( "mooo" );
   $x = $collection->validate();
   if( $x ) {
     foreach( $x as $k => $v ) {
@@ -34,11 +33,12 @@ function valid() {
   else {
     echo "oops\n";
   }
-  $m->close();
 }
 
-//listDBs();
-//createColl();
+listDBs();
+createColl();
 valid();
+
+$m->close();
 
 ?>
