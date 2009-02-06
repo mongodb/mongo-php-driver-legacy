@@ -423,6 +423,7 @@ class mongo_util {
   public static $DROP = "drop";
   public static $DROP_DATABASE = "dropDatabase";
   public static $LIST_DATABASES = "listDatabases";
+  public static $LOGOUT = "logout";
   public static $NONCE = "getnonce";
   public static $PROFILE = "profile";
   public static $REPAIR_DATABASE = "repairDatabase";

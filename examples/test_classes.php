@@ -95,6 +95,8 @@ function auth() {
   $db = $m->select_database( "admin" );
   $x = $db->get_auth( "kristina", "fred" );
   echo "auth? $x\n";
+  if( $x )
+    $x->logout();
 }
 
 /*
