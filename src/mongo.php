@@ -42,19 +42,6 @@ class mongo {
     return new mongo_db( $this, $dbname );
   }
 
-  /** 
-   * Lists all of the databases.
-   * @return Array each database with its size and name
-   */
-  public function list_databases() {
-    $data = array( mongo_util::$LIST_DATABASES => 1 );
-    $result = mongo_util::db_command( $this->connection, $data );
-    if( $result )
-      return $result[ "databases" ];
-    else
-      return false;
-  }
-
   /**
    * Drops a database.
    * @param mongo_db $db the database to drop
@@ -73,6 +60,34 @@ class mongo {
    */
   public function repair_database( mongo_db $db, $preserve_cloned_files = false, $backup_original_files = false ) {
     return $db->repair( $preserve_cloned_files, $backup_original_files );
+  }
+
+  /**
+   * Check if there was an error on the most recent db operation performed.
+   * @return string the error, if there was one, or NULL
+   */
+  public function last_error() {
+    $result = mongo_util::db_command( $this->connection, array( mongo_util::$LAST_ERROR => 1 ), mongo_util::$ADMIN );
+    return $result[ "err" ];
+  }
+
+  /**
+   * Checks for the last error thrown during a database operation.
+   * @return array the error and the number of operations ago it occured
+   */
+  public function prev_error() {
+    $result = mongo_util::db_command( $this->connection, array( mongo_util::$PREV_ERROR => 1 ), mongo_util::$ADMIN );
+    unset( $result[ "ok" ] );
+    return $result;
+  }
+
+  /**
+   * Clears any flagged errors on the connection.
+   * @param bool if successful
+   */
+  public function reset_error() {
+    $result = mongo_util::db_command( $this->connection, array( mongo_util::$RESET_ERROR => 1 ), mongo_util::$ADMIN );
+    return (bool)$result[ "ok" ];
   }
 
   /**
@@ -423,13 +438,16 @@ class mongo_util {
   public static $CREATE_COLLECTION = "create";
   public static $DROP = "drop";
   public static $DROP_DATABASE = "dropDatabase";
+  public static $LAST_ERROR = "getlasterror";
   public static $LIST_DATABASES = "listDatabases";
   public static $LOGGING = "opLogging";
   public static $LOGOUT = "logout";
   public static $NONCE = "getnonce";
+  public static $PREV_ERROR = "getpreverror";
   public static $PROFILE = "profile";
   public static $QUERY_TRACING = "queryTraceLevel";
   public static $REPAIR_DATABASE = "repairDatabase";
+  public static $RESET_ERROR = "reseterror";
   public static $SHUTDOWN = "shutdown";
   public static $TRACING = "traceAll";
   public static $VALIDATE = "validate";
