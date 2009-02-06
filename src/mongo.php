@@ -2,7 +2,7 @@
 
 dl("libmongo.so");
 
-class mongo extends mongo_api {
+class mongo extends mongo_util {
 
   var $host = "localhost";
   var $port = "27017";
@@ -46,7 +46,7 @@ class mongo extends mongo_api {
    * @return Array each database with its size and name
    */
   public function list_databases() {
-    $data = array( mongo_api::$LIST_DATABASES => 1 );
+    $data = array( mongo_util::$LIST_DATABASES => 1 );
     $result = $this->db_command( $data );
     if( $result )
       return $result[ "databases" ];
@@ -84,7 +84,7 @@ class mongo extends mongo_api {
 
 }
 
-class mongo_db extends mongo_api{
+class mongo_db extends mongo_util{
 
   var $name = NULL;
 
@@ -111,7 +111,7 @@ class mongo_db extends mongo_api{
    * @return int the profiling level
    */
   public function get_profiling_level() {
-    $data = array( mongo_api::$PROFILE => -1 );
+    $data = array( mongo_util::$PROFILE => -1 );
     $x = $this->db_command( $data, $this->name );
     if( $x[ "ok" ] == 1 )
       return $x[ "was" ];
@@ -124,7 +124,7 @@ class mongo_db extends mongo_api{
    * @return int the old profiling level
    */
   public function set_profiling_level( $level ) {
-    $data = array( mongo_api::$PROFILE => (int)$level );
+    $data = array( mongo_util::$PROFILE => (int)$level );
     $x = $this->db_command( $data, $this->name );
     if( $x[ "ok" ] == 1 ) {
       return $x[ "was" ];
@@ -137,7 +137,7 @@ class mongo_db extends mongo_api{
    * @return array db response
    */
   public function drop() {
-    $data = array( mongo_api::$DROP_DATABASE => $this->name );
+    $data = array( mongo_util::$DROP_DATABASE => $this->name );
     return $this->db_command( $data );
   }
 
@@ -148,7 +148,7 @@ class mongo_db extends mongo_api{
    * @return array db response
    */
   function repair( $preserve_cloned_files = false, $backup_original_files = false ) {
-    $data = array( mongo_api::$REPAIR_DATABASE => 1 );
+    $data = array( mongo_util::$REPAIR_DATABASE => 1 );
     if( $preserve_cloned_files )
       $data[ "preserveClonedFilesOnFailure" ] = true;
     if( $backup_original_files )
@@ -175,7 +175,7 @@ class mongo_db extends mongo_api{
    * @return Collection a collection object representing the new collection
    */
   public function create_collection( $name, $capped = false, $size = 0, $max = 0 ) {
-    $data = array( mongo_api::$CREATE_COLLECTION => $name );
+    $data = array( mongo_util::$CREATE_COLLECTION => $name );
     if( $capped && $size ) {
       $data[ "capped" ] = true;
       $data[ "size" ] = $size;
@@ -199,7 +199,7 @@ class mongo_db extends mongo_api{
 }
 
 
-class mongo_collection extends mongo_api {
+class mongo_collection extends mongo_util {
 
   var $name = "";
   var $db;
@@ -221,7 +221,7 @@ class mongo_collection extends mongo_api {
    * @return array the db response
    */
   function drop() {
-    $data = array( mongo_api::$DROP => $this->name );
+    $data = array( mongo_util::$DROP => $this->name );
     return $this->db_command( $data, $this->db );
   }
 
@@ -231,7 +231,7 @@ class mongo_collection extends mongo_api {
    * @return array the database's evaluation of this object
    */
   function validate( $scan_data = false ) {
-    $data = array( mongo_api::$VALIDATE => $this->name );
+    $data = array( mongo_util::$VALIDATE => $this->name );
     if( $scan_data )
       $data[ "scandata" ] = true;
     return $this->db_command( $data, $this->db );
@@ -242,32 +242,126 @@ class mongo_collection extends mongo_api {
    * @return array the associative array saved to the database
    */
   function insert( $iterable ) {
-    $str = (string)$this;
-    if( is_array( $iterable ) ) {
-      $result = mongo_insert( $this->connection, (string)$this, $iterable );
-      if( $result )
-        return $iterable;
-      return false;
-    }
+    $arr = mongo_util::obj_to_array( $iterable );
+    $result = mongo_insert( $this->connection, (string)$this, $arr );
+    if( $result )
+      return $iterable;
+    return false;
+  }
 
-    $arr = array();
-    foreach( $iterable as $key=>$value ) {
-      $arr[ $key ] = $value;
-    }
-    mongo_insert( $connection, (string)$this, $arr );
-    return $arr;
+  /** 
+   * Querys this collection.
+   * @param array $query the fields for which to search
+   * @param int $skip number of results to skip
+   * @param int $limit number of results to return
+   * @param array $fields fields of each result to return
+   * @return mongo_cursor a cursor for the search results
+   */
+  function find( $query = NULL, $skip = NULL, $limit = NULL, $fields = NULL ) {
+    return new mongo_cursor( $this->connection, (string)$this, $query, $skip, $limit, $fields );
   }
 
 }
 
 
-class mongo_cursor {
-  var $cursor = NULL;
+class mongo_cursor extends mongo_util {
 
+  var $connection = NULL;
+
+  private $cursor = NULL;
+  private $started_iterating = false;
+
+  private $query = NULL;
+  private $fields = NULL;
+  private $limit = NULL;
+  private $skip = NULL;
+
+  public function __construct( $conn, $ns, $query = NULL, $skip = NULL, $limit = NULL, $fields = NULL ) {
+    $this->connection = $conn;
+    $this->ns = $ns;
+    $this->query = $query;
+    $this->skip = $skip;
+    $this->limit = $limit;
+    $this->fields = $fields;
+  }
+
+  /**
+   * Return the next object to which this cursor points, and advance the cursor.
+   * @return array the next object
+   */
+  public function next() {
+    if( !$this->started_iterating ) {
+      $this->do_query();
+      $this->started_iterating = true;
+    }
+
+    return mongo_next( $this->cursor );
+  }
+
+  /**
+   * Checks if there are any more elements in this cursor.
+   * @return bool if there is another element
+   */
+  public function has_next() {
+    if( !$this->started_iterating ) {
+      $this->do_query();
+      $this->started_iterating = true;
+    }
+
+    return mongo_has_next( $this->cursor );
+  }
+
+  /**
+   * Limits the number of results returned.
+   * @param int $num the number of results to return
+   * @return mongo_cursor this cursor
+   */
+  public function limit( $num ) {
+    if( $this->started_iterating ) {
+      trigger_error( "cannot modify cursor after beginning iteration.", E_USER_ERROR );
+      return false;
+    }
+    $this->limit = (int)$num;
+    return $this;
+  }
+
+  /**
+   * Skips a number of results.
+   * @param int $num the number of results to skip
+   * @return mongo_cursor this cursor
+   */
+  public function skip( $num) {
+    if( $this->started_iterating ) {
+      trigger_error( "cannot modify cursor after beginning iteration.", E_USER_ERROR );
+      return false;
+    }
+    $this->skip = (int)$num;
+    return $this;
+  }
+
+  /**
+   * Execute the query and set the cursor resource.
+   */
+  private function do_query() {
+    $q = mongo_util::obj_to_array( $this->fields );
+    if( !is_null( $this->fields ) ) {
+      $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$skip, (int)$limit, mongo_util::obj_to_array( $fields ) );
+    }
+    else if( !is_null( $limit ) ) {
+      $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$skip, (int)$limit );
+    }
+    // 0 means the same as NULL for skip
+    else if( $skip ) {
+      $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$skip );
+    }
+    else {
+      $this->cursor = mongo_query( $this->connection, $this->ns, $q );
+    }
+  }
 }
 
 
-class mongo_api {
+class mongo_util {
 
   var $connection = NULL;
 
@@ -278,6 +372,27 @@ class mongo_api {
     $this->connection = $conn;
   }
   
+  /**
+   * Turns something into an array that can be saved to the db.
+   * Returns the empty array if passed NULL.
+   * @param any $obj object to convert
+   * @return array the array
+   */
+  protected static function obj_to_array( $obj ) {
+    if( is_null( $obj ) ) {
+      return array();
+    }
+    if( is_array( $obj ) ) {
+      return $obj;
+    }
+    $arr = array();
+    foreach( $obj as $key=>$value ) {
+      $arr[ $key ] = $value;
+    }
+    return $arr;
+  }
+
+
   /** Execute a db command
    * @param array $data the query to send
    * @param string $db the database name
@@ -286,10 +401,10 @@ class mongo_api {
     // check if dbname is set
     if( !$db ) {
       // default to admin?
-      $db = mongo_api::$ADMIN;
+      $db = mongo_util::$ADMIN;
     }
 
-    $cmd_collection = $db . mongo_api::$CMD;
+    $cmd_collection = $db . mongo_util::$CMD;
     $obj = mongo_find_one( $this->connection, $cmd_collection, $data );
 
     if( $obj ) {

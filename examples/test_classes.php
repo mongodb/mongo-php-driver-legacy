@@ -68,11 +68,24 @@ function profiling() {
 function insert() {
   global $m;
   $coll = $m->select_database( "driver_test_framework" )->select_collection( "foo" );
-  $arr = array( "this" => "that", "foo"=>"bar" );
+  $arr = array( "this" => "that", "foo"=>"bar2" );
   $obj = $coll->insert( $arr );
   if( $obj ) {
     foreach( $obj as $k => $v ) {
       echo "$k=$v\n";
+    }
+  }
+}
+
+function find() {
+  global $m;
+  $coll = $m->select_database( "driver_test_framework" )->select_collection( "foo" );
+  $cursor = $coll->find()->limit( 2 )->skip( 1 );
+  while( $cursor->has_next() ) {
+    echo "next obj:\n";
+    $obj = $cursor->next();
+    foreach( $obj as $k => $v ) {
+      echo "\t$k=$v\n";
     }
   }
 }
@@ -83,8 +96,9 @@ createColl();
 valid();
 dropper();
 profiling();
-*/
 insert();
+*/
+find();
 
 $m->close();
 
