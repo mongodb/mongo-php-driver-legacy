@@ -2,7 +2,9 @@
 
 dl("libmongo.so");
 
-class mongo extends mongo_util {
+include "mongo_auth.php";
+
+class mongo {
 
   var $host = "localhost";
   var $port = "27017";
@@ -21,7 +23,6 @@ class mongo extends mongo_util {
     }
 
     $this->connection = mongo_connect( $addr );
-    parent::__construct( $this->connection );
   }
 
   public function __toString() {
@@ -47,7 +48,7 @@ class mongo extends mongo_util {
    */
   public function list_databases() {
     $data = array( mongo_util::$LIST_DATABASES => 1 );
-    $result = $this->db_command( $data );
+    $result = mongo_util::db_command( $this->connection, $data );
     if( $result )
       return $result[ "databases" ];
     else
@@ -84,12 +85,13 @@ class mongo extends mongo_util {
 
 }
 
-class mongo_db extends mongo_util{
+class mongo_db {
 
+  var $connection = NULL;
   var $name = NULL;
 
   public function __construct( mongo $conn, $name ) {
-    parent::__construct( $conn->connection );
+    $this->connection = $conn->connection;
     $this->name = $name;
   }
 
@@ -97,6 +99,10 @@ class mongo_db extends mongo_util{
     return $this->name;
   }
 
+
+  public function get_auth( $username, $password ) {
+    return mongo_auth::get_auth( $this->connection, $this->name, $username, $password );
+  }
 
   /** 
    * Returns the name of the database currently in use.
@@ -112,7 +118,7 @@ class mongo_db extends mongo_util{
    */
   public function get_profiling_level() {
     $data = array( mongo_util::$PROFILE => -1 );
-    $x = $this->db_command( $data, $this->name );
+    $x = mongo_util::db_command( $this->connection, $data, $this->name );
     if( $x[ "ok" ] == 1 )
       return $x[ "was" ];
     else
@@ -125,7 +131,7 @@ class mongo_db extends mongo_util{
    */
   public function set_profiling_level( $level ) {
     $data = array( mongo_util::$PROFILE => (int)$level );
-    $x = $this->db_command( $data, $this->name );
+    $x = mongo_util::db_command( $this->connection, $data, $this->name );
     if( $x[ "ok" ] == 1 ) {
       return $x[ "was" ];
     }
@@ -138,7 +144,7 @@ class mongo_db extends mongo_util{
    */
   public function drop() {
     $data = array( mongo_util::$DROP_DATABASE => $this->name );
-    return $this->db_command( $data );
+    return mongo_util::db_command( $this->connection, $data );
   }
 
   /**
@@ -153,7 +159,7 @@ class mongo_db extends mongo_util{
       $data[ "preserveClonedFilesOnFailure" ] = true;
     if( $backup_original_files )
       $data[ "backupOriginalFiles" ] = true;
-    return $this->db_command( $data, $this->name );
+    return mongo_util::db_command( $this->connection, $data, $this->name );
   }
 
 
@@ -183,7 +189,7 @@ class mongo_db extends mongo_util{
         $data[ "max" ] = $max;
     }
 
-    $this->db_command( $data );
+    mongo_util::db_command( $this->connection, $data );
     return new mongo_collection( $this, $name );
   }
 
@@ -199,14 +205,13 @@ class mongo_db extends mongo_util{
 }
 
 
-class mongo_collection extends mongo_util {
+class mongo_collection {
 
   var $name = "";
   var $db;
   var $connection;
 
   function __construct( mongo_db $db, $name ) {
-    parent::__construct( $db->connection );
     $this->connection = $db->connection;
     $this->db = $db->name;
     $this->name = $name;
@@ -222,7 +227,7 @@ class mongo_collection extends mongo_util {
    */
   function drop() {
     $data = array( mongo_util::$DROP => $this->name );
-    return $this->db_command( $data, $this->db );
+    return mongo_util::db_command( $this->connection, $data, $this->db );
   }
 
   /**
@@ -234,7 +239,7 @@ class mongo_collection extends mongo_util {
     $data = array( mongo_util::$VALIDATE => $this->name );
     if( $scan_data )
       $data[ "scandata" ] = true;
-    return $this->db_command( $data, $this->db );
+    return mongo_util::db_command( $this->connection, $data, $this->db );
   }
 
   /** Inserts an object or array into the collection.
@@ -264,7 +269,7 @@ class mongo_collection extends mongo_util {
 }
 
 
-class mongo_cursor extends mongo_util {
+class mongo_cursor {
 
   var $connection = NULL;
 
@@ -362,15 +367,6 @@ class mongo_cursor extends mongo_util {
 
 
 class mongo_util {
-
-  var $connection = NULL;
-
-  /** Creates a new access point to the api
-   * @param resource $conn a mongo db connection
-   */
-  public function __construct( $conn ) {
-    $this->connection = $conn;
-  }
   
   /**
    * Turns something into an array that can be saved to the db.
@@ -378,7 +374,7 @@ class mongo_util {
    * @param any $obj object to convert
    * @return array the array
    */
-  protected static function obj_to_array( $obj ) {
+  public static function obj_to_array( $obj ) {
     if( is_null( $obj ) ) {
       return array();
     }
@@ -397,7 +393,7 @@ class mongo_util {
    * @param array $data the query to send
    * @param string $db the database name
    */
-  public function db_command( $data, $db = NULL ) {
+  public static function db_command( $conn, $data, $db = NULL ) {
     // check if dbname is set
     if( !$db ) {
       // default to admin?
@@ -405,7 +401,7 @@ class mongo_util {
     }
 
     $cmd_collection = $db . mongo_util::$CMD;
-    $obj = mongo_find_one( $this->connection, $cmd_collection, $data );
+    $obj = mongo_find_one( $conn, $cmd_collection, $data );
 
     if( $obj ) {
       return $obj;
@@ -422,10 +418,12 @@ class mongo_util {
   private static $ADMIN = "admin";
 
   /* Commands */
+  public static $AUTHENTICATE = "authenticate";
   public static $CREATE_COLLECTION = "create";
   public static $DROP = "drop";
   public static $DROP_DATABASE = "dropDatabase";
   public static $LIST_DATABASES = "listDatabases";
+  public static $NONCE = "getnonce";
   public static $PROFILE = "profile";
   public static $REPAIR_DATABASE = "repairDatabase";
   public static $VALIDATE = "validate";

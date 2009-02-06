@@ -90,6 +90,13 @@ function find() {
   }
 }
 
+function auth() {
+  global $m;
+  $db = $m->select_database( "admin" );
+  $x = $db->get_auth( "kristina", "fred" );
+  echo "auth? $x\n";
+}
+
 /*
 listDBs();
 createColl();
@@ -97,8 +104,9 @@ valid();
 dropper();
 profiling();
 insert();
-*/
 find();
+*/
+auth();
 
 $m->close();
 
