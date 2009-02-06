@@ -21,7 +21,24 @@ function createColl() {
   $m->close();
 }
 
-listDBs();
+function valid() {
+  $m = new Mongo();
+  $m->setDatabase( "driver_test_framework" );
+  $collection = $m->getCollection( "mooo" );
+  $x = $collection->validate();
+  if( $x ) {
+    foreach( $x as $k => $v ) {
+      echo "$k=$v\n";
+    }
+  }
+  else {
+    echo "oops\n";
+  }
+  $m->close();
+}
+
+//listDBs();
 //createColl();
+valid();
 
 ?>

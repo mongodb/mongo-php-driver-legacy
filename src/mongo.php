@@ -43,6 +43,13 @@ class Mongo {
     return $this->dbname;
   }
 
+  /** 
+   * Gets a collection.
+   * @param string $name the name of the collection
+   */
+  public function getCollection( $name ) {
+    return new Collection( $this, $name );
+  }
 
   /** 
    * Creates a collection.
@@ -128,11 +135,24 @@ class Collection {
   var $collection = "";
   private $db;
 
-  function __construct( $db, $name ) {
+  function __construct( Mongo $db, $name ) {
     $this->db = $db;
     $this->collection = $name;
   }
 
+  /**
+   * Validates this collection.
+   * @return array the database's evaluation of this object
+   */
+  function validate() {
+    $dbname = $this->db->getDatabase();
+    $data = array( Collection::$VALIDATE => $this->collection );
+    return $this->db->dbCommand( Collection::$VALIDATE, $data );
+  }
+
+  private static $VALIDATE = "validate";
+
 }
+
 
 ?>
