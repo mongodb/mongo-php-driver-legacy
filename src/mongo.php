@@ -308,6 +308,16 @@ class mongo_collection {
       return $obj;
     return false;
   }
+
+  /**
+   * Remove records from this collection.
+   * @param object $criteria description of records to remove
+   * @param bool $just_one remove at most one record matching this criteria
+   * @return bool if the command was executed successfully
+   */
+  function remove( $criteria, $just_one = false ) {
+    return mongo_remove( $this->connection, (string)$this, mongo_util::obj_to_array( $criteria ), $just_one );
+  }
 }
 
 

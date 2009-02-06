@@ -109,6 +109,14 @@ function update() {
   find();
 }
 
+function rm() {
+  global $m;
+  $coll = $m->select_database( "driver_test_framework" )->select_collection("foo");
+  $u = $coll->remove( array( "x" => 4 ), true );
+  echo "u: $u\n";
+  find();
+}
+
 //listDBs();
 //createColl();
 //valid();
@@ -117,7 +125,8 @@ function update() {
 //insert();
 //find();
 //auth();
-update();
+//update();
+rm();
 
 
 $m->close();
