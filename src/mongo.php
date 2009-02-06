@@ -424,10 +424,14 @@ class mongo_util {
   public static $DROP = "drop";
   public static $DROP_DATABASE = "dropDatabase";
   public static $LIST_DATABASES = "listDatabases";
+  public static $LOGGING = "opLogging";
   public static $LOGOUT = "logout";
   public static $NONCE = "getnonce";
   public static $PROFILE = "profile";
+  public static $QUERY_TRACING = "queryTraceLevel";
   public static $REPAIR_DATABASE = "repairDatabase";
+  public static $SHUTDOWN = "shutdown";
+  public static $TRACING = "traceAll";
   public static $VALIDATE = "validate";
 
 }

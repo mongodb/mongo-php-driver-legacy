@@ -43,7 +43,7 @@ class mongo_auth {
 
     // check if we need an admin instance
     if( $db == "admin" ) {
-      $auth_obj = mongo_admin::get_auth();
+      $auth_obj = mongo_admin::get_auth( $conn );
     }
     else {
       $auth_obj = new mongo_auth( $conn, $db );
@@ -87,18 +87,72 @@ class mongo_auth {
 
 class mongo_admin extends mongo_auth {
 
-  public static function get_auth() {
-    return new mongo_admin();
+  public static function get_auth( $conn ) {
+    return new mongo_admin( $conn );
   }
 
-  private function __construct() {
+  private function __construct( $conn ) {
+    $this->connection = $conn;
+    $this->db = "admin";
   }
 
+  /**
+   * Shuts down the database.
+   * @return bool if the database was successfully shut down
+   */
   public function shutdown() {
-    $result = mongo_util::db_command( $this->connection, array( "shutdown" => 1 ), $this->db );
+    $result = mongo_util::db_command( $this->connection, array( mongo_util::$SHUTDOWN => 1 ), $this->db );
     return $result[ "ok" ];
   }
 
+  /**
+   * Turns logging on/off.
+   * @param int $level logging level
+   * @return bool if the logging level was set
+   */
+  public function set_logging( $level ) {
+    $result = mongo_util::db_command( $this->connection, array( mongo_util::$LOGGING => (int)$level ), $this->db );
+    return $result[ "ok" ];
+  }
+
+  /**
+   * Sets tracing level.
+   * @param int $level trace level
+   * @return bool if the tracing level was set
+   */
+  public function set_tracing( $level ) {
+    $result = mongo_util::db_command( $this->connection, array( mongo_util::$TRACING => (int)$level ), $this->db );
+    return $result[ "ok" ];
+  }
+
+  /**
+   * Sets only the query tracing level.
+   * @param int $level trace level
+   * @return bool if the tracing level was set
+   */
+  public function set_query_tracing( $level ) {
+    $result = mongo_util::db_command( $this->connection, array( mongo_util::$QUERY_TRACING => (int)$level ), $this->db );
+    return $result[ "ok" ];
+  }
+
+
+  public static $LOG_OFF = 0;
+  public static $LOG_W = 1;
+  public static $LOG_R = 2;
+  public static $LOG_RW = 3;
+
+  public static $TRACE_OFF = 0;
+  public static $TRACE_SOME = 1;
+  public static $TRACE_ON = 2;
 }
+
+function print_result( $result ){
+  "result $result:\n";
+  foreach( $result as $k => $v ) {
+    echo "\t$k=$v\n";
+  }
+}
+
+
 
 ?>
