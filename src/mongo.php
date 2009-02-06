@@ -23,7 +23,7 @@ class Mongo {
 
   /** 
    * Sets the database to use.
-   * @param string the database name
+   * @param string $_dbname the database name
    * @return boolean if the database name was valid
    */
   public function setDatabase( $_dbname = NULL ) {
@@ -94,8 +94,7 @@ class Mongo {
     mongo_close( $this->db );
   }
 
-
-  private function dbCommand( $name, $data ) {
+  public function dbCommand( $name, $data ) {
     $dbname = $this->dbname;
     // check if dbname is set
     if( $dbname == "" ) {
@@ -104,11 +103,7 @@ class Mongo {
     }
 
     $cmd_collection = $dbname . Mongo::$CMD;
-    switch( $name ) {
-    case Mongo::$CREATE_COLLECTION:
-    case Mongo::$LIST_DATABASES:
-      $obj = mongo_find_one( $this->db, $cmd_collection, $data );
-    }
+    $obj = mongo_find_one( $this->db, $cmd_collection, $data );
 
     if( $obj ) {
       return $obj;
