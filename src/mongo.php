@@ -271,16 +271,43 @@ class mongo_collection {
 
   /** 
    * Querys this collection.
-   * @param array $query the fields for which to search
+   * @param object $query the fields for which to search
    * @param int $skip number of results to skip
    * @param int $limit number of results to return
-   * @param array $fields fields of each result to return
+   * @param object $fields fields of each result to return
    * @return mongo_cursor a cursor for the search results
    */
   function find( $query = NULL, $skip = NULL, $limit = NULL, $fields = NULL ) {
     return new mongo_cursor( $this->connection, (string)$this, $query, $skip, $limit, $fields );
   }
 
+  /**
+   * Update records based on a given criteria.
+   * <!--Options:
+   * <dl>
+   * <dt>upsert : bool</dt>
+   * <dd>if $newobj should be inserted if no matching records are found</dd>
+   * <dt>ids : bool </dt>
+   * <dd>if if the _id field should be added in the case of an upsert</dd>
+   * </dl>-->
+   * @param object $criteria description of the objects to update
+   * @param object $newobj the object with which to update the matching records
+   * @param bool $upsert if the object should be inserted if the criteria isn't found
+   * @return array the associative array saved to the db
+   */
+  function update( $criteria, $newobj, $upsert = false ) {
+    $c = mongo_util::obj_to_array( $criteria );
+    $obj = mongo_util::obj_to_array( $newobj );
+    if( $upsert ) {
+      $result = mongo_update( $this->connection, (string)$this, $c, $obj, $upsert );
+    }
+    else {
+      $result = mongo_update( $this->connection, (string)$this, $c, $obj );
+    }
+    if( $result )
+      return $obj;
+    return false;
+  }
 }
 
 

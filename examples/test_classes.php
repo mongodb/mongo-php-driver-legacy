@@ -101,16 +101,24 @@ function auth() {
   }
 }
 
-/*
-listDBs();
-createColl();
-valid();
-dropper();
-profiling();
-insert();
-find();
-*/
-auth();
+function update() {
+  global $m;
+  $coll = $m->select_database( "driver_test_framework" )->select_collection("foo");
+  $u = $coll->update( array( "y" => 0 ), array( "y" => 6, "x" => 2 ), true );
+  echo "u: $u\n";
+  find();
+}
+
+//listDBs();
+//createColl();
+//valid();
+//dropper();
+//profiling();
+//insert();
+//find();
+//auth();
+update();
+
 
 $m->close();
 

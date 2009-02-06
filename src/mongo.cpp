@@ -281,7 +281,7 @@ PHP_FUNCTION(mongo_update) {
   zval *zconn, *zquery, *zobj;
   char *collection;
   int collection_len;
-  zend_bool upsert = 0;
+  zend_bool zupsert = 0;
 
   int num_args = ZEND_NUM_ARGS();
   switch( num_args ) {
@@ -293,13 +293,13 @@ PHP_FUNCTION(mongo_update) {
     RETURN_FALSE;
     break;
   case 4:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery, &zobj) == FAILURE) {
+    if (zend_parse_parameters(num_args TSRMLS_CC, "rsaa", &zconn, &collection, &collection_len, &zquery, &zobj) == FAILURE) {
       zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
     break;
   case 5:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery, &zobj, &upsert) == FAILURE) {
+    if (zend_parse_parameters(num_args TSRMLS_CC, "rsaab", &zconn, &collection, &collection_len, &zquery, &zobj, &zupsert) == FAILURE) {
       zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
@@ -312,6 +312,7 @@ PHP_FUNCTION(mongo_update) {
 
   mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
   if (!conn_ptr) {
+    zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;
   }
 
@@ -319,7 +320,7 @@ PHP_FUNCTION(mongo_update) {
   php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
   mongo::BSONObjBuilder *bfields = new mongo::BSONObjBuilder();
   php_array_to_bson( bfields, Z_ARRVAL_P( zobj ) );
-  conn_ptr->update( collection, bquery->done(), bfields->done(), upsert );
+  conn_ptr->update( collection, bquery->done(), bfields->done(), (int)zupsert );
   RETURN_TRUE;
 }
 
