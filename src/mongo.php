@@ -90,12 +90,13 @@ class mongo_db extends mongo_api{
 
   public function __construct( mongo $conn, $name ) {
     parent::__construct( $conn->connection );
-    $this->$name = $name;
+    $this->name = $name;
   }
 
   public function __toString() {
     return $this->name;
   }
+
 
   /** 
    * Returns the name of the database currently in use.
@@ -126,7 +127,6 @@ class mongo_db extends mongo_api{
     $data = array( mongo_api::$PROFILE => (int)$level );
     $x = $this->db_command( $data, $this->name );
     if( $x[ "ok" ] == 1 ) {
-      echo "ok!\n";
       return $x[ "was" ];
     }
     return false;
@@ -202,10 +202,12 @@ class mongo_db extends mongo_api{
 class mongo_collection extends mongo_api {
 
   var $name = "";
-  private $db;
+  var $db;
+  var $connection;
 
   function __construct( mongo_db $db, $name ) {
     parent::__construct( $db->connection );
+    $this->connection = $db->connection;
     $this->db = $db->name;
     $this->name = $name;
   }
@@ -233,6 +235,27 @@ class mongo_collection extends mongo_api {
     if( $scan_data )
       $data[ "scandata" ] = true;
     return $this->db_command( $data, $this->db );
+  }
+
+  /** Inserts an object or array into the collection.
+   * @param object $iterable an object or array
+   * @return array the associative array saved to the database
+   */
+  function insert( $iterable ) {
+    $str = (string)$this;
+    if( is_array( $iterable ) ) {
+      $result = mongo_insert( $this->connection, (string)$this, $iterable );
+      if( $result )
+        return $iterable;
+      return false;
+    }
+
+    $arr = array();
+    foreach( $iterable as $key=>$value ) {
+      $arr[ $key ] = $value;
+    }
+    mongo_insert( $connection, (string)$this, $arr );
+    return $arr;
   }
 
 }

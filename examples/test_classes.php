@@ -65,13 +65,26 @@ function profiling() {
   echo "profiling level was: $x\n";
 }
 
+function insert() {
+  global $m;
+  $coll = $m->select_database( "driver_test_framework" )->select_collection( "foo" );
+  $arr = array( "this" => "that", "foo"=>"bar" );
+  $obj = $coll->insert( $arr );
+  if( $obj ) {
+    foreach( $obj as $k => $v ) {
+      echo "$k=$v\n";
+    }
+  }
+}
+
 /*
 listDBs();
 createColl();
 valid();
 dropper();
-*/
 profiling();
+*/
+insert();
 
 $m->close();
 
