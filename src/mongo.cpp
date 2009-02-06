@@ -97,7 +97,8 @@ PHP_FUNCTION(mongo_close) {
   zval *zconn;
  
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zconn) == FAILURE) {
-    RETURN_FALSE;
+     zend_error( E_WARNING, "parameter parse failure\n" );
+     RETURN_FALSE;
   }
   ZEND_FETCH_RESOURCE(conn, mongo::DBClientConnection*, &zconn, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, le_db_client_connection);
   zval_dtor( zconn );

@@ -66,7 +66,6 @@ void php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash 
     default:
       php_printf( "php=>bson: type %i not supported", Z_TYPE_PP(data) );
     }
-    php_printf("\n");
   }
 }
 
