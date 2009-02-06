@@ -106,6 +106,33 @@ class mongo_db extends mongo_api{
   }
 
   /**
+   * Gets this database's profiling level.
+   * @return int the profiling level
+   */
+  public function get_profiling_level() {
+    $data = array( mongo_api::$PROFILE => -1 );
+    $x = $this->db_command( $data, $this->name );
+    if( $x[ "ok" ] == 1 )
+      return $x[ "was" ];
+    else
+      return false;
+  }
+
+  /**
+   * Sets this database's profiling level.
+   * @return int the old profiling level
+   */
+  public function set_profiling_level( $level ) {
+    $data = array( mongo_api::$PROFILE => (int)$level );
+    $x = $this->db_command( $data, $this->name );
+    if( $x[ "ok" ] == 1 ) {
+      echo "ok!\n";
+      return $x[ "was" ];
+    }
+    return false;
+  }
+
+  /**
    * Drops this database.
    * @return array db response
    */
@@ -261,6 +288,7 @@ class mongo_api {
   public static $DROP = "drop";
   public static $DROP_DATABASE = "dropDatabase";
   public static $LIST_DATABASES = "listDatabases";
+  public static $PROFILE = "profile";
   public static $REPAIR_DATABASE = "repairDatabase";
   public static $VALIDATE = "validate";
 

@@ -49,10 +49,29 @@ function dropper() {
   }
 }
 
+function profiling() {
+  global $m;
+  $db = $m->select_database( "driver_test_framework" );
+  $x = $db->get_profiling_level();
+  echo "profiling level: $x\n";
+
+  $x = $db->set_profiling_level( 1 );
+  echo "profiling level was: $x\n";
+
+  $x = $db->set_profiling_level( 0 );
+  echo "profiling level was: $x\n";
+
+  $x = $db->set_profiling_level( "foo" );
+  echo "profiling level was: $x\n";
+}
+
+/*
 listDBs();
 createColl();
 valid();
 dropper();
+*/
+profiling();
 
 $m->close();
 
