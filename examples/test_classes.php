@@ -35,9 +35,24 @@ function valid() {
   }
 }
 
+function dropper() {
+  global $m;
+  $db = $m->select_database( "driver_test_framework" );
+  $x = $db->drop_collection( $db->select_collection( "mooo" ) );
+  if( $x ) {
+    foreach( $x as $k => $v ) {
+      echo "$k=$v\n";
+    }
+  }
+  else {
+    echo "oops\n";
+  }
+}
+
 listDBs();
 createColl();
 valid();
+dropper();
 
 $m->close();
 

@@ -47,7 +47,7 @@ class mongo extends mongo_api {
    */
   public function list_databases() {
     $data = array( mongo_api::$LIST_DATABASES => 1 );
-    $result = $this->dbCommand( $data );
+    $result = $this->db_command( $data );
     if( $result )
       return $result[ "databases" ];
     else
@@ -70,6 +70,10 @@ class mongo_db extends mongo_api{
   public function __construct( mongo $conn, $name ) {
     parent::__construct( $conn->connection );
     $this->$name = $name;
+  }
+
+  public function __toString() {
+    return $this->name;
   }
 
   /** 
@@ -106,9 +110,14 @@ class mongo_db extends mongo_api{
         $data[ "max" ] = $max;
     }
 
-    $this->dbCommand( $data );
+    $this->db_command( $data );
     return new mongo_collection( $this, $name );
   }
+
+  public function drop_collection( mongo_collection $coll ) {
+    return $coll->drop();
+  }
+
 }
 
 
@@ -123,14 +132,31 @@ class mongo_collection extends mongo_api {
     $this->name = $name;
   }
 
+  public function __toString() {
+    return $this->db . "." . $this->name;
+  }
+
+  /**
+   * Drops this collection.
+   */
+  function drop() {
+    $data = array( mongo_api::$DROP => $this->name );
+    return $this->db_command( $data, $this->db );
+  }
+
+
   /**
    * Validates this collection.
+   * @param bool $scan_data only validate indices, not the base collection (optional)
    * @return array the database's evaluation of this object
    */
-  function validate() {
+  function validate( $scan_data = false ) {
     $data = array( mongo_api::$VALIDATE => $this->name );
-    return $this->dbCommand( $data, $this->db );
+    if( $scan_data )
+      $data[ "scandata" ] = true;
+    return $this->db_command( $data, $this->db );
   }
+
 }
 
 
@@ -155,7 +181,7 @@ class mongo_api {
    * @param array $data the query to send
    * @param string $db the database name
    */
-  public function dbCommand( $data, $db = NULL ) {
+  public function db_command( $data, $db = NULL ) {
     // check if dbname is set
     if( !$db ) {
       // default to admin?
@@ -181,6 +207,7 @@ class mongo_api {
 
   /* Commands */
   public static $CREATE_COLLECTION = "create";
+  public static $DROP = "drop";
   public static $LIST_DATABASES = "listDatabases";
   public static $VALIDATE = "validate";
 
