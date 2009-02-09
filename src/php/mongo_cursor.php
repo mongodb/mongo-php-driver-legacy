@@ -75,23 +75,29 @@ class mongo_cursor {
     return $this;
   }
 
+
+  public function sort( $fields ) {
+    if( $this->started_iterating ) {
+      trigger_error( "cannot modify cursor after beginning iteration.", E_USER_ERROR );
+      return false;
+    }
+    $this->sort = $fields;
+    return $this;
+  }
+
   /**
    * Execute the query and set the cursor resource.
    */
   private function do_query() {
-    $q = mongo_util::obj_to_array( $this->fields );
-    if( !is_null( $this->fields ) ) {
-      $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$skip, (int)$limit, mongo_util::obj_to_array( $fields ) );
-    }
-    else if( !is_null( $limit ) ) {
-      $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$skip, (int)$limit );
-    }
-    // 0 means the same as NULL for skip
-    else if( $skip ) {
-      $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$skip );
+    $q = mongo_util::obj_to_array( $this->query );
+    $s = mongo_util::obj_to_array( $this->sort );
+    $f = mongo_util::obj_to_array( $this->fields );
+
+    if( !is_null( $limit ) ) {
+      $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$this->skip, (int)$this->limit, $s, $f );
     }
     else {
-      $this->cursor = mongo_query( $this->connection, $this->ns, $q );
+      $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$this->skip, $s, $f );
     }
   }
 }

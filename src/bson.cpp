@@ -52,7 +52,7 @@ void php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash 
     case IS_ARRAY: {
       mongo::BSONObjBuilder *subobj = new mongo::BSONObjBuilder();
       php_array_to_bson( subobj, Z_ARRVAL_PP( data ) );
-      obj_builder->append( field_name, subobj->doneAndDecouple() );
+      obj_builder->append( field_name, subobj->done() );
       break;
     }
     // this should probably be done as bin data, to guard against \0

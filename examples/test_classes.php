@@ -4,25 +4,15 @@ require "src/php/mongo.php";
 
 $m = new mongo();
 
-function listDBs() {
-  global $m;
-  $x = $m->list_databases();
-  if( $x ) {
-    foreach( $x as $k => $v ) {
-      echo $v["name"] . "\n";
-    }
-  }
-}
-
 function createColl() {
   global $m;
-  $db = $m->select_database( "driver_test_framework" );
+  $db = $m->select_db( "driver_test_framework" );
   $x = $db->create_collection( "mooo" );
 }
 
 function valid() {
   global $m;
-  $db = $m->select_database( "driver_test_framework" );
+  $db = $m->select_db( "driver_test_framework" );
   $collection = $db->select_collection( "mooo" );
   $x = $collection->validate();
   if( $x ) {
@@ -37,7 +27,7 @@ function valid() {
 
 function dropper() {
   global $m;
-  $db = $m->select_database( "driver_test_framework" );
+  $db = $m->select_db( "driver_test_framework" );
   $x = $db->drop_collection( $db->select_collection( "mooo" ) );
   if( $x ) {
     foreach( $x as $k => $v ) {
@@ -51,7 +41,7 @@ function dropper() {
 
 function profiling() {
   global $m;
-  $db = $m->select_database( "driver_test_framework" );
+  $db = $m->select_db( "driver_test_framework" );
   $x = $db->get_profiling_level();
   echo "profiling level: $x\n";
 
@@ -67,7 +57,7 @@ function profiling() {
 
 function insert() {
   global $m;
-  $coll = $m->select_database( "driver_test_framework" )->select_collection( "foo" );
+  $coll = $m->select_db( "driver_test_framework" )->select_collection( "foo" );
   $arr = array( "this" => "that", "foo"=>"bar2" );
   $obj = $coll->insert( $arr );
   if( $obj ) {
@@ -79,8 +69,8 @@ function insert() {
 
 function find() {
   global $m;
-  $coll = $m->select_database( "driver_test_framework" )->select_collection( "foo" );
-  $cursor = $coll->find()->limit( 2 )->skip( 1 );
+  $coll = $m->select_db( "driver_test_framework" )->select_collection( "foo" );
+  $cursor = $coll->find()->limit( 2 )->skip( 1 )->sort( array( "x" => 1 ) );
   while( $cursor->has_next() ) {
     echo "next obj:\n";
     $obj = $cursor->next();
@@ -92,18 +82,26 @@ function find() {
 
 function auth() {
   global $m;
-  $db = $m->select_database( "admin" );
+  $db = $m->select_db( "admin" );
   $x = $db->get_auth( "kristina", "fred" );
   echo "auth? $x\n";
   if( $x ) {
     $x->set_logging( 2 );
+
+    $list = $x->list_dbs();
+    if( $list ) {
+      foreach( $list as $k => $v ) {
+        echo $v["name"] . "\n";
+      }
+    }
+
     $x->logout();
   }
 }
 
 function update() {
   global $m;
-  $coll = $m->select_database( "driver_test_framework" )->select_collection("foo");
+  $coll = $m->select_db( "driver_test_framework" )->select_collection("foo");
   $u = $coll->update( array( "y" => 0 ), array( "y" => 6, "x" => 2 ), true );
   echo "u: $u\n";
   find();
@@ -111,7 +109,7 @@ function update() {
 
 function rm() {
   global $m;
-  $coll = $m->select_database( "driver_test_framework" )->select_collection("foo");
+  $coll = $m->select_db( "driver_test_framework" )->select_collection("foo");
   $u = $coll->remove( array( "x" => 4 ), true );
   echo "u: $u\n";
   find();
@@ -119,22 +117,21 @@ function rm() {
 
 function idxs() {
   global $m;
-  $coll = $m->select_database( "driver_test_framework" )->select_collection("foo");
+  $coll = $m->select_db( "driver_test_framework" )->select_collection("foo");
   $coll->ensure_index( "x" );
   $coll->ensure_index( array( "x" => 1, "y"=>1 ) );
   $coll->delete_index( "x" );
 }
 
-//listDBs();
-//createColl();
-//valid();
-//dropper();
-//profiling();
-//insert();
-//find();
-//auth();
-//update();
-//rm();
+createColl();
+valid();
+dropper();
+profiling();
+insert();
+find();
+auth();
+update();
+rm();
 idxs();
 
 $m->close();
