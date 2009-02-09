@@ -1,6 +1,6 @@
 <?php
 
-require "src/mongo.php";
+require "src/php/mongo.php";
 
 $m = new mongo();
 
