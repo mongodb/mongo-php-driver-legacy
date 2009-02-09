@@ -7,7 +7,6 @@
 
 #define PHP_DB_CLIENT_CONNECTION_RES_NAME "mongo connection"
 #define PHP_DB_CURSOR_RES_NAME "mongo cursor"
-#define PHP_DB_OID_RES_NAME "mongo object id"
 
 
 PHP_MINIT_FUNCTION(mongo);

@@ -5,7 +5,7 @@
 #include <php.h>
 #include <mongo/client/dbclient.h>
 
-extern int le_db_oid;
+extern zend_class_entry *mongo_id_class;
 
 void php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash ) {
   zval **data;
@@ -59,10 +59,23 @@ void php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash 
     case IS_STRING:
       obj_builder->append( field_name, Z_STRVAL_PP(data) );
       break;
+    case IS_OBJECT: {
+      TSRMLS_FETCH();
+      zend_class_entry *clazz = Z_OBJCE_PP( data );
+      if( clazz == mongo_id_class ) {
+        zval *zid = zend_read_property( mongo_id_class, *data, "id", 2, 0 TSRMLS_CC );
+        char *cid = Z_STRVAL_P( zid );
+        std::string *id = new string( cid );
+        mongo::OID *oid = new mongo::OID();
+        oid->init( *id );
+
+        obj_builder->appendOID( field_name, oid ); 
+        break;
+      }
+    }
     case IS_RESOURCE:
     case IS_CONSTANT:
     case IS_CONSTANT_ARRAY:
-    case IS_OBJECT:
     default:
       php_printf( "php=>bson: type %i not supported", Z_TYPE_PP(data) );
     }
@@ -137,12 +150,21 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
       break;
     }
     case mongo::jstOID: {
+      zval *zoid;
+      TSRMLS_FETCH();
+
       mongo::OID oid = elem.__oid();
-      ZEND_REGISTER_RESOURCE( NULL, &oid, le_db_oid );
+      std::string str = oid.str();
+      char *c = (char*)str.c_str();
+
+      MAKE_STD_ZVAL(zoid);
+      object_init_ex(zoid, mongo_id_class);
+      add_property_stringl( zoid, "id", c, strlen( c ), 1 );
+
       if( assoc ) 
-        add_assoc_resource( array, key, le_db_oid );
+        add_assoc_zval( array, key, zoid );
       else 
-        add_index_resource( array, index, le_db_oid );
+        add_index_zval( array, index, zoid );
       break;
     }
     case mongo::EOO: {
