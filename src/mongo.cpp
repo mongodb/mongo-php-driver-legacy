@@ -1,4 +1,4 @@
-// mongo.c
+// mongo.cpp
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -10,7 +10,10 @@
 #include <mongo/client/dbclient.h>
 
 #include "mongo.h"
+#include "mongo_id.h"
 #include "bson.h"
+
+zend_class_entry *mongo_id_class;
 
 /** Resources */
 int le_db_client_connection;
@@ -28,6 +31,12 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_has_next , NULL )
   PHP_FE( mongo_next , NULL )
   {NULL, NULL, NULL}
+};
+
+static function_entry mongo_id_functions[] = {
+  PHP_NAMED_FE( __construct, PHP_FN( mongo_id___construct ), NULL )
+  PHP_NAMED_FE( __toString, PHP_FN( mongo_id___toString ), NULL )
+  { NULL, NULL, NULL }
 };
 
 zend_module_entry mongo_module_entry = {
@@ -56,6 +65,11 @@ PHP_MINIT_FUNCTION(mongo) {
   le_db_client_connection = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CLIENT_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
   le_db_oid = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_OID_RES_NAME, module_number);
+
+  zend_class_entry id; 
+  INIT_CLASS_ENTRY(id, "mongo_id", mongo_id_functions); 
+  mongo_id_class = zend_register_internal_class(&id TSRMLS_CC); 
+
   return SUCCESS;
 }
 
