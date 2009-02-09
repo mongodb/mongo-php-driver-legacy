@@ -34,7 +34,7 @@ class mongo {
    * @param string $dbname the database name
    * @return mongo_db a new db object
    */
-  public function select_database( $dbname = NULL ) {
+  public function select_db( $dbname = NULL ) {
     if( $dbname == NULL || $dbname == "" ) {
       trigger_error( "Invalid database name.", E_USER_WARNING );
       return false;
@@ -47,7 +47,7 @@ class mongo {
    * @param mongo_db $db the database to drop
    * @return array db response
    */
-  public function drop_database( mongo_db $db ) {
+  public function drop_db( mongo_db $db ) {
     return $db->drop();
   }
 
@@ -58,7 +58,7 @@ class mongo {
    * @param bool $backup_original_files if original files should be backed up
    * @return array db response
    */
-  public function repair_database( mongo_db $db, $preserve_cloned_files = false, $backup_original_files = false ) {
+  public function repair_db( mongo_db $db, $preserve_cloned_files = false, $backup_original_files = false ) {
     return $db->repair( $preserve_cloned_files, $backup_original_files );
   }
 

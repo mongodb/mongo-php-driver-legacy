@@ -100,7 +100,7 @@ class mongo_admin extends mongo_auth {
    * Lists all of the databases.
    * @return Array each database with its size and name
    */
-  public function list_databases() {
+  public function list_dbs() {
     $data = array( mongo_util::$LIST_DATABASES => 1 );
     $result = mongo_util::db_command( $this->connection, $data );
     if( $result )
