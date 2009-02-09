@@ -7,6 +7,8 @@
 
 #define PHP_DB_CLIENT_CONNECTION_RES_NAME "mongo connection"
 #define PHP_DB_CURSOR_RES_NAME "mongo cursor"
+#define PHP_GRIDFS_RES_NAME "gridfs tools"
+#define PHP_GRIDFILE_RES_NAME "gridfs file"
 
 
 PHP_MINIT_FUNCTION(mongo);

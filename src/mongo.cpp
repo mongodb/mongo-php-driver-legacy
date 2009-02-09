@@ -8,16 +8,20 @@
 
 #include <php.h>
 #include <mongo/client/dbclient.h>
+#include <mongo/client/gridfs.h>
 
 #include "mongo.h"
 #include "mongo_id.h"
 #include "bson.h"
+#include "gridfs.h"
 
 zend_class_entry *mongo_id_class;
 
 /** Resources */
 int le_db_client_connection;
 int le_db_cursor;
+int le_gridfs;
+int le_gridfile;
 
 static function_entry mongo_functions[] = {
   PHP_FE( mongo_connect , NULL )
@@ -29,6 +33,13 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_update , NULL )
   PHP_FE( mongo_has_next , NULL )
   PHP_FE( mongo_next , NULL )
+  PHP_FE( mongo_gridfs_init , NULL )
+  PHP_FE( mongo_gridfs_list , NULL )
+  PHP_FE( mongo_gridfs_store , NULL )
+  PHP_FE( mongo_gridfs_find , NULL )
+  PHP_FE( mongo_gridfile_exists , NULL )
+  PHP_FE( mongo_gridfile_filename , NULL )
+  PHP_FE( mongo_gridfile_size , NULL )
   {NULL, NULL, NULL}
 };
 
@@ -59,10 +70,11 @@ zend_module_entry mongo_module_entry = {
 ZEND_GET_MODULE(mongo)
 #endif
 
-
 PHP_MINIT_FUNCTION(mongo) {
   le_db_client_connection = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CLIENT_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
+  le_gridfs = zend_register_list_destructors_ex(NULL, NULL, PHP_GRIDFS_RES_NAME, module_number);
+  le_gridfile = zend_register_list_destructors_ex(NULL, NULL, PHP_GRIDFILE_RES_NAME, module_number);
 
   zend_class_entry id; 
   INIT_CLASS_ENTRY(id, "mongo_id", mongo_id_functions); 

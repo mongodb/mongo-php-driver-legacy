@@ -104,5 +104,6 @@ require "src/php/mongo_db.php";
 require "src/php/mongo_collection.php";
 require "src/php/mongo_cursor.php";
 require "src/php/mongo_util.php";
+require "src/php/gridfs.php";
 
 ?>

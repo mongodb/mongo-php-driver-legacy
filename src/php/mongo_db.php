@@ -15,8 +15,23 @@ class mongo_db {
   }
 
 
+  /**
+   * Get an authenticated session.
+   * @param string $username 
+   * @param string $password
+   * @return mongo_auth if login was successful, false if unsuccessful
+   */
   public function get_auth( $username, $password ) {
     return mongo_auth::get_auth( $this->connection, $this->name, $username, $password );
+  }
+
+  /**
+   * Fetches toolkit for dealing with files stored in this database.
+   * @param string $prefix name of the file collection
+   * @return gridfs a new gridfs object for this database
+   */
+  public function get_gridfs( $prefix = "fs" ) {
+    return new mongo_gridfs( $this->connection, $this->name, $prefix );
   }
 
   /** 
