@@ -9,8 +9,8 @@ class mongo_cursor {
 
   private $query = NULL;
   private $fields = NULL;
-  private $limit = NULL;
-  private $skip = NULL;
+  private $limit = 0;
+  private $skip = 0;
 
   public function __construct( $conn, $ns, $query = NULL, $skip = NULL, $limit = NULL, $fields = NULL ) {
     $this->connection = $conn;
@@ -75,7 +75,11 @@ class mongo_cursor {
     return $this;
   }
 
-
+  /**
+   * Sorts the results by given fields.
+   * @param array $fields the fields by which to sort
+   * @return mongo_cursor this cursor
+   */
   public function sort( $fields ) {
     if( $this->started_iterating ) {
       trigger_error( "cannot modify cursor after beginning iteration.", E_USER_ERROR );
@@ -86,19 +90,30 @@ class mongo_cursor {
   }
 
   /**
+   * Gives the database a hint about the query.
+   * @param array $key_pattern
+   * @return mongo_cursor this cursor
+   */
+  public function hint( $key_pattern ) {
+    if( $this->started_iterating ) {
+      trigger_error( "cannot modify cursor after beginning iteration.", E_USER_ERROR );
+      return false;
+    }
+    $this->hint = $key_pattern;
+    return $this;
+  }
+
+
+  /**
    * Execute the query and set the cursor resource.
    */
   private function do_query() {
     $q = mongo_util::obj_to_array( $this->query );
     $s = mongo_util::obj_to_array( $this->sort );
     $f = mongo_util::obj_to_array( $this->fields );
+    $h = mongo_util::obj_to_array( $this->hint );
 
-    if( !is_null( $limit ) ) {
-      $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$this->skip, (int)$this->limit, $s, $f );
-    }
-    else {
-      $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$this->skip, $s, $f );
-    }
+    $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$this->skip, (int)$this->limit, $s, $f, $h );
   }
 }
 

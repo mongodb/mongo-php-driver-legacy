@@ -118,33 +118,26 @@ PHP_FUNCTION(mongo_close) {
 }
 
 PHP_FUNCTION(mongo_query) {
-  zval *zconn, *zquery, *zsort, *zfields;
+  zval *zconn, *zquery, *zsort, *zfields, *zhint;
   char *collection;
   int limit, skip, collection_len;
-  mongo::BSONObj query, sort, fields;
 
-  int num_args = ZEND_NUM_ARGS();
-  switch( num_args ) {
-  case 0:
-  case 1:
-  case 2:
-  case 3:
-  case 4:
-  case 5:
-  case 6:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsalaa", &zconn, &collection, &collection_len, &zquery, &skip, &zsort ) == FAILURE) {
+  int argc = ZEND_NUM_ARGS();
+  switch( argc ) {
+  case 7:
+    if (zend_parse_parameters(argc TSRMLS_CC, "rsalaaa", &zconn, &collection, &collection_len, &zquery, &skip, &zsort, &zhint ) == FAILURE) {
       zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
     break;
-  case 7:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsallaa", &zconn, &collection, &collection_len, &zquery, &skip, &limit, &zsort, &zfields) == FAILURE) {
+  case 8:
+    if (zend_parse_parameters(argc TSRMLS_CC, "rsallaaa", &zconn, &collection, &collection_len, &zquery, &skip, &limit, &zsort, &zfields, &zhint) == FAILURE) {
       zend_error( E_WARNING, "parameter parse failure\n" );
       RETURN_FALSE;
     }
     break;
   default:
-    zend_error( E_WARNING, "too many args\n" );
+    zend_error( E_WARNING, "wrong number of args\n" );
     RETURN_FALSE;
     break;
   }
@@ -157,22 +150,28 @@ PHP_FUNCTION(mongo_query) {
 
   mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
   php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
-  query = bquery->done();
+  mongo::BSONObj query = bquery->done();
   mongo::Query *q = new mongo::Query( query );
 
-  if( num_args >= 6 ) {
-    mongo::BSONObjBuilder *bsort = new mongo::BSONObjBuilder();
-    php_array_to_bson( bsort, Z_ARRVAL_P( zsort ) );
-    sort = bsort->done();
-    q->sort( sort );
-  }
-  if( num_args >= 7 ) {
-    mongo::BSONObjBuilder *bfields = new mongo::BSONObjBuilder();
-    php_array_to_bson( bfields, Z_ARRVAL_P( zfields ) );
-    fields = bfields->done();
-  }
+  mongo::BSONObjBuilder *bfields = new mongo::BSONObjBuilder();
+  int num_fields = php_array_to_bson( bfields, Z_ARRVAL_P( zfields ) );
+  mongo::BSONObj fields = bfields->done();
 
-  std::auto_ptr<mongo::DBClientCursor> cursor = conn_ptr->query( (const char*)collection, *q );
+  mongo::BSONObjBuilder *bhint = new mongo::BSONObjBuilder();
+  php_array_to_bson( bhint, Z_ARRVAL_P( zhint ) );
+  mongo::BSONObj hint = bhint->done();
+  q->hint( hint );
+
+  mongo::BSONObjBuilder *bsort = new mongo::BSONObjBuilder();
+  php_array_to_bson( bsort, Z_ARRVAL_P( zsort ) );
+  mongo::BSONObj sort = bsort->done();
+  q->sort( sort );
+
+  std::auto_ptr<mongo::DBClientCursor> cursor;
+  if( num_fields == 0 )
+    cursor = conn_ptr->query( (const char*)collection, *q, limit, skip );
+  else
+    cursor = conn_ptr->query( (const char*)collection, *q, limit, skip, &fields );
 
   mongo::DBClientCursor *c = cursor.get();
   ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );

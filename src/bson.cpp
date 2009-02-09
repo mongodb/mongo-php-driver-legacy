@@ -7,20 +7,23 @@
 
 extern zend_class_entry *mongo_id_class;
 
-void php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash ) {
+int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash ) {
   zval **data;
   char *key;
   uint key_len;
   ulong index;
   zend_bool duplicate = 0;
   HashPosition pointer;
+  int num = 0;
 
-  //  mongo::BSONObjBuilder obj_builder;
+  if( zend_hash_num_elements( arr_hash ) == 0 ) {
+    return num;
+  }
 
   for(zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); 
       zend_hash_get_current_data_ex(arr_hash, (void**) &data, &pointer) == SUCCESS; 
       zend_hash_move_forward_ex(arr_hash, &pointer)) {
-
+    num++;
     int key_type = zend_hash_get_current_key_ex(arr_hash, &key, &key_len, &index, duplicate, &pointer);
     char field_name[256];
 
@@ -80,6 +83,8 @@ void php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash 
       php_printf( "php=>bson: type %i not supported", Z_TYPE_PP(data) );
     }
   }
+
+  return num;
 }
 
 zval *bson_to_php_array( mongo::BSONObj obj ) {
