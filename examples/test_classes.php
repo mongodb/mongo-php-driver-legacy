@@ -117,6 +117,14 @@ function rm() {
   find();
 }
 
+function idxs() {
+  global $m;
+  $coll = $m->select_database( "driver_test_framework" )->select_collection("foo");
+  $coll->ensure_index( "x" );
+  $coll->ensure_index( array( "x" => 1, "y"=>1 ) );
+  $coll->delete_index( "x" );
+}
+
 //listDBs();
 //createColl();
 //valid();
@@ -126,8 +134,8 @@ function rm() {
 //find();
 //auth();
 //update();
-rm();
-
+//rm();
+idxs();
 
 $m->close();
 

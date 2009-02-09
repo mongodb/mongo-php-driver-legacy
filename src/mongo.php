@@ -222,11 +222,13 @@ class mongo_db {
 
 class mongo_collection {
 
-  var $name = "";
-  var $db;
+  var $parent;
   var $connection;
+  var $db;
+  var $name = "";
 
   function __construct( mongo_db $db, $name ) {
+    $this->parent = $db;
     $this->connection = $db->connection;
     $this->db = $db->name;
     $this->name = $name;
@@ -241,6 +243,7 @@ class mongo_collection {
    * @return array the db response
    */
   function drop() {
+    $this->delete_indices();
     $data = array( mongo_util::$DROP => $this->name );
     return mongo_util::db_command( $this->connection, $data, $this->db );
   }
@@ -281,6 +284,15 @@ class mongo_collection {
     return new mongo_cursor( $this->connection, (string)$this, $query, $skip, $limit, $fields );
   }
 
+  /** 
+   * Querys this collection, returning a single element.
+   * @param object $query the fields for which to search
+   * @return object a record matching the search or NULL
+   */
+  function find_one( $query = NULL ) {
+    return mongo_find_one( $this->connection, (string)$this, $query );
+  }
+
   /**
    * Update records based on a given criteria.
    * <!--Options:
@@ -317,6 +329,37 @@ class mongo_collection {
    */
   function remove( $criteria, $just_one = false ) {
     return mongo_remove( $this->connection, (string)$this, mongo_util::obj_to_array( $criteria ), $just_one );
+  }
+
+  /**
+   * Creates an index on the given field(s), or does nothing if the index already exists.
+   * @param string|array $keys field or fields to use as index
+   */
+  function ensure_index( $keys ) {
+    $ns = $this->db . "." . $this->name;
+    if( is_string( $keys ) ) {
+      $keys = array( $keys => 1 );
+    }
+    $name = mongo_util::to_index_string( $keys );
+    $coll = $this->parent->select_collection( "system.indexes" );
+    $coll->insert( array( "name" => $name, "ns" => $ns, "key" => $keys ) );
+  }
+  
+  /**
+   * Deletes an index from this collection.
+   * @param string|array $keys field or fields from which to delete the index
+   */
+  function delete_index( $key ) {
+    $name = mongo_util::to_index_string( $key );
+    $coll = $this->parent->select_collection( "system.indexes" );
+    $coll->remove( array( "name" => $name ) );
+  }
+
+  /**
+   * Delete all indices for this collection.
+   */
+  function delete_indices() {
+    mongo_util::db_command( $this->connection, array( mongo_util::$DELETE_INDICES => $this->name ), $this->db );
   }
 }
 
@@ -440,6 +483,25 @@ class mongo_util {
     return $arr;
   }
 
+  /**
+   * Converts a field or array of fields into an underscore-separated string.
+   * @param string|array $keys field(s) to convert
+   * @return string the index name
+   */
+  public static function to_index_string( $keys ) {
+    if( is_string( $keys ) ) {
+      $name = str_replace( ".", "_", $keys ) + "_1";
+    }
+    else {
+      $key_list = array();
+      foreach( $keys as $v ) {
+        $key_list[] = str_replace( ".", "_", $v ) + "_1";
+      }
+      $name = implode( "_", $key_list );
+    }
+    return $name;
+  }
+
 
   /** Execute a db command
    * @param array $data the query to send
@@ -473,6 +535,7 @@ class mongo_util {
   /* Commands */
   public static $AUTHENTICATE = "authenticate";
   public static $CREATE_COLLECTION = "create";
+  public static $DELETE_INDICES = "deleteIndexes";
   public static $DROP = "drop";
   public static $DROP_DATABASE = "dropDatabase";
   public static $LAST_ERROR = "getlasterror";
