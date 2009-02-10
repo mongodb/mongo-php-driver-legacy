@@ -44,7 +44,7 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
       obj_builder->appendNull( field_name );
       break;
     case IS_LONG:
-      obj_builder->append( field_name, Z_LVAL_PP(data) );
+      obj_builder->append( field_name, (int)Z_LVAL_PP(data) );
       break;
     case IS_DOUBLE:
       obj_builder->append( field_name, Z_DVAL_PP(data) );

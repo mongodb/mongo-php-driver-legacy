@@ -11,16 +11,18 @@ class mongo {
   /** Creates a new database connection.
    * @param string $host the host name (optional)
    * @param int $port the db port (optional)
+   * @param bool $auto_reconnect automatically reconnect if disconnected
    */
-  public function __construct( $host = NULL, $port = NULL ) {
+  public function __construct( $host = NULL, $port = NULL, $auto_reconnect = false ) {
     if( !$host ) {
       $host = get_cfg_var( "mongo.default_host" );
     }
     if( !$port ) {
       $port = get_cfg_var( "mongo.default_port" );
     }
-    
-    $this->connection = mongo_connect( "$host" );
+
+    $addr = "$host:$port";
+    $this->connection = mongo_connect( $addr, $auto_reconnect );
     if( !$this->connection ) {
       trigger_error( "couldn't connect to mongo", E_USER_WARNING );
     }

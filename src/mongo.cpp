@@ -87,13 +87,14 @@ PHP_MINIT_FUNCTION(mongo) {
 }
 
 PHP_FUNCTION(mongo_connect) {
-  mongo::DBClientConnection *conn = new mongo::DBClientConnection( 1, 0 );
+  mongo::DBClientConnection *conn;
   char *server;
+  zend_bool auto_reconnect;
   int server_len;
   string error;
   
-  if( ZEND_NUM_ARGS() != 1 ||
-      zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &server, &server_len) == FAILURE ) {
+  if( ZEND_NUM_ARGS() != 2 ||
+      zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sb", &server, &server_len, &auto_reconnect) == FAILURE ) {
     RETURN_FALSE;
   }
 
@@ -101,6 +102,7 @@ PHP_FUNCTION(mongo_connect) {
     RETURN_FALSE;
   }
 
+  conn = new mongo::DBClientConnection( (bool)auto_reconnect );
   if ( ! conn->connect( server, error ) ){
     zend_error( E_WARNING, "%s", error.c_str() );
     RETURN_FALSE;
