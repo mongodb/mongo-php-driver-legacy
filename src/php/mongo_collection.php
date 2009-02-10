@@ -141,6 +141,17 @@ class mongo_collection {
   function delete_indices() {
     mongo_util::db_command( $this->connection, array( mongo_util::$DELETE_INDICES => $this->name ), $this->db );
   }
+
+  /**
+   * Counts the number of documents in this collection.
+   * @return int the number of documents
+   */
+  function count() {
+    $result = mongo_util::db_command( $this->connection, array( "count" => $this->name ), $this->db );
+    if( $result )
+      return $result[ "n" ];
+    trigger_error( "count failed", E_USER_ERROR );
+  }
 }
 
 ?>
