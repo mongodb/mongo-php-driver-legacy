@@ -57,7 +57,7 @@ zend_module_entry mongo_module_entry = {
   PHP_MONGO_EXTNAME,
   mongo_functions,
   PHP_MINIT(mongo),
-  PHP_MSHUTDOWN(mongo),
+  NULL,
   NULL,
   NULL,
   NULL,
@@ -72,12 +72,7 @@ ZEND_GET_MODULE(mongo)
 #endif
 
 
-PHP_INI_BEGIN()
-PHP_INI_ENTRY( "mongo.default_host", "127.0.0.1", PHP_INI_ALL, NULL)
-PHP_INI_END()
-
 PHP_MINIT_FUNCTION(mongo) {
-  REGISTER_INI_ENTRIES();
 
   le_db_client_connection = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CLIENT_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
@@ -91,29 +86,14 @@ PHP_MINIT_FUNCTION(mongo) {
   return SUCCESS;
 }
 
-PHP_MSHUTDOWN_FUNCTION(mongo) {
-  UNREGISTER_INI_ENTRIES();
-
-  return SUCCESS;
-}
-
 PHP_FUNCTION(mongo_connect) {
   mongo::DBClientConnection *conn = new mongo::DBClientConnection( 1, 0 );
   char *server;
   int server_len;
   string error;
   
-  switch( ZEND_NUM_ARGS() ) {
-  case 0:
-    server = INI_STR( "mongo.default_host" );
-    break;
-  case 1:
-    // get the server name from the first parameter
-    if ( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &server, &server_len) == FAILURE ) {
-      RETURN_FALSE;
-    }
-    break;
-  default:
+  if( ZEND_NUM_ARGS() != 1 ||
+      zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &server, &server_len) == FAILURE ) {
     RETURN_FALSE;
   }
 

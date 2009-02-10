@@ -6,23 +6,24 @@ include "src/php/mongo_auth.php";
 
 class mongo {
 
-  var $host = "localhost";
-  var $port = "27017";
   var $connection = NULL;
 
   /** Creates a new database connection.
    * @param string $host the host name (optional)
    * @param int $port the db port (optional)
    */
-  public function __construct( $host = "localhost", $port = NULL ) {
-    $addr = $host;
-    $this->host = $host;
-    if( $port ) {
-      $addr .= ":$port";
-      $this->port = $port;
+  public function __construct( $host = NULL, $port = NULL ) {
+    if( !$host ) {
+      $host = get_cfg_var( "mongo.default_host" );
     }
-
-    $this->connection = mongo_connect( $addr );
+    if( !$port ) {
+      $port = get_cfg_var( "mongo.default_port" );
+    }
+    
+    $this->connection = mongo_connect( "$host" );
+    if( !$this->connection ) {
+      trigger_error( "couldn't connect to mongo", E_USER_WARNING );
+    }
   }
 
   public function __toString() {

@@ -12,7 +12,6 @@
 
 
 PHP_MINIT_FUNCTION(mongo);
-PHP_MSHUTDOWN_FUNCTION(mongo);
 
 /** mongo::DBClientConnection mongo_connect() // connects to localhost
  *  mongo::DBClientConnection mongo_connect( "host" )
