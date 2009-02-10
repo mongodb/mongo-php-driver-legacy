@@ -13,6 +13,26 @@ class mongo_auth {
    * @param string $password the password
    */
   public static function get_auth( $conn, $db, $username, $password ) {
+    $result = mongo_auth::get_user( $conn, $db, $username, $password );
+    if( !$result[ "ok" ] ) {
+      return false;
+    }
+
+    // check if we need an admin instance
+    if( $db == "admin" ) {
+      $auth_obj = mongo_admin::get_auth( $conn );
+    }
+    else {
+      $auth_obj = new mongo_auth( $conn, $db );
+    }
+
+    // return a new authenticated instance
+    $auth_obj->connection = $conn;
+    $auth_obj->db = $db;
+    return $auth_obj;
+  }
+
+  private static function get_user( $conn, $db, $username, $password ) {
     $ns = $db . ".system.users";
     $user = mongo_find_one( $conn, $ns, array( "user" => $username ) );
     if( !$user ) {
@@ -37,22 +57,6 @@ class mongo_auth {
 
     // send everything to the db and pray
     $result = mongo_util::db_command( $conn, $data, $db );
-    if( !$result[ "ok" ] ) {
-      return false;
-    }
-
-    // check if we need an admin instance
-    if( $db == "admin" ) {
-      $auth_obj = mongo_admin::get_auth( $conn );
-    }
-    else {
-      $auth_obj = new mongo_auth( $conn, $db );
-    }
-
-    // return a new authenticated instance
-    $auth_obj->connection = $conn;
-    $auth_obj->db = $db;
-    return $auth_obj;
   }
 
   private function __construct( $conn, $db ) {

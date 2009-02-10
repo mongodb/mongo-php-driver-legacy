@@ -95,10 +95,12 @@ PHP_FUNCTION(mongo_connect) {
   
   if( ZEND_NUM_ARGS() != 2 ||
       zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sb", &server, &server_len, &auto_reconnect) == FAILURE ) {
+    zend_error( E_WARNING, "parameter parse failure" );
     RETURN_FALSE;
   }
 
   if ( server_len == 0 ) {
+    zend_error( E_WARNING, "invalid host" );
     RETURN_FALSE;
   }
 

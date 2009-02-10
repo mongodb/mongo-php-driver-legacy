@@ -11,18 +11,19 @@ class mongo {
   /** Creates a new database connection.
    * @param string $host the host name (optional)
    * @param int $port the db port (optional)
-   * @param bool $auto_reconnect automatically reconnect if disconnected
    */
-  public function __construct( $host = NULL, $port = NULL, $auto_reconnect = false ) {
+  public function __construct( $host = NULL, $port = NULL ) {
     if( !$host ) {
       $host = get_cfg_var( "mongo.default_host" );
     }
     if( !$port ) {
       $port = get_cfg_var( "mongo.default_port" );
     }
+    $auto_reconnect = get_cfg_var( "mongo.auto_reconnect" );
 
     $addr = "$host:$port";
     $this->connection = mongo_connect( $addr, $auto_reconnect );
+
     if( !$this->connection ) {
       trigger_error( "couldn't connect to mongo", E_USER_WARNING );
     }
@@ -30,6 +31,17 @@ class mongo {
 
   public function __toString() {
     return $this->host . ":" . $this->port;
+  }
+
+  /**
+   * Gets an authenticated session.
+   * @param string $db name of the db to log in to
+   * @param string $username
+   * @param string $password
+   */
+  public function get_auth( $db, $username, $password ) {
+    $db = $this->select_db( $db );
+    return $db->get_auth( $username, $password );
   }
 
   /** 
