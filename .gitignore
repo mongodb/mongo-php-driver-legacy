@@ -5,6 +5,7 @@
 *.loT
 *.so
 *.dylib
+doc
 
 .sconf_temp
 .sconsign.dblite

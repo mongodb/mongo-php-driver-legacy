@@ -105,6 +105,24 @@ class mongo_cursor {
 
 
   /**
+   * Counts the number of records returned by this query.
+   * @return int the number of records
+   */
+  public function count() {
+    $db = substr( $this->ns, 0, strpos( $this->ns, "." ) );
+    $coll = substr( $this->ns, strpos( $this->ns, "." )+1 );
+
+    $cmd = array( "count" => $coll );
+    if( $this->query )
+      $cmd[ "query" ] = mongo_util::obj_to_array( $this->query );
+
+    $result = mongo_util::db_command( $this->connection, $cmd, $db );
+    if( $result )
+      return $result[ "n" ];
+    trigger_error( "count failed", E_USER_ERROR );
+  }
+
+  /**
    * Execute the query and set the cursor resource.
    */
   private function do_query() {
