@@ -42,6 +42,32 @@ class mongo_util {
   }
 
 
+  public static function to_json( $obj ) {
+    if( is_array( $obj ) ) {
+      $str = "array( ";
+      foreach( $obj as $k=>$v ) {
+        $str .= "\"$k\" => ";
+        if( is_array( $v ) ) {
+          $str .= mongo_util::to_json( $v );
+        }
+        else if( is_string( $v ) ) {
+          $str .= "\"$v\"";
+        }
+        else {
+          $str .= "$v";
+        }
+        if( next( $obj ) ) {
+          $str .= ",";
+        }
+      }
+      $str .= " )";
+    }
+    else {
+      return "$obj";
+    }
+    return $str;
+  }
+
   /** Execute a db command
    * @param array $data the query to send
    * @param string $db the database name

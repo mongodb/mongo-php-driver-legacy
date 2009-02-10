@@ -159,13 +159,5 @@ class mongo_admin extends mongo_auth {
   public static $TRACE_ON = 2;
 }
 
-function print_result( $result ){
-  "result $result:\n";
-  foreach( $result as $k => $v ) {
-    echo "\t$k=$v\n";
-  }
-}
-
-
 
 ?>
