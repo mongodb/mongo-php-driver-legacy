@@ -91,6 +91,13 @@ class mongo_util {
   public static $TRACING = "traceAll";
   public static $VALIDATE = "validate";
 
+  public static $LT = "\$lt";
+  public static $LTE = "\$lte";
+  public static $GT = "\$gt";
+  public static $GTE = "\$gte";
+  public static $IN = "\$in";
+  public static $NE = "\$ne";
+
 }
 
 ?>
