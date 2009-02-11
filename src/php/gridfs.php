@@ -1,10 +1,14 @@
 <?php
 
-class mongo_gridfs {
-  private $resource;
+class MongoGridfs {
+  private $_resource;
+  private $_prefix;
+  private $_db;
 
-  public function __construct( $conn, $dbname, $prefix = "fs" ) {
-    $this->resource = mongo_gridfs_init( $conn, $dbname, $prefix );
+  public function __construct( $db, $prefix = "fs" ) {
+    $this->_resource = mongo_gridfs_init( $db->connection, $db->name, $prefix );
+    $this->_prefix = $prefix;
+    $this->_db = $db;
   }
 
   /**
@@ -12,10 +16,10 @@ class mongo_gridfs {
    * @param array $query criteria to match
    * @return mongo_cursor cursor over the list of files
    */
-  public function list_files( $query = NULL ) {
+  public function listFiles( $query = NULL ) {
     if( is_null( $query ) )
       $query = array();
-    mongo_gridfs_list( $this->resource, $query );
+    return MongoCursor::getGridfsCursor( mongo_gridfs_list( $this->_resource, $query ) );
   }
 
   /**
@@ -23,8 +27,8 @@ class mongo_gridfs {
    * @param string $filename the name of the file
    * @return mongo_id the database id for the file
    */
-  public function store_file( $filename ) {
-    return mongo_gridfs_store( $this->resource, $filename );
+  public function storeFile( $filename ) {
+    return mongo_gridfs_store( $this->_resource, $filename );
   }
 
   /**
@@ -32,19 +36,44 @@ class mongo_gridfs {
    * @param array|string $query the filename or criteria for which to search
    * @return mongo_gridfs_file the file
    */
-  public function find_file( $query ) {
+  public function findFile( $query ) {
     if( is_string( $query ) )
       $query = array( "filename" => $query );
-    return new mongo_gridfs_file( mongo_gridfs_find( $this->resource, $query ) );
+    return new MongoGridfsFile( mongo_gridfs_find( $this->_resource, $query ) );
+  }
+
+  /**
+   * Saves an uploaded file to the database.
+   * @param string $name the name field of the uploaded file
+   * @return mongo_id the id of the uploaded file
+   */
+  public function saveUpload( $name ) {
+    if( !$name || !is_string( $name ) ||
+        !$_FILES || !$_FILES[ $name ] ) {
+      return false;
+    }
+
+    $tmp = $_FILES[ $name ]["tmp_name"];
+    $name = $_FILES[ $name ]["name"];
+    
+    $this->storeFile( $tmp );
+
+    // make the filename more paletable
+    $coll = $this->_db->selectCollection( $this->_prefix . ".files" );
+    $obj = $coll->findOne( array( "filename" => $tmp ) );    
+    $obj[ "filename" ] = $name;
+    $coll->update( array( "filename" => $tmp ), $obj );
+
+    return $obj[ "_id" ];
   }
 }
 
 
-class mongo_gridfs_file {
-  private $file;
+class MongoGridfsFile {
+  private $_file;
 
   public function __construct( $file ) {
-    $this->file = $file;
+    $this->_file = $file;
   }
 
   /**
@@ -52,23 +81,23 @@ class mongo_gridfs_file {
    * @return bool if the file exists
    */
   public function exists() {
-    return mongo_gridfile_exists( $this->file );
+    return mongo_gridfile_exists( $this->_file );
   }
 
   /**
    * Returns this file's filename.
    * @return string the filename
    */
-  public function get_filename() {
-    return mongo_gridfile_filename( $this->file );
+  public function getFilename() {
+    return mongo_gridfile_filename( $this->_file );
   }
 
   /**
    * Returns this file's size.
    * @return int the file size
    */
-  public function get_size() {
-    return mongo_gridfile_size( $this->file );
+  public function getSize() {
+    return mongo_gridfile_size( $this->_file );
   }
 }
 
