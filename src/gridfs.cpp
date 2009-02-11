@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "mongo.h"
+#include "mongo_id.h"
 #include "bson.h"
 
 extern zend_class_entry *mongo_id_class;
@@ -83,17 +84,8 @@ PHP_FUNCTION( mongo_gridfs_store ) {
   mongo::BSONElement elem = fs->storeFile( *f );
 
   delete f;
-  // get return val
-  zval *zoid;
-  
-  mongo::OID oid = elem.__oid();
-  std::string str = oid.str();
-  char *c = (char*)str.c_str();
-  
-  MAKE_STD_ZVAL(zoid);
-  object_init_ex(zoid, mongo_id_class);
-  add_property_stringl( zoid, "id", c, strlen( c ), 1 );
-  RETURN_ZVAL( zoid, 1, 1 );
+  zval *ret = oid_to_mongo_id( elem.__oid() );
+  RETURN_ZVAL( ret, 0, 1 );
 }
 
 PHP_FUNCTION( mongo_gridfs_find ) {

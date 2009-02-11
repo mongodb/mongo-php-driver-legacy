@@ -5,6 +5,8 @@
 #include <php.h>
 #include <mongo/client/dbclient.h>
 
+#include "mongo_id.h"
+
 extern zend_class_entry *mongo_id_class;
 
 int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash ) {
@@ -155,17 +157,7 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
       break;
     }
     case mongo::jstOID: {
-      zval *zoid;
-      TSRMLS_FETCH();
-
-      mongo::OID oid = elem.__oid();
-      std::string str = oid.str();
-      char *c = (char*)str.c_str();
-
-      MAKE_STD_ZVAL(zoid);
-      object_init_ex(zoid, mongo_id_class);
-      add_property_stringl( zoid, "id", c, strlen( c ), 1 );
-
+      zval *zoid = oid_to_mongo_id( elem.__oid() );
       if( assoc ) 
         add_assoc_zval( array, key, zoid );
       else 

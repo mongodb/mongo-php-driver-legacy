@@ -112,7 +112,7 @@ PHP_MINIT_FUNCTION(mongo) {
   le_gridfs_chunk = zend_register_list_destructors_ex(php_gridfs_chunk_dtor, NULL, PHP_GRIDFS_CHUNK_RES_NAME, module_number);
 
   zend_class_entry id; 
-  INIT_CLASS_ENTRY(id, "mongo_id", mongo_id_functions); 
+  INIT_CLASS_ENTRY(id, "MongoId", mongo_id_functions); 
   mongo_id_class = zend_register_internal_class(&id TSRMLS_CC); 
 
   return SUCCESS;
