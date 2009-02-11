@@ -12,6 +12,7 @@ extern int le_db_client_connection;
 extern int le_db_cursor;
 extern int le_gridfs;
 extern int le_gridfile;
+extern int le_gridfs_chunk;
 
 PHP_FUNCTION( mongo_gridfs_init ) {
   zval *zconn;
@@ -92,7 +93,6 @@ PHP_FUNCTION( mongo_gridfs_store ) {
 
 PHP_FUNCTION( mongo_gridfs_find ) {
   mongo::GridFS *fs;
-  int file_size = sizeof( mongo::GridFile );
   zval *zfs, *zquery;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ra", &zfs, &zquery) == FAILURE) {
@@ -198,3 +198,48 @@ PHP_FUNCTION( mongo_gridfile_chunk_num ){
   RETURN_LONG( len );
 }
 
+PHP_FUNCTION( mongo_gridchunk_get ) {
+  mongo::GridFile *file;
+  zval *zfile;
+  int chunk_num;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &zfile, &chunk_num ) == FAILURE) {
+     zend_error( E_WARNING, "parameter parse failure\n" );
+     RETURN_FALSE;
+  }
+  ZEND_FETCH_RESOURCE(file, mongo::GridFile*, &zfile, -1, PHP_GRIDFILE_RES_NAME, le_gridfile);
+
+  mongo::Chunk chunk = file->getChunk( chunk_num );
+  mongo::Chunk *chunk_ptr = new mongo::Chunk( chunk );
+
+  ZEND_REGISTER_RESOURCE( return_value, chunk_ptr, le_gridfs_chunk );
+}
+
+PHP_FUNCTION( mongo_gridchunk_size ) {
+  mongo::Chunk *chunk;
+  zval *zchunk;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zchunk ) == FAILURE) {
+     zend_error( E_WARNING, "parameter parse failure\n" );
+     RETURN_FALSE;
+  }
+  ZEND_FETCH_RESOURCE(chunk, mongo::Chunk*, &zchunk, -1, PHP_GRIDFS_CHUNK_RES_NAME, le_gridfs_chunk);
+
+  int len = chunk->len();
+  RETURN_LONG( len );
+}
+
+PHP_FUNCTION( mongo_gridchunk_data ) {
+  mongo::Chunk *chunk;
+  zval *zchunk;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zchunk ) == FAILURE) {
+     zend_error( E_WARNING, "parameter parse failure\n" );
+     RETURN_FALSE;
+  }
+  ZEND_FETCH_RESOURCE(chunk, mongo::Chunk*, &zchunk, -1, PHP_GRIDFS_CHUNK_RES_NAME, le_gridfs_chunk);
+
+  int data_len = chunk->len();
+  char *data = (char*)chunk->data( data_len );
+  RETURN_STRINGL( data, data_len, 0 );
+}

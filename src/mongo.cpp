@@ -23,6 +23,7 @@ int le_db_client_connection;
 int le_db_cursor;
 int le_gridfs;
 int le_gridfile;
+int le_gridfs_chunk;
 
 static function_entry mongo_functions[] = {
   PHP_FE( mongo_connect , NULL )
@@ -44,6 +45,9 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_gridfile_write , NULL )
   PHP_FE( mongo_gridfile_chunk_size , NULL )
   PHP_FE( mongo_gridfile_chunk_num , NULL )
+  PHP_FE( mongo_gridchunk_get , NULL )
+  PHP_FE( mongo_gridchunk_size , NULL )
+  PHP_FE( mongo_gridchunk_data , NULL )
   {NULL, NULL, NULL}
 };
 
@@ -81,6 +85,7 @@ PHP_MINIT_FUNCTION(mongo) {
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
   le_gridfs = zend_register_list_destructors_ex(NULL, NULL, PHP_GRIDFS_RES_NAME, module_number);
   le_gridfile = zend_register_list_destructors_ex(NULL, NULL, PHP_GRIDFILE_RES_NAME, module_number);
+  le_gridfs_chunk = zend_register_list_destructors_ex(NULL, NULL, PHP_GRIDFS_CHUNK_RES_NAME, module_number);
 
   zend_class_entry id; 
   INIT_CLASS_ENTRY(id, "mongo_id", mongo_id_functions); 
