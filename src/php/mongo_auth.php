@@ -41,7 +41,6 @@ class mongo_auth {
     $pwd = $user[ "pwd" ];
 
     // get the nonce
-    echo "nonce\n";
     $result = mongo_util::db_command( $conn, array( mongo_util::$NONCE => 1 ), $db );
     if( !$result[ "ok" ] )
       return false;

@@ -8,16 +8,19 @@ class mongo_util {
    * @param any $obj object to convert
    * @return array the array
    */
-  public static function obj_to_array( $obj ) {
-    if( is_null( $obj ) ) {
+  public static function obj_to_array( $obj ) 
+  {
+    if (is_null($obj)) {
       return array();
     }
-    if( is_array( $obj ) ) {
-      return $obj;
-    }
+
     $arr = array();
-    foreach( $obj as $key=>$value ) {
-      $arr[ $key ] = $value;
+    foreach ($obj as $key => $value) {
+      if (is_object($value) || is_array($value)) {
+        $arr[ $key ] = mongo_util::obj_to_array( $value );
+      } else {
+        $arr[ $key ] = $value;
+      }
     }
     return $arr;
   }
@@ -41,7 +44,11 @@ class mongo_util {
     return $name;
   }
 
-
+  /**
+   * Returns a string representation of an object.
+   * @param array $obj the object to transform
+   * @return string the string
+   */
   public static function to_json( $obj ) {
     if( is_array( $obj ) ) {
       $str = "array( ";
@@ -72,13 +79,7 @@ class mongo_util {
    * @param array $data the query to send
    * @param string $db the database name
    */
-  public static function db_command( $conn, $data, $db = NULL ) {
-    // check if dbname is set
-    if( !$db ) {
-      // default to admin?
-      $db = mongo_util::$ADMIN;
-    }
-
+  public static function db_command( $conn, $data, $db ) {
     $cmd_collection = $db . mongo_util::$CMD;
     $obj = mongo_find_one( $conn, $cmd_collection, $data );
 
