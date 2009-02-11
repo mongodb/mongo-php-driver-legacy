@@ -41,6 +41,8 @@ PHP_FUNCTION( mongo_gridfs_init ) {
 
   mongo::GridFS *gridfs = new mongo::GridFS( *conn_ptr, *dbname_s, *prefix_s );
 
+  delete dbname_s;
+  delete prefix_s;
   ZEND_REGISTER_RESOURCE( return_value, gridfs, le_gridfs );
 }
 
@@ -60,6 +62,8 @@ PHP_FUNCTION( mongo_gridfs_list ) {
 
   std::auto_ptr<mongo::DBClientCursor> cursor = fs->list( query );
   mongo::DBClientCursor *c = cursor.get();
+
+  delete bquery;
   ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
 }
 
@@ -78,6 +82,7 @@ PHP_FUNCTION( mongo_gridfs_store ) {
   std::string *f = new std::string( filename, filename_len );
   mongo::BSONElement elem = fs->storeFile( *f );
 
+  delete f;
   // get return val
   zval *zoid;
   
@@ -108,6 +113,7 @@ PHP_FUNCTION( mongo_gridfs_find ) {
   mongo::GridFile file = fs->findFile( query );
   mongo::GridFile *file_ptr = new mongo::GridFile( file );
 
+  delete bquery;
   ZEND_REGISTER_RESOURCE( return_value, file_ptr, le_gridfile );
 }
 
@@ -167,6 +173,7 @@ PHP_FUNCTION( mongo_gridfile_write ) {
 
   std::string *f = new std::string( filename, filename_len );
   long len = file->write( *f );
+  delete f;
   RETURN_LONG( len );
 }
 

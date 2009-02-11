@@ -79,13 +79,37 @@ ZEND_GET_MODULE(mongo)
 #endif
 
 
+static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
+  mongo::DBClientConnection *conn = (mongo::DBClientConnection*)rsrc->ptr;
+  if( conn )
+    delete conn;
+}
+
+static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
+  mongo::GridFS *fs = (mongo::GridFS*)rsrc->ptr;
+  if( fs )
+    delete fs;
+}
+
+static void php_gridfile_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
+  mongo::GridFile *file = (mongo::GridFile*)rsrc->ptr;
+  if( file )
+    delete file;
+}
+
+static void php_gridfs_chunk_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
+  mongo::Chunk *chunk = (mongo::Chunk*)rsrc->ptr;
+  if( chunk )
+    delete chunk;
+}
+
 PHP_MINIT_FUNCTION(mongo) {
 
-  le_db_client_connection = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CLIENT_CONNECTION_RES_NAME, module_number);
+  le_db_client_connection = zend_register_list_destructors_ex(php_connection_dtor, NULL, PHP_DB_CLIENT_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
-  le_gridfs = zend_register_list_destructors_ex(NULL, NULL, PHP_GRIDFS_RES_NAME, module_number);
-  le_gridfile = zend_register_list_destructors_ex(NULL, NULL, PHP_GRIDFILE_RES_NAME, module_number);
-  le_gridfs_chunk = zend_register_list_destructors_ex(NULL, NULL, PHP_GRIDFS_CHUNK_RES_NAME, module_number);
+  le_gridfs = zend_register_list_destructors_ex(php_gridfs_dtor, NULL, PHP_GRIDFS_RES_NAME, module_number);
+  le_gridfile = zend_register_list_destructors_ex(php_gridfile_dtor, NULL, PHP_GRIDFILE_RES_NAME, module_number);
+  le_gridfs_chunk = zend_register_list_destructors_ex(php_gridfs_chunk_dtor, NULL, PHP_GRIDFS_CHUNK_RES_NAME, module_number);
 
   zend_class_entry id; 
   INIT_CLASS_ENTRY(id, "mongo_id", mongo_id_functions); 
@@ -123,15 +147,14 @@ PHP_FUNCTION(mongo_connect) {
 }
 
 PHP_FUNCTION(mongo_close) {
-  mongo::DBClientConnection *conn;
   zval *zconn;
  
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zconn) == FAILURE) {
      zend_error( E_WARNING, "parameter parse failure\n" );
      RETURN_FALSE;
   }
-  ZEND_FETCH_RESOURCE(conn, mongo::DBClientConnection*, &zconn, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, le_db_client_connection);
-  zval_dtor( zconn );
+
+  zend_list_delete(Z_LVAL_P(zconn));
   RETURN_TRUE;
 }
 
