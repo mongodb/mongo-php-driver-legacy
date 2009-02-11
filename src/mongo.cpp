@@ -41,6 +41,9 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_gridfile_exists , NULL )
   PHP_FE( mongo_gridfile_filename , NULL )
   PHP_FE( mongo_gridfile_size , NULL )
+  PHP_FE( mongo_gridfile_write , NULL )
+  PHP_FE( mongo_gridfile_chunk_size , NULL )
+  PHP_FE( mongo_gridfile_chunk_num , NULL )
   {NULL, NULL, NULL}
 };
 

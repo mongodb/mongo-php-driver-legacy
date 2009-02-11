@@ -39,6 +39,7 @@ PHP_FUNCTION( mongo_gridfs_init ) {
   std::string *prefix_s = new std::string( prefix, prefix_len );
 
   mongo::GridFS *gridfs = new mongo::GridFS( *conn_ptr, *dbname_s, *prefix_s );
+
   ZEND_REGISTER_RESOURCE( return_value, gridfs, le_gridfs );
 }
 
@@ -75,6 +76,8 @@ PHP_FUNCTION( mongo_gridfs_store ) {
 
   std::string *f = new std::string( filename, filename_len );
   mongo::BSONElement elem = fs->storeFile( *f );
+
+  // get return val
   zval *zoid;
   
   mongo::OID oid = elem.__oid();
@@ -84,11 +87,12 @@ PHP_FUNCTION( mongo_gridfs_store ) {
   MAKE_STD_ZVAL(zoid);
   object_init_ex(zoid, mongo_id_class);
   add_property_stringl( zoid, "id", c, strlen( c ), 1 );
-  RETURN_ZVAL( zoid, 0, 1 );
+  RETURN_ZVAL( zoid, 1, 1 );
 }
 
 PHP_FUNCTION( mongo_gridfs_find ) {
   mongo::GridFS *fs;
+  int file_size = sizeof( mongo::GridFile );
   zval *zfs, *zquery;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ra", &zfs, &zquery) == FAILURE) {
@@ -102,8 +106,9 @@ PHP_FUNCTION( mongo_gridfs_find ) {
   mongo::BSONObj query = bquery->done();
 
   mongo::GridFile file = fs->findFile( query );
-  mongo::GridFile *file_ptr( &file );
-  ZEND_REGISTER_RESOURCE( return_value, &file_ptr, le_gridfile );
+  mongo::GridFile *file_ptr = new mongo::GridFile( file );
+
+  ZEND_REGISTER_RESOURCE( return_value, file_ptr, le_gridfile );
 }
 
 PHP_FUNCTION( mongo_gridfile_exists ) {
@@ -144,9 +149,52 @@ PHP_FUNCTION( mongo_gridfile_size ) {
   }
   ZEND_FETCH_RESOURCE(file, mongo::GridFile*, &zfile, -1, PHP_GRIDFILE_RES_NAME, le_gridfile);
 
-  php_printf("breaking now\n");
   long len = file->getContentLength();
-  php_printf("broke\n");
+  RETURN_LONG( len );
+}
+
+PHP_FUNCTION( mongo_gridfile_write ) {
+  mongo::GridFile *file;
+  char *filename;
+  int filename_len;
+  zval *zfile;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &zfile, &filename, &filename_len ) == FAILURE) {
+     zend_error( E_WARNING, "parameter parse failure\n" );
+     RETURN_FALSE;
+  }
+  ZEND_FETCH_RESOURCE(file, mongo::GridFile*, &zfile, -1, PHP_GRIDFILE_RES_NAME, le_gridfile);
+
+  std::string *f = new std::string( filename, filename_len );
+  long len = file->write( *f );
+  RETURN_LONG( len );
+}
+
+PHP_FUNCTION( mongo_gridfile_chunk_size ){
+  mongo::GridFile *file;
+  zval *zfile;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zfile ) == FAILURE) {
+     zend_error( E_WARNING, "parameter parse failure\n" );
+     RETURN_FALSE;
+  }
+  ZEND_FETCH_RESOURCE(file, mongo::GridFile*, &zfile, -1, PHP_GRIDFILE_RES_NAME, le_gridfile);
+
+  long len = file->getChunkSize();
+  RETURN_LONG( len );
+}
+
+PHP_FUNCTION( mongo_gridfile_chunk_num ){
+  mongo::GridFile *file;
+  zval *zfile;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zfile ) == FAILURE) {
+     zend_error( E_WARNING, "parameter parse failure\n" );
+     RETURN_FALSE;
+  }
+  ZEND_FETCH_RESOURCE(file, mongo::GridFile*, &zfile, -1, PHP_GRIDFILE_RES_NAME, le_gridfile);
+
+  long len = file->getNumChunks();
   RETURN_LONG( len );
 }
 
