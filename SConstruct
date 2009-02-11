@@ -1,13 +1,6 @@
-# to run:
-#       scons [target]
+# to compile:
+#       sudo scons install
 #
-# targets:
-#       ext
-#
-#       examples:
-#               firstExample
-#               bsonExample
-#      
 
 import os
 import SCons.Util

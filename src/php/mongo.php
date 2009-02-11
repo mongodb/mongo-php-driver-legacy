@@ -1,7 +1,5 @@
 <?php
 
-dl("libmongo.so");
-
 class Mongo {
 
   var $connection = NULL;
