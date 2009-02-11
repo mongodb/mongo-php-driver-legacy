@@ -9,7 +9,7 @@ class MongoDB {
   var $connection = NULL;
   var $name = NULL;
 
-  public function __construct( mongo $conn, $name ) {
+  public function __construct( Mongo $conn, $name ) {
     $this->connection = $conn->connection;
     $this->name = $name;
   }
@@ -35,7 +35,7 @@ class MongoDB {
    * @return gridfs a new gridfs object for this database
    */
   public function getGridfs( $prefix = "fs" ) {
-    return new MongoGridfs( $this->connection, $this->name, $prefix );
+    return new MongoGridfs( $this, $prefix );
   }
 
   /** 

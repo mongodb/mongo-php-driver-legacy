@@ -13,7 +13,7 @@ class MongoCursor {
   private $_skip = 0;
   private $_ns = NULL;
 
-  public function __construct( $conn, $ns, $query = NULL, $skip = NULL, $limit = NULL, $fields = NULL ) {
+  public function __construct( $conn = NULL, $ns = NULL, $query = NULL, $skip = NULL, $limit = NULL, $fields = NULL ) {
     $this->connection = $conn;
     $this->_ns = $ns;
     $this->_query = $query;
@@ -133,6 +133,13 @@ class MongoCursor {
     $h = MongoUtil::objToArray( $this->_hint );
 
     $this->_cursor = mongo_query( $this->connection, $this->_ns, $q, (int)$this->_skip, (int)$this->_limit, $s, $f, $h );
+  }
+
+  public static function getGridfsCursor( $cursor ) {
+    $c = new MongoCursor();
+    $c->_cursor = $cursor;
+    $c->_startedIterating = true;
+    return $c;
   }
 }
 
