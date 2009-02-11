@@ -1,9 +1,18 @@
 <?php
 
-class mongo_auth {
+define( "LOG_OFF", 0 );
+define( "LOG_W", 1 );
+define( "LOG_R", 2 );
+define( "LOG_RW", 3 );
 
-  private $connection;
-  private $db;
+define( "TRACE_OFF", 0 );
+define( "TRACE_SOME", 1 );
+define( "TRACE_ON", 2 );
+
+class MongoAuth {
+
+  private $_connection;
+  private $_db;
 
   /**
    * Attempt to create a new authenticated session.
@@ -12,27 +21,27 @@ class mongo_auth {
    * @param string $username the username
    * @param string $password the password
    */
-  public static function get_auth( $conn, $db, $username, $password ) {
-    $result = mongo_auth::get_user( $conn, $db, $username, $password );
+  public static function getAuth( $conn, $db, $username, $password ) {
+    $result = MongoAuth::getUser( $conn, $db, $username, $password );
     if( !$result[ "ok" ] ) {
       return false;
     }
 
     // check if we need an admin instance
     if( $db == "admin" ) {
-      $auth_obj = mongo_admin::get_auth( $conn );
+      $auth_obj = MongoAdmin::getAuth( $conn );
     }
     else {
-      $auth_obj = new mongo_auth( $conn, $db );
+      $auth_obj = new MongoAuth( $conn, $db );
     }
 
     // return a new authenticated instance
-    $auth_obj->connection = $conn;
-    $auth_obj->db = $db;
+    $auth_obj->_connection = $conn;
+    $auth_obj->_db = $db;
     return $auth_obj;
   }
 
-  private static function get_user( $conn, $db, $username, $password ) {
+  private static function getUser( $conn, $db, $username, $password ) {
     $ns = $db . ".system.users";
     $user = mongo_find_one( $conn, $ns, array( "user" => $username ) );
     if( !$user ) {
@@ -41,29 +50,29 @@ class mongo_auth {
     $pwd = $user[ "pwd" ];
 
     // get the nonce
-    $result = mongo_util::db_command( $conn, array( mongo_util::$NONCE => 1 ), $db );
+    $result = MongoUtil::dbCommand( $conn, array( MongoUtil::$NONCE => 1 ), $db );
     if( !$result[ "ok" ] )
       return false;
     $nonce = $result[ "nonce" ];
 
     // create a digest of nonce/username/pwd
     $digest = md5( $nonce . $username . $pwd );
-    $data = array( mongo_util::$AUTHENTICATE => 1, 
+    $data = array( MongoUtil::$AUTHENTICATE => 1, 
            "user" => $username, 
            "password" => $password,
            "nonce" => $nonce,
            "key" => $digest );
 
     // send everything to the db and pray
-    $result = mongo_util::db_command( $conn, $data, $db );
+    return MongoUtil::dbCommand( $conn, $data, $db );
   }
 
   private function __construct( $conn, $db ) {
   }
 
   public function __destruct() {
-    $this->connection = NULL;
-    $this->db = NULL;
+    $this->_connection = NULL;
+    $this->_db = NULL;
   }
 
   public function __toString() {
@@ -75,8 +84,8 @@ class mongo_auth {
    * @return boolean if successfully ended
    */
   public function logout() {
-    $data = array( mongo_util::$LOGOUT => 1 );
-    $result = mongo_util::db_command( $this->connection, $data, $this->db );
+    $data = array( MongoUtil::$LOGOUT => 1 );
+    $result = MongoUtil::dbCommand( $this->_connection, $data, $this->_db );
 
     if( !$result[ "ok" ] ) {
       // trapped in the system forever
@@ -88,24 +97,24 @@ class mongo_auth {
   }
 }
 
-class mongo_admin extends mongo_auth {
+class MongoAdmin extends MongoAuth {
 
-  public static function get_auth( $conn ) {
-    return new mongo_admin( $conn );
+  public static function getAuth( $conn ) {
+    return new MongoAdmin( $conn );
   }
 
   private function __construct( $conn ) {
-    $this->connection = $conn;
-    $this->db = "admin";
+    $this->_connection = $conn;
+    $this->_db = "admin";
   }
 
   /** 
    * Lists all of the databases.
    * @return Array each database with its size and name
    */
-  public function list_dbs() {
-    $data = array( mongo_util::$LIST_DATABASES => 1 );
-    $result = mongo_util::db_command( $this->connection, $data );
+  public function listDBs() {
+    $data = array( MongoUtil::$LIST_DATABASES => 1 );
+    $result = MongoUtil::dbCommand( $this->_connection, $data, $this->_db );
     if( $result )
       return $result[ "databases" ];
     else
@@ -117,7 +126,7 @@ class mongo_admin extends mongo_auth {
    * @return bool if the database was successfully shut down
    */
   public function shutdown() {
-    $result = mongo_util::db_command( $this->connection, array( mongo_util::$SHUTDOWN => 1 ), $this->db );
+    $result = MongoUtil::dbCommand( $this->_connection, array( MongoUtil::$SHUTDOWN => 1 ), $this->_db );
     return $result[ "ok" ];
   }
 
@@ -126,8 +135,8 @@ class mongo_admin extends mongo_auth {
    * @param int $level logging level
    * @return bool if the logging level was set
    */
-  public function set_logging( $level ) {
-    $result = mongo_util::db_command( $this->connection, array( mongo_util::$LOGGING => (int)$level ), $this->db );
+  public function setLogging( $level ) {
+    $result = MongoUtil::dbCommand( $this->_connection, array( MongoUtil::$LOGGING => (int)$level ), $this->_db );
     return $result[ "ok" ];
   }
 
@@ -136,8 +145,8 @@ class mongo_admin extends mongo_auth {
    * @param int $level trace level
    * @return bool if the tracing level was set
    */
-  public function set_tracing( $level ) {
-    $result = mongo_util::db_command( $this->connection, array( mongo_util::$TRACING => (int)$level ), $this->db );
+  public function setTracing( $level ) {
+    $result = MongoUtil::dbCommand( $this->_connection, array( MongoUtil::$TRACING => (int)$level ), $this->_db );
     return $result[ "ok" ];
   }
 
@@ -146,20 +155,11 @@ class mongo_admin extends mongo_auth {
    * @param int $level trace level
    * @return bool if the tracing level was set
    */
-  public function set_query_tracing( $level ) {
-    $result = mongo_util::db_command( $this->connection, array( mongo_util::$QUERY_TRACING => (int)$level ), $this->db );
+  public function setQueryTracing( $level ) {
+    $result = MongoUtil::dbCommand( $this->_connection, array( MongoUtil::$QUERY_TRACING => (int)$level ), $this->_db );
     return $result[ "ok" ];
   }
 
-
-  public static $LOG_OFF = 0;
-  public static $LOG_W = 1;
-  public static $LOG_R = 2;
-  public static $LOG_RW = 3;
-
-  public static $TRACE_OFF = 0;
-  public static $TRACE_SOME = 1;
-  public static $TRACE_ON = 2;
 }
 
 

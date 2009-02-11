@@ -1,13 +1,13 @@
 <?php
 
-class mongo_collection {
+class MongoCollection {
 
   var $parent;
   var $connection;
   var $db;
   var $name = "";
 
-  function __construct( mongo_db $db, $name ) {
+  function __construct( MongoDB $db, $name ) {
     $this->parent = $db;
     $this->connection = $db->connection;
     $this->db = $db->name;
@@ -23,9 +23,9 @@ class mongo_collection {
    * @return array the db response
    */
   function drop() {
-    $this->delete_indices();
-    $data = array( mongo_util::$DROP => $this->name );
-    return mongo_util::db_command( $this->connection, $data, $this->db );
+    $this->deleteIndexes();
+    $data = array( MongoUtil::$DROP => $this->name );
+    return MongoUtil::dbCommand( $this->connection, $data, $this->db );
   }
 
   /**
@@ -34,10 +34,10 @@ class mongo_collection {
    * @return array the database's evaluation of this object
    */
   function validate( $scan_data = false ) {
-    $data = array( mongo_util::$VALIDATE => $this->name );
+    $data = array( MongoUtil::$VALIDATE => $this->name );
     if( $scan_data )
       $data[ "scandata" ] = true;
-    return mongo_util::db_command( $this->connection, $data, $this->db );
+    return MongoUtil::dbCommand( $this->connection, $data, $this->db );
   }
 
   /** Inserts an object or array into the collection.
@@ -45,7 +45,7 @@ class mongo_collection {
    * @return array the associative array saved to the database
    */
   function insert( $iterable ) {
-    $arr = mongo_util::obj_to_array( $iterable );
+    $arr = MongoUtil::objToArray( $iterable );
     $result = mongo_insert( $this->connection, (string)$this, $arr );
     if( $result )
       return $iterable;
@@ -61,7 +61,7 @@ class mongo_collection {
    * @return mongo_cursor a cursor for the search results
    */
   function find( $query = NULL, $skip = NULL, $limit = NULL, $fields = NULL ) {
-    return new mongo_cursor( $this->connection, (string)$this, $query, $skip, $limit, $fields );
+    return new MongoCursor( $this->connection, (string)$this, $query, $skip, $limit, $fields );
   }
 
   /** 
@@ -69,8 +69,8 @@ class mongo_collection {
    * @param object $query the fields for which to search
    * @return object a record matching the search or NULL
    */
-  function find_one( $query = NULL ) {
-    return mongo_find_one( $this->connection, (string)$this, $query );
+  function findOne( $query = NULL ) {
+    return mongo_find_one( $this->connection, (string)$this, MongoUtil::objToArray( $query ) );
   }
 
   /**
@@ -88,8 +88,8 @@ class mongo_collection {
    * @return array the associative array saved to the db
    */
   function update( $criteria, $newobj, $upsert = false ) {
-    $c = mongo_util::obj_to_array( $criteria );
-    $obj = mongo_util::obj_to_array( $newobj );
+    $c = MongoUtil::objToArray( $criteria );
+    $obj = MongoUtil::objToArray( $newobj );
     if( $upsert ) {
       $result = mongo_update( $this->connection, (string)$this, $c, $obj, $upsert );
     }
@@ -108,20 +108,20 @@ class mongo_collection {
    * @return bool if the command was executed successfully
    */
   function remove( $criteria, $just_one = false ) {
-    return mongo_remove( $this->connection, (string)$this, mongo_util::obj_to_array( $criteria ), $just_one );
+    return mongo_remove( $this->connection, (string)$this, MongoUtil::objToArray( $criteria ), $just_one );
   }
 
   /**
    * Creates an index on the given field(s), or does nothing if the index already exists.
    * @param string|array $keys field or fields to use as index
    */
-  function ensure_index( $keys ) {
+  function ensureIndex( $keys ) {
     $ns = $this->db . "." . $this->name;
     if( is_string( $keys ) ) {
       $keys = array( $keys => 1 );
     }
-    $name = mongo_util::to_index_string( $keys );
-    $coll = $this->parent->select_collection( "system.indexes" );
+    $name = MongoUtil::toIndexString( $keys );
+    $coll = $this->parent->selectCollection( "system.indexes" );
     $coll->insert( array( "name" => $name, "ns" => $ns, "key" => $keys ) );
   }
   
@@ -129,17 +129,17 @@ class mongo_collection {
    * Deletes an index from this collection.
    * @param string|array $keys field or fields from which to delete the index
    */
-  function delete_index( $key ) {
-    $name = mongo_util::to_index_string( $key );
-    $coll = $this->parent->select_collection( "system.indexes" );
+  function deleteIndex( $key ) {
+    $name = MongoUtil::toIndexString( $key );
+    $coll = $this->parent->selectCollection( "system.indexes" );
     $coll->remove( array( "name" => $name ) );
   }
 
   /**
    * Delete all indices for this collection.
    */
-  function delete_indices() {
-    mongo_util::db_command( $this->connection, array( mongo_util::$DELETE_INDICES => $this->name ), $this->db );
+  function deleteIndexes() {
+    MongoUtil::dbCommand( $this->connection, array( MongoUtil::$DELETE_INDICES => $this->name ), $this->db );
   }
 
   /**
@@ -147,7 +147,7 @@ class mongo_collection {
    * @return int the number of documents
    */
   function count() {
-    $result = mongo_util::db_command( $this->connection, array( "count" => $this->name ), $this->db );
+    $result = MongoUtil::dbCommand( $this->connection, array( "count" => $this->name ), $this->db );
     if( $result )
       return $result[ "n" ];
     trigger_error( "count failed", E_USER_ERROR );

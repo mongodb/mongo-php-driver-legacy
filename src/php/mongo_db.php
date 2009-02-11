@@ -1,6 +1,10 @@
 <?php
 
-class mongo_db {
+define( "PROFILING_OFF", 0 );
+define( "PROFILING_SLOW", 1 );
+define( "PROFILING_ON", 2 );
+
+class MongoDB {
 
   var $connection = NULL;
   var $name = NULL;
@@ -19,10 +23,10 @@ class mongo_db {
    * Get an authenticated session.
    * @param string $username 
    * @param string $password
-   * @return mongo_auth if login was successful, false if unsuccessful
+   * @return MongoAuth if login was successful, false if unsuccessful
    */
-  public function get_auth( $username, $password ) {
-    return mongo_auth::get_auth( $this->connection, $this->name, $username, $password );
+  public function getAuth( $username, $password ) {
+    return MongoAuth::getAuth( $this->connection, $this->name, $username, $password );
   }
 
   /**
@@ -30,15 +34,15 @@ class mongo_db {
    * @param string $prefix name of the file collection
    * @return gridfs a new gridfs object for this database
    */
-  public function get_gridfs( $prefix = "fs" ) {
-    return new mongo_gridfs( $this->connection, $this->name, $prefix );
+  public function getGridfs( $prefix = "fs" ) {
+    return new MongoGridfs( $this->connection, $this->name, $prefix );
   }
 
   /** 
    * Returns the name of the database currently in use.
    * @return string the name of the database
    */
-  public function get_name() {
+  public function getName() {
     return $this->name;
   }
 
@@ -46,9 +50,9 @@ class mongo_db {
    * Gets this database's profiling level.
    * @return int the profiling level
    */
-  public function get_profiling_level() {
-    $data = array( mongo_util::$PROFILE => -1 );
-    $x = mongo_util::db_command( $this->connection, $data, $this->name );
+  public function getProfilingLevel() {
+    $data = array( MongoUtil::$PROFILE => -1 );
+    $x = MongoUtil::dbCommand( $this->connection, $data, $this->name );
     if( $x[ "ok" ] == 1 )
       return $x[ "was" ];
     else
@@ -59,9 +63,9 @@ class mongo_db {
    * Sets this database's profiling level.
    * @return int the old profiling level
    */
-  public function set_profiling_level( $level ) {
-    $data = array( mongo_util::$PROFILE => (int)$level );
-    $x = mongo_util::db_command( $this->connection, $data, $this->name );
+  public function setProfilingLevel( $level ) {
+    $data = array( MongoUtil::$PROFILE => (int)$level );
+    $x = MongoUtil::dbCommand( $this->connection, $data, $this->name );
     if( $x[ "ok" ] == 1 ) {
       return $x[ "was" ];
     }
@@ -73,8 +77,8 @@ class mongo_db {
    * @return array db response
    */
   public function drop() {
-    $data = array( mongo_util::$DROP_DATABASE => $this->name );
-    return mongo_util::db_command( $this->connection, $data );
+    $data = array( MongoUtil::$DROP_DATABASE => $this->name );
+    return MongoUtil::dbCommand( $this->connection, $data );
   }
 
   /**
@@ -84,12 +88,12 @@ class mongo_db {
    * @return array db response
    */
   function repair( $preserve_cloned_files = false, $backup_original_files = false ) {
-    $data = array( mongo_util::$REPAIR_DATABASE => 1 );
+    $data = array( MongoUtil::$REPAIR_DATABASE => 1 );
     if( $preserve_cloned_files )
       $data[ "preserveClonedFilesOnFailure" ] = true;
     if( $backup_original_files )
       $data[ "backupOriginalFiles" ] = true;
-    return mongo_util::db_command( $this->connection, $data, $this->name );
+    return MongoUtil::dbCommand( $this->connection, $data, $this->name );
   }
 
 
@@ -97,8 +101,8 @@ class mongo_db {
    * Gets a collection.
    * @param string $name the name of the collection
    */
-  public function select_collection( $name ) {
-    return new mongo_collection( $this, $name );
+  public function selectCollection( $name ) {
+    return new MongoCollection( $this, $name );
   }
 
   /** 
@@ -110,8 +114,8 @@ class mongo_db {
    *     number of elements to store in the collection
    * @return Collection a collection object representing the new collection
    */
-  public function create_collection( $name, $capped = false, $size = 0, $max = 0 ) {
-    $data = array( mongo_util::$CREATE_COLLECTION => $name );
+  public function createCollection( $name, $capped = false, $size = 0, $max = 0 ) {
+    $data = array( MongoUtil::$CREATE_COLLECTION => $name );
     if( $capped && $size ) {
       $data[ "capped" ] = true;
       $data[ "size" ] = $size;
@@ -119,8 +123,8 @@ class mongo_db {
         $data[ "max" ] = $max;
     }
 
-    mongo_util::db_command( $this->connection, $data );
-    return new mongo_collection( $this, $name );
+    MongoUtil::dbCommand( $this->connection, $data );
+    return new MongoCollection( $this, $name );
   }
 
   /**
@@ -128,7 +132,7 @@ class mongo_db {
    * @param mongo_collection $coll
    * @return array the db response
    */
-  public function drop_collection( mongo_collection $coll ) {
+  public function dropCollection( MongoCollection $coll ) {
     return $coll->drop();
   }
 

@@ -2,9 +2,7 @@
 
 dl("libmongo.so");
 
-include "src/php/mongo_auth.php";
-
-class mongo {
+class Mongo {
 
   var $connection = NULL;
 
@@ -39,41 +37,41 @@ class mongo {
    * @param string $username
    * @param string $password
    */
-  public function get_auth( $db, $username, $password ) {
-    $db = $this->select_db( $db );
-    return $db->get_auth( $username, $password );
+  public function getAuth( $db, $username, $password ) {
+    $db = $this->selectDB( $db );
+    return $db->getAuth( $username, $password );
   }
 
   /** 
    * Gets a database.
    * @param string $dbname the database name
-   * @return mongo_db a new db object
+   * @return MongoDB a new db object
    */
-  public function select_db( $dbname = NULL ) {
+  public function selectDB( $dbname = NULL ) {
     if( $dbname == NULL || $dbname == "" ) {
       trigger_error( "Invalid database name.", E_USER_WARNING );
       return false;
     }
-    return new mongo_db( $this, $dbname );
+    return new MongoDB( $this, $dbname );
   }
 
   /**
    * Drops a database.
-   * @param mongo_db $db the database to drop
+   * @param MongoDB $db the database to drop
    * @return array db response
    */
-  public function drop_db( mongo_db $db ) {
+  public function dropDB( MongoDB $db ) {
     return $db->drop();
   }
 
   /**
    * Repairs and compacts a database.
-   * @param mongo_db $db the database to drop
+   * @param MongoDB $db the database to drop
    * @param bool $preserve_cloned_files if cloned files should be kept if the repair fails
    * @param bool $backup_original_files if original files should be backed up
    * @return array db response
    */
-  public function repair_db( mongo_db $db, $preserve_cloned_files = false, $backup_original_files = false ) {
+  public function repairDB( MongoDB $db, $preserve_cloned_files = false, $backup_original_files = false ) {
     return $db->repair( $preserve_cloned_files, $backup_original_files );
   }
 
@@ -81,8 +79,8 @@ class mongo {
    * Check if there was an error on the most recent db operation performed.
    * @return string the error, if there was one, or NULL
    */
-  public function last_error() {
-    $result = mongo_util::db_command( $this->connection, array( mongo_util::$LAST_ERROR => 1 ), mongo_util::$ADMIN );
+  public function lastError() {
+    $result = MongoUtil::dbCommand( $this->connection, array( MongoUtil::$LAST_ERROR => 1 ), MongoUtil::$ADMIN );
     return $result[ "err" ];
   }
 
@@ -90,8 +88,8 @@ class mongo {
    * Checks for the last error thrown during a database operation.
    * @return array the error and the number of operations ago it occured
    */
-  public function prev_error() {
-    $result = mongo_util::db_command( $this->connection, array( mongo_util::$PREV_ERROR => 1 ), mongo_util::$ADMIN );
+  public function prevError() {
+    $result = MongoUtil::dbCommand( $this->connection, array( MongoUtil::$PREV_ERROR => 1 ), MongoUtil::$ADMIN );
     unset( $result[ "ok" ] );
     return $result;
   }
@@ -100,8 +98,8 @@ class mongo {
    * Clears any flagged errors on the connection.
    * @param bool if successful
    */
-  public function reset_error() {
-    $result = mongo_util::db_command( $this->connection, array( mongo_util::$RESET_ERROR => 1 ), mongo_util::$ADMIN );
+  public function resetError() {
+    $result = MongoUtil::dbCommand( $this->connection, array( MongoUtil::$RESET_ERROR => 1 ), MongoUtil::$ADMIN );
     return (bool)$result[ "ok" ];
   }
 
@@ -115,10 +113,11 @@ class mongo {
 
 }
 
-require "src/php/mongo_db.php";
-require "src/php/mongo_collection.php";
-require "src/php/mongo_cursor.php";
-require "src/php/mongo_util.php";
-require "src/php/gridfs.php";
+include_once "src/php/mongo_auth.php";
+require_once "src/php/mongo_db.php";
+require_once "src/php/mongo_collection.php";
+require_once "src/php/mongo_cursor.php";
+require_once "src/php/mongo_util.php";
+require_once "src/php/gridfs.php";
 
 ?>

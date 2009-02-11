@@ -1,6 +1,6 @@
 <?php
 
-class mongo_util {
+class MongoUtil {
   
   /**
    * Turns something into an array that can be saved to the db.
@@ -8,7 +8,7 @@ class mongo_util {
    * @param any $obj object to convert
    * @return array the array
    */
-  public static function obj_to_array( $obj ) 
+  public static function objToArray( $obj ) 
   {
     if (is_null($obj)) {
       return array();
@@ -17,7 +17,7 @@ class mongo_util {
     $arr = array();
     foreach ($obj as $key => $value) {
       if (is_object($value) || is_array($value)) {
-        $arr[ $key ] = mongo_util::obj_to_array( $value );
+        $arr[ $key ] = MongoUtil::objToArray( $value );
       } else {
         $arr[ $key ] = $value;
       }
@@ -30,7 +30,7 @@ class mongo_util {
    * @param string|array $keys field(s) to convert
    * @return string the index name
    */
-  public static function to_index_string( $keys ) {
+  public static function toIndexString( $keys ) {
     if( is_string( $keys ) ) {
       $name = str_replace( ".", "_", $keys ) + "_1";
     }
@@ -49,13 +49,13 @@ class mongo_util {
    * @param array $obj the object to transform
    * @return string the string
    */
-  public static function to_json( $obj ) {
+  public static function toJSON( $obj ) {
     if( is_array( $obj ) ) {
       $str = "array( ";
       foreach( $obj as $k=>$v ) {
         $str .= "\"$k\" => ";
         if( is_array( $v ) ) {
-          $str .= mongo_util::to_json( $v );
+          $str .= MongoUtil::toJSON( $v );
         }
         else if( is_string( $v ) ) {
           $str .= "\"$v\"";
@@ -79,8 +79,8 @@ class mongo_util {
    * @param array $data the query to send
    * @param string $db the database name
    */
-  public static function db_command( $conn, $data, $db ) {
-    $cmd_collection = $db . mongo_util::$CMD;
+  public static function dbCommand( $conn, $data, $db ) {
+    $cmd_collection = $db . MongoUtil::$CMD;
     $obj = mongo_find_one( $conn, $cmd_collection, $data );
 
     if( $obj ) {

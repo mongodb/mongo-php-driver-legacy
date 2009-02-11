@@ -1,24 +1,25 @@
 <?php
 
-class mongo_cursor {
+class MongoCursor {
 
   var $connection = NULL;
 
-  private $cursor = NULL;
-  private $started_iterating = false;
+  private $_cursor = NULL;
+  private $_startedIterating = false;
 
-  private $query = NULL;
-  private $fields = NULL;
-  private $limit = 0;
-  private $skip = 0;
+  private $_query = NULL;
+  private $_fields = NULL;
+  private $_limit = 0;
+  private $_skip = 0;
+  private $_ns = NULL;
 
   public function __construct( $conn, $ns, $query = NULL, $skip = NULL, $limit = NULL, $fields = NULL ) {
     $this->connection = $conn;
-    $this->ns = $ns;
-    $this->query = $query;
-    $this->skip = $skip;
-    $this->limit = $limit;
-    $this->fields = $fields;
+    $this->_ns = $ns;
+    $this->_query = $query;
+    $this->_skip = $skip;
+    $this->_limit = $limit;
+    $this->_fields = $fields;
   }
 
   /**
@@ -26,62 +27,62 @@ class mongo_cursor {
    * @return array the next object
    */
   public function next() {
-    if( !$this->started_iterating ) {
-      $this->do_query();
-      $this->started_iterating = true;
+    if( !$this->_startedIterating ) {
+      $this->doQuery();
+      $this->_startedIterating = true;
     }
 
-    return mongo_next( $this->cursor );
+    return mongo_next( $this->_cursor );
   }
 
   /**
    * Checks if there are any more elements in this cursor.
    * @return bool if there is another element
    */
-  public function has_next() {
-    if( !$this->started_iterating ) {
-      $this->do_query();
-      $this->started_iterating = true;
+  public function hasNext() {
+    if( !$this->_startedIterating ) {
+      $this->doQuery();
+      $this->_startedIterating = true;
     }
 
-    return mongo_has_next( $this->cursor );
+    return mongo_has_next( $this->_cursor );
   }
 
   /**
    * Limits the number of results returned.
    * @param int $num the number of results to return
-   * @return mongo_cursor this cursor
+   * @return MongoCursor this cursor
    */
   public function limit( $num ) {
-    if( $this->started_iterating ) {
+    if( $this->_startedIterating ) {
       trigger_error( "cannot modify cursor after beginning iteration.", E_USER_ERROR );
       return false;
     }
-    $this->limit = (int)$num;
+    $this->_limit = (int)$num;
     return $this;
   }
 
   /**
    * Skips a number of results.
    * @param int $num the number of results to skip
-   * @return mongo_cursor this cursor
+   * @return MongoCursor this cursor
    */
   public function skip( $num) {
-    if( $this->started_iterating ) {
+    if( $this->_startedIterating ) {
       trigger_error( "cannot modify cursor after beginning iteration.", E_USER_ERROR );
       return false;
     }
-    $this->skip = (int)$num;
+    $this->_skip = (int)$num;
     return $this;
   }
 
   /**
    * Sorts the results by given fields.
    * @param array $fields the fields by which to sort
-   * @return mongo_cursor this cursor
+   * @return MongoCursor this cursor
    */
   public function sort( $fields ) {
-    if( $this->started_iterating ) {
+    if( $this->_startedIterating ) {
       trigger_error( "cannot modify cursor after beginning iteration.", E_USER_ERROR );
       return false;
     }
@@ -92,10 +93,10 @@ class mongo_cursor {
   /**
    * Gives the database a hint about the query.
    * @param array $key_pattern
-   * @return mongo_cursor this cursor
+   * @return MongoCursor this cursor
    */
   public function hint( $key_pattern ) {
-    if( $this->started_iterating ) {
+    if( $this->_startedIterating ) {
       trigger_error( "cannot modify cursor after beginning iteration.", E_USER_ERROR );
       return false;
     }
@@ -109,14 +110,14 @@ class mongo_cursor {
    * @return int the number of records
    */
   public function count() {
-    $db = substr( $this->ns, 0, strpos( $this->ns, "." ) );
-    $coll = substr( $this->ns, strpos( $this->ns, "." )+1 );
+    $db = substr( $this->_ns, 0, strpos( $this->_ns, "." ) );
+    $coll = substr( $this->_ns, strpos( $this->_ns, "." )+1 );
 
     $cmd = array( "count" => $coll );
-    if( $this->query )
-      $cmd[ "query" ] = mongo_util::obj_to_array( $this->query );
+    if( $this->_query )
+      $cmd[ "query" ] = MongoUtil::objToArray( $this->_query );
 
-    $result = mongo_util::db_command( $this->connection, $cmd, $db );
+    $result = MongoUtil::dbCommand( $this->connection, $cmd, $db );
     if( $result )
       return $result[ "n" ];
     trigger_error( "count failed", E_USER_ERROR );
@@ -125,13 +126,13 @@ class mongo_cursor {
   /**
    * Execute the query and set the cursor resource.
    */
-  private function do_query() {
-    $q = mongo_util::obj_to_array( $this->query );
-    $s = mongo_util::obj_to_array( $this->sort );
-    $f = mongo_util::obj_to_array( $this->fields );
-    $h = mongo_util::obj_to_array( $this->hint );
+  private function doQuery() {
+    $q = MongoUtil::objToArray( $this->_query );
+    $s = MongoUtil::objToArray( $this->_sort );
+    $f = MongoUtil::objToArray( $this->_fields );
+    $h = MongoUtil::objToArray( $this->_hint );
 
-    $this->cursor = mongo_query( $this->connection, $this->ns, $q, (int)$this->skip, (int)$this->limit, $s, $f, $h );
+    $this->_cursor = mongo_query( $this->connection, $this->_ns, $q, (int)$this->_skip, (int)$this->_limit, $s, $f, $h );
   }
 }
 
