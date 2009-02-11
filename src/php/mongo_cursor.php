@@ -132,7 +132,7 @@ class MongoCursor {
     $f = MongoUtil::objToArray( $this->_fields );
     $h = MongoUtil::objToArray( $this->_hint );
 
-    $this->_cursor = mongo_query( $this->connection, $this->_ns, $q, (int)$this->_skip, (int)$this->_limit, $s, $f, $h );
+    $this->_cursor = mongo_query( $this->connection, $this->_ns, $q, (int)$this->_skip, ((int)$this->_limit) * -1, $s, $f, $h );
   }
 
   public static function getGridfsCursor( $cursor ) {
