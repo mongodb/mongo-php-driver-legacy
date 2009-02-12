@@ -10,7 +10,14 @@ from subprocess import Popen, PIPE
 # OPTIONS
 # -----------
 
-
+AddOption('--mongodb',
+          dest='mongodb',
+          type='string',
+          default="/opt/mongo/",
+          nargs=1,
+          action='store',
+          metavar='DIR',
+          help='mongodb installation directory')
 
 # -----------
 # GLOBAL SETUP
@@ -29,7 +36,7 @@ nix = False
 
 extensionDir = phpConfig( "extension-dir" )
 
-mongoHome = "/opt/mongo/"
+mongoHome = GetOption( "mongodb" )
 
 # -----------
 # PLATFORM CONFIG
