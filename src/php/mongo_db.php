@@ -123,7 +123,7 @@ class MongoDB {
         $data[ "max" ] = $max;
     }
 
-    MongoUtil::dbCommand( $this->connection, $data );
+    MongoUtil::dbCommand( $this->connection, $data, $this->name );
     return new MongoCollection( $this, $name );
   }
 
