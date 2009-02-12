@@ -199,20 +199,29 @@ PHP_FUNCTION(mongo_query) {
   mongo::BSONObj fields = bfields->done();
 
   mongo::BSONObjBuilder *bhint = new mongo::BSONObjBuilder();
-  php_array_to_bson( bhint, Z_ARRVAL_P( zhint ) );
-  mongo::BSONObj hint = bhint->done();
-  q->hint( hint );
+  int n = php_array_to_bson( bhint, Z_ARRVAL_P( zhint ) );
+  if( n > 0 ) {
+    mongo::BSONObj hint = bhint->done();
+    q->hint( hint );
+  }
 
   mongo::BSONObjBuilder *bsort = new mongo::BSONObjBuilder();
-  php_array_to_bson( bsort, Z_ARRVAL_P( zsort ) );
-  mongo::BSONObj sort = bsort->done();
-  q->sort( sort );
+  n = php_array_to_bson( bsort, Z_ARRVAL_P( zsort ) );
+  if( n > 0 ) {
+    mongo::BSONObj sort = bsort->done();
+    q->sort( sort );
+  }
 
   std::auto_ptr<mongo::DBClientCursor> cursor;
   if( num_fields == 0 )
     cursor = conn_ptr->query( (const char*)collection, *q, limit, skip );
   else
     cursor = conn_ptr->query( (const char*)collection, *q, limit, skip, &fields );
+
+  delete bquery;
+  delete bfields;
+  delete bhint;
+  delete bsort;
 
   mongo::DBClientCursor *c = cursor.get();
   ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
