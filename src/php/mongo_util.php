@@ -51,8 +51,8 @@ class MongoUtil {
     }
     else {
       $key_list = array();
-      foreach( $keys as $v ) {
-        $key_list[] = str_replace( ".", "_", $v ) + "_1";
+      foreach( $keys as $k=>$v ) {
+        array_push( $key_list, str_replace( ".", "_", $k ) . "_1" );
       }
       $name = implode( "_", $key_list );
     }
@@ -102,7 +102,7 @@ class MongoUtil {
       return $obj;
     }
     else {
-      trigger_error( "no response?", E_USER_WARNING );
+      trigger_error( "no db response?", E_USER_WARNING );
       return false;
     }
   }

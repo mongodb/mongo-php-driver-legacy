@@ -145,16 +145,17 @@ class MongoCollection {
    * @param string|array $keys field or fields from which to delete the index
    */
   function deleteIndex( $key ) {
-    $name = MongoUtil::toIndexString( $key );
-    $coll = $this->parent->selectCollection( "system.indexes" );
-    $coll->remove( array( "name" => $name ) );
+    $idx = MongoUtil::toIndexString( $key );
+    $d = array( MongoUtil::$DELETE_INDICES => $this->name, "index" => $idx );
+    $x = MongoUtil::dbCommand( $this->connection, $d, $this->db );    
   }
 
   /**
    * Delete all indices for this collection.
    */
   function deleteIndexes() {
-    MongoUtil::dbCommand( $this->connection, array( MongoUtil::$DELETE_INDICES => $this->name ), $this->db );
+    $d = array( MongoUtil::$DELETE_INDICES => $this->name, "index" => "*" );
+    $x = MongoUtil::dbCommand( $this->connection, $d, $this->db );
   }
 
   /**
