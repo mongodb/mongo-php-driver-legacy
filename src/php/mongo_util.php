@@ -92,6 +92,19 @@ class MongoUtil {
     }
   }
 
+  /**
+   * Parse boolean configuration settings from php.ini.
+   * @param string $str the setting name
+   * @return bool the value of the setting
+   */
+  public static function getConfig( $str ) {
+    $setting = get_cfg_var( $str );
+    if( !$setting || strcasecmp( $setting, "off" ) == 0 ) {
+      return false;
+    }
+    return true;
+  }
+
   /* Command collection */
   private static $CMD = ".\$cmd";
 
@@ -118,13 +131,13 @@ class MongoUtil {
   public static $TRACING = "traceAll";
   public static $VALIDATE = "validate";
 
-  public static $LT = "\$lt";
-  public static $LTE = "\$lte";
-  public static $GT = "\$gt";
-  public static $GTE = "\$gte";
-  public static $IN = "\$in";
-  public static $NE = "\$ne";
-
 }
+
+define( "MONGO_LT", "\$lt" );
+define( "MONGO_LTE", "\$lte" );
+define( "MONGO_GT", "\$gt" );
+define( "MONGO_GTE", "\$gte" );
+define( "MONGO_IN", "\$in" );
+define( "MONGO_NE", "\$ne" );
 
 ?>

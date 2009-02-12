@@ -11,11 +11,14 @@ class Mongo {
   public function __construct( $host = NULL, $port = NULL ) {
     if( !$host ) {
       $host = get_cfg_var( "mongo.default_host" );
+      if( !$host ) {
+        trigger_error( "no hostname given and no default hostname", E_USER_ERROR );
+      }
     }
     if( !$port ) {
       $port = get_cfg_var( "mongo.default_port" );
     }
-    $auto_reconnect = get_cfg_var( "mongo.auto_reconnect" );
+    $auto_reconnect = MongoUtil::getConfig( "mongo.auto_reconnect" );
 
     $addr = "$host:$port";
     $this->connection = mongo_connect( $addr, $auto_reconnect );
