@@ -114,11 +114,11 @@ class Mongo {
 
 }
 
-include_once "src/php/mongo_auth.php";
-require_once "src/php/mongo_db.php";
-require_once "src/php/mongo_collection.php";
-require_once "src/php/mongo_cursor.php";
-require_once "src/php/mongo_util.php";
-require_once "src/php/gridfs.php";
+include_once "mongo_auth.php";
+require_once "mongo_db.php";
+require_once "mongo_collection.php";
+require_once "mongo_cursor.php";
+require_once "mongo_util.php";
+require_once "gridfs.php";
 
 ?>
