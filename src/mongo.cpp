@@ -140,9 +140,12 @@ PHP_FUNCTION(mongo_connect) {
   int server_len;
   string error;
   
-  if( ZEND_NUM_ARGS() != 2 ||
-      zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sb", &server, &server_len, &auto_reconnect) == FAILURE ) {
-    zend_error( E_WARNING, "parameter parse failure" );
+  if( ZEND_NUM_ARGS() != 2 ) {
+    zend_error( E_WARNING, "expected 2 parameters, got %d parameters", ZEND_NUM_ARGS() );
+    RETURN_FALSE;
+  }
+  else if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sb", &server, &server_len, &auto_reconnect) == FAILURE ) {
+    zend_error( E_WARNING, "incorrect parameter types, expected: mongo_connect( string, bool )" );
     RETURN_FALSE;
   }
 
@@ -164,8 +167,12 @@ PHP_FUNCTION(mongo_connect) {
 PHP_FUNCTION(mongo_close) {
   zval *zconn;
  
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zconn) == FAILURE) {
-     zend_error( E_WARNING, "parameter parse failure\n" );
+  if (ZEND_NUM_ARGS() != 1 ) {
+     zend_error( E_WARNING, "expected 1 parameter, got %d parameters", ZEND_NUM_ARGS() );
+     RETURN_FALSE;
+  }
+  else if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zconn) == FAILURE) {
+     zend_error( E_WARNING, "incorrect parameter types, expected mongo_close( connection )" );
      RETURN_FALSE;
   }
 
@@ -178,24 +185,13 @@ PHP_FUNCTION(mongo_query) {
   char *collection;
   int limit, skip, collection_len;
 
-  int argc = ZEND_NUM_ARGS();
-  switch( argc ) {
-  case 7:
-    if (zend_parse_parameters(argc TSRMLS_CC, "rsalaaa", &zconn, &collection, &collection_len, &zquery, &skip, &zsort, &zhint ) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure\n" );
+  if( ZEND_NUM_ARGS() != 8 ) {
+      zend_error( E_WARNING, "expected 8 parameters, got %d parameters", ZEND_NUM_ARGS() );
       RETURN_FALSE;
-    }
-    break;
-  case 8:
-    if (zend_parse_parameters(argc TSRMLS_CC, "rsallaaa", &zconn, &collection, &collection_len, &zquery, &skip, &limit, &zsort, &zfields, &zhint) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure\n" );
+  }
+  else if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsallaaa", &zconn, &collection, &collection_len, &zquery, &skip, &limit, &zsort, &zfields, &zhint) == FAILURE ) {
+      zend_error( E_WARNING, "incorrect parameter types, expected mongo_query( connection, string, array, int, int, array, array, array )" );
       RETURN_FALSE;
-    }
-    break;
-  default:
-    zend_error( E_WARNING, "wrong number of args\n" );
-    RETURN_FALSE;
-    break;
   }
 
   mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
@@ -249,24 +245,13 @@ PHP_FUNCTION(mongo_find_one) {
   int collection_len;
   mongo::BSONObj query;
 
-  int num_args = ZEND_NUM_ARGS();
-  switch( num_args ) {
-  case 0:
-  case 1:
-  case 2:
-    zend_error( E_WARNING, "too few args" );
+  if( ZEND_NUM_ARGS() != 3 ) {
+    zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
     RETURN_FALSE;
-    break;
-  case 3:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure\n" );
-      RETURN_FALSE;
-    }
-    break;
-  default:
-    zend_error( E_WARNING, "too many args\n" );
+  }
+  else if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zquery) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_find_one( connection, string, array )" );
     RETURN_FALSE;
-    break;
   }
 
   mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
@@ -292,17 +277,13 @@ PHP_FUNCTION(mongo_remove) {
   int collection_len;
   zend_bool justOne = 0;
 
-  if ( ZEND_NUM_ARGS() == 3 ) {
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zarray) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure (3)" );
-      RETURN_FALSE;
-    }
+  if( ZEND_NUM_ARGS() != 4 ) {
+    zend_error( E_WARNING, "expected 4 parameters, got %d parameters", ZEND_NUM_ARGS() );
+    RETURN_FALSE;
   }
-  else if( ZEND_NUM_ARGS() == 4 ) {
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsab", &zconn, &collection, &collection_len, &zarray, &justOne) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure (4)" );
-      RETURN_FALSE;
-    }
+  else if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsab", &zconn, &collection, &collection_len, &zarray, &justOne) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_remove( connection, string, array, bool )" );
+    RETURN_FALSE;
   }
 
   mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
@@ -322,8 +303,12 @@ PHP_FUNCTION(mongo_insert) {
   char *collection;
   int collection_len;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zarray) == FAILURE) {
-    zend_error( E_WARNING, "mongo_insert: parameter parse failure\n" );
+  if (ZEND_NUM_ARGS() != 3 ) {
+    zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
+    RETURN_FALSE;
+  }
+  else if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zarray) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_insert( connection, string, array )" );
     RETURN_FALSE;
   }
 
@@ -349,30 +334,13 @@ PHP_FUNCTION(mongo_update) {
   zend_bool zupsert = 0;
 
   int num_args = ZEND_NUM_ARGS();
-  switch( num_args ) {
-  case 0:
-  case 1:
-  case 2:
-  case 3:
-    zend_error( E_WARNING, "too few args\n" );
+  if ( num_args != 5 ) {
+    zend_error( E_WARNING, "expected 5 parameters, got %d parameters", num_args );
     RETURN_FALSE;
-    break;
-  case 4:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsaa", &zconn, &collection, &collection_len, &zquery, &zobj) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure\n" );
-      RETURN_FALSE;
-    }
-    break;
-  case 5:
-    if (zend_parse_parameters(num_args TSRMLS_CC, "rsaab", &zconn, &collection, &collection_len, &zquery, &zobj, &zupsert) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure\n" );
-      RETURN_FALSE;
-    }
-    break;
-  default:
-    zend_error( E_WARNING, "too many args\n" );
+  }
+  else if(zend_parse_parameters(num_args TSRMLS_CC, "rsaab", &zconn, &collection, &collection_len, &zquery, &zobj, &zupsert) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_update( connection, string, array, array, bool )");
     RETURN_FALSE;
-    break;
   }
 
   mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
@@ -393,21 +361,13 @@ PHP_FUNCTION( mongo_has_next ) {
   zval *zcursor;
 
   int argc = ZEND_NUM_ARGS();
-  switch( argc ) {
-  case 0:
-    zend_error( E_WARNING, "too few args" );
+  if (argc != 1 ) {
+    zend_error( E_WARNING, "expected 1 parameters, got %d parameters", argc );
     RETURN_FALSE;
-    break;
-  case 1:
-    if (zend_parse_parameters(argc TSRMLS_CC, "r", &zcursor) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure\n" );
-      RETURN_FALSE;
-    }
-    break;
-  default:
-    zend_error( E_WARNING, "too many args\n" );
+  }
+  else if( zend_parse_parameters(argc TSRMLS_CC, "r", &zcursor) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_has_next( cursor ), got %d parameters", argc );
     RETURN_FALSE;
-    break;
   }
 
   mongo::DBClientCursor *c = (mongo::DBClientCursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
@@ -420,21 +380,13 @@ PHP_FUNCTION( mongo_next ) {
   zval *zcursor;
 
   int argc = ZEND_NUM_ARGS();
-  switch( argc ) {
-  case 0:
-    zend_error( E_WARNING, "too few args" );
+  if (argc != 1 ) {
+    zend_error( E_WARNING, "expected 1 parameter, got %d parameters", argc );
     RETURN_FALSE;
-    break;
-  case 1:
-    if (zend_parse_parameters(argc TSRMLS_CC, "r", &zcursor) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure\n" );
-      RETURN_FALSE;
-    }
-    break;
-  default:
-    zend_error( E_WARNING, "too many args\n" );
+  }
+  else if(zend_parse_parameters(argc TSRMLS_CC, "r", &zcursor) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter type, expected mongo_next( cursor )" );
     RETURN_FALSE;
-    break;
   }
 
   mongo::DBClientCursor *c = (mongo::DBClientCursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);

@@ -35,14 +35,12 @@ PHP_FUNCTION( mongo_gridfs_init ) {
   char *dbname, *prefix;
   int dbname_len, prefix_len;
 
-  if( ZEND_NUM_ARGS() == 3 ) {
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rss", &zconn, &dbname, &dbname_len, &prefix, &prefix_len ) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure\n" );
-      RETURN_FALSE;
-    }
+  if( ZEND_NUM_ARGS() != 3 ) {
+    zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
+    RETURN_FALSE;
   }
-  else  {
-    zend_error( E_WARNING, "wrong number of args\n" );
+  else if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rss", &zconn, &dbname, &dbname_len, &prefix, &prefix_len ) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_gridfs_init( connection, string, string )" );
     RETURN_FALSE;
   }
 
@@ -66,9 +64,13 @@ PHP_FUNCTION( mongo_gridfs_list ) {
   mongo::GridFS *fs;
   zval *zfs, *zquery;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ra", &zfs, &zquery) == FAILURE) {
-     zend_error( E_WARNING, "parameter parse failure\n" );
-     RETURN_FALSE;
+  if( ZEND_NUM_ARGS() != 2 ) {
+    zend_error( E_WARNING, "expected 2 parameters, got %d parameters", ZEND_NUM_ARGS() );
+    RETURN_FALSE;
+  }
+  else if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ra", &zfs, &zquery) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_gridfs_list( gridfs, array )" );
+    RETURN_FALSE;
   }
   ZEND_FETCH_RESOURCE(fs, mongo::GridFS*, &zfs, -1, PHP_GRIDFS_RES_NAME, le_gridfs);
 
