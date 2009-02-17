@@ -19,6 +19,21 @@ AddOption('--mongodb',
           metavar='DIR',
           help='mongodb installation directory')
 
+AddOption('--64',
+        dest='force64',
+        type='string',
+        nargs=0,
+        action="store",
+        help="whether to force 64 bit" )
+
+AddOption('--mac-boost',
+        dest='boostlib',
+        type='string',
+        default="/opt/local",
+        nargs=1,
+        action="store",
+        help="location of boost libraries for mac installs" )
+
 # -----------
 # GLOBAL SETUP
 # -----------
@@ -37,15 +52,20 @@ nix = False
 extensionDir = phpConfig( "extension-dir" )
 
 mongoHome = GetOption( "mongodb" )
+boostLib = GetOption( "boostlib" )
+force64 = not GetOption( "force64" ) is None
 
 # -----------
 # PLATFORM CONFIG
 # -----------
 
+if force64:
+    env.Append( CPPFLAGS=" -m64 " )
+    env.Append( LINKFLAGS=" -m64 " )
 
 if "darwin" == os.sys.platform:
-    env.Append( CPPPATH=[ "/sw/include" , "/opt/local/include"] )
-    env.Append( LIBPATH=["/sw/lib/" , "/opt/local/lib/" ] )
+    env.Append( CPPPATH=[ "/sw/include" , boostLib + "/include"] );
+    env.Append( LIBPATH=["/sw/lib/" , boostLib + "/lib/" ] )
 
     env.Append( LINKFLAGS=" -Wl,-flat_namespace -Wl,-undefined -Wl,suppress " )
 
