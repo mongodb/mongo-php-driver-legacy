@@ -159,6 +159,23 @@ class MongoCollection {
   }
 
   /**
+   * Returns an array of index names for this collection.
+   * @return array index names
+   */
+  function getIndexInfo() {
+    $ns = $this->db . "." . $this->name;
+    $cursor = $this->find( array( "ns" => $ns ) );
+    $a = array();
+    while( $cursor->hasNext() ) {
+      $obj = $cursor->next();
+      unset( $obj[ "id" ] );
+      unset( $obj[ "ns" ] );
+      array_push( $a, $cursor->next() );
+    }
+    return $a;
+  }
+
+  /**
    * Counts the number of documents in this collection.
    * @return int the number of documents
    */
@@ -167,6 +184,16 @@ class MongoCollection {
     if( $result )
       return $result[ "n" ];
     trigger_error( "count failed", E_USER_ERROR );
+  }
+
+  /**
+   * Saves an object to this collection.
+   * @param object $obj object to save
+   * @return the object saved
+   */
+  function save( $obj ) {
+    $a = MongoUtil::objToArray( $obj );
+    return $this->update( "_id" : $id, $a, true );
   }
 }
 
