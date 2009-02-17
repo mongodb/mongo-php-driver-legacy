@@ -13,8 +13,27 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *
+ * @package Mongo
  */
 
+/**
+ * Result object for database query.
+ *
+ * The database is not actually queried until next() or hasNext()
+ * is called.  Before the database is queried, commands can be strung
+ * together, as in:
+ * <pre>
+ *   $cursor = $collection->find()->limit( 10 );
+ *   // database has not yet been queried, so more search options can be added:
+ *   $cursor = $cursor->sort( array( "a" => 1 ) );
+ *
+ *   echo $cursor->next(); 
+ *   // now database has been queried and more options cannot be added
+ * </pre>
+ * 
+ * @package Mongo
+ */
 class MongoCursor {
 
   var $connection = NULL;
@@ -118,7 +137,6 @@ class MongoCursor {
     $this->hint = $key_pattern;
     return $this;
   }
-
 
   /**
    * Counts the number of records returned by this query.

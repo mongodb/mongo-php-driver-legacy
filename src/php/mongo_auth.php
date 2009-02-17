@@ -13,17 +13,16 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *
+ * @package Mongo
  */
 
-define( "LOG_OFF", 0 );
-define( "LOG_W", 1 );
-define( "LOG_R", 2 );
-define( "LOG_RW", 3 );
 
-define( "TRACE_OFF", 0 );
-define( "TRACE_SOME", 1 );
-define( "TRACE_ON", 2 );
-
+/**
+ * Use <pre>getAuth()</pre> to log in for an authenticated session.
+ * 
+ * @package Mongo
+ */
 class MongoAuth {
 
   private $_connection;
@@ -35,6 +34,7 @@ class MongoAuth {
    * @param string $db the name of the db
    * @param string $username the username
    * @param string $password the password
+   * @return MongoAuth an authenticated session or false if login was unsuccessful
    */
   public static function getAuth( $conn, $db, $username, $password ) {
     $result = MongoAuth::getUser( $conn, $db, $username, $password );
@@ -112,8 +112,16 @@ class MongoAuth {
   }
 }
 
+/**
+ * Use <pre>getAuth()</pre> from the admin database to log in for an admin session.
+ * 
+ * @package Mongo
+ */
 class MongoAdmin extends MongoAuth {
 
+  /**
+   * @return MongoAdmin an admin session, or false if login was unsuccessful
+   */
   public static function getAuth( $conn ) {
     return new MongoAdmin( $conn );
   }
@@ -176,6 +184,15 @@ class MongoAdmin extends MongoAuth {
   }
 
 }
+
+define( "MONGO_LOG_OFF", 0 );
+define( "MONGO_LOG_W", 1 );
+define( "MONGO_LOG_R", 2 );
+define( "MONGO_LOG_RW", 3 );
+
+define( "MONGO_TRACE_OFF", 0 );
+define( "MONGO_TRACE_SOME", 1 );
+define( "MONGO_TRACE_ON", 2 );
 
 
 ?>

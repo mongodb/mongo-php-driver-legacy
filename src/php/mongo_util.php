@@ -13,8 +13,15 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *
+ * @package Mongo
  */
 
+/**
+ * Handy methods for programming with this driver.
+ * 
+ * @package Mongo
+ */
 class MongoUtil {
   
   /**
@@ -93,6 +100,7 @@ class MongoUtil {
   /** Execute a db command
    * @param array $data the query to send
    * @param string $db the database name
+   * @return array database response
    */
   public static function dbCommand( $conn, $data, $db ) {
     $cmd_collection = $db . MongoUtil::$CMD;

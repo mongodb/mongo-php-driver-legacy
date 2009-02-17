@@ -13,8 +13,22 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *
+ * @package Mongo
  */
 
+/**
+ * A connection point between the Mongo database and PHP.
+ * 
+ * This class is used to initiate a connection and for high-level commands.
+ * A typical use is:
+ * <pre>
+ *   $m = new Mongo(); // connect
+ *   $db = $m->selectDatabase(); // get a database object
+ * </pre>
+ * 
+ * @package Mongo
+ */
 class Mongo {
 
   var $connection = NULL;
@@ -43,6 +57,10 @@ class Mongo {
     }
   }
 
+  /**
+   * String representation of this connection.
+   * @return string hostname and port for this connection
+   */
   public function __toString() {
     return $this->host . ":" . $this->port;
   }
@@ -52,6 +70,7 @@ class Mongo {
    * @param string $db name of the db to log in to
    * @param string $username
    * @param string $password
+   * @return MongoAuth an authenticated connection
    */
   public function getAuth( $db, $username, $password ) {
     $db = $this->selectDB( $db );
@@ -112,7 +131,7 @@ class Mongo {
 
   /**
    * Clears any flagged errors on the connection.
-   * @param bool if successful
+   * @return bool if successful
    */
   public function resetError() {
     $result = MongoUtil::dbCommand( $this->connection, array( MongoUtil::$RESET_ERROR => 1 ), MongoUtil::$ADMIN );

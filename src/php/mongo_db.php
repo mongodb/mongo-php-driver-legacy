@@ -13,12 +13,16 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *
+ * @package Mongo
  */
 
-define( "PROFILING_OFF", 0 );
-define( "PROFILING_SLOW", 1 );
-define( "PROFILING_ON", 2 );
 
+/**
+ * Instances of this class are used to interact with a database.
+ * 
+ * @package Mongo
+ */
 class MongoDB {
 
   var $connection = NULL;
@@ -29,6 +33,10 @@ class MongoDB {
     $this->name = $name;
   }
 
+  /**
+   * The name of this database.
+   * @return string this database's name
+   */
   public function __toString() {
     return $this->name;
   }
@@ -115,6 +123,7 @@ class MongoDB {
   /** 
    * Gets a collection.
    * @param string $name the name of the collection
+   * @return MongoCollection the collection
    */
   public function selectCollection( $name ) {
     return new MongoCollection( $this, $name );
@@ -151,6 +160,10 @@ class MongoDB {
     return $coll->drop();
   }
 
+  /**
+   * Get a list of collections in this database.
+   * @return array a list of collection names
+   */
   public function listCollections() {
     $nss = $this->selectCollection( "system.namespaces" )->find();
     $ns_list = array();
@@ -164,5 +177,10 @@ class MongoDB {
   }
 
 }
+
+define( "MONGO_PROFILING_OFF", 0 );
+define( "MONGO_PROFILING_SLOW", 1 );
+define( "MONGO_PROFILING_ON", 2 );
+
 
 ?>

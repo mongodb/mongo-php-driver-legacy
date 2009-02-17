@@ -13,8 +13,15 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *
+ * @package Mongo
  */
 
+/**
+ * Represents a collection of documents in the database.
+ * 
+ * @package Mongo
+ */
 class MongoCollection {
 
   var $parent;
@@ -29,6 +36,10 @@ class MongoCollection {
     $this->name = $name;
   }
 
+  /**
+   * String representation of this collection.
+   * @return string the full name of this collection
+   */
   public function __toString() {
     return $this->db . "." . $this->name;
   }
@@ -144,7 +155,7 @@ class MongoCollection {
    * Deletes an index from this collection.
    * @param string|array $keys field or fields from which to delete the index
    */
-  function deleteIndex( $key ) {
+  function deleteIndex( $keys ) {
     $idx = MongoUtil::toIndexString( $key );
     $d = array( MongoUtil::$DELETE_INDICES => $this->name, "index" => $idx );
     $x = MongoUtil::dbCommand( $this->connection, $d, $this->db );    
@@ -189,7 +200,7 @@ class MongoCollection {
   /**
    * Saves an object to this collection.
    * @param object $obj object to save
-   * @return the object saved
+   * @return object the object saved
    */
   function save( $obj ) {
     $a = MongoUtil::objToArray( $obj );

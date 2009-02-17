@@ -1,12 +1,6 @@
 To build:
 
-   $ scons
-   $ cp libmongo.so $phpextensions/libmongo.so
+   $ sudo scons install
 
-This attempts to put mongo.so in /usr/local/lib/php/extensions.  If extensions are in a different folder, you'll have to modify the script, for now.
+This attempts to put mongo.so in your PHP extension folder.  For more detailed instructions, please see http://www.mongodb.org.
 
-to run:
-
-   $ php -r 'dl("libmongo.so"); echo find_one();'
-
-(Somewhat limited functionality, at the moment)

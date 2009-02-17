@@ -13,8 +13,15 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *
+ * @package Mongo
  */
 
+/**
+ * Utilities for storing and retreiving files from the database.
+ * 
+ * @package Mongo
+ */
 class MongoGridfs {
   private $_resource;
   private $_prefix;
@@ -83,7 +90,11 @@ class MongoGridfs {
   }
 }
 
-
+/**
+ * Utilities for getting information about files from the database.
+ * 
+ * @package Mongo
+ */
 class MongoGridfsFile {
   private $_file;
 

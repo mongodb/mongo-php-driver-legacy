@@ -1,8 +1,2 @@
- - scons vars for linux
- - auto-add _id
- - Date
- - Regex
- - ObjectId
- - GridFS
- - auth
- - autoreconnect
+ - Save "objects" to db
+ - Add to test framework
