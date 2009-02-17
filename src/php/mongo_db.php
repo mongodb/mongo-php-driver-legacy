@@ -151,6 +151,18 @@ class MongoDB {
     return $coll->drop();
   }
 
+  public function listCollections() {
+    $nss = $this->selectCollection( "system.namespaces" )->find();
+    $ns_list = array();
+    while( $nss->hasNext() ) {
+      $ns = $nss->next()[ "name" ];
+      if( strpos( "$", $ns ) >= 0 )
+        continue;
+      array_push( $ns_list, $ns )
+    }
+    return $ns_list;
+  }
+
 }
 
 ?>
