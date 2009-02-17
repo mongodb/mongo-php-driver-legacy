@@ -204,7 +204,9 @@ class MongoCollection {
    */
   function save( $obj ) {
     $a = MongoUtil::objToArray( $obj );
-    return $this->update( "_id" : $id, $a, true );
+    if( $a[ "_id" ] )
+      return $this->update( array( "_id" => $id ), $a, true );
+    return $this->update( $a, $a, true );
   }
 }
 
