@@ -56,7 +56,7 @@ class MongoUtil {
     if( is_string( $keys ) ) {
       $name = str_replace( ".", "_", $keys ) + "_1";
     }
-    else {
+    else if( is_array( $keys ) || is_object( $keys ) ) {
       $key_list = array();
       foreach( $keys as $k=>$v ) {
         array_push( $key_list, str_replace( ".", "_", $k ) . "_1" );

@@ -116,12 +116,7 @@ class MongoCollection {
   function update( $criteria, $newobj, $upsert = false ) {
     $c = MongoUtil::objToArray( $criteria );
     $obj = MongoUtil::objToArray( $newobj );
-    if( $upsert ) {
-      $result = mongo_update( $this->connection, (string)$this, $c, $obj, $upsert );
-    }
-    else {
-      $result = mongo_update( $this->connection, (string)$this, $c, $obj );
-    }
+    $result = mongo_update( $this->connection, (string)$this, $c, $obj, $upsert );
     if( $result )
       return $obj;
     return false;
@@ -142,7 +137,7 @@ class MongoCollection {
    * @param string|array $keys field or fields to use as index
    */
   function ensureIndex( $keys ) {
-    $ns = $this->db . "." . $this->name;
+    $ns = (string)$this;
     if( is_string( $keys ) ) {
       $keys = array( $keys => 1 );
     }
@@ -174,8 +169,9 @@ class MongoCollection {
    * @return array index names
    */
   function getIndexInfo() {
-    $ns = $this->db . "." . $this->name;
-    $cursor = $this->find( array( "ns" => $ns ) );
+    $ns = (string)$this;
+    $nscollection = $this->parent->selectCollection( "system.indexes" );
+    $cursor = $nscollection->find( array( "ns" => $ns ) );
     $a = array();
     while( $cursor->hasNext() ) {
       $obj = $cursor->next();

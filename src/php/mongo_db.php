@@ -170,8 +170,9 @@ class MongoDB {
     while( $nss->hasNext() ) {
       $ns = $nss->next();
       $ns = $ns[ "name" ];
-      if( strpos( "$", $ns ) >= 0 )
+      if( strpos( $ns, "\$" ) > 0 ) {
         continue;
+      }
       array_push( $ns_list, $ns );
     }
     return $ns_list;
