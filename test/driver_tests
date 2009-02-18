@@ -289,11 +289,11 @@ case "stress1":
   $out = stress1();
   break;
 case "gridfs_in":
-  $out = grid_in( $argv[2] );
-  return;
+  $out = grid_in( $argv[3] );
+  break;
 case "gridfs_out":
-  $out = grid_out( $argv[2], $argv[3] );
-  return;
+  $out = grid_out( $argv[3], $argv[4] );
+  break;
 default:
   $implemented = false;
 }
