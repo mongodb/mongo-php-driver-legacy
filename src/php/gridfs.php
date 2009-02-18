@@ -125,6 +125,18 @@ class MongoGridfsFile {
   public function getSize() {
     return mongo_gridfile_size( $this->_file );
   }
+
+  /**
+   * Writes this file to the filesystem.
+   * @param string $filename the location to which to write the file
+   * @return int the number of bytes written
+   */
+  public function write( $filename = null ) {
+    if (!$filename) {
+      $filename = $this->getFilename();
+    }
+    return mongo_gridfile_write($this->_file, $filename );
+  }
 }
 
 ?>

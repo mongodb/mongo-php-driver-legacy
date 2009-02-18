@@ -235,6 +235,19 @@ function stress1() {
   }
 }
 
+function grid_in( $file ) {
+  $m = new Mongo();
+  $grid = $m->selectDB( "driver_test_framework" )->getGridfs();
+  $grid->storeFile( $file );
+}
+
+function grid_out( $file, $ofile ) {
+  $m = new Mongo();
+  $grid = $m->selectDB( "driver_test_framework" )->getGridfs();
+  $f = $grid->findFile( $file );
+  $f->write( $ofile );
+}
+
 $testname = $argv[1];
 $filename = $argv[2];
 $implemented = true;
@@ -275,6 +288,12 @@ case "test1":
 case "stress1":
   $out = stress1();
   break;
+case "gridfs_in":
+  $out = grid_in( $argv[2] );
+  return;
+case "gridfs_out":
+  $out = grid_out( $argv[2], $argv[3] );
+  return;
 default:
   $implemented = false;
 }
