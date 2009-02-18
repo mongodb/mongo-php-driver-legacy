@@ -98,7 +98,8 @@ PHP_FUNCTION( mongo_gridfs_store ) {
   ZEND_FETCH_RESOURCE(fs, mongo::GridFS*, &zfs, -1, PHP_GRIDFS_RES_NAME, le_gridfs);
 
   std::string *f = new std::string( filename, filename_len );
-  mongo::BSONElement elem = fs->storeFile( *f );
+  mongo::BSONObj obj = fs->storeFile( *f );
+  mongo::BSONElement elem = obj.findElement( "_id" );
 
   delete f;
   zval *ret = oid_to_mongo_id( elem.__oid() );
