@@ -137,7 +137,7 @@ for b in boostLibs:
         print( "ERROR: can't find boost library: " + b )
         Exit(1)
 
-conf.CheckLib( "boost_system-mt" )
+myCheckLib( "boost_system-mt" )
 
 if not conf.CheckLib( "mongoclient" ):
     print( "ERROR: can't find mongo client " )
