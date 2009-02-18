@@ -3,6 +3,7 @@
 #
 
 import os
+import types 
 import SCons.Util
 from subprocess import Popen, PIPE
 
@@ -34,23 +35,31 @@ AddOption('--mac-boost',
         action="store",
         help="location of boost libraries for mac installs" )
 
+def phpConfig( name ):
+    return Popen( [ "php-config", "--" + name ], stdout=PIPE ).communicate()[ 0 ].strip()
+extensionDir = phpConfig( "extension-dir" )
+
+AddOption('--extension-dir',
+          dest='extensionDir',
+          default=extensionDir,
+          nargs=1,
+          action='store',
+          help="path to store php extension")
+
 # -----------
 # GLOBAL SETUP
 # -----------
 
-def phpConfig( name ):
-    return Popen( [ "php-config", "--" + name ], stdout=PIPE ).communicate()[ 0 ].strip()
 
 env = Environment()
 
-env.Append( CFLAGS=" -O0 -DPHP_ATOM_INC " );
+env.Append( CFLAGS=" -O0 -DPHP_ATOM_INC " )
 env.Append( CPPPATH=[ "." ] )
 
 boostLibs = [ "thread" , "filesystem" , "program_options" ]
 nix = False
 
-extensionDir = phpConfig( "extension-dir" )
-
+extensionDir = GetOption( "extensionDir" )
 mongoHome = GetOption( "mongodb" )
 boostLib = GetOption( "boostlib" )
 force64 = not GetOption( "force64" ) is None
@@ -97,8 +106,34 @@ if not conf.CheckHeader( "php.h" ):
     print( "can't find php.h" )
     Exit(1)
 
+def myCheckLib( poss ):
+
+    if type( poss ) != types.ListType :
+        poss = [poss]
+        
+    allPlaces = [];
+    if nix:
+        allPlaces += env["LIBPATH"]
+        if not force64:
+            allPlaces += [ "/usr/lib" , "/usr/local/lib" ]
+            
+        for p in poss:
+            for loc in allPlaces:
+                fullPath = loc + "/lib" + p + ".a"
+                if os.path.exists( fullPath ):
+                    env['_LIBFLAGS']='${_stripixes(LIBLINKPREFIX, LIBS, LIBLINKSUFFIX, LIBPREFIXES, LIBSUFFIXES, __env__)} $SLIBS'
+                    env.Append( SLIBS=" " + fullPath + " " )
+                    return True
+
+    res = conf.CheckLib( poss )
+    if res:
+        return True
+
+    return False
+
 for b in boostLibs:
-    if not conf.CheckLib( [ "boost_" + b + "-mt" , "boost_" + b  ] ):
+    l = "boost_" + b
+    if not myCheckLib( [ l + "-mt" , l ] ):
         print( "ERROR: can't find boost library: " + b )
         Exit(1)
 
