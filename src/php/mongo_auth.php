@@ -14,185 +14,271 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- * @package Mongo
+ * PHP version 5 
+ *
+ * @category DB
+ * @package  Mongo
+ * @author   Kristina Chodorow <kristina@10gen.com>
+ * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
+ * @version  CVS: 000000
+ * @link     http://www.mongodb.org
  */
 
 
 /**
  * Use <pre>getAuth()</pre> to log in for an authenticated session.
  * 
- * @package Mongo
+ * @category DB
+ * @package  Mongo
+ * @author   Kristina Chodorow <kristina@10gen.com>
+ * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
+ * @link     http://www.mongodb.org
  */
-class MongoAuth {
+class MongoAuth
+{
 
-  private $_connection;
-  private $_db;
+    private $_connection;
+    private $_db;
 
-  /**
-   * Attempt to create a new authenticated session.
-   * @param connection $conn a database connection
-   * @param string $db the name of the db
-   * @param string $username the username
-   * @param string $password the password
-   * @return MongoAuth an authenticated session or false if login was unsuccessful
-   */
-  public static function getAuth( $conn, $db, $username, $password ) {
-    $result = MongoAuth::getUser( $conn, $db, $username, $password );
-    if( !$result[ "ok" ] ) {
-      return false;
+    /**
+     * Attempt to create a new authenticated session.
+     *
+     * @param connection $conn     a database connection
+     * @param string     $db       the name of the db
+     * @param string     $username the username
+     * @param string     $password the password
+     *
+     * @return MongoAuth an authenticated session or false if login was unsuccessful
+     */
+    public static function getAuth($conn, $db, $username, $password ) 
+    {
+        $result = MongoAuth::_getUser($conn, $db, $username, $password);
+        if (!$result[ "ok" ]) {
+            return false;
+        }
+
+        // check if we need an admin instance
+        if ($db == "admin") {
+            $auth_obj = MongoAdmin::getAuth($conn);
+        } else {
+            $auth_obj = new MongoAuth($conn, $db);
+        }
+
+        // return a new authenticated instance
+        $auth_obj->_connection = $conn;
+        $auth_obj->_db         = $db;
+        return $auth_obj;
     }
 
-    // check if we need an admin instance
-    if( $db == "admin" ) {
-      $auth_obj = MongoAdmin::getAuth( $conn );
-    }
-    else {
-      $auth_obj = new MongoAuth( $conn, $db );
-    }
+    /**
+     * Communicates with the database to log in a user.
+     * 
+     * @param connection $conn     database connection
+     * @param string     $db       db name
+     * @param string     $username username
+     * @param string     $password plaintext password
+     *
+     * @return array the database response
+     */
+    private static function _getUser($conn, $db, $username, $password ) 
+    {
+        $ns   = $db . ".system.users";
+        $user = mongo_find_one($conn, $ns, array("user" => $username));
+        if (!$user) {
+            return false;
+        }
+        $pwd = $user[ "pwd" ];
 
-    // return a new authenticated instance
-    $auth_obj->_connection = $conn;
-    $auth_obj->_db = $db;
-    return $auth_obj;
-  }
+        // get the nonce
+        $result = MongoUtil::dbCommand($conn, array(MongoUtil::$NONCE => 1 ), $db);
+        if (!$result[ "ok" ]) {
+            return false;
+        }
+        $nonce = $result[ "nonce" ];
 
-  private static function getUser( $conn, $db, $username, $password ) {
-    $ns = $db . ".system.users";
-    $user = mongo_find_one( $conn, $ns, array( "user" => $username ) );
-    if( !$user ) {
-      return false;
-    }
-    $pwd = $user[ "pwd" ];
+        // create a digest of nonce/username/pwd
+        $digest = md5($nonce . $username . $pwd);
+        $data   = array(MongoUtil::$AUTHENTICATE => 1, 
+                        "user" => $username, 
+                        "password" => $password,
+                        "nonce" => $nonce,
+                        "key" => $digest);
 
-    // get the nonce
-    $result = MongoUtil::dbCommand( $conn, array( MongoUtil::$NONCE => 1 ), $db );
-    if( !$result[ "ok" ] )
-      return false;
-    $nonce = $result[ "nonce" ];
-
-    // create a digest of nonce/username/pwd
-    $digest = md5( $nonce . $username . $pwd );
-    $data = array( MongoUtil::$AUTHENTICATE => 1, 
-           "user" => $username, 
-           "password" => $password,
-           "nonce" => $nonce,
-           "key" => $digest );
-
-    // send everything to the db and pray
-    return MongoUtil::dbCommand( $conn, $data, $db );
-  }
-
-  private function __construct( $conn, $db ) {
-  }
-
-  public function __destruct() {
-    $this->_connection = NULL;
-    $this->_db = NULL;
-  }
-
-  public function __toString() {
-    return "Authenticated";
-  }
-
-  /**
-   * Ends authenticated session.
-   * @return boolean if successfully ended
-   */
-  public function logout() {
-    $data = array( MongoUtil::$LOGOUT => 1 );
-    $result = MongoUtil::dbCommand( $this->_connection, $data, $this->_db );
-
-    if( !$result[ "ok" ] ) {
-      // trapped in the system forever
-      return false;
+        // send everything to the db and pray
+        return MongoUtil::dbCommand($conn, $data, $db);
     }
 
-    $this->__destruct();
-    return true;
-  }
+    /**
+     * Creates a new authenticated connection.
+     * 
+     * @param connection $conn db connection
+     * @param string     $db   db name
+     */
+    private function __construct($conn, $db ) 
+    {
+    }
+
+    /**
+     * Destroys the authenticated connection.
+     */
+    public function __destruct() 
+    {
+        $this->_connection = null;
+        $this->_db         = null;
+    }
+
+    /**
+     * Returns "Authenticated", for reasons I can't remember.
+     *
+     * @return string "Authenticated"
+     */
+    public function __toString() 
+    {
+        return "Authenticated";
+    }
+
+    /**
+     * Ends authenticated session.
+     *
+     * @return boolean if successfully ended
+     */
+    public function logout() 
+    {
+        $data   = array(MongoUtil::$LOGOUT => 1);
+        $result = MongoUtil::dbCommand($this->_connection, $data, $this->_db);
+
+        if (!$result[ "ok" ]) {
+            // trapped in the system forever
+            return false;
+        }
+
+        $this->__destruct();
+        return true;
+    }
 }
 
 /**
  * Use <pre>getAuth()</pre> from the admin database to log in for an admin session.
  * 
- * @package Mongo
+ * @category DB
+ * @package  Mongo
+ * @author   Kristina Chodorow <kristina@10gen.com>
+ * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
+ * @link     http://www.mongodb.org
  */
-class MongoAdmin extends MongoAuth {
+class MongoAdmin extends MongoAuth
+{
 
-  /**
-   * @return MongoAdmin an admin session, or false if login was unsuccessful
-   */
-  public static function getAuth( $conn ) {
-    return new MongoAdmin( $conn );
-  }
+    /**
+     * Get a new admin session.  
+     * This will not give an actual admin session if called directly, 
+     * the programmer must call MongoAuth::getAuth() to be logged in.
+     *
+     * @param connection $conn a database connection
+     *
+     * @return MongoAdmin an admin session, or false if login was unsuccessful
+     */
+    public static function getAuth($conn ) 
+    {
+        return new MongoAdmin($conn);
+    }
 
-  private function __construct( $conn ) {
-    $this->_connection = $conn;
-    $this->_db = "admin";
-  }
+    /**
+     * Creates a new admin session.  To get a new session, call 
+     * MongoAuth::getAuth() using the admin database.
+     * 
+     * @param connection $conn db connection
+     */
+    private function __construct($conn ) 
+    {
+        $this->_connection = $conn;
+        $this->_db         = "admin";
+    }
 
-  /** 
-   * Lists all of the databases.
-   * @return Array each database with its size and name
-   */
-  public function listDBs() {
-    $data = array( MongoUtil::$LIST_DATABASES => 1 );
-    $result = MongoUtil::dbCommand( $this->_connection, $data, $this->_db );
-    if( $result )
-      return $result[ "databases" ];
-    else
-      return false;
-  }
+    /** 
+     * Lists all of the databases.
+     *
+     * @return Array each database with its size and name
+     */
+    public function listDBs() 
+    {
+        $data   = array(MongoUtil::$LIST_DATABASES => 1);
+        $result = MongoUtil::dbCommand($this->_connection, $data, $this->_db);
+        if ($result) {
+            return $result[ "databases" ];
+        } else {
+            return false;
+        }
+    }
 
-  /**
-   * Shuts down the database.
-   * @return bool if the database was successfully shut down
-   */
-  public function shutdown() {
-    $result = MongoUtil::dbCommand( $this->_connection, array( MongoUtil::$SHUTDOWN => 1 ), $this->_db );
-    return $result[ "ok" ];
-  }
+    /**
+     * Shuts down the database.
+     *
+     * @return bool if the database was successfully shut down
+     */
+    public function shutdown() 
+    {
+        $result = MongoUtil::dbCommand($this->_connection, 
+                                       array(MongoUtil::$SHUTDOWN => 1 ), 
+                                       $this->_db);
+        return $result[ "ok" ];
+    }
 
-  /**
-   * Turns logging on/off.
-   * @param int $level logging level
-   * @return bool if the logging level was set
-   */
-  public function setLogging( $level ) {
-    $result = MongoUtil::dbCommand( $this->_connection, array( MongoUtil::$LOGGING => (int)$level ), $this->_db );
-    return $result[ "ok" ];
-  }
+    /**
+     * Turns logging on/off.
+     *
+     * @param int $level logging level
+     *
+     * @return bool if the logging level was set
+     */
+    public function setLogging($level ) 
+    {
+        $result = MongoUtil::dbCommand($this->_connection, 
+                                       array(MongoUtil::$LOGGING => (int)$level ), 
+                                       $this->_db);
+        return $result[ "ok" ];
+    }
 
-  /**
-   * Sets tracing level.
-   * @param int $level trace level
-   * @return bool if the tracing level was set
-   */
-  public function setTracing( $level ) {
-    $result = MongoUtil::dbCommand( $this->_connection, array( MongoUtil::$TRACING => (int)$level ), $this->_db );
-    return $result[ "ok" ];
-  }
+    /**
+     * Sets tracing level.
+     *
+     * @param int $level trace level
+     *
+     * @return bool if the tracing level was set
+     */
+    public function setTracing($level ) 
+    {
+        $result = MongoUtil::dbCommand($this->_connection, 
+                                       array(MongoUtil::$TRACING => (int)$level ), 
+                                       $this->_db);
+        return $result[ "ok" ];
+    }
 
-  /**
-   * Sets only the query tracing level.
-   * @param int $level trace level
-   * @return bool if the tracing level was set
-   */
-  public function setQueryTracing( $level ) {
-    $result = MongoUtil::dbCommand( $this->_connection, array( MongoUtil::$QUERY_TRACING => (int)$level ), $this->_db );
-    return $result[ "ok" ];
-  }
+    /**
+     * Sets only the query tracing level.
+     *
+     * @param int $level trace level
+     *
+     * @return bool if the tracing level was set
+     */
+    public function setQueryTracing($level ) 
+    {
+        $result = MongoUtil::dbCommand($this->_connection, 
+                                       array(MongoUtil::$QUERY_TRACING => (int)$level ), 
+                                       $this->_db);
+        return $result[ "ok" ];
+    }
 
 }
 
-define( "MONGO_LOG_OFF", 0 );
-define( "MONGO_LOG_W", 1 );
-define( "MONGO_LOG_R", 2 );
-define( "MONGO_LOG_RW", 3 );
+define("MONGO_LOG_OFF", 0);
+define("MONGO_LOG_W", 1);
+define("MONGO_LOG_R", 2);
+define("MONGO_LOG_RW", 3);
 
-define( "MONGO_TRACE_OFF", 0 );
-define( "MONGO_TRACE_SOME", 1 );
-define( "MONGO_TRACE_ON", 2 );
+define("MONGO_TRACE_OFF", 0);
+define("MONGO_TRACE_SOME", 1);
+define("MONGO_TRACE_ON", 2);
 
 
 ?>
