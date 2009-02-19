@@ -1,0 +1,490 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+            <title>PHP Tutorial - Kristina Chodorow - 10gen Confluence</title>
+    
+        
+        
+        
+        
+        
+
+                        
+        
+    
+    
+            
+<meta id="confluence-context-path" name="confluence-context-path" content="">
+<meta id="confluence-space-key" name="confluence-space-key" content="~kristina">
+
+<script type="text/javascript">
+    // Deprecated global variables. To be removed in a future version of Confluence.
+    var contextPath = '';
+    var i18n = [];
+</script>
+
+    
+    
+</head>
+
+            <body onload="placeFocus()" id="com-atlassian-confluence">
+    
+
+
+    <script type="text/javascript">
+        AJS.toInit(function ($) {
+            $(".message-close-button").each(function () {
+                var li = $(this).parent();
+                var cookieId = this.alt;
+                $(this).click(function () {
+                    li.slideUp();
+                    setCookie(cookieId, true);
+                });
+            });
+
+            $("#messageContainer .confluence-messages").each(function () {
+                if (!getCookie(this.id)) {
+                    $(this).show();
+                }
+            })
+        });
+    </script>
+
+        
+<div id="main">
+
+    <h1 id="title-heading" class="pagetitle">
+		<span id="title-text">
+                  PHP Tutorial
+    				</span>
+    </h1>
+
+    <!--
+    Root decorator: this is a layer of abstraction that Confluence doesn't need. It will be removed eventually.
+-->
+
+
+
+
+    
+    
+
+    
+    
+        
+    
+    
+                    
+        
+    
+
+    
+
+
+<div id="content" class="page view">
+    
+        
+    
+                                
+        
+    
+
+                    
+
+        
+        <div class="page-metadata">
+    <ul class="page-metadata-icons">
+        </ul>
+            Added by <a href="/display/~kristina">Kristina Chodorow</a>, last edited by <a href="/display/~kristina">Kristina Chodorow</a> on Feb 12, 2009
+                            <span class="noprint">&nbsp;(<a href="/pages/diffpages.action?pageId=589836&originalId=590136">view change</a>)</span>
+                </div>        
+        <div class="wiki-content">
+           <!-- wiki content -->
+            <div>
+<ul>
+    <li><a href='#PHPTutorial-Introduction'>Introduction</a></li>
+    <li><a href='#PHPTutorial-AQuickTour'>A Quick Tour</a></li>
+<ul>
+    <li><a href='#PHPTutorial-MakingaConnection'>Making a Connection</a></li>
+    <li><a href='#PHPTutorial-GettingaDatabase'>Getting a Database</a></li>
+    <li><a href='#PHPTutorial-Authentication%28Optional%29'>Authentication (Optional)</a></li>
+    <li><a href='#PHPTutorial-'></a></li>
+    <li><a href='#PHPTutorial-GettingACollection'>Getting A Collection</a></li>
+    <li><a href='#PHPTutorial-InsertingaDocument'>Inserting a Document</a></li>
+    <li><a href='#PHPTutorial-'></a></li>
+    <li><a href='#PHPTutorial-FindingtheFirstDocumentInACollectionusing%7B%7BfindOne%28%29%7D%7D'>Finding the First Document In A Collection using <tt>findOne()</tt></a></li>
+    <li><a href='#PHPTutorial-AddingMultipleDocuments'>Adding Multiple Documents</a></li>
+    <li><a href='#PHPTutorial-CountingDocumentsinACollection'>Counting Documents in A Collection</a></li>
+    <li><a href='#PHPTutorial-UsingaCursortoGetAlltheDocuments'>Using a Cursor to Get All the Documents</a></li>
+    <li><a href='#PHPTutorial-GettingASingleDocumentwithAQuery'>Getting A Single Document with A Query</a></li>
+    <li><a href='#PHPTutorial-GettingASetofDocumentsWithaQuery'>Getting A Set of Documents With a Query</a></li>
+    <li><a href='#PHPTutorial-CreatingAnIndex'>Creating An Index</a></li>
+    <li><a href='#PHPTutorial-'></a></li>
+</ul>
+    <li><a href='#PHPTutorial-QuickTouroftheAdministrativeFunctions'>Quick Tour of the Administrative Functions</a></li>
+<ul>
+    <li><a href='#PHPTutorial-GettingAListofDatabases'>Getting A List of Databases</a></li>
+    <li><a href='#PHPTutorial-'></a></li>
+</ul>
+</ul></div>
+
+<h3><a name="PHPTutorial-Introduction"></a>Introduction</h3>
+
+<p>This page is a brief overview of working with the MongoDB PHP Driver.</p>
+
+<h3><a name="PHPTutorial-AQuickTour"></a>A Quick Tour</h3>
+
+
+<p>Before using mongo driver functions, be sure to include the mongo.php file.</p>
+
+<div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">require_once <span class="code-quote">"mongo.php"</span>;
+</pre>
+</div></div>
+
+<h5><a name="PHPTutorial-MakingaConnection"></a>Making a Connection</h5>
+
+<p>To connect to mongo, say:</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$connection = <span class="code-keyword">new</span> Mongo(); <span class="code-comment">// connects to localhost:27017
+</span>$connection = <span class="code-keyword">new</span> Mongo( <span class="code-quote">"example.com"</span> ); <span class="code-comment">// connect to a remote host (<span class="code-keyword">default</span> port)
+</span>$connection = <span class="code-keyword">new</span> Mongo( <span class="code-quote">"example.com"</span>, 65432 ); <span class="code-comment">// connect to a remote host at a given port</span>
+</pre>
+</div></div>Now <tt>$connection</tt> can be used to get a database.</p>
+
+<h5><a name="PHPTutorial-GettingaDatabase"></a>Getting a Database</h5>
+
+<p>To select a database, use:</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$db = $connection-&gt;selectDB( <span class="code-quote">"dbname"</span> );
+</pre>
+</div></div>The database does not need to be created in advance, you can create new databases by selecting them.  Be careful of typos&#33;  You can inadvertently create a new database, which can cause confusing errors:</p>
+
+<div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$db = $connection-&gt;selectDB( <span class="code-quote">"mybiglongdbname"</span> );
+<span class="code-comment">// <span class="code-keyword">do</span> some stuff
+</span>$db = $connection-&gt;selectDB( <span class="code-quote">"mybiglongdbnme"</span> );
+<span class="code-comment">// now connected to a different database!</span>
+</pre>
+</div></div>
+
+<h5><a name="PHPTutorial-Authentication%28Optional%29"></a>Authentication (Optional)</h5>
+
+<p>To log in, chose a database and use the <tt>getAuth()</tt> command:</p>
+
+<div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$db = $connection-&gt;selectDB( <span class="code-quote">"foo"</span> );
+$auth = $db-&gt;getAuth( <span class="code-quote">"username"</span>, <span class="code-quote">"password"</span> );
+<span class="code-comment">// <span class="code-keyword">do</span> stuff
+</span>$auth-&gt;logout();
+</pre>
+</div></div>
+
+<h5><a name="PHPTutorial-"></a></h5>
+
+<h5><a name="PHPTutorial-GettingACollection"></a>Getting A Collection</h5>
+
+<p>To get a specific collection, use the <tt>selectCollection()</tt> command.  Similarly to the <tt>selectDB()</tt> command, this creates the collection if it does not already exist.</p>
+
+<div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$collection = $db-&gt;selectCollection( <span class="code-quote">"foobar"</span> );
+</pre>
+</div></div>
+
+<h5><a name="PHPTutorial-InsertingaDocument"></a>Inserting a Document</h5>
+
+<p>Arrays are the basic object that can be saved to a collection in the database.  For example:</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$doc = array( <span class="code-quote">"name"</span> =&gt; <span class="code-quote">"MongoDB"</span>,
+   <span class="code-quote">"type"</span> =&gt; <span class="code-quote">"database"</span>,
+   <span class="code-quote">"count"</span> =&gt; 1,
+   <span class="code-quote">"info"</span> =&gt; array( <span class="code-quote">"x"</span> =&gt; 203,
+       <span class="code-quote">"y"</span> =&gt; 102
+   )
+);
+</pre>
+</div></div>Note that you can have nested arrays.</p>
+
+
+<p>To insert this document, use the collection's <tt>insert()</tt> command:</p>
+
+<div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$m = <span class="code-keyword">new</span> Mongo();
+$collection = $m-&gt;selectDB( <span class="code-quote">"foo"</span> )-&gt;selectCollection( <span class="code-quote">"bar"</span> );
+$collection-&gt;insert( $doc );
+</pre>
+</div></div>
+
+<h5><a name="PHPTutorial-"></a></h5>
+
+
+<h5><a name="PHPTutorial-FindingtheFirstDocumentInACollectionusing%7B%7BfindOne%28%29%7D%7D"></a>Finding the First Document In A Collection using <tt>findOne()</tt></h5>
+
+<p>To show that the document we inserted in the previous step is there, we can do a simple <tt>findOne()</tt> operation to get the first document in the collection.  This method returns a single document (rather than the <tt>MongoCursor</tt> that the <tt>find()</tt> operation returns), and it's useful for things where there only is one document, or you are only interested in one result.</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$obj = $collection-&gt;findOne();
+echo MongoUtil::toJSON( $obj ) . <span class="code-quote">"\n"</span>;
+</pre>
+</div></div>and you should see</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">array( <span class="code-quote">"name"</span> =&gt; <span class="code-quote">"MongoDB"</span>,<span class="code-quote">"type"</span> =&gt; <span class="code-quote">"database"</span>,<span class="code-quote">"count"</span> =&gt; 1,<span class="code-quote">"info"</span> =&gt; array( <span class="code-quote">"x"</span> =&gt; 203,<span class="code-quote">"y"</span> =&gt; 102 ) )
+</pre>
+</div></div>Note the <tt>&#95;id</tt> and <tt>&#95;ns</tt> elements have been added automatically by MongoDB to your document.  Remember, MongoDB reserves element names that start with _ for internal use.</p>
+
+<div class='panelMacro'><table class='tipMacro'><colgroup><col width='24'><col></colgroup><tr><td valign='top'><img src="/images/icons/emoticons/check.gif" width="16" height="16" align="absmiddle" alt="" border="0"></td><td><b>MongoUtil::toJSON</b><br /><p>The <tt>MongoUtil::toJSON()</tt> function is handy for debugging, as it returns a string representation of an array.</p></td></tr></table></div>
+
+<h5><a name="PHPTutorial-AddingMultipleDocuments"></a>Adding Multiple Documents</h5>
+
+<p>In order to do more interesting things with queries, let's add multiple simple documents to the collection.  These documents will just be
+<div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">array( <span class="code-quote">"i"</span> =&gt; value );
+</pre>
+</div></div>and we can do this fairly efficiently in a loop</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java"><span class="code-keyword">for</span>($i=0; $i&lt;100; $i++) {
+    $collection-&gt;insert( array( <span class="code-quote">"i"</span> =&gt; $i ) );
+}
+</pre>
+</div></div>Notice that we can insert arrays with different key sets into the same collection.  This aspect is what we mean when we say that MongoDB is "schema-free"</p>
+
+<h5><a name="PHPTutorial-CountingDocumentsinACollection"></a>Counting Documents in A Collection</h5>
+
+<p>Now that we've inserted 101 documents (the 100 we did in the loop, plus the first one), we can check to see if we have them all using the <tt>count()</tt> method.</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">echo $collection-&gt;count();
+</pre>
+</div></div>and it should print <tt>101</tt>.</p>
+
+<h5><a name="PHPTutorial-UsingaCursortoGetAlltheDocuments"></a>Using a Cursor to Get All the Documents</h5>
+
+<p>In order to get all the documents in the collection, we will use the <tt>find()</tt> method.  The <tt>find()</tt> method returns a <tt>mongo_cursor</tt> object which allows us to iterate over the set of documents that matched our query.  So to query all of the documents and print them out :</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$cursor = $collection-&gt;find();
+<span class="code-keyword">while</span>( $cursor-&gt;hasNext() ) {
+    $obj = $cursor-&gt;next();
+    echo MongoUtil::toJSON( $obj );
+}
+</pre>
+</div></div>and that should print all 101 documents in the collection.</p>
+
+<h5><a name="PHPTutorial-GettingASingleDocumentwithAQuery"></a>Getting A Single Document with A Query</h5>
+
+<p>We can create a <em>query</em> to pass to the <tt>find()</tt> method to get a subset of the documents in our collection.  For example, if we wanted to find the document for which the value of the "i" field is 71, we would do the following ;</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$query = array( <span class="code-quote">"i"</span> =&gt; 71 );
+$cursor = $collection-&gt;find( $query );
+
+<span class="code-keyword">while</span>( $cursor-&gt;hasNext() ) {
+    echo MongoUtil::toJSON( $cursor-&gt;next() );
+}
+</pre>
+</div></div>and it should just print just one document</p>
+
+<div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">{ <span class="code-quote">"_id"</span> : <span class="code-quote">"49903677516250c1008d624e"</span> , <span class="code-quote">"i"</span> : 71 , <span class="code-quote">"_ns"</span> : <span class="code-quote">"testCollection"</span>}
+</pre>
+</div></div>
+
+<h5><a name="PHPTutorial-GettingASetofDocumentsWithaQuery"></a>Getting A Set of Documents With a Query</h5>
+
+<p>We can use the query to get a set of documents from our collection.  For example, if we wanted to get all documents where "i" &gt; 50, we could write :</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java"><span class="code-comment">// note the escaped <span class="code-quote">"$"</span>
+</span>$query = array( <span class="code-quote">"i"</span> =&gt; array( <span class="code-quote">"\$gt"</span> =&gt; 50 ) );
+$cursor = $coll-&gt;find( $query );
+
+<span class="code-keyword">while</span>( $cursor-&gt;hasNext() ) {
+    echo MongoUtil::toJSON( $cursor-&gt;next() );
+}
+</pre>
+</div></div>which should print the documents where i &gt; 50.  We could also get a range, say   20 &lt; i &lt;= 30 :</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$query = array( <span class="code-quote">"i"</span> =&gt; array( <span class="code-quote">"\$gt"</span> =&gt; 50, <span class="code-quote">"\$lte"</span> =&gt; 30 ) );
+$cursor = $coll-&gt;find( $query );
+
+<span class="code-keyword">while</span>( $cursor-&gt;hasNext() ) {
+    echo MongoUtil::toJSON( $cursor-&gt;next() );
+}
+
+</pre>
+</div></div>As it is easy to forget to escape the "$", there are several convenience constants, so you can say:</p>
+
+<p><div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$query = array( <span class="code-quote">"i"</span> =&gt; array( MONGO_GT =&gt; 50, MONGO_LTE =&gt; 30 ) );
+</pre>
+</div></div>See the API documentation for a list of all constants.</p>
+
+<h5><a name="PHPTutorial-CreatingAnIndex"></a>Creating An Index</h5>
+
+<p>MongoDB supports indexes, and they are very easy to add on a collection.  To create an index, you just specify the field that should be indexed, and specify if you want the index to be ascending (1) or descending (-1).  The following creates an ascending index on the "i" field :</p>
+
+<div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$coll-&gt;ensureIndex( array( <span class="code-quote">"i"</span> =&gt; 1 ) );  <span class="code-comment">// create index on <span class="code-quote">"i"</span>, ascending
+</span>$coll-&gt;ensureIndex( <span class="code-quote">"i"</span> );  <span class="code-comment">// same</span>
+</pre>
+</div></div>
+
+<h5><a name="PHPTutorial-"></a></h5>
+
+<h3><a name="PHPTutorial-QuickTouroftheAdministrativeFunctions"></a>Quick Tour of the Administrative Functions</h3>
+
+<p>The administrative functions are made available via logging in.  There are two levels of login: authenticated and administrator.  If you login to the admin database, you have administrator-level privileges, otherwise you only have authenticated privileges.</p>
+
+<div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$m = <span class="code-keyword">new</span> Mongo();
+$db = $m-&gt;selectDB( <span class="code-quote">"admin"</span> );
+$admin_session = $db-&gt;getAuth( $username, $password );
+</pre>
+</div></div>
+
+<h5><a name="PHPTutorial-GettingAListofDatabases"></a>Getting A List of Databases</h5>
+
+<p>You can get a list of the available databases:</p>
+
+<div class="code panel" style="border-width: 1px;"><div class="codeContent panelContent">
+<pre class="code-java">$dbs = $admin_session-&gt;listDBs();
+foreach( $dbs as $val ) {
+ echo <span class="code-quote">"db:\n"</span>;
+ echo <span class="code-quote">"\t"</span> . MongoUtil::toJSON( $val ) . <span class="code-quote">"\n"</span>; <span class="code-comment">// returns objects containing the name and size of each db }</span>
+</pre>
+</div></div>
+
+<h5><a name="PHPTutorial-"></a></h5>
+        </div>
+
+        <!--
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns:trackback="http://madskills.com/public/xml/rss/module/trackback/">
+         <rdf:Description
+    rdf:about="http://www.mongodb.org//display/~kristina/PHP+Tutorial"
+    dc:identifier="http://www.mongodb.org//display/~kristina/PHP+Tutorial"
+    dc:title="PHP Tutorial"
+    trackback:ping="http://www.mongodb.org//rpc/trackback/589836"/>
+</rdf:RDF>
+-->
+
+            
+    
+    
+    
+    
+    
+
+
+<fieldset class="hidden parameters">
+    <legend>Labels parameters</legend>
+    <input type="hidden" id="editLabel" value="Edit">
+    <input type="hidden" id="addLabel" value="Add Labels">
+    <input type="hidden" id="domainName" value="http://www.mongodb.org/">
+    <input type="hidden" id="pageId" value="589836">
+    <input type="hidden" id="spaceKey" value="~kristina">
+</fieldset>
+
+<div id="labels-section" class="pageSection">
+    <div id="default-labels-header" class="section-header">
+        <h2 id="labels-section-title" class="section-title  hidden ">Labels</h2>
+                            <a id="labels-edit" href="#" class="show-labels-editor add">Add Labels</a>
+                <a href="#" class="hide-labels-editor inline-control-link hidden">
+            Done
+        </a>
+            </div>
+
+    <div class="labels-editor">
+        <div id="labelsList">
+                    </div>
+
+        <span class="errorMessage error" id="errorSpan"></span>
+        <form method="GET" action="" id="add-labels-form">
+            <div id="labelInputSpan" class="labels-input">
+                <div id="labelOperationErrorContainer" class="hidden">
+                    <span class="error"><span class="errorMessage" id="labelOperationErrorMessage"></span></span>
+                </div>
+
+                <div class="caption">Enter labels to add to this page:</div>
+
+                <input autocomplete="off" id="labelsString" name="labelsString" value="" size="40">
+                <input type="submit" class="add-labels" value="Add">
+                <input type="submit" class="hide-labels-editor" value="Done">
+                <div id="waitImageAndStatus">
+                    <img class="waiting" alt="Please wait" src="/images/icons/wait.gif">&nbsp;
+                    <span id="labelOperationStatus" class="smalltext"></span>
+                </div>
+                <div class="auto_complete" id="labelsAutocompleteList"></div>
+                <div class="labels-tip">
+                    <div id="suggestedLabelsSpan"></div>
+                    Looking for a label? Just start typing.
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+            
+            
+
+<!--
+    Root decorator: this is a layer of abstraction that Confluence doesn't need. It will be removed eventually.
+-->
+
+
+
+
+    
+        
+    
+    
+    
+
+
+<fieldset class="parameters hidden">
+    <input type="hidden" id="deleteCommentConfirmMessage" value="Are you sure you want to remove the comment?">
+    <input type="hidden" id="collapseTooltip" value="Click to toggle the display of this comment.">
+</fieldset>
+
+
+
+
+
+<div id="comments-section" class="pageSection">
+    
+    
+    
+    
+                                    <p class="noprint">
+                <a href="/display/~kristina/PHP+Tutorial?showComments=true&amp;showCommentArea=true#addcomment" id="add-comment-bottom" accesskey="m">Add Comment</a>
+            </p>
+                        </div>
+
+
+
+            
+</div>
+    <br class="clear">
+</div>
+
+
+<div id="footer">
+                    <ul id="poweredby">
+        <li class="noprint">Powered by <a href="http://www.atlassian.com/software/confluence" class="smalltext">Atlassian Confluence</a> 2.10, the <a href="http://www.atlassian.com/software/confluence" class="smalltext">Enterprise Wiki</a>.</li>
+        <li class="print-only">Printed by Atlassian Confluence 2.10, the Enterprise Wiki.</li>
+        <li class="noprint"><a href="http://jira.atlassian.com/secure/BrowseProject.jspa?id=10470" class="smalltext">Bug/feature request</a> &#8211;</li>
+        <li class="noprint"><a href="http://www.atlassian.com/about/connected.jsp?s_kwcid=Confluence-stayintouch" class="smalltext">Atlassian news</a> &#8211;</li>
+        <li class="noprint"><a href="/administrators.action">Contact administrators</a></li>
+    </ul>
+</div>
+
+
+</body>
+</html>
