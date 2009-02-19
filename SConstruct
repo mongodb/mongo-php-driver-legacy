@@ -4,6 +4,7 @@
 
 import os
 import types 
+import tempfile
 import SCons.Util
 from subprocess import Popen, PIPE
 
@@ -36,8 +37,11 @@ AddOption('--mac-boost',
         help="location of boost libraries for mac installs" )
 
 def phpConfig( name ):
-    return Popen( [ "php-config", "--" + name ], stdout=PIPE ).communicate()[ 0 ].strip()
-extensionDir = phpConfig( "extension-dir" )
+    x = Popen( "php -i | grep extension_dir", stdout=PIPE, shell=True ).communicate()[ 0 ].strip()
+    arr = x.split( " => " )
+    return arr[1]
+
+extensionDir = phpConfig( "extension_dir" )
 
 AddOption('--extension-dir',
           dest='extensionDir',
