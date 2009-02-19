@@ -1,6 +1,7 @@
-To build:
+See http://www.mongodb.org/display/DOCS/PHP+Language+Center for detailed installation instructions.
+
+If you absolutely must, you can install it without reading the wiki:
 
    $ sudo scons install
 
-This attempts to put mongo.so in your PHP extension folder.  For more detailed instructions, please see http://www.mongodb.org.
-
+Now go read the wiki, because you need to configure php.ini before it will actually work.
