@@ -30,6 +30,8 @@ extern int le_gridfs;
 extern int le_gridfile;
 extern int le_gridfs_chunk;
 
+/* {{{ proto resource mongo_gridfs_init() 
+   Creates a new gridfs connection point */
 PHP_FUNCTION( mongo_gridfs_init ) {
   zval *zconn;
   char *dbname, *prefix;
@@ -59,7 +61,11 @@ PHP_FUNCTION( mongo_gridfs_init ) {
   delete prefix_s;
   ZEND_REGISTER_RESOURCE( return_value, gridfs, le_gridfs );
 }
+/* }}} */
 
+
+/* {{{ proto array mongo_gridfs_list(resource gridfs, array query) 
+   List files in the database */
 PHP_FUNCTION( mongo_gridfs_list ) {
   mongo::GridFS *fs;
   zval *zfs, *zquery;
@@ -84,7 +90,11 @@ PHP_FUNCTION( mongo_gridfs_list ) {
   delete bquery;
   ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
 }
+/* }}} */
 
+
+/* {{{ proto array mongo_gridfs_store(resource gridfs, string filename) 
+   Store a file to the database */
 PHP_FUNCTION( mongo_gridfs_store ) {
   mongo::GridFS *fs;
   zval *zfs;
@@ -105,7 +115,11 @@ PHP_FUNCTION( mongo_gridfs_store ) {
   zval *ret = oid_to_mongo_id( elem.__oid() );
   RETURN_ZVAL( ret, 0, 1 );
 }
+/* }}} */
 
+
+/* {{{ proto resource mongo_gridfs_find(resource gridfs, array query) 
+   Retreive a file from the database */
 PHP_FUNCTION( mongo_gridfs_find ) {
   mongo::GridFS *fs;
   zval *zfs, *zquery;
@@ -126,7 +140,11 @@ PHP_FUNCTION( mongo_gridfs_find ) {
   delete bquery;
   ZEND_REGISTER_RESOURCE( return_value, file_ptr, le_gridfile );
 }
+/* }}} */
 
+
+/* {{{ proto bool mongo_gridfile_exists(resource gridfile) 
+   Checks if a file exists */
 PHP_FUNCTION( mongo_gridfile_exists ) {
   mongo::GridFile *file;
   zval *zfile;
@@ -140,7 +158,11 @@ PHP_FUNCTION( mongo_gridfile_exists ) {
   bool exists = file->exists();
   RETURN_BOOL( exists ); 
 }
+/* }}} */
 
+
+/* {{{ proto string mongo_gridfile_filename(resource gridfile) 
+   Get a gridfile's filename */
 PHP_FUNCTION( mongo_gridfile_filename ) {
   mongo::GridFile *file;
   zval *zfile;
@@ -154,7 +176,11 @@ PHP_FUNCTION( mongo_gridfile_filename ) {
   string name = file->getFilename();
   RETURN_STRING( (char*)name.c_str(), 1 ); 
 }
+/* }}} */
 
+
+/* {{{ proto int mongo_gridfile_size(resource gridfile) 
+   Get a gridfile's size */
 PHP_FUNCTION( mongo_gridfile_size ) {
   mongo::GridFile *file;
   zval *zfile;
@@ -168,7 +194,11 @@ PHP_FUNCTION( mongo_gridfile_size ) {
   long len = file->getContentLength();
   RETURN_LONG( len );
 }
+/* }}} */
 
+
+/* {{{ proto int mongo_gridfile_write(resource gridfile) 
+   Write a gridfile to the filesystem */
 PHP_FUNCTION( mongo_gridfile_write ) {
   mongo::GridFile *file;
   char *filename;
@@ -186,7 +216,11 @@ PHP_FUNCTION( mongo_gridfile_write ) {
   delete f;
   RETURN_LONG( len );
 }
+/* }}} */
 
+
+/* {{{ proto int mongo_gridfile_chunck_size(resource gridfile) 
+   Get the gridfile's chunk size */
 PHP_FUNCTION( mongo_gridfile_chunk_size ){
   mongo::GridFile *file;
   zval *zfile;
@@ -200,7 +234,11 @@ PHP_FUNCTION( mongo_gridfile_chunk_size ){
   long len = file->getChunkSize();
   RETURN_LONG( len );
 }
+/* }}} */
 
+
+/* {{{ proto int mongo_gridfile_chunck_num(resource gridfile) 
+   Get the number of chunks in the gridfile */
 PHP_FUNCTION( mongo_gridfile_chunk_num ){
   mongo::GridFile *file;
   zval *zfile;
@@ -214,7 +252,11 @@ PHP_FUNCTION( mongo_gridfile_chunk_num ){
   long len = file->getNumChunks();
   RETURN_LONG( len );
 }
+/* }}} */
 
+
+/* {{{ proto resource mongo_gridchunk_get(resource gridfile, int num) 
+   Get a chunk */
 PHP_FUNCTION( mongo_gridchunk_get ) {
   mongo::GridFile *file;
   zval *zfile;
@@ -231,7 +273,11 @@ PHP_FUNCTION( mongo_gridchunk_get ) {
 
   ZEND_REGISTER_RESOURCE( return_value, chunk_ptr, le_gridfs_chunk );
 }
+/* }}} */
 
+
+/* {{{ proto int mongo_gridfile_gridchunck_size(resource chunk) 
+   Get the size of a chunk */
 PHP_FUNCTION( mongo_gridchunk_size ) {
   mongo::Chunk *chunk;
   zval *zchunk;
@@ -245,7 +291,11 @@ PHP_FUNCTION( mongo_gridchunk_size ) {
   int len = chunk->len();
   RETURN_LONG( len );
 }
+/* }}} */
 
+
+/* {{{ proto string mongo_gridfile_gridchunck_data(resource chunk) 
+   Get the chunk's content */
 PHP_FUNCTION( mongo_gridchunk_data ) {
   mongo::Chunk *chunk;
   zval *zchunk;
@@ -260,3 +310,4 @@ PHP_FUNCTION( mongo_gridchunk_data ) {
   char *data = (char*)chunk->data( data_len );
   RETURN_STRINGL( data, data_len, 0 );
 }
+/* }}} */

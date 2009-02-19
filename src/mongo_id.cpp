@@ -23,6 +23,8 @@
 
 extern zend_class_entry *mongo_id_class;
 
+/* {{{ proto MongoId mongo_id___construct() 
+   Creates a new MongoId */
 PHP_FUNCTION( mongo_id___construct ) {
   mongo::OID *oid = new mongo::OID();
   oid->init();
@@ -30,12 +32,17 @@ PHP_FUNCTION( mongo_id___construct ) {
   char *c = (char*)str.c_str();
   add_property_stringl( getThis(), "id", c, strlen( c ), 1 );
 }
+/* }}} */
 
+
+/* {{{ proto string mongo_id___toString() 
+   Returns a string represenation of this MongoId in hexidecimal */
 PHP_FUNCTION( mongo_id___toString ) {
   zval *zid = zend_read_property( mongo_id_class, getThis(), "id", 2, 0 TSRMLS_CC );
   char *id = Z_STRVAL_P( zid );
   RETURN_STRING( id, 1 );
 }
+/* }}} */
 
 zval* oid_to_mongo_id( mongo::OID oid ) {
   TSRMLS_FETCH();

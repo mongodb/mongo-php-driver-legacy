@@ -100,6 +100,7 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
     delete conn;
 }
 
+
 static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo::GridFS *fs = (mongo::GridFS*)rsrc->ptr;
   if( fs )
@@ -112,11 +113,13 @@ static void php_gridfile_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
     delete file;
 }
 
+
 static void php_gridfs_chunk_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo::Chunk *chunk = (mongo::Chunk*)rsrc->ptr;
   if( chunk )
     delete chunk;
 }
+
 
 PHP_MINIT_FUNCTION(mongo) {
 
@@ -133,6 +136,9 @@ PHP_MINIT_FUNCTION(mongo) {
   return SUCCESS;
 }
 
+
+/* {{{ proto resource mongo_connect(string host, bool auto_reconnect) 
+   Connects to the database */
 PHP_FUNCTION(mongo_connect) {
   mongo::DBClientConnection *conn;
   char *server;
@@ -160,10 +166,13 @@ PHP_FUNCTION(mongo_connect) {
     RETURN_FALSE;
   }
   
-  // return connection
   ZEND_REGISTER_RESOURCE( return_value, conn, le_db_client_connection );
 }
+/* }}} */
 
+
+/* {{{ proto bool mongo_close(resource connection) 
+   Closes the database connection */
 PHP_FUNCTION(mongo_close) {
   zval *zconn;
  
@@ -179,7 +188,11 @@ PHP_FUNCTION(mongo_close) {
   zend_list_delete(Z_LVAL_P(zconn));
   RETURN_TRUE;
 }
+/* }}} */
 
+
+/* {{{ proto cursor mongo_query(resource connection, string ns, array query, int limit, int skip, array sort, array fields, array hint) 
+   Query the database */
 PHP_FUNCTION(mongo_query) {
   zval *zconn, *zquery, *zsort, *zfields, *zhint;
   char *collection;
@@ -237,8 +250,11 @@ PHP_FUNCTION(mongo_query) {
   mongo::DBClientCursor *c = cursor.get();
   ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
 }
+/* }}} */
 
 
+/* {{{ proto array mongo_find_one(resource connection, string ns, array query) 
+   Query the database for one record */
 PHP_FUNCTION(mongo_find_one) {
   zval *zconn, *zquery;
   char *collection;
@@ -268,9 +284,11 @@ PHP_FUNCTION(mongo_find_one) {
   zval *array = bson_to_php_array( obj );
   RETURN_ZVAL( array, 0, 1 );
 }
+/* }}} */
 
 
-
+/* {{{ proto bool mongo_remove(resource connection, string ns, array query) 
+   Remove records from the database */
 PHP_FUNCTION(mongo_remove) {
   zval *zconn, *zarray;
   char *collection;
@@ -297,7 +315,11 @@ PHP_FUNCTION(mongo_remove) {
   conn_ptr->remove( collection, rarray->done(), justOne );
   RETURN_TRUE;
 }
+/* }}} */
 
+
+/* {{{ proto bool mongo_insert(resource connection, string ns, array obj) 
+   Insert a record to the database */
 PHP_FUNCTION(mongo_insert) {
   zval *zconn, *zarray;
   char *collection;
@@ -326,7 +348,11 @@ PHP_FUNCTION(mongo_insert) {
   conn_ptr->insert( collection, obj_builder->done() );
   RETURN_TRUE;
 }
+/* }}} */
 
+
+/* {{{ proto bool mongo_update(resource connection, string ns, array query, array replacement, bool upsert) 
+   Update a record in the database */
 PHP_FUNCTION(mongo_update) {
   zval *zconn, *zquery, *zobj;
   char *collection;
@@ -356,7 +382,11 @@ PHP_FUNCTION(mongo_update) {
   conn_ptr->update( collection, bquery->done(), bfields->done(), (int)zupsert );
   RETURN_TRUE;
 }
+/* }}} */
 
+
+/* {{{ proto bool mongo_has_next(resource cursor) 
+   Check if a cursor has another record. */
 PHP_FUNCTION( mongo_has_next ) {
   zval *zcursor;
 
@@ -375,7 +405,11 @@ PHP_FUNCTION( mongo_has_next ) {
   bool more = c->more();
   RETURN_BOOL(more);
 }
+/* }}} */
 
+
+/* {{{ proto array mongo_next(resource cursor) 
+   Get the next record from a cursor */
 PHP_FUNCTION( mongo_next ) {
   zval *zcursor;
 
@@ -395,4 +429,5 @@ PHP_FUNCTION( mongo_next ) {
   zval *array = bson_to_php_array( bson );
   RETURN_ZVAL( array, 0, 1 );
 }
+/* }}} */
 
