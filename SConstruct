@@ -37,7 +37,7 @@ AddOption('--mac-boost',
         help="location of boost libraries for mac installs" )
 
 def phpConfig( name ):
-    x = Popen( "php -i | grep extension_dir", stdout=PIPE, shell=True ).communicate()[ 0 ].strip()
+    x = Popen( "php -i | grep "+name, stdout=PIPE, shell=True ).communicate()[ 0 ].strip()
     arr = x.split( " => " )
     return arr[1]
 
@@ -94,7 +94,8 @@ elif "linux2" == os.sys.platform:
 
 if nix:
     env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -ggdb -pthread -O3 -Wall -Wsign-compare -Wno-non-virtual-dtor -DHAVE_CONFIG_H -g -O0 -DPHP_ATOM_INC" )
-    env.Append( CPPFLAGS=" " + phpConfig( "includes" ) )
+    x = Popen( [ "php-config", "--includes" ], stdout=PIPE ).communicate()[ 0 ].strip()
+    env.Append( CPPFLAGS=" " + x )
 
 env.Append( CPPPATH=[ mongoHome + "/include"] )
 env.Append( LIBPATH=[ mongoHome + "/lib" ] )
