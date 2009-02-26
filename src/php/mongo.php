@@ -116,6 +116,36 @@ class Mongo
         return new MongoDB($this, $dbname);
     }
 
+    /** 
+     * Gets a database collection.
+     * This allows you to get a collection directly.
+     * <pre>
+     *   $m = new Mongo();
+     *   $c = $m->selectCollection("foo", "bar.baz");
+     * </pre>
+     *
+     * @param string|MongoDB $db         the database name
+     * @param string         $collection the collection name
+     *
+     * @return MongoCollection a new collection object
+     */
+    public function selectCollection( $db = null, $collection = null ) 
+    {
+        if ($db == null || $db == "" ) {
+            trigger_error("Invalid database name.", E_USER_WARNING);
+            return false;
+        }
+        if ($collection == null || $collection == "" ) {
+            trigger_error("Invalid collection name.", E_USER_WARNING);
+            return false;
+        }
+        if (is_string($db)) {
+          return new MongoCollection(new MongoDB($this, $db), $collection);
+        } else {
+          return new MongoCollection($db, $collection);
+        }
+    }
+
     /**
      * Drops a database.
      *

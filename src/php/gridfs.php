@@ -101,7 +101,7 @@ class MongoGridfs
      *
      * @return mongo_id the id of the uploaded file
      */
-    public function saveUpload($name) 
+    public function storeUpload($name) 
     {
         if (!$name || !is_string($name) ||
             !$_FILES || !$_FILES[ $name ]) {
