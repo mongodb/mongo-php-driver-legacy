@@ -43,6 +43,7 @@ PHP_FUNCTION(mongo_query);
 PHP_FUNCTION(mongo_find_one);
 PHP_FUNCTION(mongo_remove);
 PHP_FUNCTION(mongo_insert);
+PHP_FUNCTION(mongo_batch_insert);
 PHP_FUNCTION(mongo_update);
 
 /** bool mongo_has_next( mongo::DBClientCursor ) 

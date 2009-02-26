@@ -20,6 +20,7 @@
 #endif
 
 #include <string.h>
+#include <vector>
 
 #include <php.h>
 #include <php_ini.h>
@@ -50,6 +51,7 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_query , NULL )
   PHP_FE( mongo_find_one , NULL )
   PHP_FE( mongo_insert , NULL )
+  PHP_FE( mongo_batch_insert , NULL )
   PHP_FE( mongo_update , NULL )
   PHP_FE( mongo_has_next , NULL )
   PHP_FE( mongo_next , NULL )
@@ -360,6 +362,47 @@ PHP_FUNCTION(mongo_insert) {
   RETURN_TRUE;
 }
 /* }}} */
+
+PHP_FUNCTION(mongo_batch_insert) {
+  zval *zconn, *zarray;
+  char *collection;
+  int collection_len;
+
+  if (ZEND_NUM_ARGS() != 3 ) {
+    zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
+    RETURN_FALSE;
+  }
+  else if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zarray) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_insert( connection, string, array )" );
+    RETURN_FALSE;
+  }
+
+  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
+  if (!conn_ptr) {
+    zend_error( E_WARNING, "no db connection\n" );
+    RETURN_FALSE;
+  }
+
+  vector<mongo::BSONObj> inserter;
+  HashTable *php_array = Z_ARRVAL_P(zarray);
+  HashPosition pointer;
+  zval **data;
+  for(zend_hash_internal_pointer_reset_ex(php_array, &pointer); 
+      zend_hash_get_current_data_ex(php_array, (void**) &data, &pointer) == SUCCESS; 
+      zend_hash_move_forward_ex(php_array, &pointer)) {
+    mongo::BSONObjBuilder *obj_builder = new mongo::BSONObjBuilder();
+    HashTable *insert_elem = Z_ARRVAL_PP(data);
+
+    php_array_to_bson(obj_builder, insert_elem);
+    if (!zend_hash_exists(insert_elem, "_id", 3)) {
+      prep_obj_for_db(obj_builder);
+    }
+    inserter.push_back(obj_builder->done());
+  }
+
+  conn_ptr->insert(collection, inserter);
+  RETURN_TRUE;
+}
 
 
 /* {{{ proto bool mongo_update(resource connection, string ns, array query, array replacement, bool upsert) 

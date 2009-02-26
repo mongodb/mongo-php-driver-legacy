@@ -109,6 +109,25 @@ class MongoCollection
         return false;
     }
 
+    /** Inserts many objects into the database at once.
+     *
+     * @param object $a an array of objects or arrays
+     *
+     * @return array the array saved to the database
+     */
+    function batchInsert($a) 
+    {
+        if (!count($a)) {
+            return $a;
+        }
+        $arr    = MongoUtil::objToArray($iterable);
+        $result = mongo_batch_insert($this->connection, (string)$this, $arr);
+        if ($result) {
+            return $iterable;
+        }
+        return false;
+    }
+
     /** 
      * Querys this collection.
      *

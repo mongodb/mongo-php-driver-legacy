@@ -5,8 +5,13 @@
 *.lo
 *.so
 *.dylib
+*.la
+*.lai
+Makefile*
+build
+config*
 doc
-
+CVS
 .sconf_temp
 .sconsign.dblite
 config.log
