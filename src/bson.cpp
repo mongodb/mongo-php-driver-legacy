@@ -21,8 +21,12 @@
 #include <mongo/client/dbclient.h>
 
 #include "mongo_id.h"
+#include "mongo_date.h"
+#include "mongo_regex.h"
 
 extern zend_class_entry *mongo_id_class;
+extern zend_class_entry *mongo_date_class;
+extern zend_class_entry *mongo_regex_class;
 
 int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash ) {
   zval **data;
@@ -82,7 +86,7 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
     case IS_OBJECT: {
       TSRMLS_FETCH();
       zend_class_entry *clazz = Z_OBJCE_PP( data );
-      if( clazz == mongo_id_class ) {
+      if(clazz == mongo_id_class) {
         zval *zid = zend_read_property( mongo_id_class, *data, "id", 2, 0 TSRMLS_CC );
         char *cid = Z_STRVAL_P( zid );
         std::string *id = new string( cid );
@@ -90,7 +94,23 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
         oid->init( *id );
 
         obj_builder->appendOID( field_name, oid ); 
-        break;
+      }
+      else if (clazz == mongo_date_class) {
+        zval *zsec = zend_read_property( mongo_date_class, *data, "sec", 3, 0 TSRMLS_CC );
+        long sec = Z_LVAL_P( zsec );
+        zval *zusec = zend_read_property( mongo_date_class, *data, "usec", 4, 0 TSRMLS_CC );
+        long usec = Z_LVAL_P( zusec );
+        unsigned long long d = (unsigned long long)(sec * 1000) + (unsigned long long)(usec/1000);
+
+        obj_builder->appendDate(field_name, d); 
+      }
+      else if (clazz == mongo_regex_class) {
+        zval *zre = zend_read_property( mongo_regex_class, *data, "regex", 5, 0 TSRMLS_CC );
+        char *re = Z_STRVAL_P( zre );
+        zval *zflags = zend_read_property( mongo_regex_class, *data, "flags", 5, 0 TSRMLS_CC );
+        char *flags = Z_STRVAL_P( zflags );
+
+        obj_builder->appendRegex(field_name, re, flags); 
       }
     }
     case IS_RESOURCE:
@@ -123,6 +143,7 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
     int assoc = index == -1;
 
     switch( elem.type() ) {
+    case mongo::Undefined:
     case mongo::jstNULL: {
       if( assoc )
         add_assoc_null( array, key );
@@ -160,6 +181,22 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
         add_assoc_string( array, key, value, 1 );
       else 
         add_index_string( array, index, value, 1 );
+      break;
+    }
+    case mongo::Date: {
+      zval *zdate = date_to_mongo_date( elem.date() );
+      if( assoc ) 
+        add_assoc_zval( array, key, zdate );
+      else 
+        add_index_zval( array, index, zdate );
+      break;
+    }
+    case mongo::RegEx: {
+      zval *zre = re_to_mongo_re((char*)elem.regex(), (char*)elem.regexFlags());
+      if( assoc ) 
+        add_assoc_zval( array, key, zre );
+      else 
+        add_index_zval( array, index, zre );
       break;
     }
     case mongo::Array:

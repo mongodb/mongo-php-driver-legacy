@@ -56,12 +56,14 @@ class Mongo
         if (!$host) {
             $host = get_cfg_var("mongo.default_host");
             if (!$host ) {
-                trigger_error("no hostname given and no default hostname", 
-                              E_USER_ERROR);
+              $host = MONGO_DEFAULT_HOST;
             }
         }
         if (!$port ) {
             $port = get_cfg_var("mongo.default_port");
+            if (!$port ) {
+              $port = MONGO_DEFAULT_PORT;
+            }
         }
         $auto_reconnect = MongoUtil::getConfig("mongo.auto_reconnect");
 
@@ -193,6 +195,9 @@ class Mongo
     }
 
 }
+
+define("MONGO_DEFAULT_HOST", "localhost");
+define("MONGO_DEFAULT_PORT", "27017");
 
 require_once "mongo_auth.php";
 require_once "mongo_db.php";

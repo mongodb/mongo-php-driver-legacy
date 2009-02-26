@@ -28,7 +28,6 @@ extern int le_db_client_connection;
 extern int le_db_cursor;
 extern int le_gridfs;
 extern int le_gridfile;
-extern int le_gridfs_chunk;
 
 /* {{{ proto resource mongo_gridfs_init() 
    Creates a new gridfs connection point */
@@ -135,31 +134,15 @@ PHP_FUNCTION( mongo_gridfs_find ) {
   mongo::BSONObj query = bquery->done();
 
   mongo::GridFile file = fs->findFile( query );
+  if (!file.exists()) {
+    RETURN_NULL();
+  }
   mongo::GridFile *file_ptr = new mongo::GridFile( file );
 
   delete bquery;
   ZEND_REGISTER_RESOURCE( return_value, file_ptr, le_gridfile );
 }
 /* }}} */
-
-
-/* {{{ proto bool mongo_gridfile_exists(resource gridfile) 
-   Checks if a file exists */
-PHP_FUNCTION( mongo_gridfile_exists ) {
-  mongo::GridFile *file;
-  zval *zfile;
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zfile ) == FAILURE) {
-     zend_error( E_WARNING, "parameter parse failure\n" );
-     RETURN_FALSE;
-  }
-  ZEND_FETCH_RESOURCE(file, mongo::GridFile*, &zfile, -1, PHP_GRIDFILE_RES_NAME, le_gridfile);
-
-  bool exists = file->exists();
-  RETURN_BOOL( exists ); 
-}
-/* }}} */
-
 
 /* {{{ proto string mongo_gridfile_filename(resource gridfile) 
    Get a gridfile's filename */
@@ -215,99 +198,5 @@ PHP_FUNCTION( mongo_gridfile_write ) {
   long len = file->write( *f );
   delete f;
   RETURN_LONG( len );
-}
-/* }}} */
-
-
-/* {{{ proto int mongo_gridfile_chunck_size(resource gridfile) 
-   Get the gridfile's chunk size */
-PHP_FUNCTION( mongo_gridfile_chunk_size ){
-  mongo::GridFile *file;
-  zval *zfile;
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zfile ) == FAILURE) {
-     zend_error( E_WARNING, "parameter parse failure\n" );
-     RETURN_FALSE;
-  }
-  ZEND_FETCH_RESOURCE(file, mongo::GridFile*, &zfile, -1, PHP_GRIDFILE_RES_NAME, le_gridfile);
-
-  long len = file->getChunkSize();
-  RETURN_LONG( len );
-}
-/* }}} */
-
-
-/* {{{ proto int mongo_gridfile_chunck_num(resource gridfile) 
-   Get the number of chunks in the gridfile */
-PHP_FUNCTION( mongo_gridfile_chunk_num ){
-  mongo::GridFile *file;
-  zval *zfile;
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zfile ) == FAILURE) {
-     zend_error( E_WARNING, "parameter parse failure\n" );
-     RETURN_FALSE;
-  }
-  ZEND_FETCH_RESOURCE(file, mongo::GridFile*, &zfile, -1, PHP_GRIDFILE_RES_NAME, le_gridfile);
-
-  long len = file->getNumChunks();
-  RETURN_LONG( len );
-}
-/* }}} */
-
-
-/* {{{ proto resource mongo_gridchunk_get(resource gridfile, int num) 
-   Get a chunk */
-PHP_FUNCTION( mongo_gridchunk_get ) {
-  mongo::GridFile *file;
-  zval *zfile;
-  int chunk_num;
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &zfile, &chunk_num ) == FAILURE) {
-     zend_error( E_WARNING, "parameter parse failure\n" );
-     RETURN_FALSE;
-  }
-  ZEND_FETCH_RESOURCE(file, mongo::GridFile*, &zfile, -1, PHP_GRIDFILE_RES_NAME, le_gridfile);
-
-  mongo::Chunk chunk = file->getChunk( chunk_num );
-  mongo::Chunk *chunk_ptr = new mongo::Chunk( chunk );
-
-  ZEND_REGISTER_RESOURCE( return_value, chunk_ptr, le_gridfs_chunk );
-}
-/* }}} */
-
-
-/* {{{ proto int mongo_gridfile_gridchunck_size(resource chunk) 
-   Get the size of a chunk */
-PHP_FUNCTION( mongo_gridchunk_size ) {
-  mongo::Chunk *chunk;
-  zval *zchunk;
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zchunk ) == FAILURE) {
-     zend_error( E_WARNING, "parameter parse failure\n" );
-     RETURN_FALSE;
-  }
-  ZEND_FETCH_RESOURCE(chunk, mongo::Chunk*, &zchunk, -1, PHP_GRIDFS_CHUNK_RES_NAME, le_gridfs_chunk);
-
-  int len = chunk->len();
-  RETURN_LONG( len );
-}
-/* }}} */
-
-
-/* {{{ proto string mongo_gridfile_gridchunck_data(resource chunk) 
-   Get the chunk's content */
-PHP_FUNCTION( mongo_gridchunk_data ) {
-  mongo::Chunk *chunk;
-  zval *zchunk;
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zchunk ) == FAILURE) {
-     zend_error( E_WARNING, "parameter parse failure\n" );
-     RETURN_FALSE;
-  }
-  ZEND_FETCH_RESOURCE(chunk, mongo::Chunk*, &zchunk, -1, PHP_GRIDFS_CHUNK_RES_NAME, le_gridfs_chunk);
-
-  int data_len = chunk->len();
-  char *data = (char*)chunk->data( data_len );
-  RETURN_STRINGL( data, data_len, 0 );
 }
 /* }}} */

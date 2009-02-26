@@ -16,11 +16,6 @@
 
 #include <php.h>
 
-PHP_FUNCTION( mongo_gridfs_init );
-PHP_FUNCTION( mongo_gridfs_list );
-PHP_FUNCTION( mongo_gridfs_store );
-PHP_FUNCTION( mongo_gridfs_find );
-
-PHP_FUNCTION( mongo_gridfile_filename );
-PHP_FUNCTION( mongo_gridfile_size );
-PHP_FUNCTION( mongo_gridfile_write );
+PHP_FUNCTION( mongo_date___construct );
+PHP_FUNCTION( mongo_date___toString );
+zval* date_to_mongo_date( unsigned long long d );

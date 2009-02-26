@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package packagerversion="1.4.11" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 
+  http://pear.php.net/dtd/tasks-1.0.xsd 
+  http://pear.php.net/dtd/package-2.0 
+  http://pear.php.net/dtd/package-2.0.xsd"> 
+ <name>mongo</name>
+ <channel>pecl.php.net</channel> 
+ <summary>Mongo Database Driver</summary>
+ <description>This package provides an interface for communicating with the Mongo database in PHP.</description>
+ <lead>
+   <name>Kristina Chodorow</name>
+   <user>kristina</user>
+   <email>kristina@10gen.com</email>
+   <active>yes</active>
+ </lead>
+ <date>2009-02-24</date>
+ <time>12:00:00</time>
+ <version>
+   <release>0.8.0</release>
+   <api>0.8.0</api>
+ </version>
+ <stability>
+   <release>alpha</release>
+   <api>alpha</api>
+ </stability>
+ <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+ <notes>
+   Initial release.  
+   Basic connection and interaction capabilities.
+ </notes>
+ <contents>
+   <dir baseinstalldir="/" name="/">
+     <file role="src" name="config.m4" />
+     <file role="doc" name="README"/>
+     <dir name="src">
+       <file role="src" name="mongo.cpp"/>
+       <file role="src" name="mongo.h"/>
+       <file role="src" name="mongo_id.cpp"/>
+       <file role="src" name="mongo_id.h"/>
+       <file role="src" name="bson.cpp"/>
+       <file role="src" name="bson.h"/>
+       <file role="src" name="gridfs.cpp"/>
+       <file role="src" name="gridfs.h"/>
+       <dir name="php">
+         <file role="src" name="mongo.php"/>
+         <file role="src" name="mongo_auth.php"/>
+         <file role="src" name="mongo_db.php"/>
+         <file role="src" name="mongo_collection.php"/>
+         <file role="src" name="mongo_cursor.php"/>
+         <file role="src" name="mongo_util.php"/>
+         <file role="src" name="gridfs.php"/>
+       </dir>
+     </dir>
+   </dir>
+ </contents>
+ <dependencies>
+   <required>
+     <php>
+       <min>5.0</min>
+     </php>
+     <pearinstaller>
+       <min>1.4.3</min>
+     </pearinstaller> 
+   </required>
+ </dependencies>
+ <providesextension>mongo</providesextension> 
+ <extsrcrelease />
+ <changelog>
+   <release>
+     <version>
+       <release>0.8.0</release>
+       <api>0.8.0</api>
+     </version>
+     <stability>
+       <release>alpha</release>
+       <api>alpha</api>
+     </stability>
+     <date>2009-02-24</date>
+     <license>Apache License</license>
+     <notes>Initial release.  
+       Basic connection and interaction capabilities.</notes>
+   </release> 
+ </changelog>
+</package>
+<!--
+vim:et:ts=1:sw=1
+-->

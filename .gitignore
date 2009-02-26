@@ -2,7 +2,7 @@
 *~
 *.o
 *.os
-*.loT
+*.lo
 *.so
 *.dylib
 doc

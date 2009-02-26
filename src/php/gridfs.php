@@ -148,16 +148,6 @@ class MongoGridfsFile
     }
 
     /**
-     * Checks that the file exists.
-     *
-     * @return bool if the file exists
-     */
-    public function exists() 
-    {
-        return mongo_gridfile_exists($this->_file);
-    }
-
-    /**
      * Returns this file's filename.
      *
      * @return string the filename
