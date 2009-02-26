@@ -31,12 +31,14 @@
 #include "mongo_id.h"
 #include "mongo_date.h"
 #include "mongo_regex.h"
+#include "mongo_bindata.h"
 #include "bson.h"
 #include "gridfs.h"
 
 zend_class_entry *mongo_id_class;
 zend_class_entry *mongo_date_class;
 zend_class_entry *mongo_regex_class;
+zend_class_entry *mongo_bindata_class;
 
 /** Resources */
 int le_db_client_connection;
@@ -82,6 +84,12 @@ static function_entry mongo_date_functions[] = {
 static function_entry mongo_regex_functions[] = {
   PHP_NAMED_FE( __construct, PHP_FN( mongo_regex___construct ), NULL )
   PHP_NAMED_FE( __toString, PHP_FN( mongo_regex___toString ), NULL )
+  { NULL, NULL, NULL }
+};
+
+static function_entry mongo_bindata_functions[] = {
+  PHP_NAMED_FE( __construct, PHP_FN( mongo_bindata___construct ), NULL )
+  PHP_NAMED_FE( __toString, PHP_FN( mongo_bindata___toString ), NULL )
   { NULL, NULL, NULL }
 };
 
@@ -145,6 +153,10 @@ PHP_MINIT_FUNCTION(mongo) {
   zend_class_entry regex; 
   INIT_CLASS_ENTRY(regex, "MongoRegex", mongo_regex_functions); 
   mongo_regex_class = zend_register_internal_class(&regex TSRMLS_CC); 
+
+  zend_class_entry bindata; 
+  INIT_CLASS_ENTRY(bindata, "MongoBinData", mongo_bindata_functions); 
+  mongo_bindata_class = zend_register_internal_class(&bindata TSRMLS_CC); 
 
   return SUCCESS;
 }

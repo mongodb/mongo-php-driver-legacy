@@ -23,10 +23,12 @@
 #include "mongo_id.h"
 #include "mongo_date.h"
 #include "mongo_regex.h"
+#include "mongo_bindata.h"
 
 extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_date_class;
 extern zend_class_entry *mongo_regex_class;
+extern zend_class_entry *mongo_bindata_class;
 
 int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash ) {
   zval **data;
@@ -111,6 +113,32 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
         char *flags = Z_STRVAL_P( zflags );
 
         obj_builder->appendRegex(field_name, re, flags); 
+      }
+      else if (clazz == mongo_bindata_class) {
+        zval *zbin = zend_read_property( mongo_bindata_class, *data, "bin", 3, 0 TSRMLS_CC );
+        char *bin = Z_STRVAL_P( zbin );
+        zval *zlen = zend_read_property( mongo_bindata_class, *data, "length", 6, 0 TSRMLS_CC );
+        long len = Z_LVAL_P( zlen );
+        zval *ztype = zend_read_property( mongo_bindata_class, *data, "type", 4, 0 TSRMLS_CC );
+        long type = Z_LVAL_P( ztype );
+
+        switch(type) {
+        case 1:
+          obj_builder->appendBinData(field_name, len, mongo::Function, bin); 
+          break;
+        case 3:
+          obj_builder->appendBinData(field_name, len, mongo::bdtUUID, bin); 
+          break;
+        case 5:
+          obj_builder->appendBinData(field_name, len, mongo::MD5Type, bin); 
+          break;
+        case 128:
+          obj_builder->appendBinData(field_name, len, mongo::bdtCustom, bin); 
+          break;
+        default:
+          obj_builder->appendBinData(field_name, len, mongo::ByteArray, bin); 
+          break;
+        }
       }
     }
     case IS_RESOURCE:
@@ -197,6 +225,17 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
         add_assoc_zval( array, key, zre );
       else 
         add_index_zval( array, index, zre );
+      break;
+    }
+    case mongo::BinData: {
+      int size;
+      char *bin = (char*)elem.binData(size);
+      int type = elem.binDataType();
+      zval *phpbin = bin_to_php_bin(bin, size, type);
+      if( assoc ) 
+        add_assoc_zval( array, key, phpbin );
+      else 
+        add_index_zval( array, index, phpbin );
       break;
     }
     case mongo::Array:

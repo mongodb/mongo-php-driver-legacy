@@ -1,4 +1,4 @@
-//mongo_date.cpp
+//mongo_regex.cpp
 /**
  *  Copyright 2009 10gen, Inc.
  * 

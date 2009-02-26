@@ -12,7 +12,7 @@ PHP_ARG_WITH(boost, location of boost libraries,
 
 if test "$PHP_MONGO" != "no"; then
   AC_DEFINE(HAVE_MONGO, 1, [Whether you have Mongo extension])
-  PHP_NEW_EXTENSION(mongo, src/mongo.cpp src/mongo_id.cpp src/mongo_regex.cpp src/mongo_date.cpp src/gridfs.cpp src/bson.cpp, $ext_shared)
+  PHP_NEW_EXTENSION(mongo, src/mongo.cpp src/mongo_id.cpp src/mongo_regex.cpp src/mongo_date.cpp src/mongo_bindata.cpp src/gridfs.cpp src/bson.cpp, $ext_shared)
 
   if test "$PHP_MONGODB" != "no"; then
     mongolib=$PHP_MONGODB
