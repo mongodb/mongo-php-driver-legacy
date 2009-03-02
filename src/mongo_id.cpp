@@ -26,11 +26,26 @@ extern zend_class_entry *mongo_id_class;
 /* {{{ proto MongoId mongo_id___construct() 
    Creates a new MongoId */
 PHP_FUNCTION( mongo_id___construct ) {
+  char *id;
+  int id_len;
+
   mongo::OID *oid = new mongo::OID();
-  oid->init();
-  std::string str = oid->str();
-  char *c = (char*)str.c_str();
-  add_property_stringl( getThis(), "id", c, strlen( c ), 1 );
+  if (ZEND_NUM_ARGS() == 1) { 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &id, &id_len) == FAILURE ) {
+      zend_error( E_WARNING, "incorrect parameter types" );
+      RETURN_FALSE;
+    } else {
+      std::string s (id, id_len);
+      oid->init(s);
+      add_property_stringl( getThis(), "id", id, id_len, 1 );
+    }
+  }
+  else {
+    oid->init();
+    std::string str = oid->str();
+    char *c = (char*)str.c_str();
+    add_property_stringl( getThis(), "id", c, strlen( c ), 1 );
+  }
 }
 /* }}} */
 
