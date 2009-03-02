@@ -215,6 +215,20 @@ class Mongo
     }
 
     /**
+     * Creates a database error.
+     *
+     * @return array a notification that an error occured
+     */
+    public function forceError() 
+    {
+        $result = MongoUtil::dbCommand($this->connection, 
+                                       array(MongoUtil::$FORCE_ERROR => 1 ), 
+                                       MongoUtil::$ADMIN);
+        unset($result[ "ok" ]);
+        return $result;
+    }
+
+    /**
      * Closes this database connection.
      *
      * @return bool if the connection was successfully closed

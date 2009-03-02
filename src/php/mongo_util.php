@@ -163,6 +163,7 @@ class MongoUtil
     public static $DELETE_INDICES    = "deleteIndexes";
     public static $DROP              = "drop";
     public static $DROP_DATABASE     = "dropDatabase";
+    public static $FORCE_ERROR       = "forceerror";
     public static $LAST_ERROR        = "getlasterror";
     public static $LIST_DATABASES    = "listDatabases";
     public static $LOGGING           = "opLogging";
