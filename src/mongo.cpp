@@ -34,6 +34,7 @@
 #include "mongo_bindata.h"
 #include "bson.h"
 #include "gridfs.h"
+#include "auth.h"
 
 zend_class_entry *mongo_id_class;
 zend_class_entry *mongo_date_class;
@@ -41,7 +42,8 @@ zend_class_entry *mongo_regex_class;
 zend_class_entry *mongo_bindata_class;
 
 /** Resources */
-int le_db_client_connection;
+int le_connection;
+int le_auth_connection_p;
 int le_db_cursor;
 int le_gridfs;
 int le_gridfile;
@@ -57,6 +59,8 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_update , NULL )
   PHP_FE( mongo_has_next , NULL )
   PHP_FE( mongo_next , NULL )
+  PHP_FE( mongo_auth_connect , NULL )
+  PHP_FE( mongo_auth_get , NULL )
   PHP_FE( mongo_gridfs_init , NULL )
   PHP_FE( mongo_gridfs_list , NULL )
   PHP_FE( mongo_gridfs_store , NULL )
@@ -121,6 +125,22 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
     delete conn;
 }
 
+static void php_auth_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
+  auth_connection *conn = (auth_connection*)rsrc->ptr;
+  if (conn) { 
+    if (conn->connection) {
+      pefree(conn->connection, 1);
+    }
+    if (conn->username) {
+      pefree(conn->username, 1);
+    }
+    if (conn->password) {
+      pefree(conn->password, 1);
+    }
+    pefree(conn, 1);
+  }
+}
+
 
 static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo::GridFS *fs = (mongo::GridFS*)rsrc->ptr;
@@ -137,7 +157,8 @@ static void php_gridfile_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 
 PHP_MINIT_FUNCTION(mongo) {
 
-  le_db_client_connection = zend_register_list_destructors_ex(php_connection_dtor, NULL, PHP_DB_CLIENT_CONNECTION_RES_NAME, module_number);
+  le_connection = zend_register_list_destructors_ex(php_connection_dtor, NULL, PHP_CONNECTION_RES_NAME, module_number);
+  le_auth_connection_p = zend_register_list_destructors_ex (NULL, php_auth_connection_dtor, PHP_AUTH_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
   le_gridfs = zend_register_list_destructors_ex(php_gridfs_dtor, NULL, PHP_GRIDFS_RES_NAME, module_number);
   le_gridfile = zend_register_list_destructors_ex(php_gridfile_dtor, NULL, PHP_GRIDFILE_RES_NAME, module_number);
@@ -191,7 +212,7 @@ PHP_FUNCTION(mongo_connect) {
     RETURN_FALSE;
   }
   
-  ZEND_REGISTER_RESOURCE( return_value, conn, le_db_client_connection );
+  ZEND_REGISTER_RESOURCE( return_value, conn, le_connection );
 }
 /* }}} */
 
@@ -232,7 +253,7 @@ PHP_FUNCTION(mongo_query) {
       RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
+  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
   if (!conn_ptr) {
     zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;
@@ -295,7 +316,7 @@ PHP_FUNCTION(mongo_find_one) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
+  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
   if (!conn_ptr) {
     zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;
@@ -329,7 +350,7 @@ PHP_FUNCTION(mongo_remove) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
+  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
   if (!conn_ptr) {
     zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;
@@ -359,7 +380,7 @@ PHP_FUNCTION(mongo_insert) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
+  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
   if (!conn_ptr) {
     zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;
@@ -389,7 +410,7 @@ PHP_FUNCTION(mongo_batch_insert) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
+  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
   if (!conn_ptr) {
     zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;
@@ -435,7 +456,7 @@ PHP_FUNCTION(mongo_update) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
+  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
   if (!conn_ptr) {
     zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;

@@ -20,7 +20,8 @@
 #define PHP_MONGO_VERSION "1.0"
 #define PHP_MONGO_EXTNAME "mongo"
 
-#define PHP_DB_CLIENT_CONNECTION_RES_NAME "mongo connection"
+#define PHP_CONNECTION_RES_NAME "mongo connection"
+#define PHP_AUTH_CONNECTION_RES_NAME "mongo authenticated connection"
 #define PHP_DB_CURSOR_RES_NAME "mongo cursor"
 #define PHP_GRIDFS_RES_NAME "gridfs tools"
 #define PHP_GRIDFILE_RES_NAME "gridfs file"

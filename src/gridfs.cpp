@@ -24,7 +24,7 @@
 
 extern zend_class_entry *mongo_id_class;
 
-extern int le_db_client_connection;
+extern int le_connection;
 extern int le_db_cursor;
 extern int le_gridfs;
 extern int le_gridfile;
@@ -45,7 +45,7 @@ PHP_FUNCTION( mongo_gridfs_init ) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_DB_CLIENT_CONNECTION_RES_NAME, NULL, 1, le_db_client_connection);
+  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
   if (!conn_ptr) {
     zend_error( E_WARNING, "no db connection\n" );
     RETURN_FALSE;
