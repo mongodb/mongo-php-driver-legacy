@@ -140,6 +140,7 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
           break;
         }
       }
+      break;
     }
     case IS_RESOURCE:
     case IS_CONSTANT:
