@@ -200,7 +200,7 @@ class MongoCursor
 
         $cmd = array("count" => $coll);
         if ($this->_query) {
-            $cmd[ "query" ] = MongoUtil::objToArray($this->_query);
+            $cmd[ "query" ] = $this->_query;
         }
 
         $result = MongoUtil::dbCommand($this->connection, $cmd, $db);
@@ -217,10 +217,10 @@ class MongoCursor
      */
     private function _doQuery() 
     {
-        $q = MongoUtil::objToArray($this->_query);
-        $s = MongoUtil::objToArray($this->_sort);
-        $f = MongoUtil::objToArray($this->_fields);
-        $h = MongoUtil::objToArray($this->_hint);
+        $q = $this->_query;
+        $s = $this->_sort;
+        $f = $this->_fields;
+        $h = $this->_hint;
 
         $this->_cursor = mongo_query($this->connection, 
                                       $this->_ns, $q, 

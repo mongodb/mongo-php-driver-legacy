@@ -101,7 +101,7 @@ class MongoCollection
      */
     function insert($iterable) 
     {
-        $arr    = MongoUtil::objToArray($iterable);
+        $arr    = $iterable;
         $result = mongo_insert($this->connection, (string)$this, $arr);
         if ($result) {
             return $iterable;
@@ -120,7 +120,7 @@ class MongoCollection
         if (!count($a)) {
             return $a;
         }
-        $arr    = MongoUtil::objToArray($iterable);
+        $arr    = $iterable;
         $result = mongo_batch_insert($this->connection, (string)$this, $arr);
         if ($result) {
             return $iterable;
@@ -155,11 +155,11 @@ class MongoCollection
      *
      * @return object a record matching the search or null
      */
-    function findOne($query = null) 
+    function findOne($query = array()) 
     {
         return mongo_find_one($this->connection, 
                               (string)$this, 
-                              MongoUtil::objToArray($query));
+                              $query);
     }
 
     /**
@@ -180,8 +180,8 @@ class MongoCollection
      */
     function update($criteria, $newobj, $upsert = false) 
     {
-        $c      = MongoUtil::objToArray($criteria);
-        $obj    = MongoUtil::objToArray($newobj);
+        $c      = $criteria;
+        $obj    = $newobj;
         $result = mongo_update($this->connection, (string)$this, $c, $obj, $upsert);
         if ($result) {
             return $obj;
@@ -201,7 +201,7 @@ class MongoCollection
     {
         return mongo_remove($this->connection, 
                             (string)$this, 
-                            MongoUtil::objToArray($criteria), 
+                            $criteria, 
                             $just_one);
     }
 
@@ -294,7 +294,7 @@ class MongoCollection
      */
     function save($obj) 
     {
-        $a = MongoUtil::objToArray($obj);
+        $a = $obj;
         if ($a[ "_id" ]) {
             return $this->update(array("_id" => $id), $a, true);
         }
