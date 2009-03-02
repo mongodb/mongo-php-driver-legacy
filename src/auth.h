@@ -17,14 +17,8 @@
 #include <php.h>
 #include <mongo/client/dbclient.h>
 
-typedef struct {
-  mongo::DBClientConnection *connection;
-  char *username;
-  char *password;
-} auth_connection;
-
 PHP_FUNCTION( mongo_auth_connect );
 PHP_FUNCTION( mongo_auth_get );
 //PHP_FUNCTION( mongo_auth_close );
 
-auth_connection* get_auth_conn(char *u, char *p);
+mongo::DBClientConnection* get_auth_conn(char *u, char *p);

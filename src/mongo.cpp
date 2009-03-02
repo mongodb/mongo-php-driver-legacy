@@ -43,7 +43,7 @@ zend_class_entry *mongo_bindata_class;
 
 /** Resources */
 int le_connection;
-int le_auth_connection_p;
+int le_connection_p;
 int le_db_cursor;
 int le_gridfs;
 int le_gridfile;
@@ -125,23 +125,6 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
     delete conn;
 }
 
-static void php_auth_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
-  auth_connection *conn = (auth_connection*)rsrc->ptr;
-  if (conn) { 
-    if (conn->connection) {
-      pefree(conn->connection, 1);
-    }
-    if (conn->username) {
-      pefree(conn->username, 1);
-    }
-    if (conn->password) {
-      pefree(conn->password, 1);
-    }
-    pefree(conn, 1);
-  }
-}
-
-
 static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo::GridFS *fs = (mongo::GridFS*)rsrc->ptr;
   if( fs )
@@ -158,7 +141,7 @@ static void php_gridfile_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 PHP_MINIT_FUNCTION(mongo) {
 
   le_connection = zend_register_list_destructors_ex(php_connection_dtor, NULL, PHP_CONNECTION_RES_NAME, module_number);
-  le_auth_connection_p = zend_register_list_destructors_ex (NULL, php_auth_connection_dtor, PHP_AUTH_CONNECTION_RES_NAME, module_number);
+  le_connection_p = zend_register_list_destructors_ex(NULL, php_connection_dtor, PHP_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
   le_gridfs = zend_register_list_destructors_ex(php_gridfs_dtor, NULL, PHP_GRIDFS_RES_NAME, module_number);
   le_gridfile = zend_register_list_destructors_ex(php_gridfile_dtor, NULL, PHP_GRIDFILE_RES_NAME, module_number);
