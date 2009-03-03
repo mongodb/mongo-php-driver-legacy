@@ -121,7 +121,6 @@ ZEND_GET_MODULE(mongo)
 
 
 static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
-  php_printf("in dtor\n");
   mongo::DBClientConnection *conn = (mongo::DBClientConnection*)rsrc->ptr;
   if( conn )
     delete conn;
@@ -289,7 +288,7 @@ PHP_FUNCTION(mongo_query) {
       RETURN_FALSE;
   }
 
-  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, NULL, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
   php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
