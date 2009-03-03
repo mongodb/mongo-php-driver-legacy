@@ -73,10 +73,10 @@ class MongoCursor
      */
     public function __construct($conn = null, 
                                 $ns = null, 
-                                $query = null, 
-                                $skip = null, 
-                                $limit = null, 
-                                $fields = null) 
+                                $query = array(), 
+                                $skip = 0, 
+                                $limit = 0, 
+                                $fields = array()) 
     {
         $this->connection = $conn;
         $this->_ns        = $ns;
@@ -84,6 +84,8 @@ class MongoCursor
         $this->_skip      = $skip;
         $this->_limit     = $limit;
         $this->_fields    = $fields;
+        $this->_sort       = array();
+        $this->_hint       = array();
     }
 
     /**
@@ -217,18 +219,14 @@ class MongoCursor
      */
     private function _doQuery() 
     {
-        $q = $this->_query;
-        $s = $this->_sort;
-        $f = $this->_fields;
-        $h = $this->_hint;
-
         $this->_cursor = mongo_query($this->connection, 
-                                      $this->_ns, $q, 
-                                      (int)$this->_skip, 
-                                      ((int)$this->_limit) * -1, 
-                                      $s, 
-                                      $f, 
-                                      $h);
+                                     $this->_ns, 
+                                     $this->_query, 
+                                     (int)$this->_skip, 
+                                     ((int)$this->_limit) * -1, 
+                                     $this->_sort, 
+                                     $this->_fields, 
+                                     $this->_hint);
     }
 
     /**

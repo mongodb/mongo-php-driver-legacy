@@ -138,7 +138,7 @@ class MongoCollection
      *
      * @return mongo_cursor a cursor for the search results
      */
-    function find($query = null, $skip = null, $limit = null, $fields = null) 
+    function find($query = array(), $skip = 0, $limit = 0, $fields = array()) 
     {
         return new MongoCursor($this->connection, 
                                (string)$this, 
