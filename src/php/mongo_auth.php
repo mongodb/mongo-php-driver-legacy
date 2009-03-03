@@ -34,41 +34,11 @@
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
  * @link     http://www.mongodb.org
  */
-class MongoAuth
+class MongoAuth extends Mongo
 {
 
-    private $_connection;
-    private $_db;
-
-    /**
-     * Attempt to create a new authenticated session.
-     *
-     * @param connection $conn     a database connection
-     * @param string     $db       the name of the db
-     * @param string     $username the username
-     * @param string     $password the password
-     *
-     * @return MongoAuth an authenticated session or false if login was unsuccessful
-     */
-    public static function getAuth($conn, $db, $username, $password ) 
-    {
-        $result = MongoAuth::_getUser($conn, $db, $username, $password);
-        if (!$result[ "ok" ]) {
-            return false;
-        }
-
-        // check if we need an admin instance
-        if ($db == "admin") {
-            $auth_obj = MongoAdmin::getAuth($conn);
-        } else {
-            $auth_obj = new MongoAuth($conn, $db);
-        }
-
-        // return a new authenticated instance
-        $auth_obj->_connection = $conn;
-        $auth_obj->_db         = $db;
-        return $auth_obj;
-    }
+    public $connection;
+    private $db;
 
     /**
      * Communicates with the database to log in a user.
@@ -80,7 +50,7 @@ class MongoAuth
      *
      * @return array the database response
      */
-    private static function _getUser($conn, $db, $username, $password ) 
+    public static function getUser($conn, $db, $username, $password ) 
     {
         $ns   = $db . ".system.users";
         $user = mongo_find_one($conn, $ns, array("user" => $username));
@@ -109,22 +79,64 @@ class MongoAuth
     }
 
     /**
-     * Creates a new authenticated connection.
-     * 
-     * @param connection $conn db connection
-     * @param string     $db   db name
+     * Attempt to create a new authenticated session.
+     *
+     * @param string $host       a database connection
+     * @param int    $port       a database connection
+     * @param string $db         the name of the db
+     * @param string $username   the username
+     * @param string $password   the password
+     *
+     * @return MongoAuth an authenticated session or false if login was unsuccessful
      */
-    private function __construct($conn, $db ) 
+    public function __construct($host, $port, $db, $username, $password, $plaintext=true) 
     {
-    }
+        $this->db = $db;
+        if ($plaintext) {
+            $hash = md5("mongo$password");
+        }
+        else {
+            $hash = $password;
+        }
 
-    /**
-     * Destroys the authenticated connection.
-     */
-    public function __destruct() 
-    {
-        $this->_connection = null;
-        $this->_db         = null;
+        if (!$host) {
+            $host = get_cfg_var("mongo.default_host");
+            if (!$host ) {
+                $host = MONGO_DEFAULT_HOST;
+            }
+        }
+        if (!$port ) {
+            $port = get_cfg_var("mongo.default_port");
+            if (!$port ) {
+                $port = MONGO_DEFAULT_PORT;
+            }
+        }
+        $auto_reconnect = MongoUtil::getConfig("mongo.auto_reconnect");
+
+        $addr             = "$host:$port";
+        //echo "add: ". $addr."_".$username."_".$hash."<br/>";
+        $this->connection = mongo_pconnect($addr, $username, $hash, $auto_reconnect, true);
+        //echo "connection? |".$this->connection."|<br/>";
+        if (!$this->connection ) {
+            if (!$plaintext) {
+                trigger_error("can't login with hash password", E_USER_WARNING);
+                $this->loggedIn = false;
+                return $this;
+            }
+            $this->connection = mongo_pconnect($addr, $username, $hash, $auto_reconnect, false);
+            if (!$this->connection) {
+                trigger_error("couldn't connect to mongo", E_USER_WARNING);
+                $this->loggedIn = false;
+                return $this;
+            }
+            $result = MongoAuth::getUser($this->connection, $db, $username, $password);
+            if (!$result[ "ok" ]) {
+                trigger_error("couldn't log in", E_USER_WARNING);
+                $this->loggedIn = false;
+                return $this;
+            }
+        }
+        $this->loggedIn = true;
     }
 
     /**
@@ -145,14 +157,13 @@ class MongoAuth
     public function logout() 
     {
         $data   = array(MongoUtil::$LOGOUT => 1);
-        $result = MongoUtil::dbCommand($this->_connection, $data, $this->_db);
+        $result = MongoUtil::dbCommand($this->connection, $data, $this->db);
 
         if (!$result[ "ok" ]) {
             // trapped in the system forever
             return false;
         }
 
-        $this->__destruct();
         return true;
     }
 }
@@ -170,29 +181,15 @@ class MongoAdmin extends MongoAuth
 {
 
     /**
-     * Get a new admin session.  
-     * This will not give an actual admin session if called directly, 
-     * the programmer must call MongoAuth::getAuth() to be logged in.
-     *
-     * @param connection $conn a database connection
-     *
-     * @return MongoAdmin an admin session, or false if login was unsuccessful
-     */
-    public static function getAuth($conn ) 
-    {
-        return new MongoAdmin($conn);
-    }
-
-    /**
      * Creates a new admin session.  To get a new session, call 
      * MongoAuth::getAuth() using the admin database.
      * 
      * @param connection $conn db connection
      */
-    private function __construct($conn ) 
+    public function __construct($host, $port, $username, $password, $plaintext=true) 
     {
-        $this->_connection = $conn;
-        $this->_db         = "admin";
+        $this->db = "admin";
+        parent::__construct($host, $port, $this->db, $username, $password, $plaintext);
     }
 
     /** 
@@ -203,7 +200,7 @@ class MongoAdmin extends MongoAuth
     public function listDBs() 
     {
         $data   = array(MongoUtil::$LIST_DATABASES => 1);
-        $result = MongoUtil::dbCommand($this->_connection, $data, $this->_db);
+        $result = MongoUtil::dbCommand($this->connection, $data, $this->db);
         if ($result) {
             return $result[ "databases" ];
         } else {
@@ -218,9 +215,9 @@ class MongoAdmin extends MongoAuth
      */
     public function shutdown() 
     {
-        $result = MongoUtil::dbCommand($this->_connection, 
+        $result = MongoUtil::dbCommand($this->connection, 
                                        array(MongoUtil::$SHUTDOWN => 1 ), 
-                                       $this->_db);
+                                       $this->db);
         return $result[ "ok" ];
     }
 
@@ -233,9 +230,9 @@ class MongoAdmin extends MongoAuth
      */
     public function setLogging($level ) 
     {
-        $result = MongoUtil::dbCommand($this->_connection, 
+        $result = MongoUtil::dbCommand($this->connection, 
                                        array(MongoUtil::$LOGGING => (int)$level ), 
-                                       $this->_db);
+                                       $this->db);
         return $result[ "ok" ];
     }
 
@@ -248,9 +245,9 @@ class MongoAdmin extends MongoAuth
      */
     public function setTracing($level ) 
     {
-        $result = MongoUtil::dbCommand($this->_connection, 
+        $result = MongoUtil::dbCommand($this->connection, 
                                        array(MongoUtil::$TRACING => (int)$level ), 
-                                       $this->_db);
+                                       $this->db);
         return $result[ "ok" ];
     }
 
@@ -263,9 +260,9 @@ class MongoAdmin extends MongoAuth
      */
     public function setQueryTracing($level ) 
     {
-        $result = MongoUtil::dbCommand($this->_connection, 
+        $result = MongoUtil::dbCommand($this->connection, 
                                        array(MongoUtil::$QUERY_TRACING => (int)$level ), 
-                                       $this->_db);
+                                       $this->db);
         return $result[ "ok" ];
     }
 
