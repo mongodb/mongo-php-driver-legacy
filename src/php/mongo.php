@@ -48,8 +48,8 @@ class Mongo
     /** 
      * Creates a new database connection.
      *
-     * @param string $host the host name (optional)
-     * @param int    $port the db port (optional)
+     * @param string $host the host name
+     * @param int    $port the db port
      */
     public function __construct( $host = null, $port = null ) 
     {
@@ -161,7 +161,7 @@ class Mongo
     /**
      * Repairs and compacts a database.
      *
-     * @param MongoDB $db                    the database to drop
+     * @param MongoDB $db                    the database to repair
      * @param bool    $preserve_cloned_files if cloned files should be kept if the repair fails
      * @param bool    $backup_original_files if original files should be backed up
      *

@@ -50,7 +50,7 @@ class MongoAuth extends Mongo
      *
      * @return array the database response
      */
-    public static function getUser($conn, $db, $username, $password ) 
+    private static function _getUser($conn, $db, $username, $password ) 
     {
         $ns   = $db . ".system.users";
         $user = mongo_find_one($conn, $ns, array("user" => $username));
@@ -114,9 +114,8 @@ class MongoAuth extends Mongo
         $auto_reconnect = MongoUtil::getConfig("mongo.auto_reconnect");
 
         $addr             = "$host:$port";
-        //echo "add: ". $addr."_".$username."_".$hash."<br/>";
         $this->connection = mongo_pconnect($addr, $username, $hash, $auto_reconnect, true);
-        //echo "connection? |".$this->connection."|<br/>";
+
         if (!$this->connection ) {
             if (!$plaintext) {
                 trigger_error("can't login with hash password", E_USER_WARNING);
@@ -129,7 +128,7 @@ class MongoAuth extends Mongo
                 $this->loggedIn = false;
                 return $this;
             }
-            $result = MongoAuth::getUser($this->connection, $db, $username, $password);
+            $result = MongoAuth::_getUser($this->connection, $db, $username, $password);
             if (!$result[ "ok" ]) {
                 trigger_error("couldn't log in", E_USER_WARNING);
                 $this->loggedIn = false;

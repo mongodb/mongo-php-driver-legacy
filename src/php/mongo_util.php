@@ -82,38 +82,6 @@ class MongoUtil
         return $name;
     }
 
-    /**
-     * Returns a string representation of an object.
-     *
-     * @param array $obj the object to transform
-     *
-     * @return string the string
-     */
-    public static function toJSON($obj) 
-    {
-        if (is_array($obj)) {
-            $str = "array(";
-            foreach ($obj as $k=>$v) {
-                $str .= "\"$k\" => ";
-                if (is_array($v)) {
-                    $str .= MongoUtil::toJSON($v);
-                } else if (is_string($v)) {
-                    $str .= "\"$v\"";
-                } else {
-                    $str .= "$v";
-                }
-
-                if (next($obj)) {
-                    $str .= ",";
-                }
-            }
-            $str .= ")";
-        } else {
-            return "$obj";
-        }
-        return $str;
-    }
-
     /** Execute a db command.
      *
      * @param conn   $conn database connection

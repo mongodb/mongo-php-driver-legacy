@@ -67,23 +67,6 @@ class MongoDB
         return $this->name;
     }
 
-
-    /**
-     * Get an authenticated session.
-     *
-     * @param string $username username
-     * @param string $password plaintext password
-     *
-     * @return MongoAuth if login was successful, false if unsuccessful
-     */
-    public function getAuth($username, $password) 
-    {
-        return MongoAuth::getAuth($this->connection, 
-                                  $this->name, 
-                                  $username, 
-                                  $password);
-    }
-
     /**
      * Fetches toolkit for dealing with files stored in this database.
      *
