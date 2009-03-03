@@ -43,13 +43,14 @@ zend_class_entry *mongo_bindata_class;
 
 /** Resources */
 int le_connection;
-int le_connection_p;
+int le_pconnection;
 int le_db_cursor;
 int le_gridfs;
 int le_gridfile;
 
 static function_entry mongo_functions[] = {
   PHP_FE( mongo_connect , NULL )
+  PHP_FE( mongo_pconnect , NULL )
   PHP_FE( mongo_close , NULL )
   PHP_FE( mongo_remove , NULL )
   PHP_FE( mongo_query , NULL )
@@ -120,6 +121,7 @@ ZEND_GET_MODULE(mongo)
 
 
 static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
+  php_printf("in dtor\n");
   mongo::DBClientConnection *conn = (mongo::DBClientConnection*)rsrc->ptr;
   if( conn )
     delete conn;
@@ -141,7 +143,7 @@ static void php_gridfile_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 PHP_MINIT_FUNCTION(mongo) {
 
   le_connection = zend_register_list_destructors_ex(php_connection_dtor, NULL, PHP_CONNECTION_RES_NAME, module_number);
-  le_connection_p = zend_register_list_destructors_ex(NULL, php_connection_dtor, PHP_CONNECTION_RES_NAME, module_number);
+  le_pconnection = zend_register_list_destructors_ex(NULL, php_connection_dtor, PHP_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
   le_gridfs = zend_register_list_destructors_ex(php_gridfs_dtor, NULL, PHP_GRIDFS_RES_NAME, module_number);
   le_gridfile = zend_register_list_destructors_ex(php_gridfile_dtor, NULL, PHP_GRIDFILE_RES_NAME, module_number);
@@ -200,6 +202,56 @@ PHP_FUNCTION(mongo_connect) {
 /* }}} */
 
 
+/* {{{ proto resource mongo_pconnect(string host, string username, string password, bool auto_reconnect, bool lazy) 
+   Connects to the database */
+PHP_FUNCTION(mongo_pconnect) {
+  mongo::DBClientConnection *conn;
+  char *server, *uname, *pass, *key;
+  zend_bool auto_reconnect, lazy;
+  int server_len, uname_len, pass_len, key_len;
+  list_entry le;
+  string error;
+  
+  int argc = ZEND_NUM_ARGS();
+  if (argc != 5 ||
+      zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssbb", &server, &server_len, &uname, &uname_len, &pass, &pass_len, &auto_reconnect, &lazy) == FAILURE) {
+    zend_error( E_WARNING, "parameter parse failure, expected: mongo_auth_connect( string, string, string, bool, bool )" );
+    RETURN_FALSE;
+  }
+
+  // check if a connection already exists
+  if(conn = get_pconn(server, uname, pass)) { 
+    ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
+    return;
+  }
+  else if(lazy) {
+    RETURN_NULL();
+  }
+
+  if ( server_len == 0 ) {
+    zend_error( E_WARNING, "invalid host" );
+    RETURN_FALSE;
+  }
+
+  conn = new mongo::DBClientConnection( (bool)auto_reconnect );
+  if ( ! conn->connect( server, error ) ){
+    zend_error( E_WARNING, "%s", error.c_str() );
+    RETURN_FALSE;
+  }
+
+  // store a reference in the persistence list
+  key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
+  le.ptr = conn;
+  le.type = le_connection;
+  zend_hash_add(&EG(persistent_list), key, key_len + 1, &le, sizeof(list_entry), NULL);
+  efree(key);
+
+  // save the persistent conn
+  ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
+}
+/* }}} */
+
+
 /* {{{ proto bool mongo_close(resource connection) 
    Closes the database connection */
 PHP_FUNCTION(mongo_close) {
@@ -226,6 +278,7 @@ PHP_FUNCTION(mongo_query) {
   zval *zconn, *zquery, *zsort, *zfields, *zhint;
   char *collection;
   int limit, skip, collection_len;
+  mongo::DBClientConnection *conn_ptr;
 
   if( ZEND_NUM_ARGS() != 8 ) {
       zend_error( E_WARNING, "expected 8 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -236,11 +289,7 @@ PHP_FUNCTION(mongo_query) {
       RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
-  if (!conn_ptr) {
-    zend_error( E_WARNING, "no db connection\n" );
-    RETURN_FALSE;
-  }
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, NULL, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
   php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
@@ -289,6 +338,7 @@ PHP_FUNCTION(mongo_find_one) {
   char *collection;
   int collection_len;
   mongo::BSONObj query;
+  mongo::DBClientConnection *conn_ptr;
 
   if( ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -299,11 +349,7 @@ PHP_FUNCTION(mongo_find_one) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
-  if (!conn_ptr) {
-    zend_error( E_WARNING, "no db connection\n" );
-    RETURN_FALSE;
-  }
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
   php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
@@ -323,6 +369,7 @@ PHP_FUNCTION(mongo_remove) {
   char *collection;
   int collection_len;
   zend_bool justOne = 0;
+  mongo::DBClientConnection *conn_ptr;
 
   if( ZEND_NUM_ARGS() != 4 ) {
     zend_error( E_WARNING, "expected 4 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -333,11 +380,7 @@ PHP_FUNCTION(mongo_remove) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
-  if (!conn_ptr) {
-    zend_error( E_WARNING, "no db connection\n" );
-    RETURN_FALSE;
-  }
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   mongo::BSONObjBuilder *rarray = new mongo::BSONObjBuilder(); 
   php_array_to_bson( rarray, Z_ARRVAL_P(zarray) );
@@ -353,6 +396,7 @@ PHP_FUNCTION(mongo_insert) {
   zval *zconn, *zarray;
   char *collection;
   int collection_len;
+  mongo::DBClientConnection *conn_ptr;
 
   if (ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -363,11 +407,7 @@ PHP_FUNCTION(mongo_insert) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
-  if (!conn_ptr) {
-    zend_error( E_WARNING, "no db connection\n" );
-    RETURN_FALSE;
-  }
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   mongo::BSONObjBuilder *obj_builder = new mongo::BSONObjBuilder();
   HashTable *php_array = Z_ARRVAL_P(zarray);
@@ -383,6 +423,7 @@ PHP_FUNCTION(mongo_batch_insert) {
   zval *zconn, *zarray;
   char *collection;
   int collection_len;
+  mongo::DBClientConnection *conn_ptr;
 
   if (ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -393,11 +434,7 @@ PHP_FUNCTION(mongo_batch_insert) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
-  if (!conn_ptr) {
-    zend_error( E_WARNING, "no db connection\n" );
-    RETURN_FALSE;
-  }
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   vector<mongo::BSONObj> inserter;
   HashTable *php_array = Z_ARRVAL_P(zarray);
@@ -428,7 +465,7 @@ PHP_FUNCTION(mongo_update) {
   char *collection;
   int collection_len;
   zend_bool zupsert = 0;
-
+  mongo::DBClientConnection *conn_ptr;
   int num_args = ZEND_NUM_ARGS();
   if ( num_args != 5 ) {
     zend_error( E_WARNING, "expected 5 parameters, got %d parameters", num_args );
@@ -439,11 +476,7 @@ PHP_FUNCTION(mongo_update) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
-  if (!conn_ptr) {
-    zend_error( E_WARNING, "no db connection\n" );
-    RETURN_FALSE;
-  }
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   mongo::BSONObjBuilder *bquery =  new mongo::BSONObjBuilder();
   php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
@@ -501,3 +534,19 @@ PHP_FUNCTION( mongo_next ) {
 }
 /* }}} */
 
+mongo::DBClientConnection* get_pconn(char *server, char *username, char *password) {
+  TSRMLS_FETCH();
+  char *key;
+  int key_len;
+  list_entry *le;
+  void *foo;
+
+  key_len = spprintf(&key, 0, "%s_%s_%s", server, username, password);
+  if (zend_hash_find(&EG(persistent_list), key, key_len + 1, &foo) == SUCCESS) {
+    le = (list_entry*)foo;
+    efree(key);
+    return (mongo::DBClientConnection*)le->ptr;
+  }
+  efree(key);
+  return NULL;
+}

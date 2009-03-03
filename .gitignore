@@ -1,4 +1,3 @@
-
 *~
 *.o
 *.os
@@ -15,3 +14,15 @@ CVS
 .sconf_temp
 .sconsign.dblite
 config.log
+.deps
+ac*.m4
+mkinstalldirs
+run-tests.php
+install-sh
+libtool
+ltmain.sh
+missing
+
+output.0
+requests
+traces.0

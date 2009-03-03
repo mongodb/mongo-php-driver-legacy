@@ -25,6 +25,7 @@
 extern zend_class_entry *mongo_id_class;
 
 extern int le_connection;
+extern int le_pconnection;
 extern int le_db_cursor;
 extern int le_gridfs;
 extern int le_gridfile;
@@ -35,6 +36,7 @@ PHP_FUNCTION( mongo_gridfs_init ) {
   zval *zconn;
   char *dbname, *prefix;
   int dbname_len, prefix_len;
+  mongo::DBClientConnection *conn_ptr;
 
   if( ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -45,11 +47,7 @@ PHP_FUNCTION( mongo_gridfs_init ) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientConnection *conn_ptr = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
-  if (!conn_ptr) {
-    zend_error( E_WARNING, "no db connection\n" );
-    RETURN_FALSE;
-  }
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   std::string *dbname_s = new std::string( dbname, dbname_len );
   std::string *prefix_s = new std::string( prefix, prefix_len );

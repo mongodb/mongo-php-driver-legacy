@@ -30,16 +30,9 @@
 
 PHP_MINIT_FUNCTION(mongo);
 
-/** mongo::DBClientConnection mongo_connect() // connects to localhost
- *  mongo::DBClientConnection mongo_connect( "host" )
- */
 PHP_FUNCTION(mongo_connect);
-/** bool mongo_close( mongo::DBClientConnection )
- */
+PHP_FUNCTION(mongo_pconnect);
 PHP_FUNCTION(mongo_close);
-
-/** mongo::DBClientConnection mongo_query( mongo::DBClientConnection, char* collection, zval *query, int limit, int skip, zval *fields, int opts )
- */
 PHP_FUNCTION(mongo_query);
 PHP_FUNCTION(mongo_find_one);
 PHP_FUNCTION(mongo_remove);
@@ -47,12 +40,10 @@ PHP_FUNCTION(mongo_insert);
 PHP_FUNCTION(mongo_batch_insert);
 PHP_FUNCTION(mongo_update);
 
-/** bool mongo_has_next( mongo::DBClientCursor ) 
- */
 PHP_FUNCTION(mongo_has_next);
-/** zval mongo_next( mongo::DBClientCursor ) 
- */
 PHP_FUNCTION(mongo_next);
+
+mongo::DBClientConnection* get_pconn(char*, char*, char*);
 
 extern zend_module_entry mongo_module_entry;
 #define phpext_mongo_ptr &mongo_module_entry

@@ -20,7 +20,6 @@
 #include "mongo.h"
 #include "auth.h"
 
-extern int le_connection_p;
 extern int le_connection;
 
 /* {{{ proto resource mongo_auth_connect(resource connection, string username, string password)
@@ -41,10 +40,10 @@ PHP_FUNCTION(mongo_auth_connect) {
   }
 
   // check if a connection already exists
-  if(c = get_auth_conn(uname, pass)) { 
+  /*  if(c = get_auth_conn(uname, pass)) { 
     ZEND_REGISTER_RESOURCE(return_value, c, le_connection_p);
     return;
-  }
+    }*/
 
   // create a new persistent connection
   c = (mongo::DBClientConnection*)zend_fetch_resource(&zconn TSRMLS_CC, -1, PHP_CONNECTION_RES_NAME, NULL, 1, le_connection);
@@ -57,14 +56,14 @@ PHP_FUNCTION(mongo_auth_connect) {
   // store a reference in the persistence list
   key_len = spprintf(&key, 0, "conn_%s_%s", uname, pass);
   le.ptr = c2;
-  le.type = le_connection_p;
+  //  le.type = le_connection_p;
   zend_hash_add(&EG(persistent_list), key, key_len + 1, &le, sizeof(list_entry), NULL);
   efree(key);
 
   // remove the transitory connection
   zend_list_delete(Z_LVAL_P(zconn));
   // save the persistent one
-  ZEND_REGISTER_RESOURCE(return_value, c2, le_connection_p);
+  //  ZEND_REGISTER_RESOURCE(return_value, c2, le_connection_p);
 }
 /* }}} */
 
@@ -88,7 +87,7 @@ PHP_FUNCTION(mongo_auth_get) {
   if (!conn) {
     RETURN_NULL();
   }
-  ZEND_REGISTER_RESOURCE(return_value, conn, le_connection_p);
+  //  ZEND_REGISTER_RESOURCE(return_value, conn, le_connection_p);
 }
 /* }}} */
 
