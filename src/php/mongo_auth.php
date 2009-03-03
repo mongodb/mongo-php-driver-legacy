@@ -118,19 +118,22 @@ class MongoAuth extends Mongo
 
         if (!$this->connection ) {
             if (!$plaintext) {
-                trigger_error("can't login with hash password", E_USER_WARNING);
+                $this->error = "can't login with hash password";
+                $this->code = -1;
                 $this->loggedIn = false;
                 return $this;
             }
             $this->connection = mongo_pconnect($addr, $username, $hash, $auto_reconnect, false);
             if (!$this->connection) {
-                trigger_error("couldn't connect to mongo", E_USER_WARNING);
+                $this->error = "couldn't connect to mongo";
+                $this->code = -2;
                 $this->loggedIn = false;
                 return $this;
             }
             $result = MongoAuth::_getUser($this->connection, $db, $username, $password);
             if (!$result[ "ok" ]) {
-                trigger_error("couldn't log in", E_USER_WARNING);
+                $this->error = "couldn't log in";
+                $this->code = -3;
                 $this->loggedIn = false;
                 return $this;
             }
