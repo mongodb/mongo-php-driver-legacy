@@ -29,6 +29,8 @@
 
 
 PHP_MINIT_FUNCTION(mongo);
+PHP_MSHUTDOWN_FUNCTION(mongo);
+PHP_RINIT_FUNCTION(mongo);
 
 PHP_FUNCTION(mongo_connect);
 PHP_FUNCTION(mongo_pconnect);
@@ -42,6 +44,18 @@ PHP_FUNCTION(mongo_update);
 
 PHP_FUNCTION(mongo_has_next);
 PHP_FUNCTION(mongo_next);
+
+ZEND_BEGIN_MODULE_GLOBALS(mongo)
+long num_links,num_persistent;
+long max_links,max_persistent;
+long allow_persistent; 
+ZEND_END_MODULE_GLOBALS(mongo) 
+
+#ifdef ZTS
+# define MonGlo(v) TSRMG(mongo_globals_id, zend_mongo_globals *, v)
+#else
+# define MonGlo(v) (mongo_globals.v)
+#endif 
 
 static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int);
 

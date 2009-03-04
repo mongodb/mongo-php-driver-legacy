@@ -47,6 +47,9 @@ int le_db_cursor;
 int le_gridfs;
 int le_gridfile;
 
+ZEND_DECLARE_MODULE_GLOBALS(mongo)
+static PHP_GINIT_FUNCTION(mongo);
+
 static function_entry mongo_functions[] = {
   PHP_FE( mongo_connect , NULL )
   PHP_FE( mongo_pconnect , NULL )
@@ -102,14 +105,16 @@ zend_module_entry mongo_module_entry = {
   PHP_MONGO_EXTNAME,
   mongo_functions,
   PHP_MINIT(mongo),
+  PHP_MSHUTDOWN(mongo),
+  PHP_RINIT(mongo),
   NULL,
   NULL,
-  NULL,
-  NULL,
-#if ZEND_MODULE_API_NO >= 20010901
   PHP_MONGO_VERSION,
-#endif
-    STANDARD_MODULE_PROPERTIES
+  PHP_MODULE_GLOBALS(mongo),
+  PHP_GINIT(mongo),
+  NULL,
+  NULL,
+  STANDARD_MODULE_PROPERTIES_EX
 };
 
 #ifdef COMPILE_DL_MONGO
@@ -117,11 +122,40 @@ ZEND_GET_MODULE(mongo)
 #endif
 
 
+/* {{{ PHP_INI */ 
+PHP_INI_BEGIN()
+STD_PHP_INI_BOOLEAN("mongo.allow_persistent", "1", PHP_INI_SYSTEM, OnUpdateLong, allow_persistent, zend_mongo_globals, mongo_globals) 
+STD_PHP_INI_ENTRY_EX("mongo.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_persistent, zend_mongo_globals, mongo_globals, display_link_numbers) 
+STD_PHP_INI_ENTRY_EX("mongo.max_connections", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_links, zend_mongo_globals, mongo_globals, display_link_numbers) 
+PHP_INI_END()
+/* }}} */
+
+
+/* {{{ PHP_GINIT_FUNCTION
+ */
+static PHP_GINIT_FUNCTION(mongo){
+  mongo_globals->num_persistent = 0; 
+  mongo_globals->num_links = 0; 
+}
+/* }}} */
+
+
 static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo::DBClientConnection *conn = (mongo::DBClientConnection*)rsrc->ptr;
   if( conn )
     delete conn;
+  MonGlo(num_links)--;
 }
+
+
+static void php_pconnection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
+  mongo::DBClientConnection *conn = (mongo::DBClientConnection*)rsrc->ptr;
+  if( conn )
+    delete conn;
+  MonGlo(num_links)--;
+  MonGlo(num_persistent)--;
+}
+
 
 static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo::GridFS *fs = (mongo::GridFS*)rsrc->ptr;
@@ -129,17 +163,21 @@ static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
     delete fs;
 }
 
+
 static void php_gridfile_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo::GridFile *file = (mongo::GridFile*)rsrc->ptr;
   if( file )
     delete file;
 }
 
-
+/* {{{ PHP_MINIT_FUNCTION
+ */
 PHP_MINIT_FUNCTION(mongo) {
 
+  REGISTER_INI_ENTRIES();
+
   le_connection = zend_register_list_destructors_ex(php_connection_dtor, NULL, PHP_CONNECTION_RES_NAME, module_number);
-  le_pconnection = zend_register_list_destructors_ex(NULL, php_connection_dtor, PHP_CONNECTION_RES_NAME, module_number);
+  le_pconnection = zend_register_list_destructors_ex(NULL, php_pconnection_dtor, PHP_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
   le_gridfs = zend_register_list_destructors_ex(php_gridfs_dtor, NULL, PHP_GRIDFS_RES_NAME, module_number);
   le_gridfile = zend_register_list_destructors_ex(php_gridfile_dtor, NULL, PHP_GRIDFILE_RES_NAME, module_number);
@@ -162,6 +200,25 @@ PHP_MINIT_FUNCTION(mongo) {
 
   return SUCCESS;
 }
+/* }}} */
+
+
+/* {{{ PHP_MSHUTDOWN_FUNCTION
+ */ 
+PHP_MSHUTDOWN_FUNCTION(mongo) {
+  UNREGISTER_INI_ENTRIES();
+
+  return SUCCESS;
+}
+/* }}} */
+
+
+/* {{{ PHP_RINIT_FUNCTION
+ */ 
+PHP_RINIT_FUNCTION(mongo) {
+  MonGlo(num_links) = MonGlo(num_persistent); 
+}
+/* }}} */
 
 
 /* {{{ mongo_connect
@@ -474,6 +531,20 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
   string error;
   void *foo;
   
+  /* make sure that there aren't too many links already */
+  if (MonGlo(max_links)<=MonGlo(num_links)) {
+    RETURN_FALSE;
+  }
+  /* if persistent links aren't allowed, just create a normal link */
+  if (!MonGlo(allow_persistent)) {
+    persistent = 0;
+  }
+  /* make sure that there aren't too many persistent links already */
+  if (persistent &&
+      MonGlo(max_persistent)<=MonGlo(num_persistent)) {
+    RETURN_FALSE;
+  }
+
   int argc = ZEND_NUM_ARGS();
   if (persistent) {
     if (argc != 5) {
@@ -533,10 +604,12 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
     efree(key);
 
     ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
+    MonGlo(num_persistent)++;
   }
   // otherwise, just return the connection
   else {
     ZEND_REGISTER_RESOURCE(return_value, conn, le_connection);    
   }
+  MonGlo(num_links)++;
 }
 /* }}} */
