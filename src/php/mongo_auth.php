@@ -114,28 +114,29 @@ class MongoAuth extends Mongo
         $auto_reconnect = MongoUtil::getConfig("mongo.auto_reconnect");
 
         $addr             = "$host:$port";
-        $this->connection = mongo_pconnect($addr, $username, $hash, $auto_reconnect, true);
+        $lazy = true;
+        $this->connection = mongo_pconnect($addr, $username, $hash, $auto_reconnect, $lazy);
 
         if (!$this->connection ) {
             if (!$plaintext) {
                 $this->error = "can't login with hash password";
                 $this->code = -1;
                 $this->loggedIn = false;
-                return $this;
+                return;
             }
-            $this->connection = mongo_pconnect($addr, $username, $hash, $auto_reconnect, false);
+            $this->connection = mongo_pconnect($addr, $username, $hash, $auto_reconnect, !$lazy);
             if (!$this->connection) {
                 $this->error = "couldn't connect to mongo";
                 $this->code = -2;
                 $this->loggedIn = false;
-                return $this;
+                return;
             }
             $result = MongoAuth::_getUser($this->connection, $db, $username, $password);
             if (!$result[ "ok" ]) {
                 $this->error = "couldn't log in";
                 $this->code = -3;
                 $this->loggedIn = false;
-                return $this;
+                return;
             }
         }
         $this->loggedIn = true;

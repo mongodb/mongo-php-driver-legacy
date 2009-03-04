@@ -48,31 +48,34 @@ class Mongo
     /** 
      * Creates a new database connection.
      *
-     * @param string $host the host name
-     * @param int    $port the db port
+     * @param string $host       the host name
+     * @param int    $port       the db port
+     * @param bool   $persistent if the connection should be persistent
      */
-    public function __construct( $host = null, $port = null ) 
+    public function __construct($host = NULL, $port = NULL, $persistent = false) 
     {
-        if (!$host) {
-            $host = get_cfg_var("mongo.default_host");
-            if (!$host ) {
-              $host = MONGO_DEFAULT_HOST;
-            }
-        }
-        if (!$port ) {
-            $port = get_cfg_var("mongo.default_port");
-            if (!$port ) {
-              $port = MONGO_DEFAULT_PORT;
-            }
-        }
+        $this->host = $host ? $host : get_cfg_var("mongo.default_host");
+        $this->host = $host ? $host : MONGO_DEFAULT_HOST;
+        $this->port = $port ? $port : get_cfg_var("mongo.default_port");
+        $this->port = $port ? $port : MONGO_DEFAULT_PORT;
+        
         $auto_reconnect = MongoUtil::getConfig("mongo.auto_reconnect");
+        $addr           = "$this";
 
-        $addr             = "$host:$port";
-        $this->connection = mongo_connect($addr, $auto_reconnect);
+        if ($persistent) {
+          $username = "";
+          $password = "";
+          $lazy     = false;
+          $this->connection = mongo_pconnect($addr, $username, $password, $auto_reconnect, $lazy);
+        } else {
+          $this->connection = mongo_connect($addr, $auto_reconnect);
+        }
 
         if (!$this->connection ) {
             trigger_error("couldn't connect to mongo", E_USER_WARNING);
+            $this->connected = false;
         }
+        $this->connected = true;
     }
 
     /**
@@ -83,21 +86,6 @@ class Mongo
     public function __toString() 
     {
         return $this->host . ":" . $this->port;
-    }
-
-    /**
-     * Gets an authenticated session.
-     *
-     * @param string $db       name of the db to log in to
-     * @param string $username username
-     * @param string $password plaintext password
-     *
-     * @return MongoAuth an authenticated connection
-     */
-    public function getAuth( $db, $username, $password ) 
-    {
-        $db = $this->selectDB($db);
-        return $db->getAuth($username, $password);
     }
 
     /** 
@@ -236,6 +224,7 @@ class Mongo
     public function close() 
     {
         mongo_close($this->connection);
+        $this->connected = false;
     }
 
 }

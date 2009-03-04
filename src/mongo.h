@@ -43,7 +43,7 @@ PHP_FUNCTION(mongo_update);
 PHP_FUNCTION(mongo_has_next);
 PHP_FUNCTION(mongo_next);
 
-mongo::DBClientConnection* get_pconn(char*, char*, char*);
+static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int);
 
 extern zend_module_entry mongo_module_entry;
 #define phpext_mongo_ptr &mongo_module_entry

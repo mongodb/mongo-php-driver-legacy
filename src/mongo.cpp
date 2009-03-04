@@ -167,86 +167,18 @@ PHP_MINIT_FUNCTION(mongo) {
 }
 
 
-/* {{{ proto resource mongo_connect(string host, bool auto_reconnect) 
-   Connects to the database */
+/* {{{ mongo_connect
+ */
 PHP_FUNCTION(mongo_connect) {
-  mongo::DBClientConnection *conn;
-  char *server;
-  zend_bool auto_reconnect;
-  int server_len;
-  string error;
-  
-  if( ZEND_NUM_ARGS() != 2 ) {
-    zend_error( E_WARNING, "expected 2 parameters, got %d parameters", ZEND_NUM_ARGS() );
-    RETURN_FALSE;
-  }
-  else if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sb", &server, &server_len, &auto_reconnect) == FAILURE ) {
-    zend_error( E_WARNING, "incorrect parameter types, expected: mongo_connect( string, bool )" );
-    RETURN_FALSE;
-  }
-
-  if ( server_len == 0 ) {
-    zend_error( E_WARNING, "invalid host" );
-    RETURN_FALSE;
-  }
-
-  conn = new mongo::DBClientConnection( (bool)auto_reconnect );
-  if ( ! conn->connect( server, error ) ){
-    zend_error( E_WARNING, "%s", error.c_str() );
-    RETURN_FALSE;
-  }
-  
-  ZEND_REGISTER_RESOURCE( return_value, conn, le_connection );
+  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
 }
 /* }}} */
 
 
-/* {{{ proto resource mongo_pconnect(string host, string username, string password, bool auto_reconnect, bool lazy) 
-   Connects to the database */
+/* {{{ mongo_pconnect
+ */
 PHP_FUNCTION(mongo_pconnect) {
-  mongo::DBClientConnection *conn;
-  char *server, *uname, *pass, *key;
-  zend_bool auto_reconnect, lazy;
-  int server_len, uname_len, pass_len, key_len;
-  list_entry le;
-  string error;
-  
-  int argc = ZEND_NUM_ARGS();
-  if (argc != 5 ||
-      zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssbb", &server, &server_len, &uname, &uname_len, &pass, &pass_len, &auto_reconnect, &lazy) == FAILURE) {
-    zend_error( E_WARNING, "parameter parse failure, expected: mongo_auth_connect( string, string, string, bool, bool )" );
-    RETURN_FALSE;
-  }
-
-  // check if a connection already exists
-  if(conn = get_pconn(server, uname, pass)) { 
-    ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
-    return;
-  }
-  else if(lazy) {
-    RETURN_NULL();
-  }
-
-  if ( server_len == 0 ) {
-    zend_error( E_WARNING, "invalid host" );
-    RETURN_FALSE;
-  }
-
-  conn = new mongo::DBClientConnection( (bool)auto_reconnect );
-  if ( ! conn->connect( server, error ) ){
-    zend_error( E_WARNING, "%s", error.c_str() );
-    RETURN_FALSE;
-  }
-
-  // store a reference in the persistence list
-  key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
-  le.ptr = conn;
-  le.type = le_connection;
-  zend_hash_add(&EG(persistent_list), key, key_len + 1, &le, sizeof(list_entry), NULL);
-  efree(key);
-
-  // save the persistent conn
-  ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
+  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
 }
 /* }}} */
 
@@ -533,19 +465,80 @@ PHP_FUNCTION( mongo_next ) {
 }
 /* }}} */
 
-mongo::DBClientConnection* get_pconn(char *server, char *username, char *password) {
-  TSRMLS_FETCH();
-  char *key;
-  int key_len;
-  list_entry *le;
-  void *foo;
 
-  key_len = spprintf(&key, 0, "%s_%s_%s", server, username, password);
-  if (zend_hash_find(&EG(persistent_list), key, key_len + 1, &foo) == SUCCESS) {
-    le = (list_entry*)foo;
+/* {{{ php_mongo_do_connect
+ */
+static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
+  mongo::DBClientConnection *conn;
+  char *server, *uname, *pass, *key;
+  zend_bool auto_reconnect, lazy;
+  int server_len, uname_len, pass_len, key_len;
+  list_entry le, *le_ptr;
+  string error;
+  void *foo;
+  
+  int argc = ZEND_NUM_ARGS();
+  if (persistent) {
+    if (argc != 5 ||
+        zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssbb", &server, &server_len, &uname, &uname_len, &pass, &pass_len, &auto_reconnect, &lazy) == FAILURE) {
+      zend_error( E_WARNING, "parameter parse failure, expected: mongo_auth_connect( string, string, string, bool, bool )" );
+      RETURN_FALSE;
+    }
+
+    key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
+    if (zend_hash_find(&EG(persistent_list), key, key_len + 1, &foo) == SUCCESS) {
+      php_printf("found a connection for %s", key);
+      le_ptr = (list_entry*)foo;
+      conn = (mongo::DBClientConnection*)le_ptr->ptr;
+    }
     efree(key);
-    return (mongo::DBClientConnection*)le->ptr;
+
+    /* if a connection was found, return it */
+    if (conn) { 
+      ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
+      return;
+    }
+    /* if lazy and no connection was found, return */
+    else if(lazy) {
+      RETURN_NULL();
+    }
   }
-  efree(key);
-  return NULL;
+  /* non-persistent */
+  else {
+    if( ZEND_NUM_ARGS() != 2 ) {
+      zend_error( E_WARNING, "expected 2 parameters, got %d parameters", ZEND_NUM_ARGS() );
+      RETURN_FALSE;
+    }
+    else if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sb", &server, &server_len, &auto_reconnect) == FAILURE ) {
+      zend_error( E_WARNING, "incorrect parameter types, expected: mongo_connect( string, bool )" );
+      RETURN_FALSE;
+    }
+  }
+
+  if ( server_len == 0 ) {
+    zend_error( E_WARNING, "invalid host" );
+    RETURN_FALSE;
+  }
+
+  conn = new mongo::DBClientConnection( (bool)auto_reconnect );
+  if ( ! conn->connect( server, error ) ){
+    zend_error( E_WARNING, "%s", error.c_str() );
+    RETURN_FALSE;
+  }
+
+  // store a reference in the persistence list
+  if (persistent) {
+    key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
+    le.ptr = conn;
+    le.type = le_connection;
+    zend_hash_add(&EG(persistent_list), key, key_len + 1, &le, sizeof(list_entry), NULL);
+    efree(key);
+
+    ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
+  }
+  // otherwise, just return the connection
+  else {
+    ZEND_REGISTER_RESOURCE(return_value, conn, le_connection);    
+  }
 }
+/* }}} */
