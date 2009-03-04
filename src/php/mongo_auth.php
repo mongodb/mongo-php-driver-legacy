@@ -149,7 +149,10 @@ class MongoAuth extends Mongo
      */
     public function __toString() 
     {
-        return "Authenticated";
+        if ($this->loggedIn) {
+            return "Authenticated";
+        }
+        return $this->error;
     }
 
     /**

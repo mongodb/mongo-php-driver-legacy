@@ -34,7 +34,6 @@
 #include "mongo_bindata.h"
 #include "bson.h"
 #include "gridfs.h"
-#include "auth.h"
 
 zend_class_entry *mongo_id_class;
 zend_class_entry *mongo_date_class;
@@ -60,8 +59,6 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_update , NULL )
   PHP_FE( mongo_has_next , NULL )
   PHP_FE( mongo_next , NULL )
-  PHP_FE( mongo_auth_connect , NULL )
-  PHP_FE( mongo_auth_get , NULL )
   PHP_FE( mongo_gridfs_init , NULL )
   PHP_FE( mongo_gridfs_list , NULL )
   PHP_FE( mongo_gridfs_store , NULL )
@@ -479,37 +476,38 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
   
   int argc = ZEND_NUM_ARGS();
   if (persistent) {
-    if (argc != 5 ||
-        zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssbb", &server, &server_len, &uname, &uname_len, &pass, &pass_len, &auto_reconnect, &lazy) == FAILURE) {
-      zend_error( E_WARNING, "parameter parse failure, expected: mongo_auth_connect( string, string, string, bool, bool )" );
+    if (argc != 5) {
+      zend_error( E_WARNING, "expected 5 parameters, got %d parameters", argc );
+      RETURN_FALSE;
+    }
+    else if (zend_parse_parameters(argc TSRMLS_CC, "sssbb", &server, &server_len, &uname, &uname_len, &pass, &pass_len, &auto_reconnect, &lazy) == FAILURE) {
+      zend_error( E_WARNING, "incorrect parameter types, expected: mongo_pconnect( string, string, string, bool, bool )" );
       RETURN_FALSE;
     }
 
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
+    /* if a connection is found, return it */
     if (zend_hash_find(&EG(persistent_list), key, key_len + 1, &foo) == SUCCESS) {
-      php_printf("found a connection for %s", key);
       le_ptr = (list_entry*)foo;
       conn = (mongo::DBClientConnection*)le_ptr->ptr;
-    }
-    efree(key);
-
-    /* if a connection was found, return it */
-    if (conn) { 
       ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
+      efree(key);
       return;
     }
     /* if lazy and no connection was found, return */
     else if(lazy) {
+      efree(key);
       RETURN_NULL();
     }
+    efree(key);
   }
   /* non-persistent */
   else {
-    if( ZEND_NUM_ARGS() != 2 ) {
-      zend_error( E_WARNING, "expected 2 parameters, got %d parameters", ZEND_NUM_ARGS() );
+    if( argc != 2 ) {
+      zend_error( E_WARNING, "expected 2 parameters, got %d parameters", argc );
       RETURN_FALSE;
     }
-    else if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sb", &server, &server_len, &auto_reconnect) == FAILURE ) {
+    else if( zend_parse_parameters(argc TSRMLS_CC, "sb", &server, &server_len, &auto_reconnect) == FAILURE ) {
       zend_error( E_WARNING, "incorrect parameter types, expected: mongo_connect( string, bool )" );
       RETURN_FALSE;
     }
