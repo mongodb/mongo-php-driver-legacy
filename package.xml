@@ -13,11 +13,11 @@
    <email>kristina@10gen.com</email>
    <active>yes</active>
  </lead>
- <date>2009-02-24</date>
+ <date>2009-03-04</date>
  <time>12:00:00</time>
  <version>
-   <release>0.8.0</release>
-   <api>0.8.0</api>
+   <release>0.8.1</release>
+   <api>0.8.1</api>
  </version>
  <stability>
    <release>alpha</release>
@@ -25,8 +25,10 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-   Initial release.  
-   Basic connection and interaction capabilities.
+   Persistent connections
+   Better authentication
+   MongoId, MongoDate, MongoRegex, and MongoBinData types
+   Batch insert
  </notes>
  <contents>
    <dir baseinstalldir="/" name="/">
@@ -37,6 +39,12 @@
        <file role="src" name="mongo.h"/>
        <file role="src" name="mongo_id.cpp"/>
        <file role="src" name="mongo_id.h"/>
+       <file role="src" name="mongo_bindata.cpp"/>
+       <file role="src" name="mongo_bindata.h"/>
+       <file role="src" name="mongo_regex.cpp"/>
+       <file role="src" name="mongo_regex.h"/>
+       <file role="src" name="mongo_date.cpp"/>
+       <file role="src" name="mongo_date.h"/>
        <file role="src" name="bson.cpp"/>
        <file role="src" name="bson.h"/>
        <file role="src" name="gridfs.cpp"/>
@@ -64,8 +72,29 @@
    </required>
  </dependencies>
  <providesextension>mongo</providesextension> 
- <extsrcrelease />
+ <extsrcrelease>
+   <configureoption name="enable-64" default="no" prompt="Force the mongo driver to build for 64-bit architecture, even if php is 32-bit"/> 
+   <configureoption name="with-mongodb" default="/usr/local" prompt="Specify path to mongo database"/> 
+   <configureoption name="with-boost" default="/usr/lib" prompt="Specify path to boost libraries"/> 
+ </extsrcrelease>
  <changelog>
+   <release>
+     <stability>
+       <release>alpha</release>
+       <api>alpha</api>
+     </stability>
+     <version>
+       <release>0.8.1</release>
+       <api>0.8.1</api>
+     </version>
+     <date>2009-03-04</date>
+     <notes>
+Persistent connections
+Better authentication
+MongoId, MongoDate, MongoRegex, and MongoBinData types
+Batch insert
+     </notes>
+   </release>
    <release>
      <version>
        <release>0.8.0</release>

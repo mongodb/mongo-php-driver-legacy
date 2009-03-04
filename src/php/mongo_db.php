@@ -79,16 +79,6 @@ class MongoDB
         return new MongoGridfs($this, $prefix);
     }
 
-    /** 
-     * Returns the name of the database currently in use.
-     *
-     * @return string the name of the database
-     */
-    public function getName() 
-    {
-        return $this->name;
-    }
-
     /**
      * Gets this database's profiling level.
      *

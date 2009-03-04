@@ -1,4 +1,0 @@
-#!/bin/bash
-
-php ./runtests.php $@
-exit $?

@@ -2,6 +2,9 @@ See http://www.mongodb.org/display/DOCS/PHP+Language+Center for detailed install
 
 If you absolutely must, you can install it without reading the wiki:
 
-   $ sudo scons install
+   $ phpize
+   $ ./configure --enable-mongo
+   $ make
+   $ sudo make install
 
-Now go read the wiki, because you need to configure php.ini before it will actually work.
+Now go read the wiki.
