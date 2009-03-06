@@ -111,19 +111,18 @@ class MongoCollection
 
     /** Inserts many objects into the database at once.
      *
-     * @param object $a an array of objects or arrays
+     * @param array $a an array of objects or arrays
      *
      * @return array the array saved to the database
      */
-    function batchInsert($a) 
+    function batchInsert($a = array()) 
     {
         if (!count($a)) {
             return $a;
         }
-        $arr    = $iterable;
-        $result = mongo_batch_insert($this->connection, (string)$this, $arr);
+        $result = mongo_batch_insert($this->connection, (string)$this, $a);
         if ($result) {
-            return $iterable;
+            return $a;
         }
         return false;
     }
@@ -132,19 +131,15 @@ class MongoCollection
      * Querys this collection.
      *
      * @param object $query  the fields for which to search
-     * @param int    $skip   number of results to skip
-     * @param int    $limit  number of results to return
      * @param object $fields fields of each result to return
      *
      * @return mongo_cursor a cursor for the search results
      */
-    function find($query = array(), $skip = 0, $limit = 0, $fields = array()) 
+    function find($query = array(), $fields = array()) 
     {
         return new MongoCursor($this->connection, 
                                (string)$this, 
                                $query, 
-                               $skip, 
-                               $limit, 
                                $fields);
     }
 
@@ -197,7 +192,7 @@ class MongoCollection
      *
      * @return bool if the command was executed successfully
      */
-    function remove($criteria, $just_one = false) 
+    function remove($criteria = array(), $just_one = false) 
     {
         return mongo_remove($this->connection, 
                             (string)$this, 
@@ -221,7 +216,7 @@ class MongoCollection
         }
         $name = MongoUtil::toIndexString($keys);
         $coll = $this->parent->selectCollection("system.indexes");
-        $coll->insert(array("name" => $name, "ns" => $ns, "key" => $keys));
+        $coll->insert(array("ns" => $ns, "key" => $keys, "name" => $name));
     }
   
     /**

@@ -34,30 +34,28 @@
    <dir baseinstalldir="/" name="/">
      <file role="src" name="config.m4" />
      <file role="doc" name="README"/>
-     <dir name="src">
-       <file role="src" name="mongo.cpp"/>
-       <file role="src" name="mongo.h"/>
-       <file role="src" name="mongo_id.cpp"/>
-       <file role="src" name="mongo_id.h"/>
-       <file role="src" name="mongo_bindata.cpp"/>
-       <file role="src" name="mongo_bindata.h"/>
-       <file role="src" name="mongo_regex.cpp"/>
-       <file role="src" name="mongo_regex.h"/>
-       <file role="src" name="mongo_date.cpp"/>
-       <file role="src" name="mongo_date.h"/>
-       <file role="src" name="bson.cpp"/>
-       <file role="src" name="bson.h"/>
-       <file role="src" name="gridfs.cpp"/>
-       <file role="src" name="gridfs.h"/>
-       <dir name="php">
-         <file role="src" name="mongo.php"/>
-         <file role="src" name="mongo_auth.php"/>
-         <file role="src" name="mongo_db.php"/>
-         <file role="src" name="mongo_collection.php"/>
-         <file role="src" name="mongo_cursor.php"/>
-         <file role="src" name="mongo_util.php"/>
-         <file role="src" name="gridfs.php"/>
-       </dir>
+     <file role="src" name="mongo.cpp"/>
+     <file role="src" name="mongo.h"/>
+     <file role="src" name="mongo_id.cpp"/>
+     <file role="src" name="mongo_id.h"/>
+     <file role="src" name="mongo_bindata.cpp"/>
+     <file role="src" name="mongo_bindata.h"/>
+     <file role="src" name="mongo_regex.cpp"/>
+     <file role="src" name="mongo_regex.h"/>
+     <file role="src" name="mongo_date.cpp"/>
+     <file role="src" name="mongo_date.h"/>
+     <file role="src" name="bson.cpp"/>
+     <file role="src" name="bson.h"/>
+     <file role="src" name="gridfs.cpp"/>
+     <file role="src" name="gridfs.h"/>
+     <dir name="php">
+       <file role="src" name="mongo.php"/>
+       <file role="src" name="mongo_auth.php"/>
+       <file role="src" name="mongo_db.php"/>
+       <file role="src" name="mongo_collection.php"/>
+       <file role="src" name="mongo_cursor.php"/>
+       <file role="src" name="mongo_util.php"/>
+       <file role="src" name="gridfs.php"/>
      </dir>
    </dir>
  </contents>

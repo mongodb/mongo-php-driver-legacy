@@ -91,6 +91,8 @@ class MongoAuth extends Mongo
      */
     public function __construct($host, $port, $db, $username, $password, $plaintext=true) 
     {
+        $this->host = $host;
+        $this->port = $port;
         $this->db = $db;
         if ($plaintext) {
             $hash = md5("mongo$password");
@@ -150,7 +152,7 @@ class MongoAuth extends Mongo
     public function __toString() 
     {
         if ($this->loggedIn) {
-            return "Authenticated";
+            return parent::__toString();
         }
         return $this->error;
     }
@@ -190,7 +192,11 @@ class MongoAdmin extends MongoAuth
      * Creates a new admin session.  To get a new session, call 
      * MongoAuth::getAuth() using the admin database.
      * 
-     * @param connection $conn db connection
+     * @param string $host      hostname
+     * @param string $port      port
+     * @param string $username  username
+     * @param string $password  password
+     * @param bool   $plaintext in plaintext, vs. encrypted
      */
     public function __construct($host, $port, $username, $password, $plaintext=true) 
     {

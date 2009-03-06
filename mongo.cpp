@@ -264,6 +264,7 @@ PHP_FUNCTION(mongo_query) {
   char *collection;
   int limit, skip, collection_len;
   mongo::DBClientConnection *conn_ptr;
+  std::auto_ptr<mongo::DBClientCursor> cursor;
 
   if( ZEND_NUM_ARGS() != 8 ) {
       zend_error( E_WARNING, "expected 8 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -291,24 +292,20 @@ PHP_FUNCTION(mongo_query) {
     mongo::BSONObj hint = bhint->done();
     q->hint( hint );
   }
-
+  
   mongo::BSONObjBuilder *bsort = new mongo::BSONObjBuilder();
   n = php_array_to_bson( bsort, Z_ARRVAL_P( zsort ) );
   if( n > 0 ) {
-    mongo::BSONObj sort = bsort->done();
-    q->sort( sort );
-  }
+    mongo::BSONObj *persistentSort = new mongo::BSONObj(bsort->done());
+    q->sort(*persistentSort);
+    }
 
-  std::auto_ptr<mongo::DBClientCursor> cursor;
-  if( num_fields == 0 )
+  if (num_fields == 0) {
     cursor = conn_ptr->query( (const char*)collection, *q, limit, skip );
-  else
+  }
+  else {
     cursor = conn_ptr->query( (const char*)collection, *q, limit, skip, &fields );
-
-  delete bquery;
-  delete bfields;
-  delete bhint;
-  delete bsort;
+  }
 
   mongo::DBClientCursor *c = cursor.get();
   ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
@@ -532,7 +529,8 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
   void *foo;
   
   /* make sure that there aren't too many links already */
-  if (MonGlo(max_links)<=MonGlo(num_links)) {
+  if (MonGlo(max_links) > -1 &&
+      MonGlo(max_links) <= MonGlo(num_links)) {
     RETURN_FALSE;
   }
   /* if persistent links aren't allowed, just create a normal link */
@@ -541,7 +539,8 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
   }
   /* make sure that there aren't too many persistent links already */
   if (persistent &&
-      MonGlo(max_persistent)<=MonGlo(num_persistent)) {
+      MonGlo(max_persistent) > -1 &&
+      MonGlo(max_persistent) <= MonGlo(num_persistent)) {
     RETURN_FALSE;
   }
 
