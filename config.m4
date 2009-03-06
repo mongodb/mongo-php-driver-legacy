@@ -4,30 +4,26 @@ PHP_ARG_ENABLE(mongo, whether to enable Mongo extension,
 PHP_ARG_ENABLE(64, whether to compile for 64-bit architecture,
 [  --enable-64   Compile for 64-bit architecture], no, no)
 
-PHP_ARG_WITH(mongodb, location of the mongo database client,
-[  --with-mongodb=path   Path to mongo client /usr/local], no, no)
-
-PHP_ARG_WITH(boost, location of boost libraries,
-[  --with-boost=path   Path to boost libraries /usr/lib], no, no)
-
 if test "$PHP_MONGO" != "no"; then
   AC_DEFINE(HAVE_MONGO, 1, [Whether you have Mongo extension])
-  PHP_NEW_EXTENSION(mongo, src/mongo.cpp src/mongo_id.cpp src/mongo_regex.cpp src/mongo_date.cpp src/mongo_bindata.cpp src/gridfs.cpp src/bson.cpp, $ext_shared)
+  PHP_NEW_EXTENSION(mongo, mongo.cpp mongo_id.cpp mongo_regex.cpp mongo_date.cpp mongo_bindata.cpp gridfs.cpp bson.cpp, $ext_shared)
 
-  if test "$PHP_MONGODB" != "no"; then
-    mongolib=$PHP_MONGODB
-  else
-    mongolib=/usr/local
-  fi
+  for dir in /usr /usr/local /opt/mongo ~/mongo .; do
+    if test -e $dir && test -e $dir/lib/mongo && test -e $dir/include/mongo; then
+      mongo=$dir
+      break
+    fi
+  done
 
-  if test "$PHP_BOOST" != "no"; then
-    boostlib=$PHP_BOOST
-  else
-    boostlib=/usr/lib
-  fi
+  for dir in /usr/lib /usr/local/lib; do
+    if test -e $dir/lib/libboost_thread-mt.a; then
+      boost=$dir
+      break
+    fi
+  done
 
-  LDFLAGS="$LDFLAGS -L$mongolib/lib -L$boostlib -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
-  INCLUDES="$INCLUDES -I$mongolib/include"
+  LDFLAGS="$LDFLAGS -L$mongo/lib -L$boost/lib -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
+  INCLUDES="$INCLUDES -I$mongo/include"
 
   CXX=g++
   CC=g++
