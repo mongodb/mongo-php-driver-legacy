@@ -26,3 +26,8 @@ missing
 output.0
 requests
 traces.0
+
+*.phpt.diff
+*.phpt.exp
+*.phpt.out
+*.phpt.log

@@ -275,7 +275,7 @@ class MongoCollection
                                        array("count" => $this->name), 
                                        $this->db);
         if ($result) {
-            return $result[ "n" ];
+          return (int)$result[ "n" ];
         }
         trigger_error("count failed", E_USER_ERROR);
     }
