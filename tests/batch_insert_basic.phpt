@@ -1,5 +1,5 @@
 --TEST--
-MongoAuth class - basic authentication functionality
+MongoCollection::batchInsert - basic batch insertion functionality
 --FILE--
 <?php
 

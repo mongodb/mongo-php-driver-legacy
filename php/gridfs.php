@@ -97,11 +97,12 @@ class MongoGridfs
     /**
      * Saves an uploaded file to the database.
      *
-     * @param string $name the name field of the uploaded file
+     * @param string $name     the name field of the uploaded file
+     * @param string $filename the name to give the file when saved in the database
      *
      * @return mongo_id the id of the uploaded file
      */
-    public function storeUpload($name) 
+    public function storeUpload($name, $filename=NULL) 
     {
         if (!$name || !is_string($name) ||
             !$_FILES || !$_FILES[ $name ]) {
@@ -109,13 +110,17 @@ class MongoGridfs
         }
 
         $tmp  = $_FILES[ $name ]["tmp_name"];
-        $name = $_FILES[ $name ]["name"];
-    
+        if ($filename) {
+          $name = "$filename";
+        } else {
+          $name = $_FILES[ $name ]["name"];
+        }
+
         $this->storeFile($tmp);
 
         // make the filename more paletable
         $coll              = $this->_db->selectCollection($this->_prefix . ".files");
-        $obj               = $coll->findOne(array("filename" => $tmp));    
+        $obj               = $coll->findOne(array("filename" => $tmp));
         $obj[ "filename" ] = $name;
         $coll->update(array("filename" => $tmp), $obj);
 
