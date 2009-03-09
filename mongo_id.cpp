@@ -59,15 +59,22 @@ PHP_FUNCTION( mongo_id___toString ) {
 }
 /* }}} */
 
-zval* oid_to_mongo_id( mongo::OID oid ) {
+zval* oid_to_mongo_id( const mongo::OID oid ) {
   TSRMLS_FETCH();
   zval *zoid;
   
-  std::string str = oid.str();
-  char *c = (char*)str.c_str();
-  
+  const unsigned char *data = oid.getData();
+  char *buf = new char[25];
+  char *n = buf;
+  int i;
+  for(i = 0; i < 12; i++) {
+    sprintf(n, "%02x", *data++);
+    n += 2;
+  } 
+  *(n) = '\0';
+
   MAKE_STD_ZVAL(zoid);
   object_init_ex(zoid, mongo_id_class);
-  add_property_stringl( zoid, "id", c, strlen( c ), 1 );
+  add_property_stringl( zoid, "id", buf, strlen( buf ), 1 );
   return zoid;
 }

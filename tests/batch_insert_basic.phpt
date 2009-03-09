@@ -21,7 +21,7 @@ while($cursor->hasNext()) {
 
 ?>
 --EXPECT--
-float(3)
+int(3)
 string(1) "z"
 string(1) "y"
 string(3) "foo"
