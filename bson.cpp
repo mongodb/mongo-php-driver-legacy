@@ -50,30 +50,29 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
     int key_type = zend_hash_get_current_key_ex(arr_hash, &key, &key_len, &index, duplicate, &pointer);
     char field_name[256];
 
-    // make \0 safe
     if( key_type == HASH_KEY_IS_STRING ) {
-      strcpy( field_name, key );
+      strcpy(field_name, key);
     }
     else if( key_type == HASH_KEY_IS_LONG ) {
-      sprintf( field_name, "%ld", index );
+      sprintf(field_name, "%ld", index);
     }
     else {
-      zend_error( E_ERROR, "key fail" );
-      break;
+      zend_error(E_WARNING, "key fail");
+      continue;
     }
 
     switch (Z_TYPE_PP(data)) {
     case IS_NULL:
-      obj_builder->appendNull( field_name );
+      obj_builder->appendNull(field_name);
       break;
     case IS_LONG:
-      obj_builder->append( field_name, (int)Z_LVAL_PP(data) );
+      obj_builder->append(field_name, (int)Z_LVAL_PP(data));
       break;
     case IS_DOUBLE:
-      obj_builder->append( field_name, Z_DVAL_PP(data) );
+      obj_builder->append(field_name, Z_DVAL_PP(data));
       break;
     case IS_BOOL:
-      obj_builder->append( field_name, Z_BVAL_PP(data) );
+      obj_builder->append(field_name, Z_BVAL_PP(data));
       break;
     case IS_ARRAY: {
       mongo::BSONObjBuilder *subobj = new mongo::BSONObjBuilder();
@@ -81,10 +80,13 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
       obj_builder->append( field_name, subobj->done() );
       break;
     }
-    // this should probably be done as bin data, to guard against \0
-    case IS_STRING:
-      obj_builder->append( field_name, Z_STRVAL_PP(data) );
+    case IS_STRING: {
+      char *str = Z_STRVAL_PP(data);
+      int str_len = Z_STRLEN_PP(data);
+      string s(str, str_len);
+      obj_builder->append(field_name, s);
       break;
+    }
     case IS_OBJECT: {
       TSRMLS_FETCH();
       zend_class_entry *clazz = Z_OBJCE_PP( data );
@@ -163,69 +165,41 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
     mongo::BSONElement elem = it.next();
 
     char *key = (char*)elem.fieldName();
-    int index = atoi( key );
-    // check if 0 index is valid, or just a failed 
-    // string conversion
-    if( index == 0 && strcmp( "0", key ) != 0 ) {
-      index = -1;
-    }
-    int assoc = index == -1;
 
     switch( elem.type() ) {
     case mongo::Undefined:
     case mongo::jstNULL: {
-      if( assoc )
-        add_assoc_null( array, key );
-      else 
-        add_index_null( array, index );
+      add_assoc_null( array, key );
       break;
     }
     case mongo::NumberInt: {
       long num = (long)elem.number();
-      if( assoc )
-        add_assoc_long( array, key, num );
-      else 
-        add_index_long( array, index, num );
+      add_assoc_long( array, key, num );
       break;
     }
     case mongo::NumberDouble: {
       double num = elem.number();
-      if( assoc )
-        add_assoc_double( array, key, num );
-      else 
-        add_index_double( array, index, num );
+      add_assoc_double( array, key, num );
       break;
     }
     case mongo::Bool: {
       int b = elem.boolean();
-      if( assoc )
-        add_assoc_bool( array, key, b );
-      else 
-        add_index_bool( array, index, b );
+      add_assoc_bool( array, key, b );
       break;
     }
     case mongo::String: {
       char *value = (char*)elem.valuestr();
-      if( assoc ) 
-        add_assoc_string( array, key, value, 1 );
-      else 
-        add_index_string( array, index, value, 1 );
+      add_assoc_string( array, key, value, 1 );
       break;
     }
     case mongo::Date: {
-      zval *zdate = date_to_mongo_date( elem.date() );
-      if( assoc ) 
-        add_assoc_zval( array, key, zdate );
-      else 
-        add_index_zval( array, index, zdate );
+      zval *zdate = date_to_mongo_date(elem.date());
+      add_assoc_zval( array, key, zdate );
       break;
     }
     case mongo::RegEx: {
       zval *zre = re_to_mongo_re((char*)elem.regex(), (char*)elem.regexFlags());
-      if( assoc ) 
-        add_assoc_zval( array, key, zre );
-      else 
-        add_index_zval( array, index, zre );
+      add_assoc_zval( array, key, zre );
       break;
     }
     case mongo::BinData: {
@@ -233,34 +207,25 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
       char *bin = (char*)elem.binData(size);
       int type = elem.binDataType();
       zval *phpbin = bin_to_php_bin(bin, size, type);
-      if( assoc ) 
-        add_assoc_zval( array, key, phpbin );
-      else 
-        add_index_zval( array, index, phpbin );
+      add_assoc_zval( array, key, phpbin );
       break;
     }
     case mongo::Array:
     case mongo::Object: {
-      zval *subarray = bson_to_php_array( elem.embeddedObject() );
-      if( assoc ) 
-        add_assoc_zval( array, key, subarray );
-      else 
-        add_index_zval( array, index, subarray );
+      zval *subarray = bson_to_php_array(elem.embeddedObject());
+      add_assoc_zval( array, key, subarray );
       break;
     }
     case mongo::jstOID: {
-      zval *zoid = oid_to_mongo_id( elem.__oid() );
-      if( assoc ) 
-        add_assoc_zval( array, key, zoid );
-      else 
-        add_index_zval( array, index, zoid );
+      zval *zoid = oid_to_mongo_id(elem.__oid());
+      add_assoc_zval( array, key, zoid );
       break;
     }
     case mongo::EOO: {
       break;
     }
     default:
-      php_printf( "bson=>php: type %i not supported\n", elem.type() );
+      php_printf("bson=>php: type %i not supported\n", elem.type());
     }
   }
   return array;
@@ -269,5 +234,5 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
 void prep_obj_for_db( mongo::BSONObjBuilder *array ) {
   mongo::OID *oid = new mongo::OID();
   oid->init();
-  array->appendOID( "_id", oid);
+  array->appendOID("_id", oid);
 }
