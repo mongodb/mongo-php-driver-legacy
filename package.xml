@@ -13,10 +13,10 @@
    <email>kristina@10gen.com</email>
    <active>yes</active>
  </lead>
- <date>2009-03-04</date>
+ <date>2009-03-09</date>
  <time>12:00:00</time>
  <version>
-   <release>0.8.1</release>
+   <release>0.8.2</release>
    <api>0.8.1</api>
  </version>
  <stability>
@@ -25,10 +25,10 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-   Persistent connections
-   Better authentication
-   MongoId, MongoDate, MongoRegex, and MongoBinData types
-   Batch insert
+   Reorganized source tree
+   Better config
+   API improvements
+   OID string fix
  </notes>
  <contents>
    <dir baseinstalldir="/" name="/">
@@ -70,12 +70,25 @@
    </required>
  </dependencies>
  <providesextension>mongo</providesextension> 
- <extsrcrelease>
-   <configureoption name="enable-64" default="no" prompt="Force the mongo driver to build for 64-bit architecture, even if php is 32-bit"/> 
-   <configureoption name="with-mongodb" default="/usr/local" prompt="Specify path to mongo database"/> 
-   <configureoption name="with-boost" default="/usr/lib" prompt="Specify path to boost libraries"/> 
- </extsrcrelease>
+ <extsrcrelease/>
  <changelog>
+   <release>
+     <stability>
+       <release>alpha</release>
+       <api>alpha</api>
+     </stability>
+     <version>
+       <release>0.8.2</release>
+       <api>0.8.1</api>
+     </version>
+     <date>2009-03-09</date>
+     <notes>
+Reorganized source tree
+Better config
+API improvements
+OID string fix
+     </notes>
+   </release>
    <release>
      <stability>
        <release>alpha</release>
