@@ -132,6 +132,7 @@ class MongoUtil
     public static $DROP              = "drop";
     public static $DROP_DATABASE     = "dropDatabase";
     public static $FORCE_ERROR       = "forceerror";
+    public static $INDEX_INFO        = "cursorInfo";
     public static $LAST_ERROR        = "getlasterror";
     public static $LIST_DATABASES    = "listDatabases";
     public static $LOGGING           = "opLogging";

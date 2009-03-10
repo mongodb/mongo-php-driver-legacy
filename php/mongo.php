@@ -117,7 +117,7 @@ class Mongo
      *
      * @return MongoCollection a new collection object
      */
-    public function selectCollection( $db = null, $collection = null ) 
+    public function selectCollection( $db, $collection ) 
     {
         if ($db == null || $db == "" ) {
             trigger_error("Invalid database name.", E_USER_WARNING);

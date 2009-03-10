@@ -215,6 +215,28 @@ class MongoDB
         return $ns_list;
     }
 
+    /**
+     * Gets information from the database about cursors.
+     * Returns an array of the form:
+     * <pre>
+     * array(3) {
+     *   ["byLocation_size"]=>
+     *   int(...)
+     *   ["clientCursors_size"]=>
+     *   int(...)
+     *   ["ok"]=>
+     *   float(1)
+     * }
+     * </pre>
+     *
+     * @return array information about the cursor
+     */
+    public function getCursorInfo()
+    {
+        $a = array(MongoUtil::$INDEX_INFO => 1);
+        return MongoUtil::dbCommand($this->connection, $a, "$this");
+    }
+
 }
 
 define("MONGO_PROFILING_OFF", 0);
