@@ -156,4 +156,7 @@ define("MONGO_GTE", "\$gte");
 define("MONGO_IN", "\$in");
 define("MONGO_NE", "\$ne");
 
+define("MONGO_ASC", 1);
+define("MONGO_DESC", -1);
+
 ?>
