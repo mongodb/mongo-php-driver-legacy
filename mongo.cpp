@@ -296,9 +296,8 @@ PHP_FUNCTION(mongo_query) {
   mongo::BSONObjBuilder *bsort = new mongo::BSONObjBuilder();
   n = php_array_to_bson( bsort, Z_ARRVAL_P( zsort ) );
   if( n > 0 ) {
-    mongo::BSONObj *persistentSort = new mongo::BSONObj(bsort->done());
-    q->sort(*persistentSort);
-    }
+    q->sort(bsort->done());
+  }
 
   if (num_fields == 0) {
     cursor = conn_ptr->query( (const char*)collection, *q, limit, skip );
@@ -308,6 +307,14 @@ PHP_FUNCTION(mongo_query) {
   }
 
   mongo::DBClientCursor *c = cursor.get();
+
+  delete bquery;
+  delete bfields;
+  delete bhint;
+  delete bsort;
+  delete q;
+  // c has a registered dtor
+
   ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
 }
 /* }}} */

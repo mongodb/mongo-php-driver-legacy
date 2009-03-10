@@ -128,6 +128,30 @@ class MongoCursor
                           E_USER_ERROR);
             return false;
         }
+        $this->_limit = -1 * (int)$num;
+        return $this;
+    }
+
+    /**
+     * Limits the number of results returned in the initial database response.
+     * This cannot be used in conjunction with limit(), whichever earlier will
+     * be ignored:
+     * <pre>
+     * $cursor1 = $collection->find()->softLimit(10)->limit(20); // 20 returned
+     * $cursor2 = $collection->find()->limit(20)->softLimit(10); // all documents returned, 10 sent to client initially
+     * </pre>
+     *
+     * @param int $num the number of results to return
+     *
+     * @return MongoCursor this cursor
+     */
+    public function softLimit($num) 
+    {
+        if ($this->_startedIterating) {
+            trigger_error("cannot modify cursor after beginning iteration.", 
+                          E_USER_ERROR);
+            return false;
+        }
         $this->_limit = (int)$num;
         return $this;
     }
@@ -219,7 +243,7 @@ class MongoCursor
                                      $this->_ns, 
                                      $this->_query, 
                                      (int)$this->_skip, 
-                                     ((int)$this->_limit) * -1, 
+                                     (int)$this->_limit, 
                                      $this->_sort, 
                                      $this->_fields, 
                                      $this->_hint);
