@@ -15,7 +15,7 @@ if test "$PHP_MONGO" != "no"; then
     fi
   done
 
-  for dir in /usr/lib /usr/local/lib; do
+  for dir in /usr /usr/local; do
     if test -e $dir/lib/libboost_thread-mt.a; then
       boost=$dir
       break
