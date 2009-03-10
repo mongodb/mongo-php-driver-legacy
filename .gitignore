@@ -31,3 +31,4 @@ traces.0
 *.phpt.exp
 *.phpt.out
 *.phpt.log
+*.phpt.php

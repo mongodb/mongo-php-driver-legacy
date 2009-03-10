@@ -280,7 +280,7 @@ PHP_FUNCTION(mongo_query) {
   mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
   php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
   mongo::BSONObj query = bquery->done();
-  mongo::Query *q = new mongo::Query( query );
+  mongo::Query q = mongo::Query( query );
 
   mongo::BSONObjBuilder *bfields = new mongo::BSONObjBuilder();
   int num_fields = php_array_to_bson( bfields, Z_ARRVAL_P( zfields ) );
@@ -290,29 +290,28 @@ PHP_FUNCTION(mongo_query) {
   int n = php_array_to_bson( bhint, Z_ARRVAL_P( zhint ) );
   if( n > 0 ) {
     mongo::BSONObj hint = bhint->done();
-    q->hint( hint );
+    q.hint( hint );
   }
   
   mongo::BSONObjBuilder *bsort = new mongo::BSONObjBuilder();
   n = php_array_to_bson( bsort, Z_ARRVAL_P( zsort ) );
   if( n > 0 ) {
-    q->sort(bsort->done());
+    q.sort(bsort->done());
   }
 
   if (num_fields == 0) {
-    cursor = conn_ptr->query( (const char*)collection, *q, limit, skip );
+    cursor = conn_ptr->query( (const char*)collection, q, limit, skip );
   }
   else {
-    cursor = conn_ptr->query( (const char*)collection, *q, limit, skip, &fields );
+    cursor = conn_ptr->query( (const char*)collection, q, limit, skip, &fields );
   }
 
-  mongo::DBClientCursor *c = cursor.get();
+  mongo::DBClientCursor *c = cursor.release();
 
   delete bquery;
   delete bfields;
   delete bhint;
   delete bsort;
-  delete q;
   // c has a registered dtor
 
   ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
@@ -345,6 +344,8 @@ PHP_FUNCTION(mongo_find_one) {
   query = bquery->done();
 
   mongo::BSONObj obj = conn_ptr->findOne( (const char*)collection, query );
+  delete bquery;
+
   zval *array = bson_to_php_array( obj );
   RETURN_ZVAL( array, 0, 1 );
 }
@@ -374,6 +375,8 @@ PHP_FUNCTION(mongo_remove) {
   mongo::BSONObjBuilder *rarray = new mongo::BSONObjBuilder(); 
   php_array_to_bson( rarray, Z_ARRVAL_P(zarray) );
   conn_ptr->remove( collection, rarray->done(), justOne );
+
+  delete rarray;
   RETURN_TRUE;
 }
 /* }}} */
@@ -403,7 +406,10 @@ PHP_FUNCTION(mongo_insert) {
   if( !zend_hash_exists( php_array, "_id", 3 ) )
       prep_obj_for_db( obj_builder );
   php_array_to_bson( obj_builder, php_array );
+
   conn_ptr->insert( collection, obj_builder->done() );
+
+  delete obj_builder;
   RETURN_TRUE;
 }
 /* }}} */
@@ -472,6 +478,9 @@ PHP_FUNCTION(mongo_update) {
   mongo::BSONObjBuilder *bfields = new mongo::BSONObjBuilder();
   php_array_to_bson( bfields, Z_ARRVAL_P( zobj ) );
   conn_ptr->update( collection, bquery->done(), bfields->done(), (int)zupsert );
+
+  delete bquery;
+  delete bfields;
   RETURN_TRUE;
 }
 /* }}} */
@@ -533,7 +542,6 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
   int server_len, uname_len, pass_len, key_len;
   list_entry le, *le_ptr;
   string error;
-  void *foo;
   
   /* make sure that there aren't too many links already */
   if (MonGlo(max_links) > -1 &&
@@ -564,8 +572,7 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
 
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
     /* if a connection is found, return it */
-    if (zend_hash_find(&EG(persistent_list), key, key_len + 1, &foo) == SUCCESS) {
-      le_ptr = (list_entry*)foo;
+    if (zend_hash_find(&EG(persistent_list), key, key_len + 1, (void**)&le_ptr) == SUCCESS) {
       conn = (mongo::DBClientConnection*)le_ptr->ptr;
       ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
       efree(key);

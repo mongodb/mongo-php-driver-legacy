@@ -15,8 +15,6 @@
  *  limitations under the License.
  */
 
-// note: key size is limited to 256 characters
-
 #include <php.h>
 #include <mongo/client/dbclient.h>
 
@@ -48,13 +46,13 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
       zend_hash_move_forward_ex(arr_hash, &pointer)) {
     num++;
     int key_type = zend_hash_get_current_key_ex(arr_hash, &key, &key_len, &index, duplicate, &pointer);
-    char field_name[256];
+    char *field_name;
 
     if( key_type == HASH_KEY_IS_STRING ) {
-      strcpy(field_name, key);
+      key_len = spprintf(&field_name, 0, "%s", key);
     }
     else if( key_type == HASH_KEY_IS_LONG ) {
-      sprintf(field_name, "%ld", index);
+      key_len = spprintf(&field_name, 0, "%ld", index);
     }
     else {
       zend_error(E_WARNING, "key fail");
@@ -64,20 +62,26 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
     switch (Z_TYPE_PP(data)) {
     case IS_NULL:
       obj_builder->appendNull(field_name);
+      efree(field_name);
       break;
     case IS_LONG:
       obj_builder->append(field_name, (int)Z_LVAL_PP(data));
+      efree(field_name);
       break;
     case IS_DOUBLE:
       obj_builder->append(field_name, Z_DVAL_PP(data));
+      efree(field_name);
       break;
     case IS_BOOL:
       obj_builder->append(field_name, Z_BVAL_PP(data));
+      efree(field_name);
       break;
     case IS_ARRAY: {
       mongo::BSONObjBuilder *subobj = new mongo::BSONObjBuilder();
       php_array_to_bson( subobj, Z_ARRVAL_PP( data ) );
       obj_builder->append( field_name, subobj->done() );
+      efree(field_name);
+      delete subobj;
       break;
     }
     case IS_STRING: {
@@ -85,6 +89,7 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
       int str_len = Z_STRLEN_PP(data);
       string s(str, str_len);
       obj_builder->append(field_name, s);
+      efree(field_name);
       break;
     }
     case IS_OBJECT: {
@@ -142,6 +147,7 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
           break;
         }
       }
+      efree(field_name);
       break;
     }
     case IS_RESOURCE:
@@ -149,6 +155,7 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
     case IS_CONSTANT_ARRAY:
     default:
       php_printf( "php=>bson: type %i not supported", Z_TYPE_PP(data) );
+      efree(field_name);
     }
   }
 
