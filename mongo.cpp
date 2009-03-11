@@ -534,7 +534,7 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
   char *server, *uname, *pass, *key;
   zend_bool auto_reconnect, lazy;
   int server_len, uname_len, pass_len, key_len;
-  list_entry le, *le_ptr;
+  zend_rsrc_list_entry *le;
   string error;
   
   /* make sure that there aren't too many links already */
@@ -566,8 +566,8 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
 
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
     /* if a connection is found, return it */
-    if (zend_hash_find(&EG(persistent_list), key, key_len, (void**)&le_ptr) == SUCCESS) {
-      conn = (mongo::DBClientConnection*)le_ptr->ptr;
+    if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
+      conn = (mongo::DBClientConnection*)le->ptr;
       ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
       efree(key);
       return;
@@ -604,10 +604,17 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
 
   // store a reference in the persistence list
   if (persistent) {
+    zend_rsrc_list_entry new_le; 
+
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
-    le.ptr = conn;
-    le.type = le_connection;
-    zend_hash_add(&EG(persistent_list), key, key_len, &le, sizeof(list_entry), NULL);
+    Z_TYPE(new_le) = le_pconnection;
+    new_le.ptr = conn;
+
+    if (zend_hash_update(&EG(persistent_list), key, key_len+1, (void*)&new_le, sizeof(zend_rsrc_list_entry), NULL)==FAILURE) { 
+      delete conn;
+      efree(key);
+      RETURN_FALSE;
+    }
     efree(key);
 
     ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
