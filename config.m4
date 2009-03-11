@@ -14,32 +14,32 @@ if test "$PHP_MONGO" != "no"; then
   AC_DEFINE(HAVE_MONGO, 1, [Whether you have Mongo extension])
   PHP_NEW_EXTENSION(mongo, mongo.cpp mongo_id.cpp mongo_regex.cpp mongo_date.cpp mongo_bindata.cpp gridfs.cpp bson.cpp, $ext_shared)
 
-  AC_MSG_CHECKING(for MongoDB install) 
+  AC_MSG_CHECKING(for MongoDB install)
   for dir in $PHP_MONGODB /usr /usr/local /opt/mongo ~/mongo .; do
     if test -e $dir && test -e $dir/lib/mongo && test -e $dir/include/mongo; then
       mongo=$dir
       break
     fi
   done
-  if test -z "$mongo"; then 
-    AC_MSG_ERROR([MongoDB install not found.]) 
+  if test -z "$mongo"; then
+    AC_MSG_ERROR([MongoDB install not found.])
   fi
   AC_MSG_RESULT($mongo)
 
-  AC_MSG_CHECKING(for Boost libraries) 
-  for dir in $PHP_BOOST /usr/lib /usr/local/lib; do
-    if test -e $dir/libboost_thread-mt.a; then
+  AC_MSG_CHECKING(for Boost libraries)
+  for dir in $PHP_BOOST /usr /usr/local; do
+    if test -e $dir/lib/libboost_thread-mt.a; then
       boost=$dir
       break
     fi
   done
-  if test -z "$boost"; then 
-    AC_MSG_ERROR([boost libraries not found.]) 
+  if test -z "$boost"; then
+    AC_MSG_ERROR([boost libraries not found.])
   fi
   AC_MSG_RESULT($boost)
 
-  LDFLAGS="$LDFLAGS -L$mongo/lib -L$boost -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
-  INCLUDES="$INCLUDES -I$mongo/include -I$boost"
+  LDFLAGS="$LDFLAGS -L$mongo/lib -L$boost/lib -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
+  INCLUDES="$INCLUDES -I$mongo/include -I$boost/include/boost"
 
   CXX=g++
   CC=g++
