@@ -27,8 +27,8 @@ if test "$PHP_MONGO" != "no"; then
   AC_MSG_RESULT($mongo)
 
   AC_MSG_CHECKING(for Boost libraries) 
-  for dir in $PHP_BOOST /usr /usr/local; do
-    if test -e $dir/lib/libboost_thread-mt.a; then
+  for dir in $PHP_BOOST /usr/lib /usr/local/lib; do
+    if test -e $dir/libboost_thread-mt.a; then
       boost=$dir
       break
     fi
@@ -36,9 +36,9 @@ if test "$PHP_MONGO" != "no"; then
   if test -z "$boost"; then 
     AC_MSG_ERROR([boost libraries not found.]) 
   fi
-  AC_MSG_RESULT($boost/lib)
+  AC_MSG_RESULT($boost)
 
-  LDFLAGS="$LDFLAGS -L$mongo/lib -L$boost/lib -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
+  LDFLAGS="$LDFLAGS -L$mongo/lib -L$boost -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
   INCLUDES="$INCLUDES -I$mongo/include"
 
   CXX=g++
