@@ -39,7 +39,7 @@ if test "$PHP_MONGO" != "no"; then
   AC_MSG_RESULT($boost)
 
   LDFLAGS="$LDFLAGS -L$mongo/lib -L$boost/lib -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
-  INCLUDES="$INCLUDES -I$mongo/include -I$boost/include/boost"
+  INCLUDES="$INCLUDES -I$mongo/include -I$boost/include"
 
   CXX=g++
   CC=g++
