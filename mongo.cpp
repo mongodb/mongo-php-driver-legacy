@@ -136,20 +136,13 @@ static PHP_GINIT_FUNCTION(mongo){
 
 static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo::DBClientConnection *conn = (mongo::DBClientConnection*)rsrc->ptr;
+  if (rsrc->type == le_pconnection) {
+    MonGlo(num_persistent)--;
+  }
   if( conn )
     delete conn;
   MonGlo(num_links)--;
 }
-
-
-static void php_pconnection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
-  mongo::DBClientConnection *conn = (mongo::DBClientConnection*)rsrc->ptr;
-  if( conn )
-    delete conn;
-  MonGlo(num_links)--;
-  MonGlo(num_persistent)--;
-}
-
 
 static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo::GridFS *fs = (mongo::GridFS*)rsrc->ptr;
@@ -171,7 +164,7 @@ PHP_MINIT_FUNCTION(mongo) {
   REGISTER_INI_ENTRIES();
 
   le_connection = zend_register_list_destructors_ex(php_connection_dtor, NULL, PHP_CONNECTION_RES_NAME, module_number);
-  le_pconnection = zend_register_list_destructors_ex(NULL, php_pconnection_dtor, PHP_CONNECTION_RES_NAME, module_number);
+  le_pconnection = zend_register_list_destructors_ex(NULL, php_connection_dtor, PHP_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
   le_gridfs = zend_register_list_destructors_ex(php_gridfs_dtor, NULL, PHP_GRIDFS_RES_NAME, module_number);
   le_gridfile = zend_register_list_destructors_ex(php_gridfile_dtor, NULL, PHP_GRIDFILE_RES_NAME, module_number);
