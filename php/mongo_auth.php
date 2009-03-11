@@ -26,7 +26,7 @@
 
 
 /**
- * Use <pre>getAuth()</pre> to log in for an authenticated session.
+ * Gets an authenticated database connection.
  * 
  * @category DB
  * @package  Mongo
@@ -50,14 +50,9 @@ class MongoAuth extends Mongo
      *
      * @return array the database response
      */
-    private static function _getUser($conn, $db, $username, $password ) 
+    private static function _getUser($conn, $db, $username, $pwd) 
     {
-        $ns   = $db . ".system.users";
-        $user = mongo_find_one($conn, $ns, array("user" => $username));
-        if (!$user) {
-            return false;
-        }
-        $pwd = $user[ "pwd" ];
+        $ns = $db . ".system.users";
 
         // get the nonce
         $result = MongoUtil::dbCommand($conn, array(MongoUtil::$NONCE => 1 ), $db);
@@ -70,7 +65,6 @@ class MongoAuth extends Mongo
         $digest = md5($nonce . $username . $pwd);
         $data   = array(MongoUtil::$AUTHENTICATE => 1, 
                         "user" => $username, 
-                        "password" => $password,
                         "nonce" => $nonce,
                         "key" => $digest);
 
@@ -95,7 +89,7 @@ class MongoAuth extends Mongo
         $this->port = $port;
         $this->db = $db;
         if ($plaintext) {
-            $hash = md5("mongo$password");
+            $hash = md5("${username}mongo${password}");
         }
         else {
             $hash = $password;
@@ -116,38 +110,23 @@ class MongoAuth extends Mongo
         $auto_reconnect = MongoUtil::getConfig("mongo.auto_reconnect");
 
         $addr             = "$host:$port";
-        $lazy = true;
-        $this->connection = mongo_pconnect($addr, $username, $hash, $auto_reconnect, $lazy);
+        $this->connection = mongo_connect($addr, $auto_reconnect);
 
-        if (!$this->connection ) {
-            if (!$plaintext) {
-                $this->error = "can't login with hash password";
-                $this->code = -1;
-                $this->loggedIn = false;
-                return;
-            }
-            $this->connection = mongo_pconnect($addr, $username, $hash, $auto_reconnect, !$lazy);
-            if (!$this->connection) {
-                $this->error = "couldn't connect to mongo";
-                $this->code = -2;
-                $this->loggedIn = false;
-                return;
-            }
-            $result = MongoAuth::_getUser($this->connection, $db, $username, $password);
-            if (!$result[ "ok" ]) {
-                $this->error = "couldn't log in";
-                $this->code = -3;
-                $this->loggedIn = false;
-                return;
-            }
+        $result = MongoAuth::_getUser($this->connection, $db, $username, $hash);
+        if (!$result[ "ok" ]) {
+          $this->error = "couldn't log in";
+          $this->code = -3;
+          $this->loggedIn = false;
+          return;
         }
+
         $this->loggedIn = true;
     }
 
     /**
-     * Returns "Authenticated", for reasons I can't remember.
+     * Returns the host, if logged in, or the error message.
      *
-     * @return string "Authenticated"
+     * @return string the host
      */
     public function __toString() 
     {
@@ -177,7 +156,7 @@ class MongoAuth extends Mongo
 }
 
 /**
- * Use <pre>getAuth()</pre> from the admin database to log in for an admin session.
+ * Gets an admin database connection.
  * 
  * @category DB
  * @package  Mongo
