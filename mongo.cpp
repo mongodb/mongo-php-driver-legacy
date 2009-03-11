@@ -35,17 +35,11 @@
 #include "bson.h"
 #include "gridfs.h"
 
-zend_class_entry *mongo_id_class;
-zend_class_entry *mongo_date_class;
-zend_class_entry *mongo_regex_class;
-zend_class_entry *mongo_bindata_class;
+/** Classes */
+zend_class_entry *mongo_id_class, *mongo_date_class, *mongo_regex_class, *mongo_bindata_class;
 
 /** Resources */
-int le_connection;
-int le_pconnection;
-int le_db_cursor;
-int le_gridfs;
-int le_gridfile;
+int le_connection, le_pconnection, le_db_cursor, le_gridfs, le_gridfile;
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
 static PHP_GINIT_FUNCTION(mongo);
@@ -572,7 +566,7 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
 
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
     /* if a connection is found, return it */
-    if (zend_hash_find(&EG(persistent_list), key, key_len + 1, (void**)&le_ptr) == SUCCESS) {
+    if (zend_hash_find(&EG(persistent_list), key, key_len, (void**)&le_ptr) == SUCCESS) {
       conn = (mongo::DBClientConnection*)le_ptr->ptr;
       ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
       efree(key);
@@ -613,7 +607,7 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
     le.ptr = conn;
     le.type = le_connection;
-    zend_hash_add(&EG(persistent_list), key, key_len + 1, &le, sizeof(list_entry), NULL);
+    zend_hash_add(&EG(persistent_list), key, key_len, &le, sizeof(list_entry), NULL);
     efree(key);
 
     ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
