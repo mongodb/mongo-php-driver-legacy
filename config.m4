@@ -7,8 +7,11 @@ PHP_ARG_ENABLE(64, whether to compile for 64-bit architecture,
 PHP_ARG_WITH(mongodb, MongoDB install directory,
 [  --with-mongodb[=DIR]       Set path to mongodb install])
 
-PHP_ARG_WITH(boost, Boost library path,
-[  --with-boost[=DIR]       Set path to boost libraries])
+PHP_ARG_WITH(boost, Boost path,
+[  --with-boost[=DIR]       Set path to Boost])
+
+PHP_ARG_WITH(pcre, PCRE path,
+[  --with-pcre[=DIR]       Set path to PCRE])
 
 if test "$PHP_MONGO" != "no"; then
   AC_DEFINE(HAVE_MONGO, 1, [Whether you have Mongo extension])
@@ -26,8 +29,8 @@ if test "$PHP_MONGO" != "no"; then
   fi
   AC_MSG_RESULT($mongo)
 
-  AC_MSG_CHECKING(for Boost libraries)
-  for dir in $PHP_BOOST /usr /usr/local; do
+  AC_MSG_CHECKING(for Boost)
+  for dir in $PHP_BOOST /opt/local /usr /usr/local; do
     if test -e $dir/lib/libboost_thread-mt.a; then
       boost=$dir
       break
@@ -38,8 +41,21 @@ if test "$PHP_MONGO" != "no"; then
   fi
   AC_MSG_RESULT($boost)
 
+  AC_MSG_CHECKING(for PCRE)
+  for dir in $PHP_PCRE /usr/64 /opt/local /usr /usr/local; do
+    if test -e $dir/include/pcrecpp.h; then
+      pcre=$dir
+      break
+    fi
+  done
+  if test -z "$pcre"; then
+    AC_MSG_ERROR([pcre libraries not found.])
+  fi
+  AC_MSG_RESULT($pcre)
+
+
   LDFLAGS="$LDFLAGS -L$mongo/lib -L$boost/lib -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
-  INCLUDES="$INCLUDES -I$mongo/include -I$boost/include"
+  INCLUDES="$INCLUDES -I$mongo/include -I$boost/include -I$pcre/include"
 
   CXX=g++
   CC=g++
