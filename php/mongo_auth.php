@@ -107,19 +107,19 @@ class MongoAuth extends Mongo
     /**
      * Attempt to create a new authenticated session.
      *
-     * @param string $host       a database connection
-     * @param int    $port       a database connection
      * @param string $db         the name of the db
      * @param string $username   the username
      * @param string $password   the password
+     * @param string $host       a database connection
+     * @param string $port       a database connection
      *
      * @return MongoAuth an authenticated session or false if login was unsuccessful
      */
-    public function __construct($host, $port, $db, $username, $password, $plaintext=true) 
+    public function __construct($db, $username, $password, $plaintext=true, $host=null, $port=null) 
     {
-        $this->host = $host;
-        $this->port = $port;
-        $this->db = $db;
+        parent::__construct($host, $port);
+
+        $this->db = $this->selectDB("$db");
         if ($plaintext) {
             $hash = MongoAuth::getHash($username, $password);
         }
@@ -127,24 +127,8 @@ class MongoAuth extends Mongo
             $hash = $password;
         }
 
-        if (!$host) {
-            $host = get_cfg_var("mongo.default_host");
-            if (!$host ) {
-                $host = MONGO_DEFAULT_HOST;
-            }
-        }
-        if (!$port ) {
-            $port = get_cfg_var("mongo.default_port");
-            if (!$port ) {
-                $port = MONGO_DEFAULT_PORT;
-            }
-        }
-        $auto_reconnect = MongoUtil::getConfig("mongo.auto_reconnect");
-
-        $addr             = "$host:$port";
-        $this->connection = mongo_connect($addr, $auto_reconnect);
-
         $result = MongoAuth::_getUser($this->connection, $db, $username, $hash);
+
         if ($result[ "ok" ] != 1) {
           $this->error = "couldn't log in";
           $this->code = -3;
@@ -155,18 +139,69 @@ class MongoAuth extends Mongo
         $this->loggedIn = true;
     }
 
+
     /**
-     * Returns the host, if logged in, or the error message.
+     * Creates a new user.
+     * This will not overwrite existing users, use MongoAuth::changePassword
+     * to change a user's password.
      *
-     * @return string the host
+     * @param string $username the new user's username
+     * @param string $password the new user's password
+     * 
+     * @return boolean if the new user was successfully created
      */
-    public function __toString() 
-    {
-        if ($this->loggedIn) {
-            return parent::__toString();
+    public function addUser($username, $password) {
+        $c = $this->db->selectCollection("system.users");
+        $exists = $c->findOne(array("user" => $username));
+        if ($exists) {
+          return false;
         }
-        return $this->error;
+        $newUser = array("user" => $username,
+                         "pwd" => MongoAuth::getHash($username, $password));
+        $c->insert($newUser);
+        return true;
     }
+
+
+
+    /**
+     * Changes a user's password.
+     *
+     * @param string $username the username
+     * @param string $oldpass the old password
+     * @param string $newpass the new password
+     *
+     * @return array whether the change was successful
+     */
+    public function changePassword($username, $oldpass, $newpass) {
+        $c = $this->db->selectCollection("system.users");
+        $user = $c->findOne(array("user" => $username));
+        if (!$user) {
+            return array("ok" => -2.0,
+                         "errmsg" => "no user with username $username found");
+        }
+        if ($user['pwd'] == MongoAuth::getHash($username, $oldpass)) {
+          $user['pwd'] = MongoAuth::getHash($username, $newpass);
+          $c->update(array("user"=>$username), $user);
+          return array("ok" => 1.0);
+        }
+        return array("ok" => -1.0,
+                     "errmsg" => "incorrect old password");
+    }
+
+
+    /**
+     * Delete a user.
+     *
+     * @param string $username the user to delete
+     *
+     * @return boolean if the user was deleted
+     */
+    public function deleteUser($username) {
+      $c = $this->db->selectCollection("system.users");
+      return $c->remove(array("user" => "$username"), true);
+    }
+
 
     /**
      * Ends authenticated session.
@@ -185,6 +220,7 @@ class MongoAuth extends Mongo
 
         return true;
     }
+
 }
 
 /**
@@ -200,19 +236,17 @@ class MongoAdmin extends MongoAuth
 {
 
     /**
-     * Creates a new admin session.  To get a new session, call 
-     * MongoAuth::getAuth() using the admin database.
+     * Creates a new admin session.
      * 
-     * @param string $host      hostname
-     * @param string $port      port
      * @param string $username  username
      * @param string $password  password
      * @param bool   $plaintext in plaintext, vs. encrypted
+     * @param string $host      hostname
+     * @param string $port      port
      */
-    public function __construct($host, $port, $username, $password, $plaintext=true) 
+  public function __construct($username, $password, $plaintext=true, $host=null, $port=null) 
     {
-        $this->db = "admin";
-        parent::__construct($host, $port, $this->db, $username, $password, $plaintext);
+      parent::__construct("admin", $username, $password, $plaintext, $host, $port);
     }
 
     /** 
