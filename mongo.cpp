@@ -333,7 +333,7 @@ PHP_FUNCTION(mongo_find_one) {
   mongo::BSONObj obj = conn_ptr->findOne( (const char*)collection, query );
   delete bquery;
 
-  zval *array = bson_to_php_array( obj );
+  zval *array = bson_to_php_array(&obj);
   RETURN_ZVAL( array, 0, 1 );
 }
 /* }}} */
@@ -514,8 +514,8 @@ PHP_FUNCTION( mongo_next ) {
   mongo::DBClientCursor *c = (mongo::DBClientCursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
 
   mongo::BSONObj bson = c->next();
-  zval *array = bson_to_php_array( bson );
-  RETURN_ZVAL( array, 0, 1 );
+  zval *array = bson_to_php_array(&bson);
+  RETURN_ZVAL(array, 0, 1);
 }
 /* }}} */
 

@@ -162,13 +162,13 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
   return num;
 }
 
-zval *bson_to_php_array( mongo::BSONObj obj ) {
+zval *bson_to_php_array(mongo::BSONObj *obj) {
   zval *array;
   ALLOC_INIT_ZVAL( array );
   array_init(array);
 
-  mongo::BSONObjIterator it = mongo::BSONObjIterator( obj );
-  while( it.more() ) {
+  mongo::BSONObjIterator it = mongo::BSONObjIterator(*obj);
+  while (it.more()) {
     mongo::BSONElement elem = it.next();
 
     char *key = (char*)elem.fieldName();
@@ -176,37 +176,37 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
     switch( elem.type() ) {
     case mongo::Undefined:
     case mongo::jstNULL: {
-      add_assoc_null( array, key );
+      add_assoc_null(array, key);
       break;
     }
     case mongo::NumberInt: {
       long num = (long)elem.number();
-      add_assoc_long( array, key, num );
+      add_assoc_long(array, key, num);
       break;
     }
     case mongo::NumberDouble: {
       double num = elem.number();
-      add_assoc_double( array, key, num );
+      add_assoc_double(array, key, num);
       break;
     }
     case mongo::Bool: {
       int b = elem.boolean();
-      add_assoc_bool( array, key, b );
+      add_assoc_bool(array, key, b);
       break;
     }
     case mongo::String: {
       char *value = (char*)elem.valuestr();
-      add_assoc_string( array, key, value, 1 );
+      add_assoc_string(array, key, value, 1);
       break;
     }
     case mongo::Date: {
       zval *zdate = date_to_mongo_date(elem.date());
-      add_assoc_zval( array, key, zdate );
+      add_assoc_zval(array, key, zdate);
       break;
     }
     case mongo::RegEx: {
       zval *zre = re_to_mongo_re((char*)elem.regex(), (char*)elem.regexFlags());
-      add_assoc_zval( array, key, zre );
+      add_assoc_zval(array, key, zre);
       break;
     }
     case mongo::BinData: {
@@ -214,18 +214,19 @@ zval *bson_to_php_array( mongo::BSONObj obj ) {
       char *bin = (char*)elem.binData(size);
       int type = elem.binDataType();
       zval *phpbin = bin_to_php_bin(bin, size, type);
-      add_assoc_zval( array, key, phpbin );
+      add_assoc_zval(array, key, phpbin);
       break;
     }
     case mongo::Array:
     case mongo::Object: {
-      zval *subarray = bson_to_php_array(elem.embeddedObject());
-      add_assoc_zval( array, key, subarray );
+      mongo::BSONObj temp = elem.embeddedObject();
+      zval *subarray = bson_to_php_array(&temp);
+      add_assoc_zval(array, key, subarray);
       break;
     }
     case mongo::jstOID: {
       zval *zoid = oid_to_mongo_id(elem.__oid());
-      add_assoc_zval( array, key, zoid );
+      add_assoc_zval(array, key, zoid);
       break;
     }
     case mongo::EOO: {
