@@ -136,14 +136,19 @@ class Mongo
 
     /**
      * Drops a database.
+     * @see MongoDB::drop()
      *
-     * @param MongoDB $db the database to drop
+     * @param string|MongoDB $db the database to drop
      *
-     * @return array db response
+     * @return array db response 
      */
-    public function dropDB( MongoDB $db ) 
+    public function dropDB($db) 
     {
-        return $db->drop();
+        if ($db instanceof MongoDB) {
+            return $db->drop();
+        } else {
+            return $this->selectDB("$db")->drop();
+        }
     }
 
     /**

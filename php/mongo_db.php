@@ -114,13 +114,30 @@ class MongoDB
 
     /**
      * Drops this database.
+     * Returns on success:
+     * <pre>
+     * array(1) {
+     *   ["ok"]=>
+     *   float(1)
+     * }
+     * </pre>
      *
-     * @return array db response
+     * Returns on error:
+     * <pre>
+     * array(2) {
+     *   ['errmsg']=>
+     *   string(...) "...",
+     *   ['ok']=>
+     *   float(...)
+     * }
+     * </pre>
+     *
+     * @return array the database response
      */
     public function drop() 
     {
-        $data = array(MongoUtil::$DROP_DATABASE => $this->name);
-        return MongoUtil::dbCommand($this->connection, $data);
+        $data = array(MongoUtil::$DROP_DATABASE => 1);
+        return MongoUtil::dbCommand($this->connection, $data, "$this");
     }
 
     /**
@@ -186,13 +203,17 @@ class MongoDB
     /**
      * Drops a collection.
      *
-     * @param mongo_collection $coll collection to drop
+     * @param string|MongoCollection $coll collection to drop
      *
      * @return array the db response
      */
-    public function dropCollection(MongoCollection $coll) 
+    public function dropCollection($coll) 
     {
-        return $coll->drop();
+        if ($coll instanceof MongoCollection) {
+            return $coll->drop();
+        } else {
+            return $this->selectCollection($coll)->drop();
+        }
     }
 
     /**
