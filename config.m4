@@ -37,7 +37,7 @@ if test "$PHP_MONGO" != "no"; then
     fi
   done
   if test -z "$boost"; then
-    AC_MSG_ERROR([boost libraries not found.])
+    AC_MSG_ERROR([Boost not found.])
   fi
   AC_MSG_RESULT($boost)
 
@@ -49,12 +49,12 @@ if test "$PHP_MONGO" != "no"; then
     fi
   done
   if test -z "$pcre"; then
-    AC_MSG_ERROR([pcre libraries not found.])
+    AC_MSG_ERROR([PCRE not found.])
   fi
   AC_MSG_RESULT($pcre)
 
 
-  LDFLAGS="$LDFLAGS -L$mongo/lib -L$boost/lib -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
+  LDFLAGS="$LDFLAGS -L$mongo/lib -L$boost/lib -L$pcre/lib -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
   INCLUDES="$INCLUDES -I$mongo/include -I$boost/include -I$pcre/include"
 
   CXX=g++
