@@ -98,7 +98,7 @@ class MongoUtil
         if ($obj) {
             return $obj;
         } else {
-            trigger_error("no db response?", E_USER_WARNING);
+            trigger_error("no db response", E_USER_WARNING);
             return false;
         }
     }
@@ -149,14 +149,71 @@ class MongoUtil
 
 }
 
-define("MONGO_LT", "\$lt");
-define("MONGO_LTE", "\$lte");
-define("MONGO_GT", "\$gt");
-define("MONGO_GTE", "\$gte");
-define("MONGO_IN", "\$in");
-define("MONGO_NE", "\$ne");
+/**
+ * Less than.
+ */
+define("MONGO_LT", '$lt');
 
+/**
+ * Less than or equal to.
+ */
+define("MONGO_LTE", '$lte');
+
+/**
+ * Greater than.
+ */
+define("MONGO_GT", '$gt');
+
+/**
+ * Greater than or equal to.
+ */
+define("MONGO_GTE", '$gte');
+
+/**
+ * Checks for a field in an object.
+ */
+define("MONGO_IN", '$in');
+
+/**
+ * Not equal.
+ */
+define("MONGO_NE", '$ne');
+
+
+/**
+ * Sort ascending.
+ */
 define("MONGO_ASC", 1);
+
+/**
+ * Sort descending.
+ */
 define("MONGO_DESC", -1);
+
+
+/**
+ * Function as binary data.
+ */
+define("MONGO_BIN_FUNCTION", 1);
+
+/**
+ * Default binary type: an arrray of binary data.
+ */
+define("MONGO_BIN_ARRAY", 2);
+
+/**
+ * Universal unique id.
+ */
+define("MONGO_BIN_UUID", 3);
+
+/**
+ * Binary MD5.
+ */
+define("MONGO_BIN_MD5", 5);
+
+/**
+ * User-defined binary type.
+ */
+define("MONGO_BIN_CUSTOM", 128);
 
 ?>

@@ -52,7 +52,7 @@ class Mongo
      * @param int    $port       the db port
      * @param bool   $persistent if the connection should be persistent
      */
-    public function __construct($host = NULL, $port = NULL, $persistent = false) 
+    public function __construct($host = null, $port = null, $persistent = false) 
     {
         $this->host = $host ? $host : get_cfg_var("mongo.default_host");
         $this->host = $host ? $host : MONGO_DEFAULT_HOST;

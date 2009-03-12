@@ -31,7 +31,7 @@
  * A typical usage would be:
  * <code>
  * // initial login
- * $auth_connection = new MongoAuth("localhost", 27017, "joe", "mypass", true);
+ * $auth_connection = new MongoAuth("mydb", "joe", "mypass");
  * if (!$auth_connection->loggedIn) {
  *    return $auth_connection->error;
  * }
@@ -43,7 +43,7 @@
  * <code>
  * $username = $_COOKIE['username'];
  * $password = $_COOKIE['password'];
- * $auth_connection = new MongoAuth("localhost", 27017, $username, $password, false);
+ * $auth_connection = new MongoAuth("mydb", $username, $password, false);
  * </code>
  *
  * @category DB
