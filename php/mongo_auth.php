@@ -27,7 +27,25 @@
 
 /**
  * Gets an authenticated database connection.
- * 
+ *
+ * A typical usage would be:
+ * <code>
+ * // initial login
+ * $auth_connection = new MongoAuth("localhost", 27017, "joe", "mypass", true);
+ * if (!$auth_connection->loggedIn) {
+ *    return $auth_connection->error;
+ * }
+ * setcookie("username", "joe");
+ * setcookie("password", MongoAuth::getHash("joe", "mypass"));
+ * </code>
+ *
+ * Then, for subsequent sessions, the cookies can be used to log in:
+ * <code>
+ * $username = $_COOKIE['username'];
+ * $password = $_COOKIE['password'];
+ * $auth_connection = new MongoAuth("localhost", 27017, $username, $password, false);
+ * </code>
+ *
  * @category DB
  * @package  Mongo
  * @author   Kristina Chodorow <kristina@10gen.com>
@@ -73,6 +91,20 @@ class MongoAuth extends Mongo
     }
 
     /**
+     * Creates a hashed string from the username and password.
+     * This string can be passed to MongoAuth->__construct as the password
+     * with $plaintext set to false in order to login.
+     *
+     * @param string $username the username
+     * @param string $password the password
+     *
+     * @return string the md5 hash of the username and password
+     */
+    public static function getHash($username, $password) {
+        return md5("${username}:mongo:${password}");
+    }
+
+    /**
      * Attempt to create a new authenticated session.
      *
      * @param string $host       a database connection
@@ -89,7 +121,7 @@ class MongoAuth extends Mongo
         $this->port = $port;
         $this->db = $db;
         if ($plaintext) {
-            $hash = md5("${username}mongo${password}");
+            $hash = MongoAuth::getHash($username, $password);
         }
         else {
             $hash = $password;
@@ -113,7 +145,7 @@ class MongoAuth extends Mongo
         $this->connection = mongo_connect($addr, $auto_reconnect);
 
         $result = MongoAuth::_getUser($this->connection, $db, $username, $hash);
-        if (!$result[ "ok" ]) {
+        if ($result[ "ok" ] != 1) {
           $this->error = "couldn't log in";
           $this->code = -3;
           $this->loggedIn = false;
