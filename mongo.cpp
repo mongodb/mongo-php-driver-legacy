@@ -24,6 +24,7 @@
 
 #include <php.h>
 #include <php_ini.h>
+#include <ext/standard/info.h>
 #include <mongo/client/dbclient.h>
 #include <mongo/client/gridfs.h>
 
@@ -92,6 +93,9 @@ static function_entry mongo_bindata_functions[] = {
   { NULL, NULL, NULL }
 };
 
+
+/* {{{ mongo_module_entry 
+ */
 zend_module_entry mongo_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
   STANDARD_MODULE_HEADER,
@@ -102,7 +106,7 @@ zend_module_entry mongo_module_entry = {
   PHP_MSHUTDOWN(mongo),
   PHP_RINIT(mongo),
   NULL,
-  NULL,
+  PHP_MINFO(mongo),
   PHP_MONGO_VERSION,
   PHP_MODULE_GLOBALS(mongo),
   PHP_GINIT(mongo),
@@ -110,6 +114,7 @@ zend_module_entry mongo_module_entry = {
   NULL,
   STANDARD_MODULE_PROPERTIES_EX
 };
+/* }}} */
 
 #ifdef COMPILE_DL_MONGO
 ZEND_GET_MODULE(mongo)
@@ -118,9 +123,12 @@ ZEND_GET_MODULE(mongo)
 
 /* {{{ PHP_INI */ 
 PHP_INI_BEGIN()
+STD_PHP_INI_BOOLEAN("mongo.auto_reconnect", "0", PHP_INI_SYSTEM, OnUpdateLong, auto_reconnect, zend_mongo_globals, mongo_globals) 
 STD_PHP_INI_BOOLEAN("mongo.allow_persistent", "1", PHP_INI_SYSTEM, OnUpdateLong, allow_persistent, zend_mongo_globals, mongo_globals) 
 STD_PHP_INI_ENTRY_EX("mongo.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_persistent, zend_mongo_globals, mongo_globals, display_link_numbers) 
 STD_PHP_INI_ENTRY_EX("mongo.max_connections", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_links, zend_mongo_globals, mongo_globals, display_link_numbers) 
+STD_PHP_INI_ENTRY("mongo.default_host", NULL, PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals) 
+STD_PHP_INI_ENTRY("mongo.default_port", "27017", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals) 
 PHP_INI_END()
 /* }}} */
 
@@ -130,6 +138,9 @@ PHP_INI_END()
 static PHP_GINIT_FUNCTION(mongo){
   mongo_globals->num_persistent = 0; 
   mongo_globals->num_links = 0; 
+  mongo_globals->auto_reconnect = false; 
+  mongo_globals->default_host = "localhost"; 
+  mongo_globals->default_port = 27017; 
 }
 /* }}} */
 
@@ -207,6 +218,25 @@ PHP_RINIT_FUNCTION(mongo) {
 }
 /* }}} */
 
+
+/* {{{ PHP_MINFO_FUNCTION
+ */
+PHP_MINFO_FUNCTION(mongo) {
+  char buf[32]; 
+
+  php_info_print_table_start();
+
+  php_info_print_table_header(2, "MongoDB Support", "enabled");
+  snprintf(buf, sizeof(buf), "%ld", MonGlo(num_persistent));
+  php_info_print_table_row(2, "Active Persistent Connections", buf);
+  snprintf(buf, sizeof(buf), "%ld", MonGlo(num_links));
+  php_info_print_table_row(2, "Active Connections", buf);
+
+  php_info_print_table_end(); 
+
+  DISPLAY_INI_ENTRIES();
+}
+/* }}} */
 
 /* {{{ mongo_connect
  */

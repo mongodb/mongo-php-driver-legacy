@@ -31,6 +31,7 @@
 PHP_MINIT_FUNCTION(mongo);
 PHP_MSHUTDOWN_FUNCTION(mongo);
 PHP_RINIT_FUNCTION(mongo);
+PHP_MINFO_FUNCTION(mongo);
 
 PHP_FUNCTION(mongo_connect);
 PHP_FUNCTION(mongo_pconnect);
@@ -49,6 +50,9 @@ ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;
 long max_links,max_persistent;
 long allow_persistent; 
+bool auto_reconnect; 
+char *default_host; 
+long default_port; 
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS
