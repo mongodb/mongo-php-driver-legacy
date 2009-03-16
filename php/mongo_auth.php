@@ -16,7 +16,7 @@
  *
  * PHP version 5 
  *
- * @category DB
+ * @category Database
  * @package  Mongo
  * @author   Kristina Chodorow <kristina@10gen.com>
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
@@ -46,7 +46,7 @@
  * $auth_connection = new MongoAuth("mydb", $username, $password, false);
  * </code>
  *
- * @category DB
+ * @category Database
  * @package  Mongo
  * @author   Kristina Chodorow <kristina@10gen.com>
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
@@ -235,7 +235,7 @@ class MongoAuth extends Mongo
 /**
  * Gets an admin database connection.
  * 
- * @category DB
+ * @category Database
  * @package  Mongo
  * @author   Kristina Chodorow <kristina@10gen.com>
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2

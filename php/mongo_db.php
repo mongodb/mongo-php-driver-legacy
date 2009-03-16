@@ -16,7 +16,7 @@
  *
  * PHP version 5 
  *
- * @category DB
+ * @category Database
  * @package  Mongo
  * @author   Kristina Chodorow <kristina@10gen.com>
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
@@ -33,7 +33,7 @@
  *   $db = $m->selectDatabase(); // get a database object
  * </pre>
  * 
- * @category DB
+ * @category Database
  * @package  Mongo
  * @author   Kristina Chodorow <kristina@10gen.com>
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2

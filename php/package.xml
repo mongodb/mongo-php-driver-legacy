@@ -3,7 +3,7 @@
 http://pear.php.net/dtd/tasks-1.0.xsd
 http://pear.php.net/dtd/package-2.0
 http://pear.php.net/dtd/package-2.0.xsd">
- <name>DB_Mongo</name>
+ <name>Mongo</name>
  <channel>pear.php.net</channel>
  <summary>Object-oriented interface for interacting with MongoDB</summary>
  <description>This package provides an OO interface for creating Mongo database connections, interacting with, and administrating databases.</description>
