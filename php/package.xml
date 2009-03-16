@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package packagerversion="1.5.1" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
+http://pear.php.net/dtd/tasks-1.0.xsd
+http://pear.php.net/dtd/package-2.0
+http://pear.php.net/dtd/package-2.0.xsd">
+ <name>DB_Mongo</name>
+ <channel>pear.php.net</channel>
+ <summary>Object-oriented interface for interacting with MongoDB</summary>
+ <description>This package provides an OO interface for creating Mongo database connections, interacting with, and administrating databases.</description>
+ <lead>
+  <name>Kristina Chodorow</name>
+  <user>kristina</user>
+  <email>kristina@php.net</email>
+  <active>yes</active>
+ </lead>
+  <date>2009-03-16</date>
+ <time>12:00:00</time>
+ <version>
+  <release>0.8.0</release>
+  <api>0.8.0</api>
+ </version>
+ <stability>
+  <release>alpha</release>
+  <api>alpha</api>
+ </stability>
+ <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+ <notes>Initial package</notes>
+ <contents>
+  <dir name="/">
+   <file baseinstalldir="/" name="mongo.php" role="php" />
+   <file baseinstalldir="/" name="mongo_auth.php" role="php" />
+   <file baseinstalldir="/" name="mongo_db.php" role="php" />
+   <file baseinstalldir="/" name="mongo_collection.php" role="php" />
+   <file baseinstalldir="/" name="mongo_cursor.php" role="php" />
+   <file baseinstalldir="/" name="mongo_util.php" role="php" />
+   <file baseinstalldir="/" name="gridfs.php" role="php" />
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>5.0.0</min>
+   </php>
+   <pearinstaller>
+    <min>1.4.0</min> 
+   </pearinstaller>
+  </required>
+ </dependencies>
+ <phprelease />
+</package>
