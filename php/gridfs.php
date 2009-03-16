@@ -64,7 +64,8 @@ class MongoGridfs
         if (is_null($query)) {
             $query = array();
         }
-        return MongoCursor::getGridfsCursor(mongo_gridfs_list($this->_resource, $query));
+        return MongoCursor::getGridfsCursor(mongo_gridfs_list($this->_resource, 
+                                                              $query));
     }
 
     /**
@@ -102,18 +103,18 @@ class MongoGridfs
      *
      * @return mongo_id the id of the uploaded file
      */
-    public function storeUpload($name, $filename=NULL) 
+    public function storeUpload($name, $filename=null) 
     {
         if (!$name || !is_string($name) ||
             !$_FILES || !$_FILES[ $name ]) {
             return false;
         }
 
-        $tmp  = $_FILES[ $name ]["tmp_name"];
+        $tmp = $_FILES[ $name ]["tmp_name"];
         if ($filename) {
-          $name = "$filename";
+            $name = "$filename";
         } else {
-          $name = $_FILES[ $name ]["name"];
+            $name = $_FILES[ $name ]["name"];
         }
 
         $this->storeFile($tmp);

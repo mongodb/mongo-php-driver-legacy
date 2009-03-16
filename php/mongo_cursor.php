@@ -67,8 +67,6 @@ class MongoCursor
      * @param connection $conn   database connection
      * @param string     $ns     db namespace
      * @param array      $query  database query
-     * @param int        $skip   number of records to skip
-     * @param int        $limit  number of records to return
      * @param array      $fields fields to return
      */
     public function __construct($conn = null, 
@@ -80,8 +78,8 @@ class MongoCursor
         $this->_ns        = $ns;
         $this->_query     = $query;
         $this->_fields    = $fields;
-        $this->_sort       = array();
-        $this->_hint       = array();
+        $this->_sort      = array();
+        $this->_hint      = array();
     }
 
     /**
@@ -137,8 +135,10 @@ class MongoCursor
      * This cannot be used in conjunction with limit(), whichever earlier will
      * be ignored:
      * <pre>
-     * $cursor1 = $collection->find()->softLimit(10)->limit(20); // 20 returned
-     * $cursor2 = $collection->find()->limit(20)->softLimit(10); // all documents returned, 10 sent to client initially
+     * // 20 returned
+     * $cursor1 = $collection->find()->softLimit(10)->limit(20); 
+     * // all documents returned, 10 sent to client initially
+     * $cursor2 = $collection->find()->limit(20)->softLimit(10);
      * </pre>
      *
      * @param int $num the number of results to return

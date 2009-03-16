@@ -63,12 +63,16 @@ class Mongo
         $addr           = "$this";
 
         if ($persistent) {
-          $username = "";
-          $password = "";
-          $lazy     = false;
-          $this->connection = mongo_pconnect($addr, $username, $password, $auto_reconnect, $lazy);
+            $username         = "";
+            $password         = "";
+            $lazy             = false;
+            $this->connection = mongo_pconnect($addr, 
+                                               $username, 
+                                               $password, 
+                                               $auto_reconnect, 
+                                               $lazy);
         } else {
-          $this->connection = mongo_connect($addr, $auto_reconnect);
+            $this->connection = mongo_connect($addr, $auto_reconnect);
         }
 
         if (!$this->connection ) {
@@ -128,17 +132,18 @@ class Mongo
             return false;
         }
         if (is_string($db)) {
-          return new MongoCollection(new MongoDB($this, $db), $collection);
+            return new MongoCollection(new MongoDB($this, $db), $collection);
         } else {
-          return new MongoCollection($db, $collection);
+            return new MongoCollection($db, $collection);
         }
     }
 
     /**
      * Drops a database.
-     * @see MongoDB::drop()
      *
      * @param string|MongoDB $db the database to drop
+     *
+     * @see MongoDB::drop()
      *
      * @return array db response 
      */
@@ -155,7 +160,8 @@ class Mongo
      * Repairs and compacts a database.
      *
      * @param MongoDB $db                    the database to repair
-     * @param bool    $preserve_cloned_files if cloned files should be kept if the repair fails
+     * @param bool    $preserve_cloned_files if cloned files should be kept if the 
+     *                                       repair fails
      * @param bool    $backup_original_files if original files should be backed up
      *
      * @return array db response

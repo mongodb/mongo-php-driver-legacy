@@ -56,7 +56,7 @@ class MongoAuth extends Mongo
 {
 
     public $connection;
-    private $db;
+    public $db;
 
     /**
      * Communicates with the database to log in a user.
@@ -64,7 +64,7 @@ class MongoAuth extends Mongo
      * @param connection $conn     database connection
      * @param string     $db       db name
      * @param string     $username username
-     * @param string     $password plaintext password
+     * @param string     $pwd      plaintext password
      *
      * @return array the database response
      */
@@ -100,40 +100,46 @@ class MongoAuth extends Mongo
      *
      * @return string the md5 hash of the username and password
      */
-    public static function getHash($username, $password) {
+    public static function getHash($username, $password) 
+    {
         return md5("${username}:mongo:${password}");
     }
 
     /**
      * Attempt to create a new authenticated session.
      *
-     * @param string $db         the name of the db
-     * @param string $username   the username
-     * @param string $password   the password
-     * @param string $host       a database connection
-     * @param string $port       a database connection
+     * @param string $db        the name of the db
+     * @param string $username  the username
+     * @param string $password  the password
+     * @param string $plaintext if the password is encrypted
+     * @param string $host      a database connection
+     * @param string $port      a database connection
      *
      * @return MongoAuth an authenticated session or false if login was unsuccessful
      */
-    public function __construct($db, $username, $password, $plaintext=true, $host=null, $port=null) 
+    public function __construct($db, 
+                                $username, 
+                                $password, 
+                                $plaintext=true, 
+                                $host=null, 
+                                $port=null) 
     {
         parent::__construct($host, $port);
 
         $this->db = $this->selectDB("$db");
         if ($plaintext) {
             $hash = MongoAuth::getHash($username, $password);
-        }
-        else {
+        } else {
             $hash = $password;
         }
 
         $result = MongoAuth::_getUser($this->connection, $db, $username, $hash);
 
         if ($result[ "ok" ] != 1) {
-          $this->error = "couldn't log in";
-          $this->code = -3;
-          $this->loggedIn = false;
-          return;
+            $this->error    = "couldn't log in";
+            $this->code     = -3;
+            $this->loggedIn = false;
+            return;
         }
 
         $this->loggedIn = true;
@@ -150,11 +156,12 @@ class MongoAuth extends Mongo
      * 
      * @return boolean if the new user was successfully created
      */
-    public function addUser($username, $password) {
-        $c = $this->db->selectCollection("system.users");
+    public function addUser($username, $password) 
+    {
+        $c      = $this->db->selectCollection("system.users");
         $exists = $c->findOne(array("user" => $username));
         if ($exists) {
-          return false;
+            return false;
         }
         $newUser = array("user" => $username,
                          "pwd" => MongoAuth::getHash($username, $password));
@@ -168,22 +175,23 @@ class MongoAuth extends Mongo
      * Changes a user's password.
      *
      * @param string $username the username
-     * @param string $oldpass the old password
-     * @param string $newpass the new password
+     * @param string $oldpass  the old password
+     * @param string $newpass  the new password
      *
      * @return array whether the change was successful
      */
-    public function changePassword($username, $oldpass, $newpass) {
-        $c = $this->db->selectCollection("system.users");
+    public function changePassword($username, $oldpass, $newpass) 
+    {
+        $c    = $this->db->selectCollection("system.users");
         $user = $c->findOne(array("user" => $username));
         if (!$user) {
             return array("ok" => -2.0,
                          "errmsg" => "no user with username $username found");
         }
         if ($user['pwd'] == MongoAuth::getHash($username, $oldpass)) {
-          $user['pwd'] = MongoAuth::getHash($username, $newpass);
-          $c->update(array("user"=>$username), $user);
-          return array("ok" => 1.0);
+            $user['pwd'] = MongoAuth::getHash($username, $newpass);
+            $c->update(array("user"=>$username), $user);
+            return array("ok" => 1.0);
         }
         return array("ok" => -1.0,
                      "errmsg" => "incorrect old password");
@@ -197,9 +205,10 @@ class MongoAuth extends Mongo
      *
      * @return boolean if the user was deleted
      */
-    public function deleteUser($username) {
-      $c = $this->db->selectCollection("system.users");
-      return $c->remove(array("user" => "$username"), true);
+    public function deleteUser($username) 
+    {
+        $c = $this->db->selectCollection("system.users");
+        return $c->remove(array("user" => "$username"), true);
     }
 
 
@@ -244,9 +253,13 @@ class MongoAdmin extends MongoAuth
      * @param string $host      hostname
      * @param string $port      port
      */
-  public function __construct($username, $password, $plaintext=true, $host=null, $port=null) 
+    public function __construct($username, 
+                                $password, 
+                                $plaintext=true, 
+                                $host=null, 
+                                $port=null) 
     {
-      parent::__construct("admin", $username, $password, $plaintext, $host, $port);
+        parent::__construct("admin", $username, $password, $plaintext, $host, $port);
     }
 
     /** 

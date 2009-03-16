@@ -169,7 +169,8 @@ class MongoCollection
      *
      * @param object $criteria description of the objects to update
      * @param object $newobj   the object with which to update the matching records
-     * @param bool   $upsert   if the object should be inserted if the criteria isn't found
+     * @param bool   $upsert   if the object should be inserted if the criteria isn't
+     *                         found
      *
      * @return array the associative array saved to the db
      */
@@ -275,7 +276,7 @@ class MongoCollection
                                        array("count" => $this->name), 
                                        $this->db);
         if ($result) {
-          return (int)$result[ "n" ];
+            return (int)$result[ "n" ];
         }
         trigger_error("count failed", E_USER_ERROR);
     }
