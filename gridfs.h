@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 
-#include <php.h>
-
 PHP_FUNCTION( mongo_gridfs_init );
 PHP_FUNCTION( mongo_gridfs_list );
 PHP_FUNCTION( mongo_gridfs_store );

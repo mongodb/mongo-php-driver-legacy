@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 
-#include <php.h>
-
 PHP_FUNCTION( mongo_bindata___construct );
 PHP_FUNCTION( mongo_bindata___toString );
 zval* bin_to_php_bin( char*, int, int );
