@@ -294,6 +294,7 @@ PHP_FUNCTION(mongo_query) {
   char *collection;
   int limit, skip, collection_len;
   mongo::DBClientConnection *conn_ptr;
+  mongo::BSONObjBuilder bquery, bfields, bhint, bsort;
   std::auto_ptr<mongo::DBClientCursor> cursor;
 
   if( ZEND_NUM_ARGS() != 8 ) {
@@ -307,42 +308,29 @@ PHP_FUNCTION(mongo_query) {
 
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
-  php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
-  mongo::BSONObj query = bquery->done();
-  mongo::Query q = mongo::Query( query );
+  php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
 
-  mongo::BSONObjBuilder *bfields = new mongo::BSONObjBuilder();
-  int num_fields = php_array_to_bson( bfields, Z_ARRVAL_P( zfields ) );
-  mongo::BSONObj fields = bfields->done();
+  mongo::Query q = mongo::Query(bquery.done());
 
-  mongo::BSONObjBuilder *bhint = new mongo::BSONObjBuilder();
-  int n = php_array_to_bson( bhint, Z_ARRVAL_P( zhint ) );
-  if( n > 0 ) {
-    mongo::BSONObj hint = bhint->done();
-    q.hint( hint );
-  }
-  
-  mongo::BSONObjBuilder *bsort = new mongo::BSONObjBuilder();
-  n = php_array_to_bson( bsort, Z_ARRVAL_P( zsort ) );
-  if( n > 0 ) {
-    q.sort(bsort->done());
+  int num_hints = php_array_to_bson(&bhint, Z_ARRVAL_P(zhint));
+  if( num_hints > 0 ) {
+    q.hint(bhint.done());
   }
 
+  int num_sorts = php_array_to_bson(&bsort, Z_ARRVAL_P(zsort));
+  if( num_sorts > 0 ) {
+    q.sort(bsort.done());
+  }
+
+  int num_fields = php_array_to_bson(&bfields, Z_ARRVAL_P(zfields));
   if (num_fields == 0) {
     cursor = conn_ptr->query( (const char*)collection, q, limit, skip );
   }
   else {
-    cursor = conn_ptr->query( (const char*)collection, q, limit, skip, &fields );
+    cursor = conn_ptr->query( (const char*)collection, q, limit, skip, &(bfields.done()) );
   }
 
   mongo::DBClientCursor *c = cursor.release();
-
-  delete bquery;
-  delete bfields;
-  delete bhint;
-  delete bsort;
-  // c has a registered dtor
 
   ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
 }
@@ -355,7 +343,7 @@ PHP_FUNCTION(mongo_find_one) {
   zval *zconn, *zquery;
   char *collection;
   int collection_len;
-  mongo::BSONObj query;
+  mongo::BSONObjBuilder bquery;
   mongo::DBClientConnection *conn_ptr;
 
   if( ZEND_NUM_ARGS() != 3 ) {
@@ -369,12 +357,9 @@ PHP_FUNCTION(mongo_find_one) {
 
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
-  php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
-  query = bquery->done();
+  php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
 
-  mongo::BSONObj obj = conn_ptr->findOne( (const char*)collection, query );
-  delete bquery;
+  mongo::BSONObj obj = conn_ptr->findOne((const char*)collection, bquery.done());
 
   array_init(return_value);
   bson_to_php_array(&obj, return_value);
@@ -390,6 +375,7 @@ PHP_FUNCTION(mongo_remove) {
   int collection_len;
   zend_bool justOne = 0;
   mongo::DBClientConnection *conn_ptr;
+  mongo::BSONObjBuilder rarray; 
 
   if( ZEND_NUM_ARGS() != 4 ) {
     zend_error( E_WARNING, "expected 4 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -402,11 +388,9 @@ PHP_FUNCTION(mongo_remove) {
 
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  mongo::BSONObjBuilder *rarray = new mongo::BSONObjBuilder(); 
-  php_array_to_bson( rarray, Z_ARRVAL_P(zarray) );
-  conn_ptr->remove( collection, rarray->done(), justOne );
+  php_array_to_bson(&rarray, Z_ARRVAL_P(zarray));
+  conn_ptr->remove(collection, rarray.done(), justOne);
 
-  delete rarray;
   RETURN_TRUE;
 }
 /* }}} */
@@ -418,6 +402,7 @@ PHP_FUNCTION(mongo_insert) {
   zval *zconn, *zarray;
   char *collection;
   int collection_len;
+  mongo::BSONObjBuilder obj_builder;
   mongo::DBClientConnection *conn_ptr;
 
   if (ZEND_NUM_ARGS() != 3 ) {
@@ -431,15 +416,13 @@ PHP_FUNCTION(mongo_insert) {
 
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  mongo::BSONObjBuilder *obj_builder = new mongo::BSONObjBuilder();
   HashTable *php_array = Z_ARRVAL_P(zarray);
-  if( !zend_hash_exists( php_array, "_id", 3 ) )
-      prep_obj_for_db( obj_builder );
-  php_array_to_bson( obj_builder, php_array );
+  if (!zend_hash_exists(php_array, "_id", 3))
+      prep_obj_for_db(&obj_builder);
+  php_array_to_bson(&obj_builder, php_array);
 
-  conn_ptr->insert( collection, obj_builder->done() );
+  conn_ptr->insert(collection, obj_builder.done());
 
-  delete obj_builder;
   RETURN_TRUE;
 }
 /* }}} */
@@ -491,26 +474,24 @@ PHP_FUNCTION(mongo_update) {
   int collection_len;
   zend_bool zupsert = 0;
   mongo::DBClientConnection *conn_ptr;
-  int num_args = ZEND_NUM_ARGS();
-  if ( num_args != 5 ) {
-    zend_error( E_WARNING, "expected 5 parameters, got %d parameters", num_args );
+  mongo::BSONObjBuilder bquery, bfields;
+  int argc = ZEND_NUM_ARGS();
+
+  if ( argc != 5 ) {
+    zend_error( E_WARNING, "expected 5 parameters, got %d parameters", argc );
     RETURN_FALSE;
   }
-  else if(zend_parse_parameters(num_args TSRMLS_CC, "rsaab", &zconn, &collection, &collection_len, &zquery, &zobj, &zupsert) == FAILURE) {
+  else if(zend_parse_parameters(argc TSRMLS_CC, "rsaab", &zconn, &collection, &collection_len, &zquery, &zobj, &zupsert) == FAILURE) {
     zend_error( E_WARNING, "incorrect parameter types, expected mongo_update( connection, string, array, array, bool )");
     RETURN_FALSE;
   }
 
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  mongo::BSONObjBuilder *bquery =  new mongo::BSONObjBuilder();
-  php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) );
-  mongo::BSONObjBuilder *bfields = new mongo::BSONObjBuilder();
-  php_array_to_bson( bfields, Z_ARRVAL_P( zobj ) );
-  conn_ptr->update( collection, bquery->done(), bfields->done(), (int)zupsert );
+  php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
+  php_array_to_bson(&bfields, Z_ARRVAL_P(zobj));
+  conn_ptr->update(collection, bquery.done(), bfields.done(), (int)zupsert);
 
-  delete bquery;
-  delete bfields;
   RETURN_TRUE;
 }
 /* }}} */
