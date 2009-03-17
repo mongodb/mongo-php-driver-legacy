@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "mongo.h"
-#include "mongo_id.h"
+#include "mongo_types.h"
 #include "bson.h"
 
 extern zend_class_entry *mongo_id_class;

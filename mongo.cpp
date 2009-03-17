@@ -29,15 +29,15 @@
 #include <mongo/client/gridfs.h>
 
 #include "mongo.h"
-#include "mongo_id.h"
-#include "mongo_date.h"
-#include "mongo_regex.h"
-#include "mongo_bindata.h"
+#include "mongo_types.h"
 #include "bson.h"
 #include "gridfs.h"
 
 /** Classes */
-zend_class_entry *mongo_id_class, *mongo_date_class, *mongo_regex_class, *mongo_bindata_class;
+zend_class_entry *mongo_id_class, 
+  *mongo_date_class, 
+  *mongo_regex_class, 
+  *mongo_bindata_class;
 
 /** Resources */
 int le_connection, le_pconnection, le_db_cursor, le_gridfs, le_gridfile;
@@ -363,8 +363,8 @@ PHP_FUNCTION(mongo_find_one) {
   mongo::BSONObj obj = conn_ptr->findOne( (const char*)collection, query );
   delete bquery;
 
-  zval *array = bson_to_php_array(&obj);
-  RETURN_ZVAL( array, 0, 1 );
+  array_init(return_value);
+  bson_to_php_array(&obj, return_value);
 }
 /* }}} */
 
@@ -530,8 +530,11 @@ PHP_FUNCTION( mongo_has_next ) {
    Get the next record from a cursor */
 PHP_FUNCTION( mongo_next ) {
   zval *zcursor;
+  int argc;
+  mongo::BSONObj bson;
+  mongo::DBClientCursor *c;
 
-  int argc = ZEND_NUM_ARGS();
+  argc = ZEND_NUM_ARGS();
   if (argc != 1 ) {
     zend_error( E_WARNING, "expected 1 parameter, got %d parameters", argc );
     RETURN_FALSE;
@@ -541,11 +544,12 @@ PHP_FUNCTION( mongo_next ) {
     RETURN_FALSE;
   }
 
-  mongo::DBClientCursor *c = (mongo::DBClientCursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
+  c = (mongo::DBClientCursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
 
-  mongo::BSONObj bson = c->next();
-  zval *array = bson_to_php_array(&bson);
-  RETURN_ZVAL(array, 0, 1);
+  bson = c->next();
+
+  array_init(return_value);
+  bson_to_php_array(&bson, return_value);
 }
 /* }}} */
 

@@ -16,6 +16,19 @@
 
 #include <php.h>
 
+PHP_FUNCTION( mongo_bindata___construct );
+PHP_FUNCTION( mongo_bindata___toString );
+zval* bin_to_php_bin( char*, int, int );
+
+PHP_FUNCTION( mongo_date___construct );
+PHP_FUNCTION( mongo_date___toString );
+zval* date_to_mongo_date( unsigned long long d );
+
+PHP_FUNCTION( mongo_id___construct );
+PHP_FUNCTION( mongo_id___toString );
+zval* oid_to_mongo_id(const mongo::OID oid);
+
 PHP_FUNCTION( mongo_regex___construct );
 PHP_FUNCTION( mongo_regex___toString );
 zval* re_to_mongo_re(char *regex, char *flags);
+

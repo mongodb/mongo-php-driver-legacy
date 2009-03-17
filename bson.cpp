@@ -18,15 +18,12 @@
 #include <php.h>
 #include <mongo/client/dbclient.h>
 
-#include "mongo_id.h"
-#include "mongo_date.h"
-#include "mongo_regex.h"
-#include "mongo_bindata.h"
+#include "mongo_types.h"
 
-extern zend_class_entry *mongo_id_class;
-extern zend_class_entry *mongo_date_class;
-extern zend_class_entry *mongo_regex_class;
 extern zend_class_entry *mongo_bindata_class;
+extern zend_class_entry *mongo_date_class;
+extern zend_class_entry *mongo_id_class;
+extern zend_class_entry *mongo_regex_class;
 
 int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash ) {
   zval **data;
@@ -95,12 +92,14 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
     case IS_OBJECT: {
       TSRMLS_FETCH();
       zend_class_entry *clazz = Z_OBJCE_PP( data );
+      /* check for defined classes */
+      // MongoId
       if(clazz == mongo_id_class) {
         zval *zid = zend_read_property( mongo_id_class, *data, "id", 2, 0 TSRMLS_CC );
         char *cid = Z_STRVAL_P( zid );
-        std::string *id = new string( cid );
+        std::string id = string( cid );
         mongo::OID *oid = new mongo::OID();
-        oid->init( *id );
+        oid->init( id );
 
         obj_builder->appendOID( field_name, oid ); 
       }
@@ -162,11 +161,7 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
   return num;
 }
 
-zval *bson_to_php_array(mongo::BSONObj *obj) {
-  zval *array;
-  ALLOC_INIT_ZVAL( array );
-  array_init(array);
-
+void bson_to_php_array(mongo::BSONObj *obj, zval *array) {
   mongo::BSONObjIterator it = mongo::BSONObjIterator(*obj);
   while (it.more()) {
     mongo::BSONElement elem = it.next();
@@ -220,7 +215,10 @@ zval *bson_to_php_array(mongo::BSONObj *obj) {
     case mongo::Array:
     case mongo::Object: {
       mongo::BSONObj temp = elem.embeddedObject();
-      zval *subarray = bson_to_php_array(&temp);
+      zval *subarray;
+      ALLOC_INIT_ZVAL(subarray);
+      array_init(subarray);
+      bson_to_php_array(&temp, subarray);
       add_assoc_zval(array, key, subarray);
       break;
     }
@@ -233,10 +231,9 @@ zval *bson_to_php_array(mongo::BSONObj *obj) {
       break;
     }
     default:
-      php_printf("bson=>php: type %i not supported\n", elem.type());
+      zend_error(E_WARNING, "bson=>php: type %i not supported\n", elem.type());
     }
   }
-  return array;
 }
 
 void prep_obj_for_db( mongo::BSONObjBuilder *array ) {
