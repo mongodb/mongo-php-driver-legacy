@@ -24,6 +24,7 @@
 #include "bson.h"
 
 extern zend_class_entry *mongo_bindata_class;
+extern zend_class_entry *mongo_code_class;
 extern zend_class_entry *mongo_date_class;
 extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
@@ -247,3 +248,63 @@ zval* re_to_mongo_re( char *re, char *flags ) {
   return zre;
 }
 
+
+/* {{{ mongo_code___construct(string) 
+ */
+PHP_FUNCTION( mongo_code___construct ) {
+  char *code;
+  int code_len;
+  zval *zcope;
+
+  int argc = ZEND_NUM_ARGS();
+  switch (argc) {
+  case 1:
+    if (zend_parse_parameters(argc TSRMLS_CC, "s", &code, &code_len) == FAILURE) {
+      zend_error( E_ERROR, "incorrect parameter types, expected __construct(string[, array])" );
+      RETURN_FALSE;
+    }
+    ALLOC_INIT_ZVAL(zcope);
+    array_init(zcope);
+    add_property_zval( getThis(), "scope", zcope );
+    // get rid of extra ref
+    zval_ptr_dtor(&zcope);
+    break;
+  case 2:
+    if (zend_parse_parameters(argc TSRMLS_CC, "sa", &code, &code_len, &zcope) == FAILURE) {
+      zend_error( E_ERROR, "incorrect parameter types, expected __construct(string[, array])" );
+      RETURN_FALSE;
+    }  
+    add_property_zval( getThis(), "scope", zcope );  
+    break;
+  default:
+    zend_error( E_WARNING, "expected 1 or 2 parameters, got %d parameters", argc );
+    RETURN_FALSE;
+  }
+
+  add_property_stringl( getThis(), "code", code, code_len, 1 );
+}
+/* }}} */
+
+
+/* {{{ mongo_code___toString() 
+ */
+PHP_FUNCTION( mongo_code___toString ) {
+  zval *zode = zend_read_property( mongo_code_class, getThis(), "code", 4, 0 TSRMLS_CC );
+  char *code = Z_STRVAL_P( zode );
+  RETURN_STRING( code, 1 );
+}
+/* }}} */
+
+
+zval* code_to_php_code(const char *code, zval *scope) {
+  TSRMLS_FETCH();
+  zval *zptr;
+
+  ALLOC_INIT_ZVAL(zptr);
+  object_init_ex(zptr, mongo_code_class);
+
+  add_property_stringl(zptr, "code", (char*)code, strlen(code), 1 );
+  add_property_zval(zptr, "scope", scope);
+
+  return zptr;
+}

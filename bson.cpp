@@ -21,6 +21,7 @@
 #include "mongo_types.h"
 
 extern zend_class_entry *mongo_bindata_class;
+extern zend_class_entry *mongo_code_class;
 extern zend_class_entry *mongo_date_class;
 extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
@@ -116,9 +117,23 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
         zval *zre = zend_read_property( mongo_regex_class, *data, "regex", 5, 0 TSRMLS_CC );
         char *re = Z_STRVAL_P( zre );
         zval *zflags = zend_read_property( mongo_regex_class, *data, "flags", 5, 0 TSRMLS_CC );
-        char *flags = Z_STRVAL_P( zflags );
+        char *flags = Z_STRVAL_P(zflags);
 
         obj_builder->appendRegex(field_name, re, flags); 
+      }
+      // MongoCode
+      else if (clazz == mongo_code_class) {
+        mongo::BSONObjBuilder scope_builder;
+
+        zval *zcode = zend_read_property(mongo_code_class, *data, "code", 4, 0 TSRMLS_CC);
+        char *code = Z_STRVAL_P( zcode );
+
+        zval *zscope = zend_read_property(mongo_code_class, *data, "scope", 5, 0 TSRMLS_CC);
+        php_array_to_bson(&scope_builder, Z_ARRVAL_P(zscope));
+
+        // add code & scope to obj_builder
+        obj_builder->appendCodeWScope(field_name, code, scope_builder.done()); 
+
       }
       else if (clazz == mongo_bindata_class) {
         zval *zbin = zend_read_property( mongo_bindata_class, *data, "bin", 3, 0 TSRMLS_CC );
@@ -210,6 +225,31 @@ void bson_to_php_array(mongo::BSONObj *obj, zval *array) {
       int type = elem.binDataType();
       zval *phpbin = bin_to_php_bin(bin, size, type);
       add_assoc_zval(array, key, phpbin);
+      break;
+    }
+    case mongo::Code: {
+      zval *empty;
+      ALLOC_INIT_ZVAL(empty);
+      array_init(empty);
+
+      zval *zode = code_to_php_code(elem.valuestr(), empty);
+      add_assoc_zval(array, key, zode);
+      break;
+    }
+    case mongo::CodeWScope: {
+      mongo::BSONObj bscope = elem.codeWScopeObject();
+      zval *scope;
+
+      ALLOC_INIT_ZVAL(scope);
+      array_init(scope);
+      bson_to_php_array(&bscope, scope);
+
+      zval *zode = code_to_php_code(elem.codeWScopeCode(), scope);
+
+      // get rid of extra reference to scope
+      zval_ptr_dtor(&scope);
+
+      add_assoc_zval(array, key, zode);
       break;
     }
     case mongo::Array:

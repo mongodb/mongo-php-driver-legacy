@@ -20,6 +20,10 @@ PHP_FUNCTION( mongo_bindata___construct );
 PHP_FUNCTION( mongo_bindata___toString );
 zval* bin_to_php_bin( char*, int, int );
 
+PHP_FUNCTION( mongo_code___construct );
+PHP_FUNCTION( mongo_code___toString );
+zval* code_to_php_code(const char*, zval*);
+
 PHP_FUNCTION( mongo_date___construct );
 PHP_FUNCTION( mongo_date___toString );
 zval* date_to_mongo_date( unsigned long long d );
