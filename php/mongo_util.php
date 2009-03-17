@@ -149,6 +149,65 @@ class MongoUtil
 
 }
 
+
+
+/**
+ * This class can be used to create lightweight links between objects
+ * in different collections.
+ *
+ * @category Database
+ * @package  Mongo
+ * @author   Kristina Chodorow <kristina@10gen.com>
+ * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
+ * @link     http://www.mongodb.org
+ */
+class MongoDBRef 
+{
+    private static $_refKey = '$ref';
+    private static $_idKey = '$id';
+     
+    /**
+     * Creates a new db reference.
+     *
+     * @param string $ns the name of the collection
+     * @param mixed  $id the _id of the object
+     *
+     * @return array a new db ref
+     */ 
+    public static function create($ns, $id) {
+        return array(MongoDBRef::$_refKey => "$ns",
+                     MongoDBRef::$_idKey => $id);
+    }
+
+    /**
+     * Checks if an object is a db ref
+     *
+     * @param array $obj object to check
+     * 
+     * @return bool if the object is a db ref
+     */
+    public static function isRef($obj) {
+        if (is_array($obj) && 
+            array_key_exists(MongoDBRef::$_refKey, $obj) &&
+            array_key_exists(MongoDBRef::$_idKey, $obj)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Gets the value a db ref points to.
+     *
+     * @param MongoDB $db  database to use
+     * @param array   $ref database reference
+     *
+     * @return array the object the db ref points to or null
+     */
+    public static function get(MongoDB $db, $ref) {
+        return $db->selectCollection($ref[MongoDBRef::$_refKey])->findOne(array("_id" => $ref[MongoDBRef::$_idKey]));
+    }
+}
+
 /**
  * Less than.
  */

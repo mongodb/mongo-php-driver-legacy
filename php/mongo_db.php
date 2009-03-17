@@ -258,6 +258,39 @@ class MongoDB
         return MongoUtil::dbCommand($this->connection, $a, "$this");
     }
 
+    /**
+     * Creates a database reference.
+     *
+     * @param string $ns  the collection the db ref will point to
+     * @param mixed  $obj array or _id to refer to
+     *
+     * @return array the db ref, or null if the object was not a database object 
+     *               or _id
+     */
+    public function createDBRef($ns, $obj) {
+        if (is_array($obj) &&
+            array_key_exists('_id', $obj)) {
+            return MongoDBRef::create("$ns", $obj["_id"]);
+        } else if ($obj instanceof MongoId) {
+            return MongoDBRef::create("$ns", $obj);
+        }
+        return null;
+    }
+
+    /**
+     * Gets the value a db ref points to.
+     *
+     * @param array $ref db ref to check
+     *
+     * @return array the object or null
+     */
+    public function getDBRef($ref) {
+        if (MongoDBRef::isRef($ref)) {
+            return MongoDBRef::get($this, $ref);
+        }
+        return null;
+    }
+
 }
 
 define("MONGO_PROFILING_OFF", 0);

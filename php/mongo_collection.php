@@ -66,6 +66,18 @@ class MongoCollection
     }
 
     /**
+     * Returns the collection name.
+     * The difference between this and the __toString method is that __toString
+     * returns the database name, too, whereas this returns just the collection name.
+     *
+     * @return string collection name 
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
      * Drops this collection.
      *
      * @return array the db response
@@ -296,6 +308,32 @@ class MongoCollection
         }
         return $this->update($a, $a, true);
     }
+
+    /**
+     * Creates a database reference.
+     *
+     * @param mixed $obj array or _id to refer to
+     *
+     * @return array the db ref, or null if the object was not a database object 
+     *               or _id
+     * @see MongoDB::createDBRef()
+     */
+    public function createDBRef($obj) {
+        return $this->parent->createDBRef($this->name, $obj);
+    }
+
+    /**
+     * Gets the value a db ref points to.
+     *
+     * @param array $ref db ref to check
+     *
+     * @return array the object or null
+     * @see MongoDB::getDBRef()
+     */
+    public function getDBRef($ref) {
+        return $this->parent->getDBRef($ref);
+    }
+
 }
 
 ?>
