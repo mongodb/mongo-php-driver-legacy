@@ -318,7 +318,8 @@ class MongoCollection
      *               or _id
      * @see MongoDB::createDBRef()
      */
-    public function createDBRef($obj) {
+    public function createDBRef($obj) 
+    {
         return $this->parent->createDBRef($this->name, $obj);
     }
 
@@ -330,7 +331,8 @@ class MongoCollection
      * @return array the object or null
      * @see MongoDB::getDBRef()
      */
-    public function getDBRef($ref) {
+    public function getDBRef($ref) 
+    {
         return $this->parent->getDBRef($ref);
     }
 

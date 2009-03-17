@@ -161,10 +161,10 @@ class MongoUtil
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
  * @link     http://www.mongodb.org
  */
-class MongoDBRef 
+class MongoDBRef
 {
     private static $_refKey = '$ref';
-    private static $_idKey = '$id';
+    private static $_idKey  = '$id';
      
     /**
      * Creates a new db reference.
@@ -174,7 +174,8 @@ class MongoDBRef
      *
      * @return array a new db ref
      */ 
-    public static function create($ns, $id) {
+    public static function create($ns, $id) 
+    {
         return array(MongoDBRef::$_refKey => "$ns",
                      MongoDBRef::$_idKey => $id);
     }
@@ -186,7 +187,8 @@ class MongoDBRef
      * 
      * @return bool if the object is a db ref
      */
-    public static function isRef($obj) {
+    public static function isRef($obj) 
+    {
         if (is_array($obj) && 
             array_key_exists(MongoDBRef::$_refKey, $obj) &&
             array_key_exists(MongoDBRef::$_idKey, $obj)) {
@@ -203,8 +205,10 @@ class MongoDBRef
      *
      * @return array the object the db ref points to or null
      */
-    public static function get(MongoDB $db, $ref) {
-        return $db->selectCollection($ref[MongoDBRef::$_refKey])->findOne(array("_id" => $ref[MongoDBRef::$_idKey]));
+    public static function get(MongoDB $db, $ref) 
+    {
+        return $db->selectCollection($ref[MongoDBRef::$_refKey])->
+          findOne(array("_id" => $ref[MongoDBRef::$_idKey]));
     }
 }
 

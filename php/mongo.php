@@ -75,11 +75,12 @@ class Mongo
             $this->connection = mongo_connect($addr, $auto_reconnect);
         }
 
-        if (!$this->connection ) {
+        if (!$this->connection) {
             trigger_error("couldn't connect to mongo", E_USER_WARNING);
             $this->connected = false;
+        } else {
+            $this->connected = true;
         }
-        $this->connected = true;
     }
 
     /**

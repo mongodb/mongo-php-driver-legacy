@@ -267,7 +267,8 @@ class MongoDB
      * @return array the db ref, or null if the object was not a database object 
      *               or _id
      */
-    public function createDBRef($ns, $obj) {
+    public function createDBRef($ns, $obj) 
+    {
         if (is_array($obj) &&
             array_key_exists('_id', $obj)) {
             return MongoDBRef::create("$ns", $obj["_id"]);
@@ -284,7 +285,8 @@ class MongoDB
      *
      * @return array the object or null
      */
-    public function getDBRef($ref) {
+    public function getDBRef($ref) 
+    {
         if (MongoDBRef::isRef($ref)) {
             return MongoDBRef::get($this, $ref);
         }
