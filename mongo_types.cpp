@@ -29,39 +29,36 @@ extern zend_class_entry *mongo_date_class;
 extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
 
-/* {{{ proto MongoId mongo_id___construct() 
-   Creates a new MongoId */
+/* {{{ mongo_id___construct() 
+ */
 PHP_FUNCTION( mongo_id___construct ) {
   char *id;
   int id_len;
+  mongo::OID oid;
 
-  mongo::OID *oid = new mongo::OID();
   if (ZEND_NUM_ARGS() == 1) { 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &id, &id_len) == FAILURE ) {
       zend_error( E_WARNING, "incorrect parameter types" );
       RETURN_FALSE;
     } else {
-      std::string s (id, id_len);
-      oid->init(s);
-      add_property_stringl( getThis(), "id", id, id_len, 1 );
+      add_property_stringl(getThis(), "id", id, id_len, 1);
     }
   }
   else {
-    oid->init();
-    std::string str = oid->str();
-    char *c = (char*)str.c_str();
-    add_property_stringl( getThis(), "id", c, strlen( c ), 1 );
+    oid.init();
+    std::string str = oid.str();
+    char *cstr = (char*)str.c_str();
+    add_property_stringl( getThis(), "id", cstr, strlen(cstr), 1 );
   }
 }
 /* }}} */
 
 
-/* {{{ proto string mongo_id___toString() 
-   Returns a string represenation of this MongoId in hexidecimal */
+/* {{{ mongo_id___toString() 
+ */
 PHP_FUNCTION( mongo_id___toString ) {
   zval *zid = zend_read_property( mongo_id_class, getThis(), "id", 2, 0 TSRMLS_CC );
-  char *id = Z_STRVAL_P( zid );
-  RETURN_STRING( id, 1 );
+  RETURN_STRING(Z_STRVAL_P(zid), 1);
 }
 /* }}} */
 
@@ -70,7 +67,7 @@ zval* oid_to_mongo_id( const mongo::OID oid ) {
   zval *zoid;
   
   const unsigned char *data = oid.getData();
-  char *buf = new char[25];
+  char buf[25];
   char *n = buf;
   int i;
   for(i = 0; i < 12; i++) {
@@ -87,8 +84,8 @@ zval* oid_to_mongo_id( const mongo::OID oid ) {
 
 
 
-/* {{{ proto MongoDate mongo_date___construct() 
-   Creates a new MongoDate */
+/* {{{ MongoDate mongo_date___construct() 
+ */
 PHP_FUNCTION( mongo_date___construct ) {
   timeval time;
   long ltime;
@@ -110,8 +107,8 @@ PHP_FUNCTION( mongo_date___construct ) {
 /* }}} */
 
 
-/* {{{ proto string mongo_date___toString() 
-   Returns a string represenation of this MongoDate */
+/* {{{ mongo_date___toString() 
+ */
 PHP_FUNCTION( mongo_date___toString ) {
   zval *zsec = zend_read_property( mongo_date_class, getThis(), "sec", 3, 0 TSRMLS_CC );
   long sec = Z_LVAL_P( zsec );
@@ -121,8 +118,8 @@ PHP_FUNCTION( mongo_date___toString ) {
 
   char time_str[21];
 
-  sprintf( time_str, "%.8f %ld", dusec, sec );
-  RETURN_STRING( time_str, 1 );
+  return_value->type = IS_STRING;
+  return_value->value.str.len = spprintf(&(return_value->value.str.val), 0, "%.8f %ld", dusec, sec);
 }
 /* }}} */
 
