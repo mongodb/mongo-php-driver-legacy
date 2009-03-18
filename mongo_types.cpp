@@ -116,8 +116,6 @@ PHP_FUNCTION( mongo_date___toString ) {
   long usec = Z_LVAL_P( zusec );
   double dusec = (double)usec/1000000;
 
-  char time_str[21];
-
   return_value->type = IS_STRING;
   return_value->value.str.len = spprintf(&(return_value->value.str.val), 0, "%.8f %ld", dusec, sec);
 }
@@ -188,8 +186,8 @@ zval* bin_to_php_bin( char *bin, int len, int type ) {
 /* {{{ proto MongoRegex mongo_regex___construct(string) 
    Creates a new MongoRegex */
 PHP_FUNCTION( mongo_regex___construct ) {
-  char *re, *opts;
-  int re_len, opts_len;
+  char *re;
+  int re_len;
 
   switch (ZEND_NUM_ARGS()) {
   case 0:

@@ -75,11 +75,10 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
       efree(field_name);
       break;
     case IS_ARRAY: {
-      mongo::BSONObjBuilder *subobj = new mongo::BSONObjBuilder();
-      php_array_to_bson( subobj, Z_ARRVAL_PP( data ) );
-      obj_builder->append( field_name, subobj->done() );
+      mongo::BSONObjBuilder subobj;
+      php_array_to_bson(&subobj, Z_ARRVAL_PP(data));
+      obj_builder->append(field_name, subobj.done());
       efree(field_name);
-      delete subobj;
       break;
     }
     case IS_STRING: {

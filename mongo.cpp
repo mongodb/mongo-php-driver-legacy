@@ -305,7 +305,7 @@ PHP_FUNCTION(mongo_query) {
   mongo::DBClientBase *conn_ptr;
   mongo::BSONObjBuilder bquery, bfields, bhint, bsort;
   std::auto_ptr<mongo::DBClientCursor> cursor;
-
+  
   if( ZEND_NUM_ARGS() != 8 ) {
       zend_error( E_WARNING, "expected 8 parameters, got %d parameters", ZEND_NUM_ARGS() );
       RETURN_FALSE;
@@ -314,31 +314,30 @@ PHP_FUNCTION(mongo_query) {
       zend_error( E_WARNING, "incorrect parameter types, expected mongo_query( connection, string, array, int, int, array, array, array )" );
       RETURN_FALSE;
   }
-
+  
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
 
   mongo::Query q = mongo::Query(bquery.done());
 
-  int num_hints = php_array_to_bson(&bhint, Z_ARRVAL_P(zhint));
-  if( num_hints > 0 ) {
+  // get hints
+  HashTable *array = Z_ARRVAL_P(zhint);
+  if( zend_hash_num_elements(array) > 0 ) {
+    php_array_to_bson(&bhint, array);
     q.hint(bhint.done());
   }
 
-  int num_sorts = php_array_to_bson(&bsort, Z_ARRVAL_P(zsort));
-  if( num_sorts > 0 ) {
+  // get sort
+  array = Z_ARRVAL_P(zsort);
+  if( zend_hash_num_elements(array) > 0 ) {
+    php_array_to_bson(&bsort, array);
     q.sort(bsort.done());
   }
 
-  int num_fields = php_array_to_bson(&bfields, Z_ARRVAL_P(zfields));
-  if (num_fields == 0) {
-    cursor = conn_ptr->query( (const char*)collection, q, limit, skip );
-  }
-  else {
-    mongo::BSONObj fields = bfields.done();
-    cursor = conn_ptr->query( (const char*)collection, q, limit, skip, &fields );
-  }
+  php_array_to_bson(&bfields, Z_ARRVAL_P(zfields));
+  mongo::BSONObj fields = bfields.done();
+  cursor = conn_ptr->query( (const char*)collection, q, limit, skip, &fields );
 
   ZEND_REGISTER_RESOURCE( return_value, cursor.release(), le_db_cursor );
 }
