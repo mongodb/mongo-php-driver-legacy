@@ -49,6 +49,7 @@ static PHP_GINIT_FUNCTION(mongo);
 static function_entry mongo_functions[] = {
   PHP_FE( mongo_connect , NULL )
   PHP_FE( mongo_pconnect , NULL )
+  PHP_FE( mongo_pair_connect , NULL )
   PHP_FE( mongo_close , NULL )
   PHP_FE( mongo_remove , NULL )
   PHP_FE( mongo_query , NULL )
@@ -154,7 +155,7 @@ static PHP_GINIT_FUNCTION(mongo){
 
 
 static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
-  mongo::DBClientConnection *conn = (mongo::DBClientConnection*)rsrc->ptr;
+  mongo::DBClientBase *conn = (mongo::DBClientBase*)rsrc->ptr;
   if (rsrc->type == le_pconnection) {
     MonGlo(num_persistent)--;
   }
@@ -254,7 +255,7 @@ PHP_MINFO_FUNCTION(mongo) {
 /* {{{ mongo_connect
  */
 PHP_FUNCTION(mongo_connect) {
-  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
+  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0, 0);
 }
 /* }}} */
 
@@ -262,7 +263,15 @@ PHP_FUNCTION(mongo_connect) {
 /* {{{ mongo_pconnect
  */
 PHP_FUNCTION(mongo_pconnect) {
-  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
+  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1, 0);
+}
+/* }}} */
+
+
+/* {{{ mongo_pair_connect
+ */
+PHP_FUNCTION(mongo_pair_connect) {
+  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0, 1);
 }
 /* }}} */
 
@@ -293,7 +302,7 @@ PHP_FUNCTION(mongo_query) {
   zval *zconn, *zquery, *zsort, *zfields, *zhint;
   char *collection;
   int limit, skip, collection_len;
-  mongo::DBClientConnection *conn_ptr;
+  mongo::DBClientBase *conn_ptr;
   mongo::BSONObjBuilder bquery, bfields, bhint, bsort;
   std::auto_ptr<mongo::DBClientCursor> cursor;
 
@@ -306,7 +315,7 @@ PHP_FUNCTION(mongo_query) {
       RETURN_FALSE;
   }
 
-  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
 
@@ -343,7 +352,7 @@ PHP_FUNCTION(mongo_find_one) {
   char *collection;
   int collection_len;
   mongo::BSONObjBuilder bquery;
-  mongo::DBClientConnection *conn_ptr;
+  mongo::DBClientBase *conn_ptr;
 
   if( ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -354,7 +363,7 @@ PHP_FUNCTION(mongo_find_one) {
     RETURN_FALSE;
   }
 
-  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
 
@@ -373,7 +382,7 @@ PHP_FUNCTION(mongo_remove) {
   char *collection;
   int collection_len;
   zend_bool justOne = 0;
-  mongo::DBClientConnection *conn_ptr;
+  mongo::DBClientBase *conn_ptr;
   mongo::BSONObjBuilder rarray; 
 
   if( ZEND_NUM_ARGS() != 4 ) {
@@ -385,7 +394,7 @@ PHP_FUNCTION(mongo_remove) {
     RETURN_FALSE;
   }
 
-  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   php_array_to_bson(&rarray, Z_ARRVAL_P(zarray));
   conn_ptr->remove(collection, rarray.done(), justOne);
@@ -402,7 +411,7 @@ PHP_FUNCTION(mongo_insert) {
   char *collection;
   int collection_len;
   mongo::BSONObjBuilder obj_builder;
-  mongo::DBClientConnection *conn_ptr;
+  mongo::DBClientBase *conn_ptr;
 
   if (ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -413,7 +422,7 @@ PHP_FUNCTION(mongo_insert) {
     RETURN_FALSE;
   }
 
-  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   HashTable *php_array = Z_ARRVAL_P(zarray);
   // check if "_id" field, 4 is length of "_id" + 1 for \0
@@ -432,7 +441,7 @@ PHP_FUNCTION(mongo_batch_insert) {
   zval *zconn, *zarray;
   char *collection;
   int collection_len;
-  mongo::DBClientConnection *conn_ptr;
+  mongo::DBClientBase *conn_ptr;
 
   if (ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -443,7 +452,7 @@ PHP_FUNCTION(mongo_batch_insert) {
     RETURN_FALSE;
   }
 
-  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   vector<mongo::BSONObj> inserter;
   HashTable *php_array = Z_ARRVAL_P(zarray);
@@ -474,7 +483,7 @@ PHP_FUNCTION(mongo_update) {
   char *collection;
   int collection_len;
   zend_bool zupsert = 0;
-  mongo::DBClientConnection *conn_ptr;
+  mongo::DBClientBase *conn_ptr;
   mongo::BSONObjBuilder bquery, bfields;
   int argc = ZEND_NUM_ARGS();
 
@@ -487,7 +496,7 @@ PHP_FUNCTION(mongo_update) {
     RETURN_FALSE;
   }
 
-  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
   php_array_to_bson(&bfields, Z_ARRVAL_P(zobj));
@@ -515,8 +524,7 @@ PHP_FUNCTION( mongo_has_next ) {
 
   mongo::DBClientCursor *c = (mongo::DBClientCursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
 
-  bool more = c->more();
-  RETURN_BOOL(more);
+  RETURN_BOOL(c->more());
 }
 /* }}} */
 
@@ -551,11 +559,11 @@ PHP_FUNCTION( mongo_next ) {
 
 /* {{{ php_mongo_do_connect
  */
-static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
-  mongo::DBClientConnection *conn;
-  char *server, *uname, *pass, *key;
+static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent, int paired) {
+  mongo::DBClientBase *conn;
+  char *server, *server2, *uname, *pass, *key;
   zend_bool auto_reconnect, lazy;
-  int server_len, uname_len, pass_len, key_len;
+  int server_len, server2_len, uname_len, pass_len, key_len;
   zend_rsrc_list_entry *le;
   string error;
   
@@ -589,7 +597,7 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
     /* if a connection is found, return it */
     if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
-      conn = (mongo::DBClientConnection*)le->ptr;
+      conn = (mongo::DBClientBase*)le->ptr;
       ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
       efree(key);
       return;
@@ -602,7 +610,7 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
     efree(key);
   }
   /* non-persistent */
-  else {
+  else if (!paired) {
     if( argc != 2 ) {
       zend_error( E_WARNING, "expected 2 parameters, got %d parameters", argc );
       RETURN_FALSE;
@@ -612,18 +620,39 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent) {
       RETURN_FALSE;
     }
   }
+  else {
+    if( argc != 2 ) {
+      zend_error( E_WARNING, "expected 2 parameters, got %d parameters", argc );
+      RETURN_FALSE;
+    }
+    else if( zend_parse_parameters(argc TSRMLS_CC, "ss", &server, &server_len, &server2, &server2_len) == FAILURE ) {
+      zend_error( E_WARNING, "incorrect parameter types, expected: mongo_pair_connect(string, string)" );
+      RETURN_FALSE;
+    }
+  }
 
-  if ( server_len == 0 ) {
+  if ( server_len == 0 ||
+       (paired && 
+        server2_len == 0)) {
     zend_error( E_WARNING, "invalid host" );
     RETURN_FALSE;
   }
 
-  conn = new mongo::DBClientConnection( (bool)auto_reconnect );
-  if ( ! conn->connect( server, error ) ){
-    zend_error( E_WARNING, "%s", error.c_str() );
-    RETURN_FALSE;
-  }
 
+  if (paired) {
+    conn = new mongo::DBClientPaired();
+    if (!((mongo::DBClientPaired*)conn)->connect(server, server2)) {
+      zend_error(E_WARNING, "error connecting to pair");
+      RETURN_FALSE;
+    }
+  } else {
+    conn = new mongo::DBClientConnection( (bool)auto_reconnect );
+    if (!((mongo::DBClientConnection*)conn)->connect(server, error)){
+      zend_error(E_WARNING, "%s", error.c_str());
+      RETURN_FALSE;
+    }
+  }
+  
   // store a reference in the persistence list
   if (persistent) {
     zend_rsrc_list_entry new_le; 
