@@ -327,12 +327,11 @@ PHP_FUNCTION(mongo_query) {
     cursor = conn_ptr->query( (const char*)collection, q, limit, skip );
   }
   else {
-    cursor = conn_ptr->query( (const char*)collection, q, limit, skip, &(bfields.done()) );
+    mongo::BSONObj fields = bfields.done();
+    cursor = conn_ptr->query( (const char*)collection, q, limit, skip, &fields );
   }
 
-  mongo::DBClientCursor *c = cursor.release();
-
-  ZEND_REGISTER_RESOURCE( return_value, c, le_db_cursor );
+  ZEND_REGISTER_RESOURCE( return_value, cursor.release(), le_db_cursor );
 }
 /* }}} */
 
@@ -417,8 +416,10 @@ PHP_FUNCTION(mongo_insert) {
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientConnection*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   HashTable *php_array = Z_ARRVAL_P(zarray);
-  if (!zend_hash_exists(php_array, "_id", 3))
-      prep_obj_for_db(&obj_builder);
+  // check if "_id" field, 4 is length of "_id" + 1 for \0
+  if (!zend_hash_exists(php_array, "_id", 4)) {
+    prep_obj_for_db(&obj_builder);
+  }
   php_array_to_bson(&obj_builder, php_array);
 
   conn_ptr->insert(collection, obj_builder.done());
