@@ -3,7 +3,7 @@ MongoCollection::batchInsert - basic batch insertion functionality
 --FILE--
 <?php
 
-include "mongo.php";
+include "Mongo.php";
 
 $m = new Mongo();
 $c = $m->selectDB("phpt")->selectCollection("batch.insert");

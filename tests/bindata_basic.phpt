@@ -3,7 +3,7 @@ MongoId class - basic id functionality
 --FILE--
 <?php
 
-include "mongo.php";
+include "Mongo.php";
 
 $m=new Mongo();
 

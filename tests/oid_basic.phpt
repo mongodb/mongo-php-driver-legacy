@@ -3,7 +3,7 @@ MongoId class - basic id functionality
 --FILE--
 <?php
 
-include "mongo.php";
+include "Mongo.php";
 
 $id = new MongoId("49b16fab04bc94cc343c5482");
 var_dump($id);

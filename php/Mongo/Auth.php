@@ -112,21 +112,17 @@ class MongoAuth extends Mongo
      * @param string $username  the username
      * @param string $password  the password
      * @param string $plaintext if the password is encrypted
-     * @param string $host      a database connection
-     * @param string $port      a database connection
-     *
-     * @return MongoAuth an authenticated session or false if login was unsuccessful
+     * @param string $server    a database server address
      */
     public function __construct($db, 
                                 $username, 
                                 $password, 
                                 $plaintext=true, 
-                                $host=null, 
-                                $port=null) 
+                                $server=null)
     {
-        parent::__construct($host, $port);
+        parent::__construct($server);
 
-        $this->db = $this->selectDB("$db");
+        $this->db = $this->selectDB((string)$db);
         if ($plaintext) {
             $hash = MongoAuth::getHash($username, $password);
         } else {
@@ -208,7 +204,7 @@ class MongoAuth extends Mongo
     public function deleteUser($username) 
     {
         $c = $this->db->selectCollection("system.users");
-        return $c->remove(array("user" => "$username"), true);
+        return $c->remove(array("user" => (string)$username), true);
     }
 
 
@@ -222,130 +218,9 @@ class MongoAuth extends Mongo
         $data   = array(MongoUtil::$LOGOUT => 1);
         $result = MongoUtil::dbCommand($this->connection, $data, $this->db);
 
-        if (!$result[ "ok" ]) {
-            // trapped in the system forever
-            return false;
-        }
-
-        return true;
-    }
-
-}
-
-/**
- * Gets an admin database connection.
- * 
- * @category Database
- * @package  Mongo
- * @author   Kristina Chodorow <kristina@10gen.com>
- * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
- * @link     http://www.mongodb.org
- */
-class MongoAdmin extends MongoAuth
-{
-
-    /**
-     * Creates a new admin session.
-     * 
-     * @param string $username  username
-     * @param string $password  password
-     * @param bool   $plaintext in plaintext, vs. encrypted
-     * @param string $host      hostname
-     * @param string $port      port
-     */
-    public function __construct($username, 
-                                $password, 
-                                $plaintext=true, 
-                                $host=null, 
-                                $port=null) 
-    {
-        parent::__construct("admin", $username, $password, $plaintext, $host, $port);
-    }
-
-    /** 
-     * Lists all of the databases.
-     *
-     * @return Array each database with its size and name
-     */
-    public function listDBs() 
-    {
-        $data   = array(MongoUtil::$LIST_DATABASES => 1);
-        $result = MongoUtil::dbCommand($this->connection, $data, $this->db);
-        if ($result) {
-            return $result[ "databases" ];
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Shuts down the database.
-     *
-     * @return bool if the database was successfully shut down
-     */
-    public function shutdown() 
-    {
-        $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$SHUTDOWN => 1 ), 
-                                       $this->db);
-        return $result[ "ok" ];
-    }
-
-    /**
-     * Turns logging on/off.
-     *
-     * @param int $level logging level
-     *
-     * @return bool if the logging level was set
-     */
-    public function setLogging($level ) 
-    {
-        $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$LOGGING => (int)$level ), 
-                                       $this->db);
-        return $result[ "ok" ];
-    }
-
-    /**
-     * Sets tracing level.
-     *
-     * @param int $level trace level
-     *
-     * @return bool if the tracing level was set
-     */
-    public function setTracing($level ) 
-    {
-        $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$TRACING => (int)$level ), 
-                                       $this->db);
-        return $result[ "ok" ];
-    }
-
-    /**
-     * Sets only the query tracing level.
-     *
-     * @param int $level trace level
-     *
-     * @return bool if the tracing level was set
-     */
-    public function setQueryTracing($level ) 
-    {
-        $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$QUERY_TRACING => (int)$level ), 
-                                       $this->db);
         return $result[ "ok" ];
     }
 
 }
-
-define("MONGO_LOG_OFF", 0);
-define("MONGO_LOG_W", 1);
-define("MONGO_LOG_R", 2);
-define("MONGO_LOG_RW", 3);
-
-define("MONGO_TRACE_OFF", 0);
-define("MONGO_TRACE_SOME", 1);
-define("MONGO_TRACE_ON", 2);
-
 
 ?>

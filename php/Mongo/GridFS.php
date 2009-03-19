@@ -33,7 +33,7 @@
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
  * @link     http://www.mongodb.org
  */
-class MongoGridfs
+class MongoGridFS
 {
     private $_resource;
     private $_prefix;
@@ -43,7 +43,7 @@ class MongoGridfs
      * Creates a new gridfs instance.
      *
      * @param MongoDB $db     database
-     * @param string  $prefix optional files collection prefix
+     * @param string   $prefix optional files collection prefix
      */
     public function __construct($db, $prefix = "fs") 
     {
@@ -64,7 +64,7 @@ class MongoGridfs
         if (is_null($query)) {
             $query = array();
         }
-        return MongoCursor::getGridfsCursor(mongo_gridfs_list($this->_resource, 
+        return MongoCursor::getGridFSCursor(mongo_gridfs_list($this->_resource, 
                                                               $query));
     }
 
@@ -92,7 +92,7 @@ class MongoGridfs
         if (is_string($query)) {
             $query = array("filename" => $query);
         }
-        return new MongoGridfsFile(mongo_gridfs_find($this->_resource, $query));
+        return new MongoGridFSFile(mongo_gridfs_find($this->_resource, $query));
     }
 
     /**
@@ -126,66 +126,6 @@ class MongoGridfs
         $coll->update(array("filename" => $tmp), $obj);
 
         return $obj[ "_id" ];
-    }
-}
-
-/**
- * Utilities for getting information about files from the database.
- * 
- * @category Database
- * @package  Mongo
- * @author   Kristina Chodorow <kristina@10gen.com>
- * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
- * @link     http://www.mongodb.org
- */
-class MongoGridfsFile
-{
-    private $_file;
-
-    /**
-     * Create a new Gridfs file.  
-     * These should usually be created by MongoGridfs.
-     *
-     * @param gridfile $file a file from the database
-     */
-    public function __construct($file) 
-    {
-        $this->_file = $file;
-    }
-
-    /**
-     * Returns this file's filename.
-     *
-     * @return string the filename
-     */
-    public function getFilename() 
-    {
-        return mongo_gridfile_filename($this->_file);
-    }
-
-    /**
-     * Returns this file's size.
-     *
-     * @return int the file size
-     */
-    public function getSize() 
-    {
-        return mongo_gridfile_size($this->_file);
-    }
-
-    /**
-     * Writes this file to the filesystem.
-     *
-     * @param string $filename the location to which to write the file
-     *
-     * @return int the number of bytes written
-     */
-    public function write($filename = null) 
-    {
-        if (!$filename) {
-            $filename = $this->getFilename();
-        }
-        return mongo_gridfile_write($this->_file, $filename);
     }
 }
 

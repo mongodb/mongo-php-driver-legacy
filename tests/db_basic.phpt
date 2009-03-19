@@ -2,7 +2,7 @@
 MongoDB class - basic DB functionality
 --FILE--
 <?php
-include "mongo.php";
+include "Mongo.php";
 
 $m = new Mongo();
 $db = new MongoDB($m, "phpt");

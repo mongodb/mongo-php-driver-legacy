@@ -3,7 +3,7 @@ MongoCollection::update - basic update functionality
 --FILE--
 <?php
 
-include "mongo.php";
+include "Mongo.php";
 
 $m=new Mongo();
 $c=$m->selectCollection("phpt", "update");

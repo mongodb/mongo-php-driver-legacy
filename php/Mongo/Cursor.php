@@ -50,7 +50,7 @@
 class MongoCursor
 {
 
-    var $connection = null;
+    private $_connection = null;
 
     private $_cursor           = null;
     private $_startedIterating = false;
@@ -64,22 +64,22 @@ class MongoCursor
     /**
      * Create a new cursor.
      * 
-     * @param connection $conn   database connection
-     * @param string     $ns     db namespace
-     * @param array      $query  database query
-     * @param array      $fields fields to return
+     * @param resource $conn   database connection
+     * @param string   $ns     db namespace
+     * @param array    $query  database query
+     * @param array    $fields fields to return
      */
     public function __construct($conn = null, 
                                 $ns = null, 
                                 $query = array(), 
                                 $fields = array()) 
     {
-        $this->connection = $conn;
-        $this->_ns        = $ns;
-        $this->_query     = $query;
-        $this->_fields    = $fields;
-        $this->_sort      = array();
-        $this->_hint      = array();
+        $this->_connection = $conn;
+        $this->_ns         = $ns;
+        $this->_query      = $query;
+        $this->_fields     = $fields;
+        $this->_sort       = array();
+        $this->_hint       = array();
     }
 
     /**
@@ -118,13 +118,13 @@ class MongoCursor
      * @param int $num the number of results to return
      *
      * @return MongoCursor this cursor
+     *
+     * @throws MongoCursorException if iteration phase has started
      */
     public function limit($num) 
     {
         if ($this->_startedIterating) {
-            trigger_error("cannot modify cursor after beginning iteration.", 
-                          E_USER_ERROR);
-            return false;
+            throw new MongoCursorException("cannot modify cursor after beginning iteration.");
         }
         $this->_limit = -1 * (int)$num;
         return $this;
@@ -144,13 +144,13 @@ class MongoCursor
      * @param int $num the number of results to return
      *
      * @return MongoCursor this cursor
+     *
+     * @throws MongoCursorException if iteration phase has started
      */
     public function softLimit($num) 
     {
         if ($this->_startedIterating) {
-            trigger_error("cannot modify cursor after beginning iteration.", 
-                          E_USER_ERROR);
-            return false;
+            throw new MongoCursorException("cannot modify cursor after beginning iteration.");
         }
         $this->_limit = (int)$num;
         return $this;
@@ -162,13 +162,13 @@ class MongoCursor
      * @param int $num the number of results to skip
      *
      * @return MongoCursor this cursor
+     *
+     * @throws MongoCursorException if iteration phase has started
      */
     public function skip($num) 
     {
         if ($this->_startedIterating) {
-            trigger_error("cannot modify cursor after beginning iteration.", 
-                           E_USER_ERROR);
-            return false;
+            throw new MongoCursorException("cannot modify cursor after beginning iteration.");
         }
         $this->_skip = (int)$num;
         return $this;
@@ -180,13 +180,13 @@ class MongoCursor
      * @param array $fields the fields by which to sort
      *
      * @return MongoCursor this cursor
+     *
+     * @throws MongoCursorException if iteration phase has started
      */
     public function sort($fields) 
     {
         if ($this->_startedIterating) {
-            trigger_error("cannot modify cursor after beginning iteration.", 
-                           E_USER_ERROR);
-            return false;
+            throw new MongoCursorException("cannot modify cursor after beginning iteration.");
         }
         $this->_sort = $fields;
         return $this;
@@ -198,13 +198,13 @@ class MongoCursor
      * @param array $key_pattern indexes to use for the query
      *
      * @return MongoCursor this cursor
+     *
+     * @throws MongoCursorException if iteration phase has started
      */
     public function hint($key_pattern) 
     {
         if ($this->_startedIterating) {
-            trigger_error("cannot modify cursor after beginning iteration.", 
-                           E_USER_ERROR);
-            return false;
+            throw new MongoCursorException("cannot modify cursor after beginning iteration.");
         }
         $this->_hint = $key_pattern;
         return $this;
@@ -214,6 +214,8 @@ class MongoCursor
      * Counts the number of records returned by this query.
      *
      * @return int the number of records
+     *
+     * @throws MongoException if count fails
      */
     public function count() 
     {
@@ -225,11 +227,11 @@ class MongoCursor
             $cmd[ "query" ] = $this->_query;
         }
 
-        $result = MongoUtil::dbCommand($this->connection, $cmd, $db);
+        $result = MongoUtil::dbCommand($this->_connection, $cmd, $db);
         if ($result) {
             return $result[ "n" ];
         }
-        trigger_error("count failed", E_USER_ERROR);
+        throw new MongoException("count failed");
     }
 
     /**
@@ -239,7 +241,7 @@ class MongoCursor
      */
     private function _doQuery() 
     {
-        $this->_cursor = mongo_query($this->connection, 
+        $this->_cursor = mongo_query($this->_connection, 
                                      $this->_ns, 
                                      $this->_query, 
                                      (int)$this->_skip, 
@@ -250,13 +252,13 @@ class MongoCursor
     }
 
     /**
-     * Special cursor used by Gridfs functions.
+     * Special cursor used by GridFS functions.
      * 
      * @param resource $cursor a database cursor
      *
      * @return MongoCursor a new cursor
      */
-    public static function getGridfsCursor($cursor) 
+    public static function getGridFSCursor($cursor) 
     {
         $c                    = new MongoCursor();
         $c->_cursor           = $cursor;

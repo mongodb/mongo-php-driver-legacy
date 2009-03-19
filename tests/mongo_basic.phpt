@@ -3,13 +3,13 @@ Mongo class - basic connection functionality
 --FILE--
 <?php
 
-include "mongo.php";
+include "Mongo.php";
 
 $m = new Mongo();
 echo "$m\n";
 var_dump($m->connected);
 
-$p = new Mongo("127.0.0.1", 27017, true);
+$p = new Mongo("127.0.0.1:27017");
 echo "$p\n";
 
 $m->resetError();

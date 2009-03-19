@@ -3,7 +3,7 @@ MongoCollection class - testing weird input
 --FILE--
 <?php
 
-include "mongo.php";
+include "Mongo.php";
 
 $m = new Mongo();
 $c = $m->selectDB("phpt")->selectCollection("insert.weird");

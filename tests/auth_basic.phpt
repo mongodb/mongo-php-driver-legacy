@@ -2,7 +2,7 @@
 MongoAuth class - basic authentication functionality
 --SKIPIF--
 <?php 
-include_once "mongo.php";
+include_once "Mongo.php";
 
 $m = new Mongo();
 if(!$m->selectCollection("admin", "system.users")->findOne(array("user" => "kristina")))
@@ -10,7 +10,7 @@ if(!$m->selectCollection("admin", "system.users")->findOne(array("user" => "kris
 ?>
 --FILE--
 <?php
-include_once "mongo.php";
+include_once "Mongo.php";
 
 $a = new MongoAdmin("kristina", "fred");
 echo "$a\n";

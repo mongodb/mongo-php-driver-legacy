@@ -1,8 +1,8 @@
 --TEST--
-MongoDBRef class - basic dbref functionality
+Mongo_DB_Ref class - basic dbref functionality
 --FILE--
 <?php
-include "mongo.php";
+include "Mongo.php";
 
 $m=new Mongo();
 $db = $m->selectDB("phpt");

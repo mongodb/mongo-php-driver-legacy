@@ -36,23 +36,19 @@
 class MongoCollection
 {
 
-    var $parent;
-    var $connection;
-    var $db;
-    var $name = "";
+    public $db;
+    public $name = "";
 
     /**
      * Creates a new collection.
      *
      * @param MongoDB $db   database
-     * @param string  $name collection name
+     * @param string   $name collection name
      */
     function __construct(MongoDB $db, $name)
     {
-        $this->parent     = $db;
-        $this->connection = $db->connection;
-        $this->db         = $db->name;
-        $this->name       = $name;
+        $this->db   = $db;
+        $this->name = $name;
     }
 
     /**
@@ -86,7 +82,9 @@ class MongoCollection
     {
         $this->deleteIndexes();
         $data = array(MongoUtil::$DROP => $this->name);
-        return MongoUtil::dbCommand($this->connection, $data, $this->db);
+        return MongoUtil::dbCommand($this->db->connection, 
+                                     $data, 
+                                     (string)$this->db);
     }
 
     /**
@@ -102,7 +100,9 @@ class MongoCollection
         if ($scan_data) {
             $data[ "scandata" ] = true;
         }
-        return MongoUtil::dbCommand($this->connection, $data, $this->db);
+        return MongoUtil::dbCommand($this->db->connection, 
+                                     $data, 
+                                     (string)$this->db);
     }
 
     /** Inserts an object or array into the collection.
@@ -114,7 +114,9 @@ class MongoCollection
     function insert($iterable) 
     {
         $arr    = $iterable;
-        $result = mongo_insert($this->connection, (string)$this, $arr);
+        $result = mongo_insert($this->db->connection, 
+                               (string)$this, 
+                               $arr);
         if ($result) {
             return $iterable;
         }
@@ -132,7 +134,7 @@ class MongoCollection
         if (!count($a)) {
             return $a;
         }
-        $result = mongo_batch_insert($this->connection, (string)$this, $a);
+        $result = mongo_batch_insert($this->db->connection, (string)$this, $a);
         if ($result) {
             return $a;
         }
@@ -149,7 +151,7 @@ class MongoCollection
      */
     function find($query = array(), $fields = array()) 
     {
-        return new MongoCursor($this->connection, 
+        return new MongoCursor($this->db->connection, 
                                (string)$this, 
                                $query, 
                                $fields);
@@ -164,7 +166,7 @@ class MongoCollection
      */
     function findOne($query = array()) 
     {
-        return mongo_find_one($this->connection, 
+        return mongo_find_one($this->db->connection, 
                               (string)$this, 
                               $query);
     }
@@ -190,7 +192,11 @@ class MongoCollection
     {
         $c      = $criteria;
         $obj    = $newobj;
-        $result = mongo_update($this->connection, (string)$this, $c, $obj, $upsert);
+        $result = mongo_update($this->db->connection, 
+                               (string)$this, 
+                               $c, 
+                               $obj, 
+                               $upsert);
         if ($result) {
             return $obj;
         }
@@ -207,7 +213,7 @@ class MongoCollection
      */
     function remove($criteria = array(), $just_one = false) 
     {
-        return mongo_remove($this->connection, 
+        return mongo_remove($this->db->connection, 
                             (string)$this, 
                             $criteria, 
                             $just_one);
@@ -228,7 +234,7 @@ class MongoCollection
             $keys = array($keys => 1);
         }
         $name = MongoUtil::toIndexString($keys);
-        $coll = $this->parent->selectCollection("system.indexes");
+        $coll = $this->db->selectCollection("system.indexes");
         $coll->insert(array("ns" => $ns, "key" => $keys, "name" => $name));
     }
   
@@ -243,7 +249,7 @@ class MongoCollection
     {
         $idx = MongoUtil::toIndexString($key);
         $d   = array(MongoUtil::$DELETE_INDICES => $this->name, "index" => $idx);
-        $x   = MongoUtil::dbCommand($this->connection, $d, $this->db);    
+        $x   = MongoUtil::dbCommand($this->db->connection, $d, (string)$this->db);
     }
 
     /**
@@ -254,7 +260,7 @@ class MongoCollection
     function deleteIndexes() 
     {
         $d = array(MongoUtil::$DELETE_INDICES => $this->name, "index" => "*");
-        $x = MongoUtil::dbCommand($this->connection, $d, $this->db);
+        $x = MongoUtil::dbCommand($this->db->connection, $d, (string)$this->db);
     }
 
     /**
@@ -265,7 +271,7 @@ class MongoCollection
     function getIndexInfo() 
     {
         $ns           = (string)$this;
-        $nscollection = $this->parent->selectCollection("system.indexes");
+        $nscollection = $this->db->selectCollection("system.indexes");
         $cursor       = $nscollection->find(array("ns" => $ns));
         $a            = array();
         while ($cursor->hasNext()) {
@@ -281,16 +287,18 @@ class MongoCollection
      * Counts the number of documents in this collection.
      *
      * @return int the number of documents
+     *
+     * @throws MongoException if count fails
      */
     function count() 
     {
-        $result = MongoUtil::dbCommand($this->connection, 
-                                       array("count" => $this->name), 
-                                       $this->db);
+        $result = MongoUtil::dbCommand($this->db->connection, 
+                                        array("count" => $this->name), 
+                                        (string)$this->db);
         if ($result) {
             return (int)$result[ "n" ];
         }
-        trigger_error("count failed", E_USER_ERROR);
+        throw new MongoException("count failed");
     }
 
     /**
@@ -320,7 +328,7 @@ class MongoCollection
      */
     public function createDBRef($obj) 
     {
-        return $this->parent->createDBRef($this->name, $obj);
+        return $this->db->createDBRef($this->name, $obj);
     }
 
     /**
@@ -333,7 +341,7 @@ class MongoCollection
      */
     public function getDBRef($ref) 
     {
-        return $this->parent->getDBRef($ref);
+        return $this->db->getDBRef($ref);
     }
 
 }

@@ -42,8 +42,8 @@
 class MongoDB
 {
 
-    var $connection = null;
-    var $name       = null;
+    public $connection = null;
+    public $name       = null;
 
     /**
      * Creates a new database.
@@ -72,11 +72,11 @@ class MongoDB
      *
      * @param string $prefix name of the file collection
      *
-     * @return gridfs a new gridfs object for this database
+     * @return MongoGridFS a new gridfs object for this database
      */
-    public function getGridfs($prefix = "fs") 
+    public function getGridFS($prefix = "fs") 
     {
-        return new MongoGridfs($this, $prefix);
+        return new MongoGridFS($this, $prefix);
     }
 
     /**
@@ -151,13 +151,9 @@ class MongoDB
      */
     function repair($preserve_cloned_files = false, $backup_original_files = false) 
     {
-        $data = array(MongoUtil::$REPAIR_DATABASE => 1);
-        if ($preserve_cloned_files) {
-            $data[ "preserveClonedFilesOnFailure" ] = true;
-        }
-        if ($backup_original_files) {
-            $data[ "backupOriginalFiles" ] = true;
-        }
+        $data = array(MongoUtil::$REPAIR_DATABASE => 1,
+                      "preserveClonedFilesOnFailure" => (bool)$preserve_cloned_files,
+                      "backupOriginalFiles" => $backup_original_files);
         return MongoUtil::dbCommand($this->connection, $data, $this->name);
     }
 
@@ -291,6 +287,44 @@ class MongoDB
             return MongoDBRef::get($this, $ref);
         }
         return null;
+    }
+
+    /**
+     * Runs code on the database.
+     * If successful, returns an array of the form:
+     * <pre>
+     * array(2) {
+     *   ["retval"]=>
+     *   ...
+     *   ["ok"]=>
+     *   float(1)
+     * }
+     * </pre>
+     * If there was an error, returns an array of the form:
+     * <pre>
+     * array(3) {
+     *   ["errno"]=>
+     *   float(...)
+     *   ["errmsg"]=>
+     *   string(...) "..."
+     *   ["ok"]=>
+     *   float(0)
+     * }
+     * </pre>
+     * The "errno" field may not be returned if there is no 
+     * corresponding error number.
+     *
+     * @param string $code string of code
+     * @param array  $args arguments to pass to first parameter
+     *
+     * @return the database response to the executed code
+     */
+    public function execute($code, $args=array()) 
+    {
+        $a = array('$eval' => $code, "args" => $args);
+        return MongoUtil::dbCommand($this->connection,
+                                     $a,
+                                     "$this");
     }
 
 }
