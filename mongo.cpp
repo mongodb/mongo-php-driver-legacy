@@ -305,21 +305,26 @@ PHP_FUNCTION(mongo_query) {
 
   // get hints
   HashTable *array = Z_ARRVAL_P(zhint);
-  if( zend_hash_num_elements(array) > 0 ) {
+  if (zend_hash_num_elements(array) > 0) {
     php_array_to_bson(&bhint, array);
     q.hint(bhint.done());
   }
 
   // get sort
   array = Z_ARRVAL_P(zsort);
-  if( zend_hash_num_elements(array) > 0 ) {
+  if (zend_hash_num_elements(array) > 0) {
     php_array_to_bson(&bsort, array);
     q.sort(bsort.done());
   }
 
-  php_array_to_bson(&bfields, Z_ARRVAL_P(zfields));
-  mongo::BSONObj fields = bfields.done();
-  cursor = conn_ptr->query( (const char*)collection, q, limit, skip, &fields );
+  array = Z_ARRVAL_P(zfields);
+  if (zend_hash_num_elements(array) > 0) {
+    php_array_to_bson(&bfields, array);
+    mongo::BSONObj fields = bfields.done();
+    cursor = conn_ptr->query((const char*)collection, q, limit, skip, &fields);
+  } else {
+    cursor = conn_ptr->query((const char*)collection, q, limit, skip);
+  }
 
   ZEND_REGISTER_RESOURCE( return_value, cursor.release(), le_db_cursor );
 }

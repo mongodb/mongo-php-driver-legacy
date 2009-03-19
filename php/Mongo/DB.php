@@ -42,6 +42,10 @@
 class MongoDB
 {
 
+    const PROFILING_OFF = 0;
+    const PROFILING_SLOW = 1;
+    const PROFILING_ON = 2;
+
     public $connection = null;
     public $name       = null;
 
@@ -86,7 +90,7 @@ class MongoDB
      */
     public function getProfilingLevel() 
     {
-        $data = array(MongoUtil::$PROFILE => -1);
+        $data = array(MongoUtil::PROFILE => -1);
         $x    = MongoUtil::dbCommand($this->connection, $data, $this->name);
         if ($x[ "ok" ] == 1) {
             return $x[ "was" ];
@@ -104,7 +108,7 @@ class MongoDB
      */
     public function setProfilingLevel($level) 
     {
-        $data = array(MongoUtil::$PROFILE => (int)$level);
+        $data = array(MongoUtil::PROFILE => (int)$level);
         $x    = MongoUtil::dbCommand($this->connection, $data, $this->name);
         if ($x[ "ok" ] == 1) {
             return $x[ "was" ];
@@ -136,7 +140,7 @@ class MongoDB
      */
     public function drop() 
     {
-        $data = array(MongoUtil::$DROP_DATABASE => 1);
+        $data = array(MongoUtil::DROP_DATABASE => 1);
         return MongoUtil::dbCommand($this->connection, $data, "$this");
     }
 
@@ -151,7 +155,7 @@ class MongoDB
      */
     function repair($preserve_cloned_files = false, $backup_original_files = false) 
     {
-        $data = array(MongoUtil::$REPAIR_DATABASE => 1,
+        $data = array(MongoUtil::REPAIR_DATABASE => 1,
                       "preserveClonedFilesOnFailure" => (bool)$preserve_cloned_files,
                       "backupOriginalFiles" => $backup_original_files);
         return MongoUtil::dbCommand($this->connection, $data, $this->name);
@@ -183,7 +187,7 @@ class MongoDB
      */
     public function createCollection($name, $capped = false, $size = 0, $max = 0) 
     {
-        $data = array(MongoUtil::$CREATE_COLLECTION => $name);
+        $data = array(MongoUtil::CREATE_COLLECTION => $name);
         if ($capped && $size) {
             $data[ "capped" ] = true;
             $data[ "size" ]   = $size;
@@ -250,7 +254,7 @@ class MongoDB
      */
     public function getCursorInfo()
     {
-        $a = array(MongoUtil::$INDEX_INFO => 1);
+        $a = array(MongoUtil::INDEX_INFO => 1);
         return MongoUtil::dbCommand($this->connection, $a, "$this");
     }
 
@@ -328,10 +332,5 @@ class MongoDB
     }
 
 }
-
-define("MONGO_PROFILING_OFF", 0);
-define("MONGO_PROFILING_SLOW", 1);
-define("MONGO_PROFILING_ON", 2);
-
 
 ?>

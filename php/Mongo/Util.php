@@ -108,29 +108,29 @@ class MongoUtil
     private static $_CMD = ".\$cmd";
 
     /* Admin database */
-    public static $ADMIN = "admin";
+    const ADMIN = "admin";
 
     /* Commands */
-    public static $AUTHENTICATE      = "authenticate";
-    public static $CREATE_COLLECTION = "create";
-    public static $DELETE_INDICES    = "deleteIndexes";
-    public static $DROP              = "drop";
-    public static $DROP_DATABASE     = "dropDatabase";
-    public static $FORCE_ERROR       = "forceerror";
-    public static $INDEX_INFO        = "cursorInfo";
-    public static $LAST_ERROR        = "getlasterror";
-    public static $LIST_DATABASES    = "listDatabases";
-    public static $LOGGING           = "opLogging";
-    public static $LOGOUT            = "logout";
-    public static $NONCE             = "getnonce";
-    public static $PREV_ERROR        = "getpreverror";
-    public static $PROFILE           = "profile";
-    public static $QUERY_TRACING     = "queryTraceLevel";
-    public static $REPAIR_DATABASE   = "repairDatabase";
-    public static $RESET_ERROR       = "reseterror";
-    public static $SHUTDOWN          = "shutdown";
-    public static $TRACING           = "traceAll";
-    public static $VALIDATE          = "validate";
+    const AUTHENTICATE      = "authenticate";
+    const CREATE_COLLECTION = "create";
+    const DELETE_INDICES    = "deleteIndexes";
+    const DROP              = "drop";
+    const DROP_DATABASE     = "dropDatabase";
+    const FORCE_ERROR       = "forceerror";
+    const INDEX_INFO        = "cursorInfo";
+    const LAST_ERROR        = "getlasterror";
+    const LIST_DATABASES    = "listDatabases";
+    const LOGGING           = "opLogging";
+    const LOGOUT            = "logout";
+    const NONCE             = "getnonce";
+    const PREV_ERROR        = "getpreverror";
+    const PROFILE           = "profile";
+    const QUERY_TRACING     = "queryTraceLevel";
+    const REPAIR_DATABASE   = "repairDatabase";
+    const RESET_ERROR       = "reseterror";
+    const SHUTDOWN          = "shutdown";
+    const TRACING           = "traceAll";
+    const VALIDATE          = "validate";
 
 
     /**
@@ -195,7 +195,7 @@ class MongoUtil
         if ($obj) {
             return $obj;
         } else {
-            trigger_error("no db response", E_USER_WARNING);
+            throw new MongoException("no database response");
             return false;
         }
     }

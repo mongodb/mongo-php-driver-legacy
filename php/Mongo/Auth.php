@@ -73,7 +73,7 @@ class MongoAuth extends Mongo
         $ns = $db . ".system.users";
 
         // get the nonce
-        $result = MongoUtil::dbCommand($conn, array(MongoUtil::$NONCE => 1 ), $db);
+        $result = MongoUtil::dbCommand($conn, array(MongoUtil::NONCE => 1 ), $db);
         if (!$result[ "ok" ]) {
             return false;
         }
@@ -81,7 +81,7 @@ class MongoAuth extends Mongo
 
         // create a digest of nonce/username/pwd
         $digest = md5($nonce . $username . $pwd);
-        $data   = array(MongoUtil::$AUTHENTICATE => 1, 
+        $data   = array(MongoUtil::AUTHENTICATE => 1, 
                         "user" => $username, 
                         "nonce" => $nonce,
                         "key" => $digest);
@@ -215,7 +215,7 @@ class MongoAuth extends Mongo
      */
     public function logout() 
     {
-        $data   = array(MongoUtil::$LOGOUT => 1);
+        $data   = array(MongoUtil::LOGOUT => 1);
         $result = MongoUtil::dbCommand($this->connection, $data, $this->db);
 
         return $result[ "ok" ];

@@ -81,7 +81,7 @@ class MongoCollection
     function drop() 
     {
         $this->deleteIndexes();
-        $data = array(MongoUtil::$DROP => $this->name);
+        $data = array(MongoUtil::DROP => $this->name);
         return MongoUtil::dbCommand($this->db->connection, 
                                      $data, 
                                      (string)$this->db);
@@ -96,7 +96,7 @@ class MongoCollection
      */
     function validate($scan_data = false) 
     {
-        $data = array(MongoUtil::$VALIDATE => $this->name);
+        $data = array(MongoUtil::VALIDATE => $this->name);
         if ($scan_data) {
             $data[ "scandata" ] = true;
         }
@@ -248,7 +248,7 @@ class MongoCollection
     function deleteIndex($keys) 
     {
         $idx = MongoUtil::toIndexString($key);
-        $d   = array(MongoUtil::$DELETE_INDICES => $this->name, "index" => $idx);
+        $d   = array(MongoUtil::DELETE_INDICES => $this->name, "index" => $idx);
         $x   = MongoUtil::dbCommand($this->db->connection, $d, (string)$this->db);
     }
 
@@ -259,7 +259,7 @@ class MongoCollection
      */
     function deleteIndexes() 
     {
-        $d = array(MongoUtil::$DELETE_INDICES => $this->name, "index" => "*");
+        $d = array(MongoUtil::DELETE_INDICES => $this->name, "index" => "*");
         $x = MongoUtil::dbCommand($this->db->connection, $d, (string)$this->db);
     }
 

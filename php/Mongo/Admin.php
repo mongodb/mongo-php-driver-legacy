@@ -37,6 +37,15 @@
 class MongoAdmin extends MongoAuth
 {
 
+    const LOG_OFF = 0;
+    const LOG_W = 1;
+    const LOG_R = 2;
+    const LOG_RW = 3;
+    
+    const TRACE_OFF = 0;
+    const TRACE_SOME = 1;
+    const TRACE_ON = 2;
+
     /**
      * Creates a new admin session.
      * 
@@ -60,7 +69,7 @@ class MongoAdmin extends MongoAuth
      */
     public function listDBs() 
     {
-        $data   = array(MongoUtil::$LIST_DATABASES => 1);
+        $data   = array(MongoUtil::LIST_DATABASES => 1);
         $result = MongoUtil::dbCommand($this->connection, $data, $this->db);
         if ($result) {
             return $result[ "databases" ];
@@ -77,7 +86,7 @@ class MongoAdmin extends MongoAuth
     public function shutdown() 
     {
         $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$SHUTDOWN => 1 ), 
+                                       array(MongoUtil::SHUTDOWN => 1 ), 
                                        $this->db);
         return $result[ "ok" ];
     }
@@ -92,7 +101,7 @@ class MongoAdmin extends MongoAuth
     public function setLogging($level ) 
     {
         $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$LOGGING => (int)$level ), 
+                                       array(MongoUtil::LOGGING => (int)$level ), 
                                        $this->db);
         return $result[ "ok" ];
     }
@@ -107,7 +116,7 @@ class MongoAdmin extends MongoAuth
     public function setTracing($level ) 
     {
         $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$TRACING => (int)$level ), 
+                                       array(MongoUtil::TRACING => (int)$level ), 
                                        $this->db);
         return $result[ "ok" ];
     }
@@ -122,21 +131,12 @@ class MongoAdmin extends MongoAuth
     public function setQueryTracing($level ) 
     {
         $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$QUERY_TRACING => 
+                                       array(MongoUtil::QUERY_TRACING => 
                                              (int)$level), 
                                        $this->db);
         return $result[ "ok" ];
     }
 
 }
-
-define("MONGO_LOG_OFF", 0);
-define("MONGO_LOG_W", 1);
-define("MONGO_LOG_R", 2);
-define("MONGO_LOG_RW", 3);
-
-define("MONGO_TRACE_OFF", 0);
-define("MONGO_TRACE_SOME", 1);
-define("MONGO_TRACE_ON", 2);
 
 ?>

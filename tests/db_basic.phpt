@@ -11,13 +11,13 @@ echo "db: $db\n";
 $db2 = $m->selectDB("phpt");
 echo "db: $db\n";
 
-$db->setProfilingLevel(MONGO_PROFILING_OFF);
+$db->setProfilingLevel(MongoDB::PROFILING_OFF);
 $l1 = $db->getProfilingLevel();
-$was1 = $db->setProfilingLevel(MONGO_PROFILING_SLOW);
+$was1 = $db->setProfilingLevel(MongoDB::PROFILING_SLOW);
 $l2 = $db->getProfilingLevel();
-$was2 = $db->setProfilingLevel(MONGO_PROFILING_ON);
+$was2 = $db->setProfilingLevel(MongoDB::PROFILING_ON);
 $l3 = $db->getProfilingLevel();
-$was3 = $db->setProfilingLevel(MONGO_PROFILING_OFF);
+$was3 = $db->setProfilingLevel(MongoDB::PROFILING_OFF);
 echo "$l1 $l2 $l3\n";
 echo "$was1 $was2 $was3\n";
 

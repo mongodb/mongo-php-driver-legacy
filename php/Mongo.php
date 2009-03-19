@@ -213,12 +213,13 @@ class Mongo
      * @param string $dbname the database name
      *
      * @return MongoDB a new db object
+     *
+     * @throws MongoException if the database name is invalid
      */
     public function selectDB($dbname = null) 
     {
         if ($dbname == null || $dbname == "" ) {
-            trigger_error("Invalid database name.", E_USER_WARNING);
-            return false;
+            throw new MongoException("Invalid database name.");
         }
         return new MongoDB($this, $dbname);
     }
@@ -239,12 +240,10 @@ class Mongo
     public function selectCollection( $db, $collection ) 
     {
         if ($db == null || $db == "" ) {
-            trigger_error("Invalid database name.", E_USER_WARNING);
-            return false;
+            throw new MongoException("Invalid database name.");
         }
         if ($collection == null || $collection == "" ) {
-            trigger_error("Invalid collection name.", E_USER_WARNING);
-            return false;
+            throw new MongoException("Invalid collection name.");
         }
         if (is_string($db)) {
             return new MongoCollection(new MongoDB($this, $db), $collection);
@@ -296,8 +295,8 @@ class Mongo
     public function lastError() 
     {
         $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$LAST_ERROR => 1 ), 
-                                       MongoUtil::$ADMIN);
+                                       array(MongoUtil::LAST_ERROR => 1 ), 
+                                       MongoUtil::ADMIN);
         return $result[ "err" ];
     }
 
@@ -309,8 +308,8 @@ class Mongo
     public function prevError() 
     {
         $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$PREV_ERROR => 1 ), 
-                                       MongoUtil::$ADMIN);
+                                       array(MongoUtil::PREV_ERROR => 1 ), 
+                                       MongoUtil::ADMIN);
         unset($result[ "ok" ]);
         return $result;
     }
@@ -323,8 +322,8 @@ class Mongo
     public function resetError() 
     {
         $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$RESET_ERROR => 1 ), 
-                                       MongoUtil::$ADMIN);
+                                       array(MongoUtil::RESET_ERROR => 1 ), 
+                                       MongoUtil::ADMIN);
         return (bool)$result[ "ok" ];
     }
 
@@ -336,8 +335,8 @@ class Mongo
     public function forceError() 
     {
         $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::$FORCE_ERROR => 1 ), 
-                                       MongoUtil::$ADMIN);
+                                       array(MongoUtil::FORCE_ERROR => 1 ), 
+                                       MongoUtil::ADMIN);
         unset($result[ "ok" ]);
         return $result;
     }
@@ -355,7 +354,7 @@ class Mongo
         }
         return MongoUtil::dbCommand($this->connection, 
                                      array("ismaster" => 1), 
-                                     MongoUtil::$ADMIN);
+                                     MongoUtil::ADMIN);
     }
 
     /**
