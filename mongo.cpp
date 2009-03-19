@@ -48,8 +48,6 @@ static PHP_GINIT_FUNCTION(mongo);
 
 static function_entry mongo_functions[] = {
   PHP_FE( mongo_connect , NULL )
-  PHP_FE( mongo_pconnect , NULL )
-  PHP_FE( mongo_pair_connect , NULL )
   PHP_FE( mongo_close , NULL )
   PHP_FE( mongo_remove , NULL )
   PHP_FE( mongo_query , NULL )
@@ -255,23 +253,7 @@ PHP_MINFO_FUNCTION(mongo) {
 /* {{{ mongo_connect
  */
 PHP_FUNCTION(mongo_connect) {
-  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0, 0);
-}
-/* }}} */
-
-
-/* {{{ mongo_pconnect
- */
-PHP_FUNCTION(mongo_pconnect) {
-  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1, 0);
-}
-/* }}} */
-
-
-/* {{{ mongo_pair_connect
- */
-PHP_FUNCTION(mongo_pair_connect) {
-  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0, 1);
+  php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
 
@@ -558,14 +540,24 @@ PHP_FUNCTION( mongo_next ) {
 
 /* {{{ php_mongo_do_connect
  */
-static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent, int paired) {
+static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
   mongo::DBClientBase *conn;
-  char *server, *server2, *uname, *pass, *key;
-  zend_bool auto_reconnect, lazy;
-  int server_len, server2_len, uname_len, pass_len, key_len;
+  char *server, *uname, *pass, *key;
+  zend_bool persistent, paired, lazy;
+  int server_len, uname_len, pass_len, key_len;
   zend_rsrc_list_entry *le;
   string error;
   
+  int argc = ZEND_NUM_ARGS();
+  if (argc != 6) {
+    zend_error( E_WARNING, "expected 6 parameters, got %d parameters", argc );
+    RETURN_FALSE;
+  }
+  else if (zend_parse_parameters(argc TSRMLS_CC, "sssbbb", &server, &server_len, &uname, &uname_len, &pass, &pass_len, &persistent, &paired, &lazy) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter types, expected: mongo_pconnect( string, string, string, bool, bool, bool )" );
+    RETURN_FALSE;
+  }
+
   /* make sure that there aren't too many links already */
   if (MonGlo(max_links) > -1 &&
       MonGlo(max_links) <= MonGlo(num_links)) {
@@ -582,17 +574,8 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent, i
     RETURN_FALSE;
   }
 
-  int argc = ZEND_NUM_ARGS();
-  if (persistent) {
-    if (argc != 5) {
-      zend_error( E_WARNING, "expected 5 parameters, got %d parameters", argc );
-      RETURN_FALSE;
-    }
-    else if (zend_parse_parameters(argc TSRMLS_CC, "sssbb", &server, &server_len, &uname, &uname_len, &pass, &pass_len, &auto_reconnect, &lazy) == FAILURE) {
-      zend_error( E_WARNING, "incorrect parameter types, expected: mongo_pconnect( string, string, string, bool, bool )" );
-      RETURN_FALSE;
-    }
 
+  if (persistent) {
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
     /* if a connection is found, return it */
     if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
@@ -608,44 +591,20 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent, i
     }
     efree(key);
   }
-  /* non-persistent */
-  else if (!paired) {
-    if( argc != 2 ) {
-      zend_error( E_WARNING, "expected 2 parameters, got %d parameters", argc );
-      RETURN_FALSE;
-    }
-    else if( zend_parse_parameters(argc TSRMLS_CC, "sb", &server, &server_len, &auto_reconnect) == FAILURE ) {
-      zend_error( E_WARNING, "incorrect parameter types, expected: mongo_connect( string, bool )" );
-      RETURN_FALSE;
-    }
-  }
-  else {
-    if( argc != 2 ) {
-      zend_error( E_WARNING, "expected 2 parameters, got %d parameters", argc );
-      RETURN_FALSE;
-    }
-    else if( zend_parse_parameters(argc TSRMLS_CC, "ss", &server, &server_len, &server2, &server2_len) == FAILURE ) {
-      zend_error( E_WARNING, "incorrect parameter types, expected: mongo_pair_connect(string, string)" );
-      RETURN_FALSE;
-    }
-  }
 
-  if ( server_len == 0 ||
-       (paired && 
-        server2_len == 0)) {
+  if (server_len == 0) {
     zend_error( E_WARNING, "invalid host" );
     RETURN_FALSE;
   }
 
-
   if (paired) {
     conn = new mongo::DBClientPaired();
-    if (!((mongo::DBClientPaired*)conn)->connect(server, server2)) {
+    if (!((mongo::DBClientPaired*)conn)->connect(server)) {
       zend_error(E_WARNING, "error connecting to pair");
       RETURN_FALSE;
     }
   } else {
-    conn = new mongo::DBClientConnection( (bool)auto_reconnect );
+    conn = new mongo::DBClientConnection(MonGlo(auto_reconnect));
     if (!((mongo::DBClientConnection*)conn)->connect(server, error)){
       zend_error(E_WARNING, "%s", error.c_str());
       RETURN_FALSE;

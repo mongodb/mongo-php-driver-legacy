@@ -34,8 +34,6 @@ PHP_RINIT_FUNCTION(mongo);
 PHP_MINFO_FUNCTION(mongo);
 
 PHP_FUNCTION(mongo_connect);
-PHP_FUNCTION(mongo_pconnect);
-PHP_FUNCTION(mongo_pair_connect);
 PHP_FUNCTION(mongo_close);
 PHP_FUNCTION(mongo_query);
 PHP_FUNCTION(mongo_find_one);
@@ -62,7 +60,7 @@ ZEND_END_MODULE_GLOBALS(mongo)
 # define MonGlo(v) (mongo_globals.v)
 #endif 
 
-static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS, int, int);
+static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS);
 
 extern zend_module_entry mongo_module_entry;
 #define phpext_mongo_ptr &mongo_module_entry
