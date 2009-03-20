@@ -300,27 +300,27 @@ PHP_FUNCTION(mongo_query) {
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   // get query
-  php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
+  php_array_to_bson(&bquery, Z_ARRVAL_P(zquery) TSRMLS_CC);
 
   mongo::Query q = mongo::Query(bquery.done());
 
   // get hints
   HashTable *array = Z_ARRVAL_P(zhint);
   if (zend_hash_num_elements(array) > 0) {
-    php_array_to_bson(&bhint, array);
+    php_array_to_bson(&bhint, array TSRMLS_CC);
     q.hint(bhint.done());
   }
 
   // get sort
   array = Z_ARRVAL_P(zsort);
   if (zend_hash_num_elements(array) > 0) {
-    php_array_to_bson(&bsort, array);
+    php_array_to_bson(&bsort, array TSRMLS_CC);
     q.sort(bsort.done());
   }
 
   array = Z_ARRVAL_P(zfields);
   if (zend_hash_num_elements(array) > 0) {
-    php_array_to_bson(&bfields, array);
+    php_array_to_bson(&bfields, array TSRMLS_CC);
     mongo::BSONObj fields = bfields.done();
     cursor = conn_ptr->query((const char*)collection, q, limit, skip, &fields);
   } else {
@@ -352,12 +352,12 @@ PHP_FUNCTION(mongo_find_one) {
 
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
+  php_array_to_bson(&bquery, Z_ARRVAL_P(zquery) TSRMLS_CC);
 
   mongo::BSONObj obj = conn_ptr->findOne((const char*)collection, bquery.done());
 
   array_init(return_value);
-  bson_to_php_array(&obj, return_value);
+  bson_to_php_array(&obj, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -383,7 +383,7 @@ PHP_FUNCTION(mongo_remove) {
 
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  php_array_to_bson(&rarray, Z_ARRVAL_P(zarray));
+  php_array_to_bson(&rarray, Z_ARRVAL_P(zarray) TSRMLS_CC);
   conn_ptr->remove(collection, rarray.done(), justOne);
 
   RETURN_TRUE;
@@ -413,8 +413,8 @@ PHP_FUNCTION(mongo_insert) {
 
   HashTable *php_array = Z_ARRVAL_P(zarray);
 
-  prep_obj_for_db(&obj_builder, php_array);
-  php_array_to_bson(&obj_builder, php_array);
+  prep_obj_for_db(&obj_builder, php_array TSRMLS_CC);
+  php_array_to_bson(&obj_builder, php_array TSRMLS_CC);
 
   conn_ptr->insert(collection, obj_builder.done());
 
@@ -449,8 +449,8 @@ PHP_FUNCTION(mongo_batch_insert) {
     mongo::BSONObjBuilder *obj_builder = new mongo::BSONObjBuilder();
     HashTable *insert_elem = Z_ARRVAL_PP(data);
 
-    php_array_to_bson(obj_builder, insert_elem);
-    prep_obj_for_db(obj_builder, insert_elem);
+    prep_obj_for_db(obj_builder, insert_elem TSRMLS_CC);
+    php_array_to_bson(obj_builder, insert_elem TSRMLS_CC);
 
     inserter.push_back(obj_builder->done());
   }
@@ -482,8 +482,8 @@ PHP_FUNCTION(mongo_update) {
 
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
-  php_array_to_bson(&bfields, Z_ARRVAL_P(zobj));
+  php_array_to_bson(&bquery, Z_ARRVAL_P(zquery) TSRMLS_CC);
+  php_array_to_bson(&bfields, Z_ARRVAL_P(zobj) TSRMLS_CC);
   conn_ptr->update(collection, bquery.done(), bfields.done(), (int)zupsert);
 
   RETURN_TRUE;
@@ -536,7 +536,7 @@ PHP_FUNCTION( mongo_next ) {
   bson = c->next();
 
   array_init(return_value);
-  bson_to_php_array(&bson, return_value);
+  bson_to_php_array(&bson, return_value TSRMLS_CC);
 }
 /* }}} */
 

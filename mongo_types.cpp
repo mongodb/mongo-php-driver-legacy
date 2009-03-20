@@ -62,8 +62,7 @@ PHP_FUNCTION( mongo_id___toString ) {
 }
 /* }}} */
 
-zval* oid_to_mongo_id( const mongo::OID oid ) {
-  TSRMLS_FETCH();
+zval* bson_to_zval_oid(const mongo::OID oid TSRMLS_DC) {
   zval *zoid;
   
   const unsigned char *data = oid.getData();
@@ -80,6 +79,13 @@ zval* oid_to_mongo_id( const mongo::OID oid ) {
   object_init_ex(zoid, mongo_id_class);
   add_property_stringl( zoid, "id", buf, strlen( buf ), 1 );
   return zoid;
+}
+
+void zval_to_bson_oid(zval **data, mongo::OID *oid TSRMLS_DC) {
+  zval *zid = zend_read_property( mongo_id_class, *data, "id", 2, 0 TSRMLS_CC );
+  char *cid = Z_STRVAL_P( zid );
+  std::string id = string( cid );
+  oid->init( id );
 }
 
 
@@ -122,8 +128,7 @@ PHP_FUNCTION( mongo_date___toString ) {
 /* }}} */
 
 
-zval* date_to_mongo_date( unsigned long long date ) {
-  TSRMLS_FETCH();
+zval* bson_to_zval_date(unsigned long long date TSRMLS_DC) {
   zval *zd;
     
   MAKE_STD_ZVAL(zd);
@@ -137,10 +142,18 @@ zval* date_to_mongo_date( unsigned long long date ) {
   return zd;
 }
 
+unsigned long long zval_to_bson_date(zval **data TSRMLS_DC) {
+  zval *zsec = zend_read_property( mongo_date_class, *data, "sec", 3, 0 TSRMLS_CC );
+  long sec = Z_LVAL_P( zsec );
+  zval *zusec = zend_read_property( mongo_date_class, *data, "usec", 4, 0 TSRMLS_CC );
+  long usec = Z_LVAL_P( zusec );
+  return (unsigned long long)(sec * 1000) + (unsigned long long)(usec/1000);
+}
 
-/* {{{ proto MongoBinData mongo_bindata___construct(string) 
-   Creates a new MongoBinData */
-PHP_FUNCTION( mongo_bindata___construct ) {
+
+/* {{{ mongo_bindata___construct(string) 
+ */
+PHP_FUNCTION(mongo_bindata___construct) {
   char *bin;
   int bin_len, type;
 
@@ -161,16 +174,15 @@ PHP_FUNCTION( mongo_bindata___construct ) {
 /* }}} */
 
 
-/* {{{ proto string mongo_bindata___toString() 
-   Returns a string represenation of this MongoBinData */
-PHP_FUNCTION( mongo_bindata___toString ) {
+/* {{{ mongo_bindata___toString() 
+ */
+PHP_FUNCTION(mongo_bindata___toString) {
   RETURN_STRING( "<Mongo Binary Data>", 1 );
 }
 /* }}} */
 
 
-zval* bin_to_php_bin( char *bin, int len, int type ) {
-  TSRMLS_FETCH();
+zval* bson_to_zval_bin( char *bin, int len, int type TSRMLS_DC) {
   zval *zbin;
     
   MAKE_STD_ZVAL(zbin);
@@ -182,9 +194,18 @@ zval* bin_to_php_bin( char *bin, int len, int type ) {
   return zbin;
 }
 
+int zval_to_bson_bin(zval **data, char **bin, int *len TSRMLS_DC) {
+  zval *zbin = zend_read_property( mongo_bindata_class, *data, "bin", 3, 0 TSRMLS_CC );
+  *(bin) = Z_STRVAL_P( zbin );
+  zval *zlen = zend_read_property( mongo_bindata_class, *data, "length", 6, 0 TSRMLS_CC );
+  *(len) = Z_LVAL_P( zlen );
+  zval *ztype = zend_read_property( mongo_bindata_class, *data, "type", 4, 0 TSRMLS_CC );
+  return (int)Z_LVAL_P( ztype );
+}
 
-/* {{{ proto MongoRegex mongo_regex___construct(string) 
-   Creates a new MongoRegex */
+
+/* {{{ mongo_regex___construct(string) 
+ */
 PHP_FUNCTION( mongo_regex___construct ) {
   char *re;
   int re_len;
@@ -213,8 +234,8 @@ PHP_FUNCTION( mongo_regex___construct ) {
 /* }}} */
 
 
-/* {{{ proto string mongo_regex___toString() 
-   Returns a string represenation of this MongoRegex in hexidecimal */
+/* {{{ mongo_regex___toString() 
+ */
 PHP_FUNCTION( mongo_regex___toString ) {
   zval *zre = zend_read_property( mongo_regex_class, getThis(), "regex", 5, 0 TSRMLS_CC );
   char *re = Z_STRVAL_P( zre );
@@ -231,8 +252,7 @@ PHP_FUNCTION( mongo_regex___toString ) {
 /* }}} */
 
 
-zval* re_to_mongo_re( char *re, char *flags ) {
-  TSRMLS_FETCH();
+zval* bson_to_zval_regex( char *re, char *flags TSRMLS_DC) {
   zval *zre;
     
   MAKE_STD_ZVAL(zre);
@@ -241,6 +261,13 @@ zval* re_to_mongo_re( char *re, char *flags ) {
   add_property_stringl( zre, "regex", re, strlen(re), 1 );
   add_property_stringl( zre, "flags", flags, strlen(flags), 1 );
   return zre;
+}
+
+void zval_to_bson_regex(zval **data, char **re, char **flags TSRMLS_DC) {
+  zval *zre = zend_read_property( mongo_regex_class, *data, "regex", 5, 0 TSRMLS_CC );
+  *(re) = Z_STRVAL_P(zre);
+  zval *zflags = zend_read_property( mongo_regex_class, *data, "flags", 5, 0 TSRMLS_CC );
+  *(flags) = Z_STRVAL_P(zflags);
 }
 
 
@@ -291,8 +318,7 @@ PHP_FUNCTION( mongo_code___toString ) {
 /* }}} */
 
 
-zval* code_to_php_code(const char *code, zval *scope) {
-  TSRMLS_FETCH();
+zval* bson_to_zval_code(const char *code, zval *scope TSRMLS_DC) {
   zval *zptr;
 
   ALLOC_INIT_ZVAL(zptr);
@@ -302,4 +328,13 @@ zval* code_to_php_code(const char *code, zval *scope) {
   add_property_zval(zptr, "scope", scope);
 
   return zptr;
+}
+
+
+void zval_to_bson_code(zval **data, char **code, mongo::BSONObjBuilder *scope TSRMLS_DC) {
+  zval *zcode = zend_read_property(mongo_code_class, *data, "code", 4, 0 TSRMLS_CC);
+  *(code) = Z_STRVAL_P( zcode );
+
+  zval *zscope = zend_read_property(mongo_code_class, *data, "scope", 5, 0 TSRMLS_CC);
+  php_array_to_bson(scope, Z_ARRVAL_P(zscope) TSRMLS_CC);
 }

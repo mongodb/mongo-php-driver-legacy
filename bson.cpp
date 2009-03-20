@@ -27,7 +27,7 @@ extern zend_class_entry *mongo_date_class;
 extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
 
-int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash ) {
+int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash TSRMLS_DC) {
   zval **data;
   char *key;
   uint key_len;
@@ -61,14 +61,14 @@ int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash )
       continue;
     }
 
-    add_to_bson(obj_builder, field_name, data);
+    add_to_bson(obj_builder, field_name, data TSRMLS_CC);
     efree(field_name);
   }
 
   return num;
 }
 
-void bson_to_php_array(mongo::BSONObj *obj, zval *array) {
+void bson_to_php_array(mongo::BSONObj *obj, zval *array TSRMLS_DC) {
   mongo::BSONObjIterator it = mongo::BSONObjIterator(*obj);
   while (it.more()) {
     mongo::BSONElement elem = it.next();
@@ -102,12 +102,12 @@ void bson_to_php_array(mongo::BSONObj *obj, zval *array) {
       break;
     }
     case mongo::Date: {
-      zval *zdate = date_to_mongo_date(elem.date());
+      zval *zdate = bson_to_zval_date(elem.date() TSRMLS_CC);
       add_assoc_zval(array, key, zdate);
       break;
     }
     case mongo::RegEx: {
-      zval *zre = re_to_mongo_re((char*)elem.regex(), (char*)elem.regexFlags());
+      zval *zre = bson_to_zval_regex((char*)elem.regex(), (char*)elem.regexFlags() TSRMLS_CC);
       add_assoc_zval(array, key, zre);
       break;
     }
@@ -115,7 +115,7 @@ void bson_to_php_array(mongo::BSONObj *obj, zval *array) {
       int size;
       char *bin = (char*)elem.binData(size);
       int type = elem.binDataType();
-      zval *phpbin = bin_to_php_bin(bin, size, type);
+      zval *phpbin = bson_to_zval_bin(bin, size, type TSRMLS_CC);
       add_assoc_zval(array, key, phpbin);
       break;
     }
@@ -124,7 +124,7 @@ void bson_to_php_array(mongo::BSONObj *obj, zval *array) {
       ALLOC_INIT_ZVAL(empty);
       array_init(empty);
 
-      zval *zode = code_to_php_code(elem.valuestr(), empty);
+      zval *zode = bson_to_zval_code(elem.valuestr(), empty TSRMLS_CC);
       add_assoc_zval(array, key, zode);
       break;
     }
@@ -134,9 +134,9 @@ void bson_to_php_array(mongo::BSONObj *obj, zval *array) {
 
       ALLOC_INIT_ZVAL(scope);
       array_init(scope);
-      bson_to_php_array(&bscope, scope);
+      bson_to_php_array(&bscope, scope TSRMLS_CC);
 
-      zval *zode = code_to_php_code(elem.codeWScopeCode(), scope);
+      zval *zode = bson_to_zval_code(elem.codeWScopeCode(), scope TSRMLS_CC);
 
       // get rid of extra reference to scope
       zval_ptr_dtor(&scope);
@@ -150,12 +150,12 @@ void bson_to_php_array(mongo::BSONObj *obj, zval *array) {
       zval *subarray;
       ALLOC_INIT_ZVAL(subarray);
       array_init(subarray);
-      bson_to_php_array(&temp, subarray);
+      bson_to_php_array(&temp, subarray TSRMLS_CC);
       add_assoc_zval(array, key, subarray);
       break;
     }
     case mongo::jstOID: {
-      zval *zoid = oid_to_mongo_id(elem.__oid());
+      zval *zoid = bson_to_zval_oid(elem.__oid() TSRMLS_CC);
       add_assoc_zval(array, key, zoid);
       break;
     }
@@ -168,7 +168,7 @@ void bson_to_php_array(mongo::BSONObj *obj, zval *array) {
   }
 }
 
-int prep_obj_for_db(mongo::BSONObjBuilder *obj_builder, HashTable *php_array) {
+int prep_obj_for_db(mongo::BSONObjBuilder *obj_builder, HashTable *php_array TSRMLS_DC) {
   zval **data;
   // check if "_id" field, 4 is length of "_id" + 1 for \0
   if (zend_hash_find(php_array, "_id", 4, (void**)&data) == FAILURE) {
@@ -177,11 +177,11 @@ int prep_obj_for_db(mongo::BSONObjBuilder *obj_builder, HashTable *php_array) {
     obj_builder->appendOID("_id", &oid);
     return 1;
   }
-  add_to_bson(obj_builder, "_id", data);
+  add_to_bson(obj_builder, "_id", data TSRMLS_CC);
   return 0;
 }
 
-int add_to_bson(mongo::BSONObjBuilder *obj_builder, char *field_name, zval **data) {
+int add_to_bson(mongo::BSONObjBuilder *obj_builder, char *field_name, zval **data TSRMLS_DC) {
   switch (Z_TYPE_PP(data)) {
   case IS_NULL:
     obj_builder->appendNull(field_name);
@@ -198,7 +198,7 @@ int add_to_bson(mongo::BSONObjBuilder *obj_builder, char *field_name, zval **dat
   case IS_CONSTANT_ARRAY:
   case IS_ARRAY: {
     mongo::BSONObjBuilder subobj;
-    php_array_to_bson(&subobj, Z_ARRVAL_PP(data));
+    php_array_to_bson(&subobj, Z_ARRVAL_PP(data) TSRMLS_CC);
     obj_builder->append(field_name, subobj.done());
     break;
   }
@@ -213,54 +213,32 @@ int add_to_bson(mongo::BSONObjBuilder *obj_builder, char *field_name, zval **dat
     /* check for defined classes */
     // MongoId
     if(clazz == mongo_id_class) {
-      zval *zid = zend_read_property( mongo_id_class, *data, "id", 2, 0 TSRMLS_CC );
-      char *cid = Z_STRVAL_P( zid );
-      std::string id = string( cid );
-      mongo::OID *oid = new mongo::OID();
-      oid->init( id );
-
-      obj_builder->appendOID( field_name, oid ); 
+      mongo::OID oid;
+      zval_to_bson_oid(data, &oid TSRMLS_CC);
+      obj_builder->appendOID(field_name, &oid); 
     }
+    // MongoDate
     else if (clazz == mongo_date_class) {
-      zval *zsec = zend_read_property( mongo_date_class, *data, "sec", 3, 0 TSRMLS_CC );
-      long sec = Z_LVAL_P( zsec );
-      zval *zusec = zend_read_property( mongo_date_class, *data, "usec", 4, 0 TSRMLS_CC );
-      long usec = Z_LVAL_P( zusec );
-      unsigned long long d = (unsigned long long)(sec * 1000) + (unsigned long long)(usec/1000);
-
-      obj_builder->appendDate(field_name, d); 
+      obj_builder->appendDate(field_name, zval_to_bson_date(data TSRMLS_CC)); 
     }
     else if (clazz == mongo_regex_class) {
-      zval *zre = zend_read_property( mongo_regex_class, *data, "regex", 5, 0 TSRMLS_CC );
-      char *re = Z_STRVAL_P( zre );
-      zval *zflags = zend_read_property( mongo_regex_class, *data, "flags", 5, 0 TSRMLS_CC );
-      char *flags = Z_STRVAL_P(zflags);
-
+      char *re, *flags;
+      zval_to_bson_regex(data, &re, &flags TSRMLS_CC);
       obj_builder->appendRegex(field_name, re, flags); 
     }
     // MongoCode
     else if (clazz == mongo_code_class) {
-      mongo::BSONObjBuilder scope_builder;
-
-      zval *zcode = zend_read_property(mongo_code_class, *data, "code", 4, 0 TSRMLS_CC);
-      char *code = Z_STRVAL_P( zcode );
-
-      zval *zscope = zend_read_property(mongo_code_class, *data, "scope", 5, 0 TSRMLS_CC);
-      php_array_to_bson(&scope_builder, Z_ARRVAL_P(zscope));
-
+      char *code;
+      mongo::BSONObjBuilder scope;
+      zval_to_bson_code(data, &code, &scope TSRMLS_CC);
       // add code & scope to obj_builder
-      obj_builder->appendCodeWScope(field_name, code, scope_builder.done()); 
+      obj_builder->appendCodeWScope(field_name, code, scope.done()); 
 
     }
     else if (clazz == mongo_bindata_class) {
-      zval *zbin = zend_read_property( mongo_bindata_class, *data, "bin", 3, 0 TSRMLS_CC );
-      char *bin = Z_STRVAL_P( zbin );
-      zval *zlen = zend_read_property( mongo_bindata_class, *data, "length", 6, 0 TSRMLS_CC );
-      long len = Z_LVAL_P( zlen );
-      zval *ztype = zend_read_property( mongo_bindata_class, *data, "type", 4, 0 TSRMLS_CC );
-      long type = Z_LVAL_P( ztype );
-
-      switch(type) {
+      char *bin;
+      int len;
+      switch(zval_to_bson_bin(data, &bin, &len TSRMLS_CC)) {
       case 1:
         obj_builder->appendBinData(field_name, len, mongo::Function, bin); 
         break;

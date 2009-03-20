@@ -37,17 +37,17 @@ var_dump(MongoDBRef::get($db, $p["address"]));
 ?>
 --EXPECTF--
 array(4) {
+  ["_id"]=>
+  object(MongoId)#5 (1) {
+    ["id"]=>
+    string(24) "%x"
+  }
   ["address"]=>
   string(16) "45 Oakwood Drive"
   ["city"]=>
   string(8) "Brooklyn"
   ["state"]=>
   string(8) "New York"
-  ["_id"]=>
-  object(MongoId)#5 (1) {
-    ["id"]=>
-    string(24) "%x"
-  }
 }
 array(3) {
   ["_id"]=>
@@ -69,41 +69,41 @@ array(3) {
   }
 }
 array(4) {
-  ["address"]=>
-  string(16) "45 Oakwood Drive"
-  ["city"]=>
-  string(8) "Brooklyn"
-  ["state"]=>
-  string(8) "New York"
   ["_id"]=>
   object(MongoId)#9 (1) {
     ["id"]=>
     string(24) "%x"
   }
-}
-array(4) {
   ["address"]=>
   string(16) "45 Oakwood Drive"
   ["city"]=>
   string(8) "Brooklyn"
   ["state"]=>
   string(8) "New York"
+}
+array(4) {
   ["_id"]=>
   object(MongoId)#8 (1) {
     ["id"]=>
     string(24) "%x"
   }
-}
-array(4) {
   ["address"]=>
   string(16) "45 Oakwood Drive"
   ["city"]=>
   string(8) "Brooklyn"
   ["state"]=>
   string(8) "New York"
+}
+array(4) {
   ["_id"]=>
   object(MongoId)#9 (1) {
     ["id"]=>
     string(24) "%x"
   }
+  ["address"]=>
+  string(16) "45 Oakwood Drive"
+  ["city"]=>
+  string(8) "Brooklyn"
+  ["state"]=>
+  string(8) "New York"
 }

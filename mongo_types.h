@@ -16,21 +16,26 @@
 
 PHP_FUNCTION( mongo_bindata___construct );
 PHP_FUNCTION( mongo_bindata___toString );
-zval* bin_to_php_bin( char*, int, int );
+zval* bson_to_zval_bin(char*, int, int TSRMLS_DC);
+int zval_to_bson_bin(zval **, char**, int* TSRMLS_DC);
 
 PHP_FUNCTION( mongo_code___construct );
 PHP_FUNCTION( mongo_code___toString );
-zval* code_to_php_code(const char*, zval*);
+zval* bson_to_zval_code(const char*, zval* TSRMLS_DC);
+void zval_to_bson_code(zval**, char**, mongo::BSONObjBuilder* TSRMLS_DC);
 
 PHP_FUNCTION( mongo_date___construct );
 PHP_FUNCTION( mongo_date___toString );
-zval* date_to_mongo_date( unsigned long long d );
+zval* bson_to_zval_date(unsigned long long TSRMLS_DC);
+unsigned long long zval_to_bson_date(zval** TSRMLS_DC);
 
 PHP_FUNCTION( mongo_id___construct );
 PHP_FUNCTION( mongo_id___toString );
-zval* oid_to_mongo_id(const mongo::OID oid);
+zval* bson_to_zval_oid(const mongo::OID oid TSRMLS_DC);
+void zval_to_bson_oid(zval**, mongo::OID* TSRMLS_DC);
 
 PHP_FUNCTION( mongo_regex___construct );
 PHP_FUNCTION( mongo_regex___toString );
-zval* re_to_mongo_re(char *regex, char *flags);
+zval* bson_to_zval_regex(char*, char* TSRMLS_DC);
+void zval_to_bson_regex(zval**, char**, char** TSRMLS_DC);
 
