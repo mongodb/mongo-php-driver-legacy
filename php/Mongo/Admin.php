@@ -71,24 +71,23 @@ class MongoAdmin extends MongoAuth
     {
         $data   = array(MongoUtil::LIST_DATABASES => 1);
         $result = MongoUtil::dbCommand($this->connection, $data, $this->db);
-        if ($result) {
+        if ($result['ok']) {
             return $result[ "databases" ];
         } else {
-            return false;
+            return $result;
         }
     }
 
     /**
      * Shuts down the database.
      *
-     * @return bool if the database was successfully shut down
+     * @return array database response
      */
     public function shutdown() 
     {
-        $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::SHUTDOWN => 1 ), 
-                                       $this->db);
-        return $result[ "ok" ];
+        return MongoUtil::dbCommand($this->connection, 
+                                    array(MongoUtil::SHUTDOWN => 1 ), 
+                                    $this->db);
     }
 
     /**
@@ -96,14 +95,13 @@ class MongoAdmin extends MongoAuth
      *
      * @param int $level logging level
      *
-     * @return bool if the logging level was set
+     * @return array database response
      */
     public function setLogging($level ) 
     {
-        $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::LOGGING => (int)$level ), 
-                                       $this->db);
-        return $result[ "ok" ];
+        return MongoUtil::dbCommand($this->connection, 
+                                    array(MongoUtil::LOGGING => (int)$level ), 
+                                    $this->db);
     }
 
     /**
@@ -111,14 +109,13 @@ class MongoAdmin extends MongoAuth
      *
      * @param int $level trace level
      *
-     * @return bool if the tracing level was set
+     * @return array database response
      */
     public function setTracing($level ) 
     {
-        $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::TRACING => (int)$level ), 
-                                       $this->db);
-        return $result[ "ok" ];
+        return MongoUtil::dbCommand($this->connection, 
+                                    array(MongoUtil::TRACING => (int)$level ), 
+                                    $this->db);
     }
 
     /**
@@ -126,15 +123,14 @@ class MongoAdmin extends MongoAuth
      *
      * @param int $level trace level
      *
-     * @return bool if the tracing level was set
+     * @return array database response
      */
     public function setQueryTracing($level ) 
     {
-        $result = MongoUtil::dbCommand($this->connection, 
-                                       array(MongoUtil::QUERY_TRACING => 
-                                             (int)$level), 
-                                       $this->db);
-        return $result[ "ok" ];
+        return MongoUtil::dbCommand($this->connection, 
+                                    array(MongoUtil::QUERY_TRACING => 
+                                          (int)$level), 
+                                    $this->db);
     }
 
 }

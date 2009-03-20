@@ -55,7 +55,6 @@
 class MongoAuth extends Mongo
 {
 
-    public $connection;
     public $db;
 
     /**
@@ -70,12 +69,12 @@ class MongoAuth extends Mongo
      */
     private static function _getUser($conn, $db, $username, $pwd) 
     {
-        $ns = $db . ".system.users";
+        $ns = $db . '.system.users';
 
         // get the nonce
         $result = MongoUtil::dbCommand($conn, array(MongoUtil::NONCE => 1 ), $db);
-        if (!$result[ "ok" ]) {
-            return false;
+        if (!$result["ok"]) {
+            return $result;
         }
         $nonce = $result[ "nonce" ];
 
@@ -131,8 +130,8 @@ class MongoAuth extends Mongo
 
         $result = MongoAuth::_getUser($this->connection, $db, $username, $hash);
 
-        if ($result[ "ok" ] != 1) {
-            $this->error    = "couldn't log in";
+        if ($result['ok'] != 1) {
+            $this->error    = 'couldn\'t log in';
             $this->code     = -3;
             $this->loggedIn = false;
             return;
@@ -154,13 +153,13 @@ class MongoAuth extends Mongo
      */
     public function addUser($username, $password) 
     {
-        $c      = $this->db->selectCollection("system.users");
-        $exists = $c->findOne(array("user" => $username));
+        $c      = $this->db->selectCollection('system.users');
+        $exists = $c->findOne(array('user' => $username));
         if ($exists) {
             return false;
         }
-        $newUser = array("user" => $username,
-                         "pwd" => MongoAuth::getHash($username, $password));
+        $newUser = array('user' => $username,
+                         'pwd' => MongoAuth::getHash($username, $password));
         $c->insert($newUser);
         return true;
     }
@@ -178,19 +177,19 @@ class MongoAuth extends Mongo
      */
     public function changePassword($username, $oldpass, $newpass) 
     {
-        $c    = $this->db->selectCollection("system.users");
-        $user = $c->findOne(array("user" => $username));
+        $c    = $this->db->selectCollection('system.users');
+        $user = $c->findOne(array('user' => $username));
         if (!$user) {
-            return array("ok" => -2.0,
-                         "errmsg" => "no user with username $username found");
+            return array('ok' => -2.0,
+                         'errmsg' => 'no user with username $username found');
         }
         if ($user['pwd'] == MongoAuth::getHash($username, $oldpass)) {
             $user['pwd'] = MongoAuth::getHash($username, $newpass);
-            $c->update(array("user"=>$username), $user);
-            return array("ok" => 1.0);
+            $c->update(array('user'=>$username), $user);
+            return array('ok' => 1.0);
         }
-        return array("ok" => -1.0,
-                     "errmsg" => "incorrect old password");
+        return array('ok' => -1.0,
+                     'errmsg' => 'incorrect old password');
     }
 
 
@@ -203,22 +202,21 @@ class MongoAuth extends Mongo
      */
     public function deleteUser($username) 
     {
-        $c = $this->db->selectCollection("system.users");
-        return $c->remove(array("user" => (string)$username), true);
+        $c = $this->db->selectCollection('system.users');
+        return $c->remove(array('user' => (string)$username), true);
     }
 
 
     /**
      * Ends authenticated session.
      *
-     * @return boolean if successfully ended
+     * @return array database response
      */
     public function logout() 
     {
-        $data   = array(MongoUtil::LOGOUT => 1);
-        $result = MongoUtil::dbCommand($this->connection, $data, $this->db);
-
-        return $result[ "ok" ];
+        return MongoUtil::dbCommand($this->connection, 
+                                    array(MongoUtil::LOGOUT => 1), 
+                                    (string)$this->db);
     }
 
 }

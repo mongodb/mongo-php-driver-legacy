@@ -81,10 +81,9 @@ class MongoCollection
     function drop() 
     {
         $this->deleteIndexes();
-        $data = array(MongoUtil::DROP => $this->name);
         return MongoUtil::dbCommand($this->db->connection, 
-                                     $data, 
-                                     (string)$this->db);
+                                    array(MongoUtil::DROP => $this->name), 
+                                    (string)$this->db);
     }
 
     /**
@@ -101,44 +100,35 @@ class MongoCollection
             $data[ "scandata" ] = true;
         }
         return MongoUtil::dbCommand($this->db->connection, 
-                                     $data, 
-                                     (string)$this->db);
+                                    $data, 
+                                    (string)$this->db);
     }
 
     /** Inserts an object or array into the collection.
      *
      * @param object $iterable an object or array
      *
-     * @return array the associative array saved to the database
+     * @return bool if the associative array was saved to the database
      */
     function insert($iterable) 
     {
-        $arr    = $iterable;
-        $result = mongo_insert($this->db->connection, 
+        return mongo_insert($this->db->connection, 
                                (string)$this, 
-                               $arr);
-        if ($result) {
-            return $iterable;
-        }
-        return false;
+                               $iterable);
     }
 
     /** Inserts many objects into the database at once.
      *
      * @param array $a an array of objects or arrays
      *
-     * @return array the array saved to the database
+     * @return bool if the array was saved
      */
     function batchInsert($a = array()) 
     {
         if (!count($a)) {
-            return $a;
+            return true;
         }
-        $result = mongo_batch_insert($this->db->connection, (string)$this, $a);
-        if ($result) {
-            return $a;
-        }
-        return false;
+        return mongo_batch_insert($this->db->connection, (string)$this, $a);
     }
 
     /** 
@@ -186,21 +176,15 @@ class MongoCollection
      * @param bool   $upsert   if the object should be inserted if the criteria isn't
      *                         found
      *
-     * @return array the associative array saved to the db
+     * @return bool if the array was saved
      */
     function update($criteria, $newobj, $upsert = false) 
     {
-        $c      = $criteria;
-        $obj    = $newobj;
-        $result = mongo_update($this->db->connection, 
-                               (string)$this, 
-                               $c, 
-                               $obj, 
-                               $upsert);
-        if ($result) {
-            return $obj;
-        }
-        return false;
+        return mongo_update($this->db->connection, 
+                            (string)$this, 
+                            $criteria, 
+                            $newobj, 
+                            (bool)$upsert);
     }
 
     /**
@@ -216,7 +200,7 @@ class MongoCollection
         return mongo_remove($this->db->connection, 
                             (string)$this, 
                             $criteria, 
-                            $just_one);
+                            (bool)$just_one);
     }
 
     /**
@@ -243,24 +227,24 @@ class MongoCollection
      *
      * @param string|array $keys field or fields from which to delete the index
      *
-     * @return void
+     * @return array database response
      */
     function deleteIndex($keys) 
     {
         $idx = MongoUtil::toIndexString($key);
         $d   = array(MongoUtil::DELETE_INDICES => $this->name, "index" => $idx);
-        $x   = MongoUtil::dbCommand($this->db->connection, $d, (string)$this->db);
+        return MongoUtil::dbCommand($this->db->connection, $d, (string)$this->db);
     }
 
     /**
      * Delete all indices for this collection.
      * 
-     * @return void
+     * @return array database response
      */
     function deleteIndexes() 
     {
         $d = array(MongoUtil::DELETE_INDICES => $this->name, "index" => "*");
-        $x = MongoUtil::dbCommand($this->db->connection, $d, (string)$this->db);
+        return MongoUtil::dbCommand($this->db->connection, $d, (string)$this->db);
     }
 
     /**

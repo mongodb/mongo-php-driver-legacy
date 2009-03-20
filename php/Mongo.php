@@ -50,6 +50,7 @@ class Mongo
     private $_server;
     private $_paired;
     private $_persistent;
+    private $_connected = false;
 
     /** 
      * Creates a new database connection.
@@ -72,7 +73,7 @@ class Mongo
             $this->_server     = $server;
             $this->_persistent = $persistent;
             $this->_paired     = $paired;
-            $this->connected   = false;
+            $this->_connected   = false;
         }
     }
 
@@ -166,9 +167,9 @@ class Mongo
         $this->_persistent = $persistent;
 
         // close any current connections
-        if ($this->connected) {
+        if ($this->_connected) {
             $this->close();
-            $this->connected = false;
+            $this->_connected = false;
         }
 
         if (!$server) {
@@ -189,12 +190,11 @@ class Mongo
                                           (bool)$lazy);
 
         if (!$this->connection) {
-            $this->connected = false;
+            $this->_connected = false;
             throw new MongoConnectionException("Could not connect to $server");
-        } else {
-            $this->connected = true;
         }
-        return $this->connected;
+        $this->_connected = true;
+        return $this->_connected;
     }
 
     /**
@@ -290,14 +290,13 @@ class Mongo
     /**
      * Check if there was an error on the most recent db operation performed.
      *
-     * @return string the error, if there was one, or null
+     * @return array the error, if there was one
      */
     public function lastError() 
     {
-        $result = MongoUtil::dbCommand($this->connection, 
+        return MongoUtil::dbCommand($this->connection, 
                                        array(MongoUtil::LAST_ERROR => 1 ), 
                                        MongoUtil::ADMIN);
-        return $result[ "err" ];
     }
 
     /**
@@ -307,24 +306,21 @@ class Mongo
      */
     public function prevError() 
     {
-        $result = MongoUtil::dbCommand($this->connection, 
+        return MongoUtil::dbCommand($this->connection, 
                                        array(MongoUtil::PREV_ERROR => 1 ), 
                                        MongoUtil::ADMIN);
-        unset($result[ "ok" ]);
-        return $result;
     }
 
     /**
      * Clears any flagged errors on the connection.
      *
-     * @return bool if successful
+     * @return array "ok" => true if successful
      */
     public function resetError() 
     {
-        $result = MongoUtil::dbCommand($this->connection, 
+        return MongoUtil::dbCommand($this->connection, 
                                        array(MongoUtil::RESET_ERROR => 1 ), 
                                        MongoUtil::ADMIN);
-        return (bool)$result[ "ok" ];
     }
 
     /**
@@ -334,11 +330,9 @@ class Mongo
      */
     public function forceError() 
     {
-        $result = MongoUtil::dbCommand($this->connection, 
+        return MongoUtil::dbCommand($this->connection, 
                                        array(MongoUtil::FORCE_ERROR => 1 ), 
                                        MongoUtil::ADMIN);
-        unset($result[ "ok" ]);
-        return $result;
     }
 
     /**
@@ -364,8 +358,10 @@ class Mongo
      */
     public function close() 
     {
-        mongo_close($this->connection);
-        $this->connected = false;
+        if ($this->_connected) {
+            mongo_close($this->connection);
+            $this->_connected = false;
+        }
     }
 }
 
