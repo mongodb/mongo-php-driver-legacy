@@ -13,11 +13,11 @@
    <email>kristina@10gen.com</email>
    <active>yes</active>
  </lead>
- <date>2009-03-09</date>
+ <date>2009-03-17</date>
  <time>12:00:00</time>
  <version>
-   <release>0.8.2</release>
-   <api>0.8.1</api>
+   <release>0.8.3</release>
+   <api>0.8.2</api>
  </version>
  <stability>
    <release>alpha</release>
@@ -25,10 +25,10 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-   Reorganized source tree
-   Better config
-   API improvements
-   OID string fix
+   Added Code type
+   Improved config
+   Paired connections
+   Fixed some memory leaks
  </notes>
  <contents>
    <dir baseinstalldir="/" name="/">
@@ -36,33 +36,18 @@
      <file role="doc" name="README"/>
      <file role="src" name="mongo.cpp"/>
      <file role="src" name="mongo.h"/>
-     <file role="src" name="mongo_id.cpp"/>
-     <file role="src" name="mongo_id.h"/>
-     <file role="src" name="mongo_bindata.cpp"/>
-     <file role="src" name="mongo_bindata.h"/>
-     <file role="src" name="mongo_regex.cpp"/>
-     <file role="src" name="mongo_regex.h"/>
-     <file role="src" name="mongo_date.cpp"/>
-     <file role="src" name="mongo_date.h"/>
+     <file role="src" name="mongo_types.cpp"/>
+     <file role="src" name="mongo_types.h"/>
      <file role="src" name="bson.cpp"/>
      <file role="src" name="bson.h"/>
      <file role="src" name="gridfs.cpp"/>
      <file role="src" name="gridfs.h"/>
-     <dir name="php">
-       <file role="src" name="mongo.php"/>
-       <file role="src" name="mongo_auth.php"/>
-       <file role="src" name="mongo_db.php"/>
-       <file role="src" name="mongo_collection.php"/>
-       <file role="src" name="mongo_cursor.php"/>
-       <file role="src" name="mongo_util.php"/>
-       <file role="src" name="gridfs.php"/>
-     </dir>
    </dir>
  </contents>
  <dependencies>
    <required>
      <php>
-       <min>5.0</min>
+       <min>5.0.0</min>
      </php>
      <pearinstaller>
        <min>1.4.3</min>
@@ -78,15 +63,32 @@
        <api>alpha</api>
      </stability>
      <version>
+       <release>0.8.3</release>
+       <api>0.8.2</api>
+     </version>
+     <date>2009-03-17</date>
+     <notes>
+       Added Code type
+       Improved config
+       Paired connections
+       Fixed some memory leaks
+     </notes>
+   </release>
+   <release>
+     <stability>
+       <release>alpha</release>
+       <api>alpha</api>
+     </stability>
+     <version>
        <release>0.8.2</release>
        <api>0.8.1</api>
      </version>
      <date>2009-03-09</date>
      <notes>
-Reorganized source tree
-Better config
-API improvements
-OID string fix
+       Reorganized source tree
+       Better config
+       API improvements
+       OID string fix
      </notes>
    </release>
    <release>
@@ -100,10 +102,10 @@ OID string fix
      </version>
      <date>2009-03-04</date>
      <notes>
-Persistent connections
-Better authentication
-MongoId, MongoDate, MongoRegex, and MongoBinData types
-Batch insert
+       Persistent connections
+       Better authentication
+       MongoId, MongoDate, MongoRegex, and MongoBinData types
+       Batch insert
      </notes>
    </release>
    <release>

@@ -3,7 +3,7 @@ See http://www.mongodb.org/display/DOCS/PHP+Language+Center for detailed install
 If you absolutely must, you can install it without reading the wiki:
 
    $ phpize
-   $ ./configure --enable-mongo
+   $ ./configure
    $ make
    $ sudo make install
 

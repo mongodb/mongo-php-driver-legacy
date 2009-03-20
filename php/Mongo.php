@@ -42,8 +42,8 @@
  */
 class Mongo
 {
-    const MONGO_DEFAULT_HOST = "localhost";
-    const MONGO_DEFAULT_PORT = "27017";
+    const DEFAULT_HOST = "localhost";
+    const DEFAULT_PORT = "27017";
 
     public $connection = null;
 
@@ -173,9 +173,9 @@ class Mongo
 
         if (!$server) {
             $host   = get_cfg_var("mongo.default_host");
-            $host   = $host ? $host : Mongo::MONGO_DEFAULT_HOST;
+            $host   = $host ? $host : Mongo::DEFAULT_HOST;
             $port   = get_cfg_var("mongo.default_port");
-            $port   = $port ? $port : Mongo::MONGO_DEFAULT_PORT;
+            $port   = $port ? $port : Mongo::DEFAULT_PORT;
             $server = "${host}:${port}";
         }
         $this->_server = $server;
