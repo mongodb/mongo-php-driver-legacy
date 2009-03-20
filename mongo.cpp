@@ -258,8 +258,8 @@ PHP_FUNCTION(mongo_connect) {
 /* }}} */
 
 
-/* {{{ proto bool mongo_close(resource connection) 
-   Closes the database connection */
+/* {{{ mongo_close() 
+ */
 PHP_FUNCTION(mongo_close) {
   zval *zconn;
  
@@ -278,8 +278,8 @@ PHP_FUNCTION(mongo_close) {
 /* }}} */
 
 
-/* {{{ proto cursor mongo_query(resource connection, string ns, array query, int limit, int skip, array sort, array fields, array hint) 
-   Query the database */
+/* {{{ mongo_query() 
+ */
 PHP_FUNCTION(mongo_query) {
   zval *zconn, *zquery, *zsort, *zfields, *zhint;
   char *collection;
@@ -299,6 +299,7 @@ PHP_FUNCTION(mongo_query) {
   
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
+  // get query
   php_array_to_bson(&bquery, Z_ARRVAL_P(zquery));
 
   mongo::Query q = mongo::Query(bquery.done());
@@ -326,7 +327,7 @@ PHP_FUNCTION(mongo_query) {
     cursor = conn_ptr->query((const char*)collection, q, limit, skip);
   }
 
-  ZEND_REGISTER_RESOURCE( return_value, cursor.release(), le_db_cursor );
+  ZEND_REGISTER_RESOURCE(return_value, cursor.release(), le_db_cursor);
 }
 /* }}} */
 
@@ -411,10 +412,8 @@ PHP_FUNCTION(mongo_insert) {
   ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   HashTable *php_array = Z_ARRVAL_P(zarray);
-  // check if "_id" field, 4 is length of "_id" + 1 for \0
-  if (!zend_hash_exists(php_array, "_id", 4)) {
-    prep_obj_for_db(&obj_builder);
-  }
+
+  prep_obj_for_db(&obj_builder, php_array);
   php_array_to_bson(&obj_builder, php_array);
 
   conn_ptr->insert(collection, obj_builder.done());
@@ -451,9 +450,8 @@ PHP_FUNCTION(mongo_batch_insert) {
     HashTable *insert_elem = Z_ARRVAL_PP(data);
 
     php_array_to_bson(obj_builder, insert_elem);
-    if (!zend_hash_exists(insert_elem, "_id", 3)) {
-      prep_obj_for_db(obj_builder);
-    }
+    prep_obj_for_db(obj_builder, insert_elem);
+
     inserter.push_back(obj_builder->done());
   }
 

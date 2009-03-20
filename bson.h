@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
-int php_array_to_bson(mongo::BSONObjBuilder *obj, HashTable *arr_hash);
+int php_array_to_bson(mongo::BSONObjBuilder*, HashTable*);
 void bson_to_php_array(mongo::BSONObj*, zval*);
-void prep_obj_for_db(mongo::BSONObjBuilder *obj);
+int prep_obj_for_db(mongo::BSONObjBuilder*, HashTable*);
+int add_to_bson(mongo::BSONObjBuilder*, char*, zval**);
