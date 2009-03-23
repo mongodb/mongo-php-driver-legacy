@@ -25,6 +25,7 @@
  */
 
 require_once "Mongo.php";
+include "PEAR/Exception.php";
 
 /**
  * General Mongo exception class.
@@ -35,27 +36,55 @@ require_once "Mongo.php";
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
  * @link     http://www.mongodb.org
  */
-class MongoException extends Exception
-{
-    /**
-     * Create a new exception.
-     *
-     * @param string $message exception message
-     * @param int    $code    exception code
-     */
-    public function __construct($message, $code=Mongo::ERR_GENERAL) 
-    {
-        parent::__construct($message, $code);
-    }
 
-    /**
-     * Returns the string form of this exception.
-     *
-     * @return string this exception
-     */
-    public function __toString() 
+if (class_exists(PEAR_Exception)) {
+    class MongoException extends PEAR_Exception
     {
-        return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
+        /**
+         * Create a new exception.
+         *
+         * @param string $message exception message
+         * @param int    $code    exception code
+         */
+        public function __construct($message, $code=Mongo::ERR_GENERAL) 
+        {
+            parent::__construct($message, $code);
+        }
+
+        /**
+         * Returns the string form of this exception.
+         *
+         * @return string this exception
+         */
+        public function __toString() 
+        {
+            return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
+        }
+    }
+}
+else {
+    class MongoException extends Exception
+    {
+        /**
+         * Create a new exception.
+         *
+         * @param string $message exception message
+         * @param int    $code    exception code
+         */
+        public function __construct($message, $code=Mongo::ERR_GENERAL) 
+        {
+            parent::__construct($message, $code);
+        }
+
+        /**
+         * Returns the string form of this exception.
+         *
+         * @return string this exception
+         */
+        public function __toString() 
+        {
+            return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
+        }
     }
 }
 
