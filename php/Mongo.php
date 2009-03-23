@@ -58,10 +58,10 @@ class Mongo
 
     public $connection = null;
 
-    protected $_server;
-    protected $_paired;
-    protected $_persistent;
-    protected $_connected = false;
+    protected $server;
+    protected $paired;
+    protected $persistent;
+    protected $connected = false;
 
 
     /** 
@@ -80,12 +80,12 @@ class Mongo
                                 $paired=false) 
     {
         if ($connect) {
-            $this->_connectUtil($server, "", "", $persistent, $paired);
+            $this->connectUtil($server, "", "", $persistent, $paired);
         } else {
-            $this->_server     = $server;
-            $this->_persistent = $persistent;
-            $this->_paired     = $paired;
-            $this->_connected   = false;
+            $this->server     = $server;
+            $this->persistent = $persistent;
+            $this->paired     = $paired;
+            $this->connected  = false;
         }
     }
 
@@ -100,7 +100,7 @@ class Mongo
      */
     public function connect($server=null) 
     {
-        return $this->_connectUtil($server, "", "", false, false);
+        return $this->connectUtil($server, "", "", false, false);
     }
 
     /**
@@ -115,7 +115,7 @@ class Mongo
      */
     public function pairConnect($server1, $server2) 
     {
-        return $this->_connectUtil("${server1},${server2}", "", "", false, true);
+        return $this->connectUtil("${server1},${server2}", "", "", false, true);
     }
 
     /**
@@ -131,7 +131,7 @@ class Mongo
      */
     public function persistConnect($server, $username="", $password="") 
     {
-        return $this->_connectUtil($server, $username, $password, true, false);
+        return $this->connectUtil($server, $username, $password, true, false);
     }
 
     /**
@@ -151,11 +151,11 @@ class Mongo
                                        $username="", 
                                        $password="") 
     {
-        return $this->_connectUtil("${server1},${server2}", 
-                                   $username, 
-                                   $password, 
-                                   true, 
-                                   true);
+        return $this->connectUtil("${server1},${server2}", 
+                                  $username, 
+                                  $password, 
+                                  true, 
+                                  true);
     }
 
     /**
@@ -169,19 +169,19 @@ class Mongo
      *
      * @return bool if connection was made
      */ 
-    protected function _connectUtil($server, 
-                                  $username, 
-                                  $password, 
-                                  $persistent, 
-                                  $paired)
+    protected function connectUtil($server, 
+                                   $username, 
+                                   $password, 
+                                   $persistent, 
+                                   $paired)
     {
-        $this->_paired     = $paired;
-        $this->_persistent = $persistent;
+        $this->paired     = $paired;
+        $this->persistent = $persistent;
 
         // close any current connections
-        if ($this->_connected) {
+        if ($this->connected) {
             $this->close();
-            $this->_connected = false;
+            $this->connected = false;
         }
 
         if (!$server) {
@@ -191,7 +191,7 @@ class Mongo
             $port   = $port ? $port : Mongo::DEFAULT_PORT;
             $server = "${host}:${port}";
         }
-        $this->_server = $server;
+        $this->server = $server;
 
         $lazy             = false;
         $this->connection = mongo_connect((string)$server,
@@ -202,11 +202,11 @@ class Mongo
                                           (bool)$lazy);
 
         if (!$this->connection) {
-            $this->_connected = false;
+            $this->connected = false;
             throw new MongoConnectionException("Could not connect to $server");
         }
-        $this->_connected = true;
-        return $this->_connected;
+        $this->connected = true;
+        return $this->connected;
     }
 
     /**
@@ -216,7 +216,7 @@ class Mongo
      */
     public function __toString() 
     {
-        return $this->_server;
+        return $this->server;
     }
 
     /** 
@@ -245,7 +245,7 @@ class Mongo
      * </pre>
      *
      * @param string|MongoDB $db         the database name
-     * @param string          $collection the collection name
+     * @param string         $collection the collection name
      *
      * @return MongoCollection a new collection object
      */
@@ -286,9 +286,9 @@ class Mongo
      * Repairs and compacts a database.
      *
      * @param MongoDB $db                    the database to repair
-     * @param bool     $preserve_cloned_files if cloned files should be kept if the 
-     *                                        repair fails
-     * @param bool     $backup_original_files if original files should be backed up
+     * @param bool    $preserve_cloned_files if cloned files should be kept if the 
+     *                                       repair fails
+     * @param bool    $backup_original_files if original files should be backed up
      *
      * @return array db response
      */
@@ -354,7 +354,7 @@ class Mongo
      */
     public function masterInfo() 
     {
-        if (!$this->_paired) {
+        if (!$this->paired) {
             return array("errmsg" => "non-paired connection",
                          "ok" => (float)0);
         }
@@ -370,9 +370,9 @@ class Mongo
      */
     public function close() 
     {
-        if ($this->_connected) {
+        if ($this->connected) {
             mongo_close($this->connection);
-            $this->_connected = false;
+            $this->connected = false;
         }
     }
 }

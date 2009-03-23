@@ -71,7 +71,7 @@ class MongoAuth extends Mongo
      *
      * @return array the database response
      */
-    protected static function _getUser($conn, $db, $username, $pwd) 
+    protected static function getUser($conn, $db, $username, $pwd) 
     {
         $ns = $db . '.system.users';
 
@@ -121,7 +121,8 @@ class MongoAuth extends Mongo
     public function login($db, 
                           $username, 
                           $password, 
-                          $plaintext=true) {
+                          $plaintext=true) 
+    {
         $this->db = $this->selectDB((string)$db);
         if ($plaintext) {
             $hash = MongoAuth::getHash($username, $password);
@@ -129,14 +130,13 @@ class MongoAuth extends Mongo
             $hash = $password;
         }
 
-        $result = MongoAuth::_getUser($this->connection, $db, $username, $hash);
+        $result = MongoAuth::getUser($this->connection, $db, $username, $hash);
 
         if ($result['ok'] != 1) {
-            $this->error    = 'couldn\'t log in';
-            $this->code     = -3;
+            $this->error = 'couldn\'t log in';
+            $this->code  = -3;
         }
-        $this->loggedIn = (bool)$result['ok'];
-        return $this->loggedIn;
+        return $this->loggedIn = (bool)$result['ok'];
     }
 
 

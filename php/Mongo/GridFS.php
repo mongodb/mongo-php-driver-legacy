@@ -38,21 +38,21 @@ require_once "Mongo/Cursor.php";
  */
 class MongoGridFS
 {
-    protected $_resource;
-    protected $_prefix;
-    protected $_db;
+    protected $resource;
+    protected $prefix;
+    protected $db;
 
     /**
      * Creates a new gridfs instance.
      *
      * @param MongoDB $db     database
-     * @param string   $prefix optional files collection prefix
+     * @param string  $prefix optional files collection prefix
      */
     public function __construct($db, $prefix = "fs") 
     {
-        $this->_resource = mongo_gridfs_init($db->connection, $db->name, $prefix);
-        $this->_prefix   = $prefix;
-        $this->_db       = $db;
+        $this->resource = mongo_gridfs_init($db->connection, $db->name, $prefix);
+        $this->prefix   = $prefix;
+        $this->db       = $db;
     }
 
     /**
@@ -67,7 +67,7 @@ class MongoGridFS
         if (is_null($query)) {
             $query = array();
         }
-        return MongoCursor::getGridFSCursor(mongo_gridfs_list($this->_resource, 
+        return MongoCursor::getGridFSCursor(mongo_gridfs_list($this->resource, 
                                                               $query));
     }
 
@@ -80,7 +80,7 @@ class MongoGridFS
      */
     public function storeFile($filename) 
     {
-        return mongo_gridfs_store($this->_resource, $filename);
+        return mongo_gridfs_store($this->resource, $filename);
     }
 
     /**
@@ -95,7 +95,7 @@ class MongoGridFS
         if (is_string($query)) {
             $query = array("filename" => $query);
         }
-        return new MongoGridFSFile(mongo_gridfs_find($this->_resource, $query));
+        return new MongoGridFSFile(mongo_gridfs_find($this->resource, $query));
     }
 
     /**
@@ -123,7 +123,7 @@ class MongoGridFS
         $this->storeFile($tmp);
 
         // make the filename more paletable
-        $coll              = $this->_db->selectCollection($this->_prefix . ".files");
+        $coll              = $this->db->selectCollection($this->prefix . ".files");
         $obj               = $coll->findOne(array("filename" => $tmp));
         $obj[ "filename" ] = $name;
         $coll->update(array("filename" => $tmp), $obj);

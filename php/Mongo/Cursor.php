@@ -52,16 +52,19 @@ require_once "Mongo/CursorException.php";
 class MongoCursor
 {
 
-    protected $_connection = null;
+    protected $connection = null;
 
-    protected $_cursor           = null;
-    protected $_startedIterating = false;
+    protected $cursor           = null;
+    protected $startedIterating = false;
 
-    protected $_query  = null;
-    protected $_fields = null;
-    protected $_limit  = 0;
-    protected $_skip   = 0;
-    protected $_ns     = null;
+    protected $query  = null;
+    protected $fields = null;
+    protected $limit  = 0;
+    protected $skip   = 0;
+    protected $ns     = null;
+
+    private static $_ERR_CURSOR_MOD = 
+      "cannot modify cursor after beginning iteration.";
 
     /**
      * Create a new cursor.
@@ -76,12 +79,12 @@ class MongoCursor
                                 $query = array(), 
                                 $fields = array()) 
     {
-        $this->_connection = $conn;
-        $this->_ns         = $ns;
-        $this->_query      = $query;
-        $this->_fields     = $fields;
-        $this->_sort       = array();
-        $this->_hint       = array();
+        $this->connection = $conn;
+        $this->ns         = $ns;
+        $this->query      = $query;
+        $this->fields     = $fields;
+        $this->sort       = array();
+        $this->hint       = array();
     }
 
     /**
@@ -91,12 +94,12 @@ class MongoCursor
      */
     public function next() 
     {
-        if (!$this->_startedIterating) {
-            $this->_doQuery();
-            $this->_startedIterating = true;
+        if (!$this->startedIterating) {
+            $this->doQuery();
+            $this->startedIterating = true;
         }
 
-        return mongo_next($this->_cursor);
+        return mongo_next($this->cursor);
     }
 
     /**
@@ -106,12 +109,12 @@ class MongoCursor
      */
     public function hasNext() 
     {
-        if (!$this->_startedIterating) {
-            $this->_doQuery();
-            $this->_startedIterating = true;
+        if (!$this->startedIterating) {
+            $this->doQuery();
+            $this->startedIterating = true;
         }
 
-        return mongo_has_next($this->_cursor);
+        return mongo_has_next($this->cursor);
     }
 
     /**
@@ -125,10 +128,10 @@ class MongoCursor
      */
     public function limit($num) 
     {
-        if ($this->_startedIterating) {
-            throw new MongoCursorException("cannot modify cursor after beginning iteration.");
+        if ($this->startedIterating) {
+            throw new MongoCursorException(MongoCursor::$_ERR_CURSOR_MOD);
         }
-        $this->_limit = -1 * (int)$num;
+        $this->limit = -1 * (int)$num;
         return $this;
     }
 
@@ -151,10 +154,10 @@ class MongoCursor
      */
     public function softLimit($num) 
     {
-        if ($this->_startedIterating) {
-            throw new MongoCursorException("cannot modify cursor after beginning iteration.");
+        if ($this->startedIterating) {
+            throw new MongoCursorException(MongoCursor::$_ERR_CURSOR_MOD);
         }
-        $this->_limit = (int)$num;
+        $this->limit = (int)$num;
         return $this;
     }
 
@@ -169,10 +172,10 @@ class MongoCursor
      */
     public function skip($num) 
     {
-        if ($this->_startedIterating) {
-            throw new MongoCursorException("cannot modify cursor after beginning iteration.");
+        if ($this->startedIterating) {
+            throw new MongoCursorException(MongoCursor::$_ERR_CURSOR_MOD);
         }
-        $this->_skip = (int)$num;
+        $this->skip = (int)$num;
         return $this;
     }
 
@@ -187,10 +190,10 @@ class MongoCursor
      */
     public function sort($fields) 
     {
-        if ($this->_startedIterating) {
-            throw new MongoCursorException("cannot modify cursor after beginning iteration.");
+        if ($this->startedIterating) {
+            throw new MongoCursorException(MongoCursor::$_ERR_CURSOR_MOD);
         }
-        $this->_sort = $fields;
+        $this->sort = $fields;
         return $this;
     }
 
@@ -205,10 +208,10 @@ class MongoCursor
      */
     public function hint($key_pattern) 
     {
-        if ($this->_startedIterating) {
-            throw new MongoCursorException("cannot modify cursor after beginning iteration.");
+        if ($this->startedIterating) {
+            throw new MongoCursorException(MongoCursor::$_ERR_CURSOR_MOD);
         }
-        $this->_hint = $key_pattern;
+        $this->hint = $key_pattern;
         return $this;
     }
 
@@ -221,15 +224,15 @@ class MongoCursor
      */
     public function count() 
     {
-        $db   = substr($this->_ns, 0, strpos($this->_ns, "."));
-        $coll = substr($this->_ns, strpos($this->_ns, ".")+1);
+        $db   = substr($this->ns, 0, strpos($this->ns, "."));
+        $coll = substr($this->ns, strpos($this->ns, ".")+1);
 
         $cmd = array("count" => $coll);
-        if ($this->_query) {
-            $cmd[ "query" ] = $this->_query;
+        if ($this->query) {
+            $cmd[ "query" ] = $this->query;
         }
 
-        $result = MongoUtil::dbCommand($this->_connection, $cmd, $db);
+        $result = MongoUtil::dbCommand($this->connection, $cmd, $db);
         if ($result) {
             return $result[ "n" ];
         }
@@ -241,16 +244,16 @@ class MongoCursor
      *
      * @return void 
      */
-    protected function _doQuery() 
+    protected function doQuery() 
     {
-        $this->_cursor = mongo_query($this->_connection, 
-                                     $this->_ns, 
-                                     $this->_query, 
-                                     (int)$this->_skip, 
-                                     (int)$this->_limit, 
-                                     $this->_sort, 
-                                     $this->_fields, 
-                                     $this->_hint);
+        $this->cursor = mongo_query($this->connection, 
+                                     $this->ns, 
+                                     $this->query, 
+                                     (int)$this->skip, 
+                                     (int)$this->limit, 
+                                     $this->sort, 
+                                     $this->fields, 
+                                     $this->hint);
     }
 
     /**
@@ -262,9 +265,9 @@ class MongoCursor
      */
     public static function getGridFSCursor($cursor) 
     {
-        $c                    = new MongoCursor();
-        $c->_cursor           = $cursor;
-        $c->_startedIterating = true;
+        $c                   = new MongoCursor();
+        $c->cursor           = $cursor;
+        $c->startedIterating = true;
         return $c;
     }
 }

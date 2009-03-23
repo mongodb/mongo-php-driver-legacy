@@ -105,7 +105,7 @@ class MongoUtil
 
 
     /* Command collection */
-    protected static $_CMD = ".\$cmd";
+    protected static $CMD = ".\$cmd";
 
     /* Admin database */
     const ADMIN = "admin";
@@ -189,7 +189,7 @@ class MongoUtil
      */
     public static function dbCommand($conn, $data, $db) 
     {
-        $cmd_collection = $db . MongoUtil::$_CMD;
+        $cmd_collection = $db . MongoUtil::$CMD;
         $obj            = mongo_find_one($conn, $cmd_collection, $data);
 
         if ($obj) {

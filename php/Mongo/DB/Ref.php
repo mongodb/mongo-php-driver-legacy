@@ -38,8 +38,8 @@ require_once "Mongo/DB.php";
  */
 class MongoDBRef
 {
-    protected static $_refKey = '$ref';
-    protected static $_idKey  = '$id';
+    protected static $refKey = '$ref';
+    protected static $idKey  = '$id';
      
     /**
      * Creates a new db reference.
@@ -51,8 +51,8 @@ class MongoDBRef
      */ 
     public static function create($ns, $id) 
     {
-        return array(MongoDBRef::$_refKey => "$ns",
-                     MongoDBRef::$_idKey => $id);
+        return array(MongoDBRef::$refKey => "$ns",
+                     MongoDBRef::$idKey => $id);
     }
 
     /**
@@ -65,8 +65,8 @@ class MongoDBRef
     public static function isRef($obj) 
     {
         if (is_array($obj) && 
-            array_key_exists(MongoDBRef::$_refKey, $obj) &&
-            array_key_exists(MongoDBRef::$_idKey, $obj)) {
+            array_key_exists(MongoDBRef::$refKey, $obj) &&
+            array_key_exists(MongoDBRef::$idKey, $obj)) {
             return true;
         }
         return false;
@@ -82,8 +82,8 @@ class MongoDBRef
      */
     public static function get(MongoDB $db, $ref) 
     {
-        return $db->selectCollection($ref[MongoDBRef::$_refKey])->
-          findOne(array("_id" => $ref[MongoDBRef::$_idKey]));
+        return $db->selectCollection($ref[MongoDBRef::$refKey])->
+          findOne(array("_id" => $ref[MongoDBRef::$idKey]));
     }
 }
 

@@ -43,6 +43,7 @@ class MongoConnectionException extends MongoException
      * Connection exceptions have an error code of 1.
      *
      * @param string $message exception message
+     * @param string $code    exception code
      */
     public function __construct($message, $code=Mongo::ERR_CONNECTION) 
     {

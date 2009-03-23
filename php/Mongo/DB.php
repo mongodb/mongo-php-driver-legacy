@@ -45,9 +45,9 @@ require_once "Mongo/Util.php";
 class MongoDB
 {
 
-    const PROFILING_OFF = 0;
+    const PROFILING_OFF  = 0;
     const PROFILING_SLOW = 1;
-    const PROFILING_ON = 2;
+    const PROFILING_ON   = 2;
 
     public $connection = null;
     public $name       = null;
@@ -257,8 +257,9 @@ class MongoDB
      */
     public function getCursorInfo()
     {
-        $a = array(MongoUtil::INDEX_INFO => 1);
-        return MongoUtil::dbCommand($this->connection, $a, "$this");
+        return MongoUtil::dbCommand($this->connection, 
+                                    array(MongoUtil::INDEX_INFO => 1), 
+                                    "$this");
     }
 
     /**

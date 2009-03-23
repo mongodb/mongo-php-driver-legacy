@@ -35,7 +35,7 @@
  */
 class MongoGridFSFile
 {
-    protected $_file;
+    protected $file;
 
     /**
      * Create a new GridFS file.  
@@ -45,7 +45,7 @@ class MongoGridFSFile
      */
     public function __construct($file) 
     {
-        $this->_file = $file;
+        $this->file = $file;
     }
 
     /**
@@ -55,7 +55,7 @@ class MongoGridFSFile
      */
     public function getFilename() 
     {
-        return mongo_gridfile_filename($this->_file);
+        return mongo_gridfile_filename($this->file);
     }
 
     /**
@@ -65,7 +65,7 @@ class MongoGridFSFile
      */
     public function getSize() 
     {
-        return mongo_gridfile_size($this->_file);
+        return mongo_gridfile_size($this->file);
     }
 
     /**
@@ -80,7 +80,7 @@ class MongoGridFSFile
         if (!$filename) {
             $filename = $this->getFilename();
         }
-        return mongo_gridfile_write($this->_file, $filename);
+        return mongo_gridfile_write($this->file, $filename);
     }
 }
 

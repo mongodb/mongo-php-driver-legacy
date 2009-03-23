@@ -47,7 +47,7 @@ class MongoCollection
      * Creates a new collection.
      *
      * @param MongoDB $db   database
-     * @param string   $name collection name
+     * @param string  $name collection name
      */
     function __construct(MongoDB $db, $name)
     {

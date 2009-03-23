@@ -41,13 +41,13 @@ class MongoAdmin extends MongoAuth
 {
 
     const LOG_OFF = 0;
-    const LOG_W = 1;
-    const LOG_R = 2;
-    const LOG_RW = 3;
+    const LOG_W   = 1;
+    const LOG_R   = 2;
+    const LOG_RW  = 3;
     
-    const TRACE_OFF = 0;
+    const TRACE_OFF  = 0;
     const TRACE_SOME = 1;
-    const TRACE_ON = 2;
+    const TRACE_ON   = 2;
 
 
     /**
@@ -59,7 +59,8 @@ class MongoAdmin extends MongoAuth
      *
      * @return bool if login was successful
      */
-    public function login($username, $password, $plaintext=true) {
+    public function login($username, $password, $plaintext=true) 
+    {
         return parent::login(MongoUtil::ADMIN, $username, $password, $plaintext);
     }
 
