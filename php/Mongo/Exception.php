@@ -25,7 +25,6 @@
  */
 
 require_once "Mongo.php";
-require_once "PEAR/Exception.php";
 
 /**
  * General Mongo exception class.
@@ -37,7 +36,7 @@ require_once "PEAR/Exception.php";
  * @link     http://www.mongodb.org
  */
 
-class MongoException extends PEAR_Exception
+class MongoException extends Exception
 {
     /**
      * Create a new exception.
