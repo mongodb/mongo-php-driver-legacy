@@ -46,20 +46,18 @@ class MongoAdmin extends MongoAuth
     const TRACE_SOME = 1;
     const TRACE_ON = 2;
 
+
     /**
-     * Creates a new admin session.
-     * 
+     * Logs in to a given database.
+     *
      * @param string $username  username
      * @param string $password  password
      * @param bool   $plaintext in plaintext, vs. encrypted
-     * @param string $server    database server
+     *
+     * @return bool if login was successful
      */
-    public function __construct($username, 
-                                $password, 
-                                $plaintext=true, 
-                                $server=null) 
-    {
-        parent::__construct("admin", $username, $password, $plaintext, $host, $port);
+    public function login($username, $password, $plaintext=true) {
+        return parent::login(MongoUtil::ADMIN, $username, $password, $plaintext);
     }
 
     /** 

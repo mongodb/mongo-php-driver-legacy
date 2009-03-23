@@ -31,7 +31,8 @@
  * A typical usage would be:
  * <code>
  * // initial login
- * $auth_connection = new MongoAuth("mydb", "joe", "mypass");
+ * $auth_connection = new MongoAuth();
+ * $auth->login("mydb", "joe", "mypass");
  * if (!$auth_connection->loggedIn) {
  *    return $auth_connection->error;
  * }
@@ -43,7 +44,8 @@
  * <code>
  * $username = $_COOKIE['username'];
  * $password = $_COOKIE['password'];
- * $auth_connection = new MongoAuth("mydb", $username, $password, false);
+ * $auth_connection = new MongoAuth();
+ * $auth_connection->login("mydb", $username, $password, false);
  * </code>
  *
  * @category Database
@@ -67,7 +69,7 @@ class MongoAuth extends Mongo
      *
      * @return array the database response
      */
-    private static function _getUser($conn, $db, $username, $pwd) 
+    protected static function _getUser($conn, $db, $username, $pwd) 
     {
         $ns = $db . '.system.users';
 
@@ -105,22 +107,19 @@ class MongoAuth extends Mongo
     }
 
     /**
-     * Attempt to create a new authenticated session.
+     * Logs in to a given database.
      *
      * @param string $db        the name of the db
      * @param string $username  the username
      * @param string $password  the password
-     * @param string $plaintext if the password is encrypted
-     * @param string $server    a database server address
+     * @param string $plaintext if the password is encrypted     
+     *
+     * @return bool if login was successful
      */
-    public function __construct($db, 
-                                $username, 
-                                $password, 
-                                $plaintext=true, 
-                                $server=null)
-    {
-        parent::__construct($server);
-
+    public function login($db, 
+                          $username, 
+                          $password, 
+                          $plaintext=true) {
         $this->db = $this->selectDB((string)$db);
         if ($plaintext) {
             $hash = MongoAuth::getHash($username, $password);
@@ -133,11 +132,9 @@ class MongoAuth extends Mongo
         if ($result['ok'] != 1) {
             $this->error    = 'couldn\'t log in';
             $this->code     = -3;
-            $this->loggedIn = false;
-            return;
         }
-
-        $this->loggedIn = true;
+        $this->loggedIn = (bool)$result['ok'];
+        return $this->loggedIn;
     }
 
 
