@@ -52,9 +52,9 @@ class Mongo
     const DEFAULT_PORT = "27017";
 
     // error codes
-    const ERR_GENERAL    = 'MONGO1';
-    const ERR_CONNECTION = 'MONGO2';
-    const ERR_CURSOR     = 'MONGO3';
+    const ERR_GENERAL    = 1;
+    const ERR_CONNECTION = 2;
+    const ERR_CURSOR     = 3;
 
     public $connection = null;
 
