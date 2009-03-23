@@ -39,69 +39,69 @@ class MongoUtil
     /**
      * Less than.
      */
-    const MONGO_LT = '$lt';
+    const LT = '$lt';
 
     /**
      * Less than or equal to.
      */
-    const MONGO_LTE = '$lte';
+    const LTE = '$lte';
 
     /**
      * Greater than.
      */
-    const MONGO_GT = '$gt';
+    const GT = '$gt';
 
     /**
      * Greater than or equal to.
      */
-    const MONGO_GTE = '$gte';
+    const GTE = '$gte';
 
     /**
      * Checks for a field in an object.
      */
-    const MONGO_IN = '$in';
+    const IN = '$in';
 
     /**
      * Not equal.
      */
-    const MONGO_NE = '$ne';
+    const NE = '$ne';
 
 
     /**
      * Sort ascending.
      */
-    const MONGO_ASC = 1;
+    const ASC = 1;
 
     /**
      * Sort descending.
      */
-    const MONGO_DESC = -1;
+    const DESC = -1;
 
 
     /**
      * Function as binary data.
      */
-    const MONGO_BIN_FUNCTION = 1;
+    const BIN_FUNCTION = 1;
 
     /**
      * Default binary type: an arrray of binary data.
      */
-    const MONGO_BIN_ARRAY = 2;
+    const BIN_ARRAY = 2;
 
     /**
      * Universal unique id.
      */
-    const MONGO_BIN_UUID = 3;
+    const BIN_UUID = 3;
 
     /**
      * Binary MD5.
      */
-    const MONGO_BIN_MD5 = 5;
+    const BIN_MD5 = 5;
 
     /**
      * User-defined binary type.
      */
-    const MONGO_BIN_CUSTOM = 128;
+    const BIN_CUSTOM = 128;
 
 
     /* Command collection */

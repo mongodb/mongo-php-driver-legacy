@@ -35,9 +35,9 @@
  */
 class MongoGridFS
 {
-    private $_resource;
-    private $_prefix;
-    private $_db;
+    protected $_resource;
+    protected $_prefix;
+    protected $_db;
 
     /**
      * Creates a new gridfs instance.

@@ -36,8 +36,8 @@
  */
 class MongoDBRef
 {
-    private static $_refKey = '$ref';
-    private static $_idKey  = '$id';
+    protected static $_refKey = '$ref';
+    protected static $_idKey  = '$id';
      
     /**
      * Creates a new db reference.

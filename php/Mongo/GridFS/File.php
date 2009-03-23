@@ -35,7 +35,7 @@
  */
 class MongoGridFSFile
 {
-    private $_file;
+    protected $_file;
 
     /**
      * Create a new GridFS file.  

@@ -88,7 +88,7 @@ class Mongo
      */
     public function connect($server=null) 
     {
-        return _connectUtil($server, "", "", false, false);
+        return $this->_connectUtil($server, "", "", false, false);
     }
 
     /**
@@ -103,7 +103,7 @@ class Mongo
      */
     public function pairConnect($server1, $server2) 
     {
-        return _connectUtil("${server1},${server2}", "", "", false, true);
+        return $this->_connectUtil("${server1},${server2}", "", "", false, true);
     }
 
     /**
@@ -119,7 +119,7 @@ class Mongo
      */
     public function persistConnect($server, $username="", $password="") 
     {
-        return _connectUtil($server, $username, $password, true, false);
+        return $this->_connectUtil($server, $username, $password, true, false);
     }
 
     /**
@@ -139,11 +139,11 @@ class Mongo
                                        $username="", 
                                        $password="") 
     {
-        return _connectUtil("${server1},${server2}", 
-                            $username, 
-                            $password, 
-                            true, 
-                            true);
+        return $this->_connectUtil("${server1},${server2}", 
+                                   $username, 
+                                   $password, 
+                                   true, 
+                                   true);
     }
 
     /**
@@ -157,7 +157,7 @@ class Mongo
      *
      * @return bool if connection was made
      */ 
-    private function _connectUtil($server, 
+    protected function _connectUtil($server, 
                                   $username, 
                                   $password, 
                                   $persistent, 

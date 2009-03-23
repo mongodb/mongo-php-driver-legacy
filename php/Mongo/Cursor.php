@@ -50,16 +50,16 @@
 class MongoCursor
 {
 
-    private $_connection = null;
+    protected $_connection = null;
 
-    private $_cursor           = null;
-    private $_startedIterating = false;
+    protected $_cursor           = null;
+    protected $_startedIterating = false;
 
-    private $_query  = null;
-    private $_fields = null;
-    private $_limit  = 0;
-    private $_skip   = 0;
-    private $_ns     = null;
+    protected $_query  = null;
+    protected $_fields = null;
+    protected $_limit  = 0;
+    protected $_skip   = 0;
+    protected $_ns     = null;
 
     /**
      * Create a new cursor.
@@ -239,7 +239,7 @@ class MongoCursor
      *
      * @return void 
      */
-    private function _doQuery() 
+    protected function _doQuery() 
     {
         $this->_cursor = mongo_query($this->_connection, 
                                      $this->_ns, 
