@@ -25,7 +25,7 @@
  */
 
 require_once "Mongo.php";
-include "PEAR/Exception.php";
+require_once "PEAR/Exception.php";
 
 /**
  * General Mongo exception class.
@@ -37,54 +37,27 @@ include "PEAR/Exception.php";
  * @link     http://www.mongodb.org
  */
 
-if (class_exists(PEAR_Exception)) {
-    class MongoException extends PEAR_Exception
+class MongoException extends PEAR_Exception
+{
+    /**
+     * Create a new exception.
+     *
+     * @param string $message exception message
+     * @param int    $code    exception code
+     */
+    public function __construct($message, $code=Mongo::ERR_GENERAL) 
     {
-        /**
-         * Create a new exception.
-         *
-         * @param string $message exception message
-         * @param int    $code    exception code
-         */
-        public function __construct($message, $code=Mongo::ERR_GENERAL) 
-        {
-            parent::__construct($message, $code);
-        }
-
-        /**
-         * Returns the string form of this exception.
-         *
-         * @return string this exception
-         */
-        public function __toString() 
-        {
-            return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
-        }
+        parent::__construct($message, $code);
     }
-}
-else {
-    class MongoException extends Exception
-    {
-        /**
-         * Create a new exception.
-         *
-         * @param string $message exception message
-         * @param int    $code    exception code
-         */
-        public function __construct($message, $code=Mongo::ERR_GENERAL) 
-        {
-            parent::__construct($message, $code);
-        }
 
-        /**
-         * Returns the string form of this exception.
-         *
-         * @return string this exception
-         */
-        public function __toString() 
-        {
-            return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
-        }
+    /**
+     * Returns the string form of this exception.
+     *
+     * @return string this exception
+     */
+    public function __toString() 
+    {
+        return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
     }
 }
 
