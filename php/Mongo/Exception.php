@@ -24,6 +24,8 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo.php";
+
 /**
  * General Mongo exception class.
  *
@@ -41,7 +43,7 @@ class MongoException extends Exception
      * @param string $message exception message
      * @param int    $code    exception code
      */
-    public function __construct($message, $code = 0) 
+    public function __construct($message, $code=Mongo::ERR_GENERAL) 
     {
         parent::__construct($message, $code);
     }

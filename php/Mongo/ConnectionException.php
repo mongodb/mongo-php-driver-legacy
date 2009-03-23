@@ -24,6 +24,7 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo.php";
 require_once "Mongo/Exception.php";
 
 /**
@@ -43,9 +44,9 @@ class MongoConnectionException extends MongoException
      *
      * @param string $message exception message
      */
-    public function __construct($message) 
+    public function __construct($message, $code=Mongo::ERR_CONNECTION) 
     {
-        parent::__construct($message, 1);
+        parent::__construct($message, $code);
     }
 }
 

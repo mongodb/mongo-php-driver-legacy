@@ -51,12 +51,18 @@ class Mongo
     const DEFAULT_HOST = "localhost";
     const DEFAULT_PORT = "27017";
 
+    // error codes
+    const ERR_GENERAL    = 'MONGO1';
+    const ERR_CONNECTION = 'MONGO2';
+    const ERR_CURSOR     = 'MONGO3';
+
     public $connection = null;
 
     protected $_server;
     protected $_paired;
     protected $_persistent;
     protected $_connected = false;
+
 
     /** 
      * Creates a new database connection.

@@ -24,6 +24,7 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo.php";
 require_once "Mongo/Exception.php";
 
 /**
@@ -43,7 +44,7 @@ class MongoCursorException extends MongoException
      * @param string $message exception message
      * @param int    $code    exception code
      */
-    public function __construct($message, $code = 2) 
+    public function __construct($message, $code=Mongo::ERR_CURSOR) 
     {
         parent::__construct($message, $code);
     }
