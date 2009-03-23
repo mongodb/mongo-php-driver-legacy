@@ -27,13 +27,19 @@ http://pear.php.net/dtd/package-2.0.xsd">
  <notes>Initial package</notes>
  <contents>
   <dir name="/">
-   <file baseinstalldir="/" name="mongo.php" role="php" />
-   <file baseinstalldir="/" name="mongo_auth.php" role="php" />
-   <file baseinstalldir="/" name="mongo_db.php" role="php" />
-   <file baseinstalldir="/" name="mongo_collection.php" role="php" />
-   <file baseinstalldir="/" name="mongo_cursor.php" role="php" />
-   <file baseinstalldir="/" name="mongo_util.php" role="php" />
-   <file baseinstalldir="/" name="gridfs.php" role="php" />
+   <file baseinstalldir="/" name="Mongo.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/Admin.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/Auth.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/DB.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/DB/Ref.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/Collection.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/Cursor.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/Util.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/GridFS.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/GridFS/File.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/Exception.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/ConnectionException.php" role="php" />
+   <file baseinstalldir="/" name="Mongo/CursorException.php" role="php" />
   </dir>
  </contents>
  <dependencies>
@@ -49,10 +55,6 @@ http://pear.php.net/dtd/package-2.0.xsd">
      <min>8.3</min>
    </extension>
   </required>
-  <os>
-    <name>windows</name>
-    <conflicts/>
-  </os>
  </dependencies>
  <phprelease />
 </package>
