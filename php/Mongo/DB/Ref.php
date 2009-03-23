@@ -24,6 +24,8 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo/DB.php";
+
 /**
  * This class can be used to create lightweight links between objects
  * in different collections.

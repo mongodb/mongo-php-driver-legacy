@@ -24,6 +24,10 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo/DB.php";
+require_once "Mongo/Cursor.php";
+require_once "Mongo/Util.php";
+
 /**
  * Represents a collection of documents in the database.
  * 

@@ -10,9 +10,10 @@ if(!$m->selectCollection("admin", "system.users")->findOne(array("user" => "kris
 ?>
 --FILE--
 <?php
-include_once "Mongo.php";
+include_once "Mongo/Admin.php";
 
-$a = new MongoAdmin("kristina", "fred");
+$a = new MongoAdmin();
+$a->login("kristina", "fred");
 echo "$a\n";
 
 /* check it can do everything Mongo can */
@@ -23,19 +24,23 @@ echo $one["foo"]."\n";
 /* check auth methods */
 $a->addUser("fred", "ted");
 MongoAuth::getHash("fred", "ted");
-$a2 = new MongoAdmin("fred", "ted");
+$a2 = new MongoAdmin();
+$a2->login("fred", "ted");
 echo "$a\n";
 
 var_dump($a->changePassword("fred", "ted", "foobar"));
 
-$a2 = new MongoAdmin("fred", "ted");
+$a2 = new MongoAdmin();
+$a2->login("fred", "ted");
 var_dump($a2->loggedIn);
 
-$a2 = new MongoAdmin("fred", "foobar");
+$a2 = new MongoAdmin();
+$a2->login("fred", "foobar");
 var_dump($a2->loggedIn);
 
 $a->deleteUser("fred");
-$a2 = new MongoAdmin("fred", "foobar");
+$a2 = new MongoAdmin();
+$a2->login("fred", "foobar");
 var_dump($a2->loggedIn);
 
 ?>

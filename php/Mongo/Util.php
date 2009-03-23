@@ -105,7 +105,7 @@ class MongoUtil
 
 
     /* Command collection */
-    private static $_CMD = ".\$cmd";
+    protected static $_CMD = ".\$cmd";
 
     /* Admin database */
     const ADMIN = "admin";
@@ -181,9 +181,9 @@ class MongoUtil
 
     /** Execute a db command.
      *
-     * @param conn   $conn database connection
-     * @param array  $data the query to send
-     * @param string $db   the database name
+     * @param resource $conn database connection
+     * @param array    $data the query to send
+     * @param string   $db   the database name
      *
      * @return array database response
      */

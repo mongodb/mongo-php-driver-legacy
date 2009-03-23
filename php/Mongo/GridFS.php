@@ -24,6 +24,9 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo/GridFS/File.php";
+require_once "Mongo/Cursor.php";
+
 /**
  * Utilities for storing and retreiving files from the database.
  * 

@@ -24,6 +24,8 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo/CursorException.php";
+
 /**
  * Result object for database query.
  *

@@ -24,6 +24,8 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo/Exception.php";
+
 /**
  * Exception thrown when a database connection cannot be established.
  *

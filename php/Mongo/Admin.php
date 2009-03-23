@@ -24,6 +24,9 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo.php";
+require_once "Mongo/Auth.php";
+require_once "Mongo/Util.php";
 
 /**
  * Gets an admin database connection.

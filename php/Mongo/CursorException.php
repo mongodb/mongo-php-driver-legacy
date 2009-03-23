@@ -24,6 +24,8 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo/Exception.php";
+
 /**
  * General Mongo exception class.
  *

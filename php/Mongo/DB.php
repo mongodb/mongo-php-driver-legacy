@@ -24,6 +24,9 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo/DB/Ref.php";
+require_once "Mongo/Collection.php";
+require_once "Mongo/Util.php";
 
 /**
  * Instances of this class are used to interact with a database.

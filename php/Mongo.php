@@ -24,6 +24,12 @@
  * @link     http://www.mongodb.org
  */
 
+require_once "Mongo/ConnectionException.php";
+require_once "Mongo/DB.php";
+require_once "Mongo/Collection.php";
+require_once "Mongo/Util.php";
+require_once "Mongo/GridFS.php";
+
 /**
  * A connection point between the Mongo database and PHP.
  * 
@@ -47,10 +53,10 @@ class Mongo
 
     public $connection = null;
 
-    private $_server;
-    private $_paired;
-    private $_persistent;
-    private $_connected = false;
+    protected $_server;
+    protected $_paired;
+    protected $_persistent;
+    protected $_connected = false;
 
     /** 
      * Creates a new database connection.
@@ -364,20 +370,5 @@ class Mongo
         }
     }
 }
-
-
-
-require_once "Mongo/Exception.php";
-require_once "Mongo/ConnectionException.php";
-require_once "Mongo/CursorException.php";
-require_once "Mongo/Auth.php";
-require_once "Mongo/Admin.php";
-require_once "Mongo/DB.php";
-require_once "Mongo/DB/Ref.php";
-require_once "Mongo/Collection.php";
-require_once "Mongo/Cursor.php";
-require_once "Mongo/Util.php";
-require_once "Mongo/GridFS.php";
-require_once "Mongo/GridFS/File.php";
 
 ?>
