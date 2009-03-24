@@ -1,7 +1,7 @@
 <?php
 
-$PER_TRIAL = 10000;
-$BATCH_SIZE = 100;
+define('PER_TRIAL', 5000);
+define('BATCH_SIZE', 100);
 
 include "Mongo.php";
 
@@ -14,40 +14,36 @@ function micro_time()
   return (float)$usec + (float)$sec;
 }
 
-function none($c, $obj, $num, $findOne=false)
+function none($c, $obj)
 {
   $c->drop();
+  go($c, $obj);
 
-  if($findOne) {
-    go_find_one($c, $obj, $num);
-  } else {
-    go($c, $obj, $num);
-  }
+  $c->drop();
+  go_find_one($c, $obj);
 }
 
-function index($c, $obj, $num, $findOne=false)
+function index($c, $obj)
 {
   $c->drop();
   $c->ensureIndex("x");
+  go($c, $obj, $num);
 
-  if($findOne) {
-    go_find_one($c, $obj, $num);
-  } else {
-    go($c, $obj, $num);
-  }
+  $c->drop();
+  $c->ensureIndex("x");
+  go_find_one($c, $obj);
 }
 
-function batch($c, $obj, $PER_TRIAL)
+function batch($c, $obj)
 {
-  echo "{insert} $c\n";
-  global $BATCH_SIZE;
+  echo "{batch insert} $c\n";
 
   $c->drop();
 
   $start = micro_time();
-  for($i=0;$i<$PER_TRIAL;$i++){
+  for($i=0;$i < PER_TRIAL;$i++){
     $obja = array();
-    for($j=0;$j<$BATCH_SIZE;$j++){
+    for($j=0;$j<BATCH_SIZE;$j++){
       $obj["x"]=$i;
       $obja[] = $obj;
     }
@@ -57,35 +53,35 @@ function batch($c, $obj, $PER_TRIAL)
   $end = micro_time();
 
   $total = $end - $start;
-  $ops = $PER_TRIAL/$total;
+  $ops = PER_TRIAL/$total;
   echo "total time: $total\n";
   echo "ops/sec: $ops\n";
   echo "------\n";
 }
 
-function go($c, $obj, $max)
+function go($c, $obj)
 {
   echo "{insert} $c\n";
 
   $start = micro_time();
-  for($i=0;$i<$max;$i++){
+  for($i=0;$i < PER_TRIAL;$i++){
     $obj["x"]=$i;
     $c->insert( $obj );
   }
   $end = micro_time();
   $total = $end - $start;
-  $ops = $max/$total;
+  $ops = PER_TRIAL/$total;
   echo "total time: $total\n";
   echo "ops/sec: $ops\n";
   echo "------\n";
 }
 
-function go_find_one($c, $obj, $max)
+function go_find_one($c, $obj)
 {
   echo "{insert/findOne} $c\n";
 
   $start = micro_time();
-  for($i=0;$i<$max;$i++){
+  for($i=0;$i < PER_TRIAL;$i++){
     $obj["x"]=$i;
     $c->insert( $obj );
   }
@@ -93,38 +89,38 @@ function go_find_one($c, $obj, $max)
 
   $end = micro_time();
   $total = $end - $start;
-  $ops = $max/$total;
+  $ops = PER_TRIAL/$total;
   echo "total time: $total\n";
   echo "ops/sec: $ops\n";
   echo "------\n";
 }
 
 
-function find_one($c, $PER_TRIAL)
+function find_one($c)
 {
   echo "find_one $c\n";
 
-  $query = array("x" => $PER_TRIAL/2);
+  $query = array("x" => PER_TRIAL/2);
   $start = micro_time();
-  for($i=0;$i<$PER_TRIAL;$i++){
+  for($i=0;$i<PER_TRIAL;$i++){
     $c->findOne( $query );
   }
   $end = micro_time();
   $total = $end - $start;
-  $ops = $PER_TRIAL/$total;
+  $ops = PER_TRIAL/$total;
   echo "total time: $total\n";
   echo "ops/sec: $ops\n";
   echo "------\n";
 }
 
 
-function find($c, $PER_TRIAL)
+function find($c)
 {
   echo "{find} $c\n";
 
-  $query = array("x" => $PER_TRIAL/2);
+  $query = array("x" => PER_TRIAL/2);
   $start = micro_time();
-  for($i=0;$i<$PER_TRIAL;$i++){
+  for($i=0;$i<PER_TRIAL;$i++){
     $cursor = $c->find( $query );
     while( $cursor->hasNext() ){
       $cursor->next();
@@ -132,32 +128,29 @@ function find($c, $PER_TRIAL)
   }
   $end = micro_time();
   $total = $end - $start;
-  $ops = $PER_TRIAL/$total;
+  $ops = PER_TRIAL/$total;
   echo "total time: $total\n";
   echo "ops/sec: $ops\n";
   echo "------\n";
 }
 
-function find_range($c, $PER_TRIAL)
+function find_range($c)
 {
   echo "{find_range} $c\n";
-  global $BATCH_SIZE;
 
-  $query = array("x" => array('$gt' => $PER_TRIAL/2,
-                              '$lt' => $PER_TRIAL/2+$BATCH_SIZE));
+  $query = array("x" => array('$gt' => PER_TRIAL/2,
+                              '$lt' => PER_TRIAL/2+BATCH_SIZE));
 
   $start = micro_time();
-  for($i=0;$i<$PER_TRIAL;$i++){
+  for($i=0;$i<PER_TRIAL;$i++){
     $cursor = $c->find( $query );
-    $cursor->hasNext();
-    /*
     while( $cursor->hasNext() ){
       $cursor->next();
-      }*/
+    }
   }
   $end = micro_time();
   $total = $end - $start;
-  $ops = $PER_TRIAL/$total;
+  $ops = PER_TRIAL/$total;
   echo "total time: $total\n";
   echo "ops/sec: $ops\n";
   echo "------\n";
@@ -245,51 +238,38 @@ $large  = array("x" => 0,
                                         )
              );
 
-none($db->selectCollection("small_none"), $small, 500000);
-none($db->selectCollection("medium_none"), $medium, 500000);
-none($db->selectCollection("large_none"), $large, 100000);
+batch($db->selectCollection("small_none"), $small);
+batch($db->selectCollection("medium_none"), $medium);
+batch($db->selectCollection("large_none"), $large);
 
-none($db->selectCollection("small_none"), $small, 500000, true);
-none($db->selectCollection("medium_none"), $medium, 500000, true);
-none($db->selectCollection("large_none"), $large, 100000, true);
-
-
-
-index($db->selectCollection("small_index"), $small, 750000);
-index($db->selectCollection("medium_index"), $medium, 500000);
-index($db->selectCollection("large_index"), $large, 100000);
-
-index($db->selectCollection("small_index"), $small, 500000, true);
-index($db->selectCollection("medium_index"), $medium, 500000, true);
-index($db->selectCollection("large_index"), $large, 100000, true);
+none($db->selectCollection("small_none"), $small);
+none($db->selectCollection("medium_none"), $medium);
+none($db->selectCollection("large_none"), $large);
 
 
+index($db->selectCollection("small_index"), $small);
+index($db->selectCollection("medium_index"), $medium);
+index($db->selectCollection("large_index"), $large);
 
-batch($db->selectCollection("small_none"), $small, 10000);
-batch($db->selectCollection("medium_none"), $medium, 10000);
-batch($db->selectCollection("large_none"), $large, 10000);
 
+find_one($db->selectCollection("small_none"));
+find_one($db->selectCollection("medium_none"));
+find_one($db->selectCollection("large_none"));
 
-find_one($db->selectCollection("small_none"), 1000);
-find_one($db->selectCollection("medium_none"), 1000);
-find_one($db->selectCollection("large_none"), 1000);
+find_one($db->selectCollection("small_index"));
+find_one($db->selectCollection("medium_index"));
+find_one($db->selectCollection("large_index"));
 
-find_one($db->selectCollection("small_index"), 10000);
-find_one($db->selectCollection("medium_index"), 10000);
-find_one($db->selectCollection("large_index"), 10000);
+find($db->selectCollection("small_none"));
+find($db->selectCollection("medium_none"));
+find($db->selectCollection("large_none"));
 
-find($db->selectCollection("small_none"), 1000);
-find($db->selectCollection("medium_none"), 1000);
-find($db->selectCollection("large_none"), 1000);
+find($db->selectCollection("small_index"));
+find($db->selectCollection("medium_index"));
+find($db->selectCollection("large_index"));
 
-find($db->selectCollection("small_index"), 10000);
-find($db->selectCollection("medium_index"), 10000);
-find($db->selectCollection("large_index"), 10000);
-
-find_range($db->selectCollection("small_index"), 10000);
-find_range($db->selectCollection("medium_index"), 10000);
-
-//segfaults
-find_range($db->selectCollection("large_index"), 10000);
+find_range($db->selectCollection("small_index"));
+find_range($db->selectCollection("medium_index"));
+find_range($db->selectCollection("large_index"));
 
 ?>
