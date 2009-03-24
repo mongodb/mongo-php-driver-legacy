@@ -30,8 +30,8 @@ if test "$PHP_MONGO" != "no"; then
   AC_MSG_RESULT($mongo)
 
   AC_MSG_CHECKING(for Boost)
-  for dir in $PHP_BOOST /opt/local /usr /usr/local; do
-    if test -e $dir/lib/libboost_thread-mt.a; then
+  for dir in $PHP_BOOST /opt/boost /opt/local /usr /usr/local; do
+    if test -e $dir && test -e $dir/lib/libboost_thread-mt.a; then
       boost=$dir
       break
     fi
@@ -55,6 +55,11 @@ if test "$PHP_MONGO" != "no"; then
 
 
   LDFLAGS="$LDFLAGS -L$mongo/lib -L$boost/lib -L$pcre/lib -lmongoclient -lboost_thread-mt -lboost_filesystem-mt -lboost_program_options-mt"
+  dnl boost >= 1.35 needs boost_system-mt
+  if test -e $boost/lib/libboost_system-mt.a; then
+    LDFLAGS="$LDFLAGS -lboost_system-mt"
+  fi
+
   INCLUDES="$INCLUDES -I$mongo/include -I$boost/include -I$pcre/include"
 
   CXX=g++
