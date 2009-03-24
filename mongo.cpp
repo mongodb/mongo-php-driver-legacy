@@ -446,13 +446,13 @@ PHP_FUNCTION(mongo_batch_insert) {
   for(zend_hash_internal_pointer_reset_ex(php_array, &pointer); 
       zend_hash_get_current_data_ex(php_array, (void**) &data, &pointer) == SUCCESS; 
       zend_hash_move_forward_ex(php_array, &pointer)) {
-    mongo::BSONObjBuilder *obj_builder = new mongo::BSONObjBuilder();
+    mongo::BSONObjBuilder obj_builder;
     HashTable *insert_elem = Z_ARRVAL_PP(data);
 
-    prep_obj_for_db(obj_builder, insert_elem TSRMLS_CC);
-    php_array_to_bson(obj_builder, insert_elem TSRMLS_CC);
+    prep_obj_for_db(&obj_builder, insert_elem TSRMLS_CC);
+    php_array_to_bson(&obj_builder, insert_elem TSRMLS_CC);
 
-    inserter.push_back(obj_builder->done());
+    inserter.push_back(obj_builder.obj());
   }
 
   conn_ptr->insert(collection, inserter);
