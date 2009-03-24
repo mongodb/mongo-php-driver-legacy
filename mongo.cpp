@@ -154,12 +154,13 @@ static PHP_GINIT_FUNCTION(mongo){
 
 static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo::DBClientBase *conn = (mongo::DBClientBase*)rsrc->ptr;
-  if (rsrc->type == le_pconnection) {
-    MonGlo(num_persistent)--;
-  }
-  if( conn )
+  if( conn ) {
     delete conn;
-  MonGlo(num_links)--;
+    if (rsrc->type == le_pconnection) {
+      MonGlo(num_persistent)--;
+    }
+    MonGlo(num_links)--;
+  }
 }
 
 static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
