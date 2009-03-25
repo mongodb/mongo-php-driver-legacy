@@ -37,12 +37,15 @@
 #define OP_DELETE 2006
 #define OP_KILL_CURSORS 2007 
 
-#define CREATE_INSERT_HEADER                                    \
+#define MSG_HEADER_SIZE 16
+#define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
+
+#define CREATE_HEADER(opcode)                                   \
   mongo_msg_header header;                                      \
   header.length = 0;                                            \
   header.request_id = MonGlo(request_id)++;                     \
   header.response_to = 0;                                       \
-  header.op = OP_INSERT;
+  header.op = opcode;
 
 
 #define APPEND_HEADER(buf, pos)                         \
@@ -74,6 +77,15 @@ typedef struct {
   int response_to;
   int op;
 } mongo_msg_header;
+
+typedef struct {
+  int flag;
+  long id;
+  int start;
+  int num;
+  char *buf;
+  int pos;
+} mongo_cursor;
 
 PHP_MINIT_FUNCTION(mongo);
 PHP_MSHUTDOWN_FUNCTION(mongo);

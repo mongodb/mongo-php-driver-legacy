@@ -178,6 +178,17 @@ static void php_gridfile_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
     delete file;
 }
 
+static void php_cursor_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
+  mongo_cursor *cursor = (mongo_cursor*)rsrc->ptr;
+  if (cursor) {
+    if (cursor->buf) {
+      efree(cursor->buf);
+    }
+    efree(cursor);
+  }
+}
+
+
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(mongo) {
@@ -186,7 +197,7 @@ PHP_MINIT_FUNCTION(mongo) {
 
   le_connection = zend_register_list_destructors_ex(php_connection_dtor, NULL, PHP_CONNECTION_RES_NAME, module_number);
   le_pconnection = zend_register_list_destructors_ex(NULL, php_connection_dtor, PHP_CONNECTION_RES_NAME, module_number);
-  le_db_cursor = zend_register_list_destructors_ex(NULL, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
+  le_db_cursor = zend_register_list_destructors_ex(php_cursor_dtor, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
   le_gridfs = zend_register_list_destructors_ex(php_gridfs_dtor, NULL, PHP_GRIDFS_RES_NAME, module_number);
   le_gridfile = zend_register_list_destructors_ex(php_gridfile_dtor, NULL, PHP_GRIDFILE_RES_NAME, module_number);
 
@@ -284,12 +295,11 @@ PHP_FUNCTION(mongo_close) {
 /* {{{ mongo_query() 
  */
 PHP_FUNCTION(mongo_query) {
+  mongo_link *link;
   zval *zconn, *zquery, *zsort, *zfields, *zhint;
   char *collection;
-  int limit, skip, collection_len;
-  mongo::DBClientBase *conn_ptr;
-  mongo::BSONObjBuilder bquery, bfields, bhint, bsort;
-  std::auto_ptr<mongo::DBClientCursor> cursor;
+  int limit, skip, collection_len, flags = 0, pos = 0;
+  char *buf = (char*)emalloc(1024);
   
   if( ZEND_NUM_ARGS() != 8 ) {
       zend_error( E_WARNING, "expected 8 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -300,37 +310,64 @@ PHP_FUNCTION(mongo_query) {
       RETURN_FALSE;
   }
   
-  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  // get query
-  php_array_to_bson(&bquery, Z_ARRVAL_P(zquery) TSRMLS_CC);
+  // creates an insert-style header
+  CREATE_HEADER(OP_QUERY);
+  APPEND_HEADER_NS(buf, pos, collection, collection_len);
 
-  mongo::Query q = mongo::Query(bquery.done());
+  serialize_int(buf, &pos, skip);
+  serialize_int(buf, &pos, limit);
+  zval_to_bson(buf, &pos, Z_ARRVAL_P(zquery) TSRMLS_CC);
 
-  // get hints
-  HashTable *array = Z_ARRVAL_P(zhint);
-  if (zend_hash_num_elements(array) > 0) {
-    php_array_to_bson(&bhint, array TSRMLS_CC);
-    q.hint(bhint.done());
+  serialize_size(buf, 0, pos);
+
+  // sends
+  int sent = send(link->socket, buf, pos, flags)+1;
+  if (sent == -1) {
+    RETURN_FALSE;
   }
 
-  // get sort
-  array = Z_ARRVAL_P(zsort);
-  if (zend_hash_num_elements(array) > 0) {
-    php_array_to_bson(&bsort, array TSRMLS_CC);
-    q.sort(bsort.done());
+  mongo_msg_header r_header;
+  if (recv(link->socket, &r_header.length, INT_32, flags) == -1) {
+    perror("recv");
+    RETURN_FALSE;
   }
 
-  array = Z_ARRVAL_P(zfields);
-  if (zend_hash_num_elements(array) > 0) {
-    php_array_to_bson(&bfields, array TSRMLS_CC);
-    mongo::BSONObj fields = bfields.done();
-    cursor = conn_ptr->query((const char*)collection, q, limit, skip, &fields);
-  } else {
-    cursor = conn_ptr->query((const char*)collection, q, limit, skip);
+  r_header.length -= INT_32;
+  char *response = (char*)emalloc(r_header.length);
+  if (recv(link->socket, response, r_header.length, flags) == -1) {
+    perror("recv");
+    RETURN_FALSE;
   }
+  char *r = response;
 
-  ZEND_REGISTER_RESOURCE(return_value, cursor.release(), le_db_cursor);
+  memcpy(&r_header.request_id, r, INT_32);
+  r += INT_32;
+  memcpy(&r_header.response_to, r, INT_32);
+  r += INT_32;
+  memcpy(&r_header.op, r, INT_32);
+  r += INT_32;
+
+  mongo_cursor *cursor = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
+  memcpy(&cursor->flag, r, INT_32);
+  r += INT_32;
+  memcpy(&cursor->id, r, INT_64);
+  r += INT_64;
+  memcpy(&cursor->start, r, INT_32);
+  r += INT_32;
+  memcpy(&cursor->num, r, INT_32);
+  r += INT_32;
+
+  cursor->buf = (char*)emalloc(r_header.length-REPLY_HEADER_SIZE);
+  memcpy(cursor->buf, &r, r_header.length-REPLY_HEADER_SIZE);
+
+  cursor->pos = 0;
+
+  efree(buf);
+  efree(response);
+
+  ZEND_REGISTER_RESOURCE(return_value, cursor, le_db_cursor);
 }
 /* }}} */
 
@@ -343,6 +380,12 @@ PHP_FUNCTION(mongo_find_one) {
   int collection_len;
   mongo::BSONObjBuilder bquery;
   mongo::DBClientBase *conn_ptr;
+
+  /*  int i;
+  char *temp = r;
+  for(i=0;i<r_header.length-REPLY_HEADER_SIZE; i++) {
+    php_printf("%d\n", *temp++);
+    }*/
 
   if( ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -416,7 +459,7 @@ PHP_FUNCTION(mongo_insert) {
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   // creates an insert-style header
-  CREATE_INSERT_HEADER;
+  CREATE_HEADER(OP_INSERT);
 
   // appends it to buf
   APPEND_HEADER_NS(buf, pos, collection, collection_len);
@@ -424,7 +467,12 @@ PHP_FUNCTION(mongo_insert) {
   // adds data
   zval_to_bson(buf, &pos, Z_ARRVAL_P(zarray) TSRMLS_CC);
   serialize_size(buf, 0, pos);
-
+  /*
+  int i;
+  char *temp = buf;
+  for(i=0;i<pos; i++) {
+    php_printf("%d\n", *temp++);
+    }*/
   // sends
   RETVAL_BOOL(send(link->socket, buf, pos, flags)+1);
   efree(buf);
@@ -432,10 +480,12 @@ PHP_FUNCTION(mongo_insert) {
 /* }}} */
 
 PHP_FUNCTION(mongo_batch_insert) {
-  zval *zconn, *zarray;
+  mongo_link *link;
+  HashPosition pointer;
+  zval *zconn, *zarray, **data;
   char *collection;
-  int collection_len;
-  mongo::DBClientBase *conn_ptr;
+  int collection_len, pos = 0, flags = 0;
+  char *buf = (char*)emalloc(1024);
 
   if (ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -446,26 +496,24 @@ PHP_FUNCTION(mongo_batch_insert) {
     RETURN_FALSE;
   }
 
-  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  vector<mongo::BSONObj> inserter;
+  // creates an insert-style header
+  CREATE_HEADER(OP_INSERT);
+  APPEND_HEADER_NS(buf, pos, collection, collection_len);
+
   HashTable *php_array = Z_ARRVAL_P(zarray);
-  HashPosition pointer;
-  zval **data;
   for(zend_hash_internal_pointer_reset_ex(php_array, &pointer); 
       zend_hash_get_current_data_ex(php_array, (void**) &data, &pointer) == SUCCESS; 
       zend_hash_move_forward_ex(php_array, &pointer)) {
-    mongo::BSONObjBuilder obj_builder;
-    HashTable *insert_elem = Z_ARRVAL_PP(data);
 
-    prep_obj_for_db(&obj_builder, insert_elem TSRMLS_CC);
-    php_array_to_bson(&obj_builder, insert_elem TSRMLS_CC);
-
-    inserter.push_back(obj_builder.obj());
+    int start = pos;
+    zval_to_bson(buf, &pos, Z_ARRVAL_PP(data) TSRMLS_CC);
+    serialize_size(buf, start, pos);
   }
 
-  conn_ptr->insert(collection, inserter);
-  RETURN_TRUE;
+  RETVAL_BOOL(send(link->socket, buf, pos, flags)+1);
+  efree(buf);
 }
 
 

@@ -32,6 +32,7 @@ int serialize_element(char*, int*, char*, int, zval** TSRMLS_DC);
 int serialize_double(char*, int*, double);
 int serialize_string(char*, int*, char*, int);
 int serialize_long(char*, int*, long);
+int serialize_int(char*, int*, int);
 
 int serialize_size(char*, int, int);
 

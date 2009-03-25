@@ -135,6 +135,11 @@ int serialize_string(char *buf, int *ppos, char *str, int str_len) {
   return *(ppos) = *ppos + BYTE_8;
 }
 
+int serialize_int(char *buf, int *pos, int num) {
+  memcpy(buf+(*pos), &num, INT_32);
+  return *(pos) = (*pos) + INT_32;
+}
+
 int serialize_long(char *buf, int *ppos, long num) {
   memcpy(buf+(*ppos), &num, INT_64);
   return *(ppos) = (*ppos) + INT_64;
@@ -153,6 +158,7 @@ int serialize_size(char *buf, int start, int end) {
   memcpy(buf+start, &total, INT_32);
   return end;
 }
+
 
 int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash TSRMLS_DC) {
   zval **data;
