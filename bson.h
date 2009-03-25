@@ -32,9 +32,9 @@ int serialize_bool(char*, int*, zend_bool);
 int serialize_null(char*, int*);
 int serialize_long(char*, int*, long);
 
-int serialize_size(char*, int*);
+int serialize_size(char*, int, int);
 
-int zval_to_bson(char*, HashTable* TSRMLS_DC);
+int zval_to_bson(char*, int*, HashTable* TSRMLS_DC);
 
 int set_type(char*, int*, int);
 

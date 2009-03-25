@@ -28,22 +28,22 @@ extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
 
 // serialize a zval
-int zval_to_bson(char *buf, HashTable *arr_hash TSRMLS_DC) {
+int zval_to_bson(char *buf, int *pos, HashTable *arr_hash TSRMLS_DC) {
   zval **data;
   char *key;
   uint key_len;
   ulong index;
   zend_bool duplicate = 0;
   HashPosition pointer;
-  int num = 0;
+  int num = 0, start = *pos;
 
   // skip first 4 bytes to leave room for size
-  int pos = INT_32;
+  *(pos) += INT_32;
 
   if (zend_hash_num_elements(arr_hash) == 0) {
-    serialize_null(buf, &pos);
-    serialize_size(buf, &pos);
-    return pos;
+    serialize_null(buf, pos);
+    serialize_size(buf, start, *pos);
+    return *pos;
   }
  
   
@@ -68,39 +68,45 @@ int zval_to_bson(char *buf, HashTable *arr_hash TSRMLS_DC) {
       continue;
     }
 
-    serialize_element(buf, &pos, field_name, key_len, data TSRMLS_CC);
+    serialize_element(buf, pos, field_name, key_len, data TSRMLS_CC);
     efree(field_name);
   }
-  serialize_size(buf, &pos);
-  return num;
+  serialize_null(buf, pos);
+  serialize_size(buf, start, *pos);
+  return *pos;
 }
 
-int serialize_element(char *buf, int pos, char *name, int name_len, zval **data TSRMLS_DC) {
+int serialize_element(char *buf, int *pos, char *name, int name_len, zval **data TSRMLS_DC) {
   switch (Z_TYPE_PP(data)) {
   case IS_NULL:
-    set_type(buf, &pos, BSON_NULL);
-    serialize_string(buf, &pos, name, name_len);
-    serialize_null(buf, &pos);
+    set_type(buf, pos, BSON_NULL);
+    serialize_string(buf, pos, name, name_len);
+    serialize_null(buf, pos);
     break;
   case IS_LONG:
-    set_type(buf, &pos, BSON_LONG);
-    serialize_string(buf, &pos, name, name_len);
-    serialize_long(buf, &pos, Z_LVAL_PP(data));
+    set_type(buf, pos, BSON_LONG);
+    serialize_string(buf, pos, name, name_len);
+    serialize_long(buf, pos, Z_LVAL_PP(data));
     break;
   case IS_DOUBLE:
-    set_type(buf, &pos, BSON_DOUBLE);
-    serialize_string(buf, &pos, name, name_len);
-    serialize_double(buf, &pos, Z_DVAL_PP(data));
+    set_type(buf, pos, BSON_DOUBLE);
+    serialize_string(buf, pos, name, name_len);
+    serialize_double(buf, pos, Z_DVAL_PP(data));
     break;
   case IS_BOOL:
-    set_type(buf, &pos, BSON_BOOL);
-    serialize_string(buf, &pos, name, name_len);
-    serialize_bool(buf, &pos, Z_BVAL_PP(data));
+    set_type(buf, pos, BSON_BOOL);
+    serialize_string(buf, pos, name, name_len);
+    serialize_bool(buf, pos, Z_BVAL_PP(data));
     break;
   case IS_STRING: {
-    set_type(buf, &pos, BSON_STRING);
-    serialize_string(buf, &pos, name, name_len);
-    serialize_string(buf, &pos, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+    set_type(buf, pos, BSON_STRING);
+    serialize_string(buf, pos, name, name_len);
+
+    long length = Z_STRLEN_PP(data);
+    memcpy(buf+(*pos), &length, INT_32);
+    *(pos) = *pos + INT_32;
+
+    serialize_string(buf, pos, Z_STRVAL_PP(data), length);
     break;
   }
   default:
@@ -115,12 +121,11 @@ int set_type(char *buf, int *ppos, int type) {
 }
 
 int serialize_string(char *buf, int *ppos, char *str, int str_len) {
-  int pos = *ppos;
-  memcpy(buf+pos, str, str_len);
-  pos = pos+str_len;
+  memcpy(buf+(*ppos), str, str_len);
+  *(ppos) = *ppos + str_len;
   // add \0 at the end of the string
-  buf[pos] = 0;
-  return *(ppos) = pos + BYTE_8;
+  buf[*ppos] = 0;
+  return *(ppos) = *ppos + BYTE_8;
 }
 
 int serialize_long(char *buf, int *ppos, long num) {
@@ -139,16 +144,17 @@ int serialize_bool(char *buf, int *ppos, zend_bool b) {
 }
 
 int serialize_null(char *buf, int *ppos) {
-  memset(buf+(*ppos), 0, INT_32);
-  return *(ppos) = (*ppos) + INT_32;
+  buf[*ppos] = 0;
+  return *(ppos) = (*ppos) + BYTE_8;
 }
 
 /* the position is not increased, we are just filling
  * in the first 4 bytes with the size.
  */
-int serialize_size(char *buf, int *ppos) {
-  memcpy(buf, ppos, INT_32);
-  return *ppos;
+int serialize_size(char *buf, int start, int end) {
+  int total = end-start;
+  memcpy(buf+start, &total, INT_32);
+  return end;
 }
 
 int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash TSRMLS_DC) {
