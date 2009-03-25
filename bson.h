@@ -21,22 +21,26 @@
 
 #define BSON_DOUBLE 1
 #define BSON_STRING 2
+#define BSON_OBJECT 3
+#define BSON_ARRAY 4
 #define BSON_BOOL 8
 #define BSON_NULL 10
 #define BSON_LONG 16
 
+
 int serialize_element(char*, int*, char*, int, zval** TSRMLS_DC);
 int serialize_double(char*, int*, double);
 int serialize_string(char*, int*, char*, int);
-int serialize_bool(char*, int*, zend_bool);
-int serialize_null(char*, int*);
 int serialize_long(char*, int*, long);
 
 int serialize_size(char*, int, int);
 
-int zval_to_bson(char*, int*, HashTable* TSRMLS_DC);
+int set_byte(char*, int*, char);
+#define set_type(buf, pos, type) set_byte(buf, pos, (char)type)
+#define serialize_null(buf, pos) set_byte(buf, pos, (char)0)
+#define serialize_bool(buf, pos, b) set_byte(buf, pos, (char)b)
 
-int set_type(char*, int*, int);
+int zval_to_bson(char*, int*, HashTable* TSRMLS_DC);
 
 int php_array_to_bson(mongo::BSONObjBuilder*, HashTable* TSRMLS_DC);
 void bson_to_php_array(mongo::BSONObj*, zval* TSRMLS_DC);

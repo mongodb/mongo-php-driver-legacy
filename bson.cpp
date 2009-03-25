@@ -103,11 +103,18 @@ int serialize_element(char *buf, int *pos, char *name, int name_len, zval **data
     serialize_string(buf, pos, name, name_len);
 
     long length = Z_STRLEN_PP(data);
-    memcpy(buf+(*pos), &length, INT_32);
+    long length0 = length + BYTE_8;
+    memcpy(buf+(*pos), &length0, INT_32);
     *(pos) = *pos + INT_32;
 
     serialize_string(buf, pos, Z_STRVAL_PP(data), length);
     break;
+  }
+  case IS_ARRAY: {
+    set_type(buf, pos, BSON_OBJECT);
+    serialize_string(buf, pos, name, name_len);
+
+    zval_to_bson(buf, pos, Z_ARRVAL_PP(data) TSRMLS_CC);
   }
   default:
     return FAILURE;
@@ -115,9 +122,9 @@ int serialize_element(char *buf, int *pos, char *name, int name_len, zval **data
   return SUCCESS;
 }
 
-int set_type(char *buf, int *ppos, int type) {
-  buf[*ppos] = type;
-  return *(ppos) = (*ppos) + BYTE_8;
+int set_byte(char *buf, int *pos, char b) {
+  buf[*pos] = b;
+  return *(pos) = (*pos) + BYTE_8;
 }
 
 int serialize_string(char *buf, int *ppos, char *str, int str_len) {
@@ -136,16 +143,6 @@ int serialize_long(char *buf, int *ppos, long num) {
 int serialize_double(char *buf, int *ppos, double num) {
   memcpy(buf+(*ppos), &num, DOUBLE_64);
   return *(ppos) = (*ppos) + DOUBLE_64;
-}
-
-int serialize_bool(char *buf, int *ppos, zend_bool b) {
-  buf[*ppos] = b;
-  return *(ppos) = (*ppos) + BYTE_8;
-}
-
-int serialize_null(char *buf, int *ppos) {
-  buf[*ppos] = 0;
-  return *(ppos) = (*ppos) + BYTE_8;
 }
 
 /* the position is not increased, we are just filling
