@@ -27,6 +27,53 @@
 #define PHP_GRIDFILE_RES_NAME "gridfs file"
 #define PHP_GRIDFS_CHUNK_RES_NAME "gridfs file chunk"
 
+#define OP_REPLY  1
+#define OP_MSG 1000
+#define OP_UPDATE 2001
+#define OP_INSERT 2002
+#define OP_GET_BY_OID 2003
+#define OP_QUERY 2004
+#define OP_GET_MORE 2005 
+#define OP_DELETE 2006
+#define OP_KILL_CURSORS 2007 
+
+#define CREATE_INSERT_HEADER                                    \
+  mongo_msg_header header;                                      \
+  header.length = 0;                                            \
+  header.request_id = MonGlo(request_id)++;                     \
+  header.response_to = 0;                                       \
+  header.op = OP_INSERT;
+
+
+#define APPEND_HEADER(buf, pos)                         \
+  pos += INT_32;                                        \
+  memcpy(buf+pos, &(header.request_id), INT_32);        \
+  pos += INT_32;                                        \
+  memcpy(buf+pos, &(header.response_to), INT_32);       \
+  pos += INT_32;                                        \
+  memcpy(buf+pos, &(header.op), INT_32);                \
+  pos += INT_32;                                        \
+  memset(buf+pos, 0, INT_32);                           \
+  pos += INT_32;                                        
+
+
+#define APPEND_HEADER_NS(buf, pos, ns, ns_len)          \
+  APPEND_HEADER(buf, pos)                               \
+  memcpy(buf+pos, ns, ns_len);                          \
+  pos += ns_len + BYTE_8;
+
+
+
+typedef struct {
+  int socket;
+} mongo_link;
+
+typedef struct {
+  int length;
+  int request_id;
+  int response_to;
+  int op;
+} mongo_msg_header;
 
 PHP_MINIT_FUNCTION(mongo);
 PHP_MSHUTDOWN_FUNCTION(mongo);
@@ -51,10 +98,12 @@ long max_links,max_persistent;
 long allow_persistent; 
 bool auto_reconnect; 
 char *default_host; 
-long default_port; 
+long default_port;
+int request_id; 
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS
+#include <TSRM.h>
 # define MonGlo(v) TSRMG(mongo_globals_id, zend_mongo_globals *, v)
 #else
 # define MonGlo(v) (mongo_globals.v)

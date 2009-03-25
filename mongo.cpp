@@ -24,6 +24,7 @@
 
 #include <php.h>
 #include <php_ini.h>
+#include <sys/socket.h>
 #include <ext/standard/info.h>
 #include <mongo/client/dbclient.h>
 #include <mongo/client/gridfs.h>
@@ -148,14 +149,15 @@ static PHP_GINIT_FUNCTION(mongo){
   mongo_globals->auto_reconnect = false; 
   mongo_globals->default_host = "localhost"; 
   mongo_globals->default_port = 27017; 
+  mongo_globals->request_id = 3;
 }
 /* }}} */
 
-
 static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
-  mongo::DBClientBase *conn = (mongo::DBClientBase*)rsrc->ptr;
+  mongo_link *conn = (mongo_link*)rsrc->ptr;
   if( conn ) {
-    delete conn;
+    close(conn->socket);
+    efree(conn);
     if (rsrc->type == le_pconnection) {
       MonGlo(num_persistent)--;
     }
@@ -398,8 +400,9 @@ PHP_FUNCTION(mongo_insert) {
   zval *zconn, *zarray;
   char *collection;
   int collection_len;
-  mongo::BSONObjBuilder obj_builder;
-  mongo::DBClientBase *conn_ptr;
+  mongo_link *link;
+  char *buf = (char*)emalloc(1024);
+  int pos = 0, flags = 0;
 
   if (ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -410,16 +413,21 @@ PHP_FUNCTION(mongo_insert) {
     RETURN_FALSE;
   }
 
-  ZEND_FETCH_RESOURCE2(conn_ptr, mongo::DBClientBase*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  HashTable *php_array = Z_ARRVAL_P(zarray);
+  // creates an insert-style header
+  CREATE_INSERT_HEADER;
 
-  prep_obj_for_db(&obj_builder, php_array TSRMLS_CC);
-  php_array_to_bson(&obj_builder, php_array TSRMLS_CC);
+  // appends it to buf
+  APPEND_HEADER_NS(buf, pos, collection, collection_len);
 
-  conn_ptr->insert(collection, obj_builder.done());
+  // adds data
+  zval_to_bson(buf, &pos, Z_ARRVAL_P(zarray) TSRMLS_CC);
+  serialize_size(buf, 0, pos);
 
-  RETURN_TRUE;
+  // sends
+  RETVAL_BOOL(send(link->socket, buf, pos, flags)+1);
+  efree(buf);
 }
 /* }}} */
 
@@ -434,7 +442,7 @@ PHP_FUNCTION(mongo_batch_insert) {
     RETURN_FALSE;
   }
   else if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zarray) == FAILURE) {
-    zend_error( E_WARNING, "incorrect parameter types, expected mongo_insert( connection, string, array )" );
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_batch_insert( connection, string, array )" );
     RETURN_FALSE;
   }
 
@@ -545,12 +553,14 @@ PHP_FUNCTION( mongo_next ) {
 /* {{{ php_mongo_do_connect
  */
 static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
-  mongo::DBClientBase *conn;
+  mongo_link *conn;
   char *server, *uname, *pass, *key;
   zend_bool persistent, paired, lazy;
   int server_len, uname_len, pass_len, key_len;
   zend_rsrc_list_entry *le;
   string error;
+  struct sockaddr_in name;
+  struct hostent *hostinfo;
   
   int argc = ZEND_NUM_ARGS();
   if (argc != 6) {
@@ -578,30 +588,52 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
     RETURN_FALSE;
   }
 
-
-  if (persistent) {
+  /*  if (persistent) {
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
-    /* if a connection is found, return it */
+    // if a connection is found, return it 
     if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
       conn = (mongo::DBClientBase*)le->ptr;
       ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
       efree(key);
       return;
     }
-    /* if lazy and no connection was found, return */
+    // if lazy and no connection was found, return 
     else if(lazy) {
       efree(key);
       RETURN_NULL();
     }
     efree(key);
-  }
+  }*/
 
   if (server_len == 0) {
     zend_error( E_WARNING, "invalid host" );
     RETURN_FALSE;
   }
 
-  if (paired) {
+  name.sin_family = AF_INET;
+  name.sin_port = htons (27017);
+  hostinfo = gethostbyname(server);
+  if (hostinfo == NULL) {
+    zend_error (E_WARNING, "unknown host %s", server);
+    RETURN_FALSE;
+  }
+  name.sin_addr = *(struct in_addr*)hostinfo->h_addr;
+
+  int sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (sock < 0) {
+    zend_error (E_WARNING, "socket");
+    RETURN_FALSE;
+  }
+
+  int connected = connect(sock, (struct sockaddr*) &name, sizeof(name));
+  if (connected != 0) {
+    zend_error(E_WARNING, "error connecting");
+    RETURN_FALSE;
+  }
+  conn = (mongo_link*)emalloc(sizeof(mongo_link));
+  conn->socket = sock;
+
+  /*  if (paired) {
     conn = new mongo::DBClientPaired();
     if (!((mongo::DBClientPaired*)conn)->connect(server)) {
       zend_error(E_WARNING, "error connecting to pair");
@@ -613,7 +645,7 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
       zend_error(E_WARNING, "%s", error.c_str());
       RETURN_FALSE;
     }
-  }
+    }*/
   
   // store a reference in the persistence list
   if (persistent) {
