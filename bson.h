@@ -18,11 +18,13 @@
 #define INT_64 8
 #define DOUBLE_64 8
 #define BYTE_8 1
+#define OID_SIZE 12
 
 #define BSON_DOUBLE 1
 #define BSON_STRING 2
 #define BSON_OBJECT 3
 #define BSON_ARRAY 4
+#define BSON_ID 7
 #define BSON_BOOL 8
 #define BSON_NULL 10
 #define BSON_LONG 16
@@ -42,6 +44,7 @@ int set_byte(char*, int*, char);
 #define serialize_bool(buf, pos, b) set_byte(buf, pos, (char)b)
 
 int zval_to_bson(char*, int*, HashTable* TSRMLS_DC);
+char* bson_to_zval(char*, zval* TSRMLS_DC);
 
 int php_array_to_bson(mongo::BSONObjBuilder*, HashTable* TSRMLS_DC);
 void bson_to_php_array(mongo::BSONObj*, zval* TSRMLS_DC);

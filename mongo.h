@@ -40,12 +40,18 @@
 #define MSG_HEADER_SIZE 16
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
 
-#define CREATE_HEADER(opcode)                                   \
+#define _CREATE_HEADER(rid, rto, opcode)                        \
   mongo_msg_header header;                                      \
   header.length = 0;                                            \
-  header.request_id = MonGlo(request_id)++;                     \
-  header.response_to = 0;                                       \
+  header.request_id = rid;                                      \
+  header.response_to = rto;                                     \
   header.op = opcode;
+
+#define CREATE_RESPONSE_HEADER(rto, opcode)             \
+  _CREATE_HEADER(MonGlo(request_id)++, rto, opcode)
+
+#define CREATE_HEADER(opcode)                   \
+  CREATE_RESPONSE_HEADER(0, opcode)
 
 
 #define APPEND_HEADER(buf, pos)                         \
@@ -66,6 +72,14 @@
   pos += ns_len + BYTE_8;
 
 
+#define GET_RESPONSE(link, cursor)              \
+  get_reply(link, cursor)
+
+#define GET_RESPONSE_NS(link, cursor, nsp, nsp_len)      \
+  if (GET_RESPONSE(link, cursor) == SUCCESS) {           \
+    cursor->ns = nsp;                                    \
+    cursor->ns_len = nsp_len;                            \
+  }
 
 typedef struct {
   int socket;
@@ -79,11 +93,31 @@ typedef struct {
 } mongo_msg_header;
 
 typedef struct {
+  int ref_count;
+
+  // response header
+  mongo_msg_header header;
+  // connection
+  mongo_link link;
+  // collection namespace
+  char *ns;
+  int ns_len;
+
+  // response fields
   int flag;
-  long id;
+  long cursor_id;
   int start;
+
+  // number of results used
+  int at;
+  // number results returned
   int num;
+  // total number to return
+  int limit;
+
+  // results
   char *buf;
+  int buf_size;
   int pos;
 } mongo_cursor;
 
@@ -122,6 +156,7 @@ ZEND_END_MODULE_GLOBALS(mongo)
 #endif 
 
 static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS);
+static int get_reply(mongo_link*, mongo_cursor*);
 
 extern zend_module_entry mongo_module_entry;
 #define phpext_mongo_ptr &mongo_module_entry

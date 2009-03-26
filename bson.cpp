@@ -160,6 +160,90 @@ int serialize_size(char *buf, int start, int end) {
 }
 
 
+char *bson_to_zval(char *buf, zval *result TSRMLS_DC) {
+
+  int size;
+  memcpy(&size, buf, INT_32);
+  buf += INT_32;
+
+  char type;
+  while (type = *buf++) {
+    int name_len = 0;
+    // get field name
+    char name[64];
+    while (name[name_len++] = *buf++);
+    // move past \0 at end
+    name[name_len] = 0;
+
+    // get value
+    switch(type) {
+    case BSON_ID: {
+      zval *zoid;
+      MAKE_STD_ZVAL(zoid);
+      object_init_ex(zoid, mongo_id_class);
+      char *id = (char*)emalloc(12);
+      int i=0;
+      for(i=0;i<12;i++) {
+        *(id) = *buf++;
+      }
+      add_property_stringl(zoid, "id", id, 12, 1);
+      efree(id);
+      add_assoc_zval(result, name, zoid);
+      break;
+    }
+    case BSON_DOUBLE: {
+      double d;
+      memcpy(&d, buf, DOUBLE_64);
+      add_assoc_double(result, name, d);
+      buf += DOUBLE_64;
+      break;
+    }
+    case BSON_STRING: {
+      int len, duplicate = 1;
+      memcpy(&len, buf, INT_32);
+      buf += INT_32;
+ 
+      char str[len];
+      int i=0;
+      while (str[i++] = *buf++);
+      str[i] = 0;
+      add_assoc_stringl(result, name, str, len-1, duplicate);
+      break;
+    }
+    case BSON_OBJECT:
+    case BSON_ARRAY: {
+      zval *d;
+      ALLOC_INIT_ZVAL(d);
+      array_init(d);
+      bson_to_zval(buf, d TSRMLS_CC);
+      add_assoc_zval(result, name, d);
+      buf++;
+      break;
+    }
+    case BSON_BOOL: {
+      char d = *buf++;
+      add_assoc_bool(result, name, d);
+      break;
+    }
+    case BSON_NULL: {
+      add_assoc_null(result, name);
+      break;
+    }
+    case BSON_LONG: {
+      long d;
+      memcpy(&d, buf, INT_64);
+      add_assoc_long(result, name, d);
+      buf += INT_64;
+      break;
+    }
+    default: {
+      php_printf("type %d not supported\n", type);
+    }
+    }
+  }
+  return buf;
+}
+
 int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash TSRMLS_DC) {
   zval **data;
   char *key;
@@ -288,8 +372,8 @@ void bson_to_php_array(mongo::BSONObj *obj, zval *array TSRMLS_DC) {
       break;
     }
     case mongo::jstOID: {
-      zval *zoid = bson_to_zval_oid(elem.__oid() TSRMLS_CC);
-      add_assoc_zval(array, key, zoid);
+      //      zval *zoid = bson_to_zval_oid(elem.__oid() TSRMLS_CC);
+      //      add_assoc_zval(array, key, zoid);
       break;
     }
     case mongo::EOO: {
