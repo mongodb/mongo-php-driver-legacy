@@ -40,18 +40,19 @@
 #define MSG_HEADER_SIZE 16
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
 
-#define _CREATE_HEADER(rid, rto, opcode)                        \
+#define CREATE_MSG_HEADER(rid, rto, opcode)                     \
   mongo_msg_header header;                                      \
   header.length = 0;                                            \
   header.request_id = rid;                                      \
   header.response_to = rto;                                     \
   header.op = opcode;
 
-#define CREATE_RESPONSE_HEADER(rto, opcode)             \
-  _CREATE_HEADER(MonGlo(request_id)++, rto, opcode)
+#define CREATE_RESPONSE_HEADER(buf, pos, ns, ns_len, rto, opcode)       \
+  CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode);                 \
+  APPEND_HEADER_NS(buf, pos, ns, ns_len);
 
-#define CREATE_HEADER(opcode)                   \
-  CREATE_RESPONSE_HEADER(0, opcode)
+#define CREATE_HEADER(buf, pos, ns, ns_len, opcode)             \
+  CREATE_RESPONSE_HEADER(buf, pos, ns, ns_len, 0, opcode);                    
 
 
 #define APPEND_HEADER(buf, pos)                         \
@@ -70,7 +71,6 @@
   APPEND_HEADER(buf, pos)                               \
   memcpy(buf+pos, ns, ns_len);                          \
   pos += ns_len + BYTE_8;
-
 
 #define GET_RESPONSE(link, cursor)              \
   get_reply(link, cursor)
@@ -129,7 +129,6 @@ PHP_MINFO_FUNCTION(mongo);
 PHP_FUNCTION(mongo_connect);
 PHP_FUNCTION(mongo_close);
 PHP_FUNCTION(mongo_query);
-PHP_FUNCTION(mongo_find_one);
 PHP_FUNCTION(mongo_remove);
 PHP_FUNCTION(mongo_insert);
 PHP_FUNCTION(mongo_batch_insert);
@@ -157,6 +156,7 @@ ZEND_END_MODULE_GLOBALS(mongo)
 
 static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS);
 static int get_reply(mongo_link*, mongo_cursor*);
+static void kill_cursor(mongo_cursor* TSRMLS_DC);
 
 extern zend_module_entry mongo_module_entry;
 #define phpext_mongo_ptr &mongo_module_entry

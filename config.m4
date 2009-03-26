@@ -15,7 +15,7 @@ PHP_ARG_WITH(pcre, PCRE path,
 
 if test "$PHP_MONGO" != "no"; then
   AC_DEFINE(HAVE_MONGO, 1, [Whether you have Mongo extension])
-  PHP_NEW_EXTENSION(mongo, mongo.cpp mongo_types.cpp gridfs.cpp bson.cpp, $ext_shared)
+  PHP_NEW_EXTENSION(mongo, mongo.c mongo_types.cpp gridfs.cpp bson.cpp, $ext_shared)
 
   AC_MSG_CHECKING(for MongoDB install)
   for dir in $PHP_MONGODB /usr /usr/local /opt/mongo ~/mongo .; do
