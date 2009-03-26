@@ -109,8 +109,8 @@ PHP_FUNCTION( mongo_gridfs_store ) {
   mongo::BSONElement elem = obj.findElement( "_id" );
 
   delete f;
-  zval *ret = bson_to_zval_oid(elem.__oid() TSRMLS_CC);
-  RETURN_ZVAL( ret, 0, 1 );
+  //  zval *ret = bson_to_zval_oid(elem.__oid() TSRMLS_CC);
+  //RETURN_ZVAL( ret, 0, 1 );
 }
 /* }}} */
 

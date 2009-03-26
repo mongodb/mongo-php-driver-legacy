@@ -39,6 +39,7 @@
 
 #define MSG_HEADER_SIZE 16
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
+#define MAX_RESPONSE_LEN 65536
 
 #define CREATE_MSG_HEADER(rid, rto, opcode)                     \
   mongo_msg_header header;                                      \
@@ -68,9 +69,8 @@
 
 
 #define APPEND_HEADER_NS(buf, pos, ns, ns_len)          \
-  APPEND_HEADER(buf, pos)                               \
-  memcpy(buf+pos, ns, ns_len);                          \
-  pos += ns_len + BYTE_8;
+  APPEND_HEADER(buf, pos);                              \
+  serialize_string(buf, &pos, ns, ns_len);              
 
 #define GET_RESPONSE(link, cursor)              \
   get_reply(link, cursor)

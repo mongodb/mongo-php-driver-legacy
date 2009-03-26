@@ -24,9 +24,16 @@
 #define BSON_STRING 2
 #define BSON_OBJECT 3
 #define BSON_ARRAY 4
-#define BSON_ID 7
+#define BSON_BINARY 5
+#define BSON_UNDEF 6
+#define BSON_OID 7
 #define BSON_BOOL 8
+#define BSON_DATE 9
 #define BSON_NULL 10
+#define BSON_REGEX 11
+#define BSON_DBREF 12
+#define BSON_CODE__D 13
+#define BSON_CODE 15
 #define BSON_LONG 16
 
 
@@ -38,10 +45,10 @@ int serialize_int(char*, int*, int);
 
 int serialize_size(char*, int, int);
 
-int set_byte(char*, int*, char);
-#define set_type(buf, pos, type) set_byte(buf, pos, (char)type)
-#define serialize_null(buf, pos) set_byte(buf, pos, (char)0)
-#define serialize_bool(buf, pos, b) set_byte(buf, pos, (char)b)
+int serialize_byte(char*, int*, char);
+#define set_type(buf, pos, type) serialize_byte(buf, pos, (char)type)
+#define serialize_null(buf, pos) serialize_byte(buf, pos, (char)0)
+#define serialize_bool(buf, pos, b) serialize_byte(buf, pos, (char)b)
 
 int zval_to_bson(char*, int*, HashTable* TSRMLS_DC);
 char* bson_to_zval(char*, zval* TSRMLS_DC);

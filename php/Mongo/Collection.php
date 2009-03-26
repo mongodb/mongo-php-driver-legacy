@@ -160,9 +160,12 @@ class MongoCollection
      */
     function findOne($query = array()) 
     {
-        return mongo_find_one($this->db->connection, 
-                              (string)$this, 
-                              $query);
+        $cursor = $this->find($query)->limit(1);
+        if ($cursor->hasNext()) {
+          return $cursor->next();
+        } else {
+          return null;
+        }
     }
 
     /**

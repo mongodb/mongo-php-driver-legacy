@@ -116,13 +116,73 @@ int serialize_element(char *buf, int *pos, char *name, int name_len, zval **data
 
     zval_to_bson(buf, pos, Z_ARRVAL_PP(data) TSRMLS_CC);
   }
+  case IS_OBJECT: {
+    zend_class_entry *clazz = Z_OBJCE_PP( data );
+    /* check for defined classes */
+    // MongoId
+    if(clazz == mongo_id_class) {
+      set_type(buf, pos, BSON_OID);
+      serialize_string(buf, pos, name, name_len);
+      zval *zid = zend_read_property(mongo_id_class, *data, "id", 2, 0 TSRMLS_CC);
+      serialize_string(buf, pos, Z_STRVAL_P(zid), OID_SIZE);
+    }
+    // MongoDate
+    else if (clazz == mongo_date_class) {
+      set_type(buf, pos, BSON_DATE);
+      serialize_string(buf, pos, name, name_len);
+      zval *zid = zend_read_property(mongo_date_class, *data, "ms", 2, 0 TSRMLS_CC);
+      serialize_long(buf, pos, Z_LVAL_P(zid));
+    }
+    // MongoRegex
+    else if (clazz == mongo_regex_class) {
+      set_type(buf, pos, BSON_REGEX);
+      serialize_string(buf, pos, name, name_len);
+      zval *zid = zend_read_property(mongo_regex_class, *data, "regex", 5, 0 TSRMLS_CC);
+      serialize_string(buf, pos, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+      zid = zend_read_property(mongo_regex_class, *data, "flags", 5, 0 TSRMLS_CC);
+      serialize_string(buf, pos, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+    }
+    // MongoCode
+    else if (clazz == mongo_code_class) {
+      set_type(buf, pos, BSON_CODE);
+      serialize_string(buf, pos, name, name_len);
+
+      // save spot for size
+      int start = *pos;
+      *(pos) += INT_32;
+      zval *zid = zend_read_property(mongo_code_class, *data, "code", 4, 0 TSRMLS_CC);
+      // string size
+      serialize_int(buf, pos, Z_STRLEN_P(zid));
+      // string
+      serialize_string(buf, pos, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+      // scope
+      zid = zend_read_property(mongo_code_class, *data, "scope", 5, 0 TSRMLS_CC);
+      zval_to_bson(buf, pos, Z_ARRVAL_P(zid) TSRMLS_CC);
+
+      // get total size
+      serialize_size(buf, start, *pos);
+    }
+    // MongoBin
+    else if (clazz == mongo_bindata_class) {
+      set_type(buf, pos, BSON_BINARY);
+      serialize_string(buf, pos, name, name_len);
+
+      zval *zid = zend_read_property(mongo_bindata_class, *data, "length", 6, 0 TSRMLS_CC);
+      serialize_int(buf, pos, Z_LVAL_P(zid));
+      zid = zend_read_property(mongo_bindata_class, *data, "type", 4, 0 TSRMLS_CC);
+      serialize_byte(buf, pos, (char)Z_LVAL_P(zid));
+      zid = zend_read_property(mongo_bindata_class, *data, "bin", 3, 0 TSRMLS_CC);
+      serialize_string(buf, pos, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+    }
+    break;
+  }
   default:
     return FAILURE;
   }
   return SUCCESS;
 }
 
-int set_byte(char *buf, int *pos, char b) {
+int serialize_byte(char *buf, int *pos, char b) {
   buf[*pos] = b;
   return *(pos) = (*pos) + BYTE_8;
 }
@@ -177,7 +237,7 @@ char *bson_to_zval(char *buf, zval *result TSRMLS_DC) {
 
     // get value
     switch(type) {
-    case BSON_ID: {
+    case BSON_OID: {
       zval *zoid;
       MAKE_STD_ZVAL(zoid);
       object_init_ex(zoid, mongo_id_class);
@@ -220,11 +280,35 @@ char *bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       buf++;
       break;
     }
+    case BSON_BINARY: {
+      int len;
+      memcpy(&len, buf, INT_32);
+      buf += INT_32;
+
+      char type = *buf++;
+
+      char *bytes = (char*)emalloc(len);
+      int i=0;
+      for(i=0;i<len;i++) {
+        *(bytes) = *buf++;
+      }
+
+      zval *bin;
+      MAKE_STD_ZVAL(bin);
+      object_init_ex(bin, mongo_bindata_class);
+
+      add_property_long(bin, "length", len);
+      add_property_stringl(bin, "bin", bytes, len, 0);
+      add_property_long(bin, "type", type);
+      add_assoc_zval(result, name, bin);
+      break;
+    }
     case BSON_BOOL: {
       char d = *buf++;
       add_assoc_bool(result, name, d);
       break;
     }
+    case BSON_UNDEF:
     case BSON_NULL: {
       add_assoc_null(result, name);
       break;
@@ -236,6 +320,44 @@ char *bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       buf += INT_64;
       break;
     }
+    case BSON_DATE: {
+      long d;
+      memcpy(&d, buf, INT_64);
+      buf += INT_64;
+
+      zval *date;
+      MAKE_STD_ZVAL(date);
+      object_init_ex(date, mongo_date_class);
+
+      add_property_long(date, "ms", d);
+      add_assoc_zval(result, name, date);
+      break;
+    }
+    case BSON_REGEX: {
+      int max_regex = 128;
+      int max_flags = 16;
+      char regex[max_regex];
+      char flags[max_flags];
+
+      int regex_len = 0;
+      while (regex_len < max_regex && (regex[regex_len++] = *buf++));
+      regex[regex_len] = 0;
+      int flags_len = 0;
+      while (flags_len < max_flags && (flags[flags_len++] = *buf++));
+      flags[flags_len] = 0;
+
+      zval *zegex;
+      MAKE_STD_ZVAL(zegex);
+      object_init_ex(zegex, mongo_regex_class);
+
+      add_property_stringl(zegex, "regex", regex, regex_len, 1);
+      add_property_stringl(zegex, "flags", flags, flags_len, 1);
+      add_assoc_zval(result, name, zegex);
+
+      break;
+    }
+    case BSON_CODE: 
+    case BSON_CODE__D: 
     default: {
       php_printf("type %d not supported\n", type);
     }
@@ -244,146 +366,6 @@ char *bson_to_zval(char *buf, zval *result TSRMLS_DC) {
   return buf;
 }
 
-int php_array_to_bson( mongo::BSONObjBuilder *obj_builder, HashTable *arr_hash TSRMLS_DC) {
-  zval **data;
-  char *key;
-  uint key_len;
-  ulong index;
-  zend_bool duplicate = 0;
-  HashPosition pointer;
-  int num = 0;
-
-  if (zend_hash_num_elements(arr_hash) == 0) {
-    return num;
-  }
-
-  for(zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); 
-      zend_hash_get_current_data_ex(arr_hash, (void**) &data, &pointer) == SUCCESS; 
-      zend_hash_move_forward_ex(arr_hash, &pointer)) {
-
-    // increment number of fields
-    num++;
-
-    int key_type = zend_hash_get_current_key_ex(arr_hash, &key, &key_len, &index, duplicate, &pointer);
-    char *field_name;
-
-    if (key_type == HASH_KEY_IS_STRING) {
-      key_len = spprintf(&field_name, 0, "%s", key);
-    }
-    else if (key_type == HASH_KEY_IS_LONG) {
-      key_len = spprintf(&field_name, 0, "%ld", index);
-    }
-    else {
-      zend_error(E_WARNING, "key fail");
-      continue;
-    }
-
-    add_to_bson(obj_builder, field_name, data TSRMLS_CC);
-    efree(field_name);
-  }
-
-  return num;
-}
-
-void bson_to_php_array(mongo::BSONObj *obj, zval *array TSRMLS_DC) {
-  mongo::BSONObjIterator it = mongo::BSONObjIterator(*obj);
-  while (it.more()) {
-    mongo::BSONElement elem = it.next();
-
-    char *key = (char*)elem.fieldName();
-
-    switch( elem.type() ) {
-    case mongo::Undefined:
-    case mongo::jstNULL: {
-      add_assoc_null(array, key);
-      break;
-    }
-    case mongo::NumberInt: {
-      long num = (long)elem.number();
-      add_assoc_long(array, key, num);
-      break;
-    }
-    case mongo::NumberDouble: {
-      double num = elem.number();
-      add_assoc_double(array, key, num);
-      break;
-    }
-    case mongo::Bool: {
-      int b = elem.boolean();
-      add_assoc_bool(array, key, b);
-      break;
-    }
-    case mongo::String: {
-      char *value = (char*)elem.valuestr();
-      add_assoc_string(array, key, value, 1);
-      break;
-    }
-    case mongo::Date: {
-      zval *zdate = bson_to_zval_date(elem.date() TSRMLS_CC);
-      add_assoc_zval(array, key, zdate);
-      break;
-    }
-    case mongo::RegEx: {
-      zval *zre = bson_to_zval_regex((char*)elem.regex(), (char*)elem.regexFlags() TSRMLS_CC);
-      add_assoc_zval(array, key, zre);
-      break;
-    }
-    case mongo::BinData: {
-      int size;
-      char *bin = (char*)elem.binData(size);
-      int type = elem.binDataType();
-      zval *phpbin = bson_to_zval_bin(bin, size, type TSRMLS_CC);
-      add_assoc_zval(array, key, phpbin);
-      break;
-    }
-    case mongo::Code: {
-      zval *empty;
-      ALLOC_INIT_ZVAL(empty);
-      array_init(empty);
-
-      zval *zode = bson_to_zval_code(elem.valuestr(), empty TSRMLS_CC);
-      add_assoc_zval(array, key, zode);
-      break;
-    }
-    case mongo::CodeWScope: {
-      mongo::BSONObj bscope = elem.codeWScopeObject();
-      zval *scope;
-
-      ALLOC_INIT_ZVAL(scope);
-      array_init(scope);
-      bson_to_php_array(&bscope, scope TSRMLS_CC);
-
-      zval *zode = bson_to_zval_code(elem.codeWScopeCode(), scope TSRMLS_CC);
-
-      // get rid of extra reference to scope
-      zval_ptr_dtor(&scope);
-
-      add_assoc_zval(array, key, zode);
-      break;
-    }
-    case mongo::Array:
-    case mongo::Object: {
-      mongo::BSONObj temp = elem.embeddedObject();
-      zval *subarray;
-      ALLOC_INIT_ZVAL(subarray);
-      array_init(subarray);
-      bson_to_php_array(&temp, subarray TSRMLS_CC);
-      add_assoc_zval(array, key, subarray);
-      break;
-    }
-    case mongo::jstOID: {
-      //      zval *zoid = bson_to_zval_oid(elem.__oid() TSRMLS_CC);
-      //      add_assoc_zval(array, key, zoid);
-      break;
-    }
-    case mongo::EOO: {
-      break;
-    }
-    default:
-      zend_error(E_WARNING, "bson=>php: type %i not supported\n", elem.type());
-    }
-  }
-}
 
 int prep_obj_for_db(mongo::BSONObjBuilder *obj_builder, HashTable *php_array TSRMLS_DC) {
   zval **data;
@@ -398,87 +380,3 @@ int prep_obj_for_db(mongo::BSONObjBuilder *obj_builder, HashTable *php_array TSR
   return 0;
 }
 
-int add_to_bson(mongo::BSONObjBuilder *obj_builder, char *field_name, zval **data TSRMLS_DC) {
-  switch (Z_TYPE_PP(data)) {
-  case IS_NULL:
-    obj_builder->appendNull(field_name);
-    break;
-  case IS_LONG:
-    obj_builder->append(field_name, (int)Z_LVAL_PP(data));
-    break;
-  case IS_DOUBLE:
-    obj_builder->append(field_name, Z_DVAL_PP(data));
-    break;
-  case IS_BOOL:
-    obj_builder->append(field_name, Z_BVAL_PP(data));
-    break;
-  case IS_CONSTANT_ARRAY:
-  case IS_ARRAY: {
-    mongo::BSONObjBuilder subobj;
-    php_array_to_bson(&subobj, Z_ARRVAL_PP(data) TSRMLS_CC);
-    obj_builder->append(field_name, subobj.done());
-    break;
-  }
-  case IS_STRING: {
-    string s(Z_STRVAL_PP(data), Z_STRLEN_PP(data));
-    obj_builder->append(field_name, s);
-    break;
-  }
-  case IS_OBJECT: {
-    TSRMLS_FETCH();
-    zend_class_entry *clazz = Z_OBJCE_PP( data );
-    /* check for defined classes */
-    // MongoId
-    if(clazz == mongo_id_class) {
-      mongo::OID oid;
-      zval_to_bson_oid(data, &oid TSRMLS_CC);
-      obj_builder->appendOID(field_name, &oid); 
-    }
-    // MongoDate
-    else if (clazz == mongo_date_class) {
-      obj_builder->appendDate(field_name, zval_to_bson_date(data TSRMLS_CC)); 
-    }
-    else if (clazz == mongo_regex_class) {
-      char *re, *flags;
-      zval_to_bson_regex(data, &re, &flags TSRMLS_CC);
-      obj_builder->appendRegex(field_name, re, flags); 
-    }
-    // MongoCode
-    else if (clazz == mongo_code_class) {
-      char *code;
-      mongo::BSONObjBuilder scope;
-      zval_to_bson_code(data, &code, &scope TSRMLS_CC);
-      // add code & scope to obj_builder
-      obj_builder->appendCodeWScope(field_name, code, scope.done()); 
-
-    }
-    else if (clazz == mongo_bindata_class) {
-      char *bin;
-      int len;
-      switch(zval_to_bson_bin(data, &bin, &len TSRMLS_CC)) {
-      case 1:
-        obj_builder->appendBinData(field_name, len, mongo::Function, bin); 
-        break;
-      case 3:
-        obj_builder->appendBinData(field_name, len, mongo::bdtUUID, bin); 
-        break;
-      case 5:
-        obj_builder->appendBinData(field_name, len, mongo::MD5Type, bin); 
-        break;
-      case 128:
-        obj_builder->appendBinData(field_name, len, mongo::bdtCustom, bin); 
-        break;
-      default:
-        obj_builder->appendBinData(field_name, len, mongo::ByteArray, bin); 
-        break;
-      }
-    }
-    break;
-  }
-  case IS_RESOURCE:
-  case IS_CONSTANT:
-  default:
-    return FAILURE;
-  }
-  return SUCCESS;
-}

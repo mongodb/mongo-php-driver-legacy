@@ -332,7 +332,7 @@ PHP_FUNCTION(mongo_query) {
   
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  // creates an insert-style header
+  // creates an query header
   CREATE_HEADER(buf, pos, collection, collection_len, OP_QUERY);
 
   serialize_int(buf, &pos, skip);
@@ -349,7 +349,9 @@ PHP_FUNCTION(mongo_query) {
   }
 
   mongo_cursor *cursor = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
+  cursor->buf = 0;
   GET_RESPONSE_NS(link, cursor, collection, collection_len);
+
   cursor->limit = limit;
 
   ZEND_REGISTER_RESOURCE(return_value, cursor, le_db_cursor);
@@ -359,8 +361,19 @@ PHP_FUNCTION(mongo_query) {
 
 static int get_reply(mongo_link *link, mongo_cursor *cursor) {
   int flags = 0;
+  if(cursor->buf) {
+    efree(cursor->buf);
+  }
+
   if (recv(link->socket, &cursor->header.length, INT_32, flags) == -1) {
     perror("recv");
+    return FAILURE;
+  }
+
+  // make sure we're not getting crazy data
+  if (cursor->header.length > MAX_RESPONSE_LEN ||
+      cursor->header.length <= REPLY_HEADER_SIZE) {
+    zend_error(E_WARNING, "bad response length: %d\n", cursor->header.length);
     return FAILURE;
   }
 
@@ -389,19 +402,9 @@ static int get_reply(mongo_link *link, mongo_cursor *cursor) {
   r += INT_32;
 
   cursor->buf_size = cursor->header.length-(REPLY_HEADER_SIZE-INT_32);
-  if(cursor->buf) {
-    efree(cursor->buf);
-  }
   cursor->buf = (char*)emalloc(cursor->buf_size);
   memcpy(cursor->buf, r, cursor->buf_size);
-  /*
-  php_printf("size: %d\n", cursor->buf_size);
-  char *temp = cursor->buf;
-  int i;
-  for(i=0;i<cursor->buf_size; i++) {
-    php_printf("%d\n", *temp++);
-  }
-  */
+
   efree(response);
 
   cursor->pos = 0;
@@ -587,13 +590,14 @@ PHP_FUNCTION( mongo_has_next ) {
   serialize_int(buf, &pos, cursor->limit);
   serialize_long(buf, &pos, cursor->cursor_id);
   serialize_size(buf, 0, pos);
+
   if (send(cursor->link.socket, buf, pos, flags) == -1) {
     php_printf("unable to fetch more");
     efree(buf);
     RETURN_FALSE;
   }
-  efree(buf);
 
+  efree(buf);
   GET_RESPONSE(&cursor->link, cursor);
 
   if (cursor->num > 0) {
@@ -634,6 +638,15 @@ PHP_FUNCTION( mongo_next ) {
     zval *elem;
     ALLOC_INIT_ZVAL(elem);
     array_init(elem);
+    /*  
+    //  php_printf("size: %d\n", pos);
+  //char *temp = buf;
+  int i;
+  for(i=0;i<50; i++) {
+    php_printf("%d\n", *temp++);
+  }
+  temp = cursor->buf;
+    */
     temp = bson_to_zval(temp, elem TSRMLS_CC);
 
     // increment cursor position
@@ -684,11 +697,11 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
     RETURN_FALSE;
   }
 
-  /*  if (persistent) {
+  if (persistent) {
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
     // if a connection is found, return it 
     if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
-      conn = (mongo::DBClientBase*)le->ptr;
+      conn = (mongo_link*)le->ptr;
       ZEND_REGISTER_RESOURCE(return_value, conn, le_pconnection);
       efree(key);
       return;
@@ -699,18 +712,36 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
       RETURN_NULL();
     }
     efree(key);
-  }*/
+  }
 
   if (server_len == 0) {
     zend_error( E_WARNING, "invalid host" );
     RETURN_FALSE;
   }
 
+  // extract host:port
+  char *colon = strchr(server, ':');
+  char *host;
+  int port;
+  if (colon) {
+    int host_len = colon-server+1;
+    host = (char*)emalloc(host_len);
+    memcpy(host, server, host_len-1);
+    host[host_len-1] = 0;
+    port = atoi(colon+1);
+  }
+  else {
+    host = (char*)emalloc(strlen(server));
+    memcpy(host, server, strlen(server));
+    port = 27017;
+  }
+
   name.sin_family = AF_INET;
-  name.sin_port = htons (27017);
-  hostinfo = gethostbyname(server);
+  name.sin_port = htons(port);
+  hostinfo = gethostbyname(host);
   if (hostinfo == NULL) {
-    zend_error (E_WARNING, "unknown host %s", server);
+    zend_error (E_WARNING, "unknown host %s", host);
+    efree(host);
     RETURN_FALSE;
   }
   name.sin_addr = *(struct in_addr*)hostinfo->h_addr;
@@ -718,16 +749,19 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
   int sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (sock < 0) {
     zend_error (E_WARNING, "socket");
+    efree(host);
     RETURN_FALSE;
   }
 
   int connected = connect(sock, (struct sockaddr*) &name, sizeof(name));
   if (connected != 0) {
     zend_error(E_WARNING, "error connecting");
+    efree(host);
     RETURN_FALSE;
   }
   conn = (mongo_link*)emalloc(sizeof(mongo_link));
   conn->socket = sock;
+  efree(host);
 
   /*  if (paired) {
     conn = new mongo::DBClientPaired();
