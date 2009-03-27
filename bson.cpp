@@ -251,7 +251,7 @@ char* serialize_size(char *start, char *end) {
 }
 
 
-char *bson_to_zval(char *buf, zval *result TSRMLS_DC) {
+char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
 
   int size;
   memcpy(&size, buf, INT_32);

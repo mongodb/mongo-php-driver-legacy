@@ -124,6 +124,7 @@ typedef struct {
 
   // results
   char *buf;
+  char *buf_start;
   int buf_size;
   int pos;
 } mongo_cursor;

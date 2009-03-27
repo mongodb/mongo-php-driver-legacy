@@ -186,12 +186,13 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
 
   // std header
   CREATE_MSG_HEADER(0, MonGlo(request_id)++, OP_KILL_CURSORS);
+  APPEND_HEADER(buf);
   // 0 - reserved
-  serialize_int(buf, end, 0);
+  buf = serialize_int(buf, end, 0);
   // # of cursors
-  serialize_int(buf, end, 1);
+  buf = serialize_int(buf, end, 1);
   // cursor ids
-  serialize_long(buf, end, cursor->cursor_id);
+  buf = serialize_long(buf, end, cursor->cursor_id);
   serialize_size(start, buf);
 
   send(cursor->link.socket, start, buf-start, flags)+1;
@@ -204,8 +205,8 @@ static void php_cursor_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
     kill_cursor(cursor TSRMLS_CC);
 
     // free mem
-    if (cursor->buf) {
-      efree(cursor->buf);
+    if (cursor->buf_start) {
+      efree(cursor->buf_start);
     }
     efree(cursor);
   }
@@ -355,7 +356,7 @@ PHP_FUNCTION(mongo_query) {
   }
 
   mongo_cursor *cursor = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
-  cursor->buf = 0;
+  cursor->buf_start = 0;
   GET_RESPONSE_NS(link, cursor, collection, collection_len);
   cursor->limit = limit;
 
@@ -366,8 +367,8 @@ PHP_FUNCTION(mongo_query) {
 
 static int get_reply(mongo_link *link, mongo_cursor *cursor) {
   int flags = 0;
-  if(cursor->buf) {
-    efree(cursor->buf);
+  if(cursor->buf_start) {
+    efree(cursor->buf_start);
   }
 
   if (recv(link->socket, &cursor->header.length, INT_32, flags) == -1) {
@@ -377,42 +378,38 @@ static int get_reply(mongo_link *link, mongo_cursor *cursor) {
 
   // make sure we're not getting crazy data
   if (cursor->header.length > MAX_RESPONSE_LEN ||
-      cursor->header.length <= REPLY_HEADER_SIZE) {
+      cursor->header.length < REPLY_HEADER_SIZE) {
     zend_error(E_WARNING, "bad response length: %d\n", cursor->header.length);
     return FAILURE;
   }
 
+  // create buf
   cursor->header.length -= INT_32;
-  char *response = (char*)emalloc(cursor->header.length);
-  if (recv(link->socket, response, cursor->header.length, flags) == -1) {
+  cursor->buf = (char*)emalloc(cursor->header.length);
+  // point buf_start at buf's first char
+  cursor->buf_start = cursor->buf;
+
+  if (recv(link->socket, cursor->buf, cursor->header.length, flags) == -1) {
     perror("recv");
     return FAILURE;
   }
-  char *r = response;
 
-  memcpy(&cursor->header.request_id, r, INT_32);
-  r += INT_32;
-  memcpy(&cursor->header.response_to, r, INT_32);
-  r += INT_32;
-  memcpy(&cursor->header.op, r, INT_32);
-  r += INT_32;
+  memcpy(&cursor->header.request_id, cursor->buf, INT_32);
+  cursor->buf += INT_32;
+  memcpy(&cursor->header.response_to, cursor->buf, INT_32);
+  cursor->buf += INT_32;
+  memcpy(&cursor->header.op, cursor->buf, INT_32);
+  cursor->buf += INT_32;
 
-  memcpy(&cursor->flag, r, INT_32);
-  r += INT_32;
-  memcpy(&cursor->cursor_id, r, INT_64);
-  r += INT_64;
-  memcpy(&cursor->start, r, INT_32);
-  r += INT_32;
-  memcpy(&cursor->num, r, INT_32);
-  r += INT_32;
+  memcpy(&cursor->flag, cursor->buf, INT_32);
+  cursor->buf += INT_32;
+  memcpy(&cursor->cursor_id, cursor->buf, INT_64);
+  cursor->buf += INT_64;
+  memcpy(&cursor->start, cursor->buf, INT_32);
+  cursor->buf += INT_32;
+  memcpy(&cursor->num, cursor->buf, INT_32);
+  cursor->buf += INT_32;
 
-  cursor->buf_size = cursor->header.length-(REPLY_HEADER_SIZE-INT_32);
-  cursor->buf = (char*)emalloc(cursor->buf_size);
-  memcpy(cursor->buf, r, cursor->buf_size);
-
-  efree(response);
-
-  cursor->pos = 0;
   cursor->at = 0;
 
   return SUCCESS;
@@ -446,13 +443,13 @@ PHP_FUNCTION(mongo_remove) {
   HashTable *array = Z_ARRVAL_P(zarray);
   CREATE_HEADER(buf, end, collection, collection_len, OP_DELETE);
 
-  if (justOne || zend_hash_find(array, "_id", 4, NULL) == FAILURE) {
+  if (justOne || zend_hash_find(array, "_id", 4, NULL) == SUCCESS) {
     mflags |= 1;
   }
 
-  serialize_int(buf, end, mflags);
-  zval_to_bson(buf, end, array TSRMLS_CC);
-  serialize_size(start, buf);
+  buf = serialize_int(buf, end, mflags);
+  buf = zval_to_bson(buf, end, array TSRMLS_CC);
+  buf = serialize_size(start, buf);
 
   int sent = send(link->socket, start, buf-start, flags)+1;
   efree(start);
@@ -532,7 +529,7 @@ PHP_FUNCTION(mongo_batch_insert) {
       zend_hash_move_forward_ex(php_array, &pointer)) {
 
     char *istart = buf;
-    zval_to_bson(buf, end, Z_ARRVAL_PP(data) TSRMLS_CC);
+    buf = zval_to_bson(buf, end, Z_ARRVAL_PP(data) TSRMLS_CC);
     serialize_size(istart, buf);
   }
 
@@ -566,9 +563,9 @@ PHP_FUNCTION(mongo_update) {
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   CREATE_HEADER(buf, end, collection, collection_len, OP_UPDATE);
-  serialize_int(buf, end, zupsert);
-  zval_to_bson(buf, end, Z_ARRVAL_P(zquery) TSRMLS_CC);
-  zval_to_bson(buf, end, Z_ARRVAL_P(zobj) TSRMLS_CC);
+  buf = serialize_int(buf, end, zupsert);
+  buf = zval_to_bson(buf, end, Z_ARRVAL_P(zquery) TSRMLS_CC);
+  buf = zval_to_bson(buf, end, Z_ARRVAL_P(zobj) TSRMLS_CC);
   serialize_size(start, buf);
 
   RETVAL_BOOL(send(link->socket, start, buf-start, flags)+1);
@@ -577,7 +574,7 @@ PHP_FUNCTION(mongo_update) {
 /* }}} */
 
 
-/* {{{ mongo_has_next(resource cursor) 
+/* {{{ mongo_has_next 
  */
 PHP_FUNCTION( mongo_has_next ) {
   zval *zcursor;
@@ -595,7 +592,7 @@ PHP_FUNCTION( mongo_has_next ) {
 
   cursor = (mongo_cursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
 
-  if (cursor->at <= cursor->num) {
+  if (cursor->at < cursor->num) {
     RETURN_TRUE;
   }
 
@@ -603,12 +600,12 @@ PHP_FUNCTION( mongo_has_next ) {
   char *start = buf;
   char *end = buf+size;
   CREATE_RESPONSE_HEADER(buf, end, cursor->ns, cursor->ns_len, cursor->header.request_id, OP_REPLY);
-  serialize_int(buf, end, cursor->limit);
-  serialize_long(buf, end, cursor->cursor_id);
-  serialize_size(start, buf);
+  buf = serialize_int(buf, end, cursor->limit);
+  buf = serialize_long(buf, end, cursor->cursor_id);
+  buf = serialize_size(start, buf);
 
+  // fails if we're out of elems
   if (send(cursor->link.socket, start, buf-start, flags) == -1) {
-    php_printf("unable to fetch more");
     efree(start);
     RETURN_FALSE;
   }
@@ -645,15 +642,24 @@ PHP_FUNCTION( mongo_next ) {
   cursor = (mongo_cursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
 
   if (cursor->at >= cursor->num) {
-    efree(cursor->buf);
     GET_RESPONSE(&cursor->link, cursor);
   }
 
   if (cursor->at < cursor->num) {
-    char *temp = cursor->buf+cursor->pos;
     zval *elem;
     ALLOC_INIT_ZVAL(elem);
     array_init(elem);
+    cursor->buf = bson_to_zval(cursor->buf, elem TSRMLS_CC);
+
+    // increment cursor position
+    cursor->at++;
+
+    RETURN_ZVAL(elem, 0, 1);
+  }
+  RETURN_NULL();
+}
+/* }}} */
+
     /*  
     //  php_printf("size: %d\n", pos);
   //char *temp = buf;
@@ -662,17 +668,6 @@ PHP_FUNCTION( mongo_next ) {
     php_printf("%d\n", *temp++);
   }
     */
-    temp = bson_to_zval(temp, elem TSRMLS_CC);
-
-    // increment cursor position
-    cursor->pos = temp - cursor->buf;
-    cursor->at++;
-    RETURN_ZVAL(elem, 0, 1);
-  }
-  RETURN_NULL();
-}
-/* }}} */
-
 
 /* {{{ php_mongo_do_connect
  */
