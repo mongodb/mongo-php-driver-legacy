@@ -39,6 +39,7 @@
 
 #define MSG_HEADER_SIZE 16
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
+#define INITIAL_BUF_SIZE 2048
 #define MAX_RESPONSE_LEN 65536
 
 #define CREATE_MSG_HEADER(rid, rto, opcode)                     \
@@ -48,29 +49,29 @@
   header.response_to = rto;                                     \
   header.op = opcode;
 
-#define CREATE_RESPONSE_HEADER(buf, pos, ns, ns_len, rto, opcode)       \
+#define CREATE_RESPONSE_HEADER(buf, size, ns, ns_len, rto, opcode)       \
   CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode);                 \
-  APPEND_HEADER_NS(buf, pos, ns, ns_len);
+  APPEND_HEADER_NS(buf, size, ns, ns_len);
 
-#define CREATE_HEADER(buf, pos, ns, ns_len, opcode)             \
-  CREATE_RESPONSE_HEADER(buf, pos, ns, ns_len, 0, opcode);                    
-
-
-#define APPEND_HEADER(buf, pos)                         \
-  pos += INT_32;                                        \
-  memcpy(buf+pos, &(header.request_id), INT_32);        \
-  pos += INT_32;                                        \
-  memcpy(buf+pos, &(header.response_to), INT_32);       \
-  pos += INT_32;                                        \
-  memcpy(buf+pos, &(header.op), INT_32);                \
-  pos += INT_32;                                        \
-  memset(buf+pos, 0, INT_32);                           \
-  pos += INT_32;                                        
+#define CREATE_HEADER(buf, size, ns, ns_len, opcode)             \
+  CREATE_RESPONSE_HEADER(buf, size, ns, ns_len, 0, opcode);                    
 
 
-#define APPEND_HEADER_NS(buf, pos, ns, ns_len)          \
-  APPEND_HEADER(buf, pos);                              \
-  serialize_string(buf, &pos, ns, ns_len);              
+#define APPEND_HEADER(buf)                              \
+  buf += INT_32;                                        \
+  memcpy(buf, &(header.request_id), INT_32);            \
+  buf += INT_32;                                        \
+  memcpy(buf, &(header.response_to), INT_32);           \
+  buf += INT_32;                                        \
+  memcpy(buf, &(header.op), INT_32);                    \
+  buf += INT_32;                                        \
+  memset(buf, 0, INT_32);                               \
+  buf += INT_32;                                        
+
+
+#define APPEND_HEADER_NS(buf, size, ns, ns_len)         \
+  APPEND_HEADER(buf);                                   \
+  buf = serialize_string(buf, size, ns, ns_len);              
 
 #define GET_RESPONSE(link, cursor)              \
   get_reply(link, cursor)

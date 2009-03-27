@@ -19,6 +19,7 @@
 #include <mongo/client/dbclient.h>
 
 #include "bson.h"
+#include "mongo.h"
 #include "mongo_types.h"
 
 extern zend_class_entry *mongo_bindata_class;
@@ -28,22 +29,28 @@ extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
 
 // serialize a zval
-int zval_to_bson(char *buf, int *pos, HashTable *arr_hash TSRMLS_DC) {
+char* zval_to_bson(char *buf, char *size, HashTable *arr_hash TSRMLS_DC) {
   zval **data;
   char *key;
   uint key_len;
   ulong index;
   zend_bool duplicate = 0;
   HashPosition pointer;
-  int num = 0, start = *pos;
+  int num = 0;
+  char *start = buf;
+
+  // check buf size
+  if(size-buf < 5) {
+    size = resize_buf(buf, size);
+  }
 
   // skip first 4 bytes to leave room for size
-  *(pos) += INT_32;
+  buf += INT_32;
 
   if (zend_hash_num_elements(arr_hash) == 0) {
-    serialize_null(buf, pos);
-    serialize_size(buf, start, *pos);
-    return *pos;
+    buf = serialize_null(buf, size);
+    buf = serialize_size(start, buf);
+    return buf;
   }
  
   
@@ -68,154 +75,180 @@ int zval_to_bson(char *buf, int *pos, HashTable *arr_hash TSRMLS_DC) {
       continue;
     }
 
-    serialize_element(buf, pos, field_name, key_len, data TSRMLS_CC);
+    if(size-buf < key_len+2) {
+      size = resize_buf(buf, size);
+    }
+    buf = serialize_element(buf, size, field_name, key_len, data TSRMLS_CC);
     efree(field_name);
   }
-  serialize_null(buf, pos);
-  serialize_size(buf, start, *pos);
-  return *pos;
+  buf = serialize_null(buf, size);
+  buf = serialize_size(start, buf);
+  return buf;
 }
 
-int serialize_element(char *buf, int *pos, char *name, int name_len, zval **data TSRMLS_DC) {
+char* serialize_element(char *buf, char *size, char *name, int name_len, zval **data TSRMLS_DC) {
+
   switch (Z_TYPE_PP(data)) {
   case IS_NULL:
-    set_type(buf, pos, BSON_NULL);
-    serialize_string(buf, pos, name, name_len);
-    serialize_null(buf, pos);
+    buf = set_type(buf, size, BSON_NULL);
+    buf = serialize_string(buf, size, name, name_len);
+    buf = serialize_null(buf, size);
     break;
   case IS_LONG:
-    set_type(buf, pos, BSON_LONG);
-    serialize_string(buf, pos, name, name_len);
-    serialize_long(buf, pos, Z_LVAL_PP(data));
+    buf = set_type(buf, size, BSON_LONG);
+    buf = serialize_string(buf, size, name, name_len);
+    buf = serialize_long(buf, size, Z_LVAL_PP(data));
     break;
   case IS_DOUBLE:
-    set_type(buf, pos, BSON_DOUBLE);
-    serialize_string(buf, pos, name, name_len);
-    serialize_double(buf, pos, Z_DVAL_PP(data));
+    buf = set_type(buf, size, BSON_DOUBLE);
+    buf = serialize_string(buf, size, name, name_len);
+    buf = serialize_double(buf, size, Z_DVAL_PP(data));
     break;
   case IS_BOOL:
-    set_type(buf, pos, BSON_BOOL);
-    serialize_string(buf, pos, name, name_len);
-    serialize_bool(buf, pos, Z_BVAL_PP(data));
+    buf = set_type(buf, size, BSON_BOOL);
+    buf = serialize_string(buf, size, name, name_len);
+    buf = serialize_bool(buf, size, Z_BVAL_PP(data));
     break;
   case IS_STRING: {
-    set_type(buf, pos, BSON_STRING);
-    serialize_string(buf, pos, name, name_len);
+    buf = set_type(buf, size, BSON_STRING);
+    buf = serialize_string(buf, size, name, name_len);
 
+    //while(1)kiss(kristina);
     long length = Z_STRLEN_PP(data);
     long length0 = length + BYTE_8;
-    memcpy(buf+(*pos), &length0, INT_32);
-    *(pos) = *pos + INT_32;
+    memcpy(buf, &length0, INT_32);
+    buf += INT_32;
 
-    serialize_string(buf, pos, Z_STRVAL_PP(data), length);
+    buf = serialize_string(buf, size, Z_STRVAL_PP(data), length);
     break;
   }
   case IS_ARRAY: {
-    set_type(buf, pos, BSON_OBJECT);
-    serialize_string(buf, pos, name, name_len);
+    buf = set_type(buf, size, BSON_OBJECT);
+    buf = serialize_string(buf, size, name, name_len);
 
-    zval_to_bson(buf, pos, Z_ARRVAL_PP(data) TSRMLS_CC);
+    buf = zval_to_bson(buf, size, Z_ARRVAL_PP(data) TSRMLS_CC);
   }
   case IS_OBJECT: {
     zend_class_entry *clazz = Z_OBJCE_PP( data );
     /* check for defined classes */
     // MongoId
     if(clazz == mongo_id_class) {
-      set_type(buf, pos, BSON_OID);
-      serialize_string(buf, pos, name, name_len);
+      buf = set_type(buf, size, BSON_OID);
+      buf = serialize_string(buf, size, name, name_len);
       zval *zid = zend_read_property(mongo_id_class, *data, "id", 2, 0 TSRMLS_CC);
-      serialize_string(buf, pos, Z_STRVAL_P(zid), OID_SIZE);
+      buf = serialize_string(buf, size, Z_STRVAL_P(zid), OID_SIZE);
     }
     // MongoDate
     else if (clazz == mongo_date_class) {
-      set_type(buf, pos, BSON_DATE);
-      serialize_string(buf, pos, name, name_len);
+      buf = set_type(buf, size, BSON_DATE);
+      buf = serialize_string(buf, size, name, name_len);
       zval *zid = zend_read_property(mongo_date_class, *data, "ms", 2, 0 TSRMLS_CC);
-      serialize_long(buf, pos, Z_LVAL_P(zid));
+      buf = serialize_long(buf, size, Z_LVAL_P(zid));
     }
     // MongoRegex
     else if (clazz == mongo_regex_class) {
-      set_type(buf, pos, BSON_REGEX);
-      serialize_string(buf, pos, name, name_len);
+      buf = set_type(buf, size, BSON_REGEX);
+      buf = serialize_string(buf, size, name, name_len);
       zval *zid = zend_read_property(mongo_regex_class, *data, "regex", 5, 0 TSRMLS_CC);
-      serialize_string(buf, pos, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+      buf = serialize_string(buf, size, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
       zid = zend_read_property(mongo_regex_class, *data, "flags", 5, 0 TSRMLS_CC);
-      serialize_string(buf, pos, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+      buf = serialize_string(buf, size, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
     }
     // MongoCode
     else if (clazz == mongo_code_class) {
-      set_type(buf, pos, BSON_CODE);
-      serialize_string(buf, pos, name, name_len);
+      buf = set_type(buf, size, BSON_CODE);
+      buf = serialize_string(buf, size, name, name_len);
 
       // save spot for size
-      int start = *pos;
-      *(pos) += INT_32;
+      char* start = buf;
+      buf += INT_32;
       zval *zid = zend_read_property(mongo_code_class, *data, "code", 4, 0 TSRMLS_CC);
       // string size
-      serialize_int(buf, pos, Z_STRLEN_P(zid));
+      buf = serialize_int(buf, size, Z_STRLEN_P(zid));
       // string
-      serialize_string(buf, pos, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+      buf = serialize_string(buf, size, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
       // scope
       zid = zend_read_property(mongo_code_class, *data, "scope", 5, 0 TSRMLS_CC);
-      zval_to_bson(buf, pos, Z_ARRVAL_P(zid) TSRMLS_CC);
+      buf = zval_to_bson(buf, size, Z_ARRVAL_P(zid) TSRMLS_CC);
 
       // get total size
-      serialize_size(buf, start, *pos);
+      serialize_size(start, buf);
     }
     // MongoBin
     else if (clazz == mongo_bindata_class) {
-      set_type(buf, pos, BSON_BINARY);
-      serialize_string(buf, pos, name, name_len);
+      buf = set_type(buf, size, BSON_BINARY);
+      buf = serialize_string(buf, size, name, name_len);
 
       zval *zid = zend_read_property(mongo_bindata_class, *data, "length", 6, 0 TSRMLS_CC);
-      serialize_int(buf, pos, Z_LVAL_P(zid));
+      buf = serialize_int(buf, size, Z_LVAL_P(zid));
       zid = zend_read_property(mongo_bindata_class, *data, "type", 4, 0 TSRMLS_CC);
-      serialize_byte(buf, pos, (char)Z_LVAL_P(zid));
+      buf = serialize_byte(buf, size, (char)Z_LVAL_P(zid));
       zid = zend_read_property(mongo_bindata_class, *data, "bin", 3, 0 TSRMLS_CC);
-      serialize_string(buf, pos, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+      buf = serialize_string(buf, size, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
     }
     break;
   }
-  default:
-    return FAILURE;
   }
-  return SUCCESS;
+  return buf;
 }
 
-int serialize_byte(char *buf, int *pos, char b) {
-  buf[*pos] = b;
-  return *(pos) = (*pos) + BYTE_8;
+char *resize_buf(char *buf, char *size) {
+  int total = size - buf;
+  total = total < GROW_SLOWLY ? total*2 : total+INITIAL_BUF_SIZE;
+
+  buf = (char*)erealloc(buf, total);
+  return buf;
 }
 
-int serialize_string(char *buf, int *ppos, char *str, int str_len) {
-  memcpy(buf+(*ppos), str, str_len);
-  *(ppos) = *ppos + str_len;
+char* serialize_byte(char *buf, char *size, char b) {
+  php_printf("type: %d\n", b);
+  if(size-buf < 1) {
+    size = resize_buf(buf, size);
+  }
+  *(buf) = b;
+  return buf += 1;
+}
+
+char* serialize_string(char *buf, char *size, char *str, int str_len) {
+  if(size-buf < str_len+1) {
+    size = resize_buf(buf, size);
+  }
+  memcpy(buf, str, str_len);
   // add \0 at the end of the string
-  buf[*ppos] = 0;
-  return *(ppos) = *ppos + BYTE_8;
+  buf[str_len] = 0;
+  return buf += str_len + 1;
 }
 
-int serialize_int(char *buf, int *pos, int num) {
-  memcpy(buf+(*pos), &num, INT_32);
-  return *(pos) = (*pos) + INT_32;
+char* serialize_int(char *buf, char *size, int num) {
+  if(size-buf < INT_32) {
+    size = resize_buf(buf, size);
+  }
+  memcpy(buf, &num, INT_32);
+  return buf += INT_32;
 }
 
-int serialize_long(char *buf, int *ppos, long num) {
-  memcpy(buf+(*ppos), &num, INT_64);
-  return *(ppos) = (*ppos) + INT_64;
+char* serialize_long(char *buf, char *size, long num) {
+  if(size-buf < INT_64) {
+    size = resize_buf(buf, size);
+  }
+  memcpy(buf, &num, INT_64);
+  return buf += INT_64;
 }
 
-int serialize_double(char *buf, int *ppos, double num) {
-  memcpy(buf+(*ppos), &num, DOUBLE_64);
-  return *(ppos) = (*ppos) + DOUBLE_64;
+char* serialize_double(char *buf, char *size, double num) {
+  if(size-buf < INT_64) {
+    size = resize_buf(buf, size);
+  }
+  memcpy(buf, &num, DOUBLE_64);
+  return buf += DOUBLE_64;
 }
 
 /* the position is not increased, we are just filling
  * in the first 4 bytes with the size.
  */
-int serialize_size(char *buf, int start, int end) {
+char* serialize_size(char *start, char *end) {
   int total = end-start;
-  memcpy(buf+start, &total, INT_32);
+  memcpy(start, &total, INT_32);
   return end;
 }
 

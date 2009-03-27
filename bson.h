@@ -36,21 +36,23 @@
 #define BSON_CODE 15
 #define BSON_LONG 16
 
+#define GROW_SLOWLY 1048576
 
-int serialize_element(char*, int*, char*, int, zval** TSRMLS_DC);
-int serialize_double(char*, int*, double);
-int serialize_string(char*, int*, char*, int);
-int serialize_long(char*, int*, long);
-int serialize_int(char*, int*, int);
+char* serialize_element(char*, char*, char*, int, zval** TSRMLS_DC);
+char* serialize_double(char*, char*, double);
+char* serialize_string(char*, char*, char*, int);
+char* serialize_long(char*, char*, long);
+char* serialize_int(char*, char*, int);
+char* serialize_byte(char*, char*, char);
+#define set_type(buf, size, type) serialize_byte(buf, size, (char)type)
+#define serialize_null(buf, size) serialize_byte(buf, size, (char)0)
+#define serialize_bool(buf, size, b) serialize_byte(buf, size, (char)b)
 
-int serialize_size(char*, int, int);
+char* serialize_size(char*, char*);
 
-int serialize_byte(char*, int*, char);
-#define set_type(buf, pos, type) serialize_byte(buf, pos, (char)type)
-#define serialize_null(buf, pos) serialize_byte(buf, pos, (char)0)
-#define serialize_bool(buf, pos, b) serialize_byte(buf, pos, (char)b)
+char* resize_buf(char*, char*);
 
-int zval_to_bson(char*, int*, HashTable* TSRMLS_DC);
+char* zval_to_bson(char*, char*, HashTable* TSRMLS_DC);
 char* bson_to_zval(char*, zval* TSRMLS_DC);
 
 int php_array_to_bson(mongo::BSONObjBuilder*, HashTable* TSRMLS_DC);
