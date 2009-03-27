@@ -25,7 +25,7 @@ array(3) {
   ["_id"]=>
   object(MongoId)#5 (1) {
     ["id"]=>
-    string(24) "%x"
+    string(12) "%s"
   }
   ["a"]=>
   string(1) "b"

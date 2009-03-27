@@ -195,8 +195,6 @@ class MongoUtil
                               $data, 
                               0,
                               -1,
-                              array(),
-                              array(),
                               array());
         if(mongo_has_next($cursor)) {
             return mongo_next($cursor);

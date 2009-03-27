@@ -21,9 +21,9 @@ var_dump($c->findOne());
 --EXPECTF--
 array(3) {
   ["_id"]=>
-  object(MongoId)#4 (1) {
+  object(MongoId)#5 (1) {
     ["id"]=>
-    string(24) "%x"
+    string(12) "%s"
   }
   ["foo"]=>
   string(3) "bar"
@@ -34,7 +34,7 @@ array(2) {
   ["_id"]=>
   object(MongoId)#4 (1) {
     ["id"]=>
-    string(24) "%x"
+    string(12) "%s"
   }
   ["foo"]=>
   string(3) "baz"

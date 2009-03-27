@@ -81,7 +81,7 @@ class MongoCursor
     {
         $this->connection = $conn;
         $this->ns         = $ns;
-        $this->query      = $query;
+        $this->query      = array("query" => $query);
         $this->fields     = $fields;
         $this->sort       = array();
         $this->hint       = array();
@@ -193,7 +193,7 @@ class MongoCursor
         if ($this->startedIterating) {
             throw new MongoCursorException(MongoCursor::$_ERR_CURSOR_MOD);
         }
-        $this->sort = $fields;
+        $this->query['orderby'] = $fields;
         return $this;
     }
 
@@ -211,7 +211,7 @@ class MongoCursor
         if ($this->startedIterating) {
             throw new MongoCursorException(MongoCursor::$_ERR_CURSOR_MOD);
         }
-        $this->hint = $key_pattern;
+        $this->query['$hint'] = $key_pattern;
         return $this;
     }
 
@@ -227,10 +227,7 @@ class MongoCursor
         $db   = substr($this->ns, 0, strpos($this->ns, "."));
         $coll = substr($this->ns, strpos($this->ns, ".")+1);
 
-        $cmd = array("count" => $coll);
-        if ($this->query) {
-            $cmd[ "query" ] = $this->query;
-        }
+        $cmd = array("count" => $coll, "query" => $this->query["query"]);
 
         $result = MongoUtil::dbCommand($this->connection, $cmd, $db);
         if ($result) {
@@ -251,9 +248,7 @@ class MongoCursor
                                      $this->query, 
                                      (int)$this->skip, 
                                      (int)$this->limit, 
-                                     $this->sort, 
-                                     $this->fields, 
-                                     $this->hint);
+                                     $this->fields);
     }
 
     /**
