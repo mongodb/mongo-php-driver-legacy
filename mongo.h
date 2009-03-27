@@ -42,6 +42,12 @@
 #define INITIAL_BUF_SIZE 2048
 #define MAX_RESPONSE_LEN 65536
 
+// duplicate strings
+#define DUP 1
+#define NO_DUP 0
+
+#define FLAGS 0
+
 #define CREATE_MSG_HEADER(rid, rto, opcode)                     \
   mongo_msg_header header;                                      \
   header.length = 0;                                            \

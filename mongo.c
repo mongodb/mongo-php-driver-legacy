@@ -492,16 +492,8 @@ PHP_FUNCTION(mongo_insert) {
   // and appends it to buf
   CREATE_HEADER(buf, end, collection, collection_len, OP_INSERT);
 
-
-  php_printf("size: %d\n", buf-start);
-  char *temp = start;
-  int i;
-  for(i=0;i<buf-start; i++) {
-    php_printf("%d\n", *temp++);
-  }
-
   // adds data
-  zval_to_bson(buf, end, Z_ARRVAL_P(zarray) TSRMLS_CC);
+  buf = zval_to_bson(buf, end, Z_ARRVAL_P(zarray) TSRMLS_CC);
   serialize_size(start, buf);
 
   // sends

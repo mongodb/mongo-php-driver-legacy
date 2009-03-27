@@ -82,7 +82,7 @@ char* zval_to_bson(char *buf, char *size, HashTable *arr_hash TSRMLS_DC) {
     efree(field_name);
   }
   buf = serialize_null(buf, size);
-  buf = serialize_size(start, buf);
+  serialize_size(start, buf);
   return buf;
 }
 
@@ -92,12 +92,11 @@ char* serialize_element(char *buf, char *size, char *name, int name_len, zval **
   case IS_NULL:
     buf = set_type(buf, size, BSON_NULL);
     buf = serialize_string(buf, size, name, name_len);
-    buf = serialize_null(buf, size);
     break;
   case IS_LONG:
-    buf = set_type(buf, size, BSON_LONG);
+    buf = set_type(buf, size, BSON_INT);
     buf = serialize_string(buf, size, name, name_len);
-    buf = serialize_long(buf, size, Z_LVAL_PP(data));
+    buf = serialize_int(buf, size, Z_LVAL_PP(data));
     break;
   case IS_DOUBLE:
     buf = set_type(buf, size, BSON_DOUBLE);
@@ -125,8 +124,8 @@ char* serialize_element(char *buf, char *size, char *name, int name_len, zval **
   case IS_ARRAY: {
     buf = set_type(buf, size, BSON_OBJECT);
     buf = serialize_string(buf, size, name, name_len);
-
     buf = zval_to_bson(buf, size, Z_ARRVAL_PP(data) TSRMLS_CC);
+    break;
   }
   case IS_OBJECT: {
     zend_class_entry *clazz = Z_OBJCE_PP( data );
@@ -192,7 +191,7 @@ char* serialize_element(char *buf, char *size, char *name, int name_len, zval **
   return buf;
 }
 
-char *resize_buf(char *buf, char *size) {
+char* resize_buf(char *buf, char *size) {
   int total = size - buf;
   total = total < GROW_SLOWLY ? total*2 : total+INITIAL_BUF_SIZE;
 
@@ -201,7 +200,6 @@ char *resize_buf(char *buf, char *size) {
 }
 
 char* serialize_byte(char *buf, char *size, char b) {
-  php_printf("type: %d\n", b);
   if(size-buf < 1) {
     size = resize_buf(buf, size);
   }
@@ -346,11 +344,11 @@ char *bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       add_assoc_null(result, name);
       break;
     }
-    case BSON_LONG: {
+    case BSON_INT: {
       long d;
-      memcpy(&d, buf, INT_64);
+      memcpy(&d, buf, INT_32);
       add_assoc_long(result, name, d);
-      buf += INT_64;
+      buf += INT_32;
       break;
     }
     case BSON_DATE: {

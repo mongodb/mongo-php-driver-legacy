@@ -34,7 +34,7 @@
 #define BSON_DBREF 12
 #define BSON_CODE__D 13
 #define BSON_CODE 15
-#define BSON_LONG 16
+#define BSON_INT 16
 
 #define GROW_SLOWLY 1048576
 
