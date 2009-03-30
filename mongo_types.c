@@ -20,6 +20,7 @@
 #include <string.h>
 #include <sys/time.h>
 
+#include "mongo_types.h"
 #include "mongo.h"
 #include "bson.h"
 
@@ -29,27 +30,56 @@ extern zend_class_entry *mongo_date_class;
 extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
 
+void create_id(char* data) {
+  // THIS WILL ONLY WORK ON *NIX
+  FILE *rand = fopen("/dev/urandom", "rb");
+  char machine[4], inc[4];
+  fgets(machine, 4, rand);
+  fgets(inc, 4, rand);
+    
+  unsigned t = (unsigned) time(0);
+  char *T = (char*)&t;
+  data[0] = T[3];
+  data[1] = T[2];
+  data[2] = T[1];
+  data[3] = T[0];
+
+  memcpy(data+4, machine, 4);
+  data[8] = inc[3];
+  data[9] = inc[2];
+  data[10] = inc[1];
+  data[11] = inc[0];
+}
+
 /* {{{ mongo_id___construct() 
  */
 PHP_FUNCTION( mongo_id___construct ) {
   char *id;
   int id_len;
-  mongo::OID oid;
+  char data[12];
 
-  if (ZEND_NUM_ARGS() == 1) { 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &id, &id_len) == FAILURE ) {
-      zend_error( E_WARNING, "incorrect parameter types" );
-      RETURN_FALSE;
-    } else {
-      add_property_stringl(getThis(), "id", id, id_len, 1);
+  if (ZEND_NUM_ARGS() == 1 &&
+      zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &id, &id_len) == SUCCESS &&
+      id_len == 24) {
+    int i;
+    for(i=0;i<12;i++) {
+      char digit1 = id[i*2], digit2 = id[i*2+1];
+      digit1 = digit1 >= 'a' && digit1 <= 'f' ? digit1 -= 87 : digit1;
+      digit1 = digit1 >= 'A' && digit1 <= 'F' ? digit1 -= 55 : digit1;
+      digit1 = digit1 >= '0' && digit1 <= '9' ? digit1 -= 48 : digit1;
+      
+      digit2 = digit2 >= 'a' && digit2 <= 'f' ? digit2 -= 87 : digit2;
+      digit2 = digit2 >= 'A' && digit2 <= 'F' ? digit2 -= 55 : digit2;
+      digit2 = digit2 >= '0' && digit2 <= '9' ? digit2 -= 48 : digit2;
+      
+      data[i] = digit1*16+digit2;
     }
   }
   else {
-    oid.init();
-    std::string str = oid.str();
-    char *cstr = (char*)str.c_str();
-    add_property_stringl( getThis(), "id", cstr, strlen(cstr), 1 );
+    create_id(data);
   }
+    
+  add_property_stringl(getThis(), "id", data, OID_SIZE, DUP);
 }
 /* }}} */
 
@@ -57,36 +87,26 @@ PHP_FUNCTION( mongo_id___construct ) {
 /* {{{ mongo_id___toString() 
  */
 PHP_FUNCTION( mongo_id___toString ) {
+  int i;
   zval *zid = zend_read_property( mongo_id_class, getThis(), "id", 2, 0 TSRMLS_CC );
-  RETURN_STRING(Z_STRVAL_P(zid), 1);
+  char *foo = zid->value.str.val;
+
+  char id[25];
+  char *n = id;
+  for(i=0; i<12; i++) {
+    int x = *foo;
+    if (*foo < 0) {
+      x = 256 + *foo;
+    }
+    sprintf(n, "%02x", x);
+    n += 2;
+    foo++;
+  }
+  *(n) = 0;
+
+  RETURN_STRING(id, 1);
 }
 /* }}} */
-
-zval* bson_to_zval_oid(const mongo::OID oid TSRMLS_DC) {
-  zval *zoid;
-  
-  const unsigned char *data = oid.getData();
-  char buf[25];
-  char *n = buf;
-  int i;
-  for(i = 0; i < 12; i++) {
-    sprintf(n, "%02x", *data++);
-    n += 2;
-  } 
-  *(n) = '\0';
-
-  MAKE_STD_ZVAL(zoid);
-  object_init_ex(zoid, mongo_id_class);
-  add_property_stringl( zoid, "id", buf, strlen( buf ), 1 );
-  return zoid;
-}
-
-void zval_to_bson_oid(zval **data, mongo::OID *oid TSRMLS_DC) {
-  zval *zid = zend_read_property( mongo_id_class, *data, "id", 2, 0 TSRMLS_CC );
-  char *cid = Z_STRVAL_P( zid );
-  std::string id = string( cid );
-  oid->init( id );
-}
 
 
 
@@ -160,7 +180,7 @@ PHP_FUNCTION(mongo_bindata___construct) {
   int argc = ZEND_NUM_ARGS();
   if (argc == 1 &&
       zend_parse_parameters(argc TSRMLS_CC, "s", &bin, &bin_len) != FAILURE) {
-    type = mongo::ByteArray;
+    type = BIN_BYTE_ARRAY;
   }
   else if (argc != 2 ||
            zend_parse_parameters(argc TSRMLS_CC, "sl", &bin, &bin_len, &type) == FAILURE) {
@@ -220,14 +240,16 @@ PHP_FUNCTION( mongo_regex___construct ) {
       zend_error( E_WARNING, "incorrect parameter types" );
       RETURN_FALSE;
     }
-    string r = string(re);
-    int splitter = r.find_last_of( "/" );
 
-    string newre = r.substr(1, splitter - 1);
-    string newopts = r.substr(splitter + 1);
+    char *eopattern = strrchr(re, '/');
+    int pattern_len = eopattern - re - 1;
 
-    add_property_stringl( getThis(), "regex", (char*)newre.c_str(), newre.length(), 1 );
-    add_property_stringl( getThis(), "flags", (char*)newopts.c_str(), newre.length(), 1 );
+    // move beyond the second '/' in /foo/bar 
+    eopattern++;
+    int flags_len = re_len - (eopattern-re);
+
+    add_property_stringl( getThis(), "regex", re+1, pattern_len, 1);
+    add_property_stringl( getThis(), "flags", eopattern, flags_len, 1);
     break;
   }
 }
@@ -317,24 +339,3 @@ PHP_FUNCTION( mongo_code___toString ) {
 }
 /* }}} */
 
-
-zval* bson_to_zval_code(const char *code, zval *scope TSRMLS_DC) {
-  zval *zptr;
-
-  ALLOC_INIT_ZVAL(zptr);
-  object_init_ex(zptr, mongo_code_class);
-
-  add_property_stringl(zptr, "code", (char*)code, strlen(code), 1 );
-  add_property_zval(zptr, "scope", scope);
-
-  return zptr;
-}
-
-
-void zval_to_bson_code(zval **data, char **code, mongo::BSONObjBuilder *scope TSRMLS_DC) {
-  zval *zcode = zend_read_property(mongo_code_class, *data, "code", 4, 0 TSRMLS_CC);
-  *(code) = Z_STRVAL_P( zcode );
-
-  zval *zscope = zend_read_property(mongo_code_class, *data, "scope", 5, 0 TSRMLS_CC);
-  php_array_to_bson(scope, Z_ARRVAL_P(zscope) TSRMLS_CC);
-}

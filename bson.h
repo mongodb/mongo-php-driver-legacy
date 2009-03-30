@@ -38,24 +38,21 @@
 
 #define GROW_SLOWLY 1048576
 
+char* serialize_size(char*, char*);
+
 char* serialize_element(char*, char*, char*, int, zval** TSRMLS_DC);
 char* serialize_double(char*, char*, double);
 char* serialize_string(char*, char*, char*, int);
 char* serialize_long(char*, char*, long);
 char* serialize_int(char*, char*, int);
 char* serialize_byte(char*, char*, char);
+
 #define set_type(buf, size, type) serialize_byte(buf, size, (char)type)
 #define serialize_null(buf, size) serialize_byte(buf, size, (char)0)
 #define serialize_bool(buf, size, b) serialize_byte(buf, size, (char)b)
 
-char* serialize_size(char*, char*);
-
 char* resize_buf(char*, char*);
 
+char* prep_obj_for_db(char*, char*, HashTable* TSRMLS_DC);
 char* zval_to_bson(char*, char*, HashTable* TSRMLS_DC);
 char* bson_to_zval(char*, zval* TSRMLS_DC);
-
-int php_array_to_bson(mongo::BSONObjBuilder*, HashTable* TSRMLS_DC);
-void bson_to_php_array(mongo::BSONObj*, zval* TSRMLS_DC);
-int prep_obj_for_db(mongo::BSONObjBuilder*, HashTable* TSRMLS_DC);
-int add_to_bson(mongo::BSONObjBuilder*, char*, zval** TSRMLS_DC);

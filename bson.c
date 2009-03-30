@@ -16,7 +16,6 @@
  */
 
 #include <php.h>
-#include <mongo/client/dbclient.h>
 
 #include "bson.h"
 #include "mongo.h"
@@ -27,6 +26,33 @@ extern zend_class_entry *mongo_code_class;
 extern zend_class_entry *mongo_date_class;
 extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
+
+
+char* prep_obj_for_db(char *buf, char *size, HashTable *array TSRMLS_DC) {
+  zval **data;
+
+  // array is of the form: 
+  // array("query" => array("_id" : MongoId), "orderby" => ...)
+
+  // get query
+  // 6 is length of "query" + 1 for \0
+  if (zend_hash_find(array, "query", 6, (void**)&data) == SUCCESS) {
+    array = Z_ARRVAL_PP(data);
+  }
+
+  // check if query._id field doesn't exist, add it
+  if (zend_hash_find(array, "_id", 4, (void**)&data) == FAILURE) {
+    char foo[12];
+    create_id(foo);
+    buf = set_type(buf, size, BSON_OID);
+    buf = serialize_string(buf, size, "_id", 3);
+    return serialize_string(buf, size, foo, OID_SIZE);
+  }
+
+  // if it exists, it'll be serialized
+  return buf;
+}
+
 
 // serialize a zval
 char* zval_to_bson(char *buf, char *size, HashTable *arr_hash TSRMLS_DC) {
@@ -163,7 +189,7 @@ char* serialize_element(char *buf, char *size, char *name, int name_len, zval **
       buf += INT_32;
       zval *zid = zend_read_property(mongo_code_class, *data, "code", 4, 0 TSRMLS_CC);
       // string size
-      buf = serialize_int(buf, size, Z_STRLEN_P(zid));
+      buf = serialize_int(buf, size, Z_STRLEN_P(zid)+1);
       // string
       buf = serialize_string(buf, size, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
       // scope
@@ -306,9 +332,8 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       zval *d;
       ALLOC_INIT_ZVAL(d);
       array_init(d);
-      bson_to_zval(buf, d TSRMLS_CC);
+      buf = bson_to_zval(buf, d TSRMLS_CC);
       add_assoc_zval(result, name, d);
-      buf++;
       break;
     }
     case BSON_BINARY: {
@@ -318,11 +343,12 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
 
       char type = *buf++;
 
-      char *bytes = (char*)emalloc(len);
+      char *bytes = (char*)emalloc(len+1);
       int i=0;
       for(i=0;i<len;i++) {
-        *(bytes) = *buf++;
+        bytes[i] = *buf++;
       }
+      bytes[len] = 0;
 
       zval *bin;
       MAKE_STD_ZVAL(bin);
@@ -365,49 +391,59 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_REGEX: {
-      int max_regex = 128;
-      int max_flags = 16;
-      char regex[max_regex];
-      char flags[max_flags];
+      char *start_regex = buf;
+      while (*buf++);
+      int regex_len = buf-start_regex;
 
-      int regex_len = 0;
-      while (regex_len < max_regex && (regex[regex_len++] = *buf++));
-      regex[regex_len] = 0;
-      int flags_len = 0;
-      while (flags_len < max_flags && (flags[flags_len++] = *buf++));
-      flags[flags_len] = 0;
+      char *start_flags = buf;
+      while (*buf++);
+      int flags_len = buf-start_flags;
 
       zval *zegex;
       MAKE_STD_ZVAL(zegex);
       object_init_ex(zegex, mongo_regex_class);
 
-      add_property_stringl(zegex, "regex", regex, regex_len, 1);
-      add_property_stringl(zegex, "flags", flags, flags_len, 1);
+      add_property_stringl(zegex, "regex", start_regex, regex_len, 1);
+      add_property_stringl(zegex, "flags", start_flags, flags_len, 1);
       add_assoc_zval(result, name, zegex);
 
       break;
     }
     case BSON_CODE: 
-    case BSON_CODE__D: 
+    case BSON_CODE__D: {
+      zval *zode, *zcope;
+      MAKE_STD_ZVAL(zode);
+      object_init_ex(zode, mongo_code_class);
+      MAKE_STD_ZVAL(zcope);
+      array_init(zcope);
+
+      if (type == BSON_CODE) {
+        buf += INT_32;
+      }
+
+      int len;
+      memcpy(&len, buf, INT_32);
+      buf += INT_32;
+ 
+      char str[len];
+      int i=0;
+      while (str[i++] = *buf++);
+      str[i] = 0;
+
+      if (type == BSON_CODE) {
+        buf = bson_to_zval(buf, zcope TSRMLS_CC);
+      }
+
+      add_property_stringl(zode, "code", str, len, DUP);
+      add_property_zval(zode, "scope", zcope);
+      add_assoc_zval(result, name, zode);
+      break;
+    }
     default: {
       php_printf("type %d not supported\n", type);
     }
     }
   }
   return buf;
-}
-
-
-int prep_obj_for_db(mongo::BSONObjBuilder *obj_builder, HashTable *php_array TSRMLS_DC) {
-  zval **data;
-  // check if "_id" field, 4 is length of "_id" + 1 for \0
-  if (zend_hash_find(php_array, "_id", 4, (void**)&data) == FAILURE) {
-    mongo::OID oid;
-    oid.init();
-    obj_builder->appendOID("_id", &oid);
-    return 1;
-  }
-  add_to_bson(obj_builder, "_id", data TSRMLS_CC);
-  return 0;
 }
 

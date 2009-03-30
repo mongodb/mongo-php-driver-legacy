@@ -78,7 +78,7 @@ PHP_FUNCTION( mongo_gridfs_list ) {
   ZEND_FETCH_RESOURCE(fs, mongo::GridFS*, &zfs, -1, PHP_GRIDFS_RES_NAME, le_gridfs);
 
   mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
-  php_array_to_bson(bquery, Z_ARRVAL_P(zquery) TSRMLS_CC);
+  //php_array_to_bson(bquery, Z_ARRVAL_P(zquery) TSRMLS_CC);
   mongo::BSONObj query = bquery->done();
 
   std::auto_ptr<mongo::DBClientCursor> cursor = fs->list( query );
@@ -128,7 +128,7 @@ PHP_FUNCTION( mongo_gridfs_find ) {
   ZEND_FETCH_RESOURCE(fs, mongo::GridFS*, &zfs, -1, PHP_GRIDFS_RES_NAME, le_gridfs);
 
   mongo::BSONObjBuilder *bquery = new mongo::BSONObjBuilder();
-  php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) TSRMLS_CC);
+  //  php_array_to_bson( bquery, Z_ARRVAL_P( zquery ) TSRMLS_CC);
   mongo::BSONObj query = bquery->done();
 
   mongo::GridFile file = fs->findFile( query );
