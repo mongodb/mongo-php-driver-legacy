@@ -90,6 +90,15 @@
 
 typedef struct {
   int socket;
+  int connected;
+  int ts;
+
+  char *host;
+  int port;
+
+  char *username;
+  char *password;
+
 } mongo_link;
 
 typedef struct {
@@ -162,6 +171,10 @@ ZEND_END_MODULE_GLOBALS(mongo)
 # define MonGlo(v) (mongo_globals.v)
 #endif 
 
+static int say(mongo_link*, char*, int TSRMLS_DC);
+static int check_connection(mongo_link* TSRMLS_DC);
+static int mongo_connect(mongo_link*);
+static int get_sockaddr(struct sockaddr_in*, char*, int);
 static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS);
 static int get_reply(mongo_link*, mongo_cursor*);
 static void kill_cursor(mongo_cursor* TSRMLS_DC);
