@@ -274,19 +274,16 @@ void serialize_size(unsigned char *start, buffer *buf) {
 
 
 char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
-  int size;
+  unsigned int size;
   memcpy(&size, buf, INT_32);
   buf += INT_32;
 
   char type;
   // size is for sanity check
   while (size-- > 0 && (type = *buf++)) {
-    int name_len = 0;
-    // get field name
-    char name[64];
-    while (name[name_len++] = *buf++);
-    // move past \0 at end
-    name[name_len] = 0;
+    char* name = buf;
+    // get past field name
+    while (*buf++);
 
     // get value
     switch(type) {
@@ -294,13 +291,10 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       zval *zoid;
       MAKE_STD_ZVAL(zoid);
       object_init_ex(zoid, mongo_id_class);
-      char *id = (char*)emalloc(12);
-      int i=0;
-      for(i=0;i<12;i++) {
-        *(id) = *buf++;
-      }
-      add_property_stringl(zoid, "id", id, 12, 1);
-      efree(id);
+
+      char *id = buf;
+      buf += OID_SIZE;
+      add_property_stringl(zoid, "id", id, OID_SIZE, DUP);
       add_assoc_zval(result, name, zoid);
       break;
     }
@@ -312,15 +306,13 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_STRING: {
-      int len, duplicate = 1;
+      int len;
       memcpy(&len, buf, INT_32);
       buf += INT_32;
  
-      char str[len];
-      int i=0;
-      while (str[i++] = *buf++);
-      str[i] = 0;
-      add_assoc_stringl(result, name, str, len-1, duplicate);
+      char *str = buf;
+      buf += len;
+      add_assoc_stringl(result, name, str, len-1, DUP);
       break;
     }
     case BSON_OBJECT:
@@ -339,19 +331,15 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
 
       char type = *buf++;
 
-      char *bytes = (char*)emalloc(len+1);
-      int i=0;
-      for(i=0;i<len;i++) {
-        bytes[i] = *buf++;
-      }
-      bytes[len] = 0;
+      char *bytes = buf;
+      buf += len;
 
       zval *bin;
       MAKE_STD_ZVAL(bin);
       object_init_ex(bin, mongo_bindata_class);
 
       add_property_long(bin, "length", len);
-      add_property_stringl(bin, "bin", bytes, len, 0);
+      add_property_stringl(bin, "bin", bytes, len, DUP);
       add_property_long(bin, "type", type);
       add_assoc_zval(result, name, bin);
       break;
@@ -374,7 +362,7 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_DATE: {
-      long d;
+      unsigned long d;
       memcpy(&d, buf, INT_64);
       buf += INT_64;
 
