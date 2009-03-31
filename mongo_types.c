@@ -114,20 +114,30 @@ PHP_FUNCTION( mongo_id___toString ) {
  */
 PHP_FUNCTION( mongo_date___construct ) {
   timeval time;
-  long ltime;
+  long sec, usec;
 
-  if (ZEND_NUM_ARGS() == 0) {
+  int argc = ZEND_NUM_ARGS();
+  switch(argc) {
+  case 0: {
     gettimeofday(&time, NULL);
     add_property_long( getThis(), "sec", time.tv_sec );
     add_property_long( getThis(), "usec", time.tv_usec );
+    break;
   }
-  else if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &ltime) == SUCCESS) {
-    add_property_long( getThis(), "sec", ltime );
-    add_property_long( getThis(), "usec", 0 );
+  case 1: {
+    if (zend_parse_parameters(argc TSRMLS_CC, "l", &sec) == SUCCESS) {
+      add_property_long( getThis(), "sec", sec );
+      add_property_long( getThis(), "usec", 0 );
+    }
+    break;
   }
-  else {
-    zend_error( E_WARNING, "incorrect parameter types, expected: __construct( long )" );
-    RETURN_FALSE;
+  case 2: {
+    if (zend_parse_parameters(argc TSRMLS_CC, "ll", &sec, &usec) == SUCCESS) {
+      add_property_long(getThis(), "sec", sec);
+      add_property_long(getThis(), "usec", usec);
+    }
+    break;
+  }
   }
 }
 /* }}} */
@@ -187,8 +197,8 @@ PHP_FUNCTION(mongo_bindata___construct) {
     zend_error( E_ERROR, "incorrect parameter types, expected __construct(string, long)" );
   }
   
-  add_property_stringl( getThis(), "bin", bin, strlen(bin), 1 );
   add_property_long( getThis(), "length", bin_len);
+  add_property_stringl( getThis(), "bin", bin, bin_len, 1 );
   add_property_long( getThis(), "type", type);
 }
 /* }}} */

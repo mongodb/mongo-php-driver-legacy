@@ -382,7 +382,8 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       MAKE_STD_ZVAL(date);
       object_init_ex(date, mongo_date_class);
 
-      add_property_long(date, "ms", d);
+      add_property_long(date, "sec", d/1000);
+      add_property_long(date, "usec", (d*1000)%100000);
       add_assoc_zval(result, name, date);
       break;
     }
@@ -410,28 +411,30 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       zval *zode, *zcope;
       MAKE_STD_ZVAL(zode);
       object_init_ex(zode, mongo_code_class);
+      // initialize scope array
       MAKE_STD_ZVAL(zcope);
       array_init(zcope);
 
+      // CODE has an initial size field
       if (type == BSON_CODE) {
         buf += INT_32;
       }
 
+      // length of code (includes \0)
       int len;
       memcpy(&len, buf, INT_32);
+
       buf += INT_32;
- 
-      char str[len];
-      int i=0;
-      while (str[i++] = *buf++);
-      str[i] = 0;
+      char *code = buf;
+      buf += len * BYTE_8;
 
       if (type == BSON_CODE) {
         buf = bson_to_zval(buf, zcope TSRMLS_CC);
       }
 
-      add_property_stringl(zode, "code", str, len, DUP);
+      add_property_stringl(zode, "code", code, len-1, DUP);
       add_property_zval(zode, "scope", zcope);
+      zval_ptr_dtor(&zcope);
       add_assoc_zval(result, name, zode);
       break;
     }
