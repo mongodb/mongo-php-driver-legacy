@@ -55,17 +55,20 @@ int zval_to_bson(buffer *buf, HashTable *arr_hash TSRMLS_DC) {
   int num = 0;
 
   // check buf size
-  if(BUF_REMAINING < 5) {
+  if(BUF_REMAINING <= 5) {
     resize_buf(buf);
   }
 
+  // keep a record of the starting position
+  // as an offset, in case the memory is resized
+  unsigned int start = buf->pos-buf->start;
+
   // skip first 4 bytes to leave room for size
-  unsigned char *start = buf->pos;
   buf->pos += INT_32;
 
   if (zend_hash_num_elements(arr_hash) == 0) {
     serialize_null(buf);
-    serialize_size(start, buf);
+    serialize_size(buf->start+start, buf);
     return num;
   }
  
@@ -91,14 +94,11 @@ int zval_to_bson(buffer *buf, HashTable *arr_hash TSRMLS_DC) {
       continue;
     }
 
-    if(BUF_REMAINING < key_len+2) {
-      resize_buf(buf);
-    }
     serialize_element(buf, field_name, key_len, data TSRMLS_CC);
     efree(field_name);
   }
   serialize_null(buf);
-  serialize_size(start, buf);
+  serialize_size(buf->start+start, buf);
   return num;
 }
 
@@ -129,10 +129,7 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
     serialize_string(buf, name, name_len);
 
     long length = Z_STRLEN_PP(data);
-    long length0 = length + BYTE_8;
-    memcpy(buf->pos, &length0, INT_32);
-    buf->pos += INT_32;
-
+    serialize_int(buf, length+1);
     serialize_string(buf, Z_STRVAL_PP(data), length);
     break;
   }
@@ -212,8 +209,8 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
 }
 
 int resize_buf(buffer *buf) {
-  int total = buf->end - buf->start;
-  int pos = buf->pos - buf->start;
+  unsigned int total = buf->end - buf->start;
+  unsigned int pos = buf->pos - buf->start;
   total = total < GROW_SLOWLY ? total*2 : total+INITIAL_BUF_SIZE;
 
   buf->start = (unsigned char*)erealloc(buf->start, total);
@@ -223,7 +220,7 @@ int resize_buf(buffer *buf) {
 }
 
 void serialize_byte(buffer *buf, char b) {
-  if(BUF_REMAINING < 1) {
+  if(BUF_REMAINING <= 1) {
     resize_buf(buf);
   }
   *(buf->pos) = b;
@@ -231,7 +228,7 @@ void serialize_byte(buffer *buf, char b) {
 }
 
 void serialize_string(buffer *buf, char *str, int str_len) {
-  if(BUF_REMAINING < str_len+1) {
+  if(BUF_REMAINING <= str_len+1) {
     resize_buf(buf);
   }
   memcpy(buf->pos, str, str_len);
@@ -241,7 +238,7 @@ void serialize_string(buffer *buf, char *str, int str_len) {
 }
 
 void serialize_int(buffer *buf, int num) {
-  if(BUF_REMAINING < INT_32) {
+  if(BUF_REMAINING <= INT_32) {
     resize_buf(buf);
   }
   memcpy(buf->pos, &num, INT_32);
@@ -249,7 +246,7 @@ void serialize_int(buffer *buf, int num) {
 }
 
 void serialize_long(buffer *buf, long num) {
-  if(BUF_REMAINING < INT_64) {
+  if(BUF_REMAINING <= INT_64) {
     resize_buf(buf);
   }
   memcpy(buf->pos, &num, INT_64);
@@ -257,7 +254,7 @@ void serialize_long(buffer *buf, long num) {
 }
 
 void serialize_double(buffer *buf, double num) {
-  if(BUF_REMAINING < INT_64) {
+  if(BUF_REMAINING <= INT_64) {
     resize_buf(buf);
   }
   memcpy(buf->pos, &num, DOUBLE_64);

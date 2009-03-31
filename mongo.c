@@ -559,7 +559,7 @@ PHP_FUNCTION( mongo_has_next ) {
     RETURN_TRUE;
   }
 
-  CREATE_BUF(buf, 128);
+  CREATE_BUF(buf, 256);
   CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->ns_len, cursor->header.request_id, OP_REPLY);
   serialize_int(&buf, cursor->limit);
   serialize_long(&buf, cursor->cursor_id);

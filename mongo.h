@@ -39,7 +39,7 @@
 
 #define MSG_HEADER_SIZE 16
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
-#define INITIAL_BUF_SIZE 2048
+#define INITIAL_BUF_SIZE 4096
 #define MAX_RESPONSE_LEN 65536
 
 // duplicate strings
