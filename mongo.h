@@ -55,29 +55,24 @@
   header.response_to = rto;                                     \
   header.op = opcode;
 
-#define CREATE_RESPONSE_HEADER(buf, size, ns, ns_len, rto, opcode)       \
+#define CREATE_RESPONSE_HEADER(buf, ns, ns_len, rto, opcode)            \
   CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode);                 \
-  APPEND_HEADER_NS(buf, size, ns, ns_len);
+  APPEND_HEADER_NS(buf, ns, ns_len);
 
-#define CREATE_HEADER(buf, size, ns, ns_len, opcode)             \
-  CREATE_RESPONSE_HEADER(buf, size, ns, ns_len, 0, opcode);                    
-
-
-#define APPEND_HEADER(buf)                              \
-  buf += INT_32;                                        \
-  memcpy(buf, &(header.request_id), INT_32);            \
-  buf += INT_32;                                        \
-  memcpy(buf, &(header.response_to), INT_32);           \
-  buf += INT_32;                                        \
-  memcpy(buf, &(header.op), INT_32);                    \
-  buf += INT_32;                                        \
-  memset(buf, 0, INT_32);                               \
-  buf += INT_32;                                        
+#define CREATE_HEADER(buf, ns, ns_len, opcode)          \
+  CREATE_RESPONSE_HEADER(buf, ns, ns_len, 0, opcode);                    
 
 
-#define APPEND_HEADER_NS(buf, size, ns, ns_len)         \
+#define APPEND_HEADER(buf) buf.pos += INT_32;             \
+  serialize_int(&buf, header.request_id);                 \
+  serialize_int(&buf, header.response_to);                \
+  serialize_int(&buf, header.op);                         \
+  serialize_int(&buf, 0);                                
+
+
+#define APPEND_HEADER_NS(buf, ns, ns_len)               \
   APPEND_HEADER(buf);                                   \
-  buf = serialize_string(buf, size, ns, ns_len);              
+  serialize_string(&buf, ns, ns_len);              
 
 #define GET_RESPONSE(link, cursor)              \
   get_reply(link, cursor)
@@ -87,6 +82,7 @@
     cursor->ns = nsp;                                    \
     cursor->ns_len = nsp_len;                            \
   }
+
 
 typedef struct {
   int socket;
@@ -107,6 +103,12 @@ typedef struct {
   int response_to;
   int op;
 } mongo_msg_header;
+
+typedef struct {
+  unsigned char *start;
+  unsigned char *pos;
+  unsigned char *end;
+} buffer;
 
 typedef struct {
   int ref_count;
@@ -137,6 +139,21 @@ typedef struct {
   int buf_size;
   int pos;
 } mongo_cursor;
+
+#define BUF_REMAINING (buf->end-buf->pos)
+
+#define CREATE_BUF(buf, size) buffer buf;               \
+  buf.start = (unsigned char*)emalloc(size);            \
+  buf.pos = buf.start;                                  \
+  buf.end = buf.start + size;
+
+#define DEBUG_BUF                                   \
+  unsigned char *temp = buf.start;                  \
+  while(temp != buf.pos) {                          \
+    php_printf("%d\n", *temp++);                    \
+  }
+
+
 
 PHP_MINIT_FUNCTION(mongo);
 PHP_MSHUTDOWN_FUNCTION(mongo);
@@ -171,7 +188,7 @@ ZEND_END_MODULE_GLOBALS(mongo)
 # define MonGlo(v) (mongo_globals.v)
 #endif 
 
-static int say(mongo_link*, char*, int TSRMLS_DC);
+static int say(mongo_link*, buffer* TSRMLS_DC);
 static int check_connection(mongo_link* TSRMLS_DC);
 static int mongo_connect(mongo_link*);
 static int get_sockaddr(struct sockaddr_in*, char*, int);

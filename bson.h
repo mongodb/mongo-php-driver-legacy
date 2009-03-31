@@ -38,21 +38,23 @@
 
 #define GROW_SLOWLY 1048576
 
-char* serialize_size(char*, char*);
+#include "mongo.h"
 
-char* serialize_element(char*, char*, char*, int, zval** TSRMLS_DC);
-char* serialize_double(char*, char*, double);
-char* serialize_string(char*, char*, char*, int);
-char* serialize_long(char*, char*, long);
-char* serialize_int(char*, char*, int);
-char* serialize_byte(char*, char*, char);
+void serialize_size(unsigned char*, buffer*);
 
-#define set_type(buf, size, type) serialize_byte(buf, size, (char)type)
-#define serialize_null(buf, size) serialize_byte(buf, size, (char)0)
-#define serialize_bool(buf, size, b) serialize_byte(buf, size, (char)b)
+void serialize_element(buffer*, char*, int, zval** TSRMLS_DC);
+void serialize_double(buffer*, double);
+void serialize_string(buffer*, char*, int);
+void serialize_long(buffer*, long);
+void serialize_int(buffer*, int);
+void serialize_byte(buffer*, char);
 
-char* resize_buf(char*, char*);
+#define set_type(buf, type) serialize_byte(buf, (char)type)
+#define serialize_null(buf) serialize_byte(buf, (char)0)
+#define serialize_bool(buf, b) serialize_byte(buf, (char)b)
 
-char* prep_obj_for_db(char*, char*, HashTable* TSRMLS_DC);
-char* zval_to_bson(char*, char*, HashTable* TSRMLS_DC);
+int resize_buf(buffer*);
+
+int prep_obj_for_db(buffer*, HashTable* TSRMLS_DC);
+int zval_to_bson(buffer*, HashTable* TSRMLS_DC);
 char* bson_to_zval(char*, zval* TSRMLS_DC);

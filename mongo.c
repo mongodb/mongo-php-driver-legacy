@@ -196,24 +196,24 @@ static void php_gridfile_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 
 // tell db to destroy its cursor
 static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
-  int size = 128;
-  char *buf = (char*)emalloc(size);
-  char *start = buf;
-  char *end = start + size;
+  unsigned char quickbuf[128];
+  buffer buf;
+  buf.pos = quickbuf;
+  buf.start = buf.pos;
+  buf.end = buf.start + 128;
 
   // std header
   CREATE_MSG_HEADER(0, MonGlo(request_id)++, OP_KILL_CURSORS);
   APPEND_HEADER(buf);
   // 0 - reserved
-  buf = serialize_int(buf, end, 0);
+  serialize_int(&buf, 0);
   // # of cursors
-  buf = serialize_int(buf, end, 1);
+  serialize_int(&buf, 1);
   // cursor ids
-  buf = serialize_long(buf, end, cursor->cursor_id);
-  serialize_size(start, buf);
+  serialize_long(&buf, cursor->cursor_id);
+  serialize_size(buf.start, &buf);
 
-  say(&cursor->link, start, buf-start TSRMLS_CC);
-  efree(start);
+  say(&cursor->link, &buf TSRMLS_CC);
 }
 
 static void php_cursor_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
@@ -340,9 +340,8 @@ PHP_FUNCTION(mongo_query) {
   zval *zconn, *zquery, *zfields;
   char *collection;
   int limit, skip, collection_len, argc = ZEND_NUM_ARGS();
-  char *buf = (char*)emalloc(INITIAL_BUF_SIZE);
-  char *start = buf;
-  char *end = buf + INITIAL_BUF_SIZE;
+
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
   if (argc != 6) {
     zend_error( E_WARNING, "expected 6 parameters, got %d parameters", argc);
@@ -356,23 +355,25 @@ PHP_FUNCTION(mongo_query) {
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   // creates an query header
-  CREATE_HEADER(buf, end, collection, collection_len, OP_QUERY);
+  CREATE_HEADER(buf, collection, collection_len, OP_QUERY);
 
-  buf = serialize_int(buf, end, skip);
-  buf = serialize_int(buf, end, limit);
+  serialize_int(&buf, skip);
+  serialize_int(&buf, limit);
 
-  buf = zval_to_bson(buf, end, Z_ARRVAL_P(zquery) TSRMLS_CC);
+  zval_to_bson(&buf, Z_ARRVAL_P(zquery) TSRMLS_CC);
   
   HashTable *fields = Z_ARRVAL_P(zfields);
   if (zend_hash_num_elements(fields) > 0) {
-    buf = zval_to_bson(buf, end, fields TSRMLS_CC);
+    zval_to_bson(&buf, fields TSRMLS_CC);
   }
 
-  serialize_size(start, buf);
+  serialize_size(buf.start, &buf);
+
+
 
   // sends
-  int sent = say(link, start, buf-start TSRMLS_CC);
-  efree(start);
+  int sent = say(link, &buf TSRMLS_CC);
+  efree(buf.start);
   if (sent == FAILURE) {
     RETURN_FALSE;
   }
@@ -391,7 +392,7 @@ PHP_FUNCTION(mongo_query) {
  */
 PHP_FUNCTION(mongo_remove) {
   zval *zconn, *zarray;
-  char *collection, *buf, *start;
+  char *collection, *start;
   int collection_len, mflags = 0;
   zend_bool justOne = 0;
   mongo_link *link;
@@ -407,23 +408,21 @@ PHP_FUNCTION(mongo_remove) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  buf = (char*)emalloc(INITIAL_BUF_SIZE);
-  start = buf;
-  char *end = buf + INITIAL_BUF_SIZE;
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
   HashTable *array = Z_ARRVAL_P(zarray);
-  CREATE_HEADER(buf, end, collection, collection_len, OP_DELETE);
+  CREATE_HEADER(buf, collection, collection_len, OP_DELETE);
 
   if (justOne || zend_hash_find(array, "_id", 4, NULL) == SUCCESS) {
     mflags |= 1;
   }
 
-  buf = serialize_int(buf, end, mflags);
-  buf = zval_to_bson(buf, end, array TSRMLS_CC);
-  buf = serialize_size(start, buf);
+  serialize_int(&buf, mflags);
+  zval_to_bson(&buf, array TSRMLS_CC);
+  serialize_size(buf.start, &buf);
 
-  RETVAL_BOOL(say(link, start, buf-start TSRMLS_CC)+1);
-  efree(start);
+  RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);
+  efree(buf.start);
 }
 /* }}} */
 
@@ -435,9 +434,6 @@ PHP_FUNCTION(mongo_insert) {
   char *collection;
   int collection_len;
   mongo_link *link;
-  char *buf = (char*)emalloc(INITIAL_BUF_SIZE);
-  char *start = buf;
-  char *end = buf + INITIAL_BUF_SIZE;
 
   if (ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -450,25 +446,23 @@ PHP_FUNCTION(mongo_insert) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
   // creates an insert-style header
   // and appends it to buf
-  CREATE_HEADER(buf, end, collection, collection_len, OP_INSERT);
+  CREATE_HEADER(buf, collection, collection_len, OP_INSERT);
 
   // adds data
   HashTable *obj = Z_ARRVAL_P(zarray);
   //  buf = prep_obj_for_db(buf, end, obj TSRMLS_CC);
-  buf = zval_to_bson(buf, end, obj TSRMLS_CC);
+  zval_to_bson(&buf, obj TSRMLS_CC);
 
-  serialize_size(start, buf);
-  /*
-  char *temp = start;
-  while(temp != buf) {
-    php_printf("%d\n", *temp++);
-  }
-  */
+  serialize_size(buf.start, &buf);
+  
+  //DEBUG_BUF
+
   // sends
-  RETVAL_BOOL(say(link, start, buf-start TSRMLS_CC)+1);
-  efree(start);
+  RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);
+  efree(buf.start);
 }
 /* }}} */
 
@@ -478,9 +472,6 @@ PHP_FUNCTION(mongo_batch_insert) {
   zval *zconn, *zarray, **data;
   char *collection;
   int collection_len;
-  char *buf = (char*)emalloc(INITIAL_BUF_SIZE);
-  char *start = buf;
-  char *end = buf+INITIAL_BUF_SIZE;
 
   if (ZEND_NUM_ARGS() != 3 ) {
     zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
@@ -493,21 +484,22 @@ PHP_FUNCTION(mongo_batch_insert) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_HEADER(buf, end, collection, collection_len, OP_INSERT);
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
+  CREATE_HEADER(buf, collection, collection_len, OP_INSERT);
 
   HashTable *php_array = Z_ARRVAL_P(zarray);
   for(zend_hash_internal_pointer_reset_ex(php_array, &pointer); 
       zend_hash_get_current_data_ex(php_array, (void**) &data, &pointer) == SUCCESS; 
       zend_hash_move_forward_ex(php_array, &pointer)) {
 
-    char *istart = buf;
-    buf = zval_to_bson(buf, end, Z_ARRVAL_PP(data) TSRMLS_CC);
-    serialize_size(istart, buf);
+    unsigned char *istart = buf.pos;
+    zval_to_bson(&buf, Z_ARRVAL_PP(data) TSRMLS_CC);
+    serialize_size(istart, &buf);
   }
-  serialize_size(start, buf);
+  serialize_size(buf.start, &buf);
 
-  RETVAL_BOOL(say(link, start, buf-start TSRMLS_CC)+1);
-  efree(start);
+  RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);
+  efree(buf.start);
 }
 
 
@@ -519,9 +511,6 @@ PHP_FUNCTION(mongo_update) {
   int collection_len;
   zend_bool zupsert = 0;
   mongo_link *link;
-  char *buf = (char*)emalloc(INITIAL_BUF_SIZE);
-  char *start = buf;
-  char *end = buf + INITIAL_BUF_SIZE;
   int argc = ZEND_NUM_ARGS();
 
   if ( argc != 5 ) {
@@ -535,14 +524,15 @@ PHP_FUNCTION(mongo_update) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_HEADER(buf, end, collection, collection_len, OP_UPDATE);
-  buf = serialize_int(buf, end, zupsert);
-  buf = zval_to_bson(buf, end, Z_ARRVAL_P(zquery) TSRMLS_CC);
-  buf = zval_to_bson(buf, end, Z_ARRVAL_P(zobj) TSRMLS_CC);
-  serialize_size(start, buf);
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
+  CREATE_HEADER(buf, collection, collection_len, OP_UPDATE);
+  serialize_int(&buf, zupsert);
+  zval_to_bson(&buf, Z_ARRVAL_P(zquery) TSRMLS_CC);
+  zval_to_bson(&buf, Z_ARRVAL_P(zobj) TSRMLS_CC);
+  serialize_size(buf.start, &buf);
 
-  RETVAL_BOOL(say(link, start, buf-start TSRMLS_CC)+1);
-  efree(start);
+  RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);
+  efree(buf.start);
 }
 /* }}} */
 
@@ -552,7 +542,7 @@ PHP_FUNCTION(mongo_update) {
 PHP_FUNCTION( mongo_has_next ) {
   zval *zcursor;
   mongo_cursor *cursor;
-  int argc = ZEND_NUM_ARGS(), size = 128;
+  int argc = ZEND_NUM_ARGS();
 
   if (argc != 1 ) {
     zend_error( E_WARNING, "expected 1 parameters, got %d parameters", argc );
@@ -569,21 +559,19 @@ PHP_FUNCTION( mongo_has_next ) {
     RETURN_TRUE;
   }
 
-  char *buf = (char*)emalloc(size);
-  char *start = buf;
-  char *end = buf+size;
-  CREATE_RESPONSE_HEADER(buf, end, cursor->ns, cursor->ns_len, cursor->header.request_id, OP_REPLY);
-  buf = serialize_int(buf, end, cursor->limit);
-  buf = serialize_long(buf, end, cursor->cursor_id);
-  buf = serialize_size(start, buf);
+  CREATE_BUF(buf, 128);
+  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->ns_len, cursor->header.request_id, OP_REPLY);
+  serialize_int(&buf, cursor->limit);
+  serialize_long(&buf, cursor->cursor_id);
+  serialize_size(buf.start, &buf);
 
   // fails if we're out of elems
-  if(say(&cursor->link, start, buf-start TSRMLS_CC) == FAILURE) {
-    efree(start);
+  if(say(&cursor->link, &buf TSRMLS_CC) == FAILURE) {
+    efree(buf.start);
     RETURN_FALSE;
   }
 
-  efree(start);
+  efree(buf.start);
   GET_RESPONSE(&cursor->link, cursor);
 
   if (cursor->num > 0) {
@@ -597,7 +585,7 @@ PHP_FUNCTION( mongo_has_next ) {
 
 /* {{{ mongo_next
  */
-PHP_FUNCTION( mongo_next ) {
+PHP_FUNCTION(mongo_next) {
   zval *zcursor;
   int argc;
   mongo_cursor *cursor;
@@ -684,9 +672,9 @@ static int get_reply(mongo_link *link, mongo_cursor *cursor) {
 }
 
 
-static int say(mongo_link *link, char *buf, int len TSRMLS_DC) {
+static int say(mongo_link *link, buffer *buf TSRMLS_DC) {
   if (check_connection(link TSRMLS_CC) == SUCCESS) {
-    return send(link->socket, buf, len, FLAGS);
+    return send(link->socket, buf->start, buf->pos-buf->start, FLAGS);
   }
   return FAILURE;
 }
