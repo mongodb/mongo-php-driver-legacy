@@ -20,18 +20,13 @@
 #endif
 
 #include <string.h>
-#include <vector>
 
 #include <php.h>
 #include <php_ini.h>
-#include <sys/socket.h>
-#include <ext/standard/info.h>
-#include <mongo/client/gridfs.h>
 
 #include "mongo.h"
 #include "mongo_types.h"
 #include "bson.h"
-#include "gridfs.h"
 
 /** Classes */
 zend_class_entry *mongo_id_class, 
@@ -57,11 +52,7 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_has_next , NULL )
   PHP_FE( mongo_next , NULL )
   PHP_FE( mongo_gridfs_init , NULL )
-  PHP_FE( mongo_gridfs_list , NULL )
   PHP_FE( mongo_gridfs_store , NULL )
-  PHP_FE( mongo_gridfs_find , NULL )
-  PHP_FE( mongo_gridfile_filename , NULL )
-  PHP_FE( mongo_gridfile_size , NULL )
   PHP_FE( mongo_gridfile_write , NULL )
   {NULL, NULL, NULL}
 };
@@ -145,7 +136,7 @@ PHP_INI_END()
 static PHP_GINIT_FUNCTION(mongo){
   mongo_globals->num_persistent = 0; 
   mongo_globals->num_links = 0; 
-  mongo_globals->auto_reconnect = false; 
+  mongo_globals->auto_reconnect = 0; 
   mongo_globals->default_host = "localhost"; 
   mongo_globals->default_port = 27017; 
   mongo_globals->request_id = 3;
@@ -204,12 +195,6 @@ static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 }
 
 
-static void php_gridfile_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
-  mongo::GridFile *file = (mongo::GridFile*)rsrc->ptr;
-  if( file )
-    delete file;
-}
-
 // tell db to destroy its cursor
 static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   unsigned char quickbuf[128];
@@ -232,16 +217,19 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   say(&cursor->link, &buf TSRMLS_CC);
 }
 
+static void free_cursor(mongo_cursor *cursor) {
+  // free mem
+  if (cursor->buf_start) {
+    efree(cursor->buf_start);
+  }
+  efree(cursor);
+}
+
 static void php_cursor_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
   mongo_cursor *cursor = (mongo_cursor*)rsrc->ptr;
   if (cursor) {
     kill_cursor(cursor TSRMLS_CC);
-
-    // free mem
-    if (cursor->buf_start) {
-      efree(cursor->buf_start);
-    }
-    efree(cursor);
+    free_cursor(cursor);
   }
 }
 
@@ -256,7 +244,6 @@ PHP_MINIT_FUNCTION(mongo) {
   le_pconnection = zend_register_list_destructors_ex(NULL, php_connection_dtor, PHP_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(php_cursor_dtor, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
   le_gridfs = zend_register_list_destructors_ex(php_gridfs_dtor, NULL, PHP_GRIDFS_RES_NAME, module_number);
-  le_gridfile = zend_register_list_destructors_ex(php_gridfile_dtor, NULL, PHP_GRIDFILE_RES_NAME, module_number);
 
   zend_class_entry bindata; 
   INIT_CLASS_ENTRY(bindata, "MongoBinData", mongo_bindata_functions); 
@@ -555,6 +542,197 @@ PHP_FUNCTION(mongo_next) {
 /* }}} */
 
 
+
+/* {{{ mongo_gridfs_init
+ */
+PHP_FUNCTION( mongo_gridfs_init ) {
+  zval *zconn;
+  char *dbname, *prefix;
+  int dbname_len, prefix_len;
+  mongo_link *link;
+
+  if( ZEND_NUM_ARGS() != 3 ) {
+    zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
+    RETURN_FALSE;
+  }
+  else if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rss", &zconn, &dbname, &dbname_len, &prefix, &prefix_len ) == FAILURE) {
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_gridfs_init( connection, string, string )" );
+    RETURN_FALSE;
+  }
+
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+
+  mongo_gridfs *fs = (mongo_gridfs*)emalloc(sizeof(mongo_gridfs));
+  fs->link = link;
+
+  fs->db = (char*)emalloc(dbname_len);
+  memcpy(fs->db, dbname, dbname_len);
+  fs->db_len = dbname_len;
+
+  fs->prefix = (char*)emalloc(prefix_len);
+  memcpy(fs->prefix, prefix, prefix_len);
+
+  // collections
+  spprintf(&fs->file_ns, 0, "%s.%s.files", dbname, prefix);
+  spprintf(&fs->chunk_ns, 0, "%s.%s.chunks", dbname, prefix);
+
+  ZEND_REGISTER_RESOURCE(return_value, fs, le_gridfs);
+}
+/* }}} */
+
+
+/* {{{ mongo_gridfs_store
+ */
+PHP_FUNCTION(mongo_gridfs_store) {
+  zval zfile, *zfs;
+  char *filename;
+  int filename_len;
+  mongo_gridfs *gridfs;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &zfs, &filename, &filename_len) == FAILURE) {
+     zend_error( E_WARNING, "parameter parse failure\n" );
+     RETURN_FALSE;
+  }
+
+  ZEND_FETCH_RESOURCE(gridfs, mongo_gridfs*, &zfs, -1, PHP_GRIDFS_RES_NAME, le_gridfs);
+
+  FILE *fp = fopen(filename, "rb");
+  if (!fp) {
+    zend_error(E_WARNING, "couldn't open file %s\n", filename);
+    RETURN_FALSE;
+  }
+
+  // get size
+  FILE *temp_fp = fp;
+  fseek(temp_fp, 0L, SEEK_END);
+  long size = ftell(temp_fp);
+  if (size >= 0xffffffff) {
+    zend_error(E_WARNING, "file %s is too large: %d bytes\n", filename, size);
+    RETURN_FALSE;
+  }
+
+  // create an id for the file
+  zval id;
+  create_id(&id, 0 TSRMLS_CC);
+
+  long pos = 0;
+  int chunk_num = 0, chunk_size;
+  
+  // insert chunks
+  while (pos < size) {
+    chunk_size = size-pos >= DEFAULT_CHUNK_SIZE ? DEFAULT_CHUNK_SIZE : size-pos;
+    char buf[chunk_size];
+    fread(buf, chunk_size, 1, fp);
+
+    // create chunk
+    zval zchunk;
+    array_init(&zchunk);
+
+    add_assoc_zval(&zchunk, "files_id", &id);
+    add_assoc_long(&zchunk, "n", chunk_num);
+    add_assoc_stringl(&zchunk, "data", buf, chunk_size, NO_DUP);
+
+    // insert chunk
+    mongo_do_insert(gridfs->link, gridfs->chunk_ns, &zchunk TSRMLS_CC);
+    
+    // increment counters
+    pos += chunk_size;
+    chunk_num++;
+  }
+
+  array_init(&zfile);
+  add_assoc_zval(&zfile, "_id", &id);
+  add_assoc_stringl(&zfile, "filename", filename, filename_len, NO_DUP);
+  add_assoc_long(&zfile, "length", size);
+  add_assoc_long(&zfile, "chunkSize", DEFAULT_CHUNK_SIZE);
+
+  // get md5
+  zval zmd5;
+  array_init(&zmd5);
+  add_assoc_zval(&zmd5, "filemd5", &id);
+  add_assoc_string(&zmd5, "root", gridfs->prefix, NO_DUP);
+
+  char *cmd;
+  spprintf(&cmd, 0, "%s.$cmd", gridfs->db);
+
+  zval fields;
+  array_init(&fields);
+  mongo_cursor *cursor = mongo_do_query(gridfs->link, cmd, 0, -1, &zmd5, &fields TSRMLS_CC);
+  if (!mongo_do_has_next(cursor TSRMLS_CC)) {
+    zend_error(E_WARNING, "couldn't hash file %s\n", filename);
+    RETURN_FALSE;
+  }
+
+  zval *hash = mongo_do_next(cursor TSRMLS_CC);
+  hash->refcount = 1;
+  add_assoc_zval(&zfile, "md5", hash);
+  
+  // insert file
+  mongo_do_insert(gridfs->link, gridfs->file_ns, &zfile TSRMLS_CC);
+
+  // cleanup
+  free_cursor(cursor);
+  zval_ptr_dtor(&hash);
+  efree(cmd);
+}
+/* }}} */
+
+
+/* {{{ mongo_gridfile_write
+ */
+PHP_FUNCTION(mongo_gridfile_write) {
+  mongo_gridfs *fs;
+  zval *zfs, *zfile, *zid, *zquery;
+  char *filename;
+  int filename_len;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &zfs, &zfile, &filename, &filename_len ) == FAILURE) {
+     zend_error( E_WARNING, "parameter parse failure\n" );
+     RETURN_FALSE;
+  }
+  ZEND_FETCH_RESOURCE(fs, mongo_gridfs*, &zfs, -1, PHP_GRIDFS_RES_NAME, le_gridfs);
+
+  FILE *fp = fopen(filename, "wb");
+  if (!fp) {
+    zend_error(E_WARNING, "couldn't open destination file %s", filename);
+    RETURN_FALSE;
+  }
+
+  HashTable *finfo = Z_ARRVAL_P(zfile);
+  if (zend_hash_find(finfo, "_id", 4, (void**)&zid) == FAILURE) {
+    zend_error(E_WARNING, "couldn't get file id");
+    RETURN_FALSE;
+  }
+
+  ALLOC_INIT_ZVAL(zquery);
+  array_init(zquery);
+  add_assoc_zval(zquery, "file_id", zid);
+  mongo_cursor *c = mongo_do_query(fs->link, fs->chunk_ns, 0, 0, zquery, 0 TSRMLS_CC);
+  zval_ptr_dtor(&zquery);
+
+  while (mongo_do_has_next(c TSRMLS_CC)) {
+    zval *elem = mongo_do_next(c TSRMLS_CC);
+    zval *zdata;
+    if (zend_hash_find(Z_ARRVAL_P(elem), "data", 4, (void**)&zdata) == FAILURE) {
+      zval_ptr_dtor(&elem);
+      zend_error(E_WARNING, "error reading chunk of file");
+      RETURN_FALSE;
+    }
+    char *data = Z_STRVAL_P(zdata);
+    int len = Z_STRLEN_P(zdata);
+
+    int written = fwrite(data, 1, len, fp);
+    if (written != len) {
+      zend_error(E_WARNING, "incorrect byte count.  expected: %d, got %d", len, written);
+    }
+    zval_ptr_dtor(&elem);
+  }
+
+  fclose(fp);
+}
+/* }}} */
+
+
 mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int limit, zval *zquery, zval *zfields TSRMLS_DC) {
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, collection, strlen(collection), OP_QUERY);
@@ -563,10 +741,8 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
   serialize_int(&buf, limit);
 
   zval_to_bson(&buf, Z_ARRVAL_P(zquery) TSRMLS_CC);
-  
-  HashTable *fields = Z_ARRVAL_P(zfields);
-  if (zend_hash_num_elements(fields) > 0) {
-    zval_to_bson(&buf, fields TSRMLS_CC);
+  if (zfields && zend_hash_num_elements(Z_ARRVAL_P(zfields)) > 0) {
+    zval_to_bson(&buf, Z_ARRVAL_P(zfields) TSRMLS_CC);
   }
 
   serialize_size(buf.start, &buf);
@@ -743,13 +919,13 @@ static int mongo_connect(mongo_link *link) {
 static int get_sockaddr(struct sockaddr_in *addr, char *host, int port) {
   addr->sin_family = AF_INET;
   addr->sin_port = htons(port);
-  struct hostent *hostinfo = gethostbyname(host);
+  struct hostent *hostinfo = (struct hostent*)gethostbyname(host);
   if (hostinfo == NULL) {
     zend_error (E_WARNING, "unknown host %s", host);
     efree(host);
     return FAILURE;
   }
-  addr->sin_addr = *(struct in_addr*)hostinfo->h_addr;
+  addr->sin_addr = *((struct in_addr*)hostinfo->h_addr);
   return SUCCESS;
 }
 
@@ -762,7 +938,6 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
   zend_bool persistent, paired, lazy;
   int server_len, uname_len, pass_len, key_len;
   zend_rsrc_list_entry *le;
-  string error;
   struct sockaddr_in name;
   
   int argc = ZEND_NUM_ARGS();
@@ -872,12 +1047,20 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
   if (persistent) {
     zend_rsrc_list_entry new_le; 
 
+    // save username and password for reconnection
+    if (uname_len > 0 && pass_len > 0) {
+      conn->username = (char*)emalloc(uname_len);
+      conn->password = (char*)emalloc(pass_len);
+      memcpy(conn->username, uname, uname_len);
+      memcpy(conn->password, pass, pass_len);
+    }
+
     key_len = spprintf(&key, 0, "%s_%s_%s", server, uname, pass);
     Z_TYPE(new_le) = le_pconnection;
     new_le.ptr = conn;
 
     if (zend_hash_update(&EG(persistent_list), key, key_len+1, (void*)&new_le, sizeof(zend_rsrc_list_entry), NULL)==FAILURE) { 
-      delete conn;
+      php_connection_dtor(&new_le TSRMLS_CC);
       efree(key);
       RETURN_FALSE;
     }

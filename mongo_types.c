@@ -17,6 +17,7 @@
 
 #include <php.h>
 #include <string.h>
+#include <time.h>
 #include <sys/time.h>
 
 #include "mongo_types.h"
@@ -126,7 +127,7 @@ PHP_FUNCTION( mongo_id___toString ) {
 /* {{{ MongoDate mongo_date___construct() 
  */
 PHP_FUNCTION( mongo_date___construct ) {
-  timeval time;
+  struct timeval time;
   long sec, usec;
 
   int argc = ZEND_NUM_ARGS();

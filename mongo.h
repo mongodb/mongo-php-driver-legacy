@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+#include <netdb.h>
+
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1
 
@@ -24,8 +26,6 @@
 #define PHP_AUTH_CONNECTION_RES_NAME "mongo authenticated connection"
 #define PHP_DB_CURSOR_RES_NAME "mongo cursor"
 #define PHP_GRIDFS_RES_NAME "gridfs tools"
-#define PHP_GRIDFILE_RES_NAME "gridfs file"
-#define PHP_GRIDFS_CHUNK_RES_NAME "gridfs file chunk"
 
 #define OP_REPLY  1
 #define OP_MSG 1000
@@ -41,6 +41,8 @@
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
 #define INITIAL_BUF_SIZE 4096
 #define MAX_RESPONSE_LEN 65536
+#define DEFAULT_CHUNK_SIZE (256*1024)
+
 
 // duplicate strings
 #define DUP 1
@@ -140,6 +142,18 @@ typedef struct {
   int pos;
 } mongo_cursor;
 
+typedef struct {
+  mongo_link *link;
+
+  char *db;
+  int db_len;
+  char *prefix;
+
+  char *file_ns;
+  char *chunk_ns;
+} mongo_gridfs;
+
+
 #define BUF_REMAINING (buf->end-buf->pos)
 
 #define CREATE_BUF(buf, size) buffer buf;               \
@@ -160,22 +174,33 @@ PHP_MSHUTDOWN_FUNCTION(mongo);
 PHP_RINIT_FUNCTION(mongo);
 PHP_MINFO_FUNCTION(mongo);
 
+// connection
 PHP_FUNCTION(mongo_connect);
 PHP_FUNCTION(mongo_close);
+
+// queries
 PHP_FUNCTION(mongo_query);
 PHP_FUNCTION(mongo_remove);
 PHP_FUNCTION(mongo_insert);
 PHP_FUNCTION(mongo_batch_insert);
 PHP_FUNCTION(mongo_update);
 
+// cursor
 PHP_FUNCTION(mongo_has_next);
 PHP_FUNCTION(mongo_next);
+
+// gridfs
+PHP_FUNCTION( mongo_gridfs_init );
+PHP_FUNCTION( mongo_gridfs_store );
+PHP_FUNCTION( mongo_gridfile_write );
+
+
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;
 long max_links,max_persistent;
 long allow_persistent; 
-bool auto_reconnect; 
+int auto_reconnect; 
 char *default_host; 
 long default_port;
 int request_id; 

@@ -416,6 +416,7 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
         buf = bson_to_zval(buf, zcope TSRMLS_CC);
       }
 
+      // exclude \0
       add_property_stringl(zode, "code", code, len-1, DUP);
       add_property_zval(zode, "scope", zcope);
       zval_ptr_dtor(&zcope);
