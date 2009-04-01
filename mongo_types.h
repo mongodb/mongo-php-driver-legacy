@@ -33,7 +33,8 @@ PHP_FUNCTION( mongo_date___toString );
 zval* bson_to_zval_date(unsigned long long TSRMLS_DC);
 unsigned long long zval_to_bson_date(zval** TSRMLS_DC);
 
-void create_id(char*);
+void create_id(zval*, char* TSRMLS_DC);
+void generate_id(char*);
 PHP_FUNCTION( mongo_id___construct );
 PHP_FUNCTION( mongo_id___toString );
 

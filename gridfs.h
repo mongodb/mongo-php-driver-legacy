@@ -22,3 +22,18 @@ PHP_FUNCTION( mongo_gridfs_find );
 PHP_FUNCTION( mongo_gridfile_filename );
 PHP_FUNCTION( mongo_gridfile_size );
 PHP_FUNCTION( mongo_gridfile_write );
+
+#include "mongo.h"
+
+#define DEFAULT_CHUNK_SIZE (256*1024)
+
+typedef struct mongo_gridfs {
+  mongo_link *link;
+
+  char *db;
+  int db_len;
+  char *prefix;
+
+  char *file_ns;
+  char *chunk_ns;
+};

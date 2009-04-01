@@ -16,7 +16,6 @@
  */
 
 #include <php.h>
-#include <mongo/client/dbclient.h>
 #include <string.h>
 #include <sys/time.h>
 
@@ -30,7 +29,22 @@ extern zend_class_entry *mongo_date_class;
 extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
 
-void create_id(char* data) {
+// takes an allocated but not initialized zval
+// turns it into an MongoId
+void create_id(zval *zoid, char *data TSRMLS_DC) {
+  object_init_ex(zoid, mongo_id_class);
+
+  if (data) {
+    add_property_stringl(zoid, "id", data, OID_SIZE, DUP);
+  }
+  else {
+    char id[12];
+    generate_id(id);
+    add_property_stringl(zoid, "id", id, OID_SIZE, DUP);
+  }
+}
+
+void generate_id(char *data) {
   // THIS WILL ONLY WORK ON *NIX
   FILE *rand = fopen("/dev/urandom", "rb");
   char machine[4], inc[4];
@@ -53,7 +67,7 @@ void create_id(char* data) {
 
 /* {{{ mongo_id___construct() 
  */
-PHP_FUNCTION( mongo_id___construct ) {
+PHP_FUNCTION(mongo_id___construct) {
   char *id;
   int id_len;
   char data[12];
@@ -76,7 +90,7 @@ PHP_FUNCTION( mongo_id___construct ) {
     }
   }
   else {
-    create_id(data);
+    generate_id(data);
   }
     
   add_property_stringl(getThis(), "id", data, OID_SIZE, DUP);
@@ -88,10 +102,10 @@ PHP_FUNCTION( mongo_id___construct ) {
  */
 PHP_FUNCTION( mongo_id___toString ) {
   int i;
-  zval *zid = zend_read_property( mongo_id_class, getThis(), "id", 2, 0 TSRMLS_CC );
+  zval *zid = zend_read_property(mongo_id_class, getThis(), "id", 2, 0 TSRMLS_CC);
   char *foo = zid->value.str.val;
 
-  char id[25];
+  char id[24];
   char *n = id;
   for(i=0; i<12; i++) {
     int x = *foo;
@@ -102,9 +116,8 @@ PHP_FUNCTION( mongo_id___toString ) {
     n += 2;
     foo++;
   }
-  *(n) = 0;
 
-  RETURN_STRING(id, 1);
+  RETURN_STRING(id, DUP);
 }
 /* }}} */
 

@@ -179,6 +179,7 @@ bool auto_reconnect;
 char *default_host; 
 long default_port;
 int request_id; 
+int chunk_size;
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS
@@ -187,6 +188,11 @@ ZEND_END_MODULE_GLOBALS(mongo)
 #else
 # define MonGlo(v) (mongo_globals.v)
 #endif 
+
+mongo_cursor* mongo_do_query(mongo_link*, char*, int, int, zval*, zval* TSRMLS_DC);
+int mongo_do_insert(mongo_link*, char*, zval* TSRMLS_DC);
+int mongo_do_has_next(mongo_cursor* TSRMLS_DC);
+zval* mongo_do_next(mongo_cursor* TSRMLS_DC);
 
 static int say(mongo_link*, buffer* TSRMLS_DC);
 static int check_connection(mongo_link* TSRMLS_DC);

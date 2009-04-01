@@ -135,6 +135,7 @@ STD_PHP_INI_ENTRY_EX("mongo.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong,
 STD_PHP_INI_ENTRY_EX("mongo.max_connections", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_links, zend_mongo_globals, mongo_globals, display_link_numbers) 
 STD_PHP_INI_ENTRY("mongo.default_host", NULL, PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals) 
 STD_PHP_INI_ENTRY("mongo.default_port", "27017", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals) 
+STD_PHP_INI_ENTRY("mongo.chunk_size", "262144", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals) 
 PHP_INI_END()
 /* }}} */
 
@@ -148,6 +149,7 @@ static PHP_GINIT_FUNCTION(mongo){
   mongo_globals->default_host = "localhost"; 
   mongo_globals->default_port = 27017; 
   mongo_globals->request_id = 3;
+  mongo_globals->chunk_size = 262144;
 }
 /* }}} */
 
@@ -182,9 +184,23 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 }
 
 static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
-  mongo::GridFS *fs = (mongo::GridFS*)rsrc->ptr;
-  if( fs )
-    delete fs;
+  mongo_gridfs *fs = (mongo_gridfs*)rsrc->ptr;
+  if (fs) {
+    if (fs->db) {
+      efree(fs->db);
+    }
+    if (fs->prefix) {
+      efree(fs->prefix);
+    }
+    if (fs->file_ns) {
+      efree(fs->file_ns);
+    }
+    if (fs->chunk_ns) {
+      efree(fs->chunk_ns);
+    }
+
+    efree(fs);
+  }
 }
 
 
@@ -341,8 +357,6 @@ PHP_FUNCTION(mongo_query) {
   char *collection;
   int limit, skip, collection_len, argc = ZEND_NUM_ARGS();
 
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
-
   if (argc != 6) {
     zend_error( E_WARNING, "expected 6 parameters, got %d parameters", argc);
     RETURN_FALSE;
@@ -354,35 +368,7 @@ PHP_FUNCTION(mongo_query) {
   
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  // creates an query header
-  CREATE_HEADER(buf, collection, collection_len, OP_QUERY);
-
-  serialize_int(&buf, skip);
-  serialize_int(&buf, limit);
-
-  zval_to_bson(&buf, Z_ARRVAL_P(zquery) TSRMLS_CC);
-  
-  HashTable *fields = Z_ARRVAL_P(zfields);
-  if (zend_hash_num_elements(fields) > 0) {
-    zval_to_bson(&buf, fields TSRMLS_CC);
-  }
-
-  serialize_size(buf.start, &buf);
-
-
-
-  // sends
-  int sent = say(link, &buf TSRMLS_CC);
-  efree(buf.start);
-  if (sent == FAILURE) {
-    RETURN_FALSE;
-  }
-
-  mongo_cursor *cursor = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
-  cursor->buf_start = 0;
-  GET_RESPONSE_NS(link, cursor, collection, collection_len);
-  cursor->limit = limit;
-
+  mongo_cursor *cursor = mongo_do_query(link, collection, skip, limit, zquery, zfields TSRMLS_CC);
   ZEND_REGISTER_RESOURCE(return_value, cursor, le_db_cursor);
 }
 /* }}} */
@@ -446,25 +432,11 @@ PHP_FUNCTION(mongo_insert) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
-  // creates an insert-style header
-  // and appends it to buf
-  CREATE_HEADER(buf, collection, collection_len, OP_INSERT);
-
-  // adds data
-  HashTable *obj = Z_ARRVAL_P(zarray);
-  //  buf = prep_obj_for_db(buf, end, obj TSRMLS_CC);
-  zval_to_bson(&buf, obj TSRMLS_CC);
-
-  serialize_size(buf.start, &buf);
-  
-  //DEBUG_BUF
-
-  // sends
-  RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);
-  efree(buf.start);
+  int response = mongo_do_insert(link, collection, zarray TSRMLS_CC);
+  RETURN_BOOL(response == SUCCESS);
 }
 /* }}} */
+
 
 PHP_FUNCTION(mongo_batch_insert) {
   mongo_link *link;
@@ -554,31 +526,7 @@ PHP_FUNCTION( mongo_has_next ) {
   }
 
   cursor = (mongo_cursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
-
-  if (cursor->at < cursor->num) {
-    RETURN_TRUE;
-  }
-
-  CREATE_BUF(buf, 256);
-  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->ns_len, cursor->header.request_id, OP_REPLY);
-  serialize_int(&buf, cursor->limit);
-  serialize_long(&buf, cursor->cursor_id);
-  serialize_size(buf.start, &buf);
-
-  // fails if we're out of elems
-  if(say(&cursor->link, &buf TSRMLS_CC) == FAILURE) {
-    efree(buf.start);
-    RETURN_FALSE;
-  }
-
-  efree(buf.start);
-  GET_RESPONSE(&cursor->link, cursor);
-
-  if (cursor->num > 0) {
-    RETURN_TRUE;
-  }
-
-  RETURN_FALSE;
+  RETURN_BOOL(mongo_do_has_next(cursor TSRMLS_CC));
 }
 /* }}} */
 
@@ -601,7 +549,68 @@ PHP_FUNCTION(mongo_next) {
   }
 
   cursor = (mongo_cursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
+  zval *z = mongo_do_next(cursor TSRMLS_CC);
+  RETURN_ZVAL(z, 0, 1);
+}
+/* }}} */
 
+
+mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int limit, zval *zquery, zval *zfields TSRMLS_DC) {
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
+  CREATE_HEADER(buf, collection, strlen(collection), OP_QUERY);
+
+  serialize_int(&buf, skip);
+  serialize_int(&buf, limit);
+
+  zval_to_bson(&buf, Z_ARRVAL_P(zquery) TSRMLS_CC);
+  
+  HashTable *fields = Z_ARRVAL_P(zfields);
+  if (zend_hash_num_elements(fields) > 0) {
+    zval_to_bson(&buf, fields TSRMLS_CC);
+  }
+
+  serialize_size(buf.start, &buf);
+
+  // sends
+  int sent = say(link, &buf TSRMLS_CC);
+  efree(buf.start);
+  if (sent == FAILURE) {
+    return 0;
+  }
+
+  mongo_cursor *cursor = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
+  cursor->buf_start = 0;
+  GET_RESPONSE_NS(link, cursor, collection, strlen(collection));
+  cursor->limit = limit;
+  return cursor;
+}
+
+
+int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
+  if (cursor->at < cursor->num) {
+    return 1;
+  }
+
+  CREATE_BUF(buf, 256);
+  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->ns_len, cursor->header.request_id, OP_REPLY);
+  serialize_int(&buf, cursor->limit);
+  serialize_long(&buf, cursor->cursor_id);
+  serialize_size(buf.start, &buf);
+
+  // fails if we're out of elems
+  if(say(&cursor->link, &buf TSRMLS_CC) == FAILURE) {
+    efree(buf.start);
+    return 0;
+  }
+
+  efree(buf.start);
+  GET_RESPONSE(&cursor->link, cursor);
+
+  return cursor->num > 0;
+}
+
+
+zval* mongo_do_next(mongo_cursor *cursor TSRMLS_DC) {
   if (cursor->at >= cursor->num) {
     GET_RESPONSE(&cursor->link, cursor);
   }
@@ -614,12 +623,27 @@ PHP_FUNCTION(mongo_next) {
 
     // increment cursor position
     cursor->at++;
-
-    RETURN_ZVAL(elem, 0, 1);
+    return elem;
   }
-  RETURN_NULL();
+  return 0;
 }
-/* }}} */
+
+int mongo_do_insert(mongo_link *link, char *collection, zval *zarray TSRMLS_DC) {
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
+  CREATE_HEADER(buf, collection, strlen(collection), OP_INSERT);
+
+  // adds data
+  HashTable *obj = Z_ARRVAL_P(zarray);
+  //  buf = prep_obj_for_db(buf, end, obj TSRMLS_CC);
+  zval_to_bson(&buf, obj TSRMLS_CC);
+
+  serialize_size(buf.start, &buf);
+  
+  // sends
+  int response = say(link, &buf TSRMLS_CC);
+  efree(buf.start);
+  return response;
+}
 
 
 static int get_reply(mongo_link *link, mongo_cursor *cursor) {
@@ -641,9 +665,9 @@ static int get_reply(mongo_link *link, mongo_cursor *cursor) {
 
   // create buf
   cursor->header.length -= INT_32;
-  cursor->buf = (char*)emalloc(cursor->header.length);
+  cursor->buf_start = (char*)emalloc(cursor->header.length);
   // point buf_start at buf's first char
-  cursor->buf_start = cursor->buf;
+  cursor->buf = cursor->buf_start;
 
   if (recv(link->socket, cursor->buf, cursor->header.length, FLAGS) == -1) {
     perror("recv");
