@@ -18,14 +18,14 @@ $c->ensureIndex(array("i"=>1));
 
 $cursor = $c->find()->sort(array("i"=>1));
 while ($cursor->hasNext()) {
-  $obj = $cursor->next();
+  $obj = $cursor->getNext();
   echo $obj['i']." ";
 }
 echo "\n";
 
 $cursor = $c->find()->sort(array("i"=>-1));
 while ($cursor->hasNext()) {
-  $obj = $cursor->next();
+  $obj = $cursor->getNext();
   echo $obj['i']." ";
 }
 echo "\n";
@@ -33,7 +33,7 @@ echo "\n";
 $c->drop();
 $cursor = $c->find()->sort(array("i"=>1));
 while ($cursor->hasNext()) {
-  $obj = $cursor->next();
+  $obj = $cursor->getNext();
   echo $obj['i']." ";
 }
 ?>

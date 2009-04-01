@@ -15,7 +15,7 @@ var_dump($c->count());
 
 $cursor = $c->find()->sort(array("x" => -1));
 while($cursor->hasNext()) {
-  $x = $cursor->next();
+  $x = $cursor->getNext();
   var_dump($x['x']);
 }
 

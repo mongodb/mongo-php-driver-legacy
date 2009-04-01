@@ -49,13 +49,14 @@ require_once "Mongo/CursorException.php";
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
  * @link     http://www.mongodb.org
  */
-class MongoCursor
+class MongoCursor implements Iterator
 {
 
     protected $connection = null;
 
     protected $cursor           = null;
     protected $startedIterating = false;
+    protected $current          = null;
 
     protected $query  = null;
     protected $fields = null;
@@ -81,25 +82,10 @@ class MongoCursor
     {
         $this->connection = $conn;
         $this->ns         = $ns;
-        $this->query      = $query;
+        $this->query      = array("query" => $query);
         $this->fields     = $fields;
         $this->sort       = array();
         $this->hint       = array();
-    }
-
-    /**
-     * Return the next object to which this cursor points, and advance the cursor.
-     *
-     * @return array the next object
-     */
-    public function next() 
-    {
-        if (!$this->startedIterating) {
-            $this->doQuery();
-            $this->startedIterating = true;
-        }
-
-        return mongo_next($this->cursor);
     }
 
     /**
@@ -115,6 +101,17 @@ class MongoCursor
         }
 
         return mongo_has_next($this->cursor);
+    }
+
+    /**
+     * Return the next element.
+     * 
+     * @return array the next element or null
+     */
+    public function getNext()
+    {
+        $this->next();
+        return $this->current;
     }
 
     /**
@@ -270,6 +267,83 @@ class MongoCursor
         $c->startedIterating = true;
         return $c;
     }
+
+
+    /* **************
+     *    Iterator
+     * **************/
+
+    /**
+     * Returns the correct item
+     *
+     * @return array $obj
+     */
+    public function current()
+    {
+        return $this->current;
+    }
+
+    /**
+     * Returns the key of the current item
+     *
+     * @return string The _id of the current item
+     */
+    public function key()
+    {
+        if ($this->current['_id']) {
+          return (string)$this->current['_id'];
+        }
+        return "";
+    }
+
+    /**
+     * Increment the cursor
+     *
+     */
+    public function next()
+    {
+        if (!$this->startedIterating) {
+            $this->doQuery();
+            $this->startedIterating = true;
+        }
+
+        if ($this->hasNext()) {
+            $this->current = mongo_next($this->cursor);
+        } else {
+            $this->current = null;
+        }
+    }
+
+    /**
+     * Rewinds the cursor to the start
+     *
+     */
+    public function rewind()
+    {
+        $this->reset();
+        $this->next();
+    }
+
+    /**
+     * Checks if the current position is valid
+     *
+     * @return boolean
+     */
+    public function valid()
+    {
+        return !empty($this->current);
+    }
+
+
+    /**
+     * Clears the current cursor and resets it to the start
+     */
+    public function reset()
+    {
+        unset($this->cursor);
+        $this->startedIterating = false;
+    }
+
 }
 
 ?>

@@ -16,7 +16,7 @@ $c->insert(array("foo" => "bar",
 $cursor = $c->find(array("foo"=>"bar"), array("a"=>1,"b"=>1));
 
 while ($cursor->hasNext()) {
-  var_dump($cursor->next());
+  var_dump($cursor->getNext());
 }
 
 ?>

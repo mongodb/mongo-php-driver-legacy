@@ -22,7 +22,7 @@ $c->insert(array("_id"=>1));
 echo "inserted\n";
 $cursor = $c->find();
 while($cursor->hasNext()) {
-  var_dump($cursor->next());
+  var_dump($cursor->getNext());
 }
 
 ?>
