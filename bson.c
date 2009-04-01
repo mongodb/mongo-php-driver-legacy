@@ -33,11 +33,10 @@ int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
 
   // if _id field doesn't exist, add it
   if (zend_hash_find(array, "_id", 4, (void**)&data) == FAILURE) {
-    char foo[12];
-    create_id(foo);
+    /*create_id(0);
     set_type(buf, BSON_OID);
     serialize_string(buf, "_id", 3);
-    serialize_string(buf, foo, OID_SIZE);
+    serialize_string(buf, foo, OID_SIZE);*/
   }
 
   // if it exists, it'll be serialized
@@ -56,7 +55,7 @@ int zval_to_bson(buffer *buf, HashTable *arr_hash TSRMLS_DC) {
 
   // check buf size
   if(BUF_REMAINING <= 5) {
-    resize_buf(buf);
+    resize_buf(buf, 5);
   }
 
   // keep a record of the starting position
@@ -208,10 +207,13 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
   }
 }
 
-int resize_buf(buffer *buf) {
+int resize_buf(buffer *buf, int size) {
   unsigned int total = buf->end - buf->start;
   unsigned int pos = buf->pos - buf->start;
   total = total < GROW_SLOWLY ? total*2 : total+INITIAL_BUF_SIZE;
+  if (total < size) {
+    total += size;
+  }
 
   buf->start = (unsigned char*)erealloc(buf->start, total);
   buf->pos = buf->start + pos;
@@ -221,7 +223,7 @@ int resize_buf(buffer *buf) {
 
 void serialize_byte(buffer *buf, char b) {
   if(BUF_REMAINING <= 1) {
-    resize_buf(buf);
+    resize_buf(buf, 1);
   }
   *(buf->pos) = b;
   buf->pos += 1;
@@ -229,7 +231,7 @@ void serialize_byte(buffer *buf, char b) {
 
 void serialize_string(buffer *buf, char *str, int str_len) {
   if(BUF_REMAINING <= str_len+1) {
-    resize_buf(buf);
+    resize_buf(buf, str_len+1);
   }
   memcpy(buf->pos, str, str_len);
   // add \0 at the end of the string
@@ -239,7 +241,7 @@ void serialize_string(buffer *buf, char *str, int str_len) {
 
 void serialize_int(buffer *buf, int num) {
   if(BUF_REMAINING <= INT_32) {
-    resize_buf(buf);
+    resize_buf(buf, INT_32);
   }
   memcpy(buf->pos, &num, INT_32);
   buf->pos += INT_32;
@@ -247,7 +249,7 @@ void serialize_int(buffer *buf, int num) {
 
 void serialize_long(buffer *buf, long num) {
   if(BUF_REMAINING <= INT_64) {
-    resize_buf(buf);
+    resize_buf(buf, INT_64);
   }
   memcpy(buf->pos, &num, INT_64);
   buf->pos += INT_64;
@@ -255,7 +257,7 @@ void serialize_long(buffer *buf, long num) {
 
 void serialize_double(buffer *buf, double num) {
   if(BUF_REMAINING <= INT_64) {
-    resize_buf(buf);
+    resize_buf(buf, INT_64);
   }
   memcpy(buf->pos, &num, DOUBLE_64);
   buf->pos += DOUBLE_64;
@@ -285,14 +287,11 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
     // get value
     switch(type) {
     case BSON_OID: {
-      zval *zoid;
-      MAKE_STD_ZVAL(zoid);
-      object_init_ex(zoid, mongo_id_class);
-
-      char *id = buf;
+      zval *z;
+      MAKE_STD_ZVAL(z);
+      create_id(z, buf TSRMLS_CC);
+      add_assoc_zval(result, name, z);
       buf += OID_SIZE;
-      add_property_stringl(zoid, "id", id, OID_SIZE, DUP);
-      add_assoc_zval(result, name, zoid);
       break;
     }
     case BSON_DOUBLE: {

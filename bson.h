@@ -53,7 +53,7 @@ void serialize_byte(buffer*, char);
 #define serialize_null(buf) serialize_byte(buf, (char)0)
 #define serialize_bool(buf, b) serialize_byte(buf, (char)b)
 
-int resize_buf(buffer*);
+int resize_buf(buffer*, int);
 
 int prep_obj_for_db(buffer*, HashTable* TSRMLS_DC);
 int zval_to_bson(buffer*, HashTable* TSRMLS_DC);
