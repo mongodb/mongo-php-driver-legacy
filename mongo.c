@@ -180,9 +180,6 @@ static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
     if (fs->db) {
       efree(fs->db);
     }
-    if (fs->prefix) {
-      efree(fs->prefix);
-    }
     if (fs->file_ns) {
       efree(fs->file_ns);
     }
@@ -547,15 +544,15 @@ PHP_FUNCTION(mongo_next) {
  */
 PHP_FUNCTION( mongo_gridfs_init ) {
   zval *zconn;
-  char *dbname, *prefix;
-  int dbname_len, prefix_len;
+  char *dbname, *files, *chunks;
+  int dbname_len, files_len, chunks_len;
   mongo_link *link;
 
-  if( ZEND_NUM_ARGS() != 3 ) {
-    zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
+  if( ZEND_NUM_ARGS() != 4 ) {
+    zend_error( E_WARNING, "expected 4 parameters, got %d parameters", ZEND_NUM_ARGS() );
     RETURN_FALSE;
   }
-  else if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rss", &zconn, &dbname, &dbname_len, &prefix, &prefix_len ) == FAILURE) {
+  else if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsss", &zconn, &dbname, &dbname_len, &files, &files_len, &chunks, &chunks_len) == FAILURE) {
     zend_error( E_WARNING, "incorrect parameter types, expected mongo_gridfs_init( connection, string, string )" );
     RETURN_FALSE;
   }
@@ -569,12 +566,9 @@ PHP_FUNCTION( mongo_gridfs_init ) {
   memcpy(fs->db, dbname, dbname_len);
   fs->db_len = dbname_len;
 
-  fs->prefix = (char*)emalloc(prefix_len);
-  memcpy(fs->prefix, prefix, prefix_len);
-
   // collections
-  spprintf(&fs->file_ns, 0, "%s.%s.files", dbname, prefix);
-  spprintf(&fs->chunk_ns, 0, "%s.%s.chunks", dbname, prefix);
+  spprintf(&fs->file_ns, 0, "%s.%s", dbname, files);
+  spprintf(&fs->chunk_ns, 0, "%s.%s", dbname, chunks);
 
   ZEND_REGISTER_RESOURCE(return_value, fs, le_gridfs);
 }
@@ -584,7 +578,7 @@ PHP_FUNCTION( mongo_gridfs_init ) {
 /* {{{ mongo_gridfs_store
  */
 PHP_FUNCTION(mongo_gridfs_store) {
-  zval zfile, *zfs;
+  zval *zfile, *zfs;
   char *filename;
   int filename_len;
   mongo_gridfs *gridfs;
@@ -603,77 +597,96 @@ PHP_FUNCTION(mongo_gridfs_store) {
   }
 
   // get size
-  FILE *temp_fp = fp;
-  fseek(temp_fp, 0L, SEEK_END);
-  long size = ftell(temp_fp);
+  fseek(fp, 0L, SEEK_END);
+  long size = ftell(fp);
   if (size >= 0xffffffff) {
     zend_error(E_WARNING, "file %s is too large: %d bytes\n", filename, size);
     RETURN_FALSE;
   }
 
-  // create an id for the file
-  zval id;
-  create_id(&id, 0 TSRMLS_CC);
 
+  // create an id for the file
+  char cid[12];
+  generate_id(cid);
+
+  ALLOC_INIT_ZVAL(zfile);
+  array_init(zfile);
+  
   long pos = 0;
   int chunk_num = 0, chunk_size;
-  
+
+  fseek(fp, 0, SEEK_SET);
   // insert chunks
   while (pos < size) {
     chunk_size = size-pos >= DEFAULT_CHUNK_SIZE ? DEFAULT_CHUNK_SIZE : size-pos;
     char buf[chunk_size];
-    fread(buf, chunk_size, 1, fp);
+    fread(buf, 1, chunk_size, fp);
+
+    zval *id;
+    ALLOC_INIT_ZVAL(id);
+    create_id(id, cid TSRMLS_CC);
 
     // create chunk
-    zval zchunk;
-    array_init(&zchunk);
+    zval *zchunk;
+    ALLOC_INIT_ZVAL(zchunk);
+    array_init(zchunk);
 
-    add_assoc_zval(&zchunk, "files_id", &id);
-    add_assoc_long(&zchunk, "n", chunk_num);
-    add_assoc_stringl(&zchunk, "data", buf, chunk_size, NO_DUP);
+    add_assoc_zval(zchunk, "files_id", id);
+    add_assoc_long(zchunk, "n", chunk_num);
+    add_assoc_stringl(zchunk, "data", buf, chunk_size, DUP);
 
     // insert chunk
-    mongo_do_insert(gridfs->link, gridfs->chunk_ns, &zchunk TSRMLS_CC);
+    mongo_do_insert(gridfs->link, gridfs->chunk_ns, zchunk TSRMLS_CC);
     
     // increment counters
+    id->refcount++;
     pos += chunk_size;
     chunk_num++;
+    zval_ptr_dtor(&id);
+    zval_ptr_dtor(&zchunk);
   }
+  fclose(fp);
 
-  array_init(&zfile);
-  add_assoc_zval(&zfile, "_id", &id);
-  add_assoc_stringl(&zfile, "filename", filename, filename_len, NO_DUP);
-  add_assoc_long(&zfile, "length", size);
-  add_assoc_long(&zfile, "chunkSize", DEFAULT_CHUNK_SIZE);
+  zval *id;
+  ALLOC_INIT_ZVAL(id);
+  create_id(id, cid TSRMLS_CC);
+  add_assoc_zval(zfile, "_id", id);
+  add_assoc_stringl(zfile, "filename", filename, filename_len, DUP);
+  add_assoc_long(zfile, "length", size);
+  add_assoc_long(zfile, "chunkSize", DEFAULT_CHUNK_SIZE);
 
   // get md5
-  zval zmd5;
-  array_init(&zmd5);
-  add_assoc_zval(&zmd5, "filemd5", &id);
-  add_assoc_string(&zmd5, "root", gridfs->prefix, NO_DUP);
+  /*  zval *zmd5;
+  ALLOC_INIT_ZVAL(zmd5);
+  array_init(zmd5);
+
+  add_assoc_zval(zmd5, "filemd5", id);
+  add_assoc_string(zmd5, "root", gridfs->file_ns, DUP);
 
   char *cmd;
   spprintf(&cmd, 0, "%s.$cmd", gridfs->db);
 
-  zval fields;
-  array_init(&fields);
-  mongo_cursor *cursor = mongo_do_query(gridfs->link, cmd, 0, -1, &zmd5, &fields TSRMLS_CC);
+  mongo_cursor *cursor = mongo_do_query(gridfs->link, cmd, 0, -1, zmd5, 0 TSRMLS_CC);
+
+  zval_ptr_dtor(&zmd5);
+  efree(cmd);
   if (!mongo_do_has_next(cursor TSRMLS_CC)) {
     zend_error(E_WARNING, "couldn't hash file %s\n", filename);
     RETURN_FALSE;
   }
 
   zval *hash = mongo_do_next(cursor TSRMLS_CC);
-  hash->refcount = 1;
-  add_assoc_zval(&zfile, "md5", hash);
-  
+  add_assoc_zval(zfile, "md5", hash);
+  */
+
   // insert file
-  mongo_do_insert(gridfs->link, gridfs->file_ns, &zfile TSRMLS_CC);
+  mongo_do_insert(gridfs->link, gridfs->file_ns, zfile TSRMLS_CC);
+  //  zval_ptr_dtor(&hash);
+  //  free_cursor(cursor);
 
   // cleanup
-  free_cursor(cursor);
-  zval_ptr_dtor(&hash);
-  efree(cmd);
+  zval_ptr_dtor(&id);
+  zval_ptr_dtor(&zfile);
 }
 /* }}} */
 
@@ -682,11 +695,11 @@ PHP_FUNCTION(mongo_gridfs_store) {
  */
 PHP_FUNCTION(mongo_gridfile_write) {
   mongo_gridfs *fs;
-  zval *zfs, *zfile, *zid, *zquery;
+  zval *zfs, *zquery;
   char *filename;
   int filename_len;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &zfs, &zfile, &filename, &filename_len ) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ras", &zfs, &zquery, &filename, &filename_len ) == FAILURE) {
      zend_error( E_WARNING, "parameter parse failure\n" );
      RETURN_FALSE;
   }
@@ -698,22 +711,14 @@ PHP_FUNCTION(mongo_gridfile_write) {
     RETURN_FALSE;
   }
 
-  HashTable *finfo = Z_ARRVAL_P(zfile);
-  if (zend_hash_find(finfo, "_id", 4, (void**)&zid) == FAILURE) {
-    zend_error(E_WARNING, "couldn't get file id");
-    RETURN_FALSE;
-  }
-
-  ALLOC_INIT_ZVAL(zquery);
-  array_init(zquery);
-  add_assoc_zval(zquery, "file_id", zid);
   mongo_cursor *c = mongo_do_query(fs->link, fs->chunk_ns, 0, 0, zquery, 0 TSRMLS_CC);
-  zval_ptr_dtor(&zquery);
 
+  int total = 0;
   while (mongo_do_has_next(c TSRMLS_CC)) {
     zval *elem = mongo_do_next(c TSRMLS_CC);
     zval *zdata;
-    if (zend_hash_find(Z_ARRVAL_P(elem), "data", 4, (void**)&zdata) == FAILURE) {
+    HashTable *response = Z_ARRVAL_P(elem);
+    if (zend_hash_find(response, "data", 5, (void**)&zdata) == FAILURE) {
       zval_ptr_dtor(&elem);
       zend_error(E_WARNING, "error reading chunk of file");
       RETURN_FALSE;
@@ -725,10 +730,14 @@ PHP_FUNCTION(mongo_gridfile_write) {
     if (written != len) {
       zend_error(E_WARNING, "incorrect byte count.  expected: %d, got %d", len, written);
     }
+    total += written;
+
     zval_ptr_dtor(&elem);
   }
 
+  free_cursor(c);
   fclose(fp);
+  RETURN_LONG(total);
 }
 /* }}} */
 

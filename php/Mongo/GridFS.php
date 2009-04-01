@@ -36,23 +36,74 @@ require_once "Mongo/Cursor.php";
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
  * @link     http://www.mongodb.org
  */
-class MongoGridFS
+class MongoGridFS extends MongoCollection
 {
     protected $resource;
-    protected $prefix;
-    protected $db;
+    protected $files_name;
+    protected $chunks_name;
+    protected $chunks;
 
     /**
-     * Creates a new gridfs instance.
+     * Creates new file collections.
+     *
+     * Files are stored across two collections, the first containing file meta 
+     * information, the second containing chunks of the actual files.  By default,
+     * fs.files and fs.chunks are the collections used.  
+     *
+     * Use one option to specify a prefix other that fs:
+     * <pre>
+     * $fs = new MongoGridFS($db, "myfiles");
+     * </pre>
+     * Uses myfiles.files and myfiles.chunks collections.
+     *
+     * Use two options to fully specify the two collection names:
+     * <pre>
+     * $fs = new MongoGridFS($db, "myfiles", "mychunks");
+     * </pre>
+     * Uses myfiles and mychunks collections.
      *
      * @param MongoDB $db     database
-     * @param string  $prefix optional files collection prefix
+     * @param string  $files  optional files collection name, if chunks is not given,
+     *                        files is used as a collection prefix
+     * @param string  $chunks optional chunks collection name
      */
-    public function __construct($db, $prefix = "fs") 
+    public function __construct(MongoDB $db, $files = null, $chunks = null) 
     {
-        $this->resource = mongo_gridfs_init($db->connection, $db->name, $prefix);
-        $this->prefix   = $prefix;
+        if (is_null($files) && is_null($chunks)) {
+            $this->files_name = "fs.files";
+            $this->chunks_name = "fs.chunks";
+        }
+        else if (is_null($chunks)) {
+            $this->files_name = "$files.files";
+            $this->chunks_name = "$files.chunks";
+        }
+        else {
+            $this->files_name = $files;
+            $this->chunks_name = $chunks;
+        }
+
+        parent::__construct($db, $this->files_name);
+        $this->chunks   = new MongoCollection($db, $this->chunks_name);
+        $this->resource = mongo_gridfs_init($db->connection, $db->name, $this->files_name, $this->chunks_name);
         $this->db       = $db;
+    }
+
+
+    /**
+     * Drops the files and chunks collections.
+     *
+     * @return array the db response
+     */
+    function drop() 
+    {
+        $this->chunks->deleteIndexes();
+        MongoUtil::dbCommand($this->db->connection, 
+                             array(MongoUtil::DROP => $this->chunks->name), 
+                             (string)$this->db);
+        $this->deleteIndexes();
+        return MongoUtil::dbCommand($this->db->connection, 
+                                    array(MongoUtil::DROP => $this->name), 
+                                    (string)$this->db);
     }
 
     /**
@@ -62,13 +113,9 @@ class MongoGridFS
      *
      * @return mongo_cursor cursor over the list of files
      */
-    public function listFiles($query = null) 
+    public function findFiles($query = array()) 
     {
-        if (is_null($query)) {
-            $query = array();
-        }
-        return MongoCursor::getGridFSCursor(mongo_gridfs_list($this->resource, 
-                                                              $query));
+        return $this->find($query);
     }
 
     /**
@@ -90,12 +137,16 @@ class MongoGridFS
      *
      * @return mongo_gridfs_file the file
      */
-    public function findFile($query) 
+    public function getFile($query) 
     {
         if (is_string($query)) {
             $query = array("filename" => $query);
         }
-        return new MongoGridFSFile(mongo_gridfs_find($this->resource, $query));
+        $file = $this->findOne($query);
+        if ($file) {
+            return new MongoGridFSFile($this->resource, $file);
+        }
+        return null;
     }
 
     /**
@@ -123,8 +174,7 @@ class MongoGridFS
         $this->storeFile($tmp);
 
         // make the filename more paletable
-        $coll              = $this->db->selectCollection($this->prefix . ".files");
-        $obj               = $coll->findOne(array("filename" => $tmp));
+        $obj               = $this->findOne(array("filename" => $tmp));
         $obj[ "filename" ] = $name;
         $coll->update(array("filename" => $tmp), $obj);
 

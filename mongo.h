@@ -147,7 +147,6 @@ typedef struct {
 
   char *db;
   int db_len;
-  char *prefix;
 
   char *file_ns;
   char *chunk_ns;
