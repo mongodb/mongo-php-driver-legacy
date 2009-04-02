@@ -6,10 +6,10 @@ bson - basic encode/decode functionality
 include "Mongo.php";
 
 $m=new Mongo();
-$c=$m->selectCollection("phpt", "bindata");
+$c=$m->selectCollection("phpt", "enc");
 $c->drop();
 
-$a = array("n" => NULL, 
+$a = array("n" => NULL,
            "l" => 234234124,
            "d" => 23.23451452,
            "b" => true,
@@ -31,7 +31,7 @@ array(9) {
   ["_id"]=>
   object(MongoId)#12 (1) {
     ["id"]=>
-    string(24) "49b6d9fb17330414a0c63101"
+    string(12) "%s"
   }
   ["n"]=>
   NULL
@@ -50,7 +50,7 @@ array(9) {
     ["x"]=>
     object(MongoId)#9 (1) {
       ["id"]=>
-      string(24) "49b6d9fb17330414a0c63102"
+      string(12) "%s"
     }
   }
   ["d2"]=>

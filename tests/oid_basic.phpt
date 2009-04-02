@@ -11,9 +11,9 @@ var_dump($id);
 echo "$id\n";
 
 ?>
---EXPECT--
+--EXPECTF--
 object(MongoId)#1 (1) {
   ["id"]=>
-  string(24) "49b16fab04bc94cc343c5482"
+  string(12) "%s"
 }
 49b16fab04bc94cc343c5482

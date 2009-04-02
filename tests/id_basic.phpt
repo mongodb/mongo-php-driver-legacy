@@ -29,11 +29,11 @@ while($cursor->hasNext()) {
 --EXPECTF--
 object(MongoId)#1 (1) {
   ["id"]=>
-  string(24) "%x"
+  string(12) "%s"
 }
 object(MongoId)#2 (1) {
   ["id"]=>
-  string(24) "49c10bb63eba810c0c3fc158"
+  string(12) "%s"
 }
 array(1) {
   ["_id"]=>

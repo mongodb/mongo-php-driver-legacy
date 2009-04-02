@@ -105,7 +105,7 @@ class MongoUtil
 
 
     /* Command collection */
-    protected static $CMD = ".\$cmd";
+    protected static $CMD = '.$cmd';
 
     /* Admin database */
     const ADMIN = "admin";
@@ -190,14 +190,17 @@ class MongoUtil
     public static function dbCommand($conn, $data, $db) 
     {
         $cmd_collection = $db . MongoUtil::$CMD;
-        $obj            = mongo_find_one($conn, $cmd_collection, $data);
-
-        if ($obj) {
-            return $obj;
-        } else {
-            throw new MongoException("no database response");
-            return false;
+        $cursor = mongo_query($conn, 
+                              $cmd_collection, 
+                              $data, 
+                              0,
+                              -1,
+                              array());
+        if(mongo_has_next($cursor)) {
+            return mongo_next($cursor);
         }
+        throw new MongoException("no database response");
+        return null;
     }
 
     /**

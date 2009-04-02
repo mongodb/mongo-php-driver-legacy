@@ -190,7 +190,7 @@ class MongoCursor implements Iterator
         if ($this->startedIterating) {
             throw new MongoCursorException(MongoCursor::$_ERR_CURSOR_MOD);
         }
-        $this->sort = $fields;
+        $this->query['orderby'] = $fields;
         return $this;
     }
 
@@ -208,7 +208,7 @@ class MongoCursor implements Iterator
         if ($this->startedIterating) {
             throw new MongoCursorException(MongoCursor::$_ERR_CURSOR_MOD);
         }
-        $this->hint = $key_pattern;
+        $this->query['$hint'] = $key_pattern;
         return $this;
     }
 
@@ -224,10 +224,7 @@ class MongoCursor implements Iterator
         $db   = substr($this->ns, 0, strpos($this->ns, "."));
         $coll = substr($this->ns, strpos($this->ns, ".")+1);
 
-        $cmd = array("count" => $coll);
-        if ($this->query) {
-            $cmd[ "query" ] = $this->query;
-        }
+        $cmd = array("count" => $coll, "query" => $this->query["query"]);
 
         $result = MongoUtil::dbCommand($this->connection, $cmd, $db);
         if ($result) {
@@ -248,9 +245,7 @@ class MongoCursor implements Iterator
                                      $this->query, 
                                      (int)$this->skip, 
                                      (int)$this->limit, 
-                                     $this->sort, 
-                                     $this->fields, 
-                                     $this->hint);
+                                     $this->fields);
     }
 
     /**

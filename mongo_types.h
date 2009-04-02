@@ -14,6 +14,12 @@
  *  limitations under the License.
  */
 
+#define BIN_FUNCTION 1
+#define BIN_BYTE_ARRAY 2
+#define BIN_UUID 3
+#define BIN_MD5 5
+#define BIN_CUSTOM 128
+
 PHP_FUNCTION( mongo_bindata___construct );
 PHP_FUNCTION( mongo_bindata___toString );
 zval* bson_to_zval_bin(char*, int, int TSRMLS_DC);
@@ -21,18 +27,16 @@ int zval_to_bson_bin(zval **, char**, int* TSRMLS_DC);
 
 PHP_FUNCTION( mongo_code___construct );
 PHP_FUNCTION( mongo_code___toString );
-zval* bson_to_zval_code(const char*, zval* TSRMLS_DC);
-void zval_to_bson_code(zval**, char**, mongo::BSONObjBuilder* TSRMLS_DC);
 
 PHP_FUNCTION( mongo_date___construct );
 PHP_FUNCTION( mongo_date___toString );
 zval* bson_to_zval_date(unsigned long long TSRMLS_DC);
 unsigned long long zval_to_bson_date(zval** TSRMLS_DC);
 
+void create_id(zval*, char* TSRMLS_DC);
+void generate_id(char*);
 PHP_FUNCTION( mongo_id___construct );
 PHP_FUNCTION( mongo_id___toString );
-zval* bson_to_zval_oid(const mongo::OID oid TSRMLS_DC);
-void zval_to_bson_oid(zval**, mongo::OID* TSRMLS_DC);
 
 PHP_FUNCTION( mongo_regex___construct );
 PHP_FUNCTION( mongo_regex___toString );

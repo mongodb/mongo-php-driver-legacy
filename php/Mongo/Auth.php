@@ -124,6 +124,7 @@ class MongoAuth extends Mongo
                           $plaintext=true) 
     {
         $this->db = $this->selectDB((string)$db);
+
         if ($plaintext) {
             $hash = MongoAuth::getHash($username, $password);
         } else {
@@ -202,7 +203,10 @@ class MongoAuth extends Mongo
     public function deleteUser($username) 
     {
         $c = $this->db->selectCollection('system.users');
-        return $c->remove(array('user' => (string)$username), true);
+        $b = $c->remove(array('user' => (string)$username), true);
+        // force the database to do the remove asap
+        $c->findOne();
+        return $b;
     }
 
 

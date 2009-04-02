@@ -19,18 +19,18 @@ var_dump($obj["bin"]);
 ?>
 --EXPECT--
 object(MongoBinData)#2 (3) {
-  ["bin"]=>
-  string(7) "abcdefg"
   ["length"]=>
   int(7)
+  ["bin"]=>
+  string(7) "abcdefg"
   ["type"]=>
   int(2)
 }
-object(MongoBinData)#6 (3) {
-  ["bin"]=>
-  string(7) "abcdefg"
+object(MongoBinData)#7 (3) {
   ["length"]=>
   int(7)
+  ["bin"]=>
+  string(7) "abcdefg"
   ["type"]=>
   int(2)
 }
