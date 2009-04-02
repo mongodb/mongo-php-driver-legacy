@@ -397,9 +397,7 @@ PHP_FUNCTION(mongo_remove) {
   HashTable *array = Z_ARRVAL_P(zarray);
   CREATE_HEADER(buf, collection, collection_len, OP_DELETE);
 
-  if (justOne || zend_hash_find(array, "_id", 4, NULL) == SUCCESS) {
-    mflags |= 1;
-  }
+  mflags |= (justOne == 1);
 
   serialize_int(&buf, mflags);
   zval_to_bson(&buf, array TSRMLS_CC);

@@ -24,7 +24,7 @@ var_dump(filesize($filename));
 
 $grid->storeFile($filename);
 
-$file = $grid->getFile(array("filename" => $filename));
+$file = $grid->findOne(array("filename" => $filename));
 var_dump($file->getFilename());
 var_dump($file->getSize());
 

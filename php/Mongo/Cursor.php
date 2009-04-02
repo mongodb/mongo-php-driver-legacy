@@ -248,21 +248,6 @@ class MongoCursor implements Iterator
                                      $this->fields);
     }
 
-    /**
-     * Special cursor used by GridFS functions.
-     * 
-     * @param resource $cursor a database cursor
-     *
-     * @return MongoCursor a new cursor
-     */
-    public static function getGridFSCursor($cursor) 
-    {
-        $c                   = new MongoCursor();
-        $c->cursor           = $cursor;
-        $c->startedIterating = true;
-        return $c;
-    }
-
 
     /* **************
      *    Iterator

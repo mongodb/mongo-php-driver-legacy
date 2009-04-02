@@ -25,7 +25,7 @@
  */
 
 require_once "Mongo/GridFS/File.php";
-require_once "Mongo/Cursor.php";
+require_once "Mongo/GridFS/Cursor.php";
 
 /**
  * Utilities for storing and retreiving files from the database.
@@ -117,9 +117,13 @@ class MongoGridFS extends MongoCollection
      *
      * @return mongo_cursor cursor over the list of files
      */
-    public function findFiles($query = array()) 
+    public function find($query = array()) 
     {
-        return $this->find($query);
+        return new MongoGridFSCursor($this,
+                                     $this->db->connection,
+                                     (string)$this,
+                                     $query,
+                                     array());
     }
 
     /**
@@ -141,17 +145,35 @@ class MongoGridFS extends MongoCollection
      *
      * @return mongo_gridfs_file the file
      */
-    public function getFile($query) 
+    public function findOne($query = array()) 
     {
         if (is_string($query)) {
             $query = array("filename" => $query);
         }
-        $file = $this->findOne($query);
-        if ($file) {
-            return new MongoGridFSFile($this, $file);
-        }
-        return null;
+        return $this->find($query)->limit(1)->getNext();
     }
+
+    /**
+     * Remove matching files from the collection.
+     * This also removes all associated chunks.
+     *
+     * @param object $criteria description of files to remove
+     * @param bool   $just_one remove at most one file matching this criteria
+     *
+     * @return bool if the command was executed successfully
+     */
+    function remove($criteria = array(), $just_one = false) 
+    {
+        $cursor = parent::find($criteria, array("_id" => 1));
+        foreach ($cursor as $v) {
+            $this->chunks->remove(array("files_id" => $v['_id']));
+        }
+        return mongo_remove($this->db->connection, 
+                            (string)$this, 
+                            $criteria, 
+                            (bool)$just_one);
+    }
+
 
     /**
      * Saves an uploaded file to the database.
@@ -178,9 +200,9 @@ class MongoGridFS extends MongoCollection
         $this->storeFile($tmp);
 
         // make the filename more paletable
-        $obj               = $this->findOne(array("filename" => $tmp));
+        $obj               = parent::findOne(array("filename" => $tmp));
         $obj[ "filename" ] = $name;
-        $coll->update(array("filename" => $tmp), $obj);
+        $this->update(array("filename" => $tmp), $obj);
 
         return $obj[ "_id" ];
     }
