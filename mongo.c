@@ -140,7 +140,7 @@ static PHP_GINIT_FUNCTION(mongo){
   mongo_globals->default_host = "localhost"; 
   mongo_globals->default_port = 27017; 
   mongo_globals->request_id = 3;
-  mongo_globals->chunk_size = 262144;
+  mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
 }
 /* }}} */
 
@@ -618,7 +618,7 @@ PHP_FUNCTION(mongo_gridfs_store) {
   fseek(fp, 0, SEEK_SET);
   // insert chunks
   while (pos < size) {
-    chunk_size = size-pos >= DEFAULT_CHUNK_SIZE ? DEFAULT_CHUNK_SIZE : size-pos;
+    chunk_size = size-pos >= MonGlo(chunk_size) ? MonGlo(chunk_size) : size-pos;
     char buf[chunk_size];
     fread(buf, 1, chunk_size, fp);
 
@@ -653,7 +653,7 @@ PHP_FUNCTION(mongo_gridfs_store) {
   add_assoc_zval(zfile, "_id", id);
   add_assoc_stringl(zfile, "filename", filename, filename_len, DUP);
   add_assoc_long(zfile, "length", size);
-  add_assoc_long(zfile, "chunkSize", DEFAULT_CHUNK_SIZE);
+  add_assoc_long(zfile, "chunkSize", MonGlo(chunk_size));
 
   // get md5
   /*  zval *zmd5;
