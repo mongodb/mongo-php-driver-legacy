@@ -40,7 +40,9 @@
 #define MSG_HEADER_SIZE 16
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
 #define INITIAL_BUF_SIZE 4096
-#define MAX_RESPONSE_LEN 65536
+// TODO: use the .ini mem settings
+// 1024*1024*2
+#define MAX_RESPONSE_LEN 2097152
 #define DEFAULT_CHUNK_SIZE (256*1024)
 
 
@@ -136,8 +138,8 @@ typedef struct {
   int limit;
 
   // results
-  char *buf;
-  char *buf_start;
+  unsigned char *buf;
+  unsigned char *buf_start;
   int buf_size;
   int pos;
 } mongo_cursor;

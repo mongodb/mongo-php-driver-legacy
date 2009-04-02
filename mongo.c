@@ -716,15 +716,22 @@ PHP_FUNCTION(mongo_gridfile_write) {
   int total = 0;
   while (mongo_do_has_next(c TSRMLS_CC)) {
     zval *elem = mongo_do_next(c TSRMLS_CC);
-    zval *zdata;
-    HashTable *response = Z_ARRVAL_P(elem);
-    if (zend_hash_find(response, "data", 5, (void**)&zdata) == FAILURE) {
-      zval_ptr_dtor(&elem);
+    zval **zdata;
+    HashTable *chunk = Z_ARRVAL_P(elem);
+
+    // check if data field exists.  if it doesn't, we've probably
+    // got an error message from the db, so return that
+    if (zend_hash_find(chunk, "data", 5, (void**)&zdata) == FAILURE) {
       zend_error(E_WARNING, "error reading chunk of file");
-      RETURN_FALSE;
+      if(zend_hash_exists(chunk, "$err", 5)) {
+        free_cursor(c);
+        fclose(fp);
+        RETURN_ZVAL(elem, 0, 1);
+      }
+      continue;
     }
-    char *data = Z_STRVAL_P(zdata);
-    int len = Z_STRLEN_P(zdata);
+    char *data = Z_STRVAL_PP(zdata);
+    int len = Z_STRLEN_PP(zdata);
 
     int written = fwrite(data, 1, len, fp);
     if (written != len) {

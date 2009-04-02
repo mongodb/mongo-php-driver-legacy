@@ -38,10 +38,10 @@ require_once "Mongo/Cursor.php";
  */
 class MongoGridFS extends MongoCollection
 {
-    protected $resource;
+    public $resource;
+    public $chunks;
     protected $files_name;
     protected $chunks_name;
-    protected $chunks;
 
     /**
      * Creates new file collections.
@@ -83,7 +83,11 @@ class MongoGridFS extends MongoCollection
         }
 
         parent::__construct($db, $this->files_name);
+
         $this->chunks   = new MongoCollection($db, $this->chunks_name);
+        // make sure that there's an index on chunks so we can sort by chunk num
+        $this->chunks->ensureIndex(array("n" => 1));
+
         $this->resource = mongo_gridfs_init($db->connection, $db->name, $this->files_name, $this->chunks_name);
         $this->db       = $db;
     }
@@ -144,7 +148,7 @@ class MongoGridFS extends MongoCollection
         }
         $file = $this->findOne($query);
         if ($file) {
-            return new MongoGridFSFile($this->resource, $file);
+            return new MongoGridFSFile($this, $file);
         }
         return null;
     }

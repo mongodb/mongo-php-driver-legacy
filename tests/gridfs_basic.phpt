@@ -28,16 +28,17 @@ $file = $grid->getFile(array("filename" => $filename));
 var_dump($file->getFilename());
 var_dump($file->getSize());
 
-$file->write($outfile);
+var_dump($file->write($outfile));
 var_dump(filesize($outfile));
 
-//unlink($outfile);
+unlink($outfile);
 
 ?>
 --EXPECTF--
 int(0)
 int(0)
-int(5183739)
+int(129)
 string(16) "./tests/somefile"
-int(5183739)
-int(5183739)
+int(129)
+int(129)
+int(129)

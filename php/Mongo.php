@@ -30,6 +30,10 @@ require_once "Mongo/Collection.php";
 require_once "Mongo/Util.php";
 require_once "Mongo/GridFS.php";
 
+require_once "Mongo/Auth.php";
+require_once "Mongo/Admin.php";
+
+
 /**
  * A connection point between the Mongo database and PHP.
  * 

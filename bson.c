@@ -305,10 +305,9 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       int len;
       memcpy(&len, buf, INT_32);
       buf += INT_32;
- 
-      char *str = buf;
+
+      add_assoc_stringl(result, name, buf, len-1, DUP);
       buf += len;
-      add_assoc_stringl(result, name, str, len-1, DUP);
       break;
     }
     case BSON_OBJECT:

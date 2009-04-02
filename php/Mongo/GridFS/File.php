@@ -44,7 +44,7 @@ class MongoGridFSFile
      *
      * @param gridfile $file a file from the database
      */
-    public function __construct($gridfs, $file) 
+    public function __construct(MongoGridFS $gridfs, $file) 
     {
         $this->gridfs = $gridfs;
         $this->file = $file;
@@ -79,12 +79,15 @@ class MongoGridFSFile
      */
     public function write($filename = null) 
     {
+        // make sure that there's an index on chunks so we can sort by chunk num
+        $this->gridfs->chunks->ensureIndex(array("n" => 1));
+
         if (!$filename) {
             $filename = $this->getFilename();
         }
         $query = array("query" => array('files_id' => $this->file['_id']), 
-                       "orderby" => array("chunk_num" => 1));
-        return mongo_gridfile_write($this->gridfs, $query, $filename);
+                       "orderby" => array("n" => 1));
+        return mongo_gridfile_write($this->gridfs->resource, $query, $filename);
     }
 }
 
