@@ -162,9 +162,9 @@ class MongoCollection
     {
         $cursor = $this->find($query)->limit(1);
         if ($cursor->hasNext()) {
-          return $cursor->next();
+            return $cursor->getNext();
         } else {
-          return null;
+            return null;
         }
     }
 
