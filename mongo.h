@@ -79,7 +79,7 @@
   serialize_string(&buf, ns, ns_len);              
 
 #define GET_RESPONSE(link, cursor)              \
-  get_reply(link, cursor)
+  get_reply(link, cursor TSRMLS_CC)
 
 #define GET_RESPONSE_NS(link, cursor, nsp, nsp_len)      \
   if (GET_RESPONSE(link, cursor) == SUCCESS) {           \
@@ -89,12 +89,30 @@
 
 
 typedef struct {
-  int socket;
-  int connected;
   int ts;
+  int paired;
+  int master;
 
-  char *host;
-  int port;
+  union {
+    struct {
+      char *host;
+      int port;
+
+      int socket;
+      int connected;
+    } single;
+    struct {
+      char *left;
+      int lport;
+      int lsocket;
+      int lconnected;
+
+      char *right;
+      int rport;
+      int rsocket;
+      int rconnected;
+    } paired;
+  } server;
 
   char *username;
   char *password;
@@ -220,12 +238,13 @@ int mongo_do_insert(mongo_link*, char*, zval* TSRMLS_DC);
 int mongo_do_has_next(mongo_cursor* TSRMLS_DC);
 zval* mongo_do_next(mongo_cursor* TSRMLS_DC);
 
+static int get_master(mongo_link* TSRMLS_DC);
 static int say(mongo_link*, buffer* TSRMLS_DC);
 static int check_connection(mongo_link* TSRMLS_DC);
 static int mongo_connect(mongo_link*);
 static int get_sockaddr(struct sockaddr_in*, char*, int);
 static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS);
-static int get_reply(mongo_link*, mongo_cursor*);
+static int get_reply(mongo_link*, mongo_cursor* TSRMLS_DC);
 static void kill_cursor(mongo_cursor* TSRMLS_DC);
 
 extern zend_module_entry mongo_module_entry;

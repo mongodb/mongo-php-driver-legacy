@@ -147,13 +147,27 @@ static PHP_GINIT_FUNCTION(mongo){
 static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo_link *conn = (mongo_link*)rsrc->ptr;
   if (conn) {
-    // close the connection
-    close(conn->socket);
+    if (conn->paired) {
+      close(conn->server.paired.lsocket);
+      close(conn->server.paired.rsocket);
 
-    // free strings
-    if (conn->host) {
-      efree(conn->host);
+      if (conn->server.paired.left) {
+        efree(conn->server.paired.left);
+      }
+      if (conn->server.paired.right) {
+        efree(conn->server.paired.right);
+      }
     }
+    else {
+      // close the connection
+      close(conn->server.single.socket);
+
+      // free strings
+      if (conn->server.single.host) {
+        efree(conn->server.single.host);
+      }
+    }
+
     if (conn->username) {
       efree(conn->username);
     }
@@ -837,13 +851,68 @@ int mongo_do_insert(mongo_link *link, char *collection, zval *zarray TSRMLS_DC) 
   return response;
 }
 
+static int get_master(mongo_link *link TSRMLS_DC) {
+  if (!link->paired) {
+    return link->server.single.socket;
+  }
 
-static int get_reply(mongo_link *link, mongo_cursor *cursor) {
+  if (link->server.paired.lsocket == link->master &&
+      link->server.paired.lconnected) {
+    return link->server.paired.lsocket;
+  }
+  else if (link->server.paired.rsocket == link->master &&
+           link->server.paired.rconnected) {
+    return link->server.paired.rsocket;
+  }
+
+  // redetermine master
+  zval *is_master, *response;
+  ALLOC_INIT_ZVAL(is_master);
+  array_init(is_master);
+  add_assoc_long(is_master, "ismaster", 1);
+
+  mongo_link temp;
+  temp.paired = 0;
+  temp.server.single.socket = link->server.paired.lsocket;
+
+  // check the left
+  mongo_cursor *c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
+
+  if (response = mongo_do_next(c TSRMLS_CC)) {
+    zval **ans;
+    if (zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS && 
+        Z_LVAL_PP(ans) == 1) {
+      zval_ptr_dtor(&is_master);
+      return link->master = link->server.paired.lsocket;
+    }
+  }
+
+  // check the right
+  temp.server.single.socket = link->server.paired.rsocket;
+
+  c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
+
+  if (response = mongo_do_next(c TSRMLS_CC)) {
+    zval **ans;
+    if (zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS && 
+        Z_LVAL_PP(ans) == 1) {
+      zval_ptr_dtor(&is_master);
+      return link->master = link->server.paired.rsocket;
+    }
+  }
+
+  // give up
+  zval_ptr_dtor(&is_master);
+  return -1;
+}
+
+
+static int get_reply(mongo_link *link, mongo_cursor *cursor TSRMLS_DC) {
   if(cursor->buf_start) {
     efree(cursor->buf_start);
   }
 
-  if (recv(link->socket, &cursor->header.length, INT_32, FLAGS) == -1) {
+  if (recv(get_master(link TSRMLS_CC), &cursor->header.length, INT_32, FLAGS) == -1) {
     perror("recv");
     return FAILURE;
   }
@@ -861,7 +930,7 @@ static int get_reply(mongo_link *link, mongo_cursor *cursor) {
   // point buf_start at buf's first char
   cursor->buf = cursor->buf_start;
 
-  if (recv(link->socket, cursor->buf, cursor->header.length, FLAGS) == -1) {
+  if (recv(get_master(link TSRMLS_CC), cursor->buf, cursor->header.length, FLAGS) == -1) {
     perror("recv");
     return FAILURE;
   }
@@ -890,7 +959,7 @@ static int get_reply(mongo_link *link, mongo_cursor *cursor) {
 
 static int say(mongo_link *link, buffer *buf TSRMLS_DC) {
   if (check_connection(link TSRMLS_CC) == SUCCESS) {
-    return send(link->socket, buf->start, buf->pos-buf->start, FLAGS);
+    return send(get_master(link TSRMLS_CC), buf->start, buf->pos-buf->start, FLAGS);
   }
   return FAILURE;
 }
@@ -898,38 +967,71 @@ static int say(mongo_link *link, buffer *buf TSRMLS_DC) {
 
 static int check_connection(mongo_link *link TSRMLS_DC) {
   if (!MonGlo(auto_reconnect) ||
-      link->connected || 
+      link->server.single.connected || 
       time(0)-link->ts < 2) {
     return SUCCESS;
   }
 
   link->ts = time(0);
 
-  close(link->socket);
-  struct sockaddr_in addr;
-  get_sockaddr(&addr, link->host, link->port);
-  return link->connected = 
-    connect(link->socket, (struct sockaddr*)&addr, sizeof(struct sockaddr));
+  if (!link->paired) {
+    close(link->server.single.socket);
+    struct sockaddr_in addr;
+    get_sockaddr(&addr, link->server.single.host, link->server.single.port);
+    return link->server.single.connected = 
+      connect(link->server.single.socket, (struct sockaddr*)&addr, sizeof(struct sockaddr));
+  }
 }
 
 static int mongo_connect(mongo_link *link) {
-  int sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (sock < 0) {
-    zend_error (E_WARNING, "socket");
-    return sock;
+  if (link->paired) {
+    struct sockaddr_in laddr, raddr;
+    // get addresses
+    get_sockaddr(&laddr, link->server.paired.left, link->server.paired.lport);
+    get_sockaddr(&raddr, link->server.paired.right, link->server.paired.rport);
+
+    // create sockets
+    if ((link->server.paired.lsocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE ||
+        (link->server.paired.rsocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
+      zend_error (E_WARNING, "couldn't create sockets");
+      return FAILURE;
+    }
+
+    // connect
+    if (connect(link->server.paired.lsocket, (struct sockaddr*)&laddr, sizeof(laddr)) == FAILURE) {
+      zend_error(E_WARNING, "error connecting to left host: %s:%d", 
+                 link->server.paired.left, link->server.paired.lport);
+      return FAILURE;
+    }
+    if (connect(link->server.paired.rsocket, (struct sockaddr*)&raddr, sizeof(raddr)) == FAILURE) {
+      zend_error(E_WARNING, "error connecting to right host: %s:%d", 
+                 link->server.paired.right, link->server.paired.rport);
+      return FAILURE;
+    }
+
+    // set initial connection time
+    link->ts = time(0);
   }
+  else {
+    struct sockaddr_in addr;
+    // get addresses
+    get_sockaddr(&addr, link->server.single.host, link->server.single.port);
 
-  struct sockaddr_in addr;
-  get_sockaddr(&addr, link->host, link->port);
+    // create sockets
+    if ((link->server.single.socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
+      zend_error (E_WARNING, "couldn't create socket");
+      return FAILURE;
+    }
 
-  int connected = connect(sock, (struct sockaddr*)&addr, sizeof(addr));
-  if (connected < 0) {
-    zend_error(E_WARNING, "error connecting");
-    return sock;
+    // connect
+    if (connect(link->server.single.socket, (struct sockaddr*)&addr, sizeof(addr)) == FAILURE) {
+      zend_error(E_WARNING, "error connecting");
+      return FAILURE;
+    }
+    
+    // set initial connection time
+    link->ts = time(0);
   }
-
-  link->socket = sock;
-  link->ts = time(0);
 }
 
 static int get_sockaddr(struct sockaddr_in *addr, char *host, int port) {
@@ -954,7 +1056,6 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
   zend_bool persistent, paired, lazy;
   int server_len, uname_len, pass_len, key_len;
   zend_rsrc_list_entry *le;
-  struct sockaddr_in name;
   
   int argc = ZEND_NUM_ARGS();
   if (argc != 6) {
@@ -1021,44 +1122,54 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
     port = 27017;
   }
 
-  get_sockaddr(&name, host, port);
-
   conn = (mongo_link*)emalloc(sizeof(mongo_link));
+
   // zero pointers so it doesn't segfault on cleanup if connection fails
   conn->username = 0;
   conn->password = 0;
-  conn->host = host;
-  conn->port = port;
 
-  mongo_connect(conn);
 
-  /*
   if (paired) {
+    conn->paired = 1;
+
+    conn->server.paired.left = host;
+    conn->server.paired.lport = port;
+
+
     // we get a string: host1:123,host2:456
     char *comma = strchr(server, ',');
     comma++;
-    colon = strchr(server, ':');
-    if (colon) {
-      int host_len = colon-(comma-server)+1;
+    colon = strchr(comma, ':');
+
+    // check that length is sane
+    if (colon && 
+        colon - comma > 0 &&
+        colon - comma < 256) {
+      int host_len = colon-comma + 1;
       host = (char*)emalloc(host_len);
-      memcpy(host, comma-server, host_len-1);
+      memcpy(host, comma, host_len-1);
       host[host_len-1] = 0;
-      port = atoi(colon+1);
+      port = atoi(colon + 1);
     }
     else {
-      host = (char*)emalloc(strlen(server+comma));
-      memcpy(host, server, strlen(server+comma));
+      host = (char*)emalloc(strlen(comma)+1);
+      memcpy(host, comma, strlen(comma));
+      host[strlen(comma)] = 0;
       port = 27017;
     }
 
-    mongo_link *conn2 = (mongo_link*)emalloc(sizeof(mongo_link));
-    mongo_connect(conn2, name);
-    efree(host);
+    conn->server.paired.right = host;
+    conn->server.paired.rport = port;
+  }
+  else {
+    conn->paired = 0;
 
-    //temp
-    efree(conn2);
-    }*/
-  
+    conn->server.single.host = host;
+    conn->server.single.port = port;
+  }
+
+  mongo_connect(conn);
+
   // store a reference in the persistence list
   if (persistent) {
     zend_rsrc_list_entry new_le; 
