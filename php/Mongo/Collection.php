@@ -161,11 +161,7 @@ class MongoCollection
     function findOne($query = array()) 
     {
         $cursor = $this->find($query)->limit(1);
-        if ($cursor->hasNext()) {
-            return $cursor->getNext();
-        } else {
-            return null;
-        }
+        return $cursor->getNext();
     }
 
     /**

@@ -25,31 +25,39 @@ $m->close();
 --EXPECT--
 localhost:27017
 127.0.0.1:27017
-array(3) {
+array(4) {
   ["err"]=>
   NULL
+  ["n"]=>
+  int(0)
   ["nPrev"]=>
-  int(1)
+  int(-1)
   ["ok"]=>
   float(1)
 }
-array(2) {
+array(3) {
   ["err"]=>
   NULL
+  ["n"]=>
+  int(0)
+  ["ok"]=>
+  float(1)
+}
+array(4) {
+  ["err"]=>
+  string(12) "forced error"
+  ["n"]=>
+  int(0)
+  ["nPrev"]=>
+  int(1)
   ["ok"]=>
   float(1)
 }
 array(3) {
   ["err"]=>
   string(12) "forced error"
-  ["nPrev"]=>
-  int(1)
-  ["ok"]=>
-  float(1)
-}
-array(2) {
-  ["err"]=>
-  string(12) "forced error"
+  ["n"]=>
+  int(0)
   ["ok"]=>
   float(1)
 }

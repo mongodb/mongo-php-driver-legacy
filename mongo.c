@@ -463,9 +463,10 @@ PHP_FUNCTION(mongo_batch_insert) {
       zend_hash_get_current_data_ex(php_array, (void**) &data, &pointer) == SUCCESS; 
       zend_hash_move_forward_ex(php_array, &pointer)) {
 
-    unsigned char *istart = buf.pos;
+    unsigned int start = buf.pos-buf.start;
     zval_to_bson(&buf, Z_ARRVAL_PP(data) TSRMLS_CC);
-    serialize_size(istart, &buf);
+
+    serialize_size(buf.start+start, &buf);
   }
   serialize_size(buf.start, &buf);
 

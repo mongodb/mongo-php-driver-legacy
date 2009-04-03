@@ -176,7 +176,7 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       serialize_string(buf, name, name_len);
 
       // save spot for size
-      unsigned char* start = buf->pos;
+      unsigned int start = buf->pos-buf->start;
       buf->pos += INT_32;
       zval *zid = zend_read_property(mongo_code_class, *data, "code", 4, 0 TSRMLS_CC);
       // string size
@@ -188,7 +188,7 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       zval_to_bson(buf, Z_ARRVAL_P(zid) TSRMLS_CC);
 
       // get total size
-      serialize_size(start, buf);
+      serialize_size(buf->start+start, buf);
     }
     // MongoBin
     else if (clazz == mongo_bindata_class) {
@@ -267,7 +267,7 @@ void serialize_double(buffer *buf, double num) {
  * in the first 4 bytes with the size.
  */
 void serialize_size(unsigned char *start, buffer *buf) {
-  int total = buf->pos - start;
+  unsigned int total = buf->pos - start;
   memcpy(start, &total, INT_32);
 }
 
