@@ -367,6 +367,9 @@ PHP_FUNCTION(mongo_query) {
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   mongo_cursor *cursor = mongo_do_query(link, collection, skip, limit, zquery, zfields TSRMLS_CC);
+  if (!cursor) {
+    RETURN_NULL();
+  }
   ZEND_REGISTER_RESOURCE(return_value, cursor, le_db_cursor);
 }
 /* }}} */
@@ -517,11 +520,11 @@ PHP_FUNCTION( mongo_has_next ) {
     RETURN_FALSE;
   }
   else if( zend_parse_parameters(argc TSRMLS_CC, "r", &zcursor) == FAILURE) {
-    zend_error( E_WARNING, "incorrect parameter types, expected mongo_has_next( cursor ), got %d parameters", argc );
+    zend_error( E_WARNING, "incorrect parameter types, expected mongo_has_next(cursor)" );
     RETURN_FALSE;
   }
 
-  cursor = (mongo_cursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
+  ZEND_FETCH_RESOURCE(cursor, mongo_cursor*, &zcursor, -1, PHP_DB_CURSOR_RES_NAME, le_db_cursor); 
   RETURN_BOOL(mongo_do_has_next(cursor TSRMLS_CC));
 }
 /* }}} */
@@ -544,7 +547,7 @@ PHP_FUNCTION(mongo_next) {
     RETURN_FALSE;
   }
 
-  cursor = (mongo_cursor*)zend_fetch_resource(&zcursor TSRMLS_CC, -1, PHP_DB_CURSOR_RES_NAME, NULL, 1, le_db_cursor);
+  ZEND_FETCH_RESOURCE(cursor, mongo_cursor*, &zcursor, -1, PHP_DB_CURSOR_RES_NAME, le_db_cursor); 
   zval *z = mongo_do_next(cursor TSRMLS_CC);
   RETURN_ZVAL(z, 0, 1);
 }
@@ -779,6 +782,7 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
   int sent = say(link, &buf TSRMLS_CC);
   efree(buf.start);
   if (sent == FAILURE) {
+    zend_error(E_WARNING, "couldn't send query\n");
     return 0;
   }
 
@@ -957,7 +961,12 @@ static int get_reply(mongo_link *link, mongo_cursor *cursor TSRMLS_DC) {
 
 static int say(mongo_link *link, buffer *buf TSRMLS_DC) {
   if (check_connection(link TSRMLS_CC) == SUCCESS) {
-    return send(get_master(link TSRMLS_CC), buf->start, buf->pos-buf->start, FLAGS);
+    int sent = send(get_master(link TSRMLS_CC), buf->start, buf->pos-buf->start, FLAGS);
+    if (sent == FAILURE) {
+      link->server.single.connected = 0;
+      check_connection(link TSRMLS_CC);
+    }
+    return sent;
   }
   return FAILURE;
 }
@@ -974,10 +983,7 @@ static int check_connection(mongo_link *link TSRMLS_DC) {
 
   if (!link->paired) {
     close(link->server.single.socket);
-    struct sockaddr_in addr;
-    get_sockaddr(&addr, link->server.single.host, link->server.single.port);
-    return link->server.single.connected = 
-      connect(link->server.single.socket, (struct sockaddr*)&addr, sizeof(struct sockaddr));
+    return link->server.single.connected = mongo_connect(link);
   }
 }
 
@@ -994,6 +1000,9 @@ static int mongo_connect(mongo_link *link) {
       zend_error (E_WARNING, "couldn't create sockets");
       return FAILURE;
     }
+    int yes = 1;
+    setsockopt(link->server.paired.lsocket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
+    setsockopt(link->server.paired.rsocket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
 
     // connect
     if (connect(link->server.paired.lsocket, (struct sockaddr*)&laddr, sizeof(laddr)) == FAILURE) {
@@ -1020,6 +1029,8 @@ static int mongo_connect(mongo_link *link) {
       zend_error (E_WARNING, "couldn't create socket");
       return FAILURE;
     }
+    int yes = 1;
+    setsockopt(link->server.single.socket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
 
     // connect
     if (connect(link->server.single.socket, (struct sockaddr*)&addr, sizeof(addr)) == FAILURE) {
