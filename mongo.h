@@ -22,11 +22,13 @@
 #define PHP_MONGO_VERSION "1.0"
 #define PHP_MONGO_EXTNAME "mongo"
 
+// resource names
 #define PHP_CONNECTION_RES_NAME "mongo connection"
 #define PHP_AUTH_CONNECTION_RES_NAME "mongo authenticated connection"
 #define PHP_DB_CURSOR_RES_NAME "mongo cursor"
 #define PHP_GRIDFS_RES_NAME "gridfs tools"
 
+// db ops
 #define OP_REPLY 1
 #define OP_MSG 1000
 #define OP_UPDATE 2001
@@ -36,6 +38,10 @@
 #define OP_GET_MORE 2005 
 #define OP_DELETE 2006
 #define OP_KILL_CURSORS 2007 
+
+// cursor flags
+#define CURSOR_NOT_FOUND 1
+#define CURSOR_ERR 2
 
 #define MSG_HEADER_SIZE 16
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
@@ -135,7 +141,7 @@ typedef struct {
 
   // response fields
   int flag;
-  long cursor_id;
+  long long cursor_id;
   int start;
 
   // number of results used

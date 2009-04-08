@@ -220,6 +220,13 @@ static void php_gridfs_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 
 // tell db to destroy its cursor
 static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
+  // we allocate a cursor even if no results are returned,
+  // but the database will throw an assertion if we try to
+  // kill a non-existant cursor
+  // non-cursors have ids of 0
+  if (cursor->cursor_id == 0) {
+    return;
+  }
   unsigned char quickbuf[128];
   buffer buf;
   buf.pos = quickbuf;
@@ -253,6 +260,7 @@ static void free_cursor(mongo_cursor *cursor) {
 
 static void php_cursor_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
   mongo_cursor *cursor = (mongo_cursor*)rsrc->ptr;
+
   if (cursor) {
     kill_cursor(cursor TSRMLS_CC);
     free_cursor(cursor);
@@ -775,6 +783,7 @@ PHP_FUNCTION(mongo_gridfile_write) {
     zval_ptr_dtor(&elem);
   }
 
+  
   free_cursor(c);
   fclose(fp);
   RETURN_LONG(total);
@@ -808,7 +817,7 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
   cursor->buf.start = 0;
   cursor->buf.pos = 0;
   cursor->link = link;
-  cursor->ns = estrdup(collection);                           
+  cursor->ns = estrdup(collection);
   cursor->ns_len = strlen(collection);                        
 
   get_reply(cursor TSRMLS_CC);
@@ -819,6 +828,9 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
 
 
 int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
+  if (cursor->num == 0) {
+    return 0;
+  }
   if (cursor->at < cursor->num) {
     return 1;
   }
@@ -829,7 +841,6 @@ int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
   serialize_long(&buf, cursor->cursor_id);
   serialize_size(buf.start, &buf);
   
-
   // fails if we're out of elems
   if(say(cursor->link, &buf TSRMLS_CC) == FAILURE) {
     efree(buf.start);
@@ -846,10 +857,12 @@ int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
 
 zval* mongo_do_next(mongo_cursor *cursor TSRMLS_DC) {
   if (cursor->at >= cursor->num) {
-    // we're out of results
-    if (get_reply(cursor TSRMLS_CC) == FAILURE) {
+    // check for more results
+    if (!mongo_do_has_next(cursor TSRMLS_CC)) {
+      // we're out of results
       return 0;
     }
+    // we got more results
   }
 
   if (cursor->at < cursor->num) {
@@ -969,7 +982,6 @@ static int get_reply(mongo_cursor *cursor TSRMLS_DC) {
     return FAILURE;
   }
 
-
   memcpy(&cursor->header.request_id, cursor->buf.pos, INT_32);
   cursor->buf.pos += INT_32;
   memcpy(&cursor->header.response_to, cursor->buf.pos, INT_32);
@@ -979,6 +991,11 @@ static int get_reply(mongo_cursor *cursor TSRMLS_DC) {
 
   memcpy(&cursor->flag, cursor->buf.pos, INT_32);
   cursor->buf.pos += INT_32;
+  if(cursor->flag == CURSOR_NOT_FOUND) {
+    cursor->num = 0;
+    return FAILURE;
+  }
+
   memcpy(&cursor->cursor_id, cursor->buf.pos, INT_64);
   cursor->buf.pos += INT_64;
   memcpy(&cursor->start, cursor->buf.pos, INT_32);

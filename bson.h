@@ -45,7 +45,7 @@ void serialize_size(unsigned char*, buffer*);
 void serialize_element(buffer*, char*, int, zval** TSRMLS_DC);
 void serialize_double(buffer*, double);
 void serialize_string(buffer*, char*, int);
-void serialize_long(buffer*, long);
+void serialize_long(buffer*, long long);
 void serialize_int(buffer*, int);
 void serialize_byte(buffer*, char);
 
@@ -55,6 +55,5 @@ void serialize_byte(buffer*, char);
 
 int resize_buf(buffer*, int);
 
-int prep_obj_for_db(buffer*, HashTable* TSRMLS_DC);
 int zval_to_bson(buffer*, HashTable* TSRMLS_DC);
 unsigned char* bson_to_zval(unsigned char*, zval* TSRMLS_DC);

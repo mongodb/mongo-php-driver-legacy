@@ -1,4 +1,4 @@
-// bson.cpp
+// bson.c
 /**
  *  Copyright 2009 10gen, Inc.
  * 
@@ -247,7 +247,7 @@ void serialize_int(buffer *buf, int num) {
   buf->pos += INT_32;
 }
 
-void serialize_long(buffer *buf, long num) {
+void serialize_long(buffer *buf, long long num) {
   if(BUF_REMAINING <= INT_64) {
     resize_buf(buf, INT_64);
   }
