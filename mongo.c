@@ -20,13 +20,25 @@
 #endif
 
 #include <string.h>
+#include <errno.h>
 
 #include <php.h>
 #include <php_ini.h>
+#include <ext/standard/info.h>
 
 #include "mongo.h"
 #include "mongo_types.h"
 #include "bson.h"
+
+static int get_master(mongo_link* TSRMLS_DC);
+static int say(mongo_link*, buffer* TSRMLS_DC);
+static int hear(mongo_link*, void*, int TSRMLS_DC);
+static int check_connection(mongo_link* TSRMLS_DC);
+static int mongo_connect(mongo_link*);
+static int get_sockaddr(struct sockaddr_in*, char*, int);
+static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS);
+static int get_reply(mongo_cursor* TSRMLS_DC);
+static void kill_cursor(mongo_cursor* TSRMLS_DC);
 
 /** Classes */
 zend_class_entry *mongo_id_class, 
@@ -225,13 +237,16 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   serialize_long(&buf, cursor->cursor_id);
   serialize_size(buf.start, &buf);
 
-  say(&cursor->link, &buf TSRMLS_CC);
+  say(cursor->link, &buf TSRMLS_CC);
 }
 
 static void free_cursor(mongo_cursor *cursor) {
   // free mem
-  if (cursor->buf_start) {
-    efree(cursor->buf_start);
+  if (cursor->buf.start) {
+    efree(cursor->buf.start);
+  }
+  if (cursor->ns) {
+    efree(cursor->ns);
   }
   efree(cursor);
 }
@@ -296,6 +311,8 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
  */ 
 PHP_RINIT_FUNCTION(mongo) {
   MonGlo(num_links) = MonGlo(num_persistent); 
+
+  return SUCCESS;
 }
 /* }}} */
 
@@ -379,7 +396,7 @@ PHP_FUNCTION(mongo_query) {
  */
 PHP_FUNCTION(mongo_remove) {
   zval *zconn, *zarray;
-  char *collection, *start;
+  char *collection;
   int collection_len, mflags = 0;
   zend_bool justOne = 0;
   mongo_link *link;
@@ -613,10 +630,10 @@ PHP_FUNCTION(mongo_gridfs_store) {
   }
 
   // get size
-  fseek(fp, 0L, SEEK_END);
+  fseek(fp, 0, SEEK_END);
   long size = ftell(fp);
   if (size >= 0xffffffff) {
-    zend_error(E_WARNING, "file %s is too large: %d bytes\n", filename, size);
+    zend_error(E_WARNING, "file %s is too large: %ld bytes\n", filename, size);
     RETURN_FALSE;
   }
 
@@ -788,8 +805,14 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
   }
 
   mongo_cursor *cursor = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
-  cursor->buf_start = 0;
-  GET_RESPONSE_NS(link, cursor, collection, strlen(collection));
+  cursor->buf.start = 0;
+  cursor->buf.pos = 0;
+  cursor->link = link;
+  cursor->ns = estrdup(collection);                           
+  cursor->ns_len = strlen(collection);                        
+
+  get_reply(cursor TSRMLS_CC);
+
   cursor->limit = limit;
   return cursor;
 }
@@ -801,34 +824,39 @@ int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
   }
 
   CREATE_BUF(buf, 256);
-  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->ns_len, cursor->header.request_id, OP_REPLY);
+  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->ns_len, cursor->header.request_id, OP_GET_MORE);
   serialize_int(&buf, cursor->limit);
   serialize_long(&buf, cursor->cursor_id);
   serialize_size(buf.start, &buf);
+  
 
   // fails if we're out of elems
-  if(say(&cursor->link, &buf TSRMLS_CC) == FAILURE) {
+  if(say(cursor->link, &buf TSRMLS_CC) == FAILURE) {
     efree(buf.start);
     return 0;
   }
-
+  
   efree(buf.start);
-  GET_RESPONSE(&cursor->link, cursor);
 
-  return cursor->num > 0;
+  // if we have cursor->at == cursor->num && recv fails,
+  // we're probably just out of results
+  return (get_reply(cursor TSRMLS_CC) == SUCCESS);
 }
 
 
 zval* mongo_do_next(mongo_cursor *cursor TSRMLS_DC) {
   if (cursor->at >= cursor->num) {
-    GET_RESPONSE(&cursor->link, cursor);
+    // we're out of results
+    if (get_reply(cursor TSRMLS_CC) == FAILURE) {
+      return 0;
+    }
   }
 
   if (cursor->at < cursor->num) {
     zval *elem;
     ALLOC_INIT_ZVAL(elem);
     array_init(elem);
-    cursor->buf = bson_to_zval(cursor->buf, elem TSRMLS_CC);
+    cursor->buf.pos = bson_to_zval(cursor->buf.pos, elem TSRMLS_CC);
 
     // increment cursor position
     cursor->at++;
@@ -881,7 +909,7 @@ static int get_master(mongo_link *link TSRMLS_DC) {
   // check the left
   mongo_cursor *c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
 
-  if (response = mongo_do_next(c TSRMLS_CC)) {
+  if ((response = mongo_do_next(c TSRMLS_CC)) != 0) {
     zval **ans;
     if (zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS && 
         Z_LVAL_PP(ans) == 1) {
@@ -895,7 +923,7 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
   c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
 
-  if (response = mongo_do_next(c TSRMLS_CC)) {
+  if ((response = mongo_do_next(c TSRMLS_CC)) != 0) {
     zval **ans;
     if (zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS && 
         Z_LVAL_PP(ans) == 1) {
@@ -910,53 +938,57 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 }
 
 
-static int get_reply(mongo_link *link, mongo_cursor *cursor TSRMLS_DC) {
-  if(cursor->buf_start) {
-    efree(cursor->buf_start);
+static int get_reply(mongo_cursor *cursor TSRMLS_DC) {
+  if(cursor->buf.start) {
+    efree(cursor->buf.start);
+    cursor->buf.start = 0;
   }
-
-  if (recv(get_master(link TSRMLS_CC), &cursor->header.length, INT_32, FLAGS) == -1) {
-    perror("recv");
+  
+  // if this fails, we might be disconnected... but we're probably
+  // just out of results
+  if (hear(cursor->link, &cursor->header.length, INT_32 TSRMLS_CC) == FAILURE) {
     return FAILURE;
   }
 
   // make sure we're not getting crazy data
   if (cursor->header.length > MAX_RESPONSE_LEN ||
       cursor->header.length < REPLY_HEADER_SIZE) {
-    zend_error(E_WARNING, "bad response length: %d\n", cursor->header.length);
+    zend_error(E_WARNING, "bad response length: %d, did the db assert?\n", cursor->header.length);
     return FAILURE;
   }
 
   // create buf
   cursor->header.length -= INT_32;
-  cursor->buf_start = (char*)emalloc(cursor->header.length);
-  // point buf_start at buf's first char
-  cursor->buf = cursor->buf_start;
+  // point buf.start at buf's first char
+  cursor->buf.start = (unsigned char*)emalloc(cursor->header.length);
+  cursor->buf.pos = cursor->buf.start;
+  cursor->buf.end = cursor->buf.start + cursor->header.length;
 
-  if (recv(get_master(link TSRMLS_CC), cursor->buf, cursor->header.length, FLAGS) == -1) {
-    perror("recv");
+  if (hear(cursor->link, cursor->buf.pos, cursor->header.length TSRMLS_CC) == FAILURE) {
+    zend_error(E_WARNING, "error getting response buf: %s\n", strerror(errno));
     return FAILURE;
   }
 
-  memcpy(&cursor->header.request_id, cursor->buf, INT_32);
-  cursor->buf += INT_32;
-  memcpy(&cursor->header.response_to, cursor->buf, INT_32);
-  cursor->buf += INT_32;
-  memcpy(&cursor->header.op, cursor->buf, INT_32);
-  cursor->buf += INT_32;
 
-  memcpy(&cursor->flag, cursor->buf, INT_32);
-  cursor->buf += INT_32;
-  memcpy(&cursor->cursor_id, cursor->buf, INT_64);
-  cursor->buf += INT_64;
-  memcpy(&cursor->start, cursor->buf, INT_32);
-  cursor->buf += INT_32;
-  memcpy(&cursor->num, cursor->buf, INT_32);
-  cursor->buf += INT_32;
+  memcpy(&cursor->header.request_id, cursor->buf.pos, INT_32);
+  cursor->buf.pos += INT_32;
+  memcpy(&cursor->header.response_to, cursor->buf.pos, INT_32);
+  cursor->buf.pos += INT_32;
+  memcpy(&cursor->header.op, cursor->buf.pos, INT_32);
+  cursor->buf.pos += INT_32;
+
+  memcpy(&cursor->flag, cursor->buf.pos, INT_32);
+  cursor->buf.pos += INT_32;
+  memcpy(&cursor->cursor_id, cursor->buf.pos, INT_64);
+  cursor->buf.pos += INT_64;
+  memcpy(&cursor->start, cursor->buf.pos, INT_32);
+  cursor->buf.pos += INT_32;
+  memcpy(&cursor->num, cursor->buf.pos, INT_32);
+  cursor->buf.pos += INT_32;
 
   cursor->at = 0;
 
-  return SUCCESS;
+  return cursor->num == 0 ? FAILURE : SUCCESS;
 }
 
 
@@ -965,13 +997,23 @@ static int say(mongo_link *link, buffer *buf TSRMLS_DC) {
     int sent = send(get_master(link TSRMLS_CC), buf->start, buf->pos-buf->start, FLAGS);
     if (sent == FAILURE) {
       link->server.single.connected = 0;
-      check_connection(link TSRMLS_CC);
+      sent = check_connection(link TSRMLS_CC);
     }
     return sent;
   }
   return FAILURE;
 }
 
+static int hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
+  int tries = 3;
+  while (check_connection(link TSRMLS_CC) == FAILURE &&
+         tries > 0) {
+    sleep(2);
+    zend_error(E_WARNING, "no connection, trying to reconnect %d more times...\n", tries--);
+  }
+  // this can return FAILED if there is just no more data from db
+  return recv(get_master(link TSRMLS_CC), dest, len, FLAGS);
+}
 
 static int check_connection(mongo_link *link TSRMLS_DC) {
   if (!MonGlo(auto_reconnect) ||
@@ -984,8 +1026,10 @@ static int check_connection(mongo_link *link TSRMLS_DC) {
 
   if (!link->paired) {
     close(link->server.single.socket);
-    return link->server.single.connected = mongo_connect(link);
+    int connected = link->server.single.connected = mongo_connect(link);
+    return connected;
   }
+  return link->server.paired.lconnected;
 }
 
 static int mongo_connect(mongo_link *link) {
@@ -1042,6 +1086,7 @@ static int mongo_connect(mongo_link *link) {
     // set initial connection time
     link->ts = time(0);
   }
+  return SUCCESS;
 }
 
 static int get_sockaddr(struct sockaddr_in *addr, char *host, int port) {

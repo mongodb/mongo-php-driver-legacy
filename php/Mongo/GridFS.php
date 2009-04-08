@@ -112,10 +112,11 @@ class MongoGridFS extends MongoCollection
 
     /**
      * Lists all files matching a given criteria.
+     * Each result is returned as a GridFSFile object.
      *
      * @param array $query criteria to match
      *
-     * @return mongo_cursor cursor over the list of files
+     * @return GridFSCursor cursor over the list of files
      */
     public function find($query = array()) 
     {
@@ -143,7 +144,7 @@ class MongoGridFS extends MongoCollection
      *
      * @param array|string $query the filename or criteria for which to search
      *
-     * @return mongo_gridfs_file the file
+     * @return GridFSFile the file
      */
     public function findOne($query = array()) 
     {

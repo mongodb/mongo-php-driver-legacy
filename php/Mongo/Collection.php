@@ -116,9 +116,12 @@ class MongoCollection
      */
     function insert($iterable) 
     {
+        if(!$iterable) {
+            return false;
+        }
         return mongo_insert($this->db->connection, 
-                               (string)$this, 
-                               $iterable);
+                            (string)$this, 
+                            $iterable);
     }
 
     /** Inserts many objects into the database at once.

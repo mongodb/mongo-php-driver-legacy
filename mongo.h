@@ -27,7 +27,7 @@
 #define PHP_DB_CURSOR_RES_NAME "mongo cursor"
 #define PHP_GRIDFS_RES_NAME "gridfs tools"
 
-#define OP_REPLY  1
+#define OP_REPLY 1
 #define OP_MSG 1000
 #define OP_UPDATE 2001
 #define OP_INSERT 2002
@@ -77,16 +77,6 @@
 #define APPEND_HEADER_NS(buf, ns, ns_len)               \
   APPEND_HEADER(buf);                                   \
   serialize_string(&buf, ns, ns_len);              
-
-#define GET_RESPONSE(link, cursor)              \
-  get_reply(link, cursor TSRMLS_CC)
-
-#define GET_RESPONSE_NS(link, cursor, nsp, nsp_len)      \
-  if (GET_RESPONSE(link, cursor) == SUCCESS) {           \
-    cursor->ns = nsp;                                    \
-    cursor->ns_len = nsp_len;                            \
-  }
-
 
 typedef struct {
   int ts;
@@ -138,7 +128,7 @@ typedef struct {
   // response header
   mongo_msg_header header;
   // connection
-  mongo_link link;
+  mongo_link *link;
   // collection namespace
   char *ns;
   int ns_len;
@@ -156,10 +146,7 @@ typedef struct {
   int limit;
 
   // results
-  unsigned char *buf;
-  unsigned char *buf_start;
-  int buf_size;
-  int pos;
+  buffer buf;
 } mongo_cursor;
 
 typedef struct {
@@ -180,7 +167,7 @@ typedef struct {
   buf.pos = buf.start;                                  \
   buf.end = buf.start + size;
 
-#define DEBUG_BUF                                   \
+#define DEBUG_BUF(buf)                              \
   unsigned char *temp = buf.start;                  \
   while(temp != buf.pos) {                          \
     php_printf("%d\n", *temp++);                    \
@@ -237,15 +224,6 @@ mongo_cursor* mongo_do_query(mongo_link*, char*, int, int, zval*, zval* TSRMLS_D
 int mongo_do_insert(mongo_link*, char*, zval* TSRMLS_DC);
 int mongo_do_has_next(mongo_cursor* TSRMLS_DC);
 zval* mongo_do_next(mongo_cursor* TSRMLS_DC);
-
-static int get_master(mongo_link* TSRMLS_DC);
-static int say(mongo_link*, buffer* TSRMLS_DC);
-static int check_connection(mongo_link* TSRMLS_DC);
-static int mongo_connect(mongo_link*);
-static int get_sockaddr(struct sockaddr_in*, char*, int);
-static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS);
-static int get_reply(mongo_link*, mongo_cursor* TSRMLS_DC);
-static void kill_cursor(mongo_cursor* TSRMLS_DC);
 
 extern zend_module_entry mongo_module_entry;
 #define phpext_mongo_ptr &mongo_module_entry

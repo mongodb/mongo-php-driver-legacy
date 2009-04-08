@@ -157,7 +157,7 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       zval *zsec = zend_read_property(mongo_date_class, *data, "sec", 3, 0 TSRMLS_CC);
       long sec = Z_LVAL_P(zsec);
       zval *zusec = zend_read_property(mongo_date_class, *data, "usec", 4, 0 TSRMLS_CC);
-      long usec = Z_LVAL_P(zsec);
+      long usec = Z_LVAL_P(zusec);
       long ms = (sec * 1000) + (usec / 1000);
       serialize_long(buf, ms);
     }
@@ -272,15 +272,15 @@ void serialize_size(unsigned char *start, buffer *buf) {
 }
 
 
-char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
+unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
   unsigned int size;
   memcpy(&size, buf, INT_32);
   buf += INT_32;
 
-  char type;
+  unsigned char type;
   // size is for sanity check
   while (size-- > 0 && (type = *buf++)) {
-    char* name = buf;
+    char* name = (char*)buf;
     // get past field name
     while (*buf++);
 
@@ -289,7 +289,7 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
     case BSON_OID: {
       zval *z;
       MAKE_STD_ZVAL(z);
-      create_id(z, buf TSRMLS_CC);
+      create_id(z, (char*)buf TSRMLS_CC);
       add_assoc_zval(result, name, z);
       buf += OID_SIZE;
       break;
@@ -306,7 +306,7 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       memcpy(&len, buf, INT_32);
       buf += INT_32;
 
-      add_assoc_stringl(result, name, buf, len-1, DUP);
+      add_assoc_stringl(result, name, (char*)buf, len-1, DUP);
       buf += len;
       break;
     }
@@ -324,9 +324,9 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       memcpy(&len, buf, INT_32);
       buf += INT_32;
 
-      char type = *buf++;
+      unsigned char type = *buf++;
 
-      char *bytes = buf;
+      unsigned char *bytes = buf;
       buf += len;
 
       zval *bin;
@@ -340,7 +340,7 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_BOOL: {
-      char d = *buf++;
+      unsigned char d = *buf++;
       add_assoc_bool(result, name, d);
       break;
     }
@@ -371,11 +371,11 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_REGEX: {
-      char *start_regex = buf;
+      unsigned char *start_regex = buf;
       while (*buf++);
       int regex_len = buf-start_regex;
 
-      char *start_flags = buf;
+      unsigned char *start_flags = buf;
       while (*buf++);
       int flags_len = buf-start_flags;
 
@@ -383,8 +383,8 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       MAKE_STD_ZVAL(zegex);
       object_init_ex(zegex, mongo_regex_class);
 
-      add_property_stringl(zegex, "regex", start_regex, regex_len, 1);
-      add_property_stringl(zegex, "flags", start_flags, flags_len, 1);
+      add_property_stringl(zegex, "regex", (char*)start_regex, regex_len, 1);
+      add_property_stringl(zegex, "flags", (char*)start_flags, flags_len, 1);
       add_assoc_zval(result, name, zegex);
 
       break;
@@ -408,7 +408,7 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       memcpy(&len, buf, INT_32);
 
       buf += INT_32;
-      char *code = buf;
+      unsigned char *code = buf;
       buf += len * BYTE_8;
 
       if (type == BSON_CODE) {
@@ -416,7 +416,7 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       }
 
       // exclude \0
-      add_property_stringl(zode, "code", code, len-1, DUP);
+      add_property_stringl(zode, "code", (char*)code, len-1, DUP);
       add_property_zval(zode, "scope", zcope);
       zval_ptr_dtor(&zcope);
       add_assoc_zval(result, name, zode);
