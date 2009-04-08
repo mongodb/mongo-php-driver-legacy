@@ -264,11 +264,10 @@ class MongoCollection
         $nscollection = $this->db->selectCollection("system.indexes");
         $cursor       = $nscollection->find(array("ns" => $ns));
         $a            = array();
-        while ($cursor->hasNext()) {
-            $obj = $cursor->next();
+        foreach ($cursor as $obj) {
             unset($obj[ "id" ]);
             unset($obj[ "ns" ]);
-            array_push($a, $cursor->next());
+            array_push($a, $obj);
         }
         return $a;
     }

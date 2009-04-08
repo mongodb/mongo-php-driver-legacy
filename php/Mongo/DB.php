@@ -228,8 +228,7 @@ class MongoDB
     {
         $nss     = $this->selectCollection("system.namespaces")->find();
         $ns_list = array();
-        while ($nss->hasNext()) {
-            $ns = $nss->next();
+        foreach ($nss as $ns) {
             $ns = $ns[ "name" ];
             if (strpos($ns, "\$") > 0) {
                 continue;
