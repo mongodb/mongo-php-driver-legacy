@@ -1029,7 +1029,13 @@ static int hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
     zend_error(E_WARNING, "no connection, trying to reconnect %d more times...\n", tries--);
   }
   // this can return FAILED if there is just no more data from db
-  return recv(get_master(link TSRMLS_CC), dest, len, FLAGS);
+  int r = 0;
+  while(r < len) {
+    int temp = recv(get_master(link TSRMLS_CC), dest, len, FLAGS);
+    dest += temp;
+    r += temp;
+  }
+  return r;
 }
 
 static int check_connection(mongo_link *link TSRMLS_DC) {
