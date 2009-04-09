@@ -1,10 +1,10 @@
-See http://www.mongodb.org/display/DOCS/PHP+Language+Center for detailed installation instructions.
-
-If you absolutely must, you can install it without reading the wiki:
+To install:
 
    $ phpize
    $ ./configure
    $ make
    $ sudo make install
 
-Now go read the wiki.
+See http://www.mongodb.org/display/DOCS/PHP+Language+Center for information on configuration options and API documentation.
+
+This extension is designed to be wrapped by the PHP code that can be downloaded at http://www.mongodb.org/display/DOCS/PHP+Language+Center.
