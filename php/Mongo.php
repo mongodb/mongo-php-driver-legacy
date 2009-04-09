@@ -20,7 +20,6 @@
  * @package  Mongo
  * @author   Kristina Chodorow <kristina@10gen.com>
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
- * @version  CVS: 000000
  * @link     http://www.mongodb.org
  */
 
@@ -61,11 +60,11 @@ class Mongo
     const ERR_CURSOR     = 3;
 
     public $connection = null;
+    public $connected  = false;
 
     protected $server;
     protected $paired;
     protected $persistent;
-    protected $connected = false;
 
 
     /** 
@@ -83,8 +82,12 @@ class Mongo
                                 $persistent = false, 
                                 $paired=false) 
     {
+        $this->server     = $server;
+        $this->paired     = $paired;
+        $this->persistent = $persistent;
+
         if ($connect) {
-            $this->connectUtil($server, "", "", $persistent, $paired);
+            $this->connectUtil("", "");
         } else {
             $this->server     = $server;
             $this->persistent = $persistent;
@@ -96,36 +99,32 @@ class Mongo
     /**
      * Connect to a database server.
      *
-     * @param string $server server address
-     *
      * @return bool if a connection was successfully made
      *
      * @throws MongoConnectionException if it could not connect
      */
-    public function connect($server=null) 
+    public function connect() 
     {
-        return $this->connectUtil($server, "", "", false, false);
+        return $this->connectUtil("", "");
     }
 
     /**
      * Connect to paired database servers.
-     *
-     * @param string $server1 first server address
-     * @param string $server2 second server address
+     * $this->server must be a string of the form 
+     * "server1,server2".
      *
      * @return bool if a connection was successfully made
      *
      * @throws MongoConnectionException if it could not connect
      */
-    public function pairConnect($server1, $server2) 
+    public function pairConnect() 
     {
-        return $this->connectUtil("${server1},${server2}", "", "", false, true);
+        return $this->connectUtil("", "");
     }
 
     /**
      * Create a persistent connection to a database server.
      *
-     * @param string $server   server address 
      * @param string $username username
      * @param string $password password
      *
@@ -133,16 +132,14 @@ class Mongo
      *
      * @throws MongoConnectionException if it could not connect
      */
-    public function persistConnect($server, $username="", $password="") 
+    public function persistConnect($server = null, $username="", $password="") 
     {
-        return $this->connectUtil($server, $username, $password, true, false);
+        return $this->connectUtil($username, $password);
     }
 
     /**
      * Create a persistent connection to paired database servers.
      *
-     * @param string $server1  first server address
-     * @param string $server2  second server address
      * @param string $username username
      * @param string $password password
      *
@@ -150,59 +147,45 @@ class Mongo
      *
      * @throws MongoConnectionException if it could not connect
      */
-    public function pairPersistConnect($server1, 
-                                       $server2, 
-                                       $username="", 
-                                       $password="") 
+    public function pairPersistConnect($username = "", 
+                                       $password = "") 
     {
-        return $this->connectUtil("${server1},${server2}", 
-                                  $username, 
-                                  $password, 
-                                  true, 
-                                  true);
+        return $this->connectUtil($username, 
+                                  $password);
     }
 
     /**
      * Actually connect.
      *
-     * @param string $server     database address
      * @param string $username   username
      * @param string $password   password
-     * @param bool   $persistent if connection is persistent
-     * @param bool   $paired     if connection is paired
      *
      * @return bool if connection was made
      */ 
-    protected function connectUtil($server, 
-                                   $username, 
-                                   $password, 
-                                   $persistent, 
-                                   $paired)
+    protected function connectUtil($username, 
+                                   $password)
     {
-        $this->paired     = $paired;
-        $this->persistent = $persistent;
-
         // close any current connections
         if ($this->connected) {
             $this->close();
             $this->connected = false;
         }
 
-        if (!$server) {
+        if (!$this->server) {
             $host   = get_cfg_var("mongo.default_host");
             $host   = $host ? $host : Mongo::DEFAULT_HOST;
             $port   = get_cfg_var("mongo.default_port");
             $port   = $port ? $port : Mongo::DEFAULT_PORT;
-            $server = "${host}:${port}";
+
+            $this->server = "${host}:${port}";
         }
-        $this->server = $server;
 
         $lazy             = false;
-        $this->connection = mongo_connect((string)$server,
+        $this->connection = mongo_connect((string)$this->server,
                                           (string)$username, 
                                           (string)$password, 
-                                          (bool)$persistent, 
-                                          (bool)$paired, 
+                                          (bool)$this->persistent, 
+                                          (bool)$this->paired, 
                                           (bool)$lazy);
 
         if (!$this->connection) {
@@ -225,6 +208,12 @@ class Mongo
 
     /** 
      * Gets a database.
+     * Database names can use almost any character in the
+     * ASCII range.  However, they cannot contain " ", ".",
+     * or be the empty string.
+     *
+     * A few unusual, but valid, database names: "null", 
+     * "[x,y]", "3", "\"", "/".
      *
      * @param string $dbname the database name
      *
@@ -232,9 +221,13 @@ class Mongo
      *
      * @throws MongoException if the database name is invalid
      */
-    public function selectDB($dbname = null) 
+    public function selectDB($dbname) 
     {
-        if ($dbname == null || $dbname == "" ) {
+        $dbname = (string)$dbname;
+        if ($dbname == null || 
+            $dbname == "" || 
+            strchr($dbname, " ") || 
+            strchr($dbname, ".")) {
             throw new MongoException("Invalid database name.");
         }
         return new MongoDB($this, $dbname);
@@ -255,17 +248,11 @@ class Mongo
      */
     public function selectCollection( $db, $collection ) 
     {
-        if ($db == null || $db == "" ) {
-            throw new MongoException("Invalid database name.");
+        if (!($db instanceof MongoDB)) {
+            $db = $this->selectDB((string)$db);
         }
-        if ($collection == null || $collection == "" ) {
-            throw new MongoException("Invalid collection name.");
-        }
-        if (is_string($db)) {
-            return new MongoCollection(new MongoDB($this, $db), $collection);
-        } else {
-            return new MongoCollection($db, $collection);
-        }
+
+        return $db->selectCollection($collection);
     }
 
     /**

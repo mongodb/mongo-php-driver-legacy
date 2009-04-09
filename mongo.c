@@ -1034,7 +1034,8 @@ static int hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
 
 static int check_connection(mongo_link *link TSRMLS_DC) {
   if (!MonGlo(auto_reconnect) ||
-      link->server.single.connected || 
+      (!link->paired && link->server.single.connected) || 
+      (link->paired && link->server.paired.lconnected) ||
       time(0)-link->ts < 2) {
     return SUCCESS;
   }
@@ -1177,6 +1178,15 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
     RETURN_FALSE;
   }
 
+
+  conn = (mongo_link*)emalloc(sizeof(mongo_link));
+
+  // zero pointers so it doesn't segfault on cleanup if 
+  // connection fails
+  conn->username = 0;
+  conn->password = 0;
+
+
   // extract host:port
   char *colon = strchr(server, ':');
   char *host;
@@ -1189,17 +1199,9 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
     port = atoi(colon+1);
   }
   else {
-    host = (char*)emalloc(strlen(server));
-    memcpy(host, server, strlen(server));
+    host = estrdup(server);
     port = 27017;
   }
-
-  conn = (mongo_link*)emalloc(sizeof(mongo_link));
-
-  // zero pointers so it doesn't segfault on cleanup if connection fails
-  conn->username = 0;
-  conn->password = 0;
-
 
   if (paired) {
     conn->paired = 1;
