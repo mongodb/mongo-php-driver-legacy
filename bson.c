@@ -30,22 +30,25 @@ extern zend_class_entry *mongo_regex_class;
 
 int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
   zval **data;
-
+ 
   // if _id field doesn't exist, add it
   if (zend_hash_find(array, "_id", 4, (void**)&data) == FAILURE) {
-    /*create_id(0);
-    set_type(buf, BSON_OID);
-    serialize_string(buf, "_id", 3);
-    serialize_string(buf, foo, OID_SIZE);*/
+    zval *z;
+    MAKE_STD_ZVAL(z);
+    create_id(z, 0 TSRMLS_CC);
+    serialize_element(buf, "_id", 3, &z TSRMLS_CC);
+    efree(z);
   }
-
-  // if it exists, it'll be serialized
+  else {
+    serialize_element(buf, "_id", 3, data TSRMLS_CC);
+    zend_hash_del(array, "_id", 4);
+  }
   return SUCCESS;
 }
 
 
 // serialize a zval
-int zval_to_bson(buffer *buf, HashTable *arr_hash TSRMLS_DC) {
+int zval_to_bson(buffer *buf, HashTable *arr_hash, int prep TSRMLS_DC) {
   zval **data;
   char *key;
   uint key_len;
@@ -71,6 +74,10 @@ int zval_to_bson(buffer *buf, HashTable *arr_hash TSRMLS_DC) {
     return num;
   }
  
+
+  if (prep) {
+    prep_obj_for_db(buf, arr_hash TSRMLS_CC);
+  }
   
   for(zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); 
       zend_hash_get_current_data_ex(arr_hash, (void**) &data, &pointer) == SUCCESS; 
@@ -135,7 +142,7 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
   case IS_ARRAY: {
     set_type(buf, BSON_OBJECT);
     serialize_string(buf, name, name_len);
-    zval_to_bson(buf, Z_ARRVAL_PP(data) TSRMLS_CC);
+    zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
     break;
   }
   case IS_OBJECT: {
@@ -185,7 +192,7 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
       // scope
       zid = zend_read_property(mongo_code_class, *data, "scope", 5, 0 TSRMLS_CC);
-      zval_to_bson(buf, Z_ARRVAL_P(zid) TSRMLS_CC);
+      zval_to_bson(buf, Z_ARRVAL_P(zid), NO_PREP TSRMLS_CC);
 
       // get total size
       serialize_size(buf->start+start, buf);
@@ -357,7 +364,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_DATE: {
-      unsigned long d;
+      unsigned long long d;
       memcpy(&d, buf, INT_64);
       buf += INT_64;
 

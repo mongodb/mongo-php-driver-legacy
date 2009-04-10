@@ -46,11 +46,15 @@
 #define MSG_HEADER_SIZE 16
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
 #define INITIAL_BUF_SIZE 4096
+
 // TODO: use the .ini mem settings
 // 1024*1024*2
 #define MAX_RESPONSE_LEN 2097152
 #define DEFAULT_CHUNK_SIZE (256*1024)
 
+// if _id field should be added
+#define PREP 1
+#define NO_PREP 0
 
 // duplicate strings
 #define DUP 1

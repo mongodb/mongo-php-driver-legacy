@@ -428,7 +428,7 @@ PHP_FUNCTION(mongo_remove) {
   mflags |= (justOne == 1);
 
   serialize_int(&buf, mflags);
-  zval_to_bson(&buf, array TSRMLS_CC);
+  zval_to_bson(&buf, array, NO_PREP TSRMLS_CC);
   serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);
@@ -489,7 +489,7 @@ PHP_FUNCTION(mongo_batch_insert) {
       zend_hash_move_forward_ex(php_array, &pointer)) {
 
     unsigned int start = buf.pos-buf.start;
-    zval_to_bson(&buf, Z_ARRVAL_PP(data) TSRMLS_CC);
+    zval_to_bson(&buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
 
     serialize_size(buf.start+start, &buf);
   }
@@ -524,8 +524,8 @@ PHP_FUNCTION(mongo_update) {
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, collection, collection_len, OP_UPDATE);
   serialize_int(&buf, zupsert);
-  zval_to_bson(&buf, Z_ARRVAL_P(zquery) TSRMLS_CC);
-  zval_to_bson(&buf, Z_ARRVAL_P(zobj) TSRMLS_CC);
+  zval_to_bson(&buf, Z_ARRVAL_P(zquery), NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, Z_ARRVAL_P(zobj), NO_PREP TSRMLS_CC);
   serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);
@@ -536,7 +536,7 @@ PHP_FUNCTION(mongo_update) {
 
 /* {{{ mongo_has_next 
  */
-PHP_FUNCTION( mongo_has_next ) {
+PHP_FUNCTION(mongo_has_next) {
   zval *zcursor;
   mongo_cursor *cursor;
   int argc = ZEND_NUM_ARGS();
@@ -583,7 +583,7 @@ PHP_FUNCTION(mongo_next) {
 
 /* {{{ mongo_gridfs_init
  */
-PHP_FUNCTION( mongo_gridfs_init ) {
+PHP_FUNCTION(mongo_gridfs_init) {
   zval *zconn;
   char *dbname, *files, *chunks;
   int dbname_len, files_len, chunks_len;
@@ -798,9 +798,9 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
   serialize_int(&buf, skip);
   serialize_int(&buf, limit);
 
-  zval_to_bson(&buf, Z_ARRVAL_P(zquery) TSRMLS_CC);
+  zval_to_bson(&buf, Z_ARRVAL_P(zquery), NO_PREP TSRMLS_CC);
   if (zfields && zend_hash_num_elements(Z_ARRVAL_P(zfields)) > 0) {
-    zval_to_bson(&buf, Z_ARRVAL_P(zfields) TSRMLS_CC);
+    zval_to_bson(&buf, Z_ARRVAL_P(zfields), NO_PREP TSRMLS_CC);
   }
 
   serialize_size(buf.start, &buf);
@@ -879,16 +879,16 @@ zval* mongo_do_next(mongo_cursor *cursor TSRMLS_DC) {
 }
 
 int mongo_do_insert(mongo_link *link, char *collection, zval *zarray TSRMLS_DC) {
+
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, collection, strlen(collection), OP_INSERT);
 
   // adds data
   HashTable *obj = Z_ARRVAL_P(zarray);
-  //  buf = prep_obj_for_db(buf, end, obj TSRMLS_CC);
-  zval_to_bson(&buf, obj TSRMLS_CC);
+  zval_to_bson(&buf, obj, PREP TSRMLS_CC);
 
   serialize_size(buf.start, &buf);
-  
+
   // sends
   int response = say(link, &buf TSRMLS_CC);
   efree(buf.start);

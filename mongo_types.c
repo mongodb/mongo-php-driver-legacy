@@ -1,4 +1,4 @@
-//mongo_types.cpp
+//mongo_types.c
 /**
  *  Copyright 2009 10gen, Inc.
  * 
