@@ -39,7 +39,11 @@ require_once "Mongo/GridFS/Cursor.php";
 class MongoGridFS extends MongoCollection
 {
     public $resource;
+
+    // chunks collection
     public $chunks;
+
+    // names
     protected $files_name;
     protected $chunks_name;
 

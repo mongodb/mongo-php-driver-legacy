@@ -30,6 +30,11 @@ require_once "Mongo/Util.php";
 
 /**
  * Represents a collection of documents in the database.
+ *
+ * Collection names cannot have a "$" in them, but other
+ * than that they can use any character in the ASCII set.  
+ * Some valid collection names are "", "...", 
+ * "my collection", and "*&#@".
  * 
  * @category Database
  * @package  Mongo
@@ -51,8 +56,12 @@ class MongoCollection
      */
     function __construct(MongoDB $db, $name)
     {
+        $this->name = (string)$name;
+        if (strchr($this->name, '$')) {
+            throw new InvalidArgumentException("Invalid database name.");
+        }
+
         $this->db   = $db;
-        $this->name = $name;
     }
 
     /**

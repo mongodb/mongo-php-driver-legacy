@@ -36,6 +36,15 @@ require_once "Mongo/Util.php";
  *   $db = $m->selectDatabase(); // get a database object
  * </pre>
  * 
+ * Database names can use almost any character in the
+ * ASCII range.  However, they cannot contain " ", ".",
+ * or be the empty string.
+ *
+ * A few unusual, but valid, database names: "null", 
+ * "[x,y]", "3", "\"", "/".
+ *
+ * Unlike collection names, database names may contain "$".
+ *
  * @category Database
  * @package  Mongo
  * @author   Kristina Chodorow <kristina@10gen.com>
@@ -57,9 +66,19 @@ class MongoDB
      * 
      * @param Mongo  $conn connection
      * @param string $name database name
+     *
+     * @throws InvalidArgumentException if the given name is invalid
      */
     public function __construct(Mongo $conn, $name) 
     {
+        $name = (string)$name;
+        if ($name == null || 
+            $name == "" || 
+            strchr($name, " ") || 
+            strchr($name, ".")) {
+            throw new InvalidArgumentException("Invalid database name.");
+        }
+
         $this->connection = $conn->connection;
         $this->name       = $name;
     }
@@ -77,13 +96,14 @@ class MongoDB
     /**
      * Fetches toolkit for dealing with files stored in this database.
      *
-     * @param string $prefix name of the file collection
+     * @param string $arg1 name or prefix of the collection
+     * @param string $arg2 name of the chunks collection
      *
      * @return MongoGridFS a new gridfs object for this database
      */
-    public function getGridFS($prefix = "fs") 
+    public function getGridFS($arg1 = "fs", $arg2 = null) 
     {
-        return new MongoGridFS($this, $prefix);
+      return new MongoGridFS($this, $arg1, $arg2);
     }
 
     /**
@@ -328,7 +348,7 @@ class MongoDB
      */
     public function execute($code, $args=array()) 
     {
-        $a = array('$eval' => $code, "args" => $args);
+        $a = array('$eval' => (string)$code, "args" => $args);
         return MongoUtil::dbCommand($this->connection,
                                      $a,
                                      "$this");
