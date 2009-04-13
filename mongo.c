@@ -457,7 +457,7 @@ PHP_FUNCTION(mongo_insert) {
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   int response = mongo_do_insert(link, collection, zarray TSRMLS_CC);
-  RETURN_BOOL(response == SUCCESS);
+  RETURN_BOOL(response >= SUCCESS);
 }
 /* }}} */
 
@@ -885,7 +885,11 @@ int mongo_do_insert(mongo_link *link, char *collection, zval *zarray TSRMLS_DC) 
 
   // adds data
   HashTable *obj = Z_ARRVAL_P(zarray);
-  zval_to_bson(&buf, obj, PREP TSRMLS_CC);
+  // serialize
+  if (zval_to_bson(&buf, obj, PREP TSRMLS_CC) == 0) {
+    // return if there were 0 elements
+    return FAILURE;
+  }
 
   serialize_size(buf.start, &buf);
 

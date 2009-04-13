@@ -125,7 +125,7 @@ class MongoCollection
      */
     function insert($iterable) 
     {
-        if(!$iterable) {
+        if(!is_array($iterable)) {
             return false;
         }
         return mongo_insert($this->db->connection, 
