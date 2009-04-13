@@ -26,16 +26,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->object = new MongoDB($this->sharedFixture, "phpunit");
     }
 
-    /**
-     * Tears down the fixture, for example, closes a network connection.
-     * This method is called after a test is executed.
-     *
-     * @access protected
-     */
-    protected function tearDown()
-    {
-    }
-
     public function test__toString() {
         $this->assertEquals((string)$this->object, "phpunit");
     }

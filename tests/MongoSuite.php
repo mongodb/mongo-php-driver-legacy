@@ -1,6 +1,7 @@
 <?php
 require_once 'MongoTest.php';
 require_once 'MongoDBTest.php';
+require_once 'MongoCollectionTest.php';
  
 class MongoSuite extends PHPUnit_Framework_TestSuite
 {
@@ -10,6 +11,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
 
         $suite->addTestSuite('MongoTest');
         $suite->addTestSuite('MongoDBTest');
+        $suite->addTestSuite('MongoCollectionTest');
 
         return $suite;
     }
