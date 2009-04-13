@@ -124,7 +124,7 @@ PHP_FUNCTION( mongo_id___toString ) {
 
 
 
-/* {{{ MongoDate mongo_date___construct() 
+/* {{{ mongo_date___construct() 
  */
 PHP_FUNCTION( mongo_date___construct ) {
   struct timeval time;
@@ -140,8 +140,16 @@ PHP_FUNCTION( mongo_date___construct ) {
   }
   case 1: {
     if (zend_parse_parameters(argc TSRMLS_CC, "l", &sec) == SUCCESS) {
-      add_property_long( getThis(), "sec", sec );
-      add_property_long( getThis(), "usec", 0 );
+      long long temp = sec;
+      long long t_sec = temp/1000;
+      long long t_usec = temp*1000 % 1000000;
+
+      // back to longs
+      sec = (long)t_sec;
+      usec = (long)t_usec;
+
+      add_property_long( getThis(), "sec", sec);
+      add_property_long( getThis(), "usec", usec);
     }
     break;
   }

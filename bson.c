@@ -373,7 +373,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       object_init_ex(date, mongo_date_class);
 
       add_property_long(date, "sec", d/1000);
-      add_property_long(date, "usec", (d*1000)%100000);
+      add_property_long(date, "usec", (d*1000)%1000000);
       add_assoc_zval(result, name, date);
       break;
     }
@@ -390,8 +390,8 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       MAKE_STD_ZVAL(zegex);
       object_init_ex(zegex, mongo_regex_class);
 
-      add_property_stringl(zegex, "regex", (char*)start_regex, regex_len, 1);
-      add_property_stringl(zegex, "flags", (char*)start_flags, flags_len, 1);
+      add_property_stringl(zegex, "regex", (char*)start_regex, regex_len-1, 1);
+      add_property_stringl(zegex, "flags", (char*)start_flags, flags_len-1, 1);
       add_assoc_zval(result, name, zegex);
 
       break;
