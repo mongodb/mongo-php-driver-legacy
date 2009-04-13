@@ -139,10 +139,10 @@ class MongoCollection
      *
      * @return bool if the array was saved
      */
-    function batchInsert($a = array()) 
+    function batchInsert($a) 
     {
-        if (!count($a)) {
-            return true;
+        if (!is_array($a)) {
+            return false;
         }
         return mongo_batch_insert($this->db->connection, (string)$this, $a);
     }
@@ -154,9 +154,17 @@ class MongoCollection
      * @param object $fields fields of each result to return
      *
      * @return mongo_cursor a cursor for the search results
+     *
+     * @throws InvalidArgumentException if the parameters 
+     *         passed are not arrays
      */
     function find($query = array(), $fields = array()) 
     {
+        if (!is_array($query) || 
+            !is_array($fields)) {
+            throw new InvalidArgumentException("Expects: find(array[, array])");
+        }
+
         return new MongoCursor($this->db->connection, 
                                (string)$this, 
                                $query, 

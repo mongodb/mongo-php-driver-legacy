@@ -484,15 +484,32 @@ PHP_FUNCTION(mongo_batch_insert) {
   CREATE_HEADER(buf, collection, collection_len, OP_INSERT);
 
   HashTable *php_array = Z_ARRVAL_P(zarray);
+
+  int count = 0;
+
   for(zend_hash_internal_pointer_reset_ex(php_array, &pointer); 
       zend_hash_get_current_data_ex(php_array, (void**) &data, &pointer) == SUCCESS; 
       zend_hash_move_forward_ex(php_array, &pointer)) {
+
+    if(Z_TYPE_PP(data) != IS_ARRAY) {
+      efree(buf.start);
+      RETURN_FALSE;
+    }
 
     unsigned int start = buf.pos-buf.start;
     zval_to_bson(&buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
 
     serialize_size(buf.start+start, &buf);
+
+    count++;
   }
+
+  // if there are no elements, don't bother saving
+  if (count == 0) {
+    efree(buf.start);
+    RETURN_FALSE;
+  }
+
   serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);

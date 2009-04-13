@@ -96,24 +96,76 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertTrue($this->object->insert(array(1,2,3,4,5)));
     }
 
-    /**
-     * @todo Implement test__toString().
-     */
     public function testBatchInsert() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $this->assertFalse($this->object->batchInsert(null));
+      $this->assertFalse($this->object->batchInsert(array()));
+      $this->assertFalse($this->object->batchInsert(array(1,2,3)));
+      $this->assertTrue($this->object->batchInsert(array('z'=>array('foo'=>'bar'))));
+
+      $a = array( array( "x" => "y"), array( "x"=> "z"), array("x"=>"foo"));
+      $this->object->batchInsert($a);
+      $this->assertEquals(4, $this->object->count());
+
+      $cursor = $this->object->find()->sort(array("x" => -1));
+      $x = $cursor->getNext();
+      $this->assertEquals('bar', $x['foo']);
+      $x = $cursor->getNext();
+      $this->assertEquals('z', $x['x']);
+      $x = $cursor->getNext();
+      $this->assertEquals('y', $x['x']);
+      $x = $cursor->getNext();
+      $this->assertEquals('foo', $x['x']);
     }
 
     /**
-     * @todo Implement testSelectDB().
+     * @expectedException InvalidArgumentException
      */
+    public function testFindException1() {
+      $c = $this->object->find(null);
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testFindException2() {
+      $c = $this->object->find(3);
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testFindException3() {
+      $c = $this->object->find(true);
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testFindException4() {
+      $c = $this->object->find(array(), null);
+    }
+
     public function testFind() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      for ($i=0;$i<50;$i++) {
+        $this->object->insert(array('x' => $i));
+      }
+
+      $c = $this->object->find();
+      $this->assertEquals($c->count(), 50);
+      $c = $this->object->find(array());
+      $this->assertEquals($c->count(), 50);
+
+      $this->object->insert(array("foo" => "bar",
+                                  "a" => "b",
+                                  "b" => "c"));
+
+      $c = $this->object->find(array('foo' => 'bar'), array('a'=>1, 'b'=>1));
+
+      $this->assertTrue($c instanceof MongoCursor);
+      $obj = $c->getNext();
+      $this->assertEquals('b', $obj['a']);
+      $this->assertEquals('c', $obj['b']);
+      $this->assertEquals(null, $obj['foo']);
     }
 
     /**
