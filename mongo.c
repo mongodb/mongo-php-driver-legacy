@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <netinet/tcp.h>
 
 #include <php.h>
 #include <php_ini.h>
@@ -678,7 +679,10 @@ PHP_FUNCTION(mongo_gridfs_store) {
   while (pos < size) {
     chunk_size = size-pos >= MonGlo(chunk_size) ? MonGlo(chunk_size) : size-pos;
     char buf[chunk_size];
-    fread(buf, 1, chunk_size, fp);
+    if (fread(buf, 1, chunk_size, fp) < chunk_size) {
+      zend_error(E_WARNING, "Error reading file %s\n", filename);
+      RETURN_FALSE;
+    }
 
     zval *id;
     ALLOC_INIT_ZVAL(id);
@@ -1093,6 +1097,8 @@ static int mongo_connect(mongo_link *link) {
     int yes = 1;
     setsockopt(link->server.paired.lsocket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
     setsockopt(link->server.paired.rsocket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
+    setsockopt(link->server.paired.lsocket, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
+    setsockopt(link->server.paired.rsocket, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
 
     // connect
     if (connect(link->server.paired.lsocket, (struct sockaddr*)&laddr, sizeof(laddr)) == FAILURE) {
@@ -1121,6 +1127,7 @@ static int mongo_connect(mongo_link *link) {
     }
     int yes = 1;
     setsockopt(link->server.single.socket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
+    setsockopt(link->server.single.socket, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
 
     // connect
     if (connect(link->server.single.socket, (struct sockaddr*)&addr, sizeof(addr)) == FAILURE) {

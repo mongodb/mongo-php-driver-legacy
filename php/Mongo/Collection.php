@@ -177,6 +177,9 @@ class MongoCollection
      * @param object $query the fields for which to search
      *
      * @return object a record matching the search or null
+     *
+     * @throws InvalidArgumentException if the parameter
+     *         passed is not an array
      */
     function findOne($query = array()) 
     {
@@ -186,13 +189,6 @@ class MongoCollection
 
     /**
      * Update records based on a given criteria.
-     * <!--Options:
-     * <dl>
-     * <dt>upsert : bool</dt>
-     * <dd>if $newobj should be inserted if no matching records are found</dd>
-     * <dt>ids : bool </dt>
-     * <dd>if if the _id field should be added in the case of an upsert</dd>
-     * </dl>-->
      *
      * @param object $criteria description of the objects to update
      * @param object $newobj   the object with which to update the matching records
@@ -200,9 +196,17 @@ class MongoCollection
      *                         found
      *
      * @return bool if the array was saved
+     *
+     * @throws InvalidArgumentException if the first two 
+     *         parameters passed are not arrays
      */
     function update($criteria, $newobj, $upsert = false) 
     {
+        if (!is_array($criteria) ||
+            !is_array($newobj)) {
+            throw new InvalidArgumentException("Expects: update(array, array[, bool])");
+        }
+
         return mongo_update($this->db->connection, 
                             (string)$this, 
                             $criteria, 
@@ -217,9 +221,16 @@ class MongoCollection
      * @param bool   $just_one remove at most one record matching this criteria
      *
      * @return bool if the command was executed successfully
+     *
+     * @throws InvalidArgumentException if the first
+     *         parameter passed is not an array
      */
     function remove($criteria = array(), $just_one = false) 
     {
+        if (!is_array($criteria)) {
+            throw new InvalidArgumentException("Expects: remove(array[, bool])");
+        }
+
         return mongo_remove($this->db->connection, 
                             (string)$this, 
                             $criteria, 
@@ -237,8 +248,8 @@ class MongoCollection
     function ensureIndex($keys) 
     {
         $ns = (string)$this;
-        if (is_string($keys)) {
-            $keys = array($keys => 1);
+        if (!is_array($keys)) {
+          $keys = array((string)$keys => 1);
         }
         $name = MongoUtil::toIndexString($keys);
         $coll = $this->db->selectCollection("system.indexes");
@@ -254,8 +265,11 @@ class MongoCollection
      */
     function deleteIndex($keys) 
     {
-        $idx = MongoUtil::toIndexString($key);
-        $d   = array(MongoUtil::DELETE_INDICES => $this->name, "index" => $idx);
+        if (!is_array($keys)) {
+            $keys = array((string)$keys => 1);
+        }
+        $name = MongoUtil::toIndexString($keys);
+        $d    = array(MongoUtil::DELETE_INDICES => $this->name, "index" => $name);
         return MongoUtil::dbCommand($this->db->connection, $d, (string)$this->db);
     }
 

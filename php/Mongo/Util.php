@@ -172,7 +172,8 @@ class MongoUtil
         } else if (is_array($keys) || is_object($keys)) {
             $key_list = array();
             foreach ($keys as $k=>$v) {
-                array_push($key_list, str_replace(".", "_", $k) . "_1");
+                $digit = $v == 1 ? 1 : -1;
+                array_push($key_list, str_replace(".", "_", $k) . "_" . $digit);
             }
             $name = implode("_", $key_list);
         }
