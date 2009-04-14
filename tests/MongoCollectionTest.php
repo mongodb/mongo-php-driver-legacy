@@ -169,53 +169,114 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @todo Implement testSelectCollection().
+     * @expectedException InvalidArgumentException
      */
+    public function testFindOneException1() {
+      $this->object->findOne(true);
+    }
+
     public function testFindOne() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $this->assertEquals(null, $this->object->findOne());
+      $this->assertEquals(null, $this->object->findOne(array()));
+
+      for ($i=0;$i<3;$i++) {
+        $this->object->insert(array('x' => $i));
+      }
+
+      $obj = $this->object->findOne();
+      $this->assertNotNull($obj);
+      $this->assertEquals($obj['x'], 0);
+
+      $obj = $this->object->findOne(array('x' => 1));
+      $this->assertNotNull($obj);
+      $this->assertEquals(1, $obj['x']);
     }
 
-    /**
-     * @todo Implement testDropDB().
-     */
     public function testUpdate() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $old = array("foo"=>"bar", "x"=>"y");
+      $new = array("foo"=>"baz");
+      
+      $this->object->update(array("foo"=>"bar"), $old, true);
+      $obj = $this->object->findOne();
+      $this->assertEquals($obj['foo'], 'bar');      
+      $this->assertEquals($obj['x'], 'y');      
+
+      $this->object->update($old, $new);
+      $obj = $this->object->findOne();
+      $this->assertEquals($obj['foo'], 'baz');      
     }
 
     /**
-     * @todo Implement testRepairDB().
+     * @expectedException InvalidArgumentException
      */
+    public function testRemoveException1() {
+      $this->object->remove(0);
+    }
+
     public function testRemove() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      for($i=0;$i<15;$i++) {
+        $this->object->insert(array("i"=>$i));
+      }
+      
+      $this->assertEquals($this->object->count(), 15);
+      $this->object->remove(array(), true);
+      $this->assertEquals($this->object->count(), 14);
+
+      $this->object->remove();
+      
+      $this->assertEquals($this->object->count(), 0);
     }
 
-    /**
-     * @todo Implement testLastError().
-     */
     public function testEnsureIndex() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $this->object->ensureIndex('foo');
+
+      $idx = $this->object->db->selectCollection('system.indexes');
+      $index = $idx->findOne(array('ns' => 'phpunit.c'));
+
+      $this->assertNotNull($index);
+      $this->assertEquals($index['key']['foo'], 1);
+      $this->assertEquals($index['name'], 'foo_1');
+
+      $this->object->ensureIndex("");
+      $index = $idx->findOne(array('name' => '_1'));
+      $this->assertNotNull($index);
+      $this->assertEquals($index['key'][''], 1);
+      $this->assertEquals($index['ns'], 'phpunit.c');
+
+      // get rid of indexes
+      $this->object->drop();
+
+      $this->object->ensureIndex(null);
+      $index = $idx->findOne(array('name' => '_1'));
+      $this->assertNotNull($index);
+      $this->assertEquals($index['key'][''], 1);
+      $this->assertEquals($index['ns'], 'phpunit.c');
+
+      $this->object->ensureIndex(6);
+      $index = $idx->findOne(array('name' => '6_1'));
+      $this->assertNotNull($index);
+      $this->assertEquals($index['key']['6'], 1);
+      $this->assertEquals($index['ns'], 'phpunit.c');
+
+      $this->object->ensureIndex(array('bar' => -1));
+      $index = $idx->findOne(array('name' => 'bar_-1'));
+      $this->assertNotNull($index);
+      $this->assertEquals($index['key']['bar'], -1);
+      $this->assertEquals($index['ns'], 'phpunit.c');
     }
 
-    /**
-     * @todo Implement testPrevError().
-     */
     public function testDeleteIndex() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $idx = $this->object->db->selectCollection('system.indexes');
+
+      $this->object->ensureIndex('foo');
+      $this->object->ensureIndex(array('foo' => -1));
+
+      $num = $idx->find(array('ns' => 'phpunit.c'))->count();
+      $this->assertEquals($num, 2);
+
+      $this->object->deleteIndex(null);
+      $num = $idx->find(array('ns' => 'phpunit.c'))->count();
+      $this->assertEquals($num, 2);
     }
 
     /**
