@@ -22,6 +22,7 @@
 #include <string.h>
 #include <errno.h>
 #include <netinet/tcp.h>
+#include <fcntl.h>
 
 #include <php.h>
 #include <php_ini.h>
@@ -35,7 +36,8 @@ static int get_master(mongo_link* TSRMLS_DC);
 static int say(mongo_link*, buffer* TSRMLS_DC);
 static int hear(mongo_link*, void*, int TSRMLS_DC);
 static int check_connection(mongo_link* TSRMLS_DC);
-static int mongo_connect(mongo_link*);
+static int mongo_connect_nonb(int, char*, int);
+static int mongo_do_socket_connect(mongo_link*);
 static int get_sockaddr(struct sockaddr_in*, char*, int);
 static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS);
 static int get_reply(mongo_cursor* TSRMLS_DC);
@@ -972,7 +974,7 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
   // give up
   zval_ptr_dtor(&is_master);
-  return -1;
+  return FAILURE;
 }
 
 
@@ -1047,7 +1049,7 @@ static int say(mongo_link *link, buffer *buf TSRMLS_DC) {
 }
 
 static int hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
-  int tries = 3;
+  int tries = 3, num = 1;
   while (check_connection(link TSRMLS_CC) == FAILURE &&
          tries > 0) {
     sleep(2);
@@ -1055,10 +1057,10 @@ static int hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
   }
   // this can return FAILED if there is just no more data from db
   int r = 0;
-  while(r < len) {
-    int temp = recv(get_master(link TSRMLS_CC), dest, len, FLAGS);
-    dest += temp;
-    r += temp;
+  while(r < len && num > 0) {
+    num = recv(get_master(link TSRMLS_CC), dest, len, FLAGS);
+    dest += num;
+    r += num;
   }
   return r;
 }
@@ -1066,78 +1068,112 @@ static int hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
 static int check_connection(mongo_link *link TSRMLS_DC) {
   if (!MonGlo(auto_reconnect) ||
       (!link->paired && link->server.single.connected) || 
-      (link->paired && link->server.paired.lconnected) ||
+      (link->paired && 
+       (link->server.paired.lconnected || 
+        link->server.paired.rconnected)) ||
       time(0)-link->ts < 2) {
     return SUCCESS;
   }
 
   link->ts = time(0);
 
-  if (!link->paired) {
-    close(link->server.single.socket);
-    int connected = link->server.single.connected = mongo_connect(link);
-    return connected;
-  }
-  return link->server.paired.lconnected;
-}
-
-static int mongo_connect(mongo_link *link) {
   if (link->paired) {
-    struct sockaddr_in laddr, raddr;
-    // get addresses
-    get_sockaddr(&laddr, link->server.paired.left, link->server.paired.lport);
-    get_sockaddr(&raddr, link->server.paired.right, link->server.paired.rport);
-
-    // create sockets
-    if ((link->server.paired.lsocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE ||
-        (link->server.paired.rsocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
-      zend_error (E_WARNING, "couldn't create sockets");
-      return FAILURE;
-    }
-    int yes = 1;
-    setsockopt(link->server.paired.lsocket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
-    setsockopt(link->server.paired.rsocket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
-    setsockopt(link->server.paired.lsocket, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
-    setsockopt(link->server.paired.rsocket, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
-
-    // connect
-    if (connect(link->server.paired.lsocket, (struct sockaddr*)&laddr, sizeof(laddr)) == FAILURE) {
-      zend_error(E_WARNING, "error connecting to left host: %s:%d", 
-                 link->server.paired.left, link->server.paired.lport);
-      return FAILURE;
-    }
-    if (connect(link->server.paired.rsocket, (struct sockaddr*)&raddr, sizeof(raddr)) == FAILURE) {
-      zend_error(E_WARNING, "error connecting to right host: %s:%d", 
-                 link->server.paired.right, link->server.paired.rport);
-      return FAILURE;
-    }
-
-    // set initial connection time
-    link->ts = time(0);
+    close(link->server.paired.lsocket);
+    close(link->server.paired.rsocket);
   }
   else {
-    struct sockaddr_in addr;
-    // get addresses
-    get_sockaddr(&addr, link->server.single.host, link->server.single.port);
+    close(link->server.single.socket);
+  } 
 
-    // create sockets
-    if ((link->server.single.socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
-      zend_error (E_WARNING, "couldn't create socket");
-      return FAILURE;
-    }
-    int yes = 1;
-    setsockopt(link->server.single.socket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
-    setsockopt(link->server.single.socket, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
+  return mongo_do_socket_connect(link);
+}
 
-    // connect
-    if (connect(link->server.single.socket, (struct sockaddr*)&addr, sizeof(addr)) == FAILURE) {
+static int mongo_connect_nonb(int sock, char *host, int port) {
+  struct sockaddr_in addr;
+  fd_set rset, wset;
+  struct timeval tval;
+  int yes = 1;
+
+  // get addresses
+  get_sockaddr(&addr, host, port);
+
+  // create sockets
+  if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
+    zend_error (E_WARNING, "couldn't create socket");
+    return FAILURE;
+  }
+
+  setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
+  setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
+  fcntl(sock, F_SETFL, FLAGS|O_NONBLOCK);
+
+  // connect
+  if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+    if (errno != EINPROGRESS) {
       zend_error(E_WARNING, "error connecting");
       return FAILURE;
     }
-    
-    // set initial connection time
-    link->ts = time(0);
+
+    FD_ZERO(&rset);
+    FD_SET(sock, &rset);
+
+    // 3 second timeout
+    tval.tv_sec = 3;
+    tval.tv_usec = 0;
+
+    if (select(sock+1, &rset, &wset, NULL, &tval) == 0) {
+      zend_error(E_WARNING, "connecting timed out");
+      return FAILURE;
+    }
   }
+  
+  // reset flags  
+  fcntl(sock, F_SETFL, FLAGS);
+  return sock;
+}
+
+static int mongo_do_socket_connect(mongo_link *link) {
+  if (link->paired) {
+
+    if ((link->server.paired.lsocket = 
+         mongo_connect_nonb(link->server.paired.lsocket,
+                            link->server.paired.left,
+                            link->server.paired.lport)) == FAILURE) {
+      
+      link->server.paired.lconnected = 0;
+    }
+    else {
+      link->server.paired.lconnected = 1;
+    }
+    if ((link->server.paired.rsocket = 
+         mongo_connect_nonb(link->server.paired.lsocket,
+                            link->server.paired.left,
+                            link->server.paired.lport)) == FAILURE) {
+      link->server.paired.rconnected = 0;
+    }
+    else {
+      link->server.paired.rconnected = 1;
+    }
+
+    if (!link->server.paired.lconnected &&
+        !link->server.paired.rconnected) {
+      return FAILURE;
+    }
+  }
+  else {
+    if ((link->server.single.socket = 
+         mongo_connect_nonb(link->server.single.socket,
+                            link->server.single.host,
+                            link->server.single.port)) == FAILURE) {
+      link->server.single.connected = 0;
+      return FAILURE;
+    }
+    link->server.single.connected = 1;
+  }
+
+  // set initial connection time
+  link->ts = time(0);
+
   return SUCCESS;
 }
 
@@ -1276,7 +1312,10 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
     conn->server.single.port = port;
   }
 
-  mongo_connect(conn);
+  // actually connect
+  if (mongo_do_socket_connect(conn) == FAILURE) {
+    RETURN_FALSE;
+  }
 
   // store a reference in the persistence list
   if (persistent) {
