@@ -64,9 +64,11 @@ void generate_id(char *data) {
   data[9] = inc[2];
   data[10] = inc[1];
   data[11] = inc[0];
+
+  fclose(rand);
 }
 
-/* {{{ mongo_id___construct() 
+/* {{{ mongo_id___construct()
  */
 PHP_FUNCTION(mongo_id___construct) {
   char *id;
