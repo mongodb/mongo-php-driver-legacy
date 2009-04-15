@@ -98,7 +98,11 @@ class MongoGridFSCursor extends MongoCursor
      */
     public function current()
     {
-        return new MongoGridFSFile($this->gridfs, $this->current);
+        if ($this->current) {
+            return new MongoGridFSFile($this->gridfs, $this->current);
+        } else {
+            return null;
+        }
     }
 
     /**

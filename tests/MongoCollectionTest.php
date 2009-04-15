@@ -96,6 +96,23 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertTrue($this->object->insert(array(1,2,3,4,5)));
     }
 
+    public function testInsert2() {
+      $this->assertFalse($this->object->insert(NULL));
+      $this->assertTrue($this->object->insert(array(NULL)));
+      $this->assertTrue($this->object->insert(array(NULL=>"1")));
+      
+      $this->assertEquals($this->object->count(), 2);
+      $cursor = $this->object->find();
+
+      $x = $cursor->getNext();
+      $this->assertTrue(array_key_exists('0', $x));
+      $this->assertEquals($x['0'], null);
+
+      $x = $cursor->getNext();
+      $this->assertTrue(array_key_exists('', $x));
+      $this->assertEquals($x[''], '1');
+    }
+
     public function testBatchInsert() {
       $this->assertFalse($this->object->batchInsert(null));
       $this->assertFalse($this->object->batchInsert(array()));
@@ -277,66 +294,125 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->deleteIndex(null);
       $num = $idx->find(array('ns' => 'phpunit.c'))->count();
       $this->assertEquals($num, 2);
+
+      $this->object->deleteIndex(array('foo' => 1));
+      $num = $idx->find(array('ns' => 'phpunit.c'))->count();
+      $this->assertEquals($num, 1);
+
+      $this->object->deleteIndex('foo');
+      $num = $idx->find(array('ns' => 'phpunit.c'))->count();
+      $this->assertEquals($num, 1);
+
+      $this->object->deleteIndex(array('foo' => -1));
+      $num = $idx->find(array('ns' => 'phpunit.c'))->count();
+      $this->assertEquals($num, 0);
     }
 
-    /**
-     * @todo Implement testResetError().
-     */
     public function testDeleteIndexes() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $idx = $this->object->db->selectCollection('system.indexes');
+
+      $this->object->ensureIndex(array('foo' => 1));
+      $this->object->ensureIndex(array('foo' => -1));
+      $this->object->ensureIndex(array('bar' => 1, 'baz' => -1));
+
+      $num = $idx->find(array('ns' => 'phpunit.c'))->count();
+      $this->assertEquals($num, 3);
+
+      $this->object->deleteIndexes();
+      $num = $idx->find(array('ns' => 'phpunit.c'))->count();
+      $this->assertEquals($num, 0);
     }
 
-    /**
-     * @todo Implement testForceError().
-     */
     public function testGetIndexInfo() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $info = $this->object->getIndexInfo();
+      $this->assertEquals(count($info), 0);
+
+      $this->object->ensureIndex(array('foo' => 1));
+      $this->object->ensureIndex(array('foo' => -1));
+      $this->object->ensureIndex(array('bar' => 1, 'baz' => -1));
+
+      $info = $this->object->getIndexInfo();
+      $this->assertEquals(count($info), 3);
+      $this->assertEquals($info[0]['key']['foo'], 1);
+      $this->assertEquals($info[0]['name'], 'foo_1');
+      $this->assertEquals($info[1]['key']['foo'], -1);
+      $this->assertEquals($info[1]['name'], 'foo_-1');
+      $this->assertEquals($info[2]['key']['bar'], 1);
+      $this->assertEquals($info[2]['key']['baz'], -1);
+      $this->assertEquals($info[2]['name'], 'bar_1_baz_-1');
     }
 
-    /**
-     * @todo Implement testMasterInfo().
-     */
     public function testCount() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $this->assertEquals($this->object->count(), 0);
+
+      $this->object->insert(array(6));
+
+      $this->assertEquals($this->object->count(), 1);
     }
 
     /**
-     * @todo Implement testClose().
+     * @expectedException InvalidArgumentException
      */
+    public function testSaveException1() {
+      $this->object->save(null);
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testSaveException2() {
+      $this->object->save("");
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testSaveException3() {
+      $this->object->save(4);
+    }
+
     public function testSave() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $this->object->save(array('x' => 1));
+      $a = $this->object->findOne();
+      $a['x'] = 2;
+      $this->object->save($a);
+
+      $this->assertEquals($this->object->count(), 1);
+
+      $a = $this->object->findOne();
+      $this->assertEquals($a['x'], 2);
     }
 
-    /**
-     * @todo Implement testClose().
-     */
     public function testGetDBRef() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+        for($i=0;$i<50;$i++) {
+            $this->object->insert(array('x' => rand()));
+        }
+        $obj = $this->object->findOne();
+
+        $ref = $this->object->createDBRef($obj);
+        $obj2 = $this->object->getDBRef($ref);
+
+        $this->assertNotNull($obj2);
+        $this->assertEquals($obj['x'], $obj2['x']);
     }
 
-    /**
-     * @todo Implement testClose().
-     */
     public function testCreateDBRef() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+        $ref = $this->object->createDBRef(array('foo' => 'bar'));
+        $this->assertEquals($ref, null);
+
+        $arr = array('_id' => new MongoId());
+        $ref = $this->object->createDBRef($arr);
+        $this->assertNotNull($ref);
+        $this->assertTrue(is_array($ref));
+
+        $arr = array('_id' => 1);
+        $ref = $this->object->createDBRef($arr);
+        $this->assertNotNull($ref);
+        $this->assertTrue(is_array($ref));
+
+        $ref = $this->object->createDBRef(new MongoId());
+        $this->assertNotNull($ref);
+        $this->assertTrue(is_array($ref));
     }
 }
 ?>

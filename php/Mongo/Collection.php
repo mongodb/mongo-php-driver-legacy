@@ -324,17 +324,23 @@ class MongoCollection
     /**
      * Saves an object to this collection.
      *
-     * @param object $obj object to save
+     * @param array $obj object to save
      *
-     * @return object the object saved
+     * @return array the object saved
+     *
+     * @throws InvalidArgumentException if the parameter 
+     *         is not an array
      */
     function save($obj) 
     {
-        $a = $obj;
-        if ($a[ "_id" ]) {
-            return $this->update(array("_id" => $id), $a, true);
+        if (!is_array($obj)) {
+            throw new InvalidArgumentException("Expects: save(array)");
         }
-        return $this->update($a, $a, true);
+
+        if ($obj['_id']) {
+            return $this->update(array("_id" => $obj['_id']), $obj, true);
+        }
+        return $this->insert($obj);
     }
 
     /**
