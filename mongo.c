@@ -1105,7 +1105,7 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
 
   setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
   setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
-  fcntl(sock, F_SETFL, FLAGS|O_NONBLOCK);
+  //fcntl(sock, F_SETFL, FLAGS|O_NONBLOCK);
 
   // connect
   if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
@@ -1126,26 +1126,26 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
       return FAILURE;
     }
   }
-  
-  // reset flags  
-  fcntl(sock, F_SETFL, FLAGS);
+
+  // reset flags
+  //fcntl(sock, F_SETFL, FLAGS);
   return sock;
 }
 
 static int mongo_do_socket_connect(mongo_link *link) {
   if (link->paired) {
 
-    if ((link->server.paired.lsocket = 
+    if ((link->server.paired.lsocket =
          mongo_connect_nonb(link->server.paired.lsocket,
                             link->server.paired.left,
                             link->server.paired.lport)) == FAILURE) {
-      
+
       link->server.paired.lconnected = 0;
     }
     else {
       link->server.paired.lconnected = 1;
     }
-    if ((link->server.paired.rsocket = 
+    if ((link->server.paired.rsocket =
          mongo_connect_nonb(link->server.paired.lsocket,
                             link->server.paired.left,
                             link->server.paired.lport)) == FAILURE) {
