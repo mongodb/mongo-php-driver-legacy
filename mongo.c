@@ -1105,30 +1105,30 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
 
   setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
   setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
-  //fcntl(sock, F_SETFL, FLAGS|O_NONBLOCK);
+  fcntl(sock, F_SETFL, FLAGS|O_NONBLOCK);
 
   // connect
   if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
     if (errno != EINPROGRESS) {
-      zend_error(E_WARNING, "error connecting");
+      zend_error(E_WARNING, "%s:%d: %s", host, port, strerror(errno));
       return FAILURE;
     }
 
     FD_ZERO(&rset);
     FD_SET(sock, &rset);
 
-    // 3 second timeout
-    tval.tv_sec = 3;
+    // timeout
+    tval.tv_sec = 20;
     tval.tv_usec = 0;
 
     if (select(sock+1, &rset, &wset, NULL, &tval) == 0) {
-      zend_error(E_WARNING, "connecting timed out");
+      zend_error(E_WARNING, "connecting timed out: %s", strerror(errno));
       return FAILURE;
     }
   }
 
   // reset flags
-  //fcntl(sock, F_SETFL, FLAGS);
+  fcntl(sock, F_SETFL, FLAGS);
   return sock;
 }
 
