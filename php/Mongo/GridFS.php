@@ -104,11 +104,9 @@ class MongoGridFS extends MongoCollection
      */
     function drop() 
     {
-        $this->chunks->deleteIndexes();
         MongoUtil::dbCommand($this->db->connection, 
                              array(MongoUtil::DROP => $this->chunks->name), 
                              (string)$this->db);
-        $this->deleteIndexes();
         return MongoUtil::dbCommand($this->db->connection, 
                                     array(MongoUtil::DROP => $this->name), 
                                     (string)$this->db);
