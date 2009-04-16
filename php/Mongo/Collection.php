@@ -93,7 +93,6 @@ class MongoCollection
      */
     function drop() 
     {
-        $this->deleteIndexes();
         return MongoUtil::dbCommand($this->db->connection, 
                                     array(MongoUtil::DROP => $this->name), 
                                     (string)$this->db);
