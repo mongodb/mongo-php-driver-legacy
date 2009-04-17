@@ -208,6 +208,8 @@ PHP_FUNCTION( mongo_gridfs_store );
 PHP_FUNCTION( mongo_gridfile_write );
 
 
+void mongo_init_MongoUtil(TSRMLS_D);
+
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;

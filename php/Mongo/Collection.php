@@ -53,6 +53,9 @@ class MongoCollection
      *
      * @param MongoDB $db   database
      * @param string  $name collection name
+     *
+     * @throws InvalidArgumentException if the database name 
+     *         is invalid
      */
     function __construct(MongoDB $db, $name)
     {

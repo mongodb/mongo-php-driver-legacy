@@ -46,7 +46,8 @@ zend_class_entry *mongo_id_class,
   *mongo_code_class, 
   *mongo_date_class, 
   *mongo_regex_class, 
-  *mongo_bindata_class;
+  *mongo_bindata_class,
+  *mongo_util_class;
 
 /** Resources */
 int le_connection, le_pconnection, le_db_cursor, le_gridfs, le_gridfile;
@@ -300,6 +301,8 @@ PHP_MINIT_FUNCTION(mongo) {
   INIT_CLASS_ENTRY(regex, "MongoRegex", mongo_regex_functions); 
   mongo_regex_class = zend_register_internal_class(&regex TSRMLS_CC); 
 
+
+  mongo_init_MongoUtil(TSRMLS_C);
 
   return SUCCESS;
 }

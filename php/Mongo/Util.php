@@ -33,7 +33,7 @@
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
  * @link     http://www.mongodb.org
  */
-class MongoUtil
+class MongoUtil2
 {
   
     /**
@@ -134,31 +134,6 @@ class MongoUtil
 
 
     /**
-     * Turns something into an array that can be saved to the db.
-     * Returns the empty array if passed null.
-     *
-     * @param any $obj object to convert
-     *
-     * @return array the array
-     */
-    public static function objToArray($obj) 
-    {
-        if (is_null($obj)) {
-            return array();
-        }
-
-        $arr = array();
-        foreach ($obj as $key => $value) {
-            if (is_object($value) || is_array($value)) {
-                $arr[ $key ] = MongoUtil::objToArray($value);
-            } else {
-                $arr[ $key ] = $value;
-            }
-        }
-        return $arr;
-    }
-
-    /**
      * Converts a field or array of fields into an underscore-separated string.
      *
      * @param string|array $keys field(s) to convert
@@ -167,16 +142,17 @@ class MongoUtil
      */
     public static function toIndexString($keys) 
     {
-        if (is_string($keys)) {
-            $name = str_replace(".", "_", $keys) + "_1";
-        } else if (is_array($keys) || is_object($keys)) {
-            $key_list = array();
-            foreach ($keys as $k=>$v) {
-                $digit = $v == 1 ? 1 : -1;
-                array_push($key_list, str_replace(".", "_", $k) . "_" . $digit);
-            }
-            $name = implode("_", $key_list);
+        if (!is_array($keys)  && 
+            !is_object($keys)) {
+            $keys = array((string)$keys => 1);
         }
+
+        $key_list = array();
+        foreach ($keys as $k=>$v) {
+            $digit = $v == 1 ? 1 : -1;
+            array_push($key_list, str_replace(".", "_", $k) . "_" . $digit);
+        }
+        $name = implode("_", $key_list);
         return $name;
     }
 
@@ -190,6 +166,10 @@ class MongoUtil
      */
     public static function dbCommand($conn, $data, $db) 
     {
+        if (!is_array($data)) {
+            throw new InvalidArgumentException("MongoUtil::dbCommand(resource, array, string)");
+        }
+
         $cmd_collection = $db . MongoUtil::$CMD;
         $cursor = mongo_query($conn, 
                               $cmd_collection, 

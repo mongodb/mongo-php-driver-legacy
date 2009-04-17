@@ -68,7 +68,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function test__toString() {
-        // Remove the following lines when you implement this test.
         $this->assertEquals((string)$this->object, "localhost");
 
         $m = new Mongo();
