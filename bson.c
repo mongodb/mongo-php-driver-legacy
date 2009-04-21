@@ -429,8 +429,29 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       add_assoc_zval(result, name, zode);
       break;
     }
+    case BSON_DBREF: {
+      zval *zref;
+      ALLOC_INIT_ZVAL(zref);
+      array_init(zref);
+
+      buf += INT_32;
+      char *ns = buf;
+      while (*buf++);
+
+      zval *zoid;
+      MAKE_STD_ZVAL(zoid);
+      create_id(zoid, (char*)buf TSRMLS_CC);
+      buf += OID_SIZE;
+
+      add_assoc_string(zref, "$ns", ns, 1);
+      add_assoc_zval(zref, "$ref", zoid);
+
+      add_assoc_zval(result, name, zref);
+    }
     default: {
       php_printf("type %d not supported\n", type);
+      // give up, it'll be trouble if we keep going
+      return buf;
     }
     }
   }
