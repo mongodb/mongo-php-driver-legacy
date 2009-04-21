@@ -244,7 +244,7 @@ class MongoCollection
      *
      * @return void
      */
-    function ensureIndex($keys) 
+    function ensureIndex($keys, $unique=false) 
     {
         $ns = (string)$this;
         if (!is_array($keys)) {
@@ -252,7 +252,10 @@ class MongoCollection
         }
         $name = MongoUtil::toIndexString($keys);
         $coll = $this->db->selectCollection("system.indexes");
-        $coll->insert(array("ns" => $ns, "key" => $keys, "name" => $name));
+        $coll->insert(array('ns' => $ns, 
+                            'key' => $keys, 
+                            'name' => $name, 
+                            'unique' => (bool)$unique));
     }
   
     /**
