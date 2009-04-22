@@ -283,6 +283,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
   unsigned int size;
   memcpy(&size, buf, INT_32);
   buf += INT_32;
+  size -= INT_32;
 
   unsigned char type;
   // size is for sanity check
@@ -447,6 +448,24 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       add_assoc_zval(zref, "$id", zoid);
 
       add_assoc_zval(result, name, zref);
+      break;
+    }
+    case BSON_TIMESTAMP: {
+      long long int d;
+      memcpy(&d, buf, INT_64);
+      buf += INT_64;
+
+      add_assoc_long(result, name, d);
+
+      break;
+    }
+    case BSON_MINKEY: {
+      add_assoc_string(result, name, "[MinKey]", 1);
+      break;
+    }
+    case BSON_MAXKEY: {
+      add_assoc_string(result, name, "[MaxKey]", 1);
+      break;
     }
     default: {
       php_printf("type %d not supported\n", type);

@@ -35,6 +35,9 @@
 #define BSON_CODE__D 13
 #define BSON_CODE 15
 #define BSON_INT 16
+#define BSON_TIMESTAMP 17
+#define BSON_MINKEY 255
+#define BSON_MAXKEY 127
 
 #define GROW_SLOWLY 1048576
 
