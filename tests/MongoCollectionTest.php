@@ -248,7 +248,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->ensureIndex('foo');
 
       $idx = $this->object->db->selectCollection('system.indexes');
-      $index = $idx->findOne(array('ns' => 'phpunit.c'));
+      $index = $idx->findOne(array('name' => 'foo_1'));
 
       $this->assertNotNull($index);
       $this->assertEquals($index['key']['foo'], 1);
@@ -303,23 +303,23 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->ensureIndex(array('foo' => -1));
 
       $num = $idx->find(array('ns' => 'phpunit.c'))->count();
-      $this->assertEquals($num, 2);
+      $this->assertEquals($num, 3);
 
       $this->object->deleteIndex(null);
       $num = $idx->find(array('ns' => 'phpunit.c'))->count();
-      $this->assertEquals($num, 2);
+      $this->assertEquals($num, 3);
 
       $this->object->deleteIndex(array('foo' => 1));
       $num = $idx->find(array('ns' => 'phpunit.c'))->count();
-      $this->assertEquals($num, 1);
+      $this->assertEquals($num, 2);
 
       $this->object->deleteIndex('foo');
       $num = $idx->find(array('ns' => 'phpunit.c'))->count();
-      $this->assertEquals($num, 1);
+      $this->assertEquals($num, 2);
 
       $this->object->deleteIndex(array('foo' => -1));
       $num = $idx->find(array('ns' => 'phpunit.c'))->count();
-      $this->assertEquals($num, 0);
+      $this->assertEquals($num, 1);
     }
 
     public function testDeleteIndexes() {
@@ -330,11 +330,11 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->ensureIndex(array('bar' => 1, 'baz' => -1));
 
       $num = $idx->find(array('ns' => 'phpunit.c'))->count();
-      $this->assertEquals($num, 3);
+      $this->assertEquals($num, 4);
 
       $this->object->deleteIndexes();
       $num = $idx->find(array('ns' => 'phpunit.c'))->count();
-      $this->assertEquals($num, 0);
+      $this->assertEquals($num, 1);
     }
 
     public function testGetIndexInfo() {
@@ -346,14 +346,14 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->ensureIndex(array('bar' => 1, 'baz' => -1));
 
       $info = $this->object->getIndexInfo();
-      $this->assertEquals(count($info), 3);
-      $this->assertEquals($info[0]['key']['foo'], 1);
-      $this->assertEquals($info[0]['name'], 'foo_1');
-      $this->assertEquals($info[1]['key']['foo'], -1);
-      $this->assertEquals($info[1]['name'], 'foo_-1');
-      $this->assertEquals($info[2]['key']['bar'], 1);
-      $this->assertEquals($info[2]['key']['baz'], -1);
-      $this->assertEquals($info[2]['name'], 'bar_1_baz_-1');
+      $this->assertEquals(count($info), 4);
+      $this->assertEquals($info[1]['key']['foo'], 1);
+      $this->assertEquals($info[1]['name'], 'foo_1');
+      $this->assertEquals($info[2]['key']['foo'], -1);
+      $this->assertEquals($info[2]['name'], 'foo_-1');
+      $this->assertEquals($info[3]['key']['bar'], 1);
+      $this->assertEquals($info[3]['key']['baz'], -1);
+      $this->assertEquals($info[3]['name'], 'bar_1_baz_-1');
     }
 
     public function testCount() {
