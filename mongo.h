@@ -14,7 +14,11 @@
  *  limitations under the License.
  */
 
+
+
+#ifndef WIN32
 #include <netdb.h>
+#endif
 
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1

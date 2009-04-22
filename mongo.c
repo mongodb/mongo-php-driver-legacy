@@ -21,8 +21,13 @@
 
 #include <string.h>
 #include <errno.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#else
 #include <netinet/tcp.h>
 #include <fcntl.h>
+#endif
 
 #include <php.h>
 #include <php_ini.h>
@@ -680,7 +685,7 @@ PHP_FUNCTION(mongo_gridfs_store) {
   // insert chunks
   while (pos < size) {
     chunk_size = size-pos >= MonGlo(chunk_size) ? MonGlo(chunk_size) : size-pos;
-    char buf[chunk_size];
+    char *buf = (char*)emalloc(chunk_size);
     if (fread(buf, 1, chunk_size, fp) < chunk_size) {
       zend_error(E_WARNING, "Error reading file %s\n", filename);
       RETURN_FALSE;
@@ -708,6 +713,7 @@ PHP_FUNCTION(mongo_gridfs_store) {
     chunk_num++;
     zval_ptr_dtor(&id);
     zval_ptr_dtor(&zchunk);
+	efree(buf);
   }
   fclose(fp);
 
@@ -1038,7 +1044,13 @@ static int get_reply(mongo_cursor *cursor TSRMLS_DC) {
 
 static int say(mongo_link *link, buffer *buf TSRMLS_DC) {
   if (check_connection(link TSRMLS_CC) == SUCCESS) {
-    int sent = send(get_master(link TSRMLS_CC), buf->start, buf->pos-buf->start, FLAGS);
+
+#ifdef WIN32
+    int sent = send(get_master(link TSRMLS_CC), (const char*)buf->start, buf->pos-buf->start, FLAGS);
+#else
+	int sent = send(get_master(link TSRMLS_CC), buf->start, buf->pos-buf->start, FLAGS);
+#endif
+
     if (sent == FAILURE) {
       link->server.single.connected = 0;
       sent = check_connection(link TSRMLS_CC);
@@ -1052,14 +1064,22 @@ static int hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
   int tries = 3, num = 1;
   while (check_connection(link TSRMLS_CC) == FAILURE &&
          tries > 0) {
+#ifndef WIN32
     sleep(2);
+#endif
     zend_error(E_WARNING, "no connection, trying to reconnect %d more times...\n", tries--);
   }
   // this can return FAILED if there is just no more data from db
   int r = 0;
   while(r < len && num > 0) {
+
+#ifdef WIN32
+    num = recv(get_master(link TSRMLS_CC), (char*)dest, len, FLAGS);
+#else
     num = recv(get_master(link TSRMLS_CC), dest, len, FLAGS);
-    dest += num;
+#endif
+
+	dest = (char*)dest + num;
     r += num;
   }
   return r;
@@ -1092,7 +1112,11 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
   struct sockaddr_in addr;
   fd_set rset, wset;
   struct timeval tval;
+#ifdef WIN32
+  const char yes = 1;
+#else
   int yes = 1;
+#endif
 
   // get addresses
   get_sockaddr(&addr, host, port);
@@ -1105,11 +1129,20 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
 
   setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
   setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
+#ifdef WIN32
+  ioctlsocket(sock, FIONBIO, (u_long*)&yes);
+#else
   fcntl(sock, F_SETFL, FLAGS|O_NONBLOCK);
+#endif
 
   // connect
   if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+#ifdef WIN32
+    errno = WSAGetLastError();
+	if (errno != WSAEINPROGRESS) {
+#else
     if (errno != EINPROGRESS) {
+#endif
       zend_error(E_WARNING, "%s:%d: %s", host, port, strerror(errno));
       return FAILURE;
     }
@@ -1128,7 +1161,13 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
   }
 
   // reset flags
+#ifdef WIN32
+  u_long no = 0;
+  ioctlsocket(sock, FIONBIO, &no);
+#else
   fcntl(sock, F_SETFL, FLAGS);
+#endif
+
   return sock;
 }
 
