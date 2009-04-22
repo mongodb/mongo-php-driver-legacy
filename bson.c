@@ -443,8 +443,8 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       create_id(zoid, (char*)buf TSRMLS_CC);
       buf += OID_SIZE;
 
-      add_assoc_string(zref, "$ns", ns, 1);
-      add_assoc_zval(zref, "$ref", zoid);
+      add_assoc_string(zref, "$ref", ns, 1);
+      add_assoc_zval(zref, "$id", zoid);
 
       add_assoc_zval(result, name, zref);
     }

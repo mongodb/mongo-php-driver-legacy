@@ -167,6 +167,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         }
 
         $info = $this->object->getCursorInfo();
+        var_dump($info);
         $this->assertEquals($info['byLocation_size'], 0);
         $this->assertEquals($info['clientCursors_size'], 0);
         $this->assertEquals($info['ok'], 1);
