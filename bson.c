@@ -439,7 +439,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       array_init(zref);
 
       buf += INT_32;
-      char *ns = buf;
+      char *ns = (char*)buf;
       while (*buf++);
 
       zval *zoid;

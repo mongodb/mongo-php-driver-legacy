@@ -13,6 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+#ifndef PHP_BSON_H
+#define PHP_BSON_H 1
 
 #define INT_32 4
 #define INT_64 8
@@ -57,3 +59,5 @@ int resize_buf(buffer*, int);
 
 int zval_to_bson(buffer*, HashTable*, int TSRMLS_DC);
 unsigned char* bson_to_zval(unsigned char*, zval* TSRMLS_DC);
+
+#endif

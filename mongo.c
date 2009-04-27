@@ -27,6 +27,7 @@
 #else
 #include <netinet/tcp.h>
 #include <fcntl.h>
+#include <netdb.h>
 #endif
 
 #include <php.h>
