@@ -116,14 +116,15 @@ class MongoGridFS extends MongoCollection
      * Lists all files matching a given criteria.
      * Each result is returned as a GridFSFile object.
      *
-     * @param array $query criteria to match
+     * @param array $query  criteria to match
+     * @param array $fields fields to return
      *
      * @return GridFSCursor cursor over the list of files
      *
      * @throws InvalidArgumentException if the parameters 
      *         passed are not arrays
      */
-    public function find($query = array()) 
+    public function find($query = array(), $fields = array()) 
     {
         if (!is_array($query)) {
             throw new InvalidArgumentException("Expects: find(array)");
@@ -133,7 +134,7 @@ class MongoGridFS extends MongoCollection
                                      $this->db->connection,
                                      (string)$this,
                                      $query,
-                                     array());
+                                     $fields);
     }
 
     /**
