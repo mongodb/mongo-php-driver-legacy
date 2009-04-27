@@ -226,6 +226,12 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     public function testExecute() {
         $ret = $this->object->execute('4+3*6');
         $this->assertEquals($ret['retval'], 22);
+
+        $ret = $this->object->execute(new MongoCode('function() { return x+y; }', array('x' => 'hi', 'y' => 'bye')));
+        $this->assertEquals($ret['retval'], 'hibye');
+
+        $ret = $this->object->execute(new MongoCode('function(x) { return x+y; }', array('y' => 'bye')), array('bye'));
+        $this->assertEquals($ret['retval'], 'byebye');
     }
 
 }

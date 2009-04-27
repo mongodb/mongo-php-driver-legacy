@@ -144,7 +144,13 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
     break;
   }
   case IS_ARRAY: {
-    set_type(buf, BSON_OBJECT);
+    if (zend_hash_index_exists(Z_ARRVAL_PP(data), 0)) {
+      set_type(buf, BSON_ARRAY);
+    }
+    else {
+      set_type(buf, BSON_OBJECT);
+    }
+
     serialize_string(buf, name, name_len);
     zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
     break;

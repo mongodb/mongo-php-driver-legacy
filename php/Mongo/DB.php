@@ -341,17 +341,24 @@ class MongoDB
      * The "errno" field may not be returned if there is no 
      * corresponding error number.
      *
-     * @param string $code string of code
-     * @param array  $args arguments to pass to first parameter
+     * @param string|MongoCode $code string of code
+     * @param array $args arguments to pass to first parameter
      *
      * @return the database response to the executed code
      */
     public function execute($code, $args=array()) 
     {
-        $a = array('$eval' => (string)$code, "args" => $args);
+        if (!is_array($args)) {
+            $args = array($args);
+        }
+        if (!($code instanceof MongoCode)) {
+            $code = new MongoCode((string)$code);
+        }
+        $a = array('$eval' => $code, "args" => $args);
+
         return MongoUtil::dbCommand($this->connection,
-                                     $a,
-                                     "$this");
+                                    $a,
+                                    (string)$this);
     }
 
 }
