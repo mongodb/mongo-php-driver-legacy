@@ -118,18 +118,18 @@ class MongoCollection
 
     /** Inserts an object or array into the collection.
      *
-     * @param object $iterable an object or array
+     * @param object $a an array
      *
      * @return bool if the associative array was saved to the database
      */
-    function insert($iterable) 
+    function insert($a) 
     {
-        if(!is_array($iterable)) {
+        if(!is_array($a)) {
             return false;
         }
         return mongo_insert($this->db->connection, 
                             (string)$this, 
-                            $iterable);
+                            $a);
     }
 
     /** Inserts many objects into the database at once.

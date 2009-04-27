@@ -119,6 +119,7 @@ class Mongo
      */
     public function pairConnect() 
     {
+        $this->paired = true;
         return $this->connectUtil("", "");
     }
 
@@ -134,6 +135,7 @@ class Mongo
      */
     public function persistConnect($server = null, $username="", $password="") 
     {
+        $this->persistent = true;
         return $this->connectUtil($username, $password);
     }
 
@@ -150,6 +152,8 @@ class Mongo
     public function pairPersistConnect($username = "", 
                                        $password = "") 
     {
+        $this->paired     = true;
+        $this->persistent = true;
         return $this->connectUtil($username, 
                                   $password);
     }

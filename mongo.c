@@ -350,6 +350,7 @@ PHP_MINFO_FUNCTION(mongo) {
 /* {{{ mongo_connect
  */
 PHP_FUNCTION(mongo_connect) {
+  return_value_ptr = &return_value;
   php_mongo_do_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
@@ -1089,10 +1090,15 @@ static int check_connection(mongo_link *link TSRMLS_DC) {
 }
 
 static int mongo_connect_nonb(int sock, char *host, int port) {
-  struct sockaddr_in addr;
-  fd_set rset, wset;
+  struct sockaddr_in addr, addr2;
+  fd_set rset, wset, eset;
   struct timeval tval;
   int yes = 1;
+  int connected = FAILURE;
+
+  // timeout
+  tval.tv_sec = 20;
+  tval.tv_usec = 0;
 
   // get addresses
   get_sockaddr(&addr, host, port);
@@ -1107,22 +1113,29 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
   setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
   fcntl(sock, F_SETFL, FLAGS|O_NONBLOCK);
 
+  FD_ZERO(&rset);
+  FD_SET(sock, &rset);  
+  FD_ZERO(&wset);
+  FD_SET(sock, &wset);  
+
   // connect
-  if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+  int x = 0;
+  if ((x = connect(sock, (struct sockaddr*)&addr, sizeof(addr))) < 0) {
     if (errno != EINPROGRESS) {
+      close(sock);
       zend_error(E_WARNING, "%s:%d: %s", host, port, strerror(errno));
       return FAILURE;
     }
 
-    FD_ZERO(&rset);
-    FD_SET(sock, &rset);
-
-    // timeout
-    tval.tv_sec = 20;
-    tval.tv_usec = 0;
-
     if (select(sock+1, &rset, &wset, NULL, &tval) == 0) {
-      zend_error(E_WARNING, "connecting timed out: %s", strerror(errno));
+      close(sock);
+      return FAILURE;
+    }
+
+    int size = sizeof(addr2);
+    connected = getpeername(sock, (struct sockaddr*)&addr, &size);
+    if (connected == FAILURE) {
+      close(sock);
       return FAILURE;
     }
   }
