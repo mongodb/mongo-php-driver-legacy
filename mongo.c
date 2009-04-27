@@ -1219,7 +1219,7 @@ static void php_mongo_do_connect(INTERNAL_FUNCTION_PARAMETERS) {
     RETURN_FALSE;
   }
   else if (zend_parse_parameters(argc TSRMLS_CC, "sssbbb", &server, &server_len, &uname, &uname_len, &pass, &pass_len, &persistent, &paired, &lazy) == FAILURE) {
-    zend_error( E_WARNING, "incorrect parameter types, expected: mongo_pconnect( string, string, string, bool, bool, bool )" );
+    zend_error( E_WARNING, "incorrect parameter types, expected: mongo_connect( string, string, string, bool, bool, bool )" );
     RETURN_FALSE;
   }
 
