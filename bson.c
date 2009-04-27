@@ -17,6 +17,10 @@
 
 #include <php.h>
 
+#ifdef WIN32
+#include <memory.h>
+#endif
+
 #include "bson.h"
 #include "mongo.h"
 #include "mongo_types.h"
@@ -342,7 +346,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       object_init_ex(bin, mongo_bindata_class);
 
       add_property_long(bin, "length", len);
-      add_property_stringl(bin, "bin", bytes, len, DUP);
+      add_property_stringl(bin, "bin", (char*)bytes, len, DUP);
       add_property_long(bin, "type", type);
       add_assoc_zval(result, name, bin);
       break;
@@ -436,7 +440,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       array_init(zref);
 
       buf += INT_32;
-      char *ns = buf;
+      char *ns = (char*)buf;
       while (*buf++);
 
       zval *zoid;

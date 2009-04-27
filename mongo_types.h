@@ -14,6 +14,9 @@
  *  limitations under the License.
  */
 
+#ifndef PHP_MONGO_TYPES_H
+#define PHP_MONGO_TYPES_H 1
+
 #define BIN_FUNCTION 1
 #define BIN_BYTE_ARRAY 2
 #define BIN_UUID 3
@@ -43,3 +46,4 @@ PHP_FUNCTION( mongo_regex___toString );
 zval* bson_to_zval_regex(char*, char* TSRMLS_DC);
 void zval_to_bson_regex(zval**, char**, char** TSRMLS_DC);
 
+#endif
