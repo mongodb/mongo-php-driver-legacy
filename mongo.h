@@ -209,6 +209,7 @@ PHP_FUNCTION( mongo_gridfile_write );
 
 
 void mongo_init_MongoUtil(TSRMLS_D);
+void mongo_init_MongoCursor(TSRMLS_D);
 
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)

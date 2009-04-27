@@ -47,7 +47,9 @@ zend_class_entry *mongo_id_class,
   *mongo_date_class, 
   *mongo_regex_class, 
   *mongo_bindata_class,
-  *mongo_util_class;
+  *mongo_util_class,
+  *mongo_cursor_ce,
+  *mongo_ce_CursorException;
 
 /** Resources */
 int le_connection, le_pconnection, le_db_cursor, le_gridfs, le_gridfile;
@@ -258,10 +260,12 @@ static void free_cursor(mongo_cursor *cursor) {
     efree(cursor->ns);
   }
   efree(cursor);
+  cursor = 0;
 }
 
 static void php_cursor_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
   mongo_cursor *cursor = (mongo_cursor*)rsrc->ptr;
+  php_printf("in dtor for %p\n", cursor);
 
   if (cursor) {
     kill_cursor(cursor TSRMLS_CC);
@@ -303,6 +307,7 @@ PHP_MINIT_FUNCTION(mongo) {
 
 
   mongo_init_MongoUtil(TSRMLS_C);
+  mongo_init_MongoCursor(TSRMLS_C);
 
   return SUCCESS;
 }
@@ -347,6 +352,19 @@ PHP_MINFO_FUNCTION(mongo) {
   DISPLAY_INI_ENTRIES();
 }
 /* }}} */
+
+void mongo_init_class(zend_class_entry ** ppce, zend_class_entry *pce, const char * name, zend_function_entry * functions TSRMLS_DC) {
+  zend_class_entry ce;
+  
+  INIT_CLASS_ENTRY(ce, name, functions);
+  ce.name_length = strlen(name);
+  *ppce = zend_register_internal_class_ex(&ce, pce, NULL TSRMLS_CC);
+  (*ppce)->create_object = pce->create_object;
+}
+
+void mongo_init_MongoExceptions(TSRMLS_D) {
+  mongo_init_class(&mongo_ce_CursorException, zend_exception_get_default(TSRMLS_C), "MongoCursorException", NULL TSRMLS_CC);
+}
 
 /* {{{ mongo_connect
  */
@@ -821,7 +839,7 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
 
   serialize_int(&buf, skip);
   serialize_int(&buf, limit);
-
+ 
   zval_to_bson(&buf, Z_ARRVAL_P(zquery), NO_PREP TSRMLS_CC);
   if (zfields && zend_hash_num_elements(Z_ARRVAL_P(zfields)) > 0) {
     zval_to_bson(&buf, Z_ARRVAL_P(zfields), NO_PREP TSRMLS_CC);
@@ -844,6 +862,7 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
   cursor->ns = estrdup(collection);
   cursor->ns_len = strlen(collection);                        
 
+  php_printf("mongo_do_query\n");
   get_reply(cursor TSRMLS_CC);
 
   cursor->limit = limit;
@@ -875,6 +894,7 @@ int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
 
   // if we have cursor->at == cursor->num && recv fails,
   // we're probably just out of results
+  php_printf("mongo_do_has_next\n");
   return (get_reply(cursor TSRMLS_CC) == SUCCESS);
 }
 
@@ -1002,6 +1022,7 @@ static int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   cursor->header.length -= INT_32;
   // point buf.start at buf's first char
   cursor->buf.start = (unsigned char*)emalloc(cursor->header.length);
+  php_printf("ALLOCING %p\n", cursor->buf.start);
   cursor->buf.pos = cursor->buf.start;
   cursor->buf.end = cursor->buf.start + cursor->header.length;
 
