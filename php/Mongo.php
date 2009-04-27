@@ -194,7 +194,7 @@ class Mongo
 
         if (!$this->connection) {
             $this->connected = false;
-            throw new MongoConnectionException("Could not connect to $server");
+            throw new MongoConnectionException("Could not connect to ".$this->server);
         }
         $this->connected = true;
         return $this->connected;
