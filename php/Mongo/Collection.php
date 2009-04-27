@@ -339,7 +339,7 @@ class MongoCollection
             throw new InvalidArgumentException("Expects: save(array)");
         }
 
-        if ($obj['_id']) {
+        if (array_key_exists('_id', $obj)) {
             return $this->update(array("_id" => $obj['_id']), $obj, true);
         }
         return $this->insert($obj);

@@ -182,7 +182,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $obj = $c->getNext();
       $this->assertEquals('b', $obj['a']);
       $this->assertEquals('c', $obj['b']);
-      $this->assertEquals(null, $obj['foo']);
+      $this->assertEquals(false, array_key_exists('foo', $obj));
     }
 
     /**
