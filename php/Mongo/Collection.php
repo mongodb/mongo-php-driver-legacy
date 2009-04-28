@@ -25,7 +25,6 @@
  */
 
 require_once "Mongo/DB.php";
-require_once "Mongo/Cursor.php";
 require_once "Mongo/Util.php";
 
 /**
@@ -96,7 +95,6 @@ class MongoCollection
      */
     function drop() 
     {
-        $this->deleteIndexes();
         return MongoUtil::dbCommand($this->db->connection, 
                                     array(MongoUtil::DROP => $this->name), 
                                     (string)$this->db);
@@ -122,18 +120,18 @@ class MongoCollection
 
     /** Inserts an object or array into the collection.
      *
-     * @param object $iterable an object or array
+     * @param object $a an array
      *
      * @return bool if the associative array was saved to the database
      */
-    function insert($iterable) 
+    function insert($a) 
     {
-        if(!is_array($iterable)) {
+        if(!is_array($a)) {
             return false;
         }
         return mongo_insert($this->db->connection, 
                             (string)$this, 
-                            $iterable);
+                            $a);
     }
 
     /** Inserts many objects into the database at once.
@@ -248,7 +246,7 @@ class MongoCollection
      *
      * @return void
      */
-    function ensureIndex($keys) 
+    function ensureIndex($keys, $unique=false) 
     {
         $ns = (string)$this;
         if (!is_array($keys)) {
@@ -256,7 +254,10 @@ class MongoCollection
         }
         $name = MongoUtil::toIndexString($keys);
         $coll = $this->db->selectCollection("system.indexes");
-        $coll->insert(array("ns" => $ns, "key" => $keys, "name" => $name));
+        $coll->insert(array('ns' => $ns, 
+                            'key' => $keys, 
+                            'name' => $name, 
+                            'unique' => (bool)$unique));
     }
   
     /**
@@ -327,17 +328,23 @@ class MongoCollection
     /**
      * Saves an object to this collection.
      *
-     * @param object $obj object to save
+     * @param array $obj object to save
      *
-     * @return object the object saved
+     * @return array the object saved
+     *
+     * @throws InvalidArgumentException if the parameter 
+     *         is not an array
      */
     function save($obj) 
     {
-        $a = $obj;
-        if ($a[ "_id" ]) {
-            return $this->update(array("_id" => $id), $a, true);
+        if (!is_array($obj)) {
+            throw new InvalidArgumentException("Expects: save(array)");
         }
-        return $this->update($a, $a, true);
+
+        if (array_key_exists('_id', $obj)) {
+            return $this->update(array("_id" => $obj['_id']), $obj, true);
+        }
+        return $this->insert($obj);
     }
 
     /**

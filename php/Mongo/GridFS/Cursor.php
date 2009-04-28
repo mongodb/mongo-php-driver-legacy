@@ -24,7 +24,6 @@
  * @link     http://www.mongodb.org
  */
 
-require_once "Mongo/Cursor.php";
 require_once "Mongo/GridFS/File.php";
 
 /**
@@ -98,7 +97,11 @@ class MongoGridFSCursor extends MongoCursor
      */
     public function current()
     {
-        return new MongoGridFSFile($this->gridfs, $this->current);
+        if ($this->current) {
+            return new MongoGridFSFile($this->gridfs, $this->current);
+        } else {
+            return null;
+        }
     }
 
     /**

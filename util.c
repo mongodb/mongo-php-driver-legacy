@@ -199,6 +199,7 @@ PHP_METHOD(MongoUtil, dbCommand) {
 
   // return 1 result
   zval *next = mongo_do_next(cursor TSRMLS_CC);
+  free_cursor(cursor);
   RETURN_ZVAL(next, 0, 1);
 }
 

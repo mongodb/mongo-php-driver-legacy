@@ -15,10 +15,14 @@
  *  limitations under the License.
  */
 
-#include <php.h>
-#include <string.h>
+#ifdef WIN32
 #include <time.h>
+#else
+#include <string.h>
 #include <sys/time.h>
+#endif
+
+#include <php.h>
 
 #include "mongo_types.h"
 #include "mongo.h"
@@ -64,11 +68,13 @@ void generate_id(char *data) {
   data[9] = inc[2];
   data[10] = inc[1];
   data[11] = inc[0];
+
+  fclose(rand);
 }
 
-/* {{{ mongo_id___construct() 
+/* {{{ mongo_id___construct()
  */
-PHP_FUNCTION(mongo_id___construct) {
+PHP_METHOD(MongoId, __construct) {
   char *id;
   int id_len;
   char data[12];
@@ -99,9 +105,9 @@ PHP_FUNCTION(mongo_id___construct) {
 /* }}} */
 
 
-/* {{{ mongo_id___toString() 
+/* {{{ MongoId::toString() 
  */
-PHP_FUNCTION( mongo_id___toString ) {
+PHP_METHOD(MongoId, __toString) {
   int i;
   zval *zid = zend_read_property(mongo_id_class, getThis(), "id", 2, 0 TSRMLS_CC);
   char *foo = zid->value.str.val;
@@ -122,6 +128,18 @@ PHP_FUNCTION( mongo_id___toString ) {
 }
 /* }}} */
 
+static function_entry MongoId_methods[] = {
+  PHP_ME(MongoId, __construct, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoId, __toString, NULL, ZEND_ACC_PUBLIC)
+  {NULL, NULL, NULL}
+};
+
+void mongo_init_MongoId(TSRMLS_D) {
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "MongoId", MongoId_methods);
+  mongo_id_class = zend_register_internal_class(&ce TSRMLS_CC);
+}
 
 
 /* {{{ mongo_date___construct() 
@@ -133,7 +151,14 @@ PHP_FUNCTION( mongo_date___construct ) {
   int argc = ZEND_NUM_ARGS();
   switch(argc) {
   case 0: {
+#ifdef WIN32
+    SYSTEMTIME systime;
+	GetSystemTime(&systime);
+	time.tv_sec = systime.wSecond;
+	time.tv_usec = systime.wMilliseconds * 1000;
+#else
     gettimeofday(&time, NULL);
+#endif
     add_property_long( getThis(), "sec", time.tv_sec );
     add_property_long( getThis(), "usec", time.tv_usec );
     break;
@@ -298,10 +323,11 @@ PHP_FUNCTION( mongo_regex___toString ) {
 
   int re_len = strlen(re);
   int opts_len = strlen(opts);
-  char field_name[re_len+opts_len+3];
+  char *field_name;
 
-  sprintf( field_name, "/%s/%s", re, opts );
-  RETURN_STRING( field_name, 1 );
+  spprintf(&field_name, 0, "/%s/%s", re, opts );
+  RETVAL_STRING(field_name, 1);
+  efree(field_name);
 }
 /* }}} */
 

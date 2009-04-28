@@ -1,0 +1,10 @@
+// $ID$
+// vim:ft=javascript
+
+ARG_ENABLE("mongo", "MongoDB support", "no");
+
+if (PHP_MONGO != "no") {
+  EXTENSION('mongo', 'mongo.c mongo_types.c bson.c');
+  
+  AC_DEFINE('HAVE_MONGO', 1);
+}

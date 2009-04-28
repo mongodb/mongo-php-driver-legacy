@@ -104,11 +104,9 @@ class MongoGridFS extends MongoCollection
      */
     function drop() 
     {
-        $this->chunks->deleteIndexes();
         MongoUtil::dbCommand($this->db->connection, 
                              array(MongoUtil::DROP => $this->chunks->name), 
                              (string)$this->db);
-        $this->deleteIndexes();
         return MongoUtil::dbCommand($this->db->connection, 
                                     array(MongoUtil::DROP => $this->name), 
                                     (string)$this->db);
@@ -118,17 +116,25 @@ class MongoGridFS extends MongoCollection
      * Lists all files matching a given criteria.
      * Each result is returned as a GridFSFile object.
      *
-     * @param array $query criteria to match
+     * @param array $query  criteria to match
+     * @param array $fields fields to return
      *
      * @return GridFSCursor cursor over the list of files
+     *
+     * @throws InvalidArgumentException if the parameters 
+     *         passed are not arrays
      */
-    public function find($query = array()) 
+    public function find($query = array(), $fields = array()) 
     {
+        if (!is_array($query)) {
+            throw new InvalidArgumentException("Expects: find(array)");
+        }
+
         return new MongoGridFSCursor($this,
                                      $this->db->connection,
                                      (string)$this,
                                      $query,
-                                     array());
+                                     $fields);
     }
 
     /**

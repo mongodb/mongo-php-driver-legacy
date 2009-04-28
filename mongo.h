@@ -14,7 +14,6 @@
  *  limitations under the License.
  */
 
-#include <netdb.h>
 
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1
@@ -208,6 +207,9 @@ PHP_FUNCTION( mongo_gridfs_store );
 PHP_FUNCTION( mongo_gridfile_write );
 
 
+void free_cursor(mongo_cursor*);
+
+void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoUtil(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);
 

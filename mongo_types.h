@@ -14,6 +14,9 @@
  *  limitations under the License.
  */
 
+#ifndef PHP_MONGO_TYPES_H
+#define PHP_MONGO_TYPES_H 1
+
 #define BIN_FUNCTION 1
 #define BIN_BYTE_ARRAY 2
 #define BIN_UUID 3
@@ -35,11 +38,12 @@ unsigned long long zval_to_bson_date(zval** TSRMLS_DC);
 
 void create_id(zval*, char* TSRMLS_DC);
 void generate_id(char*);
-PHP_FUNCTION( mongo_id___construct );
-PHP_FUNCTION( mongo_id___toString );
+PHP_METHOD(MongoId, __construct);
+PHP_METHOD(MongoId, __toString);
 
 PHP_FUNCTION( mongo_regex___construct );
 PHP_FUNCTION( mongo_regex___toString );
 zval* bson_to_zval_regex(char*, char* TSRMLS_DC);
 void zval_to_bson_regex(zval**, char**, char** TSRMLS_DC);
 
+#endif
