@@ -38,8 +38,8 @@ unsigned long long zval_to_bson_date(zval** TSRMLS_DC);
 
 void create_id(zval*, char* TSRMLS_DC);
 void generate_id(char*);
-PHP_FUNCTION( mongo_id___construct );
-PHP_FUNCTION( mongo_id___toString );
+PHP_METHOD(MongoId, __construct);
+PHP_METHOD(MongoId, __toString);
 
 PHP_FUNCTION( mongo_regex___construct );
 PHP_FUNCTION( mongo_regex___toString );

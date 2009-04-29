@@ -68,13 +68,25 @@ void generate_id(char *data) {
   data[9] = inc[2];
   data[10] = inc[1];
   data[11] = inc[0];
-
+  
   fclose(rand);
 }
 
-/* {{{ mongo_id___construct()
+static function_entry MongoId_methods[] = {
+  PHP_ME(MongoId, __construct, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoId, __toString, NULL, ZEND_ACC_PUBLIC)
+  { NULL, NULL, NULL }
+};
+
+void mongo_init_MongoId(TSRMLS_D) {
+  zend_class_entry id; 
+  INIT_CLASS_ENTRY(id, "MongoId", MongoId_methods); 
+  mongo_id_class = zend_register_internal_class_ex(&id, mongo_id_class, NULL TSRMLS_CC); 
+}
+
+/* {{{ MongoId::__construct()
  */
-PHP_FUNCTION(mongo_id___construct) {
+PHP_METHOD(MongoId, __construct) {
   char *id;
   int id_len;
   char data[12];
@@ -105,9 +117,9 @@ PHP_FUNCTION(mongo_id___construct) {
 /* }}} */
 
 
-/* {{{ mongo_id___toString() 
+/* {{{ MongoId::__toString() 
  */
-PHP_FUNCTION( mongo_id___toString ) {
+PHP_METHOD(MongoId, __toString) {
   int i;
   zval *zid = zend_read_property(mongo_id_class, getThis(), "id", 2, 0 TSRMLS_CC);
   char *foo = zid->value.str.val;

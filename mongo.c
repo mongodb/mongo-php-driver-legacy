@@ -78,13 +78,6 @@ static function_entry mongo_functions[] = {
   {NULL, NULL, NULL}
 };
 
-static function_entry mongo_id_functions[] = {
-  PHP_NAMED_FE( __construct, PHP_FN( mongo_id___construct ), NULL )
-  PHP_NAMED_FE( __toString, PHP_FN( mongo_id___toString ), NULL )
-  { NULL, NULL, NULL }
-};
-
-
 static function_entry mongo_code_functions[] = {
   PHP_NAMED_FE( __construct, PHP_FN( mongo_code___construct ), NULL )
   PHP_NAMED_FE( __toString, PHP_FN( mongo_code___toString ), NULL )
@@ -300,14 +293,11 @@ PHP_MINIT_FUNCTION(mongo) {
   INIT_CLASS_ENTRY(date, "MongoDate", mongo_date_functions); 
   mongo_date_class = zend_register_internal_class(&date TSRMLS_CC); 
 
-  zend_class_entry id; 
-  INIT_CLASS_ENTRY(id, "MongoId", mongo_id_functions); 
-  mongo_id_class = zend_register_internal_class(&id TSRMLS_CC); 
-
   zend_class_entry regex; 
   INIT_CLASS_ENTRY(regex, "MongoRegex", mongo_regex_functions); 
   mongo_regex_class = zend_register_internal_class(&regex TSRMLS_CC); 
 
+  mongo_init_MongoId(TSRMLS_C);
 
   return SUCCESS;
 }
