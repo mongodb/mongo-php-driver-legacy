@@ -306,6 +306,8 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoUtil(TSRMLS_C);
   mongo_init_MongoCursor(TSRMLS_C);
 
+  mongo_init_MongoExceptions(TSRMLS_C);
+
   return SUCCESS;
 }
 /* }}} */
@@ -350,17 +352,11 @@ PHP_MINFO_FUNCTION(mongo) {
 }
 /* }}} */
 
-void mongo_init_class(zend_class_entry ** ppce, zend_class_entry *pce, const char * name, zend_function_entry * functions TSRMLS_DC) {
+void mongo_init_MongoExceptions(TSRMLS_D) {
   zend_class_entry ce;
   
-  INIT_CLASS_ENTRY(ce, name, functions);
-  ce.name_length = strlen(name);
-  *ppce = zend_register_internal_class_ex(&ce, pce, NULL TSRMLS_CC);
-  (*ppce)->create_object = pce->create_object;
-}
-
-void mongo_init_MongoExceptions(TSRMLS_D) {
-  mongo_init_class(&mongo_ce_CursorException, zend_exception_get_default(TSRMLS_C), "MongoCursorException", NULL TSRMLS_CC);
+  INIT_CLASS_ENTRY(ce, "MongoCursorException", NULL);
+  mongo_ce_CursorException = zend_register_internal_class_ex(&ce, zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
 }
 
 /* {{{ mongo_connect

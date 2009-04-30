@@ -19,7 +19,6 @@
 #define MONGO_CURSOR_H 1
 
 PHP_METHOD(MongoCursor, __construct);
-PHP_METHOD(MongoCursor, __destruct);
 PHP_METHOD(MongoCursor, getNext);
 PHP_METHOD(MongoCursor, hasNext);
 PHP_METHOD(MongoCursor, limit);

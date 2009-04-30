@@ -89,8 +89,9 @@ PHP_METHOD(MongoCursor, __construct) {
   add_assoc_zval(q, "query", *zquery);
   zend_update_property(mongo_cursor_ce, getThis(), "query", strlen("query"), q TSRMLS_CC);
 
-  zend_update_property(mongo_cursor_ce, getThis(), "sort", strlen("sort"), empty_array TSRMLS_CC);
   zend_update_property(mongo_cursor_ce, getThis(), "hint", strlen("hint"), empty_array TSRMLS_CC);
+
+  zim_MongoCursor_reset(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 
   zval_ptr_dtor(&empty_array);
   zval_ptr_dtor(&q);
@@ -148,7 +149,7 @@ PHP_METHOD(MongoCursor, limit) {
   num *= -1;
 
   zend_update_property_long(mongo_cursor_ce, getThis(), "limit", strlen("limit"), num TSRMLS_CC);
-  RETURN_ZVAL(getThis(), 0, 1);
+  RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
 
@@ -161,7 +162,7 @@ PHP_METHOD(MongoCursor, softLimit) {
   long int num = Z_LVAL_PP(znum);
 
   zend_update_property_long(mongo_cursor_ce, getThis(), "limit", strlen("limit"), num TSRMLS_CC);
-  RETURN_ZVAL(getThis(), 0, 1);
+  RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
 
@@ -174,7 +175,7 @@ PHP_METHOD(MongoCursor, skip) {
   long int num = Z_LVAL_PP(znum);
 
   zend_update_property_long(mongo_cursor_ce, getThis(), "skip", strlen("skip"), num TSRMLS_CC);
-  RETURN_ZVAL(getThis(), 0, 1);
+  RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
 
@@ -189,10 +190,11 @@ PHP_METHOD(MongoCursor, sort) {
   }
 
   zval *query = zend_read_property(mongo_cursor_ce, getThis(), "query", strlen("query"), 1 TSRMLS_CC);
+  zval_add_ref(zfields);
   add_assoc_zval(query, "orderby", *zfields);
 
   zend_update_property(mongo_cursor_ce, getThis(), "query", strlen("query"), query TSRMLS_CC);
-  RETURN_ZVAL(getThis(), 0, 1);
+  RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
 
@@ -207,10 +209,11 @@ PHP_METHOD(MongoCursor, hint) {
   }
 
   zval *query = zend_read_property(mongo_cursor_ce, getThis(), "query", strlen("query"), 1 TSRMLS_CC);
+  zval_add_ref(zfields);
   add_assoc_zval(query, "$hint", *zfields);
 
   zend_update_property(mongo_cursor_ce, getThis(), "query", strlen("query"), query TSRMLS_CC);
-  RETURN_ZVAL(getThis(), 0, 1);
+  RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
 
@@ -254,12 +257,15 @@ PHP_METHOD(MongoCursor, doQuery) {
 }
 /* }}} */
 
+
+// ITERATOR FUNCTIONS
+
 /* {{{ MongoCursor->current
  */
 PHP_METHOD(MongoCursor, current) {
   zval *zcurrent = zend_read_property(mongo_cursor_ce, getThis(), "current", strlen("current"), 1 TSRMLS_CC);
 
-  RETURN_ZVAL(zcurrent, 0, 0);
+  RETURN_ZVAL(zcurrent, 1, 0);
 }
 /* }}} */
 
@@ -278,7 +284,6 @@ PHP_METHOD(MongoCursor, key) {
     this_ptr = temp_this;
   }
   else {
-    php_printf("is null");
     RETURN_STRING("", 1);
   }
 }
@@ -295,20 +300,16 @@ PHP_METHOD(MongoCursor, next) {
     zend_update_property_bool(mongo_cursor_ce, getThis(), "startedIterating", strlen("startedIterating"), 1 TSRMLS_CC);
   }
 
+  zval *current = zend_read_property(mongo_cursor_ce, getThis(), "current", strlen("current"), 1 TSRMLS_CC);
+
   zim_MongoCursor_hasNext(INTERNAL_FUNCTION_PARAM_PASSTHRU);
   if (Z_BVAL_P(return_value)) {
-    return_value_ptr = &return_value;
-    zval *temp;
-    ALLOC_INIT_ZVAL(temp);
-
-    zval *temp_return = return_value;
-    return_value = temp;
+    zval *temp = return_value;
+    return_value = current;
     zim_MongoCursor_getNext(INTERNAL_FUNCTION_PARAM_PASSTHRU); 
-    return_value = temp_return;
-
-    zend_update_property(mongo_cursor_ce, getThis(), "current", strlen("current"), temp TSRMLS_CC);
+    return_value = temp;
   }
-  else {
+  else if (current && Z_TYPE_P(current) != IS_NULL) {
     zend_update_property_null(mongo_cursor_ce, getThis(), "current", strlen("current") TSRMLS_CC);
   }
 
@@ -341,19 +342,8 @@ PHP_METHOD(MongoCursor, reset) {
 }
 /* }}} */
 
-PHP_METHOD(MongoCursor, __destruct) {
-  zval *current = zend_read_property(mongo_cursor_ce, getThis(), "current", strlen("current"), 1 TSRMLS_CC);
-  if (Z_TYPE_P(current) != IS_NULL) {
-    while (current->refcount > 1) {
-      zval_ptr_dtor(&current);
-    }
-    zval_ptr_dtor(&current);
-  }
-}
-
 static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, __construct, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, __destruct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hasNext, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, getNext, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, limit, NULL, ZEND_ACC_PUBLIC)

@@ -212,6 +212,7 @@ void free_cursor(mongo_cursor*);
 void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoUtil(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);
+void mongo_init_MongoExceptions(TSRMLS_D);
 
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
