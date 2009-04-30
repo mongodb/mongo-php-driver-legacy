@@ -28,7 +28,13 @@ class MongoGridFSCursorTest extends PHPUnit_Framework_TestCase
         $grid->drop();
         $grid->storeFile('./somefile');
         $this->object = $grid->find();
+        $this->object->start = memory_get_usage(true);
     }
+
+    protected function tearDown() {
+        $this->assertEquals($this->object->start, memory_get_usage(true));
+    }
+
 
     public function testGetNext() {
         $obj = $this->object->getNext();

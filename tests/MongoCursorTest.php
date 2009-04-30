@@ -25,7 +25,13 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
     {
         $this->object = $this->sharedFixture->selectCollection('phpunit', 'c');
         $this->object->drop();
+        $this->object->start = memory_get_usage(true);
     }
+
+    protected function tearDown() {
+        $this->assertEquals($this->object->start, memory_get_usage(true));
+    }
+
 
     public function testHasNext() {
         $c = $this->object->find();

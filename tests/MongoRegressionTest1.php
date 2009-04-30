@@ -30,7 +30,7 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $arr = array("test" => "1, 2, 3"); 
         $start = memory_get_usage(true);
 
-        for($i = 1; $i < 20000; $i++) {
+        for($i = 1; $i < 2000; $i++) {
             $c->insert($arr);
         }
         $this->assertEquals($start, memory_get_usage(true));

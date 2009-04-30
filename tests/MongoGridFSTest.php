@@ -26,7 +26,13 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $db = $this->sharedFixture->selectDB('phpunit');
         $this->object = $db->getGridFS();
         $this->object->drop();
+        $this->object->start = memory_get_usage(true);
     }
+
+    protected function tearDown() {
+        $this->assertEquals($this->object->start, memory_get_usage(true));
+    }
+
 
     public function testDrop() {
         $this->object->storeFile('./somefile');

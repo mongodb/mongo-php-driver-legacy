@@ -28,6 +28,11 @@ class MongoGridFSFileTest extends PHPUnit_Framework_TestCase
         $grid->drop();
         $grid->storeFile('./somefile');
         $this->object = $grid->findOne();
+        $this->object->start = memory_get_usage(true);
+    }
+
+    protected function tearDown() {
+        $this->assertEquals($this->object->start, memory_get_usage(true));
     }
 
     public function testGetFilename() {

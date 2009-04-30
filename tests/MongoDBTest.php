@@ -24,6 +24,11 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->object = new MongoDB($this->sharedFixture, "phpunit");
+        $this->object->start = memory_get_usage(true);
+    }
+
+    protected function tearDown() {
+        $this->assertEquals($this->object->start, memory_get_usage(true));
     }
 
     public function test__toString() {
