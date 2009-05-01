@@ -7,7 +7,10 @@ require_once 'MongoGridFSTest.php';
 require_once 'MongoGridFSFileTest.php';
 require_once 'MongoGridFSCursorTest.php';
 require_once 'MongoUtilTest.php';
+<<<<<<< Updated upstream:tests/MongoSuite.php
 require_once 'MongoRegressionTest1.php';
+=======
+>>>>>>> Stashed changes:tests/MongoSuite.php
  
 class MongoSuite extends PHPUnit_Framework_TestSuite
 {
