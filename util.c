@@ -207,6 +207,7 @@ PHP_METHOD(MongoUtil, dbCommand) {
 static function_entry MongoUtil_methods[] = {
   PHP_ME(MongoUtil, toIndexString, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(MongoUtil, dbCommand, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  { NULL, NULL, NULL }
 };
 
 

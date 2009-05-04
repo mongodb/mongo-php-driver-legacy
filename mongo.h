@@ -52,6 +52,11 @@
 #define PREP 1
 #define NO_PREP 0
 
+#define LAZY 1
+#define NOT_LAZY 0
+
+#define NOISY 0
+
 // duplicate strings
 #define DUP 1
 #define NO_DUP 0
@@ -206,9 +211,36 @@ PHP_FUNCTION( mongo_gridfs_init );
 PHP_FUNCTION( mongo_gridfs_store );
 PHP_FUNCTION( mongo_gridfile_write );
 
+/*
+ * Mongo class
+ */
+PHP_METHOD(Mongo, __construct);
+PHP_METHOD(Mongo, connect);
+PHP_METHOD(Mongo, pairConnect);
+PHP_METHOD(Mongo, persistConnect);
+PHP_METHOD(Mongo, pairPersistConnect);
+PHP_METHOD(Mongo, connectUtil);
+PHP_METHOD(Mongo, __toString);
+PHP_METHOD(Mongo, selectDB);
+PHP_METHOD(Mongo, selectCollection);
+PHP_METHOD(Mongo, dropDB);
+PHP_METHOD(Mongo, repairDB);
+PHP_METHOD(Mongo, lastError);
+PHP_METHOD(Mongo, prevError);
+PHP_METHOD(Mongo, resetError);
+PHP_METHOD(Mongo, forceError);
+PHP_METHOD(Mongo, close);
+
+/*
+ * Internal functions
+ */
+void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
+void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
+
 
 void free_cursor(mongo_cursor*);
 
+void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoUtil(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);

@@ -49,7 +49,7 @@ require_once "Mongo/Admin.php";
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
  * @link     http://www.mongodb.org
  */
-class Mongo
+class Mongo2
 {
     const DEFAULT_HOST = "localhost";
     const DEFAULT_PORT = "27017";
@@ -89,9 +89,6 @@ class Mongo
         if ($connect) {
             $this->connectUtil("", "");
         } else {
-            $this->server     = $server;
-            $this->persistent = $persistent;
-            $this->paired     = $paired;
             $this->connected  = false;
         }
     }
@@ -133,7 +130,7 @@ class Mongo
      *
      * @throws MongoConnectionException if it could not connect
      */
-    public function persistConnect($server = null, $username="", $password="") 
+    public function persistConnect($username="", $password="") 
     {
         $this->persistent = true;
         return $this->connectUtil($username, $password);

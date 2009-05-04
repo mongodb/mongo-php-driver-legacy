@@ -46,7 +46,7 @@ PHP_METHOD(MongoCursor, __construct) {
   }
 
   zval *empty_array;
-  ALLOC_INIT_ZVAL(empty_array);
+  MAKE_STD_ZVAL(empty_array);
   array_init(empty_array);
 
   // defaults
@@ -84,7 +84,7 @@ PHP_METHOD(MongoCursor, __construct) {
   zval_add_ref(zquery);
 
   zval *q;
-  ALLOC_INIT_ZVAL(q);
+  MAKE_STD_ZVAL(q);
   array_init(q);
   add_assoc_zval(q, "query", *zquery);
   zend_update_property(mongo_cursor_ce, getThis(), "query", strlen("query"), q TSRMLS_CC);
@@ -248,7 +248,7 @@ PHP_METHOD(MongoCursor, doQuery) {
 
 
   zval *rsrc;
-  ALLOC_INIT_ZVAL(rsrc);
+  MAKE_STD_ZVAL(rsrc);
   ZEND_REGISTER_RESOURCE(rsrc, cursor, le_db_cursor);
 
   zend_update_property(mongo_cursor_ce, getThis(), "cursor", strlen("cursor"), rsrc TSRMLS_CC);
