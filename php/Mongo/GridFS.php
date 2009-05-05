@@ -212,10 +212,10 @@ class MongoGridFS extends MongoCollection
 
         // make the filename more paletable
         $obj               = parent::findOne(array("filename" => $tmp));
-        $obj[ "filename" ] = $name;
-        $this->update(array("filename" => $tmp), $obj);
+        $obj->file['filename'] = $name;
+        $this->update(array("filename" => $tmp), $obj->file);
 
-        return $obj[ "_id" ];
+        return $obj->file["_id"];
     }
 }
 

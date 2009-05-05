@@ -35,7 +35,7 @@
  */
 class MongoGridFSFile
 {
-    protected $file;
+    public $file;
     protected $gridfs;
 
     /**
