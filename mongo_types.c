@@ -68,11 +68,23 @@ void generate_id(char *data) {
   data[9] = inc[2];
   data[10] = inc[1];
   data[11] = inc[0];
-
+  
   fclose(rand);
 }
 
-/* {{{ mongo_id___construct()
+static function_entry MongoId_methods[] = {
+  PHP_ME(MongoId, __construct, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoId, __toString, NULL, ZEND_ACC_PUBLIC)
+  { NULL, NULL, NULL }
+};
+
+void mongo_init_MongoId(TSRMLS_D) {
+  zend_class_entry id; 
+  INIT_CLASS_ENTRY(id, "MongoId", MongoId_methods); 
+  mongo_id_class = zend_register_internal_class_ex(&id, mongo_id_class, NULL TSRMLS_CC); 
+}
+
+/* {{{ MongoId::__construct()
  */
 PHP_METHOD(MongoId, __construct) {
   char *id;
@@ -105,7 +117,7 @@ PHP_METHOD(MongoId, __construct) {
 /* }}} */
 
 
-/* {{{ MongoId::toString() 
+/* {{{ MongoId::__toString() 
  */
 PHP_METHOD(MongoId, __toString) {
   int i;
@@ -127,19 +139,6 @@ PHP_METHOD(MongoId, __toString) {
   RETURN_STRING(id, DUP);
 }
 /* }}} */
-
-static function_entry MongoId_methods[] = {
-  PHP_ME(MongoId, __construct, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoId, __toString, NULL, ZEND_ACC_PUBLIC)
-  {NULL, NULL, NULL}
-};
-
-void mongo_init_MongoId(TSRMLS_D) {
-  zend_class_entry ce;
-
-  INIT_CLASS_ENTRY(ce, "MongoId", MongoId_methods);
-  mongo_id_class = zend_register_internal_class(&ce TSRMLS_CC);
-}
 
 
 /* {{{ mongo_date___construct() 

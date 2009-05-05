@@ -184,6 +184,7 @@ static PHP_GINIT_FUNCTION(mongo){
 
 static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo_link *conn = (mongo_link*)rsrc->ptr;
+  php_printf("in connection dtor");
   if (conn) {
     if (conn->paired) {
       close(conn->server.paired.lsocket);
@@ -497,18 +498,23 @@ void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS) {
 
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password) {
   int pnum = 2;
-  zval *param[] = {username, password};
+  void *null_ptr = 0;
 
-  zend_ptr_stack_2_push(&EG(argument_stack), &param, &pnum);
-
+  // temporarily hold args
+  void *arg1, *arg2, *arg3;
+  zend_ptr_stack_3_pop(&EG(argument_stack), &arg1, &arg2, &arg3);
+  
+  zend_ptr_stack_n_push(&EG(argument_stack), pnum+2, username, password, pnum, null_ptr);
+  
   int temp = ht;
   ht = 2;
   zim_Mongo_connectUtil(INTERNAL_FUNCTION_PARAM_PASSTHRU);
   ht = temp;
 
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), pnum+2, &holder, &holder, &holder, &holder);
 
-  zend_ptr_stack_pop(&EG(argument_stack));
-  zend_ptr_stack_pop(&EG(argument_stack));
+  zend_ptr_stack_3_push(&EG(argument_stack), arg3, arg2, arg1);
 }
 
 PHP_METHOD(Mongo, connectUtil) {
@@ -521,12 +527,12 @@ PHP_METHOD(Mongo, connectUtil) {
     // Mongo->connected = false
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
   }
-  connect_already(INTERNAL_FUNCTION_PARAM_PASSTHRU, NOT_LAZY);
 
-  // if connecting failed, throw an exception
+  connect_already(INTERNAL_FUNCTION_PARAM_PASSTHRU, NOT_LAZY);
+  
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
+  // if connecting failed, throw an exception
   if (!Z_BVAL_P(connected)) {
-    php_print("not connected\n");
     zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
     zend_throw_exception(mongo_ce_ConnectionException,
                          Z_STRVAL_P(server),
@@ -535,18 +541,18 @@ PHP_METHOD(Mongo, connectUtil) {
   }
 
   // set the Mongo->connected property
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
+  Z_LVAL_P(connected) = 1;
 }
 
 
 int connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
-  mongo_link *link;
-  zend_rsrc_list_entry *le;
+  zval *username, *password;
+ 
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &username, &password) == FAILURE) {
+    return;
+  }
 
   zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), 0 TSRMLS_CC);
-
-  zval *username = zend_read_property(mongo_ce_Mongo, getThis(), "username", strlen("username"), 0 TSRMLS_CC);
-  zval *password = zend_read_property(mongo_ce_Mongo, getThis(), "password", strlen("password"), 0 TSRMLS_CC);
 
   zval *pair = zend_read_property(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 0 TSRMLS_CC);
   zval *persist = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 0 TSRMLS_CC);
@@ -567,20 +573,27 @@ int connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
     RETURN_FALSE;
   }
 
+  mongo_link *link;
+  zend_rsrc_list_entry *le;
+
+  zval *connection;
+  MAKE_STD_ZVAL(connection);
+  zend_update_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), connection TSRMLS_CC);
+
   if (Z_BVAL_P(persist)) {
     char *key;
     int key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), Z_STRVAL_P(username), Z_STRVAL_P(password));
     // if a connection is found, return it 
     if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
       link = (mongo_link*)le->ptr;
-      ZEND_REGISTER_RESOURCE(return_value, link, le_pconnection);
+      ZEND_REGISTER_RESOURCE(connection, link, le_pconnection);
       efree(key);
       return;
     }
     // if lazy and no connection was found, return 
     else if(lazy) {
       efree(key);
-      RETURN_NULL();
+      return;
     }
     efree(key);
   }
@@ -600,7 +613,10 @@ int connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   link->paired = Z_BVAL_P(pair);
 
   get_host_and_port(Z_STRVAL_P(server), link TSRMLS_CC);
-  mongo_do_socket_connect(link);
+  if (mongo_do_socket_connect(link) == FAILURE) {
+    php_printf("failed to connect\n");
+    return;
+  }
 
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
 
@@ -631,16 +647,14 @@ int connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
     }
     efree(key);
 
-    ZEND_REGISTER_RESOURCE(return_value, link, le_pconnection);
+    ZEND_REGISTER_RESOURCE(connection, link, le_pconnection);
     MonGlo(num_persistent)++;
   }
   // otherwise, just return the connection
   else {
-    ZEND_REGISTER_RESOURCE(return_value, link, le_connection);    
+    ZEND_REGISTER_RESOURCE(connection, link, le_connection);    
   }
   MonGlo(num_links)++;
-
-  zend_update_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), return_value TSRMLS_CC);
 }
 
 static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {

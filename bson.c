@@ -37,15 +37,18 @@ int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
  
   // if _id field doesn't exist, add it
   if (zend_hash_find(array, "_id", 4, (void**)&data) == FAILURE) {
-    zval *z;
-    MAKE_STD_ZVAL(z);
-    create_id(z, 0 TSRMLS_CC);
-    serialize_element(buf, "_id", 3, &z TSRMLS_CC);
-    efree(z);
+    char *data = (char*)emalloc(OID_SIZE);
+    generate_id(data);
+
+    set_type(buf, BSON_OID);
+    serialize_string(buf, "_id", 3);
+    memcpy(buf->pos, data, OID_SIZE);
+    buf->pos += OID_SIZE;
+    efree(data);
   }
   else {
     serialize_element(buf, "_id", 3, data TSRMLS_CC);
-    zend_hash_del(array, "_id", 4);
+    zend_hash_del(array, "_id", 4); 
   }
   return SUCCESS;
 }
