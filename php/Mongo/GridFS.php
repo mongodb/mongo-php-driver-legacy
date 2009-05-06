@@ -127,7 +127,7 @@ class MongoGridFS extends MongoCollection
     public function find($query = array(), $fields = array()) 
     {
         if (!is_array($query)) {
-            throw new InvalidArgumentException("Expects: find(array)");
+            throw new InvalidArgumentException("Expects: find([array[, array]])");
         }
 
         return new MongoGridFSCursor($this,
@@ -201,7 +201,7 @@ class MongoGridFS extends MongoCollection
             return false;
         }
 
-        $tmp = $_FILES[ $name ]["tmp_name"];
+        $tmp = $_FILES[$name]['tmp_name'];
         if ($filename) {
             $name = "$filename";
         } else {
