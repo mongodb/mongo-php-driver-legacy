@@ -84,6 +84,7 @@ int zval_to_bson(buffer *buf, HashTable *arr_hash, int prep TSRMLS_DC) {
 
   if (prep) {
     prep_obj_for_db(buf, arr_hash TSRMLS_CC);
+    num++;
   }
   
   for(zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); 

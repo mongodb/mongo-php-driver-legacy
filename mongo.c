@@ -908,6 +908,7 @@ int mongo_do_insert(mongo_link *link, char *collection, zval *zarray TSRMLS_DC) 
   HashTable *obj = Z_ARRVAL_P(zarray);
   // serialize
   if (zval_to_bson(&buf, obj, PREP TSRMLS_CC) == 0) {
+    efree(buf.start);
     // return if there were 0 elements
     return FAILURE;
   }
