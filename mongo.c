@@ -38,6 +38,8 @@
 #include "mongo_types.h"
 #include "bson.h"
 
+extern zend_class_entry *mongo_ce_DB;
+
 static int get_master(mongo_link* TSRMLS_DC);
 static int say(mongo_link*, buffer* TSRMLS_DC);
 static int hear(mongo_link*, void*, int TSRMLS_DC);
@@ -52,12 +54,10 @@ static void mongo_init_MongoExceptions(TSRMLS_D);
 
 /** Classes */
 zend_class_entry *mongo_ce_Mongo,
-  *mongo_id_class, 
   *mongo_code_class, 
   *mongo_date_class, 
   *mongo_regex_class, 
   *mongo_bindata_class,
-  *mongo_util_class,
   *mongo_ce_CursorException,
   *mongo_ce_ConnectionException,
   *mongo_ce_Exception;
@@ -326,11 +326,11 @@ PHP_MINIT_FUNCTION(mongo) {
 
 
   mongo_init_Mongo(TSRMLS_C);
+  mongo_init_MongoCollection(TSRMLS_C);
+  mongo_init_MongoDB(TSRMLS_C);
   mongo_init_MongoId(TSRMLS_C);
   mongo_init_MongoUtil(TSRMLS_C);
   mongo_init_MongoCursor(TSRMLS_C);
-  //  mongo_init_MongoCollection(TSRMLS_C);
-
   mongo_init_MongoExceptions(TSRMLS_C);
 
   return SUCCESS;
@@ -399,7 +399,7 @@ PHP_MINFO_FUNCTION(mongo) {
 }
 /* }}} */
 
-static void mongo_create_exception(zend_class_entry **ppce, zend_class_entry *pce, const char *name, zend_function_entry functions TSRMLS_DC) {
+void mongo_init_MongoExceptions(TSRMLS_D) {
   zend_class_entry e;
   INIT_CLASS_ENTRY(e, "MongoException", NULL);
   mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
@@ -768,7 +768,7 @@ PHP_METHOD(Mongo, dropDB) {
   }
 
   if (Z_TYPE_P(db) == IS_OBJECT &&
-      Z_OBJCE_P(db) == mongo_ce_MongoDB) {
+      Z_OBJCE_P(db) == mongo_ce_DB) {
 
   }
   else {
@@ -776,7 +776,7 @@ PHP_METHOD(Mongo, dropDB) {
 
     zval *newdb;
     MAKE_STD_ZVAL(newdb);
-    object_init_ex(newdb, mongo_ce_MongoDB);
+    object_init_ex(newdb, mongo_ce_DB);
     zim_MongoDB___construct(newdb);
   }
 }
@@ -787,7 +787,7 @@ PHP_METHOD(Mongo, dropDB) {
 PHP_METHOD(Mongo, repairDB) {
   zval *db, *preserve_clones, *backup;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Czz", &db, &mongo_ce_MongoDB, &preserve_clones, backup) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Czz", &db, &mongo_ce_DB, &preserve_clones, backup) == FAILURE) {
     RETURN_FALSE;
   }
 
@@ -818,12 +818,12 @@ PHP_METHOD(Mongo, repairDB) {
 PHP_METHOD(Mongo, lastError) {
   mongo_link *link;
   zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
-  add_assoc_zval(data, "getlasterror", 1);
+  add_assoc_long(data, "getlasterror", 1);
 
   mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, "admin");
 }
@@ -834,12 +834,12 @@ PHP_METHOD(Mongo, lastError) {
 PHP_METHOD(Mongo, prevError) {
   mongo_link *link;
   zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
-  add_assoc_zval(data, "getpreverror", 1);
+  add_assoc_long(data, "getpreverror", 1);
 
   mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, "admin");
 }
@@ -850,12 +850,12 @@ PHP_METHOD(Mongo, prevError) {
 PHP_METHOD(Mongo, resetError) {
   mongo_link *link;
   zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
-  add_assoc_zval(data, "reseterror", 1);
+  add_assoc_long(data, "reseterror", 1);
 
   mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, "admin");
 }
@@ -866,12 +866,12 @@ PHP_METHOD(Mongo, resetError) {
 PHP_METHOD(Mongo, forceError) {
   mongo_link *link;
   zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
-  add_assoc_zval(data, "forceerror", 1);
+  add_assoc_long(data, "forceerror", 1);
 
   mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, "admin");
 }

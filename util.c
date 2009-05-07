@@ -25,7 +25,7 @@ extern int le_connection,
   le_pconnection;
 
 
-zend_class_entry *mongo_util_ce = NULL;
+zend_class_entry *mongo_ce_Util = NULL;
 
 static char* MONGO_CMD = "$cmd";
 
@@ -147,9 +147,9 @@ PHP_METHOD(MongoUtil, toIndexString) {
     *(position) = 0;
   }
   else {
-    convert_to_string(*zkeys);
+    convert_to_string(zkeys);
 
-    int len = Z_STRLEN_PP(zkeys);
+    int len = Z_STRLEN_P(zkeys);
 
     name = (char*)emalloc(len + 3);
     position = name;
@@ -175,9 +175,10 @@ PHP_METHOD(MongoUtil, dbCommand) {
   }
 
   mongo_link *link;
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  RETURN_ZVAL(mongo_dbCommand(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, zdata, db), 0, 1);
+  zval *response = mongo_dbCommand(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, zdata, db);
+  RETURN_ZVAL(response, 0, 1);
 }
 
 void mongo_db_command(INTERNAL_FUNCTION_PARAMETERS, mongo_link *link, zval *data, char *db) {
@@ -185,7 +186,7 @@ void mongo_db_command(INTERNAL_FUNCTION_PARAMETERS, mongo_link *link, zval *data
   char *cmd_ns = get_cmd_ns(db, strlen(db));
 
   // query
-  mongo_cursor *cursor = mongo_do_query(link, cmd_ns, 0, -1, *data, 0 TSRMLS_CC);
+  mongo_cursor *cursor = mongo_do_query(link, cmd_ns, 0, -1, data, 0 TSRMLS_CC);
   efree(cmd_ns);
 
   // return 1 result
@@ -206,44 +207,44 @@ void mongo_init_MongoUtil(TSRMLS_D) {
   zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoUtil", MongoUtil_methods);
-  mongo_util_ce = zend_register_internal_class(&ce TSRMLS_CC);
+  mongo_ce_Util = zend_register_internal_class(&ce TSRMLS_CC);
 
 
-  zend_declare_class_constant_string(mongo_util_ce, "LT", strlen("LT"), "$lt" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "LTE", strlen("LTE"), "$lte" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "GT", strlen("GT"), "$gt" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "GTE", strlen("GTE"), "$gte" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "IN", strlen("IN"), "$in" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "NE", strlen("NE"), "$ne" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "LT", strlen("LT"), "$lt" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "LTE", strlen("LTE"), "$lte" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "GT", strlen("GT"), "$gt" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "GTE", strlen("GTE"), "$gte" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "IN", strlen("IN"), "$in" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "NE", strlen("NE"), "$ne" TSRMLS_CC);
 
-  zend_declare_class_constant_long(mongo_util_ce, "ASC", strlen("ASC"), 1 TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_util_ce, "DESC", strlen("DESC"), -1 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Util, "ASC", strlen("ASC"), 1 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Util, "DESC", strlen("DESC"), -1 TSRMLS_CC);
 
-  zend_declare_class_constant_long(mongo_util_ce, "BIN_FUNCTION", strlen("BIN_FUNCTION"), 1 TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_util_ce, "BIN_ARRAY", strlen("BIN_ARRAY"), 2 TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_util_ce, "BIN_UUID", strlen("BIN_UUID"), 3 TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_util_ce, "BIN_MD5", strlen("BIN_MD5"), 5 TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_util_ce, "BIN_CUSTOM", strlen("BIN_CUSTOM"), 128 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Util, "BIN_FUNCTION", strlen("BIN_FUNCTION"), 1 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Util, "BIN_ARRAY", strlen("BIN_ARRAY"), 2 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Util, "BIN_UUID", strlen("BIN_UUID"), 3 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Util, "BIN_MD5", strlen("BIN_MD5"), 5 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Util, "BIN_CUSTOM", strlen("BIN_CUSTOM"), 128 TSRMLS_CC);
 
-  zend_declare_class_constant_string(mongo_util_ce, "ADMIN", strlen("ADMIN"), "admin" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "AUTHENTICATE", strlen("AUTHENTICATE"), "authenticate" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "CREATE_COLLECTION", strlen("CREATE_COLLECTION"), "create" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "DELETE_INDICES", strlen("DELETE_INDICES"), "deleteIndexes" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "DROP", strlen("DROP"), "drop" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "DROP_DATABASE", strlen("DROP_DATABASE"), "dropDatabase" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "FORCE_ERROR", strlen("FORCE_ERROR"), "forceerror" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "INDEX_INFO", strlen("INDEX_INFO"), "cursorInfo" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "LAST_ERROR", strlen("LAST_ERROR"), "getlasterror" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "LIST_DATABASES", strlen("LIST_DATABASES"), "listDatabases" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "LOGGING", strlen("LOGGING"), "opLogging" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "LOGOUT", strlen("LOGOUT"), "logout" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "NONCE", strlen("NONCE"), "getnonce" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "PREV_ERROR", strlen("PREV_ERROR"), "getpreverror" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "PROFILE", strlen("PROFILE"), "profile" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "QUERY_TRACING", strlen("QUERY_TRACING"), "queryTraceLevel" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "REPAIR_DATABASE", strlen("REPAIR_DATABASE"), "repairDatabase" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "RESET_ERROR", strlen("RESET_ERROR"), "reseterror" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "SHUTDOWN", strlen("SHUTDOWN"), "shutdown" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "TRACING", strlen("TRACING"), "traceAll" TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_util_ce, "VALIDATE", strlen("VALIDATE"), "validate" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "ADMIN", strlen("ADMIN"), "admin" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "AUTHENTICATE", strlen("AUTHENTICATE"), "authenticate" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "CREATE_COLLECTION", strlen("CREATE_COLLECTION"), "create" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "DELETE_INDICES", strlen("DELETE_INDICES"), "deleteIndexes" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "DROP", strlen("DROP"), "drop" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "DROP_DATABASE", strlen("DROP_DATABASE"), "dropDatabase" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "FORCE_ERROR", strlen("FORCE_ERROR"), "forceerror" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "INDEX_INFO", strlen("INDEX_INFO"), "cursorInfo" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "LAST_ERROR", strlen("LAST_ERROR"), "getlasterror" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "LIST_DATABASES", strlen("LIST_DATABASES"), "listDatabases" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "LOGGING", strlen("LOGGING"), "opLogging" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "LOGOUT", strlen("LOGOUT"), "logout" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "NONCE", strlen("NONCE"), "getnonce" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "PREV_ERROR", strlen("PREV_ERROR"), "getpreverror" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "PROFILE", strlen("PROFILE"), "profile" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "QUERY_TRACING", strlen("QUERY_TRACING"), "queryTraceLevel" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "REPAIR_DATABASE", strlen("REPAIR_DATABASE"), "repairDatabase" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "RESET_ERROR", strlen("RESET_ERROR"), "reseterror" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "SHUTDOWN", strlen("SHUTDOWN"), "shutdown" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "TRACING", strlen("TRACING"), "traceAll" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Util, "VALIDATE", strlen("VALIDATE"), "validate" TSRMLS_CC);
 }

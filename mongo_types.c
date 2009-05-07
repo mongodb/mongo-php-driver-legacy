@@ -31,15 +31,15 @@
 extern zend_class_entry *mongo_bindata_class;
 extern zend_class_entry *mongo_code_class;
 extern zend_class_entry *mongo_date_class;
-extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
 
-zend_class_entry *mongo_dbref_ce = NULL;
+zend_class_entry *mongo_dbref_ce = NULL,
+  *mongo_ce_Id = NULL;
 
 // takes an allocated but not initialized zval
 // turns it into an MongoId
 void create_id(zval *zoid, char *data TSRMLS_DC) {
-  object_init_ex(zoid, mongo_id_class);
+  object_init_ex(zoid, mongo_ce_Id);
 
   if (data) {
     add_property_stringl(zoid, "id", data, OID_SIZE, DUP);
@@ -83,7 +83,7 @@ static function_entry MongoId_methods[] = {
 void mongo_init_MongoId(TSRMLS_D) {
   zend_class_entry id; 
   INIT_CLASS_ENTRY(id, "MongoId", MongoId_methods); 
-  mongo_id_class = zend_register_internal_class_ex(&id, mongo_id_class, NULL TSRMLS_CC); 
+  mongo_ce_Id = zend_register_internal_class(&id TSRMLS_CC); 
 }
 
 /* {{{ MongoId::__construct()
@@ -123,7 +123,7 @@ PHP_METHOD(MongoId, __construct) {
  */
 PHP_METHOD(MongoId, __toString) {
   int i;
-  zval *zid = zend_read_property(mongo_id_class, getThis(), "id", 2, 0 TSRMLS_CC);
+  zval *zid = zend_read_property(mongo_ce_Id, getThis(), "id", 2, 0 TSRMLS_CC);
   char *foo = zid->value.str.val;
 
   char id[24];
