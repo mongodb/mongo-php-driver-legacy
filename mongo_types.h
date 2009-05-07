@@ -46,4 +46,9 @@ PHP_FUNCTION( mongo_regex___toString );
 zval* bson_to_zval_regex(char*, char* TSRMLS_DC);
 void zval_to_bson_regex(zval**, char**, char** TSRMLS_DC);
 
+PHP_METHOD(MongoDBRef, create);
+PHP_METHOD(MongoDBRef, isRef);
+PHP_METHOD(MongoDBRef, get);
+
 #endif
+

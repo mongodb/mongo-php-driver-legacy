@@ -63,19 +63,247 @@ PHP_METHOD(MongoDB, getGridFS) {
 }
 
 PHP_METHOD(MongoDB, getProfilingLevel) {
+  zval *data;
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_long(data, "profile", -1);
 
+  zval **ok;
+  if (zend_hash_find(Z_ARRVAL_P(return_value), "ok", 3, (void**)&ok) == SUCCESS &&
+      Z_LVAL_P(return_value) == 1) {
+    zend_hash_find(Z_ARRVAL_P(return_value), "was", 4, (void**)&ok);
+    RETURN_ZVAL(*ok, 0, 1);
+  }
+  RETURN_FALSE;
 }
 
-PHP_METHOD(MongoDB, setProfilingLevel) {}
-PHP_METHOD(MongoDB, drop) {}
-PHP_METHOD(MongoDB, repair) {}
-PHP_METHOD(MongoDB, createCollection) {}
-PHP_METHOD(MongoDB, dropCollection) {}
-PHP_METHOD(MongoDB, listCollections) {}
-PHP_METHOD(MongoDB, getCursorInfo) {}
-PHP_METHOD(MongoDB, createDBRef) {}
-PHP_METHOD(MongoDB, getDBRef) {}
-PHP_METHOD(MongoDB, execute) {}
+PHP_METHOD(MongoDB, setProfilingLevel) {
+  long *level;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &level) == FAILURE) {
+    return;
+  }
+
+  zval *data;
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_long(data, "profile", level);
+
+  zval **ok;
+  if (zend_hash_find(Z_ARRVAL_P(return_value), "ok", 3, (void**)&ok) == SUCCESS &&
+      Z_LVAL_P(return_value) == 1) {
+    zend_hash_find(Z_ARRVAL_P(return_value), "was", 4, (void**)&ok);
+    RETURN_ZVAL(*ok, 0, 1);
+  }
+  RETURN_FALSE;
+}
+
+PHP_METHOD(MongoDB, drop) {
+  mongo_link *link;
+  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+
+  zval *data;
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_long(data, "dropDatabase", 1);
+
+  zval *name = zend_read_property(mongo_ce_Mongo, getThis(), "name", strlen("name"), 0 TSRMLS_CC);
+
+  mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, Z_STRVAL_P(name));
+}
+
+PHP_METHOD(MongoDB, repair) {
+  zend_bool cloned=0, original=0;
+  zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|bb", &cloned, &backup);
+
+  mongo_link *link;
+  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+
+  zval *data;
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_long(data, "repairDatabase", 1);
+  add_assoc_bool(data, "preserveClonedFilesOnFailure", cloned);
+  add_assoc_bool(data, "backupOriginalFiles", original);
+
+  zval *name = zend_read_property(mongo_ce_Mongo, getThis(), "name", strlen("name"), 0 TSRMLS_CC);
+
+  mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, Z_STRVAL_P(name));
+}
+
+PHP_METHOD(MongoDB, selectCollection) {
+  //TODO
+}
+
+PHP_METHOD(MongoDB, createCollection) {
+  char *cname;
+  int cname_len;
+  zend_bool capped=0;
+  int size=0, max=0;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|bll", &cname, &cname_len, &capped, &size, &max) == FAILURE) {
+    return;
+  }
+
+  mongo_link *link;
+  zval *zlink = zend_read_property(mongo_ce_DB, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+
+  zval *data;
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_long(data, "create", cname);
+  if (capped && size) {
+    add_assoc_bool(data, "capped", 1);
+    add_assoc_bool(data, "size", size);
+    if (max) {
+      add_assoc_bool(data, "max", max);
+    }
+  }
+
+  zval *name = zend_read_property(mongo_ce_DB, getThis(), "name", strlen("name"), 0 TSRMLS_CC);
+
+  mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, Z_STRVAL_P(name));
+
+  int null_ptr = 0;
+  zend_ptr_stack_n_push(&EG(argument_stack), 4, getThis(), cname, 2, &null_ptr);
+  zim_MongoDB_selectCollection(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  zval *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+}
+
+PHP_METHOD(MongoDB, dropCollection) {
+  zval *coll;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &coll) == FAILURE) {
+    return;
+  }
+
+  if (Z_TYPE_P(coll) == IS_OBJECT &&
+      Z_OBJCE_P(coll) == mongo_ce_Collection) {
+    zim_MongoCollection_drop(0, return_value, return_value_ptr, coll, return_value_used TSRMLS_CC);
+  }
+  else {
+    int null_ptr = 0;
+    zend_ptr_stack_n_push(&EG(argument_stack), 4, getThis(), coll, 2, &null_ptr);
+    zim_MongoDB_selectCollection(1, coll, &coll, getThis(), return_value_used TSRMLS_CC);
+    zval *holder;
+    zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+
+    zim_MongoCollection_drop(0, return_value, return_value_ptr, coll, return_value_used TSRMLS_CC);
+  }
+}
+
+PHP_METHOD(MongoDB, listCollections) {
+  char *name;
+  zval *zname = zend_read_property(mongo_ce_DB, getThis(), "name", strlen("name"), 0 TSRMLS_CC);
+  int name_len = spprintf(name, 0, "%s.system.indexes", Z_STRVAL_P(zname));
+
+  zval *zlink = zend_read_property(mongo_ce_DB, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
+  mongo_link *link;
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+
+  zval *list;
+  MAKE_STD_ZVAL(list);
+  array_init(list);
+
+  mongo_cursor *cursor = mongo_do_query(link, name, 0, 0, NULL, NULL TSRMLS_CC);
+  while (mongo_do_has_next(cursor TSRMLS_CC)) {
+
+    zval *obj = mongo_do_next(cursor TSRMLS_CC);
+
+    zval *cname;
+    MAKE_STD_ZVAL(cname);
+    zval **ccname = &cname;
+
+    if (zend_hash_find(Z_ARRVAL_P(obj), "name", 5, (void**)&ccname) == FAILURE ||
+        strchr(Z_STRVAL_PP(cname), '$')) {
+      continue;
+    }
+
+    add_next_index_zval(list, cname);
+
+    zval_add_ref(ccname);
+    zval_ptr_dtor(&obj);
+  }
+
+  efree(name);
+
+  RETURN_ZVAL(list, 0, 1);
+}
+
+PHP_METHOD(MongoDB, getCursorInfo) {
+  mongo_link *link;
+  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+
+  zval *data;
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_zval(data, "cursorInfo", 1);
+
+  zval *zname = zend_read_property(mongo_ce_Mongo, getThis(), "name", strlen("name"), 0 TSRMLS_CC);
+  mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, Z_STRVAL_P(zname));
+}
+
+PHP_METHOD(MongoDB, createDBRef) {
+  zval *ns, *obj, *holder;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &ns, &obj) == FAILURE) {
+    return;
+  }
+
+  convert_to_string(ns);
+
+  zval *ref;
+  MAKE_STD_ZVAL(ref);
+  array_init(ref);
+  add_assoc_string(ref, "$ref", ns);
+
+  zval **id;
+  if (Z_TYPE_P(obj) == IS_ARRAY &&
+      zend_hash_find(Z_ARRVAL_P(obj), "_id", 4, (void**)id) == SUCCESS) {
+
+    add_assoc_zval(ref, "$id", id);
+  }
+  else if (Z_TYPE_P(obj) == IS_OBJECT &&
+           Z_OBJCE_P(obj) == mongo_ce_MongoId) {
+    add_assoc_zval(ref, "$id", obj);
+  }
+
+  RETURN_ZVAL(ref, 0, 1);
+}
+
+PHP_METHOD(MongoDB, getDBRef) {
+  //TODO
+}
+
+PHP_METHOD(MongoDB, execute) {
+  zval *code, *args;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &code, &args) == FAILURE) {
+    return;
+  }
+  if (!args) {
+    MAKE_STD_ZVAL(args);
+    array_init(args);
+  }
+
+  if (Z_TYPE_P(code) != IS_OBJECT || 
+      Z_OBJCE_P(code) != mongo_ce_MongoId) {
+    //TODO
+  }
+
+  mongo_link *link;
+  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+
+  zval *data;
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_zval(data, "$eval", code);
+  add_assoc_zval(data, "$args", args);
+
+  zval *zname = zend_read_property(mongo_ce_Mongo, getThis(), "name", strlen("name"), 0 TSRMLS_CC);
+  mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, Z_STRVAL_P(zname));
+}
 
 static function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, __construct, NULL, ZEND_ACC_PUBLIC)

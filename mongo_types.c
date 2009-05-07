@@ -34,6 +34,8 @@ extern zend_class_entry *mongo_date_class;
 extern zend_class_entry *mongo_id_class;
 extern zend_class_entry *mongo_regex_class;
 
+zend_class_entry *mongo_dbref_ce = NULL;
+
 // takes an allocated but not initialized zval
 // turns it into an MongoId
 void create_id(zval *zoid, char *data TSRMLS_DC) {
@@ -395,4 +397,71 @@ PHP_FUNCTION( mongo_code___toString ) {
   RETURN_STRING( code, 1 );
 }
 /* }}} */
+
+
+PHP_METHOD(MongoDBRef, create) {
+  zval **zns, **zid;
+
+  int argc = ZEND_NUM_ARGS();
+  if (argc != 2) {
+    ZEND_WRONG_NUM_PARAMS();
+  }
+  zend_get_parameters_ex(argc, &zns, &zid);
+
+  convert_to_string(*zns);
+
+  zval *ref;
+  ALLOC_INIT_ZVAL(ref);
+  array_init(ref);
+  add_assoc_zval(ref, "$ref", *zns); 
+  add_assoc_zval(ref, "$id", *zid); 
+
+  RETURN_ZVAL(ref, 0, 1);
+}
+
+PHP_METHOD(MongoDBRef, isRef) {
+  zval **zobj;
+
+  int argc = ZEND_NUM_ARGS();
+  if (argc != 1) {
+    ZEND_WRONG_NUM_PARAMS();
+  }
+  zend_get_parameters_ex(argc, &zobj);
+
+  if (Z_TYPE_PP(zobj) == IS_ARRAY) {
+    HashTable *h = Z_ARRVAL_PP(zobj);
+    if (zend_hash_find(h, "$ref", 5, NULL) == SUCCESS &&
+        zend_hash_find(h, "$id", 4, NULL) == SUCCESS)
+      RETURN_TRUE;
+  }
+  RETURN_FALSE;
+}
+
+PHP_METHOD(MongoDBRef, get) {
+  zval **zdb, **zref;
+
+  int argc = ZEND_NUM_ARGS();
+  if (argc != 2) {
+    ZEND_WRONG_NUM_PARAMS();
+  }
+  zend_get_parameters_ex(argc, &zdb, &zref);
+
+}
+
+static function_entry MongoDBRef_methods[] = {
+  PHP_ME(MongoDBRef, create, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(MongoDBRef, isRef, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(MongoDBRef, get, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+};
+
+
+void mongo_init_MongoDBRef(TSRMLS_D) {
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "MongoDBRef", MongoDBRef_methods);
+  mongo_dbref_ce = zend_register_internal_class(&ce TSRMLS_CC);
+
+  zend_declare_property_string(mongo_dbref_ce, "refKey", strlen("refKey"), "$ref", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
+  zend_declare_property_string(mongo_dbref_ce, "idKey", strlen("idKey"), "$id", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
+}
 
