@@ -37,12 +37,12 @@ zend_class_entry *mongo_cursor_ce = NULL;
 /* {{{ MongoCursor->__construct
  */
 PHP_METHOD(MongoCursor, __construct) {
-  zval **zlink, **zns, **zquery, **zfields;
+  zval *zlink, *zns, *zquery, *zfields;
   int param_count = 4;
   int argc = ZEND_NUM_ARGS();
 
-  if (argc > param_count) {
-    ZEND_WRONG_PARAM_COUNT();
+  if (zend_parse_parameters(argc TSRMLS_CC, "z|zzz", &zlink, &zns, &zquery, &zfields) == FAILURE) {
+    return;
   }
 
   zval *empty_array;
@@ -57,36 +57,21 @@ PHP_METHOD(MongoCursor, __construct) {
 
   switch (argc) {
   case 4:
-    zend_get_parameters_ex(argc, &zlink, &zns, &zquery, &zfields);
-    break;
-  case 3:
-    zend_get_parameters_ex(argc, &zlink, &zns, &zquery);
-    break;
-  case 2:
-    zend_get_parameters_ex(argc, &zlink, &zns);
-    break;
-  case 1:
-    zend_get_parameters_ex(argc, &zlink);
-    break;
-  }
-
-  switch (argc) {
-  case 4:
-    zend_update_property(mongo_cursor_ce, getThis(), "fields", strlen("fields"), *zfields TSRMLS_CC);
+    zend_update_property(mongo_cursor_ce, getThis(), "fields", strlen("fields"), zfields TSRMLS_CC);
   case 3:
   case 2:
-    zend_update_property(mongo_cursor_ce, getThis(), "ns", strlen("ns"), *zns TSRMLS_CC);
+    zend_update_property(mongo_cursor_ce, getThis(), "ns", strlen("ns"), zns TSRMLS_CC);
   case 1:
-    zend_update_property(mongo_cursor_ce, getThis(), "connection", strlen("connection"), *zlink TSRMLS_CC);
+    zend_update_property(mongo_cursor_ce, getThis(), "connection", strlen("connection"), zlink TSRMLS_CC);
   }
 
   // we don't want this param to go away at the end of this method
-  zval_add_ref(zquery);
+  zval_add_ref(&zquery);
 
   zval *q;
   MAKE_STD_ZVAL(q);
   array_init(q);
-  add_assoc_zval(q, "query", *zquery);
+  add_assoc_zval(q, "query", zquery);
   zend_update_property(mongo_cursor_ce, getThis(), "query", strlen("query"), q TSRMLS_CC);
 
   zend_update_property(mongo_cursor_ce, getThis(), "hint", strlen("hint"), empty_array TSRMLS_CC);

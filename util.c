@@ -68,18 +68,17 @@ static char *replace_dots(char *key, int key_len, char *position) {
 
 /* {{{ MongoUtil::toIndexString(array|string) */
 PHP_METHOD(MongoUtil, toIndexString) {
-  zval **zkeys;
+  zval *zkeys;
   int param_count = 1;
   char *name, *position;
   int len = 0;
 
-  if (ZEND_NUM_ARGS() != param_count) {
-    ZEND_WRONG_PARAM_COUNT();
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zkeys) == FAILURE) {
+    RETURN_FALSE;
   }
 
-  zend_get_parameters_ex(param_count, &zkeys);
-  if (Z_TYPE_PP(zkeys) == IS_ARRAY) {
-    HashTable *hindex = Z_ARRVAL_PP(zkeys);
+  if (Z_TYPE_P(zkeys) == IS_ARRAY) {
+    HashTable *hindex = Z_ARRVAL_P(zkeys);
     HashPosition pointer;
     zval **data;
     char *key;
@@ -156,7 +155,7 @@ PHP_METHOD(MongoUtil, toIndexString) {
     position = name;
  
     // copy str, replacing '.' with '_'
-    position = replace_dots(Z_STRVAL_PP(zkeys), Z_STRLEN_PP(zkeys), position);
+    position = replace_dots(Z_STRVAL_P(zkeys), Z_STRLEN_P(zkeys), position);
 
     *(position)++ = '_';
     *(position)++ = '1';
@@ -166,35 +165,27 @@ PHP_METHOD(MongoUtil, toIndexString) {
 }
 
 PHP_METHOD(MongoUtil, dbCommand) {
-  mongo_link *link;
   char *db;
   int db_len;
-  int param_count = 3;
 
-  zval **zlink, **zdata, **zdb;
+  zval *zlink, *zdata;
 
-  if (ZEND_NUM_ARGS() != param_count) {
-    ZEND_WRONG_PARAM_COUNT();
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ras", &zlink, &zdata, &db, &db_len) == FAILURE) {
+    RETURN_FALSE;
   }
 
-  zend_get_parameters_ex(param_count, &zlink, &zdata, &zdb);
-  if (Z_TYPE_PP(zlink) == IS_RESOURCE &&
-      Z_TYPE_PP(zdata) == IS_ARRAY &&
-      Z_TYPE_PP(zdb)  == IS_STRING) {
-    ZEND_FETCH_RESOURCE2(link, mongo_link*, zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
-    db = Z_STRVAL_PP(zdb);
-    db_len = Z_STRLEN_PP(zdb);
-  }
-  else {
-    zend_throw_exception(spl_ce_InvalidArgumentException, "expected MongoUtil::dbCommand(resource, array, string)", 0 TSRMLS_CC);
-    return;
-  }
+  mongo_link *link;
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
+  RETURN_ZVAL(mongo_dbCommand(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, zdata, db), 0, 1);
+}
+
+void mongo_db_command(INTERNAL_FUNCTION_PARAMETERS, mongo_link *link, zval *data, char *db) {
   // create db.$cmd
-  char *cmd_ns = get_cmd_ns(db, db_len);
+  char *cmd_ns = get_cmd_ns(db, strlen(db));
 
   // query
-  mongo_cursor *cursor = mongo_do_query(link, cmd_ns, 0, -1, *zdata, 0 TSRMLS_CC);
+  mongo_cursor *cursor = mongo_do_query(link, cmd_ns, 0, -1, *data, 0 TSRMLS_CC);
   efree(cmd_ns);
 
   // return 1 result
