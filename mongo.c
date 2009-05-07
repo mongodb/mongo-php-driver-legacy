@@ -48,7 +48,7 @@ static int get_sockaddr(struct sockaddr_in*, char*, int);
 static int get_reply(mongo_cursor* TSRMLS_DC);
 static void kill_cursor(mongo_cursor* TSRMLS_DC);
 static void get_host_and_port(char*, mongo_link* TSRMLS_DC);
-static void doAdminCmd(INTERNAL_FUNCTION_PARAMETERS, char*);
+static void mongo_init_MongoExceptions(TSRMLS_D);
 
 /** Classes */
 zend_class_entry *mongo_ce_Mongo,
@@ -58,9 +58,9 @@ zend_class_entry *mongo_ce_Mongo,
   *mongo_regex_class, 
   *mongo_bindata_class,
   *mongo_util_class,
-  *mongo_cursor_ce,
+  *mongo_ce_CursorException,
   *mongo_ce_ConnectionException,
-  *mongo_ce_CursorException;
+  *mongo_ce_Exception;
 
 /** Resources */
 int le_connection, le_pconnection, le_db_cursor, le_gridfs, le_gridfile;
@@ -329,6 +329,7 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoId(TSRMLS_C);
   mongo_init_MongoUtil(TSRMLS_C);
   mongo_init_MongoCursor(TSRMLS_C);
+  //  mongo_init_MongoCollection(TSRMLS_C);
 
   mongo_init_MongoExceptions(TSRMLS_C);
 
@@ -398,15 +399,18 @@ PHP_MINFO_FUNCTION(mongo) {
 }
 /* }}} */
 
-void mongo_init_MongoExceptions(TSRMLS_D) {
+static void mongo_create_exception(zend_class_entry **ppce, zend_class_entry *pce, const char *name, zend_function_entry functions TSRMLS_DC) {
+  zend_class_entry e;
+  INIT_CLASS_ENTRY(e, "MongoException", NULL);
+  mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
+
   zend_class_entry ce;
-  
   INIT_CLASS_ENTRY(ce, "MongoCursorException", NULL);
-  mongo_ce_CursorException = zend_register_internal_class_ex(&ce, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
+  mongo_ce_CursorException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
 
   zend_class_entry conn;
   INIT_CLASS_ENTRY(conn, "MongoConnectionException", NULL);
-  mongo_ce_ConnectionException = zend_register_internal_class_ex(&conn, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
+  mongo_ce_ConnectionException = zend_register_internal_class_ex(&conn, mongo_ce_Exception, NULL TSRMLS_CC);
 }
 
 /* {{{ Mongo->__construct 

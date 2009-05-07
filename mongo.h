@@ -245,7 +245,7 @@ void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoUtil(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);
-void mongo_init_MongoExceptions(TSRMLS_D);
+void mongo_init_MongoCollection(TSRMLS_D);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;

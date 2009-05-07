@@ -43,7 +43,7 @@ PHP_METHOD(MongoCursor, reset);
   }                                                                     \
   zend_get_parameters_ex(argc, &pname);                                 \
                                                                         \
-  zval *started = zend_read_property(mongo_cursor_ce,                   \
+  zval *started = zend_read_property(mongo_ce_Cursor,                   \
                                      getThis(),                         \
                                      "startedIterating",                \
                                      strlen("startedIterating"),        \

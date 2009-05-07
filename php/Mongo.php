@@ -23,7 +23,6 @@
  * @link     http://www.mongodb.org
  */
 
-require_once "Mongo/ConnectionException.php";
 require_once "Mongo/DB.php";
 require_once "Mongo/Collection.php";
 require_once "Mongo/Util.php";

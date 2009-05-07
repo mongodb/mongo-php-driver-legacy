@@ -32,6 +32,10 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals((string)$this->object, 'phpunit.c');
     }
 
+    public function testGetName() {
+      $this->assertEquals($this->object->getName(), 'c');
+    }
+
     public function testDrop() {
       $ns = $this->object->db->selectCollection('system.namespaces');
 
