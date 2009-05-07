@@ -35,7 +35,7 @@
  */
 class MongoGridFSFile
 {
-    protected $file;
+    public $file;
     protected $gridfs;
 
     /**
@@ -88,6 +88,25 @@ class MongoGridFSFile
         $query = array("query" => array('files_id' => $this->file['_id']), 
                        "orderby" => array("n" => 1));
         return mongo_gridfile_write($this->gridfs->resource, $query, $filename);
+    }
+
+    /**
+     * Gets the raw byte of a file.
+     * Warning: this will load the file into memory.  If the file is 
+     * bigger than your memory, this will cause problems!  
+     *
+     * @return bytes a string of the bytes in the file
+     */
+    public function getBytes()
+    {
+        $this->gridfs->chunks->ensureIndex(array("n" => 1));
+        $cursor = $this->gridfs->chunks->find(array('files_id' => $this->file['_id']))->sort(array('n' => 1));
+
+        $str = '';
+        foreach ($cursor as $chunk) {
+            $str .= $chunk['data'];
+        }
+        return $str;
     }
 }
 

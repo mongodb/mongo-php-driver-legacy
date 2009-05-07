@@ -91,15 +91,32 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $this->assertNotNull($this->object->findOne());
     }
 
-    /**
-     * @todo Implement testStoreUpload().
-     */
     public function testStoreUpload() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+        $_FILES['x']['name'] = 'myfile';
+        $_FILES['x']['tmp_name'] = 'somefile';
+      
+        $this->object->storeUpload('x');
+
+        $file = $this->object->findOne();
+        $this->assertTrue($file instanceof MongoGridFSFile);
+        $this->assertEquals($file->getFilename(), 'myfile');
+
+        $this->object->drop();
+
+        $this->object->storeUpload('x', 'y');
+
+        $file = $this->object->findOne();
+        $this->assertTrue($file instanceof MongoGridFSFile);
+        $this->assertEquals($file->getFilename(), 'y');
     }
 
+    public function getBytes() {
+        $contents = file_get_contents('somefile');
+
+        $this->object->storeFile('somefile');
+        $file = $this->object->findOne();
+
+        $this->assertEquals($file->getBytes(), $contents);
+    }
 }
 ?>
