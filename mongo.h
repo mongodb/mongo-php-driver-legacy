@@ -120,13 +120,6 @@ typedef struct {
 
 } mongo_link;
 
-typedef struct {
-  mongo_link *link;
-  int refcount;
-  zend_object *z;
-  HashTable *properties;
-} MongoObj;
-
 
 typedef struct {
   int length;
