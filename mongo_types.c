@@ -28,10 +28,11 @@
 #include "mongo.h"
 #include "bson.h"
 
-extern zend_class_entry *mongo_bindata_class;
-extern zend_class_entry *mongo_code_class;
-extern zend_class_entry *mongo_date_class;
-extern zend_class_entry *mongo_regex_class;
+extern zend_class_entry *mongo_bindata_class,
+  *mongo_code_class,
+  *mongo_date_class,
+  *mongo_regex_class,
+  *mongo_ce_DB;
 
 zend_class_entry *mongo_dbref_ce = NULL,
   *mongo_ce_Id = NULL;
@@ -400,52 +401,57 @@ PHP_FUNCTION( mongo_code___toString ) {
 
 
 PHP_METHOD(MongoDBRef, create) {
-  zval **zns, **zid;
-
-  int argc = ZEND_NUM_ARGS();
-  if (argc != 2) {
-    ZEND_WRONG_NUM_PARAMS();
+  char *ns;
+  int ns_len;
+  zval *zid;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &ns, &ns_len, &zid) == FAILURE) {
+    return;
   }
-  zend_get_parameters_ex(argc, &zns, &zid);
-
-  convert_to_string(*zns);
 
   zval *ref;
-  ALLOC_INIT_ZVAL(ref);
+  MAKE_STD_ZVAL(ref);
   array_init(ref);
-  add_assoc_zval(ref, "$ref", *zns); 
-  add_assoc_zval(ref, "$id", *zid); 
+  add_assoc_stringl(ref, "$ref", ns, ns_len, 1); 
+  add_assoc_zval(ref, "$id", zid); 
 
   RETURN_ZVAL(ref, 0, 1);
 }
 
 PHP_METHOD(MongoDBRef, isRef) {
-  zval **zobj;
-
-  int argc = ZEND_NUM_ARGS();
-  if (argc != 1) {
-    ZEND_WRONG_NUM_PARAMS();
+  zval *ref;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &ref) == FAILURE) {
+    return;
   }
-  zend_get_parameters_ex(argc, &zobj);
 
-  if (Z_TYPE_PP(zobj) == IS_ARRAY) {
-    HashTable *h = Z_ARRVAL_PP(zobj);
-    if (zend_hash_find(h, "$ref", 5, NULL) == SUCCESS &&
-        zend_hash_find(h, "$id", 4, NULL) == SUCCESS)
-      RETURN_TRUE;
+  if (zend_hash_find(Z_ARRVAL_P(ref), "$ref", 5, NULL) == SUCCESS &&
+      zend_hash_find(Z_ARRVAL_P(ref), "$id", 4, NULL) == SUCCESS) {
+    RETURN_TRUE;
   }
   RETURN_FALSE;
 }
 
 PHP_METHOD(MongoDBRef, get) {
-  zval **zdb, **zref;
-
-  int argc = ZEND_NUM_ARGS();
-  if (argc != 2) {
-    ZEND_WRONG_NUM_PARAMS();
+  zval *db, *ref;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Ca", &db, &mongo_ce_DB, &ref) == FAILURE) {
+    return;
   }
-  zend_get_parameters_ex(argc, &zdb, &zref);
 
+  zval **ns, **id;
+  if (zend_hash_find(Z_ARRVAL_P(ref), "$ref", 5, (void**)&ns) == SUCCESS &&
+      zend_hash_find(Z_ARRVAL_P(ref), "$id", 4, (void**)&id) == SUCCESS) {
+    RETURN_TRUE;
+  }
+
+  zval *collection;
+  MAKE_STD_ZVAL(collection);
+  zim_MongoDB_selectCollection(1, collection, &collection, db, return_value_used TSRMLS_CC);
+
+  zval *query;
+  MAKE_STD_ZVAL(query);
+  array_init(query);
+  add_assoc_zval(query, "_id", *id);
+
+  zim_MongoCollection_findOne(1, return_value, &return_value, db, return_value_used TSRMLS_CC);
 }
 
 static function_entry MongoDBRef_methods[] = {

@@ -41,7 +41,7 @@ require_once "Mongo/Util.php";
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
  * @link     http://www.mongodb.org
  */
-class MongoCollection
+class MongoCollection2
 {
 
     public $db;

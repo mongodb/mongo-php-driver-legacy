@@ -25,11 +25,11 @@
 #include "mongo.h"
 #include "mongo_types.h"
 
-extern zend_class_entry *mongo_bindata_class;
-extern zend_class_entry *mongo_code_class;
-extern zend_class_entry *mongo_date_class;
-extern zend_class_entry *mongo_id_class;
-extern zend_class_entry *mongo_regex_class;
+extern zend_class_entry *mongo_bindata_class,
+  *mongo_code_class,
+  *mongo_date_class,
+  *mongo_ce_Id,
+  *mongo_regex_class;
 
 
 int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
@@ -163,10 +163,10 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
     zend_class_entry *clazz = Z_OBJCE_PP( data );
     /* check for defined classes */
     // MongoId
-    if(clazz == mongo_id_class) {
+    if(clazz == mongo_ce_Id) {
       set_type(buf, BSON_OID);
       serialize_string(buf, name, name_len);
-      zval *zid = zend_read_property(mongo_id_class, *data, "id", 2, 0 TSRMLS_CC);
+      zval *zid = zend_read_property(mongo_ce_Id, *data, "id", 2, 0 TSRMLS_CC);
       memcpy(buf->pos, Z_STRVAL_P(zid), OID_SIZE);
       buf->pos += OID_SIZE;
     }

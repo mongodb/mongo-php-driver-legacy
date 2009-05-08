@@ -22,7 +22,7 @@
 #include "mongo.h"
 #include "mongo_types.h"
 
-extern zend_class_entry *mongo_id_class,
+extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_CursorException,
   *spl_ce_InvalidArgumentException,
   *zend_ce_iterator;

@@ -51,7 +51,7 @@ require_once "Mongo/Util.php";
  * @license  http://www.apache.org/licenses/LICENSE-2.0  Apache License 2
  * @link     http://www.mongodb.org
  */
-class MongoDB
+class MongoDB2
 {
 
     const PROFILING_OFF  = 0;
