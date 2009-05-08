@@ -40,42 +40,38 @@ PHP_METHOD(MongoCollection, __construct) {
   zval *db;
   char *name;
   int name_len;
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Cs", &db, &mongo_ce_DB, &name, &name_len) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &db, mongo_ce_DB, &name, &name_len) == FAILURE) {
     return;
   }
 
-  zend_update_property(mongo_ce_Collection, getThis(), "db", strlen("db"), db TSRMLS_CC);
   if (name_len == 0 ||
       strchr(name, '$')) {
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoCollection->__construct(): collection names must be at least one character and cannot contain '$'", 0 TSRMLS_CC);
     return;
   }
 
-  zend_update_property_string(mongo_ce_Collection, getThis(), "name", strlen("name"), name TSRMLS_CC);
+  zend_update_property(mongo_ce_Collection, getThis(), "db", strlen("db"), db TSRMLS_CC);
 
-  zval *ns;
-  zim_MongoCollection___toString(ht, ns, &ns, getThis(), 0 TSRMLS_CC);
-  zend_update_property(mongo_ce_Collection, getThis(), "ns", strlen("ns"), ns TSRMLS_CC);
+  zend_update_property_stringl(mongo_ce_Collection, getThis(), "name", strlen("name"), name, name_len+1 TSRMLS_CC);
+  zval *dbname = zend_read_property(mongo_ce_DB, db, "name", strlen("name"), NOISY TSRMLS_CC);
+
+  char *ns;
+  spprintf(&ns, 0, "%s.%s", Z_STRVAL_P(dbname), name);
+  zend_update_property_string(mongo_ce_Collection, getThis(), "ns", strlen("ns"), ns TSRMLS_CC);
+  efree(ns);
 
   zval *connection = zend_read_property(mongo_ce_DB, db, "connection", strlen("connection"), NOISY TSRMLS_CC);
   zend_update_property(mongo_ce_Collection, getThis(), "connection", strlen("connection"), connection TSRMLS_CC);
 }
 
 PHP_METHOD(MongoCollection, __toString) {
-  zval *db_r;
-  zval *db = zend_read_property(mongo_ce_Collection, getThis(), "db", strlen("db"), 1 TSRMLS_CC);
-  zim_MongoDB___toString(ht, db_r, &db_r, db, 0 TSRMLS_CC);
-
-  zval *name = zend_read_property(mongo_ce_Collection, getThis(), "name", strlen("name"), 1 TSRMLS_CC);
-
-  char *ns;
-  spprintf(&ns, 0, "%s.%s", Z_STRVAL_P(db_r), Z_STRVAL_P(name));
-  RETURN_STRING(ns, 0);
+  zval *ns = zend_read_property(mongo_ce_Collection, getThis(), "ns", strlen("ns"), NOISY TSRMLS_CC);
+  RETURN_ZVAL(ns, 1, 1);
 }
 
 PHP_METHOD(MongoCollection, getName) {
   zval *name = zend_read_property(mongo_ce_Collection, getThis(), "name", strlen("name"), 1 TSRMLS_CC);
-  RETURN_ZVAL(name, 0, 0);
+  RETURN_ZVAL(name, 1, 1);
 }
 
 PHP_METHOD(MongoCollection, drop) {

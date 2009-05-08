@@ -35,7 +35,7 @@ PHP_METHOD(MongoDB, __construct) {
   zval *zlink;
   char *name;
   int name_len;
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Cs", &zlink, &mongo_ce_Mongo, &name, &name_len) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &zlink, mongo_ce_Mongo, &name, &name_len) == FAILURE) {
     return;
   }
 
@@ -46,18 +46,32 @@ PHP_METHOD(MongoDB, __construct) {
     return;
   }
 
-  zval *zconn = zend_read_property(mongo_ce_Mongo, zlink, "connection", strlen("connection"), 0 TSRMLS_CC);
+  zval *zconn = zend_read_property(mongo_ce_Mongo, zlink, "connection", strlen("connection"), NOISY TSRMLS_CC);
   zend_update_property(mongo_ce_DB, getThis(), "connection", strlen("connection"), zconn TSRMLS_CC);
-  zend_update_property_string(mongo_ce_DB, getThis(), "name", strlen("name"), name TSRMLS_CC);
+  zend_update_property_stringl(mongo_ce_DB, getThis(), "name", strlen("name"), name, name_len+1 TSRMLS_CC);
 }
 
 PHP_METHOD(MongoDB, __toString) {
-  zval *name = zend_read_property(mongo_ce_DB, getThis(), "name", strlen("name"), 0 TSRMLS_CC);
-  RETURN_STRING(Z_STRVAL_P(name), 0);
+  zval *name = zend_read_property(mongo_ce_DB, getThis(), "name", strlen("name"), NOISY TSRMLS_CC);
+  RETURN_STRING(Z_STRVAL_P(name), 1);
 }
 
 PHP_METHOD(MongoDB, selectCollection) {
-  //TODO!
+  zval *collection;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &collection) == FAILURE) {
+    return;
+  }
+
+  zval *obj;
+  MAKE_STD_ZVAL(obj);
+  object_init_ex(obj, mongo_ce_Collection);
+
+  zend_ptr_stack_n_push(&EG(argument_stack), 4, getThis(), collection, 2, NULL);
+  zim_MongoCollection___construct(2, return_value, return_value_ptr, obj, return_value_used TSRMLS_CC);
+
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  RETURN_ZVAL(obj, 0, 1);
 }
 
 PHP_METHOD(MongoDB, getGridFS) {
@@ -323,10 +337,29 @@ static function_entry MongoDB_methods[] = {
   { NULL, NULL, NULL }
 };
 
+/* {{{ mongo_init_MongoDB_new
+ */
+zend_object_value mongo_init_MongoDB_new(zend_class_entry *class_type TSRMLS_DC) {
+  zval tmp, obj;
+  zend_object *object;
+
+  Z_OBJVAL(obj) = zend_objects_new(&object, class_type TSRMLS_CC);
+  Z_OBJ_HT(obj) = zend_get_std_object_handlers();
+ 
+  ALLOC_HASHTABLE(object->properties);
+  zend_hash_init(object->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
+  zend_hash_copy(object->properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+
+  return Z_OBJVAL(obj);
+}
+/* }}} */
+
+
 void mongo_init_MongoDB(TSRMLS_D) {
   zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoDB", MongoDB_methods);
+  ce.create_object = mongo_init_MongoDB_new;
   mongo_ce_DB = zend_register_internal_class(&ce TSRMLS_CC);
 
   zend_declare_class_constant_long(mongo_ce_DB, "PROFILING_OFF", strlen("PROFILING_OFF"), 0 TSRMLS_CC);

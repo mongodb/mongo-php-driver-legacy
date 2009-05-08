@@ -243,10 +243,17 @@ void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval 
 void free_cursor(mongo_cursor*);
 
 void mongo_init_Mongo(TSRMLS_D);
-void mongo_init_MongoId(TSRMLS_D);
-void mongo_init_MongoUtil(TSRMLS_D);
-void mongo_init_MongoCursor(TSRMLS_D);
+void mongo_init_MongoDB(TSRMLS_D);
 void mongo_init_MongoCollection(TSRMLS_D);
+void mongo_init_MongoCursor(TSRMLS_D);
+
+void mongo_init_MongoId(TSRMLS_D);
+
+void mongo_init_MongoUtil(TSRMLS_D);
+
+zend_object_value mongo_init_Mongo_new(zend_class_entry* TSRMLS_DC);
+zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
+
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;

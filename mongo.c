@@ -41,6 +41,7 @@
 extern zend_class_entry *mongo_ce_DB;
 
 static void mongo_link_dtor(mongo_link*);
+static int connect_already(INTERNAL_FUNCTION_PARAMETERS, int);
 static int get_master(mongo_link* TSRMLS_DC);
 static int say(mongo_link*, buffer* TSRMLS_DC);
 static int hear(mongo_link*, void*, int TSRMLS_DC);
@@ -507,7 +508,11 @@ PHP_METHOD(Mongo, pairConnect) {
   ZVAL_STRING(&zusername, "", 0);
   ZVAL_STRING(&zpassword, "", 0);
 
-  mongo_do_connect_caller(INTERNAL_FUNCTION_PARAM_PASSTHRU, &zusername, &zpassword);
+  zend_ptr_stack_n_push(&EG(argument_stack), 4, &zusername, &zpassword, 2, NULL);
+  zim_Mongo_connectUtil(2, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
+
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
 }
 
 /* {{{ Mongo->persistConnect
@@ -515,7 +520,16 @@ PHP_METHOD(Mongo, pairConnect) {
 PHP_METHOD(Mongo, persistConnect) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
-  mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  zval *zusername, *zpassword;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &zusername, &zpassword) == FAILURE) {
+    return;
+  } 
+
+  zend_ptr_stack_n_push(&EG(argument_stack), 4, &zusername, &zpassword, 2, NULL);
+  zim_Mongo_connectUtil(2, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
+
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
 }
 
 /* {{{ Mongo->pairPersistConnect
@@ -524,42 +538,18 @@ PHP_METHOD(Mongo, pairPersistConnect) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
-  mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-}
-
-/* {{{ mongo_do_up_connect_caller
- * Get username and password from parameters and call mongo_do_connect_caller
- */
-void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS) {
-  zval *u, *p;
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &u, &p) == FAILURE) {
+  zval *zusername, *zpassword;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &zusername, &zpassword) == FAILURE) {
     return;
-  }
+  } 
 
-  mongo_do_connect_caller(INTERNAL_FUNCTION_PARAM_PASSTHRU, u, p);
-}
-/* }}} */
-
-void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password) {
-  int pnum = 2;
-  void *null_ptr = 0;
-
-  // temporarily hold args
-  void *arg1, *arg2, *arg3;
-  zend_ptr_stack_3_pop(&EG(argument_stack), &arg1, &arg2, &arg3);
-  
-  zend_ptr_stack_n_push(&EG(argument_stack), pnum+2, username, password, pnum, null_ptr);
-  
-  int temp = ht;
-  ht = 2;
-  zim_Mongo_connectUtil(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-  ht = temp;
+  zend_ptr_stack_n_push(&EG(argument_stack), 4, &zusername, &zpassword, 2, NULL);
+  zim_Mongo_connectUtil(2, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
 
   void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), pnum+2, &holder, &holder, &holder, &holder);
-
-  zend_ptr_stack_3_push(&EG(argument_stack), arg3, arg2, arg1);
+  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
 }
+
 
 PHP_METHOD(Mongo, connectUtil) {
   // if we're already connected, disconnect
@@ -586,7 +576,7 @@ PHP_METHOD(Mongo, connectUtil) {
 }
 
 
-int connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
+static int connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   zval *username, *password;
  
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &username, &password) == FAILURE) {
@@ -756,6 +746,9 @@ PHP_METHOD(Mongo, close) {
   zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
 
   zend_list_delete(Z_LVAL_P(zlink));
+
+  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 0 TSRMLS_CC);
+  zend_update_property_null(mongo_ce_Mongo, getThis(), "connection", strlen("connection") TSRMLS_CC);
   RETURN_TRUE;
 }
 /* }}} */
@@ -773,14 +766,43 @@ PHP_METHOD(Mongo, __toString) {
 /* {{{ Mongo->selectDB()
  */
 PHP_METHOD(Mongo, selectDB) {
-  // TODO
+  zval *db;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &db) == FAILURE) {
+    return;
+  }
+
+  zval *obj;
+  MAKE_STD_ZVAL(obj);
+  object_init_ex(obj, mongo_ce_DB);
+
+  zend_ptr_stack_n_push(&EG(argument_stack), 4, getThis(), db, 2, NULL);
+  zim_MongoDB___construct(2, return_value, &return_value, obj, return_value_used TSRMLS_CC);
+
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  RETURN_ZVAL(obj, 0, 1);
 }
 /* }}} */
 
 /* {{{ Mongo->selectCollection()
  */
 PHP_METHOD(Mongo, selectCollection) {
-  // TODO
+  zval *db, *collection;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &db, &collection) == FAILURE) {
+    return;
+  }
+
+  if (Z_TYPE_P(db) != IS_OBJECT ||
+      Z_OBJCE_P(db) != mongo_ce_DB) {
+    zim_Mongo_selectDB(1, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
+    db = return_value;
+  }
+
+  zend_ptr_stack_n_push(&EG(argument_stack), 3, collection, 1, NULL);
+  zim_MongoDB_selectCollection(1, return_value, &return_value, db, return_value_used TSRMLS_CC);
+
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
 }
 /* }}} */
 
@@ -792,18 +814,13 @@ PHP_METHOD(Mongo, dropDB) {
     RETURN_FALSE;
   }
 
-  if (Z_TYPE_P(db) == IS_OBJECT &&
-      Z_OBJCE_P(db) == mongo_ce_DB) {
-
+  if (Z_TYPE_P(db) != IS_OBJECT ||
+      Z_OBJCE_P(db) != mongo_ce_DB) {
+    zim_Mongo_selectDB(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+    db = return_value;
   }
-  else {
-    convert_to_string(db);
 
-    zval *newdb;
-    MAKE_STD_ZVAL(newdb);
-    object_init_ex(newdb, mongo_ce_DB);
-    zim_MongoDB___construct(newdb);
-  }
+  zim_MongoDB_drop(0, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
 }
 /* }}} */
 
@@ -812,29 +829,20 @@ PHP_METHOD(Mongo, dropDB) {
 PHP_METHOD(Mongo, repairDB) {
   zval *db, *preserve_clones, *backup;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Czz", &db, &mongo_ce_DB, &preserve_clones, backup) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Ozz", &db, mongo_ce_DB, &preserve_clones, &backup) == FAILURE) {
     RETURN_FALSE;
   }
 
   zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
 
-  return_value_ptr = &return_value;
-
-  void *arg1, *arg2, *arg3;
-  zend_ptr_stack_3_pop(&EG(argument_stack), &arg1, &arg2, &arg3);
-
   int param_num = 2;
   int *null_ptr = 0;
 
-  zend_ptr_stack_n_push(&EG(argument_stack), param_num+2, preserve_clones, backup, param_num, null_ptr);
-
+  zend_ptr_stack_n_push(&EG(argument_stack), param_num+2, preserve_clones, backup, param_num, NULL);
   zim_MongoDB_repair(param_num, return_value, return_value_ptr, db, 0 TSRMLS_CC);
 
   void *holder;
   zend_ptr_stack_n_pop(&EG(argument_stack), param_num+2, &holder, &holder, &holder, &holder);
-
-  zend_ptr_stack_3_push(&EG(argument_stack), arg3, arg2, arg1);
-
 }
 /* }}} */
 
