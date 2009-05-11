@@ -56,7 +56,6 @@ static void mongo_init_MongoExceptions(TSRMLS_D);
 
 /** Classes */
 zend_class_entry *mongo_ce_Mongo,
-  *mongo_code_class, 
   *mongo_date_class, 
   *mongo_regex_class, 
   *mongo_bindata_class,
@@ -82,12 +81,6 @@ static function_entry mongo_functions[] = {
   PHP_FE( mongo_gridfs_store , NULL )
   PHP_FE( mongo_gridfile_write , NULL )
   {NULL, NULL, NULL}
-};
-
-static function_entry mongo_code_functions[] = {
-  PHP_NAMED_FE( __construct, PHP_FN( mongo_code___construct ), NULL )
-  PHP_NAMED_FE( __toString, PHP_FN( mongo_code___toString ), NULL )
-  { NULL, NULL, NULL }
 };
 
 
@@ -314,10 +307,6 @@ PHP_MINIT_FUNCTION(mongo) {
   INIT_CLASS_ENTRY(bindata, "MongoBinData", mongo_bindata_functions); 
   mongo_bindata_class = zend_register_internal_class(&bindata TSRMLS_CC); 
 
-  zend_class_entry code; 
-  INIT_CLASS_ENTRY(code, "MongoCode", mongo_code_functions); 
-  mongo_code_class = zend_register_internal_class(&code TSRMLS_CC); 
-
   zend_class_entry date; 
   INIT_CLASS_ENTRY(date, "MongoDate", mongo_date_functions); 
   mongo_date_class = zend_register_internal_class(&date TSRMLS_CC); 
@@ -328,11 +317,14 @@ PHP_MINIT_FUNCTION(mongo) {
 
 
   mongo_init_Mongo(TSRMLS_C);
-  mongo_init_MongoCollection(TSRMLS_C);
   mongo_init_MongoDB(TSRMLS_C);
-  mongo_init_MongoId(TSRMLS_C);
-  mongo_init_MongoUtil(TSRMLS_C);
+  mongo_init_MongoCollection(TSRMLS_C);
   mongo_init_MongoCursor(TSRMLS_C);
+  mongo_init_MongoUtil(TSRMLS_C);
+
+  mongo_init_MongoId(TSRMLS_C);
+  mongo_init_MongoCode(TSRMLS_C);
+
   mongo_init_MongoExceptions(TSRMLS_C);
 
   return SUCCESS;
@@ -849,32 +841,52 @@ PHP_METHOD(Mongo, repairDB) {
 /* {{{ Mongo->lastError()
  */
 PHP_METHOD(Mongo, lastError) {
-  mongo_link *link;
   zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_long(data, "getlasterror", 1);
 
-  mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, "admin");
+  zval *name;
+  MAKE_STD_ZVAL(name);
+  ZVAL_STRING(name, "admin", 0);
+
+  zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
+
+  zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
+
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
+
+  zval_ptr_dtor(&name);
+  zval_ptr_dtor(&data);
 }
 /* }}} */
 
 /* {{{ Mongo->prevError()
  */
 PHP_METHOD(Mongo, prevError) {
-  mongo_link *link;
   zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_long(data, "getpreverror", 1);
 
-  mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, "admin");
+  zval *name;
+  MAKE_STD_ZVAL(name);
+  ZVAL_STRING(name, "admin", 0);
+
+  zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
+
+  zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
+
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
+
+  zval_ptr_dtor(&name);
+  zval_ptr_dtor(&data);
 }
 /* }}} */
 
@@ -890,7 +902,19 @@ PHP_METHOD(Mongo, resetError) {
   array_init(data);
   add_assoc_long(data, "reseterror", 1);
 
-  mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, "admin");
+  zval *name;
+  MAKE_STD_ZVAL(name);
+  ZVAL_STRING(name, "admin", 0);
+
+  zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
+
+  zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
+
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
+
+  zval_ptr_dtor(&name);
+  zval_ptr_dtor(&data);
 }
 /* }}} */
 
@@ -906,7 +930,19 @@ PHP_METHOD(Mongo, forceError) {
   array_init(data);
   add_assoc_long(data, "forceerror", 1);
 
-  mongo_db_command(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, data, "admin");
+  zval *name;
+  MAKE_STD_ZVAL(name);
+  ZVAL_STRING(name, "admin", 0);
+
+  zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
+
+  zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
+
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
+
+  zval_ptr_dtor(&name);
+  zval_ptr_dtor(&data);
 }
 /* }}} */
 
@@ -1357,14 +1393,13 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
 
   serialize_int(&buf, skip);
   serialize_int(&buf, limit);
- 
+
   zval_to_bson(&buf, Z_ARRVAL_P(zquery), NO_PREP TSRMLS_CC);
   if (zfields && zend_hash_num_elements(Z_ARRVAL_P(zfields)) > 0) {
     zval_to_bson(&buf, Z_ARRVAL_P(zfields), NO_PREP TSRMLS_CC);
   }
 
   serialize_size(buf.start, &buf);
-
   // sends
   int sent = say(link, &buf TSRMLS_CC);
   efree(buf.start);

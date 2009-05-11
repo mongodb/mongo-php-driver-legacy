@@ -28,8 +28,8 @@ PHP_FUNCTION( mongo_bindata___toString );
 zval* bson_to_zval_bin(char*, int, int TSRMLS_DC);
 int zval_to_bson_bin(zval **, char**, int* TSRMLS_DC);
 
-PHP_FUNCTION( mongo_code___construct );
-PHP_FUNCTION( mongo_code___toString );
+PHP_METHOD(MongoCode, __construct );
+PHP_METHOD(MongoCode, __toString );
 
 PHP_FUNCTION( mongo_date___construct );
 PHP_FUNCTION( mongo_date___toString );

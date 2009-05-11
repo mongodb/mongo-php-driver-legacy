@@ -177,16 +177,11 @@ PHP_METHOD(MongoUtil, dbCommand) {
   mongo_link *link;
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  zval *response = mongo_dbCommand(INTERNAL_FUNCTION_PARAM_PASSTHRU, link, zdata, db);
-  RETURN_ZVAL(response, 0, 1);
-}
-
-void mongo_db_command(INTERNAL_FUNCTION_PARAMETERS, mongo_link *link, zval *data, char *db) {
   // create db.$cmd
   char *cmd_ns = get_cmd_ns(db, strlen(db));
 
   // query
-  mongo_cursor *cursor = mongo_do_query(link, cmd_ns, 0, -1, data, 0 TSRMLS_CC);
+  mongo_cursor *cursor = mongo_do_query(link, cmd_ns, 0, -1, zdata, 0 TSRMLS_CC);
   efree(cmd_ns);
 
   // return 1 result

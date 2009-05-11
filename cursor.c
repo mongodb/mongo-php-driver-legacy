@@ -37,11 +37,10 @@ zend_class_entry *mongo_ce_Cursor = NULL;
 /* {{{ MongoCursor->__construct
  */
 PHP_METHOD(MongoCursor, __construct) {
-  zval *zlink, *zns, *zquery, *zfields;
-  int param_count = 4;
+  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0;
   int argc = ZEND_NUM_ARGS();
 
-  if (zend_parse_parameters(argc TSRMLS_CC, "z|zzz", &zlink, &zns, &zquery, &zfields) == FAILURE) {
+  if (zend_parse_parameters(argc TSRMLS_CC, "zz|zz", &zlink, &zns, &zquery, &zfields) == FAILURE) {
     return;
   }
 
@@ -49,21 +48,16 @@ PHP_METHOD(MongoCursor, __construct) {
   MAKE_STD_ZVAL(empty_array);
   array_init(empty_array);
 
-  // defaults
-  zend_update_property_null(mongo_ce_Cursor, getThis(), "connection", strlen("connection") TSRMLS_CC);
-  zend_update_property_null(mongo_ce_Cursor, getThis(), "ns", strlen("ns") TSRMLS_CC);
-  zend_update_property(mongo_ce_Cursor, getThis(), "query", strlen("query"), empty_array TSRMLS_CC);
-  zend_update_property(mongo_ce_Cursor, getThis(), "fields", strlen("fields"), empty_array TSRMLS_CC);
-
-  switch (argc) {
-  case 4:
-    zend_update_property(mongo_ce_Cursor, getThis(), "fields", strlen("fields"), zfields TSRMLS_CC);
-  case 3:
-  case 2:
-    zend_update_property(mongo_ce_Cursor, getThis(), "ns", strlen("ns"), zns TSRMLS_CC);
-  case 1:
-    zend_update_property(mongo_ce_Cursor, getThis(), "connection", strlen("connection"), zlink TSRMLS_CC);
+  if (!zfields) {
+    zfields = empty_array;
   }
+  if (!zquery) {
+    zquery = empty_array;
+  }
+
+  zend_update_property(mongo_ce_Cursor, getThis(), "fields", strlen("fields"), zfields TSRMLS_CC);
+  zend_update_property(mongo_ce_Cursor, getThis(), "ns", strlen("ns"), zns TSRMLS_CC);
+  zend_update_property(mongo_ce_Cursor, getThis(), "connection", strlen("connection"), zlink TSRMLS_CC);
 
   // we don't want this param to go away at the end of this method
   zval_add_ref(&zquery);
@@ -78,6 +72,7 @@ PHP_METHOD(MongoCursor, __construct) {
 
   zim_MongoCursor_reset(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 
+  // get rid of extra refs
   zval_ptr_dtor(&empty_array);
   zval_ptr_dtor(&q);
 }
@@ -86,7 +81,7 @@ PHP_METHOD(MongoCursor, __construct) {
 /* {{{ MongoCursor->hasNext
  */
 PHP_METHOD(MongoCursor, hasNext) {
-  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), 1 TSRMLS_CC);
+  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), NOISY TSRMLS_CC);
 
   if (!Z_BVAL_P(started)) {
     zim_MongoCursor_doQuery(INTERNAL_FUNCTION_PARAM_PASSTHRU);
@@ -127,10 +122,10 @@ PHP_METHOD(MongoCursor, getNext) {
 /* {{{ MongoCursor->limit
  */
 PHP_METHOD(MongoCursor, limit) {
-  CHECK_AND_GET_PARAM(znum);
-
-  convert_to_long(*znum);
-  long int num = Z_LVAL_PP(znum);
+  long int num;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &num) == FAILURE) {
+    return;
+  }
   num *= -1;
 
   zend_update_property_long(mongo_ce_Cursor, getThis(), "limit", strlen("limit"), num TSRMLS_CC);
@@ -141,12 +136,13 @@ PHP_METHOD(MongoCursor, limit) {
 /* {{{ MongoCursor->softLimit
  */
 PHP_METHOD(MongoCursor, softLimit) {
-  CHECK_AND_GET_PARAM(znum);
+  zval *znum;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &znum) == FAILURE) {
+    return;
+  }
+  convert_to_long(znum);
 
-  convert_to_long(*znum);
-  long int num = Z_LVAL_PP(znum);
-
-  zend_update_property_long(mongo_ce_Cursor, getThis(), "limit", strlen("limit"), num TSRMLS_CC);
+  zend_update_property(mongo_ce_Cursor, getThis(), "limit", strlen("limit"), znum TSRMLS_CC);
   RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
@@ -154,12 +150,13 @@ PHP_METHOD(MongoCursor, softLimit) {
 /* {{{ MongoCursor->skip
  */
 PHP_METHOD(MongoCursor, skip) {
-  CHECK_AND_GET_PARAM(znum);
+  zval *znum;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &znum) == FAILURE) {
+    return;
+  }
+  convert_to_long(znum);
 
-  convert_to_long(*znum);
-  long int num = Z_LVAL_PP(znum);
-
-  zend_update_property_long(mongo_ce_Cursor, getThis(), "skip", strlen("skip"), num TSRMLS_CC);
+  zend_update_property(mongo_ce_Cursor, getThis(), "skip", strlen("skip"), znum TSRMLS_CC);
   RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
@@ -167,16 +164,14 @@ PHP_METHOD(MongoCursor, skip) {
 /* {{{ MongoCursor->sort
  */
 PHP_METHOD(MongoCursor, sort) {
-  CHECK_AND_GET_PARAM(zfields);
-
-  if (Z_TYPE_PP(zfields) != IS_ARRAY) {
-    zend_throw_exception(spl_ce_InvalidArgumentException, "expected MongoCursor->sort(array)", 0 TSRMLS_CC);
+  zval *zfields;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &zfields) == FAILURE) {
     return;
   }
 
   zval *query = zend_read_property(mongo_ce_Cursor, getThis(), "query", strlen("query"), 1 TSRMLS_CC);
-  zval_add_ref(zfields);
-  add_assoc_zval(query, "orderby", *zfields);
+  zval_add_ref(&zfields);
+  add_assoc_zval(query, "orderby", zfields);
 
   zend_update_property(mongo_ce_Cursor, getThis(), "query", strlen("query"), query TSRMLS_CC);
   RETURN_ZVAL(getThis(), 1, 0);
@@ -186,16 +181,14 @@ PHP_METHOD(MongoCursor, sort) {
 /* {{{ MongoCursor->hint
  */
 PHP_METHOD(MongoCursor, hint) {
-  CHECK_AND_GET_PARAM(zfields);
-
-  if (Z_TYPE_PP(zfields) != IS_ARRAY) {
-    zend_throw_exception(spl_ce_InvalidArgumentException, "expected MongoCursor->hint(array)", 0 TSRMLS_CC);
+  zval *zfields;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &zfields) == FAILURE) {
     return;
   }
 
   zval *query = zend_read_property(mongo_ce_Cursor, getThis(), "query", strlen("query"), 1 TSRMLS_CC);
-  zval_add_ref(zfields);
-  add_assoc_zval(query, "$hint", *zfields);
+  zval_add_ref(&zfields);
+  add_assoc_zval(query, "$hint", zfields);
 
   zend_update_property(mongo_ce_Cursor, getThis(), "query", strlen("query"), query TSRMLS_CC);
   RETURN_ZVAL(getThis(), 1, 0);
@@ -248,8 +241,7 @@ PHP_METHOD(MongoCursor, doQuery) {
 /* {{{ MongoCursor->current
  */
 PHP_METHOD(MongoCursor, current) {
-  zval *zcurrent = zend_read_property(mongo_ce_Cursor, getThis(), "current", strlen("current"), 1 TSRMLS_CC);
-
+  zval *zcurrent = zend_read_property(mongo_ce_Cursor, getThis(), "current", strlen("current"), NOISY TSRMLS_CC);
   RETURN_ZVAL(zcurrent, 1, 0);
 }
 /* }}} */
@@ -278,23 +270,26 @@ PHP_METHOD(MongoCursor, key) {
  */
 PHP_METHOD(MongoCursor, next) {
   return_value_ptr = &return_value;
-  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), 1 TSRMLS_CC);
+  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), NOISY TSRMLS_CC);
 
   if (!Z_BVAL_P(started)) {
     zim_MongoCursor_doQuery(INTERNAL_FUNCTION_PARAM_PASSTHRU);
     zend_update_property_bool(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), 1 TSRMLS_CC);
   }
 
-  zval *current = zend_read_property(mongo_ce_Cursor, getThis(), "current", strlen("current"), 1 TSRMLS_CC);
+  zval *current = zend_read_property(mongo_ce_Cursor, getThis(), "current", strlen("current"), NOISY TSRMLS_CC);
 
   zim_MongoCursor_hasNext(INTERNAL_FUNCTION_PARAM_PASSTHRU);
   if (Z_BVAL_P(return_value)) {
-    zval *temp = return_value;
-    return_value = current;
-    zim_MongoCursor_getNext(INTERNAL_FUNCTION_PARAM_PASSTHRU); 
-    return_value = temp;
+    zval *next;
+    MAKE_STD_ZVAL(next);
+
+    zim_MongoCursor_getNext(0, next, &next, getThis(), return_value_used TSRMLS_CC); 
+
+    zend_update_property(mongo_ce_Cursor, getThis(), "current", strlen("current"), next TSRMLS_CC);
+    zval_ptr_dtor(&current);
   }
-  else if (current && Z_TYPE_P(current) != IS_NULL) {
+  else {
     zend_update_property_null(mongo_ce_Cursor, getThis(), "current", strlen("current") TSRMLS_CC);
   }
 
@@ -313,7 +308,7 @@ PHP_METHOD(MongoCursor, rewind) {
 /* {{{ MongoCursor->valid
  */
 PHP_METHOD(MongoCursor, valid) {
-  zval *current = zend_read_property(mongo_ce_Cursor, getThis(), "current", strlen("current"), 1 TSRMLS_CC);
+  zval *current = zend_read_property(mongo_ce_Cursor, getThis(), "current", strlen("current"), NOISY TSRMLS_CC);
 
   RETURN_BOOL(Z_TYPE_P(current) != IS_NULL);
 }

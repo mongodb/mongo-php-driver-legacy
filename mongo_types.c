@@ -29,13 +29,13 @@
 #include "bson.h"
 
 extern zend_class_entry *mongo_bindata_class,
-  *mongo_code_class,
   *mongo_date_class,
   *mongo_regex_class,
   *mongo_ce_DB;
 
 zend_class_entry *mongo_dbref_ce = NULL,
-  *mongo_ce_Id = NULL;
+  *mongo_ce_Id = NULL,
+  *mongo_ce_Code = NULL;
 
 // takes an allocated but not initialized zval
 // turns it into an MongoId
@@ -355,49 +355,48 @@ void zval_to_bson_regex(zval **data, char **re, char **flags TSRMLS_DC) {
 
 /* {{{ mongo_code___construct(string) 
  */
-PHP_FUNCTION( mongo_code___construct ) {
+PHP_METHOD(MongoCode, __construct) {
   char *code;
   int code_len;
-  zval *zcope;
+  zval *zcope = 0;
 
-  int argc = ZEND_NUM_ARGS();
-  switch (argc) {
-  case 1:
-    if (zend_parse_parameters(argc TSRMLS_CC, "s", &code, &code_len) == FAILURE) {
-      zend_error( E_ERROR, "incorrect parameter types, expected __construct(string[, array])" );
-      RETURN_FALSE;
-    }
-    ALLOC_INIT_ZVAL(zcope);
-    array_init(zcope);
-    add_property_zval( getThis(), "scope", zcope );
-    // get rid of extra ref
-    zval_ptr_dtor(&zcope);
-    break;
-  case 2:
-    if (zend_parse_parameters(argc TSRMLS_CC, "sa", &code, &code_len, &zcope) == FAILURE) {
-      zend_error( E_ERROR, "incorrect parameter types, expected __construct(string[, array])" );
-      RETURN_FALSE;
-    }  
-    add_property_zval( getThis(), "scope", zcope );  
-    break;
-  default:
-    zend_error( E_WARNING, "expected 1 or 2 parameters, got %d parameters", argc );
-    RETURN_FALSE;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &code, &code_len, &zcope)) {
+    return;
   }
 
   add_property_stringl( getThis(), "code", code, code_len, 1 );
+
+  if (!zcope) {
+    ALLOC_INIT_ZVAL(zcope);
+    array_init(zcope);
+    // get rid of extra ref
+    //    zval_ptr_dtor(&zcope);
+  }
+  add_property_zval(getThis(), "scope", zcope );
 }
 /* }}} */
 
 
 /* {{{ mongo_code___toString() 
  */
-PHP_FUNCTION( mongo_code___toString ) {
-  zval *zode = zend_read_property( mongo_code_class, getThis(), "code", 4, 0 TSRMLS_CC );
-  char *code = Z_STRVAL_P( zode );
-  RETURN_STRING( code, 1 );
+PHP_METHOD(MongoCode, __toString ) {
+  zval *zode = zend_read_property( mongo_ce_Code, getThis(), "code", 4, 0 TSRMLS_CC );
+  RETURN_STRING(Z_STRVAL_P(zode), 1 );
 }
 /* }}} */
+
+
+static function_entry MongoCode_methods[] = {
+  PHP_ME(MongoCode, __construct, NULL, ZEND_ACC_PUBLIC )
+  PHP_ME(MongoCode, __toString, NULL, ZEND_ACC_PUBLIC )
+  { NULL, NULL, NULL }
+};
+
+void mongo_init_MongoCode(TSRMLS_D) {
+  zend_class_entry ce; 
+  INIT_CLASS_ENTRY(ce, "MongoCode", MongoCode_methods); 
+  mongo_ce_Code = zend_register_internal_class(&ce TSRMLS_CC); 
+}
 
 
 PHP_METHOD(MongoDBRef, create) {

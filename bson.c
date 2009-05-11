@@ -26,7 +26,7 @@
 #include "mongo_types.h"
 
 extern zend_class_entry *mongo_bindata_class,
-  *mongo_code_class,
+  *mongo_ce_Code,
   *mongo_date_class,
   *mongo_ce_Id,
   *mongo_regex_class;
@@ -192,20 +192,20 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
     }
     // MongoCode
-    else if (clazz == mongo_code_class) {
+    else if (clazz == mongo_ce_Code) {
       set_type(buf, BSON_CODE);
       serialize_string(buf, name, name_len);
 
       // save spot for size
       unsigned int start = buf->pos-buf->start;
       buf->pos += INT_32;
-      zval *zid = zend_read_property(mongo_code_class, *data, "code", 4, 0 TSRMLS_CC);
+      zval *zid = zend_read_property(mongo_ce_Code, *data, "code", 4, 0 TSRMLS_CC);
       // string size
       serialize_int(buf, Z_STRLEN_P(zid)+1);
       // string
       serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
       // scope
-      zid = zend_read_property(mongo_code_class, *data, "scope", 5, 0 TSRMLS_CC);
+      zid = zend_read_property(mongo_ce_Code, *data, "scope", 5, 0 TSRMLS_CC);
       zval_to_bson(buf, Z_ARRVAL_P(zid), NO_PREP TSRMLS_CC);
 
       // get total size
@@ -335,7 +335,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
     case BSON_OBJECT:
     case BSON_ARRAY: {
       zval *d;
-      ALLOC_INIT_ZVAL(d);
+      MAKE_STD_ZVAL(d);
       array_init(d);
       buf = bson_to_zval(buf, d TSRMLS_CC);
       add_assoc_zval(result, name, d);
@@ -415,7 +415,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
     case BSON_CODE__D: {
       zval *zode, *zcope;
       MAKE_STD_ZVAL(zode);
-      object_init_ex(zode, mongo_code_class);
+      object_init_ex(zode, mongo_ce_Code);
       // initialize scope array
       MAKE_STD_ZVAL(zcope);
       array_init(zcope);

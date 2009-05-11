@@ -185,8 +185,6 @@ typedef struct {
     php_printf("%d\n", *temp++);                    \
   }
 
-
-
 PHP_MINIT_FUNCTION(mongo);
 PHP_MSHUTDOWN_FUNCTION(mongo);
 PHP_RINIT_FUNCTION(mongo);
@@ -248,6 +246,7 @@ void mongo_init_MongoCollection(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);
 
 void mongo_init_MongoId(TSRMLS_D);
+void mongo_init_MongoCode(TSRMLS_D);
 
 void mongo_init_MongoUtil(TSRMLS_D);
 
