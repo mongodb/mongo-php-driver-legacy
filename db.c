@@ -76,7 +76,31 @@ PHP_METHOD(MongoDB, selectCollection) {
 }
 
 PHP_METHOD(MongoDB, getGridFS) {
-  //TODO
+  zval *arg1 = 0, *arg2 = 0;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &arg1, &arg2) == FAILURE) {
+    return;
+  }
+
+  zval *grid;
+  MAKE_STD_ZVAL(grid);
+  object_init_ex(grid, mongo_ce_GridFS);
+
+  zend_ptr_stack_push(&EG(argument_stack), ZEND_NUM_ARGS()+2);
+  if (arg1) {
+    zend_ptr_stack_push(&EG(argument_stack), arg1);
+  }
+  if (arg2) {
+    zend_ptr_stack_push(&EG(argument_stack), arg1);
+  }
+  zend_ptr_stack_2_push(&EG(argument_stack), ZEND_NUM_ARGS(), NULL);
+
+  zim_MongoGridFS___construct(ZEND_NUM_ARGS(), return_value, return_value_ptr, grid, return_value_used TSRMLS_CC);
+
+  void *holder;
+  zend_ptr_stack_n_pop(&EG(argument_stack), ZEND_NUM_ARGS(), &holder, &holder, &holder, &holder, &holder);
+
+  RETURN_ZVAL(grid, 0, 1);
 }
 
 PHP_METHOD(MongoDB, getProfilingLevel) {

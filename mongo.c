@@ -306,6 +306,9 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoDB(TSRMLS_C);
   mongo_init_MongoCollection(TSRMLS_C);
   mongo_init_MongoCursor(TSRMLS_C);
+  mongo_init_MongoGridFS(TSRMLS_C);
+  mongo_init_MongoGridFSFile(TSRMLS_C);
+  mongo_init_MongoGridFSCursor(TSRMLS_C);
   mongo_init_MongoUtil(TSRMLS_C);
 
   mongo_init_MongoId(TSRMLS_C);

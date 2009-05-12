@@ -246,12 +246,15 @@ void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);
 void mongo_init_MongoCollection(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);
+void mongo_init_MongoGridFS(TSRMLS_D);
+void mongo_init_MongoGridFSFile(TSRMLS_D);
+void mongo_init_MongoGridFSCursor(TSRMLS_D);
+void mongo_init_MongoUtil(TSRMLS_D);
 
 void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoCode(TSRMLS_D);
 void mongo_init_MongoRegex(TSRMLS_D);
 
-void mongo_init_MongoUtil(TSRMLS_D);
 
 zend_object_value mongo_init_Mongo_new(zend_class_entry* TSRMLS_DC);
 zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
