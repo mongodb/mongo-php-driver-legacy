@@ -15,14 +15,6 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * Bug PHP-7
-     */
-    public function testConnect() {
-        $x = mongo_connect("localhost:9923", "", "", false, false, false);
-        $this->assertEquals($x, false);
-    }
-
-    /**
      * Bug PHP-9
      */
     public function testMem() {

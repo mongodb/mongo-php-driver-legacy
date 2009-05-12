@@ -30,12 +30,13 @@
 
 extern zend_class_entry *mongo_bindata_class,
   *mongo_date_class,
-  *mongo_regex_class,
-  *mongo_ce_DB;
+  *mongo_ce_DB,
+  *spl_ce_InvalidArgumentException;
 
 zend_class_entry *mongo_dbref_ce = NULL,
   *mongo_ce_Id = NULL,
-  *mongo_ce_Code = NULL;
+  *mongo_ce_Code = NULL,
+  *mongo_ce_Regex = NULL;
 
 // takes an allocated but not initialized zval
 // turns it into an MongoId
@@ -283,44 +284,49 @@ int zval_to_bson_bin(zval **data, char **bin, int *len TSRMLS_DC) {
 }
 
 
-/* {{{ mongo_regex___construct(string) 
+/* {{{ MongoRegex::__construct() 
  */
-PHP_FUNCTION( mongo_regex___construct ) {
-  char *re;
-  int re_len;
+PHP_METHOD(MongoRegex, __construct) {
+  zval *regex;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &regex) == FAILURE) {
+    return;
+  }
 
-  switch (ZEND_NUM_ARGS()) {
-  case 0:
-    add_property_stringl( getThis(), "regex", "", 0, 1 );
-    add_property_stringl( getThis(), "flags", "", 0, 1 );
-    break;
-  case 1:
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &re, &re_len) == FAILURE ) {
-      zend_error( E_WARNING, "incorrect parameter types" );
-      RETURN_FALSE;
-    }
-
+  if (Z_TYPE_P(regex) == IS_OBJECT &&
+      Z_OBJCE_P(regex) == mongo_ce_Regex) {
+    zval *oregex = zend_read_property(mongo_ce_Regex, regex, "regex", strlen("regex"), NOISY TSRMLS_CC);
+    zval_add_ref(&oregex);
+    zend_update_property(mongo_ce_Regex, getThis(), "regex", strlen("regex"), oregex TSRMLS_CC);
+    zval *oflags = zend_read_property(mongo_ce_Regex, regex, "flags", strlen("flags"), NOISY TSRMLS_CC);
+    zval_add_ref(&oflags);
+    zend_update_property(mongo_ce_Regex, getThis(), "flags", strlen("flags"), oflags TSRMLS_CC);
+  }
+  else if (Z_TYPE_P(regex) == IS_STRING) {
+    char *re = Z_STRVAL_P(regex);
     char *eopattern = strrchr(re, '/');
     int pattern_len = eopattern - re - 1;
 
     // move beyond the second '/' in /foo/bar 
     eopattern++;
-    int flags_len = re_len - (eopattern-re);
+    int flags_len = Z_STRLEN_P(regex) - (eopattern-re);
 
     add_property_stringl( getThis(), "regex", re+1, pattern_len, 1);
     add_property_stringl( getThis(), "flags", eopattern, flags_len, 1);
-    break;
+  }
+  else {
+    zend_throw_exception(spl_ce_InvalidArgumentException, "MongoRegex::__construct(): argument must be a string or MongoRegex", 0 TSRMLS_CC);
+    return;
   }
 }
 /* }}} */
 
 
-/* {{{ mongo_regex___toString() 
+/* {{{ MongoRegex::__toString() 
  */
-PHP_FUNCTION( mongo_regex___toString ) {
-  zval *zre = zend_read_property( mongo_regex_class, getThis(), "regex", 5, 0 TSRMLS_CC );
+PHP_METHOD(MongoRegex, __toString) {
+  zval *zre = zend_read_property( mongo_ce_Regex, getThis(), "regex", 5, 0 TSRMLS_CC );
   char *re = Z_STRVAL_P( zre );
-  zval *zopts = zend_read_property( mongo_regex_class, getThis(), "flags", 5, 0 TSRMLS_CC );
+  zval *zopts = zend_read_property( mongo_ce_Regex, getThis(), "flags", 5, 0 TSRMLS_CC );
   char *opts = Z_STRVAL_P( zopts );
 
   int re_len = strlen(re);
@@ -333,54 +339,63 @@ PHP_FUNCTION( mongo_regex___toString ) {
 }
 /* }}} */
 
-
-zval* bson_to_zval_regex( char *re, char *flags TSRMLS_DC) {
-  zval *zre;
-    
-  MAKE_STD_ZVAL(zre);
-  object_init_ex(zre, mongo_regex_class);
-
-  add_property_stringl( zre, "regex", re, strlen(re), 1 );
-  add_property_stringl( zre, "flags", flags, strlen(flags), 1 );
-  return zre;
-}
-
 void zval_to_bson_regex(zval **data, char **re, char **flags TSRMLS_DC) {
-  zval *zre = zend_read_property( mongo_regex_class, *data, "regex", 5, 0 TSRMLS_CC );
+  zval *zre = zend_read_property(mongo_ce_Regex, *data, "regex", 5, 0 TSRMLS_CC );
   *(re) = Z_STRVAL_P(zre);
-  zval *zflags = zend_read_property( mongo_regex_class, *data, "flags", 5, 0 TSRMLS_CC );
+  zval *zflags = zend_read_property(mongo_ce_Regex, *data, "flags", 5, 0 TSRMLS_CC );
   *(flags) = Z_STRVAL_P(zflags);
 }
 
+static function_entry MongoRegex_methods[] = {
+  PHP_ME(MongoRegex, __construct, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoRegex, __toString, NULL, ZEND_ACC_PUBLIC)
+  { NULL, NULL, NULL }
+};
 
-/* {{{ mongo_code___construct(string) 
+void mongo_init_MongoRegex(TSRMLS_D) {
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "MongoRegex", MongoRegex_methods);
+  mongo_ce_Regex = zend_register_internal_class(&ce TSRMLS_CC);
+
+  zend_declare_property_string(mongo_ce_Regex, "regex", strlen("regex"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
+  zend_declare_property_string(mongo_ce_Regex, "flags", strlen("flags"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
+}
+
+
+
+/* {{{ MongoCode::__construct(string) 
  */
 PHP_METHOD(MongoCode, __construct) {
-  char *code;
-  int code_len;
-  zval *zcope = 0;
+  zval *code = 0, *zcope = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &code, &code_len, &zcope)) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &code, &zcope) == FAILURE) {
     return;
   }
+  convert_to_string(code);
 
-  add_property_stringl( getThis(), "code", code, code_len, 1 );
+  zend_update_property(mongo_ce_Code, getThis(), "code", strlen("code"), code TSRMLS_CC);
 
   if (!zcope) {
     ALLOC_INIT_ZVAL(zcope);
     array_init(zcope);
-    // get rid of extra ref
-    //    zval_ptr_dtor(&zcope);
   }
-  add_property_zval(getThis(), "scope", zcope );
+  else {
+    zval_add_ref(&zcope);
+  }
+
+  zend_update_property(mongo_ce_Code, getThis(), "scope", strlen("scope"), zcope TSRMLS_CC);
+
+  // get rid of extra ref
+  zval_ptr_dtor(&zcope);
 }
 /* }}} */
 
 
-/* {{{ mongo_code___toString() 
+/* {{{ MongoCode::__toString() 
  */
 PHP_METHOD(MongoCode, __toString ) {
-  zval *zode = zend_read_property( mongo_ce_Code, getThis(), "code", 4, 0 TSRMLS_CC );
+  zval *zode = zend_read_property(mongo_ce_Code, getThis(), "code", 4, 0 TSRMLS_CC);
   RETURN_STRING(Z_STRVAL_P(zode), 1 );
 }
 /* }}} */
@@ -396,26 +411,28 @@ void mongo_init_MongoCode(TSRMLS_D) {
   zend_class_entry ce; 
   INIT_CLASS_ENTRY(ce, "MongoCode", MongoCode_methods); 
   mongo_ce_Code = zend_register_internal_class(&ce TSRMLS_CC); 
+
+  zend_declare_property_string(mongo_ce_Code, "code", strlen("code"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
+  zend_declare_property_null(mongo_ce_Code, "scope", strlen("scope"), ZEND_ACC_PUBLIC TSRMLS_CC);
 }
 
-
+/* {{{ MongoCode::create()
+ */
 PHP_METHOD(MongoDBRef, create) {
-  char *ns;
-  int ns_len;
-  zval *zid;
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &ns, &ns_len, &zid) == FAILURE) {
+  zval *zns, *zid;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &zns, &zid) == FAILURE) {
     return;
   }
+  convert_to_string(zns);
 
-  zval *ref;
-  MAKE_STD_ZVAL(ref);
-  array_init(ref);
-  add_assoc_stringl(ref, "$ref", ns, ns_len, 1); 
-  add_assoc_zval(ref, "$id", zid); 
-
-  RETURN_ZVAL(ref, 0, 1);
+  array_init(return_value);
+  add_assoc_zval(return_value, "$ref", zns); 
+  add_assoc_zval(return_value, "$id", zid); 
 }
+/* }}} */
 
+/* {{{ MongoCode::isRef()
+ */
 PHP_METHOD(MongoDBRef, isRef) {
   zval *ref;
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &ref) == FAILURE) {
@@ -428,30 +445,43 @@ PHP_METHOD(MongoDBRef, isRef) {
   }
   RETURN_FALSE;
 }
+/* }}} */
 
+/* {{{ MongoCode::get()
+ */
 PHP_METHOD(MongoDBRef, get) {
   zval *db, *ref;
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Ca", &db, &mongo_ce_DB, &ref) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oa", &db, mongo_ce_DB, &ref) == FAILURE) {
     return;
   }
 
   zval **ns, **id;
-  if (zend_hash_find(Z_ARRVAL_P(ref), "$ref", 5, (void**)&ns) == SUCCESS &&
-      zend_hash_find(Z_ARRVAL_P(ref), "$id", 4, (void**)&id) == SUCCESS) {
-    RETURN_TRUE;
+  if (zend_hash_find(Z_ARRVAL_P(ref), "$ref", 5, (void**)&ns) == FAILURE ||
+      zend_hash_find(Z_ARRVAL_P(ref), "$id", 4, (void**)&id) == FAILURE) {
+    RETURN_NULL();
   }
 
   zval *collection;
   MAKE_STD_ZVAL(collection);
+
+  void *holder;
+  zend_ptr_stack_n_push(&EG(argument_stack), 3, *ns, 1, NULL);
   zim_MongoDB_selectCollection(1, collection, &collection, db, return_value_used TSRMLS_CC);
+  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
 
   zval *query;
   MAKE_STD_ZVAL(query);
   array_init(query);
   add_assoc_zval(query, "_id", *id);
 
-  zim_MongoCollection_findOne(1, return_value, &return_value, db, return_value_used TSRMLS_CC);
+  zend_ptr_stack_n_push(&EG(argument_stack), 3, query, 1, NULL);
+  zim_MongoCollection_findOne(1, return_value, return_value_ptr, collection, return_value_used TSRMLS_CC);
+  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+
+  zval_ptr_dtor(&collection);
+  zval_ptr_dtor(&query);
 }
+/* }}} */
 
 static function_entry MongoDBRef_methods[] = {
   PHP_ME(MongoDBRef, create, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)

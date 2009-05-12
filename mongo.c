@@ -43,8 +43,6 @@ extern zend_class_entry *mongo_ce_DB;
 static void mongo_link_dtor(mongo_link*);
 static int connect_already(INTERNAL_FUNCTION_PARAMETERS, int);
 static int get_master(mongo_link* TSRMLS_DC);
-static int say(mongo_link*, buffer* TSRMLS_DC);
-static int hear(mongo_link*, void*, int TSRMLS_DC);
 static int check_connection(mongo_link* TSRMLS_DC);
 static int mongo_connect_nonb(int, char*, int);
 static int mongo_do_socket_connect(mongo_link*);
@@ -57,7 +55,6 @@ static void mongo_init_MongoExceptions(TSRMLS_D);
 /** Classes */
 zend_class_entry *mongo_ce_Mongo,
   *mongo_date_class, 
-  *mongo_regex_class, 
   *mongo_bindata_class,
   *mongo_ce_CursorException,
   *mongo_ce_ConnectionException,
@@ -90,12 +87,6 @@ static function_entry mongo_date_functions[] = {
   { NULL, NULL, NULL }
 };
 
-
-static function_entry mongo_regex_functions[] = {
-  PHP_NAMED_FE( __construct, PHP_FN( mongo_regex___construct ), NULL )
-  PHP_NAMED_FE( __toString, PHP_FN( mongo_regex___toString ), NULL )
-  { NULL, NULL, NULL }
-};
 
 static function_entry mongo_bindata_functions[] = {
   PHP_NAMED_FE( __construct, PHP_FN( mongo_bindata___construct ), NULL )
@@ -267,7 +258,7 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   serialize_long(&buf, cursor->cursor_id);
   serialize_size(buf.start, &buf);
 
-  say(cursor->link, &buf TSRMLS_CC);
+  mongo_say(cursor->link, &buf TSRMLS_CC);
 }
 
 void free_cursor(mongo_cursor *cursor) {
@@ -311,11 +302,6 @@ PHP_MINIT_FUNCTION(mongo) {
   INIT_CLASS_ENTRY(date, "MongoDate", mongo_date_functions); 
   mongo_date_class = zend_register_internal_class(&date TSRMLS_CC); 
 
-  zend_class_entry regex; 
-  INIT_CLASS_ENTRY(regex, "MongoRegex", mongo_regex_functions); 
-  mongo_regex_class = zend_register_internal_class(&regex TSRMLS_CC); 
-
-
   mongo_init_Mongo(TSRMLS_C);
   mongo_init_MongoDB(TSRMLS_C);
   mongo_init_MongoCollection(TSRMLS_C);
@@ -324,6 +310,7 @@ PHP_MINIT_FUNCTION(mongo) {
 
   mongo_init_MongoId(TSRMLS_C);
   mongo_init_MongoCode(TSRMLS_C);
+  mongo_init_MongoRegex(TSRMLS_C);
 
   mongo_init_MongoExceptions(TSRMLS_C);
 
@@ -786,15 +773,23 @@ PHP_METHOD(Mongo, selectCollection) {
 
   if (Z_TYPE_P(db) != IS_OBJECT ||
       Z_OBJCE_P(db) != mongo_ce_DB) {
-    zim_Mongo_selectDB(1, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
-    db = return_value;
+    zval *temp_db;
+    MAKE_STD_ZVAL(temp_db);
+
+    zim_Mongo_selectDB(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
+    db = temp_db;
+  }
+  else {
+    zval_add_ref(&db);
   }
 
   zend_ptr_stack_n_push(&EG(argument_stack), 3, collection, 1, NULL);
-  zim_MongoDB_selectCollection(1, return_value, &return_value, db, return_value_used TSRMLS_CC);
+  zim_MongoDB_selectCollection(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
 
   void *holder;
   zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+
+  zval_ptr_dtor(&db);
 }
 /* }}} */
 
@@ -808,11 +803,19 @@ PHP_METHOD(Mongo, dropDB) {
 
   if (Z_TYPE_P(db) != IS_OBJECT ||
       Z_OBJCE_P(db) != mongo_ce_DB) {
-    zim_Mongo_selectDB(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
-    db = return_value;
+    zval *temp_db;
+    MAKE_STD_ZVAL(temp_db);
+
+    zim_Mongo_selectDB(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
+    db = temp_db;
+  }
+  else {
+    zval_add_ref(&db);
   }
 
   zim_MongoDB_drop(0, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
+
+  zval_ptr_dtor(&db);
 }
 /* }}} */
 
@@ -850,7 +853,7 @@ PHP_METHOD(Mongo, lastError) {
 
   zval *name;
   MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 0);
+  ZVAL_STRING(name, "admin", 1);
 
   zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
 
@@ -876,7 +879,7 @@ PHP_METHOD(Mongo, prevError) {
 
   zval *name;
   MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 0);
+  ZVAL_STRING(name, "admin", 1);
 
   zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
 
@@ -893,9 +896,7 @@ PHP_METHOD(Mongo, prevError) {
 /* {{{ Mongo->resetError()
  */
 PHP_METHOD(Mongo, resetError) {
-  mongo_link *link;
-  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), NOISY TSRMLS_CC);
 
   zval *data;
   MAKE_STD_ZVAL(data);
@@ -904,7 +905,7 @@ PHP_METHOD(Mongo, resetError) {
 
   zval *name;
   MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 0);
+  ZVAL_STRING(name, "admin", 1);
 
   zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
 
@@ -932,7 +933,7 @@ PHP_METHOD(Mongo, forceError) {
 
   zval *name;
   MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 0);
+  ZVAL_STRING(name, "admin", 1);
 
   zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
 
@@ -1006,7 +1007,7 @@ PHP_FUNCTION(mongo_remove) {
   zval_to_bson(&buf, array, NO_PREP TSRMLS_CC);
   serialize_size(buf.start, &buf);
 
-  RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);
+  RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
   efree(buf.start);
 }
 /* }}} */
@@ -1087,7 +1088,7 @@ PHP_FUNCTION(mongo_batch_insert) {
 
   serialize_size(buf.start, &buf);
 
-  RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);
+  RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
   efree(buf.start);
 }
 
@@ -1120,7 +1121,7 @@ PHP_FUNCTION(mongo_update) {
   zval_to_bson(&buf, Z_ARRVAL_P(zobj), NO_PREP TSRMLS_CC);
   serialize_size(buf.start, &buf);
 
-  RETVAL_BOOL(say(link, &buf TSRMLS_CC)+1);
+  RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
   efree(buf.start);
 }
 /* }}} */
@@ -1401,7 +1402,7 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
 
   serialize_size(buf.start, &buf);
   // sends
-  int sent = say(link, &buf TSRMLS_CC);
+  int sent = mongo_say(link, &buf TSRMLS_CC);
   efree(buf.start);
   if (sent == FAILURE) {
     zend_error(E_WARNING, "couldn't send query\n");
@@ -1437,7 +1438,7 @@ int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
   serialize_size(buf.start, &buf);
   
   // fails if we're out of elems
-  if(say(cursor->link, &buf TSRMLS_CC) == FAILURE) {
+  if(mongo_say(cursor->link, &buf TSRMLS_CC) == FAILURE) {
     efree(buf.start);
     return 0;
   }
@@ -1490,7 +1491,7 @@ int mongo_do_insert(mongo_link *link, char *collection, zval *zarray TSRMLS_DC) 
   serialize_size(buf.start, &buf);
 
   // sends
-  int response = say(link, &buf TSRMLS_CC);
+  int response = mongo_say(link, &buf TSRMLS_CC);
   efree(buf.start);
   return response;
 }
@@ -1559,7 +1560,7 @@ static int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   
   // if this fails, we might be disconnected... but we're probably
   // just out of results
-  if (hear(cursor->link, &cursor->header.length, INT_32 TSRMLS_CC) == FAILURE) {
+  if (mongo_hear(cursor->link, &cursor->header.length, INT_32 TSRMLS_CC) == FAILURE) {
     return FAILURE;
   }
 
@@ -1577,7 +1578,7 @@ static int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   cursor->buf.pos = cursor->buf.start;
   cursor->buf.end = cursor->buf.start + cursor->header.length;
 
-  if (hear(cursor->link, cursor->buf.pos, cursor->header.length TSRMLS_CC) == FAILURE) {
+  if (mongo_hear(cursor->link, cursor->buf.pos, cursor->header.length TSRMLS_CC) == FAILURE) {
     zend_error(E_WARNING, "error getting response buf: %s\n", strerror(errno));
     return FAILURE;
   }
@@ -1609,7 +1610,7 @@ static int get_reply(mongo_cursor *cursor TSRMLS_DC) {
 }
 
 
-static int say(mongo_link *link, buffer *buf TSRMLS_DC) {
+int mongo_say(mongo_link *link, buffer *buf TSRMLS_DC) {
   if (check_connection(link TSRMLS_CC) == SUCCESS) {
 
 #ifdef WIN32
@@ -1627,7 +1628,7 @@ static int say(mongo_link *link, buffer *buf TSRMLS_DC) {
   return FAILURE;
 }
 
-static int hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
+int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
   int tries = 3, num = 1;
   while (check_connection(link TSRMLS_CC) == FAILURE &&
          tries > 0) {

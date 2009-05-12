@@ -10,7 +10,7 @@ require_once 'Mongo/DB.php';
 class MongoDBTest extends PHPUnit_Framework_TestCase
 {
     /**
-     * @var    Mongo
+     * @var    MongoDB
      * @access protected
      */
     protected $object;

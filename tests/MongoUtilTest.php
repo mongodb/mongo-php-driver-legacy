@@ -20,41 +20,6 @@ class MongoUtilTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(MongoUtil::toIndexString(array('x' => 1, 'y' => -1)), 'x_1_y_-1');
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testDBCommandException1()
-    {
-        $link = $this->sharedFixture->connection;
-        MongoUtil::dbCommand($link, null, 'phpunit');
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testDBCommandException2()
-    {
-        $link = $this->sharedFixture->connection;
-        MongoUtil::dbCommand($link, 7, 'phpunit');
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testDBCommandException3()
-    {
-        $link = $this->sharedFixture->connection;
-        MongoUtil::dbCommand($link, "asdf", 'phpunit');
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testDBCommandException4()
-    {
-        MongoUtil::dbCommand(null, array(), 'phpunit');
-    }
-
 
     public function testDBCommand() {
         $db = 'phpunit';
@@ -64,6 +29,7 @@ class MongoUtilTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($x['errmsg'], "no such cmd");
         $this->assertEquals($x['ok'], 0);
 
+        MongoUtil::dbCommand($link, array(MongoUtil::PROFILE => 0), $db);
         $x = MongoUtil::dbCommand($link, array(MongoUtil::PROFILE => 1), $db);
         $this->assertEquals($x['was'], 0);
         $this->assertEquals($x['ok'], 1);

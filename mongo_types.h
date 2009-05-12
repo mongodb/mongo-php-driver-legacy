@@ -41,9 +41,8 @@ void generate_id(char*);
 PHP_METHOD(MongoId, __construct);
 PHP_METHOD(MongoId, __toString);
 
-PHP_FUNCTION( mongo_regex___construct );
-PHP_FUNCTION( mongo_regex___toString );
-zval* bson_to_zval_regex(char*, char* TSRMLS_DC);
+PHP_METHOD(MongoRegex, __construct);
+PHP_METHOD(MongoRegex, __toString);
 void zval_to_bson_regex(zval**, char**, char** TSRMLS_DC);
 
 PHP_METHOD(MongoDBRef, create);

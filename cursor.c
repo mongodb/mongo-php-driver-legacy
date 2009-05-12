@@ -24,7 +24,6 @@
 
 extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_CursorException,
-  *spl_ce_InvalidArgumentException,
   *zend_ce_iterator;
 
 extern int le_db_cursor,
@@ -99,7 +98,7 @@ PHP_METHOD(MongoCursor, hasNext) {
 /* {{{ MongoCursor->getNext
  */
 PHP_METHOD(MongoCursor, getNext) {
-  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), 1 TSRMLS_CC);
+  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), NOISY TSRMLS_CC);
 
   if (!Z_BVAL_P(started)) {
     zim_MongoCursor_doQuery(INTERNAL_FUNCTION_PARAM_PASSTHRU);
@@ -287,11 +286,11 @@ PHP_METHOD(MongoCursor, next) {
     zim_MongoCursor_getNext(0, next, &next, getThis(), return_value_used TSRMLS_CC); 
 
     zend_update_property(mongo_ce_Cursor, getThis(), "current", strlen("current"), next TSRMLS_CC);
-    zval_ptr_dtor(&current);
   }
   else {
     zend_update_property_null(mongo_ce_Cursor, getThis(), "current", strlen("current") TSRMLS_CC);
   }
+  zval_ptr_dtor(&current);
 
   RETURN_NULL();
 }

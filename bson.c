@@ -29,7 +29,7 @@ extern zend_class_entry *mongo_bindata_class,
   *mongo_ce_Code,
   *mongo_date_class,
   *mongo_ce_Id,
-  *mongo_regex_class;
+  *mongo_ce_Regex;
 
 
 int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
@@ -183,12 +183,12 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       serialize_long(buf, ms);
     }
     // MongoRegex
-    else if (clazz == mongo_regex_class) {
+    else if (clazz == mongo_ce_Regex) {
       set_type(buf, BSON_REGEX);
       serialize_string(buf, name, name_len);
-      zval *zid = zend_read_property(mongo_regex_class, *data, "regex", 5, 0 TSRMLS_CC);
+      zval *zid = zend_read_property(mongo_ce_Regex, *data, "regex", 5, 0 TSRMLS_CC);
       serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
-      zid = zend_read_property(mongo_regex_class, *data, "flags", 5, 0 TSRMLS_CC);
+      zid = zend_read_property(mongo_ce_Regex, *data, "flags", 5, 0 TSRMLS_CC);
       serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
     }
     // MongoCode
@@ -199,13 +199,13 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       // save spot for size
       unsigned int start = buf->pos-buf->start;
       buf->pos += INT_32;
-      zval *zid = zend_read_property(mongo_ce_Code, *data, "code", 4, 0 TSRMLS_CC);
+      zval *zid = zend_read_property(mongo_ce_Code, *data, "code", 4, NOISY TSRMLS_CC);
       // string size
       serialize_int(buf, Z_STRLEN_P(zid)+1);
       // string
       serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
       // scope
-      zid = zend_read_property(mongo_ce_Code, *data, "scope", 5, 0 TSRMLS_CC);
+      zid = zend_read_property(mongo_ce_Code, *data, "scope", 5, NOISY TSRMLS_CC);
       zval_to_bson(buf, Z_ARRVAL_P(zid), NO_PREP TSRMLS_CC);
 
       // get total size
@@ -403,7 +403,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
 
       zval *zegex;
       MAKE_STD_ZVAL(zegex);
-      object_init_ex(zegex, mongo_regex_class);
+      object_init_ex(zegex, mongo_ce_Regex);
 
       add_property_stringl(zegex, "regex", (char*)start_regex, regex_len-1, 1);
       add_property_stringl(zegex, "flags", (char*)start_flags, flags_len-1, 1);

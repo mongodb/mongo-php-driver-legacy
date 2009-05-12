@@ -236,6 +236,8 @@ PHP_METHOD(Mongo, __destruct);
  */
 void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
+int mongo_say(mongo_link*, buffer* TSRMLS_DC);
+int mongo_hear(mongo_link*, void*, int TSRMLS_DC);
 
 
 void free_cursor(mongo_cursor*);
@@ -247,6 +249,7 @@ void mongo_init_MongoCursor(TSRMLS_D);
 
 void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoCode(TSRMLS_D);
+void mongo_init_MongoRegex(TSRMLS_D);
 
 void mongo_init_MongoUtil(TSRMLS_D);
 
