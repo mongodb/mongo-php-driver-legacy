@@ -25,7 +25,6 @@
 #define PHP_CONNECTION_RES_NAME "mongo connection"
 #define PHP_AUTH_CONNECTION_RES_NAME "mongo authenticated connection"
 #define PHP_DB_CURSOR_RES_NAME "mongo cursor"
-#define PHP_GRIDFS_RES_NAME "gridfs tools"
 
 // db ops
 #define OP_REPLY 1
@@ -161,16 +160,6 @@ typedef struct {
   buffer buf;
 } mongo_cursor;
 
-typedef struct {
-  mongo_link *link;
-
-  char *db;
-  int db_len;
-
-  char *file_ns;
-  char *chunk_ns;
-} mongo_gridfs;
-
 
 #define BUF_REMAINING (buf->end-buf->pos)
 
@@ -204,11 +193,6 @@ PHP_FUNCTION(mongo_update);
 // cursor
 PHP_FUNCTION(mongo_has_next);
 PHP_FUNCTION(mongo_next);
-
-// gridfs
-PHP_FUNCTION( mongo_gridfs_init );
-PHP_FUNCTION( mongo_gridfs_store );
-PHP_FUNCTION( mongo_gridfile_write );
 
 /*
  * Mongo class
@@ -246,9 +230,11 @@ void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);
 void mongo_init_MongoCollection(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);
+
 void mongo_init_MongoGridFS(TSRMLS_D);
 void mongo_init_MongoGridFSFile(TSRMLS_D);
 void mongo_init_MongoGridFSCursor(TSRMLS_D);
+
 void mongo_init_MongoUtil(TSRMLS_D);
 
 void mongo_init_MongoId(TSRMLS_D);

@@ -77,7 +77,7 @@ PHP_METHOD(MongoCursor, __construct) {
 }
 /* }}} */
 
-/* {{{ MongoCursor->hasNext
+/* {{{ MongoCursor::hasNext
  */
 PHP_METHOD(MongoCursor, hasNext) {
   zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), NOISY TSRMLS_CC);
@@ -95,7 +95,7 @@ PHP_METHOD(MongoCursor, hasNext) {
 }
 /* }}} */
 
-/* {{{ MongoCursor->getNext
+/* {{{ MongoCursor::getNext
  */
 PHP_METHOD(MongoCursor, getNext) {
   zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), NOISY TSRMLS_CC);
@@ -109,12 +109,25 @@ PHP_METHOD(MongoCursor, getNext) {
   mongo_cursor *cursor;
   ZEND_FETCH_RESOURCE(cursor, mongo_cursor*, &rcursor, -1, PHP_DB_CURSOR_RES_NAME, le_db_cursor); 
 
-  zval *next = mongo_do_next(cursor TSRMLS_CC);
-  if (next) {
-    RETURN_ZVAL(next, 0, 1);
+  if (cursor->at >= cursor->num) {
+    // check for more results
+    if (!mongo_do_has_next(cursor TSRMLS_CC)) {
+      // we're out of results
+      RETURN_NULL();
+    }
+    // we got more results
   }
 
-  zval_ptr_dtor(&rcursor);
+  if (cursor->at < cursor->num) {
+    array_init(return_value);
+    cursor->buf.pos = bson_to_zval(cursor->buf.pos, return_value TSRMLS_CC);
+
+    // increment cursor position
+    cursor->at++;
+    return;
+  }
+
+  RETURN_NULL();
 }
 /* }}} */
 

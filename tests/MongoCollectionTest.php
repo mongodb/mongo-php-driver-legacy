@@ -93,15 +93,11 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertNotNull($obj['_id']);
       $this->assertEquals($obj['string'], 'string');
 
-      $this->assertFalse($this->object->insert(null));
       $this->assertFalse($this->object->insert(array()));
-      $this->assertFalse($this->object->insert(1345));
-      $this->assertFalse($this->object->insert(true));
       $this->assertTrue($this->object->insert(array(1,2,3,4,5)));
     }
 
     public function testInsert2() {
-      $this->assertFalse($this->object->insert(NULL));
       $this->assertTrue($this->object->insert(array(NULL)));
       $this->assertTrue($this->object->insert(array(NULL=>"1")));
       
@@ -116,9 +112,8 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertTrue(array_key_exists('', $x));
       $this->assertEquals($x[''], '1');
     }
-
+    
     public function testBatchInsert() {
-      $this->assertFalse($this->object->batchInsert(null));
       $this->assertFalse($this->object->batchInsert(array()));
       $this->assertFalse($this->object->batchInsert(array(1,2,3)));
       $this->assertTrue($this->object->batchInsert(array('z'=>array('foo'=>'bar'))));
@@ -136,34 +131,6 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals('y', $x['x']);
       $x = $cursor->getNext();
       $this->assertEquals('foo', $x['x']);
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testFindException1() {
-      $c = $this->object->find(null);
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testFindException2() {
-      $c = $this->object->find(3);
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testFindException3() {
-      $c = $this->object->find(true);
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testFindException4() {
-      $c = $this->object->find(array(), null);
     }
 
     public function testFind() {
@@ -187,13 +154,6 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals('b', $obj['a']);
       $this->assertEquals('c', $obj['b']);
       $this->assertEquals(false, array_key_exists('foo', $obj));
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testFindOneException1() {
-      $this->object->findOne(true);
     }
 
     public function testFindOne() {
@@ -225,13 +185,6 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->update($old, $new);
       $obj = $this->object->findOne();
       $this->assertEquals($obj['foo'], 'baz');      
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testRemoveException1() {
-      $this->object->remove(0);
     }
 
     public function testRemove() {
@@ -362,7 +315,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($info[3]['key']['baz'], -1);
       $this->assertEquals($info[3]['name'], 'bar_1_baz_-1');
     }
-
+    
     public function testCount() {
       $this->assertEquals($this->object->count(), 0);
 
@@ -370,27 +323,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
       $this->assertEquals($this->object->count(), 1);
     }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testSaveException1() {
-      $this->object->save(null);
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testSaveException2() {
-      $this->object->save("");
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testSaveException3() {
-      $this->object->save(4);
-    }
+    
 
     public function testSave() {
       $this->object->save(array('x' => 1));

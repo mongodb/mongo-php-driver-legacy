@@ -26,7 +26,7 @@ class MongoGridFSFileTest extends PHPUnit_Framework_TestCase
         $db = $this->sharedFixture->selectDB('phpunit');
         $grid = $db->getGridFS();
         $grid->drop();
-        $grid->storeFile('./somefile');
+        $grid->storeFile('tests/somefile');
         $this->object = $grid->findOne();
         $this->object->start = memory_get_usage(true);
     }
@@ -36,21 +36,22 @@ class MongoGridFSFileTest extends PHPUnit_Framework_TestCase
     }
 
     public function testGetFilename() {
-        $this->assertEquals($this->object->getFilename(), './somefile');
+        $this->assertEquals($this->object->getFilename(), 'tests/somefile');
     }
 
     public function testGetSize() {
-        $size = filesize('./somefile');
+        $size = filesize('tests/somefile');
         $this->assertEquals($this->object->getSize(), $size);
     }
 
     public function testWrite() {
-        $this->assertFalse(file_exists('./anotherfile'));
-        $this->object->write('./anotherfile');
-        $this->assertEquals(filesize('./anotherfile'), 
+        $this->assertFalse(file_exists('tests/anotherfile'));
+        $bytes = $this->object->write('tests/anotherfile');
+        $this->assertEquals($bytes, 129);
+        $this->assertEquals(filesize('tests/anotherfile'), 
                             $this->object->getSize());
 
-        unlink('./anotherfile');
+        unlink('tests/anotherfile');
     }
 }
 ?>

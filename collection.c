@@ -194,6 +194,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
 }
 
 PHP_METHOD(MongoCollection, find) {
+  void *holder;
   zval *query = 0, *fields = 0;
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|aa", &query, &fields) == FAILURE) {
     return;
@@ -204,22 +205,21 @@ PHP_METHOD(MongoCollection, find) {
 
   object_init_ex(return_value, mongo_ce_Cursor);
 
-  void *holder;
-  if (fields) {
-    zend_ptr_stack_n_push(&EG(argument_stack), 6, connection, ns, query, fields, 4, NULL);
-    zim_MongoCursor___construct(4, return_value, return_value_ptr, return_value, return_value_used TSRMLS_CC);
-    zend_ptr_stack_n_pop(&EG(argument_stack), 6, &holder, &holder, &holder, &holder, &holder, &holder);
+  zend_ptr_stack_2_push(&EG(argument_stack), connection, ns);
+
+  if (query) {
+    zend_ptr_stack_push(&EG(argument_stack), query);
+    if (fields) {
+      zend_ptr_stack_push(&EG(argument_stack), fields);
+    }
   }
-  else if (query) {
-    zend_ptr_stack_n_push(&EG(argument_stack), 5, connection, ns, query, 3, NULL);
-    zim_MongoCursor___construct(3, return_value, return_value_ptr, return_value, return_value_used TSRMLS_CC);
-    zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
-  }
-  else {
-    zend_ptr_stack_n_push(&EG(argument_stack), 4, connection, ns, 2, NULL);
-    zim_MongoCursor___construct(2, return_value, return_value_ptr, return_value, return_value_used TSRMLS_CC);
-    zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
-  }
+
+  zend_ptr_stack_2_push(&EG(argument_stack), ZEND_NUM_ARGS()+2, NULL);
+
+  zval temp;
+  zim_MongoCursor___construct(ZEND_NUM_ARGS()+2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
+
+  zend_ptr_stack_n_pop(&EG(argument_stack), ZEND_NUM_ARGS()+4, &holder, &holder, &holder, &holder, &holder, &holder);
 }
 
 PHP_METHOD(MongoCollection, findOne) {

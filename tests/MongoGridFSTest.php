@@ -33,9 +33,23 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($this->object->start, memory_get_usage(true));
     }
 
+    public function test__construct() {
+        $db = $this->sharedFixture->selectDB('phpunit');
+        $grid = $db->getGridFS('x', 'y');
+        $this->assertEquals((string)$grid, 'phpunit.x');
+        $this->assertEquals((string)$grid->chunks, 'phpunit.y');
+
+        $grid = $db->getGridFS('x');
+        $this->assertEquals((string)$grid, 'phpunit.x.files');
+        $this->assertEquals((string)$grid->chunks, 'phpunit.x.chunks');
+
+        $grid = $db->getGridFS();
+        $this->assertEquals((string)$grid, 'phpunit.fs.files');
+        $this->assertEquals((string)$grid->chunks, 'phpunit.fs.chunks');
+    }
 
     public function testDrop() {
-        $this->object->storeFile('./somefile');
+        $this->object->storeFile('tests/somefile');
         $c = $this->object->chunks->count();
         $this->assertGreaterThan(0, $c);
         $this->assertEquals($this->count(), 1);
@@ -47,24 +61,26 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
     }
 
     public function testFind() {
-        $this->object->storeFile('./somefile');
+        $this->object->storeFile('tests/somefile');
 
         $cursor = $this->object->find();
         $this->assertTrue($cursor instanceof MongoGridFSCursor);
         $file = $cursor->getNext();
+        $this->assertNotNull($file);
+        var_dump($file);
         $this->assertTrue($file instanceof MongoGridFSFile);
     }
 
     public function testStoreFile() {
         $this->assertEquals($this->object->findOne(), null);
-        $this->object->storeFile('./somefile');
+        $this->object->storeFile('tests/somefile');
         $this->assertNotNull($this->object->findOne());
         $this->assertNotNull($this->object->chunks->findOne());
     }
 
     public function testFindOne() {
         $this->assertEquals($this->object->findOne(), null);
-        $this->object->storeFile('./somefile');
+        $this->object->storeFile('tests/somefile');
         $obj = $this->object->findOne();
 
         $this->assertTrue($obj instanceof MongoGridFSFile);
@@ -72,28 +88,22 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $obj = $this->object->findOne(array('filename' => 'zxvf'));
         $this->assertEquals($obj, null);
 
-        $obj = $this->object->findOne('./somefile');
+        $obj = $this->object->findOne('tests/somefile');
         $this->assertNotNull($obj);
     }
 
     public function testRemove()
     {
-        $this->object->storeFile('./somefile');
+        $this->object->storeFile('tests/somefile');
 
         $this->object->remove();
         $this->assertEquals($this->object->findOne(), null);
         $this->assertEquals($this->object->chunks->findOne(), null);
     }
 
-    public function testBasic()
-    {
-        mongo_gridfs_store($this->object->resource, "./somefile");
-        $this->assertNotNull($this->object->findOne());
-    }
-
     public function testStoreUpload() {
         $_FILES['x']['name'] = 'myfile';
-        $_FILES['x']['tmp_name'] = 'somefile';
+        $_FILES['x']['tmp_name'] = 'tests/somefile';
       
         $this->object->storeUpload('x');
 
@@ -111,9 +121,9 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
     }
 
     public function getBytes() {
-        $contents = file_get_contents('somefile');
+        $contents = file_get_contents('tests/somefile');
 
-        $this->object->storeFile('somefile');
+        $this->object->storeFile('tests/somefile');
         $file = $this->object->findOne();
 
         $this->assertEquals($file->getBytes(), $contents);

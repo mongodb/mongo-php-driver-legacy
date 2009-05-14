@@ -91,16 +91,19 @@ void mongo_init_MongoId(TSRMLS_D) {
 /* {{{ MongoId::__construct()
  */
 PHP_METHOD(MongoId, __construct) {
-  char *id;
-  int id_len;
-  char data[12];
+  zval *id;
+  char holder[12];
+  char *data = holder;
 
-  if (ZEND_NUM_ARGS() == 1 &&
-      zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &id, &id_len) == SUCCESS &&
-      id_len == 24) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s", &id) == FAILURE) {
+    return;
+  }
+  
+  if (Z_TYPE_P(id) == IS_STRING && 
+      Z_STRLEN_P(id) == 24) {
     int i;
     for(i=0;i<12;i++) {
-      char digit1 = id[i*2], digit2 = id[i*2+1];
+      char digit1 = Z_STRVAL_P(id)[i*2], digit2 = Z_STRVAL_P(id)[i*2+1];
       digit1 = digit1 >= 'a' && digit1 <= 'f' ? digit1 -= 87 : digit1;
       digit1 = digit1 >= 'A' && digit1 <= 'F' ? digit1 -= 55 : digit1;
       digit1 = digit1 >= '0' && digit1 <= '9' ? digit1 -= 48 : digit1;
@@ -111,6 +114,11 @@ PHP_METHOD(MongoId, __construct) {
       
       data[i] = digit1*16+digit2;
     }
+  }
+  else if (Z_TYPE_P(id) == IS_OBJECT &&
+           Z_OBJCE_P(id) == mongo_ce_Id) {
+    zval *zid = zend_read_property(mongo_ce_Id, getThis(), "id", strlen("id"), NOISY TSRMLS_CC);
+    data = (char*)Z_STRVAL_P(zid);
   }
   else {
     generate_id(data);
@@ -125,7 +133,7 @@ PHP_METHOD(MongoId, __construct) {
  */
 PHP_METHOD(MongoId, __toString) {
   int i;
-  zval *zid = zend_read_property(mongo_ce_Id, getThis(), "id", 2, 0 TSRMLS_CC);
+  zval *zid = zend_read_property(mongo_ce_Id, getThis(), "id", 2, NOISY TSRMLS_CC);
   char *foo = zid->value.str.val;
 
   char id[24];

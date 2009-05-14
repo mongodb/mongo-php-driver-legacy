@@ -23,6 +23,7 @@
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Collection,
+  *mongo_ce_GridFS,
   *mongo_ce_Id,
   *mongo_ce_Code,
   *spl_ce_InvalidArgumentException;
@@ -82,25 +83,30 @@ PHP_METHOD(MongoDB, getGridFS) {
     return;
   }
 
-  zval *grid;
-  MAKE_STD_ZVAL(grid);
-  object_init_ex(grid, mongo_ce_GridFS);
+  zval temp;
+  void *holder;
 
-  zend_ptr_stack_push(&EG(argument_stack), ZEND_NUM_ARGS()+2);
+  object_init_ex(return_value, mongo_ce_GridFS);
+  
+  zend_ptr_stack_push(&EG(argument_stack), getThis());
+
   if (arg1) {
     zend_ptr_stack_push(&EG(argument_stack), arg1);
+    if (arg2) {
+      zend_ptr_stack_push(&EG(argument_stack), arg2);
+    }
   }
-  if (arg2) {
-    zend_ptr_stack_push(&EG(argument_stack), arg1);
+
+  zend_ptr_stack_2_push(&EG(argument_stack), ZEND_NUM_ARGS()+1, NULL);
+  zim_MongoGridFS___construct(ZEND_NUM_ARGS()+1, &temp, NULL, return_value, return_value_used TSRMLS_CC);
+  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+
+  if (arg1) {
+    zend_ptr_stack_pop(&EG(argument_stack));
+    if (arg2) {
+      zend_ptr_stack_pop(&EG(argument_stack));
+    }
   }
-  zend_ptr_stack_2_push(&EG(argument_stack), ZEND_NUM_ARGS(), NULL);
-
-  zim_MongoGridFS___construct(ZEND_NUM_ARGS(), return_value, return_value_ptr, grid, return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), ZEND_NUM_ARGS(), &holder, &holder, &holder, &holder, &holder);
-
-  RETURN_ZVAL(grid, 0, 1);
 }
 
 PHP_METHOD(MongoDB, getProfilingLevel) {
@@ -274,13 +280,9 @@ PHP_METHOD(MongoDB, dropCollection) {
 
 PHP_METHOD(MongoDB, listCollections) {
   // select db.system.namespaces collection
-  zval *zname = zend_read_property(mongo_ce_DB, getThis(), "name", strlen("name"), 0 TSRMLS_CC);
-  char *name;
-  int name_len = spprintf(&name, 0, "%s.system.namespaces", Z_STRVAL_P(zname));
-
   zval *nss;
   MAKE_STD_ZVAL(nss);
-  ZVAL_STRINGL(nss, name, name_len, 1);
+  ZVAL_STRING(nss, "system.namespaces", 1);
 
   zval *collection;
   MAKE_STD_ZVAL(collection);
@@ -302,34 +304,33 @@ PHP_METHOD(MongoDB, listCollections) {
   array_init(list);
  
   // populate list
-  zval *has_next;
-  MAKE_STD_ZVAL(has_next);
+  zval *next;
+  MAKE_STD_ZVAL(next);
   
-  zim_MongoCursor_hasNext(0, has_next, &has_next, cursor, return_value_used TSRMLS_CC);
-  while (Z_BVAL_P(has_next)) {
-
-    zval *ns;
-    MAKE_STD_ZVAL(ns);
-
-    zim_MongoCursor_getNext(0, ns, &ns, cursor, return_value_used TSRMLS_CC);
-
+  zim_MongoCursor_getNext(0, next, &next, cursor, return_value_used TSRMLS_CC);
+  while (Z_TYPE_P(next) != IS_NULL) {
     zval **collection;
-    if (zend_hash_find(Z_ARRVAL_P(ns), "name", 5, (void**)&collection) == FAILURE ||
+    if (zend_hash_find(Z_ARRVAL_P(next), "name", 5, (void**)&collection) == FAILURE ||
         strchr(Z_STRVAL_PP(collection), '$')) {
+
+      zval_ptr_dtor(&next);
+      MAKE_STD_ZVAL(next);
+
+      zim_MongoCursor_getNext(0, next, &next, cursor, return_value_used TSRMLS_CC);
       continue;
     }
 
     add_next_index_string(list, Z_STRVAL_PP(collection), 1);
 
-    zval_ptr_dtor(&ns);
+    zval_ptr_dtor(&next);
+    MAKE_STD_ZVAL(next);
 
-    zim_MongoCursor_hasNext(0, has_next, &has_next, cursor, return_value_used TSRMLS_CC);
+    zim_MongoCursor_getNext(0, next, &next, cursor, return_value_used TSRMLS_CC);
   }
 
-  efree(name);
+  zval_ptr_dtor(&next);
   zval_ptr_dtor(&nss);
   zval_ptr_dtor(&cursor);
-  zval_ptr_dtor(&has_next);
   zval_ptr_dtor(&collection);
 
   RETURN_ZVAL(list, 0, 1);
