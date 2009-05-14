@@ -54,8 +54,6 @@ static void mongo_init_MongoExceptions(TSRMLS_D);
 
 /** Classes */
 zend_class_entry *mongo_ce_Mongo,
-  *mongo_date_class, 
-  *mongo_bindata_class,
   *mongo_ce_CursorException,
   *mongo_ce_ConnectionException,
   *mongo_ce_GridFSException,
@@ -66,32 +64,6 @@ int le_connection, le_pconnection, le_db_cursor;
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
 static PHP_GINIT_FUNCTION(mongo);
-
-static function_entry mongo_functions[] = {
-  PHP_FE( mongo_remove , NULL )
-  PHP_FE( mongo_query , NULL )
-  PHP_FE( mongo_insert , NULL )
-  PHP_FE( mongo_batch_insert , NULL )
-  PHP_FE( mongo_update , NULL )
-  PHP_FE( mongo_has_next , NULL )
-  PHP_FE( mongo_next , NULL )
-  {NULL, NULL, NULL}
-};
-
-
-static function_entry mongo_date_functions[] = {
-  PHP_NAMED_FE( __construct, PHP_FN( mongo_date___construct ), NULL )
-  PHP_NAMED_FE( __toString, PHP_FN( mongo_date___toString ), NULL )
-  { NULL, NULL, NULL }
-};
-
-
-static function_entry mongo_bindata_functions[] = {
-  PHP_NAMED_FE( __construct, PHP_FN( mongo_bindata___construct ), NULL )
-  PHP_NAMED_FE( __toString, PHP_FN( mongo_bindata___toString ), NULL )
-  { NULL, NULL, NULL }
-};
-
 
 static function_entry Mongo_methods[] = {
   PHP_ME(Mongo, __construct, NULL, ZEND_ACC_PUBLIC)
@@ -120,7 +92,7 @@ zend_module_entry mongo_module_entry = {
   STANDARD_MODULE_HEADER,
 #endif
   PHP_MONGO_EXTNAME,
-  mongo_functions,
+  NULL,
   PHP_MINIT(mongo),
   PHP_MSHUTDOWN(mongo),
   PHP_RINIT(mongo),
@@ -274,14 +246,6 @@ PHP_MINIT_FUNCTION(mongo) {
   le_pconnection = zend_register_list_destructors_ex(NULL, php_connection_dtor, PHP_CONNECTION_RES_NAME, module_number);
   le_db_cursor = zend_register_list_destructors_ex(php_cursor_dtor, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
 
-  zend_class_entry bindata; 
-  INIT_CLASS_ENTRY(bindata, "MongoBinData", mongo_bindata_functions); 
-  mongo_bindata_class = zend_register_internal_class(&bindata TSRMLS_CC); 
-
-  zend_class_entry date; 
-  INIT_CLASS_ENTRY(date, "MongoDate", mongo_date_functions); 
-  mongo_date_class = zend_register_internal_class(&date TSRMLS_CC); 
-
   mongo_init_Mongo(TSRMLS_C);
   mongo_init_MongoDB(TSRMLS_C);
   mongo_init_MongoCollection(TSRMLS_C);
@@ -296,6 +260,8 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoId(TSRMLS_C);
   mongo_init_MongoCode(TSRMLS_C);
   mongo_init_MongoRegex(TSRMLS_C);
+  mongo_init_MongoDate(TSRMLS_C);
+  mongo_init_MongoBinData(TSRMLS_C);
 
   mongo_init_MongoExceptions(TSRMLS_C);
 
@@ -303,24 +269,6 @@ PHP_MINIT_FUNCTION(mongo) {
 }
 /* }}} */
 
-
-/* {{{ mongo_init_Mongo_free
- */
-void mongo_init_Mongo_free(void *object TSRMLS_DC) {
-  zend_object *zo = (zend_object*)object;
-
-  zval **c;
-  if (zend_hash_find(zo->properties, "connection", strlen("connection")+1, (void**)&c) == SUCCESS) {
-    if (Z_TYPE_PP(c) == IS_RESOURCE) {
-      /*  mongo_link *link;
-      ZEND_FETCH_RESOURCE2_NO_RETURN(link, mongo_link*, c, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
-      mongo_link_dtor(link);*/
-    }
-    return;
-  }
-  php_printf("didn't find connection\n"); 
-}
-/* }}} */
 
 /* {{{ mongo_init_Mongo_new
  */
@@ -330,7 +278,6 @@ zend_object_value mongo_init_Mongo_new(zend_class_entry *class_type TSRMLS_DC) {
 
   Z_OBJVAL(obj) = zend_objects_new(&object, class_type TSRMLS_CC);
   Z_OBJ_HT(obj) = zend_get_std_object_handlers();
-  Z_OBJ_HANDLE(obj) = zend_objects_store_put(object, NULL, (zend_objects_free_object_storage_t) mongo_init_Mongo_free, NULL TSRMLS_CC);
  
   ALLOC_HASHTABLE(object->properties);
   zend_hash_init(object->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
@@ -404,6 +351,7 @@ PHP_MINFO_FUNCTION(mongo) {
 /* }}} */
 
 void mongo_init_MongoExceptions(TSRMLS_D) {
+
   zend_class_entry e;
   INIT_CLASS_ENTRY(e, "MongoException", NULL);
   mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
@@ -811,22 +759,37 @@ PHP_METHOD(Mongo, dropDB) {
 /* {{{ Mongo->repairDB()
  */
 PHP_METHOD(Mongo, repairDB) {
-  zval *db, *preserve_clones, *backup;
+  zval *db, *preserve_clones = 0, *backup = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Ozz", &db, mongo_ce_DB, &preserve_clones, &backup) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|zz", &db, mongo_ce_DB, &preserve_clones, &backup) == FAILURE) {
     RETURN_FALSE;
   }
 
-  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
+  if (!preserve_clones) {
+    MAKE_STD_ZVAL(preserve_clones);
+    ZVAL_BOOL(preserve_clones, 0);
+  }
+  else {
+    zval_add_ref(&preserve_clones);
+  }
 
+  if (!backup) {
+    MAKE_STD_ZVAL(backup);
+    ZVAL_BOOL(backup, 0);
+  }
+  else {
+    zval_add_ref(&backup);
+  }
+  
   int param_num = 2;
-  int *null_ptr = 0;
+  void *holder;
 
   zend_ptr_stack_n_push(&EG(argument_stack), param_num+2, preserve_clones, backup, param_num, NULL);
   zim_MongoDB_repair(param_num, return_value, return_value_ptr, db, 0 TSRMLS_CC);
-
-  void *holder;
   zend_ptr_stack_n_pop(&EG(argument_stack), param_num+2, &holder, &holder, &holder, &holder);
+
+  zval_ptr_dtor(&backup);
+  zval_ptr_dtor(&preserve_clones);
 }
 /* }}} */
 
@@ -936,230 +899,6 @@ PHP_METHOD(Mongo, forceError) {
 }
 /* }}} */
 
-
-/* {{{ mongo_query() 
- */
-PHP_FUNCTION(mongo_query) {
-  mongo_link *link;
-  zval *zconn, *zquery, *zfields;
-  char *collection;
-  int limit, skip, collection_len, argc = ZEND_NUM_ARGS();
-
-  if (argc != 6) {
-    zend_error( E_WARNING, "expected 6 parameters, got %d parameters", argc);
-    RETURN_FALSE;
-  }
-  else if (zend_parse_parameters(argc TSRMLS_CC, "rsalla", &zconn, &collection, &collection_len, &zquery, &skip, &limit, &zfields) == FAILURE) {
-    zend_error(E_WARNING, "incorrect parameter types, expected mongo_query(connection, string, array, int, int, array)");
-    RETURN_FALSE;
-  }
-  
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
-
-  mongo_cursor *cursor = mongo_do_query(link, collection, skip, limit, zquery, zfields TSRMLS_CC);
-  if (!cursor) {
-    RETURN_NULL();
-  }
-  ZEND_REGISTER_RESOURCE(return_value, cursor, le_db_cursor);
-}
-/* }}} */
-
-
-/* {{{ mongo_remove
- */
-PHP_FUNCTION(mongo_remove) {
-  zval *zconn, *zarray;
-  char *collection;
-  int collection_len, mflags = 0;
-  zend_bool justOne = 0;
-  mongo_link *link;
-
-  if( ZEND_NUM_ARGS() != 4 ) {
-    zend_error( E_WARNING, "expected 4 parameters, got %d parameters", ZEND_NUM_ARGS() );
-    RETURN_FALSE;
-  }
-  else if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsab", &zconn, &collection, &collection_len, &zarray, &justOne) == FAILURE) {
-    zend_error( E_WARNING, "incorrect parameter types, expected mongo_remove( connection, string, array, bool )" );
-    RETURN_FALSE;
-  }
-
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
-
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
-
-  HashTable *array = Z_ARRVAL_P(zarray);
-  CREATE_HEADER(buf, collection, collection_len, OP_DELETE);
-
-  mflags |= (justOne == 1);
-
-  serialize_int(&buf, mflags);
-  zval_to_bson(&buf, array, NO_PREP TSRMLS_CC);
-  serialize_size(buf.start, &buf);
-
-  RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
-  efree(buf.start);
-}
-/* }}} */
-
-
-/* {{{ mongo_insert
- */
-PHP_FUNCTION(mongo_insert) {
-  zval *zconn, *zarray;
-  char *collection;
-  int collection_len;
-  mongo_link *link;
-
-  if (ZEND_NUM_ARGS() != 3 ) {
-    zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
-    RETURN_FALSE;
-  }
-  else if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zarray) == FAILURE) {
-    zend_error( E_WARNING, "incorrect parameter types, expected mongo_insert( connection, string, array )" );
-    RETURN_FALSE;
-  }
-
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
-
-  int response = mongo_do_insert(link, collection, zarray TSRMLS_CC);
-  RETURN_BOOL(response >= SUCCESS);
-}
-/* }}} */
-
-
-PHP_FUNCTION(mongo_batch_insert) {
-  mongo_link *link;
-  HashPosition pointer;
-  zval *zconn, *zarray, **data;
-  char *collection;
-  int collection_len;
-
-  if (ZEND_NUM_ARGS() != 3 ) {
-    zend_error( E_WARNING, "expected 3 parameters, got %d parameters", ZEND_NUM_ARGS() );
-    RETURN_FALSE;
-  }
-  else if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &zconn, &collection, &collection_len, &zarray) == FAILURE) {
-    zend_error( E_WARNING, "incorrect parameter types, expected mongo_batch_insert( connection, string, array )" );
-    RETURN_FALSE;
-  }
-
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
-
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
-  CREATE_HEADER(buf, collection, collection_len, OP_INSERT);
-
-  HashTable *php_array = Z_ARRVAL_P(zarray);
-
-  int count = 0;
-
-  for(zend_hash_internal_pointer_reset_ex(php_array, &pointer); 
-      zend_hash_get_current_data_ex(php_array, (void**) &data, &pointer) == SUCCESS; 
-      zend_hash_move_forward_ex(php_array, &pointer)) {
-
-    if(Z_TYPE_PP(data) != IS_ARRAY) {
-      efree(buf.start);
-      RETURN_FALSE;
-    }
-
-    unsigned int start = buf.pos-buf.start;
-    zval_to_bson(&buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
-
-    serialize_size(buf.start+start, &buf);
-
-    count++;
-  }
-
-  // if there are no elements, don't bother saving
-  if (count == 0) {
-    efree(buf.start);
-    RETURN_FALSE;
-  }
-
-  serialize_size(buf.start, &buf);
-
-  RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
-  efree(buf.start);
-}
-
-
-/* {{{ mongo_update
- */
-PHP_FUNCTION(mongo_update) {
-  zval *zconn, *zquery, *zobj;
-  char *collection;
-  int collection_len;
-  zend_bool zupsert = 0;
-  mongo_link *link;
-  int argc = ZEND_NUM_ARGS();
-
-  if ( argc != 5 ) {
-    zend_error( E_WARNING, "expected 5 parameters, got %d parameters", argc );
-    RETURN_FALSE;
-  }
-  else if(zend_parse_parameters(argc TSRMLS_CC, "rsaab", &zconn, &collection, &collection_len, &zquery, &zobj, &zupsert) == FAILURE) {
-    zend_error( E_WARNING, "incorrect parameter types, expected mongo_update( connection, string, array, array, bool )");
-    RETURN_FALSE;
-  }
-
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zconn, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
-
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
-  CREATE_HEADER(buf, collection, collection_len, OP_UPDATE);
-  serialize_int(&buf, zupsert);
-  zval_to_bson(&buf, Z_ARRVAL_P(zquery), NO_PREP TSRMLS_CC);
-  zval_to_bson(&buf, Z_ARRVAL_P(zobj), NO_PREP TSRMLS_CC);
-  serialize_size(buf.start, &buf);
-
-  RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
-  efree(buf.start);
-}
-/* }}} */
-
-
-/* {{{ mongo_has_next 
- */
-PHP_FUNCTION(mongo_has_next) {
-  zval *zcursor;
-  mongo_cursor *cursor;
-  int argc = ZEND_NUM_ARGS();
-
-  if (argc != 1 ) {
-    zend_error( E_WARNING, "expected 1 parameters, got %d parameters", argc );
-    RETURN_FALSE;
-  }
-  else if( zend_parse_parameters(argc TSRMLS_CC, "r", &zcursor) == FAILURE) {
-    zend_error( E_WARNING, "incorrect parameter types, expected mongo_has_next(cursor)" );
-    RETURN_FALSE;
-  }
-
-  ZEND_FETCH_RESOURCE(cursor, mongo_cursor*, &zcursor, -1, PHP_DB_CURSOR_RES_NAME, le_db_cursor); 
-  RETURN_BOOL(mongo_do_has_next(cursor TSRMLS_CC));
-}
-/* }}} */
-
-
-/* {{{ mongo_next
- */
-PHP_FUNCTION(mongo_next) {
-  zval *zcursor;
-  int argc;
-  mongo_cursor *cursor;
-
-  argc = ZEND_NUM_ARGS();
-  if (argc != 1 ) {
-    zend_error( E_WARNING, "expected 1 parameter, got %d parameters", argc );
-    RETURN_FALSE;
-  }
-  else if(zend_parse_parameters(argc TSRMLS_CC, "r", &zcursor) == FAILURE) {
-    zend_error( E_WARNING, "incorrect parameter type, expected mongo_next( cursor )" );
-    RETURN_FALSE;
-  }
-
-  ZEND_FETCH_RESOURCE(cursor, mongo_cursor*, &zcursor, -1, PHP_DB_CURSOR_RES_NAME, le_db_cursor); 
-  zval *z = mongo_do_next(cursor TSRMLS_CC);
-  RETURN_ZVAL(z, 0, 1);
-}
-/* }}} */
 
 
 mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int limit, zval *zquery, zval *zfields TSRMLS_DC) {

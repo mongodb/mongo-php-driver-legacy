@@ -23,18 +23,14 @@
 #define BIN_MD5 5
 #define BIN_CUSTOM 128
 
-PHP_FUNCTION( mongo_bindata___construct );
-PHP_FUNCTION( mongo_bindata___toString );
-zval* bson_to_zval_bin(char*, int, int TSRMLS_DC);
-int zval_to_bson_bin(zval **, char**, int* TSRMLS_DC);
+PHP_METHOD(MongoBinData, __construct);
+PHP_METHOD(MongoBinData, __toString);
 
 PHP_METHOD(MongoCode, __construct );
 PHP_METHOD(MongoCode, __toString );
 
-PHP_FUNCTION( mongo_date___construct );
-PHP_FUNCTION( mongo_date___toString );
-zval* bson_to_zval_date(unsigned long long TSRMLS_DC);
-unsigned long long zval_to_bson_date(zval** TSRMLS_DC);
+PHP_METHOD(MongoDate, __construct);
+PHP_METHOD(MongoDate, __toString);
 
 void create_id(zval*, char* TSRMLS_DC);
 void generate_id(char*);
@@ -43,7 +39,6 @@ PHP_METHOD(MongoId, __toString);
 
 PHP_METHOD(MongoRegex, __construct);
 PHP_METHOD(MongoRegex, __toString);
-void zval_to_bson_regex(zval**, char**, char** TSRMLS_DC);
 
 PHP_METHOD(MongoDBRef, create);
 PHP_METHOD(MongoDBRef, isRef);

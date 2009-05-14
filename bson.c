@@ -25,9 +25,9 @@
 #include "mongo.h"
 #include "mongo_types.h"
 
-extern zend_class_entry *mongo_bindata_class,
+extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_Code,
-  *mongo_date_class,
+  *mongo_ce_Date,
   *mongo_ce_Id,
   *mongo_ce_Regex;
 
@@ -171,13 +171,13 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       buf->pos += OID_SIZE;
     }
     // MongoDate
-    else if (clazz == mongo_date_class) {
+    else if (clazz == mongo_ce_Date) {
       set_type(buf, BSON_DATE);
       serialize_string(buf, name, name_len);
 
-      zval *zsec = zend_read_property(mongo_date_class, *data, "sec", 3, 0 TSRMLS_CC);
+      zval *zsec = zend_read_property(mongo_ce_Date, *data, "sec", 3, 0 TSRMLS_CC);
       long sec = Z_LVAL_P(zsec);
-      zval *zusec = zend_read_property(mongo_date_class, *data, "usec", 4, 0 TSRMLS_CC);
+      zval *zusec = zend_read_property(mongo_ce_Date, *data, "usec", 4, 0 TSRMLS_CC);
       long usec = Z_LVAL_P(zusec);
       long ms = (sec * 1000) + (usec / 1000);
       serialize_long(buf, ms);
@@ -212,15 +212,15 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       serialize_size(buf->start+start, buf);
     }
     // MongoBin
-    else if (clazz == mongo_bindata_class) {
+    else if (clazz == mongo_ce_BinData) {
       set_type(buf, BSON_BINARY);
       serialize_string(buf, name, name_len);
 
-      zval *zid = zend_read_property(mongo_bindata_class, *data, "length", 6, 0 TSRMLS_CC);
+      zval *zid = zend_read_property(mongo_ce_BinData, *data, "length", 6, 0 TSRMLS_CC);
       serialize_int(buf, Z_LVAL_P(zid));
-      zid = zend_read_property(mongo_bindata_class, *data, "type", 4, 0 TSRMLS_CC);
+      zid = zend_read_property(mongo_ce_BinData, *data, "type", 4, 0 TSRMLS_CC);
       serialize_byte(buf, (unsigned char)Z_LVAL_P(zid));
-      zid = zend_read_property(mongo_bindata_class, *data, "bin", 3, 0 TSRMLS_CC);
+      zid = zend_read_property(mongo_ce_BinData, *data, "bin", 3, 0 TSRMLS_CC);
       serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
     }
     break;
@@ -353,7 +353,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
 
       zval *bin;
       MAKE_STD_ZVAL(bin);
-      object_init_ex(bin, mongo_bindata_class);
+      object_init_ex(bin, mongo_ce_BinData);
 
       add_property_long(bin, "length", len);
       add_property_stringl(bin, "bin", (char*)bytes, len, DUP);
@@ -385,7 +385,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
 
       zval *date;
       MAKE_STD_ZVAL(date);
-      object_init_ex(date, mongo_date_class);
+      object_init_ex(date, mongo_ce_Date);
 
       add_property_long(date, "sec", d/1000);
       add_property_long(date, "usec", (d*1000)%1000000);

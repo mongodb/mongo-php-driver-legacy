@@ -28,12 +28,13 @@
 #include "mongo.h"
 #include "bson.h"
 
-extern zend_class_entry *mongo_bindata_class,
-  *mongo_date_class,
-  *mongo_ce_DB,
-  *spl_ce_InvalidArgumentException;
+extern zend_class_entry *mongo_ce_DB,
+  *spl_ce_InvalidArgumentException,
+  *mongo_ce_Exception;
 
-zend_class_entry *mongo_dbref_ce = NULL,
+zend_class_entry *mongo_ce_Date = NULL,
+  *mongo_ce_BinData = NULL,
+  *mongo_ce_DBRef = NULL,
   *mongo_ce_Id = NULL,
   *mongo_ce_Code = NULL,
   *mongo_ce_Regex = NULL;
@@ -153,9 +154,9 @@ PHP_METHOD(MongoId, __toString) {
 /* }}} */
 
 
-/* {{{ mongo_date___construct() 
+/* {{{ MongoDate::__construct
  */
-PHP_FUNCTION( mongo_date___construct ) {
+PHP_METHOD(MongoDate, __construct) {
   struct timeval time;
   long sec, usec;
 
@@ -201,12 +202,12 @@ PHP_FUNCTION( mongo_date___construct ) {
 /* }}} */
 
 
-/* {{{ mongo_date___toString() 
+/* {{{ MongoDate::__toString() 
  */
-PHP_FUNCTION( mongo_date___toString ) {
-  zval *zsec = zend_read_property( mongo_date_class, getThis(), "sec", 3, 0 TSRMLS_CC );
+PHP_METHOD(MongoDate, __toString) {
+  zval *zsec = zend_read_property( mongo_ce_Date, getThis(), "sec", 3, 0 TSRMLS_CC );
   long sec = Z_LVAL_P( zsec );
-  zval *zusec = zend_read_property( mongo_date_class, getThis(), "usec", 4, 0 TSRMLS_CC );
+  zval *zusec = zend_read_property( mongo_ce_Date, getThis(), "usec", 4, 0 TSRMLS_CC );
   long usec = Z_LVAL_P( zusec );
   double dusec = (double)usec/1000000;
 
@@ -216,32 +217,25 @@ PHP_FUNCTION( mongo_date___toString ) {
 /* }}} */
 
 
-zval* bson_to_zval_date(unsigned long long date TSRMLS_DC) {
-  zval *zd;
-    
-  MAKE_STD_ZVAL(zd);
-  object_init_ex(zd, mongo_date_class);
+static function_entry MongoDate_methods[] = {
+  PHP_ME(MongoDate, __construct, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDate, __toString, NULL, ZEND_ACC_PUBLIC)
+  { NULL, NULL, NULL }
+};
 
-  long usec = (date % 1000) * 1000;
-  long sec = date / 1000;
+void mongo_init_MongoDate(TSRMLS_D) {
+  zend_class_entry ce;
 
-  add_property_long( zd, "sec", sec );
-  add_property_long( zd, "usec", usec );
-  return zd;
+  INIT_CLASS_ENTRY(ce, "MongoDate", MongoDate_methods);
+  mongo_ce_Date = zend_register_internal_class(&ce TSRMLS_CC);
+
+  zend_declare_property_long(mongo_ce_Date, "sec", strlen("sec"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Date, "usec", strlen("usec"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 }
 
-unsigned long long zval_to_bson_date(zval **data TSRMLS_DC) {
-  zval *zsec = zend_read_property( mongo_date_class, *data, "sec", 3, 0 TSRMLS_CC );
-  long sec = Z_LVAL_P( zsec );
-  zval *zusec = zend_read_property( mongo_date_class, *data, "usec", 4, 0 TSRMLS_CC );
-  long usec = Z_LVAL_P( zusec );
-  return (unsigned long long)(sec * 1000) + (unsigned long long)(usec/1000);
-}
-
-
-/* {{{ mongo_bindata___construct(string) 
+/* {{{ MongoBinData::__construct() 
  */
-PHP_FUNCTION(mongo_bindata___construct) {
+PHP_METHOD(MongoBinData, __construct) {
   char *bin;
   int bin_len, type;
 
@@ -262,35 +256,30 @@ PHP_FUNCTION(mongo_bindata___construct) {
 /* }}} */
 
 
-/* {{{ mongo_bindata___toString() 
+/* {{{ MongoBinData::__toString() 
  */
-PHP_FUNCTION(mongo_bindata___toString) {
+PHP_METHOD(MongoBinData, __toString) {
   RETURN_STRING( "<Mongo Binary Data>", 1 );
 }
 /* }}} */
 
 
-zval* bson_to_zval_bin( char *bin, int len, int type TSRMLS_DC) {
-  zval *zbin;
-    
-  MAKE_STD_ZVAL(zbin);
-  object_init_ex(zbin, mongo_bindata_class);
+static function_entry MongoBinData_methods[] = {
+  PHP_ME(MongoBinData, __construct, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoBinData, __toString, NULL, ZEND_ACC_PUBLIC)
+  { NULL, NULL, NULL }
+};
 
-  add_property_stringl( zbin, "bin", bin, len, 1 );
-  add_property_long( zbin, "length", len);
-  add_property_long( zbin, "type", type);
-  return zbin;
+void mongo_init_MongoBinData(TSRMLS_D) {
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "MongoBinData", MongoBinData_methods);
+  mongo_ce_BinData = zend_register_internal_class(&ce TSRMLS_CC);
+
+  zend_declare_property_string(mongo_ce_BinData, "bin", strlen("bin"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_BinData, "length", strlen("length"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 }
-
-int zval_to_bson_bin(zval **data, char **bin, int *len TSRMLS_DC) {
-  zval *zbin = zend_read_property( mongo_bindata_class, *data, "bin", 3, 0 TSRMLS_CC );
-  *(bin) = Z_STRVAL_P( zbin );
-  zval *zlen = zend_read_property( mongo_bindata_class, *data, "length", 6, 0 TSRMLS_CC );
-  *(len) = Z_LVAL_P( zlen );
-  zval *ztype = zend_read_property( mongo_bindata_class, *data, "type", 4, 0 TSRMLS_CC );
-  return (int)Z_LVAL_P( ztype );
-}
-
 
 /* {{{ MongoRegex::__construct() 
  */
@@ -312,7 +301,18 @@ PHP_METHOD(MongoRegex, __construct) {
   else if (Z_TYPE_P(regex) == IS_STRING) {
     char *re = Z_STRVAL_P(regex);
     char *eopattern = strrchr(re, '/');
+
+    if (!eopattern) {
+      zend_throw_exception(mongo_ce_Exception, "invalid regex", 0 TSRMLS_CC);
+      return;
+    }
+
     int pattern_len = eopattern - re - 1;
+
+    if (pattern_len < 0) {
+      zend_throw_exception(mongo_ce_Exception, "invalid regex", 0 TSRMLS_CC);
+      return;
+    }
 
     // move beyond the second '/' in /foo/bar 
     eopattern++;
@@ -347,12 +347,6 @@ PHP_METHOD(MongoRegex, __toString) {
 }
 /* }}} */
 
-void zval_to_bson_regex(zval **data, char **re, char **flags TSRMLS_DC) {
-  zval *zre = zend_read_property(mongo_ce_Regex, *data, "regex", 5, 0 TSRMLS_CC );
-  *(re) = Z_STRVAL_P(zre);
-  zval *zflags = zend_read_property(mongo_ce_Regex, *data, "flags", 5, 0 TSRMLS_CC );
-  *(flags) = Z_STRVAL_P(zflags);
-}
 
 static function_entry MongoRegex_methods[] = {
   PHP_ME(MongoRegex, __construct, NULL, ZEND_ACC_PUBLIC)
@@ -502,9 +496,9 @@ void mongo_init_MongoDBRef(TSRMLS_D) {
   zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoDBRef", MongoDBRef_methods);
-  mongo_dbref_ce = zend_register_internal_class(&ce TSRMLS_CC);
+  mongo_ce_DBRef = zend_register_internal_class(&ce TSRMLS_CC);
 
-  zend_declare_property_string(mongo_dbref_ce, "refKey", strlen("refKey"), "$ref", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
-  zend_declare_property_string(mongo_dbref_ce, "idKey", strlen("idKey"), "$id", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
+  zend_declare_property_string(mongo_ce_DBRef, "refKey", strlen("refKey"), "$ref", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
+  zend_declare_property_string(mongo_ce_DBRef, "idKey", strlen("idKey"), "$id", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
 }
 

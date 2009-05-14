@@ -179,20 +179,6 @@ PHP_MSHUTDOWN_FUNCTION(mongo);
 PHP_RINIT_FUNCTION(mongo);
 PHP_MINFO_FUNCTION(mongo);
 
-// connection
-PHP_FUNCTION(mongo_connect);
-PHP_FUNCTION(mongo_close);
-
-// queries
-PHP_FUNCTION(mongo_query);
-PHP_FUNCTION(mongo_remove);
-PHP_FUNCTION(mongo_insert);
-PHP_FUNCTION(mongo_batch_insert);
-PHP_FUNCTION(mongo_update);
-
-// cursor
-PHP_FUNCTION(mongo_has_next);
-PHP_FUNCTION(mongo_next);
 
 /*
  * Mongo class
@@ -240,6 +226,8 @@ void mongo_init_MongoUtil(TSRMLS_D);
 void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoCode(TSRMLS_D);
 void mongo_init_MongoRegex(TSRMLS_D);
+void mongo_init_MongoDate(TSRMLS_D);
+void mongo_init_MongoBinData(TSRMLS_D);
 
 
 zend_object_value mongo_init_Mongo_new(zend_class_entry* TSRMLS_DC);
