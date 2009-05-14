@@ -26,7 +26,7 @@ class MongoGridFSCursorTest extends PHPUnit_Framework_TestCase
         $db = $this->sharedFixture->selectDB('phpunit');
         $grid = $db->getGridFS();
         $grid->drop();
-        $grid->storeFile('./somefile');
+        $grid->storeFile('tests/somefile');
         $this->object = $grid->find();
         $this->object->start = memory_get_usage(true);
     }
@@ -51,7 +51,7 @@ class MongoGridFSCursorTest extends PHPUnit_Framework_TestCase
 
     public function testKey() {
         foreach ($this->object as $k => $v) {
-            $this->assertEquals($k, './somefile');
+            $this->assertEquals($k, 'tests/somefile');
         }
     }
 }

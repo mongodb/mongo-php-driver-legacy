@@ -23,6 +23,7 @@
 #include "mongo.h"
 #include "mongo_types.h"
 
+extern global_auto_globals_table;
 extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_Collection,
   *mongo_ce_Cursor,
@@ -410,6 +411,29 @@ PHP_METHOD(MongoGridFS, remove) {
 }
 
 PHP_METHOD(MongoGridFS, storeUpload) {
+  char *filename;
+  int filename_len;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &filename, &filename_len) == FAILURE) {
+    return;
+  }
+
+  zval **files;
+  if (zend_hash_find(CG(auto_globals), "_FILES", strlen("_FILES")+1, (void**)&files) == FAILURE) {
+    return;
+  }
+  
+  php_printf("here?\n");
+  HashTable *h = Z_ARRVAL_PP(files);
+  php_printf("that worked?\n");
+
+  php_printf("elems: %d\n", zend_hash_num_elements(h));
+  zval **file;
+  if (zend_hash_find(CG(auto_globals), filename, filename_len+1, (void**)&file) == FAILURE) {
+    php_printf("nope!\n");
+    return;
+  }
+  php_printf("woo!\n");
 
 }
 
@@ -713,7 +737,8 @@ PHP_METHOD(MongoGridFSCursor, current) {
 
 PHP_METHOD(MongoGridFSCursor, key) {
   zval *current = zend_read_property(mongo_ce_GridFSCursor, getThis(), "current", strlen("current"), NOISY TSRMLS_CC);
-  zend_hash_find(Z_ARRVAL_P(current), "filename", strlen("filename")+1, (void**)return_value_ptr);
+  zend_hash_find(Z_ARRVAL_P(current), "filename", strlen("filename")+1, (void**)&return_value_ptr);
+  RETURN_STRING(Z_STRVAL_PP(return_value_ptr), 1);
 }
 
 

@@ -95,7 +95,7 @@ PHP_METHOD(MongoId, __construct) {
   char holder[12];
   char *data = holder;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s", &id) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &id) == FAILURE) {
     return;
   }
   

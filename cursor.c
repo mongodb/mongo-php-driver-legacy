@@ -131,9 +131,15 @@ PHP_METHOD(MongoCursor, getNext) {
 }
 /* }}} */
 
-/* {{{ MongoCursor->limit
+/* {{{ MongoCursor::limit
  */
 PHP_METHOD(MongoCursor, limit) {
+  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), NOISY TSRMLS_CC);
+  if (Z_BVAL_P(started)) {
+    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+    return;
+  }
+
   long int num;
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &num) == FAILURE) {
     return;
@@ -145,9 +151,15 @@ PHP_METHOD(MongoCursor, limit) {
 }
 /* }}} */
 
-/* {{{ MongoCursor->softLimit
+/* {{{ MongoCursor::softLimit
  */
 PHP_METHOD(MongoCursor, softLimit) {
+  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), NOISY TSRMLS_CC);
+  if (Z_BVAL_P(started)) {
+    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+    return;
+  }
+
   zval *znum;
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &znum) == FAILURE) {
     return;
@@ -159,9 +171,15 @@ PHP_METHOD(MongoCursor, softLimit) {
 }
 /* }}} */
 
-/* {{{ MongoCursor->skip
+/* {{{ MongoCursor::skip
  */
 PHP_METHOD(MongoCursor, skip) {
+  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), NOISY TSRMLS_CC);
+  if (Z_BVAL_P(started)) {
+    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+    return;
+  }
+
   zval *znum;
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &znum) == FAILURE) {
     return;
@@ -176,6 +194,12 @@ PHP_METHOD(MongoCursor, skip) {
 /* {{{ MongoCursor->sort
  */
 PHP_METHOD(MongoCursor, sort) {
+  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), NOISY TSRMLS_CC);
+  if (Z_BVAL_P(started)) {
+    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+    return;
+  }
+
   zval *zfields;
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &zfields) == FAILURE) {
     return;
@@ -193,6 +217,12 @@ PHP_METHOD(MongoCursor, sort) {
 /* {{{ MongoCursor->hint
  */
 PHP_METHOD(MongoCursor, hint) {
+  zval *started = zend_read_property(mongo_ce_Cursor, getThis(), "startedIterating", strlen("startedIterating"), NOISY TSRMLS_CC);
+  if (Z_BVAL_P(started)) {
+    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+    return;
+  }
+
   zval *zfields;
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &zfields) == FAILURE) {
     return;
