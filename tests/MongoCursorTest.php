@@ -235,6 +235,13 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($c->hasNext());
     }
 
+    public function testHint() {
+        $c = $this->object->find();
+        $d = $c->hint(array('x'=>1));
+
+        $this->assertSame($c, $d);
+    }
+
     public function testCurrent() {
         for ($i=0; $i<20; $i++) {
             $this->object->insert(array('z' => $i));
@@ -259,6 +266,14 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $c = $this->object->find();
         foreach ($c as $k=>$v) {
             $this->assertEquals($k, (string)$v['_id']);
+        }
+
+        $ns = $this->object->db->selectCollection("system.indexes");
+        $cursor = $ns->find();
+
+        foreach ($ns as $k => $v) {
+            var_dump($v);
+            $this->assertEquals($k, "");
         }
     }
 

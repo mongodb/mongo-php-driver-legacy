@@ -196,8 +196,15 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->remove(array(), true);
       $this->assertEquals($this->object->count(), 14);
 
-      $this->object->remove();
-      
+      $this->object->remove(array());
+      $this->assertEquals($this->object->count(), 0);
+
+      for($i=0;$i<15;$i++) {
+        $this->object->insert(array("i"=>$i));
+      }
+
+      $this->assertEquals($this->object->count(), 15);
+      $this->object->remove();      
       $this->assertEquals($this->object->count(), 0);
     }
 

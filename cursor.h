@@ -34,26 +34,4 @@ PHP_METHOD(MongoCursor, rewind);
 PHP_METHOD(MongoCursor, valid);
 PHP_METHOD(MongoCursor, reset);
 
-
-#define CHECK_AND_GET_PARAM(pname) int argc = ZEND_NUM_ARGS();          \
-  int param_count = 1;                                                  \
-  zval **pname;                                                         \
-  if (argc != param_count) {                                            \
-    ZEND_WRONG_PARAM_COUNT();                                           \
-  }                                                                     \
-  zend_get_parameters_ex(argc, &pname);                                 \
-                                                                        \
-  zval *started = zend_read_property(mongo_ce_Cursor,                   \
-                                     getThis(),                         \
-                                     "startedIterating",                \
-                                     strlen("startedIterating"),        \
-                                     1 TSRMLS_CC);                      \
-                                                                        \
-  if (Z_BVAL_P(started)) {                                              \
-    zend_throw_exception(mongo_ce_CursorException,                      \
-                         "cannot modify cursor after beginning iteration.", \
-                         0 TSRMLS_CC);                                  \
-    return;                                                             \
-  }                                                                     
-
 #endif

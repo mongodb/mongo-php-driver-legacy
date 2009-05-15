@@ -120,7 +120,7 @@ PHP_METHOD(MongoCursor, getNext) {
 
   if (cursor->at < cursor->num) {
     array_init(return_value);
-    cursor->buf.pos = bson_to_zval(cursor->buf.pos, return_value TSRMLS_CC);
+    cursor->buf.pos = (unsigned char*)bson_to_zval(cursor->buf.pos, return_value TSRMLS_CC);
 
     // increment cursor position
     cursor->at++;
@@ -147,7 +147,9 @@ PHP_METHOD(MongoCursor, limit) {
   num *= -1;
 
   zend_update_property_long(mongo_ce_Cursor, getThis(), "limit", strlen("limit"), num TSRMLS_CC);
-  RETURN_ZVAL(getThis(), 1, 0);
+
+  return_value->value.obj = this_ptr->value.obj;
+  return_value->type = IS_OBJECT;
 }
 /* }}} */
 
@@ -167,7 +169,9 @@ PHP_METHOD(MongoCursor, softLimit) {
   convert_to_long(znum);
 
   zend_update_property(mongo_ce_Cursor, getThis(), "limit", strlen("limit"), znum TSRMLS_CC);
-  RETURN_ZVAL(getThis(), 1, 0);
+
+  return_value->value.obj = this_ptr->value.obj;
+  return_value->type = IS_OBJECT;
 }
 /* }}} */
 
@@ -187,7 +191,9 @@ PHP_METHOD(MongoCursor, skip) {
   convert_to_long(znum);
 
   zend_update_property(mongo_ce_Cursor, getThis(), "skip", strlen("skip"), znum TSRMLS_CC);
-  RETURN_ZVAL(getThis(), 1, 0);
+
+  return_value->value.obj = this_ptr->value.obj;
+  return_value->type = IS_OBJECT;
 }
 /* }}} */
 
@@ -210,7 +216,9 @@ PHP_METHOD(MongoCursor, sort) {
   add_assoc_zval(query, "orderby", zfields);
 
   zend_update_property(mongo_ce_Cursor, getThis(), "query", strlen("query"), query TSRMLS_CC);
-  RETURN_ZVAL(getThis(), 1, 0);
+
+  return_value->value.obj = this_ptr->value.obj;
+  return_value->type = IS_OBJECT;
 }
 /* }}} */
 
@@ -233,7 +241,9 @@ PHP_METHOD(MongoCursor, hint) {
   add_assoc_zval(query, "$hint", zfields);
 
   zend_update_property(mongo_ce_Cursor, getThis(), "query", strlen("query"), query TSRMLS_CC);
-  RETURN_ZVAL(getThis(), 1, 0);
+
+  return_value->value.obj = this_ptr->value.obj;
+  return_value->type = IS_OBJECT;
 }
 /* }}} */
 

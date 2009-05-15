@@ -35,6 +35,10 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
         $this->object->close();
         $this->assertFalse($this->object->connected);
+
+        $this->object->connect();
+        $this->object->connect();
+        $this->assertTrue($this->object->connected);
     }
 
     /**
@@ -155,24 +159,25 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals((string)$c, "1.6");
     }
 
-    /**
-     * @todo Implement testDropDB().
-     */
     public function testDropDB() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+        $this->object->connect();
+        $c = $this->object->selectCollection("temp", "foo");
+        $c->insert(array('x' => 1));
+
+        $this->object->dropDB("temp");
+        $this->assertEquals($c->findOne(), NULL);
+
+        $db = $this->object->selectDB("temp");
+        $c->insert(array('x' => 1));
+
+        $this->object->dropDB($db);
+        $this->assertEquals($c->findOne(), NULL);
     }
 
-    /**
-     * @todo Implement testRepairDB().
-     */
     public function testRepairDB() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+        $this->object->connect();
+        $db = $this->object->selectDB('temp');
+        $this->object->repairDB($db);
     }
 
     public function testLastError() {
@@ -206,8 +211,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testResetError() {
-        $this->sharedFixture->connect();
-
         $this->sharedFixture->resetError();
         $err = $this->sharedFixture->lastError();
         $this->assertEquals($err['err'], null);
@@ -236,6 +239,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
     public function testClose() {
         $this->object = new Mongo();
         $this->assertTrue($this->object->connected);
+
+        $this->object->close();
+        $this->assertFalse($this->object->connected);
 
         $this->object->close();
         $this->assertFalse($this->object->connected);

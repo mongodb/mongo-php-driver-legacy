@@ -162,8 +162,9 @@ PHP_METHOD(MongoGridFS, find) {
 PHP_METHOD(MongoGridFS, storeFile) {
   char *filename;
   int filename_len;
+  zval *extra = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &filename, &filename_len) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &filename, &filename_len, &extra) == FAILURE) {
     return;
   }
 
@@ -249,6 +250,11 @@ PHP_METHOD(MongoGridFS, storeFile) {
   add_assoc_stringl(zfile, "filename", filename, filename_len, DUP);
   add_assoc_long(zfile, "length", size);
   add_assoc_long(zfile, "chunkSize", MonGlo(chunk_size));
+
+  if (extra) {
+    zval temp;
+    zend_hash_merge(Z_ARRVAL_P(zfile), Z_ARRVAL_P(extra), NULL, &temp, sizeof(zval), 1);
+  }
 
   // get md5
   /*  zval *zmd5;
@@ -411,30 +417,46 @@ PHP_METHOD(MongoGridFS, remove) {
 }
 
 PHP_METHOD(MongoGridFS, storeUpload) {
-  char *filename;
-  int filename_len;
+  zval *filename;
+  char *new_name = 0;
+  int new_len = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &filename, &filename_len) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|s", &filename, &new_name, &new_len) == FAILURE) {
     return;
   }
+  convert_to_string(filename);
 
-  zval **files;
-  if (zend_hash_find(CG(auto_globals), "_FILES", strlen("_FILES")+1, (void**)&files) == FAILURE) {
-    return;
-  }
-  
-  php_printf("here?\n");
-  HashTable *h = Z_ARRVAL_PP(files);
-  php_printf("that worked?\n");
-
-  php_printf("elems: %d\n", zend_hash_num_elements(h));
+  zval *h = PG(http_globals)[TRACK_VARS_FILES];
   zval **file;
-  if (zend_hash_find(CG(auto_globals), filename, filename_len+1, (void**)&file) == FAILURE) {
-    php_printf("nope!\n");
+  if (zend_hash_find(Z_ARRVAL_P(h), Z_STRVAL_P(filename), Z_STRLEN_P(filename)+1, (void**)&file) == FAILURE) {
+    char *errmsg;
+    spprintf(&errmsg, 0, "could not find uploaded file %s", Z_STRVAL_P(filename));
+    zend_throw_exception(mongo_ce_GridFSException, errmsg, 0 TSRMLS_CC);
+    efree(errmsg);
     return;
   }
-  php_printf("woo!\n");
 
+  zval **temp;
+  zend_hash_find(Z_ARRVAL_PP(file), "tmp_name", strlen("tmp_name")+1, (void**)&temp);
+  convert_to_string(*temp);
+
+  if (!new_name) {
+    zval **n;
+    zend_hash_find(Z_ARRVAL_PP(file), "name", strlen("name")+1, (void**)&n);
+    new_name = Z_STRVAL_PP(n);
+  }
+
+  zval *extra;
+  MAKE_STD_ZVAL(extra);
+  array_init(extra);
+  add_assoc_string(extra, "filename", new_name, 1);
+
+  void *holder;
+  zend_ptr_stack_n_push(&EG(argument_stack), 4, *temp, extra, 2, NULL);
+  zim_MongoGridFS_storeFile(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+
+  zval_ptr_dtor(&extra);
 }
 
 

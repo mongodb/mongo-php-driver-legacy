@@ -118,7 +118,7 @@ PHP_METHOD(MongoId, __construct) {
   }
   else if (Z_TYPE_P(id) == IS_OBJECT &&
            Z_OBJCE_P(id) == mongo_ce_Id) {
-    zval *zid = zend_read_property(mongo_ce_Id, getThis(), "id", strlen("id"), NOISY TSRMLS_CC);
+    zval *zid = zend_read_property(mongo_ce_Id, id, "id", strlen("id"), NOISY TSRMLS_CC);
     data = (char*)Z_STRVAL_P(zid);
   }
   else {

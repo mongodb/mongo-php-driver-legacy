@@ -7,14 +7,47 @@ require_once 'PHPUnit/Framework.php';
  */
 class MongoRegexTest extends PHPUnit_Framework_TestCase
 {
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testInvalidParam1() {
+        $r1 = new MongoRegex("");
+    }
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testInvalidParam2() {
+        $r1 = new MongoRegex("/");
+    }
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testInvalidParam3() {
+        $r1 = new MongoRegex("345");
+    }
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testInvalidParam4() {
+        $r1 = new MongoRegex("b");
+    }
+
     public function testBasic() {
-        $r1 = new MongoRegex();
+        $r1 = new MongoRegex("//");
         $this->assertEquals($r1->regex, "");
         $this->assertEquals($r1->flags, "");
 
         $r2 = new MongoRegex("/foo/bar");
         $this->assertEquals($r2->regex, "foo");
         $this->assertEquals($r2->flags, "bar");
+
+        $r3 = new MongoRegex($r2);
+        $this->assertEquals($r3->regex, "foo");
+        $this->assertEquals($r3->flags, "bar");
 
         $stupid_str = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz";
         $rstupid = new MongoRegex("/${stupid_str}/flagflagflagflagflag");

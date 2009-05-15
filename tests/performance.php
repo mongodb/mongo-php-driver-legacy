@@ -27,7 +27,7 @@ function index($c, $obj)
 {
   $c->drop();
   $c->ensureIndex("x");
-  go($c, $obj, $num);
+  go($c, $obj);
 
   $c->drop();
   $c->ensureIndex("x");

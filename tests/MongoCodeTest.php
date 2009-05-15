@@ -7,6 +7,17 @@ require_once 'PHPUnit/Framework.php';
  */
 class MongoCodeTest extends PHPUnit_Framework_TestCase
 {
+    public function testWeird() {
+        $c = new MongoCode(3);
+        $this->assertEquals($c->code, "3");
+        $this->assertEquals(count($c->scope), 0);
+
+        $c = new MongoCode(NULL, array("x"=>1));
+        $this->assertEquals($c->code, "");
+        $this->assertEquals(count($c->scope), 1);
+        $this->assertEquals($c->scope['x'], 1);
+    }
+
     public function testBasic() {
       $code_str = "if(x<5){ return true; } else { return false;}";
 
