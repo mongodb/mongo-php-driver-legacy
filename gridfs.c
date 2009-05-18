@@ -741,8 +741,9 @@ PHP_METHOD(MongoGridFSCursor, getNext) {
 }
 
 PHP_METHOD(MongoGridFSCursor, current) {
-  zval *current = zend_read_property(mongo_ce_GridFSCursor, getThis(), "current", strlen("current"), NOISY TSRMLS_CC);
-  if (Z_TYPE_P(current) == IS_NULL) {
+  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+  if (!cursor->current) {
     RETURN_NULL();
   }
 
@@ -752,14 +753,21 @@ PHP_METHOD(MongoGridFSCursor, current) {
   void *holder;
   zval *gridfs = zend_read_property(mongo_ce_GridFSCursor, getThis(), "gridfs", strlen("gridfs"), NOISY TSRMLS_CC);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, gridfs, current, 2, NULL);
+  zend_ptr_stack_n_push(&EG(argument_stack), 4, gridfs, cursor->current, 2, NULL);
   zim_MongoGridFSFile___construct(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
   zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
 }
 
 PHP_METHOD(MongoGridFSCursor, key) {
-  zval *current = zend_read_property(mongo_ce_GridFSCursor, getThis(), "current", strlen("current"), NOISY TSRMLS_CC);
-  zend_hash_find(Z_ARRVAL_P(current), "filename", strlen("filename")+1, (void**)&return_value_ptr);
+  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  if (!cursor->current) {
+    RETURN_NULL();
+  }
+  zend_hash_find(Z_ARRVAL_P(cursor->current), "filename", strlen("filename")+1, (void**)&return_value_ptr);
+  if (!return_value_ptr) {
+    RETURN_NULL();
+  }
+  convert_to_string(*return_value_ptr);
   RETURN_STRING(Z_STRVAL_PP(return_value_ptr), 1);
 }
 

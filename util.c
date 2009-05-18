@@ -19,7 +19,8 @@
 
 #include "mongo.h"
 
-extern zend_class_entry *spl_ce_InvalidArgumentException;
+extern zend_class_entry *spl_ce_InvalidArgumentException,
+  *mongo_ce_Cursor;
 
 extern int le_connection,
   le_pconnection;
@@ -174,20 +175,37 @@ PHP_METHOD(MongoUtil, dbCommand) {
     RETURN_FALSE;
   }
 
-  mongo_link *link;
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
-
   // create db.$cmd
   char *cmd_ns = get_cmd_ns(db, strlen(db));
+  zval ns;
+  Z_TYPE(ns) = IS_STRING;
+  Z_STRVAL(ns) = cmd_ns;
+  Z_STRLEN(ns) = strlen(cmd_ns);
+
+  // create cursor
+  zval *cursor;
+  MAKE_STD_ZVAL(cursor);
+  object_init_ex(cursor, mongo_ce_Cursor);
+
+  zval temp;
+  void *holder;
+  zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, &ns, zdata, 3, 0);
+  zim_MongoCursor___construct(3, &temp, 0, cursor, return_value_used TSRMLS_CC);
+  zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
+
+  // limit
+  zval limit;
+  Z_TYPE(limit) = IS_LONG;
+  Z_LVAL(limit) = 1;
+
+  zend_ptr_stack_n_push(&EG(argument_stack), 3, &limit, 1, 0);
+  zim_MongoCursor_limit(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
+  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
 
   // query
-  mongo_cursor *cursor = mongo_do_query(link, cmd_ns, 0, -1, zdata, 0 TSRMLS_CC);
-  efree(cmd_ns);
+  zim_MongoCursor_getNext(0, return_value, return_value_ptr, cursor, return_value_used TSRMLS_CC);
 
-  // return 1 result
-  zval *next = mongo_do_next(cursor TSRMLS_CC);
-  free_cursor(cursor);
-  RETURN_ZVAL(next, 0, 1);
+  zval_ptr_dtor(&cursor);
 }
 
 

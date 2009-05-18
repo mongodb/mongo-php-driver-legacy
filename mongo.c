@@ -47,7 +47,7 @@ static int check_connection(mongo_link* TSRMLS_DC);
 static int mongo_connect_nonb(int, char*, int);
 static int mongo_do_socket_connect(mongo_link*);
 static int get_sockaddr(struct sockaddr_in*, char*, int);
-static int get_reply(mongo_cursor* TSRMLS_DC);
+int get_reply(mongo_cursor* TSRMLS_DC);
 static void kill_cursor(mongo_cursor* TSRMLS_DC);
 static void get_host_and_port(char*, mongo_link* TSRMLS_DC);
 static void mongo_init_MongoExceptions(TSRMLS_D);
@@ -64,6 +64,10 @@ int le_connection, le_pconnection, le_db_cursor;
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
 static PHP_GINIT_FUNCTION(mongo);
+
+function_entry mongo_functions[] = {
+  { NULL, NULL, NULL }
+}; 
 
 static function_entry Mongo_methods[] = {
   PHP_ME(Mongo, __construct, NULL, ZEND_ACC_PUBLIC)
@@ -85,6 +89,8 @@ static function_entry Mongo_methods[] = {
   { NULL, NULL, NULL }
 };
 
+
+
 /* {{{ mongo_module_entry 
  */
 zend_module_entry mongo_module_entry = {
@@ -92,7 +98,7 @@ zend_module_entry mongo_module_entry = {
   STANDARD_MODULE_HEADER,
 #endif
   PHP_MONGO_EXTNAME,
-  NULL,
+  mongo_functions,
   PHP_MINIT(mongo),
   PHP_MSHUTDOWN(mongo),
   PHP_RINIT(mongo),
@@ -185,56 +191,6 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 }
 
 
-// tell db to destroy its cursor
-static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
-  // we allocate a cursor even if no results are returned,
-  // but the database will throw an assertion if we try to
-  // kill a non-existant cursor
-  // non-cursors have ids of 0
-  if (cursor->cursor_id == 0) {
-    return;
-  }
-  unsigned char quickbuf[128];
-  buffer buf;
-  buf.pos = quickbuf;
-  buf.start = buf.pos;
-  buf.end = buf.start + 128;
-
-  // std header
-  CREATE_MSG_HEADER(0, MonGlo(request_id)++, OP_KILL_CURSORS);
-  APPEND_HEADER(buf);
-  // 0 - reserved
-  serialize_int(&buf, 0);
-  // # of cursors
-  serialize_int(&buf, 1);
-  // cursor ids
-  serialize_long(&buf, cursor->cursor_id);
-  serialize_size(buf.start, &buf);
-
-  mongo_say(cursor->link, &buf TSRMLS_CC);
-}
-
-void free_cursor(mongo_cursor *cursor) {
-  // free mem
-  if (cursor->buf.start) {
-    efree(cursor->buf.start);
-  }
-  if (cursor->ns) {
-    efree(cursor->ns);
-  }
-  efree(cursor);
-  cursor = 0;
-}
-
-static void php_cursor_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
-  mongo_cursor *cursor = (mongo_cursor*)rsrc->ptr;
-
-  if (cursor) {
-    kill_cursor(cursor TSRMLS_CC);
-    free_cursor(cursor);
-  }
-}
-
 
 /* {{{ PHP_MINIT_FUNCTION
  */
@@ -244,7 +200,6 @@ PHP_MINIT_FUNCTION(mongo) {
 
   le_connection = zend_register_list_destructors_ex(php_connection_dtor, NULL, PHP_CONNECTION_RES_NAME, module_number);
   le_pconnection = zend_register_list_destructors_ex(NULL, php_connection_dtor, PHP_CONNECTION_RES_NAME, module_number);
-  le_db_cursor = zend_register_list_destructors_ex(php_cursor_dtor, NULL, PHP_DB_CURSOR_RES_NAME, module_number);
 
   mongo_init_Mongo(TSRMLS_C);
   mongo_init_MongoDB(TSRMLS_C);
@@ -927,7 +882,6 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
   cursor->buf.pos = 0;
   cursor->link = link;
   cursor->ns = estrdup(collection);
-  cursor->ns_len = strlen(collection);                        
 
   get_reply(cursor TSRMLS_CC);
 
@@ -945,7 +899,7 @@ int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
   }
 
   CREATE_BUF(buf, 256);
-  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->ns_len, cursor->header.request_id, OP_GET_MORE);
+  CREATE_RESPONSE_HEADER(buf, cursor->ns, strlen(cursor->ns), cursor->header.request_id, OP_GET_MORE);
   serialize_int(&buf, cursor->limit);
   serialize_long(&buf, cursor->cursor_id);
   serialize_size(buf.start, &buf);
@@ -1065,7 +1019,7 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 }
 
 
-static int get_reply(mongo_cursor *cursor TSRMLS_DC) {
+int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   if(cursor->buf.start) {
     efree(cursor->buf.start);
     cursor->buf.start = 0;

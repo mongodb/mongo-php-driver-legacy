@@ -213,9 +213,9 @@ PHP_METHOD(MongoCollection, find) {
       zend_ptr_stack_push(&EG(argument_stack), fields);
     }
   }
-
-  zend_ptr_stack_2_push(&EG(argument_stack), ZEND_NUM_ARGS()+2, NULL);
-
+  
+  zend_ptr_stack_2_push(&EG(argument_stack), (void*)ZEND_NUM_ARGS()+2, NULL);
+  
   zval temp;
   zim_MongoCursor___construct(ZEND_NUM_ARGS()+2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
 
@@ -248,7 +248,10 @@ PHP_METHOD(MongoCollection, findOne) {
   zend_ptr_stack_n_push(&EG(argument_stack), 3, &limit, 1, NULL);
   zim_MongoCursor_limit(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
   zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+
   zim_MongoCursor_getNext(0, return_value, return_value_ptr, cursor, return_value_used TSRMLS_CC);
+
+  zend_objects_store_del_ref(cursor TSRMLS_CC);
   zval_ptr_dtor(&cursor);
 }
 

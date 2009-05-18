@@ -24,7 +24,6 @@
 // resource names
 #define PHP_CONNECTION_RES_NAME "mongo connection"
 #define PHP_AUTH_CONNECTION_RES_NAME "mongo authenticated connection"
-#define PHP_DB_CURSOR_RES_NAME "mongo cursor"
 
 // db ops
 #define OP_REPLY 1
@@ -133,28 +132,36 @@ typedef struct {
   unsigned char *end;
 } buffer;
 
+
 typedef struct {
-  int ref_count;
+  zend_object std;
+
+  zval *current;
+
+  zval *query;
+  zval *fields;
+  int limit;
+  int skip;
 
   // response header
   mongo_msg_header header;
   // connection
   mongo_link *link;
+
   // collection namespace
   char *ns;
-  int ns_len;
 
   // response fields
   int flag;
   long long cursor_id;
   int start;
 
+  zend_bool started_iterating;
+
   // number of results used
   int at;
   // number results returned
   int num;
-  // total number to return
-  int limit;
 
   // results
   buffer buf;
@@ -208,9 +215,6 @@ void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
 int mongo_say(mongo_link*, buffer* TSRMLS_DC);
 int mongo_hear(mongo_link*, void*, int TSRMLS_DC);
-
-
-void free_cursor(mongo_cursor*);
 
 void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);

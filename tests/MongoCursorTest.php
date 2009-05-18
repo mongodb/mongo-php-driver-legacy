@@ -271,8 +271,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $ns = $this->object->db->selectCollection("system.indexes");
         $cursor = $ns->find();
 
-        foreach ($ns as $k => $v) {
-            var_dump($v);
+        foreach ($cursor as $k => $v) {
             $this->assertEquals($k, "");
         }
     }
