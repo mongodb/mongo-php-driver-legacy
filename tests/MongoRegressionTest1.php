@@ -1,8 +1,6 @@
 <?php
 require_once 'PHPUnit/Framework.php';
 
-require_once 'Mongo.php';
-
 class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
 {
 
