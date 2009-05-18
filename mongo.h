@@ -24,8 +24,6 @@
 // resource names
 #define PHP_CONNECTION_RES_NAME "mongo connection"
 #define PHP_AUTH_CONNECTION_RES_NAME "mongo authenticated connection"
-#define PHP_DB_CURSOR_RES_NAME "mongo cursor"
-#define PHP_GRIDFS_RES_NAME "gridfs tools"
 
 // db ops
 #define OP_REPLY 1
@@ -51,6 +49,11 @@
 // if _id field should be added
 #define PREP 1
 #define NO_PREP 0
+
+#define LAZY 1
+#define NOT_LAZY 0
+
+#define NOISY 0
 
 // duplicate strings
 #define DUP 1
@@ -115,6 +118,7 @@ typedef struct {
 
 } mongo_link;
 
+
 typedef struct {
   int length;
   int request_id;
@@ -128,42 +132,40 @@ typedef struct {
   unsigned char *end;
 } buffer;
 
+
 typedef struct {
-  int ref_count;
+  zend_object std;
+
+  zval *current;
+
+  zval *query;
+  zval *fields;
+  int limit;
+  int skip;
 
   // response header
   mongo_msg_header header;
   // connection
   mongo_link *link;
+
   // collection namespace
   char *ns;
-  int ns_len;
 
   // response fields
   int flag;
   long long cursor_id;
   int start;
 
+  zend_bool started_iterating;
+
   // number of results used
   int at;
   // number results returned
   int num;
-  // total number to return
-  int limit;
 
   // results
   buffer buf;
 } mongo_cursor;
-
-typedef struct {
-  mongo_link *link;
-
-  char *db;
-  int db_len;
-
-  char *file_ns;
-  char *chunk_ns;
-} mongo_gridfs;
 
 
 #define BUF_REMAINING (buf->end-buf->pos)
@@ -179,35 +181,62 @@ typedef struct {
     php_printf("%d\n", *temp++);                    \
   }
 
-
-
 PHP_MINIT_FUNCTION(mongo);
 PHP_MSHUTDOWN_FUNCTION(mongo);
 PHP_RINIT_FUNCTION(mongo);
 PHP_MINFO_FUNCTION(mongo);
 
-// connection
-PHP_FUNCTION(mongo_connect);
-PHP_FUNCTION(mongo_close);
 
-// queries
-PHP_FUNCTION(mongo_query);
-PHP_FUNCTION(mongo_remove);
-PHP_FUNCTION(mongo_insert);
-PHP_FUNCTION(mongo_batch_insert);
-PHP_FUNCTION(mongo_update);
+/*
+ * Mongo class
+ */
+PHP_METHOD(Mongo, __construct);
+PHP_METHOD(Mongo, connect);
+PHP_METHOD(Mongo, pairConnect);
+PHP_METHOD(Mongo, persistConnect);
+PHP_METHOD(Mongo, pairPersistConnect);
+PHP_METHOD(Mongo, connectUtil);
+PHP_METHOD(Mongo, __toString);
+PHP_METHOD(Mongo, selectDB);
+PHP_METHOD(Mongo, selectCollection);
+PHP_METHOD(Mongo, dropDB);
+PHP_METHOD(Mongo, repairDB);
+PHP_METHOD(Mongo, lastError);
+PHP_METHOD(Mongo, prevError);
+PHP_METHOD(Mongo, resetError);
+PHP_METHOD(Mongo, forceError);
+PHP_METHOD(Mongo, close);
+PHP_METHOD(Mongo, __destruct);
 
-// cursor
-PHP_FUNCTION(mongo_has_next);
-PHP_FUNCTION(mongo_next);
+/*
+ * Internal functions
+ */
+void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
+void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
+int mongo_say(mongo_link*, buffer* TSRMLS_DC);
+int mongo_hear(mongo_link*, void*, int TSRMLS_DC);
 
-// gridfs
-PHP_FUNCTION( mongo_gridfs_init );
-PHP_FUNCTION( mongo_gridfs_store );
-PHP_FUNCTION( mongo_gridfile_write );
+void mongo_init_Mongo(TSRMLS_D);
+void mongo_init_MongoDB(TSRMLS_D);
+void mongo_init_MongoCollection(TSRMLS_D);
+void mongo_init_MongoCursor(TSRMLS_D);
 
+void mongo_init_MongoGridFS(TSRMLS_D);
+void mongo_init_MongoGridFSFile(TSRMLS_D);
+void mongo_init_MongoGridFSCursor(TSRMLS_D);
+
+void mongo_init_MongoUtil(TSRMLS_D);
 
 void mongo_init_MongoId(TSRMLS_D);
+void mongo_init_MongoCode(TSRMLS_D);
+void mongo_init_MongoRegex(TSRMLS_D);
+void mongo_init_MongoDate(TSRMLS_D);
+void mongo_init_MongoBinData(TSRMLS_D);
+
+
+zend_object_value mongo_init_Mongo_new(zend_class_entry* TSRMLS_DC);
+zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
+
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;
