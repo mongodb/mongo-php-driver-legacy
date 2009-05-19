@@ -17,9 +17,14 @@
 
 
 #include <php.h>
+#include <zend_exceptions.h>
 
 #include "db.h"
 #include "mongo.h"
+#include "collection.h"
+#include "cursor.h"
+#include "gridfs.h"
+#include "mongo_types.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Collection,
@@ -97,7 +102,7 @@ PHP_METHOD(MongoDB, getGridFS) {
     }
   }
 
-  zend_ptr_stack_2_push(&EG(argument_stack), ZEND_NUM_ARGS()+1, NULL);
+  zend_ptr_stack_2_push(&EG(argument_stack), (void*)ZEND_NUM_ARGS()+1, NULL);
   zim_MongoGridFS___construct(ZEND_NUM_ARGS()+1, &temp, NULL, return_value, return_value_used TSRMLS_CC);
   zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
 

@@ -31,23 +31,24 @@
 #endif
 
 #include <php.h>
+#include <zend_exceptions.h>
 #include <php_ini.h>
 #include <ext/standard/info.h>
 
 #include "mongo.h"
+#include "db.h"
 #include "mongo_types.h"
 #include "bson.h"
 
 extern zend_class_entry *mongo_ce_DB;
 
 static void mongo_link_dtor(mongo_link*);
-static int connect_already(INTERNAL_FUNCTION_PARAMETERS, int);
+static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int);
 static int get_master(mongo_link* TSRMLS_DC);
 static int check_connection(mongo_link* TSRMLS_DC);
 static int mongo_connect_nonb(int, char*, int);
 static int mongo_do_socket_connect(mongo_link*);
 static int get_sockaddr(struct sockaddr_in*, char*, int);
-int get_reply(mongo_cursor* TSRMLS_DC);
 static void kill_cursor(mongo_cursor* TSRMLS_DC);
 static void get_host_and_port(char*, mongo_link* TSRMLS_DC);
 static void mongo_init_MongoExceptions(TSRMLS_D);
@@ -447,7 +448,7 @@ PHP_METHOD(Mongo, connectUtil) {
 }
 
 
-static int connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
+static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   zval *username, *password;
  
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &username, &password) == FAILURE) {
@@ -1145,7 +1146,7 @@ static int check_connection(mongo_link *link TSRMLS_DC) {
 
 static int mongo_connect_nonb(int sock, char *host, int port) {
   struct sockaddr_in addr, addr2;
-  fd_set rset, wset, eset;
+  fd_set rset, wset;
   struct timeval tval;
 #ifdef WIN32
   const char yes = 1;
@@ -1199,7 +1200,7 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
       return FAILURE;
     }
 
-    int size = sizeof(addr2);
+    uint size = sizeof(addr2);
     connected = getpeername(sock, (struct sockaddr*)&addr, &size);
     if (connected == FAILURE) {
       close(sock);

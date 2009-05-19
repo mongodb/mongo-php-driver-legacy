@@ -17,6 +17,7 @@
 
 #include <php.h>
 #include <zend_interfaces.h>
+#include <zend_exceptions.h>
 
 #include "mongo.h"
 #include "bson.h"
@@ -152,11 +153,6 @@ PHP_METHOD(MongoCursor, limit) {
   convert_to_long(znum);
 
   cursor->limit = Z_LVAL_P(znum) * -1;
-
-  RETVAL_ZVAL(getThis(), 0, 0);
-
-  int i;
-  char *temp;
 
   RETVAL_ZVAL(getThis(), 1, 0);
 }
@@ -404,9 +400,6 @@ static zend_object_value mongo_mongo_cursor_new(zend_class_entry *class_type TSR
   zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, 
                  (void *) &tmp, sizeof(zval *));
 
-  zend_object_handle handle;
-  struct _store_object *obj;
-  
   retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, mongo_mongo_cursor_free, NULL TSRMLS_CC);
   retval.handlers = zend_get_std_object_handlers();
   retval.handlers->clone_obj = NULL;

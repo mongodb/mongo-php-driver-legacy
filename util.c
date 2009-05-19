@@ -18,6 +18,7 @@
 #include <php.h>
 
 #include "mongo.h"
+#include "cursor.h"
 
 extern zend_class_entry *spl_ce_InvalidArgumentException,
   *mongo_ce_Cursor;
@@ -83,7 +84,7 @@ PHP_METHOD(MongoUtil, toIndexString) {
     HashPosition pointer;
     zval **data;
     char *key;
-    int key_len, first = 1;
+    uint key_len, first = 1;
     ulong index;
 
     for(zend_hash_internal_pointer_reset_ex(hindex, &pointer); 

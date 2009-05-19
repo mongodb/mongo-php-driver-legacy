@@ -16,14 +16,15 @@
  */
 
 #include <php.h>
+#include <zend_exceptions.h>
 
 #include "gridfs.h"
 #include "collection.h"
 #include "cursor.h"
 #include "mongo.h"
 #include "mongo_types.h"
+#include "db.h"
 
-extern global_auto_globals_table;
 extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_Collection,
   *mongo_ce_Cursor,

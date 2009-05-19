@@ -22,6 +22,7 @@
 #include "bson.h"
 #include "mongo.h"
 #include "mongo_types.h"
+#include "db.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
@@ -105,7 +106,6 @@ PHP_METHOD(MongoCollection, validate) {
 
   zval *name = zend_read_property(mongo_ce_Collection, getThis(), "name", strlen("name"), NOISY TSRMLS_CC);
   zval *zlink = zend_read_property(mongo_ce_Collection, getThis(), "connection", strlen("connection"), NOISY TSRMLS_CC);
-  zval *ns = zend_read_property(mongo_ce_Collection, getThis(), "ns", strlen("ns"), NOISY TSRMLS_CC);
 
   zval *data;
   MAKE_STD_ZVAL(data);
@@ -300,8 +300,6 @@ PHP_METHOD(MongoCollection, remove) {
   zval *ns = zend_read_property(mongo_ce_Collection, getThis(), "ns", strlen("ns"), NOISY TSRMLS_CC);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
-
-  HashTable *array = Z_ARRVAL_P(criteria);
   CREATE_HEADER(buf, Z_STRVAL_P(ns), Z_STRLEN_P(ns), OP_DELETE);
 
   int mflags = (just_one == 1);
@@ -339,7 +337,6 @@ PHP_METHOD(MongoCollection, ensureIndex) {
 
   // get the system.indexes collection
   zval *db = zend_read_property(mongo_ce_Collection, getThis(), "db", strlen("db"), NOISY TSRMLS_CC);
-  zval *dbname = zend_read_property(mongo_ce_Collection, db, "name", strlen("name"), NOISY TSRMLS_CC);
 
   zval *system_indexes;
   MAKE_STD_ZVAL(system_indexes);

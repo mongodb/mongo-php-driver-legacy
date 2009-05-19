@@ -26,6 +26,8 @@
 
 #include "mongo_types.h"
 #include "mongo.h"
+#include "db.h"
+#include "collection.h"
 #include "bson.h"
 
 extern zend_class_entry *mongo_ce_DB,
@@ -337,8 +339,6 @@ PHP_METHOD(MongoRegex, __toString) {
   zval *zopts = zend_read_property( mongo_ce_Regex, getThis(), "flags", 5, 0 TSRMLS_CC );
   char *opts = Z_STRVAL_P( zopts );
 
-  int re_len = strlen(re);
-  int opts_len = strlen(opts);
   char *field_name;
 
   spprintf(&field_name, 0, "/%s/%s", re, opts );

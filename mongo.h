@@ -209,12 +209,20 @@ PHP_METHOD(Mongo, close);
 PHP_METHOD(Mongo, __destruct);
 
 /*
+ * MongoUtil class
+ */
+PHP_METHOD(MongoUtil, toIndexString);
+PHP_METHOD(MongoUtil, dbCommand);
+
+
+/*
  * Internal functions
  */
 void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
 int mongo_say(mongo_link*, buffer* TSRMLS_DC);
 int mongo_hear(mongo_link*, void*, int TSRMLS_DC);
+int get_reply(mongo_cursor* TSRMLS_DC);
 
 void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);
