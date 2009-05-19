@@ -210,6 +210,7 @@ PHP_METHOD(MongoUtil, dbCommand) {
   zim_MongoCursor_getNext(0, return_value, return_value_ptr, cursor, return_value_used TSRMLS_CC);
 
   zval_ptr_dtor(&cursor);
+  efree(cmd_ns);
 }
 
 
