@@ -94,7 +94,7 @@ void mongo_init_MongoId(TSRMLS_D) {
 /* {{{ MongoId::__construct()
  */
 PHP_METHOD(MongoId, __construct) {
-  zval *id;
+  zval *id = 0;
   char holder[12];
   char *data = holder;
 
@@ -102,7 +102,8 @@ PHP_METHOD(MongoId, __construct) {
     return;
   }
   
-  if (Z_TYPE_P(id) == IS_STRING && 
+  if (id && 
+      Z_TYPE_P(id) == IS_STRING && 
       Z_STRLEN_P(id) == 24) {
     int i;
     for(i=0;i<12;i++) {
@@ -118,7 +119,8 @@ PHP_METHOD(MongoId, __construct) {
       data[i] = digit1*16+digit2;
     }
   }
-  else if (Z_TYPE_P(id) == IS_OBJECT &&
+  else if (id && 
+           Z_TYPE_P(id) == IS_OBJECT &&
            Z_OBJCE_P(id) == mongo_ce_Id) {
     zval *zid = zend_read_property(mongo_ce_Id, id, "id", strlen("id"), NOISY TSRMLS_CC);
     data = (char*)Z_STRVAL_P(zid);
@@ -466,19 +468,22 @@ PHP_METHOD(MongoDBRef, get) {
   zval *collection;
   MAKE_STD_ZVAL(collection);
 
-  void *holder;
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, *ns, 1, NULL);
+  PUSH_PARAM(*ns); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoDB_selectCollection(1, collection, &collection, db, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval *query;
   MAKE_STD_ZVAL(query);
   array_init(query);
   add_assoc_zval(query, "_id", *id);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, query, 1, NULL);
+  PUSH_PARAM(query); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCollection_findOne(1, return_value, return_value_ptr, collection, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&collection);
   zval_ptr_dtor(&query);

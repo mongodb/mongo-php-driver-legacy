@@ -87,6 +87,18 @@
   APPEND_HEADER(buf);                                   \
   serialize_string(&buf, ns, ns_len);              
 
+#if ZEND_MODULE_API_NO >= 20090115
+# define PUSH_PARAM(arg) zend_vm_stack_push(arg TSRMLS_CC)
+# define POP_PARAM() zend_vm_stack_pop(TSRMLS_C)
+# define PUSH_EO_PARAM()
+# define POP_EO_PARAM()
+#else
+# define PUSH_PARAM(arg) zend_ptr_stack_push(&EG(argument_stack), arg)
+# define POP_PARAM() zend_ptr_stack_pop(&EG(argument_stack))
+# define PUSH_EO_PARAM() zend_ptr_stack_push(&EG(argument_stack), NULL)
+# define POP_EO_PARAM() zend_ptr_stack_pop(&EG(argument_stack))
+#endif
+
 typedef struct {
   int ts;
   int paired;

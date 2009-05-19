@@ -189,19 +189,22 @@ PHP_METHOD(MongoUtil, dbCommand) {
   object_init_ex(cursor, mongo_ce_Cursor);
 
   zval temp;
-  void *holder;
-  zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, &ns, zdata, 3, 0);
+  PUSH_PARAM(zlink); PUSH_PARAM(&ns); PUSH_PARAM(zdata); PUSH_PARAM((void*)3);
+  PUSH_EO_PARAM();
   zim_MongoCursor___construct(3, &temp, 0, cursor, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   // limit
   zval limit;
   Z_TYPE(limit) = IS_LONG;
   Z_LVAL(limit) = 1;
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, &limit, 1, 0);
+  PUSH_PARAM(&limit); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCursor_limit(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   // query
   zim_MongoCursor_getNext(0, return_value, return_value_ptr, cursor, return_value_used TSRMLS_CC);

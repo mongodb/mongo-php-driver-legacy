@@ -38,7 +38,6 @@ zend_class_entry *mongo_ce_GridFS = NULL,
   *mongo_ce_GridFSCursor = NULL;
 
 PHP_METHOD(MongoGridFS, __construct) {
-  void *holder;
   zval *zdb;
   char *files = 0, *chunks = 0;
   int files_len = 0, chunks_len = 0;
@@ -65,9 +64,11 @@ PHP_METHOD(MongoGridFS, __construct) {
   MAKE_STD_ZVAL(zfile);
   ZVAL_STRING(zfile, files, 1);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, zdb, zfile, 2, NULL);
+  PUSH_PARAM(zdb); PUSH_PARAM(zfile); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
   zim_MongoCollection___construct(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM(); 
 
   zval *zchunks;
   MAKE_STD_ZVAL(zchunks);
@@ -77,9 +78,11 @@ PHP_METHOD(MongoGridFS, __construct) {
   MAKE_STD_ZVAL(zchunk);
   ZVAL_STRING(zchunk, chunks, 1);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, zdb, zchunk, 2, NULL);
+  PUSH_PARAM(zdb); PUSH_PARAM(zchunk); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
   zim_MongoCollection___construct(2, return_value, return_value_ptr, zchunks, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM(); 
   
   zend_update_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), zchunks TSRMLS_CC);
 
@@ -88,9 +91,11 @@ PHP_METHOD(MongoGridFS, __construct) {
   MAKE_STD_ZVAL(zidx);
   ZVAL_STRING(zidx, "n", 1);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, zidx, 1, NULL);
+  PUSH_PARAM(zidx); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCollection_ensureIndex(1, return_value, return_value_ptr, zchunks, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&zfile);
   zval_ptr_dtor(&zchunk);
@@ -110,11 +115,11 @@ PHP_METHOD(MongoGridFS, drop) {
   zval *zchunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   zval *zdb = zend_read_property(mongo_ce_GridFS, getThis(), "db", strlen("db"), NOISY TSRMLS_CC);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, zchunks, 1, NULL);
+  PUSH_PARAM(zchunks); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoDB_dropCollection(1, return_value, return_value_ptr, zdb, return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zim_MongoCollection_drop(0, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
 }
@@ -125,8 +130,6 @@ PHP_METHOD(MongoGridFS, find) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|aa", &zquery, &zfields) == FAILURE) {
     return;
   }
-
-  object_init_ex(return_value, mongo_ce_GridFSCursor);
 
   zval *zdb = zend_read_property(mongo_ce_GridFS, getThis(), "db", strlen("db"), NOISY TSRMLS_CC);
   zval *zlink = zend_read_property(mongo_ce_DB, zdb, "connection", strlen("connection"), NOISY TSRMLS_CC);
@@ -148,13 +151,14 @@ PHP_METHOD(MongoGridFS, find) {
     zval_add_ref(&zquery);
   }
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 7, getThis(), zlink, zns, zquery, zfields, 5, NULL);
-
   zval temp;
-  zim_MongoGridFSCursor___construct(5, &temp, NULL, return_value, return_value_used TSRMLS_CC);
+  object_init_ex(return_value, mongo_ce_GridFSCursor);
 
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 7, &holder, &holder, &holder, &holder, &holder, &holder, &holder);
+  PUSH_PARAM(getThis()); PUSH_PARAM(zlink); PUSH_PARAM(zns); PUSH_PARAM(zquery); PUSH_PARAM(zfields); PUSH_PARAM((void*)5);
+  PUSH_EO_PARAM();
+  zim_MongoGridFSCursor___construct(5, &temp, NULL, return_value, return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&zquery);
   zval_ptr_dtor(&zfields);
@@ -210,7 +214,6 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   // insert chunks
   zval *chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
-  void *holder;
   while (pos < size) {
     chunk_size = size-pos >= MonGlo(chunk_size) ? MonGlo(chunk_size) : size-pos;
     char *buf = (char*)emalloc(chunk_size);
@@ -232,9 +235,12 @@ PHP_METHOD(MongoGridFS, storeFile) {
     add_assoc_stringl(zchunk, "data", buf, chunk_size, DUP);
 
     // insert chunk
-    zend_ptr_stack_n_push(&EG(argument_stack), 3, zchunk, 1, NULL);
+
+    PUSH_PARAM(zchunk); PUSH_PARAM((void*)1);
+    PUSH_EO_PARAM();
     zim_MongoCollection_insert(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
-    zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+    POP_EO_PARAM();
+    POP_PARAM(); POP_PARAM(); 
     
     // increment counters
     pos += chunk_size;
@@ -282,9 +288,11 @@ PHP_METHOD(MongoGridFS, storeFile) {
   */
 
   // insert file
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, zfile, 1, NULL);
+  PUSH_PARAM(zfile); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCollection_insert(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); 
 
   //  zval_ptr_dtor(&hash);
   //  free_cursor(cursor);
@@ -321,10 +329,11 @@ PHP_METHOD(MongoGridFS, findOne) {
   zval *file;
   MAKE_STD_ZVAL(file);
 
-  void *holder;
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, zquery, 1, NULL);
+  PUSH_PARAM(zquery); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCollection_findOne(1, file, &file, getThis(), return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); 
 
   if (Z_TYPE_P(file) == IS_NULL) {
     RETVAL_ZVAL(file, 0, 1);
@@ -333,9 +342,11 @@ PHP_METHOD(MongoGridFS, findOne) {
     object_init_ex(return_value, mongo_ce_GridFSFile);
 
     zval temp;
-    zend_ptr_stack_n_push(&EG(argument_stack), 4, getThis(), file, 2, NULL);
+    PUSH_PARAM(getThis()); PUSH_PARAM(file); PUSH_PARAM((void*)2);
+    PUSH_EO_PARAM();
     zim_MongoGridFSFile___construct(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
-    zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+    POP_EO_PARAM();
+    POP_PARAM(); POP_PARAM(); POP_PARAM();
   }
 
   zval_ptr_dtor(&file);
@@ -367,10 +378,11 @@ PHP_METHOD(MongoGridFS, remove) {
   zval *zcursor;
   MAKE_STD_ZVAL(zcursor);
 
-  void *holder;
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, criteria, zfields, 2, NULL);
+  PUSH_PARAM(criteria); PUSH_PARAM(zfields); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
   zim_MongoCollection_find(2, zcursor, &zcursor, getThis(), return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&zfields);
 
@@ -393,10 +405,12 @@ PHP_METHOD(MongoGridFS, remove) {
     zval_add_ref(id);
     add_assoc_zval(temp, "files_id", *id);
 
-
-    zend_ptr_stack_n_push(&EG(argument_stack), 3, temp, 1, NULL);
+ 
+    PUSH_PARAM(temp); PUSH_PARAM((void*)1);
+    PUSH_EO_PARAM();
     zim_MongoCollection_remove(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
-    zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+    POP_EO_PARAM();
+    POP_PARAM(); POP_PARAM();
 
     zval_ptr_dtor(&temp);
     zval_ptr_dtor(&next);
@@ -410,9 +424,11 @@ PHP_METHOD(MongoGridFS, remove) {
   Z_TYPE(zjust_one) = IS_BOOL;
   zjust_one.value.lval = just_one;
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, criteria, &zjust_one, 2, NULL);
+  PUSH_PARAM(criteria); PUSH_PARAM(&zjust_one); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
   zim_MongoCollection_remove(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&criteria);
 }
@@ -452,10 +468,11 @@ PHP_METHOD(MongoGridFS, storeUpload) {
   array_init(extra);
   add_assoc_string(extra, "filename", new_name, 1);
 
-  void *holder;
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, *temp, extra, 2, NULL);
+  PUSH_PARAM(*temp); PUSH_PARAM(extra); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
   zim_MongoGridFS_storeFile(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&extra);
 }
@@ -527,10 +544,11 @@ PHP_METHOD(MongoGridFSFile, write) {
   array_init(n);
   add_assoc_long(n, "n", 1);  
 
-  void *holder;
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, n, 1, NULL);
+  PUSH_PARAM(n); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCollection_ensureIndex(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&n);
 
@@ -563,18 +581,22 @@ PHP_METHOD(MongoGridFSFile, write) {
   zval *cursor;
   MAKE_STD_ZVAL(cursor);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, query, 1, NULL);
+  PUSH_PARAM(query); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCollection_find(1, cursor, &cursor, chunks, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval *sort;
   MAKE_STD_ZVAL(sort);
   array_init(sort);
   add_assoc_long(sort, "n", 1);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, sort, 1, NULL);
+  PUSH_PARAM(sort); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCursor_sort(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval *next;
   MAKE_STD_ZVAL(next);
@@ -619,8 +641,6 @@ PHP_METHOD(MongoGridFSFile, write) {
 }
 
 PHP_METHOD(MongoGridFSFile, getBytes) {
-  void *holder;
-
   zval *file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
   zval **id;
   zend_hash_find(Z_ARRVAL_P(file), "filename", strlen("filename")+1, (void**)&id);
@@ -640,9 +660,11 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   array_init(n);
   add_assoc_long(n, "n", 1);  
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, n, 1, NULL);
+  PUSH_PARAM(n); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCollection_ensureIndex(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&n);
 
@@ -656,18 +678,22 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   zval *cursor;
   MAKE_STD_ZVAL(cursor);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, query, 1, NULL);
+  PUSH_PARAM(query); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCollection_find(1, cursor, &cursor, chunks, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval *sort;
   MAKE_STD_ZVAL(sort);
   array_init(sort);
   add_assoc_long(sort, "n", 1);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, sort, 1, NULL);
+  PUSH_PARAM(sort); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoCursor_sort(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   char *str = (char*)emalloc(Z_LVAL_PP(size));
   char *str_ptr = str;
@@ -722,7 +748,6 @@ void mongo_init_MongoGridFSFile(TSRMLS_D) {
 
 
 PHP_METHOD(MongoGridFSCursor, __construct) {
-  void *holder;
   zval *gridfs = 0, *connection = 0, *ns = 0, *query = 0, *fields = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Ozzzz", &gridfs, mongo_ce_GridFS, &connection, &ns, &query, &fields) == FAILURE) {
@@ -731,9 +756,11 @@ PHP_METHOD(MongoGridFSCursor, __construct) {
 
   zend_update_property(mongo_ce_GridFSCursor, getThis(), "gridfs", strlen("gridfs"), gridfs TSRMLS_CC);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 6, connection, ns, query, fields, 4, NULL);
+  PUSH_PARAM(connection); PUSH_PARAM(ns); PUSH_PARAM(query); PUSH_PARAM(fields); PUSH_PARAM((void*)4);
+  PUSH_EO_PARAM();
   zim_MongoCursor___construct(4, NULL, NULL, getThis(), return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 6, &holder, &holder, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 PHP_METHOD(MongoGridFSCursor, getNext) {
@@ -751,12 +778,13 @@ PHP_METHOD(MongoGridFSCursor, current) {
   object_init_ex(return_value, mongo_ce_GridFSFile);
 
   zval temp;
-  void *holder;
   zval *gridfs = zend_read_property(mongo_ce_GridFSCursor, getThis(), "gridfs", strlen("gridfs"), NOISY TSRMLS_CC);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, gridfs, cursor->current, 2, NULL);
+  PUSH_PARAM(gridfs); PUSH_PARAM(cursor->current); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
   zim_MongoGridFSFile___construct(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 PHP_METHOD(MongoGridFSCursor, key) {

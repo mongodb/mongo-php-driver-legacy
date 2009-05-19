@@ -35,11 +35,6 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $suite->addTestSuite('MongoRegexTest');
         $suite->addTestSuite('MongoBinDataTest');
 
-        $suite->addTestSuite('MongoIdTest');
-        $suite->addTestSuite('MongoCodeTest');
-        $suite->addTestSuite('MongoRegexTest');
-        $suite->addTestSuite('MongoBinDataTest');
-
         $suite->addTestSuite('MongoRegressionTest1');
 
         return $suite;

@@ -363,11 +363,11 @@ PHP_METHOD(Mongo, connect) {
   ZVAL_STRING(&zusername, "", 0);
   ZVAL_STRING(&zpassword, "", 0);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, &zusername, &zpassword, 2, NULL);
-  zim_Mongo_connectUtil(2, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
+  zim_Mongo_connectUtil(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 /* {{{ Mongo->pairConnect
@@ -380,11 +380,11 @@ PHP_METHOD(Mongo, pairConnect) {
   ZVAL_STRING(&zusername, "", 0);
   ZVAL_STRING(&zpassword, "", 0);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, &zusername, &zpassword, 2, NULL);
-  zim_Mongo_connectUtil(2, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
+  zim_Mongo_connectUtil(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 /* {{{ Mongo->persistConnect
@@ -397,11 +397,11 @@ PHP_METHOD(Mongo, persistConnect) {
     return;
   } 
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, &zusername, &zpassword, 2, NULL);
-  zim_Mongo_connectUtil(2, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
+  zim_Mongo_connectUtil(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 /* {{{ Mongo->pairPersistConnect
@@ -415,11 +415,11 @@ PHP_METHOD(Mongo, pairPersistConnect) {
     return;
   } 
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, &zusername, &zpassword, 2, NULL);
-  zim_Mongo_connectUtil(2, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
+  PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
+  zim_Mongo_connectUtil(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 
@@ -647,11 +647,12 @@ PHP_METHOD(Mongo, selectDB) {
   MAKE_STD_ZVAL(obj);
   object_init_ex(obj, mongo_ce_DB);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 4, getThis(), db, 2, NULL);
-  zim_MongoDB___construct(2, return_value, &return_value, obj, return_value_used TSRMLS_CC);
+  PUSH_PARAM(getThis()); PUSH_PARAM(db); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
+  zim_MongoDB___construct(2, return_value, return_value_ptr, obj, return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 4, &holder, &holder, &holder, &holder);
   RETURN_ZVAL(obj, 0, 1);
 }
 /* }}} */
@@ -676,11 +677,11 @@ PHP_METHOD(Mongo, selectCollection) {
     zval_add_ref(&db);
   }
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 3, collection, 1, NULL);
+  PUSH_PARAM(collection); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
   zim_MongoDB_selectCollection(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 3, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&db);
 }
@@ -737,12 +738,11 @@ PHP_METHOD(Mongo, repairDB) {
     zval_add_ref(&backup);
   }
   
-  int param_num = 2;
-  void *holder;
-
-  zend_ptr_stack_n_push(&EG(argument_stack), param_num+2, preserve_clones, backup, param_num, NULL);
-  zim_MongoDB_repair(param_num, return_value, return_value_ptr, db, 0 TSRMLS_CC);
-  zend_ptr_stack_n_pop(&EG(argument_stack), param_num+2, &holder, &holder, &holder, &holder);
+  PUSH_PARAM(preserve_clones); PUSH_PARAM(backup); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
+  zim_MongoDB_selectCollection(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&backup);
   zval_ptr_dtor(&preserve_clones);
@@ -763,12 +763,11 @@ PHP_METHOD(Mongo, lastError) {
   MAKE_STD_ZVAL(name);
   ZVAL_STRING(name, "admin", 1);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
-
+  PUSH_PARAM(zlink); PUSH_PARAM(data); PUSH_PARAM(name); PUSH_PARAM((void*)3);
+  PUSH_EO_PARAM();
   zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&name);
   zval_ptr_dtor(&data);
@@ -789,12 +788,11 @@ PHP_METHOD(Mongo, prevError) {
   MAKE_STD_ZVAL(name);
   ZVAL_STRING(name, "admin", 1);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
-
+  PUSH_PARAM(zlink); PUSH_PARAM(data); PUSH_PARAM(name); PUSH_PARAM((void*)3);
+  PUSH_EO_PARAM();
   zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&name);
   zval_ptr_dtor(&data);
@@ -815,12 +813,11 @@ PHP_METHOD(Mongo, resetError) {
   MAKE_STD_ZVAL(name);
   ZVAL_STRING(name, "admin", 1);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
-
+  PUSH_PARAM(zlink); PUSH_PARAM(data); PUSH_PARAM(name); PUSH_PARAM((void*)3);
+  PUSH_EO_PARAM();
   zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&name);
   zval_ptr_dtor(&data);
@@ -843,12 +840,11 @@ PHP_METHOD(Mongo, forceError) {
   MAKE_STD_ZVAL(name);
   ZVAL_STRING(name, "admin", 1);
 
-  zend_ptr_stack_n_push(&EG(argument_stack), 5, zlink, data, name, 3, NULL);
-
+  PUSH_PARAM(zlink); PUSH_PARAM(data); PUSH_PARAM(name); PUSH_PARAM((void*)3);
+  PUSH_EO_PARAM();
   zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
-
-  void *holder;
-  zend_ptr_stack_n_pop(&EG(argument_stack), 5, &holder, &holder, &holder, &holder, &holder);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&name);
   zval_ptr_dtor(&data);

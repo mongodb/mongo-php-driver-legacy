@@ -13,11 +13,11 @@
    <email>kristina@10gen.com</email>
    <active>yes</active>
  </lead>
- <date>2009-04-09</date>
+ <date>2009-05-19</date>
  <time>12:00:00</time>
  <version>
-   <release>0.8.4</release>
-   <api>0.8.4</api>
+   <release>0.9.0</release>
+   <api>0.9.0</api>
  </version>
  <stability>
    <release>alpha</release>
@@ -25,7 +25,7 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-   Removed all config dependencies
+   Added classes
  </notes>
  <contents>
    <dir baseinstalldir="/" name="/">
@@ -37,6 +37,15 @@
      <file role="src" name="mongo_types.h"/>
      <file role="src" name="bson.c"/>
      <file role="src" name="bson.h"/>
+     <file role="src" name="collection.c"/>
+     <file role="src" name="collection.h"/>
+     <file role="src" name="db.c"/>
+     <file role="src" name="db.h"/>
+     <file role="src" name="cursor.c"/>
+     <file role="src" name="cursor.h"/>
+     <file role="src" name="gridfs.c"/>
+     <file role="src" name="gridfs.h"/>
+     <file role="src" name="util.c"/>
    </dir>
  </contents>
  <dependencies>
@@ -52,6 +61,20 @@
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog>
+   <release>
+     <stability>
+       <release>alpha</release>
+       <api>alpha</api>
+     </stability>
+     <version>
+       <release>0.9.0</release>
+       <api>0.9.0</api>
+     </version>
+     <date>2009-05-19</date>
+     <notes>
+       Added classes
+     </notes>
+   </release>
    <release>
      <stability>
        <release>alpha</release>
