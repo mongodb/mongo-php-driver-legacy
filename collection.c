@@ -528,7 +528,8 @@ PHP_METHOD(MongoCollection, count) {
   zval_ptr_dtor(&data);
   zval **n;
   if (zend_hash_find(Z_ARRVAL_P(response), "n", 2, (void**)&n) == SUCCESS) {
-    RETURN_ZVAL(*n, 1, 1);
+    RETVAL_ZVAL(*n, 1, 0);
+    zval_ptr_dtor(&response);
   }
   else {
     RETURN_ZVAL(response, 0, 1);

@@ -178,19 +178,13 @@ PHP_METHOD(MongoDB, drop) {
 
   zval *name = zend_read_property(mongo_ce_Mongo, getThis(), "name", strlen("name"), 0 TSRMLS_CC);
 
-  zval *cmd_return, *cmd_ptr;
-  MAKE_STD_ZVAL(cmd_return);
-  cmd_ptr = cmd_return;
-
   PUSH_PARAM(zlink); PUSH_PARAM(data); PUSH_PARAM(name); PUSH_PARAM((void*)3);
   PUSH_EO_PARAM();
-  zim_MongoUtil_dbCommand(3, cmd_return, &cmd_return, NULL, return_value_used TSRMLS_CC);
+  zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&data);
-  zval_ptr_dtor(&cmd_return);
-  zval_ptr_dtor(&cmd_ptr);
 }
 
 PHP_METHOD(MongoDB, repair) {
