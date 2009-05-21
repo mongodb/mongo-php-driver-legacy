@@ -9,10 +9,10 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
 {
     public function testBasic() {
         $id1 = new MongoId();
-        $this->assertEquals(strlen($id1->id), 12);
+        $this->assertEquals(strlen("$id1"), 24);
 
         $copy = new MongoId($id1);
-        $this->assertEquals($id1->id, $copy->id);
+        $this->assertEquals((string)$id1, (string)$copy);
 
         $id2 = new MongoId('49c10bb63eba810c0c3fc158');
         $this->assertEquals((string)$id2, '49c10bb63eba810c0c3fc158');
@@ -27,14 +27,14 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
     // shouldn't throw an error, just ignore it
     public function testIncorrect() {
         $id1 = new MongoId("foo");
-        $this->assertNotEquals($id1->id, "foo");
-        $this->assertEquals(strlen($id1->id), 12);
+        $this->assertNotEquals((string)$id1, "foo");
+        $this->assertEquals(strlen("$id1"), 24);
 
         $id2 = new MongoId(234);
-        $this->assertNotEquals($id2->id, 234);
-        $this->assertEquals(strlen($id2->id), 12);
+        $this->assertNotEquals("$id2", 234);
+        $this->assertEquals(strlen("$id2"), 24);
 
-        $this->assertNotEquals($id1, $id2);
+        $this->assertNotEquals((string)$id1, (string)$id2);
     }
 }
 

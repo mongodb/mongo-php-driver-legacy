@@ -860,9 +860,9 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
   serialize_int(&buf, skip);
   serialize_int(&buf, limit);
 
-  zval_to_bson(&buf, Z_ARRVAL_P(zquery), NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, zquery, NO_PREP TSRMLS_CC);
   if (zfields && zend_hash_num_elements(Z_ARRVAL_P(zfields)) > 0) {
-    zval_to_bson(&buf, Z_ARRVAL_P(zfields), NO_PREP TSRMLS_CC);
+    zval_to_bson(&buf, zfields, NO_PREP TSRMLS_CC);
   }
 
   serialize_size(buf.start, &buf);
@@ -943,10 +943,8 @@ int mongo_do_insert(mongo_link *link, char *collection, zval *zarray TSRMLS_DC) 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, collection, strlen(collection), OP_INSERT);
 
-  // adds data
-  HashTable *obj = Z_ARRVAL_P(zarray);
   // serialize
-  if (zval_to_bson(&buf, obj, PREP TSRMLS_CC) == 0) {
+  if (zval_to_bson(&buf, zarray, PREP TSRMLS_CC) == 0) {
     efree(buf.start);
     // return if there were 0 elements
     return FAILURE;

@@ -41,21 +41,6 @@ zend_class_entry *mongo_ce_Date = NULL,
   *mongo_ce_Code = NULL,
   *mongo_ce_Regex = NULL;
 
-// takes an allocated but not initialized zval
-// turns it into an MongoId
-void create_id(zval *zoid, char *data TSRMLS_DC) {
-  object_init_ex(zoid, mongo_ce_Id);
-
-  if (data) {
-    add_property_stringl(zoid, "id", data, OID_SIZE, DUP);
-  }
-  else {
-    char id[12];
-    generate_id(id);
-    add_property_stringl(zoid, "id", id, OID_SIZE, DUP);
-  }
-}
-
 void generate_id(char *data) {
   // THIS WILL ONLY WORK ON *NIX
   FILE *rand = fopen("/dev/urandom", "rb");
@@ -79,6 +64,36 @@ void generate_id(char *data) {
   fclose(rand);
 }
 
+static void mongo_mongo_id_free(void *object TSRMLS_DC) {
+  mongo_id *id = (mongo_id*)object;
+  if (id) {
+    if (id->id) {
+      efree(id->id);
+    }
+    zend_object_std_dtor(&id->std TSRMLS_CC);
+    efree(id);
+  }
+}
+
+static zend_object_value mongo_mongo_id_new(zend_class_entry *class_type TSRMLS_DC) {
+  zend_object_value retval;
+  mongo_cursor *intern;
+  zval *tmp;
+
+  intern = emalloc(sizeof(mongo_id));
+  memset(intern, 0, sizeof(mongo_id));
+
+  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
+  zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, 
+                 (void *) &tmp, sizeof(zval *));
+
+  retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, mongo_mongo_id_free, NULL TSRMLS_CC);
+  retval.handlers = zend_get_std_object_handlers();
+  retval.handlers->clone_obj = NULL;
+
+  return retval;
+}
+
 static function_entry MongoId_methods[] = {
   PHP_ME(MongoId, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoId, __toString, NULL, ZEND_ACC_PUBLIC)
@@ -88,6 +103,7 @@ static function_entry MongoId_methods[] = {
 void mongo_init_MongoId(TSRMLS_D) {
   zend_class_entry id; 
   INIT_CLASS_ENTRY(id, "MongoId", MongoId_methods); 
+  id.create_object = mongo_mongo_id_new;
   mongo_ce_Id = zend_register_internal_class(&id TSRMLS_CC); 
 }
 
@@ -95,8 +111,8 @@ void mongo_init_MongoId(TSRMLS_D) {
  */
 PHP_METHOD(MongoId, __construct) {
   zval *id = 0;
-  char holder[12];
-  char *data = holder;
+  mongo_id *this_id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  this_id->id = (char*)emalloc(OID_SIZE);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &id) == FAILURE) {
     return;
@@ -116,20 +132,18 @@ PHP_METHOD(MongoId, __construct) {
       digit2 = digit2 >= 'A' && digit2 <= 'F' ? digit2 -= 55 : digit2;
       digit2 = digit2 >= '0' && digit2 <= '9' ? digit2 -= 48 : digit2;
       
-      data[i] = digit1*16+digit2;
+      this_id->id[i] = digit1*16+digit2;
     }
   }
   else if (id && 
            Z_TYPE_P(id) == IS_OBJECT &&
            Z_OBJCE_P(id) == mongo_ce_Id) {
-    zval *zid = zend_read_property(mongo_ce_Id, id, "id", strlen("id"), NOISY TSRMLS_CC);
-    data = (char*)Z_STRVAL_P(zid);
+    mongo_id *that_id = (mongo_id*)zend_object_store_get_object(id TSRMLS_CC);
+    memcpy(this_id->id, that_id->id, OID_SIZE);
   }
   else {
-    generate_id(data);
+    generate_id(this_id->id);
   }
-    
-  add_property_stringl(getThis(), "id", data, OID_SIZE, DUP);
 }
 /* }}} */
 
@@ -138,8 +152,9 @@ PHP_METHOD(MongoId, __construct) {
  */
 PHP_METHOD(MongoId, __toString) {
   int i;
-  zval *zid = zend_read_property(mongo_ce_Id, getThis(), "id", 2, NOISY TSRMLS_CC);
-  char *foo = zid->value.str.val;
+  mongo_id *this_id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  //  zval *zid = zend_read_property(mongo_ce_Id, getThis(), "id", 2, NOISY TSRMLS_CC);
+  char *foo = this_id->id; //zid->value.str.val;
 
   char id[24];
   char *n = id;

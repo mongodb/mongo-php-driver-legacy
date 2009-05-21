@@ -173,7 +173,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
     }
 
     unsigned int start = buf.pos-buf.start;
-    zval_to_bson(&buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
+    zval_to_bson(&buf, *data, NO_PREP TSRMLS_CC);
 
     serialize_size(buf.start+start, &buf);
 
@@ -277,8 +277,8 @@ PHP_METHOD(MongoCollection, update) {
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(ns), Z_STRLEN_P(ns), OP_UPDATE);
   serialize_int(&buf, upsert);
-  zval_to_bson(&buf, Z_ARRVAL_P(criteria), NO_PREP TSRMLS_CC);
-  zval_to_bson(&buf, Z_ARRVAL_P(newobj), NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, criteria, NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, newobj, NO_PREP TSRMLS_CC);
   serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
@@ -312,7 +312,7 @@ PHP_METHOD(MongoCollection, remove) {
   int mflags = (just_one == 1);
 
   serialize_int(&buf, mflags);
-  zval_to_bson(&buf, Z_ARRVAL_P(criteria), NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, criteria, NO_PREP TSRMLS_CC);
   serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);

@@ -27,7 +27,9 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
     }
 
     protected function tearDown() {
-        $this->assertEquals($this->object->start, memory_get_usage(true));
+        $start = $this->object->start;
+        unset($this->object);
+        $this->assertEquals($start, memory_get_usage(true));
     }
 
 
@@ -272,7 +274,9 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $cursor = $ns->find();
 
         foreach ($cursor as $k => $v) {
-            $this->assertEquals($k, "");
+            if (!array_key_exists('_id', $v)) {
+                $this->assertEquals("", $k, json_encode($v));
+            }
         }
     }
 

@@ -26,6 +26,7 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
    Added classes
+   5.3 compatible
  </notes>
  <contents>
    <dir baseinstalldir="/" name="/">
@@ -73,6 +74,7 @@
      <date>2009-05-19</date>
      <notes>
        Added classes
+       5.3 compatible
      </notes>
    </release>
    <release>

@@ -32,36 +32,40 @@ extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_Regex;
 
 
-int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
+int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
   zval **data;
  
   // if _id field doesn't exist, add it
-  if (zend_hash_find(array, "_id", 4, (void**)&data) == FAILURE) {
-    char *data = (char*)emalloc(OID_SIZE);
-    generate_id(data);
+  if (zend_hash_find(Z_ARRVAL_P(array), "_id", 4, (void**)&data) == FAILURE) {
+    // create new MongoId
+    zval temp;
+    zval *newid;
+    MAKE_STD_ZVAL(newid);
+    object_init_ex(newid, mongo_ce_Id);
+    zim_MongoId___construct(0, &temp, NULL, newid, 0 TSRMLS_CC);
 
-    set_type(buf, BSON_OID);
-    serialize_string(buf, "_id", 3);
-    memcpy(buf->pos, data, OID_SIZE);
-    buf->pos += OID_SIZE;
-    efree(data);
+    // add to obj
+    add_assoc_zval(array, "_id", newid);
+
+    // set to data
+    data = &newid;
   }
-  else {
-    serialize_element(buf, "_id", 3, data TSRMLS_CC);
-    zend_hash_del(array, "_id", 4); 
-  }
+
+  serialize_element(buf, "_id", 3, data TSRMLS_CC);
+
   return SUCCESS;
 }
 
 
 // serialize a zval
-int zval_to_bson(buffer *buf, HashTable *arr_hash, int prep TSRMLS_DC) {
+int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
   zval **data;
   char *key;
   uint key_len;
   ulong index;
   HashPosition pointer;
   int num = 0;
+  HashTable *arr_hash = Z_ARRVAL_P(zhash);
 
   // check buf size
   if(BUF_REMAINING <= 5) {
@@ -83,7 +87,7 @@ int zval_to_bson(buffer *buf, HashTable *arr_hash, int prep TSRMLS_DC) {
  
 
   if (prep) {
-    prep_obj_for_db(buf, arr_hash TSRMLS_CC);
+    prep_obj_for_db(buf, zhash TSRMLS_CC);
     num++;
   }
   
@@ -98,6 +102,9 @@ int zval_to_bson(buffer *buf, HashTable *arr_hash, int prep TSRMLS_DC) {
     char *field_name;
 
     if (key_type == HASH_KEY_IS_STRING) {
+      if (prep && strcmp(key, "_id") == 0) {
+        continue;
+      }
       key_len = spprintf(&field_name, 0, "%s", key);
     }
     else if (key_type == HASH_KEY_IS_LONG) {
@@ -156,7 +163,7 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
     }
 
     serialize_string(buf, name, name_len);
-    zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
+    zval_to_bson(buf, *data, NO_PREP TSRMLS_CC);
     break;
   }
   case IS_OBJECT: {
@@ -166,8 +173,8 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
     if(clazz == mongo_ce_Id) {
       set_type(buf, BSON_OID);
       serialize_string(buf, name, name_len);
-      zval *zid = zend_read_property(mongo_ce_Id, *data, "id", 2, 0 TSRMLS_CC);
-      memcpy(buf->pos, Z_STRVAL_P(zid), OID_SIZE);
+      mongo_id *id = (mongo_id*)zend_object_store_get_object(*data TSRMLS_CC);
+      memcpy(buf->pos, id->id, OID_SIZE);
       buf->pos += OID_SIZE;
     }
     // MongoDate
@@ -206,7 +213,7 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
       // scope
       zid = zend_read_property(mongo_ce_Code, *data, "scope", 5, NOISY TSRMLS_CC);
-      zval_to_bson(buf, Z_ARRVAL_P(zid), NO_PREP TSRMLS_CC);
+      zval_to_bson(buf, zid, NO_PREP TSRMLS_CC);
 
       // get total size
       serialize_size(buf->start+start, buf);
@@ -311,7 +318,12 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
     case BSON_OID: {
       zval *z;
       MAKE_STD_ZVAL(z);
-      create_id(z, (char*)buf TSRMLS_CC);
+      object_init_ex(z, mongo_ce_Id);
+
+      mongo_id *this_id = (mongo_id*)zend_object_store_get_object(z TSRMLS_CC);
+      this_id->id = (char*)emalloc(OID_SIZE);
+      memcpy(this_id->id, buf, OID_SIZE);
+
       add_assoc_zval(result, name, z);
       buf += OID_SIZE;
       break;
@@ -455,7 +467,12 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
 
       zval *zoid;
       MAKE_STD_ZVAL(zoid);
-      create_id(zoid, (char*)buf TSRMLS_CC);
+      object_init_ex(zoid, mongo_ce_Id);
+
+      mongo_id *this_id = (mongo_id*)zend_object_store_get_object(zoid TSRMLS_CC);
+      this_id->id = (char*)emalloc(OID_SIZE);
+      memcpy(this_id->id, buf, OID_SIZE);
+
       buf += OID_SIZE;
 
       add_assoc_string(zref, "$ref", ns, 1);

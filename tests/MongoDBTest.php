@@ -161,23 +161,22 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
             $this->assertTrue(in_array("phpunit.x$i", $list));
         }
     }
-
+    
     public function testGetCursorInfo() {
         $c = $this->object->selectCollection('cinfo');
         $c->drop();
         for($i=0; $i<500; $i++) {
             $c->insert(array('x' => $i));
         }
-
+        
         $info = $this->object->getCursorInfo();
-        var_dump($info);
-        $this->assertEquals($info['byLocation_size'], 0);
-        $this->assertEquals($info['clientCursors_size'], 0);
-        $this->assertEquals($info['ok'], 1);
-
+        $this->assertEquals($info['byLocation_size'], 0, json_encode($info));
+        $this->assertEquals($info['clientCursors_size'], 0, json_encode($info));
+        $this->assertEquals($info['ok'], 1, json_encode($info));
+        
         $cursor = $c->find();
         $cursor->hasNext();
-
+        
         $info = $this->object->getCursorInfo();
         $this->assertEquals($info['byLocation_size'], 1);
         $this->assertEquals($info['clientCursors_size'], 1);

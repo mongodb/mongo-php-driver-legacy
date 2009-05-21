@@ -60,7 +60,8 @@ void serialize_byte(buffer*, char);
 
 int resize_buf(buffer*, int);
 
-int zval_to_bson(buffer*, HashTable*, int TSRMLS_DC);
+int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC);
+int zval_to_bson(buffer*, zval*, int TSRMLS_DC);
 unsigned char* bson_to_zval(unsigned char*, zval* TSRMLS_DC);
 
 #endif

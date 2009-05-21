@@ -180,6 +180,11 @@ typedef struct {
 } mongo_cursor;
 
 
+typedef struct {
+  zend_object std;
+  char *id;
+} mongo_id;
+
 #define BUF_REMAINING (buf->end-buf->pos)
 
 #define CREATE_BUF(buf, size) buffer buf;               \

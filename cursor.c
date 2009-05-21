@@ -260,9 +260,9 @@ PHP_METHOD(MongoCursor, doQuery) {
   serialize_int(&buf, cursor->skip);
   serialize_int(&buf, cursor->limit);
 
-  zval_to_bson(&buf, Z_ARRVAL_P(cursor->query), NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, cursor->query, NO_PREP TSRMLS_CC);
   if (cursor->fields && zend_hash_num_elements(Z_ARRVAL_P(cursor->fields)) > 0) {
-    zval_to_bson(&buf, Z_ARRVAL_P(cursor->fields), NO_PREP TSRMLS_CC);
+    zval_to_bson(&buf, cursor->fields, NO_PREP TSRMLS_CC);
   }
 
   serialize_size(buf.start, &buf);
@@ -424,10 +424,9 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   buf.end = buf.start + 128;
 
   // std header
-  CREATE_MSG_HEADER(0, MonGlo(request_id)++, OP_KILL_CURSORS);
+  CREATE_MSG_HEADER(MonGlo(request_id)++, 0, OP_KILL_CURSORS);
   APPEND_HEADER(buf);
-  // 0 - reserved
-  serialize_int(&buf, 0);
+
   // # of cursors
   serialize_int(&buf, 1);
   // cursor ids
