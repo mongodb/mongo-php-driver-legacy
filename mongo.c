@@ -225,30 +225,10 @@ PHP_MINIT_FUNCTION(mongo) {
 }
 /* }}} */
 
-
-/* {{{ mongo_init_Mongo_new
- */
-zend_object_value mongo_init_Mongo_new(zend_class_entry *class_type TSRMLS_DC) {
-  zval tmp, obj;
-  zend_object *object;
-
-  Z_OBJVAL(obj) = zend_objects_new(&object, class_type TSRMLS_CC);
-  Z_OBJ_HT(obj) = zend_get_std_object_handlers();
- 
-  ALLOC_HASHTABLE(object->properties);
-  zend_hash_init(object->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-  zend_hash_copy(object->properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
-
-  return Z_OBJVAL(obj);
-}
-/* }}} */
-
-
 void mongo_init_Mongo(TSRMLS_D) {
   zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "Mongo", Mongo_methods);
-  ce.create_object = mongo_init_Mongo_new;
   mongo_ce_Mongo = zend_register_internal_class(&ce TSRMLS_CC);
 
   zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), MonGlo(default_host) TSRMLS_CC);

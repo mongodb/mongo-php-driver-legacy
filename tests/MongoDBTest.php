@@ -71,24 +71,18 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     }
 
 
-    /**
-     * @todo Implement testDrop().
-     */
     public function testDrop() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $r = $this->object->drop();
+      $this->assertEquals(1, $r['ok'], json_encode($r));
     }
 
-    /**
-     * @todo Implement testRepair().
-     */
     public function testRepair() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $r = $this->object->repair();
+      $this->assertEquals(1, $r['ok'], json_encode($r));
+      $r = $this->object->repair(true);
+      $this->assertEquals(1, $r['ok'], json_encode($r));
+      $r = $this->object->repair(true, true);
+      $this->assertEquals(1, $r['ok'], json_encode($r));
     }
 
     /**
