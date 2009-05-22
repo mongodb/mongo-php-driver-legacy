@@ -402,7 +402,6 @@ static zend_object_value mongo_mongo_cursor_new(zend_class_entry *class_type TSR
 
   retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, mongo_mongo_cursor_free, NULL TSRMLS_CC);
   retval.handlers = zend_get_std_object_handlers();
-  retval.handlers->clone_obj = NULL;
 
   return retval;
 }
