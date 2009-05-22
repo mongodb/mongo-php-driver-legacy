@@ -288,6 +288,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   //  free_cursor(cursor);
 
   // cleanup
+  zend_objects_store_del_ref(zid TSRMLS_CC);
   zval_ptr_dtor(&zid);
   zval_ptr_dtor(&zfile);
 }

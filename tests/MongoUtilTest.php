@@ -19,19 +19,6 @@ class MongoUtilTest extends PHPUnit_Framework_TestCase
     }
 
 
-    public function testDBCommand() {
-        $db = 'phpunit';
-        $link = $this->sharedFixture->connection;
-
-        $x = MongoUtil::dbCommand($link, array(), $db);
-        $this->assertEquals($x['errmsg'], "no such cmd");
-        $this->assertEquals($x['ok'], 0);
-
-        MongoUtil::dbCommand($link, array(MongoUtil::PROFILE => 0), $db);
-        $x = MongoUtil::dbCommand($link, array(MongoUtil::PROFILE => 1), $db);
-        $this->assertEquals($x['was'], 0);
-        $this->assertEquals($x['ok'], 1);
-    }
 }
 ?>
 

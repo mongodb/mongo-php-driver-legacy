@@ -251,7 +251,6 @@ PHP_METHOD(Mongo, __destruct);
  * MongoUtil class
  */
 PHP_METHOD(MongoUtil, toIndexString);
-PHP_METHOD(MongoUtil, dbCommand);
 
 
 /*

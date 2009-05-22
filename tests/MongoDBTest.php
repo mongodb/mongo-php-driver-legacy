@@ -119,16 +119,16 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         }
         $this->assertLessThan(10, $c->count());
 
-        $c = $this->object->createCollection('zzz', true, 10000, 5);
+        $c = $this->object->createCollection('zzz', true, 1000, 5);
         $obj = $ns->findOne(array('name' => 'phpunit.zzz'));
         $this->assertNotNull($obj);
 
         for($i=0;$i<10;$i++) {
             $c->insert(array('x' => $i));
         }
-        $this->assertEquals($c->count(), 5);
+        $this->assertEquals(5, $c->count());
     }
-
+    
     public function testDropCollection() {
         $ns = $this->object->selectCollection('system.namespaces');
 
@@ -230,5 +230,16 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($ret['retval'], 'byebye');
     }
 
+    public function testDBCommand() {
+        $x = $this->object->command(array());
+        $this->assertEquals($x['errmsg'], "no such cmd");
+        $this->assertEquals($x['ok'], 0);
+
+        $this->object->command(array(MongoUtil::PROFILE => 0));
+        $x = $this->object->command(array(MongoUtil::PROFILE => 1));
+        $this->assertEquals($x['was'], 0, json_encode($x));
+        $this->assertEquals($x['ok'], 1);
+    }
+    
 }
 ?>

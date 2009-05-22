@@ -29,32 +29,6 @@ extern int le_connection,
 
 zend_class_entry *mongo_ce_Util = NULL;
 
-static char* MONGO_CMD = "$cmd";
-
-
-static char *get_cmd_ns(char *db, int db_len) {
-  char *position;
-
-  char *cmd_ns = (char*)emalloc(db_len + strlen(MONGO_CMD) + 2);
-  position = cmd_ns;
-
-  // db
-  memcpy(position, db, db_len);
-  position += db_len;
-
-  // .
-  *(position)++ = '.';
-
-  // $cmd
-  memcpy(position, MONGO_CMD, strlen(MONGO_CMD));
-  position += strlen(MONGO_CMD);
-
-  // \0
-  *(position) = '\0';
-
-  return cmd_ns;
-}
-
 static char *replace_dots(char *key, int key_len, char *position) {
   int i;
   for (i=0; i<key_len; i++) {
@@ -166,57 +140,10 @@ PHP_METHOD(MongoUtil, toIndexString) {
   RETURN_STRING(name, 0)
 }
 
-PHP_METHOD(MongoUtil, dbCommand) {
-  char *db;
-  int db_len;
-
-  zval *zlink, *zdata;
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ras", &zlink, &zdata, &db, &db_len) == FAILURE) {
-    RETURN_FALSE;
-  }
-
-  // create db.$cmd
-  char *cmd_ns = get_cmd_ns(db, strlen(db));
-  zval ns;
-  Z_TYPE(ns) = IS_STRING;
-  Z_STRVAL(ns) = cmd_ns;
-  Z_STRLEN(ns) = strlen(cmd_ns);
-
-  // create cursor
-  zval *cursor;
-  MAKE_STD_ZVAL(cursor);
-  object_init_ex(cursor, mongo_ce_Cursor);
-
-  zval temp;
-  PUSH_PARAM(zlink); PUSH_PARAM(&ns); PUSH_PARAM(zdata); PUSH_PARAM((void*)3);
-  PUSH_EO_PARAM();
-  zim_MongoCursor___construct(3, &temp, 0, cursor, return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
-
-  // limit
-  zval limit;
-  Z_TYPE(limit) = IS_LONG;
-  Z_LVAL(limit) = 1;
-
-  PUSH_PARAM(&limit); PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  zim_MongoCursor_limit(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM();
-
-  // query
-  zim_MongoCursor_getNext(0, return_value, return_value_ptr, cursor, return_value_used TSRMLS_CC);
-
-  zval_ptr_dtor(&cursor);
-  efree(cmd_ns);
-}
 
 
 static function_entry MongoUtil_methods[] = {
   PHP_ME(MongoUtil, toIndexString, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(MongoUtil, dbCommand, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   { NULL, NULL, NULL }
 };
 

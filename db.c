@@ -140,8 +140,6 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
     return;
   }
 
-  mongo_db *db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -150,11 +148,11 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
   zval *cmd_return, *cmd_ptr;
   MAKE_STD_ZVAL(cmd_return);
 
-  PUSH_PARAM(db->link); PUSH_PARAM(data); PUSH_PARAM(db->name); PUSH_PARAM((void*)3);
+  PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoUtil_dbCommand(3, cmd_return, &cmd_return, NULL, return_value_used TSRMLS_CC);
+  zim_MongoDB_command(1, cmd_return, &cmd_return, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval **ok;
   if (zend_hash_find(Z_ARRVAL_P(cmd_return), "ok", 3, (void**)&ok) == SUCCESS &&
@@ -170,20 +168,16 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
 }
 
 PHP_METHOD(MongoDB, drop) {
-  mongo_link *link;
-
-  mongo_db *db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_long(data, "dropDatabase", 1);
 
-  PUSH_PARAM(db->link); PUSH_PARAM(data); PUSH_PARAM(db->name); PUSH_PARAM((void*)3);
+  PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
+  zim_MongoDB_command(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&data);
 }
@@ -194,8 +188,6 @@ PHP_METHOD(MongoDB, repair) {
     return;
   }
 
-  mongo_db *db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -203,11 +195,11 @@ PHP_METHOD(MongoDB, repair) {
   add_assoc_bool(data, "preserveClonedFilesOnFailure", cloned);
   add_assoc_bool(data, "backupOriginalFiles", original);
 
-  PUSH_PARAM(db->link); PUSH_PARAM(data); PUSH_PARAM(db->name); PUSH_PARAM((void*)3);
+  PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoUtil_dbCommand(3, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
+  zim_MongoDB_command(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&data);
 }
@@ -222,12 +214,10 @@ PHP_METHOD(MongoDB, createCollection) {
   }
   convert_to_string(collection);
 
-  mongo_db *db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
-  add_assoc_zval(data, "create", collection);
+  add_assoc_string(data, "create", Z_STRVAL_P(collection), 1);
   if (capped && size) {
     add_assoc_bool(data, "capped", 1);
     add_assoc_long(data, "size", size);
@@ -236,15 +226,14 @@ PHP_METHOD(MongoDB, createCollection) {
     }
   }
 
-  zval *cmd_return, *cmd_ptr;
-  MAKE_STD_ZVAL(cmd_return);
-  cmd_ptr = cmd_return;
-
-  PUSH_PARAM(db->link); PUSH_PARAM(data); PUSH_PARAM(db->name); PUSH_PARAM((void*)3);
+  zval temp;
+  PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoUtil_dbCommand(3, cmd_return, &cmd_return, NULL, return_value_used TSRMLS_CC);
+  zim_MongoDB_command(1, &temp, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
+  POP_PARAM(); POP_PARAM();
+
+  zval_ptr_dtor(&data);
 
   // get the collection we just created
   PUSH_PARAM(collection); PUSH_PARAM((void*)1);
@@ -252,9 +241,6 @@ PHP_METHOD(MongoDB, createCollection) {
   zim_MongoDB_selectCollection(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&data);
-  zval_ptr_dtor(&cmd_ptr);
 }
 
 PHP_METHOD(MongoDB, dropCollection) {
@@ -334,19 +320,16 @@ PHP_METHOD(MongoDB, listCollections) {
 }
 
 PHP_METHOD(MongoDB, getCursorInfo) {
-
-  mongo_db *db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
   zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_long(data, "cursorInfo", 1);
 
-  PUSH_PARAM(db->link); PUSH_PARAM(data); PUSH_PARAM(db->name); PUSH_PARAM((void*)3);
+  PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoUtil_dbCommand(3, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
+  zim_MongoDB_command(1, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
+  POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&data);
 }
