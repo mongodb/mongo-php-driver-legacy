@@ -57,5 +57,15 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('_id', $x);
         $this->assertEquals((string)$x['_id'], $id);
     }
+
+    public function testFatalClone() {
+        $output = "";
+        $exit_code = 0;
+        exec("php tests/fatal1.php", $output, $exit_code);
+        $this->assertEquals($exit_code, 255);
+
+        exec("php tests/fatal2.php", $output, $exit_code);
+        $this->assertEquals($exit_code, 255);
+    }
 }
 ?>
