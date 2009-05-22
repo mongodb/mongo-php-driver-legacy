@@ -35,7 +35,7 @@ extern int le_db_cursor,
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
-
+static zend_object_handlers default_cursor_handlers;
 
 /* {{{ MongoCursor->__construct
  */
@@ -401,7 +401,7 @@ static zend_object_value mongo_mongo_cursor_new(zend_class_entry *class_type TSR
                  (void *) &tmp, sizeof(zval *));
 
   retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, mongo_mongo_cursor_free, NULL TSRMLS_CC);
-  retval.handlers = zend_get_std_object_handlers();
+  retval.handlers = &default_cursor_handlers;
 
   return retval;
 }
@@ -468,5 +468,8 @@ void mongo_init_MongoCursor(TSRMLS_D) {
   ce.create_object = mongo_mongo_cursor_new;
   mongo_ce_Cursor = zend_register_internal_class(&ce TSRMLS_CC);
   zend_class_implements(mongo_ce_Cursor TSRMLS_CC, 1, zend_ce_iterator);
+
+  memcpy(&default_cursor_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+  default_cursor_handlers.clone_obj = NULL;
 }
 

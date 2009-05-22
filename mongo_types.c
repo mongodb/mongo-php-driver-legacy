@@ -41,6 +41,8 @@ zend_class_entry *mongo_ce_Date = NULL,
   *mongo_ce_Code = NULL,
   *mongo_ce_Regex = NULL;
 
+static zend_object_handlers default_id_handlers;
+
 void generate_id(char *data) {
   // THIS WILL ONLY WORK ON *NIX
   FILE *rand = fopen("/dev/urandom", "rb");
@@ -88,7 +90,7 @@ static zend_object_value mongo_mongo_id_new(zend_class_entry *class_type TSRMLS_
                  (void *) &tmp, sizeof(zval *));
 
   retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, mongo_mongo_id_free, NULL TSRMLS_CC);
-  retval.handlers = zend_get_std_object_handlers();
+  retval.handlers = &default_id_handlers;
 
   return retval;
 }
@@ -104,6 +106,9 @@ void mongo_init_MongoId(TSRMLS_D) {
   INIT_CLASS_ENTRY(id, "MongoId", MongoId_methods); 
   id.create_object = mongo_mongo_id_new;
   mongo_ce_Id = zend_register_internal_class(&id TSRMLS_CC); 
+
+  memcpy(&default_id_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+  default_id_handlers.clone_obj = NULL;
 }
 
 /* {{{ MongoId::__construct()
