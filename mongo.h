@@ -185,6 +185,28 @@ typedef struct {
   char *id;
 } mongo_id;
 
+
+typedef struct {
+  zend_object std;
+  zval *link;
+  zval *name;
+} mongo_db;
+
+typedef struct {
+  zend_object std;
+
+  // parent database
+  zval *parent;
+
+  // db obj
+  mongo_db *db;
+
+  // names
+  zval *name;
+  zval *ns;
+} mongo_collection;
+
+
 #define BUF_REMAINING (buf->end-buf->pos)
 
 #define CREATE_BUF(buf, size) buffer buf;               \

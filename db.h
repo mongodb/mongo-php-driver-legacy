@@ -31,3 +31,4 @@ PHP_METHOD(MongoDB, getCursorInfo);
 PHP_METHOD(MongoDB, createDBRef);
 PHP_METHOD(MongoDB, getDBRef);
 PHP_METHOD(MongoDB, execute);
+PHP_METHOD(MongoDB, command);

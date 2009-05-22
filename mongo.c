@@ -53,6 +53,8 @@ static void kill_cursor(mongo_cursor* TSRMLS_DC);
 static void get_host_and_port(char*, mongo_link* TSRMLS_DC);
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
+zend_object_handlers mongo_default_handlers;
+
 /** Classes */
 zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_CursorException,
@@ -220,6 +222,10 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoBinData(TSRMLS_C);
 
   mongo_init_MongoExceptions(TSRMLS_C);
+
+  // make mongo objects uncloneable
+  memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+  mongo_default_handlers.clone_obj = NULL;
 
   return SUCCESS;
 }
@@ -623,21 +629,18 @@ PHP_METHOD(Mongo, selectDB) {
     return;
   }
 
-  zval *obj;
-  MAKE_STD_ZVAL(obj);
-  object_init_ex(obj, mongo_ce_DB);
+  zval temp;
+  object_init_ex(return_value, mongo_ce_DB);
 
   PUSH_PARAM(getThis()); PUSH_PARAM(db); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_MongoDB___construct(2, return_value, return_value_ptr, obj, return_value_used TSRMLS_CC);
+  zim_MongoDB___construct(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
-
-  RETURN_ZVAL(obj, 0, 1);
 }
 /* }}} */
 
-/* {{{ Mongo->selectCollection()
+/* {{{ Mongo::selectCollection()
  */
 PHP_METHOD(Mongo, selectCollection) {
   zval *db, *collection;
@@ -651,6 +654,12 @@ PHP_METHOD(Mongo, selectCollection) {
     MAKE_STD_ZVAL(temp_db);
 
     zim_Mongo_selectDB(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
+
+    mongo_db *ok = (mongo_db*)zend_object_store_get_object(temp_db TSRMLS_CC);
+    if (!ok || !ok->name) {
+      return;
+    }
+
     db = temp_db;
   }
   else {
@@ -667,7 +676,7 @@ PHP_METHOD(Mongo, selectCollection) {
 }
 /* }}} */
 
-/* {{{ Mongo->dropDB()
+/* {{{ Mongo::dropDB()
  */
 PHP_METHOD(Mongo, dropDB) {
   zval *db;
@@ -693,7 +702,7 @@ PHP_METHOD(Mongo, dropDB) {
 }
 /* }}} */
 
-/* {{{ Mongo->repairDB()
+/* {{{ Mongo::repairDB()
  */
 PHP_METHOD(Mongo, repairDB) {
   zval *db, *preserve_clones = 0, *backup = 0;

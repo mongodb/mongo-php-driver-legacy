@@ -3,8 +3,6 @@
 define('PER_TRIAL', 5000);
 define('BATCH_SIZE', 100);
 
-include "Mongo.php";
-
 $m  = new Mongo();
 $db = $m->selectDB("test");
 
@@ -237,11 +235,11 @@ $large  = array("x" => 0,
                                         "developers","focus","building","mongodb","mongo"
                                         )
              );
-
+/*
 batch($db->selectCollection("small_none"), $small);
 batch($db->selectCollection("medium_none"), $medium);
 batch($db->selectCollection("large_none"), $large);
-
+*/
 none($db->selectCollection("small_none"), $small);
 none($db->selectCollection("medium_none"), $medium);
 none($db->selectCollection("large_none"), $large);

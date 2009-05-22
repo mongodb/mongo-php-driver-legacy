@@ -147,9 +147,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $db = $this->object->selectCollection("xyz", '$');
     }
 
-    /**
-     * @todo Implement testSelectCollection().
-     */
     public function testSelectCollection() {
         $c = $this->object->selectCollection("foo", "bar.baz");
         $this->assertEquals((string)$c, "foo.bar.baz");

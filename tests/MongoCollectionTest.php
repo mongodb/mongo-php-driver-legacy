@@ -311,7 +311,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->ensureIndex(array('bar' => 1, 'baz' => -1));
 
       $info = $this->object->getIndexInfo();
-      $this->assertEquals(count($info), 4);
+      $this->assertEquals(4, count($info), json_encode($info));
       $this->assertEquals($info[1]['key']['foo'], 1);
       $this->assertEquals($info[1]['name'], 'foo_1');
       $this->assertEquals($info[2]['key']['foo'], -1);

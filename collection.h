@@ -15,6 +15,8 @@
  *  limitations under the License.
  */
 
+zend_object_value mongo_mongo_collection_new(zend_class_entry* TSRMLS_DC);
+
 PHP_METHOD(MongoCollection, __construct);
 PHP_METHOD(MongoCollection, __toString);
 PHP_METHOD(MongoCollection, getName);

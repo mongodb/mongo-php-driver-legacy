@@ -38,58 +38,63 @@ zend_class_entry *mongo_ce_GridFS = NULL,
   *mongo_ce_GridFSCursor = NULL;
 
 PHP_METHOD(MongoGridFS, __construct) {
-  zval *zdb;
-  char *files = 0, *chunks = 0;
-  int files_len = 0, chunks_len = 0;
+  zval *zdb, *files = 0, *chunks = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|ss", &zdb, mongo_ce_DB, &files, &files_len, &chunks, &chunks_len) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|zz", &zdb, mongo_ce_DB, &files, &chunks) == FAILURE) {
     return;
   }
 
-  int release = 0;
   if (!files && !chunks) {
-    files = "fs.files";
-    chunks = "fs.chunks";
+    MAKE_STD_ZVAL(files);
+    ZVAL_STRING(files, "fs.files", 1);
+    MAKE_STD_ZVAL(chunks);
+    ZVAL_STRING(chunks, "fs.chunks", 1);
   }
   else if (!chunks) {
-    release = 1;
-    spprintf(&chunks, 0, "%s.chunks", files);
-    spprintf(&files, 0, "%s.files", files);
+    char *temp;
+    MAKE_STD_ZVAL(chunks);
+    spprintf(&temp, 0, "%s.chunks", Z_STRVAL_P(files));
+    ZVAL_STRING(chunks, temp, 0);
+
+    zval *temp_file;
+    MAKE_STD_ZVAL(temp_file);
+    spprintf(&temp, 0, "%s.files", Z_STRVAL_P(files));
+    ZVAL_STRING(temp_file, temp, 0);
+    files = temp_file;
+  }
+  else {
+    convert_to_string(files);
+    zval_add_ref(&files);
+    convert_to_string(chunks);
+    zval_add_ref(&chunks);
   }
 
-  zend_update_property_string(mongo_ce_GridFS, getThis(), "filesName", strlen("filesName"), files TSRMLS_CC);
-  zend_update_property_string(mongo_ce_GridFS, getThis(), "chunksName", strlen("chunksName"), chunks TSRMLS_CC);
-
-  zval *zfile;
-  MAKE_STD_ZVAL(zfile);
-  ZVAL_STRING(zfile, files, 1);
-
-  PUSH_PARAM(zdb); PUSH_PARAM(zfile); PUSH_PARAM((void*)2);
+  // create files collection
+  PUSH_PARAM(zdb); PUSH_PARAM(files); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
   zim_MongoCollection___construct(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); 
 
+  // create chunks collection
   zval *zchunks;
   MAKE_STD_ZVAL(zchunks);
   object_init_ex(zchunks, mongo_ce_Collection);
 
-  zval *zchunk;
-  MAKE_STD_ZVAL(zchunk);
-  ZVAL_STRING(zchunk, chunks, 1);
-
-  PUSH_PARAM(zdb); PUSH_PARAM(zchunk); PUSH_PARAM((void*)2);
+  PUSH_PARAM(zdb); PUSH_PARAM(chunks); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
   zim_MongoCollection___construct(2, return_value, return_value_ptr, zchunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); 
   
+  // store
   zend_update_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), zchunks TSRMLS_CC);
-
+  
   // ensure index on chunks.n
   zval *zidx;
   MAKE_STD_ZVAL(zidx);
-  ZVAL_STRING(zidx, "n", 1);
+  array_init(zidx);
+  add_assoc_long(zidx, "n", 1);
 
   PUSH_PARAM(zidx); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -97,27 +102,23 @@ PHP_METHOD(MongoGridFS, __construct) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  zval_ptr_dtor(&zfile);
-  zval_ptr_dtor(&zchunk);
+  // cleanup
   zval_ptr_dtor(&zchunks);
   zval_ptr_dtor(&zidx);
 
-  if (release) {
-    efree(files);
-    efree(chunks);
-  }
-
-  zend_update_property(mongo_ce_GridFS, getThis(), "db", strlen("db"), zdb TSRMLS_CC);
+  zval_ptr_dtor(&files);
+  zval_ptr_dtor(&chunks);
 }
 
 
 PHP_METHOD(MongoGridFS, drop) {
+  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
   zval *zchunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
-  zval *zdb = zend_read_property(mongo_ce_GridFS, getThis(), "db", strlen("db"), NOISY TSRMLS_CC);
 
   PUSH_PARAM(zchunks); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_dropCollection(1, return_value, return_value_ptr, zdb, return_value_used TSRMLS_CC);
+  zim_MongoDB_dropCollection(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -130,10 +131,6 @@ PHP_METHOD(MongoGridFS, find) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|aa", &zquery, &zfields) == FAILURE) {
     return;
   }
-
-  zval *zdb = zend_read_property(mongo_ce_GridFS, getThis(), "db", strlen("db"), NOISY TSRMLS_CC);
-  zval *zlink = zend_read_property(mongo_ce_DB, zdb, "connection", strlen("connection"), NOISY TSRMLS_CC);
-  zval *zns = zend_read_property(mongo_ce_GridFS, getThis(), "ns", strlen("ns"), NOISY TSRMLS_CC);
 
   if (!zquery) {
     MAKE_STD_ZVAL(zquery);
@@ -154,7 +151,9 @@ PHP_METHOD(MongoGridFS, find) {
   zval temp;
   object_init_ex(return_value, mongo_ce_GridFSCursor);
 
-  PUSH_PARAM(getThis()); PUSH_PARAM(zlink); PUSH_PARAM(zns); PUSH_PARAM(zquery); PUSH_PARAM(zfields); PUSH_PARAM((void*)5);
+  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+  PUSH_PARAM(getThis()); PUSH_PARAM(c->db->link); PUSH_PARAM(c->ns); PUSH_PARAM(zquery); PUSH_PARAM(zfields); PUSH_PARAM((void*)5);
   PUSH_EO_PARAM();
   zim_MongoGridFSCursor___construct(5, &temp, NULL, return_value, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
@@ -176,10 +175,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // try to open the file
   FILE *fp = fopen(filename, "rb");
   if (!fp) {
-    char *errmsg;
-    spprintf(&errmsg, 0, "could not open file %s", filename);
-    zend_throw_exception(mongo_ce_GridFSException, errmsg, 0 TSRMLS_CC);
-    efree(errmsg);
+    zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "could not open file %s", filename);
     return;
   }
 
@@ -187,10 +183,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   fseek(fp, 0, SEEK_END);
   long size = ftell(fp);
   if (size >= 0xffffffff) {
-    char *errmsg;
-    spprintf(&errmsg, 0, "file %s is too large: %ld bytes", filename, size);
-    zend_throw_exception(mongo_ce_GridFSException, errmsg, 0 TSRMLS_CC);
-    efree(errmsg);
+    zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "file %s is too large: %ld bytes", filename, size);
     return;
   }
 
@@ -218,10 +211,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
     chunk_size = size-pos >= MonGlo(chunk_size) ? MonGlo(chunk_size) : size-pos;
     char *buf = (char*)emalloc(chunk_size);
     if (fread(buf, 1, chunk_size, fp) < chunk_size) {
-      char *errmsg;
-      spprintf(&errmsg, 0, "error reading file %s", filename);
-      zend_throw_exception(mongo_ce_GridFSException, errmsg, 0 TSRMLS_CC);
-      efree(errmsg);
+      zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error reading file %s", filename);
       return;
     }
 
@@ -446,10 +436,7 @@ PHP_METHOD(MongoGridFS, storeUpload) {
   zval *h = PG(http_globals)[TRACK_VARS_FILES];
   zval **file;
   if (zend_hash_find(Z_ARRVAL_P(h), Z_STRVAL_P(filename), Z_STRLEN_P(filename)+1, (void**)&file) == FAILURE) {
-    char *errmsg;
-    spprintf(&errmsg, 0, "could not find uploaded file %s", Z_STRVAL_P(filename));
-    zend_throw_exception(mongo_ce_GridFSException, errmsg, 0 TSRMLS_CC);
-    efree(errmsg);
+    zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "could not find uploaded file %s", Z_STRVAL_P(filename));
     return;
   }
 
@@ -493,6 +480,7 @@ void mongo_init_MongoGridFS(TSRMLS_D) {
   zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoGridFS", MongoGridFS_methods);
+  ce.create_object = mongo_mongo_collection_new;
   mongo_ce_GridFS = zend_register_internal_class_ex(&ce, mongo_ce_Collection, "MongoCollection" TSRMLS_CC);
 
   zend_declare_property_null(mongo_ce_GridFS, "chunks", strlen("chunks"), ZEND_ACC_PUBLIC TSRMLS_CC);
@@ -562,10 +550,7 @@ PHP_METHOD(MongoGridFSFile, write) {
   
   FILE *fp = fopen(filename, "wb");
   if (!fp) {
-    char *errmsg;
-    spprintf(&errmsg, 0, "could not open destination file %s", filename);
-    zend_throw_exception(mongo_ce_GridFSException, errmsg, 0 TSRMLS_CC);
-    efree(errmsg);
+    zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "could not open destination file %s", filename);
     return;
   }
 
