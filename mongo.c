@@ -938,25 +938,6 @@ zval* mongo_do_next(mongo_cursor *cursor TSRMLS_DC) {
   return 0;
 }
 
-int mongo_do_insert(mongo_link *link, char *collection, zval *zarray TSRMLS_DC) {
-
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
-  CREATE_HEADER(buf, collection, strlen(collection), OP_INSERT);
-
-  // serialize
-  if (zval_to_bson(&buf, zarray, PREP TSRMLS_CC) == 0) {
-    efree(buf.start);
-    // return if there were 0 elements
-    return FAILURE;
-  }
-
-  serialize_size(buf.start, &buf);
-
-  // sends
-  int response = mongo_say(link, &buf TSRMLS_CC);
-  efree(buf.start);
-  return response;
-}
 
 static int get_master(mongo_link *link TSRMLS_DC) {
   if (!link->paired) {

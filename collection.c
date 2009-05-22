@@ -140,7 +140,23 @@ PHP_METHOD(MongoCollection, insert) {
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
   zval *ns = zend_read_property(mongo_ce_Collection, getThis(), "ns", strlen("ns"), 1 TSRMLS_CC);
-  int response = mongo_do_insert(link, Z_STRVAL_P(ns), a TSRMLS_CC);
+
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
+  CREATE_HEADER(buf, Z_STRVAL_P(ns), Z_STRLEN_P(ns), OP_INSERT);
+
+  // serialize
+  if (zval_to_bson(&buf, a, PREP TSRMLS_CC) == 0) {
+    efree(buf.start);
+    // return if there were 0 elements
+    RETURN_FALSE;
+  }
+
+  serialize_size(buf.start, &buf);
+
+  // sends
+  int response = mongo_say(link, &buf TSRMLS_CC);
+  efree(buf.start);
+
   RETURN_BOOL(response >= SUCCESS);
 }
 

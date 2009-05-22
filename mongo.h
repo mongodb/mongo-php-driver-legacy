@@ -282,7 +282,6 @@ ZEND_END_MODULE_GLOBALS(mongo)
 #endif 
 
 mongo_cursor* mongo_do_query(mongo_link*, char*, int, int, zval*, zval* TSRMLS_DC);
-int mongo_do_insert(mongo_link*, char*, zval* TSRMLS_DC);
 int mongo_do_has_next(mongo_cursor* TSRMLS_DC);
 zval* mongo_do_next(mongo_cursor* TSRMLS_DC);
 
