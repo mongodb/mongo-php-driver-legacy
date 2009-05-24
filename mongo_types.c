@@ -15,6 +15,8 @@
  *  limitations under the License.
  */
 
+#include <stdlib.h>
+
 #ifdef WIN32
 #include <time.h>
 #else
@@ -45,11 +47,10 @@ zend_class_entry *mongo_ce_Date = NULL,
 
 
 void generate_id(char *data) {
-  // THIS WILL ONLY WORK ON *NIX
-  FILE *rand = fopen("/dev/urandom", "rb");
-  char machine[4], inc[4];
-  fgets(machine, 4, rand);
-  fgets(inc, 4, rand);
+  int r1 = rand();
+  int r2 = rand();
+
+  char *inc = (void*)&r2;
     
   unsigned t = (unsigned) time(0);
   char *T = (char*)&t;
@@ -58,13 +59,11 @@ void generate_id(char *data) {
   data[2] = T[1];
   data[3] = T[0];
 
-  memcpy(data+4, machine, 4);
+  memcpy(data+4, &r1, 4);
   data[8] = inc[3];
   data[9] = inc[2];
   data[10] = inc[1];
   data[11] = inc[0];
-  
-  fclose(rand);
 }
 
 static void mongo_mongo_id_free(void *object TSRMLS_DC) {

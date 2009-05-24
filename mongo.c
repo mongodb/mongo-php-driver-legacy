@@ -19,6 +19,7 @@
 #include "config.h"
 #endif
 
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
@@ -226,6 +227,15 @@ PHP_MINIT_FUNCTION(mongo) {
   // make mongo objects uncloneable
   memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
   mongo_default_handlers.clone_obj = NULL;
+
+  // start random number generator
+  FILE *rand = fopen("/dev/urandom", "rb");
+  uint seed;
+  char *seed_ptr = (char*)(void*)&seed;
+  fgets(seed_ptr, sizeof(uint), rand);
+  fclose(rand);
+
+  srand(seed);
 
   return SUCCESS;
 }
