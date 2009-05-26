@@ -1075,21 +1075,25 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
 
 
 int mongo_say(mongo_link *link, buffer *buf TSRMLS_DC) {
-  if (check_connection(link TSRMLS_CC) == SUCCESS) {
+  int sock = get_master(link TSRMLS_CC);
 
 #ifdef WIN32
-    int sent = send(get_master(link TSRMLS_CC), (const char*)buf->start, buf->pos-buf->start, FLAGS);
+  int sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
 #else
-	int sent = send(get_master(link TSRMLS_CC), buf->start, buf->pos-buf->start, FLAGS);
+  int sent = write(sock, buf->start, buf->pos-buf->start);
 #endif
-
-    if (sent == FAILURE) {
-      link->server.single.connected = 0;
-      sent = check_connection(link TSRMLS_CC);
+  
+  if (sent == FAILURE) {
+    if (check_connection(link TSRMLS_CC) == SUCCESS) {
+      sock = get_master(link TSRMLS_CC);
+      sent = send(sock, buf->start, buf->pos-buf->start, O_NONBLOCK);
     }
-    return sent;
+    else {
+      return FAILURE;
+    }
   }
-  return FAILURE;
+  
+  return sent;
 }
 
 int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
@@ -1105,13 +1109,19 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
   int r = 0;
   while(r < len && num > 0) {
 
-#ifdef WIN32
     num = recv(get_master(link TSRMLS_CC), (char*)dest, len, FLAGS);
-#else
-    num = recv(get_master(link TSRMLS_CC), dest, len, FLAGS);
-#endif
 
-	dest = (char*)dest + num;
+    fd_set rset, wset;
+    struct timeval tval;
+    // timeout
+    tval.tv_sec = 1;
+    tval.tv_usec = 0;
+
+    if (select(get_master(link TSRMLS_CC)+1, &rset, &wset, NULL, &tval) == 0) {
+      // something went wrong, just keep moving
+    }
+
+    dest = (char*)dest + num;
     r += num;
   }
   return r;
@@ -1161,22 +1171,17 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
 
   // create sockets
   if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
-    zend_error (E_WARNING, "couldn't create socket");
     return FAILURE;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
+  setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE|O_NONBLOCK, &yes, INT_32);
   setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
-#ifdef WIN32
-  ioctlsocket(sock, FIONBIO, (u_long*)&yes);
-#else
-  fcntl(sock, F_SETFL, FLAGS|O_NONBLOCK);
-#endif
 
   FD_ZERO(&rset);
   FD_SET(sock, &rset);  
   FD_ZERO(&wset);
   FD_SET(sock, &wset);  
+
 
   // connect
   if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
@@ -1186,31 +1191,19 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
 #else
     if (errno != EINPROGRESS) {
 #endif
-      close(sock);
-      zend_error(E_WARNING, "%s:%d: %s", host, port, strerror(errno));
       return FAILURE;
     }
 
     if (select(sock+1, &rset, &wset, NULL, &tval) == 0) {
-      close(sock);
       return FAILURE;
     }
 
     uint size = sizeof(addr2);
     connected = getpeername(sock, (struct sockaddr*)&addr, &size);
     if (connected == FAILURE) {
-      close(sock);
       return FAILURE;
     }
   }
-
-  // reset flags
-#ifdef WIN32
-  u_long no = 0;
-  ioctlsocket(sock, FIONBIO, &no);
-#else
-  fcntl(sock, F_SETFL, FLAGS);
-#endif
 
   return sock;
 }

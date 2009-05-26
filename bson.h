@@ -43,8 +43,6 @@
 
 #define GROW_SLOWLY 1048576
 
-#include "mongo.h"
-
 void serialize_size(unsigned char*, buffer*);
 
 void serialize_element(buffer*, char*, int, zval** TSRMLS_DC);

@@ -21,8 +21,8 @@
 #include <memory.h>
 #endif
 
-#include "bson.h"
 #include "mongo.h"
+#include "bson.h"
 #include "mongo_types.h"
 
 extern zend_class_entry *mongo_ce_BinData,

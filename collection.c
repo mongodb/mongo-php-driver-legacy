@@ -17,10 +17,10 @@
 
 #include <php.h>
 
+#include "mongo.h"
 #include "collection.h"
 #include "cursor.h"
 #include "bson.h"
-#include "mongo.h"
 #include "mongo_types.h"
 #include "db.h"
 
@@ -148,7 +148,7 @@ PHP_METHOD(MongoCollection, insert) {
   // sends
   int response = mongo_say(link, &buf TSRMLS_CC);
   efree(buf.start);
-
+  
   RETURN_BOOL(response >= SUCCESS);
 }
 
