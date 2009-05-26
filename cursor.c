@@ -38,7 +38,7 @@ extern zend_object_handlers mongo_default_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
-static void mongo_mongo_cursor_free(void *object TSRMLS_DC);
+void mongo_mongo_cursor_free(void *object TSRMLS_DC);
 static void kill_cursor(mongo_cursor *cursor TSRMLS_DC);
 static zend_object_value mongo_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
 
@@ -440,25 +440,19 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   mongo_say(cursor->link, &buf TSRMLS_CC);
 }
 
-static void mongo_mongo_cursor_free(void *object TSRMLS_DC) {
+void mongo_mongo_cursor_free(void *object TSRMLS_DC) {
   mongo_cursor *cursor = (mongo_cursor*)object;
 
   if (cursor) {
     kill_cursor(cursor TSRMLS_CC);
 
-    if (cursor->current) {
-      zval_ptr_dtor(&cursor->current);
-    }
+    if (cursor->current) zval_ptr_dtor(&cursor->current);
 
-    zval_ptr_dtor(&cursor->query);
-    zval_ptr_dtor(&cursor->fields);
-
-    if (cursor->buf.start) {
-      efree(cursor->buf.start);
-    }
-    if (cursor->ns) {
-      efree(cursor->ns);
-    } 
+    if (cursor->query) zval_ptr_dtor(&cursor->query);
+    if (cursor->fields) zval_ptr_dtor(&cursor->fields);
+ 
+    if (cursor->buf.start) efree(cursor->buf.start);
+    if (cursor->ns) efree(cursor->ns);
 
     zend_object_std_dtor(&cursor->std TSRMLS_CC);
 

@@ -48,7 +48,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int);
 static int get_master(mongo_link* TSRMLS_DC);
 static int check_connection(mongo_link* TSRMLS_DC);
 static int mongo_connect_nonb(int, char*, int);
-static int mongo_do_socket_connect(mongo_link*);
+static int mongo_do_socket_connect(mongo_link* TSRMLS_DC);
 static int get_sockaddr(struct sockaddr_in*, char*, int);
 static void kill_cursor(mongo_cursor* TSRMLS_DC);
 static void get_host_and_port(char*, mongo_link* TSRMLS_DC);
@@ -328,7 +328,7 @@ PHP_METHOD(Mongo, __construct) {
   int server_len = 0;
   zend_bool connect = 1, paired = 0, persist = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sbbb", &server, &server_len, &connect, &paired, &persist) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sbbb", &server, &server_len, &connect, &persist, &paired) == FAILURE) {
     return;
   }
 
@@ -451,10 +451,10 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
     return;
   }
 
-  zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), 0 TSRMLS_CC);
+  zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
 
-  zval *pair = zend_read_property(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 0 TSRMLS_CC);
-  zval *persist = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 0 TSRMLS_CC);
+  zval *pair = zend_read_property(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), NOISY TSRMLS_CC);
+  zval *persist = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), NOISY TSRMLS_CC);
 
   /* make sure that there aren't too many links already */
   if (MonGlo(max_links) > -1 &&
@@ -508,7 +508,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   link->paired = Z_BVAL_P(pair);
 
   get_host_and_port(Z_STRVAL_P(server), link TSRMLS_CC);
-  if (mongo_do_socket_connect(link) == FAILURE) {
+  if (mongo_do_socket_connect(link TSRMLS_CC) == FAILURE) {
     mongo_link_dtor(link);
     return;
   }
@@ -896,8 +896,7 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
   }
 
   mongo_cursor *cursor = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
-  cursor->buf.start = 0;
-  cursor->buf.pos = 0;
+  memset(cursor, 0, sizeof(mongo_cursor));
   cursor->link = link;
   cursor->ns = estrdup(collection);
 
@@ -987,30 +986,39 @@ static int get_master(mongo_link *link TSRMLS_DC) {
   // check the left
   mongo_cursor *c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
 
-  if ((response = mongo_do_next(c TSRMLS_CC)) != 0) {
+  if ((response = mongo_do_next(c TSRMLS_CC)) != NULL) {
     zval **ans;
     if (zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS && 
         Z_LVAL_PP(ans) == 1) {
       zval_ptr_dtor(&is_master);
+      mongo_mongo_cursor_free(c TSRMLS_CC);
+      zval_ptr_dtor(&response);
       return link->master = link->server.paired.lsocket;
     }
   }
+  // cleanup
+  mongo_mongo_cursor_free(c TSRMLS_CC);
+  zval_ptr_dtor(&response);
 
   // check the right
   temp.server.single.socket = link->server.paired.rsocket;
 
   c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
 
-  if ((response = mongo_do_next(c TSRMLS_CC)) != 0) {
+  if ((response = mongo_do_next(c TSRMLS_CC)) != NULL) {
     zval **ans;
     if (zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS && 
         Z_LVAL_PP(ans) == 1) {
       zval_ptr_dtor(&is_master);
+      mongo_mongo_cursor_free(c TSRMLS_CC);
+      zval_ptr_dtor(&response);
       return link->master = link->server.paired.rsocket;
     }
   }
 
   // give up
+  mongo_mongo_cursor_free(c TSRMLS_CC);
+  zval_ptr_dtor(&response);
   zval_ptr_dtor(&is_master);
   return FAILURE;
 }
@@ -1111,16 +1119,6 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
 
     num = recv(get_master(link TSRMLS_CC), (char*)dest, len, FLAGS);
 
-    fd_set rset, wset;
-    struct timeval tval;
-    // timeout
-    tval.tv_sec = 1;
-    tval.tv_usec = 0;
-
-    if (select(get_master(link TSRMLS_CC)+1, &rset, &wset, NULL, &tval) == 0) {
-      // something went wrong, just keep moving
-    }
-
     dest = (char*)dest + num;
     r += num;
   }
@@ -1147,7 +1145,7 @@ static int check_connection(mongo_link *link TSRMLS_DC) {
     close(link->server.single.socket);
   } 
 
-  return mongo_do_socket_connect(link);
+  return mongo_do_socket_connect(link TSRMLS_CC);
 }
 
 static int mongo_connect_nonb(int sock, char *host, int port) {
@@ -1174,8 +1172,14 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
     return FAILURE;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE|O_NONBLOCK, &yes, INT_32);
+  setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
   setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
+
+#ifdef WIN32
+  ioctlsocket(sock, FIONBIO, (u_long*)&yes);
+#else
+  fcntl(sock, F_SETFL, FLAGS|O_NONBLOCK);
+#endif
 
   FD_ZERO(&rset);
   FD_SET(sock, &rset);  
@@ -1205,36 +1209,46 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
     }
   }
 
+// reset flags
+#ifdef WIN32
+  u_long no = 0;
+  ioctlsocket(sock, FIONBIO, &no);
+#else
+  fcntl(sock, F_SETFL, FLAGS);
+#endif
   return sock;
 }
 
-static int mongo_do_socket_connect(mongo_link *link) {
-  if (link->paired) {
-
+static int mongo_do_socket_connect(mongo_link *link TSRMLS_DC) {
+  if (link->paired) { 
+    int left, right;
     if ((link->server.paired.lsocket =
          mongo_connect_nonb(link->server.paired.lsocket,
                             link->server.paired.left,
                             link->server.paired.lport)) == FAILURE) {
 
-      link->server.paired.lconnected = 0;
+      left = 0;
     }
     else {
-      link->server.paired.lconnected = 1;
+      left = 1;
     }
     if ((link->server.paired.rsocket =
-         mongo_connect_nonb(link->server.paired.lsocket,
-                            link->server.paired.left,
-                            link->server.paired.lport)) == FAILURE) {
-      link->server.paired.rconnected = 0;
+         mongo_connect_nonb(link->server.paired.rsocket,
+                            link->server.paired.right,
+                            link->server.paired.rport)) == FAILURE) {
+      right = 0;
     }
     else {
-      link->server.paired.rconnected = 1;
+      right = 1;
     }
 
-    if (!link->server.paired.lconnected &&
-        !link->server.paired.rconnected) {
+    if (!left && !right) {
       return FAILURE;
     }
+
+    get_master(link TSRMLS_CC);
+    link->server.paired.lconnected = left;
+    link->server.paired.rconnected = right;
   }
   else {
     if ((link->server.single.socket = 
