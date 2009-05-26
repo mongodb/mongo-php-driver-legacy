@@ -107,7 +107,7 @@ PHP_METHOD(MongoDB, getGridFS) {
     }
   }
 
-  PUSH_PARAM((void*)ZEND_NUM_ARGS()+1);
+  PUSH_PARAM((void*)(ZEND_NUM_ARGS()+1));
   PUSH_EO_PARAM();
   zim_MongoGridFS___construct(ZEND_NUM_ARGS()+1, &temp, NULL, return_value, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
@@ -551,7 +551,7 @@ zend_object_value mongo_mongo_db_new(zend_class_entry *class_type TSRMLS_DC) {
   mongo_db *intern;
   zval *tmp;
 
-  intern = emalloc(sizeof(mongo_db));
+  intern = (mongo_db*)emalloc(sizeof(mongo_db));
   memset(intern, 0, sizeof(mongo_db));
 
   zend_object_std_init(&intern->std, class_type TSRMLS_CC);

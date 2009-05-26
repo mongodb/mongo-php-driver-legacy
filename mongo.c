@@ -38,6 +38,7 @@
 
 #include "mongo.h"
 #include "db.h"
+#include "cursor.h"
 #include "mongo_types.h"
 #include "bson.h"
 
@@ -1094,7 +1095,11 @@ int mongo_say(mongo_link *link, buffer *buf TSRMLS_DC) {
   if (sent == FAILURE) {
     if (check_connection(link TSRMLS_CC) == SUCCESS) {
       sock = get_master(link TSRMLS_CC);
-      sent = send(sock, buf->start, buf->pos-buf->start, O_NONBLOCK);
+#     ifdef WIN32
+	  sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
+#     else
+      sent = send(sock, buf->start, buf->pos-buf->start, FLAGS);
+#     endif
     }
     else {
       return FAILURE;
@@ -1126,16 +1131,25 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
 }
 
 static int check_connection(mongo_link *link TSRMLS_DC) {
-  if (!MonGlo(auto_reconnect) ||
+
+#ifdef WIN32
+	SYSTEMTIME systemTime;
+	GetSystemTime(&systemTime);
+	int now = systemTime.wMilliseconds;
+#else
+	int now = time(0);
+#endif
+
+	if (!MonGlo(auto_reconnect) ||
       (!link->paired && link->server.single.connected) || 
       (link->paired && 
        (link->server.paired.lconnected || 
         link->server.paired.rconnected)) ||
-      time(0)-link->ts < 2) {
+      (now-link->ts) < 2) {
     return SUCCESS;
   }
 
-  link->ts = time(0);
+  link->ts = now;
 
   if (link->paired) {
     close(link->server.paired.lsocket);
@@ -1202,7 +1216,13 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
       return FAILURE;
     }
 
+	// why is Windows so freakin dumb?
+#ifdef WIN32
+	int size = sizeof(addr2);
+#else
     uint size = sizeof(addr2);
+#endif
+
     connected = getpeername(sock, (struct sockaddr*)&addr, &size);
     if (connected == FAILURE) {
       return FAILURE;
@@ -1262,7 +1282,13 @@ static int mongo_do_socket_connect(mongo_link *link TSRMLS_DC) {
   }
 
   // set initial connection time
-  link->ts = time(0);
+#ifdef WIN32
+	SYSTEMTIME systemTime;
+	GetSystemTime(&systemTime);
+	link->ts = systemTime.wMilliseconds;
+#else
+	link->ts = time(0);
+#endif
 
   return SUCCESS;
 }

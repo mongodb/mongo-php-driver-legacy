@@ -38,7 +38,6 @@ extern zend_object_handlers mongo_default_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
-void mongo_mongo_cursor_free(void *object TSRMLS_DC);
 static void kill_cursor(mongo_cursor *cursor TSRMLS_DC);
 static zend_object_value mongo_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
 
@@ -398,7 +397,7 @@ static zend_object_value mongo_mongo_cursor_new(zend_class_entry *class_type TSR
   mongo_cursor *intern;
   zval *tmp;
 
-  intern = emalloc(sizeof(mongo_cursor));
+  intern = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
   memset(intern, 0, sizeof(mongo_cursor));
 
   zend_object_std_init(&intern->std, class_type TSRMLS_CC);

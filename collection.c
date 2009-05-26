@@ -16,6 +16,7 @@
  */
 
 #include <php.h>
+#include <zend_exceptions.h>
 
 #include "mongo.h"
 #include "collection.h"
@@ -644,7 +645,7 @@ zend_object_value mongo_mongo_collection_new(zend_class_entry *class_type TSRMLS
   mongo_collection *intern;
   zval *tmp;
 
-  intern = emalloc(sizeof(mongo_collection));
+  intern = (mongo_collection*)emalloc(sizeof(mongo_collection));
   memset(intern, 0, sizeof(mongo_collection));
 
   zend_object_std_init(&intern->std, class_type TSRMLS_CC);

@@ -18,6 +18,8 @@
 #ifndef MONGO_CURSOR_H
 #define MONGO_CURSOR_H 1
 
+void mongo_mongo_cursor_free(void *object TSRMLS_DC);
+
 PHP_METHOD(MongoCursor, __construct);
 PHP_METHOD(MongoCursor, getNext);
 PHP_METHOD(MongoCursor, hasNext);

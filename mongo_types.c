@@ -25,6 +25,7 @@
 #endif
 
 #include <php.h>
+#include <zend_exceptions.h>
 
 #include "mongo_types.h"
 #include "mongo.h"
@@ -50,9 +51,16 @@ void generate_id(char *data) {
   int r1 = rand();
   int r2 = rand();
 
-  char *inc = (void*)&r2;
-    
+  char *inc = (char*)(void*)&r2;
+
+#ifdef WIN32
+  SYSTEMTIME systemTime;
+  GetSystemTime(&systemTime);
+  unsigned t = systemTime.wMilliseconds;
+#else
   unsigned t = (unsigned) time(0);
+#endif
+
   char *T = (char*)&t;
   data[0] = T[3];
   data[1] = T[2];
@@ -79,10 +87,10 @@ static void mongo_mongo_id_free(void *object TSRMLS_DC) {
 
 static zend_object_value mongo_mongo_id_new(zend_class_entry *class_type TSRMLS_DC) {
   zend_object_value retval;
-  mongo_cursor *intern;
+  mongo_id *intern;
   zval *tmp;
 
-  intern = emalloc(sizeof(mongo_id));
+  intern = (mongo_id*)emalloc(sizeof(mongo_id));
   memset(intern, 0, sizeof(mongo_id));
 
   zend_object_std_init(&intern->std, class_type TSRMLS_CC);
