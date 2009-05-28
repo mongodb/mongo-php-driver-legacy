@@ -18,6 +18,7 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
+#include "ext/spl/spl_exceptions.h"
 
 #include "db.h"
 #include "mongo.h"
@@ -31,8 +32,7 @@ extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Cursor,
   *mongo_ce_GridFS,
   *mongo_ce_Id,
-  *mongo_ce_Code,
-  *spl_ce_InvalidArgumentException;
+  *mongo_ce_Code;
 
 extern int le_pconnection,
   le_connection;

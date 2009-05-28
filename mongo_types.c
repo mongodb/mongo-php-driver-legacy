@@ -26,6 +26,7 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
+#include "ext/spl/spl_exceptions.h"
 
 #include "mongo_types.h"
 #include "mongo.h"
@@ -34,7 +35,6 @@
 #include "bson.h"
 
 extern zend_class_entry *mongo_ce_DB,
-  *spl_ce_InvalidArgumentException,
   *mongo_ce_Exception;
 
 extern zend_object_handlers mongo_default_handlers;
