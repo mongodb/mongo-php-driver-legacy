@@ -61,32 +61,6 @@
 
 #define FLAGS 0
 
-#define CREATE_MSG_HEADER(rid, rto, opcode)                     \
-  mongo_msg_header header;                                      \
-  header.length = 0;                                            \
-  header.request_id = rid;                                      \
-  header.response_to = rto;                                     \
-  header.op = opcode;
-
-#define CREATE_RESPONSE_HEADER(buf, ns, ns_len, rto, opcode)            \
-  CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode);                 \
-  APPEND_HEADER_NS(buf, ns, ns_len);
-
-#define CREATE_HEADER(buf, ns, ns_len, opcode)          \
-  CREATE_RESPONSE_HEADER(buf, ns, ns_len, 0, opcode);                    
-
-
-#define APPEND_HEADER(buf) buf.pos += INT_32;             \
-  serialize_int(&buf, header.request_id);                 \
-  serialize_int(&buf, header.response_to);                \
-  serialize_int(&buf, header.op);                         \
-  serialize_int(&buf, 0);                                
-
-
-#define APPEND_HEADER_NS(buf, ns, ns_len)               \
-  APPEND_HEADER(buf);                                   \
-  serialize_string(&buf, ns, ns_len);              
-
 #if ZEND_MODULE_API_NO >= 20090115
 # define PUSH_PARAM(arg) zend_vm_stack_push(arg TSRMLS_CC)
 # define POP_PARAM() zend_vm_stack_pop(TSRMLS_C)
@@ -144,6 +118,30 @@ typedef struct {
   unsigned char *end;
 } buffer;
 
+#define CREATE_MSG_HEADER(rid, rto, opcode)                     \
+  header.length = 0;                                            \
+  header.request_id = rid;                                      \
+  header.response_to = rto;                                     \
+  header.op = opcode;
+
+#define CREATE_RESPONSE_HEADER(buf, ns, ns_len, rto, opcode)            \
+  CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode);                 \
+  APPEND_HEADER_NS(buf, ns, ns_len);
+
+#define CREATE_HEADER(buf, ns, ns_len, opcode)          \
+  CREATE_RESPONSE_HEADER(buf, ns, ns_len, 0, opcode);                    
+
+
+#define APPEND_HEADER(buf) buf.pos += INT_32;             \
+  serialize_int(&buf, header.request_id);                 \
+  serialize_int(&buf, header.response_to);                \
+  serialize_int(&buf, header.op);                         \
+  serialize_int(&buf, 0);                                
+
+
+#define APPEND_HEADER_NS(buf, ns, ns_len)               \
+  APPEND_HEADER(buf);                                   \
+  serialize_string(&buf, ns, ns_len);              
 
 typedef struct {
   zend_object std;

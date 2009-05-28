@@ -259,9 +259,11 @@ PHP_METHOD(MongoCursor, hint) {
  */
 PHP_METHOD(MongoCursor, doQuery) {
   int sent;
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
+  mongo_msg_header header;
+  mongo_cursor *cursor;
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
+
+  cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   CREATE_HEADER(buf, cursor->ns, strlen(cursor->ns), OP_QUERY);
 
   serialize_int(&buf, cursor->skip);
@@ -417,6 +419,7 @@ static zend_object_value mongo_mongo_cursor_new(zend_class_entry *class_type TSR
 static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   unsigned char quickbuf[128];
   buffer buf;
+  mongo_msg_header header;
 
   // we allocate a cursor even if no results are returned,
   // but the database will throw an assertion if we try to

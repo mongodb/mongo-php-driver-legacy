@@ -306,20 +306,17 @@ PHP_MINFO_FUNCTION(mongo) {
 /* }}} */
 
 void mongo_init_MongoExceptions(TSRMLS_D) {
+  zend_class_entry e, ce, conn, e2;
 
-  zend_class_entry e;
   INIT_CLASS_ENTRY(e, "MongoException", NULL);
   mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
 
-  zend_class_entry ce;
   INIT_CLASS_ENTRY(ce, "MongoCursorException", NULL);
   mongo_ce_CursorException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
 
-  zend_class_entry conn;
   INIT_CLASS_ENTRY(conn, "MongoConnectionException", NULL);
   mongo_ce_ConnectionException = zend_register_internal_class_ex(&conn, mongo_ce_Exception, NULL TSRMLS_CC);
 
-  zend_class_entry e2;
   INIT_CLASS_ENTRY(e2, "MongoGridFSException", NULL);
   mongo_ce_GridFSException = zend_register_internal_class_ex(&e2, mongo_ce_Exception, NULL TSRMLS_CC);
 }
@@ -885,6 +882,7 @@ PHP_METHOD(Mongo, forceError) {
 mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int limit, zval *zquery, zval *zfields TSRMLS_DC) {
   int sent;
   mongo_cursor *cursor;
+  mongo_msg_header header;
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, collection, strlen(collection), OP_QUERY);
@@ -919,14 +917,18 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
 
 
 int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
+  mongo_msg_header header;
+  CREATE_BUF(buf, 256);
+
   if (cursor->num == 0) {
+    efree(buf.start);
     return 0;
   }
   if (cursor->at < cursor->num) {
+    efree(buf.start);
     return 1;
   }
 
-  CREATE_BUF(buf, 256);
   CREATE_RESPONSE_HEADER(buf, cursor->ns, strlen(cursor->ns), cursor->header.request_id, OP_GET_MORE);
   serialize_int(&buf, cursor->limit);
   serialize_long(&buf, cursor->cursor_id);

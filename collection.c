@@ -131,8 +131,11 @@ PHP_METHOD(MongoCollection, insert) {
   mongo_collection *c;
   mongo_link *link;
   int response;
+  mongo_msg_header header;
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &a) == FAILURE) {
+    efree(buf.start);
     return;
   }
 
@@ -140,7 +143,6 @@ PHP_METHOD(MongoCollection, insert) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_INSERT);
 
   // serialize
@@ -167,6 +169,8 @@ PHP_METHOD(MongoCollection, batchInsert) {
   int count = 0, start = 0;
   zval **data;
   HashPosition pointer;
+  mongo_msg_header header;
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &a) == FAILURE) {
     return;
@@ -176,7 +180,6 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_INSERT);
 
   php_array = Z_ARRVAL_P(a);
@@ -284,6 +287,8 @@ PHP_METHOD(MongoCollection, update) {
   zend_bool upsert = 0;
   mongo_collection *c;
   mongo_link *link;
+  mongo_msg_header header;
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|b", &criteria, &newobj, &upsert) == FAILURE) {
     return;
@@ -293,7 +298,6 @@ PHP_METHOD(MongoCollection, update) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_UPDATE);
   serialize_int(&buf, upsert);
   zval_to_bson(&buf, criteria, NO_PREP TSRMLS_CC);
@@ -310,6 +314,8 @@ PHP_METHOD(MongoCollection, remove) {
   mongo_collection *c;
   mongo_link *link;
   int mflags;
+  mongo_msg_header header;
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ab", &criteria, &just_one) == FAILURE) {
     return;
@@ -327,7 +333,6 @@ PHP_METHOD(MongoCollection, remove) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_DELETE);
 
   mflags = (just_one == 1);
