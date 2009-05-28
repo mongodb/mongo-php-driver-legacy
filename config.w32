@@ -4,7 +4,7 @@
 ARG_ENABLE("mongo", "MongoDB support", "no");
 
 if (PHP_MONGO != "no") {
-  EXTENSION('mongo', 'mongo.c mongo_types.c bson.c');
+  EXTENSION('mongo', 'mongo.c mongo_types.c bson.c collection.c db.c util.c gridfs.c');
   
   AC_DEFINE('HAVE_MONGO', 1);
 }
