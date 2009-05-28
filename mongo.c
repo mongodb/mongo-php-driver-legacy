@@ -200,6 +200,9 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(mongo) {
+  FILE *rand;
+  uint seed;
+  char *seed_ptr;
 
   REGISTER_INI_ENTRIES();
 
@@ -230,9 +233,8 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_default_handlers.clone_obj = NULL;
 
   // start random number generator
-  FILE *rand = fopen("/dev/urandom", "rb");
-  uint seed;
-  char *seed_ptr = (char*)(void*)&seed;
+  rand = fopen("/dev/urandom", "rb");
+  seed_ptr = (char*)(void*)&seed;
   fgets(seed_ptr, sizeof(uint), rand);
   fclose(rand);
 
@@ -328,13 +330,14 @@ PHP_METHOD(Mongo, __construct) {
   char *server = 0;
   int server_len = 0;
   zend_bool connect = 1, paired = 0, persist = 0;
+  zval *zserver;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sbbb", &server, &server_len, &connect, &persist, &paired) == FAILURE) {
     return;
   }
 
   if (!server) {
-    zval *zserver = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
+    zserver = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
     server = Z_STRVAL_P(zserver);
     server_len = Z_STRLEN_P(zserver);
   }
@@ -370,9 +373,9 @@ PHP_METHOD(Mongo, connect) {
 /* {{{ Mongo->pairConnect
  */
 PHP_METHOD(Mongo, pairConnect) {
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
-
   zval zusername, zpassword;
+
+  zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
 
   ZVAL_STRING(&zusername, "", 0);
   ZVAL_STRING(&zpassword, "", 0);
@@ -387,9 +390,10 @@ PHP_METHOD(Mongo, pairConnect) {
 /* {{{ Mongo->persistConnect
  */
 PHP_METHOD(Mongo, persistConnect) {
+  zval *zusername, *zpassword;
+
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
-  zval *zusername, *zpassword;
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &zusername, &zpassword) == FAILURE) {
     return;
   } 
@@ -404,10 +408,11 @@ PHP_METHOD(Mongo, persistConnect) {
 /* {{{ Mongo->pairPersistConnect
  */
 PHP_METHOD(Mongo, pairPersistConnect) {
+  zval *zusername, *zpassword;
+
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
-  zval *zusername, *zpassword;
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &zusername, &zpassword) == FAILURE) {
     return;
   } 
@@ -421,8 +426,10 @@ PHP_METHOD(Mongo, pairPersistConnect) {
 
 
 PHP_METHOD(Mongo, connectUtil) {
+  zval *connected, *server;
+
   // if we're already connected, disconnect
-  zval *connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
+  connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
   if (Z_BVAL_P(connected)) {
     // Mongo->close()
     zim_Mongo_close(INTERNAL_FUNCTION_PARAM_PASSTHRU);
@@ -435,7 +442,7 @@ PHP_METHOD(Mongo, connectUtil) {
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
   // if connecting failed, throw an exception
   if (!Z_BVAL_P(connected)) {
-    zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
+    server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
     zend_throw_exception(mongo_ce_ConnectionException, Z_STRVAL_P(server), 0 TSRMLS_CC);
     return;
   }
@@ -446,16 +453,21 @@ PHP_METHOD(Mongo, connectUtil) {
 
 
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
-  zval *username, *password;
- 
+  zval *username, *password, *server, *pair, *persist;
+  mongo_link *link;
+  zend_rsrc_list_entry new_le; 
+  zend_rsrc_list_entry *le;
+  char *key;
+  int key_len, ulen, plen;
+
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &username, &password) == FAILURE) {
     return;
   }
 
-  zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
+  server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
 
-  zval *pair = zend_read_property(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), NOISY TSRMLS_CC);
-  zval *persist = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), NOISY TSRMLS_CC);
+  pair = zend_read_property(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), NOISY TSRMLS_CC);
+  persist = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), NOISY TSRMLS_CC);
 
   /* make sure that there aren't too many links already */
   if (MonGlo(max_links) > -1 &&
@@ -473,13 +485,10 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
     RETURN_FALSE;
   }
 
-  mongo_link *link;
-  zend_rsrc_list_entry *le;
   zend_update_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), return_value TSRMLS_CC);
 
   if (Z_BVAL_P(persist)) {
-    char *key;
-    int key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), Z_STRVAL_P(username), Z_STRVAL_P(password));
+    key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), Z_STRVAL_P(username), Z_STRVAL_P(password));
     // if a connection is found, return it 
     if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
       link = (mongo_link*)le->ptr;
@@ -518,13 +527,9 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
 
   // store a reference in the persistence list
   if (Z_BVAL_P(persist)) {
-    zend_rsrc_list_entry new_le; 
-    char *key;
-    int key_len;
-
     // save username and password for reconnection
-    int ulen = Z_STRLEN_P(username);
-    int plen = Z_STRLEN_P(password);
+    ulen = Z_STRLEN_P(username);
+    plen = Z_STRLEN_P(password);
     if (ulen > 0 && plen > 0) {
       link->username = (char*)emalloc(ulen);
       link->password = (char*)emalloc(plen);
@@ -555,13 +560,13 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
 }
 
 static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
+  char *colon, *host, *comma;
+  int port, host_len;
 
   // extract host:port
-  char *colon = strchr(server, ':');
-  char *host;
-  int port;
+  colon = strchr(server, ':');
   if (colon) {
-    int host_len = colon-server+1;
+    host_len = colon-server+1;
     host = (char*)emalloc(host_len);
     memcpy(host, server, host_len-1);
     host[host_len-1] = 0;
@@ -579,7 +584,7 @@ static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
 
 
     // we get a string: host1:123,host2:456
-    char *comma = strchr(server, ',');
+    comma = strchr(server, ',');
     comma++;
     colon = strchr(comma, ':');
 
@@ -587,7 +592,7 @@ static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
     if (colon && 
         colon - comma > 0 &&
         colon - comma < 256) {
-      int host_len = colon-comma + 1;
+      host_len = colon-comma + 1;
       host = (char*)emalloc(host_len);
       memcpy(host, comma, host_len-1);
       host[host_len-1] = 0;
@@ -635,12 +640,13 @@ PHP_METHOD(Mongo, __toString) {
 /* {{{ Mongo->selectDB()
  */
 PHP_METHOD(Mongo, selectDB) {
+  zval temp;
   zval *db;
+
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &db) == FAILURE) {
     return;
   }
 
-  zval temp;
   object_init_ex(return_value, mongo_ce_DB);
 
   PUSH_PARAM(getThis()); PUSH_PARAM(db); PUSH_PARAM((void*)2);
@@ -654,19 +660,20 @@ PHP_METHOD(Mongo, selectDB) {
 /* {{{ Mongo::selectCollection()
  */
 PHP_METHOD(Mongo, selectCollection) {
-  zval *db, *collection;
+  zval *db, *collection, *temp_db;
+  mongo_db *ok;
+
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &db, &collection) == FAILURE) {
     return;
   }
 
   if (Z_TYPE_P(db) != IS_OBJECT ||
       Z_OBJCE_P(db) != mongo_ce_DB) {
-    zval *temp_db;
     MAKE_STD_ZVAL(temp_db);
 
     zim_Mongo_selectDB(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
 
-    mongo_db *ok = (mongo_db*)zend_object_store_get_object(temp_db TSRMLS_CC);
+    ok = (mongo_db*)zend_object_store_get_object(temp_db TSRMLS_CC);
     if (!ok || !ok->name) {
       return;
     }
@@ -690,14 +697,14 @@ PHP_METHOD(Mongo, selectCollection) {
 /* {{{ Mongo::dropDB()
  */
 PHP_METHOD(Mongo, dropDB) {
-  zval *db;
+  zval *db, *temp_db;
+
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &db) == FAILURE) {
     RETURN_FALSE;
   }
 
   if (Z_TYPE_P(db) != IS_OBJECT ||
       Z_OBJCE_P(db) != mongo_ce_DB) {
-    zval *temp_db;
     MAKE_STD_ZVAL(temp_db);
 
     zim_Mongo_selectDB(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
@@ -752,11 +759,12 @@ PHP_METHOD(Mongo, repairDB) {
 /* {{{ Mongo->lastError()
  */
 PHP_METHOD(Mongo, lastError) {
-  zval *name;
+  zval *name, *data;
+  zval db;
+
   MAKE_STD_ZVAL(name);
   ZVAL_STRING(name, "admin", 1);
 
-  zval db;
   PUSH_PARAM(name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   zim_Mongo_selectDB(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
@@ -765,7 +773,6 @@ PHP_METHOD(Mongo, lastError) {
 
   zval_ptr_dtor(&name);
 
-  zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_long(data, "getlasterror", 1);
@@ -783,11 +790,12 @@ PHP_METHOD(Mongo, lastError) {
 /* {{{ Mongo->prevError()
  */
 PHP_METHOD(Mongo, prevError) {
-  zval *name;
+  zval *name, *data;
+  zval db;
+
   MAKE_STD_ZVAL(name);
   ZVAL_STRING(name, "admin", 1);
 
-  zval db;
   PUSH_PARAM(name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   zim_Mongo_selectDB(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
@@ -796,7 +804,6 @@ PHP_METHOD(Mongo, prevError) {
 
   zval_ptr_dtor(&name);
 
-  zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_long(data, "getpreverror", 1);
@@ -814,11 +821,12 @@ PHP_METHOD(Mongo, prevError) {
 /* {{{ Mongo->resetError()
  */
 PHP_METHOD(Mongo, resetError) {
-  zval *name;
+  zval *name, *data;
+  zval db;
+
   MAKE_STD_ZVAL(name);
   ZVAL_STRING(name, "admin", 1);
 
-  zval db;
   PUSH_PARAM(name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   zim_Mongo_selectDB(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
@@ -827,7 +835,6 @@ PHP_METHOD(Mongo, resetError) {
 
   zval_ptr_dtor(&name);
 
-  zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_long(data, "reseterror", 1);
@@ -845,11 +852,12 @@ PHP_METHOD(Mongo, resetError) {
 /* {{{ Mongo->forceError()
  */
 PHP_METHOD(Mongo, forceError) {
-  zval *name;
+  zval *name, *data;
+  zval db;
+
   MAKE_STD_ZVAL(name);
   ZVAL_STRING(name, "admin", 1);
 
-  zval db;
   PUSH_PARAM(name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   zim_Mongo_selectDB(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
@@ -858,7 +866,6 @@ PHP_METHOD(Mongo, forceError) {
 
   zval_ptr_dtor(&name);
 
-  zval *data;
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_long(data, "forceerror", 1);
@@ -876,6 +883,9 @@ PHP_METHOD(Mongo, forceError) {
 
 
 mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int limit, zval *zquery, zval *zfields TSRMLS_DC) {
+  int sent;
+  mongo_cursor *cursor;
+
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, collection, strlen(collection), OP_QUERY);
 
@@ -889,14 +899,14 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
 
   serialize_size(buf.start, &buf);
   // sends
-  int sent = mongo_say(link, &buf TSRMLS_CC);
+  sent = mongo_say(link, &buf TSRMLS_CC);
   efree(buf.start);
   if (sent == FAILURE) {
     zend_error(E_WARNING, "couldn't send query\n");
     return 0;
   }
 
-  mongo_cursor *cursor = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
+  cursor = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
   memset(cursor, 0, sizeof(mongo_cursor));
   cursor->link = link;
   cursor->ns = estrdup(collection);
@@ -937,6 +947,8 @@ int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
 
 
 zval* mongo_do_next(mongo_cursor *cursor TSRMLS_DC) {
+  zval *elem = 0;
+
   if (cursor->at >= cursor->num) {
     // check for more results
     if (!mongo_do_has_next(cursor TSRMLS_CC)) {
@@ -947,20 +959,23 @@ zval* mongo_do_next(mongo_cursor *cursor TSRMLS_DC) {
   }
 
   if (cursor->at < cursor->num) {
-    zval *elem;
     MAKE_STD_ZVAL(elem);
     array_init(elem);
     cursor->buf.pos = bson_to_zval(cursor->buf.pos, elem TSRMLS_CC);
 
     // increment cursor position
     cursor->at++;
-    return elem;
   }
-  return 0;
+  return elem;
 }
 
 
 static int get_master(mongo_link *link TSRMLS_DC) {
+  zval *is_master, *response;
+  mongo_link temp;
+  mongo_cursor *c;
+  zval **ans;
+
   if (!link->paired) {
     return link->server.single.socket;
   }
@@ -975,20 +990,17 @@ static int get_master(mongo_link *link TSRMLS_DC) {
   }
 
   // redetermine master
-  zval *is_master, *response;
   ALLOC_INIT_ZVAL(is_master);
   array_init(is_master);
   add_assoc_long(is_master, "ismaster", 1);
 
-  mongo_link temp;
   temp.paired = 0;
   temp.server.single.socket = link->server.paired.lsocket;
 
   // check the left
-  mongo_cursor *c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
+  c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
 
   if ((response = mongo_do_next(c TSRMLS_CC)) != NULL) {
-    zval **ans;
     if (zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS && 
         Z_LVAL_PP(ans) == 1) {
       zval_ptr_dtor(&is_master);
@@ -1007,7 +1019,6 @@ static int get_master(mongo_link *link TSRMLS_DC) {
   c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
 
   if ((response = mongo_do_next(c TSRMLS_CC)) != NULL) {
-    zval **ans;
     if (zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS && 
         Z_LVAL_PP(ans) == 1) {
       zval_ptr_dtor(&is_master);
@@ -1084,19 +1095,21 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
 
 
 int mongo_say(mongo_link *link, buffer *buf TSRMLS_DC) {
-  int sock = get_master(link TSRMLS_CC);
+  int sock, sent;
+
+  sock = get_master(link TSRMLS_CC);
 
 #ifdef WIN32
-  int sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
+  sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
 #else
-  int sent = write(sock, buf->start, buf->pos-buf->start);
+  sent = write(sock, buf->start, buf->pos-buf->start);
 #endif
   
   if (sent == FAILURE) {
     if (check_connection(link TSRMLS_CC) == SUCCESS) {
       sock = get_master(link TSRMLS_CC);
 #     ifdef WIN32
-	  sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
+      sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
 #     else
       sent = send(sock, buf->start, buf->pos-buf->start, FLAGS);
 #     endif
@@ -1110,7 +1123,8 @@ int mongo_say(mongo_link *link, buffer *buf TSRMLS_DC) {
 }
 
 int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
-  int tries = 3, num = 1;
+  int tries = 3, num = 1, r = 0;
+
   while (check_connection(link TSRMLS_CC) == FAILURE &&
          tries > 0) {
 #ifndef WIN32
@@ -1119,7 +1133,6 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
     zend_error(E_WARNING, "no connection, trying to reconnect %d more times...\n", tries--);
   }
   // this can return FAILED if there is just no more data from db
-  int r = 0;
   while(r < len && num > 0) {
 
     num = recv(get_master(link TSRMLS_CC), (char*)dest, len, FLAGS);
@@ -1131,16 +1144,16 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
 }
 
 static int check_connection(mongo_link *link TSRMLS_DC) {
-
+  int now;
 #ifdef WIN32
-	SYSTEMTIME systemTime;
-	GetSystemTime(&systemTime);
-	int now = systemTime.wMilliseconds;
+  SYSTEMTIME systemTime;
+  GetSystemTime(&systemTime);
+  now = systemTime.wMilliseconds;
 #else
-	int now = time(0);
+  now = time(0);
 #endif
 
-	if (!MonGlo(auto_reconnect) ||
+  if (!MonGlo(auto_reconnect) ||
       (!link->paired && link->server.single.connected) || 
       (link->paired && 
        (link->server.paired.lconnected || 
@@ -1167,8 +1180,11 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
   fd_set rset, wset;
   struct timeval tval;
 #ifdef WIN32
+  int size;
+  u_long no = 0;
   const char yes = 1;
 #else
+  uint size;
   int yes = 1;
 #endif
 
@@ -1216,12 +1232,7 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
       return FAILURE;
     }
 
-	// why is Windows so freakin dumb?
-#ifdef WIN32
-	int size = sizeof(addr2);
-#else
-    uint size = sizeof(addr2);
-#endif
+    size = sizeof(addr2);
 
     connected = getpeername(sock, (struct sockaddr*)&addr, &size);
     if (connected == FAILURE) {
@@ -1231,7 +1242,6 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
 
 // reset flags
 #ifdef WIN32
-  u_long no = 0;
   ioctlsocket(sock, FIONBIO, &no);
 #else
   fcntl(sock, F_SETFL, FLAGS);
@@ -1240,8 +1250,11 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
 }
 
 static int mongo_do_socket_connect(mongo_link *link TSRMLS_DC) {
+#if WIN32
+  SYSTEMTIME systemTime;
+#endif
+  int left, right;
   if (link->paired) { 
-    int left, right;
     if ((link->server.paired.lsocket =
          mongo_connect_nonb(link->server.paired.lsocket,
                             link->server.paired.left,
@@ -1283,26 +1296,30 @@ static int mongo_do_socket_connect(mongo_link *link TSRMLS_DC) {
 
   // set initial connection time
 #ifdef WIN32
-	SYSTEMTIME systemTime;
-	GetSystemTime(&systemTime);
-	link->ts = systemTime.wMilliseconds;
+  GetSystemTime(&systemTime);
+  link->ts = systemTime.wMilliseconds;
 #else
-	link->ts = time(0);
+  link->ts = time(0);
 #endif
 
   return SUCCESS;
 }
 
 static int get_sockaddr(struct sockaddr_in *addr, char *host, int port) {
+  struct hostent *hostinfo;
+
   addr->sin_family = AF_INET;
   addr->sin_port = htons(port);
-  struct hostent *hostinfo = (struct hostent*)gethostbyname(host);
+  hostinfo = (struct hostent*)gethostbyname(host);
+
   if (hostinfo == NULL) {
     zend_error (E_WARNING, "unknown host %s", host);
     efree(host);
     return FAILURE;
   }
+
   addr->sin_addr = *((struct in_addr*)hostinfo->h_addr);
+
   return SUCCESS;
 }
 

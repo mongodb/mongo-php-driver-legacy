@@ -58,14 +58,14 @@ PHP_METHOD(MongoUtil, toIndexString) {
     HashPosition pointer;
     zval **data;
     char *key;
-    uint key_len, first = 1;
+    uint key_len, first = 1, key_type;
     ulong index;
 
     for(zend_hash_internal_pointer_reset_ex(hindex, &pointer); 
         zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS; 
         zend_hash_move_forward_ex(hindex, &pointer)) {
 
-      int key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
+      key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
       switch (key_type) {
       case HASH_KEY_IS_STRING: {
         len += key_len;
@@ -98,7 +98,7 @@ PHP_METHOD(MongoUtil, toIndexString) {
       }
       first = 0;
 
-      int key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
+      key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
 
       if (key_type == HASH_KEY_IS_LONG) {
         key_len = spprintf(&key, 0, "%ld", index);
@@ -123,9 +123,10 @@ PHP_METHOD(MongoUtil, toIndexString) {
     *(position) = 0;
   }
   else {
+    int len;
     convert_to_string(zkeys);
 
-    int len = Z_STRLEN_P(zkeys);
+    len = Z_STRLEN_P(zkeys);
 
     name = (char*)emalloc(len + 3);
     position = name;

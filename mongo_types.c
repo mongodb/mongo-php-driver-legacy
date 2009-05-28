@@ -48,6 +48,9 @@ zend_class_entry *mongo_ce_Date = NULL,
 
 
 void generate_id(char *data) {
+  unsigned t;
+  char *T;
+
   int r1 = rand();
   int r2 = rand();
 
@@ -56,12 +59,12 @@ void generate_id(char *data) {
 #ifdef WIN32
   SYSTEMTIME systemTime;
   GetSystemTime(&systemTime);
-  unsigned t = systemTime.wMilliseconds;
+  t = systemTime.wMilliseconds;
 #else
-  unsigned t = (unsigned) time(0);
+  t = (unsigned) time(0);
 #endif
 
-  char *T = (char*)&t;
+  T = (char*)&t;
   data[0] = T[3];
   data[1] = T[2];
   data[2] = T[1];
@@ -193,9 +196,9 @@ PHP_METHOD(MongoDate, __construct) {
   case 0: {
 #ifdef WIN32
     SYSTEMTIME systime;
-	GetSystemTime(&systime);
-	time.tv_sec = systime.wSecond;
-	time.tv_usec = systime.wMilliseconds * 1000;
+    GetSystemTime(&systime);
+    time.tv_sec = systime.wSecond;
+    time.tv_usec = systime.wMilliseconds * 1000;
 #else
     gettimeofday(&time, NULL);
 #endif
@@ -319,14 +322,18 @@ PHP_METHOD(MongoRegex, __construct) {
 
   if (Z_TYPE_P(regex) == IS_OBJECT &&
       Z_OBJCE_P(regex) == mongo_ce_Regex) {
-    zval *oregex = zend_read_property(mongo_ce_Regex, regex, "regex", strlen("regex"), NOISY TSRMLS_CC);
+    zval *oregex, *oflags;
+
+    oregex = zend_read_property(mongo_ce_Regex, regex, "regex", strlen("regex"), NOISY TSRMLS_CC);
     zval_add_ref(&oregex);
     zend_update_property(mongo_ce_Regex, getThis(), "regex", strlen("regex"), oregex TSRMLS_CC);
-    zval *oflags = zend_read_property(mongo_ce_Regex, regex, "flags", strlen("flags"), NOISY TSRMLS_CC);
+
+    oflags = zend_read_property(mongo_ce_Regex, regex, "flags", strlen("flags"), NOISY TSRMLS_CC);
     zval_add_ref(&oflags);
     zend_update_property(mongo_ce_Regex, getThis(), "flags", strlen("flags"), oflags TSRMLS_CC);
   }
   else if (Z_TYPE_P(regex) == IS_STRING) {
+    int pattern_len, flags_len;
     char *re = Z_STRVAL_P(regex);
     char *eopattern = strrchr(re, '/');
 
@@ -335,7 +342,7 @@ PHP_METHOD(MongoRegex, __construct) {
       return;
     }
 
-    int pattern_len = eopattern - re - 1;
+    pattern_len = eopattern - re - 1;
 
     if (pattern_len < 0) {
       zend_throw_exception(mongo_ce_Exception, "invalid regex", 0 TSRMLS_CC);
@@ -344,7 +351,7 @@ PHP_METHOD(MongoRegex, __construct) {
 
     // move beyond the second '/' in /foo/bar 
     eopattern++;
-    int flags_len = Z_STRLEN_P(regex) - (eopattern-re);
+    flags_len = Z_STRLEN_P(regex) - (eopattern-re);
 
     add_property_stringl( getThis(), "regex", re+1, pattern_len, 1);
     add_property_stringl( getThis(), "flags", eopattern, flags_len, 1);
@@ -360,12 +367,11 @@ PHP_METHOD(MongoRegex, __construct) {
 /* {{{ MongoRegex::__toString() 
  */
 PHP_METHOD(MongoRegex, __toString) {
+  char *field_name;
   zval *zre = zend_read_property( mongo_ce_Regex, getThis(), "regex", 5, 0 TSRMLS_CC );
   char *re = Z_STRVAL_P( zre );
   zval *zopts = zend_read_property( mongo_ce_Regex, getThis(), "flags", 5, 0 TSRMLS_CC );
   char *opts = Z_STRVAL_P( zopts );
-
-  char *field_name;
 
   spprintf(&field_name, 0, "/%s/%s", re, opts );
   RETVAL_STRING(field_name, 1);
@@ -478,18 +484,18 @@ PHP_METHOD(MongoDBRef, isRef) {
 /* {{{ MongoCode::get()
  */
 PHP_METHOD(MongoDBRef, get) {
-  zval *db, *ref;
+  zval *db, *ref, *collection, *query;
+  zval **ns, **id;
+
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oa", &db, mongo_ce_DB, &ref) == FAILURE) {
     return;
   }
 
-  zval **ns, **id;
   if (zend_hash_find(Z_ARRVAL_P(ref), "$ref", 5, (void**)&ns) == FAILURE ||
       zend_hash_find(Z_ARRVAL_P(ref), "$id", 4, (void**)&id) == FAILURE) {
     RETURN_NULL();
   }
 
-  zval *collection;
   MAKE_STD_ZVAL(collection);
 
   PUSH_PARAM(*ns); PUSH_PARAM((void*)1);
@@ -498,7 +504,6 @@ PHP_METHOD(MongoDBRef, get) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  zval *query;
   MAKE_STD_ZVAL(query);
   array_init(query);
   add_assoc_zval(query, "_id", *id);
