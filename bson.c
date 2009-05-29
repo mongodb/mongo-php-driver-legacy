@@ -400,7 +400,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_INT: {
-      long d;
+      int d;
 
       memcpy(&d, buf, INT_32);
       add_assoc_long(result, name, d);
