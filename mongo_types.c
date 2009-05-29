@@ -206,22 +206,15 @@ PHP_METHOD(MongoDate, __construct) {
 #else
     gettimeofday(&time, NULL);
 #endif
-    add_property_long( getThis(), "sec", time.tv_sec );
-    add_property_long( getThis(), "usec", time.tv_usec );
+
+    add_property_long(getThis(), "sec", time.tv_sec);
+    add_property_long(getThis(), "usec", time.tv_usec);
     break;
   }
   case 1: {
     if (zend_parse_parameters(argc TSRMLS_CC, "l", &sec) == SUCCESS) {
-      long long temp = sec;
-      long long t_sec = temp/1000;
-      long long t_usec = temp*1000 % 1000000;
-
-      // back to longs
-      sec = (long)t_sec;
-      usec = (long)t_usec;
-
       add_property_long( getThis(), "sec", sec);
-      add_property_long( getThis(), "usec", usec);
+      add_property_long( getThis(), "usec", 0);
     }
     break;
   }

@@ -27,26 +27,26 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     }
 
     public function test__toString() {
-      $this->assertEquals((string)$this->object, 'phpunit.c');
+        $this->assertEquals((string)$this->object, 'phpunit.c');
     }
 
     public function testGetName() {
-      $this->assertEquals($this->object->getName(), 'c');
+        $this->assertEquals($this->object->getName(), 'c');
     }
 
     public function testDrop() {
-      $ns = $this->object->db->selectCollection('system.namespaces');
+        $ns = $this->object->db->selectCollection('system.namespaces');
 
-      $this->object->insert(array('x' => 1));
-      $this->object->ensureIndex('x');
+        $this->object->insert(array('x' => 1));
+        $this->object->ensureIndex('x');
 
-      $c = $ns->findOne(array('name' => 'phpunit.c'));
-      $this->assertNotNull($c);
+        $c = $ns->findOne(array('name' => 'phpunit.c'));
+        $this->assertNotNull($c);
 
-      $this->object->drop();
+        $this->object->drop();
 
-      $c = $ns->findOne(array('name' => 'phpunit.c'));
-      $this->assertEquals($c, null);
+        $c = $ns->findOne(array('name' => 'phpunit.c'));
+        $this->assertEquals(null, $c);
     }
 
     public function testValidate() {
@@ -84,8 +84,8 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($obj['a']['foo'], 'bar');
       $this->assertEquals($obj['a']['n'], null);
       $this->assertNotNull($obj['a']['x']);
-      $this->assertEquals($obj['d2']->sec, 1271079);
-      $this->assertEquals($obj['d2']->usec, 861000);
+      $this->assertEquals($obj['d2']->sec, 1271079861);
+      $this->assertEquals($obj['d2']->usec, 0);
       $this->assertEquals($obj['regex']->regex, 'xtz');
       $this->assertEquals($obj['regex']->flags, 'g');
       $this->assertNotNull($obj['_id']);

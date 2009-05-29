@@ -181,7 +181,7 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
     // MongoDate
     else if (clazz == mongo_ce_Date) {
       zval *zsec, *zusec;
-      long sec, usec, ms;
+      long long int sec, usec, ms;
 
       set_type(buf, BSON_DATE);
       serialize_string(buf, name, name_len);
@@ -190,6 +190,7 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       sec = Z_LVAL_P(zsec);
       zusec = zend_read_property(mongo_ce_Date, *data, "usec", 4, 0 TSRMLS_CC);
       usec = Z_LVAL_P(zusec);
+
       ms = (sec * 1000) + (usec / 1000);
       serialize_long(buf, ms);
     }
