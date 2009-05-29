@@ -1230,7 +1230,7 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
   int yes = 1;
 
   // create socket
-  if (sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
+  if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
     return FAILURE;
   }
 #endif
