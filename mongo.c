@@ -50,7 +50,7 @@ static int get_master(mongo_link* TSRMLS_DC);
 static int check_connection(mongo_link* TSRMLS_DC);
 static int mongo_connect_nonb(int, char*, int);
 static int mongo_do_socket_connect(mongo_link* TSRMLS_DC);
-static int get_sockaddr(struct sockaddr_in*, char*, int);
+static int mongo_get_sockaddr(struct sockaddr_in*, char*, int);
 static void kill_cursor(mongo_cursor* TSRMLS_DC);
 static void get_host_and_port(char*, mongo_link* TSRMLS_DC);
 static void mongo_init_MongoExceptions(TSRMLS_D);
@@ -65,7 +65,7 @@ zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Exception;
 
 /** Resources */
-int le_connection, le_pconnection, le_db_cursor;
+int le_connection, le_pconnection;
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
 static PHP_GINIT_FUNCTION(mongo);
@@ -152,8 +152,13 @@ static PHP_GINIT_FUNCTION(mongo){
 static void mongo_link_dtor(mongo_link *link) {
   if (link) {
     if (link->paired) {
+#ifdef WIN32
+	  closesocket(link->server.paired.lsocket);
+      closesocket(link->server.paired.rsocket);
+#else
       close(link->server.paired.lsocket);
       close(link->server.paired.rsocket);
+#endif
 
       if (link->server.paired.left) {
         efree(link->server.paired.left);
@@ -164,7 +169,11 @@ static void mongo_link_dtor(mongo_link *link) {
     }
     else {
       // close the connection
+#ifdef WIN32
+	  closesocket(link->server.single.socket);
+#else
       close(link->server.single.socket);
+#endif
 
       // free strings
       if (link->server.single.host) {
@@ -200,9 +209,6 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(mongo) {
-  FILE *rand;
-  uint seed;
-  char *seed_ptr;
 
   REGISTER_INI_ENTRIES();
 
@@ -233,12 +239,17 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_default_handlers.clone_obj = NULL;
 
   // start random number generator
-  rand = fopen("/dev/urandom", "rb");
-  seed_ptr = (char*)(void*)&seed;
+#ifdef WIN32
+  srand(time(0));
+#else
+  uint seed;
+  FILE *rand = fopen("/dev/urandom", "rb");
+  char *seed_ptr = (char*)(void*)&seed;
   fgets(seed_ptr, sizeof(uint), rand);
   fclose(rand);
 
   srand(seed);
+#endif
 
   return SUCCESS;
 }
@@ -1166,6 +1177,16 @@ static int check_connection(mongo_link *link TSRMLS_DC) {
 
   link->ts = now;
 
+#ifdef WIN32
+  if (link->paired) {
+    closesocket(link->server.paired.lsocket);
+	closesocket(link->server.paired.rsocket);
+  }
+  else {
+    closesocket(link->server.single.socket);
+  }
+  WSACleanup();
+#else
   if (link->paired) {
     close(link->server.paired.lsocket);
     close(link->server.paired.rsocket);
@@ -1173,6 +1194,7 @@ static int check_connection(mongo_link *link TSRMLS_DC) {
   else {
     close(link->server.single.socket);
   } 
+#endif
 
   return mongo_do_socket_connect(link TSRMLS_CC);
 }
@@ -1181,26 +1203,44 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
   struct sockaddr_in addr, addr2;
   fd_set rset, wset;
   struct timeval tval;
+  int connected = FAILURE;
+
 #ifdef WIN32
-  int size;
+  WORD version;
+  WSADATA wsaData;
+  int size, error;
   u_long no = 0;
   const char yes = 1;
+
+  version = MAKEWORD(2,2);
+  error = WSAStartup(version, &wsaData);
+
+  if (error != 0) {
+    return FAILURE;
+  }
+
+  // create socket
+  sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (sock == INVALID_SOCKET) {
+    return FAILURE;
+  }
+
 #else
   uint size;
   int yes = 1;
-#endif
 
-  int connected = FAILURE;
+  // create socket
+  if (sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
+    return FAILURE;
+  }
+#endif
 
   // timeout
   tval.tv_sec = 20;
   tval.tv_usec = 0;
 
   // get addresses
-  get_sockaddr(&addr, host, port);
-
-  // create sockets
-  if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
+  if (mongo_get_sockaddr(&addr, host, port) == FAILURE) {
     return FAILURE;
   }
 
@@ -1223,7 +1263,8 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
   if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
 #ifdef WIN32
     errno = WSAGetLastError();
-    if (errno != WSAEINPROGRESS) {
+    if (errno != WSAEINPROGRESS &&
+		errno != WSAEWOULDBLOCK) {
 #else
     if (errno != EINPROGRESS) {
 #endif
@@ -1252,9 +1293,6 @@ static int mongo_connect_nonb(int sock, char *host, int port) {
 }
 
 static int mongo_do_socket_connect(mongo_link *link TSRMLS_DC) {
-#if WIN32
-  SYSTEMTIME systemTime;
-#endif
   int left, right;
   if (link->paired) { 
     if ((link->server.paired.lsocket =
@@ -1297,17 +1335,12 @@ static int mongo_do_socket_connect(mongo_link *link TSRMLS_DC) {
   }
 
   // set initial connection time
-#ifdef WIN32
-  GetSystemTime(&systemTime);
-  link->ts = systemTime.wMilliseconds;
-#else
   link->ts = time(0);
-#endif
 
   return SUCCESS;
 }
 
-static int get_sockaddr(struct sockaddr_in *addr, char *host, int port) {
+static int mongo_get_sockaddr(struct sockaddr_in *addr, char *host, int port) {
   struct hostent *hostinfo;
 
   addr->sin_family = AF_INET;
@@ -1315,12 +1348,14 @@ static int get_sockaddr(struct sockaddr_in *addr, char *host, int port) {
   hostinfo = (struct hostent*)gethostbyname(host);
 
   if (hostinfo == NULL) {
-    zend_error (E_WARNING, "unknown host %s", host);
-    efree(host);
     return FAILURE;
   }
 
+#ifdef WIN32
+  addr->sin_addr.s_addr = ((struct in_addr*)(hostinfo->h_addr))->s_addr;
+#else
   addr->sin_addr = *((struct in_addr*)hostinfo->h_addr);
+#endif
 
   return SUCCESS;
 }

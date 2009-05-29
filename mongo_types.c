@@ -164,21 +164,25 @@ PHP_METHOD(MongoId, __construct) {
  */
 PHP_METHOD(MongoId, __toString) {
   int i;
-  mongo_id *this_id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  //  zval *zid = zend_read_property(mongo_ce_Id, getThis(), "id", 2, NOISY TSRMLS_CC);
-  char *foo = this_id->id; //zid->value.str.val;
+  mongo_id *this_id;
+  char *id_str, *movable;
+  char id[25];
 
-  char id[24];
-  char *n = id;
+  this_id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  id_str = this_id->id;
+
+  movable = id;
   for(i=0; i<12; i++) {
-    int x = *foo;
-    if (*foo < 0) {
-      x = 256 + *foo;
+    int x = *id_str;
+    if (*id_str < 0) {
+      x = 256 + *id_str;
     }
-    sprintf(n, "%02x", x);
-    n += 2;
-    foo++;
+    sprintf(movable, "%02x", x);
+    movable += 2;
+    id_str++;
   }
+
+  id[24] = '\0';
 
   RETURN_STRING(id, DUP);
 }
@@ -507,7 +511,8 @@ PHP_METHOD(MongoDBRef, get) {
   MAKE_STD_ZVAL(query);
   array_init(query);
   add_assoc_zval(query, "_id", *id);
-
+  zval_add_ref(id);
+  
   PUSH_PARAM(query); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   zim_MongoCollection_findOne(1, return_value, return_value_ptr, collection, return_value_used TSRMLS_CC);

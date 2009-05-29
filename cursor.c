@@ -28,8 +28,7 @@
 extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_CursorException;
 
-extern int le_db_cursor,
-  le_connection,
+extern int le_connection,
   le_pconnection;
 
 extern zend_object_handlers mongo_default_handlers;

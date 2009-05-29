@@ -242,6 +242,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   fclose(fp);
 
   add_assoc_zval(zfile, "_id", zid);
+  zval_add_ref(&zid);
   add_assoc_stringl(zfile, "filename", filename, filename_len, DUP);
   add_assoc_long(zfile, "length", size);
   add_assoc_long(zfile, "chunkSize", MonGlo(chunk_size));
