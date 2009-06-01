@@ -6,7 +6,7 @@ PHP_ARG_ENABLE(64, whether to compile for 64-bit architecture,
 
 if test "$PHP_MONGO" != "no"; then
   AC_DEFINE(HAVE_MONGO, 1, [Whether you have Mongo extension])
-  PHP_NEW_EXTENSION(mongo, mongo.c mongo_types.c bson.c util.c cursor.c collection.c db.c gridfs.c, $ext_shared)
+  PHP_NEW_EXTENSION(mongo, mongo.c mongo_types.c bson.c cursor.c collection.c db.c gridfs.c, $ext_shared)
 
   if test "$PHP_64" != "no"; then
     CFLAGS="$CFLAGS -m64"

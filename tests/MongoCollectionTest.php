@@ -154,6 +154,18 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(false, array_key_exists('foo', $obj));
     }
 
+    /*
+    public function testFindWhere() {
+        for($i=0;$i<50; $i++) {
+            $this->object->insert(array( "foo$i" => pow(2, $i)));
+        }
+
+        $x = $this->object->findOne(array('$where' => new MongoCode('function() { return this.foo23 != null; }')));
+        $this->assertArrayHasKey('foo23', $x, json_encode($x));
+        $this->assertEquals(8388608, $x['foo23'], json_encode($x));
+    }
+    */
+
     public function testFindOne() {
       $this->assertEquals(null, $this->object->findOne());
       $this->assertEquals(null, $this->object->findOne(array()));
@@ -373,5 +385,25 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertNotNull($ref);
         $this->assertTrue(is_array($ref));
     }
+
+
+    public function testToIndexString() {
+        $this->assertEquals(TestToIndexString::test(null), '_1');
+        $this->assertEquals(TestToIndexString::test(52), '52_1');
+        $this->assertEquals(TestToIndexString::test('x'), 'x_1');
+        $this->assertEquals(TestToIndexString::test('x.y.z'), 'x_y_z_1');
+        $this->assertEquals(TestToIndexString::test('x_y.z'), 'x_y_z_1');
+        $this->assertEquals(TestToIndexString::test(array('x' => 1)), 'x_1');
+        $this->assertEquals(TestToIndexString::test(array('x' => -1)), 'x_-1');
+        $this->assertEquals(TestToIndexString::test(array('x' => 1, 'y' => -1)), 'x_1_y_-1');
+    }
+
 }
+
+class TestToIndexString extends MongoCollection {
+    public static function test($obj) {
+        return parent::toIndexString($obj);
+    }
+}
+
 ?>

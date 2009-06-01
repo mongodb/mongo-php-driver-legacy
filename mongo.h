@@ -245,10 +245,6 @@ PHP_METHOD(Mongo, forceError);
 PHP_METHOD(Mongo, close);
 PHP_METHOD(Mongo, __destruct);
 
-/*
- * MongoUtil class
- */
-PHP_METHOD(MongoUtil, toIndexString);
 
 
 /*
@@ -268,8 +264,6 @@ void mongo_init_MongoCursor(TSRMLS_D);
 void mongo_init_MongoGridFS(TSRMLS_D);
 void mongo_init_MongoGridFSFile(TSRMLS_D);
 void mongo_init_MongoGridFSCursor(TSRMLS_D);
-
-void mongo_init_MongoUtil(TSRMLS_D);
 
 void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoCode(TSRMLS_D);

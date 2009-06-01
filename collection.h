@@ -35,4 +35,5 @@ PHP_METHOD(MongoCollection, count);
 PHP_METHOD(MongoCollection, save);
 PHP_METHOD(MongoCollection, createDBRef);
 PHP_METHOD(MongoCollection, getDBRef);
+PHP_METHOD(MongoCollection, toIndexString);
 

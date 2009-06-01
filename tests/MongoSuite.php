@@ -20,7 +20,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
     public static function suite()
     {
         $suite = new MongoSuite('Mongo Tests');
-
+        
         $suite->addTestSuite('MongoTest');
         $suite->addTestSuite('MongoDBTest');
         $suite->addTestSuite('MongoCollectionTest');
@@ -28,15 +28,14 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $suite->addTestSuite('MongoGridFSTest');
         $suite->addTestSuite('MongoGridFSFileTest');
         $suite->addTestSuite('MongoGridFSCursorTest');
-        $suite->addTestSuite('MongoUtilTest');
-
+        
         $suite->addTestSuite('MongoIdTest');
         $suite->addTestSuite('MongoCodeTest');
         $suite->addTestSuite('MongoRegexTest');
         $suite->addTestSuite('MongoBinDataTest');
 
         $suite->addTestSuite('MongoRegressionTest1');
-
+        // */
         return $suite;
     }
  

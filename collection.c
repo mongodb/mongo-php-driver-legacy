@@ -398,10 +398,10 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   // turn keys into a string
   MAKE_STD_ZVAL(key_str);
 
-  // MongoUtil::toIndexString()
+  // MongoCollection::toIndexString()
   PUSH_PARAM(keys); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoUtil_toIndexString(1, key_str, &key_str, NULL, return_value_used TSRMLS_CC);
+  zim_MongoCollection_toIndexString(1, key_str, &key_str, NULL, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -432,7 +432,7 @@ PHP_METHOD(MongoCollection, deleteIndex) {
 
   PUSH_PARAM(keys); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoUtil_toIndexString(1, key_str, &key_str, NULL, return_value_used TSRMLS_CC);
+  zim_MongoCollection_toIndexString(1, key_str, &key_str, NULL, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -616,6 +616,118 @@ PHP_METHOD(MongoCollection, getDBRef) {
   POP_PARAM(); POP_PARAM(); 
 }
 
+static char *replace_dots(char *key, int key_len, char *position) {
+  int i;
+  for (i=0; i<key_len; i++) {
+    if (key[i] == '.') {
+      *(position)++ = '_';
+    }
+    else {
+      *(position)++ = key[i];
+    }
+  }
+  return position;
+}
+
+/* {{{ MongoCollection::toIndexString(array|string) */
+PHP_METHOD(MongoCollection, toIndexString) {
+  zval *zkeys;
+  int param_count = 1;
+  char *name, *position;
+  int len = 0;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zkeys) == FAILURE) {
+    RETURN_FALSE;
+  }
+
+  if (Z_TYPE_P(zkeys) == IS_ARRAY) {
+    HashTable *hindex = Z_ARRVAL_P(zkeys);
+    HashPosition pointer;
+    zval **data;
+    char *key;
+    uint key_len, first = 1, key_type;
+    ulong index;
+
+    for(zend_hash_internal_pointer_reset_ex(hindex, &pointer); 
+        zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS; 
+        zend_hash_move_forward_ex(hindex, &pointer)) {
+
+      key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
+      switch (key_type) {
+      case HASH_KEY_IS_STRING: {
+        len += key_len;
+
+        convert_to_long(*data);
+        len += Z_LVAL_PP(data) == 1 ? 2 : 3;
+
+        break;
+      }
+      case HASH_KEY_IS_LONG:
+        convert_to_string(*data);
+
+        len += Z_STRLEN_PP(data);
+        len += 2;
+        break;
+      default:
+        continue;
+      }
+    }
+
+    name = (char*)emalloc(len+1);
+    position = name;
+
+    for(zend_hash_internal_pointer_reset_ex(hindex, &pointer); 
+        zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS; 
+        zend_hash_move_forward_ex(hindex, &pointer)) {
+
+      if (!first) {
+        *(position)++ = '_';
+      }
+      first = 0;
+
+      key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
+
+      if (key_type == HASH_KEY_IS_LONG) {
+        key_len = spprintf(&key, 0, "%ld", index);
+        key_len += 1;
+      }
+
+      // copy str, replacing '.' with '_'
+      position = replace_dots(key, key_len-1, position);
+      
+      *(position)++ = '_';
+      
+      convert_to_long(*data);
+      if (Z_LVAL_PP(data) != 1) {
+        *(position)++ = '-';
+      }
+      *(position)++ = '1';
+
+      if (key_type == HASH_KEY_IS_LONG) {
+        efree(key);
+      }
+    }
+    *(position) = 0;
+  }
+  else {
+    int len;
+    convert_to_string(zkeys);
+
+    len = Z_STRLEN_P(zkeys);
+
+    name = (char*)emalloc(len + 3);
+    position = name;
+ 
+    // copy str, replacing '.' with '_'
+    position = replace_dots(Z_STRVAL_P(zkeys), Z_STRLEN_P(zkeys), position);
+
+    *(position)++ = '_';
+    *(position)++ = '1';
+    *(position) = '\0';
+  }
+  RETURN_STRING(name, 0)
+}
+
 static function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, __toString, NULL, ZEND_ACC_PUBLIC)
@@ -636,6 +748,7 @@ static function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, save, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, createDBRef, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, getDBRef, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, toIndexString, NULL, ZEND_ACC_PROTECTED|ZEND_ACC_STATIC)
   {NULL, NULL, NULL}
 };
 
