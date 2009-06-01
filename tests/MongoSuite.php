@@ -6,7 +6,6 @@ require_once 'MongoCursorTest.php';
 require_once 'MongoGridFSTest.php';
 require_once 'MongoGridFSFileTest.php';
 require_once 'MongoGridFSCursorTest.php';
-require_once 'MongoUtilTest.php';
 
 require_once 'MongoIdTest.php';
 require_once 'MongoCodeTest.php';

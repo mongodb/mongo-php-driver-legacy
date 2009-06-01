@@ -22,6 +22,8 @@ You can get information about installing and setting up phpunit at http://www.ph
 
 = Credits
 
-Jon Moss (XirisR@gmail.com)
+Jon Moss
 * Came up with the idea and implemented MongoCursor implementing Iterator
 
+Pierre-Alain Joye
+* Helped build the Windows extension
