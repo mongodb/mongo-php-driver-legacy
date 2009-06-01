@@ -229,6 +229,7 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoRegex(TSRMLS_C);
   mongo_init_MongoDate(TSRMLS_C);
   mongo_init_MongoBinData(TSRMLS_C);
+  mongo_init_MongoDBRef(TSRMLS_C);
 
   mongo_init_MongoExceptions(TSRMLS_C);
 
