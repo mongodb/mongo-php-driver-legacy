@@ -481,9 +481,7 @@ PHP_METHOD(MongoDB, command) {
 
   // create db.$cmd
   cmd_ns = get_cmd_ns(Z_STRVAL_P(db->name), Z_STRLEN_P(db->name));
-  Z_TYPE(ns) = IS_STRING;
-  Z_STRVAL(ns) = cmd_ns;
-  Z_STRLEN(ns) = strlen(cmd_ns);
+  ZVAL_STRING((&ns), cmd_ns, 0);
 
   // create cursor
   MAKE_STD_ZVAL(cursor);
@@ -491,7 +489,7 @@ PHP_METHOD(MongoDB, command) {
 
   PUSH_PARAM(db->link); PUSH_PARAM(&ns); PUSH_PARAM(cmd); PUSH_PARAM((void*)3);
   PUSH_EO_PARAM();
-  zim_MongoCursor___construct(3, &temp, 0, cursor, return_value_used TSRMLS_CC);
+  zim_MongoCursor___construct(3, &temp, 0, cursor, return_value_used TSRMLS_CC); 
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 

@@ -521,15 +521,27 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
 }
 
 PHP_METHOD(MongoCollection, count) {
-  zval *response, *data;
+  zval *response, *data, *query=0, *fields=0;
   zval **n;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
+    return;
+  }
 
   MAKE_STD_ZVAL(response);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_string(data, "count", Z_STRVAL_P(c->name), 1);
+  if (query) {
+    add_assoc_zval(data, "query", query);
+    zval_add_ref(&query);
+    if (fields) {
+      add_assoc_zval(data, "fields", fields);
+      zval_add_ref(&fields);
+    }
+  }
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();

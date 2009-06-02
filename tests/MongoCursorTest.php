@@ -389,5 +389,26 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $c->getNext();
         $c->skip(4);
     }
+
+    public function testCount() {
+        $this->object->insert(array('x'=>1));
+        $this->object->insert(array('x'=>2));
+        $this->object->insert(array('x'=>3, 'y'=>1));
+        
+        $cursor = $this->object->find();
+        $this->assertEquals(3, $cursor->count());
+        
+        $cursor = $this->object->find(array('x'=>1));
+        $count = $cursor->count(); 
+        $str = json_encode(iterator_to_array($cursor));
+        $this->assertEquals(1, $count, $str);
+         
+        $cursor = $this->object->find(array(), array('y'=>1));
+        $this->assertEquals(1, $cursor->count());
+
+        $cursor = $this->object->find(array(), array('z'=>1)); 
+        $this->assertEquals(0, $cursor->count()); 
+    }
+
 }
 ?>

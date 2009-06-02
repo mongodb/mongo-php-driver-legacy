@@ -35,5 +35,6 @@ PHP_METHOD(MongoCursor, next);
 PHP_METHOD(MongoCursor, rewind);
 PHP_METHOD(MongoCursor, valid);
 PHP_METHOD(MongoCursor, reset);
+PHP_METHOD(MongoCursor, count);
 
 #endif

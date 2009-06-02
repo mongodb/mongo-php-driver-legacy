@@ -339,6 +339,10 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->insert(array(6));
 
       $this->assertEquals($this->object->count(), 1);
+
+      $this->assertEquals(0, $this->object->count(array('z'=>1)));
+      $this->assertEquals(1, $this->object->count(array('0'=>6)));
+      $this->assertEquals(1, $this->object->count(array(), array('0'=>1)));
     }
     
 

@@ -157,6 +157,7 @@ typedef struct {
   mongo_msg_header header;
   // connection
   mongo_link *link;
+  zval *resource;
 
   // collection namespace
   char *ns;
@@ -270,7 +271,7 @@ void mongo_init_MongoCode(TSRMLS_D);
 void mongo_init_MongoRegex(TSRMLS_D);
 void mongo_init_MongoDate(TSRMLS_D);
 void mongo_init_MongoBinData(TSRMLS_D);
-void mongo_init_MongoDBRef(TSRMLS_C);
+void mongo_init_MongoDBRef(TSRMLS_D);
 
 
 zend_object_value mongo_init_Mongo_new(zend_class_entry* TSRMLS_DC);
