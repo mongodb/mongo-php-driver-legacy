@@ -93,7 +93,7 @@ PHP_METHOD(MongoCollection, drop) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_command(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -118,7 +118,7 @@ PHP_METHOD(MongoCollection, validate) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_command(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -236,7 +236,7 @@ PHP_METHOD(MongoCollection, find) {
   PUSH_PARAM((void*)(ZEND_NUM_ARGS()+2));
   PUSH_EO_PARAM();
 
-  zim_MongoCursor___construct(ZEND_NUM_ARGS()+2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, __construct)(ZEND_NUM_ARGS()+2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
 
   POP_EO_PARAM();
   while(i++ < ZEND_NUM_ARGS()+3) {
@@ -259,7 +259,7 @@ PHP_METHOD(MongoCollection, findOne) {
     PUSH_PARAM((void*)1);
     PUSH_EO_PARAM();
   }
-  zim_MongoCollection_find(ZEND_NUM_ARGS(), cursor, &cursor, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, find)(ZEND_NUM_ARGS(), cursor, &cursor, getThis(), return_value_used TSRMLS_CC);
   if (query) {
     POP_EO_PARAM();
     POP_PARAM();
@@ -271,11 +271,11 @@ PHP_METHOD(MongoCollection, findOne) {
 
   PUSH_PARAM(&limit); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCursor_limit(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, limit)(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  zim_MongoCursor_getNext(0, return_value, return_value_ptr, cursor, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, getNext)(0, return_value, return_value_ptr, cursor, return_value_used TSRMLS_CC);
 
   zend_objects_store_del_ref(cursor TSRMLS_CC);
   zval_ptr_dtor(&cursor);
@@ -382,7 +382,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
 
   PUSH_PARAM(system_indexes); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_selectCollection(1, collection, &collection, db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, selectCollection)(1, collection, &collection, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -401,7 +401,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   // MongoCollection::toIndexString()
   PUSH_PARAM(keys); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_toIndexString(1, key_str, &key_str, NULL, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, toIndexString)(1, key_str, &key_str, NULL, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -411,7 +411,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   // MongoCollection::insert()
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_insert(1, return_value, return_value_ptr, collection, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, insert)(1, return_value, return_value_ptr, collection, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -432,7 +432,7 @@ PHP_METHOD(MongoCollection, deleteIndex) {
 
   PUSH_PARAM(keys); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_toIndexString(1, key_str, &key_str, NULL, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, toIndexString)(1, key_str, &key_str, NULL, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -447,7 +447,7 @@ PHP_METHOD(MongoCollection, deleteIndex) {
  
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_command(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -467,7 +467,7 @@ PHP_METHOD(MongoCollection, deleteIndexes) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_command(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -485,7 +485,7 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
 
   PUSH_PARAM(i_str); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_selectCollection(1, collection, &collection, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, selectCollection)(1, collection, &collection, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -499,7 +499,7 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
 
   PUSH_PARAM(query); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_find(1, cursor, &cursor, collection, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, find)(1, cursor, &cursor, collection, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -509,12 +509,12 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
   array_init(return_value);
 
   MAKE_STD_ZVAL(next);
-  zim_MongoCursor_getNext(0, next, &next, cursor, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
   while (Z_TYPE_P(next) != IS_NULL) {
     add_next_index_zval(return_value, next);
 
     MAKE_STD_ZVAL(next);
-    zim_MongoCursor_getNext(0, next, &next, cursor, return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
   }
   zval_ptr_dtor(&next);
   zval_ptr_dtor(&cursor);
@@ -545,7 +545,7 @@ PHP_METHOD(MongoCollection, count) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_command(1, response, &response, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, response, &response, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -580,7 +580,7 @@ PHP_METHOD(MongoCollection, save) {
 
     PUSH_PARAM(criteria); PUSH_PARAM(a); PUSH_PARAM(&zupsert); PUSH_PARAM((void*)3);
     PUSH_EO_PARAM();
-    zim_MongoCollection_update(3, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoCollection, update)(3, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
     POP_EO_PARAM();
     POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
@@ -589,7 +589,7 @@ PHP_METHOD(MongoCollection, save) {
   
   PUSH_PARAM(a); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_insert(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, insert)(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); 
 }
@@ -606,7 +606,7 @@ PHP_METHOD(MongoCollection, createDBRef) {
 
   PUSH_PARAM(c->name); PUSH_PARAM(obj); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_MongoDB_createDBRef(2, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, createDBRef)(2, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); 
 }
@@ -623,7 +623,7 @@ PHP_METHOD(MongoCollection, getDBRef) {
 
   PUSH_PARAM(ref); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_getDBRef(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, getDBRef)(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); 
 }

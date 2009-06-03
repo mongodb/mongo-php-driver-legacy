@@ -40,7 +40,7 @@ int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
     // create new MongoId
     MAKE_STD_ZVAL(newid);
     object_init_ex(newid, mongo_ce_Id);
-    zim_MongoId___construct(0, &temp, NULL, newid, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoId, __construct)(0, &temp, NULL, newid, 0 TSRMLS_CC);
 
     // add to obj
     add_assoc_zval(array, "_id", newid);

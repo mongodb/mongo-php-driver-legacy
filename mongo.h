@@ -73,6 +73,14 @@
 # define POP_EO_PARAM() zend_ptr_stack_pop(&EG(argument_stack))
 #endif
 
+#if ZEND_MODULE_API_NO >= 20060613
+// normal, nice method
+#define MONGO_METHOD(classname, name) zim_##classname##_##name
+#else
+// gah!  wtf, php 5.1?
+#define MONGO_METHOD(classname, name) zif_##classname##_##name
+#endif /* ZEND_MODULE_API_NO >= 20060613 */
+
 typedef struct {
   int ts;
   int paired;
@@ -247,7 +255,6 @@ PHP_METHOD(Mongo, close);
 PHP_METHOD(Mongo, __destruct);
 
 
-
 /*
  * Internal functions
  */
@@ -272,11 +279,6 @@ void mongo_init_MongoRegex(TSRMLS_D);
 void mongo_init_MongoDate(TSRMLS_D);
 void mongo_init_MongoBinData(TSRMLS_D);
 void mongo_init_MongoDBRef(TSRMLS_D);
-
-
-zend_object_value mongo_init_Mongo_new(zend_class_entry* TSRMLS_DC);
-zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
-
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;

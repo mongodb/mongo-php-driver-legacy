@@ -91,7 +91,7 @@ PHP_METHOD(MongoCursor, __construct) {
   zval_add_ref(&zquery);
 
   // reset iteration pointer, just in case
-  zim_MongoCursor_reset(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  MONGO_METHOD(MongoCursor, reset)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 
   // get rid of extra ref
   zval_ptr_dtor(&empty_array);
@@ -104,7 +104,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
   if (!cursor->started_iterating) {
-    zim_MongoCursor_doQuery(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    MONGO_METHOD(MongoCursor, doQuery)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
     cursor->started_iterating = 1;
   }
 
@@ -118,7 +118,7 @@ PHP_METHOD(MongoCursor, getNext) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
   if (!cursor->started_iterating) {
-    zim_MongoCursor_doQuery(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    MONGO_METHOD(MongoCursor, doQuery)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
     cursor->started_iterating = 1;
   }
 
@@ -317,7 +317,7 @@ PHP_METHOD(MongoCursor, key) {
   if (cursor->current && 
       Z_TYPE_P(cursor->current) == IS_ARRAY &&
       zend_hash_find(Z_ARRVAL_P(cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
-    zim_MongoId___toString(0, return_value, return_value_ptr, *id, return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoId, __toString)(0, return_value, return_value_ptr, *id, return_value_used TSRMLS_CC);
   }
   else {
     RETURN_STRING("", 1);
@@ -334,7 +334,7 @@ PHP_METHOD(MongoCursor, next) {
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   if (!cursor->started_iterating) {
-    zim_MongoCursor_doQuery(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    MONGO_METHOD(MongoCursor, doQuery)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
     cursor->started_iterating = 1;
   }
 
@@ -343,10 +343,10 @@ PHP_METHOD(MongoCursor, next) {
     cursor->current = 0;
   }
 
-  zim_MongoCursor_hasNext(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  MONGO_METHOD(MongoCursor, hasNext)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
   if (Z_BVAL_P(return_value)) {
     MAKE_STD_ZVAL(cursor->current);
-    zim_MongoCursor_getNext(0, cursor->current, &cursor->current, getThis(), return_value_used TSRMLS_CC); 
+    MONGO_METHOD(MongoCursor, getNext)(0, cursor->current, &cursor->current, getThis(), return_value_used TSRMLS_CC); 
   }
 
   RETURN_NULL();
@@ -356,8 +356,8 @@ PHP_METHOD(MongoCursor, next) {
 /* {{{ MongoCursor->rewind
  */
 PHP_METHOD(MongoCursor, rewind) {
-  zim_MongoCursor_reset(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-  zim_MongoCursor_next(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  MONGO_METHOD(MongoCursor, reset)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  MONGO_METHOD(MongoCursor, next)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
 
@@ -416,7 +416,7 @@ PHP_METHOD(MongoCursor, count) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_command(1, response, &response, db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, response, &response, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 

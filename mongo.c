@@ -68,7 +68,14 @@ zend_class_entry *mongo_ce_Mongo,
 int le_connection, le_pconnection;
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
+
+#if ZEND_MODULE_API_NO >= 20060613
+// 5.2+ globals
 static PHP_GINIT_FUNCTION(mongo);
+#else
+// 5.1- globals
+static void mongo_init_globals(zend_mongo_globals* g TSRMLS_DC);
+#endif /* ZEND_MODULE_API_NO >= 20060613 */
 
 function_entry mongo_functions[] = {
   { NULL, NULL, NULL }
@@ -110,11 +117,15 @@ zend_module_entry mongo_module_entry = {
   NULL,
   PHP_MINFO(mongo),
   PHP_MONGO_VERSION,
+#if ZEND_MODULE_API_NO >= 20060613
   PHP_MODULE_GLOBALS(mongo),
   PHP_GINIT(mongo),
   NULL,
   NULL,
   STANDARD_MODULE_PROPERTIES_EX
+#else
+  STANDARD_MODULE_PROPERTIES
+#endif
 };
 /* }}} */
 
@@ -136,18 +147,6 @@ PHP_INI_END()
 /* }}} */
 
 
-/* {{{ PHP_GINIT_FUNCTION
- */
-static PHP_GINIT_FUNCTION(mongo){
-  mongo_globals->num_persistent = 0; 
-  mongo_globals->num_links = 0; 
-  mongo_globals->auto_reconnect = 0; 
-  mongo_globals->default_host = "localhost"; 
-  mongo_globals->default_port = 27017; 
-  mongo_globals->request_id = 3;
-  mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
-}
-/* }}} */
 
 static void mongo_link_dtor(mongo_link *link) {
   if (link) {
@@ -170,7 +169,7 @@ static void mongo_link_dtor(mongo_link *link) {
     else {
       // close the connection
 #ifdef WIN32
-	  closesocket(link->server.single.socket);
+      closesocket(link->server.single.socket);
 #else
       close(link->server.single.socket);
 #endif
@@ -209,6 +208,10 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(mongo) {
+
+#if ZEND_MODULE_API_NO < 20060613
+  ZEND_INIT_MODULE_GLOBALS(mongo, mongo_init_globals, NULL);
+#endif /* ZEND_MODULE_API_NO < 20060613 */
 
   REGISTER_INI_ENTRIES();
 
@@ -252,29 +255,27 @@ PHP_MINIT_FUNCTION(mongo) {
 
   return SUCCESS;
 }
+
+
+#if ZEND_MODULE_API_NO >= 20060613
+/* {{{ PHP_GINIT_FUNCTION
+ */
+static PHP_GINIT_FUNCTION(mongo) {
+#else
+/* {{{ mongo_init_globals
+ */
+static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC) {
+#endif /* ZEND_MODULE_API_NO >= 20060613 */
+  mongo_globals->num_persistent = 0; 
+  mongo_globals->num_links = 0; 
+  mongo_globals->auto_reconnect = 0; 
+  mongo_globals->default_host = "localhost"; 
+  mongo_globals->default_port = 27017; 
+  mongo_globals->request_id = 3;
+  mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
+}
 /* }}} */
 
-void mongo_init_Mongo(TSRMLS_D) {
-  zend_class_entry ce;
-
-  INIT_CLASS_ENTRY(ce, "Mongo", Mongo_methods);
-  mongo_ce_Mongo = zend_register_internal_class(&ce TSRMLS_CC);
-
-  zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), MonGlo(default_host) TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Mongo, "DEFAULT_PORT", strlen("DEFAULT_PORT"), MonGlo(default_port) TSRMLS_CC);
-
-  zend_declare_property_bool(mongo_ce_Mongo, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
-
-  zend_declare_property_string(mongo_ce_Mongo, "server", strlen("server"), "localhost:27017", ZEND_ACC_PROTECTED TSRMLS_CC);
-
-  zend_declare_property_string(mongo_ce_Mongo, "username", strlen("username"), "", ZEND_ACC_PROTECTED TSRMLS_CC);
-  zend_declare_property_string(mongo_ce_Mongo, "password", strlen("password"), "", ZEND_ACC_PROTECTED TSRMLS_CC);
-
-  zend_declare_property_bool(mongo_ce_Mongo, "paired", strlen("paired"), 0, ZEND_ACC_PROTECTED TSRMLS_CC);
-  zend_declare_property_bool(mongo_ce_Mongo, "persistent", strlen("persistent"), 0, ZEND_ACC_PROTECTED TSRMLS_CC);
-
-  zend_declare_property_null(mongo_ce_Mongo, "connection", strlen("connection"), ZEND_ACC_PUBLIC TSRMLS_CC);
-}
 
 /* {{{ PHP_MSHUTDOWN_FUNCTION
  */ 
@@ -319,7 +320,12 @@ void mongo_init_MongoExceptions(TSRMLS_D) {
   zend_class_entry e, ce, conn, e2;
 
   INIT_CLASS_ENTRY(e, "MongoException", NULL);
+
+#if ZEND_MODULE_API_NO >= 20060613
   mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
+#else
+  mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(), NULL TSRMLS_CC);
+#endif /* ZEND_MODULE_API_NO >= 20060613 */
 
   INIT_CLASS_ENTRY(ce, "MongoCursorException", NULL);
   mongo_ce_CursorException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
@@ -329,6 +335,28 @@ void mongo_init_MongoExceptions(TSRMLS_D) {
 
   INIT_CLASS_ENTRY(e2, "MongoGridFSException", NULL);
   mongo_ce_GridFSException = zend_register_internal_class_ex(&e2, mongo_ce_Exception, NULL TSRMLS_CC);
+}
+
+void mongo_init_Mongo(TSRMLS_D) {
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "Mongo", Mongo_methods);
+  mongo_ce_Mongo = zend_register_internal_class(&ce TSRMLS_CC);
+
+  zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), MonGlo(default_host) TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Mongo, "DEFAULT_PORT", strlen("DEFAULT_PORT"), MonGlo(default_port) TSRMLS_CC);
+
+  zend_declare_property_bool(mongo_ce_Mongo, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+
+  zend_declare_property_string(mongo_ce_Mongo, "server", strlen("server"), "localhost:27017", ZEND_ACC_PROTECTED TSRMLS_CC);
+
+  zend_declare_property_string(mongo_ce_Mongo, "username", strlen("username"), "", ZEND_ACC_PROTECTED TSRMLS_CC);
+  zend_declare_property_string(mongo_ce_Mongo, "password", strlen("password"), "", ZEND_ACC_PROTECTED TSRMLS_CC);
+
+  zend_declare_property_bool(mongo_ce_Mongo, "paired", strlen("paired"), 0, ZEND_ACC_PROTECTED TSRMLS_CC);
+  zend_declare_property_bool(mongo_ce_Mongo, "persistent", strlen("persistent"), 0, ZEND_ACC_PROTECTED TSRMLS_CC);
+
+  zend_declare_property_null(mongo_ce_Mongo, "connection", strlen("connection"), ZEND_ACC_PUBLIC TSRMLS_CC);
 }
 
 /* {{{ Mongo->__construct 
@@ -354,7 +382,7 @@ PHP_METHOD(Mongo, __construct) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), persist TSRMLS_CC);
 
   if (connect) {
-    zim_Mongo_connect(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    MONGO_METHOD(Mongo, connect)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
   }
   else {
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 0 TSRMLS_CC);
@@ -372,7 +400,7 @@ PHP_METHOD(Mongo, connect) {
 
   PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_Mongo_connectUtil(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
@@ -389,7 +417,7 @@ PHP_METHOD(Mongo, pairConnect) {
 
   PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_Mongo_connectUtil(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
@@ -407,7 +435,7 @@ PHP_METHOD(Mongo, persistConnect) {
 
   PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_Mongo_connectUtil(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
@@ -426,7 +454,7 @@ PHP_METHOD(Mongo, pairPersistConnect) {
 
   PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_Mongo_connectUtil(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
@@ -439,7 +467,7 @@ PHP_METHOD(Mongo, connectUtil) {
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
   if (Z_BVAL_P(connected)) {
     // Mongo->close()
-    zim_Mongo_close(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    MONGO_METHOD(Mongo, close)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 
     // Mongo->connected = false
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
@@ -658,7 +686,7 @@ PHP_METHOD(Mongo, selectDB) {
 
   PUSH_PARAM(getThis()); PUSH_PARAM(db); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_MongoDB___construct(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, __construct)(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
@@ -678,7 +706,7 @@ PHP_METHOD(Mongo, selectCollection) {
       Z_OBJCE_P(db) != mongo_ce_DB) {
     MAKE_STD_ZVAL(temp_db);
 
-    zim_Mongo_selectDB(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
+    MONGO_METHOD(Mongo, selectDB)(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
 
     ok = (mongo_db*)zend_object_store_get_object(temp_db TSRMLS_CC);
     if (!ok || !ok->name) {
@@ -693,7 +721,7 @@ PHP_METHOD(Mongo, selectCollection) {
 
   PUSH_PARAM(collection); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_selectCollection(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, selectCollection)(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -714,14 +742,14 @@ PHP_METHOD(Mongo, dropDB) {
       Z_OBJCE_P(db) != mongo_ce_DB) {
     MAKE_STD_ZVAL(temp_db);
 
-    zim_Mongo_selectDB(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
+    MONGO_METHOD(Mongo, selectDB)(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
     db = temp_db;
   }
   else {
     zval_add_ref(&db);
   }
 
-  zim_MongoDB_drop(0, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, drop)(0, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
 
   zval_ptr_dtor(&db);
 }
@@ -754,7 +782,7 @@ PHP_METHOD(Mongo, repairDB) {
   
   PUSH_PARAM(preserve_clones); PUSH_PARAM(backup); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_MongoDB_selectCollection(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, selectCollection)(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 
@@ -774,7 +802,7 @@ PHP_METHOD(Mongo, lastError) {
 
   PUSH_PARAM(name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_Mongo_selectDB(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -786,7 +814,7 @@ PHP_METHOD(Mongo, lastError) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_command(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -805,7 +833,7 @@ PHP_METHOD(Mongo, prevError) {
 
   PUSH_PARAM(name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_Mongo_selectDB(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -817,7 +845,7 @@ PHP_METHOD(Mongo, prevError) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_command(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -836,7 +864,7 @@ PHP_METHOD(Mongo, resetError) {
 
   PUSH_PARAM(name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_Mongo_selectDB(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -848,7 +876,7 @@ PHP_METHOD(Mongo, resetError) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_command(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -867,7 +895,7 @@ PHP_METHOD(Mongo, forceError) {
 
   PUSH_PARAM(name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_Mongo_selectDB(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -879,7 +907,7 @@ PHP_METHOD(Mongo, forceError) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_command(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 

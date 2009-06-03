@@ -26,7 +26,7 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
-#include "ext/spl/spl_exceptions.h"
+#include <ext/spl/spl_exceptions.h>
 
 #include "mongo_types.h"
 #include "mongo.h"
@@ -497,7 +497,7 @@ PHP_METHOD(MongoDBRef, get) {
 
   PUSH_PARAM(*ns); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_selectCollection(1, collection, &collection, db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, selectCollection)(1, collection, &collection, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -508,7 +508,7 @@ PHP_METHOD(MongoDBRef, get) {
   
   PUSH_PARAM(query); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_findOne(1, return_value, return_value_ptr, collection, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, findOne)(1, return_value, return_value_ptr, collection, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
