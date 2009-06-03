@@ -73,7 +73,7 @@ PHP_METHOD(MongoGridFS, __construct) {
   // create files collection
   PUSH_PARAM(zdb); PUSH_PARAM(files); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_MongoCollection___construct(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, __construct)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); 
 
@@ -83,7 +83,7 @@ PHP_METHOD(MongoGridFS, __construct) {
 
   PUSH_PARAM(zdb); PUSH_PARAM(chunks); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_MongoCollection___construct(2, return_value, return_value_ptr, zchunks, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, __construct)(2, return_value, return_value_ptr, zchunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); 
   
@@ -97,7 +97,7 @@ PHP_METHOD(MongoGridFS, __construct) {
 
   PUSH_PARAM(zidx); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_ensureIndex(1, return_value, return_value_ptr, zchunks, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, ensureIndex)(1, return_value, return_value_ptr, zchunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -116,11 +116,11 @@ PHP_METHOD(MongoGridFS, drop) {
 
   PUSH_PARAM(zchunks); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoDB_dropCollection(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, dropCollection)(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  zim_MongoCollection_drop(0, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, drop)(0, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
 }
 
 PHP_METHOD(MongoGridFS, find) {
@@ -154,7 +154,7 @@ PHP_METHOD(MongoGridFS, find) {
 
   PUSH_PARAM(getThis()); PUSH_PARAM(c->db->link); PUSH_PARAM(c->ns); PUSH_PARAM(zquery); PUSH_PARAM(zfields); PUSH_PARAM((void*)5);
   PUSH_EO_PARAM();
-  zim_MongoGridFSCursor___construct(5, &temp, NULL, return_value, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoGridFSCursor, __construct)(5, &temp, NULL, return_value, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
@@ -193,7 +193,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // create an id for the file
   MAKE_STD_ZVAL(zid);
   object_init_ex(zid, mongo_ce_Id);
-  zim_MongoId___construct(0, &temp, NULL, zid, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoId, __construct)(0, &temp, NULL, zid, return_value_used TSRMLS_CC);
 
   MAKE_STD_ZVAL(zfile);
   array_init(zfile);
@@ -226,7 +226,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
     PUSH_PARAM(zchunk); PUSH_PARAM((void*)1);
     PUSH_EO_PARAM();
-    zim_MongoCollection_insert(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoCollection, insert)(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
     POP_EO_PARAM();
     POP_PARAM(); POP_PARAM(); 
     
@@ -255,7 +255,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // insert file
   PUSH_PARAM(zfile); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_insert(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, insert)(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); 
 
@@ -294,7 +294,7 @@ PHP_METHOD(MongoGridFS, findOne) {
 
   PUSH_PARAM(zquery); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_findOne(1, file, &file, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, findOne)(1, file, &file, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); 
 
@@ -308,7 +308,7 @@ PHP_METHOD(MongoGridFS, findOne) {
 
     PUSH_PARAM(getThis()); PUSH_PARAM(file); PUSH_PARAM((void*)2);
     PUSH_EO_PARAM();
-    zim_MongoGridFSFile___construct(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoGridFSFile, __construct)(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
     POP_EO_PARAM();
     POP_PARAM(); POP_PARAM(); POP_PARAM();
   }
@@ -343,7 +343,7 @@ PHP_METHOD(MongoGridFS, remove) {
 
   PUSH_PARAM(criteria); PUSH_PARAM(zfields); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_MongoCollection_find(2, zcursor, &zcursor, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, find)(2, zcursor, &zcursor, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 
@@ -352,7 +352,7 @@ PHP_METHOD(MongoGridFS, remove) {
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
   MAKE_STD_ZVAL(next);
-  zim_MongoCursor_getNext(0, next, &next, zcursor, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, getNext)(0, next, &next, zcursor, return_value_used TSRMLS_CC);
 
   while (Z_TYPE_P(next) != IS_NULL) {
     zval **id;
@@ -371,14 +371,14 @@ PHP_METHOD(MongoGridFS, remove) {
  
     PUSH_PARAM(temp); PUSH_PARAM((void*)1);
     PUSH_EO_PARAM();
-    zim_MongoCollection_remove(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoCollection, remove)(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
     POP_EO_PARAM();
     POP_PARAM(); POP_PARAM();
 
     zval_ptr_dtor(&temp);
     zval_ptr_dtor(&next);
     MAKE_STD_ZVAL(next);
-    zim_MongoCursor_getNext(0, next, &next, zcursor, return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoCursor, getNext)(0, next, &next, zcursor, return_value_used TSRMLS_CC);
   }
   zval_ptr_dtor(&next);
   zval_ptr_dtor(&zcursor);
@@ -388,7 +388,7 @@ PHP_METHOD(MongoGridFS, remove) {
 
   PUSH_PARAM(criteria); PUSH_PARAM(&zjust_one); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_MongoCollection_remove(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, remove)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 
@@ -427,7 +427,7 @@ PHP_METHOD(MongoGridFS, storeUpload) {
 
   PUSH_PARAM(*temp); PUSH_PARAM(extra); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_MongoGridFS_storeFile(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoGridFS, storeFile)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 
@@ -506,7 +506,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   PUSH_PARAM(n); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_ensureIndex(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, ensureIndex)(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -537,7 +537,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   PUSH_PARAM(query); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_find(1, cursor, &cursor, chunks, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, find)(1, cursor, &cursor, chunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -547,13 +547,13 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   PUSH_PARAM(sort); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCursor_sort(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, sort)(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
   MAKE_STD_ZVAL(next);
 
-  zim_MongoCursor_getNext(0, next, &next, cursor, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
 
   while (Z_TYPE_P(next) != IS_NULL) {
     zval **zdata;
@@ -579,7 +579,7 @@ PHP_METHOD(MongoGridFSFile, write) {
     zval_ptr_dtor(&next);
 
     MAKE_STD_ZVAL(next);
-    zim_MongoCursor_getNext(0, next, &next, cursor, return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
   }
 
   zval_ptr_dtor(&cursor);
@@ -615,7 +615,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 
   PUSH_PARAM(n); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_ensureIndex(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, ensureIndex)(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -631,7 +631,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 
   PUSH_PARAM(query); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCollection_find(1, cursor, &cursor, chunks, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, find)(1, cursor, &cursor, chunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -641,7 +641,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 
   PUSH_PARAM(sort); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  zim_MongoCursor_sort(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, sort)(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -650,7 +650,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 
   MAKE_STD_ZVAL(next);
 
-  zim_MongoCursor_getNext(0, next, &next, cursor, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
   while (Z_TYPE_P(next) != IS_NULL) {
     zval **zdata;
 
@@ -667,7 +667,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
     memcpy(str, Z_STRVAL_PP(zdata), Z_STRLEN_PP(zdata));
     str += Z_STRLEN_PP(zdata);
 
-    zim_MongoCursor_getNext(0, next, &next, cursor, return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
   }
 
   zval_ptr_dtor(&next);
@@ -707,14 +707,14 @@ PHP_METHOD(MongoGridFSCursor, __construct) {
 
   PUSH_PARAM(connection); PUSH_PARAM(ns); PUSH_PARAM(query); PUSH_PARAM(fields); PUSH_PARAM((void*)4);
   PUSH_EO_PARAM();
-  zim_MongoCursor___construct(4, NULL, NULL, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, __construct)(4, NULL, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 PHP_METHOD(MongoGridFSCursor, getNext) {
-  zim_MongoCursor_next(0, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
-  zim_MongoGridFSCursor_current(0, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, next)(0, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoGridFSCursor, current)(0, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
 }
 
 PHP_METHOD(MongoGridFSCursor, current) {
@@ -732,7 +732,7 @@ PHP_METHOD(MongoGridFSCursor, current) {
 
   PUSH_PARAM(gridfs); PUSH_PARAM(cursor->current); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zim_MongoGridFSFile___construct(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoGridFSFile, __construct)(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
