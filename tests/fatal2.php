@@ -1,6 +1,8 @@
 <?php
 
-dl('mongo.so');
+if (!extension_loaded('mongo')) {
+  dl('mongo.so');
+}
 $m = new Mongo();
 $c = new MongoCursor($m->connection, "bar");
 $c2 = clone $c;
