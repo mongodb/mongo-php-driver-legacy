@@ -268,7 +268,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->insert(array('z'=>0));
       $this->object->insert(array('z'=>0));
       $err = $this->sharedFixture->lastError();
-      $this->assertEquals($err['err'], "E11000 duplicate key error");
+      $this->assertEquals("E11000", substr($err['err'], 0, 6), json_encode($err));
       // this should work, but buildbot says 4
       //$this->assertEquals($this->object->count(), 3);
     }

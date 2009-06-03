@@ -257,6 +257,22 @@ PHP_METHOD(MongoCursor, hint) {
 /* }}} */
 
 
+/* {{{ MongoCursor->explain
+ */
+PHP_METHOD(MongoCursor, explain) {
+  zval *query;
+  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+  MONGO_METHOD(MongoCursor, reset)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+
+  query = cursor->query;
+  add_assoc_bool(query, "$explain", 1);
+
+  MONGO_METHOD(MongoCursor, getNext)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+/* }}} */
+
+
 /* {{{ MongoCursor->doQuery
  */
 PHP_METHOD(MongoCursor, doQuery) {
@@ -440,7 +456,8 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, softLimit, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC) 
+  PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, doQuery, NULL, ZEND_ACC_PROTECTED)
   PHP_ME(MongoCursor, current, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, key, NULL, ZEND_ACC_PUBLIC)

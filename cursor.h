@@ -28,6 +28,7 @@ PHP_METHOD(MongoCursor, softLimit);
 PHP_METHOD(MongoCursor, skip);
 PHP_METHOD(MongoCursor, sort);
 PHP_METHOD(MongoCursor, hint);
+PHP_METHOD(MongoCursor, explain);
 PHP_METHOD(MongoCursor, doQuery);
 PHP_METHOD(MongoCursor, current);
 PHP_METHOD(MongoCursor, key);

@@ -164,8 +164,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         }
         
         $info = $this->object->getCursorInfo();
-        $this->assertEquals($info['byLocation_size'], 0, json_encode($info));
-        $this->assertEquals($info['clientCursors_size'], 0, json_encode($info));
+        $this->assertGreaterThanOrEqual($info['clientCursors_size'], 0, json_encode($info));
         $this->assertEquals($info['ok'], 1, json_encode($info));
         
         $cursor = $c->find();
