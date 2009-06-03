@@ -84,6 +84,7 @@
 typedef struct {
   int ts;
   int paired;
+  int persist;
   int master;
 
   union {

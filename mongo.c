@@ -152,7 +152,7 @@ static void mongo_link_dtor(mongo_link *link) {
   if (link) {
     if (link->paired) {
 #ifdef WIN32
-	  closesocket(link->server.paired.lsocket);
+      closesocket(link->server.paired.lsocket);
       closesocket(link->server.paired.rsocket);
 #else
       close(link->server.paired.lsocket);
@@ -160,10 +160,10 @@ static void mongo_link_dtor(mongo_link *link) {
 #endif
 
       if (link->server.paired.left) {
-        efree(link->server.paired.left);
+        pefree(link->server.paired.left, link->persist);
       }
       if (link->server.paired.right) {
-        efree(link->server.paired.right);
+        pefree(link->server.paired.right, link->persist);
       }
     }
     else {
@@ -176,19 +176,19 @@ static void mongo_link_dtor(mongo_link *link) {
 
       // free strings
       if (link->server.single.host) {
-        efree(link->server.single.host);
+        pefree(link->server.single.host, link->persist);
       }
     }
 
     if (link->username) {
-      efree(link->username);
+      pefree(link->username, link->persist);
     }
     if (link->password) {
-      efree(link->password);
+      pefree(link->password, link->persist);
     }
 
     // free connection
-    efree(link);
+    pefree(link, link->persist);
   }
 }
 
@@ -544,13 +544,14 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   }
 
 
-  link = (mongo_link*)emalloc(sizeof(mongo_link));
+  link = (mongo_link*)pemalloc(sizeof(mongo_link), Z_BVAL_P(persist));
 
   // zero pointers so it doesn't segfault on cleanup if 
   // connection fails
   link->username = 0;
   link->password = 0;
   link->paired = Z_BVAL_P(pair);
+  link->persist = Z_BVAL_P(persist);
 
   get_host_and_port(Z_STRVAL_P(server), link TSRMLS_CC);
   if (mongo_do_socket_connect(link TSRMLS_CC) == FAILURE) {
@@ -562,14 +563,11 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
 
   // store a reference in the persistence list
   if (Z_BVAL_P(persist)) {
+
     // save username and password for reconnection
-    ulen = Z_STRLEN_P(username);
-    plen = Z_STRLEN_P(password);
-    if (ulen > 0 && plen > 0) {
-      link->username = (char*)emalloc(ulen);
-      link->password = (char*)emalloc(plen);
-      memcpy(link->username, Z_STRVAL_P(username), ulen);
-      memcpy(link->password, Z_STRVAL_P(password), plen);
+    if (Z_STRLEN_P(username) > 0 && Z_STRLEN_P(password) > 0) {
+      link->username = (char*)pestrdup(Z_STRVAL_P(username), link->persist);
+      link->password = (char*)pestrdup(Z_STRVAL_P(password), link->persist);
     }
 
     key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), Z_STRVAL_P(username), Z_STRVAL_P(password));
@@ -602,7 +600,7 @@ static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
   colon = strchr(server, ':');
   if (colon) {
     host_len = colon-server+1;
-    host = (char*)emalloc(host_len);
+    host = (char*)pemalloc(host_len, link->persist);
     memcpy(host, server, host_len-1);
     host[host_len-1] = 0;
     port = atoi(colon+1);
@@ -628,15 +626,11 @@ static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
         colon - comma > 0 &&
         colon - comma < 256) {
       host_len = colon-comma + 1;
-      host = (char*)emalloc(host_len);
-      memcpy(host, comma, host_len-1);
-      host[host_len-1] = 0;
+      host = pestrndup(comma, host_len-1, link->persist);
       port = atoi(colon + 1);
     }
     else {
-      host = (char*)emalloc(strlen(comma)+1);
-      memcpy(host, comma, strlen(comma));
-      host[strlen(comma)] = 0;
+      host = pestrdup(comma, link->persist);
       port = 27017;
     }
 
