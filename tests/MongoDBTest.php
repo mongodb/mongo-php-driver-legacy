@@ -171,16 +171,16 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $cursor->hasNext();
         
         $info = $this->object->getCursorInfo();
-        $this->assertEquals($info['byLocation_size'], 1);
-        $this->assertEquals($info['clientCursors_size'], 1);
+        $this->assertGreaterThanOrEqual(1, $info['byLocation_size']);
+        $this->assertGreaterThanOrEqual(1, $info['clientCursors_size']);
         $this->assertEquals($info['ok'], 1);
 
         $cursor2 = $c->find()->skip(20);
         $cursor2->hasNext();
 
         $info = $this->object->getCursorInfo();
-        $this->assertEquals($info['byLocation_size'], 2);
-        $this->assertEquals($info['clientCursors_size'], 2);
+        $this->assertGreaterThanOrEqual(2, $info['byLocation_size']);
+        $this->assertGreaterThanOrEqual(2, $info['clientCursors_size']);
         $this->assertEquals($info['ok'], 1);
     }
 

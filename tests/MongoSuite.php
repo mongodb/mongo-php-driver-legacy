@@ -48,4 +48,17 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $this->sharedFixture->close();
     }
 }
+
+if (!function_exists('memory_get_usage')) {
+  function memory_get_usage($arg=0) {
+    return 0;
+  }
+}
+
+if (!function_exists('json_encode')) {
+  function json_encode($str) {
+    return "$str";
+  }
+}
+
 ?>
