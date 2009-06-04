@@ -263,11 +263,10 @@ PHP_METHOD(MongoCursor, explain) {
   zval *query;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-  MONGO_METHOD(MongoCursor, reset)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-
   query = cursor->query;
   add_assoc_bool(query, "$explain", 1);
 
+  MONGO_METHOD(MongoCursor, reset)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
   MONGO_METHOD(MongoCursor, getNext)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
@@ -389,6 +388,14 @@ PHP_METHOD(MongoCursor, valid) {
  */
 PHP_METHOD(MongoCursor, reset) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  if (cursor->buf.start) { 
+    efree(cursor->buf.start);
+    cursor->buf.start = 0;
+  }
+  if (cursor->current) {
+    zval_ptr_dtor(&cursor->current);
+    cursor->current = 0;
+  }
   cursor->started_iterating = 0;
   cursor->current = 0;
 }
