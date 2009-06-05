@@ -193,7 +193,7 @@ PHP_METHOD(MongoId, __toString) {
  */
 PHP_METHOD(MongoDate, __construct) {
   struct timeval time;
-  long sec, usec;
+  int sec, usec;
 
   int argc = ZEND_NUM_ARGS();
   switch(argc) {
@@ -212,9 +212,18 @@ PHP_METHOD(MongoDate, __construct) {
     break;
   }
   case 1: {
-    if (zend_parse_parameters(argc TSRMLS_CC, "l", &sec) == SUCCESS) {
-      add_property_long( getThis(), "sec", sec);
-      add_property_long( getThis(), "usec", 0);
+    zval *arg;
+    if (zend_parse_parameters(argc TSRMLS_CC, "z", &arg) == SUCCESS) {
+      if (Z_TYPE_P(arg) == IS_LONG) {
+        add_property_long(getThis(), "sec", Z_LVAL_P(arg));
+        add_property_long(getThis(), "usec", 0);
+      }
+      else if (Z_TYPE_P(arg) == IS_STRING) {
+        zif_strtotime(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+        sec = Z_LVAL_P(return_value);
+        add_property_long(getThis(), "sec", sec);
+        add_property_long(getThis(), "usec", 0);
+      }
     }
     break;
   }
