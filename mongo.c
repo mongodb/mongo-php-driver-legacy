@@ -626,7 +626,9 @@ static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
         colon - comma > 0 &&
         colon - comma < 256) {
       host_len = colon-comma + 1;
-      host = pestrndup(comma, host_len-1, link->persist);
+      host = link->persist ? 
+        zend_strndup(comma, host_len-1) : 
+        estrndup(comma, host_len-1);
       port = atoi(colon + 1);
     }
     else {
