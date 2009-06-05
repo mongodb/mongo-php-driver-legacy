@@ -63,11 +63,11 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $exit_code = 0;
         exec("php tests/fatal1.php", $output, $exit_code);
         $unclonable = "Fatal error: Trying to clone an uncloneable object";
-        $this->assertEquals($unclonable, substr($output[1], 0, strlen($unclonable))); 
+        $this->assertEquals($unclonable, substr($output[1], 0, strlen($unclonable)), json_encode($output)); 
         $this->assertEquals($exit_code, 255);
 
         exec("php tests/fatal2.php", $output, $exit_code);
-        $this->assertEquals($unclonable, substr($output[3], 0, strlen($unclonable))); 
+        $this->assertEquals($unclonable, substr($output[3], 0, strlen($unclonable)), json_encode($output)); 
         $this->assertEquals($exit_code, 255);
     }
 }
