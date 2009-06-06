@@ -347,7 +347,7 @@ PHP_METHOD(MongoCollection, remove) {
 }
 
 PHP_METHOD(MongoCollection, ensureIndex) {
-  zend_bool unique = false;
+  zend_bool unique = 0;
   zval *keys, *db, *system_indexes, *collection, *data, *key_str;
   mongo_collection *c;
 
