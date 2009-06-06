@@ -347,8 +347,8 @@ PHP_METHOD(MongoCollection, remove) {
 }
 
 PHP_METHOD(MongoCollection, ensureIndex) {
+  zend_bool unique = false;
   zval *keys, *db, *system_indexes, *collection, *data, *key_str;
-  zend_bool unique;
   mongo_collection *c;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|b", &keys, &unique) == FAILURE) {
