@@ -111,15 +111,14 @@ PHP_METHOD(MongoGridFS, __construct) {
 
 
 PHP_METHOD(MongoGridFS, drop) {
+  zval *temp;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   zval *zchunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
-
-  PUSH_PARAM(zchunks); PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, dropCollection)(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM();
-
+  
+  MAKE_STD_ZVAL(temp);
+  MONGO_METHOD(MongoCollection, drop)(0, temp, NULL, zchunks, return_value_used TSRMLS_CC);
+  zval_ptr_dtor(&temp);
+  
   MONGO_METHOD(MongoCollection, drop)(0, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
 }
 
@@ -593,12 +592,13 @@ PHP_METHOD(MongoGridFSFile, write) {
 }
 
 PHP_METHOD(MongoGridFSFile, getBytes) {
+  zval temp;
   zval *file, *gridfs, *chunks, *n, *query, *cursor, *sort, *next;
   zval **id, **size;
   char *str, *str_ptr;
 
   file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
-  zend_hash_find(Z_ARRVAL_P(file), "filename", strlen("filename")+1, (void**)&id);
+  zend_hash_find(Z_ARRVAL_P(file), "_id", strlen("_id")+1, (void**)&id);
 
   if (zend_hash_find(Z_ARRVAL_P(file), "length", strlen("length")+1, (void**)&size) == FAILURE) {
     zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size", 0 TSRMLS_CC);
@@ -615,7 +615,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 
   PUSH_PARAM(n); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoCollection, ensureIndex)(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, ensureIndex)(1, &temp, NULL, chunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -641,16 +641,19 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 
   PUSH_PARAM(sort); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoCursor, sort)(1, cursor, &cursor, cursor, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, sort)(1, &temp, NULL, cursor, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  str = (char*)emalloc(Z_LVAL_PP(size));
+  str = (char*)emalloc(Z_LVAL_PP(size) + 1);
+
   str_ptr = str;
 
   MAKE_STD_ZVAL(next);
-
-  MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
+                                                                         
+  MONGO_METHOD(MongoCursor, getNext)(0, next, NULL, cursor, return_value_used TSRMLS_CC);
+  zval_ptr_dtor(&query);
+  zval_ptr_dtor(&sort);
   while (Z_TYPE_P(next) != IS_NULL) {
     zval **zdata;
 
@@ -667,12 +670,17 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
     memcpy(str, Z_STRVAL_PP(zdata), Z_STRLEN_PP(zdata));
     str += Z_STRLEN_PP(zdata);
 
-    MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
+    zval_ptr_dtor(&next);
+    MAKE_STD_ZVAL(next);
+    MONGO_METHOD(MongoCursor, getNext)(0, next, NULL, cursor, return_value_used TSRMLS_CC);
   }
 
   zval_ptr_dtor(&next);
+  zval_ptr_dtor(&cursor);
 
-  RETURN_STRING(str_ptr, 0);
+  str[0] = '\0';
+
+  RETURN_STRINGL(str_ptr, Z_LVAL_PP(size), 0);
 }
 
 static function_entry MongoGridFSFile_methods[] = {

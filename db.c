@@ -249,6 +249,7 @@ PHP_METHOD(MongoDB, createCollection) {
 }
 
 PHP_METHOD(MongoDB, dropCollection) {
+  zval temp;
   zval *collection;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &collection) == FAILURE) {
@@ -258,12 +259,15 @@ PHP_METHOD(MongoDB, dropCollection) {
   if (Z_TYPE_P(collection) != IS_OBJECT ||
       Z_OBJCE_P(collection) != mongo_ce_Collection) {
 
-    PUSH_PARAM(getThis()); PUSH_PARAM(collection); PUSH_PARAM((void*)2);
+    PUSH_PARAM(collection); PUSH_PARAM((void*)1);
     PUSH_EO_PARAM();
-    MONGO_METHOD(MongoDB, selectCollection)(1, collection, &collection, getThis(), return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoDB, selectCollection)(1, &temp, NULL, getThis(), return_value_used TSRMLS_CC);
     POP_EO_PARAM();
-    POP_PARAM(); POP_PARAM(); POP_PARAM();
+    POP_PARAM(); POP_PARAM();
+
+    collection = &temp;
   }
+
   MONGO_METHOD(MongoCollection, drop)(0, return_value, return_value_ptr, collection, return_value_used TSRMLS_CC);
 }
 
