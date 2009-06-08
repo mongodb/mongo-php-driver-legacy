@@ -1073,11 +1073,6 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
 
 int get_reply(mongo_cursor *cursor TSRMLS_DC) {
-  if(cursor->buf.start) {
-    efree(cursor->buf.start);
-    cursor->buf.start = 0;
-  }
-  
   // if this fails, we might be disconnected... but we're probably
   // just out of results
   if (mongo_hear(cursor->link, &cursor->header.length, INT_32 TSRMLS_CC) == FAILURE) {
@@ -1094,9 +1089,15 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   // create buf
   cursor->header.length -= INT_32;
   // point buf.start at buf's first char
-  cursor->buf.start = (unsigned char*)emalloc(cursor->header.length);
+  if (!cursor->buf.start) {
+    cursor->buf.start = (unsigned char*)emalloc(cursor->header.length);
+    cursor->buf.end = cursor->buf.start + cursor->header.length;
+  } 
+  else if (cursor->buf.end - cursor->buf.start < cursor->header.length) {
+    cursor->buf.start = (unsigned char*)erealloc(cursor->buf.start, cursor->header.length);
+    cursor->buf.end = cursor->buf.start + cursor->header.length;
+  }
   cursor->buf.pos = cursor->buf.start;
-  cursor->buf.end = cursor->buf.start + cursor->header.length;
 
   if (mongo_hear(cursor->link, cursor->buf.pos, cursor->header.length TSRMLS_CC) == FAILURE) {
     zend_error(E_WARNING, "error getting response buf: %s\n", strerror(errno));

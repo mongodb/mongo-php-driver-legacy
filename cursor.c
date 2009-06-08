@@ -321,9 +321,6 @@ PHP_METHOD(MongoCursor, doQuery) {
     return;
   }
 
-  cursor->buf.start = 0;
-  cursor->buf.pos = 0;
-
   get_reply(cursor TSRMLS_CC);
 }
 /* }}} */
@@ -409,10 +406,8 @@ PHP_METHOD(MongoCursor, valid) {
  */
 PHP_METHOD(MongoCursor, reset) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  if (cursor->buf.start) { 
-    efree(cursor->buf.start);
-    cursor->buf.start = 0;
-  }
+  cursor->buf.pos = cursor->buf.start;
+
   if (cursor->current) {
     zval_ptr_dtor(&cursor->current);
     cursor->current = 0;
