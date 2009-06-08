@@ -124,7 +124,8 @@ void mongo_init_MongoId(TSRMLS_D) {
 PHP_METHOD(MongoId, __construct) {
   zval *id = 0;
   mongo_id *this_id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  this_id->id = (char*)emalloc(OID_SIZE);
+  this_id->id = (char*)emalloc(OID_SIZE+1);
+  this_id->id[OID_SIZE] = '\0';
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &id) == FAILURE) {
     return;
@@ -166,7 +167,7 @@ PHP_METHOD(MongoId, __toString) {
   int i;
   mongo_id *this_id;
   char *id_str, *movable;
-  char id[25];
+  char *id = (char*)emalloc(25);
 
   this_id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
   id_str = this_id->id;
@@ -184,7 +185,7 @@ PHP_METHOD(MongoId, __toString) {
 
   id[24] = '\0';
 
-  RETURN_STRING(id, DUP);
+  RETURN_STRING(id, NO_DUP);
 }
 /* }}} */
 
