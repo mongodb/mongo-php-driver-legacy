@@ -15,6 +15,9 @@
  *  limitations under the License.
  */
 
+#ifndef MONGO_COLLECTION_H
+#define MONGO_COLLECTION_H
+
 zend_object_value mongo_mongo_collection_new(zend_class_entry* TSRMLS_DC);
 
 PHP_METHOD(MongoCollection, __construct);
@@ -36,4 +39,6 @@ PHP_METHOD(MongoCollection, save);
 PHP_METHOD(MongoCollection, createDBRef);
 PHP_METHOD(MongoCollection, getDBRef);
 PHP_METHOD(MongoCollection, toIndexString);
+PHP_METHOD(MongoCollection, group);
 
+#endif /* MONGO_COLLECTION_H */

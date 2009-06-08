@@ -29,6 +29,7 @@
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
   *mongo_ce_Cursor,
+  *mongo_ce_Code,
   *mongo_ce_Exception;
 
 extern int le_pconnection,
@@ -740,6 +741,73 @@ PHP_METHOD(MongoCollection, toIndexString) {
   RETURN_STRING(name, 0)
 }
 
+
+/* {{{ MongoCollection::group
+ */
+PHP_METHOD(MongoCollection, group) {
+  // TODO: keyf
+  zval temp;
+  zval *params, *key, *reduce, *initial, *condition = 0, *groupFunction, *code, *almost_return;
+  zval **retval, **result;
+  char *function_str;
+  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aaz|a", &key, &initial, &reduce, &condition) == FAILURE) {
+    return;
+  }
+
+  MAKE_STD_ZVAL(code);
+  spprintf(&function_str, 0, "function() { var c = db[ns].find(condition); var map = new Map(); var reduce_function = %s; while (c.hasNext()) { var obj = c.next(); var key = {}; for (var i in keys) { key[keys[i]] = obj[keys[i]]; } var aggObj = map.get(key); if (aggObj == null) { var newObj = Object.extend({}, key); aggObj = Object.extend(newObj, initial); map.put(key, aggObj); } reduce_function(obj, aggObj); } return {\"result\": map.values()}; }", Z_STRVAL_P(reduce));
+  ZVAL_STRING(code, function_str, 0);
+
+  MAKE_STD_ZVAL(params);
+  array_init(params);
+  add_assoc_zval(params, "ns", c->name);
+  zval_add_ref(&c->name);
+  add_assoc_zval(params, "keys", key);
+  zval_add_ref(&key);
+  add_assoc_zval(params, "initial", initial);
+  zval_add_ref(&initial);
+  if (condition) {
+    add_assoc_zval(params, "condition", condition);
+    zval_add_ref(&condition);
+  }
+  else  {
+    zval *empty;
+    MAKE_STD_ZVAL(empty);
+    array_init(empty);
+    add_assoc_zval(params, "condition", empty);
+  }
+
+  MAKE_STD_ZVAL(groupFunction);
+  object_init_ex(groupFunction, mongo_ce_Code);
+
+  PUSH_PARAM(code); PUSH_PARAM(params); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
+  MONGO_METHOD(MongoCode, __construct)(2, &temp, NULL, groupFunction, return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
+
+  MAKE_STD_ZVAL(almost_return);
+  PUSH_PARAM(groupFunction);; PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
+  MONGO_METHOD(MongoDB, execute)(1, almost_return, NULL, c->parent, return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
+
+  zval_ptr_dtor(&code);
+  zval_ptr_dtor(&groupFunction);
+  zval_ptr_dtor(&params);
+
+  if (zend_hash_find(Z_ARRVAL_P(almost_return), "retval", 7, (void**)&retval) == SUCCESS) {
+    if (zend_hash_find(Z_ARRVAL_PP(retval), "result", 7, (void**)&result) == SUCCESS) {
+      RETVAL_ZVAL(*result, 1, 0);
+    }
+  }
+  zval_ptr_dtor(&almost_return);
+}
+/* }}} */
+
 static function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, __toString, NULL, ZEND_ACC_PUBLIC)
@@ -761,6 +829,7 @@ static function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, createDBRef, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, getDBRef, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, toIndexString, NULL, ZEND_ACC_PROTECTED|ZEND_ACC_STATIC)
+  PHP_ME(MongoCollection, group, NULL, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
 

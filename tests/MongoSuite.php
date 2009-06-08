@@ -41,6 +41,21 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
     protected function setUp()
     {
         $this->sharedFixture = new Mongo();
+
+        $db = $this->sharedFixture->selectDB('phpunit');
+
+        $c = $db->selectCollection('test');
+        $c->insert(array('x'=>'y'));
+        $c->ensureIndex('x');
+        $c->drop();
+
+        $ns = $db->selectCollection('system.namespaces');
+        if ($ns->findOne(array('name' => 'phpunit.test')) != NULL) {
+            echo "\n\nMongoCollection::drop() isn't working.  ".
+                "Most likely, you are running an old version of ".
+                "the database, which will cause a lot of tests to ".
+                "fail.  Please consider upgrading.\n";
+        }
     }
  
     protected function tearDown()
