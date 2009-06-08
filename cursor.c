@@ -46,7 +46,9 @@ zend_class_entry *mongo_ce_Cursor = NULL;
 /* {{{ MongoCursor->__construct
  */
 PHP_METHOD(MongoCursor, __construct) {
-  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty_array, *q;
+  HashPosition pointer;
+  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty_array, *q, *fields;
+  zval **data;
   mongo_cursor *cursor;
   mongo_link *link;
 
@@ -58,11 +60,11 @@ PHP_METHOD(MongoCursor, __construct) {
   MAKE_STD_ZVAL(empty_array);
   array_init(empty_array);
 
-  if (!zfields) {
-    zfields = empty_array;
-  }
   if (!zquery) {
     zquery = empty_array;
+  }
+  if (!zfields) {
+    zfields = empty_array;
   }
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -73,9 +75,28 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->resource = zlink;
   zval_add_ref(&zlink);
 
+  MAKE_STD_ZVAL(fields);
+  array_init(fields);
+
   // fields to return
-  cursor->fields = zfields;
-  zval_add_ref(&zfields);
+  for(zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(zfields), &pointer); 
+      zend_hash_get_current_data_ex(Z_ARRVAL_P(zfields), (void**) &data, &pointer) == SUCCESS; 
+      zend_hash_move_forward_ex(Z_ARRVAL_P(zfields), &pointer)) {
+    int key_type, key_len;
+    ulong index;
+    char *key;
+
+    key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(zfields), &key, &key_len, &index, NO_DUP, &pointer);
+
+    if (key_type == HASH_KEY_IS_LONG &&
+        Z_TYPE_PP(data) == IS_STRING) {
+      add_assoc_long(fields, Z_STRVAL_PP(data), 1);
+    }
+    else {
+      add_assoc_long(fields, key, 1);
+    }
+  }
+  cursor->fields = fields;
 
   // ns
   convert_to_string(zns);
