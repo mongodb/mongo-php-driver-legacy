@@ -336,8 +336,9 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       object_init_ex(z, mongo_ce_Id);
 
       this_id = (mongo_id*)zend_object_store_get_object(z TSRMLS_CC);
-      this_id->id = (char*)emalloc(OID_SIZE);
+      this_id->id = (char*)emalloc(OID_SIZE+1);
       memcpy(this_id->id, buf, OID_SIZE);
+      this_id->id[OID_SIZE] = '\0';
 
       add_assoc_zval(result, name, z);
       buf += OID_SIZE;
@@ -495,8 +496,9 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       object_init_ex(zoid, mongo_ce_Id);
 
       this_id = (mongo_id*)zend_object_store_get_object(zoid TSRMLS_CC);
-      this_id->id = (char*)emalloc(OID_SIZE);
+      this_id->id = (char*)emalloc(OID_SIZE+1);
       memcpy(this_id->id, buf, OID_SIZE);
+      this_id->id[OID_SIZE] = '\0';
 
       buf += OID_SIZE;
 
