@@ -130,5 +130,26 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals($file->getBytes(), $contents);
     }
+
+    public function testSpecFields() {
+      $this->object->storeFile('tests/somefile');
+      $file = $this->object->findOne();
+      $file = $file->file;
+      $this->assertTrue($file['_id'] instanceof MongoId, json_encode($file));
+      $this->assertEquals('tests/somefile', $file['filename'], json_encode($file));
+      $this->assertEquals(129, $file['length'], json_encode($file));
+      $this->assertTrue($file['uploadDate'] instanceof MongoDate, json_encode($file));
+      $this->assertEquals("d41d8cd98f00b204e9800998ecf8427e", $file['md5'], json_encode($file));
+
+      $this->object->storeFile('tests/somefile', array('_id' => 4, 'filename' => 'foo', 'length' => 0, 'chunkSize'=>23, 'uploadDate' => 'yesterday', 'md5'=>16, 'md4'=>32));
+      $file = $this->object->findOne(array('_id' => 4));
+      $file = $file->file;
+      $this->assertEquals('foo', $file['filename'], json_encode($file));
+      $this->assertEquals(0, $file['length'], json_encode($file));
+      $this->assertEquals(23, $file['chunkSize'], json_encode($file));
+      $this->assertEquals('yesterday', $file['uploadDate'], json_encode($file));
+      $this->assertEquals(16, $file['md5'], json_encode($file));
+      $this->assertEquals(32, $file['md4'], json_encode($file));
+    }
 }
 ?>
