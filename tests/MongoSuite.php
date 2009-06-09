@@ -11,6 +11,7 @@ require_once 'MongoIdTest.php';
 require_once 'MongoCodeTest.php';
 require_once 'MongoRegexTest.php';
 require_once 'MongoBinDataTest.php';
+require_once 'MongoDateTest.php';
 
 require_once 'MongoRegressionTest1.php';
 
@@ -34,6 +35,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $suite->addTestSuite('MongoCodeTest');
         $suite->addTestSuite('MongoRegexTest');
         $suite->addTestSuite('MongoBinDataTest');
+        $suite->addTestSuite('MongoDateTest');
 
         $suite->addTestSuite('MongoRegressionTest1');
 

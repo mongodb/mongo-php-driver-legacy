@@ -186,7 +186,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
 
     public function testCreateDBRef() {
         $ref = $this->object->createDBRef('foo.bar', array('foo' => 'bar'));
-        $this->assertEquals($ref, null);
+        $this->assertEquals($ref, NULL);
 
         $arr = array('_id' => new MongoId());
         $ref = $this->object->createDBRef('foo.bar', $arr);
@@ -201,6 +201,11 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $ref = $this->object->createDBRef('foo.bar', new MongoId());
         $this->assertNotNull($ref);
         $this->assertTrue(is_array($ref));
+
+        $id = new MongoId();
+        $ref = $this->object->createDBRef('foo.bar', array('_id' => $id, 'y' => 3));
+        $this->assertNotNull($ref);
+        $this->assertEquals((string)$id, (string)$ref['$id']);
     }
 
     public function testGetDBRef() {
@@ -219,14 +224,14 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     }
 
     public function testExecute() {
-        /*$ret = $this->object->execute('4+3*6');
+        $ret = $this->object->execute('4+3*6');
         $this->assertEquals($ret['retval'], 22);
 
         $ret = $this->object->execute(new MongoCode('function() { return x+y; }', array('x' => 'hi', 'y' => 'bye')));
         $this->assertEquals($ret['retval'], 'hibye');
 
         $ret = $this->object->execute(new MongoCode('function(x) { return x+y; }', array('y' => 'bye')), array('bye'));
-        $this->assertEquals($ret['retval'], 'byebye');*/
+        $this->assertEquals($ret['retval'], 'byebye');
     }
 
     public function testDBCommand() {
@@ -240,11 +245,17 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($x['ok'], 1);
     }
 
+    public function testCreateRef() {
+        $ref = MongoDBRef::create("x", "y");
+        $this->assertEquals('x', $ref['$ref']);
+        $this->assertEquals('y', $ref['$id']);
+    }
+
     public function testIsRef() {
-        $this->assertFalse(MongoDBRef::isRef(NULL));
+        $this->assertFalse(MongoDBRef::isRef(array()));
         $this->assertFalse(MongoDBRef::isRef(array('$ns' => 'foo', '$id' => 'bar')));
         $ref = $this->object->createDBRef('foo.bar', array('foo' => 'bar'));
-        $this->assertTrue(MongoDBRef::isRef($ref));
+        $this->assertEquals(NULL, $ref);
 
         $ref = array('$ref' => 'blog.posts', '$id' => new MongoId('cb37544b9dc71e4ac3116c00'));
         $this->assertTrue(MongoDBRef::isRef($ref));

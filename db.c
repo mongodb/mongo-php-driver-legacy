@@ -352,35 +352,27 @@ PHP_METHOD(MongoDB, createDBRef) {
     return;
   }
 
-  if (Z_TYPE_P(obj) == IS_ARRAY &&
-      zend_hash_find(Z_ARRVAL_P(obj), "_id", 4, (void**)&id) == SUCCESS) {
+  if (Z_TYPE_P(obj) == IS_ARRAY) {
+    if (zend_hash_find(Z_ARRVAL_P(obj), "_id", 4, (void**)&id) == SUCCESS) {
 
-    zval_add_ref(&ns);
-    zval_add_ref(id);
+      PUSH_PARAM(ns); PUSH_PARAM(*id); PUSH_PARAM((void*)2);
+      PUSH_EO_PARAM();
+      MONGO_METHOD(MongoDBRef, create)(2, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
+      POP_EO_PARAM();
+      POP_PARAM(); POP_PARAM(); POP_PARAM();
 
-    PUSH_PARAM(ns); PUSH_PARAM(*id); PUSH_PARAM((void*)2);
-    PUSH_EO_PARAM();
-    MONGO_METHOD(MongoDBRef, create)(2, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
-    POP_EO_PARAM();
-    POP_PARAM(); POP_PARAM(); POP_PARAM();
-
-    return;
+      return;
+    }
+    else {
+      RETURN_NULL();
+    }
   }
-  else if (Z_TYPE_P(obj) == IS_OBJECT &&
-           Z_OBJCE_P(obj) == mongo_ce_Id) {
 
-    zval_add_ref(&ns);
-    zval_add_ref(&obj);
-
-    PUSH_PARAM(ns); PUSH_PARAM(obj); PUSH_PARAM((void*)2);
-    PUSH_EO_PARAM();
-    MONGO_METHOD(MongoDBRef, create)(2, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
-    POP_EO_PARAM();
-    POP_PARAM(); POP_PARAM(); POP_PARAM();
-
-    return;
-  }
-  RETURN_NULL();
+  PUSH_PARAM(ns); PUSH_PARAM(obj); PUSH_PARAM((void*)2);
+  PUSH_EO_PARAM();
+  MONGO_METHOD(MongoDBRef, create)(2, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 PHP_METHOD(MongoDB, getDBRef) {

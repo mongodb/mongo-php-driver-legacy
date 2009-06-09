@@ -154,7 +154,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(false, array_key_exists('foo', $obj));
     }
 
-    /*
+    
     public function testFindWhere() {
         for($i=0;$i<50; $i++) {
             $this->object->insert(array( "foo$i" => pow(2, $i)));
@@ -164,7 +164,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('foo23', $x, json_encode($x));
         $this->assertEquals(8388608, $x['foo23'], json_encode($x));
     }
-    */
+    
 
     public function testFindOne() {
       $this->assertEquals(null, $this->object->findOne());
