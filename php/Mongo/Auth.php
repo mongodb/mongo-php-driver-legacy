@@ -24,7 +24,6 @@
  * @link     http://www.mongodb.org
  */
 
-require_once "Mongo.php";
 require_once "Mongo/Util.php";
 
 /**
@@ -64,19 +63,18 @@ class MongoAuth extends Mongo
     /**
      * Communicates with the database to log in a user.
      * 
-     * @param connection $conn     database connection
-     * @param string     $db       db name
-     * @param string     $username username
-     * @param string     $pwd      plaintext password
+     * @param MongoDB $db       database
+     * @param string  $username username
+     * @param string  $pwd      plaintext password
      *
      * @return array the database response
      */
-    protected static function getUser($conn, $db, $username, $pwd) 
+    protected static function getUser($db, $username, $pwd) 
     {
-        $ns = $db . '.system.users';
+        $ns = "${db}.system.users";
 
         // get the nonce
-        $result = MongoUtil::dbCommand($conn, array(MongoUtil::NONCE => 1 ), $db);
+        $result = $db->command(array(MongoUtil::NONCE => 1 ));
         if (!$result["ok"]) {
             return $result;
         }
@@ -90,7 +88,7 @@ class MongoAuth extends Mongo
                         "key" => $digest);
 
         // send everything to the db and pray
-        return MongoUtil::dbCommand($conn, $data, $db);
+        return $db->command($data);
     }
 
     /**
@@ -131,7 +129,7 @@ class MongoAuth extends Mongo
             $hash = $password;
         }
 
-        $result = MongoAuth::getUser($this->connection, $db, $username, $hash);
+        $result = MongoAuth::getUser($this->db, $username, $hash);
 
         if ($result['ok'] != 1) {
             $this->error = 'couldn\'t log in';
@@ -217,9 +215,7 @@ class MongoAuth extends Mongo
      */
     public function logout() 
     {
-        return MongoUtil::dbCommand($this->connection, 
-                                    array(MongoUtil::LOGOUT => 1), 
-                                    (string)$this->db);
+        return $this->db->command(array(MongoUtil::LOGOUT => 1));
     }
 
 }

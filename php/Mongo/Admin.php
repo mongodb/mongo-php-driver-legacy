@@ -24,9 +24,8 @@
  * @link     http://www.mongodb.org
  */
 
-require_once "Mongo.php";
-require_once "Mongo/Auth.php";
 require_once "Mongo/Util.php";
+require_once "Mongo/Auth.php";
 
 /**
  * Gets an admin database connection.
@@ -72,7 +71,7 @@ class MongoAdmin extends MongoAuth
     public function listDBs() 
     {
         $data   = array(MongoUtil::LIST_DATABASES => 1);
-        $result = MongoUtil::dbCommand($this->connection, $data, $this->db);
+        $result = $this->db->command($data);
         if ($result['ok']) {
             return $result[ "databases" ];
         } else {
@@ -87,9 +86,7 @@ class MongoAdmin extends MongoAuth
      */
     public function shutdown() 
     {
-        return MongoUtil::dbCommand($this->connection, 
-                                    array(MongoUtil::SHUTDOWN => 1 ), 
-                                    $this->db);
+        return $this->db->command(array(MongoUtil::SHUTDOWN => 1 ));
     }
 
     /**
@@ -101,9 +98,7 @@ class MongoAdmin extends MongoAuth
      */
     public function setLogging($level ) 
     {
-        return MongoUtil::dbCommand($this->connection, 
-                                    array(MongoUtil::LOGGING => (int)$level ), 
-                                    $this->db);
+        return $this->db->command(array(MongoUtil::LOGGING => (int)$level ));
     }
 
     /**
@@ -115,9 +110,7 @@ class MongoAdmin extends MongoAuth
      */
     public function setTracing($level ) 
     {
-        return MongoUtil::dbCommand($this->connection, 
-                                    array(MongoUtil::TRACING => (int)$level ), 
-                                    $this->db);
+        return $this->db->command(array(MongoUtil::TRACING => (int)$level ));
     }
 
     /**
@@ -129,10 +122,7 @@ class MongoAdmin extends MongoAuth
      */
     public function setQueryTracing($level ) 
     {
-        return MongoUtil::dbCommand($this->connection, 
-                                    array(MongoUtil::QUERY_TRACING => 
-                                          (int)$level), 
-                                    $this->db);
+        return $this->db->command(array(MongoUtil::QUERY_TRACING => (int)$level));
     }
 
 }

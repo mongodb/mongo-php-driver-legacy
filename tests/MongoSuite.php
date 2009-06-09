@@ -13,6 +13,8 @@ require_once 'MongoRegexTest.php';
 require_once 'MongoBinDataTest.php';
 
 require_once 'MongoRegressionTest1.php';
+
+include 'MongoAuthTest.php';
  
 class MongoSuite extends PHPUnit_Framework_TestSuite
 {
@@ -34,6 +36,22 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $suite->addTestSuite('MongoBinDataTest');
 
         $suite->addTestSuite('MongoRegressionTest1');
+
+        // try adding an admin user
+        if (class_exists("MongoAuth")) {
+            exec("mongo tests/addUser.js", $output, $exit_code);
+            if ($exit_code != 0) {
+                echo "\nNot running admin/auth tests\n";
+                echo implode("\n", $output);
+            }
+            else {
+                $suite->addTestSuite('MongoAuthTest');
+            }
+        }
+        else {
+            echo "\nAdd \$pwd/php/ to include_path to run admin/auth tests\n";
+        }
+
         // */
         return $suite;
     }
@@ -61,6 +79,10 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
     protected function tearDown()
     {
         $this->sharedFixture->close();
+
+        // remove db user
+        echo "\n";
+        exec("mongo tests/deleteUser.js");
     }
 }
 

@@ -21,6 +21,10 @@ To run the tests:
 
 You can get information about installing and setting up phpunit at http://www.phpunit.de/.
 
+The tests will spit out a bunch of warnings if you do not have mongo-php-driver/php on your include path, but it will just skip the tests that require that.
+
+The tests will also attempt to create an admin user using the shell.  If "mongo" is not on your path, you will get some output complaining about it.
+
 = Credits
 
 Jon Moss

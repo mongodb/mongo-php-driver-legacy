@@ -1,5 +1,7 @@
 <?php
 require_once 'PHPUnit/Framework.php';
+include 'Mongo/Auth.php';
+include 'Mongo/Admin.php';
 
 /**
  * Test class for MongoCollection.
@@ -8,7 +10,7 @@ require_once 'PHPUnit/Framework.php';
 class MongoAuthTest extends PHPUnit_Framework_TestCase
 {
     /**
-     * @var    MongoCollection
+     * @var    MongoAdmin
      * @access protected
      */
     protected $object;
@@ -16,42 +18,41 @@ class MongoAuthTest extends PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->object = new MongoAdmin();
-        $this->object->login("kristina", "fred");
+        $this->object->login("testUser", "testPass");
     }
 
-    protected $object;
-
     public function testAdminBasic() {
+        // make sure it behaves like a normal connection
+        $this->object->selectCollection("phpunit", "c")->drop();
         $this->object->selectCollection("phpunit", "c")->insert(array("foo"=>"bar"));
-        $one = $this->object->selectCollection("phpt", "auth.basic")->findOne();
-        echo $one["foo"]."\n";
+        $x = $this->object->selectCollection("phpunit", "c")->findOne();
+        $this->assertEquals("bar", $x["foo"]);
     }
 
     public function testAddUser() {
-        $this->object = new MongoAdmin();
-        $this->object->login("kristina", "fred");
-
         /* check auth methods */
         $this->object->addUser("fred", "ted");
         MongoAuth::getHash("fred", "ted");
         $a2 = new MongoAdmin();
+        $this->assertTrue($a2->connected);
         $a2->login("fred", "ted");
-        echo "$a\n";
+        $this->assertTrue($a2->loggedIn);
 
-        var_dump($this->object->changePassword("fred", "ted", "foobar"));
+        $x = $this->object->changePassword("fred", "ted", "foobar");
+        $this->assertEquals(1, $x['ok'], json_encode($x));
 
         $a2 = new MongoAdmin();
         $a2->login("fred", "ted");
-        var_dump($a2->loggedIn);
+        $this->assertFalse($a2->loggedIn);
 
         $a2 = new MongoAdmin();
         $a2->login("fred", "foobar");
-        var_dump($a2->loggedIn);
+        $this->assertTrue($a2->loggedIn);
 
         $this->object->deleteUser("fred");
         $a2 = new MongoAdmin();
         $a2->login("fred", "foobar");
-        var_dump($a2->loggedIn);
+        $this->assertFalse($a2->loggedIn);
     }
 }
 
