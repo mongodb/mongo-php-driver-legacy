@@ -152,6 +152,20 @@ typedef struct {
   APPEND_HEADER(buf);                                   \
   serialize_string(&buf, ns, ns_len);              
 
+
+#define MONGO_CHECK_INITIALIZED(member, class_name)                     \
+  if (!(member)) {                                                      \
+    php_error_docref(NULL TSRMLS_CC, E_WARNING, "The " #class_name " object has not been correctly initialized by its constructor"); \
+    RETURN_FALSE;                                                       \
+  }
+
+#define MONGO_CHECK_INITIALIZED_STRING(member, class_name)              \
+  if (!(member)) {                                                      \
+    php_error_docref(NULL TSRMLS_CC, E_WARNING, "The " #class_name " object has not been correctly initialized by its constructor"); \
+    RETURN_STRING("", 1);                                               \
+  }
+
+
 typedef struct {
   zend_object std;
 

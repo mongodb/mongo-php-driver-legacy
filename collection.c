@@ -63,6 +63,7 @@ PHP_METHOD(MongoCollection, __construct) {
   zval_add_ref(&c->parent);
 
   c->db = (mongo_db*)zend_object_store_get_object(db TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->db->name, MongoDB);
 
   c->name = name;
   zval_add_ref(&name);
@@ -76,17 +77,20 @@ PHP_METHOD(MongoCollection, __construct) {
 
 PHP_METHOD(MongoCollection, __toString) {
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED_STRING(c->ns, MongoCollection);
   RETURN_ZVAL(c->ns, 1, 0);
 }
 
 PHP_METHOD(MongoCollection, getName) {
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
   RETURN_ZVAL(c->name, 1, 0);
 }
 
 PHP_METHOD(MongoCollection, drop) {
   zval *data;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -111,6 +115,7 @@ PHP_METHOD(MongoCollection, validate) {
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -140,6 +145,7 @@ PHP_METHOD(MongoCollection, insert) {
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
@@ -177,6 +183,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
@@ -223,6 +230,7 @@ PHP_METHOD(MongoCollection, find) {
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   object_init_ex(return_value, mongo_ce_Cursor);
 
@@ -295,6 +303,7 @@ PHP_METHOD(MongoCollection, update) {
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
@@ -330,6 +339,7 @@ PHP_METHOD(MongoCollection, remove) {
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
@@ -372,6 +382,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   // get the system.indexes collection
   db = c->parent;
@@ -438,6 +449,7 @@ PHP_METHOD(MongoCollection, deleteIndex) {
   POP_PARAM(); POP_PARAM();
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -459,6 +471,7 @@ PHP_METHOD(MongoCollection, deleteIndex) {
 PHP_METHOD(MongoCollection, deleteIndexes) {
   zval *data;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -478,6 +491,7 @@ PHP_METHOD(MongoCollection, deleteIndexes) {
 PHP_METHOD(MongoCollection, getIndexInfo) {
   zval *collection, *i_str, *query, *cursor, *next;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(collection);
 
@@ -525,6 +539,7 @@ PHP_METHOD(MongoCollection, count) {
   zval *response, *data, *query=0, *fields=0;
   zval **n;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
     return;
@@ -604,6 +619,7 @@ PHP_METHOD(MongoCollection, createDBRef) {
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   PUSH_PARAM(c->name); PUSH_PARAM(obj); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
@@ -621,6 +637,7 @@ PHP_METHOD(MongoCollection, getDBRef) {
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   PUSH_PARAM(ref); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -751,6 +768,7 @@ PHP_METHOD(MongoCollection, group) {
   zval **retval, **result;
   char *function_str;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aaz|a", &key, &initial, &reduce, &condition) == FAILURE) {
     return;

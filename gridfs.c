@@ -28,6 +28,7 @@
 extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_Collection,
   *mongo_ce_Cursor,
+  *mongo_ce_Exception,
   *mongo_ce_GridFSException,
   *mongo_ce_Id,
   *mongo_ce_Date;
@@ -113,9 +114,8 @@ PHP_METHOD(MongoGridFS, __construct) {
 
 PHP_METHOD(MongoGridFS, drop) {
   zval *temp;
-  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   zval *zchunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
-  
+
   MAKE_STD_ZVAL(temp);
   MONGO_METHOD(MongoCollection, drop)(0, temp, NULL, zchunks, return_value_used TSRMLS_CC);
   zval_ptr_dtor(&temp);
@@ -151,6 +151,7 @@ PHP_METHOD(MongoGridFS, find) {
   object_init_ex(return_value, mongo_ce_GridFSCursor);
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
 
   PUSH_PARAM(getThis()); PUSH_PARAM(c->db->link); PUSH_PARAM(c->ns); PUSH_PARAM(zquery); PUSH_PARAM(zfields); PUSH_PARAM((void*)5);
   PUSH_EO_PARAM();
@@ -172,6 +173,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   long size, pos = 0;
   zend_bool created_date = 0, created_id = 0;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &filename, &filename_len, &extra) == FAILURE) {
     return;
@@ -809,6 +811,7 @@ PHP_METHOD(MongoGridFSCursor, current) {
   zval temp;
   zval *gridfs;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(cursor->link, MongoGridFSCursor);
 
   if (!cursor->current) {
     RETURN_NULL();
@@ -827,6 +830,7 @@ PHP_METHOD(MongoGridFSCursor, current) {
 
 PHP_METHOD(MongoGridFSCursor, key) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(cursor->link, MongoGridFSCursor);
 
   if (!cursor->current) {
     RETURN_NULL();

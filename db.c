@@ -32,7 +32,8 @@ extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Cursor,
   *mongo_ce_GridFS,
   *mongo_ce_Id,
-  *mongo_ce_Code;
+  *mongo_ce_Code,
+  *mongo_ce_Exception;
 
 extern int le_pconnection,
   le_connection;
@@ -69,6 +70,7 @@ PHP_METHOD(MongoDB, __construct) {
 
 PHP_METHOD(MongoDB, __toString) {
   mongo_db *db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED_STRING(db->name, MongoDB);
   RETURN_ZVAL(db->name, 1, 0);
 }
 
@@ -84,6 +86,7 @@ PHP_METHOD(MongoDB, selectCollection) {
   object_init_ex(return_value, mongo_ce_Collection);
 
   db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(db->name, MongoDB);
 
   PUSH_PARAM(getThis()); PUSH_PARAM(collection); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
@@ -482,6 +485,7 @@ PHP_METHOD(MongoDB, command) {
   }
 
   db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(db->name, MongoDB);
 
   // create db.$cmd
   cmd_ns = get_cmd_ns(Z_STRVAL_P(db->name), Z_STRLEN_P(db->name));

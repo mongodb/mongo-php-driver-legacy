@@ -705,6 +705,8 @@ PHP_METHOD(Mongo, selectCollection) {
     MONGO_METHOD(Mongo, selectDB)(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
 
     ok = (mongo_db*)zend_object_store_get_object(temp_db TSRMLS_CC);
+    MONGO_CHECK_INITIALIZED(ok->name, MongoDB);
+
     if (!ok || !ok->name) {
       return;
     }

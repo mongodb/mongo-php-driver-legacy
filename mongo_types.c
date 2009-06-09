@@ -46,7 +46,6 @@ zend_class_entry *mongo_ce_Date = NULL,
   *mongo_ce_Code = NULL,
   *mongo_ce_Regex = NULL;
 
-
 void generate_id(char *data) {
   unsigned t;
   char *T;
@@ -167,9 +166,12 @@ PHP_METHOD(MongoId, __toString) {
   int i;
   mongo_id *this_id;
   char *id_str, *movable;
-  char *id = (char*)emalloc(25);
+  char *id;
 
   this_id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED_STRING(this_id->id, MongoId);
+
+  id = (char*)emalloc(25);
   id_str = this_id->id;
 
   movable = id;

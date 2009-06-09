@@ -29,7 +29,8 @@ extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_Code,
   *mongo_ce_Date,
   *mongo_ce_Id,
-  *mongo_ce_Regex;
+  *mongo_ce_Regex,
+  *mongo_ce_Exception;
 
 
 int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
@@ -171,10 +172,13 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
     // MongoId
     if(clazz == mongo_ce_Id) {
       mongo_id *id;
+      zval temp;
+      zval *return_value = &temp;
 
       set_type(buf, BSON_OID);
       serialize_string(buf, name, name_len);
       id = (mongo_id*)zend_object_store_get_object(*data TSRMLS_CC);
+      MONGO_CHECK_INITIALIZED(id->id, MongoId);
       memcpy(buf->pos, id->id, OID_SIZE);
       buf->pos += OID_SIZE;
     }
