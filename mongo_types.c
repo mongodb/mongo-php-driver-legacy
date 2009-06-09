@@ -222,7 +222,7 @@ PHP_METHOD(MongoDate, __construct) {
         add_property_long(getThis(), "usec", 0);
       }
       else if (Z_TYPE_P(arg) == IS_STRING) {
-        zif_strtotime(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+        ZEND_FN(strtotime)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
         sec = Z_LVAL_P(return_value);
         add_property_long(getThis(), "sec", sec);
         add_property_long(getThis(), "usec", 0);
@@ -270,7 +270,7 @@ PHP_METHOD(MongoDate, format) {
 
   PUSH_PARAM(format); PUSH_PARAM(zsec); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  zif_date(2, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC); 
+  ZEND_FN(date)(2, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC); 
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
