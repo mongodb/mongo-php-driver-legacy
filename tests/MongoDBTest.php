@@ -239,6 +239,16 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($x['was'], 0, json_encode($x));
         $this->assertEquals($x['ok'], 1);
     }
+
+    public function testIsRef() {
+        $this->assertFalse(MongoDBRef::isRef(NULL));
+        $this->assertFalse(MongoDBRef::isRef(array('$ns' => 'foo', '$id' => 'bar')));
+        $ref = $this->object->createDBRef('foo.bar', array('foo' => 'bar'));
+        $this->assertTrue(MongoDBRef::isRef($ref));
+
+        $ref = array('$ref' => 'blog.posts', '$id' => new MongoId('cb37544b9dc71e4ac3116c00'));
+        $this->assertTrue(MongoDBRef::isRef($ref));
+    }
     
 }
 ?>
