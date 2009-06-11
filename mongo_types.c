@@ -526,19 +526,10 @@ PHP_METHOD(MongoDBRef, get) {
     RETURN_NULL();
   }
 
-  c_name = Z_STRVAL_PP(ns);
-  c_name = strchr(c_name, '.');
-  if (c_name) {
-    ZVAL_STRING((&name), c_name+1, 0);
-    PUSH_PARAM(&name);
-  }
-  else {
-    PUSH_PARAM(*ns);
-  }
 
   MAKE_STD_ZVAL(collection);
 
-  PUSH_PARAM((void*)1);
+  PUSH_PARAM(*ns); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   MONGO_METHOD(MongoDB, selectCollection)(1, collection, &collection, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();

@@ -38,18 +38,18 @@ class MongoGridFSFileClassicTest extends PHPUnit_Framework_TestCase
 
         $chunk4 = array('cn' => 4, 'data' => new MongoBinData('xyz'));
         $chunks->insert($chunk4);
-        $chunk3 = array('cn' => 3, 'data' => new MongoBinData('rst'), 'next' => MongoDBRef::create((string)$chunks, $chunk4['_id']));
+        $chunk3 = array('cn' => 3, 'data' => new MongoBinData('rst'), 'next' => MongoDBRef::create($chunks->getName(), $chunk4['_id']));
         $chunks->insert($chunk3);
-        $chunk2 = array('cn' => 2, 'data' => new MongoBinData('lmno'), 'next' => MongoDBRef::create((string)$chunks, $chunk3['_id']));
+        $chunk2 = array('cn' => 2, 'data' => new MongoBinData('lmno'), 'next' => MongoDBRef::create($chunks->getName(), $chunk3['_id']));
         $chunks->insert($chunk2);
-        $chunk1 = array('cn' => 1, 'data' => new MongoBinData('abc'), 'next' => MongoDBRef::create((string)$chunks, $chunk2['_id']));
+        $chunk1 = array('cn' => 1, 'data' => new MongoBinData('abc'), 'next' => MongoDBRef::create($chunks->getName(), $chunk2['_id']));
         $chunks->insert($chunk1);
 
         $files->insert(array("filename" => "classic.jpg", 
                              "contentType" => "image/jpeg",
                              "length" =>  4, 
                              "chunkSize" => 4 , 
-                             "next" => MongoDBRef::create((string)$chunks, $chunk1['_id'])));
+                             "next" => MongoDBRef::create($chunks->getName(), $chunk1['_id'])));
 
 
         $file = $grid->findOne();
@@ -69,7 +69,7 @@ class MongoGridFSFileClassicTest extends PHPUnit_Framework_TestCase
     
     public function testWrite() {
         $bytes = $this->object->write('tests/classic.jpg');
-        $this->assertEquals($bytes, 13);
+        $this->assertEquals(13, $bytes);
     }
 }
 ?>
