@@ -57,6 +57,8 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
 
         if (class_exists("MongoGridFSFileClassic")) {
             $suite->addTestSuite('MongoGridFSFileClassicTest');
+        } else {
+            echo "\nAdd \$pwd/php/ to include_path to run GridFS Classic tests\n";
         }
 
         // */

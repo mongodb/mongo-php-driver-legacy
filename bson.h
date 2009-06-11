@@ -43,14 +43,14 @@
 
 #define GROW_SLOWLY 1048576
 
-void serialize_size(unsigned char*, buffer*);
+inline void serialize_size(unsigned char*, buffer*);
 
 void serialize_element(buffer*, char*, int, zval** TSRMLS_DC);
-void serialize_double(buffer*, double);
-void serialize_string(buffer*, char*, int);
-void serialize_long(buffer*, long long);
-void serialize_int(buffer*, int);
-void serialize_byte(buffer*, char);
+inline void serialize_double(buffer*, double);
+inline void serialize_string(buffer*, char*, int);
+inline void serialize_long(buffer*, long long);
+inline void serialize_int(buffer*, int);
+inline void serialize_byte(buffer*, char);
 
 #define set_type(buf, type) serialize_byte(buf, (char)type)
 #define serialize_null(buf) serialize_byte(buf, (char)0)

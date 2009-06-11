@@ -270,7 +270,7 @@ int resize_buf(buffer *buf, int size) {
   return total;
 }
 
-void serialize_byte(buffer *buf, char b) {
+inline void serialize_byte(buffer *buf, char b) {
   if(BUF_REMAINING <= 1) {
     resize_buf(buf, 1);
   }
@@ -278,7 +278,7 @@ void serialize_byte(buffer *buf, char b) {
   buf->pos += 1;
 }
 
-void serialize_string(buffer *buf, char *str, int str_len) {
+inline void serialize_string(buffer *buf, char *str, int str_len) {
   if(BUF_REMAINING <= str_len+1) {
     resize_buf(buf, str_len+1);
   }
@@ -288,7 +288,7 @@ void serialize_string(buffer *buf, char *str, int str_len) {
   buf->pos += str_len + 1;
 }
 
-void serialize_int(buffer *buf, int num) {
+inline void serialize_int(buffer *buf, int num) {
   if(BUF_REMAINING <= INT_32) {
     resize_buf(buf, INT_32);
   }
@@ -296,7 +296,7 @@ void serialize_int(buffer *buf, int num) {
   buf->pos += INT_32;
 }
 
-void serialize_long(buffer *buf, long long num) {
+inline void serialize_long(buffer *buf, long long num) {
   if(BUF_REMAINING <= INT_64) {
     resize_buf(buf, INT_64);
   }
@@ -304,7 +304,7 @@ void serialize_long(buffer *buf, long long num) {
   buf->pos += INT_64;
 }
 
-void serialize_double(buffer *buf, double num) {
+inline void serialize_double(buffer *buf, double num) {
   if(BUF_REMAINING <= INT_64) {
     resize_buf(buf, INT_64);
   }
@@ -315,7 +315,7 @@ void serialize_double(buffer *buf, double num) {
 /* the position is not increased, we are just filling
  * in the first 4 bytes with the size.
  */
-void serialize_size(unsigned char *start, buffer *buf) {
+inline void serialize_size(unsigned char *start, buffer *buf) {
   unsigned int total = buf->pos - start;
   memcpy(start, &total, INT_32);
 }
@@ -354,19 +354,18 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_DOUBLE: {
-      double d;
-      memcpy(&d, buf, DOUBLE_64);
-      add_assoc_double(result, name, d);
+      double *d = (void*)buf;
+
+      add_assoc_double(result, name, *d);
       buf += DOUBLE_64;
       break;
     }
     case BSON_STRING: {
-      int len;
-      memcpy(&len, buf, INT_32);
+      int *len = (void*)buf;
       buf += INT_32;
 
-      add_assoc_stringl(result, name, (char*)buf, len-1, DUP);
-      buf += len;
+      add_assoc_stringl(result, name, (char*)buf, (*len)-1, DUP);
+      buf += (*len);
       break;
     }
     case BSON_OBJECT:
@@ -374,27 +373,27 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       zval *d;
       MAKE_STD_ZVAL(d);
       array_init(d);
+
       buf = bson_to_zval(buf, d TSRMLS_CC);
       add_assoc_zval(result, name, d);
       break;
     }
     case BSON_BINARY: {
-      int len;
+      int *len = (void*)buf;
       unsigned char type, *bytes;
       zval *bin;
 
-      memcpy(&len, buf, INT_32);
       buf += INT_32;
 
       type = *buf++;
 
       bytes = buf;
-      buf += len;
+      buf += (*len);
 
       MAKE_STD_ZVAL(bin);
       object_init_ex(bin, mongo_ce_BinData);
 
-      add_property_stringl(bin, "bin", (char*)bytes, len, DUP);
+      add_property_stringl(bin, "bin", (char*)bytes, *len, DUP);
       add_property_long(bin, "type", type);
       add_assoc_zval(result, name, bin);
       break;
@@ -410,45 +409,45 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_INT: {
-      int d;
+      int *d = (void*)buf;
 
-      memcpy(&d, buf, INT_32);
-      add_assoc_long(result, name, d);
+      add_assoc_long(result, name, *d);
       buf += INT_32;
       break;
     }
     case BSON_DATE: {
-      unsigned long long d;
+      long long int *d;
       zval *date;
 
-      memcpy(&d, buf, INT_64);
+      d = (void*)buf;
       buf += INT_64;
 
       MAKE_STD_ZVAL(date);
       object_init_ex(date, mongo_ce_Date);
 
-      add_property_long(date, "sec", d/1000);
-      add_property_long(date, "usec", (d*1000)%1000000);
+      add_property_long(date, "sec", (*d)/1000);
+      add_property_long(date, "usec", ((*d)*1000)%1000000);
       add_assoc_zval(result, name, date);
       break;
     }
     case BSON_REGEX: {
-      unsigned char *start_regex = buf, *start_flags;
+      unsigned char *regex, *flags;
       int regex_len, flags_len;
       zval *zegex;
 
-      while (*buf++);
-      regex_len = buf-start_regex;
+      regex = buf;
+      regex_len = strlen(buf);
+      buf += regex_len+1;
 
-      start_flags = buf;
-      while (*buf++);
-      flags_len = buf-start_flags;
+      flags = buf;
+      flags_len = strlen(buf);
+      buf += flags_len+1;
 
       MAKE_STD_ZVAL(zegex);
       object_init_ex(zegex, mongo_ce_Regex);
 
-      add_property_stringl(zegex, "regex", (char*)start_regex, regex_len-1, 1);
-      add_property_stringl(zegex, "flags", (char*)start_flags, flags_len-1, 1);
+      add_property_stringl(zegex, "regex", (char*)regex, regex_len, 1);
+      add_property_stringl(zegex, "flags", (char*)flags, flags_len, 1);
       add_assoc_zval(result, name, zegex);
 
       break;
@@ -456,7 +455,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
     case BSON_CODE: 
     case BSON_CODE__D: {
       zval *zode, *zcope;
-      int len;
+      int *len;
       unsigned char *code;
 
       MAKE_STD_ZVAL(zode);
@@ -471,18 +470,18 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       }
 
       // length of code (includes \0)
-      memcpy(&len, buf, INT_32);
-
+      len = (void*)buf;
       buf += INT_32;
+
       code = buf;
-      buf += len * BYTE_8;
+      buf += (*len);
 
       if (type == BSON_CODE) {
         buf = bson_to_zval(buf, zcope TSRMLS_CC);
       }
 
       // exclude \0
-      add_property_stringl(zode, "code", (char*)code, len-1, DUP);
+      add_property_stringl(zode, "code", (char*)code, (*len)-1, DUP);
       add_property_zval(zode, "scope", zcope);
       zval_ptr_dtor(&zcope);
       add_assoc_zval(result, name, zode);
@@ -498,7 +497,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
 
       buf += INT_32;
       ns = (char*)buf;
-      while (*buf++);
+      buf += strlen(buf)+1;
 
       MAKE_STD_ZVAL(zoid);
       object_init_ex(zoid, mongo_ce_Id);
@@ -517,12 +516,12 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_TIMESTAMP: {
-      long long int d;
+      long long int *d;
 
-      memcpy(&d, buf, INT_64);
+      d = (void*)buf;
       buf += INT_64;
 
-      add_assoc_long(result, name, d);
+      add_assoc_long(result, name, *d);
 
       break;
     }
