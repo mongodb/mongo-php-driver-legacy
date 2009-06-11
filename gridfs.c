@@ -727,7 +727,12 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  str = (char*)emalloc(Z_DVAL_PP(size) + 1);
+  if (Z_TYPE_PP(size) == IS_DOUBLE) {
+    str = (char*)emalloc(Z_DVAL_PP(size) + 1);
+  }
+  else { // if Z_TYPE_PP(size) == IS_LONG
+    str = (char*)emalloc(Z_LVAL_PP(size) + 1);
+  }
 
   str_ptr = str;
 

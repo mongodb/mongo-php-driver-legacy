@@ -1075,6 +1075,8 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
 
 int get_reply(mongo_cursor *cursor TSRMLS_DC) {
+  int sock = get_master(cursor->link TSRMLS_CC);
+
   // if this fails, we might be disconnected... but we're probably
   // just out of results
   if (mongo_hear(cursor->link, &cursor->header.length, INT_32 TSRMLS_CC) == FAILURE) {
@@ -1088,8 +1090,17 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
     return FAILURE;
   }
 
+  read(sock, &cursor->header.request_id, INT_32);
+  read(sock, &cursor->header.response_to, INT_32);
+  read(sock, &cursor->header.op, INT_32);
+  read(sock, &cursor->flag, INT_32);
+  read(sock, &cursor->cursor_id, INT_64);
+  read(sock, &cursor->start, INT_32);
+  read(sock, &cursor->num, INT_32);
+
   // create buf
-  cursor->header.length -= INT_32;
+  cursor->header.length -= INT_32*9;
+
   // point buf.start at buf's first char
   if (!cursor->buf.start) {
     cursor->buf.start = (unsigned char*)emalloc(cursor->header.length);
@@ -1101,11 +1112,13 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   }
   cursor->buf.pos = cursor->buf.start;
 
+
   if (mongo_hear(cursor->link, cursor->buf.pos, cursor->header.length TSRMLS_CC) == FAILURE) {
     zend_error(E_WARNING, "error getting response buf: %s\n", strerror(errno));
     return FAILURE;
   }
 
+  /*
   memcpy(&cursor->header.request_id, cursor->buf.pos, INT_32);
   cursor->buf.pos += INT_32;
   memcpy(&cursor->header.response_to, cursor->buf.pos, INT_32);
@@ -1126,6 +1139,7 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   cursor->buf.pos += INT_32;
   memcpy(&cursor->num, cursor->buf.pos, INT_32);
   cursor->buf.pos += INT_32;
+  */
 
   cursor->at = 0;
 
@@ -1164,13 +1178,6 @@ int mongo_say(mongo_link *link, buffer *buf TSRMLS_DC) {
 int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
   int tries = 3, num = 1, r = 0;
 
-  while (check_connection(link TSRMLS_CC) == FAILURE &&
-         tries > 0) {
-#ifndef WIN32
-    sleep(2);
-#endif
-    zend_error(E_WARNING, "no connection, trying to reconnect %d more times...\n", tries--);
-  }
   // this can return FAILED if there is just no more data from db
   while(r < len && num > 0) {
 

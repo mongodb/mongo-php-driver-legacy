@@ -308,7 +308,6 @@ PHP_METHOD(MongoBinData, __construct) {
     zend_error( E_ERROR, "incorrect parameter types, expected __construct(string, long)" );
   }
   
-  add_property_long( getThis(), "length", bin_len);
   add_property_stringl( getThis(), "bin", bin, bin_len, 1 );
   add_property_long( getThis(), "type", type);
 }
@@ -336,7 +335,6 @@ void mongo_init_MongoBinData(TSRMLS_D) {
   mongo_ce_BinData = zend_register_internal_class(&ce TSRMLS_CC);
 
   zend_declare_property_string(mongo_ce_BinData, "bin", strlen("bin"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
-  zend_declare_property_long(mongo_ce_BinData, "length", strlen("length"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
   zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 }
 
@@ -495,7 +493,7 @@ PHP_METHOD(MongoDBRef, create) {
 }
 /* }}} */
 
-/* {{{ MongoCode::isRef()
+/* {{{ MongoDBRef::isRef()
  */
 PHP_METHOD(MongoDBRef, isRef) {
   zval *ref;
@@ -511,9 +509,11 @@ PHP_METHOD(MongoDBRef, isRef) {
 }
 /* }}} */
 
-/* {{{ MongoCode::get()
+/* {{{ MongoDBRef::get()
  */
 PHP_METHOD(MongoDBRef, get) {
+  char *c_name;
+  zval name;
   zval *db, *ref, *collection, *query;
   zval **ns, **id;
 
@@ -526,9 +526,19 @@ PHP_METHOD(MongoDBRef, get) {
     RETURN_NULL();
   }
 
+  c_name = Z_STRVAL_PP(ns);
+  c_name = strchr(c_name, '.');
+  if (c_name) {
+    ZVAL_STRING((&name), c_name+1, 0);
+    PUSH_PARAM(&name);
+  }
+  else {
+    PUSH_PARAM(*ns);
+  }
+
   MAKE_STD_ZVAL(collection);
 
-  PUSH_PARAM(*ns); PUSH_PARAM((void*)1);
+  PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   MONGO_METHOD(MongoDB, selectCollection)(1, collection, &collection, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();

@@ -234,17 +234,22 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
     }
     // MongoBin
     else if (clazz == mongo_ce_BinData) {
-      zval *zid;
+      zval *zbin, *ztype;
 
       set_type(buf, BSON_BINARY);
       serialize_string(buf, name, name_len);
 
-      zid = zend_read_property(mongo_ce_BinData, *data, "length", 6, 0 TSRMLS_CC);
-      serialize_int(buf, Z_LVAL_P(zid));
-      zid = zend_read_property(mongo_ce_BinData, *data, "type", 4, 0 TSRMLS_CC);
-      serialize_byte(buf, (unsigned char)Z_LVAL_P(zid));
-      zid = zend_read_property(mongo_ce_BinData, *data, "bin", 3, 0 TSRMLS_CC);
-      serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+      zbin = zend_read_property(mongo_ce_BinData, *data, "bin", 3, 0 TSRMLS_CC);
+      serialize_int(buf, Z_STRLEN_P(zbin));
+
+      ztype = zend_read_property(mongo_ce_BinData, *data, "type", 4, 0 TSRMLS_CC);
+      serialize_byte(buf, (unsigned char)Z_LVAL_P(ztype));
+
+      if(BUF_REMAINING <= Z_STRLEN_P(zbin)) {
+        resize_buf(buf, Z_STRLEN_P(zbin));
+      }
+      memcpy(buf->pos, Z_STRVAL_P(zbin), Z_STRLEN_P(zbin));
+      buf->pos += Z_STRLEN_P(zbin);
     }
     break;
   }
@@ -389,7 +394,6 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       MAKE_STD_ZVAL(bin);
       object_init_ex(bin, mongo_ce_BinData);
 
-      add_property_long(bin, "length", len);
       add_property_stringl(bin, "bin", (char*)bytes, len, DUP);
       add_property_long(bin, "type", type);
       add_assoc_zval(result, name, bin);

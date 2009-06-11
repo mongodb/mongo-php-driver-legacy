@@ -621,7 +621,7 @@ PHP_METHOD(MongoCollection, createDBRef) {
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  PUSH_PARAM(c->name); PUSH_PARAM(obj); PUSH_PARAM((void*)2);
+  PUSH_PARAM(c->ns); PUSH_PARAM(obj); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
   MONGO_METHOD(MongoDB, createDBRef)(2, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
@@ -639,11 +639,11 @@ PHP_METHOD(MongoCollection, getDBRef) {
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  PUSH_PARAM(ref); PUSH_PARAM((void*)1);
+  PUSH_PARAM(c->parent); PUSH_PARAM(ref); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, getDBRef)(1, return_value, return_value_ptr, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDBRef, get)(2, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); 
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 static char *replace_dots(char *key, int key_len, char *position) {
