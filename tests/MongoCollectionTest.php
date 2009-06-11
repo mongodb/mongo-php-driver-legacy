@@ -348,14 +348,24 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
     public function testSave() {
       $this->object->save(array('x' => 1));
+
       $a = $this->object->findOne();
+      $id1 = $a['_id'];
+
       $a['x'] = 2;
+      $this->object->save($a);
+      $id2 = $a['_id'];
+
+      $this->assertEquals($id1, $id2);
+      $a['y'] = 3;
       $this->object->save($a);
 
       $this->assertEquals($this->object->count(), 1);
 
       $a = $this->object->findOne();
       $this->assertEquals($a['x'], 2);
+
+
     }
 
     public function testGetDBRef() {

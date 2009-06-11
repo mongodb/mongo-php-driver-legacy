@@ -590,6 +590,7 @@ PHP_METHOD(MongoCollection, save) {
     MAKE_STD_ZVAL(criteria);
     array_init(criteria);
     add_assoc_zval(criteria, "_id", *id);
+    zval_add_ref(id);
 
     Z_TYPE(zupsert) = IS_BOOL;
     zupsert.value.lval = 1;
@@ -600,6 +601,7 @@ PHP_METHOD(MongoCollection, save) {
     POP_EO_PARAM();
     POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
+    zval_ptr_dtor(&criteria);
     return;
   }
   
