@@ -51,6 +51,7 @@ inline void serialize_string(buffer*, char*, int);
 inline void serialize_long(buffer*, long long);
 inline void serialize_int(buffer*, int);
 inline void serialize_byte(buffer*, char);
+inline void serialize_bytes(buffer*, char*, int);
 
 #define set_type(buf, type) serialize_byte(buf, (char)type)
 #define serialize_null(buf) serialize_byte(buf, (char)0)

@@ -179,8 +179,8 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       serialize_string(buf, name, name_len);
       id = (mongo_id*)zend_object_store_get_object(*data TSRMLS_CC);
       MONGO_CHECK_INITIALIZED(id->id, MongoId);
-      memcpy(buf->pos, id->id, OID_SIZE);
-      buf->pos += OID_SIZE;
+
+      serialize_bytes(buf, id->id, OID_SIZE);
     }
     // MongoDate
     else if (clazz == mongo_ce_Date) {
@@ -248,8 +248,8 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
       if(BUF_REMAINING <= Z_STRLEN_P(zbin)) {
         resize_buf(buf, Z_STRLEN_P(zbin));
       }
-      memcpy(buf->pos, Z_STRVAL_P(zbin), Z_STRLEN_P(zbin));
-      buf->pos += Z_STRLEN_P(zbin);
+
+      serialize_bytes(buf, Z_STRVAL_P(zbin), Z_STRLEN_P(zbin));
     }
     break;
   }
@@ -284,8 +284,7 @@ inline void serialize_bytes(buffer *buf, char *str, int str_len) {
     resize_buf(buf, str_len);
   }
   memcpy(buf->pos, str, str_len);
-  // add \0 at the end of the string
-  buf->pos += str_len + 1;
+  buf->pos += str_len;
 }
 
 inline void serialize_string(buffer *buf, char *str, int str_len) {

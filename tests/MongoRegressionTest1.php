@@ -75,5 +75,25 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         }
         $this->assertEquals(255, $exit_code);
     }
+
+    public function testRealloc() {
+        $db = $this->sharedFixture->selectDB('webgenius');
+        $tbColl = $db->selectCollection('Text_Block');
+        
+        $text = file_get_contents('tests/mongo-bug.txt');
+      
+        $arr = array('text' => $text,);
+        $tbColl->insert($arr);
+    }
+
+    public function testIdRealloc() {
+        $db = $this->sharedFixture->selectDB('webgenius');
+        $tbColl = $db->selectCollection('Text_Block');
+
+        $text = file_get_contents('tests/id-alloc.txt');
+        $arr = array('text' => $text, 'id2' => new MongoId());
+        $tbColl->insert($arr);
+    }
+
 }
 ?>
