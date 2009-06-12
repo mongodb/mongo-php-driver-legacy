@@ -257,15 +257,16 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
 }
 
 int resize_buf(buffer *buf, int size) {
-  unsigned int total = buf->end - buf->start;
-  unsigned int pos = buf->pos - buf->start;
+  int total = buf->end - buf->start;
+  int used = buf->pos - buf->start;
+
   total = total < GROW_SLOWLY ? total*2 : total+INITIAL_BUF_SIZE;
-  if (total < size) {
+  while (total-used < size) {
     total += size;
   }
 
   buf->start = (unsigned char*)erealloc(buf->start, total);
-  buf->pos = buf->start + pos;
+  buf->pos = buf->start + used;
   buf->end = buf->start + total;
   return total;
 }
@@ -278,10 +279,20 @@ inline void serialize_byte(buffer *buf, char b) {
   buf->pos += 1;
 }
 
+inline void serialize_bytes(buffer *buf, char *str, int str_len) {
+  if(BUF_REMAINING <= str_len) {
+    resize_buf(buf, str_len);
+  }
+  memcpy(buf->pos, str, str_len);
+  // add \0 at the end of the string
+  buf->pos += str_len + 1;
+}
+
 inline void serialize_string(buffer *buf, char *str, int str_len) {
   if(BUF_REMAINING <= str_len+1) {
     resize_buf(buf, str_len+1);
   }
+
   memcpy(buf->pos, str, str_len);
   // add \0 at the end of the string
   buf->pos[str_len] = 0;
