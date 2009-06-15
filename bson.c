@@ -97,7 +97,7 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
 
   buffer *buf = va_arg(args, buffer*);
   int prep = va_arg(args, int);
-  TSRMLS_D = va_arg(args, void***);
+  void ***tsrm_ls = va_arg(args, void***);
 
   if (key->nKeyLength) {
     return serialize_element(key->arKey, (zval**)data, buf, prep TSRMLS_CC);
