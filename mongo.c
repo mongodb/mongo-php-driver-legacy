@@ -1079,7 +1079,7 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
 
   // if this fails, we might be disconnected... but we're probably
   // just out of results
-  if (mongo_hear(cursor->link, &cursor->header.length, INT_32 TSRMLS_CC) == FAILURE) {
+  if (read(sock, &cursor->header.length, INT_32) == FAILURE) {
     return FAILURE;
   }
 
@@ -1112,34 +1112,10 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   }
   cursor->buf.pos = cursor->buf.start;
 
-
   if (mongo_hear(cursor->link, cursor->buf.pos, cursor->header.length TSRMLS_CC) == FAILURE) {
-    zend_error(E_WARNING, "error getting response buf: %s\n", strerror(errno));
+    zend_error(E_WARNING, "error getting database response: %s\n", strerror(errno));
     return FAILURE;
   }
-
-  /*
-  memcpy(&cursor->header.request_id, cursor->buf.pos, INT_32);
-  cursor->buf.pos += INT_32;
-  memcpy(&cursor->header.response_to, cursor->buf.pos, INT_32);
-  cursor->buf.pos += INT_32;
-  memcpy(&cursor->header.op, cursor->buf.pos, INT_32);
-  cursor->buf.pos += INT_32;
-
-  memcpy(&cursor->flag, cursor->buf.pos, INT_32);
-  cursor->buf.pos += INT_32;
-  if(cursor->flag == CURSOR_NOT_FOUND) {
-    cursor->num = 0;
-    return FAILURE;
-  }
-
-  memcpy(&cursor->cursor_id, cursor->buf.pos, INT_64);
-  cursor->buf.pos += INT_64;
-  memcpy(&cursor->start, cursor->buf.pos, INT_32);
-  cursor->buf.pos += INT_32;
-  memcpy(&cursor->num, cursor->buf.pos, INT_32);
-  cursor->buf.pos += INT_32;
-  */
 
   cursor->at = 0;
 

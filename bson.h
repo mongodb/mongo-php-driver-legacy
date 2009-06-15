@@ -45,7 +45,9 @@
 
 inline void serialize_size(unsigned char*, buffer*);
 
-void serialize_element(buffer*, char*, int, zval** TSRMLS_DC);
+static int apply_func_args_wrapper(void**, int, va_list, zend_hash_key*);
+
+int serialize_element(char*, zval**, buffer*, int TSRMLS_DC);
 inline void serialize_double(buffer*, double);
 inline void serialize_string(buffer*, char*, int);
 inline void serialize_long(buffer*, long long);
@@ -53,13 +55,14 @@ inline void serialize_int(buffer*, int);
 inline void serialize_byte(buffer*, char);
 inline void serialize_bytes(buffer*, char*, int);
 
+
 #define set_type(buf, type) serialize_byte(buf, (char)type)
 #define serialize_null(buf) serialize_byte(buf, (char)0)
 #define serialize_bool(buf, b) serialize_byte(buf, (char)b)
 
 int resize_buf(buffer*, int);
 
-int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC);
+static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC);
 int zval_to_bson(buffer*, zval*, int TSRMLS_DC);
 unsigned char* bson_to_zval(unsigned char*, zval* TSRMLS_DC);
 

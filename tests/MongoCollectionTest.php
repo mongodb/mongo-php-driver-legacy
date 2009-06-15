@@ -110,6 +110,17 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertTrue(array_key_exists('', $x));
       $this->assertEquals($x[''], '1');
     }
+
+    public function testInsertNonAssoc() {
+        $nonassoc = array("x", "y", "z");
+        $this->object->insert($nonassoc);
+        $x = $this->object->findOne();
+
+        $this->assertEquals("x", $x[0]);
+        $this->assertEquals("y", $x[1]);
+        $this->assertEquals("z", $x[2]);
+        $this->assertEquals((string)$nonassoc['_id'], (string)$x['_id']);
+    }
     
     public function testBatchInsert() {
       $this->assertFalse($this->object->batchInsert(array()));

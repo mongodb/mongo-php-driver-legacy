@@ -55,13 +55,7 @@ void generate_id(char *data) {
 
   char *inc = (char*)(void*)&r2;
 
-#ifdef WIN32
-  SYSTEMTIME systemTime;
-  GetSystemTime(&systemTime);
-  t = systemTime.wMilliseconds;
-#else
   t = (unsigned) time(0);
-#endif
 
   T = (char*)&t;
   data[0] = T[3];

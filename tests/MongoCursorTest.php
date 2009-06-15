@@ -439,5 +439,47 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(10, $c->count());
     }
 
+    public function testReset2() {
+        for ($i=0; $i<20; $i++) {
+            $this->object->insert(array('x'=>$i, "b$i" => 'foo'));
+        }
+
+        $cursor = $this->object->find();
+        for ($i=0; $i<20; $i++) {
+            $this->assertNotNull($cursor->getNext());
+        }
+
+        $cursor->reset();
+        $cursor->limit(1);
+
+        $this->assertNotNull($cursor->getNext());
+        $this->assertEquals(NULL, $cursor->getNext());
+
+        $cursor->reset();
+        $cursor->limit(0);
+
+        for ($i=0; $i<20; $i++) {
+            $this->assertNotNull($cursor->getNext());
+        }
+    }
+
+    public function testResetRealloc() {
+        for ($i=0; $i<20; $i++) {
+            $this->object->insert(array('x'=>$i, "b$i" => 'foo'));
+        }
+
+        $cursor = $this->object->find()->limit(1);
+
+        $this->assertNotNull($cursor->getNext());
+        $this->assertEquals(NULL, $cursor->getNext());
+
+        $cursor->reset();
+        $cursor->limit(0);
+
+        for ($i=0; $i<20; $i++) {
+            $this->assertNotNull($cursor->getNext());
+        }
+    }
+
 }
 ?>

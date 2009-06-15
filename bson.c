@@ -32,8 +32,7 @@ extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_Regex,
   *mongo_ce_Exception;
 
-
-int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
+static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
   zval temp, **data, *newid;
 
   // if _id field doesn't exist, add it
@@ -50,7 +49,7 @@ int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
     data = &newid;
   }
 
-  serialize_element(buf, "_id", 3, data TSRMLS_CC);
+  serialize_element("_id", data, buf, 0 TSRMLS_CC);
 
   return SUCCESS;
 }
@@ -78,50 +77,44 @@ int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
   // skip first 4 bytes to leave room for size
   buf->pos += INT_32;
 
-  if (zend_hash_num_elements(arr_hash) == 0) {
-    serialize_null(buf);
-    serialize_size(buf->start+start, buf);
-    return num;
-  }
- 
-
-  if (prep) {
-    prep_obj_for_db(buf, zhash TSRMLS_CC);
-    num++;
-  }
+  if (zend_hash_num_elements(arr_hash) > 0) {
+    if (prep) {
+      prep_obj_for_db(buf, zhash TSRMLS_CC);
+      num++;
+    }
   
-  for(zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); 
-      zend_hash_get_current_data_ex(arr_hash, (void**) &data, &pointer) == SUCCESS; 
-      zend_hash_move_forward_ex(arr_hash, &pointer)) {
-
-    // increment number of fields
-    num++;
-
-    key_type = zend_hash_get_current_key_ex(arr_hash, &key, &key_len, &index, NO_DUP, &pointer);
-
-    if (key_type == HASH_KEY_IS_STRING) {
-      if (prep && strcmp(key, "_id") == 0) {
-        continue;
-      }
-      key_len = spprintf(&field_name, 0, "%s", key);
-    }
-    else if (key_type == HASH_KEY_IS_LONG) {
-      key_len = spprintf(&field_name, 0, "%ld", index);
-    }
-    else {
-      zend_error(E_WARNING, "key fail");
-      continue;
-    }
-
-    serialize_element(buf, field_name, key_len, data TSRMLS_CC);
-    efree(field_name);
+    zend_hash_apply_with_arguments(Z_ARRVAL_P(zhash), (apply_func_args_t)apply_func_args_wrapper, 3, buf, prep TSRMLS_CC);
   }
+
   serialize_null(buf);
   serialize_size(buf->start+start, buf);
   return num;
 }
 
-void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS_DC) {
+static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key) {
+  int retval;
+  char *name;
+
+  buffer *buf = va_arg(args, buffer*);
+  int prep = va_arg(args, int);
+  TSRMLS_D = va_arg(args, void***);
+
+  if (key->nKeyLength) {
+    return serialize_element(key->arKey, (zval**)data, buf, prep TSRMLS_CC);
+  }
+
+  spprintf(&name, 0, "%ld", key->h);
+  retval = serialize_element(name, (zval**)data, buf, prep TSRMLS_CC);
+  efree(name);
+  return retval;
+}
+
+int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) {
+  int name_len = strlen(name);
+
+  if (prep && strcmp(name, "_id") == 0) {
+    return ZEND_HASH_APPLY_KEEP;
+  }
 
   switch (Z_TYPE_PP(data)) {
   case IS_NULL:
@@ -144,14 +137,11 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
     serialize_bool(buf, Z_BVAL_PP(data));
     break;
   case IS_STRING: {
-    long length;
-
     set_type(buf, BSON_STRING);
     serialize_string(buf, name, name_len);
 
-    length = Z_STRLEN_PP(data);
-    serialize_int(buf, length+1);
-    serialize_string(buf, Z_STRVAL_PP(data), length);
+    serialize_int(buf, Z_STRLEN_PP(data)+1);
+    serialize_string(buf, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
     break;
   }
   case IS_ARRAY: {
@@ -254,6 +244,8 @@ void serialize_element(buffer *buf, char *name, int name_len, zval **data TSRMLS
     break;
   }
   }
+
+  return ZEND_HASH_APPLY_KEEP;
 }
 
 int resize_buf(buffer *buf, int size) {
