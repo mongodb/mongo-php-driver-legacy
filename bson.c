@@ -83,7 +83,11 @@ int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
       num++;
     }
   
+#if ZEND_MODULE_API_NO >= 20090115
+    zend_hash_apply_with_arguments(Z_ARRVAL_P(zhash) TSRMLS_CC, (apply_func_args_t)apply_func_args_wrapper, 2, buf, prep);
+#else
     zend_hash_apply_with_arguments(Z_ARRVAL_P(zhash), (apply_func_args_t)apply_func_args_wrapper, 3, buf, prep TSRMLS_CC);
+#endif /* ZEND_MODULE_API_NO >= 20090115 */
   }
 
   serialize_null(buf);
@@ -91,13 +95,19 @@ int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
   return num;
 }
 
+#if ZEND_MODULE_API_NO >= 20090115
+static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key) {
+#else
 static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key) {
+#endif /* ZEND_MODULE_API_NO >= 20090115 */
   int retval;
   char *name;
 
   buffer *buf = va_arg(args, buffer*);
   int prep = va_arg(args, int);
+#if ZEND_MODULE_API_NO < 20090115
   void ***tsrm_ls = va_arg(args, void***);
+#endif /* ZEND_MODULE_API_NO < 20090115 */
 
   if (key->nKeyLength) {
     return serialize_element(key->arKey, (zval**)data, buf, prep TSRMLS_CC);

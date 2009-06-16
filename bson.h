@@ -45,7 +45,11 @@
 
 inline void serialize_size(unsigned char*, buffer*);
 
+#if ZEND_MODULE_API_NO >= 20090115
+static int apply_func_args_wrapper(void** TSRMLS_DC, int, va_list, zend_hash_key*);
+#else
 static int apply_func_args_wrapper(void**, int, va_list, zend_hash_key*);
+#endif /* ZEND_MODULE_API_NO >= 20090115 */
 
 int serialize_element(char*, zval**, buffer*, int TSRMLS_DC);
 inline void serialize_double(buffer*, double);

@@ -394,32 +394,33 @@ PHP_METHOD(Mongo, __construct) {
 /* {{{ Mongo->connect
  */
 PHP_METHOD(Mongo, connect) {
-  zval zusername, zpassword;
-  ZVAL_STRING(&zusername, "", 0);
-  ZVAL_STRING(&zpassword, "", 0);
+  zval *zempty;
+  MAKE_STD_ZVAL(zempty);
+  ZVAL_STRING(zempty, "", 1);
 
-  PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
+  PUSH_PARAM(zempty); PUSH_PARAM(zempty); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
+  zval_ptr_dtor(&zempty);
 }
 
 /* {{{ Mongo->pairConnect
  */
 PHP_METHOD(Mongo, pairConnect) {
-  zval zusername, zpassword;
+  zval *zempty;
+  MAKE_STD_ZVAL(zempty);
+  ZVAL_STRING(zempty, "", 1);
 
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
 
-  ZVAL_STRING(&zusername, "", 0);
-  ZVAL_STRING(&zpassword, "", 0);
-
-  PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
+  PUSH_PARAM(zempty); PUSH_PARAM(zempty); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
+  zval_ptr_dtor(&zempty);
 }
 
 /* {{{ Mongo->persistConnect
