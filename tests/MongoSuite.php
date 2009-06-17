@@ -23,19 +23,20 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
     public static function suite()
     {
         $suite = new MongoSuite('Mongo Tests');
-
+        
         $suite->addTestSuite('MongoTest');
         $suite->addTestSuite('MongoDBTest');
         $suite->addTestSuite('MongoCollectionTest');
         $suite->addTestSuite('MongoCursorTest');
-
+        
+        // */
         // 5.1 is just going to mess up the file stuff
         if (floatval(phpversion()) >= 5.2) {
           $suite->addTestSuite('MongoGridFSTest');
           $suite->addTestSuite('MongoGridFSFileTest');
           $suite->addTestSuite('MongoGridFSCursorTest');
         }
-
+        
         $suite->addTestSuite('MongoIdTest');
         $suite->addTestSuite('MongoCodeTest');
         $suite->addTestSuite('MongoRegexTest');

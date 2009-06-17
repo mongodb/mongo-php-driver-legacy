@@ -15,6 +15,9 @@
  *  limitations under the License.
  */
 
+#ifndef MONGO_GRIDFS_H
+#define MONGO_GRIDFS_H
+
 PHP_METHOD(MongoGridFS, __construct);
 PHP_METHOD(MongoGridFS, drop);
 PHP_METHOD(MongoGridFS, find);
@@ -22,6 +25,7 @@ PHP_METHOD(MongoGridFS, storeFile);
 PHP_METHOD(MongoGridFS, findOne);
 PHP_METHOD(MongoGridFS, remove);
 PHP_METHOD(MongoGridFS, storeUpload);
+PHP_METHOD(MongoGridFS, storeBytes);
 
 PHP_METHOD(MongoGridFSFile, __construct);
 PHP_METHOD(MongoGridFSFile, getFilename);
@@ -33,3 +37,5 @@ PHP_METHOD(MongoGridFSCursor, __construct);
 PHP_METHOD(MongoGridFSCursor, getNext);
 PHP_METHOD(MongoGridFSCursor, current);
 PHP_METHOD(MongoGridFSCursor, key);
+
+#endif /* MONGO_GRIDFS_H */

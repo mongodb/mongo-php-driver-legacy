@@ -31,13 +31,25 @@ extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_Exception,
   *mongo_ce_GridFSException,
   *mongo_ce_Id,
-  *mongo_ce_Date;
+  *mongo_ce_Date,
+  *mongo_ce_BinData;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_GridFS = NULL,
   *mongo_ce_GridFSFile = NULL,
   *mongo_ce_GridFSCursor = NULL;
+
+
+typedef int (*apply_copy_func_t)(void *to, char *from, int len);
+
+static int copy_bytes(void *to, char *from, int len);
+static int copy_file(void *to, char *from, int len);
+
+static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to TSRMLS_DC);
+static int setup_file(FILE *fpp, char *filename TSRMLS_DC);
+static int get_chunk_size(zval *array TSRMLS_DC);
+
 
 PHP_METHOD(MongoGridFS, __construct) {
   zval *zdb, *files = 0, *chunks = 0, *zchunks, *zidx;
@@ -89,7 +101,7 @@ PHP_METHOD(MongoGridFS, __construct) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); 
   
-  // store
+  // add chunks collection as a property
   zend_update_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), zchunks TSRMLS_CC);
   
   // ensure index on chunks.n
@@ -102,6 +114,9 @@ PHP_METHOD(MongoGridFS, __construct) {
   MONGO_METHOD(MongoCollection, ensureIndex)(1, return_value, return_value_ptr, zchunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
+
+  zend_update_property(mongo_ce_GridFS, getThis(), "filesName", strlen("filesName"), files TSRMLS_CC);
+  zend_update_property(mongo_ce_GridFS, getThis(), "chunksName", strlen("chunksName"), chunks TSRMLS_CC);
 
   // cleanup
   zval_ptr_dtor(&zchunks);
@@ -163,27 +178,29 @@ PHP_METHOD(MongoGridFS, find) {
   zval_ptr_dtor(&zfields);
 }
 
-PHP_METHOD(MongoGridFS, storeFile) {
-  char *filename = 0;
-  int filename_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0;
-  zval temp;
-  zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *upload_date = 0;
-  zval **zzid = 0, **md5 = 0, **zchunk_size;
-  FILE *fp = 0;
-  long size, pos = 0;
-  zend_bool created_date = 0, created_id = 0;
-  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &filename, &filename_len, &extra) == FAILURE) {
-    return;
+static int get_chunk_size(zval *array TSRMLS_DC) {
+  zval **zchunk_size = 0;
+
+  if (zend_hash_find(Z_ARRVAL_P(array), "chunkSize", strlen("chunkSize")+1, (void**)&zchunk_size) == FAILURE) {
+    add_assoc_long(array, "chunkSize", MonGlo(chunk_size));
+    return MonGlo(chunk_size);
   }
 
+  convert_to_long(*zchunk_size);
+  return Z_LVAL_PP(zchunk_size) > 0 ? 
+    Z_LVAL_PP(zchunk_size) :
+    MonGlo(chunk_size);
+}
+
+
+static int setup_file(FILE *fp, char *filename TSRMLS_DC) {
+  int size = 0;
+
   // try to open the file
-  fp = fopen(filename, "rb");
   if (!fp) {
     zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "could not open file %s", filename);
-    return;
+    return FAILURE;
   }
 
   // get size
@@ -191,9 +208,31 @@ PHP_METHOD(MongoGridFS, storeFile) {
   size = ftell(fp);
   if (size >= 0xffffffff) {
     zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "file %s is too large: %ld bytes", filename, size);
-    return;
+    fclose(fp);
+    return FAILURE;
   }
 
+  // reset file ptr
+  fseek(fp, 0, SEEK_SET);
+
+  return size;
+}
+
+PHP_METHOD(MongoGridFS, storeBytes) {
+  char *bytes = 0;
+  int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, pos = 0;
+  zend_bool created_date = 0, created_id = 0;
+
+  zval temp;
+  zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0;
+  zval **zzid = 0, **zchunk_size;
+
+  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &bytes, &bytes_len, &extra) == FAILURE) {
+    return;
+  }
 
   // file array object
   MAKE_STD_ZVAL(zfile);
@@ -208,7 +247,119 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // check if we need to add any fields
 
   // _id
-  if (zend_hash_find(Z_ARRVAL_P(zfile), "_id", strlen("_id")+1, (void*)&zzid) == FAILURE) {
+  if (zend_hash_find(Z_ARRVAL_P(zfile), "_id", strlen("_id")+1, (void**)&zzid) == FAILURE) {
+    // create an id for the file
+    MAKE_STD_ZVAL(zid);
+    object_init_ex(zid, mongo_ce_Id);
+    MONGO_METHOD(MongoId, __construct)(0, &temp, NULL, zid, return_value_used TSRMLS_CC);
+
+    add_assoc_zval(zfile, "_id", zid);
+    created_id = 1;
+  }
+  else {
+    zid = *zzid;
+  }
+  zval_add_ref(&zid);
+
+  // size
+  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "length", strlen("length")+1)) {
+    add_assoc_long(zfile, "length", bytes_len);
+  }
+
+  // chunkSize
+  global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
+
+  // insert chunks
+  chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
+  while (pos < bytes_len) {
+    zval *zchunk, *zbin;
+
+    chunk_size = bytes_len-pos >= global_chunk_size ? global_chunk_size : bytes_len-pos;
+
+    // create chunk
+    MAKE_STD_ZVAL(zchunk);
+    array_init(zchunk);
+
+    add_assoc_zval(zchunk, "files_id", zid);
+    add_assoc_long(zchunk, "n", chunk_num);
+
+    // create MongoBinData object
+    MAKE_STD_ZVAL(zbin);
+    object_init_ex(zbin, mongo_ce_BinData);
+    add_property_stringl(zbin, "bin", bytes+pos, chunk_size, DUP);
+    add_property_long(zbin, "type", 2);
+
+    add_assoc_zval(zchunk, "data", zbin);
+
+    // insert chunk
+
+    PUSH_PARAM(zchunk); PUSH_PARAM((void*)1);
+    PUSH_EO_PARAM();
+    MONGO_METHOD(MongoCollection, insert)(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
+    POP_EO_PARAM();
+    POP_PARAM(); POP_PARAM(); 
+    
+    // increment counters
+    pos += chunk_size;
+    chunk_num++; 
+
+    zval_add_ref(&zid); // zid->refcount = 2
+    zval_ptr_dtor(&zchunk); // zid->refcount = 1
+  }
+
+  // insert file
+  PUSH_PARAM(zfile); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
+  MONGO_METHOD(MongoCollection, insert)(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); 
+
+  // cleanup
+  if (created_id) {
+    zend_objects_store_del_ref(zid TSRMLS_CC);
+    zval_ptr_dtor(&zid);
+  }
+  zval_ptr_dtor(&zfile);
+}
+
+
+PHP_METHOD(MongoGridFS, storeFile) {
+  char *filename = 0;
+  int filename_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, size = 0, pos = 0;
+  FILE *fp = 0;
+  zend_bool created_date = 0, created_id = 0;
+
+  zval temp;
+  zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *upload_date = 0;
+  zval **zzid = 0, **md5 = 0, **zchunk_size;
+
+  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &filename, &filename_len, &extra) == FAILURE) {
+    return;
+  }
+
+  fp = fopen(filename, "rb");
+  // no point in continuing if we can't open the file
+  if ((size = setup_file(fp, filename TSRMLS_CC)) == FAILURE) {
+    return;
+  }
+
+  // file array object
+  MAKE_STD_ZVAL(zfile);
+  array_init(zfile);
+
+  // add user-defined fields
+  if (extra) {
+    zval temp;
+    zend_hash_merge(Z_ARRVAL_P(zfile), Z_ARRVAL_P(extra), NULL, &temp, sizeof(zval), 1);
+  }
+
+  // check if we need to add any fields
+
+  // _id
+  if (zend_hash_find(Z_ARRVAL_P(zfile), "_id", strlen("_id")+1, (void**)&zzid) == FAILURE) {
     // create an id for the file
     MAKE_STD_ZVAL(zid);
     object_init_ex(zid, mongo_ce_Id);
@@ -233,16 +384,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   }
 
   // chunkSize
-  if (zend_hash_find(Z_ARRVAL_P(zfile), "chunkSize", strlen("chunkSize")+1, (void**)&zchunk_size) == FAILURE) {
-    add_assoc_long(zfile, "chunkSize", MonGlo(chunk_size));
-    global_chunk_size = MonGlo(chunk_size);
-  }
-  else {
-    convert_to_long(*zchunk_size);
-    global_chunk_size = Z_LVAL_PP(zchunk_size) > 0 ? 
-      Z_LVAL_PP(zchunk_size) :
-      MonGlo(chunk_size);
-  }
+  global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
 
   // uploadDate
   if (!zend_hash_exists(Z_ARRVAL_P(zfile), "uploadDate", strlen("uploadDate")+1)) {
@@ -255,17 +397,14 @@ PHP_METHOD(MongoGridFS, storeFile) {
     created_date = 1;
   }
 
-  // reset file ptr
-  fseek(fp, 0, SEEK_SET);
-
   // insert chunks
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   while (pos < size) {
     char *buf;
-    zval *zchunk;
+    zval *zchunk, *zbin;
 
     chunk_size = size-pos >= global_chunk_size ? global_chunk_size : size-pos;
-    buf = (char*)emalloc(chunk_size);
+    buf = (char*)emalloc(chunk_size); 
     if (fread(buf, 1, chunk_size, fp) < chunk_size) {
       zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error reading file %s", filename);
       return;
@@ -277,7 +416,14 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
     add_assoc_zval(zchunk, "files_id", zid);
     add_assoc_long(zchunk, "n", chunk_num);
-    add_assoc_stringl(zchunk, "data", buf, chunk_size, DUP);
+
+    // create MongoBinData object
+    MAKE_STD_ZVAL(zbin);
+    object_init_ex(zbin, mongo_ce_BinData);
+    add_property_stringl(zbin, "bin", buf, chunk_size, DUP);
+    add_property_long(zbin, "type", 2);
+
+    add_assoc_zval(zchunk, "data", zbin);
 
     // insert chunk
 
@@ -521,6 +667,7 @@ static function_entry MongoGridFS_methods[] = {
   PHP_ME(MongoGridFS, drop, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, find, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, storeFile, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFS, storeBytes, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, findOne, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, remove, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, storeUpload, NULL, ZEND_ACC_PUBLIC)
@@ -632,43 +779,15 @@ PHP_METHOD(MongoGridFSFile, write) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  MAKE_STD_ZVAL(next);
-
-  MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
-
-  while (Z_TYPE_P(next) != IS_NULL) {
-    zval **zdata;
-    int written;
-
-    // check if data field exists.  if it doesn't, we've probably
-    // got an error message from the db, so return that
-    if (zend_hash_find(Z_ARRVAL_P(next), "data", 5, (void**)&zdata) == FAILURE) {
-      zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
-      if(zend_hash_exists(Z_ARRVAL_P(next), "$err", 5)) {
-        fclose(fp);
-        return;
-      }
-      continue;
-    }
-
-    written = fwrite(Z_STRVAL_PP(zdata), 1, Z_STRLEN_PP(zdata), fp);
-    if (written != Z_STRLEN_PP(zdata)) {
-      zend_error(E_WARNING, "incorrect byte count.  expected: %d, got %d", Z_STRLEN_PP(zdata), written);
-    }
-    total += written;
-
-    zval_ptr_dtor(&next);
-
-    MAKE_STD_ZVAL(next);
-    MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
+  if ((total = apply_to_cursor(cursor, copy_file, fp TSRMLS_CC)) == FAILURE) {
+    zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
   }
 
-  zval_ptr_dtor(&cursor);
-  zval_ptr_dtor(&sort);
-  zval_ptr_dtor(&query);
-  zval_ptr_dtor(&next);
-
   fclose(fp);
+
+  zval_ptr_dtor(&cursor);
+  zval_ptr_dtor(&sort); 
+  zval_ptr_dtor(&query);
 
   RETURN_LONG(total);
 }
@@ -678,6 +797,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   zval *file, *gridfs, *chunks, *n, *query, *cursor, *sort, *next;
   zval **id, **size;
   char *str, *str_ptr;
+  int len;
 
   file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
   zend_hash_find(Z_ARRVAL_P(file), "_id", strlen("_id")+1, (void**)&id);
@@ -728,46 +848,93 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   POP_PARAM(); POP_PARAM();
 
   if (Z_TYPE_PP(size) == IS_DOUBLE) {
-    str = (char*)emalloc(Z_DVAL_PP(size) + 1);
+    len = Z_DVAL_PP(size);
   }
   else { // if Z_TYPE_PP(size) == IS_LONG
-    str = (char*)emalloc(Z_LVAL_PP(size) + 1);
+    len = Z_LVAL_PP(size);
   }
+  str = (char*)emalloc(len + 1);
 
-  str_ptr = str;
-
-  MAKE_STD_ZVAL(next);
-                                                                         
-  MONGO_METHOD(MongoCursor, getNext)(0, next, NULL, cursor, return_value_used TSRMLS_CC);
   zval_ptr_dtor(&query);
   zval_ptr_dtor(&sort);
+  str_ptr = str;
+
+  if (apply_to_cursor(cursor, copy_bytes, str TSRMLS_CC) == FAILURE) {
+    zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
+  }
+
+  zval_ptr_dtor(&cursor);
+
+  str[len] = '\0';
+
+  RETURN_STRINGL(str_ptr, Z_LVAL_PP(size), 0);
+}
+
+static int copy_bytes(void *to, char *from, int len) {
+  memcpy(to, from, len);
+  to += len;
+
+  return len;
+}
+
+static int copy_file(void *to, char *from, int len) {
+  int written = fwrite(from, 1, len, (FILE*)to);
+
+  if (written != len) {
+    zend_error(E_WARNING, "incorrect byte count.  expected: %d, got %d", len, written);
+  }
+
+  return written;
+}
+
+static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to TSRMLS_DC) {
+  int total = 0;
+  zval *next;
+
+  MAKE_STD_ZVAL(next);                                                                     
+  MONGO_METHOD(MongoCursor, getNext)(0, next, NULL, cursor, 0 TSRMLS_CC);
+
   while (Z_TYPE_P(next) != IS_NULL) {
     zval **zdata;
 
     // check if data field exists.  if it doesn't, we've probably
     // got an error message from the db, so return that
     if (zend_hash_find(Z_ARRVAL_P(next), "data", 5, (void**)&zdata) == FAILURE) {
-      zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
       if(zend_hash_exists(Z_ARRVAL_P(next), "$err", 5)) {
-        return;
+        return FAILURE;
       }
       continue;
     }
 
-    memcpy(str, Z_STRVAL_PP(zdata), Z_STRLEN_PP(zdata));
-    str += Z_STRLEN_PP(zdata);
+    /* This copies the next chunk -> *to  
+     * Due to a talent I have for not reading directions, older versions of the driver
+     * store files as raw bytes, not MongoBinData.  So, we'll check for and handle 
+     * both cases.
+     */
+    // raw bytes
+    if (Z_TYPE_PP(zdata) == IS_STRING) {
+      total += apply_copy_func(to, Z_STRVAL_PP(zdata), Z_STRLEN_PP(zdata));
+    }
+    // MongoBinData
+    else if (Z_TYPE_PP(zdata) == IS_OBJECT &&
+             Z_OBJCE_PP(zdata) == mongo_ce_BinData) {
+      zval *bin = zend_read_property(mongo_ce_BinData, *zdata, "bin", strlen("bin"), NOISY TSRMLS_CC);
+      total += apply_copy_func(to, Z_STRVAL_P(bin), Z_STRLEN_P(bin));
+    }
+    // if it's not a string or a MongoBinData, give up
+    else {
+      return FAILURE;
+    }
 
+    // get ready for the next iteration
     zval_ptr_dtor(&next);
     MAKE_STD_ZVAL(next);
-    MONGO_METHOD(MongoCursor, getNext)(0, next, NULL, cursor, return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoCursor, getNext)(0, next, NULL, cursor, 0 TSRMLS_CC);
   }
-
   zval_ptr_dtor(&next);
-  zval_ptr_dtor(&cursor);
 
-  str[0] = '\0';
-
-  RETURN_STRINGL(str_ptr, Z_LVAL_PP(size), 0);
+  // return the number of bytes copied
+  return total;
 }
 
 static function_entry MongoGridFSFile_methods[] = {

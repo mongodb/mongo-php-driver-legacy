@@ -122,7 +122,7 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
     }
     */
 
-    public function getBytes() {
+    public function testGetBytes() {
         $contents = file_get_contents('tests/somefile');
 
         $this->object->storeFile('tests/somefile');
@@ -132,24 +132,71 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
     }
 
     public function testSpecFields() {
-      $this->object->storeFile('tests/somefile');
-      $file = $this->object->findOne();
-      $file = $file->file;
-      $this->assertTrue($file['_id'] instanceof MongoId, json_encode($file));
-      $this->assertEquals('tests/somefile', $file['filename'], json_encode($file));
-      $this->assertEquals(129, $file['length'], json_encode($file));
-      $this->assertTrue($file['uploadDate'] instanceof MongoDate, json_encode($file));
-      $this->assertEquals("d41d8cd98f00b204e9800998ecf8427e", $file['md5'], json_encode($file));
+        $this->object->storeFile('tests/somefile');
+        $file = $this->object->findOne();
+        $file = $file->file;
+        $this->assertTrue($file['_id'] instanceof MongoId, json_encode($file));
+        $this->assertEquals('tests/somefile', $file['filename'], json_encode($file));
+        $this->assertEquals(129, $file['length'], json_encode($file));
+        $this->assertTrue($file['uploadDate'] instanceof MongoDate, json_encode($file));
+        $this->assertEquals("d41d8cd98f00b204e9800998ecf8427e", $file['md5'], json_encode($file));
 
-      $this->object->storeFile('tests/somefile', array('_id' => 4, 'filename' => 'foo', 'length' => 0, 'chunkSize'=>23, 'uploadDate' => 'yesterday', 'md5'=>16, 'md4'=>32));
-      $file = $this->object->findOne(array('_id' => 4));
-      $file = $file->file;
-      $this->assertEquals('foo', $file['filename'], json_encode($file));
-      $this->assertEquals(0, $file['length'], json_encode($file));
-      $this->assertEquals(23, $file['chunkSize'], json_encode($file));
-      $this->assertEquals('yesterday', $file['uploadDate'], json_encode($file));
-      $this->assertEquals(16, $file['md5'], json_encode($file));
-      $this->assertEquals(32, $file['md4'], json_encode($file));
+        $this->object->storeFile('tests/somefile', array('_id' => 4, 'filename' => 'foo', 'length' => 0, 'chunkSize'=>23, 'uploadDate' => 'yesterday', 'md5'=>16, 'md4'=>32));
+        $file = $this->object->findOne(array('_id' => 4));
+        $file = $file->file;
+        $this->assertEquals('foo', $file['filename'], json_encode($file));
+        $this->assertEquals(0, $file['length'], json_encode($file));
+        $this->assertEquals(23, $file['chunkSize'], json_encode($file));
+        $this->assertEquals('yesterday', $file['uploadDate'], json_encode($file));
+        $this->assertEquals(16, $file['md5'], json_encode($file));
+        $this->assertEquals(32, $file['md4'], json_encode($file));
+    }
+
+    public function testFileData() {
+        $this->object->storeFile('tests/somefile');
+        $files = $this->object->db->selectCollection("fs.files");
+
+        $file = $files->findOne();
+        $id = $file['_id'];
+
+        $chunks = $this->object->db->selectCollection("fs.chunks");
+        $pieces = $chunks->find(array('files_id' => $id));
+
+        $piece = $pieces->getNext();
+        $this->assertTrue($piece['data'] instanceof MongoBinData);
+
+        $bytes1 = $this->object->findOne()->getBytes();
+        $bytes2 = $piece['data']->bin;
+
+        $this->assertEquals($bytes1, $bytes2);
+    }
+
+    public function testStoreBytes() {
+        $x = chr(0);
+        $y = chr(255);
+        $z = chr(127);
+        $w = chr(128);
+        $bytes = "${x}4g7$y$z$w$x";
+
+        $this->object->storeBytes($bytes, array('myopt' => $bytes));
+
+        $obj = $this->object->findOne();
+
+        $b = $obj->getBytes();
+
+        $this->assertEquals($b, $obj->file['myopt']);
+        $this->assertEquals(8, strlen($b));
+
+        $this->assertEquals(0, ord(substr($b, 0)));
+        $this->assertEquals(52, ord(substr($b, 1)));
+        $this->assertEquals(103, ord(substr($b, 2)));
+        $this->assertEquals(55, ord(substr($b, 3)));
+        $this->assertEquals(255, ord(substr($b, 4)));
+        $this->assertEquals(127, ord(substr($b, 5)));
+        $this->assertEquals(128, ord(substr($b, 6)));
+        $this->assertEquals(0, ord(substr($b, 7)));
+
     }
 }
+
 ?>
