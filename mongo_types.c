@@ -189,12 +189,15 @@ PHP_METHOD(MongoId, __toString) {
 /* {{{ MongoDate::__construct
  */
 PHP_METHOD(MongoDate, __construct) {
+  zval *arg = 0;
   struct timeval time;
-  int sec, usec;
+  int sec, usec = 0;
 
-  int argc = ZEND_NUM_ARGS();
-  switch(argc) {
-  case 0: {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zl", &arg, &usec) == FAILURE) {
+    return;
+  }
+
+  if (!arg) {
 #ifdef WIN32
     SYSTEMTIME systime;
     GetSystemTime(&systime);
@@ -206,31 +209,22 @@ PHP_METHOD(MongoDate, __construct) {
 
     add_property_long(getThis(), "sec", time.tv_sec);
     add_property_long(getThis(), "usec", time.tv_usec);
-    break;
   }
-  case 1: {
-    zval *arg;
-    if (zend_parse_parameters(argc TSRMLS_CC, "z", &arg) == SUCCESS) {
-      if (Z_TYPE_P(arg) == IS_LONG) {
-        add_property_long(getThis(), "sec", Z_LVAL_P(arg));
-        add_property_long(getThis(), "usec", 0);
-      }
-      else if (Z_TYPE_P(arg) == IS_STRING) {
-        ZEND_FN(strtotime)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-        sec = Z_LVAL_P(return_value);
-        add_property_long(getThis(), "sec", sec);
-        add_property_long(getThis(), "usec", 0);
-      }
-    }
-    break;
+  else if (Z_TYPE_P(arg) == IS_LONG) {
+    add_property_long(getThis(), "sec", Z_LVAL_P(arg));
+    add_property_long(getThis(), "usec", usec);      
   }
-  case 2: {
-    if (zend_parse_parameters(argc TSRMLS_CC, "ll", &sec, &usec) == SUCCESS) {
-      add_property_long(getThis(), "sec", sec);
-      add_property_long(getThis(), "usec", usec);
-    }
-    break;
+#if ZEND_MODULE_API_NO < 20090115
+  else if (Z_TYPE_P(arg) == IS_STRING) {
+    // use PHP's ext/date's strtotime() to parse time string
+    ZEND_FN(strtotime)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+
+    add_property_long(getThis(), "sec", Z_LVAL_P(return_value));
+    add_property_long(getThis(), "usec", 0);
   }
+#endif /* ZEND_MODULE_API_NO < 20090115 */
+  else {
+    zend_throw_exception(spl_ce_InvalidArgumentException, "MongoDate::__construct()", 0 TSRMLS_CC);
   }
 }
 /* }}} */
@@ -251,6 +245,7 @@ PHP_METHOD(MongoDate, __toString) {
 /* }}} */
 
 
+#if ZEND_MODULE_API_NO < 20090115
 PHP_METHOD(MongoDate, format) {
   zval *zsec, *format;
   int sec;
@@ -268,11 +263,14 @@ PHP_METHOD(MongoDate, format) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
+#endif /* ZEND_MODULE_API_NO < 20090115 */
 
 static function_entry MongoDate_methods[] = {
   PHP_ME(MongoDate, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDate, __toString, NULL, ZEND_ACC_PUBLIC)
+#if ZEND_MODULE_API_NO < 20090115
   PHP_ME(MongoDate, format, NULL, ZEND_ACC_PUBLIC)
+#endif /* ZEND_MODULE_API_NO < 20090115 */
   { NULL, NULL, NULL }
 };
 
