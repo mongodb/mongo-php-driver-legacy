@@ -13,11 +13,11 @@
    <email>kristina@10gen.com</email>
    <active>yes</active>
  </lead>
- <date>2009-06-09</date>
+ <date>2009-06-17</date>
  <time>12:00:00</time>
  <version>
-   <release>0.9.1</release>
-   <api>0.9.1</api>
+   <release>0.9.2</release>
+   <api>0.9.2</api>
  </version>
  <stability>
    <release>beta</release>
@@ -25,7 +25,7 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-   Bug fixes
+   Optimizations, bug fixes
    Windows build
    5.1 compatible
  </notes>
@@ -68,14 +68,30 @@
        <api>beta</api>
      </stability>
      <version>
+       <release>0.9.2</release>
+       <api>0.9.2</api>
+     </version>
+     <date>2009-06-17</date>
+     <notes>
+       Optimizations, bug fixes
+       Windows build
+       5.1 compatible
+     </notes>
+   </release>
+   <release>
+     <stability>
+       <release>alpha</release>
+       <api>alpha</api>
+     </stability>
+     <version>
        <release>0.9.1</release>
        <api>0.9.1</api>
      </version>
-     <date>2009-06-09</date>
+     <date>2009-05-28</date>
      <notes>
-       Bug fixes
-       Windows build
-       5.1 compatible
+       Code cleanup
+       Speed improvement
+       Windows work
      </notes>
    </release>
    <release>
