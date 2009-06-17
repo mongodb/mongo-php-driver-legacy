@@ -214,33 +214,39 @@ PHP_METHOD(MongoDB, repair) {
 
 
 PHP_METHOD(MongoDB, createCollection) {
-  zval temp;
-  zval *collection, *data;
+  zval *collection, *data, *temp;
   zend_bool capped=0;
   int size=0, max=0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|bll", &collection, &capped, &size, &max) == FAILURE) {
     return;
   }
-  convert_to_string(collection);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
-  add_assoc_string(data, "create", Z_STRVAL_P(collection), 1);
-  if (capped && size) {
-    add_assoc_bool(data, "capped", 1);
+  convert_to_string(collection);
+  add_assoc_zval(data, "create", collection);
+  zval_add_ref(&collection);
+
+  if (size) {
     add_assoc_long(data, "size", size);
+  }
+
+  if (capped) {
+    add_assoc_bool(data, "capped", 1);
     if (max) {
       add_assoc_long(data, "max", max);
     }
   }
 
+  MAKE_STD_ZVAL(temp);
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, command)(1, &temp, NULL, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, temp, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
+  zval_ptr_dtor(&temp);
   zval_ptr_dtor(&data);
 
   // get the collection we just created
