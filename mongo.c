@@ -36,7 +36,7 @@
 #include <php_ini.h>
 #include <ext/standard/info.h>
 
-#include "mongo.h"
+#include "php_mongo.h"
 #include "db.h"
 #include "cursor.h"
 #include "mongo_types.h"
@@ -955,22 +955,25 @@ mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int l
 
 int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
   mongo_msg_header header;
-  CREATE_BUF(buf, 256);
+  buffer buf;
+  int size = 34+strlen(cursor->ns);
 
   if (cursor->num == 0) {
-    efree(buf.start);
     return 0;
   }
   if (cursor->at < cursor->num) {
-    efree(buf.start);
     return 1;
   }
+ 
+  buf.start = (unsigned char*)emalloc(size);
+  buf.pos = buf.start;
+  buf.end = buf.start + size;
 
   CREATE_RESPONSE_HEADER(buf, cursor->ns, strlen(cursor->ns), cursor->header.request_id, OP_GET_MORE);
   serialize_int(&buf, cursor->limit);
   serialize_long(&buf, cursor->cursor_id);
   serialize_size(buf.start, &buf);
-  
+
   // fails if we're out of elems
   if(mongo_say(cursor->link, &buf TSRMLS_CC) == FAILURE) {
     efree(buf.start);
@@ -1083,7 +1086,7 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   if (read(sock, &cursor->header.length, INT_32) == FAILURE) {
     return FAILURE;
   }
-
+  
   // make sure we're not getting crazy data
   if (cursor->header.length > MAX_RESPONSE_LEN ||
       cursor->header.length < REPLY_HEADER_SIZE) {

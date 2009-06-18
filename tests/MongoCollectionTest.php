@@ -103,7 +103,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $cursor = $this->object->find();
 
       $x = $cursor->getNext();
-      $this->assertTrue(array_key_exists('0', $x));
+      $this->assertTrue(array_key_exists('0', $x), json_encode($x));
       $this->assertEquals($x['0'], null);
 
       $x = $cursor->getNext();

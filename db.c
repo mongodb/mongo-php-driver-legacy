@@ -21,7 +21,7 @@
 #include "ext/spl/spl_exceptions.h"
 
 #include "db.h"
-#include "mongo.h"
+#include "php_mongo.h"
 #include "collection.h"
 #include "cursor.h"
 #include "gridfs.h"

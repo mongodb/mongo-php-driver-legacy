@@ -19,7 +19,7 @@
 #include <zend_interfaces.h>
 #include <zend_exceptions.h>
 
-#include "mongo.h"
+#include "php_mongo.h"
 #include "bson.h"
 #include "db.h"
 #include "cursor.h"

@@ -29,7 +29,7 @@
 #include <ext/spl/spl_exceptions.h>
 
 #include "mongo_types.h"
-#include "mongo.h"
+#include "php_mongo.h"
 #include "db.h"
 #include "collection.h"
 #include "bson.h"

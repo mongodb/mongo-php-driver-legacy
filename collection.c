@@ -19,7 +19,7 @@
 #include <zend_exceptions.h>
 #include "ext/spl/spl_exceptions.h"
 
-#include "mongo.h"
+#include "php_mongo.h"
 #include "collection.h"
 #include "cursor.h"
 #include "bson.h"

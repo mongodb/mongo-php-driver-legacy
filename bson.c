@@ -21,7 +21,7 @@
 #include <memory.h>
 #endif
 
-#include "mongo.h"
+#include "php_mongo.h"
 #include "bson.h"
 #include "mongo_types.h"
 
@@ -334,118 +334,100 @@ inline void serialize_size(unsigned char *start, buffer *buf) {
 
 
 unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
-  unsigned int size;
   unsigned char type;
 
-  memcpy(&size, buf, INT_32);
+  // for size
   buf += INT_32;
-  size -= INT_32;
-
-  // size is for sanity check
-  while (size-- > 0 && (type = *buf++)) {
-    char* name = (char*)buf;
+  
+  while (type = *buf++) {
+    char *name;
+    zval *value;
+    
+    name = (char*)buf;
     // get past field name
-    while (*buf++);
+    buf += strlen(buf) + 1;
 
+    MAKE_STD_ZVAL(value);
+    
     // get value
     switch(type) {
     case BSON_OID: {
-      zval *z;
       mongo_id *this_id;
 
-      MAKE_STD_ZVAL(z);
-      object_init_ex(z, mongo_ce_Id);
+      object_init_ex(value, mongo_ce_Id);
 
-      this_id = (mongo_id*)zend_object_store_get_object(z TSRMLS_CC);
-      this_id->id = (char*)emalloc(OID_SIZE+1);
-      memcpy(this_id->id, buf, OID_SIZE);
-      this_id->id[OID_SIZE] = '\0';
+      this_id = (mongo_id*)zend_object_store_get_object(value TSRMLS_CC);
+      this_id->id = estrndup(buf, OID_SIZE);
 
-      add_assoc_zval(result, name, z);
       buf += OID_SIZE;
       break;
     }
     case BSON_DOUBLE: {
-      double *d = (void*)buf;
-
-      add_assoc_double(result, name, *d);
+      ZVAL_DOUBLE(value, *(double*)buf);
       buf += DOUBLE_64;
       break;
     }
     case BSON_STRING: {
-      int *len = (void*)buf;
+      // len includes \0
+      int len = *((int*)buf);
       buf += INT_32;
 
-      add_assoc_stringl(result, name, (char*)buf, (*len)-1, DUP);
-      buf += (*len);
+      ZVAL_STRINGL(value, buf, len-1, 1);
+      buf += len;
       break;
     }
     case BSON_OBJECT:
     case BSON_ARRAY: {
-      zval *d;
-      MAKE_STD_ZVAL(d);
-      array_init(d);
-
-      buf = bson_to_zval(buf, d TSRMLS_CC);
-      add_assoc_zval(result, name, d);
+      array_init(value);
+      buf = bson_to_zval(buf, value TSRMLS_CC);
       break;
     }
     case BSON_BINARY: {
-      int *len = (void*)buf;
+      int len = *(int*)buf;
       unsigned char type, *bytes;
-      zval *bin;
 
       buf += INT_32;
 
       type = *buf++;
 
       bytes = buf;
-      buf += (*len);
+      buf += len;
 
-      MAKE_STD_ZVAL(bin);
-      object_init_ex(bin, mongo_ce_BinData);
+      object_init_ex(value, mongo_ce_BinData);
 
-      add_property_stringl(bin, "bin", (char*)bytes, *len, DUP);
-      add_property_long(bin, "type", type);
-      add_assoc_zval(result, name, bin);
+      add_property_stringl(value, "bin", (char*)bytes, len, DUP);
+      add_property_long(value, "type", type);
       break;
     }
     case BSON_BOOL: {
       unsigned char d = *buf++;
-      add_assoc_bool(result, name, d);
+      ZVAL_BOOL(value, d);
       break;
     }
     case BSON_UNDEF:
     case BSON_NULL: {
-      add_assoc_null(result, name);
+      ZVAL_NULL(value);
       break;
     }
     case BSON_INT: {
-      int *d = (void*)buf;
-
-      add_assoc_long(result, name, *d);
+      ZVAL_LONG(value, *((int*)buf));
       buf += INT_32;
       break;
     }
     case BSON_DATE: {
-      long long int *d;
-      zval *date;
-
-      d = (void*)buf;
+      long long int d = *((long long int*)buf);
       buf += INT_64;
+      
+      object_init_ex(value, mongo_ce_Date);
 
-      MAKE_STD_ZVAL(date);
-      object_init_ex(date, mongo_ce_Date);
+      add_property_long(value, "sec", d/1000);
+      add_property_long(value, "usec", (d*1000)%1000000);
 
-      add_property_long(date, "sec", (*d)/1000);
-      add_property_long(date, "usec", ((*d)*1000)%1000000);
-      add_assoc_zval(result, name, date);
       break;
     }
     case BSON_REGEX: {
       unsigned char *regex, *flags;
       int regex_len, flags_len;
-      zval *zegex;
 
       regex = buf;
       regex_len = strlen(buf);
@@ -455,94 +437,90 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       flags_len = strlen(buf);
       buf += flags_len+1;
 
-      MAKE_STD_ZVAL(zegex);
-      object_init_ex(zegex, mongo_ce_Regex);
+      object_init_ex(value, mongo_ce_Regex);
 
-      add_property_stringl(zegex, "regex", (char*)regex, regex_len, 1);
-      add_property_stringl(zegex, "flags", (char*)flags, flags_len, 1);
-      add_assoc_zval(result, name, zegex);
+      add_property_stringl(value, "regex", (char*)regex, regex_len, 1);
+      add_property_stringl(value, "flags", (char*)flags, flags_len, 1);
 
       break;
     }
     case BSON_CODE: 
     case BSON_CODE__D: {
-      zval *zode, *zcope;
-      int *len;
-      unsigned char *code;
+      zval *zcope;
+      int code_len;
+      char *code;
 
-      MAKE_STD_ZVAL(zode);
-      object_init_ex(zode, mongo_ce_Code);
+      object_init_ex(value, mongo_ce_Code);
       // initialize scope array
       MAKE_STD_ZVAL(zcope);
       array_init(zcope);
 
-      // CODE has an initial size field
+      // CODE has a useless total size field
       if (type == BSON_CODE) {
         buf += INT_32;
       }
 
       // length of code (includes \0)
-      len = (void*)buf;
+      code_len = *(int*)buf;
       buf += INT_32;
 
-      code = buf;
-      buf += (*len);
+      code = (char*)buf;
+      buf += code_len;
 
       if (type == BSON_CODE) {
         buf = bson_to_zval(buf, zcope TSRMLS_CC);
       }
 
       // exclude \0
-      add_property_stringl(zode, "code", (char*)code, (*len)-1, DUP);
-      add_property_zval(zode, "scope", zcope);
+      add_property_stringl(value, "code", code, code_len-1, DUP);
+      add_property_zval(value, "scope", zcope);
+
+      // somehow, we pick up an extra zcope ref
       zval_ptr_dtor(&zcope);
-      add_assoc_zval(result, name, zode);
       break;
     }
     case BSON_DBREF: {
-      zval *zref, *zoid;
+      int ns_len;
       char *ns;
+      zval *zoid;
       mongo_id *this_id;
 
-      ALLOC_INIT_ZVAL(zref);
-      array_init(zref);
-
+      // ns
+      ns_len = *(int*)buf;
       buf += INT_32;
       ns = (char*)buf;
-      buf += strlen(buf)+1;
+      buf += ns_len+1;
 
+      // id
       MAKE_STD_ZVAL(zoid);
       object_init_ex(zoid, mongo_ce_Id);
 
       this_id = (mongo_id*)zend_object_store_get_object(zoid TSRMLS_CC);
-      this_id->id = (char*)emalloc(OID_SIZE+1);
-      memcpy(this_id->id, buf, OID_SIZE);
-      this_id->id[OID_SIZE] = '\0';
+      this_id->id = estrndup(buf, OID_SIZE);
 
       buf += OID_SIZE;
 
-      add_assoc_string(zref, "$ref", ns, 1);
-      add_assoc_zval(zref, "$id", zoid);
-
-      add_assoc_zval(result, name, zref);
+      // put it all together
+      array_init(value);
+      add_assoc_stringl(value, "$ref", ns, ns_len, 1);
+      add_assoc_zval(value, "$id", zoid);
       break;
     }
     case BSON_TIMESTAMP: {
-      long long int *d;
+      long long int d;
 
-      d = (void*)buf;
+      d = *(int*)buf;
       buf += INT_64;
 
-      add_assoc_long(result, name, *d);
-
+      ZVAL_LONG(value, d);
       break;
     }
     case BSON_MINKEY: {
-      add_assoc_string(result, name, "[MinKey]", 1);
+      ZVAL_STRING(value, "[MinKey]", 1);
       break;
     }
     case BSON_MAXKEY: {
-      add_assoc_string(result, name, "[MaxKey]", 1);
+      ZVAL_STRING(value, "[MaxKey]", 1);
       break;
     }
     default: {
@@ -551,6 +529,10 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       return buf;
     }
     }
+
+    // doesn't handle numeric keys
+    //zend_hash_quick_add(Z_ARRVAL_P(result), name, strlen(name)+1, zend_inline_hash_func(name, strlen(name)+1), &value, sizeof(zval*), NULL);
+    add_assoc_zval(result, name, value);
   }
   return buf;
 }
