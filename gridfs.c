@@ -241,7 +241,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   // add user-defined fields
   if (extra) {
     zval temp;
-    zend_hash_merge(Z_ARRVAL_P(zfile), Z_ARRVAL_P(extra), NULL, &temp, sizeof(zval), 1);
+    zend_hash_merge(Z_ARRVAL_P(zfile), Z_ARRVAL_P(extra), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
   }
 
   // check if we need to add any fields
@@ -353,7 +353,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // add user-defined fields
   if (extra) {
     zval temp;
-    zend_hash_merge(Z_ARRVAL_P(zfile), Z_ARRVAL_P(extra), NULL, &temp, sizeof(zval), 1);
+    zend_hash_merge(Z_ARRVAL_P(zfile), Z_ARRVAL_P(extra), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
   }
 
   // check if we need to add any fields
