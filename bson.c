@@ -502,7 +502,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
 
       // put it all together
       array_init(value);
-      add_assoc_stringl(value, "$ref", ns, ns_len, 1);
+      add_assoc_stringl(value, "$ref", ns, ns_len-1, 1);
       add_assoc_zval(value, "$id", zoid);
       break;
     }
