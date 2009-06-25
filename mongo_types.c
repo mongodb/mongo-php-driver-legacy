@@ -70,6 +70,34 @@ void generate_id(char *data) {
   data[11] = inc[0];
 }
 
+int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_uint *serialized_length, zend_serialize_data *var_hash TSRMLS_DC) {
+  zval str;
+  MONGO_METHOD(MongoId, __toString)(0, &str, NULL, struc, 0 TSRMLS_CC);
+  *(serialized_length) = Z_STRLEN(str);
+  *(serialized_data) = Z_STRVAL(str);
+  return SUCCESS;
+}
+
+int mongo_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned char* p, long datalen, zend_unserialize_data* var_hash TSRMLS_DC) {
+  zval temp;
+  zval str;
+
+  Z_STRLEN(str) = strlen(p);
+  Z_STRVAL(str) = estrndup(p, 24);
+
+  object_init_ex(*rval, mongo_ce_Id);
+
+  PUSH_PARAM(&str); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
+  MONGO_METHOD(MongoId, __construct)(1, &temp, NULL, *rval, 0 TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
+
+  efree(Z_STRVAL(str));
+
+  return SUCCESS;
+}
+
 static void mongo_mongo_id_free(void *object TSRMLS_DC) {
   mongo_id *id = (mongo_id*)object;
   if (id) {
@@ -108,7 +136,11 @@ static function_entry MongoId_methods[] = {
 void mongo_init_MongoId(TSRMLS_D) {
   zend_class_entry id; 
   INIT_CLASS_ENTRY(id, "MongoId", MongoId_methods); 
+
   id.create_object = mongo_mongo_id_new;
+  id.serialize = mongo_mongo_id_serialize;
+  id.unserialize = mongo_mongo_id_unserialize;
+
   mongo_ce_Id = zend_register_internal_class(&id TSRMLS_CC); 
 }
 
