@@ -115,6 +115,9 @@ PHP_METHOD(MongoCursor, __construct) {
   // reset iteration pointer, just in case
   MONGO_METHOD(MongoCursor, reset)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 
+  cursor->at = 0;
+  cursor->num = 0;
+
   // get rid of extra ref
   zval_ptr_dtor(&empty_array);
 }
@@ -129,6 +132,10 @@ PHP_METHOD(MongoCursor, hasNext) {
   if (!cursor->started_iterating) {
     MONGO_METHOD(MongoCursor, doQuery)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
     cursor->started_iterating = 1;
+  }
+
+  if (cursor->limit > 0 && cursor->at >= cursor->limit) {
+    RETURN_FALSE;
   }
 
   RETURN_BOOL(mongo_do_has_next(cursor TSRMLS_CC));
@@ -146,15 +153,19 @@ PHP_METHOD(MongoCursor, getNext) {
     cursor->started_iterating = 1;
   }
 
+  if (cursor->limit > 0 && cursor->at >= cursor->limit) {
+    RETURN_NULL();
+  }
+
   if (cursor->at >= cursor->num) {
     // check for more results
     if (!mongo_do_has_next(cursor TSRMLS_CC)) {
       // we're out of results
       RETURN_NULL();
     }
-    // we got more results
   }
 
+  // we got more results
   if (cursor->at < cursor->num) {
     array_init(return_value);
     cursor->buf.pos = (unsigned char*)bson_to_zval(cursor->buf.pos, return_value TSRMLS_CC);
@@ -185,32 +196,9 @@ PHP_METHOD(MongoCursor, limit) {
   }
   convert_to_long(znum);
 
-  cursor->limit = Z_LVAL_P(znum) * -1;
-
-  RETVAL_ZVAL(getThis(), 1, 0);
-}
-/* }}} */
-
-/* {{{ MongoCursor::softLimit
- */
-PHP_METHOD(MongoCursor, softLimit) {
-  zval *znum;
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
-
-  if (cursor->started_iterating) {
-    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
-    return;
-  }
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &znum) == FAILURE) {
-    return;
-  }
-  convert_to_long(znum);
-
   cursor->limit = Z_LVAL_P(znum);
 
-  RETURN_ZVAL(getThis(), 1, 0);
+  RETVAL_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
 
@@ -434,6 +422,8 @@ PHP_METHOD(MongoCursor, reset) {
   }
   cursor->started_iterating = 0;
   cursor->current = 0;
+  cursor->at = 0;
+  cursor->num = 0;
 }
 /* }}} */
 
@@ -498,7 +488,6 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, hasNext, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, getNext, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, limit, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, softLimit, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC) 

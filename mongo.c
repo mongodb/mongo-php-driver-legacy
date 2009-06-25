@@ -1080,6 +1080,7 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
 int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   int sock = get_master(cursor->link TSRMLS_CC);
+  int num_returned = 0;
 
   // if this fails, we might be disconnected... but we're probably
   // just out of results
@@ -1100,7 +1101,7 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   read(sock, &cursor->flag, INT_32);
   read(sock, &cursor->cursor_id, INT_64);
   read(sock, &cursor->start, INT_32);
-  read(sock, &cursor->num, INT_32);
+  read(sock, &num_returned, INT_32);
 
   // create buf
   cursor->header.length -= INT_32*9;
@@ -1121,9 +1122,8 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
     return FAILURE;
   }
 
-  cursor->at = 0;
-
-  return cursor->num == 0 ? FAILURE : SUCCESS;
+  cursor->num += num_returned;
+  return num_returned == 0 ? FAILURE : SUCCESS;
 }
 
 

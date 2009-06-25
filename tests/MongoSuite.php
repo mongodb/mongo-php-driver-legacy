@@ -36,7 +36,8 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
           $suite->addTestSuite('MongoGridFSFileTest');
           $suite->addTestSuite('MongoGridFSCursorTest');
         }
-        
+        // */
+
         $suite->addTestSuite('MongoIdTest');
         $suite->addTestSuite('MongoCodeTest');
         $suite->addTestSuite('MongoRegexTest');

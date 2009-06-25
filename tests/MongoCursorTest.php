@@ -109,54 +109,6 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($count, 12);
     }
 
-    public function testSoftLimit() {
-        for ($i=0; $i<20; $i++) {
-            $this->object->insert(array('z' => $i));
-        }
-
-        $c = $this->object->find()->softLimit(0);
-        $count = 0;
-        foreach ($c as $obj) {
-            $count++;
-        }
-        $this->assertEquals($count, 20);
-
-        $c = $this->object->find()->softLimit(null);
-        $count = 0;
-        foreach ($c as $obj) {
-            $count++;
-        }
-        $this->assertEquals($count, 20);
-
-        $c = $this->object->find()->softLimit("12");
-        $count = 0;
-        foreach ($c as $obj) {
-            $count++;
-        }
-        $this->assertEquals($count, 20);
-
-        $c = $this->object->find()->softLimit(5);
-        $count = 0;
-        foreach ($c as $obj) {
-            $count++;
-        }
-        $this->assertEquals($count, 20);
-
-        $c = $this->object->find()->softLimit(20);
-        $count = 0;
-        foreach ($c as $obj) {
-            $count++;
-        }
-        $this->assertEquals($count, 20);
-
-        $c = $this->object->find()->softLimit(200);
-        $count = 0;
-        foreach ($c as $obj) {
-            $count++;
-        }
-        $this->assertEquals($count, 20);
-    }
-
     public function testSkip()
     {
         for ($i=0; $i<20; $i++) {
@@ -363,14 +315,6 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $c->limit(4);
     }
 
-    /**
-     * @expectedException MongoCursorException
-     */
-    public function testCursorException2() {
-        $c = $this->object->find();
-        $c->hasNext();
-        $c->softLimit(4);
-    }
 
     /**
      * @expectedException MongoCursorException

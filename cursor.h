@@ -24,7 +24,6 @@ PHP_METHOD(MongoCursor, __construct);
 PHP_METHOD(MongoCursor, getNext);
 PHP_METHOD(MongoCursor, hasNext);
 PHP_METHOD(MongoCursor, limit);
-PHP_METHOD(MongoCursor, softLimit);
 PHP_METHOD(MongoCursor, skip);
 PHP_METHOD(MongoCursor, sort);
 PHP_METHOD(MongoCursor, hint);
