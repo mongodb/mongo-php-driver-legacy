@@ -489,7 +489,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       ns_len = *(int*)buf;
       buf += INT_32;
       ns = (char*)buf;
-      buf += ns_len+1;
+      buf += ns_len;
 
       // id
       MAKE_STD_ZVAL(zoid);

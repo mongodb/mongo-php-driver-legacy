@@ -82,7 +82,8 @@ int mongo_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned
   zval temp;
   zval str;
 
-  Z_STRLEN(str) = strlen(p);
+  Z_TYPE(str) = IS_STRING;
+  Z_STRLEN(str) = 24;
   Z_STRVAL(str) = estrndup(p, 24);
 
   object_init_ex(*rval, mongo_ce_Id);

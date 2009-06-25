@@ -36,6 +36,16 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
 
         $this->assertNotEquals((string)$id1, (string)$id2);
     }
+  
+    public function testSerialize() {
+      $id = new MongoId("4a4391aa82c94f4f3adc0878");
+      $x = serialize($id);
+      $this->assertEquals('C:7:"MongoId":24:{4a4391aa82c94f4f3adc0878}', $x);
+
+      $y = unserialize($x);
+      $this->assertTrue($y instanceof MongoId);
+      $this->assertEquals("$id", "$y");
+    }
 }
 
 ?>
