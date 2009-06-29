@@ -57,12 +57,8 @@ static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
 
 // serialize a zval
 int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
-  zval **data;
-  char *key, *field_name;
-  uint key_len, start;
-  ulong index;
-  HashPosition pointer;
-  int num = 0, key_type;
+  uint start;
+  int num = 0;
   HashTable *arr_hash = Z_ARRVAL_P(zhash);
 
   // check buf size
@@ -178,7 +174,9 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
       set_type(buf, BSON_OID);
       serialize_string(buf, name, name_len);
       id = (mongo_id*)zend_object_store_get_object(*data TSRMLS_CC);
-      MONGO_CHECK_INITIALIZED(id->id, MongoId);
+      if (!id->id) {
+	return ZEND_HASH_APPLY_KEEP;
+      }
 
       serialize_bytes(buf, id->id, OID_SIZE);
     }

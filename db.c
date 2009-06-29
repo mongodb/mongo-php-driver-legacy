@@ -429,6 +429,9 @@ PHP_METHOD(MongoDB, execute) {
 
     code = obj;
   }
+  else {
+    zval_add_ref(&code);
+  }
 
   // create { $eval : code, args : [] }
   MAKE_STD_ZVAL(zdata);
@@ -501,7 +504,7 @@ PHP_METHOD(MongoDB, command) {
 
   // limit
   Z_TYPE(limit) = IS_LONG;
-  Z_LVAL(limit) = 1;
+  Z_LVAL(limit) = -1;
 
   PUSH_PARAM(&limit); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();

@@ -225,7 +225,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0;
-  zval **zzid = 0, **zchunk_size;
+  zval **zzid = 0;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
@@ -331,7 +331,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *upload_date = 0;
-  zval **zzid = 0, **md5 = 0, **zchunk_size;
+  zval **zzid = 0, **md5 = 0;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
@@ -483,11 +483,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // cleanup
   if (created_id) {
     zend_objects_store_del_ref(zid TSRMLS_CC);
-    zval_ptr_dtor(&zid);
   }
   if (created_date) {
     zend_objects_store_del_ref(upload_date TSRMLS_CC);
-    zval_ptr_dtor(&upload_date);
   }
   zval_ptr_dtor(&zfile);
 }
@@ -714,7 +712,7 @@ PHP_METHOD(MongoGridFSFile, getSize) {
 PHP_METHOD(MongoGridFSFile, write) {
   char *filename = 0;
   int filename_len, total = 0;
-  zval *gridfs, *file, *chunks, *n, *query, *cursor, *sort, *next;
+  zval *gridfs, *file, *chunks, *n, *query, *cursor, *sort;
   zval **id;
   FILE *fp;
 
@@ -794,7 +792,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 
 PHP_METHOD(MongoGridFSFile, getBytes) {
   zval temp;
-  zval *file, *gridfs, *chunks, *n, *query, *cursor, *sort, *next;
+  zval *file, *gridfs, *chunks, *n, *query, *cursor, *sort;
   zval **id, **size;
   char *str, *str_ptr;
   int len;
@@ -848,7 +846,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   POP_PARAM(); POP_PARAM();
 
   if (Z_TYPE_PP(size) == IS_DOUBLE) {
-    len = Z_DVAL_PP(size);
+    len = (int)Z_DVAL_PP(size);
   }
   else { // if Z_TYPE_PP(size) == IS_LONG
     len = Z_LVAL_PP(size);
@@ -871,8 +869,10 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 }
 
 static int copy_bytes(void *to, char *from, int len) {
-  memcpy(to, from, len);
-  to += len;
+  char *winIsDumb = (char*)to;
+  memcpy(winIsDumb, from, len);
+  winIsDumb += len;
+  to = (void*)winIsDumb;
 
   return len;
 }

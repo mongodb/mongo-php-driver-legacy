@@ -1084,7 +1084,11 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
 
   // if this fails, we might be disconnected... but we're probably
   // just out of results
+#ifdef WIN32
+  if (recv(sock, &cursor->header.length, INT_32, FLAGS) == FAILURE) {
+#else
   if (read(sock, &cursor->header.length, INT_32) == FAILURE) {
+#endif
     return FAILURE;
   }
   
@@ -1095,6 +1099,15 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
     return FAILURE;
   }
 
+#ifdef WIN32
+  recv(sock, &cursor->header.request_id, INT_32, FLAGS);
+  recv(sock, &cursor->header.response_to, INT_32, FLAGS);
+  recv(sock, &cursor->header.op, INT_32, FLAGS);
+  recv(sock, &cursor->flag, INT_32, FLAGS);
+  recv(sock, &cursor->cursor_id, INT_64, FLAGS);
+  recv(sock, &cursor->start, INT_32, FLAGS);
+  recv(sock, &num_returned, INT_32, FLAGS);
+#else
   read(sock, &cursor->header.request_id, INT_32);
   read(sock, &cursor->header.response_to, INT_32);
   read(sock, &cursor->header.op, INT_32);
@@ -1102,6 +1115,7 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   read(sock, &cursor->cursor_id, INT_64);
   read(sock, &cursor->start, INT_32);
   read(sock, &num_returned, INT_32);
+#endif
 
   // create buf
   cursor->header.length -= INT_32*9;

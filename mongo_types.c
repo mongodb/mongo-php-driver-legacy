@@ -78,7 +78,7 @@ int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_
   return SUCCESS;
 }
 
-int mongo_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned char* p, long datalen, zend_unserialize_data* var_hash TSRMLS_DC) {
+int mongo_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned char* p, zend_uint datalen, zend_unserialize_data* var_hash TSRMLS_DC) {
   zval temp;
   zval str;
 
@@ -223,8 +223,7 @@ PHP_METHOD(MongoId, __toString) {
  */
 PHP_METHOD(MongoDate, __construct) {
   zval *arg = 0;
-  struct timeval time;
-  int sec, usec = 0;
+  int usec = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zl", &arg, &usec) == FAILURE) {
     return;
@@ -232,16 +231,16 @@ PHP_METHOD(MongoDate, __construct) {
 
   if (!arg) {
 #ifdef WIN32
-    SYSTEMTIME systime;
-    GetSystemTime(&systime);
-    time.tv_sec = systime.wSecond;
-    time.tv_usec = systime.wMilliseconds * 1000;
+    time_t sec = time(0);
+    add_property_long(getThis(), "sec", sec);
+    add_property_long(getThis(), "usec", 0);
 #else
+    struct timeval time;
     gettimeofday(&time, NULL);
-#endif
 
     add_property_long(getThis(), "sec", time.tv_sec);
     add_property_long(getThis(), "usec", time.tv_usec);
+#endif
   }
   else if (Z_TYPE_P(arg) == IS_LONG) {
     add_property_long(getThis(), "sec", Z_LVAL_P(arg));
@@ -537,8 +536,6 @@ PHP_METHOD(MongoDBRef, isRef) {
 /* {{{ MongoDBRef::get()
  */
 PHP_METHOD(MongoDBRef, get) {
-  char *c_name;
-  zval name;
   zval *db, *ref, *collection, *query;
   zval **ns, **id;
 
