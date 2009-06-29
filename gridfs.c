@@ -49,6 +49,9 @@ static int copy_file(void *to, char *from, int len);
 static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to TSRMLS_DC);
 static int setup_file(FILE *fpp, char *filename TSRMLS_DC);
 static int get_chunk_size(zval *array TSRMLS_DC);
+static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC);
+static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
+static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size TSRMLS_DC);
 
 
 PHP_METHOD(MongoGridFS, __construct) {
@@ -218,24 +221,11 @@ static int setup_file(FILE *fp, char *filename TSRMLS_DC) {
   return size;
 }
 
-PHP_METHOD(MongoGridFS, storeBytes) {
-  char *bytes = 0;
-  int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, pos = 0;
-  zend_bool created_date = 0, created_id = 0;
-
+static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC) {
   zval temp;
-  zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0;
+  zval *zid = 0;
   zval **zzid = 0;
 
-  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &bytes, &bytes_len, &extra) == FAILURE) {
-    return;
-  }
-
-  // file array object
-  MAKE_STD_ZVAL(zfile);
   array_init(zfile);
 
   // add user-defined fields
@@ -251,23 +241,43 @@ PHP_METHOD(MongoGridFS, storeBytes) {
     // create an id for the file
     MAKE_STD_ZVAL(zid);
     object_init_ex(zid, mongo_ce_Id);
-    MONGO_METHOD(MongoId, __construct)(0, &temp, NULL, zid, return_value_used TSRMLS_CC);
+    MONGO_METHOD(MongoId, __construct)(0, &temp, NULL, zid, 0 TSRMLS_CC);
 
     add_assoc_zval(zfile, "_id", zid);
-    created_id = 1;
   }
   else {
     zid = *zzid;
   }
-  zval_add_ref(&zid);
+  return zid;
+}
+
+PHP_METHOD(MongoGridFS, storeBytes) {
+  char *bytes = 0;
+  int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, pos = 0;
+  zend_bool created_date = 0, created_id = 0;
+
+  zval temp;
+  zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0;
+
+  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &bytes, &bytes_len, &extra) == FAILURE) {
+    return;
+  }
+
+  // file array object
+  MAKE_STD_ZVAL(zfile);
+
+  // merge extra & zfile and add _id if needed
+  zid = setup_extra(zfile, extra TSRMLS_CC);
+  // chunkSize
+  global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
 
   // size
   if (!zend_hash_exists(Z_ARRVAL_P(zfile), "length", strlen("length")+1)) {
     add_assoc_long(zfile, "length", bytes_len);
   }
-
-  // chunkSize
-  global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
 
   // insert chunks
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
@@ -276,50 +286,96 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
     chunk_size = bytes_len-pos >= global_chunk_size ? global_chunk_size : bytes_len-pos;
 
-    // create chunk
-    MAKE_STD_ZVAL(zchunk);
-    array_init(zchunk);
-
-    add_assoc_zval(zchunk, "files_id", zid);
-    add_assoc_long(zchunk, "n", chunk_num);
-
-    // create MongoBinData object
-    MAKE_STD_ZVAL(zbin);
-    object_init_ex(zbin, mongo_ce_BinData);
-    add_property_stringl(zbin, "bin", bytes+pos, chunk_size, DUP);
-    add_property_long(zbin, "type", 2);
-
-    add_assoc_zval(zchunk, "data", zbin);
-
-    // insert chunk
-
-    PUSH_PARAM(zchunk); PUSH_PARAM((void*)1);
-    PUSH_EO_PARAM();
-    MONGO_METHOD(MongoCollection, insert)(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
-    POP_EO_PARAM();
-    POP_PARAM(); POP_PARAM(); 
+    insert_chunk(chunks, zid, chunk_num, bytes+pos, chunk_size TSRMLS_CC);
     
     // increment counters
     pos += chunk_size;
     chunk_num++; 
-
-    zval_add_ref(&zid); // zid->refcount = 2
-    zval_ptr_dtor(&zchunk); // zid->refcount = 1
   }
 
   // insert file
   PUSH_PARAM(zfile); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoCollection, insert)(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, insert)(1, &temp, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); 
 
-  // cleanup
-  if (created_id) {
-    zend_objects_store_del_ref(zid TSRMLS_CC);
-    zval_ptr_dtor(&zid);
-  }
+  zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
+
+  RETURN_ZVAL(zid, 1, 1);
+}
+
+/* add extra fields required for files:
+ * - filename
+ * - upload date
+ */
+static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC) {
+  zval temp;
+
+  // filename
+  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "filename", strlen("filename")+1)) {
+    add_assoc_stringl(zfile, "filename", filename, strlen(filename), DUP);
+  }
+
+  // uploadDate
+  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "uploadDate", strlen("uploadDate")+1)) {
+    // create an id for the file
+    zval *upload_date;
+    MAKE_STD_ZVAL(upload_date);
+    object_init_ex(upload_date, mongo_ce_Date);
+    MONGO_METHOD(MongoDate, __construct)(0, &temp, NULL, upload_date, 0 TSRMLS_CC);
+
+    add_assoc_zval(zfile, "uploadDate", upload_date);
+  }
+
+  // size
+  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "length", strlen("length")+1)) {
+    add_assoc_long(zfile, "length", size);
+  }
+}
+
+/* Creates a chunk and adds it to the chunks collection as:
+ * array(3) {
+ *   files_id => zid
+ *   n => chunk_num
+ *   data => MongoBinData(buf, chunk_size, type 2)
+ * }
+ *
+ * Clean up should leave:
+ * - 1 ref to zid
+ * - buf
+ */
+static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size TSRMLS_DC) {
+  zval temp;
+  zval *zchunk, *zbin;
+
+  // create chunk
+  MAKE_STD_ZVAL(zchunk);
+  array_init(zchunk);
+
+  add_assoc_zval(zchunk, "files_id", zid);
+  zval_add_ref(&zid); // zid->refcount = 2
+  add_assoc_long(zchunk, "n", chunk_num);
+
+  // create MongoBinData object
+  MAKE_STD_ZVAL(zbin);
+  object_init_ex(zbin, mongo_ce_BinData);
+  add_property_stringl(zbin, "bin", buf, chunk_size, DUP);
+  add_property_long(zbin, "type", 2);
+
+  add_assoc_zval(zchunk, "data", zbin);
+
+  // insert chunk
+
+  PUSH_PARAM(zchunk); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
+  MONGO_METHOD(MongoCollection, insert)(1, &temp, NULL, chunks, 0 TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM(); 
+    
+  // increment counters
+  zval_ptr_dtor(&zchunk); // zid->refcount = 1
 }
 
 
@@ -327,7 +383,6 @@ PHP_METHOD(MongoGridFS, storeFile) {
   char *filename = 0;
   int filename_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, size = 0, pos = 0;
   FILE *fp = 0;
-  zend_bool created_date = 0, created_id = 0;
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *upload_date = 0;
@@ -348,54 +403,13 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   // file array object
   MAKE_STD_ZVAL(zfile);
-  array_init(zfile);
 
-  // add user-defined fields
-  if (extra) {
-    zval temp;
-    zend_hash_merge(Z_ARRVAL_P(zfile), Z_ARRVAL_P(extra), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
-  }
-
-  // check if we need to add any fields
-
-  // _id
-  if (zend_hash_find(Z_ARRVAL_P(zfile), "_id", strlen("_id")+1, (void**)&zzid) == FAILURE) {
-    // create an id for the file
-    MAKE_STD_ZVAL(zid);
-    object_init_ex(zid, mongo_ce_Id);
-    MONGO_METHOD(MongoId, __construct)(0, &temp, NULL, zid, return_value_used TSRMLS_CC);
-
-    add_assoc_zval(zfile, "_id", zid);
-    created_id = 1;
-  }
-  else {
-    zid = *zzid;
-  }
-  zval_add_ref(&zid);
-
-  // filename
-  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "filename", strlen("filename")+1)) {
-    add_assoc_stringl(zfile, "filename", filename, filename_len, DUP);
-  }
-
-  // size
-  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "length", strlen("length")+1)) {
-    add_assoc_long(zfile, "length", size);
-  }
+  // merge extra & zfile and add _id if needed
+  zid = setup_extra(zfile, extra TSRMLS_CC);
+  setup_file_fields(zfile, filename, size TSRMLS_CC);
 
   // chunkSize
   global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
-
-  // uploadDate
-  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "uploadDate", strlen("uploadDate")+1)) {
-    // create an id for the file
-    MAKE_STD_ZVAL(upload_date);
-    object_init_ex(upload_date, mongo_ce_Date);
-    MONGO_METHOD(MongoDate, __construct)(0, &temp, NULL, upload_date, return_value_used TSRMLS_CC);
-
-    add_assoc_zval(zfile, "uploadDate", upload_date);
-    created_date = 1;
-  }
 
   // insert chunks
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
@@ -410,35 +424,12 @@ PHP_METHOD(MongoGridFS, storeFile) {
       return;
     }
 
-    // create chunk
-    MAKE_STD_ZVAL(zchunk);
-    array_init(zchunk);
-
-    add_assoc_zval(zchunk, "files_id", zid);
-    add_assoc_long(zchunk, "n", chunk_num);
-
-    // create MongoBinData object
-    MAKE_STD_ZVAL(zbin);
-    object_init_ex(zbin, mongo_ce_BinData);
-    add_property_stringl(zbin, "bin", buf, chunk_size, DUP);
-    add_property_long(zbin, "type", 2);
-
-    add_assoc_zval(zchunk, "data", zbin);
-
-    // insert chunk
-
-    PUSH_PARAM(zchunk); PUSH_PARAM((void*)1);
-    PUSH_EO_PARAM();
-    MONGO_METHOD(MongoCollection, insert)(1, return_value, return_value_ptr, chunks, return_value_used TSRMLS_CC);
-    POP_EO_PARAM();
-    POP_PARAM(); POP_PARAM(); 
+    insert_chunk(chunks, zid, chunk_num, buf, chunk_size TSRMLS_CC);
     
     // increment counters
     pos += chunk_size;
     chunk_num++; 
 
-    zval_add_ref(&zid); // zid->refcount = 2
-    zval_ptr_dtor(&zchunk); // zid->refcount = 1
     efree(buf);
   }
   // close file ptr
@@ -476,18 +467,15 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // insert file
   PUSH_PARAM(zfile); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoCollection, insert)(1, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, insert)(1, &temp, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); 
 
   // cleanup
-  if (created_id) {
-    zend_objects_store_del_ref(zid TSRMLS_CC);
-  }
-  if (created_date) {
-    zend_objects_store_del_ref(upload_date TSRMLS_CC);
-  }
+  zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
+
+  RETURN_ZVAL(zid, 1, 1);
 }
 
 PHP_METHOD(MongoGridFS, findOne) {

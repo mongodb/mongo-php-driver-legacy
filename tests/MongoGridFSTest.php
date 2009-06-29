@@ -72,7 +72,9 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
 
     public function testStoreFile() {
         $this->assertEquals($this->object->findOne(), null);
-        $this->object->storeFile('tests/somefile');
+        $id = $this->object->storeFile('tests/somefile');
+        $this->assertTrue($id instanceof MongoId);
+        $this->assertEquals(24, strlen("$id"));
         $this->assertNotNull($this->object->findOne());
         $this->assertNotNull($this->object->chunks->findOne());
     }
