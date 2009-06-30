@@ -254,10 +254,10 @@ PHP_METHOD(MongoCollection, find) {
 }
 
 PHP_METHOD(MongoCollection, findOne) {
-  zval *query = 0, *cursor;
+  zval *query = 0, *fields = 0, *cursor;
   zval limit;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|a", &query) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|aa", &query, &fields) == FAILURE) {
     return;
   }
 
@@ -265,18 +265,29 @@ PHP_METHOD(MongoCollection, findOne) {
 
   if (query) {
     PUSH_PARAM(query);
-    PUSH_PARAM((void*)1);
+    if (fields) {
+      PUSH_PARAM(fields);
+      PUSH_PARAM((void*)2);
+    }
+    else {
+      PUSH_PARAM((void*)1);
+    }
     PUSH_EO_PARAM();
   }
+
   MONGO_METHOD(MongoCollection, find)(ZEND_NUM_ARGS(), cursor, &cursor, getThis(), return_value_used TSRMLS_CC);
+
   if (query) {
     POP_EO_PARAM();
+    if (fields) {
+      POP_PARAM();
+    }
     POP_PARAM();
     POP_PARAM();
   }
 
   limit.type = IS_LONG;
-  limit.value.lval = 1;
+  limit.value.lval = -1;
 
   PUSH_PARAM(&limit); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();

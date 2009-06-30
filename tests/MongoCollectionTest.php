@@ -194,6 +194,24 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(1, $obj['x']);
     }
 
+    public function testFindOneFields() {
+      for ($i=0;$i<3;$i++) {
+        $this->object->insert(array('x' => $i, 'y' => 4, 'z' => 6));
+      }
+
+      $obj = $this->object->findOne(array(), array('y'));
+      $this->assertArrayHasKey('y', $obj, json_encode($obj));
+      $this->assertArrayHasKey('_id', $obj, json_encode($obj));
+      $this->assertArrayNotHasKey('x', $obj, json_encode($obj));
+      $this->assertArrayNotHasKey('z', $obj, json_encode($obj));
+
+      $obj = $this->object->findOne(array(), array('y'=>1, 'z'=>1));
+      $this->assertArrayHasKey('y', $obj, json_encode($obj));
+      $this->assertArrayHasKey('_id', $obj, json_encode($obj));
+      $this->assertArrayNotHasKey('x', $obj, json_encode($obj));
+      $this->assertArrayHasKey('z', $obj, json_encode($obj));
+    }
+
     public function testUpdate() {
       $old = array("foo"=>"bar", "x"=>"y");
       $new = array("foo"=>"baz");
