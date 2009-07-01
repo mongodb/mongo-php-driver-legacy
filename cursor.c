@@ -352,7 +352,8 @@ PHP_METHOD(MongoCursor, key) {
   if (cursor->current && 
       Z_TYPE_P(cursor->current) == IS_ARRAY &&
       zend_hash_find(Z_ARRVAL_P(cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
-    MONGO_METHOD(MongoId, __toString)(0, return_value, return_value_ptr, *id, return_value_used TSRMLS_CC);
+    convert_to_string(*id);
+    RETURN_ZVAL(*id, 1, 0);
   }
   else {
     RETURN_STRING("", 1);
