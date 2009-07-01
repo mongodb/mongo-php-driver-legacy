@@ -95,5 +95,19 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $tbColl->insert($arr);
     }
 
+    public function testMongoEmptyObj() {
+        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $c->drop();
+
+        $c->insert(array('x' => array(), 'y' => new MongoEmptyObj()));
+        $c->update(array(), array('$push' => array('x' => 'foo')));
+        $c->update(array(), array('$push' => array('y' => 'bar')));
+
+        $x = $c->findOne();
+        $this->assertTrue(empty($x['y']));
+        $this->assertEquals(1, count($x['x'])); 
+        $this->assertEquals('foo', $x['x'][0]);
+    }
+
 }
 ?>

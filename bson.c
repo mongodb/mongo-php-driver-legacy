@@ -30,6 +30,7 @@ extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_Date,
   *mongo_ce_Id,
   *mongo_ce_Regex,
+  *mongo_ce_EmptyObj,
   *mongo_ce_Exception;
 
 static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
@@ -151,7 +152,8 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     break;
   }
   case IS_ARRAY: {
-    if (zend_hash_index_exists(Z_ARRVAL_PP(data), 0)) {
+    if (zend_hash_num_elements(Z_ARRVAL_PP(data)) == 0 || 
+        zend_hash_index_exists(Z_ARRVAL_PP(data), 0)) {
       set_type(buf, BSON_ARRAY);
     }
     else {
@@ -248,6 +250,17 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
       }
 
       serialize_bytes(buf, Z_STRVAL_P(zbin), Z_STRLEN_P(zbin));
+    }
+    else if (clazz == mongo_ce_EmptyObj) {
+      zval *temp;
+      MAKE_STD_ZVAL(temp);
+      array_init(temp);
+
+      set_type(buf, BSON_OBJECT);
+      serialize_string(buf, name, name_len);
+      zval_to_bson(buf, temp, NO_PREP TSRMLS_CC);
+
+      zval_ptr_dtor(&temp);
     }
     break;
   }
