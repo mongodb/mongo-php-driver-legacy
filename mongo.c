@@ -1098,7 +1098,7 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   // make sure we're not getting crazy data
   if (cursor->header.length > MAX_RESPONSE_LEN ||
       cursor->header.length < REPLY_HEADER_SIZE) {
-    zend_error(E_WARNING, "bad response length: %d, did the db assert?\n", cursor->header.length);
+    zend_error(E_WARNING, "bad response length: %d, max: %d, did the db assert?\n", cursor->header.length, MAX_RESPONSE_LEN);
     return FAILURE;
   }
 
