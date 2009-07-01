@@ -134,5 +134,13 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $this->assertEquals(21, strlen($data[5]), "key: ".$data[5]);
     }
 
+    public function testIn() {
+        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $x = $c->findOne(array('oldId' =>array('$in' =>array ())));
+        if ($x != NULL) {
+            $this->assertArrayNotHasKey('$err', $x, json_encode($x));
+        }
+    }
+
 }
 ?>
