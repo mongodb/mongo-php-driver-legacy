@@ -158,5 +158,16 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         }
     }
 
+    /**
+     * Mongo::toString() was destroying Mongo::server
+     */
+    public function testMongoToString() {
+        $m = new Mongo();
+        $str1 = $m->__toString();
+        $str2 = $m->__toString();
+        $this->assertEquals("localhost:27017", $str2);
+        $this->assertEquals($str1, $str2);
+    }
+
 }
 ?>

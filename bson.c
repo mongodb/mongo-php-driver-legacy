@@ -60,7 +60,6 @@ static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
 int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
   uint start;
   int num = 0;
-  HashTable *arr_hash = Z_ARRVAL_P(zhash);
 
   // check buf size
   if(BUF_REMAINING <= 5) {
@@ -74,7 +73,7 @@ int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
   // skip first 4 bytes to leave room for size
   buf->pos += INT_32;
 
-  if (zend_hash_num_elements(arr_hash) > 0) {
+  if (zend_hash_num_elements(Z_ARRVAL_P(zhash)) > 0) {
     if (prep) {
       prep_obj_for_db(buf, zhash TSRMLS_CC);
       num++;

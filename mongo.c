@@ -652,7 +652,7 @@ static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
 /* {{{ Mongo->close()
  */
 PHP_METHOD(Mongo, close) {
-  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
+  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), NOISY TSRMLS_CC);
 
   zend_list_delete(Z_LVAL_P(zlink));
 
@@ -666,8 +666,8 @@ PHP_METHOD(Mongo, close) {
 /* {{{ Mongo->__toString()
  */
 PHP_METHOD(Mongo, __toString) {
-  zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), 1 TSRMLS_CC);
-  RETURN_ZVAL(server, 0, 1);
+  zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
+  RETURN_ZVAL(server, 1, 0);
 }
 /* }}} */
 
@@ -706,14 +706,12 @@ PHP_METHOD(Mongo, selectCollection) {
       Z_OBJCE_P(db) != mongo_ce_DB) {
     MAKE_STD_ZVAL(temp_db);
 
+    // reusing db param from Mongo::selectCollection call...
+    // a little funky, but kind of clever
     MONGO_METHOD(Mongo, selectDB)(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
 
     ok = (mongo_db*)zend_object_store_get_object(temp_db TSRMLS_CC);
     MONGO_CHECK_INITIALIZED(ok->name, MongoDB);
-
-    if (!ok || !ok->name) {
-      return;
-    }
 
     db = temp_db;
   }
@@ -744,6 +742,7 @@ PHP_METHOD(Mongo, dropDB) {
       Z_OBJCE_P(db) != mongo_ce_DB) {
     MAKE_STD_ZVAL(temp_db);
 
+    // reusing db param from Mongo::drop call
     MONGO_METHOD(Mongo, selectDB)(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
     db = temp_db;
   }
@@ -796,19 +795,16 @@ PHP_METHOD(Mongo, repairDB) {
 /* {{{ Mongo->lastError()
  */
 PHP_METHOD(Mongo, lastError) {
-  zval *name, *data;
-  zval db;
+  zval *data;
+  zval name, db;
 
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
+  ZVAL_STRING(&name, "admin", 0);
 
-  PUSH_PARAM(name); PUSH_PARAM((void*)1);
+  PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&name);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -827,19 +823,16 @@ PHP_METHOD(Mongo, lastError) {
 /* {{{ Mongo->prevError()
  */
 PHP_METHOD(Mongo, prevError) {
-  zval *name, *data;
-  zval db;
+  zval *data;
+  zval name, db;
 
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
+  ZVAL_STRING(&name, "admin", 0);
 
-  PUSH_PARAM(name); PUSH_PARAM((void*)1);
+  PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&name);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -858,19 +851,16 @@ PHP_METHOD(Mongo, prevError) {
 /* {{{ Mongo->resetError()
  */
 PHP_METHOD(Mongo, resetError) {
-  zval *name, *data;
-  zval db;
+  zval *data;
+  zval name, db;
 
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
+  ZVAL_STRING(&name, "admin", 0);
 
-  PUSH_PARAM(name); PUSH_PARAM((void*)1);
+  PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&name);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -889,19 +879,16 @@ PHP_METHOD(Mongo, resetError) {
 /* {{{ Mongo->forceError()
  */
 PHP_METHOD(Mongo, forceError) {
-  zval *name, *data;
-  zval db;
+  zval *data;
+  zval name, db;
 
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
+  ZVAL_STRING(&name, "admin", 0);
 
-  PUSH_PARAM(name); PUSH_PARAM((void*)1);
+  PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&name);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
