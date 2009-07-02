@@ -61,6 +61,8 @@ PHP_METHOD(MongoCursor, __construct) {
   MAKE_STD_ZVAL(empty_array);
   array_init(empty_array);
 
+  // these are both initialized to the same zval, but that's okay because 
+  // there's no way to change them without creating a new cursor
   if (!zquery) {
     zquery = empty_array;
   }
@@ -71,10 +73,12 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
  
   // db connection
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
-  cursor->link = link;
   cursor->resource = zlink;
   zval_add_ref(&zlink);
+
+  // db connection resource
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  cursor->link = link;
 
   MAKE_STD_ZVAL(fields);
   array_init(fields);
@@ -87,7 +91,7 @@ PHP_METHOD(MongoCursor, __construct) {
     ulong index;
     char *key;
 
-    key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(zfields), &key, &key_len, &index, NO_DUP, &pointer);
+    key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(zfields), &key, (uint*)&key_len, &index, NO_DUP, &pointer);
 
     if (key_type == HASH_KEY_IS_LONG &&
         Z_TYPE_PP(data) == IS_STRING) {
@@ -107,10 +111,9 @@ PHP_METHOD(MongoCursor, __construct) {
   MAKE_STD_ZVAL(q);
   array_init(q);
   add_assoc_zval(q, "query", zquery);
-  cursor->query = q;
-
   // we don't want this param to go away at the end of this method
   zval_add_ref(&zquery);
+  cursor->query = q;
 
   // reset iteration pointer, just in case
   MONGO_METHOD(MongoCursor, reset)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
@@ -145,37 +148,8 @@ PHP_METHOD(MongoCursor, hasNext) {
 /* {{{ MongoCursor::getNext
  */
 PHP_METHOD(MongoCursor, getNext) {
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
-
-  if (!cursor->started_iterating) {
-    MONGO_METHOD(MongoCursor, doQuery)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-    cursor->started_iterating = 1;
-  }
-
-  if (cursor->limit > 0 && cursor->at >= cursor->limit) {
-    RETURN_NULL();
-  }
-
-  if (cursor->at >= cursor->num) {
-    // check for more results
-    if (!mongo_do_has_next(cursor TSRMLS_CC)) {
-      // we're out of results
-      RETURN_NULL();
-    }
-  }
-
-  // we got more results
-  if (cursor->at < cursor->num) {
-    array_init(return_value);
-    cursor->buf.pos = (unsigned char*)bson_to_zval(cursor->buf.pos, return_value TSRMLS_CC);
-
-    // increment cursor position
-    cursor->at++;
-    return;
-  }
-
-  RETURN_NULL();
+  MONGO_METHOD(MongoCursor, next)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  MONGO_METHOD(MongoCursor, current)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
 
@@ -366,8 +340,6 @@ PHP_METHOD(MongoCursor, key) {
 PHP_METHOD(MongoCursor, next) {
   mongo_cursor *cursor;
 
-  return_value_ptr = &return_value;
-
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
@@ -376,15 +348,33 @@ PHP_METHOD(MongoCursor, next) {
     cursor->started_iterating = 1;
   }
 
+  // destroy old current
   if (cursor->current) {
     zval_ptr_dtor(&cursor->current);
     cursor->current = 0;
   }
 
-  MONGO_METHOD(MongoCursor, hasNext)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-  if (Z_BVAL_P(return_value)) {
+  // check limits
+  if (cursor->limit > 0 && cursor->at >= cursor->limit) {
+    RETURN_NULL();
+  }
+
+  if (cursor->at >= cursor->num) {
+    // check for more results
+    if (!mongo_do_has_next(cursor TSRMLS_CC)) {
+      // we're out of results
+      RETURN_NULL();
+    }
+  }
+
+  // we got more results
+  if (cursor->at < cursor->num) {
     MAKE_STD_ZVAL(cursor->current);
-    MONGO_METHOD(MongoCursor, getNext)(0, cursor->current, &cursor->current, getThis(), return_value_used TSRMLS_CC); 
+    array_init(cursor->current);
+    cursor->buf.pos = (unsigned char*)bson_to_zval(cursor->buf.pos, cursor->current TSRMLS_CC);
+
+    // increment cursor position
+    cursor->at++;
   }
 
   RETURN_NULL();
@@ -419,7 +409,6 @@ PHP_METHOD(MongoCursor, reset) {
 
   if (cursor->current) {
     zval_ptr_dtor(&cursor->current);
-    cursor->current = 0;
   }
   cursor->started_iterating = 0;
   cursor->current = 0;
@@ -437,21 +426,25 @@ PHP_METHOD(MongoCursor, count) {
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
+
   // fake a MongoDB object
   MAKE_STD_ZVAL(db);
   object_init_ex(db, mongo_ce_DB);
   db_struct = (mongo_db*)zend_object_store_get_object(db TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(db_struct, MongoDB);
 
   db_struct->link = cursor->resource;
   zval_add_ref(&cursor->resource);
   MAKE_STD_ZVAL(db_struct->name);
   ZVAL_STRING(db_struct->name, estrndup(cursor->ns, strchr(cursor->ns, '.') - cursor->ns), 0);
 
+
   // create query
   MAKE_STD_ZVAL(data);
   array_init(data);
+
+  // "count" => "collectionName"
   add_assoc_string(data, "count", strchr(cursor->ns, '.')+1, 1);
+
   if (cursor->query) {
     zval **inner_query;
     if (zend_hash_find(Z_ARRVAL_P(cursor->query), "query", strlen("query")+1, (void**)&inner_query) == SUCCESS) {
@@ -473,13 +466,22 @@ PHP_METHOD(MongoCursor, count) {
   POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&data);
+
+  // prep results
   if (zend_hash_find(Z_ARRVAL_P(response), "n", 2, (void**)&n) == SUCCESS) {
-    RETVAL_ZVAL(*n, 1, 0);
+    // don't allow count to return more than cursor->limit
+    if (cursor->limit > 0 && Z_DVAL_PP(n) > cursor->limit) {
+      RETVAL_DOUBLE(cursor->limit);
+    }
+    else {
+      RETVAL_ZVAL(*n, 1, 0);
+    }
     zval_ptr_dtor(&response);
   }
   else {
     RETURN_ZVAL(response, 0, 0);
   }
+
   zend_objects_store_del_ref(db TSRMLS_CC);
   zval_ptr_dtor(&db);
 }

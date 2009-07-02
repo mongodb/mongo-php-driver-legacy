@@ -33,6 +33,14 @@ extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_EmptyObj,
   *mongo_ce_Exception;
 
+static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC);
+#if ZEND_MODULE_API_NO >= 20090115
+static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key);
+#else
+static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key);
+#endif /* ZEND_MODULE_API_NO >= 20090115 */
+
+
 static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
   zval temp, **data, *newid;
 
@@ -96,11 +104,13 @@ static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list 
 #else
 static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key) {
 #endif /* ZEND_MODULE_API_NO >= 20090115 */
+
   int retval;
   char *name;
 
   buffer *buf = va_arg(args, buffer*);
   int prep = va_arg(args, int);
+
 #if ZEND_MODULE_API_NO < 20090115
   void ***tsrm_ls = va_arg(args, void***);
 #endif /* ZEND_MODULE_API_NO < 20090115 */
@@ -169,8 +179,6 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     // MongoId
     if(clazz == mongo_ce_Id) {
       mongo_id *id;
-      zval temp;
-      zval *return_value = &temp;
 
       set_type(buf, BSON_OID);
       serialize_string(buf, name, name_len);
@@ -349,13 +357,13 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
   // for size
   buf += INT_32;
   
-  while (type = *buf++) {
+  while ((type = *buf++) != 0) {
     char *name;
     zval *value;
     
     name = (char*)buf;
     // get past field name
-    buf += strlen(buf) + 1;
+    buf += strlen((char*)buf) + 1;
 
     MAKE_STD_ZVAL(value);
     

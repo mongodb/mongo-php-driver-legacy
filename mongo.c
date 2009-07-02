@@ -52,7 +52,6 @@ static int check_connection(mongo_link* TSRMLS_DC);
 static int mongo_connect_nonb(int, char*, int);
 static int mongo_do_socket_connect(mongo_link* TSRMLS_DC);
 static int mongo_get_sockaddr(struct sockaddr_in*, char*, int);
-static void kill_cursor(mongo_cursor* TSRMLS_DC);
 static void get_host_and_port(char*, mongo_link* TSRMLS_DC);
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
@@ -168,12 +167,14 @@ static void mongo_link_dtor(mongo_link *link) {
       }
     }
     else {
+      if (link->server.single.socket > -1) {
       // close the connection
 #ifdef WIN32
-      closesocket(link->server.single.socket);
+        closesocket(link->server.single.socket);
 #else
-      close(link->server.single.socket);
+        close(link->server.single.socket);
 #endif
+      }
 
       // free strings
       if (link->server.single.host) {
@@ -497,7 +498,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   zend_rsrc_list_entry new_le;
   zend_rsrc_list_entry *le;
   char *key;
-  int key_len, ulen, plen;
+  int key_len;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &username, &password) == FAILURE) {
     return;
@@ -1160,7 +1161,7 @@ int mongo_say(mongo_link *link, buffer *buf TSRMLS_DC) {
 }
 
 int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
-  int tries = 3, num = 1, r = 0;
+  int num = 1, r = 0;
 
   // this can return FAILED if there is just no more data from db
   while(r < len && num > 0) {
