@@ -142,5 +142,21 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         }
     }
 
+    public function testBatchInsert() {
+        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $c->drop();
+
+        $a = array();
+        for($i=0; $i < 10; $i++) {
+            $a[] = array('time' => new MongoDate(), 'x' => $i, "label" => "ooo$i");
+        }
+
+        $c->batchInsert($a);
+
+        for ($i=0; $i <10; $i++) {
+            $this->assertArrayHasKey('_id', $a[$i], json_encode($a));
+        }
+    }
+
 }
 ?>
