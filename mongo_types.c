@@ -246,7 +246,7 @@ PHP_METHOD(MongoDate, __construct) {
     add_property_long(getThis(), "sec", Z_LVAL_P(arg));
     add_property_long(getThis(), "usec", usec);      
   }
-#if ZEND_MODULE_API_NO < 20090115
+#if ZEND_MODULE_API_NO < 20090115 && ! defined(WIN32)
   else if (Z_TYPE_P(arg) == IS_STRING) {
     // use PHP's ext/date's strtotime() to parse time string
     ZEND_FN(strtotime)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
@@ -254,7 +254,7 @@ PHP_METHOD(MongoDate, __construct) {
     add_property_long(getThis(), "sec", Z_LVAL_P(return_value));
     add_property_long(getThis(), "usec", 0);
   }
-#endif /* ZEND_MODULE_API_NO < 20090115 */
+#endif /* ZEND_MODULE_API_NO < 20090115 && ! defined(WIN32) */
   else {
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoDate::__construct()", 0 TSRMLS_CC);
   }
@@ -277,7 +277,7 @@ PHP_METHOD(MongoDate, __toString) {
 /* }}} */
 
 
-#if ZEND_MODULE_API_NO < 20090115
+#if ZEND_MODULE_API_NO < 20090115 && ! defined(WIN32)
 PHP_METHOD(MongoDate, format) {
   zval *zsec, *format;
   int sec;
