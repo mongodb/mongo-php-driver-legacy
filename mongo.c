@@ -52,7 +52,6 @@ static int check_connection(mongo_link* TSRMLS_DC);
 static int mongo_connect_nonb(int, char*, int);
 static int mongo_do_socket_connect(mongo_link* TSRMLS_DC);
 static int mongo_get_sockaddr(struct sockaddr_in*, char*, int);
-static void kill_cursor(mongo_cursor* TSRMLS_DC);
 static void get_host_and_port(char*, mongo_link* TSRMLS_DC);
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
@@ -168,12 +167,14 @@ static void mongo_link_dtor(mongo_link *link) {
       }
     }
     else {
+      if (link->server.single.socket > -1) {
       // close the connection
 #ifdef WIN32
-      closesocket(link->server.single.socket);
+        closesocket(link->server.single.socket);
 #else
-      close(link->server.single.socket);
+        close(link->server.single.socket);
 #endif
+      }
 
       // free strings
       if (link->server.single.host) {
@@ -236,6 +237,8 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoDBRef(TSRMLS_C);
 
   mongo_init_MongoExceptions(TSRMLS_C);
+
+  mongo_init_MongoEmptyObj(TSRMLS_C);
 
   // make mongo objects uncloneable
   memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
@@ -495,7 +498,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   zend_rsrc_list_entry new_le;
   zend_rsrc_list_entry *le;
   char *key;
-  int key_len, ulen, plen;
+  int key_len;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &username, &password) == FAILURE) {
     return;
@@ -650,7 +653,7 @@ static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
 /* {{{ Mongo->close()
  */
 PHP_METHOD(Mongo, close) {
-  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), 0 TSRMLS_CC);
+  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), NOISY TSRMLS_CC);
 
   zend_list_delete(Z_LVAL_P(zlink));
 
@@ -664,8 +667,8 @@ PHP_METHOD(Mongo, close) {
 /* {{{ Mongo->__toString()
  */
 PHP_METHOD(Mongo, __toString) {
-  zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), 1 TSRMLS_CC);
-  RETURN_ZVAL(server, 0, 1);
+  zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
+  RETURN_ZVAL(server, 1, 0);
 }
 /* }}} */
 
@@ -704,14 +707,12 @@ PHP_METHOD(Mongo, selectCollection) {
       Z_OBJCE_P(db) != mongo_ce_DB) {
     MAKE_STD_ZVAL(temp_db);
 
+    // reusing db param from Mongo::selectCollection call...
+    // a little funky, but kind of clever
     MONGO_METHOD(Mongo, selectDB)(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
 
     ok = (mongo_db*)zend_object_store_get_object(temp_db TSRMLS_CC);
     MONGO_CHECK_INITIALIZED(ok->name, MongoDB);
-
-    if (!ok || !ok->name) {
-      return;
-    }
 
     db = temp_db;
   }
@@ -742,6 +743,7 @@ PHP_METHOD(Mongo, dropDB) {
       Z_OBJCE_P(db) != mongo_ce_DB) {
     MAKE_STD_ZVAL(temp_db);
 
+    // reusing db param from Mongo::drop call
     MONGO_METHOD(Mongo, selectDB)(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
     db = temp_db;
   }
@@ -794,19 +796,16 @@ PHP_METHOD(Mongo, repairDB) {
 /* {{{ Mongo->lastError()
  */
 PHP_METHOD(Mongo, lastError) {
-  zval *name, *data;
-  zval db;
+  zval *data;
+  zval name, db;
 
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
+  ZVAL_STRING(&name, "admin", 0);
 
-  PUSH_PARAM(name); PUSH_PARAM((void*)1);
+  PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&name);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -825,19 +824,16 @@ PHP_METHOD(Mongo, lastError) {
 /* {{{ Mongo->prevError()
  */
 PHP_METHOD(Mongo, prevError) {
-  zval *name, *data;
-  zval db;
+  zval *data;
+  zval name, db;
 
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
+  ZVAL_STRING(&name, "admin", 0);
 
-  PUSH_PARAM(name); PUSH_PARAM((void*)1);
+  PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&name);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -856,19 +852,16 @@ PHP_METHOD(Mongo, prevError) {
 /* {{{ Mongo->resetError()
  */
 PHP_METHOD(Mongo, resetError) {
-  zval *name, *data;
-  zval db;
+  zval *data;
+  zval name, db;
 
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
+  ZVAL_STRING(&name, "admin", 0);
 
-  PUSH_PARAM(name); PUSH_PARAM((void*)1);
+  PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&name);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -887,19 +880,16 @@ PHP_METHOD(Mongo, resetError) {
 /* {{{ Mongo->forceError()
  */
 PHP_METHOD(Mongo, forceError) {
-  zval *name, *data;
-  zval db;
+  zval *data;
+  zval name, db;
 
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
+  ZVAL_STRING(&name, "admin", 0);
 
-  PUSH_PARAM(name); PUSH_PARAM((void*)1);
+  PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&name);
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -1096,7 +1086,7 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   // make sure we're not getting crazy data
   if (cursor->header.length > MAX_RESPONSE_LEN ||
       cursor->header.length < REPLY_HEADER_SIZE) {
-    zend_error(E_WARNING, "bad response length: %d, did the db assert?\n", cursor->header.length);
+    zend_error(E_WARNING, "bad response length: %d, max: %d, did the db assert?\n", cursor->header.length, MAX_RESPONSE_LEN);
     return FAILURE;
   }
 
@@ -1171,7 +1161,7 @@ int mongo_say(mongo_link *link, buffer *buf TSRMLS_DC) {
 }
 
 int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
-  int tries = 3, num = 1, r = 0;
+  int num = 1, r = 0;
 
   // this can return FAILED if there is just no more data from db
   while(r < len && num > 0) {

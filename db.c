@@ -83,10 +83,10 @@ PHP_METHOD(MongoDB, selectCollection) {
     return;
   }
 
-  object_init_ex(return_value, mongo_ce_Collection);
-
   db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(db->name, MongoDB);
+ 
+  object_init_ex(return_value, mongo_ce_Collection);
 
   PUSH_PARAM(getThis()); PUSH_PARAM(collection); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();

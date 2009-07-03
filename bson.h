@@ -45,12 +45,6 @@
 
 inline void serialize_size(unsigned char*, buffer*);
 
-#if ZEND_MODULE_API_NO >= 20090115
-static int apply_func_args_wrapper(void** TSRMLS_DC, int, va_list, zend_hash_key*);
-#else
-static int apply_func_args_wrapper(void**, int, va_list, zend_hash_key*);
-#endif /* ZEND_MODULE_API_NO >= 20090115 */
-
 int serialize_element(char*, zval**, buffer*, int TSRMLS_DC);
 inline void serialize_double(buffer*, double);
 inline void serialize_string(buffer*, char*, int);
@@ -66,7 +60,6 @@ inline void serialize_bytes(buffer*, char*, int);
 
 int resize_buf(buffer*, int);
 
-static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC);
 int zval_to_bson(buffer*, zval*, int TSRMLS_DC);
 unsigned char* bson_to_zval(unsigned char*, zval* TSRMLS_DC);
 

@@ -95,5 +95,93 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $tbColl->insert($arr);
     }
 
+    public function testMongoEmptyObj() {
+        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $c->drop();
+
+        $c->insert(array('x' => array(), 'y' => new MongoEmptyObj()));
+        $c->update(array(), array('$push' => array('x' => 'foo')));
+        $c->update(array(), array('$push' => array('y' => 'bar')));
+
+        $x = $c->findOne();
+        $this->assertTrue(empty($x['y']));
+        $this->assertEquals(1, count($x['x'])); 
+        $this->assertEquals('foo', $x['x'][0]);
+    }
+
+    public function testForEachKey() {
+        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $c->drop();
+
+        $c->insert(array('_id' => "xsf0", 'x' => 1));
+        $c->insert(array('_id' => 1, 'x' => 2));
+        $c->insert(array('_id' => true, 'x' => 3));
+        $c->insert(array('_id' => null, 'x' => 4));
+        $c->insert(array('_id' => new MongoId(), 'x' => 5));
+        $c->insert(array('_id' => new MongoDate(), 'x' => 6));
+
+        $cursor = $c->find()->sort(array('x'=>1));
+        $data = array();
+        foreach($cursor as $k=>$v) {
+            $data[] = $k;
+        }
+
+        $this->assertEquals('xsf0', $data[0]);
+        $this->assertEquals('1', $data[1]);
+        $this->assertEquals('1', $data[2]);
+        $this->assertEquals('', $data[3]);
+        $this->assertEquals(24, strlen($data[4]), "key: ".$data[4]);
+        $this->assertEquals(21, strlen($data[5]), "key: ".$data[5]);
+    }
+
+    public function testIn() {
+        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $x = $c->findOne(array('oldId' =>array('$in' =>array ())));
+        if ($x != NULL) {
+            $this->assertArrayNotHasKey('$err', $x, json_encode($x));
+        }
+    }
+
+    public function testBatchInsert() {
+        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $c->drop();
+
+        $a = array();
+        for($i=0; $i < 10; $i++) {
+            $a[] = array('time' => new MongoDate(), 'x' => $i, "label" => "ooo$i");
+        }
+
+        $c->batchInsert($a);
+
+        for ($i=0; $i <10; $i++) {
+            $this->assertArrayHasKey('_id', $a[$i], json_encode($a));
+        }
+    }
+
+    /**
+     * Mongo::toString() was destroying Mongo::server
+     */
+    public function testMongoToString() {
+        $m = new Mongo();
+        $str1 = $m->__toString();
+        $str2 = $m->__toString();
+        $this->assertEquals("localhost:27017", $str2);
+        $this->assertEquals($str1, $str2);
+    }
+
+    public function testCursorCount() {
+        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $c->drop();
+
+        for($i=0; $i < 10; $i++) {
+            $c->insert(array('foo'=>'bar'));
+        }
+
+        $cursor = $c->find();
+        $this->assertEquals(10, $cursor->count());
+
+        $cursor->limit(2);
+        $this->assertEquals(2, $cursor->count());
+    }
 }
 ?>

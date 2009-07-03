@@ -200,7 +200,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
     }
 
     start = buf.pos-buf.start;
-    zval_to_bson(&buf, *data, NO_PREP TSRMLS_CC);
+    zval_to_bson(&buf, *data, PREP TSRMLS_CC);
 
     serialize_size(buf.start+start, &buf);
 

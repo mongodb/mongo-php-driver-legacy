@@ -30,7 +30,16 @@ extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_Date,
   *mongo_ce_Id,
   *mongo_ce_Regex,
+  *mongo_ce_EmptyObj,
   *mongo_ce_Exception;
+
+static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC);
+#if ZEND_MODULE_API_NO >= 20090115
+static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key);
+#else
+static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key);
+#endif /* ZEND_MODULE_API_NO >= 20090115 */
+
 
 static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
   zval temp, **data, *newid;
@@ -59,7 +68,6 @@ static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
 int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
   uint start;
   int num = 0;
-  HashTable *arr_hash = Z_ARRVAL_P(zhash);
 
   // check buf size
   if(BUF_REMAINING <= 5) {
@@ -73,7 +81,7 @@ int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
   // skip first 4 bytes to leave room for size
   buf->pos += INT_32;
 
-  if (zend_hash_num_elements(arr_hash) > 0) {
+  if (zend_hash_num_elements(Z_ARRVAL_P(zhash)) > 0) {
     if (prep) {
       prep_obj_for_db(buf, zhash TSRMLS_CC);
       num++;
@@ -96,11 +104,13 @@ static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list 
 #else
 static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key) {
 #endif /* ZEND_MODULE_API_NO >= 20090115 */
+
   int retval;
   char *name;
 
   buffer *buf = va_arg(args, buffer*);
   int prep = va_arg(args, int);
+
 #if ZEND_MODULE_API_NO < 20090115
   void ***tsrm_ls = va_arg(args, void***);
 #endif /* ZEND_MODULE_API_NO < 20090115 */
@@ -151,7 +161,8 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     break;
   }
   case IS_ARRAY: {
-    if (zend_hash_index_exists(Z_ARRVAL_PP(data), 0)) {
+    if (zend_hash_num_elements(Z_ARRVAL_PP(data)) == 0 || 
+        zend_hash_index_exists(Z_ARRVAL_PP(data), 0)) {
       set_type(buf, BSON_ARRAY);
     }
     else {
@@ -168,8 +179,6 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     // MongoId
     if(clazz == mongo_ce_Id) {
       mongo_id *id;
-      zval temp;
-      zval *return_value = &temp;
 
       set_type(buf, BSON_OID);
       serialize_string(buf, name, name_len);
@@ -248,6 +257,17 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
       }
 
       serialize_bytes(buf, Z_STRVAL_P(zbin), Z_STRLEN_P(zbin));
+    }
+    else if (clazz == mongo_ce_EmptyObj) {
+      zval *temp;
+      MAKE_STD_ZVAL(temp);
+      array_init(temp);
+
+      set_type(buf, BSON_OBJECT);
+      serialize_string(buf, name, name_len);
+      zval_to_bson(buf, temp, NO_PREP TSRMLS_CC);
+
+      zval_ptr_dtor(&temp);
     }
     break;
   }
@@ -337,13 +357,13 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
   // for size
   buf += INT_32;
   
-  while (type = *buf++) {
+  while ((type = *buf++) != 0) {
     char *name;
     zval *value;
     
     name = (char*)buf;
     // get past field name
-    buf += strlen(buf) + 1;
+    buf += strlen((char*)buf) + 1;
 
     MAKE_STD_ZVAL(value);
     
