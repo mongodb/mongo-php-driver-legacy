@@ -136,21 +136,25 @@ typedef struct {
 
 #define CREATE_RESPONSE_HEADER(buf, ns, ns_len, rto, opcode)            \
   CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode);                 \
-  APPEND_HEADER_NS(buf, ns, ns_len);
+  APPEND_HEADER_NS(buf, ns, ns_len, 0);
+
+#define CREATE_HEADER_WITH_OPTS(buf, ns, opcode, opts)  \
+  CREATE_MSG_HEADER(MonGlo(request_id)++, 0, opcode);   \
+  APPEND_HEADER_NS(buf, ns, strlen(ns), opts);
 
 #define CREATE_HEADER(buf, ns, ns_len, opcode)          \
   CREATE_RESPONSE_HEADER(buf, ns, ns_len, 0, opcode);                    
 
 
-#define APPEND_HEADER(buf) buf.pos += INT_32;             \
+#define APPEND_HEADER(buf, opts) buf.pos += INT_32;       \
   serialize_int(&buf, header.request_id);                 \
   serialize_int(&buf, header.response_to);                \
   serialize_int(&buf, header.op);                         \
-  serialize_int(&buf, 0);                                
+  serialize_int(&buf, opts);                                
 
 
-#define APPEND_HEADER_NS(buf, ns, ns_len)               \
-  APPEND_HEADER(buf);                                   \
+#define APPEND_HEADER_NS(buf, ns, ns_len, opts)         \
+  APPEND_HEADER(buf, opts);                             \
   serialize_string(&buf, ns, ns_len);              
 
 
@@ -170,15 +174,6 @@ typedef struct {
 typedef struct {
   zend_object std;
 
-  zval *current;
-
-  zval *query;
-  zval *fields;
-  int limit;
-  int skip;
-
-  // response header
-  mongo_msg_header header;
   // connection
   mongo_link *link;
   zval *resource;
@@ -186,20 +181,30 @@ typedef struct {
   // collection namespace
   char *ns;
 
+  // fields to send
+  zval *query;
+  zval *fields;
+  int limit;
+  int skip;
+  int opts;
+
+  // response header
+  mongo_msg_header header;
   // response fields
   int flag;
   long long cursor_id;
   int start;
-
-  zend_bool started_iterating;
-
   // number of results used
   int at;
   // number results returned
   int num;
-
   // results
   buffer buf;
+
+  zend_bool started_iterating;
+
+  zval *current;
+
 } mongo_cursor;
 
 

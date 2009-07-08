@@ -174,19 +174,23 @@ static void mongo_link_dtor(mongo_link *link) {
 #else
         close(link->server.single.socket);
 #endif
+        link->server.single.socket = -1;
       }
 
       // free strings
       if (link->server.single.host) {
         pefree(link->server.single.host, link->persist);
+        link->server.single.host = 0;
       }
     }
 
     if (link->username) {
       pefree(link->username, link->persist);
+      link->username = 0;
     }
     if (link->password) {
       pefree(link->password, link->persist);
+      link->password = 0;
     }
 
     // free connection
@@ -203,6 +207,7 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   }
   // decrement the total number of links
   MonGlo(num_links)--;
+  rsrc->ptr = 0;
 }
 
 
@@ -994,7 +999,7 @@ zval* mongo_do_next(mongo_cursor *cursor TSRMLS_DC) {
   if (cursor->at < cursor->num) {
     MAKE_STD_ZVAL(elem);
     array_init(elem);
-    cursor->buf.pos = bson_to_zval(cursor->buf.pos, elem TSRMLS_CC);
+    cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, elem TSRMLS_CC);
 
     // increment cursor position
     cursor->at++;

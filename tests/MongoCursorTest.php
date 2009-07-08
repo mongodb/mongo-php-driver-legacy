@@ -424,6 +424,20 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
             $this->assertNotNull($cursor->getNext());
         }
     }
+    
+    /* 
+     * TODO: add actual functionality testing 
+     * BLOCKED BY: buildbot support for master/slave
+     */
+    public function testSlaveOkay() {
+        $cursor = $this->object->find()->slaveOkay()->tailable()->logReplay();
+        $cursor->getNext();
+
+        $cursor->reset();
+        $cursor = $this->object->find()->slaveOkay(false)->tailable(false)->logReplay(false);
+        $cursor->slaveOkay(true)->tailable(true)->logReplay(true);
+        $cursor->getNext();
+    }
 
 }
 ?>

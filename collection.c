@@ -675,7 +675,6 @@ static char *replace_dots(char *key, int key_len, char *position) {
 /* {{{ MongoCollection::toIndexString(array|string) */
 PHP_METHOD(MongoCollection, toIndexString) {
   zval *zkeys;
-  int param_count = 1;
   char *name, *position;
   int len = 0;
 

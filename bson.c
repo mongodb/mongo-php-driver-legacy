@@ -351,8 +351,8 @@ inline void serialize_size(unsigned char *start, buffer *buf) {
 }
 
 
-unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
-  unsigned char type;
+char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
+  char type;
 
   // for size
   buf += INT_32;
@@ -361,9 +361,9 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
     char *name;
     zval *value;
     
-    name = (char*)buf;
+    name = buf;
     // get past field name
-    buf += strlen((char*)buf) + 1;
+    buf += strlen(buf) + 1;
 
     MAKE_STD_ZVAL(value);
     
@@ -402,7 +402,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
     }
     case BSON_BINARY: {
       int len = *(int*)buf;
-      unsigned char type, *bytes;
+      char type, *bytes;
 
       buf += INT_32;
 
@@ -413,12 +413,12 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
 
       object_init_ex(value, mongo_ce_BinData);
 
-      add_property_stringl(value, "bin", (char*)bytes, len, DUP);
+      add_property_stringl(value, "bin", bytes, len, DUP);
       add_property_long(value, "type", type);
       break;
     }
     case BSON_BOOL: {
-      unsigned char d = *buf++;
+      char d = *buf++;
       ZVAL_BOOL(value, d);
       break;
     }
@@ -444,7 +444,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       break;
     }
     case BSON_REGEX: {
-      unsigned char *regex, *flags;
+      char *regex, *flags;
       int regex_len, flags_len;
 
       regex = buf;
@@ -457,8 +457,8 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
 
       object_init_ex(value, mongo_ce_Regex);
 
-      add_property_stringl(value, "regex", (char*)regex, regex_len, 1);
-      add_property_stringl(value, "flags", (char*)flags, flags_len, 1);
+      add_property_stringl(value, "regex", regex, regex_len, 1);
+      add_property_stringl(value, "flags", flags, flags_len, 1);
 
       break;
     }
@@ -482,7 +482,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       code_len = *(int*)buf;
       buf += INT_32;
 
-      code = (char*)buf;
+      code = buf;
       buf += code_len;
 
       if (type == BSON_CODE) {
@@ -506,7 +506,7 @@ unsigned char* bson_to_zval(unsigned char *buf, zval *result TSRMLS_DC) {
       // ns
       ns_len = *(int*)buf;
       buf += INT_32;
-      ns = (char*)buf;
+      ns = buf;
       buf += ns_len;
 
       // id

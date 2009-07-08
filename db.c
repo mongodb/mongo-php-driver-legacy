@@ -118,7 +118,6 @@ PHP_METHOD(MongoDB, getGridFS) {
   PUSH_EO_PARAM();
   MONGO_METHOD(MongoGridFS, __construct)(ZEND_NUM_ARGS()+1, &temp, NULL, return_value, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
-
   POP_PARAM(); POP_PARAM();
 
   if (arg1) {
@@ -143,7 +142,7 @@ PHP_METHOD(MongoDB, getProfilingLevel) {
 
 PHP_METHOD(MongoDB, setProfilingLevel) {
   long level;
-  zval *data, *cmd_return, *cmd_ptr;
+  zval *data, *cmd_return;
   zval **ok;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &level) == FAILURE) {

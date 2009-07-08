@@ -75,7 +75,7 @@ int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_
   zval str;
   MONGO_METHOD(MongoId, __toString)(0, &str, NULL, struc, 0 TSRMLS_CC);
   *(serialized_length) = Z_STRLEN(str);
-  *(serialized_data) = Z_STRVAL(str);
+  *(serialized_data) = (unsigned char*)Z_STRVAL(str);
   return SUCCESS;
 }
 
@@ -85,7 +85,7 @@ int mongo_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned
 
   Z_TYPE(str) = IS_STRING;
   Z_STRLEN(str) = 24;
-  Z_STRVAL(str) = estrndup(p, 24);
+  Z_STRVAL(str) = estrndup((char*)p, 24);
 
   object_init_ex(*rval, mongo_ce_Id);
 

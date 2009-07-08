@@ -38,7 +38,7 @@
 #define BSON_CODE 15
 #define BSON_INT 16
 #define BSON_TIMESTAMP 17
-#define BSON_MINKEY 255
+#define BSON_MINKEY -1
 #define BSON_MAXKEY 127
 
 #define GROW_SLOWLY 1048576
@@ -61,6 +61,6 @@ inline void serialize_bytes(buffer*, char*, int);
 int resize_buf(buffer*, int);
 
 int zval_to_bson(buffer*, zval*, int TSRMLS_DC);
-unsigned char* bson_to_zval(unsigned char*, zval* TSRMLS_DC);
+char* bson_to_zval(char*, zval* TSRMLS_DC);
 
 #endif
