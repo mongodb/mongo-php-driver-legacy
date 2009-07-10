@@ -51,7 +51,8 @@ PHP_METHOD(MongoCollection, __construct) {
   }
   convert_to_string(name);
 
-  if (strchr(Z_STRVAL_P(name), '$')) {
+  if (strchr(Z_STRVAL_P(name), '$') != 0 &&
+      strchr(Z_STRVAL_P(name), '$') != Z_STRVAL_P(name)) {
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoCollection::__construct(): collection names cannot contain '$'", 0 TSRMLS_CC);
     return;
   }
