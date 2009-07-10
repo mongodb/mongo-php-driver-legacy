@@ -43,7 +43,8 @@
 #include "mongo_types.h"
 #include "bson.h"
 
-extern zend_class_entry *mongo_ce_DB;
+extern zend_class_entry *mongo_ce_DB, 
+  *mongo_ce_Cursor;
 
 static void mongo_link_dtor(mongo_link*);
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int);
@@ -174,19 +175,23 @@ static void mongo_link_dtor(mongo_link *link) {
 #else
         close(link->server.single.socket);
 #endif
+        link->server.single.socket = -1;
       }
 
       // free strings
       if (link->server.single.host) {
         pefree(link->server.single.host, link->persist);
+        link->server.single.host = 0;
       }
     }
 
     if (link->username) {
       pefree(link->username, link->persist);
+      link->username = 0;
     }
     if (link->password) {
       pefree(link->password, link->persist);
+      link->password = 0;
     }
 
     // free connection
@@ -203,6 +208,7 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   }
   // decrement the total number of links
   MonGlo(num_links)--;
+  rsrc->ptr = 0;
 }
 
 
@@ -906,108 +912,12 @@ PHP_METHOD(Mongo, forceError) {
 /* }}} */
 
 
-
-mongo_cursor* mongo_do_query(mongo_link *link, char *collection, int skip, int limit, zval *zquery, zval *zfields TSRMLS_DC) {
-  int sent;
-  mongo_cursor *cursor;
-  mongo_msg_header header;
-
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
-  CREATE_HEADER(buf, collection, strlen(collection), OP_QUERY);
-
-  serialize_int(&buf, skip);
-  serialize_int(&buf, limit);
-
-  zval_to_bson(&buf, zquery, NO_PREP TSRMLS_CC);
-  if (zfields && zend_hash_num_elements(Z_ARRVAL_P(zfields)) > 0) {
-    zval_to_bson(&buf, zfields, NO_PREP TSRMLS_CC);
-  }
-
-  serialize_size(buf.start, &buf);
-  // sends
-  sent = mongo_say(link, &buf TSRMLS_CC);
-  efree(buf.start);
-  if (sent == FAILURE) {
-    zend_error(E_WARNING, "couldn't send query\n");
-    return 0;
-  }
-
-  cursor = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
-  memset(cursor, 0, sizeof(mongo_cursor));
-  cursor->link = link;
-  cursor->ns = estrdup(collection);
-
-  get_reply(cursor TSRMLS_CC);
-
-  cursor->limit = limit;
-  return cursor;
-}
-
-
-int mongo_do_has_next(mongo_cursor *cursor TSRMLS_DC) {
-  mongo_msg_header header;
-  buffer buf;
-  int size = 34+strlen(cursor->ns);
-
-  if (cursor->num == 0) {
-    return 0;
-  }
-  if (cursor->at < cursor->num) {
-    return 1;
-  }
-
-  buf.start = (unsigned char*)emalloc(size);
-  buf.pos = buf.start;
-  buf.end = buf.start + size;
-
-  CREATE_RESPONSE_HEADER(buf, cursor->ns, strlen(cursor->ns), cursor->header.request_id, OP_GET_MORE);
-  serialize_int(&buf, cursor->limit);
-  serialize_long(&buf, cursor->cursor_id);
-  serialize_size(buf.start, &buf);
-
-  // fails if we're out of elems
-  if(mongo_say(cursor->link, &buf TSRMLS_CC) == FAILURE) {
-    efree(buf.start);
-    return 0;
-  }
-
-  efree(buf.start);
-
-  // if we have cursor->at == cursor->num && recv fails,
-  // we're probably just out of results
-  return (get_reply(cursor TSRMLS_CC) == SUCCESS);
-}
-
-
-zval* mongo_do_next(mongo_cursor *cursor TSRMLS_DC) {
-  zval *elem = 0;
-
-  if (cursor->at >= cursor->num) {
-    // check for more results
-    if (!mongo_do_has_next(cursor TSRMLS_CC)) {
-      // we're out of results
-      return 0;
-    }
-    // we got more results
-  }
-
-  if (cursor->at < cursor->num) {
-    MAKE_STD_ZVAL(elem);
-    array_init(elem);
-    cursor->buf.pos = bson_to_zval(cursor->buf.pos, elem TSRMLS_CC);
-
-    // increment cursor position
-    cursor->at++;
-  }
-  return elem;
-}
-
-
 static int get_master(mongo_link *link TSRMLS_DC) {
-  zval *is_master, *response;
-  mongo_link temp;
-  mongo_cursor *c;
+  zval temp_ret, response;
+  zval *cursor_zval, *query, *is_master;
   zval **ans;
+  mongo_link temp;
+  mongo_cursor *cursor;
 
   if (!link->paired) {
     return link->server.single.socket;
@@ -1022,49 +932,58 @@ static int get_master(mongo_link *link TSRMLS_DC) {
     return link->server.paired.rsocket;
   }
 
+  MAKE_STD_ZVAL(cursor_zval);
+  object_init_ex(cursor_zval, mongo_ce_Cursor);
+  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
+
   // redetermine master
-  ALLOC_INIT_ZVAL(is_master);
+  MAKE_STD_ZVAL(query);
+  array_init(query);
+  MAKE_STD_ZVAL(is_master);
   array_init(is_master);
   add_assoc_long(is_master, "ismaster", 1);
+  add_assoc_zval(query, "query", is_master);
+
+  cursor->ns = estrdup("admin.$cmd");
+  cursor->query = query;
+  cursor->fields = 0;
+  cursor->limit = -1;
+  cursor->skip = 0;
+  cursor->opts = 0;
 
   temp.paired = 0;
-  temp.server.single.socket = link->server.paired.lsocket;
-
   // check the left
-  c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
+  temp.server.single.socket = link->server.paired.lsocket;
+  cursor->link = &temp;
 
-  if ((response = mongo_do_next(c TSRMLS_CC)) != NULL) {
-    if (zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
-        Z_LVAL_PP(ans) == 1) {
-      zval_ptr_dtor(&is_master);
-      mongo_mongo_cursor_free(c TSRMLS_CC);
-      zval_ptr_dtor(&response);
-      return link->master = link->server.paired.lsocket;
-    }
+  // need to call this after setting cursor->link
+  // reset checks that cursor->link != 0
+  MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
+
+  MONGO_METHOD(MongoCursor, getNext)(0, &response, NULL, cursor_zval, 0 TSRMLS_CC);
+  if (Z_TYPE(response) == IS_ARRAY &&
+      zend_hash_find(Z_ARRVAL(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
+      Z_LVAL_PP(ans) == 1) {
+    zval_ptr_dtor(&cursor_zval);
+    zval_ptr_dtor(&query);
+    return link->master = link->server.paired.lsocket;
   }
-  // cleanup
-  mongo_mongo_cursor_free(c TSRMLS_CC);
-  zval_ptr_dtor(&response);
 
   // check the right
   temp.server.single.socket = link->server.paired.rsocket;
+  cursor->link = &temp;
 
-  c = mongo_do_query(&temp, "admin.$cmd", 0, -1, is_master, 0 TSRMLS_CC);
-
-  if ((response = mongo_do_next(c TSRMLS_CC)) != NULL) {
-    if (zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
-        Z_LVAL_PP(ans) == 1) {
-      zval_ptr_dtor(&is_master);
-      mongo_mongo_cursor_free(c TSRMLS_CC);
-      zval_ptr_dtor(&response);
-      return link->master = link->server.paired.rsocket;
-    }
+  MONGO_METHOD(MongoCursor, getNext)(0, &response, NULL, cursor_zval, 0 TSRMLS_CC);
+  if (Z_TYPE(response) == IS_ARRAY &&
+      zend_hash_find(Z_ARRVAL(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
+      Z_LVAL_PP(ans) == 1) {
+    zval_ptr_dtor(&cursor_zval);
+    zval_ptr_dtor(&query);
+    return link->master = link->server.paired.rsocket;
   }
 
-  // give up
-  mongo_mongo_cursor_free(c TSRMLS_CC);
-  zval_ptr_dtor(&response);
-  zval_ptr_dtor(&is_master);
+  zval_ptr_dtor(&query);
+  zval_ptr_dtor(&cursor_zval);
   return FAILURE;
 }
 

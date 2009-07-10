@@ -75,7 +75,7 @@ int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_
   zval str;
   MONGO_METHOD(MongoId, __toString)(0, &str, NULL, struc, 0 TSRMLS_CC);
   *(serialized_length) = Z_STRLEN(str);
-  *(serialized_data) = Z_STRVAL(str);
+  *(serialized_data) = (unsigned char*)Z_STRVAL(str);
   return SUCCESS;
 }
 
@@ -85,7 +85,7 @@ int mongo_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned
 
   Z_TYPE(str) = IS_STRING;
   Z_STRLEN(str) = 24;
-  Z_STRVAL(str) = estrndup(p, 24);
+  Z_STRVAL(str) = estrndup((char*)p, 24);
 
   object_init_ex(*rval, mongo_ce_Id);
 
@@ -247,15 +247,6 @@ PHP_METHOD(MongoDate, __construct) {
     add_property_long(getThis(), "sec", Z_LVAL_P(arg));
     add_property_long(getThis(), "usec", usec);      
   }
-#if ZEND_MODULE_API_NO < 20090115 && ! defined(WIN32)
-  else if (Z_TYPE_P(arg) == IS_STRING) {
-    // use PHP's ext/date's strtotime() to parse time string
-    ZEND_FN(strtotime)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-
-    add_property_long(getThis(), "sec", Z_LVAL_P(return_value));
-    add_property_long(getThis(), "usec", 0);
-  }
-#endif /* ZEND_MODULE_API_NO < 20090115 && ! defined(WIN32) */
   else {
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoDate::__construct()", 0 TSRMLS_CC);
   }

@@ -99,7 +99,7 @@ PHP_METHOD(MongoGridFS, __construct) {
   object_init_ex(zchunks, mongo_ce_Collection);
 
   PUSH_PARAM(zdb); PUSH_PARAM(chunks); PUSH_PARAM((void*)2);
-  PUSH_EO_PARAM();
+  PUSH_EO_PARAM(); 
   MONGO_METHOD(MongoCollection, __construct)(2, return_value, return_value_ptr, zchunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM(); 
@@ -254,7 +254,6 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC) {
 PHP_METHOD(MongoGridFS, storeBytes) {
   char *bytes = 0;
   int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, pos = 0;
-  zend_bool created_date = 0, created_id = 0;
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0;
@@ -282,8 +281,6 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   // insert chunks
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   while (pos < bytes_len) {
-    zval *zchunk, *zbin;
-
     chunk_size = bytes_len-pos >= global_chunk_size ? global_chunk_size : bytes_len-pos;
 
     insert_chunk(chunks, zid, chunk_num, bytes+pos, chunk_size TSRMLS_CC);
@@ -333,6 +330,8 @@ static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC) {
   if (!zend_hash_exists(Z_ARRVAL_P(zfile), "length", strlen("length")+1)) {
     add_assoc_long(zfile, "length", size);
   }
+
+  return SUCCESS;
 }
 
 /* Creates a chunk and adds it to the chunks collection as:
@@ -376,6 +375,8 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
     
   // increment counters
   zval_ptr_dtor(&zchunk); // zid->refcount = 1
+
+  return SUCCESS;
 }
 
 
@@ -385,8 +386,8 @@ PHP_METHOD(MongoGridFS, storeFile) {
   FILE *fp = 0;
 
   zval temp;
-  zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *upload_date = 0;
-  zval **zzid = 0, **md5 = 0;
+  zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0;
+  zval **md5 = 0;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
@@ -415,7 +416,6 @@ PHP_METHOD(MongoGridFS, storeFile) {
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   while (pos < size) {
     char *buf;
-    zval *zchunk, *zbin;
 
     chunk_size = size-pos >= global_chunk_size ? global_chunk_size : size-pos;
     buf = (char*)emalloc(chunk_size); 

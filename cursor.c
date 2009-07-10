@@ -120,6 +120,7 @@ PHP_METHOD(MongoCursor, __construct) {
 
   cursor->at = 0;
   cursor->num = 0;
+  cursor->opts = 0;
 
   // get rid of extra ref
   zval_ptr_dtor(&empty_array);
@@ -129,6 +130,9 @@ PHP_METHOD(MongoCursor, __construct) {
 /* {{{ MongoCursor::hasNext
  */
 PHP_METHOD(MongoCursor, hasNext) {
+  mongo_msg_header header;
+  buffer buf;
+  int size;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
@@ -137,11 +141,36 @@ PHP_METHOD(MongoCursor, hasNext) {
     cursor->started_iterating = 1;
   }
 
-  if (cursor->limit > 0 && cursor->at >= cursor->limit) {
+  if ((cursor->limit > 0 && cursor->at >= cursor->limit) || 
+      cursor->num == 0) {
+    RETURN_FALSE;
+  }
+  if (cursor->at < cursor->num) {
+    RETURN_TRUE;
+  }
+
+  // we have to go and check with the db
+  size = 34+strlen(cursor->ns);
+  buf.start = (unsigned char*)emalloc(size);
+  buf.pos = buf.start;
+  buf.end = buf.start + size;
+
+  CREATE_RESPONSE_HEADER(buf, cursor->ns, strlen(cursor->ns), cursor->header.request_id, OP_GET_MORE);
+  serialize_int(&buf, cursor->limit);
+  serialize_long(&buf, cursor->cursor_id);
+  serialize_size(buf.start, &buf);
+
+  // fails if we're out of elems
+  if(mongo_say(cursor->link, &buf TSRMLS_CC) == FAILURE) {
+    efree(buf.start);
     RETURN_FALSE;
   }
 
-  RETURN_BOOL(mongo_do_has_next(cursor TSRMLS_CC));
+  efree(buf.start);
+
+  // if we have cursor->at == cursor->num && recv fails,
+  // we're probably just out of results
+  RETURN_BOOL(get_reply(cursor TSRMLS_CC) == SUCCESS);
 }
 /* }}} */
 
@@ -156,22 +185,14 @@ PHP_METHOD(MongoCursor, getNext) {
 /* {{{ MongoCursor::limit
  */
 PHP_METHOD(MongoCursor, limit) {
-  zval *znum;
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  preiteration_setup;
 
-  if (cursor->started_iterating) {
-    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
     return;
   }
+  convert_to_long(z);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &znum) == FAILURE) {
-    return;
-  }
-  convert_to_long(znum);
-
-  cursor->limit = Z_LVAL_P(znum);
-
+  cursor->limit = Z_LVAL_P(z);
   RETVAL_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
@@ -179,25 +200,48 @@ PHP_METHOD(MongoCursor, limit) {
 /* {{{ MongoCursor::skip
  */
 PHP_METHOD(MongoCursor, skip) {
-  zval *znum;
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  preiteration_setup;
 
-  if (cursor->started_iterating) {
-    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
     return;
   }
+  convert_to_long(z);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &znum) == FAILURE) {
-    return;
-  }
-  convert_to_long(znum);
-
-  cursor->skip = Z_LVAL_P(znum);
-
+  cursor->skip = Z_LVAL_P(z);
   RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
+
+
+/* {{{ MongoCursor::tailable
+ */
+PHP_METHOD(MongoCursor, tailable) {
+  preiteration_setup;
+  default_to_true(1);
+  RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
+
+/* {{{ MongoCursor::slaveOkay
+ */
+PHP_METHOD(MongoCursor, slaveOkay) {
+  preiteration_setup;
+  default_to_true(2);
+  RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
+
+/* {{{ MongoCursor::logReplay
+ */
+PHP_METHOD(MongoCursor, logReplay) {
+  preiteration_setup;
+  default_to_true(3);
+  RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
 
 /* {{{ MongoCursor->sort
  */
@@ -275,7 +319,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
-  CREATE_HEADER(buf, cursor->ns, strlen(cursor->ns), OP_QUERY);
+  CREATE_HEADER_WITH_OPTS(buf, cursor->ns, OP_QUERY, cursor->opts);
 
   serialize_int(&buf, cursor->skip);
   serialize_int(&buf, cursor->limit);
@@ -338,6 +382,7 @@ PHP_METHOD(MongoCursor, key) {
 /* {{{ MongoCursor->next
  */
 PHP_METHOD(MongoCursor, next) {
+  zval has_next;
   mongo_cursor *cursor;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -354,24 +399,18 @@ PHP_METHOD(MongoCursor, next) {
     cursor->current = 0;
   }
 
-  // check limits
-  if (cursor->limit > 0 && cursor->at >= cursor->limit) {
+  // check for results
+  MONGO_METHOD(MongoCursor, hasNext)(0, &has_next, NULL, getThis(), 0 TSRMLS_CC);
+  if (!Z_BVAL(has_next)) {
+    // we're out of results
     RETURN_NULL();
-  }
-
-  if (cursor->at >= cursor->num) {
-    // check for more results
-    if (!mongo_do_has_next(cursor TSRMLS_CC)) {
-      // we're out of results
-      RETURN_NULL();
-    }
   }
 
   // we got more results
   if (cursor->at < cursor->num) {
     MAKE_STD_ZVAL(cursor->current);
     array_init(cursor->current);
-    cursor->buf.pos = (unsigned char*)bson_to_zval(cursor->buf.pos, cursor->current TSRMLS_CC);
+    cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, cursor->current TSRMLS_CC);
 
     // increment cursor position
     cursor->at++;
@@ -492,6 +531,9 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, getNext, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, limit, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, logReplay, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC) 
   PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
@@ -545,7 +587,7 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
 
   // std header
   CREATE_MSG_HEADER(MonGlo(request_id)++, 0, OP_KILL_CURSORS);
-  APPEND_HEADER(buf);
+  APPEND_HEADER(buf, 0);
 
   // # of cursors
   serialize_int(&buf, 1);

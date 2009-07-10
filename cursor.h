@@ -25,6 +25,9 @@ PHP_METHOD(MongoCursor, getNext);
 PHP_METHOD(MongoCursor, hasNext);
 PHP_METHOD(MongoCursor, limit);
 PHP_METHOD(MongoCursor, skip);
+PHP_METHOD(MongoCursor, slaveOkay);
+PHP_METHOD(MongoCursor, tailable);
+PHP_METHOD(MongoCursor, logReplay);
 PHP_METHOD(MongoCursor, sort);
 PHP_METHOD(MongoCursor, hint);
 PHP_METHOD(MongoCursor, explain);
@@ -36,5 +39,32 @@ PHP_METHOD(MongoCursor, rewind);
 PHP_METHOD(MongoCursor, valid);
 PHP_METHOD(MongoCursor, reset);
 PHP_METHOD(MongoCursor, count);
+
+#define preiteration_setup   zval *z = 0;                               \
+  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC); \
+  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);                   \
+                                                                        \
+  if (cursor->started_iterating) {                                      \
+    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC); \
+    return;                                                             \
+  }
+
+#define default_to_true(bit)                                            \
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &z) == FAILURE) { \
+    return;                                                             \
+  }                                                                     \
+                                                                        \
+  if (!z) {                                                             \
+    cursor->opts |= 1 << bit;                                           \
+  }                                                                     \
+  else {                                                                \
+    convert_to_boolean(z);                                              \
+    if (Z_BVAL_P(z)) {                                                  \
+      cursor->opts |= 1 << bit;                                         \
+    } else {                                                            \
+      cursor->opts &= !(1 << bit);                                      \
+    }                                                                   \
+  }
+
 
 #endif
