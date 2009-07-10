@@ -130,6 +130,9 @@ PHP_METHOD(MongoCursor, __construct) {
 /* {{{ MongoCursor::hasNext
  */
 PHP_METHOD(MongoCursor, hasNext) {
+  mongo_msg_header header;
+  buffer buf;
+  int size;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
@@ -138,11 +141,36 @@ PHP_METHOD(MongoCursor, hasNext) {
     cursor->started_iterating = 1;
   }
 
-  if (cursor->limit > 0 && cursor->at >= cursor->limit) {
+  if ((cursor->limit > 0 && cursor->at >= cursor->limit) || 
+      cursor->num == 0) {
+    RETURN_FALSE;
+  }
+  if (cursor->at < cursor->num) {
+    RETURN_TRUE;
+  }
+
+  // we have to go and check with the db
+  size = 34+strlen(cursor->ns);
+  buf.start = (unsigned char*)emalloc(size);
+  buf.pos = buf.start;
+  buf.end = buf.start + size;
+
+  CREATE_RESPONSE_HEADER(buf, cursor->ns, strlen(cursor->ns), cursor->header.request_id, OP_GET_MORE);
+  serialize_int(&buf, cursor->limit);
+  serialize_long(&buf, cursor->cursor_id);
+  serialize_size(buf.start, &buf);
+
+  // fails if we're out of elems
+  if(mongo_say(cursor->link, &buf TSRMLS_CC) == FAILURE) {
+    efree(buf.start);
     RETURN_FALSE;
   }
 
-  RETURN_BOOL(mongo_do_has_next(cursor TSRMLS_CC));
+  efree(buf.start);
+
+  // if we have cursor->at == cursor->num && recv fails,
+  // we're probably just out of results
+  RETURN_BOOL(get_reply(cursor TSRMLS_CC) == SUCCESS);
 }
 /* }}} */
 
@@ -354,6 +382,7 @@ PHP_METHOD(MongoCursor, key) {
 /* {{{ MongoCursor->next
  */
 PHP_METHOD(MongoCursor, next) {
+  zval has_next;
   mongo_cursor *cursor;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -370,17 +399,11 @@ PHP_METHOD(MongoCursor, next) {
     cursor->current = 0;
   }
 
-  // check limits
-  if (cursor->limit > 0 && cursor->at >= cursor->limit) {
+  // check for results
+  MONGO_METHOD(MongoCursor, hasNext)(0, &has_next, NULL, getThis(), 0 TSRMLS_CC);
+  if (!Z_BVAL(has_next)) {
+    // we're out of results
     RETURN_NULL();
-  }
-
-  if (cursor->at >= cursor->num) {
-    // check for more results
-    if (!mongo_do_has_next(cursor TSRMLS_CC)) {
-      // we're out of results
-      RETURN_NULL();
-    }
   }
 
   // we got more results

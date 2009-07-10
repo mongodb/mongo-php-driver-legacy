@@ -90,7 +90,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
      */
     public function testSelectCollectionException1()
     {
-        $this->object->selectCollection('$');
+        $this->object->selectCollection('#$');
     }
 
     public function testSelectCollection() {

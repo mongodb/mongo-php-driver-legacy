@@ -320,10 +320,6 @@ ZEND_END_MODULE_GLOBALS(mongo)
 # define MonGlo(v) (mongo_globals.v)
 #endif 
 
-mongo_cursor* mongo_do_query(mongo_link*, char*, int, int, zval*, zval* TSRMLS_DC);
-int mongo_do_has_next(mongo_cursor* TSRMLS_DC);
-zval* mongo_do_next(mongo_cursor* TSRMLS_DC);
-
 extern zend_module_entry mongo_module_entry;
 #define phpext_mongo_ptr &mongo_module_entry
 
