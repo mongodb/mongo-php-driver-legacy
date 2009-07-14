@@ -40,21 +40,21 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException InvalidArgumentException
+     * @expectedException MongoConnectionException
      */
     public function testDumbIPs1() {
 	$m = new Mongo(",");
     }
 
     /**
-     * @expectedException InvalidArgumentException
+     * @expectedException MongoConnectionException 
      */
     public function testDumbIPs2() {
 	$m = new Mongo(":,:");
     }
 
     /**
-     * @expectedException InvalidArgumentException
+     * @expectedException MongoConnectionException
      */
     public function testDumbIPs3() {
 	$m = new Mongo("x:x");

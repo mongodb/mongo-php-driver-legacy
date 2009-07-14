@@ -183,5 +183,29 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $cursor->limit(2);
         $this->assertEquals(2, $cursor->count());
     }
+
+    public function cursorConversion() {
+        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $c->drop();
+
+        for($i=0; $i < 10; $i++) {
+            $c->insert(array('foo'=>'bar'));
+        }
+
+	$cursor = $c->find();
+	foreach ($cursor as $k=>$v) {
+	    $this->assertTrue(is_string($k));
+	    $this->assertTrue($v['_id'] instanceof MongoId);
+	}
+
+	$c->remove();
+	$c->insert(array("_id" => 20));
+
+	$cursor = $c->find();
+	$cursor->next();
+	$this->assertTrue(is_string($cursor->key()));
+	$v = $cursor->current();
+	$this->assertTrue(is_int($v['_id']));
+    }
 }
 ?>
