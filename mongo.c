@@ -53,7 +53,9 @@ static int check_connection(mongo_link* TSRMLS_DC);
 static int mongo_connect_nonb(int, char*, int);
 static int mongo_do_socket_connect(mongo_link* TSRMLS_DC);
 static int mongo_get_sockaddr(struct sockaddr_in*, char*, int);
-static void get_host_and_port(char*, mongo_link* TSRMLS_DC);
+static char* getHost(char*, int);
+static int getPort(char*);
+static int get_host_and_port(char*, mongo_link* TSRMLS_DC);
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
 zend_object_handlers mongo_default_handlers;
@@ -251,17 +253,7 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_default_handlers.clone_obj = NULL;
 
   // start random number generator
-#ifdef WIN32
   srand(time(0));
-#else
-  uint seed;
-  FILE *rand = fopen("/dev/urandom", "rb");
-  char *seed_ptr = (char*)(void*)&seed;
-  fgets(seed_ptr, sizeof(uint), rand);
-  fclose(rand);
-
-  srand(seed);
-#endif
 
   return SUCCESS;
 }
@@ -564,8 +556,16 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   link->paired = Z_BVAL_P(pair);
   link->persist = Z_BVAL_P(persist);
 
-  get_host_and_port(Z_STRVAL_P(server), link TSRMLS_CC);
-  if (mongo_do_socket_connect(link TSRMLS_CC) == FAILURE) {
+  if (link->paired) {
+    link->server.paired.left = 0;
+    link->server.paired.right = 0;
+  }
+  else {
+    link->server.single.host = 0;
+  }
+
+  if (get_host_and_port(Z_STRVAL_P(server), link TSRMLS_CC) == FAILURE ||
+      mongo_do_socket_connect(link TSRMLS_CC) == FAILURE) {
     mongo_link_dtor(link);
     return;
   }
@@ -603,23 +603,79 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   MonGlo(num_links)++;
 }
 
-static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
+static char* getHost(char *ip, int persist) {
+  char *colon = strchr(ip, ':');
+
+  if (colon) {
+    if (colon - ip > 1 && 
+	colon -ip < 256) {
+      int len = colon-ip;
+      return persist ? 
+	zend_strndup(ip, len) :
+	estrndup(ip, len);
+    }
+    else {
+      return 0;
+    }
+  }
+  return pestrdup(ip, persist);
+}
+
+static int getPort(char *ip) {
+  char *colon = strchr(ip, ':');
+
+  if (colon && colon[1]) {
+    int i;
+
+    colon++;
+
+    // make sure the port is actually a number
+    for (i = 0; i < (ip+strlen(ip)) - colon; i++) {
+      if (colon[i] < '0' ||
+	  colon[i] > '9') {
+	return 0;
+      }
+    }
+
+    return atoi(colon);
+  }
+  return 27017;
+}
+
+static int get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
   char *colon, *host, *comma;
-  int port, host_len;
+  int port;
 
   // extract host:port
-  colon = strchr(server, ':');
-  if (colon) {
-    host_len = colon-server+1;
-    host = (char*)pemalloc(host_len, link->persist);
-    memcpy(host, server, host_len-1);
-    host[host_len-1] = 0;
-    port = atoi(colon+1);
+  comma = strchr(server, ',');
+
+  // two-part ip
+  if (comma) {
+    char *ip1;
+
+    ip1 = estrndup(server, comma-server);
+
+    if ((host = getHost(ip1, link->persist)) == 0 ||
+	(port = getPort(ip1)) == 0) {
+      if (host) {
+	efree(host);
+      }
+      efree(ip1);
+      return FAILURE;
+    }
+
+    efree(ip1);
   }
   else {
-    host = estrdup(server);
-    port = 27017;
+    if ((host = getHost(server, link->persist)) == 0 ||
+	(port = getPort(server)) == 0) {
+      if (host) {
+	efree(host);
+      }
+      return FAILURE;
+    }
   }
+
 
   if (link->paired) {
 
@@ -629,22 +685,22 @@ static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
 
     // we get a string: host1:123,host2:456
     comma = strchr(server, ',');
-    comma++;
-    colon = strchr(comma, ':');
-
-    // check that length is sane
-    if (colon &&
-        colon - comma > 0 &&
-        colon - comma < 256) {
-      host_len = colon-comma + 1;
-      host = link->persist ?
-        zend_strndup(comma, host_len-1) :
-        estrndup(comma, host_len-1);
-      port = atoi(colon + 1);
+    if (!comma) {
+      // make sure the right hostname won't be 
+      // cleaned up, as it wasn't set
+      link->server.paired.right = 0;
+      return FAILURE;
     }
-    else {
-      host = pestrdup(comma, link->persist);
-      port = 27017;
+
+    // get to host2:456
+    comma++;
+
+    if ((host = getHost(comma, link->persist)) == 0 ||
+	(port = getPort(comma)) == 0) {
+      if (host) {
+	efree(host);
+      }
+      return FAILURE;
     }
 
     link->server.paired.right = host;
@@ -654,6 +710,8 @@ static void get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
     link->server.single.host = host;
     link->server.single.port = port;
   }
+
+  return SUCCESS;
 }
 
 /* {{{ Mongo->close()
@@ -1018,13 +1076,15 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   recv(sock, &cursor->start, INT_32, FLAGS);
   recv(sock, &num_returned, INT_32, FLAGS);
 #else
-  read(sock, &cursor->header.request_id, INT_32);
-  read(sock, &cursor->header.response_to, INT_32);
-  read(sock, &cursor->header.op, INT_32);
-  read(sock, &cursor->flag, INT_32);
-  read(sock, &cursor->cursor_id, INT_64);
-  read(sock, &cursor->start, INT_32);
-  read(sock, &num_returned, INT_32);
+  if (read(sock, &cursor->header.request_id, INT_32) == FAILURE ||
+      read(sock, &cursor->header.response_to, INT_32) == FAILURE ||
+      read(sock, &cursor->header.op, INT_32) == FAILURE ||
+      read(sock, &cursor->flag, INT_32) == FAILURE ||
+      read(sock, &cursor->cursor_id, INT_64) == FAILURE ||
+      read(sock, &cursor->start, INT_32) == FAILURE ||
+      read(sock, &num_returned, INT_32) == FAILURE) {
+    return FAILURE;
+  }
 #endif
 
   // create buf

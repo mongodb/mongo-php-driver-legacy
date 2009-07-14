@@ -40,6 +40,35 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testDumbIPs1() {
+	$m = new Mongo(",");
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testDumbIPs2() {
+	$m = new Mongo(":,:");
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testDumbIPs3() {
+	$m = new Mongo("x:x");
+    }
+
+    // these should actually work, though
+    public function testDumbIPs4() {
+	$m = new Mongo("localhost:");
+	$m = new Mongo("localhost,localhost");
+	$m = new Mongo("localhost,localhost:27");
+	$m = new Mongo("localhost:27017,localhost:27018,");
+    }
+
+    /**
      * @todo Implement testPairConnect().
      */
     public function testPairConnect() {
