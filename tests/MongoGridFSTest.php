@@ -199,6 +199,13 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(0, ord(substr($b, 7)));
 
     }
+
+    public function testGetBigBytes() {
+      $str1 = file_get_contents("tests/Formelsamling.pdf");
+      $id = $this->object->storeFile("tests/Formelsamling.pdf");
+      $str2 = $this->object->findOne(array('_id' => $id2))->getBytes();
+      $this->assertEquals($str1, $str2);
+    }
 }
 
 ?>
