@@ -839,28 +839,29 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   else { // if Z_TYPE_PP(size) == IS_LONG
     len = Z_LVAL_PP(size);
   }
-  str = (char*)emalloc(len + 1);
 
   zval_ptr_dtor(&query);
   zval_ptr_dtor(&sort);
+
+  str = (char*)emalloc(len + 1);
   str_ptr = str;
 
-  if (apply_to_cursor(cursor, copy_bytes, str TSRMLS_CC) == FAILURE) {
+  if (apply_to_cursor(cursor, copy_bytes, &str TSRMLS_CC) == FAILURE) {
     zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
   }
 
   zval_ptr_dtor(&cursor);
 
-  str[len] = '\0';
+  str_ptr[len] = '\0';
 
   RETURN_STRINGL(str_ptr, Z_LVAL_PP(size), 0);
 }
 
 static int copy_bytes(void *to, char *from, int len) {
-  char *winIsDumb = (char*)to;
+  char *winIsDumb = *(char**)to;
   memcpy(winIsDumb, from, len);
   winIsDumb += len;
-  to = (void*)winIsDumb;
+  *((char**)to) = (void*)winIsDumb;
 
   return len;
 }
