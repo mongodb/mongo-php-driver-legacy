@@ -78,14 +78,20 @@ class MongoTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    /**
-     * @todo Implement testPersistConnect().
-     */
     public function testPersistConnect() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
+      $m1 = new Mongo("localhost:27017", false);
+      $m1->persistConnect("", "");
+
+      $m2 = new Mongo("localhost:27017", false);
+      $m2->persistConnect("", "");
+
+      // TODO: check numLinks == numPersistentLinks
+
+      // make sure this doesn't disconnect $m2      
+      unset($m1);
+      
+      $c = $m2->selectCollection("foo","bar");
+      $c->findOne();
     }
 
     /**

@@ -428,38 +428,18 @@ PHP_METHOD(Mongo, pairConnect) {
 /* {{{ Mongo->persistConnect
  */
 PHP_METHOD(Mongo, persistConnect) {
-  zval *zusername, *zpassword;
-
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &zusername, &zpassword) == FAILURE) {
-    return;
-  }
-
-  PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
-  PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 /* {{{ Mongo->pairPersistConnect
  */
 PHP_METHOD(Mongo, pairPersistConnect) {
-  zval *zusername, *zpassword;
-
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &zusername, &zpassword) == FAILURE) {
-    return;
-  }
-
-  PUSH_PARAM(&zusername); PUSH_PARAM(&zpassword); PUSH_PARAM((void*)2);
-  PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM();
 }
 
 
@@ -494,7 +474,6 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   zval *username, *password, *server, *pair, *persist;
   mongo_link *link;
   zend_rsrc_list_entry new_le;
-  zend_rsrc_list_entry *le;
   char *key;
   int key_len;
 
@@ -506,6 +485,10 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
 
   pair = zend_read_property(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), NOISY TSRMLS_CC);
   persist = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), NOISY TSRMLS_CC);
+
+  /* 
+   * check connection limits 
+   */
 
   /* make sure that there aren't too many links already */
   if (MonGlo(max_links) > -1 &&
@@ -523,14 +506,20 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
     RETURN_FALSE;
   }
 
-  zend_update_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), return_value TSRMLS_CC);
+  /* 
+   * end of connection limit check
+   */
 
   if (Z_BVAL_P(persist)) {
+    zend_rsrc_list_entry *le;
     key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), Z_STRVAL_P(username), Z_STRVAL_P(password));
     // if a connection is found, return it
     if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
+      zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
+
       link = (mongo_link*)le->ptr;
       ZEND_REGISTER_RESOURCE(return_value, link, le_pconnection);
+      zend_update_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), return_value TSRMLS_CC);
       efree(key);
       return;
     }
@@ -599,6 +588,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy) {
   else {
     ZEND_REGISTER_RESOURCE(return_value, link, le_connection);
   }
+  zend_update_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), return_value TSRMLS_CC);
 
   MonGlo(num_links)++;
 }
