@@ -48,7 +48,7 @@ zend_class_entry *mongo_ce_Cursor = NULL;
  */
 PHP_METHOD(MongoCursor, __construct) {
   HashPosition pointer;
-  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty_array, *q, *fields;
+  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty_array, *q, *fields, *slave_okay;
   zval **data;
   mongo_cursor *cursor;
   mongo_link *link;
@@ -120,7 +120,9 @@ PHP_METHOD(MongoCursor, __construct) {
 
   cursor->at = 0;
   cursor->num = 0;
-  cursor->opts = 0;
+
+  slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
+  cursor->opts = Z_BVAL_P(slave_okay) ? (1 << 2) : 0;
 
   // get rid of extra ref
   zval_ptr_dtor(&empty_array);
@@ -634,5 +636,7 @@ void mongo_init_MongoCursor(TSRMLS_D) {
   ce.create_object = mongo_mongo_cursor_new;
   mongo_ce_Cursor = zend_register_internal_class(&ce TSRMLS_CC);
   zend_class_implements(mongo_ce_Cursor TSRMLS_CC, 1, zend_ce_iterator);
+
+  zend_declare_property_bool(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
 }
 

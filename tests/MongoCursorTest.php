@@ -439,5 +439,11 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $cursor->getNext();
     }
 
+    public function testSlaveOkay2() {
+        $this->assertFalse(MongoCursor::$slaveOkay);
+        MongoCursor::$slaveOkay = true;
+        $this->assertTrue(MongoCursor::$slaveOkay);
+    }
+
 }
 ?>
