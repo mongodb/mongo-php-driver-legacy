@@ -184,7 +184,7 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $this->assertEquals(2, $cursor->count());
     }
 
-    public function cursorConversion() {
+    public function testCursorConversion() {
         $c = $this->sharedFixture->selectCollection('x', 'y');
         $c->drop();
 
@@ -206,6 +206,27 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
 	$this->assertTrue(is_string($cursor->key()));
 	$v = $cursor->current();
 	$this->assertTrue(is_int($v['_id']));
+    }
+
+    public function testCountReturnsInt() {
+      $c = $this->sharedFixture->selectCollection('x', 'y');
+      $c->drop();
+
+      $this->assertTrue(is_int($c->count()));
+      $cursor = $c->find();
+      $this->assertTrue(is_int($cursor->count()));
+
+      for($i=0; $i < 10; $i++) {
+        $c->insert(array('foo'=>'bar'));
+      }
+
+      $cursor = $c->find();
+      $this->assertTrue(is_int($cursor->count()));
+
+      $cursor->limit(4);
+      $this->assertTrue(is_int($cursor->count()));
+
+      $this->assertTrue(is_int($c->count()));
     }
 }
 ?>

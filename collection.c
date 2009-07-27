@@ -579,6 +579,7 @@ PHP_METHOD(MongoCollection, count) {
 
   zval_ptr_dtor(&data);
   if (zend_hash_find(Z_ARRVAL_P(response), "n", 2, (void**)&n) == SUCCESS) {
+    convert_to_long(*n);
     RETVAL_ZVAL(*n, 1, 0);
     zval_ptr_dtor(&response);
   }

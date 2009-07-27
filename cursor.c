@@ -516,9 +516,10 @@ PHP_METHOD(MongoCursor, count) {
   if (zend_hash_find(Z_ARRVAL_P(response), "n", 2, (void**)&n) == SUCCESS) {
     // don't allow count to return more than cursor->limit
     if (cursor->limit > 0 && Z_DVAL_PP(n) > cursor->limit) {
-      RETVAL_DOUBLE(cursor->limit);
+      RETVAL_LONG(cursor->limit);
     }
     else {
+      convert_to_long(*n);
       RETVAL_ZVAL(*n, 1, 0);
     }
     zval_ptr_dtor(&response);
