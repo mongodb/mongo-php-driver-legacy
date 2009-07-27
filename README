@@ -7,21 +7,28 @@ To install:
    $ make
    $ sudo make install
 
-See http://www.mongodb.org/display/DOCS/PHP+Language+Center for information on configuration options and API documentation.
+See http://www.mongodb.org/display/DOCS/PHP+Language+Center for information on configuration options.
 
-This extension is designed to be wrapped by the PHP code that can be downloaded at http://github.com/mongodb/mongo-php-driver/tree/master.  Add $DOWNLOAD_DIR/mongo-php-driver/php to your include path in php.ini.
+= Documentation
+
+See http://us2.php.net/manual/en/book.mongo.php
 
 = Testing
 
 To run the tests:
 
-   $ cd tests/
-   $ phpunit MongoSuite
+   $ phpunit tests/MongoSuite
 
 You can get information about installing and setting up phpunit at http://www.phpunit.de/.
 
+The tests will spit out a bunch of warnings if you do not have mongo-php-driver/php on your include path, but it will just skip the tests that require that.
+
+The tests will also attempt to create an admin user using the shell.  If "mongo" is not on your path, you will get some output complaining about it.
+
 = Credits
 
-Jon Moss (XirisR@gmail.com)
+Jon Moss
 * Came up with the idea and implemented MongoCursor implementing Iterator
 
+Pierre-Alain Joye
+* Helped build the Windows extension

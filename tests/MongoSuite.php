@@ -74,6 +74,10 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
  
     protected function setUp()
     {
+        // paired
+        // $this->sharedFixture = new Mongo('localhost:27017,localhost:27018', true, false, true);
+
+        // normal
         $this->sharedFixture = new Mongo();
 
         $db = $this->sharedFixture->selectDB('phpunit');
