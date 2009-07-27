@@ -38,14 +38,21 @@ function batch($c, $obj)
 
   $c->drop();
 
-  $start = micro_time();
+  $batches = array();
   for($i=0;$i < PER_TRIAL;$i++){
-    $obja = array();
+    $batch = array();
     for($j=0;$j<BATCH_SIZE;$j++){
       $obj["x"]=$i;
-      $obja[] = $obj;
+      $batch[] = $obj;
+      $i++;
     }
-    $c->batchInsert( $obja );
+    $batches[] = $batch;
+  }
+  $num_batches = count($batches);
+
+  $start = micro_time();
+  for($i=0;$i < $num_batches;$i++){
+    $c->batchInsert( $batches[$i] );
   }
   $c->findOne();
   $end = micro_time();
@@ -235,11 +242,11 @@ $large  = array("x" => 0,
                                         "developers","focus","building","mongodb","mongo"
                                         )
              );
-/*
+
 batch($db->selectCollection("small_none"), $small);
 batch($db->selectCollection("medium_none"), $medium);
 batch($db->selectCollection("large_none"), $large);
-*/
+
 none($db->selectCollection("small_none"), $small);
 none($db->selectCollection("medium_none"), $medium);
 none($db->selectCollection("large_none"), $large);
