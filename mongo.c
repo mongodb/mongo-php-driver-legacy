@@ -1019,10 +1019,15 @@ static int get_master(mongo_link *link TSRMLS_DC) {
     return link->master = link->server.paired.lsocket;
   }
 
+  // reset response
+  zval_ptr_dtor(&response);
+  MAKE_STD_ZVAL(response);
+
   // check the right
   temp.server.single.socket = link->server.paired.rsocket;
   cursor->link = &temp;
 
+  MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
   MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
   if (Z_TYPE_P(response) == IS_ARRAY &&
       zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
@@ -1310,7 +1315,10 @@ static int mongo_do_socket_connect(mongo_link *link TSRMLS_DC) {
       return FAILURE;
     }
 
-    get_master(link TSRMLS_CC);
+    if (get_master(link TSRMLS_CC) == FAILURE) {
+      return FAILURE;
+    }
+
     link->server.paired.lconnected = left;
     link->server.paired.rconnected = right;
   }
