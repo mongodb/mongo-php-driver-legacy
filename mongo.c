@@ -961,8 +961,8 @@ PHP_METHOD(Mongo, forceError) {
 
 
 static int get_master(mongo_link *link TSRMLS_DC) {
-  zval temp_ret, response;
-  zval *cursor_zval, *query, *is_master;
+  zval temp_ret;
+  zval *cursor_zval, *query, *is_master, *response;
   zval **ans;
   mongo_link temp;
   mongo_cursor *cursor;
@@ -1008,12 +1008,14 @@ static int get_master(mongo_link *link TSRMLS_DC) {
   // reset checks that cursor->link != 0
   MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
 
-  MONGO_METHOD(MongoCursor, getNext)(0, &response, NULL, cursor_zval, 0 TSRMLS_CC);
-  if (Z_TYPE(response) == IS_ARRAY &&
-      zend_hash_find(Z_ARRVAL(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
+  MAKE_STD_ZVAL(response);
+  MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
+  if (Z_TYPE_P(response) == IS_ARRAY &&
+      zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
       Z_LVAL_PP(ans) == 1) {
     zval_ptr_dtor(&cursor_zval);
     zval_ptr_dtor(&query);
+    zval_ptr_dtor(&response);
     return link->master = link->server.paired.lsocket;
   }
 
@@ -1021,15 +1023,17 @@ static int get_master(mongo_link *link TSRMLS_DC) {
   temp.server.single.socket = link->server.paired.rsocket;
   cursor->link = &temp;
 
-  MONGO_METHOD(MongoCursor, getNext)(0, &response, NULL, cursor_zval, 0 TSRMLS_CC);
-  if (Z_TYPE(response) == IS_ARRAY &&
-      zend_hash_find(Z_ARRVAL(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
+  MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
+  if (Z_TYPE_P(response) == IS_ARRAY &&
+      zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
       Z_LVAL_PP(ans) == 1) {
     zval_ptr_dtor(&cursor_zval);
     zval_ptr_dtor(&query);
+    zval_ptr_dtor(&response);
     return link->master = link->server.paired.rsocket;
   }
 
+  zval_ptr_dtor(&response);
   zval_ptr_dtor(&query);
   zval_ptr_dtor(&cursor_zval);
   return FAILURE;
