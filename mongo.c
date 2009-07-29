@@ -721,8 +721,27 @@ PHP_METHOD(Mongo, close) {
 /* {{{ Mongo->__toString()
  */
 PHP_METHOD(Mongo, __toString) {
-  zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
-  RETURN_ZVAL(server, 1, 0);
+  char *server;
+  mongo_link *link;
+  zval *zlink = zend_read_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), NOISY TSRMLS_CC);
+  zval *zconn = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
+
+  // if we haven't connected yet, there's no link
+  if (!Z_BVAL_P(zconn)) {
+    zval *s = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
+    RETURN_ZVAL(s, 1, 0);
+  }
+
+  // if there is a link, get the real server string
+  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection);
+
+  if (link->paired) {
+    spprintf(&server, 0, "%s:%d,%s:%d", link->server.paired.left, link->server.paired.lport, link->server.paired.right, link->server.paired.rport);
+  }
+  else {
+    spprintf(&server, 0, "%s:%d", link->server.single.host, link->server.single.port);
+  }
+  RETURN_STRING(server, 0);
 }
 /* }}} */
 
