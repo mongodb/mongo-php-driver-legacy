@@ -1,8 +1,8 @@
 PHP_ARG_ENABLE(mongo, whether to enable Mongo extension,
 [  --enable-mongo   Enable Mongo extension])
 
-PHP_ARG_ENABLE(64, whether to compile for 64-bit architecture,
-[  --enable-64   Compile for 64-bit architecture], no, no)
+PHP_ARG_ENABLE(osx, whether to compile for the gaggle of osx architectures,
+[  --enable-osx   Compile for the gaggle of osx architectures], no, no)
 
 if test "$PHP_MONGO" != "no"; then
   AC_DEFINE(HAVE_MONGO, 1, [Whether you have Mongo extension])
@@ -12,8 +12,7 @@ if test "$PHP_MONGO" != "no"; then
   PHP_ADD_EXTENSION_DEP(mongo, spl, false)
 
   if test "$PHP_64" != "no"; then
-    CFLAGS="$CFLAGS -m64"
-    LDFLAGS="$LDFLAGS -m64"
+    CFLAGS="$CFLAGS -arch i386 -arch x86_64 -arch ppc -arch ppc64"
   fi
 fi
 
