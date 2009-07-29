@@ -374,7 +374,11 @@ PHP_METHOD(MongoCursor, key) {
       zend_hash_find(Z_ARRVAL_P(cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
 
     if (Z_TYPE_PP(id) == IS_OBJECT) {
+#if ZEND_MODULE_API_NO >= 20060613
       zend_std_cast_object_tostring(*id, return_value, IS_STRING TSRMLS_CC);
+#else
+      zend_std_cast_object_tostring(*id, return_value, IS_STRING, 0 TSRMLS_CC);
+#endif /* ZEND_MODULE_API_NO >= 20060613 */
     }
     else {
       RETVAL_ZVAL(*id, 1, 0);
