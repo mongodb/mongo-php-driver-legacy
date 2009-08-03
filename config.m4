@@ -11,7 +11,7 @@ if test "$PHP_MONGO" != "no"; then
   PHP_ADD_EXTENSION_DEP(mongo, date, false)
   PHP_ADD_EXTENSION_DEP(mongo, spl, false)
 
-  if test "$PHP_64" != "no"; then
+  if test "$PHP_OSX" != "no"; then
     CFLAGS="$CFLAGS -arch i386 -arch x86_64 -arch ppc -arch ppc64"
   fi
 fi
