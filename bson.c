@@ -432,6 +432,11 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       buf += INT_32;
       break;
     }
+    case BSON_LONG: {
+      ZVAL_FLOAT(value, *((long long int*)buf));
+      buf += INT_64;
+      break;
+    }
     case BSON_DATE: {
       long long int d = *((long long int*)buf);
       buf += INT_64;

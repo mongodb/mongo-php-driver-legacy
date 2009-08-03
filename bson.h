@@ -38,6 +38,7 @@
 #define BSON_CODE 15
 #define BSON_INT 16
 #define BSON_TIMESTAMP 17
+#define BSON_LONG 18
 #define BSON_MINKEY -1
 #define BSON_MAXKEY 127
 
