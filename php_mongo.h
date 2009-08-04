@@ -82,6 +82,12 @@
 #define MONGO_METHOD(classname, name) zif_##classname##_##name
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
 
+#define HASH_P(a) (Z_TYPE_P(a) == IS_ARRAY ? Z_ARRVAL_P(a) : Z_OBJPROP_P(a))
+#define HASH_PP(a) (Z_TYPE_PP(a) == IS_ARRAY ? Z_ARRVAL_PP(a) : Z_OBJPROP_PP(a))
+
+#define IS_SCALAR_P(a) (Z_TYPE_P(a) != IS_ARRAY && Z_TYPE_P(a) != IS_OBJECT)
+
+
 typedef struct {
   int ts;
   int paired;

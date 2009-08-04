@@ -140,7 +140,8 @@ PHP_METHOD(MongoCollection, insert) {
   mongo_msg_header header;
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &a) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &a) == FAILURE ||
+      IS_SCALAR_P(a)) {
     efree(buf.start);
     return;
   }
@@ -153,7 +154,7 @@ PHP_METHOD(MongoCollection, insert) {
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_INSERT);
 
   // serialize
-  if (zval_to_bson(&buf, Z_ARRVAL_P(a), PREP TSRMLS_CC) == 0) {
+  if (zval_to_bson(&buf, HASH_P(a), PREP TSRMLS_CC) == 0) {
     efree(buf.start);
     // return if there were 0 elements
     RETURN_FALSE;
@@ -179,7 +180,8 @@ PHP_METHOD(MongoCollection, batchInsert) {
   mongo_msg_header header;
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &a) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &a) == FAILURE ||
+      IS_SCALAR_P(a)) {
     return;
   }
 
@@ -201,7 +203,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
     }
 
     start = buf.pos-buf.start;
-    zval_to_bson(&buf, Z_ARRVAL_PP(data), PREP TSRMLS_CC);
+    zval_to_bson(&buf, HASH_PP(data), PREP TSRMLS_CC);
 
     serialize_size(buf.start+start, &buf);
 
@@ -226,7 +228,9 @@ PHP_METHOD(MongoCollection, find) {
   zval temp;
   int i = 0;
   
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|aa", &query, &fields) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE ||
+      (ZEND_NUM_ARGS() > 0 && IS_SCALAR_P(query)) ||
+      (ZEND_NUM_ARGS() > 1 && IS_SCALAR_P(fields))) {
     return;
   }
 
@@ -258,7 +262,9 @@ PHP_METHOD(MongoCollection, findOne) {
   zval *query = 0, *fields = 0, *cursor;
   zval limit;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|aa", &query, &fields) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE ||
+      (ZEND_NUM_ARGS() > 0 && IS_SCALAR_P(query)) ||
+      (ZEND_NUM_ARGS() > 1 && IS_SCALAR_P(fields))) {
     return;
   }
 
@@ -310,7 +316,9 @@ PHP_METHOD(MongoCollection, update) {
   mongo_msg_header header;
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|b", &criteria, &newobj, &upsert) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|b", &criteria, &newobj, &upsert) == FAILURE ||
+      IS_SCALAR_P(criteria) ||
+      IS_SCALAR_P(newobj)) {
     efree(buf.start);
     return;
   }
@@ -322,8 +330,8 @@ PHP_METHOD(MongoCollection, update) {
 
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_UPDATE);
   serialize_int(&buf, upsert);
-  zval_to_bson(&buf, Z_ARRVAL_P(criteria), NO_PREP TSRMLS_CC);
-  zval_to_bson(&buf, Z_ARRVAL_P(newobj), NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, HASH_P(criteria), NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, HASH_P(newobj), NO_PREP TSRMLS_CC);
   serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
@@ -339,7 +347,8 @@ PHP_METHOD(MongoCollection, remove) {
   mongo_msg_header header;
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ab", &criteria, &just_one) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zb", &criteria, &just_one) == FAILURE ||
+      (ZEND_NUM_ARGS() > 0 && IS_SCALAR_P(criteria))) {
     efree(buf.start);
     return;
   }
@@ -362,7 +371,7 @@ PHP_METHOD(MongoCollection, remove) {
   mflags = (just_one == 1);
 
   serialize_int(&buf, mflags);
-  zval_to_bson(&buf, Z_ARRVAL_P(criteria), NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, HASH_P(criteria), NO_PREP TSRMLS_CC);
   serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
@@ -594,11 +603,12 @@ PHP_METHOD(MongoCollection, save) {
   zval *a;
   zval **id;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &a) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &a) == FAILURE ||
+      IS_SCALAR_P(a)) {
     return;
   }
 
-  if (zend_hash_find(Z_ARRVAL_P(a), "_id", 4, (void**)&id) == SUCCESS) {
+  if (zend_hash_find(HASH_P(a), "_id", 4, (void**)&id) == SUCCESS) {
     zval zupsert;
     zval *criteria;
 

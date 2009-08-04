@@ -326,9 +326,9 @@ PHP_METHOD(MongoCursor, doQuery) {
   serialize_int(&buf, cursor->skip);
   serialize_int(&buf, cursor->limit);
 
-  zval_to_bson(&buf, Z_ARRVAL_P(cursor->query), NO_PREP TSRMLS_CC);
-  if (cursor->fields && zend_hash_num_elements(Z_ARRVAL_P(cursor->fields)) > 0) {
-    zval_to_bson(&buf, Z_ARRVAL_P(cursor->fields), NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, HASH_P(cursor->query), NO_PREP TSRMLS_CC);
+  if (cursor->fields && zend_hash_num_elements(HASH_P(cursor->fields)) > 0) {
+    zval_to_bson(&buf, HASH_P(cursor->fields), NO_PREP TSRMLS_CC);
   }
 
   serialize_size(buf.start, &buf);

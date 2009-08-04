@@ -68,6 +68,23 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(1, $foo['foo']->x);
       $this->assertEquals(2, $foo['foo']->y);
       $this->assertEquals("hello", $foo['foo']->z);
+
+      //      $this->assertTrue($c instanceof MongoCollection);
+      //      $this->assertEquals(1, $c->count());
+    }
+
+    public function testMethods() {
+      $c = $this->sharedFixture->selectCollection('phpunit', 'objs4');
+      $c->drop();
+
+      $f = new Foo();
+
+      $c->insert($f);
+      $f->x = 3;
+      $c->save($f);
+      $f->y = 7;
+      $c->update(array('_id' => $f->_id), $f);
+      $c->remove($f);
     }
 }
 
