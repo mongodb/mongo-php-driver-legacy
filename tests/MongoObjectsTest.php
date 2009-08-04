@@ -37,8 +37,8 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $c->insert($x);
       $x = $c->findOne();
 
-      $this->assertTrue(is_object($x['obj']));
-      $this->assertEquals(1, $x['obj']->x);
+      $this->assertTrue(is_object($x->obj));
+      $this->assertEquals(1, $x->obj->x);
     }
 
     public function testNested() {
@@ -50,9 +50,9 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
 
       $x = $c->findOne();
 
-      $this->assertTrue(is_object($x['obj']));
-      $this->assertTrue(is_object($x['obj']->x));
-      $this->assertTrue(is_object($x['obj']->x->foo));
+      $this->assertTrue(is_object($x->obj));
+      $this->assertTrue(is_object($x->obj->x));
+      $this->assertTrue(is_object($x->obj->x->foo));
     }
 
     public function testClass() {
@@ -64,10 +64,10 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $c->insert($a);
 
       $foo = $c->findOne();
-      $this->assertTrue(is_object($foo['foo']));
-      $this->assertEquals(1, $foo['foo']->x);
-      $this->assertEquals(2, $foo['foo']->y);
-      $this->assertEquals("hello", $foo['foo']->z);
+      $this->assertTrue(is_object($foo->foo));
+      $this->assertEquals(1, $foo->foo->x);
+      $this->assertEquals(2, $foo->foo->y);
+      $this->assertEquals("hello", $foo->foo->z);
 
       //      $this->assertTrue($c instanceof MongoCollection);
       //      $this->assertEquals(1, $c->count());

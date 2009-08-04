@@ -421,8 +421,14 @@ PHP_METHOD(MongoCursor, next) {
   // we got more results
   if (cursor->at < cursor->num) {
     MAKE_STD_ZVAL(cursor->current);
-    array_init(cursor->current);
-    cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
+    if (MonGlo(objects)) {
+      object_init(cursor->current);
+      cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_OBJPROP_P(cursor->current) TSRMLS_CC);
+    }
+    else {
+      array_init(cursor->current);
+      cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
+    }
 
     // increment cursor position
     cursor->at++;
