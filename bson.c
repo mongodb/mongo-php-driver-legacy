@@ -274,11 +274,11 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     }
     // serialize a normal obj
     else if(MonGlo(objects)) {
+      HashTable *hash = Z_OBJPROP_PP(data);
+
       // go through the k/v pairs and serialize them
       set_type(buf, BSON_OBJECT);
       serialize_string(buf, name, name_len);
-
-      HashTable *hash = Z_OBJPROP_PP(data);
 
       zval_to_bson(buf, hash, NO_PREP TSRMLS_CC);
     }
@@ -456,7 +456,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_LONG: {
-      ZVAL_FLOAT(value, *((long long int*)buf));
+      ZVAL_DOUBLE(value, *((long long int*)buf));
       buf += INT_64;
       break;
     }
