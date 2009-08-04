@@ -46,6 +46,19 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
       $this->assertTrue($y instanceof MongoId);
       $this->assertEquals("$id", "$y");
     }
+
+    public function testIncrement() {
+      $num = 10;
+      $id = array();
+      for ($i=0; $i<$num; $i++) {
+        $id[] = new MongoId();
+        sleep(1);
+      }
+
+      for ($i=0; $i<$num-1; $i++) {
+        $this->assertGreaterThan($id[$i]."", $id[$i+1]."", $id[$i] . ", " . $id[$i+1]);
+      }
+    }
 }
 
 ?>
