@@ -33,7 +33,9 @@ extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_EmptyObj,
   *mongo_ce_Exception;
 
-static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC);
+ZEND_EXTERN_MODULE_GLOBALS(mongo);
+
+static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC);
 #if ZEND_MODULE_API_NO >= 20090115
 static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key);
 #else
@@ -41,18 +43,18 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
 #endif /* ZEND_MODULE_API_NO >= 20090115 */
 
 
-static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
+static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
   zval temp, **data, *newid;
 
   // if _id field doesn't exist, add it
-  if (zend_hash_find(Z_ARRVAL_P(array), "_id", 4, (void**)&data) == FAILURE) {
+  if (zend_hash_find(array, "_id", 4, (void**)&data) == FAILURE) {
     // create new MongoId
     MAKE_STD_ZVAL(newid);
     object_init_ex(newid, mongo_ce_Id);
     MONGO_METHOD(MongoId, __construct)(0, &temp, NULL, newid, 0 TSRMLS_CC);
 
     // add to obj
-    add_assoc_zval(array, "_id", newid);
+    zend_hash_add(array, "_id", 4, &newid, sizeof(zval*), NULL);
 
     // set to data
     data = &newid;
@@ -65,7 +67,7 @@ static int prep_obj_for_db(buffer *buf, zval *array TSRMLS_DC) {
 
 
 // serialize a zval
-int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
+int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC) {
   uint start;
   int num = 0;
 
@@ -81,16 +83,16 @@ int zval_to_bson(buffer *buf, zval *zhash, int prep TSRMLS_DC) {
   // skip first 4 bytes to leave room for size
   buf->pos += INT_32;
 
-  if (zend_hash_num_elements(Z_ARRVAL_P(zhash)) > 0) {
+  if (zend_hash_num_elements(hash) > 0) {
     if (prep) {
-      prep_obj_for_db(buf, zhash TSRMLS_CC);
+      prep_obj_for_db(buf, hash TSRMLS_CC);
       num++;
     }
   
 #if ZEND_MODULE_API_NO >= 20090115
-    zend_hash_apply_with_arguments(Z_ARRVAL_P(zhash) TSRMLS_CC, (apply_func_args_t)apply_func_args_wrapper, 2, buf, prep);
+    zend_hash_apply_with_arguments(hash TSRMLS_CC, (apply_func_args_t)apply_func_args_wrapper, 2, buf, prep);
 #else
-    zend_hash_apply_with_arguments(Z_ARRVAL_P(zhash), (apply_func_args_t)apply_func_args_wrapper, 3, buf, prep TSRMLS_CC);
+    zend_hash_apply_with_arguments(hash, (apply_func_args_t)apply_func_args_wrapper, 3, buf, prep TSRMLS_CC);
 #endif /* ZEND_MODULE_API_NO >= 20090115 */
   }
 
@@ -161,7 +163,8 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     break;
   }
   case IS_ARRAY: {
-    if (zend_hash_num_elements(Z_ARRVAL_PP(data)) == 0 || 
+    if (MonGlo(objects) ||
+        zend_hash_num_elements(Z_ARRVAL_PP(data)) == 0 || 
         zend_hash_index_exists(Z_ARRVAL_PP(data), 0)) {
       set_type(buf, BSON_ARRAY);
     }
@@ -170,7 +173,7 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     }
 
     serialize_string(buf, name, name_len);
-    zval_to_bson(buf, *data, NO_PREP TSRMLS_CC);
+    zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
     break;
   }
   case IS_OBJECT: {
@@ -234,7 +237,7 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
       serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
       // scope
       zid = zend_read_property(mongo_ce_Code, *data, "scope", 5, NOISY TSRMLS_CC);
-      zval_to_bson(buf, zid, NO_PREP TSRMLS_CC);
+      zval_to_bson(buf, Z_ARRVAL_P(zid), NO_PREP TSRMLS_CC);
 
       // get total size
       serialize_size(buf->start+start, buf);
@@ -265,9 +268,19 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
 
       set_type(buf, BSON_OBJECT);
       serialize_string(buf, name, name_len);
-      zval_to_bson(buf, temp, NO_PREP TSRMLS_CC);
+      zval_to_bson(buf, Z_ARRVAL_P(temp), NO_PREP TSRMLS_CC);
 
       zval_ptr_dtor(&temp);
+    }
+    // serialize a normal obj
+    else if(MonGlo(objects)) {
+      // go through the k/v pairs and serialize them
+      set_type(buf, BSON_OBJECT);
+      serialize_string(buf, name, name_len);
+
+      HashTable *hash = Z_OBJPROP_PP(data);
+
+      zval_to_bson(buf, hash, NO_PREP TSRMLS_CC);
     }
     break;
   }
@@ -351,7 +364,7 @@ inline void serialize_size(unsigned char *start, buffer *buf) {
 }
 
 
-char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
+char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
   char type;
 
   // for size
@@ -394,10 +407,20 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       buf += len;
       break;
     }
-    case BSON_OBJECT:
+    case BSON_OBJECT: 
+      if (MonGlo(objects)) {
+        HashTable *hash;
+        object_init(value);
+        hash = Z_OBJPROP_P(value);
+
+        buf = bson_to_zval(buf, hash TSRMLS_CC);
+
+        break;
+      }
+      // if MonGlo(object is not set, fall through)
     case BSON_ARRAY: {
       array_init(value);
-      buf = bson_to_zval(buf, value TSRMLS_CC);
+      buf = bson_to_zval(buf, Z_ARRVAL_P(value) TSRMLS_CC);
       break;
     }
     case BSON_BINARY: {
@@ -491,7 +514,7 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
       buf += code_len;
 
       if (type == BSON_CODE) {
-        buf = bson_to_zval(buf, zcope TSRMLS_CC);
+        buf = bson_to_zval(buf, Z_ARRVAL_P(zcope) TSRMLS_CC);
       }
 
       // exclude \0
@@ -553,10 +576,9 @@ char* bson_to_zval(char *buf, zval *result TSRMLS_DC) {
     }
     }
 
-    // doesn't handle numeric keys
-    //zend_hash_quick_add(Z_ARRVAL_P(result), name, strlen(name)+1, zend_inline_hash_func(name, strlen(name)+1), &value, sizeof(zval*), NULL);
-    add_assoc_zval(result, name, value);
+    zend_symtable_update(result, name, strlen(name)+1, &value, sizeof(zval*), NULL);
   }
+
   return buf;
 }
 

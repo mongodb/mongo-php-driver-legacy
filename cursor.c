@@ -326,9 +326,9 @@ PHP_METHOD(MongoCursor, doQuery) {
   serialize_int(&buf, cursor->skip);
   serialize_int(&buf, cursor->limit);
 
-  zval_to_bson(&buf, cursor->query, NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, Z_ARRVAL_P(cursor->query), NO_PREP TSRMLS_CC);
   if (cursor->fields && zend_hash_num_elements(Z_ARRVAL_P(cursor->fields)) > 0) {
-    zval_to_bson(&buf, cursor->fields, NO_PREP TSRMLS_CC);
+    zval_to_bson(&buf, Z_ARRVAL_P(cursor->fields), NO_PREP TSRMLS_CC);
   }
 
   serialize_size(buf.start, &buf);
@@ -422,7 +422,7 @@ PHP_METHOD(MongoCursor, next) {
   if (cursor->at < cursor->num) {
     MAKE_STD_ZVAL(cursor->current);
     array_init(cursor->current);
-    cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, cursor->current TSRMLS_CC);
+    cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
 
     // increment cursor position
     cursor->at++;

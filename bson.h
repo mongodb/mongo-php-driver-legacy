@@ -61,7 +61,7 @@ inline void serialize_bytes(buffer*, char*, int);
 
 int resize_buf(buffer*, int);
 
-int zval_to_bson(buffer*, zval*, int TSRMLS_DC);
-char* bson_to_zval(char*, zval* TSRMLS_DC);
+int zval_to_bson(buffer*, HashTable*, int TSRMLS_DC);
+char* bson_to_zval(char*, HashTable* TSRMLS_DC);
 
 #endif

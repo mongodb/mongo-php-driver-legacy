@@ -153,7 +153,7 @@ PHP_METHOD(MongoCollection, insert) {
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_INSERT);
 
   // serialize
-  if (zval_to_bson(&buf, a, PREP TSRMLS_CC) == 0) {
+  if (zval_to_bson(&buf, Z_ARRVAL_P(a), PREP TSRMLS_CC) == 0) {
     efree(buf.start);
     // return if there were 0 elements
     RETURN_FALSE;
@@ -201,7 +201,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
     }
 
     start = buf.pos-buf.start;
-    zval_to_bson(&buf, *data, PREP TSRMLS_CC);
+    zval_to_bson(&buf, Z_ARRVAL_PP(data), PREP TSRMLS_CC);
 
     serialize_size(buf.start+start, &buf);
 
@@ -311,6 +311,7 @@ PHP_METHOD(MongoCollection, update) {
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|b", &criteria, &newobj, &upsert) == FAILURE) {
+    efree(buf.start);
     return;
   }
 
@@ -321,8 +322,8 @@ PHP_METHOD(MongoCollection, update) {
 
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_UPDATE);
   serialize_int(&buf, upsert);
-  zval_to_bson(&buf, criteria, NO_PREP TSRMLS_CC);
-  zval_to_bson(&buf, newobj, NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, Z_ARRVAL_P(criteria), NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, Z_ARRVAL_P(newobj), NO_PREP TSRMLS_CC);
   serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
@@ -339,6 +340,7 @@ PHP_METHOD(MongoCollection, remove) {
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ab", &criteria, &just_one) == FAILURE) {
+    efree(buf.start);
     return;
   }
 
@@ -360,7 +362,7 @@ PHP_METHOD(MongoCollection, remove) {
   mflags = (just_one == 1);
 
   serialize_int(&buf, mflags);
-  zval_to_bson(&buf, criteria, NO_PREP TSRMLS_CC);
+  zval_to_bson(&buf, Z_ARRVAL_P(criteria), NO_PREP TSRMLS_CC);
   serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);

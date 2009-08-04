@@ -13,6 +13,8 @@ require_once 'MongoRegexTest.php';
 require_once 'MongoBinDataTest.php';
 require_once 'MongoDateTest.php';
 
+require_once 'MongoObjectsTest.php';
+
 require_once 'MongoRegressionTest1.php';
 
 include 'MongoAuthTest.php';
@@ -37,13 +39,15 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
           $suite->addTestSuite('MongoGridFSCursorTest');
         }
         // */
-
+        
         $suite->addTestSuite('MongoIdTest');
         $suite->addTestSuite('MongoCodeTest');
         $suite->addTestSuite('MongoRegexTest');
         $suite->addTestSuite('MongoBinDataTest');
         $suite->addTestSuite('MongoDateTest');
+
         // */
+        $suite->addTestSuite('MongoObjectsTest');
 
         $suite->addTestSuite('MongoRegressionTest1');
         
