@@ -1123,7 +1123,11 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   cursor->buf.pos = cursor->buf.start;
 
   if (mongo_hear(cursor->link, cursor->buf.pos, cursor->header.length TSRMLS_CC) == FAILURE) {
+#ifdef WIN32
+    zend_error(E_WARNING, "WSA error getting database response: %d\n", WSAGetLastError());
+#else
     zend_error(E_WARNING, "error getting database response: %s\n", strerror(errno));
+#endif
     return FAILURE;
   }
 
@@ -1166,7 +1170,16 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
   // this can return FAILED if there is just no more data from db
   while(r < len && num > 0) {
 
+#ifdef WIN32
+    // windows gives a WSAEFAULT if you try to get more bytes
+    num = recv(get_master(link TSRMLS_CC), (char*)dest, 4096, FLAGS);
+#else
     num = recv(get_master(link TSRMLS_CC), (char*)dest, len, FLAGS);
+#endif
+
+    if (num < 0) {
+      return FAILURE;
+    }
 
     dest = (char*)dest + num;
     r += num;
