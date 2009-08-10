@@ -7,6 +7,12 @@ To install:
    $ make
    $ sudo make install
 
+Then add
+
+   extension=mongo.so
+
+to your php.ini file.
+
 See http://www.mongodb.org/display/DOCS/PHP+Language+Center for information on configuration options.
 
 = Documentation
