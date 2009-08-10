@@ -1034,7 +1034,7 @@ static int get_master(mongo_link *link TSRMLS_DC) {
   MAKE_STD_ZVAL(response);
   MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
   if (Z_TYPE_P(response) == IS_ARRAY &&
-      zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
+      zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
       Z_LVAL_PP(ans) == 1) {
     zval_ptr_dtor(&cursor_zval);
     zval_ptr_dtor(&query);
@@ -1053,7 +1053,7 @@ static int get_master(mongo_link *link TSRMLS_DC) {
   MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
   MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
   if (Z_TYPE_P(response) == IS_ARRAY &&
-      zend_hash_find(Z_ARRVAL_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
+      zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
       Z_LVAL_PP(ans) == 1) {
     zval_ptr_dtor(&cursor_zval);
     zval_ptr_dtor(&query);

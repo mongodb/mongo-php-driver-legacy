@@ -185,7 +185,7 @@ PHP_METHOD(MongoGridFS, find) {
 static int get_chunk_size(zval *array TSRMLS_DC) {
   zval **zchunk_size = 0;
 
-  if (zend_hash_find(Z_ARRVAL_P(array), "chunkSize", strlen("chunkSize")+1, (void**)&zchunk_size) == FAILURE) {
+  if (zend_hash_find(HASH_P(array), "chunkSize", strlen("chunkSize")+1, (void**)&zchunk_size) == FAILURE) {
     add_assoc_long(array, "chunkSize", MonGlo(chunk_size));
     return MonGlo(chunk_size);
   }
@@ -231,13 +231,13 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC) {
   // add user-defined fields
   if (extra) {
     zval temp;
-    zend_hash_merge(Z_ARRVAL_P(zfile), Z_ARRVAL_P(extra), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
+    zend_hash_merge(HASH_P(zfile), Z_ARRVAL_P(extra), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
   }
 
   // check if we need to add any fields
 
   // _id
-  if (zend_hash_find(Z_ARRVAL_P(zfile), "_id", strlen("_id")+1, (void**)&zzid) == FAILURE) {
+  if (zend_hash_find(HASH_P(zfile), "_id", strlen("_id")+1, (void**)&zzid) == FAILURE) {
     // create an id for the file
     MAKE_STD_ZVAL(zid);
     object_init_ex(zid, mongo_ce_Id);
@@ -274,7 +274,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
 
   // size
-  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "length", strlen("length")+1)) {
+  if (!zend_hash_exists(HASH_P(zfile), "length", strlen("length")+1)) {
     add_assoc_long(zfile, "length", bytes_len);
   }
 
@@ -311,12 +311,12 @@ static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC) {
   zval temp;
 
   // filename
-  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "filename", strlen("filename")+1)) {
+  if (!zend_hash_exists(HASH_P(zfile), "filename", strlen("filename")+1)) {
     add_assoc_stringl(zfile, "filename", filename, strlen(filename), DUP);
   }
 
   // uploadDate
-  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "uploadDate", strlen("uploadDate")+1)) {
+  if (!zend_hash_exists(HASH_P(zfile), "uploadDate", strlen("uploadDate")+1)) {
     // create an id for the file
     zval *upload_date;
     MAKE_STD_ZVAL(upload_date);
@@ -327,7 +327,7 @@ static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC) {
   }
 
   // size
-  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "length", strlen("length")+1)) {
+  if (!zend_hash_exists(HASH_P(zfile), "length", strlen("length")+1)) {
     add_assoc_long(zfile, "length", size);
   }
 
@@ -437,7 +437,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
 
   // add chunks md5 hash
-  if (!zend_hash_exists(Z_ARRVAL_P(zfile), "md5", strlen("md5")+1)) {
+  if (!zend_hash_exists(HASH_P(zfile), "md5", strlen("md5")+1)) {
     zval *md5_cmd = 0, *response = 0;
 
     MAKE_STD_ZVAL(md5_cmd);
@@ -455,7 +455,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
     POP_EO_PARAM();
     POP_PARAM(); POP_PARAM();
 
-    if (zend_hash_find(Z_ARRVAL_P(response), "md5", strlen("md5")+1, (void**)&md5) == SUCCESS) {
+    if (zend_hash_find(HASH_P(response), "md5", strlen("md5")+1, (void**)&md5) == SUCCESS) {
       add_assoc_zval(zfile, "md5", *md5);
       zval_add_ref(md5);
     }
@@ -571,7 +571,7 @@ PHP_METHOD(MongoGridFS, remove) {
     zval **id;
     zval *temp;
 
-    if (zend_hash_find(Z_ARRVAL_P(next), "_id", 4, (void**)&id) == FAILURE) {
+    if (zend_hash_find(HASH_P(next), "_id", 4, (void**)&id) == FAILURE) {
       // uh oh
       continue;
     }
@@ -687,13 +687,13 @@ PHP_METHOD(MongoGridFSFile, __construct) {
 
 PHP_METHOD(MongoGridFSFile, getFilename) {
   zval *file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
-  zend_hash_find(Z_ARRVAL_P(file), "filename", strlen("filename")+1, (void**)&return_value_ptr);
+  zend_hash_find(HASH_P(file), "filename", strlen("filename")+1, (void**)&return_value_ptr);
   RETURN_STRING(Z_STRVAL_PP(return_value_ptr), 1);
 }
 
 PHP_METHOD(MongoGridFSFile, getSize) {
   zval *file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
-  zend_hash_find(Z_ARRVAL_P(file), "length", strlen("length")+1, (void**)&return_value_ptr);
+  zend_hash_find(HASH_P(file), "length", strlen("length")+1, (void**)&return_value_ptr);
   RETURN_LONG(Z_LVAL_PP(return_value_ptr));
 }
 
@@ -728,7 +728,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   if (!filename) {
     zval **temp;
-    zend_hash_find(Z_ARRVAL_P(file), "filename", strlen("filename")+1, (void**)&temp);
+    zend_hash_find(HASH_P(file), "filename", strlen("filename")+1, (void**)&temp);
 
     filename = Z_STRVAL_PP(temp);
   }
@@ -740,7 +740,7 @@ PHP_METHOD(MongoGridFSFile, write) {
     return;
   }
 
-  zend_hash_find(Z_ARRVAL_P(file), "_id", strlen("_id")+1, (void**)&id);
+  zend_hash_find(HASH_P(file), "_id", strlen("_id")+1, (void**)&id);
 
   MAKE_STD_ZVAL(query);
   array_init(query);
@@ -786,9 +786,9 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   int len;
 
   file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
-  zend_hash_find(Z_ARRVAL_P(file), "_id", strlen("_id")+1, (void**)&id);
+  zend_hash_find(HASH_P(file), "_id", strlen("_id")+1, (void**)&id);
 
-  if (zend_hash_find(Z_ARRVAL_P(file), "length", strlen("length")+1, (void**)&size) == FAILURE) {
+  if (zend_hash_find(HASH_P(file), "length", strlen("length")+1, (void**)&size) == FAILURE) {
     zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size", 0 TSRMLS_CC);
     return;
   }
@@ -888,8 +888,8 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
 
     // check if data field exists.  if it doesn't, we've probably
     // got an error message from the db, so return that
-    if (zend_hash_find(Z_ARRVAL_P(next), "data", 5, (void**)&zdata) == FAILURE) {
-      if(zend_hash_exists(Z_ARRVAL_P(next), "$err", 5)) {
+    if (zend_hash_find(HASH_P(next), "data", 5, (void**)&zdata) == FAILURE) {
+      if(zend_hash_exists(HASH_P(next), "$err", 5)) {
         return FAILURE;
       }
       continue;
@@ -996,7 +996,7 @@ PHP_METHOD(MongoGridFSCursor, key) {
   if (!cursor->current) {
     RETURN_NULL();
   }
-  zend_hash_find(Z_ARRVAL_P(cursor->current), "filename", strlen("filename")+1, (void**)&return_value_ptr);
+  zend_hash_find(HASH_P(cursor->current), "filename", strlen("filename")+1, (void**)&return_value_ptr);
   if (!return_value_ptr) {
     RETURN_NULL();
   }

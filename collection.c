@@ -192,7 +192,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_INSERT);
 
-  php_array = Z_ARRVAL_P(a);
+  php_array = HASH_P(a);
 
   for(zend_hash_internal_pointer_reset_ex(php_array, &pointer); 
       zend_hash_get_current_data_ex(php_array, (void**) &data, &pointer) == SUCCESS; 
@@ -589,7 +589,7 @@ PHP_METHOD(MongoCollection, count) {
   POP_PARAM(); POP_PARAM();
 
   zval_ptr_dtor(&data);
-  if (zend_hash_find(Z_ARRVAL_P(response), "n", 2, (void**)&n) == SUCCESS) {
+  if (zend_hash_find(HASH_P(response), "n", 2, (void**)&n) == SUCCESS) {
     convert_to_long(*n);
     RETVAL_ZVAL(*n, 1, 0);
     zval_ptr_dtor(&response);
@@ -697,7 +697,7 @@ PHP_METHOD(MongoCollection, toIndexString) {
   }
 
   if (Z_TYPE_P(zkeys) == IS_ARRAY) {
-    HashTable *hindex = Z_ARRVAL_P(zkeys);
+    HashTable *hindex = HASH_P(zkeys);
     HashPosition pointer;
     zval **data;
     char *key;
@@ -843,8 +843,8 @@ PHP_METHOD(MongoCollection, group) {
   zval_ptr_dtor(&groupFunction);
   zval_ptr_dtor(&params);
 
-  if (zend_hash_find(Z_ARRVAL_P(almost_return), "retval", 7, (void**)&retval) == SUCCESS) {
-    if (zend_hash_find(Z_ARRVAL_PP(retval), "result", 7, (void**)&result) == SUCCESS) {
+  if (zend_hash_find(HASH_P(almost_return), "retval", 7, (void**)&retval) == SUCCESS) {
+    if (zend_hash_find(HASH_PP(retval), "result", 7, (void**)&result) == SUCCESS) {
       RETVAL_ZVAL(*result, 1, 0);
     }
   }

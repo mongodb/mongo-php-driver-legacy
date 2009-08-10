@@ -371,7 +371,7 @@ PHP_METHOD(MongoCursor, key) {
 
   if (cursor->current && 
       Z_TYPE_P(cursor->current) == IS_ARRAY &&
-      zend_hash_find(Z_ARRVAL_P(cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
+      zend_hash_find(HASH_P(cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
 
     if (Z_TYPE_PP(id) == IS_OBJECT) {
 #if ZEND_MODULE_API_NO >= 20060613
@@ -504,7 +504,7 @@ PHP_METHOD(MongoCursor, count) {
 
   if (cursor->query) {
     zval **inner_query;
-    if (zend_hash_find(Z_ARRVAL_P(cursor->query), "query", strlen("query")+1, (void**)&inner_query) == SUCCESS) {
+    if (zend_hash_find(HASH_P(cursor->query), "query", strlen("query")+1, (void**)&inner_query) == SUCCESS) {
       add_assoc_zval(data, "query", *inner_query);
       zval_add_ref(inner_query);
     }
@@ -525,7 +525,7 @@ PHP_METHOD(MongoCursor, count) {
   zval_ptr_dtor(&data);
 
   // prep results
-  if (zend_hash_find(Z_ARRVAL_P(response), "n", 2, (void**)&n) == SUCCESS) {
+  if (zend_hash_find(HASH_P(response), "n", 2, (void**)&n) == SUCCESS) {
     // don't allow count to return more than cursor->limit
     if (cursor->limit > 0 && Z_DVAL_PP(n) > cursor->limit) {
       RETVAL_LONG(cursor->limit);

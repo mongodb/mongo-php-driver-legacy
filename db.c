@@ -161,9 +161,9 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  if (zend_hash_find(Z_ARRVAL_P(cmd_return), "ok", 3, (void**)&ok) == SUCCESS &&
+  if (zend_hash_find(HASH_P(cmd_return), "ok", 3, (void**)&ok) == SUCCESS &&
       Z_DVAL_PP(ok) == 1) {
-    zend_hash_find(Z_ARRVAL_P(cmd_return), "was", 4, (void**)&ok);
+    zend_hash_find(HASH_P(cmd_return), "was", 4, (void**)&ok);
     RETVAL_ZVAL(*ok, 1, 0);
   }
   else {
@@ -358,7 +358,7 @@ PHP_METHOD(MongoDB, createDBRef) {
   }
 
   if (Z_TYPE_P(obj) == IS_ARRAY) {
-    if (zend_hash_find(Z_ARRVAL_P(obj), "_id", 4, (void**)&id) == SUCCESS) {
+    if (zend_hash_find(HASH_P(obj), "_id", 4, (void**)&id) == SUCCESS) {
 
       PUSH_PARAM(ns); PUSH_PARAM(*id); PUSH_PARAM((void*)2);
       PUSH_EO_PARAM();

@@ -517,8 +517,8 @@ PHP_METHOD(MongoDBRef, isRef) {
     return;
   }
 
-  if (zend_hash_exists(Z_ARRVAL_P(ref), "$ref", 5) &&
-      zend_hash_exists(Z_ARRVAL_P(ref), "$id", 4)) {
+  if (zend_hash_exists(HASH_P(ref), "$ref", 5) &&
+      zend_hash_exists(HASH_P(ref), "$id", 4)) {
     RETURN_TRUE;
   }
   RETURN_FALSE;
@@ -535,8 +535,8 @@ PHP_METHOD(MongoDBRef, get) {
     return;
   }
 
-  if (zend_hash_find(Z_ARRVAL_P(ref), "$ref", 5, (void**)&ns) == FAILURE ||
-      zend_hash_find(Z_ARRVAL_P(ref), "$id", 4, (void**)&id) == FAILURE) {
+  if (zend_hash_find(HASH_P(ref), "$ref", 5, (void**)&ns) == FAILURE ||
+      zend_hash_find(HASH_P(ref), "$id", 4, (void**)&id) == FAILURE) {
     RETURN_NULL();
   }
 
