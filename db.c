@@ -307,8 +307,13 @@ PHP_METHOD(MongoDB, listCollections) {
   
   MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
   while (Z_TYPE_P(next) != IS_NULL) {
+    zval zname;
+    zval *c;
     zval **collection;
-    if (zend_hash_find(Z_ARRVAL_P(next), "name", 5, (void**)&collection) == FAILURE ||
+    char *name, *first_dot, *system;
+
+    // check that the ns is valid and not an index (contains $)
+    if (zend_hash_find(HASH_P(next), "name", 5, (void**)&collection) == FAILURE ||
         strchr(Z_STRVAL_PP(collection), '$')) {
 
       zval_ptr_dtor(&next);
@@ -318,7 +323,36 @@ PHP_METHOD(MongoDB, listCollections) {
       continue;
     }
 
-    add_next_index_string(list, Z_STRVAL_PP(collection), 1);
+    first_dot = strchr(Z_STRVAL_PP(collection), '.');
+    system = strstr(Z_STRVAL_PP(collection), ".system.");
+    // check that this isn't a system ns
+    if (system && first_dot == system) {
+      zval_ptr_dtor(&next);
+      MAKE_STD_ZVAL(next);
+
+      MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
+      continue;
+    }
+
+    // take a substring after the first "."
+    name = strchr(Z_STRVAL_PP(collection), '.');
+    if (!name)
+      continue;
+    name++;
+
+    MAKE_STD_ZVAL(c);
+
+    zname.value.str.len = strlen(name);
+    zname.value.str.val = name;
+    zname.type = IS_STRING;
+
+    PUSH_PARAM(&zname); PUSH_PARAM((void*)1);
+    PUSH_EO_PARAM();
+    MONGO_METHOD(MongoDB, selectCollection)(1, c, NULL, getThis(), return_value_used TSRMLS_CC);
+    POP_EO_PARAM();
+    POP_PARAM(); POP_PARAM();
+
+    add_next_index_zval(list, c);
 
     zval_ptr_dtor(&next);
     MAKE_STD_ZVAL(next);
