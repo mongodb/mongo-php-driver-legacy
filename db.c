@@ -150,8 +150,8 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
   }
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "profile", level);
+  object_init(data);
+  add_property_long(data, "profile", level);
 
   MAKE_STD_ZVAL(cmd_return);
 
@@ -176,8 +176,8 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
 PHP_METHOD(MongoDB, drop) {
   zval *data;
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "dropDatabase", 1);
+  object_init(data);
+  add_property_long(data, "dropDatabase", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -197,10 +197,10 @@ PHP_METHOD(MongoDB, repair) {
   }
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "repairDatabase", 1);
-  add_assoc_bool(data, "preserveClonedFilesOnFailure", cloned);
-  add_assoc_bool(data, "backupOriginalFiles", original);
+  object_init(data);
+  add_property_long(data, "repairDatabase", 1);
+  add_property_bool(data, "preserveClonedFilesOnFailure", cloned);
+  add_property_bool(data, "backupOriginalFiles", original);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -222,19 +222,19 @@ PHP_METHOD(MongoDB, createCollection) {
   }
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
+  object_init(data);
   convert_to_string(collection);
-  add_assoc_zval(data, "create", collection);
+  add_property_zval(data, "create", collection);
   zval_add_ref(&collection);
 
   if (size) {
-    add_assoc_long(data, "size", size);
+    add_property_long(data, "size", size);
   }
 
   if (capped) {
-    add_assoc_bool(data, "capped", 1);
+    add_property_bool(data, "capped", 1);
     if (max) {
-      add_assoc_long(data, "max", max);
+      add_property_long(data, "max", max);
     }
   }
 
@@ -371,8 +371,8 @@ PHP_METHOD(MongoDB, listCollections) {
 PHP_METHOD(MongoDB, getCursorInfo) {
   zval *data;
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "cursorInfo", 1);
+  object_init(data);
+  add_property_long(data, "cursorInfo", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -391,7 +391,8 @@ PHP_METHOD(MongoDB, createDBRef) {
     return;
   }
 
-  if (Z_TYPE_P(obj) == IS_ARRAY) {
+  if (Z_TYPE_P(obj) == IS_ARRAY ||
+      Z_TYPE_P(obj) == IS_OBJECT) {
     if (zend_hash_find(HASH_P(obj), "_id", 4, (void**)&id) == SUCCESS) {
 
       PUSH_PARAM(ns); PUSH_PARAM(*id); PUSH_PARAM((void*)2);
@@ -399,11 +400,11 @@ PHP_METHOD(MongoDB, createDBRef) {
       MONGO_METHOD(MongoDBRef, create)(2, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC);
       POP_EO_PARAM();
       POP_PARAM(); POP_PARAM(); POP_PARAM();
-
+        
       return;
     }
-    else {
-      RETURN_NULL();
+    else if (Z_TYPE_P(obj) == IS_ARRAY) {
+      return;
     }
   }
 
@@ -468,9 +469,9 @@ PHP_METHOD(MongoDB, execute) {
 
   // create { $eval : code, args : [] }
   MAKE_STD_ZVAL(zdata);
-  array_init(zdata);
-  add_assoc_zval(zdata, "$eval", code);
-  add_assoc_zval(zdata, "args", args);
+  object_init(zdata);
+  add_property_zval(zdata, "$eval", code);
+  add_property_zval(zdata, "args", args);
 
   PUSH_PARAM(zdata); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -514,7 +515,8 @@ PHP_METHOD(MongoDB, command) {
   mongo_db *db;
   char *cmd_ns;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &cmd) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &cmd) == FAILURE ||
+      IS_SCALAR_P(cmd)) {
     return;
   }
 

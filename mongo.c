@@ -885,8 +885,8 @@ PHP_METHOD(Mongo, lastError) {
   POP_PARAM(); POP_PARAM();
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "getlasterror", 1);
+  object_init(data);
+  add_property_long(data, "getlasterror", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -913,8 +913,8 @@ PHP_METHOD(Mongo, prevError) {
   POP_PARAM(); POP_PARAM();
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "getpreverror", 1);
+  object_init(data);
+  add_property_long(data, "getpreverror", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -941,8 +941,8 @@ PHP_METHOD(Mongo, resetError) {
   POP_PARAM(); POP_PARAM();
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "reseterror", 1);
+  object_init(data);
+  add_property_long(data, "reseterror", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -969,8 +969,8 @@ PHP_METHOD(Mongo, forceError) {
   POP_PARAM(); POP_PARAM();
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "forceerror", 1);
+  object_init(data);
+  add_property_long(data, "forceerror", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -1009,11 +1009,11 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
   // redetermine master
   MAKE_STD_ZVAL(query);
-  array_init(query);
+  object_init(query);
   MAKE_STD_ZVAL(is_master);
-  array_init(is_master);
-  add_assoc_long(is_master, "ismaster", 1);
-  add_assoc_zval(query, "query", is_master);
+  object_init(is_master);
+  add_property_long(is_master, "ismaster", 1);
+  add_property_zval(query, "query", is_master);
 
   cursor->ns = estrdup("admin.$cmd");
   cursor->query = query;
@@ -1033,7 +1033,8 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
   MAKE_STD_ZVAL(response);
   MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
-  if (Z_TYPE_P(response) == IS_ARRAY &&
+  if ((Z_TYPE_P(response) == IS_ARRAY ||
+       Z_TYPE_P(response) == IS_OBJECT) &&
       zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
       Z_LVAL_PP(ans) == 1) {
     zval_ptr_dtor(&cursor_zval);
@@ -1052,7 +1053,8 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
   MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
   MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
-  if (Z_TYPE_P(response) == IS_ARRAY &&
+  if ((Z_TYPE_P(response) == IS_ARRAY ||
+       Z_TYPE_P(response) == IS_OBJECT) &&
       zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
       Z_LVAL_PP(ans) == 1) {
     zval_ptr_dtor(&cursor_zval);

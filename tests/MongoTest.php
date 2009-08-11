@@ -215,9 +215,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
     public function testLastError() {
         $this->sharedFixture->resetError();
         $err = $this->sharedFixture->lastError();
-        $this->assertEquals($err['err'], null);
-        $this->assertEquals($err['n'], 0);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals(null, $err['err'], json_encode($err));
+        $this->assertEquals(0, $err['n'], json_encode($err));
+        $this->assertEquals(1, $err['ok'], json_encode($err));
 
         $this->sharedFixture->forceError();
         $err = $this->sharedFixture->lastError();

@@ -48,7 +48,7 @@ zend_class_entry *mongo_ce_Cursor = NULL;
  */
 PHP_METHOD(MongoCursor, __construct) {
   HashPosition pointer;
-  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty_array, *q, *fields, *slave_okay;
+  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, *q, *fields, *slave_okay;
   zval **data;
   mongo_cursor *cursor;
   mongo_link *link;
@@ -58,16 +58,16 @@ PHP_METHOD(MongoCursor, __construct) {
   }
 
   // if query or fields weren't passed, make them default to an empty array
-  MAKE_STD_ZVAL(empty_array);
-  array_init(empty_array);
+  MAKE_STD_ZVAL(empty);
+  object_init(empty);
 
   // these are both initialized to the same zval, but that's okay because 
   // there's no way to change them without creating a new cursor
   if (!zquery) {
-    zquery = empty_array;
+    zquery = empty;
   }
   if (!zfields) {
-    zfields = empty_array;
+    zfields = empty;
   }
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -80,28 +80,37 @@ PHP_METHOD(MongoCursor, __construct) {
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
   cursor->link = link;
 
-  MAKE_STD_ZVAL(fields);
-  array_init(fields);
+  // change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1}
+  if (Z_TYPE_P(zfields) == IS_ARRAY) {
+    MAKE_STD_ZVAL(fields);
+    object_init(fields);
 
-  // fields to return
-  for(zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(zfields), &pointer); 
-      zend_hash_get_current_data_ex(Z_ARRVAL_P(zfields), (void**) &data, &pointer) == SUCCESS; 
-      zend_hash_move_forward_ex(Z_ARRVAL_P(zfields), &pointer)) {
-    int key_type, key_len;
-    ulong index;
-    char *key;
+    // fields to return
+    for(zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(zfields), &pointer); 
+        zend_hash_get_current_data_ex(Z_ARRVAL_P(zfields), (void**) &data, &pointer) == SUCCESS; 
+        zend_hash_move_forward_ex(Z_ARRVAL_P(zfields), &pointer)) {
+      int key_type, key_len;
+      ulong index;
+      char *key;
+      
+      key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(zfields), &key, (uint*)&key_len, &index, NO_DUP, &pointer);
 
-    key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(zfields), &key, (uint*)&key_len, &index, NO_DUP, &pointer);
-
-    if (key_type == HASH_KEY_IS_LONG &&
-        Z_TYPE_PP(data) == IS_STRING) {
-      add_assoc_long(fields, Z_STRVAL_PP(data), 1);
+      if (key_type == HASH_KEY_IS_LONG &&
+          Z_TYPE_PP(data) == IS_STRING) {
+        add_property_long(fields, Z_STRVAL_PP(data), 1);
+      }
+      else {
+        add_property_long(fields, key, 1);
+      }
     }
-    else {
-      add_assoc_long(fields, key, 1);
-    }
+    cursor->fields = fields;
   }
-  cursor->fields = fields;
+  // if it's already an object, we don't have to worry
+  else {
+    cursor->fields = zfields;
+    zval_add_ref(&zfields);
+  }
+
 
   // ns
   convert_to_string(zns);
@@ -125,7 +134,7 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->opts = Z_BVAL_P(slave_okay) ? (1 << 2) : 0;
 
   // get rid of extra ref
-  zval_ptr_dtor(&empty_array);
+  zval_ptr_dtor(&empty);
 }
 /* }}} */
 
@@ -257,7 +266,8 @@ PHP_METHOD(MongoCursor, sort) {
     return;
   }
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &zfields) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zfields) == FAILURE ||
+      IS_SCALAR_P(zfields)) {
     return;
   }
 
@@ -281,7 +291,8 @@ PHP_METHOD(MongoCursor, hint) {
     return;
   }
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &zfields) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zfields) == FAILURE ||
+      IS_SCALAR_P(zfields)) {
     return;
   }
 
@@ -497,20 +508,20 @@ PHP_METHOD(MongoCursor, count) {
 
   // create query
   MAKE_STD_ZVAL(data);
-  array_init(data);
+  object_init(data);
 
   // "count" => "collectionName"
-  add_assoc_string(data, "count", strchr(cursor->ns, '.')+1, 1);
+  add_property_string(data, "count", strchr(cursor->ns, '.')+1, 1);
 
   if (cursor->query) {
     zval **inner_query;
     if (zend_hash_find(HASH_P(cursor->query), "query", strlen("query")+1, (void**)&inner_query) == SUCCESS) {
-      add_assoc_zval(data, "query", *inner_query);
+      add_property_zval(data, "query", *inner_query);
       zval_add_ref(inner_query);
     }
   }
   if (cursor->fields) {
-    add_assoc_zval(data, "fields", cursor->fields);
+    add_property_zval(data, "fields", cursor->fields);
     zval_add_ref(&cursor->fields);
   }
 

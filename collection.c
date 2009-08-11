@@ -94,8 +94,8 @@ PHP_METHOD(MongoCollection, drop) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_string(data, "drop", Z_STRVAL_P(c->name), 1);
+  object_init(data);
+  add_property_string(data, "drop", Z_STRVAL_P(c->name), 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -119,9 +119,9 @@ PHP_METHOD(MongoCollection, validate) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_string(data, "validate", Z_STRVAL_P(c->name), 1);
-  add_assoc_bool(data, "scandata", scan_data);
+  object_init(data);
+  add_property_string(data, "validate", Z_STRVAL_P(c->name), 1);
+  add_property_bool(data, "scandata", scan_data);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -180,8 +180,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
   mongo_msg_header header;
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &a) == FAILURE ||
-      IS_SCALAR_P(a)) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &a) == FAILURE) {
     return;
   }
 
@@ -198,7 +197,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
       zend_hash_get_current_data_ex(php_array, (void**) &data, &pointer) == SUCCESS; 
       zend_hash_move_forward_ex(php_array, &pointer)) {
 
-    if(Z_TYPE_PP(data) != IS_ARRAY) {
+    if(IS_SCALAR_PP(data)) {
       continue;
     }
 
@@ -355,7 +354,7 @@ PHP_METHOD(MongoCollection, remove) {
 
   if (!criteria) {
     MAKE_STD_ZVAL(criteria);
-    array_init(criteria);
+    object_init(criteria);
   }
   else {
     zval_add_ref(&criteria);
@@ -389,14 +388,17 @@ PHP_METHOD(MongoCollection, ensureIndex) {
     return;
   }
 
-  if (Z_TYPE_P(keys) != IS_ARRAY) {
+  if (IS_SCALAR_P(keys)) {
     zval *key_array;
 
     convert_to_string(keys);
 
+    if (Z_STRLEN_P(keys) == 0)
+      return;
+
     MAKE_STD_ZVAL(key_array);
-    array_init(key_array);
-    add_assoc_long(key_array, Z_STRVAL_P(keys), 1);
+    object_init(key_array);
+    add_property_long(key_array, Z_STRVAL_P(keys), 1);
 
     keys = key_array;
   }
@@ -423,12 +425,12 @@ PHP_METHOD(MongoCollection, ensureIndex) {
 
   // set up data
   MAKE_STD_ZVAL(data);
-  array_init(data);
+  object_init(data);
 
   // ns
-  add_assoc_zval(data, "ns", c->ns);
+  add_property_zval(data, "ns", c->ns);
   zval_add_ref(&c->ns);
-  add_assoc_zval(data, "key", keys);
+  add_property_zval(data, "key", keys);
 
   // turn keys into a string
   MAKE_STD_ZVAL(key_str);
@@ -440,8 +442,8 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  add_assoc_zval(data, "name", key_str);
-  add_assoc_bool(data, "unique", unique);
+  add_property_zval(data, "name", key_str);
+  add_property_bool(data, "unique", unique);
 
   // MongoCollection::insert()
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
@@ -475,11 +477,11 @@ PHP_METHOD(MongoCollection, deleteIndex) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_zval(data, "deleteIndexes", c->name);
+  object_init(data);
+  add_property_zval(data, "deleteIndexes", c->name);
   zval_add_ref(&c->name);
   zval_add_ref(&key_str);
-  add_assoc_zval(data, "index", key_str);
+  add_property_zval(data, "index", key_str);
  
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -497,10 +499,10 @@ PHP_METHOD(MongoCollection, deleteIndexes) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
+  object_init(data);
 
-  add_assoc_string(data, "deleteIndexes", Z_STRVAL_P(c->name), 1);
-  add_assoc_string(data, "index", "*", 1);
+  add_property_string(data, "deleteIndexes", Z_STRVAL_P(c->name), 1);
+  add_property_string(data, "index", "*", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -530,8 +532,8 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
   zval_ptr_dtor(&i_str);
 
   MAKE_STD_ZVAL(query);
-  array_init(query);
-  add_assoc_string(query, "ns", Z_STRVAL_P(c->ns), 1);
+  object_init(query);
+  add_property_string(query, "ns", Z_STRVAL_P(c->ns), 1);
 
   MAKE_STD_ZVAL(cursor);
 
@@ -571,13 +573,13 @@ PHP_METHOD(MongoCollection, count) {
   MAKE_STD_ZVAL(response);
 
   MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_string(data, "count", Z_STRVAL_P(c->name), 1);
+  object_init(data);
+  add_property_string(data, "count", Z_STRVAL_P(c->name), 1);
   if (query) {
-    add_assoc_zval(data, "query", query);
+    add_property_zval(data, "query", query);
     zval_add_ref(&query);
     if (fields) {
-      add_assoc_zval(data, "fields", fields);
+      add_property_zval(data, "fields", fields);
       zval_add_ref(&fields);
     }
   }
@@ -613,8 +615,8 @@ PHP_METHOD(MongoCollection, save) {
     zval *criteria;
 
     MAKE_STD_ZVAL(criteria);
-    array_init(criteria);
-    add_assoc_zval(criteria, "_id", *id);
+    object_init(criteria);
+    add_property_zval(criteria, "_id", *id);
     zval_add_ref(id);
 
     Z_TYPE(zupsert) = IS_BOOL;
@@ -696,7 +698,8 @@ PHP_METHOD(MongoCollection, toIndexString) {
     RETURN_FALSE;
   }
 
-  if (Z_TYPE_P(zkeys) == IS_ARRAY) {
+  if (Z_TYPE_P(zkeys) == IS_ARRAY || 
+      Z_TYPE_P(zkeys) == IS_OBJECT) {
     HashTable *hindex = HASH_P(zkeys);
     HashPosition pointer;
     zval **data;
@@ -805,22 +808,22 @@ PHP_METHOD(MongoCollection, group) {
   ZVAL_STRING(code, function_str, 0);
 
   MAKE_STD_ZVAL(params);
-  array_init(params);
-  add_assoc_zval(params, "ns", c->name);
+  object_init(params);
+  add_property_zval(params, "ns", c->name);
   zval_add_ref(&c->name);
-  add_assoc_zval(params, "keys", key);
+  add_property_zval(params, "keys", key);
   zval_add_ref(&key);
-  add_assoc_zval(params, "initial", initial);
+  add_property_zval(params, "initial", initial);
   zval_add_ref(&initial);
   if (condition) {
-    add_assoc_zval(params, "condition", condition);
+    add_property_zval(params, "condition", condition);
     zval_add_ref(&condition);
   }
   else  {
     zval *empty;
     MAKE_STD_ZVAL(empty);
-    array_init(empty);
-    add_assoc_zval(params, "condition", empty);
+    object_init(empty);
+    add_property_zval(params, "condition", empty);
   }
 
   MAKE_STD_ZVAL(groupFunction);

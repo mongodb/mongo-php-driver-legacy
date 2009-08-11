@@ -39,6 +39,8 @@ extern zend_class_entry *mongo_ce_DB,
 
 extern zend_object_handlers mongo_default_handlers;
 
+ZEND_EXTERN_MODULE_GLOBALS(mongo);
+
 zend_class_entry *mongo_ce_Date = NULL,
   *mongo_ce_BinData = NULL,
   *mongo_ce_DBRef = NULL,
@@ -445,7 +447,8 @@ void mongo_init_MongoRegex(TSRMLS_D) {
 PHP_METHOD(MongoCode, __construct) {
   zval *code = 0, *zcope = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &code, &zcope) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &code, &zcope) == FAILURE ||
+      (ZEND_NUM_ARGS() > 1 && IS_SCALAR_P(zcope))) {
     return;
   }
   convert_to_string(code);
@@ -454,7 +457,7 @@ PHP_METHOD(MongoCode, __construct) {
 
   if (!zcope) {
     ALLOC_INIT_ZVAL(zcope);
-    array_init(zcope);
+    object_init(zcope);
   }
   else {
     zval_add_ref(&zcope);
@@ -501,11 +504,20 @@ PHP_METHOD(MongoDBRef, create) {
   }
   convert_to_string(zns);
 
-  array_init(return_value);
-  add_assoc_zval(return_value, "$ref", zns); 
-  zval_add_ref(&zns);
-  add_assoc_zval(return_value, "$id", zid); 
-  zval_add_ref(&zid);
+  if (MonGlo(objects)) {
+    object_init(return_value);
+    add_property_zval(return_value, "$ref", zns); 
+    zval_add_ref(&zns);
+    add_property_zval(return_value, "$id", zid); 
+    zval_add_ref(&zid);
+  }
+  else {
+    array_init(return_value);
+    add_assoc_zval(return_value, "$ref", zns); 
+    zval_add_ref(&zns);
+    add_assoc_zval(return_value, "$id", zid); 
+    zval_add_ref(&zid);
+  }
 }
 /* }}} */
 
@@ -531,7 +543,7 @@ PHP_METHOD(MongoDBRef, get) {
   zval *db, *ref, *collection, *query;
   zval **ns, **id;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oa", &db, mongo_ce_DB, &ref) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &db, mongo_ce_DB, &ref) == FAILURE) {
     return;
   }
 
@@ -550,8 +562,8 @@ PHP_METHOD(MongoDBRef, get) {
   POP_PARAM(); POP_PARAM();
 
   MAKE_STD_ZVAL(query);
-  array_init(query);
-  add_assoc_zval(query, "_id", *id);
+  object_init(query);
+  add_property_zval(query, "_id", *id);
   zval_add_ref(id);
   
   PUSH_PARAM(query); PUSH_PARAM((void*)1);

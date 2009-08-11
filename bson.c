@@ -237,7 +237,7 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
       serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
       // scope
       zid = zend_read_property(mongo_ce_Code, *data, "scope", 5, NOISY TSRMLS_CC);
-      zval_to_bson(buf, Z_ARRVAL_P(zid), NO_PREP TSRMLS_CC);
+      zval_to_bson(buf, HASH_P(zid), NO_PREP TSRMLS_CC);
 
       // get total size
       serialize_size(buf->start+start, buf);
@@ -273,7 +273,7 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
       zval_ptr_dtor(&temp);
     }
     // serialize a normal obj
-    else if(MonGlo(objects)) {
+    else {
       HashTable *hash = Z_OBJPROP_PP(data);
 
       // go through the k/v pairs and serialize them
@@ -281,7 +281,7 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
       serialize_string(buf, name, name_len);
 
       zval_to_bson(buf, hash, NO_PREP TSRMLS_CC);
-    }
+    } 
     break;
   }
   }
@@ -499,7 +499,11 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       object_init_ex(value, mongo_ce_Code);
       // initialize scope array
       MAKE_STD_ZVAL(zcope);
-      array_init(zcope);
+      if (MonGlo(objects)) {
+        object_init(zcope);
+      } else {
+        array_init(zcope);
+      }
 
       // CODE has a useless total size field
       if (type == BSON_CODE) {
@@ -514,7 +518,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       buf += code_len;
 
       if (type == BSON_CODE) {
-        buf = bson_to_zval(buf, Z_ARRVAL_P(zcope) TSRMLS_CC);
+        buf = bson_to_zval(buf, HASH_P(zcope) TSRMLS_CC);
       }
 
       // exclude \0
@@ -547,9 +551,16 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       buf += OID_SIZE;
 
       // put it all together
-      array_init(value);
-      add_assoc_stringl(value, "$ref", ns, ns_len-1, 1);
-      add_assoc_zval(value, "$id", zoid);
+      if (MonGlo(objects)) {
+        object_init(value);
+        add_property_stringl(value, "$ref", ns, ns_len-1, 1);
+        add_property_zval(value, "$id", zoid);
+      }
+      else {
+        array_init(value);
+        add_assoc_stringl(value, "$ref", ns, ns_len-1, 1);
+        add_assoc_zval(value, "$id", zoid);
+      }
       break;
     }
     case BSON_TIMESTAMP: {

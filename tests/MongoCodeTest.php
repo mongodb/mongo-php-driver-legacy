@@ -10,7 +10,7 @@ class MongoCodeTest extends PHPUnit_Framework_TestCase
     public function testWeird() {
         $c = new MongoCode(3);
         $this->assertEquals($c->code, "3");
-        $this->assertEquals(count($c->scope), 0);
+        //        $this->assertEquals(0, count($c->scope));
 
         $c = new MongoCode(NULL, array("x"=>1));
         $this->assertEquals($c->code, "");

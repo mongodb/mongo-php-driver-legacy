@@ -259,18 +259,14 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
       $this->object->ensureIndex("");
       $index = $idx->findOne(array('name' => '_1'));
-      $this->assertNotNull($index);
-      $this->assertEquals($index['key'][''], 1);
-      $this->assertEquals($index['ns'], 'phpunit.c');
+      $this->assertEquals(null, $index);
 
       // get rid of indexes
       $this->object->drop();
 
       $this->object->ensureIndex(null);
       $index = $idx->findOne(array('name' => '_1'));
-      $this->assertNotNull($index);
-      $this->assertEquals($index['key'][''], 1);
-      $this->assertEquals($index['ns'], 'phpunit.c');
+      $this->assertEquals(null, $index);
 
       $this->object->ensureIndex(6);
       $index = $idx->findOne(array('name' => '6_1'));
