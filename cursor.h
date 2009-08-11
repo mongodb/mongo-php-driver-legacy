@@ -28,6 +28,7 @@ PHP_METHOD(MongoCursor, skip);
 PHP_METHOD(MongoCursor, slaveOkay);
 PHP_METHOD(MongoCursor, tailable);
 PHP_METHOD(MongoCursor, logReplay);
+PHP_METHOD(MongoCursor, snapshot);
 PHP_METHOD(MongoCursor, sort);
 PHP_METHOD(MongoCursor, hint);
 PHP_METHOD(MongoCursor, explain);

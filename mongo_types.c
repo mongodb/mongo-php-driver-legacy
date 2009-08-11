@@ -525,7 +525,8 @@ PHP_METHOD(MongoDBRef, create) {
  */
 PHP_METHOD(MongoDBRef, isRef) {
   zval *ref;
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &ref) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ref) == FAILURE ||
+      IS_SCALAR_P(ref)) {
     return;
   }
 

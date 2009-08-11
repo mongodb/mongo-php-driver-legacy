@@ -254,6 +254,26 @@ PHP_METHOD(MongoCursor, logReplay) {
 /* }}} */
 
 
+/* {{{ MongoCursor::snapshot
+ */
+PHP_METHOD(MongoCursor, snapshot) {
+  zval *query;
+  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+
+  if (cursor->started_iterating) {
+    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+    return;
+  }
+
+  query = cursor->query;
+  add_assoc_bool(query, "$snapshot", 1);
+
+  RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
+
 /* {{{ MongoCursor->sort
  */
 PHP_METHOD(MongoCursor, sort) {
@@ -564,6 +584,7 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, logReplay, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, snapshot, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC) 
   PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)

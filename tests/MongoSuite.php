@@ -14,6 +14,7 @@ require_once 'MongoBinDataTest.php';
 require_once 'MongoDateTest.php';
 
 require_once 'MongoObjectsTest.php';
+require_once 'MongoObjDBTest.php';
 
 require_once 'MongoRegressionTest1.php';
 
@@ -48,7 +49,8 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
 
         // */
         $suite->addTestSuite('MongoObjectsTest');
-
+        $suite->addTestSuite('MongoObjDBTest');
+        
         $suite->addTestSuite('MongoRegressionTest1');
         
         // try adding an admin user

@@ -445,5 +445,14 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->assertTrue(MongoCursor::$slaveOkay);
     }
 
+    /*
+     * Doesn't actually test functionality
+     */
+    public function testSnapshot() {
+      $this->object->drop();
+      $this->object->insert(array('foo'=>'bar'));
+      $cursor = $this->object->find()->snapshot();
+      $this->assertNotNull($cursor->getNext());
+    }
 }
 ?>
