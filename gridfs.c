@@ -493,8 +493,7 @@ PHP_METHOD(MongoGridFS, findOne) {
     MAKE_STD_ZVAL(zquery);
     object_init(zquery);
   }
-  else if (Z_TYPE_P(zquery) != IS_ARRAY &&
-           Z_TYPE_P(zquery) != IS_OBJECT) {
+  else if (IS_SCALAR_P(zquery)) {
     zval *temp;
 
     convert_to_string(zquery);
@@ -507,6 +506,7 @@ PHP_METHOD(MongoGridFS, findOne) {
   }
   else if (Z_TYPE_P(zquery) == IS_ARRAY) {
     convert_to_object(zquery);
+    zval_add_ref(&zquery);
   } else {
     zval_add_ref(&zquery);
   }
