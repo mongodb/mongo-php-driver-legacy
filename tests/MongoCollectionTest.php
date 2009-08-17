@@ -254,7 +254,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $index = $idx->findOne(array('name' => 'foo_1'));
 
       $this->assertNotNull($index);
-      $this->assertEquals($index['key']['foo'], 1);
+      $this->assertEquals($index['key']->foo, 1);
       $this->assertEquals($index['name'], 'foo_1');
 
       $this->object->ensureIndex("");
@@ -267,12 +267,6 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->ensureIndex(null);
       $index = $idx->findOne(array('name' => '_1'));
       $this->assertEquals(null, $index);
-
-      $this->object->ensureIndex(6);
-      $index = $idx->findOne(array('name' => '6_1'));
-      $this->assertNotNull($index);
-      $this->assertEquals($index['key']['6'], 1);
-      $this->assertEquals($index['ns'], 'phpunit.c');
 
       $this->object->ensureIndex(array('bar' => -1));
       $index = $idx->findOne(array('name' => 'bar_-1'));
@@ -413,16 +407,16 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $arr = array('_id' => new MongoId());
         $ref = $this->object->createDBRef($arr);
         $this->assertNotNull($ref);
-        $this->assertTrue(is_array($ref));
+        $this->assertTrue(is_object($ref));
 
         $arr = array('_id' => 1);
         $ref = $this->object->createDBRef($arr);
         $this->assertNotNull($ref);
-        $this->assertTrue(is_array($ref));
+        $this->assertTrue(is_object($ref));
 
         $ref = $this->object->createDBRef(new MongoId());
         $this->assertNotNull($ref);
-        $this->assertTrue(is_array($ref));
+        $this->assertTrue(is_object($ref));
     }
 
 
@@ -449,11 +443,11 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
  
         $g = $this->object->group(array(), array("count" => 0), "function (obj, prev) { prev.count++; }", array());
         $this->assertEquals(1, count($g));
-        $this->assertEquals(3, $g[0]['count']);
+        $this->assertEquals(3, $g[0]->count);
       
         $g = $this->object->group(array(), array("count" => 0), "function (obj, prev) { prev.count++; }", array("a" => array( '$gt' => 1)));
         $this->assertEquals(1, count($g)); 
-        $this->assertEquals(1, $g[0]['count']);
+        $this->assertEquals(1, $g[0]->count);
     }
 
 }

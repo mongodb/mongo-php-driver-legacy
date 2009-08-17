@@ -239,21 +239,25 @@ PHP_METHOD(MongoCursor, tailable) {
 /* }}} */
 
 
+/* {{{ MongoCursor::dead
+ */
+PHP_METHOD(MongoCursor, dead) {
+  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+
+  if (cursor->started_iterating && cursor->cursor_id == 0) {
+    RETURN_TRUE;
+  }
+
+  RETURN_FALSE;
+}
+/* }}} */
+
 /* {{{ MongoCursor::slaveOkay
  */
 PHP_METHOD(MongoCursor, slaveOkay) {
   preiteration_setup;
   default_to_true(2);
-  RETURN_ZVAL(getThis(), 1, 0);
-}
-/* }}} */
-
-
-/* {{{ MongoCursor::logReplay
- */
-PHP_METHOD(MongoCursor, logReplay) {
-  preiteration_setup;
-  default_to_true(3);
   RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
@@ -298,6 +302,7 @@ PHP_METHOD(MongoCursor, sort) {
 
   query = cursor->query;
   zval_add_ref(&zfields);
+  convert_to_object(zfields);
   add_assoc_zval(query, "orderby", zfields);
 
   RETURN_ZVAL(getThis(), 1, 0);
@@ -458,21 +463,15 @@ PHP_METHOD(MongoCursor, next) {
   if (cursor->at < cursor->num) {
     zval **err;
     MAKE_STD_ZVAL(cursor->current);
-    if (MonGlo(objects)) {
-      object_init(cursor->current);
-      cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_OBJPROP_P(cursor->current) TSRMLS_CC);
-    }
-    else {
-      array_init(cursor->current);
-      cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
-    }
+    array_init(cursor->current);
+    cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
 
     // increment cursor position
     cursor->at++;
 
     // check for err
     if (cursor->num == 1 &&
-        zend_hash_find(HASH_P(cursor->current), "$err", 5, (void**)&err) == SUCCESS) {
+        zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", 5, (void**)&err) == SUCCESS) {
       zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 0 TSRMLS_CC);
       RETURN_FALSE;
     }
@@ -596,7 +595,7 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, logReplay, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, dead, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, snapshot, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC) 

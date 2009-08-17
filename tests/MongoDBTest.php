@@ -192,21 +192,21 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $arr = array('_id' => new MongoId());
         $ref = $this->object->createDBRef('foo.bar', $arr);
         $this->assertNotNull($ref);
-        $this->assertTrue(is_array($ref));
+        $this->assertTrue(is_object($ref));
 
         $arr = array('_id' => 1);
         $ref = $this->object->createDBRef('foo.bar', $arr);
         $this->assertNotNull($ref);
-        $this->assertTrue(is_array($ref));
+        $this->assertTrue(is_object($ref));
 
         $ref = $this->object->createDBRef('foo.bar', new MongoId());
         $this->assertNotNull($ref);
-        $this->assertTrue(is_array($ref));
+        $this->assertTrue(is_object($ref));
 
         $id = new MongoId();
         $ref = $this->object->createDBRef('foo.bar', array('_id' => $id, 'y' => 3));
         $this->assertNotNull($ref);
-        $this->assertEquals((string)$id, (string)$ref['$id']);
+        $this->assertEquals((string)$id, (string)$ref->{'$id'});
     }
 
     public function testGetDBRef() {
@@ -248,8 +248,8 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
 
     public function testCreateRef() {
         $ref = MongoDBRef::create("x", "y");
-        $this->assertEquals('x', $ref['$ref']);
-        $this->assertEquals('y', $ref['$id']);
+        $this->assertEquals('x', $ref->{'$ref'});
+        $this->assertEquals('y', $ref->{'$id'});
     }
 
     public function testIsRef() {

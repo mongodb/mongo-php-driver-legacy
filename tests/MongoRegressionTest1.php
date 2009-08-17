@@ -100,11 +100,11 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $c->drop();
 
         $c->insert(array('x' => array(), 'y' => new MongoEmptyObj()));
-        $c->update(array(), array('$push' => array('x' => 'foo')));
-        $c->update(array(), array('$push' => array('y' => 'bar')));
+        $c->update(array(), array('$push' => (object)array('x' => 'foo')));
+        $c->update(array(), array('$push' => (object)array('y' => 'bar')));
 
         $x = $c->findOne();
-        $this->assertTrue(empty($x['y']));
+        $this->assertTrue(is_object($x['y']));
         $this->assertEquals(1, count($x['x'])); 
         $this->assertEquals('foo', $x['x'][0]);
     }

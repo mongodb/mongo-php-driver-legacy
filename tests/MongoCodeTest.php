@@ -28,7 +28,7 @@ class MongoCodeTest extends PHPUnit_Framework_TestCase
       $c->insert(array("something" => $code));
       $obj = $c->findOne();
       $this->assertEquals($obj['something']->code, $code_str);
-      $this->assertEquals(count($obj['something']->scope), 0);
+      $this->assertEquals(1, count($obj['something']->scope));
 
       $c->remove();
       $code = new MongoCode($code_str, array("x" => 2));
@@ -36,14 +36,14 @@ class MongoCodeTest extends PHPUnit_Framework_TestCase
       $obj = $c->findOne();
       $this->assertEquals($obj['something']->code, $code_str);
       $this->assertEquals(count($obj['something']->scope), 1);
-      $this->assertEquals($obj['something']->scope['x'], 2);
+      $this->assertEquals($obj['something']->scope->x, 2);
       
       $c->remove();
       $code = new MongoCode($code_str);
       $c->insert(array("something" => $code));
       $obj = $c->findOne();
       $this->assertEquals($obj['something']->code, $code_str);
-      $this->assertEquals(count($obj['something']->scope), 0);
+      $this->assertEquals(1, count($obj['something']->scope));
     }
 }
 

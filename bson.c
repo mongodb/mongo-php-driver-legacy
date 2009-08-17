@@ -163,15 +163,7 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     break;
   }
   case IS_ARRAY: {
-    if (MonGlo(objects) ||
-        zend_hash_num_elements(Z_ARRVAL_PP(data)) == 0 || 
-        zend_hash_index_exists(Z_ARRVAL_PP(data), 0)) {
-      set_type(buf, BSON_ARRAY);
-    }
-    else {
-      set_type(buf, BSON_OBJECT);
-    }
-
+    set_type(buf, BSON_ARRAY);
     serialize_string(buf, name, name_len);
     zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
     break;
@@ -260,17 +252,6 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
       }
 
       serialize_bytes(buf, Z_STRVAL_P(zbin), Z_STRLEN_P(zbin));
-    }
-    else if (clazz == mongo_ce_EmptyObj) {
-      zval *temp;
-      MAKE_STD_ZVAL(temp);
-      array_init(temp);
-
-      set_type(buf, BSON_OBJECT);
-      serialize_string(buf, name, name_len);
-      zval_to_bson(buf, Z_ARRVAL_P(temp), NO_PREP TSRMLS_CC);
-
-      zval_ptr_dtor(&temp);
     }
     // serialize a normal obj
     else {
@@ -408,16 +389,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_OBJECT: 
-      if (MonGlo(objects)) {
-        HashTable *hash;
-        object_init(value);
-        hash = Z_OBJPROP_P(value);
-
-        buf = bson_to_zval(buf, hash TSRMLS_CC);
-
-        break;
-      }
-      // if MonGlo(object is not set, fall through)
+      object_init(value);
+      buf = bson_to_zval(buf, Z_OBJPROP_P(value) TSRMLS_CC);
+      break;
     case BSON_ARRAY: {
       array_init(value);
       buf = bson_to_zval(buf, Z_ARRVAL_P(value) TSRMLS_CC);
@@ -499,11 +473,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       object_init_ex(value, mongo_ce_Code);
       // initialize scope array
       MAKE_STD_ZVAL(zcope);
-      if (MonGlo(objects)) {
-        object_init(zcope);
-      } else {
-        array_init(zcope);
-      }
+      object_init(zcope);
 
       // CODE has a useless total size field
       if (type == BSON_CODE) {
@@ -551,16 +521,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       buf += OID_SIZE;
 
       // put it all together
-      if (MonGlo(objects)) {
-        object_init(value);
-        add_property_stringl(value, "$ref", ns, ns_len-1, 1);
-        add_property_zval(value, "$id", zoid);
-      }
-      else {
-        array_init(value);
-        add_assoc_stringl(value, "$ref", ns, ns_len-1, 1);
-        add_assoc_zval(value, "$id", zoid);
-      }
+      object_init(value);
+      add_property_stringl(value, "$ref", ns, ns_len-1, 1);
+      add_property_zval(value, "$id", zoid);
       break;
     }
     case BSON_TIMESTAMP: {

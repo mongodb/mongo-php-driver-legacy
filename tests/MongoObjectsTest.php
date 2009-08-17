@@ -39,8 +39,8 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $c->insert($x);
       $x = $c->findOne();
 
-      $this->assertTrue(is_object($x->obj));
-      $this->assertEquals(1, $x->obj->x);
+      $this->assertTrue(is_object($x['obj']));
+      $this->assertEquals(1, $x['obj']->x);
     }
 
     public function testNested() {
@@ -52,9 +52,9 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
 
       $x = $c->findOne();
 
-      $this->assertTrue(is_object($x->obj));
-      $this->assertTrue(is_object($x->obj->x));
-      $this->assertTrue(is_object($x->obj->x->foo));
+      $this->assertTrue(is_object($x['obj']));
+      $this->assertTrue(is_object($x['obj']->x));
+      $this->assertTrue(is_object($x['obj']->x->foo));
     }
 
     public function testClass() {
@@ -66,13 +66,10 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $c->insert($a);
 
       $foo = $c->findOne();
-      $this->assertTrue(is_object($foo->foo));
-      $this->assertEquals(1, $foo->foo->x);
-      $this->assertEquals(2, $foo->foo->y);
-      $this->assertEquals("hello", $foo->foo->z);
-
-      //      $this->assertTrue($c instanceof MongoCollection);
-      //      $this->assertEquals(1, $c->count());
+      $this->assertTrue(is_object($foo['foo']));
+      $this->assertEquals(1, $foo['foo']->x);
+      $this->assertEquals(2, $foo['foo']->y);
+      $this->assertEquals("hello", $foo['foo']->z);
     }
 
     public function testMethods() {
@@ -114,14 +111,14 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
 
     public function testValidate() {
         $v = $this->object->validate();
-        $this->assertEquals($v->ok, 0);
-        $this->assertEquals('ns not found', $v->errmsg);
+        $this->assertEquals($v['ok'], 0);
+        $this->assertEquals('ns not found', $v['errmsg']);
         
         $this->object->insert((object)array('a' => 'foo'));
         $v = $this->object->validate();
-        $this->assertEquals($v->ok, 1);
-        $this->assertEquals($v->ns, 'phpunit.c');
-        $this->assertNotNull($v->result);
+        $this->assertEquals($v['ok'], 1);
+        $this->assertEquals($v['ns'], 'phpunit.c');
+        $this->assertNotNull($v['result']);
     }
 
     public function testInsert() {
@@ -140,22 +137,19 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $this->assertTrue($this->object->insert($a));
       $obj = $this->object->findOne();
 
-      $this->assertEquals($obj->n, null, json_encode($obj));
-      $this->assertEquals($obj->l, 234234124);
-      $this->assertEquals($obj->d, 23.23451452);
-      $this->assertEquals($obj->b, true);
-      $this->assertEquals($obj->a['foo'], 'bar');
-      $this->assertEquals($obj->a['n'], null);
-      $this->assertNotNull($obj->a['x']);
-      $this->assertEquals($obj->d2->sec, 1271079861);
-      $this->assertEquals($obj->d2->usec, 0);
-      $this->assertEquals($obj->regex->regex, 'xtz');
-      $this->assertEquals($obj->regex->flags, 'g');
-      $this->assertNotNull($obj->_id);
-      $this->assertEquals($obj->string, 'string');
-
-      $this->assertFalse($this->object->insert(array()));
-      $this->assertTrue($this->object->insert(array(1,2,3,4,5)));
+      $this->assertEquals($obj['n'], null);
+      $this->assertEquals($obj['l'], 234234124);
+      $this->assertEquals($obj['d'], 23.23451452);
+      $this->assertEquals($obj['b'], true);
+      $this->assertEquals($obj['a']['foo'], 'bar');
+      $this->assertEquals($obj['a']['n'], null);
+      $this->assertNotNull($obj['a']['x']);
+      $this->assertEquals($obj['d2']->sec, 1271079861);
+      $this->assertEquals($obj['d2']->usec, 0);
+      $this->assertEquals($obj['regex']->regex, 'xtz');
+      $this->assertEquals($obj['regex']->flags, 'g');
+      $this->assertNotNull($obj['_id']);
+      $this->assertEquals($obj['string'], 'string');
     }
 
     public function testInsert2() {
@@ -174,10 +168,10 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         $this->object->insert($nonassoc);
         $x = $this->object->findOne();
 
-        $this->assertEquals("x", $x->x[0]);
-        $this->assertEquals("y", $x->x[1]);
-        $this->assertEquals("z", $x->x[2]);
-        $this->assertEquals((string)$nonassoc->_id, (string)$x->_id);
+        $this->assertEquals("x", $x['x'][0]);
+        $this->assertEquals("y", $x['x'][1]);
+        $this->assertEquals("z", $x['x'][2]);
+        $this->assertEquals((string)$nonassoc->_id, (string)$x['_id']);
     }
     
     public function testBatchInsert() {
@@ -191,13 +185,13 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
 
       $cursor = $this->object->find()->sort((object)array("x" => -1));
       $x = $cursor->getNext();
-      $this->assertEquals('bar', $x->foo);
+      $this->assertEquals('bar', $x['foo']);
       $x = $cursor->getNext();
-      $this->assertEquals('z', $x->x);
+      $this->assertEquals('z', $x['x']);
       $x = $cursor->getNext();
-      $this->assertEquals('y', $x->x);
+      $this->assertEquals('y', $x['x']);
       $x = $cursor->getNext();
-      $this->assertEquals('foo', $x->x);
+      $this->assertEquals('foo', $x['x']);
     }
 
     public function testFind() {
@@ -218,8 +212,8 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
 
         $this->assertTrue($c instanceof MongoCursor);
         $obj = $c->getNext();
-        $this->assertEquals('b', $obj->a);
-        $this->assertEquals('c', $obj->b);
+        $this->assertEquals('b', $obj['a']);
+        $this->assertEquals('c', $obj['b']);
         $this->assertEquals(false, array_key_exists('foo', $obj));
     }
 
@@ -234,11 +228,11 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
 
         $obj = $this->object->findOne();
         $this->assertNotNull($obj);
-        $this->assertEquals(0, $obj->x);
+        $this->assertEquals(0, $obj['x']);
 
         $obj = $this->object->findOne((object)array('x' => 1));
         $this->assertNotNull($obj);
-        $this->assertEquals(1, $obj->x);
+        $this->assertEquals(1, $obj['x']);
     }
 
     public function testFindOneFields() {
@@ -247,17 +241,16 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         }
 
         $obj = $this->object->findOne((object)array(), (object)array('y'=>1));
-        $this->assertNotNull($obj);
-        $this->assertObjectHasAttribute('y', $obj, json_encode($obj));
-        $this->assertObjectHasAttribute('_id', $obj, json_encode($obj));
-        $this->assertObjectNotHasAttribute('x', $obj, json_encode($obj));
-        $this->assertObjectNotHasAttribute('z', $obj, json_encode($obj));
+        $this->assertArrayHasKey('y', $obj, json_encode($obj));
+        $this->assertArrayHasKey('_id', $obj, json_encode($obj));
+        $this->assertArrayNotHasKey('x', $obj, json_encode($obj));
+        $this->assertArrayNotHasKey('z', $obj, json_encode($obj));
 
         $obj = $this->object->findOne(array(), array('y'=>1, 'z'=>1));
-        $this->assertObjectHasAttribute('y', $obj, json_encode($obj));
-        $this->assertObjectHasAttribute('_id', $obj, json_encode($obj));
-        $this->assertObjectNotHasAttribute('x', $obj, json_encode($obj));
-        $this->assertObjectHasAttribute('z', $obj, json_encode($obj));
+        $this->assertArrayHasKey('y', $obj, json_encode($obj));
+        $this->assertArrayHasKey('_id', $obj, json_encode($obj));
+        $this->assertArrayNotHasKey('x', $obj, json_encode($obj));
+        $this->assertArrayHasKey('z', $obj, json_encode($obj));
     }
 
     public function testUpdate() {
@@ -266,12 +259,12 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       
         $this->object->update((object)array("foo"=>"bar"), $old, true);
         $obj = $this->object->findOne();
-        $this->assertEquals($obj->foo, 'bar');      
-        $this->assertEquals($obj->x, 'y');      
+        $this->assertEquals($obj['foo'], 'bar');      
+        $this->assertEquals($obj['x'], 'y');      
 
         $this->object->update($old, $new);
         $obj = $this->object->findOne();
-        $this->assertEquals($obj->foo, 'baz');      
+        $this->assertEquals($obj['foo'], 'baz');      
     }
 
     public function testRemove() {
@@ -302,8 +295,8 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         $index = $idx->findOne((object)array('name' => 'foo_1'));
 
         $this->assertNotNull($index);
-        $this->assertEquals($index->key->foo, 1);
-        $this->assertEquals($index->name, 'foo_1');
+        $this->assertEquals($index['key']->foo, 1);
+        $this->assertEquals($index['name'], 'foo_1');
 
         // get rid of indexes
         $this->object->drop();
@@ -311,8 +304,8 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         $this->object->ensureIndex((object)array('bar' => -1));
         $index = $idx->findOne((object)array('name' => 'bar_-1'));
         $this->assertNotNull($index);
-        $this->assertEquals($index->key->bar, -1);
-        $this->assertEquals($index->ns, 'phpunit.c');
+        $this->assertEquals($index['key']->bar, -1);
+        $this->assertEquals($index['ns'], 'phpunit.c');
     }
 
     public function testEnsureUniqueIndex() {
@@ -327,7 +320,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $this->object->insert((object)array('z'=>0));
       $this->object->insert((object)array('z'=>0));
       $err = $this->sharedFixture->lastError();
-      $this->assertEquals("E11000", substr($err->err, 0, 6), json_encode($err));
+      $this->assertEquals("E11000", substr($err['err'], 0, 6), json_encode($err));
     }
 
     public function testDeleteIndex() {
@@ -381,13 +374,13 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
 
       $info = $this->object->getIndexInfo();
       $this->assertEquals(4, count($info), json_encode($info));
-      $this->assertEquals($info[1]->key->foo, 1);
-      $this->assertEquals($info[1]->name, 'foo_1');
-      $this->assertEquals($info[2]->key->foo, -1);
-      $this->assertEquals($info[2]->name, 'foo_-1');
-      $this->assertEquals($info[3]->key->bar, 1);
-      $this->assertEquals($info[3]->key->baz, -1);
-      $this->assertEquals($info[3]->name, 'bar_1_baz_-1');
+      $this->assertEquals($info[1]['key']->foo, 1);
+      $this->assertEquals($info[1]['name'], 'foo_1');
+      $this->assertEquals($info[2]['key']->foo, -1);
+      $this->assertEquals($info[2]['name'], 'foo_-1');
+      $this->assertEquals($info[3]['key']->bar, 1);
+      $this->assertEquals($info[3]['key']->baz, -1);
+      $this->assertEquals($info[3]['name'], 'bar_1_baz_-1');
     }
     
     public function testCount() {
@@ -407,20 +400,20 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $this->object->save((object)array('x' => 1));
 
       $a = $this->object->findOne();
-      $id1 = $a->_id;
+      $id1 = $a['_id'];
 
-      $a->x = 2;
+      $a['x'] = 2;
       $this->object->save($a);
-      $id2 = $a->_id;
+      $id2 = $a['_id'];
 
       $this->assertEquals($id1, $id2);
-      $a->y = 3;
+      $a['y'] = 3;
       $this->object->save($a);
 
       $this->assertEquals($this->object->count(), 1);
 
       $a = $this->object->findOne();
-      $this->assertEquals($a->x, 2);
+      $this->assertEquals($a['x'], 2);
 
 
     }
@@ -435,7 +428,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         $obj2 = $this->object->getDBRef($ref);
 
         $this->assertNotNull($obj2);
-        $this->assertEquals($obj->x, $obj2->x);
+        $this->assertEquals($obj['x'], $obj2['x']);
     }
 
     public function testCreateDBRef() {

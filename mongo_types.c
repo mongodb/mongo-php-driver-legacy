@@ -504,20 +504,11 @@ PHP_METHOD(MongoDBRef, create) {
   }
   convert_to_string(zns);
 
-  if (MonGlo(objects)) {
-    object_init(return_value);
-    add_property_zval(return_value, "$ref", zns); 
-    zval_add_ref(&zns);
-    add_property_zval(return_value, "$id", zid); 
-    zval_add_ref(&zid);
-  }
-  else {
-    array_init(return_value);
-    add_assoc_zval(return_value, "$ref", zns); 
-    zval_add_ref(&zns);
-    add_assoc_zval(return_value, "$id", zid); 
-    zval_add_ref(&zid);
-  }
+  object_init(return_value);
+  add_property_zval(return_value, "$ref", zns); 
+  zval_add_ref(&zns);
+  add_property_zval(return_value, "$id", zid); 
+  zval_add_ref(&zid);
 }
 /* }}} */
 

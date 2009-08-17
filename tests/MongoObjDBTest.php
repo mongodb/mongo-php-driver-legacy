@@ -30,12 +30,12 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
 
     public function testDBDrop() {
         $r = $this->object->drop();
-        $this->assertEquals(1, $r->ok, json_encode($r));
+        $this->assertEquals(1, $r['ok'], json_encode($r));
     }
 
     public function testRepair() {
       $r = $this->object->repair();
-      $this->assertEquals(1, $r->ok, json_encode($r));
+      $this->assertEquals(1, $r['ok'], json_encode($r));
     }
 
     public function testCreateCollection() {
@@ -116,29 +116,29 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
         $obj2 = $this->object->getDBRef($ref);
 
         $this->assertNotNull($obj2);
-        $this->assertEquals($obj->x, $obj2->x);
+        $this->assertEquals($obj['x'], $obj2['x']);
     }
 
     public function testExecute() {
         $ret = $this->object->execute('4+3*6');
-        $this->assertEquals($ret->retval, 22);
+        $this->assertEquals($ret['retval'], 22);
 
         $ret = $this->object->execute(new MongoCode('function() { return x+y; }', (object)array('x' => 'hi', 'y' => 'bye')));
-        $this->assertEquals($ret->retval, 'hibye');
+        $this->assertEquals($ret['retval'], 'hibye');
 
         $ret = $this->object->execute(new MongoCode('function(x) { return x+y; }', (object)array('y' => 'bye')), array('bye'));
-        $this->assertEquals($ret->retval, 'byebye');
+        $this->assertEquals($ret['retval'], 'byebye');
     }
 
     public function testDBCommand() {
         $x = $this->object->command((object)array());
-        $this->assertEquals($x->errmsg, "no such cmd");
-        $this->assertEquals($x->ok, 0);
+        $this->assertEquals($x['errmsg'], "no such cmd");
+        $this->assertEquals($x['ok'], 0);
 
         $this->object->command((object)array('profile' => 0));
         $x = $this->object->command((object)array('profile' => 1));
-        $this->assertEquals($x->was, 0, json_encode($x));
-        $this->assertEquals($x->ok, 1);
+        $this->assertEquals($x['was'], 0, json_encode($x));
+        $this->assertEquals($x['ok'], 1);
     }
 
     public function testCreateRef() {
