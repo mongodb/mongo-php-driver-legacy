@@ -26,7 +26,9 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
+#ifdef HAVE_SPL
 #include <ext/spl/spl_exceptions.h>
+#endif
 
 #include "mongo_types.h"
 #include "php_mongo.h"
@@ -250,7 +252,11 @@ PHP_METHOD(MongoDate, __construct) {
     add_property_long(getThis(), "usec", usec);      
   }
   else {
+#   ifdef HAVE_SPL
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoDate::__construct()", 0 TSRMLS_CC);
+#   else
+    zend_throw_exception(zend_exception_get_default(), "MongoDate::__construct()", 0 TSRMLS_CC);
+#   endif
   }
 }
 /* }}} */
@@ -401,7 +407,11 @@ PHP_METHOD(MongoRegex, __construct) {
     add_property_stringl( getThis(), "flags", eopattern, flags_len, 1);
   }
   else {
+#   ifdef HAVE_SPL
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoRegex::__construct(): argument must be a string or MongoRegex", 0 TSRMLS_CC);
+#   else
+    zend_throw_exception(zend_exception_get_default(), "MongoRegex::__construct(): argument must be a string or MongoRegex", 0 TSRMLS_CC);
+#   endif
     return;
   }
 }

@@ -17,7 +17,9 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
+#ifdef HAVE_SPL
 #include "ext/spl/spl_exceptions.h"
+#endif /* HAVE_SPL */
 
 #include "php_mongo.h"
 #include "collection.h"
@@ -53,7 +55,11 @@ PHP_METHOD(MongoCollection, __construct) {
 
   if (strchr(Z_STRVAL_P(name), '$') != 0 &&
       strchr(Z_STRVAL_P(name), '$') != Z_STRVAL_P(name)) {
+#   ifdef HAVE_SPL
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoCollection::__construct(): collection names cannot contain '$'", 0 TSRMLS_CC);
+#   else
+    zend_throw_exception(zend_exception_get_default(), "MongoCollection::__construct(): collection names cannot contain '$'", 0 TSRMLS_CC);
+#   endif
     return;
   }
   zend_update_property(mongo_ce_Collection, getThis(), "db", strlen("db"), db TSRMLS_CC);

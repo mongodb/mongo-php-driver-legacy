@@ -18,7 +18,9 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
+#ifdef HAVE_SPL
 #include "ext/spl/spl_exceptions.h"
+#endif
 
 #include "db.h"
 #include "php_mongo.h"
@@ -55,7 +57,11 @@ PHP_METHOD(MongoDB, __construct) {
   if (name_len == 0 ||
       strchr(name, ' ') ||
       strchr(name, '.')) {
+#   ifdef HAVE_SPL
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoDB::__construct(): database names must be at least one character and cannot contain ' ' or  '.'", 0 TSRMLS_CC);
+#   else
+    zend_throw_exception(zend_exception_get_default(), "MongoDB::__construct(): database names must be at least one character and cannot contain ' ' or  '.'", 0 TSRMLS_CC);
+#   endif
     return;
   }
 
