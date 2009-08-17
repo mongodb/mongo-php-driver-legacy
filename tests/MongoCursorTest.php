@@ -454,5 +454,37 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       $cursor = $this->object->find()->snapshot();
       $this->assertNotNull($cursor->getNext());
     }
+
+
+    /**
+     * @expectedException MongoCursorException
+     */
+    public function testErr1() {
+      $this->object->drop();
+
+      $this->object->insert(array("num" => 1, "foo" => 1));
+      var_dump($this->object->find()->hint(array("num" => 1))->explain());
+    }
+
+    /**
+     * @expectedException MongoCursorException
+     */
+    public function testErr2() {
+      $this->object->drop();
+
+      $this->object->insert(array("num" => 1, "foo" => 1));
+      var_dump($this->object->find()->hint(array("num" => 1))->next());
+    }
+
+    /**
+     * @expectedException MongoCursorException
+     */
+    public function testErr3() {
+      $this->object->drop();
+
+      $this->object->insert(array("num" => 1, "foo" => 1));
+      var_dump($this->object->find()->hint(array("num" => 1))->getNext());
+    }
+
 }
 ?>

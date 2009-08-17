@@ -189,6 +189,11 @@ PHP_METHOD(MongoCursor, hasNext) {
  */
 PHP_METHOD(MongoCursor, getNext) {
   MONGO_METHOD(MongoCursor, next)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  // will be null unless there was an error
+  if (Z_TYPE_P(return_value) == IS_BOOL &&
+      Z_BVAL_P(return_value) == 0) {
+    return;
+  }
   MONGO_METHOD(MongoCursor, current)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
@@ -451,6 +456,7 @@ PHP_METHOD(MongoCursor, next) {
 
   // we got more results
   if (cursor->at < cursor->num) {
+    zval **err;
     MAKE_STD_ZVAL(cursor->current);
     if (MonGlo(objects)) {
       object_init(cursor->current);
@@ -463,6 +469,13 @@ PHP_METHOD(MongoCursor, next) {
 
     // increment cursor position
     cursor->at++;
+
+    // check for err
+    if (cursor->num == 1 &&
+        zend_hash_find(HASH_P(cursor->current), "$err", 5, (void**)&err) == SUCCESS) {
+      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 0 TSRMLS_CC);
+      RETURN_FALSE;
+    }
   }
 
   RETURN_NULL();
