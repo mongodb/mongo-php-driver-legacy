@@ -1,13 +1,13 @@
 // db.c
 /**
  *  Copyright 2009 10gen, Inc.
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
-#ifdef HAVE_SPL
+#if ZEND_MODULE_API_NO >= 20060613
 #include "ext/spl/spl_exceptions.h"
 #endif
 
@@ -57,7 +57,7 @@ PHP_METHOD(MongoDB, __construct) {
   if (name_len == 0 ||
       strchr(name, ' ') ||
       strchr(name, '.')) {
-#   ifdef HAVE_SPL
+#   if ZEND_MODULE_API_NO >= 20060613
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoDB::__construct(): database names must be at least one character and cannot contain ' ' or  '.'", 0 TSRMLS_CC);
 #   else
     zend_throw_exception(zend_exception_get_default(), "MongoDB::__construct(): database names must be at least one character and cannot contain ' ' or  '.'", 0 TSRMLS_CC);

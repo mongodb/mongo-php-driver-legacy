@@ -1,13 +1,13 @@
 //collection.c
 /**
  *  Copyright 2009 10gen, Inc.
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,9 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
-#ifdef HAVE_SPL
+#if ZEND_MODULE_API_NO >= 20060613
 #include "ext/spl/spl_exceptions.h"
-#endif /* HAVE_SPL */
+#endif
 
 #include "php_mongo.h"
 #include "collection.h"
@@ -55,7 +55,7 @@ PHP_METHOD(MongoCollection, __construct) {
 
   if (strchr(Z_STRVAL_P(name), '$') != 0 &&
       strchr(Z_STRVAL_P(name), '$') != Z_STRVAL_P(name)) {
-#   ifdef HAVE_SPL
+#   if ZEND_MODULE_API_NO >= 20060613
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoCollection::__construct(): collection names cannot contain '$'", 0 TSRMLS_CC);
 #   else
     zend_throw_exception(zend_exception_get_default(), "MongoCollection::__construct(): collection names cannot contain '$'", 0 TSRMLS_CC);

@@ -26,7 +26,7 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
-#ifdef HAVE_SPL
+#if ZEND_MODULE_API_NO >= 20060613
 #include <ext/spl/spl_exceptions.h>
 #endif
 
@@ -249,10 +249,10 @@ PHP_METHOD(MongoDate, __construct) {
   }
   else if (Z_TYPE_P(arg) == IS_LONG) {
     add_property_long(getThis(), "sec", Z_LVAL_P(arg));
-    add_property_long(getThis(), "usec", usec);      
+    add_property_long(getThis(), "usec", usec);
   }
   else {
-#   ifdef HAVE_SPL
+#   if ZEND_MODULE_API_NO >= 20060613
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoDate::__construct()", 0 TSRMLS_CC);
 #   else
     zend_throw_exception(zend_exception_get_default(), "MongoDate::__construct()", 0 TSRMLS_CC);
@@ -262,7 +262,7 @@ PHP_METHOD(MongoDate, __construct) {
 /* }}} */
 
 
-/* {{{ MongoDate::__toString() 
+/* {{{ MongoDate::__toString()
  */
 PHP_METHOD(MongoDate, __toString) {
   zval *zsec = zend_read_property( mongo_ce_Date, getThis(), "sec", 3, 0 TSRMLS_CC );
@@ -399,7 +399,7 @@ PHP_METHOD(MongoRegex, __construct) {
       return;
     }
 
-    // move beyond the second '/' in /foo/bar 
+    // move beyond the second '/' in /foo/bar
     eopattern++;
     flags_len = Z_STRLEN_P(regex) - (eopattern-re);
 
@@ -407,7 +407,7 @@ PHP_METHOD(MongoRegex, __construct) {
     add_property_stringl( getThis(), "flags", eopattern, flags_len, 1);
   }
   else {
-#   ifdef HAVE_SPL
+#   if ZEND_MODULE_API_NO >= 20060613
     zend_throw_exception(spl_ce_InvalidArgumentException, "MongoRegex::__construct(): argument must be a string or MongoRegex", 0 TSRMLS_CC);
 #   else
     zend_throw_exception(zend_exception_get_default(), "MongoRegex::__construct(): argument must be a string or MongoRegex", 0 TSRMLS_CC);
@@ -418,7 +418,7 @@ PHP_METHOD(MongoRegex, __construct) {
 /* }}} */
 
 
-/* {{{ MongoRegex::__toString() 
+/* {{{ MongoRegex::__toString()
  */
 PHP_METHOD(MongoRegex, __toString) {
   char *field_name;
