@@ -47,8 +47,7 @@ zend_class_entry *mongo_ce_Cursor = NULL;
 /* {{{ MongoCursor->__construct
  */
 PHP_METHOD(MongoCursor, __construct) {
-  HashPosition pointer;
-  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, *q, *fields, *slave_okay;
+  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, *q, *slave_okay;
   zval **data;
   mongo_cursor *cursor;
   mongo_link *link;
@@ -82,6 +81,9 @@ PHP_METHOD(MongoCursor, __construct) {
 
   // change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1}
   if (Z_TYPE_P(zfields) == IS_ARRAY) {
+    HashPosition pointer;
+    zval *fields;
+
     MAKE_STD_ZVAL(fields);
     object_init(fields);
 
@@ -111,7 +113,6 @@ PHP_METHOD(MongoCursor, __construct) {
     zval_add_ref(&zfields);
   }
 
-
   // ns
   convert_to_string(zns);
   cursor->ns = estrdup(Z_STRVAL_P(zns));
@@ -119,7 +120,36 @@ PHP_METHOD(MongoCursor, __construct) {
   // query
   MAKE_STD_ZVAL(q);
   array_init(q);
-  add_assoc_zval(q, "query", zquery);
+
+  // make sure query is an object
+  if (Z_TYPE_P(zquery) == IS_ARRAY) {
+    /*
+     * If the query isn't an object, copy the keys/values into obj's
+     * properties.  However, HashTables don't have refcounts, so this
+     * could be freed before the query.  So, we need to store the array
+     * as part of this cursor so we can decrement the reference count
+     * at the end and clean up.
+     */
+
+    zval *obj, temp;
+    zend_object *zobj;
+    MAKE_STD_ZVAL(obj);
+    object_init(obj);
+
+    zobj = zend_objects_get_address(obj TSRMLS_CC);
+    zend_hash_copy(zobj->properties, Z_ARRVAL_P(zquery), NULL, &temp, sizeof(zval*));
+
+    add_assoc_zval(q, "query", obj);
+
+    // we need a handle to be able to free this at the end
+    cursor->query_zval = zquery;
+  }
+  else {
+    add_assoc_zval(q, "query", zquery);
+
+    // if this was already an object, we don't need to hack around it
+    cursor->query_zval = 0;
+  }
   // we don't want this param to go away at the end of this method
   zval_add_ref(&zquery);
   cursor->query = q;
@@ -671,6 +701,7 @@ void mongo_mongo_cursor_free(void *object TSRMLS_DC) {
 
     if (cursor->query) zval_ptr_dtor(&cursor->query);
     if (cursor->fields) zval_ptr_dtor(&cursor->fields);
+    if (cursor->query_zval) zval_ptr_dtor(&cursor->query_zval);
 
     if (cursor->resource) zval_ptr_dtor(&cursor->resource);
  

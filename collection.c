@@ -435,7 +435,6 @@ PHP_METHOD(MongoCollection, ensureIndex) {
 
   // ns
   add_property_zval(data, "ns", c->ns);
-  zval_add_ref(&c->ns);
   add_property_zval(data, "key", keys);
 
   // turn keys into a string
@@ -462,6 +461,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   zval_ptr_dtor(&system_indexes);
   zval_ptr_dtor(&collection);
   zval_ptr_dtor(&keys);
+  zval_ptr_dtor(&key_str);
 }
 
 PHP_METHOD(MongoCollection, deleteIndex) {

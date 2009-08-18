@@ -195,6 +195,9 @@ typedef struct {
   int skip;
   int opts;
 
+  // holder for array ref
+  zval *query_zval;
+
   // response header
   mongo_msg_header header;
   // response fields

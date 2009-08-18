@@ -288,8 +288,6 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->insert(array('z'=>0));
       $err = $this->sharedFixture->lastError();
       $this->assertEquals("E11000", substr($err['err'], 0, 6), json_encode($err));
-      // this should work, but buildbot says 4
-      //$this->assertEquals($this->object->count(), 3);
     }
 
     public function testDeleteIndex() {
@@ -298,24 +296,25 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->ensureIndex('foo');
       $this->object->ensureIndex(array('foo' => -1));
 
-      $num = iterator_count($idx->find(array('ns' => 'phpunit.c')));
-      $this->assertEquals($num, 3);
+      $cursor = $idx->find(array('ns' => 'phpunit.c'));
+      $num = iterator_count($cursor);
+      $this->assertEquals(3, $num);
 
       $this->object->deleteIndex(null);
       $num = iterator_count($idx->find(array('ns' => 'phpunit.c')));
-      $this->assertEquals($num, 3);
+      $this->assertEquals(3, $num);
 
       $this->object->deleteIndex(array('foo' => 1)); 
       $num = iterator_count($idx->find(array('ns' => 'phpunit.c')));
-      $this->assertEquals($num, 2);
+      $this->assertEquals(2, $num);
 
       $this->object->deleteIndex('foo');
       $num = iterator_count($idx->find(array('ns' => 'phpunit.c')));
-      $this->assertEquals($num, 2);
+      $this->assertEquals(2, $num);
 
       $this->object->deleteIndex(array('foo' => -1));
       $num = iterator_count($idx->find(array('ns' => 'phpunit.c')));
-      $this->assertEquals($num, 1);
+      $this->assertEquals(1, $num);
     }
 
     public function testDeleteIndexes() {
