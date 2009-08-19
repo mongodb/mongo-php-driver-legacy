@@ -634,7 +634,7 @@ static int getPort(char *ip) {
 }
 
 static int get_host_and_port(char *server, mongo_link *link TSRMLS_DC) {
-  char *colon, *host, *comma;
+  char *host, *comma;
   int port;
 
   // extract host:port
@@ -1074,7 +1074,7 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   // if this fails, we might be disconnected... but we're probably
   // just out of results
 #ifdef WIN32
-  if (recv(sock, &cursor->header.length, INT_32, FLAGS) == FAILURE) {
+  if (recv(sock, (char*)&cursor->header.length, INT_32, FLAGS) == FAILURE) {
 #else
   if (read(sock, &cursor->header.length, INT_32) == FAILURE) {
 #endif
@@ -1089,13 +1089,13 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   }
 
 #ifdef WIN32
-  recv(sock, &cursor->header.request_id, INT_32, FLAGS);
-  recv(sock, &cursor->header.response_to, INT_32, FLAGS);
-  recv(sock, &cursor->header.op, INT_32, FLAGS);
-  recv(sock, &cursor->flag, INT_32, FLAGS);
-  recv(sock, &cursor->cursor_id, INT_64, FLAGS);
-  recv(sock, &cursor->start, INT_32, FLAGS);
-  recv(sock, &num_returned, INT_32, FLAGS);
+  if (recv(sock, (char*)&cursor->header.request_id, INT_32, FLAGS) == FAILURE ||
+      recv(sock, (char*)&cursor->header.response_to, INT_32, FLAGS) == FAILURE ||
+      recv(sock, (char*)&cursor->header.op, INT_32, FLAGS) == FAILURE ||
+      recv(sock, (char*)&cursor->flag, INT_32, FLAGS) == FAILURE ||
+      recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
+      recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
+      recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
 #else
   if (read(sock, &cursor->header.request_id, INT_32) == FAILURE ||
       read(sock, &cursor->header.response_to, INT_32) == FAILURE ||
@@ -1104,9 +1104,9 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
       read(sock, &cursor->cursor_id, INT_64) == FAILURE ||
       read(sock, &cursor->start, INT_32) == FAILURE ||
       read(sock, &num_returned, INT_32) == FAILURE) {
+#endif
     return FAILURE;
   }
-#endif
 
   // create buf
   cursor->header.length -= INT_32*9;

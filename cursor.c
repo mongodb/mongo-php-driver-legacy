@@ -246,7 +246,7 @@ PHP_METHOD(MongoCursor, dead) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
-  RETURN_BOOLEAN(cursor->started_iterating && cursor->cursor_id == 0);
+  RETURN_BOOL(cursor->started_iterating && cursor->cursor_id == 0);
 }
 /* }}} */
 

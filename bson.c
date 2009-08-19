@@ -448,7 +448,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_LONG: {
-      ZVAL_DOUBLE(value, *((long long int*)buf));
+      ZVAL_DOUBLE(value, (double)*((long long int*)buf));
       buf += INT_64;
       break;
     }
@@ -458,7 +458,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       
       object_init_ex(value, mongo_ce_Date);
 
-      add_property_long(value, "sec", d/1000);
+      add_property_long(value, "sec", (long)(d/1000));
       add_property_long(value, "usec", (d*1000)%1000000);
 
       break;
@@ -550,7 +550,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       d = *(int*)buf;
       buf += INT_64;
 
-      ZVAL_LONG(value, d);
+      ZVAL_LONG(value, (long)d);
       break;
     }
     case BSON_MINKEY: {

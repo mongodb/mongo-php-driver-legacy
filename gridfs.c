@@ -424,7 +424,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
     chunk_size = size-pos >= global_chunk_size ? global_chunk_size : size-pos;
     buf = (char*)emalloc(chunk_size); 
-    if (fread(buf, 1, chunk_size, fp) < chunk_size) {
+    if ((int)fread(buf, 1, chunk_size, fp) < chunk_size) {
       zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error reading file %s", filename);
       return;
     }
