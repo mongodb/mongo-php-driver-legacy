@@ -121,36 +121,7 @@ PHP_METHOD(MongoCursor, __construct) {
   MAKE_STD_ZVAL(q);
   array_init(q);
 
-  // make sure query is an object
-  if (Z_TYPE_P(zquery) == IS_ARRAY) {
-    /*
-     * If the query isn't an object, copy the keys/values into obj's
-     * properties.  However, HashTables don't have refcounts, so this
-     * could be freed before the query.  So, we need to store the array
-     * as part of this cursor so we can decrement the reference count
-     * at the end and clean up.
-     */
-
-    zval *obj, temp;
-    zend_object *zobj;
-    MAKE_STD_ZVAL(obj);
-    object_init(obj);
-
-    zobj = zend_objects_get_address(obj TSRMLS_CC);
-    zend_hash_copy(zobj->properties, Z_ARRVAL_P(zquery), NULL, &temp, sizeof(zval*));
-
-    add_assoc_zval(q, "query", obj);
-
-    // we need a handle to be able to free this at the end
-    cursor->query_zval = zquery;
-  }
-  else {
-    add_assoc_zval(q, "query", zquery);
-
-    // if this was already an object, we don't need to hack around it
-    cursor->query_zval = 0;
-  }
-  // we don't want this param to go away at the end of this method
+  add_assoc_zval(q, "query", zquery);
   zval_add_ref(&zquery);
   cursor->query = q;
 
@@ -275,11 +246,7 @@ PHP_METHOD(MongoCursor, dead) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
-  if (cursor->started_iterating && cursor->cursor_id == 0) {
-    RETURN_TRUE;
-  }
-
-  RETURN_FALSE;
+  RETURN_BOOLEAN(cursor->started_iterating && cursor->cursor_id == 0);
 }
 /* }}} */
 
@@ -701,7 +668,6 @@ void mongo_mongo_cursor_free(void *object TSRMLS_DC) {
 
     if (cursor->query) zval_ptr_dtor(&cursor->query);
     if (cursor->fields) zval_ptr_dtor(&cursor->fields);
-    if (cursor->query_zval) zval_ptr_dtor(&cursor->query_zval);
 
     if (cursor->resource) zval_ptr_dtor(&cursor->resource);
  

@@ -90,9 +90,9 @@ int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC) {
     }
   
 #if ZEND_MODULE_API_NO >= 20090115
-    zend_hash_apply_with_arguments(hash TSRMLS_CC, (apply_func_args_t)apply_func_args_wrapper, 2, buf, prep);
+    zend_hash_apply_with_arguments(hash TSRMLS_CC, (apply_func_args_t)apply_func_args_wrapper, 3, buf, prep, &num);
 #else
-    zend_hash_apply_with_arguments(hash, (apply_func_args_t)apply_func_args_wrapper, 3, buf, prep TSRMLS_CC);
+    zend_hash_apply_with_arguments(hash, (apply_func_args_t)apply_func_args_wrapper, 4, buf, prep, &num TSRMLS_CC);
 #endif /* ZEND_MODULE_API_NO >= 20090115 */
   }
 
@@ -112,6 +112,7 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
 
   buffer *buf = va_arg(args, buffer*);
   int prep = va_arg(args, int);
+  int *num = va_arg(args, int*);
 
 #if ZEND_MODULE_API_NO < 20090115
   void ***tsrm_ls = va_arg(args, void***);
@@ -124,6 +125,10 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
   spprintf(&name, 0, "%ld", key->h);
   retval = serialize_element(name, (zval**)data, buf, prep TSRMLS_CC);
   efree(name);
+
+  // if this is a number, increase the count
+  (*num)++;
+
   return retval;
 }
 
@@ -163,9 +168,25 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     break;
   }
   case IS_ARRAY: {
-    set_type(buf, BSON_ARRAY);
+    int num;
+
+    // skip type until we know whether it was an array or an object
+    char *type_byte = buf->pos;
+    buf->pos++;
+
+    //serialize
     serialize_string(buf, name, name_len);
-    zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
+    num = zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
+
+    // now go back and set the type bit
+    //set_type(buf, BSON_ARRAY);
+    if (num == zend_hash_num_elements(Z_ARRVAL_PP(data))) {
+      *(type_byte) = BSON_ARRAY;
+    }
+    else {
+      *(type_byte) = BSON_OBJECT;
+    }
+
     break;
   }
   case IS_OBJECT: {
@@ -389,9 +410,6 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_OBJECT: 
-      object_init(value);
-      buf = bson_to_zval(buf, Z_OBJPROP_P(value) TSRMLS_CC);
-      break;
     case BSON_ARRAY: {
       array_init(value);
       buf = bson_to_zval(buf, Z_ARRVAL_P(value) TSRMLS_CC);

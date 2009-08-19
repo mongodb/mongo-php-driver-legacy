@@ -313,8 +313,7 @@ PHP_METHOD(MongoDB, listCollections) {
   
   MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
   while (Z_TYPE_P(next) != IS_NULL) {
-    zval zname;
-    zval *c;
+    zval *c, *zname;
     zval **collection;
     char *name, *first_dot, *system;
 
@@ -348,11 +347,11 @@ PHP_METHOD(MongoDB, listCollections) {
 
     MAKE_STD_ZVAL(c);
 
-    zname.value.str.len = strlen(name);
-    zname.value.str.val = name;
-    zname.type = IS_STRING;
+    // zname must be on heap
+    MAKE_STD_ZVAL(zname);
+    ZVAL_STRING(zname, name, 0);
 
-    PUSH_PARAM(&zname); PUSH_PARAM((void*)1);
+    PUSH_PARAM(zname); PUSH_PARAM((void*)1);
     PUSH_EO_PARAM();
     MONGO_METHOD(MongoDB, selectCollection)(1, c, NULL, getThis(), return_value_used TSRMLS_CC);
     POP_EO_PARAM();

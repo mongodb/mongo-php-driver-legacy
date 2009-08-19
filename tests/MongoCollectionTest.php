@@ -25,7 +25,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->object = $db->selectCollection('c');
         $this->object->drop();
     }
-
+    
     public function test__toString() {
         $this->assertEquals((string)$this->object, 'phpunit.c');
     }
@@ -254,7 +254,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $index = $idx->findOne(array('name' => 'foo_1'));
 
       $this->assertNotNull($index);
-      $this->assertEquals($index['key']->foo, 1);
+      $this->assertEquals($index['key']['foo'], 1);
       $this->assertEquals($index['name'], 'foo_1');
 
       $this->object->ensureIndex("");
@@ -442,11 +442,11 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
  
         $g = $this->object->group(array(), array("count" => 0), "function (obj, prev) { prev.count++; }", array());
         $this->assertEquals(1, count($g));
-        $this->assertEquals(3, $g[0]->count);
+        $this->assertEquals(3, $g[0]['count']);
       
         $g = $this->object->group(array(), array("count" => 0), "function (obj, prev) { prev.count++; }", array("a" => array( '$gt' => 1)));
         $this->assertEquals(1, count($g)); 
-        $this->assertEquals(1, $g[0]->count);
+        $this->assertEquals(1, $g[0]['count']);
     }
 
 }

@@ -160,7 +160,8 @@ PHP_METHOD(MongoCollection, insert) {
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_INSERT);
 
   // serialize
-  if (zval_to_bson(&buf, HASH_P(a), PREP TSRMLS_CC) == 0) {
+  if (zval_to_bson(&buf, HASH_P(a), PREP TSRMLS_CC) == 0 &&
+      zend_hash_num_elements(HASH_P(a)) == 0) {
     efree(buf.start);
     // return if there were 0 elements
     RETURN_FALSE;

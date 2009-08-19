@@ -104,7 +104,7 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $c->update(array(), array('$push' => (object)array('y' => 'bar')));
 
         $x = $c->findOne();
-        $this->assertTrue(is_object($x['y']));
+        $this->assertTrue(is_array($x['y']));
         $this->assertEquals(1, count($x['x'])); 
         $this->assertEquals('foo', $x['x'][0]);
     }
