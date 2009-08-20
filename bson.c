@@ -126,8 +126,11 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
   retval = serialize_element(name, (zval**)data, buf, prep TSRMLS_CC);
   efree(name);
 
-  // if this is a number, increase the count
-  (*num)++;
+  // if the key is a number in ascending order, we're still
+  // dealing with an array, not an object, so increase the count
+  if (key->h == *num) {
+    (*num)++;
+  }
 
   return retval;
 }

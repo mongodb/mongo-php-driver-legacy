@@ -13,11 +13,11 @@
    <email>kristina@10gen.com</email>
    <active>yes</active>
  </lead>
- <date>2009-07-10</date>
+ <date>2009-08-20</date>
  <time>12:00:00</time>
  <version>
-   <release>0.9.3</release>
-   <api>0.9.3</api>
+   <release>0.9.5</release>
+   <api>0.9.5</api>
  </version>
  <stability>
    <release>beta</release>
@@ -25,9 +25,8 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-   added slaveOkay(), tailable(), and logReplay() to MongoCursor
-   empty array() defaults to array type, added MongoEmptyObj
-   MongoId serialize/unserialize
+   Unbreak backwards compatibility
+   Arrays are saved as arrays only if they have ascending numeric indices, otherwise they're saved as objects
  </notes>
  <contents>
    <dir baseinstalldir="/" name="/">
@@ -62,6 +61,39 @@
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog>
+   <release>
+     <stability>
+       <release>beta</release>
+       <api>beta</api>
+     </stability>
+     <version>
+       <release>0.9.5</release>
+       <api>0.9.5</api>
+     </version>
+     <date>2009-08-20</date>
+     <notes>
+       Unbreak backwards compatibility
+       Arrays are saved as arrays only if they have ascending numeric indices, otherwise they're saved as objects
+     </notes>
+   </release>
+   <release>
+     <stability>
+       <release>beta</release>
+       <api>beta</api>
+     </stability>
+     <version>
+       <release>0.9.4</release>
+       <api>0.9.4</api>
+     </version>
+     <date>2009-08-18</date>
+     <notes>
+       Objects can be stored/retrieved
+       MongoCursor - errors throws exceptions, added snapshot() and $slaveOkay
+       MongoCollection::listCollections() returns collections
+       Long decoding support
+       Bug fixes
+     </notes>
+   </release>
    <release>
      <stability>
        <release>beta</release>
