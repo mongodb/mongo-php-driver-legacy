@@ -300,17 +300,16 @@ PHP_METHOD(MongoDB, listCollections) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
   
-  // do find  
-  MAKE_STD_ZVAL(cursor);
-  MONGO_METHOD(MongoCollection, find)(0, cursor, &cursor, collection, return_value_used TSRMLS_CC);
-
   // list to return
   MAKE_STD_ZVAL(list);
   array_init(list);
+
+  // do find  
+  MAKE_STD_ZVAL(cursor);
+  MONGO_METHOD(MongoCollection, find)(0, cursor, &cursor, collection, return_value_used TSRMLS_CC);
  
   // populate list
-  MAKE_STD_ZVAL(next);
-  
+  MAKE_STD_ZVAL(next);  
   MONGO_METHOD(MongoCursor, getNext)(0, next, &next, cursor, return_value_used TSRMLS_CC);
   while (Z_TYPE_P(next) != IS_NULL) {
     zval *c, *zname;
@@ -331,7 +330,9 @@ PHP_METHOD(MongoDB, listCollections) {
     first_dot = strchr(Z_STRVAL_PP(collection), '.');
     system = strstr(Z_STRVAL_PP(collection), ".system.");
     // check that this isn't a system ns
-    if (system && first_dot == system) {
+    if ((system && first_dot == system) ||
+	(name = strchr(Z_STRVAL_PP(collection), '.')) == 0) {
+
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
 
@@ -340,16 +341,14 @@ PHP_METHOD(MongoDB, listCollections) {
     }
 
     // take a substring after the first "."
-    name = strchr(Z_STRVAL_PP(collection), '.');
-    if (!name)
-      continue;
     name++;
 
     MAKE_STD_ZVAL(c);
 
-    // zname must be on heap
     MAKE_STD_ZVAL(zname);
-    ZVAL_STRING(zname, name, 0);
+    // name must be copied because it is a substring of
+    // a string that will be garbage collected in a sec
+    ZVAL_STRING(zname, name, 1);
 
     PUSH_PARAM(zname); PUSH_PARAM((void*)1);
     PUSH_EO_PARAM();
@@ -359,6 +358,7 @@ PHP_METHOD(MongoDB, listCollections) {
 
     add_next_index_zval(list, c);
 
+    zval_ptr_dtor(&zname);
     zval_ptr_dtor(&next);
     MAKE_STD_ZVAL(next);
 
