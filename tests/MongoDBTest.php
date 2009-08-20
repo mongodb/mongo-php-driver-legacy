@@ -248,8 +248,8 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
 
     public function testCreateRef() {
         $ref = MongoDBRef::create("x", "y");
-        $this->assertEquals('x', $ref->{'$ref'});
-        $this->assertEquals('y', $ref->{'$id'});
+        $this->assertEquals('x', $ref['$ref']);
+        $this->assertEquals('y', $ref['$id']);
     }
 
     public function testIsRef() {
