@@ -435,16 +435,16 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         $arr = (object)array('_id' => new MongoId());
         $ref = $this->object->createDBRef($arr);
         $this->assertNotNull($ref);
-        $this->assertTrue(is_object($ref));
+        $this->assertTrue(is_array($ref));
 
         $arr = (object)array('_id' => 1);
         $ref = $this->object->createDBRef($arr);
         $this->assertNotNull($ref);
-        $this->assertTrue(is_object($ref));
+        $this->assertTrue(is_array($ref));
 
         $ref = $this->object->createDBRef(new MongoId());
         $this->assertNotNull($ref);
-        $this->assertTrue(is_object($ref));
+        $this->assertTrue(is_array($ref));
     }
 
 

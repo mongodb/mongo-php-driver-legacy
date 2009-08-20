@@ -87,21 +87,21 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
         $arr = (object)array('_id' => new MongoId());
         $ref = $this->object->createDBRef('foo.bar', $arr);
         $this->assertNotNull($ref);
-        $this->assertTrue(is_object($ref));
+        $this->assertTrue(is_array($ref));
 
         $arr = (object)array('_id' => 1);
         $ref = $this->object->createDBRef('foo.bar', $arr);
         $this->assertNotNull($ref);
-        $this->assertTrue(is_object($ref));
+        $this->assertTrue(is_array($ref));
 
         $ref = $this->object->createDBRef('foo.bar', new MongoId());
         $this->assertNotNull($ref);
-        $this->assertTrue(is_object($ref));
+        $this->assertTrue(is_array($ref));
 
         $id = new MongoId();
         $ref = $this->object->createDBRef('foo.bar', (object)array('_id' => $id, 'y' => 3));
         $this->assertNotNull($ref);
-        $this->assertEquals((string)$id, (string)$ref->{'$id'});
+        $this->assertEquals((string)$id, (string)$ref['$id']);
     }
 
     public function testGetDBRef() {
@@ -119,17 +119,6 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($obj['x'], $obj2['x']);
     }
 
-    public function testExecute() {
-        $ret = $this->object->execute('4+3*6');
-        $this->assertEquals($ret['retval'], 22);
-
-        $ret = $this->object->execute(new MongoCode('function() { return x+y; }', (object)array('x' => 'hi', 'y' => 'bye')));
-        $this->assertEquals($ret['retval'], 'hibye');
-
-        $ret = $this->object->execute(new MongoCode('function(x) { return x+y; }', (object)array('y' => 'bye')), array('bye'));
-        $this->assertEquals($ret['retval'], 'byebye');
-    }
-
     public function testDBCommand() {
         $x = $this->object->command((object)array());
         $this->assertEquals($x['errmsg'], "no such cmd");
@@ -143,8 +132,8 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
 
     public function testCreateRef() {
         $ref = MongoDBRef::create("x", "y");
-        $this->assertEquals('x', $ref->{'$ref'});
-        $this->assertEquals('y', $ref->{'$id'});
+        $this->assertEquals('x', $ref['$ref']);
+        $this->assertEquals('y', $ref['$id']);
     }
 
     public function testIsRef() {

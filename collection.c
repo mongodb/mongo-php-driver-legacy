@@ -800,37 +800,38 @@ PHP_METHOD(MongoCollection, toIndexString) {
 PHP_METHOD(MongoCollection, group) {
   // TODO: keyf
   zval temp;
-  zval *params, *key, *reduce, *initial, *condition = 0, *groupFunction, *code, *almost_return;
+  zval *params, *key, *initial, *condition = 0, *groupFunction, *code, *almost_return;
   zval **retval, **result;
-  char *function_str;
+  char *function_str, *reduce;
+  int reduce_len;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aaz|a", &key, &initial, &reduce, &condition) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aas|z", &key, &initial, &reduce, &reduce_len, &condition) == FAILURE) {
     return;
   }
 
   MAKE_STD_ZVAL(code);
-  spprintf(&function_str, 0, "function() { var c = db[ns].find(condition); var map = new Map(); var reduce_function = %s; while (c.hasNext()) { var obj = c.next(); var key = {}; for (var i in keys) { key[keys[i]] = obj[keys[i]]; } var aggObj = map.get(key); if (aggObj == null) { var newObj = Object.extend({}, key); aggObj = Object.extend(newObj, initial); map.put(key, aggObj); } reduce_function(obj, aggObj); } return {\"result\": map.values()}; }", Z_STRVAL_P(reduce));
+  spprintf(&function_str, 0, "function() { var c = db[ns].find(condition); var map = new Map(); var reduce_function = %s; while (c.hasNext()) { var obj = c.next(); var key = {}; for (var i in keys) { key[keys[i]] = obj[keys[i]]; } var aggObj = map.get(key); if (aggObj == null) { var newObj = Object.extend({}, key); aggObj = Object.extend(newObj, initial); map.put(key, aggObj); } reduce_function(obj, aggObj); } return {\"result\": map.values()}; }", reduce);
   ZVAL_STRING(code, function_str, 0);
 
   MAKE_STD_ZVAL(params);
-  object_init(params);
-  add_property_zval(params, "ns", c->name);
+  array_init(params);
+  add_assoc_zval(params, "ns", c->name);
   zval_add_ref(&c->name);
-  add_property_zval(params, "keys", key);
+  add_assoc_zval(params, "keys", key);
   zval_add_ref(&key);
-  add_property_zval(params, "initial", initial);
+  add_assoc_zval(params, "initial", initial);
   zval_add_ref(&initial);
   if (condition) {
-    add_property_zval(params, "condition", condition);
+    add_assoc_zval(params, "condition", condition);
     zval_add_ref(&condition);
   }
   else  {
     zval *empty;
     MAKE_STD_ZVAL(empty);
     object_init(empty);
-    add_property_zval(params, "condition", empty);
+    add_assoc_zval(params, "condition", empty);
   }
 
   MAKE_STD_ZVAL(groupFunction);

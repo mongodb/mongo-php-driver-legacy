@@ -406,16 +406,16 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $arr = array('_id' => new MongoId());
         $ref = $this->object->createDBRef($arr);
         $this->assertNotNull($ref);
-        $this->assertTrue(is_object($ref));
+        $this->assertTrue(is_array($ref));
 
         $arr = array('_id' => 1);
         $ref = $this->object->createDBRef($arr);
         $this->assertNotNull($ref);
-        $this->assertTrue(is_object($ref));
+        $this->assertTrue(is_array($ref));
 
         $ref = $this->object->createDBRef(new MongoId());
         $this->assertNotNull($ref);
-        $this->assertTrue(is_object($ref));
+        $this->assertTrue(is_array($ref));
     }
 
 
@@ -431,7 +431,6 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     }
 
     public function testGroup() {
-
         $g = $this->object->group(array(), array("count"=> 0), "function (obj, prev) { prev.count++; }", array());
 
         $this->assertEquals(0, count($g));

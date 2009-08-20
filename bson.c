@@ -491,7 +491,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       object_init_ex(value, mongo_ce_Code);
       // initialize scope array
       MAKE_STD_ZVAL(zcope);
-      object_init(zcope);
+      array_init(zcope);
 
       // CODE has a useless total size field
       if (type == BSON_CODE) {
@@ -539,9 +539,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       buf += OID_SIZE;
 
       // put it all together
-      object_init(value);
-      add_property_stringl(value, "$ref", ns, ns_len-1, 1);
-      add_property_zval(value, "$id", zoid);
+      array_init(value);
+      add_assoc_stringl(value, "$ref", ns, ns_len-1, 1);
+      add_assoc_zval(value, "$id", zoid);
       break;
     }
     case BSON_TIMESTAMP: {

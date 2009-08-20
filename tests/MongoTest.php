@@ -258,16 +258,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($err['ok'], 1);
     }
 
-    /**
-     * @todo Implement testMasterInfo().
-     */
-    public function testMasterInfo() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
     public function testClose() {
         $this->object = new Mongo();
         $this->assertTrue($this->object->connected);

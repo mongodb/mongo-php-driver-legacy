@@ -486,5 +486,14 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       var_dump($this->object->find()->hint(array("num" => 1))->getNext());
     }
 
+    public function testDead() {
+      $this->object->drop();
+      $this->object->insert(array('x' => 1));
+      $cursor = $this->object->find();
+      $this->assertFalse($cursor->dead());
+      $cursor->next();
+      $this->assertTrue($cursor->dead());
+    }
+
 }
 ?>
