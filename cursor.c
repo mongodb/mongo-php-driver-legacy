@@ -160,6 +160,10 @@ PHP_METHOD(MongoCursor, hasNext) {
   if (cursor->at < cursor->num) {
     RETURN_TRUE;
   }
+  else if (cursor->cursor_id == 0) {
+    RETURN_FALSE;
+  }
+
 
   // we have to go and check with the db
   size = 34+strlen(cursor->ns);
