@@ -18,6 +18,8 @@ require_once 'MongoObjDBTest.php';
 
 require_once 'MongoRegressionTest1.php';
 
+require_once 'MongoMemTest.php';
+
 include 'MongoAuthTest.php';
 include 'MongoGridFSClassicTest.php';
  
@@ -27,6 +29,8 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
     {
         $suite = new MongoSuite('Mongo Tests');
         
+        $suite->addTestSuite('MongoMemTest');
+
         $suite->addTestSuite('MongoTest');
         $suite->addTestSuite('MongoDBTest');
         $suite->addTestSuite('MongoCollectionTest');

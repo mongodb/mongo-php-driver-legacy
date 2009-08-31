@@ -870,27 +870,30 @@ PHP_METHOD(Mongo, repairDB) {
 /* {{{ Mongo->lastError()
  */
 PHP_METHOD(Mongo, lastError) {
-  zval *data;
-  zval name, db;
+  zval *data, *db, *name;
 
-  ZVAL_STRING(&name, "admin", 0);
-
-  PUSH_PARAM(&name); PUSH_PARAM((void*)1);
+  MAKE_STD_ZVAL(db);
+  MAKE_STD_ZVAL(name);
+  ZVAL_STRING(name, "admin", 1);
+  
+  PUSH_PARAM(name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, selectDB)(1, db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
+  
   MAKE_STD_ZVAL(data);
-  object_init(data);
-  add_property_long(data, "getlasterror", 1);
-
+  array_init(data);
+  add_assoc_long(data, "getlasterror", 1);
+  
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
+  
+  zval_ptr_dtor(&db);
+  zval_ptr_dtor(&name);
   zval_ptr_dtor(&data);
 }
 /* }}} */
@@ -898,27 +901,29 @@ PHP_METHOD(Mongo, lastError) {
 /* {{{ Mongo->prevError()
  */
 PHP_METHOD(Mongo, prevError) {
-  zval *data;
-  zval name, db;
+  zval *data, *db;
+  zval name;
 
+  MAKE_STD_ZVAL(db);
   ZVAL_STRING(&name, "admin", 0);
 
   PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, selectDB)(1, db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
   MAKE_STD_ZVAL(data);
-  object_init(data);
-  add_property_long(data, "getpreverror", 1);
+  array_init(data);
+  add_assoc_long(data, "getpreverror", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
+  zval_ptr_dtor(&db);
   zval_ptr_dtor(&data);
 }
 /* }}} */
@@ -926,14 +931,15 @@ PHP_METHOD(Mongo, prevError) {
 /* {{{ Mongo->resetError()
  */
 PHP_METHOD(Mongo, resetError) {
-  zval *data;
-  zval name, db;
+  zval *data, *db;
+  zval name;
 
+  MAKE_STD_ZVAL(db);
   ZVAL_STRING(&name, "admin", 0);
 
   PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, selectDB)(1, db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -943,10 +949,11 @@ PHP_METHOD(Mongo, resetError) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
+  zval_ptr_dtor(&db);
   zval_ptr_dtor(&data);
 }
 /* }}} */
@@ -954,14 +961,15 @@ PHP_METHOD(Mongo, resetError) {
 /* {{{ Mongo->forceError()
  */
 PHP_METHOD(Mongo, forceError) {
-  zval *data;
-  zval name, db;
+  zval *data, *db;
+  zval name;
 
+  MAKE_STD_ZVAL(db);
   ZVAL_STRING(&name, "admin", 0);
 
   PUSH_PARAM(&name); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, selectDB)(1, &db, NULL, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD(Mongo, selectDB)(1, db, NULL, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -971,10 +979,11 @@ PHP_METHOD(Mongo, forceError) {
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, &db, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
+  zval_ptr_dtor(&db);
   zval_ptr_dtor(&data);
 }
 /* }}} */
