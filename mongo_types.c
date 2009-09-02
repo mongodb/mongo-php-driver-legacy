@@ -545,13 +545,12 @@ PHP_METHOD(MongoDBRef, get) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &db, mongo_ce_DB, &ref) == FAILURE) {
     return;
   }
-
+  
   if (zend_hash_find(HASH_P(ref), "$ref", 5, (void**)&ns) == FAILURE ||
       zend_hash_find(HASH_P(ref), "$id", 4, (void**)&id) == FAILURE) {
     RETURN_NULL();
   }
-
-
+  
   MAKE_STD_ZVAL(collection);
 
   PUSH_PARAM(*ns); PUSH_PARAM((void*)1);
@@ -559,10 +558,10 @@ PHP_METHOD(MongoDBRef, get) {
   MONGO_METHOD(MongoDB, selectCollection)(1, collection, &collection, db, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
+  
   MAKE_STD_ZVAL(query);
-  object_init(query);
-  add_property_zval(query, "_id", *id);
+  array_init(query);
+  add_assoc_zval(query, "_id", *id);
   zval_add_ref(id);
   
   PUSH_PARAM(query); PUSH_PARAM((void*)1);
@@ -570,7 +569,7 @@ PHP_METHOD(MongoDBRef, get) {
   MONGO_METHOD(MongoCollection, findOne)(1, return_value, return_value_ptr, collection, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
-
+  
   zval_ptr_dtor(&collection);
   zval_ptr_dtor(&query);
 }

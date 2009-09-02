@@ -68,6 +68,31 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
       }
     }
 
+    public function testGetDBRef() {
+      $db = $this->sharedFixture->selectDB("foo");
+      $c = $db->selectCollection("bar");
+      $obj = array("uid" => 0);
+      $c->insert($obj);
+      $ref=$c->createDBRef($obj);
+
+      $mem = memory_get_usage(true);
+      for ($i=0;$i<10000;$i++) {
+        MongoDBRef::get($db, $ref);
+      }
+      $this->assertEquals($mem, memory_get_usage(true));
+    }
+
+    public function testCreateDBRef() {
+      $c = $this->sharedFixture->selectCollection("foo", "bar");
+      $obj = array("uid" => 0);
+      $c->insert($obj);
+
+      $mem = memory_get_usage(true);
+      for ($i=0;$i<10000;$i++) {
+        MongoDBRef::create("bar", $obj['_id']);
+      }
+      $this->assertEquals($mem, memory_get_usage(true));
+    }
 }
 
 ?>
