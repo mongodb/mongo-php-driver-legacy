@@ -228,5 +228,20 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
 
       $this->assertTrue(is_int($c->count()));
     }
+
+    public function testNestedArray() {
+      $count = 1500;
+      $mongo = new Mongo();
+      $mongoDB = $mongo->selectDb('testdb');
+      $mongoCollection = $mongoDB->selectCollection('testcollection');
+      $values = array();
+      for($i = 0; $i < $count; $i++) {
+        $values[] = new MongoId($i);
+      }
+      $mongoCursor = $mongoCollection->find(array('_id' => array('$in' => $values)));
+      while ($mongoCursor->hasNext()) {
+        $mongoCursor->getNext();
+      } 
+    }
 }
 ?>

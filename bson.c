@@ -173,8 +173,9 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
   case IS_ARRAY: {
     int num;
 
+    // if we realloc, we need an offset, not an abs pos (phew)
+    int type_offset = buf->pos-buf->start;
     // skip type until we know whether it was an array or an object
-    char *type_byte = buf->pos;
     buf->pos++;
 
     //serialize
@@ -184,10 +185,10 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     // now go back and set the type bit
     //set_type(buf, BSON_ARRAY);
     if (num == zend_hash_num_elements(Z_ARRVAL_PP(data))) {
-      *(type_byte) = BSON_ARRAY;
+      buf->start[type_offset] = BSON_ARRAY;
     }
     else {
-      *(type_byte) = BSON_OBJECT;
+      buf->start[type_offset] = BSON_OBJECT;
     }
 
     break;
