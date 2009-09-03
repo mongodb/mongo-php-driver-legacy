@@ -1015,11 +1015,11 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
   // redetermine master
   MAKE_STD_ZVAL(query);
-  object_init(query);
+  array_init(query);
   MAKE_STD_ZVAL(is_master);
-  object_init(is_master);
-  add_property_long(is_master, "ismaster", 1);
-  add_property_zval(query, "query", is_master);
+  array_init(is_master);
+  add_assoc_long(is_master, "ismaster", 1);
+  add_assoc_zval(query, "query", is_master);
 
   cursor->ns = estrdup("admin.$cmd");
   cursor->query = query;
@@ -1029,44 +1029,49 @@ static int get_master(mongo_link *link TSRMLS_DC) {
   cursor->opts = 0;
 
   temp.paired = 0;
-  // check the left
-  temp.server.single.socket = link->server.paired.lsocket;
-  cursor->link = &temp;
-
-  // need to call this after setting cursor->link
-  // reset checks that cursor->link != 0
-  MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
 
   MAKE_STD_ZVAL(response);
-  MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
-  if ((Z_TYPE_P(response) == IS_ARRAY ||
-       Z_TYPE_P(response) == IS_OBJECT) &&
-      zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
-      Z_LVAL_PP(ans) == 1) {
-    zval_ptr_dtor(&cursor_zval);
-    zval_ptr_dtor(&query);
+  if (link->server.paired.lconnected) {
+    // check the left
+    temp.server.single.socket = link->server.paired.lsocket;
+    cursor->link = &temp;
+
+    // need to call this after setting cursor->link
+    // reset checks that cursor->link != 0
+    MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
+
+    MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
+    if ((Z_TYPE_P(response) == IS_ARRAY ||
+         Z_TYPE_P(response) == IS_OBJECT) &&
+        zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
+        Z_LVAL_PP(ans) == 1) {
+      zval_ptr_dtor(&cursor_zval);
+      zval_ptr_dtor(&query);
+      zval_ptr_dtor(&response);
+      return link->master = link->server.paired.lsocket;
+    }
+
+    // reset response
     zval_ptr_dtor(&response);
-    return link->master = link->server.paired.lsocket;
+    MAKE_STD_ZVAL(response);
   }
 
-  // reset response
-  zval_ptr_dtor(&response);
-  MAKE_STD_ZVAL(response);
+  if (link->server.paired.rconnected) {
+    // check the right
+    temp.server.single.socket = link->server.paired.rsocket;
+    cursor->link = &temp;
 
-  // check the right
-  temp.server.single.socket = link->server.paired.rsocket;
-  cursor->link = &temp;
-
-  MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
-  MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
-  if ((Z_TYPE_P(response) == IS_ARRAY ||
-       Z_TYPE_P(response) == IS_OBJECT) &&
-      zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
-      Z_LVAL_PP(ans) == 1) {
-    zval_ptr_dtor(&cursor_zval);
-    zval_ptr_dtor(&query);
-    zval_ptr_dtor(&response);
-    return link->master = link->server.paired.rsocket;
+    MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
+    if ((Z_TYPE_P(response) == IS_ARRAY ||
+         Z_TYPE_P(response) == IS_OBJECT) &&
+        zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
+        Z_LVAL_PP(ans) == 1) {
+      zval_ptr_dtor(&cursor_zval);
+      zval_ptr_dtor(&query);
+      zval_ptr_dtor(&response);
+      return link->master = link->server.paired.rsocket;
+    }
   }
 
   zval_ptr_dtor(&response);
@@ -1359,12 +1364,12 @@ static int mongo_do_socket_connect(mongo_link *link TSRMLS_DC) {
       return FAILURE;
     }
 
+    link->server.paired.lconnected = left;
+    link->server.paired.rconnected = right;
+
     if (get_master(link TSRMLS_CC) == FAILURE) {
       return FAILURE;
     }
-
-    link->server.paired.lconnected = left;
-    link->server.paired.rconnected = right;
   }
   else {
     if ((link->server.single.socket =
