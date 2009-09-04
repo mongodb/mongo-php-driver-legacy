@@ -100,8 +100,8 @@ PHP_METHOD(MongoCollection, drop) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
-  object_init(data);
-  add_property_string(data, "drop", Z_STRVAL_P(c->name), 1);
+  array_init(data);
+  add_assoc_string(data, "drop", Z_STRVAL_P(c->name), 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -125,9 +125,9 @@ PHP_METHOD(MongoCollection, validate) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
-  object_init(data);
-  add_property_string(data, "validate", Z_STRVAL_P(c->name), 1);
-  add_property_bool(data, "scandata", scan_data);
+  array_init(data);
+  add_assoc_string(data, "validate", Z_STRVAL_P(c->name), 1);
+  add_assoc_bool(data, "scandata", scan_data);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -361,7 +361,7 @@ PHP_METHOD(MongoCollection, remove) {
 
   if (!criteria) {
     MAKE_STD_ZVAL(criteria);
-    object_init(criteria);
+    array_init(criteria);
   }
   else {
     zval_add_ref(&criteria);
@@ -404,8 +404,8 @@ PHP_METHOD(MongoCollection, ensureIndex) {
       return;
 
     MAKE_STD_ZVAL(key_array);
-    object_init(key_array);
-    add_property_long(key_array, Z_STRVAL_P(keys), 1);
+    array_init(key_array);
+    add_assoc_long(key_array, Z_STRVAL_P(keys), 1);
 
     keys = key_array;
   }
@@ -432,11 +432,12 @@ PHP_METHOD(MongoCollection, ensureIndex) {
 
   // set up data
   MAKE_STD_ZVAL(data);
-  object_init(data);
+  array_init(data);
 
   // ns
-  add_property_zval(data, "ns", c->ns);
-  add_property_zval(data, "key", keys);
+  add_assoc_zval(data, "ns", c->ns);
+  zval_add_ref(&c->ns);
+  add_assoc_zval(data, "key", keys);
 
   // turn keys into a string
   MAKE_STD_ZVAL(key_str);
@@ -448,8 +449,8 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  add_property_zval(data, "name", key_str);
-  add_property_bool(data, "unique", unique);
+  add_assoc_zval(data, "name", key_str);
+  add_assoc_bool(data, "unique", unique);
 
   // MongoCollection::insert()
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
@@ -506,10 +507,10 @@ PHP_METHOD(MongoCollection, deleteIndexes) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
-  object_init(data);
+  array_init(data);
 
-  add_property_string(data, "deleteIndexes", Z_STRVAL_P(c->name), 1);
-  add_property_string(data, "index", "*", 1);
+  add_assoc_string(data, "deleteIndexes", Z_STRVAL_P(c->name), 1);
+  add_assoc_string(data, "index", "*", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -539,8 +540,8 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
   zval_ptr_dtor(&i_str);
 
   MAKE_STD_ZVAL(query);
-  object_init(query);
-  add_property_string(query, "ns", Z_STRVAL_P(c->ns), 1);
+  array_init(query);
+  add_assoc_string(query, "ns", Z_STRVAL_P(c->ns), 1);
 
   MAKE_STD_ZVAL(cursor);
 
@@ -580,13 +581,13 @@ PHP_METHOD(MongoCollection, count) {
   MAKE_STD_ZVAL(response);
 
   MAKE_STD_ZVAL(data);
-  object_init(data);
-  add_property_string(data, "count", Z_STRVAL_P(c->name), 1);
+  array_init(data);
+  add_assoc_string(data, "count", Z_STRVAL_P(c->name), 1);
   if (query) {
-    add_property_zval(data, "query", query);
+    add_assoc_zval(data, "query", query);
     zval_add_ref(&query);
     if (fields) {
-      add_property_zval(data, "fields", fields);
+      add_assoc_zval(data, "fields", fields);
       zval_add_ref(&fields);
     }
   }
@@ -622,8 +623,8 @@ PHP_METHOD(MongoCollection, save) {
     zval *criteria;
 
     MAKE_STD_ZVAL(criteria);
-    object_init(criteria);
-    add_property_zval(criteria, "_id", *id);
+    array_init(criteria);
+    add_assoc_zval(criteria, "_id", *id);
     zval_add_ref(id);
 
     Z_TYPE(zupsert) = IS_BOOL;
@@ -830,7 +831,7 @@ PHP_METHOD(MongoCollection, group) {
   else  {
     zval *empty;
     MAKE_STD_ZVAL(empty);
-    object_init(empty);
+    array_init(empty);
     add_assoc_zval(params, "condition", empty);
   }
 

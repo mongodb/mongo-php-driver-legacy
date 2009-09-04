@@ -156,8 +156,8 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
   }
 
   MAKE_STD_ZVAL(data);
-  object_init(data);
-  add_property_long(data, "profile", level);
+  array_init(data);
+  add_assoc_long(data, "profile", level);
 
   MAKE_STD_ZVAL(cmd_return);
 
@@ -182,8 +182,8 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
 PHP_METHOD(MongoDB, drop) {
   zval *data;
   MAKE_STD_ZVAL(data);
-  object_init(data);
-  add_property_long(data, "dropDatabase", 1);
+  array_init(data);
+  add_assoc_long(data, "dropDatabase", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -203,10 +203,10 @@ PHP_METHOD(MongoDB, repair) {
   }
 
   MAKE_STD_ZVAL(data);
-  object_init(data);
-  add_property_long(data, "repairDatabase", 1);
-  add_property_bool(data, "preserveClonedFilesOnFailure", cloned);
-  add_property_bool(data, "backupOriginalFiles", original);
+  array_init(data);
+  add_assoc_long(data, "repairDatabase", 1);
+  add_assoc_bool(data, "preserveClonedFilesOnFailure", cloned);
+  add_assoc_bool(data, "backupOriginalFiles", original);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -228,19 +228,19 @@ PHP_METHOD(MongoDB, createCollection) {
   }
 
   MAKE_STD_ZVAL(data);
-  object_init(data);
+  array_init(data);
   convert_to_string(collection);
-  add_property_zval(data, "create", collection);
+  add_assoc_zval(data, "create", collection);
   zval_add_ref(&collection);
 
   if (size) {
-    add_property_long(data, "size", size);
+    add_assoc_long(data, "size", size);
   }
 
   if (capped) {
-    add_property_bool(data, "capped", 1);
+    add_assoc_bool(data, "capped", 1);
     if (max) {
-      add_property_long(data, "max", max);
+      add_assoc_long(data, "max", max);
     }
   }
 
@@ -376,8 +376,8 @@ PHP_METHOD(MongoDB, listCollections) {
 PHP_METHOD(MongoDB, getCursorInfo) {
   zval *data;
   MAKE_STD_ZVAL(data);
-  object_init(data);
-  add_property_long(data, "cursorInfo", 1);
+  array_init(data);
+  add_assoc_long(data, "cursorInfo", 1);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
