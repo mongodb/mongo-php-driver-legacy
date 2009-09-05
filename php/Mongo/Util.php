@@ -133,5 +133,3 @@ class MongoUtil
     const VALIDATE          = "validate";
 
 }
-
-?>

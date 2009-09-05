@@ -220,4 +220,3 @@ class MongoAuth extends Mongo
 
 }
 
-?>

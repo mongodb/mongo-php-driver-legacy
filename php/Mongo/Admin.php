@@ -127,4 +127,3 @@ class MongoAdmin extends MongoAuth
 
 }
 
-?>
