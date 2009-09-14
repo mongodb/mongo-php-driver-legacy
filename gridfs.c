@@ -779,8 +779,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 }
 
 PHP_METHOD(MongoGridFSFile, getBytes) {
-  zval temp;
-  zval *file, *gridfs, *chunks, *n, *query, *cursor, *sort;
+  zval *file, *gridfs, *chunks, *n, *query, *cursor, *sort, *temp;
   zval **id, **size;
   char *str, *str_ptr;
   int len;
@@ -797,13 +796,14 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   gridfs = zend_read_property(mongo_ce_GridFSFile, getThis(), "gridfs", strlen("gridfs"), NOISY TSRMLS_CC);
   chunks = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
+  MAKE_STD_ZVAL(temp);
   MAKE_STD_ZVAL(n);
   array_init(n);
   add_assoc_long(n, "n", 1);  
 
   PUSH_PARAM(n); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoCollection, ensureIndex)(1, &temp, NULL, chunks, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCollection, ensureIndex)(1, temp, NULL, chunks, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
@@ -829,9 +829,13 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 
   PUSH_PARAM(sort); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoCursor, sort)(1, &temp, NULL, cursor, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoCursor, sort)(1, temp, NULL, cursor, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
+  zval_ptr_dtor(&temp);
+
+  zval_ptr_dtor(&query);
+  zval_ptr_dtor(&sort);
 
   if (Z_TYPE_PP(size) == IS_DOUBLE) {
     len = (int)Z_DVAL_PP(size);
@@ -840,21 +844,18 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
     len = Z_LVAL_PP(size);
   }
 
-  zval_ptr_dtor(&query);
-  zval_ptr_dtor(&sort);
-
   str = (char*)emalloc(len + 1);
   str_ptr = str;
-
+  
   if (apply_to_cursor(cursor, copy_bytes, &str TSRMLS_CC) == FAILURE) {
     zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
   }
-
+  
   zval_ptr_dtor(&cursor);
 
   str_ptr[len] = '\0';
 
-  RETURN_STRINGL(str_ptr, Z_LVAL_PP(size), 0);
+  RETURN_STRINGL(str_ptr, len, 0);
 }
 
 static int copy_bytes(void *to, char *from, int len) {
