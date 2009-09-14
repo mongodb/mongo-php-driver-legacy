@@ -560,6 +560,54 @@ PHP_METHOD(MongoDB, command) {
   efree(cmd_ns);
 }
 
+
+static void run_err(char *cmd, zval *return_value, zval *db TSRMLS_DC) {
+  zval *data;
+  
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_long(data, cmd, 1);
+  
+  PUSH_PARAM(data); PUSH_PARAM((void*)1);
+  PUSH_EO_PARAM();
+  MONGO_METHOD(MongoDB, command)(1, return_value, NULL, db, 0 TSRMLS_CC);
+  POP_EO_PARAM();
+  POP_PARAM(); POP_PARAM();
+  
+  zval_ptr_dtor(&data);
+}
+
+/* {{{ MongoDB->lastError()
+ */
+PHP_METHOD(MongoDB, lastError) {
+  run_err("getlasterror", return_value, getThis() TSRMLS_CC);
+}
+/* }}} */
+
+
+/* {{{ MongoDB->prevError()
+ */
+PHP_METHOD(MongoDB, prevError) {
+  run_err("getpreverror", return_value, getThis() TSRMLS_CC);
+}
+/* }}} */
+
+
+/* {{{ MongoDB->resetError()
+ */
+PHP_METHOD(MongoDB, resetError) {
+  run_err("reseterror", return_value, getThis() TSRMLS_CC);
+}
+/* }}} */
+
+/* {{{ MongoDB->forceError()
+ */
+PHP_METHOD(MongoDB, forceError) {
+  run_err("forceerror", return_value, getThis() TSRMLS_CC);
+}
+/* }}} */
+
+
 static function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, __toString, NULL, ZEND_ACC_PUBLIC)
@@ -577,6 +625,10 @@ static function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, getDBRef, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, execute, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, command, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, lastError, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, prevError, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, forceError, NULL, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
 };
 

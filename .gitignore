@@ -33,7 +33,7 @@ traces.0
 *.phpt.log
 *.phpt.php
 
-to_old.patch
-to_new.patch
-to_dev.patch
-to_apache.patch
+.svn
+\#*
+
+tests/anotherfile

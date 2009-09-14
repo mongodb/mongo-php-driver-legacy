@@ -286,7 +286,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->ensureIndex(array('z'=>1), $unique);
       $this->object->insert(array('z'=>0));
       $this->object->insert(array('z'=>0));
-      $err = $this->sharedFixture->lastError();
+      $err = $this->object->db->lastError();
       $this->assertEquals("E11000", substr($err['err'], 0, 6), json_encode($err));
     }
 

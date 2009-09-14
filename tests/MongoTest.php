@@ -212,6 +212,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->object->repairDB($db);
     }
 
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
     public function testLastError() {
         $this->sharedFixture->resetError();
         $err = $this->sharedFixture->lastError();
@@ -226,6 +229,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($err['ok'], 1);
     }
 
+    /**
+     * @expectedException PHPUnit_Framework_Error 
+     */
     public function testPrevError() {
         $this->sharedFixture->resetError();
         $err = $this->sharedFixture->prevError();
@@ -242,6 +248,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($err['ok'], 1);
     }
 
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
     public function testResetError() {
         $this->sharedFixture->resetError();
         $err = $this->sharedFixture->lastError();
@@ -250,6 +259,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($err['ok'], 1);
     }
 
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
     public function testForceError() {
         $this->sharedFixture->forceError();
         $err = $this->sharedFixture->lastError();

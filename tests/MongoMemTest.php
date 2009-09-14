@@ -7,6 +7,9 @@ require_once 'PHPUnit/Framework.php';
  */
 class MongoMemTest extends PHPUnit_Framework_TestCase
 {
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
     public function testLastError() {
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
@@ -15,6 +18,18 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($mem, memory_get_usage(true));
     }
 
+    public function testLastError2() {
+      $db = $this->sharedFixture->selectDB('db');
+      $mem = memory_get_usage(true);
+      for ($i=0;$i<10000;$i++) {
+        $db->lastError();
+      }
+      $this->assertEquals($mem, memory_get_usage(true));
+    }
+    
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
     public function testPrevError() {
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
@@ -23,6 +38,18 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($mem, memory_get_usage(true));
     }
 
+    public function testPrevError2() {
+      $db = $this->sharedFixture->selectDB('db');
+      $mem = memory_get_usage(true);
+      for ($i=0;$i<10000;$i++) {
+        $db->prevError();
+      }
+      $this->assertEquals($mem, memory_get_usage(true));
+    }
+
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
     public function testResetError() {
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
@@ -31,10 +58,31 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($mem, memory_get_usage(true));
     }
 
+    public function testResetError2() {
+      $db = $this->sharedFixture->selectDB('db');
+      $mem = memory_get_usage(true);
+      for ($i=0;$i<10000;$i++) {
+        $db->resetError();
+      }
+      $this->assertEquals($mem, memory_get_usage(true));
+    }
+
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
     public function testForceError() {
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
         $this->sharedFixture->forceError();
+      }
+      $this->assertEquals($mem, memory_get_usage(true));
+    }
+
+    public function testForceError2() {
+      $db = $this->sharedFixture->selectDB('db');
+      $mem = memory_get_usage(true);
+      for ($i=0;$i<10000;$i++) {
+        $db->forceError();
       }
       $this->assertEquals($mem, memory_get_usage(true));
     }
@@ -102,6 +150,7 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
       }
       $this->assertEquals($mem, memory_get_usage(true));
     }
+    
 }
 
 ?>

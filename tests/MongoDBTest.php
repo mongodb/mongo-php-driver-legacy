@@ -261,6 +261,51 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $ref = array('$ref' => 'blog.posts', '$id' => new MongoId('cb37544b9dc71e4ac3116c00'));
         $this->assertTrue(MongoDBRef::isRef($ref));
     }
-    
+
+    public function testLastError() {
+        $this->object->resetError();
+        $err = $this->object->lastError();
+        $this->assertEquals(null, $err['err'], json_encode($err));
+        $this->assertEquals(0, $err['n'], json_encode($err));
+        $this->assertEquals(1, $err['ok'], json_encode($err));
+
+        $this->object->forceError();
+        $err = $this->object->lastError();
+        $this->assertNotNull($err['err']);
+        $this->assertEquals($err['n'], 0);
+        $this->assertEquals($err['ok'], 1);
+    }
+
+    public function testPrevError() {
+        $this->object->resetError();
+        $err = $this->object->prevError();
+        $this->assertEquals($err['err'], null);
+        $this->assertEquals($err['n'], 0);
+        $this->assertEquals($err['nPrev'], -1);
+        $this->assertEquals($err['ok'], 1);
+        
+        $this->object->forceError();
+        $err = $this->object->prevError();
+        $this->assertNotNull($err['err']);
+        $this->assertEquals($err['n'], 0);
+        $this->assertEquals($err['nPrev'], 1);
+        $this->assertEquals($err['ok'], 1);
+    }
+
+    public function testResetError() {
+        $this->object->resetError();
+        $err = $this->object->lastError();
+        $this->assertEquals($err['err'], null);
+        $this->assertEquals($err['n'], 0);
+        $this->assertEquals($err['ok'], 1);
+    }
+
+    public function testForceError() {
+        $this->object->forceError();
+        $err = $this->object->lastError();
+        $this->assertNotNull($err['err']);
+        $this->assertEquals($err['n'], 0);
+        $this->assertEquals($err['ok'], 1);
+    }    
 }
 ?>
