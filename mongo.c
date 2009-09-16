@@ -59,6 +59,8 @@ static int getPort(char*);
 static int get_host_and_port(char*, mongo_link* TSRMLS_DC);
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
+inline void set_disconnected(mongo_link *link);
+
 zend_object_handlers mongo_default_handlers;
 
 /** Classes */
@@ -1075,28 +1077,36 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
   int sock = get_master(cursor->link TSRMLS_CC);
   int num_returned = 0;
 
+  if (check_connection(cursor->link TSRMLS_CC) != SUCCESS) {
+    return FAILURE;
+  }
+
   // if this fails, we might be disconnected... but we're probably
   // just out of results
-#ifdef WIN32
   if (recv(sock, (char*)&cursor->header.length, INT_32, FLAGS) == FAILURE) {
-#else
-  if (read(sock, &cursor->header.length, INT_32) == FAILURE) {
-#endif
+
+    set_disconnected(cursor->link);
+
     return FAILURE;
   }
 
   // make sure we're not getting crazy data
   if (cursor->header.length == 0) {
+
+    set_disconnected(cursor->link);
+
     zend_error(E_WARNING, "no db response\n");
     return FAILURE;
   }
   else if (cursor->header.length > MAX_RESPONSE_LEN ||
            cursor->header.length < REPLY_HEADER_SIZE) {
+
+    set_disconnected(cursor->link);
+
     zend_error(E_WARNING, "bad response length: %d, max: %d, did the db assert?\n", cursor->header.length, MAX_RESPONSE_LEN);
     return FAILURE;
   }
 
-#ifdef WIN32
   if (recv(sock, (char*)&cursor->header.request_id, INT_32, FLAGS) == FAILURE ||
       recv(sock, (char*)&cursor->header.response_to, INT_32, FLAGS) == FAILURE ||
       recv(sock, (char*)&cursor->header.op, INT_32, FLAGS) == FAILURE ||
@@ -1104,15 +1114,6 @@ int get_reply(mongo_cursor *cursor TSRMLS_DC) {
       recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
       recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
       recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
-#else
-  if (read(sock, &cursor->header.request_id, INT_32) == FAILURE ||
-      read(sock, &cursor->header.response_to, INT_32) == FAILURE ||
-      read(sock, &cursor->header.op, INT_32) == FAILURE ||
-      read(sock, &cursor->flag, INT_32) == FAILURE ||
-      read(sock, &cursor->cursor_id, INT_64) == FAILURE ||
-      read(sock, &cursor->start, INT_32) == FAILURE ||
-      read(sock, &num_returned, INT_32) == FAILURE) {
-#endif
     return FAILURE;
   }
 
@@ -1148,21 +1149,14 @@ int mongo_say(mongo_link *link, buffer *buf TSRMLS_DC) {
   int sock, sent;
 
   sock = get_master(link TSRMLS_CC);
-
-#ifdef WIN32
   sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
-#else
-  sent = write(sock, buf->start, buf->pos-buf->start);
-#endif
 
   if (sent == FAILURE) {
+    set_disconnected(link);
+
     if (check_connection(link TSRMLS_CC) == SUCCESS) {
       sock = get_master(link TSRMLS_CC);
-#     ifdef WIN32
       sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
-#     else
-      sent = send(sock, buf->start, buf->pos-buf->start, FLAGS);
-#     endif
     }
     else {
       return FAILURE;
@@ -1196,21 +1190,11 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
 }
 
 static int check_connection(mongo_link *link TSRMLS_DC) {
-  int now;
-#ifdef WIN32
-  SYSTEMTIME systemTime;
-  GetSystemTime(&systemTime);
-  now = systemTime.wMilliseconds;
-#else
-  now = time(0);
-#endif
+  int now = time(0);
 
   if (!MonGlo(auto_reconnect) ||
       (!link->paired && link->server.single.connected) ||
-      (link->paired &&
-       (link->server.paired.lconnected ||
-        link->server.paired.rconnected)) ||
-      (now-link->ts) < 2) {
+      (link->paired && (link->server.paired.lconnected || link->server.paired.rconnected))) {
     return SUCCESS;
   }
 
@@ -1219,7 +1203,7 @@ static int check_connection(mongo_link *link TSRMLS_DC) {
 #ifdef WIN32
   if (link->paired) {
     closesocket(link->server.paired.lsocket);
-	closesocket(link->server.paired.rsocket);
+    closesocket(link->server.paired.rsocket);
   }
   else {
     closesocket(link->server.single.socket);
@@ -1235,7 +1219,19 @@ static int check_connection(mongo_link *link TSRMLS_DC) {
   }
 #endif
 
+  set_disconnected(link);
+
   return mongo_do_socket_connect(link TSRMLS_CC);
+}
+
+inline void set_disconnected(mongo_link *link) {
+  if (link->paired) {
+    link->server.paired.lconnected = 0;
+    link->server.paired.rconnected = 0;
+  }
+  else {
+    link->server.single.connected = 0;
+  }
 }
 
 static int mongo_connect_nonb(int sock, char *host, int port) {
