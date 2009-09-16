@@ -799,68 +799,58 @@ PHP_METHOD(MongoCollection, toIndexString) {
 /* {{{ MongoCollection::group
  */
 PHP_METHOD(MongoCollection, group) {
-  // TODO: keyf
-  zval temp;
-  zval *params, *key, *initial, *condition = 0, *groupFunction, *code, *almost_return;
-  zval **retval, **result;
-  char *function_str, *reduce;
-  int reduce_len;
+  zval *key, *initial, *condition = 0, *group, *cmd, *reduce;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aas|z", &key, &initial, &reduce, &reduce_len, &condition) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aaz|z", &key, &initial, &reduce, &condition) == FAILURE) {
     return;
   }
 
-  MAKE_STD_ZVAL(code);
-  spprintf(&function_str, 0, "function() { var c = db[ns].find(condition); var map = new Map(); var reduce_function = %s; while (c.hasNext()) { var obj = c.next(); var key = {}; for (var i in keys) { key[keys[i]] = obj[keys[i]]; } var aggObj = map.get(key); if (aggObj == null) { var newObj = Object.extend({}, key); aggObj = Object.extend(newObj, initial); map.put(key, aggObj); } reduce_function(obj, aggObj); } return {\"result\": map.values()}; }", reduce);
-  ZVAL_STRING(code, function_str, 0);
+  if (Z_TYPE_P(reduce) == IS_STRING) {
+    zval *code;
+    MAKE_STD_ZVAL(code);
+    object_init_ex(code, mongo_ce_Code);
 
-  MAKE_STD_ZVAL(params);
-  array_init(params);
-  add_assoc_zval(params, "ns", c->name);
+    PUSH_PARAM(reduce); PUSH_PARAM((void*)1);
+    PUSH_EO_PARAM();
+    MONGO_METHOD(MongoCode, __construct)(1, return_value, NULL, code, return_value_used TSRMLS_CC);
+    POP_EO_PARAM();
+    POP_PARAM(); POP_PARAM();
+
+    reduce = code;
+  }
+  else if (Z_TYPE_P(reduce) == IS_OBJECT &&
+           Z_OBJCE_P(reduce) == mongo_ce_Code) {
+    zval_add_ref(&reduce);
+  }
+
+  MAKE_STD_ZVAL(cmd);
+  array_init(cmd);
+
+  MAKE_STD_ZVAL(group);
+  array_init(group);
+  add_assoc_zval(group, "ns", c->name);
   zval_add_ref(&c->name);
-  add_assoc_zval(params, "keys", key);
+  add_assoc_zval(group, "$reduce", reduce);
+  zval_add_ref(&reduce);
+  add_assoc_zval(group, "key", key);
   zval_add_ref(&key);
-  add_assoc_zval(params, "initial", initial);
+  add_assoc_zval(group, "cond", condition);
+  zval_add_ref(&condition);
+  add_assoc_zval(group, "initial", initial);
   zval_add_ref(&initial);
-  if (condition) {
-    add_assoc_zval(params, "condition", condition);
-    zval_add_ref(&condition);
-  }
-  else  {
-    zval *empty;
-    MAKE_STD_ZVAL(empty);
-    array_init(empty);
-    add_assoc_zval(params, "condition", empty);
-  }
 
-  MAKE_STD_ZVAL(groupFunction);
-  object_init_ex(groupFunction, mongo_ce_Code);
+  add_assoc_zval(cmd, "group", group);
 
-  PUSH_PARAM(code); PUSH_PARAM(params); PUSH_PARAM((void*)2);
+  PUSH_PARAM(cmd); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
-  MONGO_METHOD(MongoCode, __construct)(2, &temp, NULL, groupFunction, return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM();
-
-  MAKE_STD_ZVAL(almost_return);
-  PUSH_PARAM(groupFunction);; PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, execute)(1, almost_return, NULL, c->parent, return_value_used TSRMLS_CC);
+  MONGO_METHOD(MongoDB, command)(1, return_value, NULL, c->parent, return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  zval_ptr_dtor(&code);
-  zval_ptr_dtor(&groupFunction);
-  zval_ptr_dtor(&params);
-
-  if (zend_hash_find(HASH_P(almost_return), "retval", 7, (void**)&retval) == SUCCESS) {
-    if (zend_hash_find(HASH_PP(retval), "result", 7, (void**)&result) == SUCCESS) {
-      RETVAL_ZVAL(*result, 1, 0);
-    }
-  }
-  zval_ptr_dtor(&almost_return);
+  zval_ptr_dtor(&cmd);
+  zval_ptr_dtor(&reduce);
 }
 /* }}} */
 
