@@ -495,5 +495,20 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       $this->assertTrue($cursor->dead());
     }
 
+    public function testExplainLimit() {
+      $this->object->drop();
+
+      for ($i=0;$i<100;$i++) {
+        $this->object->save(array("x" => $i));
+      }
+
+      $q = array("x" => array('$gt' => 50));
+      $soft = $this->object->find($q)->limit(20)->explain();
+      $hard = $this->object->find($q)->limit(-20)->explain();
+
+      $this->assertEquals(20, $soft['n']);
+      $this->assertEquals(20, $hard['n']);
+    }
+
 }
 ?>

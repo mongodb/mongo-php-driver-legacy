@@ -339,15 +339,25 @@ PHP_METHOD(MongoCursor, hint) {
 /* {{{ MongoCursor->explain
  */
 PHP_METHOD(MongoCursor, explain) {
+  int temp_limit;
   zval *query;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+
+  // make explain use a hard limit
+  temp_limit = cursor->limit;
+  if (cursor->limit > 0) {
+    cursor->limit *= -1;
+  }
 
   query = cursor->query;
   add_assoc_bool(query, "$explain", 1);
 
   MONGO_METHOD(MongoCursor, reset)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
   MONGO_METHOD(MongoCursor, getNext)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+
+  // reset to original limit
+  cursor->limit = temp_limit;
 }
 /* }}} */
 
