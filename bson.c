@@ -212,7 +212,7 @@ int serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) 
     // MongoDate
     else if (clazz == mongo_ce_Date) {
       zval *zsec, *zusec;
-      long long int sec, usec, ms;
+      int64_t sec, usec, ms;
 
       set_type(buf, BSON_DATE);
       serialize_string(buf, name, name_len);
@@ -310,66 +310,6 @@ int resize_buf(buffer *buf, int size) {
   return total;
 }
 
-inline void serialize_byte(buffer *buf, char b) {
-  if(BUF_REMAINING <= 1) {
-    resize_buf(buf, 1);
-  }
-  *(buf->pos) = b;
-  buf->pos += 1;
-}
-
-inline void serialize_bytes(buffer *buf, char *str, int str_len) {
-  if(BUF_REMAINING <= str_len) {
-    resize_buf(buf, str_len);
-  }
-  memcpy(buf->pos, str, str_len);
-  buf->pos += str_len;
-}
-
-inline void serialize_string(buffer *buf, char *str, int str_len) {
-  if(BUF_REMAINING <= str_len+1) {
-    resize_buf(buf, str_len+1);
-  }
-
-  memcpy(buf->pos, str, str_len);
-  // add \0 at the end of the string
-  buf->pos[str_len] = 0;
-  buf->pos += str_len + 1;
-}
-
-inline void serialize_int(buffer *buf, int num) {
-  if(BUF_REMAINING <= INT_32) {
-    resize_buf(buf, INT_32);
-  }
-  memcpy(buf->pos, &num, INT_32);
-  buf->pos += INT_32;
-}
-
-inline void serialize_long(buffer *buf, long long num) {
-  if(BUF_REMAINING <= INT_64) {
-    resize_buf(buf, INT_64);
-  }
-  memcpy(buf->pos, &num, INT_64);
-  buf->pos += INT_64;
-}
-
-inline void serialize_double(buffer *buf, double num) {
-  if(BUF_REMAINING <= INT_64) {
-    resize_buf(buf, INT_64);
-  }
-  memcpy(buf->pos, &num, DOUBLE_64);
-  buf->pos += DOUBLE_64;
-}
-
-/* the position is not increased, we are just filling
- * in the first 4 bytes with the size.
- */
-inline void serialize_size(unsigned char *start, buffer *buf) {
-  unsigned int total = buf->pos - start;
-  memcpy(start, &total, INT_32);
-}
-
-
 char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
   char type;
 
@@ -452,12 +392,12 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_LONG: {
-      ZVAL_DOUBLE(value, (double)*((long long int*)buf));
+      ZVAL_DOUBLE(value, (double)*((int64_t *)buf));
       buf += INT_64;
       break;
     }
     case BSON_DATE: {
-      long long int d = *((long long int*)buf);
+      int64_t d = *((int64_t *)buf);
       buf += INT_64;
       
       object_init_ex(value, mongo_ce_Date);
@@ -549,7 +489,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_TIMESTAMP: {
-      long long int d;
+      int64_t d;
 
       d = *(int*)buf;
       buf += INT_64;

@@ -18,6 +18,10 @@
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1
 
+#ifdef PHP_WIN32
+# include "win32/php_stdint.h"
+#endif
+
 #define PHP_MONGO_VERSION "1.0"
 #define PHP_MONGO_EXTNAME "mongo"
 
@@ -199,7 +203,7 @@ typedef struct {
   mongo_msg_header header;
   // response fields
   int flag;
-  long long cursor_id;
+  int64_t cursor_id;
   int start;
   // number of results used
   int at;

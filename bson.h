@@ -16,6 +16,10 @@
 #ifndef PHP_BSON_H
 #define PHP_BSON_H 1
 
+#ifdef PHP_WIN32
+# include "win32/php_stdint.h"
+#endif
+
 #define INT_32 4
 #define INT_64 8
 #define DOUBLE_64 8
@@ -44,16 +48,74 @@
 
 #define GROW_SLOWLY 1048576
 
-inline void serialize_size(unsigned char*, buffer*);
+#ifndef INLINE
+# if __GNUC__ && !__GNUC_STDC_INLINE__
+#  define INLINE extern inline
+# else
+#  define INLINE inline 
+# endif
+#endif
 
 int serialize_element(char*, zval**, buffer*, int TSRMLS_DC);
-inline void serialize_double(buffer*, double);
-inline void serialize_string(buffer*, char*, int);
-inline void serialize_long(buffer*, long long);
-inline void serialize_int(buffer*, int);
-inline void serialize_byte(buffer*, char);
-inline void serialize_bytes(buffer*, char*, int);
 
+INLINE void serialize_byte(buffer *buf, char b) {
+  if(BUF_REMAINING <= 1) {
+    resize_buf(buf, 1);
+  }
+  *(buf->pos) = b;
+  buf->pos += 1;
+}
+
+INLINE void serialize_bytes(buffer *buf, char *str, int str_len) {
+  if(BUF_REMAINING <= str_len) {
+    resize_buf(buf, str_len);
+  }
+  memcpy(buf->pos, str, str_len);
+  buf->pos += str_len;
+}
+
+INLINE void serialize_double(buffer *buf, double num) {
+  if(BUF_REMAINING <= INT_64) {
+    resize_buf(buf, INT_64);
+  }
+  memcpy(buf->pos, &num, DOUBLE_64);
+  buf->pos += DOUBLE_64;
+}
+
+INLINE void serialize_int(buffer *buf, int num) {
+  if(BUF_REMAINING <= INT_32) {
+    resize_buf(buf, INT_32);
+  }
+  memcpy(buf->pos, &num, INT_32);
+  buf->pos += INT_32;
+}
+
+INLINE void serialize_long(buffer *buf, int64_t num) {
+  if(BUF_REMAINING <= INT_64) {
+    resize_buf(buf, INT_64);
+  }
+  memcpy(buf->pos, &num, INT_64);
+  buf->pos += INT_64;
+}
+
+/* the position is not increased, we are just filling
+ * in the first 4 bytes with the size.
+ */
+INLINE void serialize_size(unsigned char *start, buffer *buf) {
+  unsigned int total = buf->pos - start;
+  memcpy(start, &total, INT_32);
+}
+
+INLINE void serialize_string(buffer *buf, char *str, int str_len) {
+  if(BUF_REMAINING <= str_len+1) {
+    resize_buf(buf, str_len+1);
+  }
+
+  memcpy(buf->pos, str, str_len);
+  // add \0 at the end of the string
+  buf->pos[str_len] = 0;
+  buf->pos += str_len + 1;
+}
 
 #define set_type(buf, type) serialize_byte(buf, (char)type)
 #define serialize_null(buf) serialize_byte(buf, (char)0)
