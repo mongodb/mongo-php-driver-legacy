@@ -154,15 +154,15 @@ typedef struct {
 
 
 #define APPEND_HEADER(buf, opts) buf.pos += INT_32;       \
-  serialize_int(&buf, header.request_id);                 \
-  serialize_int(&buf, header.response_to);                \
-  serialize_int(&buf, header.op);                         \
-  serialize_int(&buf, opts);                                
+  php_mongo_serialize_int(&buf, header.request_id);                 \
+  php_mongo_serialize_int(&buf, header.response_to);                \
+  php_mongo_serialize_int(&buf, header.op);                         \
+  php_mongo_serialize_int(&buf, opts);                                
 
 
 #define APPEND_HEADER_NS(buf, ns, ns_len, opts)         \
   APPEND_HEADER(buf, opts);                             \
-  serialize_string(&buf, ns, ns_len);              
+  php_mongo_serialize_string(&buf, ns, ns_len);              
 
 
 #define MONGO_CHECK_INITIALIZED(member, class_name)                     \

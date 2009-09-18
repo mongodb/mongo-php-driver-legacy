@@ -172,9 +172,9 @@ PHP_METHOD(MongoCursor, hasNext) {
   buf.end = buf.start + size;
 
   CREATE_RESPONSE_HEADER(buf, cursor->ns, strlen(cursor->ns), cursor->header.request_id, OP_GET_MORE);
-  serialize_int(&buf, cursor->limit);
-  serialize_long(&buf, cursor->cursor_id);
-  serialize_size(buf.start, &buf);
+  php_mongo_serialize_int(&buf, cursor->limit);
+  php_mongo_serialize_long(&buf, cursor->cursor_id);
+  php_mongo_serialize_size(buf.start, &buf);
 
   // fails if we're out of elems
   if(mongo_say(cursor->link, &buf TSRMLS_CC) == FAILURE) {
@@ -375,15 +375,15 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   CREATE_HEADER_WITH_OPTS(buf, cursor->ns, OP_QUERY, cursor->opts);
 
-  serialize_int(&buf, cursor->skip);
-  serialize_int(&buf, cursor->limit);
+  php_mongo_serialize_int(&buf, cursor->skip);
+  php_mongo_serialize_int(&buf, cursor->limit);
 
   zval_to_bson(&buf, HASH_P(cursor->query), NO_PREP TSRMLS_CC);
   if (cursor->fields && zend_hash_num_elements(HASH_P(cursor->fields)) > 0) {
     zval_to_bson(&buf, HASH_P(cursor->fields), NO_PREP TSRMLS_CC);
   }
 
-  serialize_size(buf.start, &buf);
+  php_mongo_serialize_size(buf.start, &buf);
   // sends
   sent = mongo_say(cursor->link, &buf TSRMLS_CC);
   efree(buf.start);
@@ -664,10 +664,10 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   APPEND_HEADER(buf, 0);
 
   // # of cursors
-  serialize_int(&buf, 1);
+  php_mongo_serialize_int(&buf, 1);
   // cursor ids
-  serialize_long(&buf, cursor->cursor_id);
-  serialize_size(buf.start, &buf);
+  php_mongo_serialize_long(&buf, cursor->cursor_id);
+  php_mongo_serialize_size(buf.start, &buf);
 
   mongo_say(cursor->link, &buf TSRMLS_CC);
 }
