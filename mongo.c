@@ -149,6 +149,7 @@ STD_PHP_INI_ENTRY_EX("mongo.max_connections", "-1", PHP_INI_SYSTEM, OnUpdateLong
 STD_PHP_INI_ENTRY("mongo.default_host", "localhost", PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.default_port", "27017", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.chunk_size", "262144", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals)
+STD_PHP_INI_ENTRY("mongo.cmd", "$", PHP_INI_ALL, OnUpdateString, cmd_char, zend_mongo_globals, mongo_globals)
 PHP_INI_END()
 /* }}} */
 
@@ -278,6 +279,7 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC) {
   mongo_globals->default_port = 27017;
   mongo_globals->request_id = 3;
   mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
+  mongo_globals->cmd_char = 0;
 }
 /* }}} */
 

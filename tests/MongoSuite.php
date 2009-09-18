@@ -19,6 +19,7 @@ require_once 'MongoObjDBTest.php';
 require_once 'MongoRegressionTest1.php';
 
 require_once 'MongoMemTest.php';
+require_once 'CmdSymbolTest.php';
 
 include 'MongoAuthTest.php';
 include 'MongoGridFSClassicTest.php';
@@ -56,7 +57,8 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $suite->addTestSuite('MongoObjDBTest');
         
         $suite->addTestSuite('MongoRegressionTest1');
-        
+        $suite->addTestSuite('CmdSymbolTest');
+
         // try adding an admin user
         if (class_exists("MongoAuth")) {
             exec("mongo tests/addUser.js", $output, $exit_code);

@@ -16,6 +16,7 @@
 #ifndef PHP_BSON_H
 #define PHP_BSON_H 1
 
+
 #define INT_32 4
 #define INT_64 8
 #define DOUBLE_64 8
@@ -46,6 +47,7 @@
 
 void php_mongo_serialize_size(unsigned char*, buffer*);
 
+
 int php_mongo_serialize_element(char*, zval**, buffer*, int TSRMLS_DC);
 void php_mongo_serialize_double(buffer*, double);
 void php_mongo_serialize_string(buffer*, char*, int);
@@ -53,7 +55,7 @@ void php_mongo_serialize_long(buffer*, long long);
 void php_mongo_serialize_int(buffer*, int);
 void php_mongo_serialize_byte(buffer*, char);
 void php_mongo_serialize_bytes(buffer*, char*, int);
-
+void php_mongo_serialize_key(buffer*, char*, int, int TSRMLS_DC);
 
 #define php_mongo_set_type(buf, type) php_mongo_serialize_byte(buf, (char)type)
 #define php_mongo_serialize_null(buf) php_mongo_serialize_byte(buf, (char)0)

@@ -318,6 +318,7 @@ char *default_host;
 long default_port;
 int request_id; 
 int chunk_size;
+char *cmd_char;
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS
