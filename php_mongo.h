@@ -244,9 +244,9 @@ typedef struct {
 
 #define BUF_REMAINING (buf->end-buf->pos)
 
-#define CREATE_BUF(buf, size) buffer buf;               \
-  buf.start = (unsigned char*)emalloc(size);            \
-  buf.pos = buf.start;                                  \
+#define CREATE_BUF(buf, size)                   \
+  buf.start = (unsigned char*)emalloc(size);    \
+  buf.pos = buf.start;                          \
   buf.end = buf.start + size;
 
 #define DEBUG_BUF(buf)                              \

@@ -368,11 +368,12 @@ PHP_METHOD(MongoCursor, doQuery) {
   int sent;
   mongo_msg_header header;
   mongo_cursor *cursor;
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
+  buffer buf;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
+  CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER_WITH_OPTS(buf, cursor->ns, OP_QUERY, cursor->opts);
 
   php_mongo_serialize_int(&buf, cursor->skip);

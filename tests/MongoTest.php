@@ -72,16 +72,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
 	$m = new Mongo("localhost:27017,localhost:27018,");
     }
 
-    /**
-     * @todo Implement testPairConnect().
-     */
-    public function testPairConnect() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
-    }
-
     public function testPersistConnect() {
       $m1 = new Mongo("localhost:27017", false);
       $m1->persistConnect("", "");
@@ -96,16 +86,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
       
       $c = $m2->selectCollection("foo","bar");
       $c->findOne();
-    }
-
-    /**
-     * @todo Implement testPairPersistConnect().
-     */
-    public function testPairPersistConnect() {
-        // Remove the following lines when you implement this test.
-        $this->markTestIncomplete(
-          'This test has not been implemented yet.'
-        );
     }
 
     public function test__toString() {
