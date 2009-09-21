@@ -135,34 +135,34 @@ typedef struct {
   unsigned char *end;
 } buffer;
 
-#define CREATE_MSG_HEADER(rid, rto, opcode)                     \
-  header.length = 0;                                            \
-  header.request_id = rid;                                      \
-  header.response_to = rto;                                     \
+#define CREATE_MSG_HEADER(rid, rto, opcode)     \
+  header.length = 0;                            \
+  header.request_id = rid;                      \
+  header.response_to = rto;                     \
   header.op = opcode;
 
-#define CREATE_RESPONSE_HEADER(buf, ns, ns_len, rto, opcode)            \
-  CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode);                 \
-  APPEND_HEADER_NS(buf, ns, ns_len, 0);
+#define CREATE_RESPONSE_HEADER(buf, ns, rto, opcode)    \
+  CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode); \
+  APPEND_HEADER_NS(buf, ns, 0);
 
 #define CREATE_HEADER_WITH_OPTS(buf, ns, opcode, opts)  \
   CREATE_MSG_HEADER(MonGlo(request_id)++, 0, opcode);   \
-  APPEND_HEADER_NS(buf, ns, strlen(ns), opts);
+  APPEND_HEADER_NS(buf, ns, opts);
 
-#define CREATE_HEADER(buf, ns, ns_len, opcode)          \
-  CREATE_RESPONSE_HEADER(buf, ns, ns_len, 0, opcode);                    
+#define CREATE_HEADER(buf, ns, opcode)          \
+  CREATE_RESPONSE_HEADER(buf, ns, 0, opcode);                    
 
 
-#define APPEND_HEADER(buf, opts) buf.pos += INT_32;       \
-  php_mongo_serialize_int(&buf, header.request_id);                 \
-  php_mongo_serialize_int(&buf, header.response_to);                \
-  php_mongo_serialize_int(&buf, header.op);                         \
+#define APPEND_HEADER(buf, opts) buf.pos += INT_32;     \
+  php_mongo_serialize_int(&buf, header.request_id);     \
+  php_mongo_serialize_int(&buf, header.response_to);    \
+  php_mongo_serialize_int(&buf, header.op);             \
   php_mongo_serialize_int(&buf, opts);                                
 
 
-#define APPEND_HEADER_NS(buf, ns, ns_len, opts)         \
-  APPEND_HEADER(buf, opts);                             \
-  php_mongo_serialize_string(&buf, ns, ns_len);              
+#define APPEND_HEADER_NS(buf, ns, opts)                         \
+  APPEND_HEADER(buf, opts);                                     \
+  php_mongo_serialize_ns(&buf, ns TSRMLS_CC);
 
 
 #define MONGO_CHECK_INITIALIZED(member, class_name)                     \

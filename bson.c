@@ -363,9 +363,7 @@ void php_mongo_serialize_double(buffer *buf, double num) {
 
 /* 
  * prep == true
- *    we are inserting, so keys can't have '.'s in them
- * prep == false
- *    we are querying, so custom $s must be replaced 
+ *    we are inserting, so keys can't have .s in them
  */
 void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRMLS_DC) {
   if(BUF_REMAINING <= str_len+1) {
@@ -375,7 +373,8 @@ void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRML
   if (prep && (strchr(str, '.') != 0)) {
     zend_error(E_ERROR, "invalid key name: [%s]", str);
   }
-  else if (MonGlo(cmd_char) && strchr(str, MonGlo(cmd_char)[0]) == str) {
+
+  if (MonGlo(cmd_char) && strchr(str, MonGlo(cmd_char)[0]) == str) {
     *(buf->pos) = '$';
     memcpy(buf->pos+1, str+1, str_len-1);
   }
@@ -388,13 +387,37 @@ void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRML
   buf->pos += str_len + 1;
 }
 
+void php_mongo_serialize_ns(buffer *buf, char *str TSRMLS_DC) {
+  char *collection = strchr(str, '.')+1;
+
+  if(BUF_REMAINING <= strlen(str)+1) {
+    resize_buf(buf, strlen(str)+1);
+  }
+
+  if (MonGlo(cmd_char) && strchr(collection, MonGlo(cmd_char)[0]) == collection) {
+    char *tmp = buf->pos;
+    memcpy(buf->pos, str, collection-str);
+    buf->pos += collection-str;
+    *(buf->pos) = '$';
+    memcpy(buf->pos+1, collection+1, strlen(collection)-1);
+    buf->pos[strlen(collection)] = 0;
+    buf->pos += strlen(collection) + 1;
+  }
+  else {
+    memcpy(buf->pos, str, strlen(str));
+    buf->pos[strlen(str)] = 0;
+    buf->pos += strlen(str) + 1;
+  }
+}
+
 
 /* the position is not increased, we are just filling
  * in the first 4 bytes with the size.
  */
 void php_mongo_serialize_size(unsigned char *start, buffer *buf) {
-  unsigned int total = buf->pos - start;
+  int total = buf->pos - start;
   memcpy(start, &total, INT_32);
+
 }
 
 

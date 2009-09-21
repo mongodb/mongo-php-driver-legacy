@@ -171,7 +171,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   buf.pos = buf.start;
   buf.end = buf.start + size;
 
-  CREATE_RESPONSE_HEADER(buf, cursor->ns, strlen(cursor->ns), cursor->header.request_id, OP_GET_MORE);
+  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->header.request_id, OP_GET_MORE);
   php_mongo_serialize_int(&buf, cursor->limit);
   php_mongo_serialize_long(&buf, cursor->cursor_id);
   php_mongo_serialize_size(buf.start, &buf);
@@ -384,7 +384,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   }
 
   php_mongo_serialize_size(buf.start, &buf);
-  // sends
+
   sent = mongo_say(cursor->link, &buf TSRMLS_CC);
   efree(buf.start);
   if (sent == FAILURE) {

@@ -157,7 +157,7 @@ PHP_METHOD(MongoCollection, insert) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_INSERT);
+  CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_INSERT);
 
   // serialize
   if (zval_to_bson(&buf, HASH_P(a), PREP TSRMLS_CC) == 0 &&
@@ -196,7 +196,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_INSERT);
+  CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_INSERT);
 
   php_array = HASH_P(a);
 
@@ -334,7 +334,7 @@ PHP_METHOD(MongoCollection, update) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_UPDATE);
+  CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_UPDATE);
   php_mongo_serialize_int(&buf, upsert);
   zval_to_bson(&buf, HASH_P(criteria), NO_PREP TSRMLS_CC);
   zval_to_bson(&buf, HASH_P(newobj), NO_PREP TSRMLS_CC);
@@ -372,7 +372,7 @@ PHP_METHOD(MongoCollection, remove) {
 
   ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
 
-  CREATE_HEADER(buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), OP_DELETE);
+  CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_DELETE);
 
   mflags = (just_one == 1);
 

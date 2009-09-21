@@ -183,6 +183,7 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $this->object->storeBytes($bytes, array('myopt' => $bytes));
 
         $obj = $this->object->findOne();
+        $this->assertNotNull($obj, "this can be caused by an old db version");
 
         $b = $obj->getBytes();
 

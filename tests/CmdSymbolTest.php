@@ -20,15 +20,16 @@ class CmdSymbolTest extends PHPUnit_Framework_TestCase
      * @access protected
      */
     public function setUp() {
-        ini_set("mongo.cmd", "!");
         $this->object = $this->sharedFixture->selectCollection('foo', 'bar');
-    }
-
-    public function tearDown() {
         $this->object->drop();
     }
 
+    public function tearDown() {
+        ini_set("mongo.cmd", '$');
+    }
+
     public function testSet() {
+        ini_set("mongo.cmd", "!");
         $this->object->save(array('name'=>'google.com'));
         $this->object->update(array(), array('!set' => array("name" => "yahoo.com")));
         $yahoo = $this->object->findOne();
@@ -38,6 +39,31 @@ class CmdSymbolTest extends PHPUnit_Framework_TestCase
         $this->object->update(array(), array('#set' => array("name" => "askjeeves.com")));
         $jeeves = $this->object->findOne();
         $this->assertEquals('askjeeves.com', $jeeves['name']);
+    }
+
+    public function testNS() {
+        ini_set("mongo.cmd", "@");
+
+        $db = $this->sharedFixture->selectDB("admin");
+        $cmd = $db->selectCollection('@cmd');
+
+        $info = $cmd->findOne(array('buildinfo' => 1));
+        $this->assertArrayHasKey('version', $info, json_encode($info));
+        $this->assertArrayHasKey('gitVersion', $info, json_encode($info));
+        $this->assertArrayHasKey('sysInfo', $info, json_encode($info));
+    }
+
+    
+    public function testRef() {
+        ini_set("mongo.cmd", ":");
+
+        $this->object->insert(array("_id" => 123, "hello" => "world"));
+        $this->object->insert(array("_id" => 456, "ref" => array(":ref" => "bar", ":id" => 123)));
+
+        $ref = $this->object->findOne(array("_id" => 456));
+        $obj = MongoDBRef::get($this->object->db, $ref["ref"]);
+        $this->assertNotNull($obj);
+        $this->assertEquals("world", $obj["hello"], json_encode($obj));
     }
 
 }
