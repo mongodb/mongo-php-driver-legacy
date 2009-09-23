@@ -445,6 +445,21 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $g = $this->object->group(array(), array("count" => 0), "function (obj, prev) { prev.count++; }", array("a" => array( '$gt' => 1)));
         $this->assertEquals(1, count($g['retval'])); 
         $this->assertEquals(1, $g['retval'][0]['count']);
+   }
+
+    public function testSafeInsert() {
+      $c = $this->object;
+      $c->drop();
+
+      $success = $c->insert(array("_id" => "foo"));
+      $this->assertTrue($success);
+      $success = $c->insert(array("_id" => "foo"));
+      $this->assertTrue($success);
+
+      $success = $c->insert(array("_id" => "bar"), true);
+      $this->assertEquals($success['err'], null);
+      $success = $c->insert(array("_id" => "bar"), true);
+      $this->assertEquals($success['err'], "E11000 duplicate key errorindex: phpunit.c.\$_id_  dup key: { : \"bar\" }");
     }
 
 }
