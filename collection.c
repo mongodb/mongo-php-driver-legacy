@@ -172,7 +172,8 @@ PHP_METHOD(MongoCollection, insert) {
   php_mongo_serialize_size(buf.start, &buf);
 
   if (safe) {
-    zval *cmd, *cursor_z, *temp, *cmd_ns_z;
+    zval temp;
+    zval *cmd, *cursor_z, *cmd_ns_z;
     char *start = buf.pos, *cmd_ns;
     mongo_cursor *cursor;
 
@@ -205,17 +206,14 @@ PHP_METHOD(MongoCollection, insert) {
       return;
     }
 
-    MAKE_STD_ZVAL(temp);
     MAKE_STD_ZVAL(cursor_z);
     object_init_ex(cursor_z, mongo_ce_Cursor);
 
     PUSH_PARAM(c->db->link); PUSH_PARAM(cmd_ns_z); PUSH_PARAM((void*)2);
     PUSH_EO_PARAM();
-    MONGO_METHOD(MongoCursor, __construct)(2, temp, NULL, cursor_z, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoCursor, __construct)(2, &temp, NULL, cursor_z, 0 TSRMLS_CC);
     POP_EO_PARAM();
     POP_PARAM(); POP_PARAM(); POP_PARAM();
-
-    zval_ptr_dtor(&temp);
 
     /* get the response */
     cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);

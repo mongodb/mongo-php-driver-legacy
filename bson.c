@@ -390,7 +390,7 @@ void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRML
 void php_mongo_serialize_ns(buffer *buf, char *str TSRMLS_DC) {
   char *collection = strchr(str, '.')+1;
 
-  if(BUF_REMAINING <= strlen(str)+1) {
+  if(BUF_REMAINING <= (int)strlen(str)+1) {
     resize_buf(buf, strlen(str)+1);
   }
 
