@@ -275,32 +275,10 @@ PHP_METHOD(MongoDate, __toString) {
 /* }}} */
 
 
-#if ZEND_MODULE_API_NO < 20090115 && ! defined(WIN32)
-PHP_METHOD(MongoDate, format) {
-  zval *zsec, *format;
-  int sec;
-
-  zsec = zend_read_property( mongo_ce_Date, getThis(), "sec", 3, 0 TSRMLS_CC );
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &format) == FAILURE) {
-    return;
-  }
-  convert_to_string(format);
-
-  PUSH_PARAM(format); PUSH_PARAM(zsec); PUSH_PARAM((void*)2);
-  PUSH_EO_PARAM();
-  ZEND_FN(date)(2, return_value, return_value_ptr, NULL, return_value_used TSRMLS_CC); 
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM();
-}
-#endif /* ZEND_MODULE_API_NO < 20090115 */
 
 static function_entry MongoDate_methods[] = {
   PHP_ME(MongoDate, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDate, __toString, NULL, ZEND_ACC_PUBLIC)
-#if ZEND_MODULE_API_NO < 20090115
-  PHP_ME(MongoDate, format, NULL, ZEND_ACC_PUBLIC)
-#endif /* ZEND_MODULE_API_NO < 20090115 */
   { NULL, NULL, NULL }
 };
 

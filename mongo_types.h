@@ -31,7 +31,6 @@ PHP_METHOD(MongoCode, __toString );
 
 PHP_METHOD(MongoDate, __construct);
 PHP_METHOD(MongoDate, __toString);
-PHP_METHOD(MongoDate, format);
 
 void generate_id(char*);
 PHP_METHOD(MongoId, __construct);

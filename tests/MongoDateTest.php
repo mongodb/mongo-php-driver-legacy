@@ -20,12 +20,6 @@ class MongoDateTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(0, $d3->usec);
     }
 
-    public function testFormat() {
-        if (floatval(phpversion()) < 5.3) {
-          $d = new MongoDate(strtotime('2009-05-01 00:00:00'));
-          $this->assertEquals("Friday", $d->format("l"));
-        }
-    }
 }
 
 ?>
