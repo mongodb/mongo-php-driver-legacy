@@ -212,7 +212,7 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
     // MongoDate
     else if (clazz == mongo_ce_Date) {
       zval *zsec, *zusec;
-      long long int sec, usec, ms;
+      int64_t sec, usec, ms;
 
       php_mongo_set_type(buf, BSON_DATE);
       php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
@@ -345,7 +345,7 @@ void php_mongo_serialize_int(buffer *buf, int num) {
   buf->pos += INT_32;
 }
 
-void php_mongo_serialize_long(buffer *buf, long long num) {
+void php_mongo_serialize_long(buffer *buf, int64_t num) {
   if(BUF_REMAINING <= INT_64) {
     resize_buf(buf, INT_64);
   }
@@ -503,12 +503,12 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_LONG: {
-      ZVAL_DOUBLE(value, (double)*((long long int*)buf));
+      ZVAL_DOUBLE(value, (double)*((int64_t*)buf));
       buf += INT_64;
       break;
     }
     case BSON_DATE: {
-      long long int d = *((long long int*)buf);
+      int64_t d = *((int64_t*)buf);
       buf += INT_64;
       
       object_init_ex(value, mongo_ce_Date);
@@ -600,7 +600,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_TIMESTAMP: {
-      long long int d;
+      int64_t d;
 
       d = *(int*)buf;
       buf += INT_64;

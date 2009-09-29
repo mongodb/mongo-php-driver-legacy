@@ -186,7 +186,7 @@ PHP_METHOD(MongoCursor, hasNext) {
 
   // if we have cursor->at == cursor->num && recv fails,
   // we're probably just out of results
-  RETURN_BOOL(get_reply(cursor TSRMLS_CC) == SUCCESS);
+  RETURN_BOOL(php_mongo_get_reply(cursor TSRMLS_CC) == SUCCESS);
 }
 /* }}} */
 
@@ -393,7 +393,7 @@ PHP_METHOD(MongoCursor, doQuery) {
     return;
   }
 
-  get_reply(cursor TSRMLS_CC);
+  php_mongo_get_reply(cursor TSRMLS_CC);
 }
 /* }}} */
 

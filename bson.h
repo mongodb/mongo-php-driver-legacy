@@ -51,7 +51,7 @@ void php_mongo_serialize_size(unsigned char*, buffer*);
 int php_mongo_serialize_element(char*, zval**, buffer*, int TSRMLS_DC);
 void php_mongo_serialize_double(buffer*, double);
 void php_mongo_serialize_string(buffer*, char*, int);
-void php_mongo_serialize_long(buffer*, long long);
+void php_mongo_serialize_long(buffer*, int64_t);
 void php_mongo_serialize_int(buffer*, int);
 void php_mongo_serialize_byte(buffer*, char);
 void php_mongo_serialize_bytes(buffer*, char*, int);

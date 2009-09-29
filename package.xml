@@ -13,20 +13,21 @@
    <email>kristina@10gen.com</email>
    <active>yes</active>
  </lead>
- <date>2009-08-20</date>
+ <date>2009-09-29</date>
  <time>12:00:00</time>
  <version>
-   <release>0.9.5</release>
-   <api>0.9.5</api>
+   <release>1.0.0</release>
+   <api>1.0.0</api>
  </version>
  <stability>
-   <release>beta</release>
-   <api>beta</api>
+   <release>stable</release>
+   <api>stable</api>
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-   Unbreak backwards compatibility
-   Arrays are saved as arrays only if they have ascending numeric indices, otherwise they're saved as objects
+   Safe insert
+   Configurable special character
+   Error methods are on MongoDB, not Mongo
  </notes>
  <contents>
    <dir baseinstalldir="/" name="/">
@@ -61,6 +62,22 @@
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog>
+   <release>
+     <stability>
+       <release>stable</release>
+       <api>stable</api>
+     </stability>
+     <version>
+       <release>1.0.0</release>
+       <api>1.0.0</api>
+     </version>
+     <date>2009-09-29</date>
+     <notes>
+       Safe insert
+       Configurable special character
+       Error methods are on MongoDB, not Mongo
+     </notes>
+   </release>
    <release>
      <stability>
        <release>beta</release>

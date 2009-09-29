@@ -58,6 +58,7 @@ static char* getHost(char*, int);
 static int getPort(char*);
 static int get_host_and_port(char*, mongo_link* TSRMLS_DC);
 static void mongo_init_MongoExceptions(TSRMLS_D);
+static void run_err(int, zval*, zval* TSRMLS_DC);
 
 inline void set_disconnected(mongo_link *link);
 
@@ -352,7 +353,7 @@ void mongo_init_Mongo(TSRMLS_D) {
 
   zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), MonGlo(default_host) TSRMLS_CC);
   zend_declare_class_constant_long(mongo_ce_Mongo, "DEFAULT_PORT", strlen("DEFAULT_PORT"), MonGlo(default_port) TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), "0.9.5+" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), "1.0.0" TSRMLS_CC);
 
   zend_declare_property_bool(mongo_ce_Mongo, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 
@@ -872,37 +873,7 @@ PHP_METHOD(Mongo, repairDB) {
 }
 /* }}} */
 
-static void run_err(char *cmd, zval *return_value, zval *this TSRMLS_DC) {
-  zval *data, *db, *name;
-
-  MAKE_STD_ZVAL(db);
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
-  
-  PUSH_PARAM(name); PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, selectDB)(1, db, NULL, this, 0 TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM();
-  
-  MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, cmd, 1);
-  
-  PUSH_PARAM(data); PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, command)(1, return_value, NULL, db, 0 TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM();
-  
-  zval_ptr_dtor(&db);
-  zval_ptr_dtor(&name);
-  zval_ptr_dtor(&data);
-}
-
-/* {{{ Mongo->lastError()
- */
-PHP_METHOD(Mongo, lastError) {
+static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC) {
   zval *db_name, *db;
   MAKE_STD_ZVAL(db_name);
   ZVAL_STRING(db_name, "admin", 1);
@@ -915,8 +886,29 @@ PHP_METHOD(Mongo, lastError) {
   POP_PARAM(); POP_PARAM();
   zval_ptr_dtor(&db_name);
 
-  MONGO_METHOD(MongoDB, lastError)(0, return_value, NULL, db, 0 TSRMLS_CC);
+  switch (err_type) {
+  case LAST_ERROR:
+    MONGO_METHOD(MongoDB, lastError)(0, return_value, NULL, db, 0 TSRMLS_CC);
+    break;
+  case PREV_ERROR:
+    MONGO_METHOD(MongoDB, prevError)(0, return_value, NULL, db, 0 TSRMLS_CC);
+    break;
+  case RESET_ERROR:
+    MONGO_METHOD(MongoDB, resetError)(0, return_value, NULL, db, 0 TSRMLS_CC);
+    break;
+  case FORCE_ERROR:
+    MONGO_METHOD(MongoDB, forceError)(0, return_value, NULL, db, 0 TSRMLS_CC);
+    break;
+  }
+
   zval_ptr_dtor(&db);
+}
+
+
+/* {{{ Mongo->lastError()
+ */
+PHP_METHOD(Mongo, lastError) {
+  run_err(LAST_ERROR, return_value, getThis() TSRMLS_CC);
 }
 /* }}} */
 
@@ -924,20 +916,7 @@ PHP_METHOD(Mongo, lastError) {
 /* {{{ Mongo->prevError()
  */
 PHP_METHOD(Mongo, prevError) {
-  zval *db_name, *db;
-  MAKE_STD_ZVAL(db_name);
-  ZVAL_STRING(db_name, "admin", 1);
-
-  MAKE_STD_ZVAL(db);
-  PUSH_PARAM(db_name); PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, selectDB)(1, db, NULL, getThis(), 0 TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM();
-  zval_ptr_dtor(&db_name);
-
-  MONGO_METHOD(MongoDB, prevError)(0, return_value, NULL, db, 0 TSRMLS_CC);
-  zval_ptr_dtor(&db);
+  run_err(PREV_ERROR, return_value, getThis() TSRMLS_CC);
 }
 /* }}} */
 
@@ -945,40 +924,14 @@ PHP_METHOD(Mongo, prevError) {
 /* {{{ Mongo->resetError()
  */
 PHP_METHOD(Mongo, resetError) {
-  zval *db_name, *db;
-  MAKE_STD_ZVAL(db_name);
-  ZVAL_STRING(db_name, "admin", 1);
-
-  MAKE_STD_ZVAL(db);
-  PUSH_PARAM(db_name); PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, selectDB)(1, db, NULL, getThis(), 0 TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM();
-  zval_ptr_dtor(&db_name);
-
-  MONGO_METHOD(MongoDB, resetError)(0, return_value, NULL, db, 0 TSRMLS_CC);
-  zval_ptr_dtor(&db);
+  run_err(RESET_ERROR, return_value, getThis() TSRMLS_CC);
 }
 /* }}} */
 
 /* {{{ Mongo->forceError()
  */
 PHP_METHOD(Mongo, forceError) {
-  zval *db_name, *db;
-  MAKE_STD_ZVAL(db_name);
-  ZVAL_STRING(db_name, "admin", 1);
-
-  MAKE_STD_ZVAL(db);
-  PUSH_PARAM(db_name); PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, selectDB)(1, db, NULL, getThis(), 0 TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM();
-  zval_ptr_dtor(&db_name);
-
-  MONGO_METHOD(MongoDB, forceError)(0, return_value, NULL, db, 0 TSRMLS_CC);
-  zval_ptr_dtor(&db);
+  run_err(FORCE_ERROR, return_value, getThis() TSRMLS_CC);
 }
 /* }}} */
 
@@ -1075,7 +1028,7 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 }
 
 
-int get_reply(mongo_cursor *cursor TSRMLS_DC) {
+int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC) {
   int sock = get_master(cursor->link TSRMLS_CC);
   int num_returned = 0;
 

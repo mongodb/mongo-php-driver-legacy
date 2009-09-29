@@ -20,15 +20,10 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
      * @access protected
      */
     public function setUp() {
-      ini_set('mongo.objects', 1);
       $this->object = $this->sharedFixture->selectCollection("phpunit", "c");
       $this->object->drop();
     }
 
-    public function tearDown() {
-      ini_set('mongo.objects', 0);
-    }
-    
     public function testObjects() {
       $c = $this->sharedFixture->selectCollection('phpunit', 'objs1');
       $c->drop();

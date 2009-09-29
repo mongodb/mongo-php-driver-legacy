@@ -102,7 +102,8 @@ PHP_METHOD(MongoCollection, drop) {
 
   MAKE_STD_ZVAL(data);
   array_init(data);
-  add_assoc_string(data, "drop", Z_STRVAL_P(c->name), 1);
+  add_assoc_zval(data, "drop", c->name);
+  zval_add_ref(&c->name);
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -219,7 +220,7 @@ PHP_METHOD(MongoCollection, insert) {
 
     /* get the response */
     cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
-    get_reply(cursor TSRMLS_CC);
+    php_mongo_get_reply(cursor TSRMLS_CC);
 
     MONGO_METHOD(MongoCursor, getNext)(0, return_value, NULL, cursor_z, 0 TSRMLS_CC);
 

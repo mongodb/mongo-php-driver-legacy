@@ -62,6 +62,11 @@
 
 #define FLAGS 0
 
+#define LAST_ERROR 0
+#define PREV_ERROR 1
+#define RESET_ERROR 2
+#define FORCE_ERROR 3
+
 #if ZEND_MODULE_API_NO >= 20090115
 # define PUSH_PARAM(arg) zend_vm_stack_push(arg TSRMLS_CC)
 # define POP_PARAM() zend_vm_stack_pop(TSRMLS_C)
@@ -199,7 +204,7 @@ typedef struct {
   mongo_msg_header header;
   // response fields
   int flag;
-  long long cursor_id;
+  int64_t cursor_id;
   int start;
   // number of results used
   int at;
@@ -290,7 +295,7 @@ void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
 int mongo_say(mongo_link*, buffer* TSRMLS_DC);
 int mongo_hear(mongo_link*, void*, int TSRMLS_DC);
-int get_reply(mongo_cursor* TSRMLS_DC);
+int php_mongo_get_reply(mongo_cursor* TSRMLS_DC);
 
 void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);
