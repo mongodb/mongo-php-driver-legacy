@@ -56,6 +56,7 @@ void php_mongo_serialize_int(buffer*, int);
 void php_mongo_serialize_byte(buffer*, char);
 void php_mongo_serialize_bytes(buffer*, char*, int);
 void php_mongo_serialize_key(buffer*, char*, int, int TSRMLS_DC);
+void php_mongo_serialize_ns(buffer*, char* TSRMLS_DC);
 
 #define php_mongo_set_type(buf, type) php_mongo_serialize_byte(buf, (char)type)
 #define php_mongo_serialize_null(buf) php_mongo_serialize_byte(buf, (char)0)
