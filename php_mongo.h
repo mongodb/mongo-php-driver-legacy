@@ -25,6 +25,10 @@
 #define PHP_CONNECTION_RES_NAME "mongo connection"
 #define PHP_AUTH_CONNECTION_RES_NAME "mongo authenticated connection"
 
+#ifdef WIN32
+typedef long long int int64_t;
+#endif
+
 // db ops
 #define OP_REPLY 1
 #define OP_MSG 1000
