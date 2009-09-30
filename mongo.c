@@ -37,6 +37,9 @@
 #include <zend_exceptions.h>
 #include <php_ini.h>
 #include <ext/standard/info.h>
+#ifdef WIN32
+#include <win32/php_stdint.h>
+#endif
 
 #include "php_mongo.h"
 #include "db.h"
@@ -281,6 +284,37 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC) {
   mongo_globals->request_id = 3;
   mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
   mongo_globals->cmd_char = 0;
+  mongo_globals->inc = 0;
+  mongo_globals->pid = getpid();
+
+  struct hostent *lh = gethostbyname("localhost");
+  char *arKey = lh->h_name;
+  int nKeyLength = strlen(arKey);
+  register ulong hash = 5381;
+
+  /* from zend_hash.h */
+  /* variant with the hash unrolled eight times */
+  for (; nKeyLength >= 8; nKeyLength -= 8) {
+    hash = ((hash << 5) + hash) + *arKey++;
+    hash = ((hash << 5) + hash) + *arKey++;
+    hash = ((hash << 5) + hash) + *arKey++;
+    hash = ((hash << 5) + hash) + *arKey++;
+    hash = ((hash << 5) + hash) + *arKey++;
+    hash = ((hash << 5) + hash) + *arKey++;
+    hash = ((hash << 5) + hash) + *arKey++;
+    hash = ((hash << 5) + hash) + *arKey++;
+  }
+  switch (nKeyLength) {
+  case 7: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
+  case 6: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
+  case 5: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
+  case 4: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
+  case 3: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
+  case 2: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
+  case 1: hash = ((hash << 5) + hash) + *arKey++; break;
+  case 0: break;
+  }
+  mongo_globals->machine = hash;
 }
 /* }}} */
 

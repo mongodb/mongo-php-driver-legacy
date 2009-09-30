@@ -25,10 +25,6 @@
 #define PHP_CONNECTION_RES_NAME "mongo connection"
 #define PHP_AUTH_CONNECTION_RES_NAME "mongo authenticated connection"
 
-#ifdef WIN32
-typedef long long int int64_t;
-#endif
-
 // db ops
 #define OP_REPLY 1
 #define OP_MSG 1000
@@ -328,6 +324,9 @@ long default_port;
 int request_id; 
 int chunk_size;
 char *cmd_char;
+int inc;
+int pid;
+int machine;
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS

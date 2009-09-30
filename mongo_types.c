@@ -41,6 +41,8 @@ extern zend_class_entry *mongo_ce_DB,
 
 extern zend_object_handlers mongo_default_handlers;
 
+ZEND_EXTERN_MODULE_GLOBALS(mongo);
+
 zend_class_entry *mongo_ce_Date = NULL,
   *mongo_ce_BinData = NULL,
   *mongo_ce_DBRef = NULL,
@@ -49,28 +51,27 @@ zend_class_entry *mongo_ce_Date = NULL,
   *mongo_ce_Regex = NULL,
   *mongo_ce_EmptyObj = NULL;
 
-void generate_id(char *data) {
-  unsigned t;
-  char *T;
+void generate_id(char *data TSRMLS_DC) {
+  unsigned t = (unsigned) time(0);
+  char *T = (char*)&t;
 
-  int r1 = rand();
-  int r2 = rand();
-
-  char *inc = (char*)(void*)&r2;
-
-  t = (unsigned) time(0);
-
-  T = (char*)&t;
   data[0] = T[3];
   data[1] = T[2];
   data[2] = T[1];
   data[3] = T[0];
 
-  memcpy(data+4, &r1, 4);
-  data[8] = inc[3];
-  data[9] = inc[2];
-  data[10] = inc[1];
-  data[11] = inc[0];
+  // 3 bytes machine
+  memcpy(data+4, &MonGlo(machine)+1, 3);
+
+  // 2 bytes pid
+  memcpy(data+7, &MonGlo(pid)+2, 2);
+
+  // 3 bytes inc
+  //memcpy(data+9, &MonGlo(inc)+1, 3);
+  //MonGlo(inc)++;
+
+  int inc = php_rand(TSRMLS_C);
+  memcpy(data+9, &inc, 3);
 }
 
 int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_uint *serialized_length, zend_serialize_data *var_hash TSRMLS_DC) {
@@ -184,7 +185,7 @@ PHP_METHOD(MongoId, __construct) {
     memcpy(this_id->id, that_id->id, OID_SIZE);
   }
   else {
-    generate_id(this_id->id);
+    generate_id(this_id->id TSRMLS_CC);
   }
 }
 /* }}} */
