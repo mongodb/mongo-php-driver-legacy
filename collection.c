@@ -141,7 +141,7 @@ PHP_METHOD(MongoCollection, validate) {
 }
 
 PHP_METHOD(MongoCollection, insert) {
-  zval *a;
+  zval temp, *a;
   zend_bool *safe = 0;
   mongo_collection *c;
   mongo_link *link;
@@ -173,7 +173,6 @@ PHP_METHOD(MongoCollection, insert) {
   php_mongo_serialize_size(buf.start, &buf);
 
   if (safe) {
-    zval temp;
     zval *cmd, *cursor_z, *cmd_ns_z;
     char *start = buf.pos, *cmd_ns;
     mongo_cursor *cursor;
@@ -199,7 +198,7 @@ PHP_METHOD(MongoCollection, insert) {
     zval_ptr_dtor(&cmd);
 
     /* send everything */
-    response = mongo_say(link, &buf TSRMLS_CC);
+    response = mongo_say(link, &buf, &temp TSRMLS_CC);
     efree(buf.start);
     if (response == FAILURE) {
       zval_ptr_dtor(&cmd_ns_z);
@@ -218,7 +217,7 @@ PHP_METHOD(MongoCollection, insert) {
 
     /* get the response */
     cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
-    php_mongo_get_reply(cursor TSRMLS_CC);
+    php_mongo_get_reply(cursor, &temp TSRMLS_CC);
 
     MONGO_METHOD(MongoCursor, getNext)(0, return_value, NULL, cursor_z, 0 TSRMLS_CC);
 
@@ -226,7 +225,7 @@ PHP_METHOD(MongoCollection, insert) {
     zval_ptr_dtor(&cmd_ns_z);
   }
   else {
-    response = mongo_say(link, &buf TSRMLS_CC);
+    response = mongo_say(link, &buf, &temp TSRMLS_CC);
     efree(buf.start);
   
     RETURN_BOOL(response >= SUCCESS);
@@ -234,12 +233,11 @@ PHP_METHOD(MongoCollection, insert) {
 }
 
 PHP_METHOD(MongoCollection, batchInsert) {
-  zval *a;
+  zval temp, *a, **data;
   mongo_collection *c;
   mongo_link *link;
   HashTable *php_array;
   int count = 0, start = 0;
-  zval **data;
   HashPosition pointer;
   mongo_msg_header header;
   buffer buf;
@@ -282,7 +280,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   php_mongo_serialize_size(buf.start, &buf);
 
-  RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
+  RETVAL_BOOL(mongo_say(link, &buf, &temp TSRMLS_CC)+1);
   efree(buf.start);
 }
 
@@ -373,7 +371,7 @@ PHP_METHOD(MongoCollection, findOne) {
 }
 
 PHP_METHOD(MongoCollection, update) {
-  zval *criteria, *newobj;
+  zval temp, *criteria, *newobj;
   zend_bool upsert = 0;
   mongo_collection *c;
   mongo_link *link;
@@ -398,12 +396,12 @@ PHP_METHOD(MongoCollection, update) {
   zval_to_bson(&buf, HASH_P(newobj), NO_PREP TSRMLS_CC);
   php_mongo_serialize_size(buf.start, &buf);
 
-  RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
+  RETVAL_BOOL(mongo_say(link, &buf, &temp TSRMLS_CC)+1);
   efree(buf.start);
 }
 
 PHP_METHOD(MongoCollection, remove) {
-  zval *criteria = 0;
+  zval temp, *criteria = 0;
   zend_bool just_one = 0;
   mongo_collection *c;
   mongo_link *link;
@@ -438,7 +436,7 @@ PHP_METHOD(MongoCollection, remove) {
   zval_to_bson(&buf, HASH_P(criteria), NO_PREP TSRMLS_CC);
   php_mongo_serialize_size(buf.start, &buf);
 
-  RETVAL_BOOL(mongo_say(link, &buf TSRMLS_CC)+1);
+  RETVAL_BOOL(mongo_say(link, &buf, &temp TSRMLS_CC)+1);
 
   efree(buf.start);
   zval_ptr_dtor(&criteria);

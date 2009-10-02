@@ -146,6 +146,8 @@ PHP_METHOD(MongoCursor, hasNext) {
   buffer buf;
   int size;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  zval temp;
+
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
   if (!cursor->started_iterating) {
@@ -177,7 +179,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   php_mongo_serialize_size(buf.start, &buf);
 
   // fails if we're out of elems
-  if(mongo_say(cursor->link, &buf TSRMLS_CC) == FAILURE) {
+  if(mongo_say(cursor->link, &buf, &temp TSRMLS_CC) == FAILURE) {
     efree(buf.start);
     RETURN_FALSE;
   }
@@ -186,7 +188,7 @@ PHP_METHOD(MongoCursor, hasNext) {
 
   // if we have cursor->at == cursor->num && recv fails,
   // we're probably just out of results
-  RETURN_BOOL(php_mongo_get_reply(cursor TSRMLS_CC) == SUCCESS);
+  RETURN_BOOL(php_mongo_get_reply(cursor, &temp TSRMLS_CC) == SUCCESS);
 }
 /* }}} */
 
@@ -369,6 +371,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   mongo_msg_header header;
   mongo_cursor *cursor;
   buffer buf;
+  zval temp;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
@@ -386,14 +389,14 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   php_mongo_serialize_size(buf.start, &buf);
 
-  sent = mongo_say(cursor->link, &buf TSRMLS_CC);
+  sent = mongo_say(cursor->link, &buf, &temp TSRMLS_CC);
   efree(buf.start);
   if (sent == FAILURE) {
     zend_throw_exception(mongo_ce_CursorException, "couldn't send query.", 0 TSRMLS_CC);
     return;
   }
 
-  php_mongo_get_reply(cursor TSRMLS_CC);
+  php_mongo_get_reply(cursor, &temp TSRMLS_CC);
 }
 /* }}} */
 
@@ -648,6 +651,7 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   unsigned char quickbuf[128];
   buffer buf;
   mongo_msg_header header;
+  zval temp;
 
   // we allocate a cursor even if no results are returned,
   // but the database will throw an assertion if we try to
@@ -670,7 +674,7 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   php_mongo_serialize_long(&buf, cursor->cursor_id);
   php_mongo_serialize_size(buf.start, &buf);
 
-  mongo_say(cursor->link, &buf TSRMLS_CC);
+  mongo_say(cursor->link, &buf, &temp TSRMLS_CC);
 }
 
 void mongo_mongo_cursor_free(void *object TSRMLS_DC) {

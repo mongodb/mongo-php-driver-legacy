@@ -293,9 +293,9 @@ PHP_METHOD(Mongo, __destruct);
  */
 void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
-int mongo_say(mongo_link*, buffer* TSRMLS_DC);
+int mongo_say(mongo_link*, buffer*, zval* TSRMLS_DC);
 int mongo_hear(mongo_link*, void*, int TSRMLS_DC);
-int php_mongo_get_reply(mongo_cursor* TSRMLS_DC);
+int php_mongo_get_reply(mongo_cursor*, zval* TSRMLS_DC);
 
 void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);
