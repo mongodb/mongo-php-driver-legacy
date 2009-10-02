@@ -254,7 +254,7 @@ PHP_MINIT_FUNCTION(mongo) {
 
   mongo_init_MongoExceptions(TSRMLS_C);
 
-  mongo_init_MongoEmptyObj(TSRMLS_C);
+  mongo_init_MongoTimestamp(TSRMLS_C);
 
   // make mongo objects uncloneable
   memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));

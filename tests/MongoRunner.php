@@ -12,6 +12,7 @@ require_once 'MongoCodeTest.php';
 require_once 'MongoRegexTest.php';
 require_once 'MongoBinDataTest.php';
 require_once 'MongoDateTest.php';
+require_once 'MongoTimestampTest.php';
 
 require_once 'MongoObjectsTest.php';
 require_once 'MongoObjDBTest.php';
@@ -24,13 +25,13 @@ require_once 'CmdSymbolTest.php';
 include 'MongoAuthTest.php';
 include 'MongoGridFSClassicTest.php';
  
-class MongoSuite extends PHPUnit_Framework_TestSuite
+class MongoRunner extends PHPUnit_Framework_TestSuite
 {
     public static function suite()
     {
-        $suite = new MongoSuite('Mongo Tests');
+        $suite = new MongoRunner('Mongo Tests');
         
-        $suite->addTestSuite('CmdSymbolTest');
+        $suite->addTestSuite('MongoTimestampTest');
         return $suite;
     }
  

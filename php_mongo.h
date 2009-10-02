@@ -312,7 +312,7 @@ void mongo_init_MongoRegex(TSRMLS_D);
 void mongo_init_MongoDate(TSRMLS_D);
 void mongo_init_MongoBinData(TSRMLS_D);
 void mongo_init_MongoDBRef(TSRMLS_D);
-void mongo_init_MongoEmptyObj(TSRMLS_D);
+void mongo_init_MongoTimestamp(TSRMLS_D);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;

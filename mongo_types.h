@@ -46,5 +46,13 @@ PHP_METHOD(MongoDBRef, create);
 PHP_METHOD(MongoDBRef, isRef);
 PHP_METHOD(MongoDBRef, get);
 
+typedef struct {
+  zend_object std;
+  int64_t ts;
+} mongo_ts;
+
+PHP_METHOD(MongoTimestamp, __construct);
+PHP_METHOD(MongoTimestamp, __toString);
+
 #endif
 
