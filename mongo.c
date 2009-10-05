@@ -487,6 +487,7 @@ PHP_METHOD(Mongo, pairPersistConnect) {
 PHP_METHOD(Mongo, connectUtil) {
   zval *connected, *server, *errmsg;
   MAKE_STD_ZVAL(errmsg);
+  Z_TYPE_P(errmsg) = IS_NULL;
 
   // if we're already connected, disconnect
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
