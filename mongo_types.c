@@ -592,16 +592,25 @@ void mongo_init_MongoTimestamp(TSRMLS_D) {
  * Timestamp is 4 bytes of seconds since epoch and 4 bytes of increment.
  */
 PHP_METHOD(MongoTimestamp, __construct) {
-  int32_t sec = -1, inc = -1;
+  zval *sec = 0, *inc = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &sec, &inc) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &sec, &inc) == FAILURE) {
     return;
   }
 
-  sec = (sec == -1) ? time(0) : sec;
-  zend_update_property_long(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
-  inc = (inc == -1) ? MonGlo(ts_inc)++ : inc;
-  zend_update_property_long(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), inc TSRMLS_CC);
+  if (sec) {
+    zend_update_property(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
+  }
+  else {
+    zend_update_property_long(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), time(0) TSRMLS_CC);
+  }
+
+  if (inc) {
+    zend_update_property(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), inc TSRMLS_CC);
+  }
+  else {
+    zend_update_property_long(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), MonGlo(ts_inc)++ TSRMLS_CC);
+  }
 }
 
 /*
