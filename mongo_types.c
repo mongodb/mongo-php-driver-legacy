@@ -583,6 +583,9 @@ void mongo_init_MongoTimestamp(TSRMLS_D) {
 
   INIT_CLASS_ENTRY(ce, "MongoTimestamp", MongoTimestamp_methods);
   mongo_ce_Timestamp = zend_register_internal_class(&ce TSRMLS_CC);
+
+  zend_declare_property_long(mongo_ce_Timestamp, "sec", strlen("sec"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Timestamp, "inc", strlen("inc"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 }
 
 /*
@@ -596,9 +599,9 @@ PHP_METHOD(MongoTimestamp, __construct) {
   }
 
   sec = (sec == -1) ? time(0) : sec;
-  add_property_long(getThis(), "sec", sec);
+  zend_update_property_long(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
   inc = (inc == -1) ? MonGlo(ts_inc)++ : inc;
-  add_property_long(getThis(), "inc", inc);
+  zend_update_property_long(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), inc TSRMLS_CC);
 }
 
 /*

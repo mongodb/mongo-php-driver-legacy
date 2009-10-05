@@ -614,9 +614,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     }
     case BSON_TIMESTAMP: {
       object_init_ex(value, mongo_ce_Timestamp);
-      add_property_long(value, "sec", *(int32_t*)buf);
+      zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), *(int32_t*)buf TSRMLS_CC);
       buf += INT_32;
-      add_property_long(value, "inc", *(int32_t*)buf);
+      zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), *(int32_t*)buf TSRMLS_CC);
       buf += INT_32;
       break;
     }
