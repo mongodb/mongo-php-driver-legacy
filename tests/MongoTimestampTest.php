@@ -18,6 +18,18 @@ class MongoTimestampTest extends PHPUnit_Framework_TestCase
       $this->assertTrue($x['ts'] instanceof MongoTimestamp);
       $this->assertEquals("".$x['ts'], "$ts");
     }
+
+    public function testParam() {
+      $c = $this->sharedFixture->selectCollection("phpunit", "ts");
+      $c->drop();
+
+      $n = new MongoTimestamp(123456789);
+      $this->assertEquals("123456789", "$n");
+      
+      $c->insert(array("ts" => $n));
+      $x = $c->findOne();
+      $this->assertEquals("123456789", $x['ts']."");
+    }
 }
 
 ?>

@@ -618,8 +618,19 @@ void mongo_init_MongoTimestamp(TSRMLS_D) {
  * constructor, you're getting the current timestamp.  Tough.
  */
 PHP_METHOD(MongoTimestamp, __construct) {
+  int arg = -1;
   mongo_ts *ts = (mongo_ts*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  ts->ts = time(0);
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &arg) == FAILURE) {
+    return;
+  }
+
+  if (arg == -1) {
+    ts->ts = time(0);
+  }
+  else {
+    ts->ts = arg;
+  }
 }
 
 /*
