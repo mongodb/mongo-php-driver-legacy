@@ -110,6 +110,7 @@ PHP_METHOD(MongoGridFS, __construct) {
   // ensure index on chunks.n
   MAKE_STD_ZVAL(zidx);
   array_init(zidx);
+  add_assoc_long(zidx, "files_id", 1);
   add_assoc_long(zidx, "n", 1);
 
   PUSH_PARAM(zidx); PUSH_PARAM((void*)1);
@@ -716,7 +717,8 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   MAKE_STD_ZVAL(n);
   array_init(n);
-  add_assoc_long(n, "n", 1);  
+  add_assoc_long(n, "files_id", 1);
+  add_assoc_long(n, "n", 1);
 
   PUSH_PARAM(n); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -799,6 +801,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   MAKE_STD_ZVAL(temp);
   MAKE_STD_ZVAL(n);
   array_init(n);
+  add_assoc_long(n, "files_id", 1);  
   add_assoc_long(n, "n", 1);  
 
   PUSH_PARAM(n); PUSH_PARAM((void*)1);
