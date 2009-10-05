@@ -494,6 +494,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   add_assoc_zval(data, "ns", c->ns);
   zval_add_ref(&c->ns);
   add_assoc_zval(data, "key", keys);
+  zval_add_ref(&keys);
 
   // turn keys into a string
   MAKE_STD_ZVAL(key_str);

@@ -229,5 +229,17 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $mongoCursor->getNext();
       } 
     }
+
+    public function testEnsureIndex() {
+      $mongoConnection = new Mongo('127.0.0.1:27017');
+      $collection = $mongoConnection->selectCollection("debug", "col1");
+      $data = array("field"=>"some data","date"=>date("Y-m-s"));
+      $this->assertEquals(true, $collection->save($data));
+      
+      $tmp = array("date" => 1);
+      $this->assertEquals(1, $tmp['date']);
+      $this->assertEquals(true, $collection->ensureIndex($tmp));
+      $this->assertEquals(1, $tmp['date']);
+    }
 }
 ?>
