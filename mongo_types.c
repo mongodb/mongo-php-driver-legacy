@@ -572,33 +572,6 @@ void mongo_init_MongoDBRef(TSRMLS_D) {
   zend_declare_property_string(mongo_ce_DBRef, "idKey", strlen("idKey"), "$id", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
-
-static void php_mongo_ts_free(void *object TSRMLS_DC) {
-  mongo_ts *ts = (mongo_ts*)object;
-  if (ts) {
-    zend_object_std_dtor(&ts->std TSRMLS_CC);
-    efree(ts);
-  }
-}
-
-static zend_object_value php_mongo_ts_new(zend_class_entry *class_type TSRMLS_DC) {
-  zend_object_value retval;
-  mongo_ts *intern;
-  zval *tmp;
-
-  intern = (mongo_ts*)emalloc(sizeof(mongo_ts));
-  memset(intern, 0, sizeof(mongo_ts));
-
-  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
-  zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, 
-                 (void *) &tmp, sizeof(zval *));
-
-  retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, php_mongo_ts_free, NULL TSRMLS_CC);
-  retval.handlers = &mongo_default_handlers;
-
-  return retval;
-}
-
 static function_entry MongoTimestamp_methods[] = {
   PHP_ME(MongoTimestamp, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoTimestamp, __toString, NULL, ZEND_ACC_PUBLIC)
@@ -609,36 +582,31 @@ void mongo_init_MongoTimestamp(TSRMLS_D) {
   zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoTimestamp", MongoTimestamp_methods);
-  ce.create_object = php_mongo_ts_new;
   mongo_ce_Timestamp = zend_register_internal_class(&ce TSRMLS_CC);
 }
 
 /*
- * There's no way to pass in a big enough number, so if you're calling the
- * constructor, you're getting the current timestamp.  Tough.
+ * Timestamp is 4 bytes of seconds since epoch and 4 bytes of increment.
  */
 PHP_METHOD(MongoTimestamp, __construct) {
-  int arg = -1;
-  mongo_ts *ts = (mongo_ts*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  int32_t sec = -1, inc = -1;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &arg) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &sec, &inc) == FAILURE) {
     return;
   }
 
-  if (arg == -1) {
-    ts->ts = time(0);
-  }
-  else {
-    ts->ts = arg;
-  }
+  sec = (sec == -1) ? time(0) : sec;
+  add_property_long(getThis(), "sec", sec);
+  inc = (inc == -1) ? MonGlo(ts_inc)++ : inc;
+  add_property_long(getThis(), "inc", inc);
 }
 
 /*
- * Just convert the int64 to a string.
+ * Just convert the seconds field to a string.
  */
 PHP_METHOD(MongoTimestamp, __toString) {
-  mongo_ts *ts = (mongo_ts*)zend_object_store_get_object(getThis() TSRMLS_CC);
   char *str;
-  spprintf(&str, 0, "%lld", ts->ts);
+  zval *sec = zend_read_property(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), NOISY TSRMLS_CC);
+  spprintf(&str, 0, "%d", Z_LVAL_P(sec));
   RETURN_STRING(str, 0);
 }

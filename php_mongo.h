@@ -323,10 +323,15 @@ char *default_host;
 long default_port;
 int request_id; 
 int chunk_size;
+
+// $ alternative
 char *cmd_char;
-int inc;
-int pid;
-int machine;
+
+// _id generation helpers
+int inc, pid, machine;
+
+// timestamp generation helper
+int ts_inc;
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS

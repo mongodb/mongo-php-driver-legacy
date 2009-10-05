@@ -315,6 +315,8 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   case 0: break;
   }
   mongo_globals->machine = hash;
+
+  mongo_globals->ts_inc = 0;
 }
 /* }}} */
 
