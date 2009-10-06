@@ -41,36 +41,37 @@ extern zend_class_entry *mongo_ce_DB,
 
 extern zend_object_handlers mongo_default_handlers;
 
+ZEND_EXTERN_MODULE_GLOBALS(mongo);
+
 zend_class_entry *mongo_ce_Date = NULL,
   *mongo_ce_BinData = NULL,
   *mongo_ce_DBRef = NULL,
   *mongo_ce_Id = NULL,
   *mongo_ce_Code = NULL,
   *mongo_ce_Regex = NULL,
-  *mongo_ce_EmptyObj = NULL;
+  *mongo_ce_Timestamp = NULL;
 
-void generate_id(char *data) {
-  unsigned t;
-  char *T;
+void generate_id(char *data TSRMLS_DC) {
+  unsigned t = (unsigned) time(0);
+  char *T = (char*)&t;
 
-  int r1 = rand();
-  int r2 = rand();
-
-  char *inc = (char*)(void*)&r2;
-
-  t = (unsigned) time(0);
-
-  T = (char*)&t;
   data[0] = T[3];
   data[1] = T[2];
   data[2] = T[1];
   data[3] = T[0];
 
-  memcpy(data+4, &r1, 4);
-  data[8] = inc[3];
-  data[9] = inc[2];
-  data[10] = inc[1];
-  data[11] = inc[0];
+  // 3 bytes machine
+  memcpy(data+4, &MonGlo(machine)+1, 3);
+
+  // 2 bytes pid
+  memcpy(data+7, &MonGlo(pid)+2, 2);
+
+  // 3 bytes inc
+  //memcpy(data+9, &MonGlo(inc)+1, 3);
+  //MonGlo(inc)++;
+
+  int inc = php_rand(TSRMLS_C);
+  memcpy(data+9, &inc, 3);
 }
 
 int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_uint *serialized_length, zend_serialize_data *var_hash TSRMLS_DC) {
@@ -184,7 +185,7 @@ PHP_METHOD(MongoId, __construct) {
     memcpy(this_id->id, that_id->id, OID_SIZE);
   }
   else {
-    generate_id(this_id->id);
+    generate_id(this_id->id TSRMLS_CC);
   }
 }
 /* }}} */
@@ -571,10 +572,53 @@ void mongo_init_MongoDBRef(TSRMLS_D) {
   zend_declare_property_string(mongo_ce_DBRef, "idKey", strlen("idKey"), "$id", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
+static function_entry MongoTimestamp_methods[] = {
+  PHP_ME(MongoTimestamp, __construct, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoTimestamp, __toString, NULL, ZEND_ACC_PUBLIC)
+  { NULL, NULL, NULL }
+};
 
-void mongo_init_MongoEmptyObj(TSRMLS_D) {
+void mongo_init_MongoTimestamp(TSRMLS_D) {
   zend_class_entry ce;
 
-  INIT_CLASS_ENTRY(ce, "MongoEmptyObj", NULL);
-  mongo_ce_EmptyObj = zend_register_internal_class(&ce TSRMLS_CC);
+  INIT_CLASS_ENTRY(ce, "MongoTimestamp", MongoTimestamp_methods);
+  mongo_ce_Timestamp = zend_register_internal_class(&ce TSRMLS_CC);
+
+  zend_declare_property_long(mongo_ce_Timestamp, "sec", strlen("sec"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Timestamp, "inc", strlen("inc"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+}
+
+/*
+ * Timestamp is 4 bytes of seconds since epoch and 4 bytes of increment.
+ */
+PHP_METHOD(MongoTimestamp, __construct) {
+  zval *sec = 0, *inc = 0;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &sec, &inc) == FAILURE) {
+    return;
+  }
+
+  if (sec) {
+    zend_update_property(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
+  }
+  else {
+    zend_update_property_long(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), time(0) TSRMLS_CC);
+  }
+
+  if (inc) {
+    zend_update_property(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), inc TSRMLS_CC);
+  }
+  else {
+    zend_update_property_long(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), MonGlo(ts_inc)++ TSRMLS_CC);
+  }
+}
+
+/*
+ * Just convert the seconds field to a string.
+ */
+PHP_METHOD(MongoTimestamp, __toString) {
+  char *str;
+  zval *sec = zend_read_property(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), NOISY TSRMLS_CC);
+  spprintf(&str, 0, "%d", Z_LVAL_P(sec));
+  RETURN_STRING(str, 0);
 }

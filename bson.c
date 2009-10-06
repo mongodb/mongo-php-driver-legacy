@@ -30,7 +30,7 @@ extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_Date,
   *mongo_ce_Id,
   *mongo_ce_Regex,
-  *mongo_ce_EmptyObj,
+  *mongo_ce_Timestamp,
   *mongo_ce_Exception;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
@@ -277,6 +277,19 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
       }
 
       php_mongo_serialize_bytes(buf, Z_STRVAL_P(zbin), Z_STRLEN_P(zbin));
+    }
+    // MongoTimestamp
+    else if (clazz == mongo_ce_Timestamp) {
+      zval *ts, *inc;
+
+      php_mongo_set_type(buf, BSON_TIMESTAMP);
+      php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+
+      ts = zend_read_property(mongo_ce_Timestamp, *data, "sec", strlen("sec"), NOISY TSRMLS_CC);
+      inc = zend_read_property(mongo_ce_Timestamp, *data, "inc", strlen("inc"), NOISY TSRMLS_CC);
+
+      php_mongo_serialize_int(buf, Z_LVAL_P(ts));
+      php_mongo_serialize_int(buf, Z_LVAL_P(inc));
     }
     // serialize a normal obj
     else {
@@ -600,12 +613,11 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_TIMESTAMP: {
-      int64_t d;
-
-      d = *(int*)buf;
-      buf += INT_64;
-
-      ZVAL_LONG(value, (long)d);
+      object_init_ex(value, mongo_ce_Timestamp);
+      zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), *(int32_t*)buf TSRMLS_CC);
+      buf += INT_32;
+      zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), *(int32_t*)buf TSRMLS_CC);
+      buf += INT_32;
       break;
     }
     case BSON_MINKEY: {

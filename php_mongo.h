@@ -25,10 +25,6 @@
 #define PHP_CONNECTION_RES_NAME "mongo connection"
 #define PHP_AUTH_CONNECTION_RES_NAME "mongo authenticated connection"
 
-#ifdef WIN32
-typedef long long int int64_t;
-#endif
-
 // db ops
 #define OP_REPLY 1
 #define OP_MSG 1000
@@ -297,9 +293,9 @@ PHP_METHOD(Mongo, __destruct);
  */
 void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
-int mongo_say(mongo_link*, buffer* TSRMLS_DC);
+int mongo_say(mongo_link*, buffer*, zval* TSRMLS_DC);
 int mongo_hear(mongo_link*, void*, int TSRMLS_DC);
-int php_mongo_get_reply(mongo_cursor* TSRMLS_DC);
+int php_mongo_get_reply(mongo_cursor*, zval* TSRMLS_DC);
 
 void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);
@@ -316,7 +312,7 @@ void mongo_init_MongoRegex(TSRMLS_D);
 void mongo_init_MongoDate(TSRMLS_D);
 void mongo_init_MongoBinData(TSRMLS_D);
 void mongo_init_MongoDBRef(TSRMLS_D);
-void mongo_init_MongoEmptyObj(TSRMLS_D);
+void mongo_init_MongoTimestamp(TSRMLS_D);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;
@@ -327,7 +323,15 @@ char *default_host;
 long default_port;
 int request_id; 
 int chunk_size;
+
+// $ alternative
 char *cmd_char;
+
+// _id generation helpers
+int inc, pid, machine;
+
+// timestamp generation helper
+int ts_inc;
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS

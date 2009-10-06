@@ -95,20 +95,6 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $tbColl->insert($arr);
     }
 
-    public function testMongoEmptyObj() {
-        $c = $this->sharedFixture->selectCollection('x', 'y');
-        $c->drop();
-
-        $c->insert(array('x' => array(), 'y' => new MongoEmptyObj()));
-        $c->update(array(), array('$push' => (object)array('x' => 'foo')));
-        $c->update(array(), array('$push' => (object)array('y' => 'bar')));
-
-        $x = $c->findOne();
-        $this->assertTrue(is_array($x['y']));
-        $this->assertEquals(1, count($x['x'])); 
-        $this->assertEquals('foo', $x['x'][0]);
-    }
-
     public function testForEachKey() {
         $c = $this->sharedFixture->selectCollection('x', 'y');
         $c->drop();
@@ -242,6 +228,18 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
       while ($mongoCursor->hasNext()) {
         $mongoCursor->getNext();
       } 
+    }
+
+    public function testEnsureIndex() {
+      $mongoConnection = new Mongo('127.0.0.1:27017');
+      $collection = $mongoConnection->selectCollection("debug", "col1");
+      $data = array("field"=>"some data","date"=>date("Y-m-s"));
+      $this->assertEquals(true, $collection->save($data));
+      
+      $tmp = array("date" => 1);
+      $this->assertEquals(1, $tmp['date']);
+      $this->assertEquals(true, $collection->ensureIndex($tmp));
+      $this->assertEquals(1, $tmp['date']);
     }
 }
 ?>

@@ -32,7 +32,7 @@ PHP_METHOD(MongoCode, __toString );
 PHP_METHOD(MongoDate, __construct);
 PHP_METHOD(MongoDate, __toString);
 
-void generate_id(char*);
+void generate_id(char* TSRMLS_DC);
 PHP_METHOD(MongoId, __construct);
 PHP_METHOD(MongoId, __toString);
 
@@ -45,6 +45,9 @@ PHP_METHOD(MongoRegex, __toString);
 PHP_METHOD(MongoDBRef, create);
 PHP_METHOD(MongoDBRef, isRef);
 PHP_METHOD(MongoDBRef, get);
+
+PHP_METHOD(MongoTimestamp, __construct);
+PHP_METHOD(MongoTimestamp, __toString);
 
 #endif
 

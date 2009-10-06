@@ -12,6 +12,7 @@ require_once 'MongoCodeTest.php';
 require_once 'MongoRegexTest.php';
 require_once 'MongoBinDataTest.php';
 require_once 'MongoDateTest.php';
+require_once 'MongoTimestampTest.php';
 
 require_once 'MongoObjectsTest.php';
 require_once 'MongoObjDBTest.php';
@@ -51,6 +52,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $suite->addTestSuite('MongoRegexTest');
         $suite->addTestSuite('MongoBinDataTest');
         $suite->addTestSuite('MongoDateTest');
+        $suite->addTestSuite('MongoTimestampTest');
 
         // */
         $suite->addTestSuite('MongoObjectsTest');
