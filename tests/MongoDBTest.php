@@ -53,7 +53,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
 
     public function testGetSetProfilingLevel() {
         $created = $this->object->createCollection("system.profile", true, 5000);
-        var_dump($created);
 
         $prev = $this->object->setProfilingLevel(MongoDB::PROFILING_ON);
         $level = $this->object->getProfilingLevel();
@@ -242,6 +241,8 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $x = $this->object->command(array());
         $this->assertEquals($x['errmsg'], "no such cmd");
         $this->assertEquals($x['ok'], 0);
+
+        $created = $this->object->createCollection("system.profile", true, 5000);
 
         $this->object->command(array('profile' => 0));
         $x = $this->object->command(array('profile' => 1));
