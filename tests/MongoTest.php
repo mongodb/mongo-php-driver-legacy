@@ -158,14 +158,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $db = $this->object->selectCollection("", "xyz");
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testSelectCollectionException2()
-    {
-        $db = $this->object->selectCollection("xyz", 'a$');
-    }
-
     public function testSelectCollection() {
         $c = $this->object->selectCollection("foo", "bar.baz");
         $this->assertEquals((string)$c, "foo.bar.baz");
