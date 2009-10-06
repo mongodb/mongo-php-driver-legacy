@@ -87,14 +87,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(1, $r['ok'], json_encode($r));
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testSelectCollectionException1()
-    {
-        $this->object->selectCollection('#$');
-    }
-
     public function testSelectCollection() {
         $this->assertEquals((string)$this->object->selectCollection('x'), 'phpunit.x');
         $this->assertEquals((string)$this->object->selectCollection(''), 'phpunit.');

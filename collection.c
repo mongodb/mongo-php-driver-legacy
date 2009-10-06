@@ -54,15 +54,6 @@ PHP_METHOD(MongoCollection, __construct) {
   }
   convert_to_string(name);
 
-  if (strchr(Z_STRVAL_P(name), '$') != 0 &&
-      strchr(Z_STRVAL_P(name), '$') != Z_STRVAL_P(name)) {
-#   if ZEND_MODULE_API_NO >= 20060613
-    zend_throw_exception(spl_ce_InvalidArgumentException, "MongoCollection::__construct(): collection names cannot contain '$'", 0 TSRMLS_CC);
-#   else
-    zend_throw_exception(zend_exception_get_default(), "MongoCollection::__construct(): collection names cannot contain '$'", 0 TSRMLS_CC);
-#   endif
-    return;
-  }
   zend_update_property(mongo_ce_Collection, getThis(), "db", strlen("db"), db TSRMLS_CC);
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
