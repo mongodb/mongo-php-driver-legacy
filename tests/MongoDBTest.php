@@ -53,6 +53,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
 
     public function testGetSetProfilingLevel() {
         $prev = $this->object->setProfilingLevel(MongoDB::PROFILING_ON);
+        var_dump($prev);
         $level = $this->object->getProfilingLevel();
         $this->assertEquals($level, MongoDB::PROFILING_ON);
 

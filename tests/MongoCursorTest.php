@@ -123,7 +123,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         }
         $this->assertEquals($count, 20);
 
-        $c = $this->object->find()->sort(array('z'=>1))->skip(-2);
+        $c = $this->object->find()->sort(array('z'=>1))->skip(0);
         $count = 0;
         foreach ($c as $obj) {
             $this->assertEquals($count, $obj['z']);
