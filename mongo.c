@@ -48,7 +48,13 @@
 #include "bson.h"
 
 extern zend_class_entry *mongo_ce_DB, 
-  *mongo_ce_Cursor;
+  *mongo_ce_Cursor,
+  *mongo_ce_Id,
+  *mongo_ce_Date,
+  *mongo_ce_Regex,
+  *mongo_ce_Code,
+  *mongo_ce_BinData,
+  *mongo_ce_Timestamp;
 
 static void mongo_link_dtor(mongo_link*);
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int, zval*);
@@ -88,10 +94,12 @@ static void mongo_init_globals(zend_mongo_globals* g TSRMLS_DC);
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
 
 function_entry mongo_functions[] = {
+  PHP_FE(bson_encode, NULL)
+  PHP_FE(bson_decode, NULL)
   { NULL, NULL, NULL }
 };
 
-static function_entry Mongo_methods[] = {
+static function_entry mongo_methods[] = {
   PHP_ME(Mongo, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, connect, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, pairConnect, NULL, ZEND_ACC_PUBLIC)
@@ -384,7 +392,7 @@ void mongo_init_MongoExceptions(TSRMLS_D) {
 void mongo_init_Mongo(TSRMLS_D) {
   zend_class_entry ce;
 
-  INIT_CLASS_ENTRY(ce, "Mongo", Mongo_methods);
+  INIT_CLASS_ENTRY(ce, "Mongo", mongo_methods);
   mongo_ce_Mongo = zend_register_internal_class(&ce TSRMLS_CC);
 
   zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), MonGlo(default_host) TSRMLS_CC);
@@ -1005,6 +1013,130 @@ PHP_METHOD(Mongo, forceError) {
   run_err(FORCE_ERROR, return_value, getThis() TSRMLS_CC);
 }
 /* }}} */
+
+
+/*
+ * Takes any type of PHP var and turns it into BSON
+ */
+PHP_FUNCTION(bson_encode) {
+  zval *z;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
+    return;
+  }
+
+  switch (Z_TYPE_P(z)) {
+  case IS_NULL: {
+    RETURN_STRING("", 1);
+    break;
+  }
+  case IS_LONG: {
+    char buf[5];
+    buf[4] = (char)0;
+    memcpy(buf, &Z_LVAL_P(z), 4);
+    RETURN_STRINGL(buf, 4, 1);
+    break;
+  }
+  case IS_DOUBLE: {
+    char buf[9];
+    buf[8] = (char)0;
+    memcpy(buf, &Z_LVAL_P(z), 8);
+    RETURN_STRINGL(buf, 8, 1);
+    break;
+  }
+  case IS_BOOL: {
+    if (Z_BVAL_P(z)) {
+      RETURN_STRINGL("\x01", 1, 1);
+    }
+    else {
+      RETURN_STRINGL("\x00", 1, 1);
+    }
+    break;
+  }
+  case IS_STRING: {
+    RETURN_STRINGL(Z_STRVAL_P(z), Z_STRLEN_P(z), 1);
+    break;
+  }
+  case IS_OBJECT: {
+    buffer buf;
+    zend_class_entry *clazz = Z_OBJCE_P(z);
+    if (clazz == mongo_ce_Id) {
+      mongo_id *id = (mongo_id*)zend_object_store_get_object(z TSRMLS_CC);
+      RETURN_STRINGL(id->id, 12, 1);
+      break;
+    }
+    else if (clazz == mongo_ce_Date) {
+      CREATE_BUF(buf, 9);
+      buf.pos[8] = (char)0;
+
+      php_mongo_serialize_date(&buf, z TSRMLS_CC);
+      RETURN_STRINGL(buf.start, 8, 0);
+      break;
+    }
+    else if (clazz == mongo_ce_Regex) {
+      CREATE_BUF(buf, 128);
+
+      php_mongo_serialize_regex(&buf, z TSRMLS_CC);
+      RETVAL_STRINGL(buf.start, buf.pos-buf.start, 1);
+      efree(buf.start);
+      break;
+    }
+    else if (clazz == mongo_ce_Code) {
+      CREATE_BUF(buf, INITIAL_BUF_SIZE);
+
+      php_mongo_serialize_code(&buf, z TSRMLS_CC);
+      RETVAL_STRINGL(buf.start, buf.pos-buf.start, 1);
+      efree(buf.start);
+      break;
+    }
+    else if (clazz == mongo_ce_BinData) {
+      CREATE_BUF(buf, INITIAL_BUF_SIZE);
+
+      php_mongo_serialize_bin_data(&buf, z TSRMLS_CC);
+      RETVAL_STRINGL(buf.start, buf.pos-buf.start, 1);
+      efree(buf.start);
+      break;
+    }
+    else if (clazz == mongo_ce_Timestamp) {
+      CREATE_BUF(buf, 9);
+      buf.pos[8] = (char)0;
+
+      php_mongo_serialize_bin_data(&buf, z TSRMLS_CC);
+      RETURN_STRINGL(buf.start, 8, 0);
+      break;
+    }
+  }
+  /* fallthrough for a normal obj */
+  case IS_ARRAY: {
+    buffer buf;
+    CREATE_BUF(buf, INITIAL_BUF_SIZE);
+    zval_to_bson(&buf, HASH_P(z), 0 TSRMLS_CC);
+
+    RETVAL_STRINGL(buf.start, buf.pos-buf.start, 1);
+    efree(buf.start);
+    break;
+  }
+  default:
+    zend_throw_exception(zend_exception_get_default(TSRMLS_C), "couldn't serialize element", 0 TSRMLS_CC);
+    return;
+  }
+}
+
+/*
+ * Takes a serialized BSON object and turns it into a PHP array.
+ * This only deserializes entire documents!
+ */
+PHP_FUNCTION(bson_decode) {
+  zval *result;
+  char *str;
+  int str_len;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
+    return;
+  }
+
+  array_init(return_value);
+  bson_to_zval(str, HASH_P(return_value) TSRMLS_CC);
+}
 
 
 static int get_master(mongo_link *link TSRMLS_DC) {

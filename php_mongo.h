@@ -265,6 +265,11 @@ PHP_MSHUTDOWN_FUNCTION(mongo);
 PHP_RINIT_FUNCTION(mongo);
 PHP_MINFO_FUNCTION(mongo);
 
+/*
+ * serialization functions
+ */
+PHP_FUNCTION(bson_encode);
+PHP_FUNCTION(bson_decode);
 
 /*
  * Mongo class

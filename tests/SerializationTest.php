@@ -1,0 +1,101 @@
+<?php
+require_once 'PHPUnit/Framework.php';
+
+class SerializationTest extends PHPUnit_Framework_TestCase
+{
+    public function getChars($x) {
+      $str = "";
+      for ($i=0; $i < strlen($x); $i++) {
+        $str .= ord($x[$i])." ";
+      }
+      return $str;
+    }
+
+    public function testNull() {
+      $x = bson_encode(NULL);
+      $this->assertEquals("", $x);
+    }
+
+    public function testLong() {
+      $x = bson_encode(123);
+
+      $z = chr(0);
+      $s = chr(123);
+      $this->assertEquals("$s$z$z$z", $x, $this->getChars($x));
+    }
+
+    public function testDouble() {
+      $x = bson_encode(4.23);
+      $expect = chr(236).chr(81).chr(184).chr(30).chr(133).chr(235).chr(16).chr(64);
+      $this->assertEquals($expect, $x, $this->getChars($x));
+    }
+
+    public function testBool() {
+      $x = bson_encode(true);
+      $this->assertEquals(chr(1), $x, $this->getChars($x));
+      $x = bson_encode(false);
+      $this->assertEquals(chr(0), $x, $this->getChars($x));
+    }
+
+    public function testString() {
+      $x = bson_encode("foofaroo");
+      $this->assertEquals("foofaroo", $x);
+    }
+
+    public function testArray() {
+      $x = bson_encode(array("x", 6));
+      $z = chr(0);
+
+      $str = chr(21)."$z$z$z";
+      $str .= chr(2)."0$z".chr(2)."$z$z${z}x$z";
+      $str .= chr(16)."1$z".chr(6)."$z$z$z";
+      $str .= $z;
+      $this->assertEquals($str, $x, $this->getChars($x));
+    }
+
+    /* TODO */
+    public function testObj() {
+      $x = bson_encode(NULL);
+      $this->assertEquals("", $x);
+    }
+
+    public function testId() {
+      $id = new MongoId("012345678901234567890123");
+      $x = bson_encode($id);
+      $str = chr(1).chr(35).chr(69).chr(103).chr(137);
+      $str .= chr(1).chr(35).chr(69).chr(103).chr(137);
+      $str .= chr(1).chr(35);
+      $this->assertEquals($str, $x, $this->getChars($x));
+    }
+
+    /* TODO */
+    public function testDate() {
+      $x = bson_encode(NULL);
+      $this->assertEquals("", $x);
+    }
+
+    /* TODO */
+    public function testTs() {
+      $x = bson_encode(NULL);
+      $this->assertEquals("", $x);
+    }
+
+    /* TODO */
+    public function testCode() {
+      $x = bson_encode(NULL);
+      $this->assertEquals("", $x);
+    }
+
+    /* TODO */
+    public function testBinData() {
+      $x = bson_encode(NULL);
+      $this->assertEquals("", $x);
+    }
+
+    /* TODO */
+    public function testRegex() {
+      $x = bson_encode(NULL);
+      $this->assertEquals("", $x);
+    }
+}
+?>

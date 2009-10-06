@@ -21,6 +21,7 @@ require_once 'MongoRegressionTest1.php';
 
 require_once 'MongoMemTest.php';
 require_once 'CmdSymbolTest.php';
+require_once 'SerializationTest.php';
 
 include 'MongoAuthTest.php';
 include 'MongoGridFSClassicTest.php';
@@ -31,7 +32,7 @@ class MongoRunner extends PHPUnit_Framework_TestSuite
     {
         $suite = new MongoRunner('Mongo Tests');
         
-        $suite->addTestSuite('MongoTimestampTest');
+        $suite->addTestSuite('SerializationTest');
         return $suite;
     }
  

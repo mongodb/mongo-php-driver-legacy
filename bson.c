@@ -102,11 +102,11 @@ int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC) {
 }
 
 #if ZEND_MODULE_API_NO >= 20090115
-static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key) {
+static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key)
 #else
-static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key) {
+static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key)
 #endif /* ZEND_MODULE_API_NO >= 20090115 */
-
+{
   int retval;
   char *name;
 
@@ -211,85 +211,33 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
     }
     // MongoDate
     else if (clazz == mongo_ce_Date) {
-      zval *zsec, *zusec;
-      int64_t sec, usec, ms;
-
       php_mongo_set_type(buf, BSON_DATE);
       php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
-
-      zsec = zend_read_property(mongo_ce_Date, *data, "sec", 3, 0 TSRMLS_CC);
-      sec = Z_LVAL_P(zsec);
-      zusec = zend_read_property(mongo_ce_Date, *data, "usec", 4, 0 TSRMLS_CC);
-      usec = Z_LVAL_P(zusec);
-
-      ms = (sec * 1000) + (usec / 1000);
-      php_mongo_serialize_long(buf, ms);
+      php_mongo_serialize_date(buf, *data TSRMLS_CC);
     }
     // MongoRegex
     else if (clazz == mongo_ce_Regex) {
-      zval *zid;
-
       php_mongo_set_type(buf, BSON_REGEX);
       php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
-      zid = zend_read_property(mongo_ce_Regex, *data, "regex", 5, 0 TSRMLS_CC);
-      php_mongo_serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
-      zid = zend_read_property(mongo_ce_Regex, *data, "flags", 5, 0 TSRMLS_CC);
-      php_mongo_serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+      php_mongo_serialize_regex(buf, *data TSRMLS_CC);
     }
     // MongoCode
     else if (clazz == mongo_ce_Code) {
-      uint start;
-      zval *zid;
-
       php_mongo_set_type(buf, BSON_CODE);
       php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
-
-      // save spot for size
-      start = buf->pos-buf->start;
-      buf->pos += INT_32;
-      zid = zend_read_property(mongo_ce_Code, *data, "code", 4, NOISY TSRMLS_CC);
-      // string size
-      php_mongo_serialize_int(buf, Z_STRLEN_P(zid)+1);
-      // string
-      php_mongo_serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
-      // scope
-      zid = zend_read_property(mongo_ce_Code, *data, "scope", 5, NOISY TSRMLS_CC);
-      zval_to_bson(buf, HASH_P(zid), NO_PREP TSRMLS_CC);
-
-      // get total size
-      php_mongo_serialize_size(buf->start+start, buf);
+      php_mongo_serialize_code(buf, *data TSRMLS_CC);
     }
     // MongoBin
     else if (clazz == mongo_ce_BinData) {
-      zval *zbin, *ztype;
-
       php_mongo_set_type(buf, BSON_BINARY);
       php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
-
-      zbin = zend_read_property(mongo_ce_BinData, *data, "bin", 3, 0 TSRMLS_CC);
-      php_mongo_serialize_int(buf, Z_STRLEN_P(zbin));
-
-      ztype = zend_read_property(mongo_ce_BinData, *data, "type", 4, 0 TSRMLS_CC);
-      php_mongo_serialize_byte(buf, (unsigned char)Z_LVAL_P(ztype));
-
-      if(BUF_REMAINING <= Z_STRLEN_P(zbin)) {
-        resize_buf(buf, Z_STRLEN_P(zbin));
-      }
-
-      php_mongo_serialize_bytes(buf, Z_STRVAL_P(zbin), Z_STRLEN_P(zbin));
+      php_mongo_serialize_bin_data(buf, *data TSRMLS_CC);
     }
     // MongoTimestamp
     else if (clazz == mongo_ce_Timestamp) {
-      zval *ts, *inc;
-
       php_mongo_set_type(buf, BSON_TIMESTAMP);
       php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
-
-      ts = zend_read_property(mongo_ce_Timestamp, *data, "sec", strlen("sec"), NOISY TSRMLS_CC);
-      inc = zend_read_property(mongo_ce_Timestamp, *data, "inc", strlen("inc"), NOISY TSRMLS_CC);
-
-      php_mongo_serialize_int(buf, Z_LVAL_P(ts));
-      php_mongo_serialize_int(buf, Z_LVAL_P(inc));
+      php_mongo_serialize_ts(buf, *data TSRMLS_CC);
     }
     // serialize a normal obj
     else {
@@ -321,6 +269,106 @@ int resize_buf(buffer *buf, int size) {
   buf->pos = buf->start + used;
   buf->end = buf->start + total;
   return total;
+}
+
+/*
+ * create a bson date
+ *
+ * type: 9
+ * 8 bytes of ms since the epoch
+ */
+void php_mongo_serialize_date(buffer *buf, zval *date TSRMLS_DC) {
+  int64_t ms;
+  zval *sec = zend_read_property(mongo_ce_Date, date, "sec", 3, 0 TSRMLS_CC);
+  zval *usec = zend_read_property(mongo_ce_Date, date, "usec", 4, 0 TSRMLS_CC);
+  
+  ms = ((int64_t)Z_LVAL_P(sec) * 1000) + ((int64_t)Z_LVAL_P(usec) / 1000);
+  php_mongo_serialize_long(buf, ms);
+}
+
+/*
+ * create a bson regex
+ *
+ * type: 11
+ * cstring cstring
+ */
+void php_mongo_serialize_regex(buffer *buf, zval *regex TSRMLS_DC) {
+  zval *z;
+
+  z = zend_read_property(mongo_ce_Regex, regex, "regex", 5, 0 TSRMLS_CC);
+  php_mongo_serialize_string(buf, Z_STRVAL_P(z), Z_STRLEN_P(z));
+  z = zend_read_property(mongo_ce_Regex, regex, "flags", 5, 0 TSRMLS_CC);
+  php_mongo_serialize_string(buf, Z_STRVAL_P(z), Z_STRLEN_P(z));
+}
+
+/*
+ * create a bson code with scope
+ *
+ * type: 15
+ * 4 bytes total size
+ * 4 bytes cstring size + NULL
+ * cstring
+ * bson object scope
+ */
+void php_mongo_serialize_code(buffer *buf, zval *code TSRMLS_DC) {
+  uint start;
+  zval *zid;
+
+  // save spot for size
+  start = buf->pos-buf->start;
+  buf->pos += INT_32;
+  zid = zend_read_property(mongo_ce_Code, code, "code", 4, NOISY TSRMLS_CC);
+  // string size
+  php_mongo_serialize_int(buf, Z_STRLEN_P(zid)+1);
+  // string
+  php_mongo_serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
+  // scope
+  zid = zend_read_property(mongo_ce_Code, code, "scope", 5, NOISY TSRMLS_CC);
+  zval_to_bson(buf, HASH_P(zid), NO_PREP TSRMLS_CC);
+  
+  // get total size
+  php_mongo_serialize_size(buf->start+start, buf);
+}
+
+/*
+ * create bson binary data
+ *
+ * type: 5
+ * 4 bytes: length of bindata
+ * 1 byte: bindata type
+ * bindata
+ */
+void php_mongo_serialize_bin_data(buffer *buf, zval *bin TSRMLS_DC) {
+  zval *zbin, *ztype;
+
+  zbin = zend_read_property(mongo_ce_BinData, bin, "bin", 3, 0 TSRMLS_CC);
+  php_mongo_serialize_int(buf, Z_STRLEN_P(zbin));
+
+  ztype = zend_read_property(mongo_ce_BinData, bin, "type", 4, 0 TSRMLS_CC);
+  php_mongo_serialize_byte(buf, (unsigned char)Z_LVAL_P(ztype));
+
+  if(BUF_REMAINING <= Z_STRLEN_P(zbin)) {
+    resize_buf(buf, Z_STRLEN_P(zbin));
+  }
+
+  php_mongo_serialize_bytes(buf, Z_STRVAL_P(zbin), Z_STRLEN_P(zbin));
+}
+
+/*
+ * create bson timestamp
+ *
+ * type: 17
+ * 4 bytes seconds since epoch
+ * 4 bytes increment
+ */
+void php_mongo_serialize_ts(buffer *buf, zval *time TSRMLS_DC) {
+  zval *ts, *inc;
+
+  ts = zend_read_property(mongo_ce_Timestamp, time, "sec", strlen("sec"), NOISY TSRMLS_CC);
+  inc = zend_read_property(mongo_ce_Timestamp, time, "inc", strlen("inc"), NOISY TSRMLS_CC);
+
+  php_mongo_serialize_int(buf, Z_LVAL_P(ts));
+  php_mongo_serialize_int(buf, Z_LVAL_P(inc));
 }
 
 void php_mongo_serialize_byte(buffer *buf, char b) {
@@ -400,6 +448,13 @@ void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRML
   buf->pos += str_len + 1;
 }
 
+/*
+ * replaces collection names starting with MonGlo(cmd_char)
+ * with the '$' character.
+ *
+ * TODO: this doesn't handle main.$oplog-type situations (if
+ * MonGlo(cmd_char) is set)
+ */
 void php_mongo_serialize_ns(buffer *buf, char *str TSRMLS_DC) {
   char *collection = strchr(str, '.')+1;
 
@@ -435,6 +490,16 @@ void php_mongo_serialize_size(unsigned char *start, buffer *buf) {
 
 
 char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
+  /* 
+   * buf_start is used for debugging
+   *
+   * if the deserializer runs into bson it can't
+   * parse, it will dump the bytes to that point.
+   *
+   * we lose buf's position as we iterate, so we
+   * need buf_start to save it. 
+   */
+  char *buf_start = *buf;
   char type;
 
   // for size
@@ -629,7 +694,12 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     default: {
+      int i;
       php_printf("type %d not supported\n", type);
+      for (i=0; i<buf-buf_start; i++) {
+        printf("%d ", buf_start[i]);
+      }
+      printf("<-- \n");
       // give up, it'll be trouble if we keep going
       return buf;
     }

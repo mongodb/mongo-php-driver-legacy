@@ -47,8 +47,17 @@
 
 void php_mongo_serialize_size(unsigned char*, buffer*);
 
-
+/* driver */
 int php_mongo_serialize_element(char*, zval**, buffer*, int TSRMLS_DC);
+
+/* objects */
+void php_mongo_serialize_date(buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_regex(buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_code(buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_ts(buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_bin_data(buffer*, zval* TSRMLS_DC);
+
+/* simple types */
 void php_mongo_serialize_double(buffer*, double);
 void php_mongo_serialize_string(buffer*, char*, int);
 void php_mongo_serialize_long(buffer*, int64_t);
