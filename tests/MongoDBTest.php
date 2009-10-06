@@ -52,6 +52,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     }
 
     public function testGetSetProfilingLevel() {
+      var_dump($this->object->command(array("profile" => MongoDB::PROFILING_ON)));
         $prev = $this->object->setProfilingLevel(MongoDB::PROFILING_ON);
         var_dump($prev);
         $level = $this->object->getProfilingLevel();
@@ -244,7 +245,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->object->command(array('profile' => 0));
         $x = $this->object->command(array('profile' => 1));
         $this->assertEquals($x['was'], 0, json_encode($x));
-        $this->assertEquals($x['ok'], 1);
+        $this->assertEquals($x['ok'], 1, json_encode($x));
     }
 
     public function testCreateRef() {
