@@ -499,7 +499,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
    * we lose buf's position as we iterate, so we
    * need buf_start to save it. 
    */
-  char *buf_start = *buf;
+  char *buf_start = buf;
   char type;
 
   // for size
