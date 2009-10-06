@@ -52,7 +52,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     }
 
     public function testGetSetProfilingLevel() {
-        $created = $this->createCollection("system.profile", true, 5000);
+        $created = $this->object->createCollection("system.profile", true, 5000);
         var_dump($created);
 
         $prev = $this->object->setProfilingLevel(MongoDB::PROFILING_ON);
