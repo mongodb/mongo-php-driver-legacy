@@ -284,6 +284,11 @@ static PHP_GINIT_FUNCTION(mongo)
 static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC) 
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
 {
+  struct hostent *lh;
+  char *arKey;
+  int nKeyLength;
+  register ulong hash;
+
   mongo_globals->num_persistent = 0;
   mongo_globals->num_links = 0;
   mongo_globals->auto_reconnect = 0;
@@ -295,10 +300,10 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   mongo_globals->inc = 0;
   mongo_globals->pid = getpid();
 
-  struct hostent *lh = gethostbyname("localhost");
-  char *arKey = lh ? lh->h_name : "borkdebork";
-  int nKeyLength = strlen(arKey);
-  register ulong hash = 5381;
+  lh = gethostbyname("localhost");
+  arKey = lh ? lh->h_name : "borkdebork";
+  nKeyLength = strlen(arKey);
+  hash = 5381;
 
   /* from zend_hash.h */
   /* variant with the hash unrolled eight times */
