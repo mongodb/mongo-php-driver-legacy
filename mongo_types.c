@@ -29,7 +29,7 @@
 #if ZEND_MODULE_API_NO >= 20060613
 #include <ext/spl/spl_exceptions.h>
 #endif
-#include <ext\standard\php_rand.h>
+#include <ext/standard/php_rand.h>
 
 #include "mongo_types.h"
 #include "php_mongo.h"
