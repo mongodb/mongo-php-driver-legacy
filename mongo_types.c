@@ -29,6 +29,7 @@
 #if ZEND_MODULE_API_NO >= 20060613
 #include <ext/spl/spl_exceptions.h>
 #endif
+#include <ext\standard\php_rand.h>
 
 #include "mongo_types.h"
 #include "php_mongo.h"
@@ -52,6 +53,7 @@ zend_class_entry *mongo_ce_Date = NULL,
   *mongo_ce_Timestamp = NULL;
 
 void generate_id(char *data TSRMLS_DC) {
+  int inc;
   unsigned t = (unsigned) time(0);
   char *T = (char*)&t;
 
@@ -70,7 +72,7 @@ void generate_id(char *data TSRMLS_DC) {
   //memcpy(data+9, &MonGlo(inc)+1, 3);
   //MonGlo(inc)++;
 
-  int inc = php_rand(TSRMLS_C);
+  inc = php_rand(TSRMLS_C);
   memcpy(data+9, &inc, 3);
 }
 

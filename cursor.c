@@ -16,6 +16,11 @@
  */
 
 #include <php.h>
+
+#ifdef WIN32
+#include <win32/php_stdint.h>
+#endif
+
 #include <zend_interfaces.h>
 #include <zend_exceptions.h>
 

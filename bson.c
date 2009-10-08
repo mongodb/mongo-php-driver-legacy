@@ -19,6 +19,7 @@
 
 #ifdef WIN32
 #include <memory.h>
+#include <win32/php_stdint.h>
 #endif
 
 #include "php_mongo.h"
