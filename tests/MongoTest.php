@@ -44,13 +44,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException MongoConnectionException
-     */
-    public function testDumbIPs1() {
-	$m = new Mongo(",");
-    }
-
-    /**
      * @expectedException MongoConnectionException 
      */
     public function testDumbIPs2() {
