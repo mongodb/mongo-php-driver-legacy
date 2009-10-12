@@ -27,7 +27,7 @@
 
 #ifdef WIN32
 #  ifndef int64_t
-     typedef __int64 int64_t
+     typedef __int64 int64_t;
 #  endif
 #endif
 
