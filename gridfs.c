@@ -16,9 +16,12 @@
  */
 
 #include <php.h>
-#ifndef int64_t
-  typedef __int64 int64_t;
+#ifdef WIN32
+#  ifndef int64_t
+     typedef __int64 int64_t;
+#  endif
 #endif
+
 #include <zend_exceptions.h>
 
 #include "gridfs.h"
