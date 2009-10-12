@@ -18,8 +18,10 @@
 #include <php.h>
 
 #ifdef WIN32
-#include <memory.h>
-#include <win32/php_stdint.h>
+#  include <memory.h>
+#  ifndef int64_t
+     typedef __int64 int64_t;
+#  endif
 #endif
 
 #include "php_mongo.h"
@@ -680,9 +682,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     }
     case BSON_TIMESTAMP: {
       object_init_ex(value, mongo_ce_Timestamp);
-      zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), *(int32_t*)buf TSRMLS_CC);
+      zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), *(int*)buf TSRMLS_CC);
       buf += INT_32;
-      zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), *(int32_t*)buf TSRMLS_CC);
+      zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), *(int*)buf TSRMLS_CC);
       buf += INT_32;
       break;
     }

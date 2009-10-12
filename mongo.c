@@ -37,8 +37,8 @@
 #include <zend_exceptions.h>
 #include <php_ini.h>
 #include <ext/standard/info.h>
-#ifdef WIN32
-#include <win32/php_stdint.h>
+#ifndef int64_t
+  typedef __int64 int64_t;
 #endif
 
 #include "php_mongo.h"
