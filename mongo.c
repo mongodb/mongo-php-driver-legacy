@@ -1123,7 +1123,11 @@ PHP_FUNCTION(bson_encode) {
     break;
   }
   default:
+#if ZEND_MODULE_API_NO >= 20060613
     zend_throw_exception(zend_exception_get_default(TSRMLS_C), "couldn't serialize element", 0 TSRMLS_CC);
+#else
+    zend_throw_exception(zend_exception_get_default(), "couldn't serialize element", 0 TSRMLS_CC);
+#endif
     return;
   }
 }
