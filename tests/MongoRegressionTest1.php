@@ -59,6 +59,7 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testFatalClone() {
+      if (phpversion() == "5.2.9") {
         $output = "";
         $exit_code = 0;
         exec("php tests/fatal1.php", $output, $exit_code);
@@ -74,6 +75,7 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
             $this->assertEquals($unclonable, substr($output[3], 0, strlen($unclonable)), json_encode($output)); 
         }
         $this->assertEquals(255, $exit_code);
+      }
     }
 
     public function testRealloc() {
