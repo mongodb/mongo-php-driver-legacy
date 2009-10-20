@@ -78,7 +78,9 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
         $list = $this->object->listCollections();
         for($i=0;$i<10;$i++) {
             $this->assertTrue($list[$i] instanceof MongoCollection);
-            $this->assertTrue(in_array("phpunit.x$i", $list));
+            if (!preg_match($this->sharedFixture->version_51, phpversion())) {
+              $this->assertTrue(in_array("phpunit.x$i", $list));
+            }
         }
     }
     

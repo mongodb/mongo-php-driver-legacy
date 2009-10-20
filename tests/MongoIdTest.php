@@ -8,6 +8,11 @@ require_once 'PHPUnit/Framework.php';
 class MongoIdTest extends PHPUnit_Framework_TestCase
 {
     public function testBasic() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $id1 = new MongoId();
         $this->assertEquals(strlen("$id1"), 24);
 
