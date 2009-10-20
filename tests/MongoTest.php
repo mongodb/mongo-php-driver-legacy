@@ -82,53 +82,153 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function test__toString() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $this->assertEquals((string)$this->object, "localhost");
 
         $m = new Mongo();
         $this->assertEquals((string)$m, "localhost:27017");
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testSelectDBException1()
     {
-        $db = $this->object->selectDB("");
+        if (preg_match("/5\.1\../", phpversion())) {
+            $threw = false;
+            try {
+                $db = $this->object->selectDB("");
+            }
+            catch(Exception $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
+        else {
+            $threw = false;
+            try {
+                $db = $this->object->selectDB("");
+            }
+            catch(InvalidArgumentException $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testSelectDBException2()
     {
-        $db = $this->object->selectDB("my database");
+        if (preg_match("/5\.1\../", phpversion())) {
+            $threw = false;
+            try {
+                $db = $this->object->selectDB("my database");
+            }
+            catch(Exception $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
+        else {
+            $threw = false;
+            try {
+                $db = $this->object->selectDB("my database");
+            }
+            catch(InvalidArgumentException $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testSelectDBException3()
     {
-        $db = $this->object->selectDB("x.y.z");
+        if (preg_match("/5\.1\../", phpversion())) {
+            $threw = false;
+            try {
+                $db = $this->object->selectDB("x.y.z");
+            }
+            catch(Exception $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
+        else {
+            $threw = false;
+            try {
+                $db = $this->object->selectDB("x.y.z");
+            }
+            catch(InvalidArgumentException $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testSelectDBException4()
     {
-        $db = $this->object->selectDB(".");
+        if (preg_match("/5\.1\../", phpversion())) {
+            $threw = false;
+            try {
+                $db = $this->object->selectDB(".");
+            }
+            catch(Exception $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
+        else {
+            $threw = false;
+            try {
+                $db = $this->object->selectDB(".");
+            }
+            catch(InvalidArgumentException $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testSelectDBException5()
     {
-        $db = $this->object->selectDB(null);
+        if (preg_match("/5\.1\../", phpversion())) {
+            $threw = false;
+            try {
+                $db = $this->object->selectDB(null);
+            }
+            catch(Exception $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
+        else {
+            $threw = false;
+            try {
+                $db = $this->object->selectDB(null);
+            }
+            catch(InvalidArgumentException $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
     }
 
     public function testSelectDB() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $db = $this->object->selectDB("foo");
         $this->assertEquals((string)$db, "foo");
         $db = $this->object->selectDB("line\nline");
@@ -143,15 +243,38 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals((string)$db, "\"");
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testSelectCollectionException1()
     {
-        $db = $this->object->selectCollection("", "xyz");
+        if (preg_match("/5\.1\../", phpversion())) {
+            $threw = false;
+            try {
+                $db = $this->object->selectCollection("", "xyz");
+            }
+            catch(Exception $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
+        else {
+            $threw = false;
+            try {
+                $db = $this->object->selectCollection("", "xyz");
+            }
+            catch(InvalidArgumentException $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw);
+            return;
+        }
     }
 
     public function testSelectCollection() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $c = $this->object->selectCollection("foo", "bar.baz");
         $this->assertEquals((string)$c, "foo.bar.baz");
         $c = $this->object->selectCollection(1, 6);

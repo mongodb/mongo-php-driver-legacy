@@ -26,6 +26,11 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
 
     // shouldn't throw an error, just ignore it
     public function testIncorrect() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $id1 = new MongoId("foo");
         $this->assertNotEquals((string)$id1, "foo");
         $this->assertEquals(strlen("$id1"), 24);
@@ -38,13 +43,18 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
     }
   
     public function testSerialize() {
-      $id = new MongoId("4a4391aa82c94f4f3adc0878");
-      $x = serialize($id);
-      $this->assertEquals('C:7:"MongoId":24:{4a4391aa82c94f4f3adc0878}', $x);
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
 
-      $y = unserialize($x);
-      $this->assertTrue($y instanceof MongoId);
-      $this->assertEquals("$id", "$y");
+        $id = new MongoId("4a4391aa82c94f4f3adc0878");
+        $x = serialize($id);
+        $this->assertEquals('C:7:"MongoId":24:{4a4391aa82c94f4f3adc0878}', $x);
+        
+        $y = unserialize($x);
+        $this->assertTrue($y instanceof MongoId);
+        $this->assertEquals("$id", "$y");
     }
 
     public function testIncrement() {

@@ -159,6 +159,11 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
     }
 
     public function testInsertNonAssoc() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $nonassoc = (object)array("x" => array("x", "y", "z"));
         $this->object->insert($nonassoc);
         $x = $this->object->findOne();

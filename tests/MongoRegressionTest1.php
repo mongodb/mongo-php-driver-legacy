@@ -42,6 +42,11 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testIdInsert() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $c = $this->sharedFixture->selectCollection("phpunit", "c");
 
         $a = array('_id' => 1);
@@ -79,6 +84,11 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testRealloc() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped('Cannot open files w/out absolute path in 5.1.');
+            return;
+        }
+
         $db = $this->sharedFixture->selectDB('webgenius');
         $tbColl = $db->selectCollection('Text_Block');
         
@@ -89,6 +99,11 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testIdRealloc() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped('Cannot open files w/out absolute path in 5.1.');
+            return;
+        }
+
         $db = $this->sharedFixture->selectDB('webgenius');
         $tbColl = $db->selectCollection('Text_Block');
 

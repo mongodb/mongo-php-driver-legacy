@@ -110,6 +110,8 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
                 "the database, which will cause a lot of tests to ".
                 "fail.  Please consider upgrading.\n";
         }
+
+        $this->sharedFixture->version_51 = "/5\.1\../";
     }
  
     protected function tearDown()

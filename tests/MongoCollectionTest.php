@@ -27,6 +27,11 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     }
     
     public function test__toString() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $this->assertEquals((string)$this->object, 'phpunit.c');
     }
 
@@ -112,6 +117,11 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     }
 
     public function testInsertNonAssoc() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $nonassoc = array("x", "y", "z");
         $this->object->insert($nonassoc);
         $x = $this->object->findOne();

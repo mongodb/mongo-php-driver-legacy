@@ -213,6 +213,11 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
     }
 
     public function testKey() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         for ($i=0; $i<20; $i++) {
             $this->object->insert(array('z' => $i));
         }

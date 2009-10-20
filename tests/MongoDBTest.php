@@ -30,10 +30,20 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     }
 
     public function test__toString() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $this->assertEquals((string)$this->object, "phpunit");
     }
 
     public function testGetGridFS() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $grid = $this->object->getGridFS();
 
         $this->assertTrue($grid instanceof MongoGridFS);
@@ -88,6 +98,11 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     }
 
     public function testSelectCollection() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $this->assertEquals((string)$this->object->selectCollection('x'), 'phpunit.x');
         $this->assertEquals((string)$this->object->selectCollection(''), 'phpunit.');
         $this->assertEquals((string)$this->object->selectCollection('..'), 'phpunit...');
@@ -147,7 +162,9 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $list = $this->object->listCollections();
         for($i=0;$i<10;$i++) {
             $this->assertTrue($list[$i] instanceof MongoCollection);
-            $this->assertTrue(in_array("phpunit.x$i", $list));
+            if (!preg_match("/5\.1\../", phpversion())) {
+              $this->assertTrue(in_array("phpunit.x$i", $list));
+            }
         }
     }
     
