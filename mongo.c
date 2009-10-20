@@ -300,7 +300,6 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
   mongo_globals->cmd_char = 0;
   mongo_globals->inc = 0;
-  mongo_globals->pid = getpid();
 
   lh = gethostbyname("localhost");
   arKey = lh ? lh->h_name : "borkdebork";

@@ -54,6 +54,7 @@ zend_class_entry *mongo_ce_Date = NULL,
 
 void generate_id(char *data TSRMLS_DC) {
   int inc;
+  int pid = (int)getpid();
   unsigned t = (unsigned) time(0);
   char *T = (char*)&t;
 
@@ -63,16 +64,19 @@ void generate_id(char *data TSRMLS_DC) {
   data[3] = T[0];
 
   // 3 bytes machine
-  memcpy(data+4, &MonGlo(machine)+1, 3);
+  memcpy(data+4, &MonGlo(machine), 3);
 
   // 2 bytes pid
-  memcpy(data+7, &MonGlo(pid)+2, 2);
+  memcpy(data+7, &pid, 2);
 
   // 3 bytes inc
-  //memcpy(data+9, &MonGlo(inc)+1, 3);
-  //MonGlo(inc)++;
-
+#ifdef WIN32
   inc = php_rand(TSRMLS_C);
+#else
+  inc = MonGlo(inc);
+  MonGlo(inc)++;
+#endif
+
   memcpy(data+9, &inc, 3);
 }
 
@@ -621,6 +625,6 @@ PHP_METHOD(MongoTimestamp, __construct) {
 PHP_METHOD(MongoTimestamp, __toString) {
   char *str;
   zval *sec = zend_read_property(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), NOISY TSRMLS_CC);
-  spprintf(&str, 0, "%d", Z_LVAL_P(sec));
+  spprintf(&str, 0, "%ld", Z_LVAL_P(sec));
   RETURN_STRING(str, 0);
 }
