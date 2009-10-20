@@ -63,16 +63,21 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
     }
 
     public function testIncrement() {
-      $num = 10;
-      $id = array();
-      for ($i=0; $i<$num; $i++) {
-        $id[] = new MongoId();
-        sleep(1);
-      }
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
 
-      for ($i=0; $i<$num-1; $i++) {
-        $this->assertGreaterThan($id[$i]."", $id[$i+1]."", $id[$i] . ", " . $id[$i+1]);
-      }
+        $num = 10;
+        $id = array();
+        for ($i=0; $i<$num; $i++) {
+            $id[] = new MongoId();
+            sleep(1);
+        }
+        
+        for ($i=0; $i<$num-1; $i++) {
+            $this->assertGreaterThan($id[$i]."", $id[$i+1]."", $id[$i] . ", " . $id[$i+1]);
+        }
     }
 }
 
