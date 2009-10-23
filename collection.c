@@ -363,13 +363,13 @@ PHP_METHOD(MongoCollection, findOne) {
 
 PHP_METHOD(MongoCollection, update) {
   zval temp, *criteria, *newobj;
-  zend_bool upsert = 0;
+  zend_bool upsert = 0, multiple = 0;
   mongo_collection *c;
   mongo_link *link;
   mongo_msg_header header;
   buffer buf;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|b", &criteria, &newobj, &upsert) == FAILURE ||
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|bb", &criteria, &newobj, &upsert, &multiple) == FAILURE ||
       IS_SCALAR_P(criteria) ||
       IS_SCALAR_P(newobj)) {
     return;
@@ -382,7 +382,7 @@ PHP_METHOD(MongoCollection, update) {
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_UPDATE);
-  php_mongo_serialize_int(&buf, upsert);
+  php_mongo_serialize_int(&buf, (upsert << 0) | (multiple << 1));
   zval_to_bson(&buf, HASH_P(criteria), NO_PREP TSRMLS_CC);
   zval_to_bson(&buf, HASH_P(newobj), NO_PREP TSRMLS_CC);
   php_mongo_serialize_size(buf.start, &buf);
