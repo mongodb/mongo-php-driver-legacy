@@ -94,11 +94,22 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($mem, memory_get_usage(true));
     }
 
-    public function ensureIndex() {
+    public function testEnsureIndex() {
       $c = $this->sharedFixture->selectCollection("foo", "bar");
       $mem = memory_get_usage(true);
       for ($i=0; $i<10000; $i++) {
         $c->deleteIndexes();
+      }
+      $this->assertEquals($mem, memory_get_usage(true));
+    }
+
+    public function testCursorCount() {
+      $c = $this->sharedFixture->selectCollection("foo", "bar");
+      $c->insert(array("foo" => "bar"));
+      $c->insert(array("foo" => "bar"));
+      $mem = memory_get_usage(true);
+      for ($i=0; $i<10000; $i++) {
+        $c->find()->count();
       }
       $this->assertEquals($mem, memory_get_usage(true));
     }

@@ -571,12 +571,10 @@ PHP_METHOD(MongoCursor, count) {
     zval **inner_query;
     if (zend_hash_find(HASH_P(cursor->query), "query", strlen("query")+1, (void**)&inner_query) == SUCCESS) {
       add_property_zval(data, "query", *inner_query);
-      zval_add_ref(inner_query);
     }
   }
   if (cursor->fields) {
     add_property_zval(data, "fields", cursor->fields);
-    zval_add_ref(&cursor->fields);
   }
 
   MAKE_STD_ZVAL(response);
@@ -602,7 +600,7 @@ PHP_METHOD(MongoCursor, count) {
     zval_ptr_dtor(&response);
   }
   else {
-    RETURN_ZVAL(response, 0, 0);
+    RETVAL_ZVAL(response, 0, 0);
   }
 
   zend_objects_store_del_ref(db TSRMLS_CC);
