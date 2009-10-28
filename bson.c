@@ -342,7 +342,7 @@ void php_mongo_serialize_code(buffer *buf, zval *code TSRMLS_DC) {
  * bindata
  */
 void php_mongo_serialize_bin_data(buffer *buf, zval *bin TSRMLS_DC) {
-  zval *zbin, *ztype, *mode;
+  zval *zbin, *ztype;
 
   zbin = zend_read_property(mongo_ce_BinData, bin, "bin", 3, 0 TSRMLS_CC);
   ztype = zend_read_property(mongo_ce_BinData, bin, "type", 4, 0 TSRMLS_CC);
@@ -357,15 +357,9 @@ void php_mongo_serialize_bin_data(buffer *buf, zval *bin TSRMLS_DC) {
    *   - 1 byte type (0x02)
    *   - N bytes: 4 bytes of length of the following bindata + bindata
    *
-   * 2 is the default type and was previously saved without the
-   * redundant 4 bytes.  Thus, we have to check the 
-   * MongoBinData::$type2mode variable to see whether to honor
-   * the type spec or treat it the same.
    */
 
-  mode = zend_read_static_property(mongo_ce_BinData, "type2mode", strlen("type2mode"), NOISY TSRMLS_CC);
-
-  if (Z_BVAL_P(mode) == 1 && Z_LVAL_P(ztype) == 2) {
+  if (Z_LVAL_P(ztype) == 2) {
     // length
     php_mongo_serialize_int(buf, Z_STRLEN_P(zbin)+4);
     // 02
@@ -586,19 +580,29 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     }
     case BSON_BINARY: {
       char type;
-      zval *mode;
 
       int len = *(int*)buf;
       buf += INT_32;
 
       type = *buf++;
 
-      /* check if the type 2 redundancy should be honored */
-      mode = zend_read_static_property(mongo_ce_BinData, "type2mode", strlen("type2mode"), NOISY TSRMLS_CC);
-
-      if (Z_BVAL_P(mode) == 1 && (int)type == 2) {
-        len = *(int*)buf;
-        buf += INT_32;
+      /* If the type is 2, check if the binary data
+       * is prefixed by its length.
+       * 
+       * There is an infinitesimally small chance that
+       * the first four bytes will happen to be the
+       * length of the rest of the string.  In this
+       * case, the data will be corrupted.
+       */
+      if ((int)type == 2) {
+        int len2 = *(int*)buf;
+        /* if the lengths match, the data is to spec,
+         * so we use len2 as the true length.
+         */
+        if (len2 == len - 4) {
+          len = len2;
+          buf += INT_32;
+        }
       }
 
       object_init_ex(value, mongo_ce_BinData);
