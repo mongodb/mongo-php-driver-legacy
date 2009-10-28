@@ -342,18 +342,51 @@ void php_mongo_serialize_code(buffer *buf, zval *code TSRMLS_DC) {
  * bindata
  */
 void php_mongo_serialize_bin_data(buffer *buf, zval *bin TSRMLS_DC) {
-  zval *zbin, *ztype;
+  zval *zbin, *ztype, *mode;
 
   zbin = zend_read_property(mongo_ce_BinData, bin, "bin", 3, 0 TSRMLS_CC);
-  php_mongo_serialize_int(buf, Z_STRLEN_P(zbin));
-
   ztype = zend_read_property(mongo_ce_BinData, bin, "type", 4, 0 TSRMLS_CC);
-  php_mongo_serialize_byte(buf, (unsigned char)Z_LVAL_P(ztype));
 
-  if(BUF_REMAINING <= Z_STRLEN_P(zbin)) {
-    resize_buf(buf, Z_STRLEN_P(zbin));
+  /* 
+   * type 2 has the redundant structure:
+   *
+   * |------|--|-------==========|
+   *  length 02 length   bindata
+   *
+   *   - 4 bytes: length of bindata (+4 for length below)
+   *   - 1 byte type (0x02)
+   *   - N bytes: 4 bytes of length of the following bindata + bindata
+   *
+   * 2 is the default type and was previously saved without the
+   * redundant 4 bytes.  Thus, we have to check the 
+   * MongoBinData::$type2mode variable to see whether to honor
+   * the type spec or treat it the same.
+   */
+
+  mode = zend_read_static_property(mongo_ce_BinData, "type2mode", strlen("type2mode"), NOISY TSRMLS_CC);
+
+  if (Z_BVAL_P(mode) == 1 && Z_LVAL_P(ztype) == 2) {
+    // length
+    php_mongo_serialize_int(buf, Z_STRLEN_P(zbin)+4);
+    // 02
+    php_mongo_serialize_byte(buf, 2);
+    // length
+    php_mongo_serialize_int(buf, Z_STRLEN_P(zbin));
+  }
+  /* other types have
+   *
+   * |------|--|==========|
+   *  length     bindata
+   *        type
+   */
+  else {
+    // length
+    php_mongo_serialize_int(buf, Z_STRLEN_P(zbin));
+    // type
+    php_mongo_serialize_byte(buf, (unsigned char)Z_LVAL_P(ztype));
   }
 
+  // bindata
   php_mongo_serialize_bytes(buf, Z_STRVAL_P(zbin), Z_STRLEN_P(zbin));
 }
 
@@ -552,19 +585,27 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_BINARY: {
-      int len = *(int*)buf;
-      char type, *bytes;
+      char type;
+      zval *mode;
 
+      int len = *(int*)buf;
       buf += INT_32;
 
       type = *buf++;
 
-      bytes = buf;
-      buf += len;
+      /* check if the type 2 redundancy should be honored */
+      mode = zend_read_static_property(mongo_ce_BinData, "type2mode", strlen("type2mode"), NOISY TSRMLS_CC);
+
+      if (Z_BVAL_P(mode) == 1 && (int)type == 2) {
+        len = *(int*)buf;
+        buf += INT_32;
+      }
 
       object_init_ex(value, mongo_ce_BinData);
 
-      add_property_stringl(value, "bin", bytes, len, DUP);
+      add_property_stringl(value, "bin", buf, len, DUP);
+      buf += len;
+
       add_property_long(value, "type", type);
       break;
     }

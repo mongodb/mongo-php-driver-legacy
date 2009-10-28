@@ -343,6 +343,13 @@ void mongo_init_MongoBinData(TSRMLS_D) {
 
   zend_declare_property_string(mongo_ce_BinData, "bin", strlen("bin"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
   zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+
+  /* Timeline:
+   *     1.01 : default to false
+   *     1.02 : default to true
+   *     1.03 : remove option
+   */
+  zend_declare_property_bool(mongo_ce_BinData, "type2mode", strlen("type2mode"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
 /* {{{ MongoRegex::__construct() 
