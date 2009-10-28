@@ -605,6 +605,10 @@ PHP_METHOD(MongoTimestamp, __construct) {
   }
 
   if (sec) {
+    /* this isn't the most elegant thing ever, but if someone passes in
+     * something that isn't a long, convert it to a long (same with inc).
+     */
+    convert_to_long(sec);
     zend_update_property(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
   }
   else {
@@ -612,6 +616,7 @@ PHP_METHOD(MongoTimestamp, __construct) {
   }
 
   if (inc) {
+    convert_to_long(inc);
     zend_update_property(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), inc TSRMLS_CC);
   }
   else {

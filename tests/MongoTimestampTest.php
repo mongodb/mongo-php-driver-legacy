@@ -48,6 +48,39 @@ class MongoTimestampTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($n->inc, $x['ts']->inc);
     }
 
+    public function testParam2() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
+        $c = $this->object;
+        $c->drop();
+        
+        $n = new MongoTimestamp(60, 30);
+        $this->assertEquals("60", "$n");
+        $this->assertEquals(60, $n->sec);
+        $this->assertEquals(30, $n->inc);
+
+        $n = new MongoTimestamp("60", "30");
+        $this->assertEquals("60", "$n");
+        $this->assertEquals(60, $n->sec);
+        $this->assertEquals(30, $n->inc);
+
+        $n = new MongoTimestamp("foo", "bar");
+        $this->assertEquals(0, $n->sec);
+        $this->assertEquals(0, $n->inc);
+
+        $n = new MongoTimestamp(60.123, "40");
+        $this->assertEquals(60, $n->sec);
+        $this->assertEquals(40, $n->inc);
+      
+        $c->insert(array("ts" => $n));
+        $x = $c->findOne();
+        $this->assertEquals("60", $x['ts']."");
+        $this->assertEquals($n->inc, $x['ts']->inc);
+    }
+
     public function testFields() {
       $ts = new MongoTimestamp(0,0);
       $this->assertEquals(0, $ts->sec);

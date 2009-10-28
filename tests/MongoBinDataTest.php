@@ -45,8 +45,6 @@ class MongoBinDataTest extends PHPUnit_Framework_TestCase
     }
 
     public function testType2Mode() {
-        MongoBinData::$type2mode = false;
-
         $x = chr(0).chr(1).chr(2).chr(3);
         $b = new MongoBinData($x);
         $this->object->save(array("bin" => $b));
@@ -56,23 +54,6 @@ class MongoBinDataTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(1, ord($b->bin[1]));
         $this->assertEquals(2, ord($b->bin[2]));
         $this->assertEquals(3, ord($b->bin[3]));
-
-        MongoBinData::$type2mode = true;
-
-        $this->object->drop();
-        $x = chr(0).chr(1).chr(2).chr(3);
-        $b = new MongoBinData($x);
-        $this->object->save(array("bin" => $b));
-        $result = $this->object->findOne();
-
-        $this->assertEquals(0, ord($b->bin[0]));
-        $this->assertEquals(1, ord($b->bin[1]));
-        $this->assertEquals(2, ord($b->bin[2]));
-        $this->assertEquals(3, ord($b->bin[3]));
-
-        MongoBinData::$type2mode = false;
-
-        $result = $this->object->findOne();
     }
 
     public function testTypes() {
