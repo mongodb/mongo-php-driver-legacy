@@ -698,6 +698,14 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       zval_ptr_dtor(&zcope);
       break;
     }
+    /* DEPRECATED
+     * database reference (12)
+     *   - 4 bytes ns length (includes trailing \0)
+     *   - ns + \0
+     *   - 12 bytes MongoId
+     * This converts the deprecated, old-style db ref type 
+     * into the new type (array('$ref' => ..., $id => ...)).
+     */
     case BSON_DBREF: {
       int ns_len;
       char *ns;
@@ -725,6 +733,11 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       add_assoc_zval(value, "$id", zoid);
       break;
     }
+    /* MongoTimestamp (17)
+     * 8 bytes total:
+     *  - sec: 4 bytes
+     *  - inc: 4 bytes
+     */
     case BSON_TIMESTAMP: {
       object_init_ex(value, mongo_ce_Timestamp);
       zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), *(int*)buf TSRMLS_CC);
@@ -733,15 +746,31 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       buf += INT_32;
       break;
     }
+    /* max key (127)
+     * max and min keys are used only for sharding, and 
+     * cannot be resaved to the database at the moment
+     */
     case BSON_MINKEY: {
       ZVAL_STRING(value, "[MinKey]", 1);
       break;
     }
+    /* min key (0)
+     */
     case BSON_MAXKEY: {
       ZVAL_STRING(value, "[MaxKey]", 1);
       break;
     }
     default: {
+      /* if we run into a type we don't recognize, there's
+       * either been some corruption or we've messed up on
+       * the parsing.  Either way, it's helpful to know the
+       * situation that led us here, so this dumps the 
+       * buffer up to this point to stdout and returns.  
+       *
+       * We can't dump any more of the buffer, unfortunately,
+       * because we don't keep track of the size.  Besides,
+       * if it is corrupt, the size might be messed up, too.
+       */
       int i;
       php_printf("type %d not supported\n", type);
       for (i=0; i<buf-buf_start; i++) {

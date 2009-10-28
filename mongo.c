@@ -1246,6 +1246,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int num_returned = 0;
 
   if (check_connection(cursor->link, errmsg TSRMLS_CC) != SUCCESS) {
+    ZVAL_STRING(errmsg, "could not establish db connection", 1);
     return FAILURE;
   }
 
@@ -1255,6 +1256,8 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
     set_disconnected(cursor->link);
 
+    /* set the error message to NULL so we know this isn't a "real" error */
+    ZVAL_NULL(errmsg);
     return FAILURE;
   }
 
@@ -1263,15 +1266,24 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
     set_disconnected(cursor->link);
 
-    zend_error(E_WARNING, "no db response\n");
+    /* copy message to the heap */
+    ZVAL_STRING(errmsg, "no db response", 1);
     return FAILURE;
   }
   else if (cursor->header.length > MAX_RESPONSE_LEN ||
            cursor->header.length < REPLY_HEADER_SIZE) {
+    char *msg;
 
     set_disconnected(cursor->link);
 
-    zend_error(E_WARNING, "bad response length: %d, max: %d, did the db assert?\n", cursor->header.length, MAX_RESPONSE_LEN);
+    spprintf(&msg, 
+             0, 
+             "bad response length: %d, max: %d, did the db assert?", 
+             cursor->header.length, 
+             MAX_RESPONSE_LEN);
+
+    /* the message is already on the heap, so don't copy it again */
+    ZVAL_STRING(errmsg, msg, 0);
     return FAILURE;
   }
 
@@ -1282,6 +1294,8 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
       recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
       recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
+
+    ZVAL_STRING(errmsg, "incomplete response", 1);
     return FAILURE;
   }
 
@@ -1293,29 +1307,44 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     cursor->buf.start = (unsigned char*)emalloc(cursor->header.length);
     cursor->buf.end = cursor->buf.start + cursor->header.length;
   }
+  /* if we've already got a buffer allocated but it's too small, resize it
+   * 
+   * TODO: profile with a large response
+   * this might actually be slower than freeing/reallocating, as it might
+   * have to copy over all the bytes if there isn't contiguous free space.  
+   */
   else if (cursor->buf.end - cursor->buf.start < cursor->header.length) {
     cursor->buf.start = (unsigned char*)erealloc(cursor->buf.start, cursor->header.length);
     cursor->buf.end = cursor->buf.start + cursor->header.length;
   }
   cursor->buf.pos = cursor->buf.start;
 
+  /* get the actual response content */
   if (mongo_hear(cursor->link, cursor->buf.pos, cursor->header.length TSRMLS_CC) == FAILURE) {
+    char *msg;
 #ifdef WIN32
-    zend_error(E_WARNING, "WSA error getting database response: %d\n", WSAGetLastError());
+    spprintf(&msg, 0, "WSA error getting database response: %d", WSAGetLastError());
 #else
-    zend_error(E_WARNING, "error getting database response: %s\n", strerror(errno));
+    spprintf(&msg, 0, "error getting database response: %s\n", strerror(errno));
 #endif
+    ZVAL_STRING(errmsg, msg, 0);
     return FAILURE;
   }
 
+  /* cursor->num is the total of the elements we've retrieved
+   * (elements already iterated through + elements in db response
+   * but not yet iterated through) 
+   */
   cursor->num += num_returned;
+
+  /* if no catastrophic error has happened yet, we're fine, set errmsg to null */
+  ZVAL_NULL(errmsg);
   return num_returned == 0 ? FAILURE : SUCCESS;
 }
 
 
 int mongo_say(mongo_link *link, buffer *buf, zval *errmsg TSRMLS_DC) {
   int sock, sent;
-
   sock = get_master(link TSRMLS_CC);
   sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
 

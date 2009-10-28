@@ -340,7 +340,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
     }
 
     public function testCount() {
-        $this->object->insert(array('x'=>1));
+      $this->object->insert(array('x'=>1));
         $this->object->insert(array('x'=>2));
         $this->object->insert(array('x'=>3, 'y'=>1));
         
@@ -350,13 +350,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $cursor = $this->object->find(array('x'=>1));
         $count = $cursor->count(); 
         $str = json_encode(iterator_to_array($cursor));
-        $this->assertEquals(1, $count, $str);
-         
-        $cursor = $this->object->find(array(), array('y'=>1));
-        $this->assertEquals(1, $cursor->count());
-
-        $cursor = $this->object->find(array(), array('z'=>1)); 
-        $this->assertEquals(0, $cursor->count()); 
+        $this->assertEquals(1, $count, $str);         
     }
 
     public function testExplain() {
@@ -369,24 +363,6 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(0, $x['n'], json_encode($x));
     }
 
-    public function testFields() {
-        for ($i=0; $i<10; $i++) {
-            $this->object->insert(array('x'=>$i, "b$i" => 'foo'));
-        }
-
-        $c = $this->object->find(array(), array("b3"));
-        $c->getNext();
-        $this->assertEquals(NULL, $c->next());
-        $this->assertEquals(1, $c->count());
-        
-        $c = $this->object->find(array(), array("b3" => 1));
-        $c->getNext();
-        $this->assertEquals(NULL, $c->next());
-        $this->assertEquals(1, $c->count());
-
-        $c = $this->object->find(array(), array("x"));
-        $this->assertEquals(10, $c->count());
-    }
 
     public function testReset2() {
         for ($i=0; $i<20; $i++) {

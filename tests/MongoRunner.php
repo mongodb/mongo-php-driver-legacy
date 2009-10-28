@@ -43,6 +43,7 @@ class MongoRunner extends PHPUnit_Framework_TestSuite
 
         // normal
         $this->sharedFixture = new Mongo();
+        $this->sharedFixture->version_51 = "/5\.1\../";
     }
  
     protected function tearDown()
