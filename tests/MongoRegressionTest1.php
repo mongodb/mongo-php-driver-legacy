@@ -112,6 +112,21 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $tbColl->insert($arr);
     }
 
+    public function testSafeInsertRealloc() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped('Cannot open files w/out absolute path in 5.1.');
+            return;
+        }
+
+        $db = $this->sharedFixture->selectDB('webgenius');
+        $tbColl = $db->selectCollection('Text_Block');
+
+        $text = file_get_contents('tests/id-alloc.txt');
+        $arr = array('text' => $text);
+        $x = $tbColl->insert($arr, true);
+        $this->assertEquals($x['err'], null);
+    }
+
     public function testForEachKey() {
         $c = $this->sharedFixture->selectCollection('x', 'y');
         $c->drop();

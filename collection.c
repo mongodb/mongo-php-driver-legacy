@@ -132,7 +132,7 @@ PHP_METHOD(MongoCollection, validate) {
 }
 
 PHP_METHOD(MongoCollection, insert) {
-  zval temp, *a;
+  zval *temp, *a;
   zend_bool *safe = 0;
   mongo_collection *c;
   mongo_link *link;
@@ -161,11 +161,15 @@ PHP_METHOD(MongoCollection, insert) {
     RETURN_FALSE;
   }
 
+  MAKE_STD_ZVAL(temp);
+  ZVAL_NULL(temp);
+
   php_mongo_serialize_size(buf.start, &buf);
 
   if (safe) {
+    int start = buf.pos - buf.start;
     zval *cmd, *cursor_z, *cmd_ns_z;
-    char *start = buf.pos, *cmd_ns;
+    char *cmd_ns;
     mongo_cursor *cursor;
 
     MAKE_STD_ZVAL(cmd_ns_z);
@@ -184,16 +188,17 @@ PHP_METHOD(MongoCollection, insert) {
 
     zval_to_bson(&buf, HASH_P(cmd), NO_PREP TSRMLS_CC);
 
-    php_mongo_serialize_size(start, &buf);
+    php_mongo_serialize_size(buf.start + start, &buf);
 
     zval_ptr_dtor(&cmd);
 
     /* send everything */
-    response = mongo_say(link, &buf, &temp TSRMLS_CC);
+    response = mongo_say(link, &buf, temp TSRMLS_CC);
     efree(buf.start);
     if (response == FAILURE) {
+      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
       zval_ptr_dtor(&cmd_ns_z);
-      zend_throw_exception(mongo_ce_CursorException, "couldn't send query.", 0 TSRMLS_CC);
+      zval_ptr_dtor(&temp);
       return;
     }
 
@@ -202,13 +207,18 @@ PHP_METHOD(MongoCollection, insert) {
 
     PUSH_PARAM(c->db->link); PUSH_PARAM(cmd_ns_z); PUSH_PARAM((void*)2);
     PUSH_EO_PARAM();
-    MONGO_METHOD(MongoCursor, __construct)(2, &temp, NULL, cursor_z, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoCursor, __construct)(2, temp, NULL, cursor_z, 0 TSRMLS_CC);
     POP_EO_PARAM();
     POP_PARAM(); POP_PARAM(); POP_PARAM();
 
     /* get the response */
     cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
-    php_mongo_get_reply(cursor, &temp TSRMLS_CC);
+    if (php_mongo_get_reply(cursor, temp TSRMLS_CC) == FAILURE &&
+        Z_TYPE_P(temp) == IS_STRING) {
+      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
+      zval_ptr_dtor(&temp);
+      return;
+    }
 
     MONGO_METHOD(MongoCursor, getNext)(0, return_value, NULL, cursor_z, 0 TSRMLS_CC);
 
@@ -216,11 +226,12 @@ PHP_METHOD(MongoCollection, insert) {
     zval_ptr_dtor(&cmd_ns_z);
   }
   else {
-    response = mongo_say(link, &buf, &temp TSRMLS_CC);
+    response = mongo_say(link, &buf, temp TSRMLS_CC);
     efree(buf.start);
   
-    RETURN_BOOL(response >= SUCCESS);
+    RETVAL_BOOL(response >= SUCCESS);
   }
+  zval_ptr_dtor(&temp);
 }
 
 PHP_METHOD(MongoCollection, batchInsert) {
