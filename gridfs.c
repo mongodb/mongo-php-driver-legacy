@@ -153,7 +153,7 @@ PHP_METHOD(MongoGridFS, find) {
   zval *zquery = 0, *zfields = 0;
   mongo_collection *c;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|aa", &zquery, &zfields) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &zquery, &zfields) == FAILURE) {
     return;
   }
 
@@ -170,7 +170,7 @@ PHP_METHOD(MongoGridFS, find) {
     array_init(zfields);
   }
   else {
-    zval_add_ref(&zquery);
+    zval_add_ref(&zfields);
   }
 
   object_init_ex(return_value, mongo_ce_GridFSCursor);
