@@ -168,7 +168,7 @@ PHP_METHOD(MongoCollection, insert) {
 
   if (safe) {
     int start = buf.pos - buf.start;
-    zval *cmd, *cursor_z, *cmd_ns_z;
+    zval *cmd, *cursor_z, *cmd_ns_z, **err;
     char *cmd_ns;
     mongo_cursor *cursor;
 
@@ -213,8 +213,7 @@ PHP_METHOD(MongoCollection, insert) {
 
     /* get the response */
     cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
-    if (php_mongo_get_reply(cursor, temp TSRMLS_CC) == FAILURE &&
-        Z_TYPE_P(temp) == IS_STRING) {
+    if (php_mongo_get_reply(cursor, temp TSRMLS_CC) == FAILURE) {
       zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
       zval_ptr_dtor(&temp);
       return;
@@ -224,6 +223,13 @@ PHP_METHOD(MongoCollection, insert) {
 
     zval_ptr_dtor(&cursor_z);
     zval_ptr_dtor(&cmd_ns_z);
+
+    /* if getlasterror returned an error, throw an exception */
+    zend_hash_find(Z_ARRVAL_P(return_value), "err", strlen("err")+1, (void**)&err);
+    if (Z_TYPE_PP(err) == IS_STRING) {
+      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 0 TSRMLS_CC);
+      return;
+    }
   }
   else {
     response = mongo_say(link, &buf, temp TSRMLS_CC);

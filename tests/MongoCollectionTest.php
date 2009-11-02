@@ -506,6 +506,14 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertTrue($success);
       $success = $c->insert(array("_id" => "foo"));
       $this->assertTrue($success);
+    }
+
+    /**
+     * @expectedException MongoCursorException 
+     */
+    public function testSafeInsert2() {
+      $c = $this->object;
+      $c->drop();
 
       $success = $c->insert(array("_id" => "bar"), true);
       $this->assertEquals($success['err'], null);
