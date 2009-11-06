@@ -634,12 +634,12 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
 }
 
 PHP_METHOD(MongoCollection, count) {
-  zval *response, *data, *query=0, *fields=0;
+  zval *response, *data, *query=0;
   zval **n;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &query) == FAILURE) {
     return;
   }
 
@@ -651,10 +651,6 @@ PHP_METHOD(MongoCollection, count) {
   if (query) {
     add_assoc_zval(data, "query", query);
     zval_add_ref(&query);
-    if (fields) {
-      add_assoc_zval(data, "fields", fields);
-      zval_add_ref(&fields);
-    }
   }
 
   PUSH_PARAM(data); PUSH_PARAM((void*)1);

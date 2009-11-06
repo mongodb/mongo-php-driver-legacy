@@ -573,9 +573,6 @@ PHP_METHOD(MongoCursor, count) {
       add_property_zval(data, "query", *inner_query);
     }
   }
-  if (cursor->fields) {
-    add_property_zval(data, "fields", cursor->fields);
-  }
 
   MAKE_STD_ZVAL(response);
 

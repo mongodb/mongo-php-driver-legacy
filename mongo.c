@@ -59,7 +59,7 @@ extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_Timestamp;
 
 static void mongo_link_dtor(mongo_link*);
-static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int, zval*);
+static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval*);
 static int get_master(mongo_link* TSRMLS_DC);
 static int check_connection(mongo_link*, zval* TSRMLS_DC);
 static int mongo_connect_nonb(int, char*, int, zval*);
@@ -455,13 +455,14 @@ PHP_METHOD(Mongo, __construct) {
 PHP_METHOD(Mongo, connect) {
   zval *zempty;
   MAKE_STD_ZVAL(zempty);
-  ZVAL_STRING(zempty, "", 1);
+  ZVAL_EMPTY_STRING(zempty);
 
   PUSH_PARAM(zempty); PUSH_PARAM(zempty); PUSH_PARAM((void*)2);
   PUSH_EO_PARAM();
   MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM(); POP_PARAM();
+
   zval_ptr_dtor(&zempty);
 }
 
@@ -470,7 +471,7 @@ PHP_METHOD(Mongo, connect) {
 PHP_METHOD(Mongo, pairConnect) {
   zval *zempty;
   MAKE_STD_ZVAL(zempty);
-  ZVAL_STRING(zempty, "", 1);
+  ZVAL_EMPTY_STRING(zempty);
 
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
 
@@ -503,7 +504,7 @@ PHP_METHOD(Mongo, pairPersistConnect) {
 PHP_METHOD(Mongo, connectUtil) {
   zval *connected, *server, *errmsg;
   MAKE_STD_ZVAL(errmsg);
-  Z_TYPE_P(errmsg) = IS_NULL;
+  ZVAL_NULL(errmsg);
 
   // if we're already connected, disconnect
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
@@ -514,7 +515,7 @@ PHP_METHOD(Mongo, connectUtil) {
     // Mongo->connected = false
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
   }
-  connect_already(INTERNAL_FUNCTION_PARAM_PASSTHRU, NOT_LAZY, errmsg);
+  connect_already(INTERNAL_FUNCTION_PARAM_PASSTHRU, errmsg);
 
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
   // if connecting failed, throw an exception
@@ -536,12 +537,9 @@ PHP_METHOD(Mongo, connectUtil) {
 }
 
 
-static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy, zval *errmsg) {
+static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
   zval *username, *password, *server, *pair, *persist;
   mongo_link *link;
-  zend_rsrc_list_entry new_le;
-  char *key;
-  int key_len;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &username, &password) == FAILURE) {
     return;
@@ -584,6 +582,9 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy, zval *errmsg
 
   if (Z_BVAL_P(persist)) {
     zend_rsrc_list_entry *le;
+    char *key;
+    int key_len;
+
     key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), Z_STRVAL_P(username), Z_STRVAL_P(password));
     // if a connection is found, return it
     if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
@@ -592,12 +593,6 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy, zval *errmsg
       link = (mongo_link*)le->ptr;
       ZEND_REGISTER_RESOURCE(return_value, link, le_pconnection);
       zend_update_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), return_value TSRMLS_CC);
-      efree(key);
-      return;
-    }
-    // if lazy and no connection was found, return
-    else if(lazy) {
-      ZVAL_STRING(errmsg, "lazy connecting and no connection found", 1);
       efree(key);
       return;
     }
@@ -637,6 +632,9 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, int lazy, zval *errmsg
 
   // store a reference in the persistence list
   if (Z_BVAL_P(persist)) {
+    zend_rsrc_list_entry new_le;
+    char *key;
+    int key_len;
 
     // save username and password for reconnection
     if (Z_STRLEN_P(username) > 0 && Z_STRLEN_P(password) > 0) {
@@ -722,7 +720,7 @@ static int get_host_and_port(char *server, mongo_link *link, zval *errmsg TSRMLS
     if ((host = getHost(ip1, link->persist)) == 0 ||
 	(port = getPort(ip1)) == 0) {
       char *errstr;
-      spprintf(&errstr, 0, "failed to get host [%s] or port [%d] from %s before comma", 
+      spprintf(&errstr, 0, "failed to get left host [%s] or port [%d] from %s", 
                host ? host : "", port, server);
       ZVAL_STRING(errmsg, errstr, 0);
 
@@ -1325,7 +1323,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 #ifdef WIN32
     spprintf(&msg, 0, "WSA error getting database response: %d", WSAGetLastError());
 #else
-    spprintf(&msg, 0, "error getting database response: %s\n", strerror(errno));
+    spprintf(&msg, 0, "error getting database response: %s", strerror(errno));
 #endif
     ZVAL_STRING(errmsg, msg, 0);
     return FAILURE;

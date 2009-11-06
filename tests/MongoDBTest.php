@@ -168,34 +168,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         }
     }
     
-    public function testGetCursorInfo() {
-        $c = $this->object->selectCollection('cinfo');
-        $c->drop();
-        for($i=0; $i<500; $i++) {
-            $c->insert(array('x' => $i));
-        }
-        
-        $info = $this->object->getCursorInfo();
-        $this->assertGreaterThanOrEqual(0, $info['clientCursors_size'], json_encode($info));
-        $this->assertEquals($info['ok'], 1, json_encode($info));
-        
-        $cursor = $c->find();
-        $cursor->hasNext();
-        
-        $info = $this->object->getCursorInfo();
-        $this->assertGreaterThanOrEqual(1, $info['byLocation_size']);
-        $this->assertGreaterThanOrEqual(1, $info['clientCursors_size']);
-        $this->assertEquals($info['ok'], 1);
-
-        $cursor2 = $c->find()->skip(20);
-        $cursor2->hasNext();
-
-        $info = $this->object->getCursorInfo();
-        $this->assertGreaterThanOrEqual(2, $info['byLocation_size']);
-        $this->assertGreaterThanOrEqual(2, $info['clientCursors_size']);
-        $this->assertEquals($info['ok'], 1);
-    }
-
     public function testCreateDBRef() {
         $ref = $this->object->createDBRef('foo.bar', array('foo' => 'bar'));
         $this->assertEquals($ref, NULL);

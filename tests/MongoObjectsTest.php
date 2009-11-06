@@ -392,7 +392,6 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
 
       $this->assertEquals(0, $this->object->count((object)array('z'=>1)));
       $this->assertEquals(1, $this->object->count((object)array('0'=>6)));
-      $this->assertEquals(1, $this->object->count((object)array(), (object)array('0'=>1)));
     }
     
 

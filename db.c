@@ -373,21 +373,6 @@ PHP_METHOD(MongoDB, listCollections) {
   RETURN_ZVAL(list, 0, 1);
 }
 
-PHP_METHOD(MongoDB, getCursorInfo) {
-  zval *data;
-  MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "cursorInfo", 1);
-
-  PUSH_PARAM(data); PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, command)(1, return_value, &return_value, getThis(), return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&data);
-}
-
 PHP_METHOD(MongoDB, createDBRef) {
   zval *ns, *obj;
   zval **id;
@@ -435,7 +420,6 @@ PHP_METHOD(MongoDB, getDBRef) {
 }
 
 PHP_METHOD(MongoDB, execute) {
-  int rm_obj = 0;
   zval *code = 0, *args = 0, *zdata;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &code, &args) == FAILURE) {
@@ -454,8 +438,6 @@ PHP_METHOD(MongoDB, execute) {
   if (Z_TYPE_P(code) != IS_OBJECT || 
       Z_OBJCE_P(code) != mongo_ce_Code) {
     zval *obj;
-
-    rm_obj = 1;
 
     MAKE_STD_ZVAL(obj);
     object_init_ex(obj, mongo_ce_Code);
@@ -484,9 +466,7 @@ PHP_METHOD(MongoDB, execute) {
   POP_EO_PARAM();
   POP_PARAM(); POP_PARAM();
 
-  if (rm_obj) {  
-    zend_objects_store_del_ref(code TSRMLS_CC);
-  }
+  zval_ptr_dtor(&code);
   zval_ptr_dtor(&zdata);
   zval_ptr_dtor(&args);
 }
@@ -620,7 +600,6 @@ static function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, createCollection, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, dropCollection, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, listCollections, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, getCursorInfo, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, createDBRef, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, getDBRef, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, execute, NULL, ZEND_ACC_PUBLIC)

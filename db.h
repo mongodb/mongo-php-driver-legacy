@@ -32,7 +32,6 @@ PHP_METHOD(MongoDB, repair);
 PHP_METHOD(MongoDB, createCollection);
 PHP_METHOD(MongoDB, dropCollection);
 PHP_METHOD(MongoDB, listCollections);
-PHP_METHOD(MongoDB, getCursorInfo);
 PHP_METHOD(MongoDB, createDBRef);
 PHP_METHOD(MongoDB, getDBRef);
 PHP_METHOD(MongoDB, execute);

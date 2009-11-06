@@ -57,9 +57,6 @@
 #define PREP 1
 #define NO_PREP 0
 
-#define LAZY 1
-#define NOT_LAZY 0
-
 #define NOISY 0
 
 // duplicate strings
@@ -178,13 +175,13 @@ typedef struct {
 
 #define MONGO_CHECK_INITIALIZED(member, class_name)                     \
   if (!(member)) {                                                      \
-    php_error_docref(NULL TSRMLS_CC, E_WARNING, "The " #class_name " object has not been correctly initialized by its constructor"); \
+    zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
     RETURN_FALSE;                                                       \
   }
 
 #define MONGO_CHECK_INITIALIZED_STRING(member, class_name)              \
   if (!(member)) {                                                      \
-    php_error_docref(NULL TSRMLS_CC, E_WARNING, "The " #class_name " object has not been correctly initialized by its constructor"); \
+    zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
     RETURN_STRING("", 1);                                               \
   }
 
