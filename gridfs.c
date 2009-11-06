@@ -51,6 +51,7 @@ typedef int (*apply_copy_func_t)(void *to, char *from, int len);
 
 static int copy_bytes(void *to, char *from, int len);
 static int copy_file(void *to, char *from, int len);
+static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC);
 
 static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to TSRMLS_DC);
 static int setup_file(FILE *fpp, char *filename TSRMLS_DC);
@@ -258,6 +259,60 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC) {
   return zid;
 }
 
+/* Use the db command to get the md5 hash of the inserted chunks
+ *
+ * $db->command(array(filemd5 => $fileId, "root" => $ns));
+ *
+ * adds the response to zfile as the "md5" field.
+ *
+ */
+static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
+  if (!zend_hash_exists(HASH_P(zfile), "md5", strlen("md5")+1)) {
+    zval *md5_cmd = 0, *response = 0, **md5 = 0;
+
+    // create command
+    MAKE_STD_ZVAL(md5_cmd);
+    array_init(md5_cmd);
+
+    add_assoc_zval(md5_cmd, "filemd5", zid);
+    zval_add_ref(&zid);
+    add_assoc_zval(md5_cmd, "root", c->ns);
+    zval_add_ref(&c->ns);
+
+    MAKE_STD_ZVAL(response);
+
+    // run command
+    PUSH_PARAM(md5_cmd); PUSH_PARAM((void*)1);
+    PUSH_EO_PARAM();
+    MONGO_METHOD(MongoDB, command)(1, response, NULL, c->parent, 0 TSRMLS_CC); 
+    POP_EO_PARAM();
+    POP_PARAM(); POP_PARAM();
+
+    // make sure there wasn't an error
+    if (zend_hash_find(HASH_P(response), "md5", strlen("md5")+1, (void**)&md5) == SUCCESS) {
+      // add it to zfile
+      add_assoc_zval(zfile, "md5", *md5);
+      /* increment the refcount so it isn't cleaned up at 
+       * the end of this method
+       */
+      zval_add_ref(md5);
+    }
+
+    // cleanup
+    zval_ptr_dtor(&response);
+    zval_ptr_dtor(&md5_cmd);
+  }
+}
+
+/* 
+ * Stores an array of bytes that may not have a filename,
+ * such as data from a socket or stream.
+ *
+ * Still somewhat limited atm, as the string has to fit
+ * in memory.  It would be better if it could take a fh
+ * or something.
+ *
+ */
 PHP_METHOD(MongoGridFS, storeBytes) {
   char *bytes = 0;
   int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, pos = 0;
@@ -297,6 +352,9 @@ PHP_METHOD(MongoGridFS, storeBytes) {
     chunk_num++; 
   }
 
+  // now that we've inserted the chunks, use them to calculate the hash
+  add_md5(zfile, zid, c TSRMLS_CC);
+
   // insert file
   PUSH_PARAM(zfile); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();
@@ -313,6 +371,8 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 /* add extra fields required for files:
  * - filename
  * - upload date
+ * - length
+ * these fields are only added if the user hasn't defined them.
  */
 static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC) {
   zval temp;
@@ -394,7 +454,6 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0;
-  zval **md5 = 0;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
@@ -442,34 +501,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // close file ptr
   fclose(fp);
 
-
-  // add chunks md5 hash
-  if (!zend_hash_exists(HASH_P(zfile), "md5", strlen("md5")+1)) {
-    zval *md5_cmd = 0, *response = 0;
-
-    MAKE_STD_ZVAL(md5_cmd);
-    array_init(md5_cmd);
-
-    add_assoc_zval(md5_cmd, "filemd5", zid);
-    zval_add_ref(&zid);
-    add_assoc_zval(md5_cmd, "root", c->ns);
-    zval_add_ref(&c->ns);
-
-    MAKE_STD_ZVAL(response);
-    PUSH_PARAM(md5_cmd); PUSH_PARAM((void*)1);
-    PUSH_EO_PARAM();
-    MONGO_METHOD(MongoDB, command)(1, response, NULL, c->parent, return_value_used TSRMLS_CC); 
-    POP_EO_PARAM();
-    POP_PARAM(); POP_PARAM();
-
-    if (zend_hash_find(HASH_P(response), "md5", strlen("md5")+1, (void**)&md5) == SUCCESS) {
-      add_assoc_zval(zfile, "md5", *md5);
-      zval_add_ref(md5);
-    }
-
-    zval_ptr_dtor(&response);
-    zval_ptr_dtor(&md5_cmd);
-  }
+  add_md5(zfile, zid, c TSRMLS_CC);
 
   // insert file
   PUSH_PARAM(zfile); PUSH_PARAM((void*)1);
