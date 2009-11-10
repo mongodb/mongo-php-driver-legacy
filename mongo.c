@@ -112,7 +112,6 @@ static function_entry mongo_methods[] = {
   PHP_ME(Mongo, selectDB, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, selectCollection, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, dropDB, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, repairDB, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, lastError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, prevError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, resetError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
@@ -441,7 +440,7 @@ PHP_METHOD(Mongo, __construct) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), persist TSRMLS_CC);
 
   if (connect) {
-    MONGO_METHOD(Mongo, connect)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    MONGO_METHOD(Mongo, connect, return_value, getThis(), 0);
   }
   else {
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 0 TSRMLS_CC);
@@ -453,34 +452,14 @@ PHP_METHOD(Mongo, __construct) {
 /* {{{ Mongo->connect
  */
 PHP_METHOD(Mongo, connect) {
-  zval *zempty;
-  MAKE_STD_ZVAL(zempty);
-  ZVAL_EMPTY_STRING(zempty);
-
-  PUSH_PARAM(zempty); PUSH_PARAM(zempty); PUSH_PARAM((void*)2);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&zempty);
+  MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 /* {{{ Mongo->pairConnect
  */
 PHP_METHOD(Mongo, pairConnect) {
-  zval *zempty;
-  MAKE_STD_ZVAL(zempty);
-  ZVAL_EMPTY_STRING(zempty);
-
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
-
-  PUSH_PARAM(zempty); PUSH_PARAM(zempty); PUSH_PARAM((void*)2);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM();
-  zval_ptr_dtor(&zempty);
+  MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 /* {{{ Mongo->persistConnect
@@ -488,7 +467,7 @@ PHP_METHOD(Mongo, pairConnect) {
 PHP_METHOD(Mongo, persistConnect) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
-  MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 /* {{{ Mongo->pairPersistConnect
@@ -497,7 +476,7 @@ PHP_METHOD(Mongo, pairPersistConnect) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
-  MONGO_METHOD(Mongo, connectUtil)(2, return_value, return_value_ptr, getThis(), return_value_used TSRMLS_CC);
+  MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 
@@ -510,7 +489,7 @@ PHP_METHOD(Mongo, connectUtil) {
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
   if (Z_BVAL_P(connected)) {
     // Mongo->close()
-    MONGO_METHOD(Mongo, close)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    MONGO_METHOD(Mongo, close, return_value, getThis(), 0);
 
     // Mongo->connected = false
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
@@ -538,15 +517,14 @@ PHP_METHOD(Mongo, connectUtil) {
 
 
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
-  zval *username, *password, *server, *pair, *persist;
+  zval *username = 0, *password = 0, *server, *pair, *persist;
   mongo_link *link;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &username, &password) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &username, &password) == FAILURE) {
     return;
   }
 
   server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
-
   pair = zend_read_property(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), NOISY TSRMLS_CC);
   persist = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), NOISY TSRMLS_CC);
 
@@ -585,7 +563,10 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
     char *key;
     int key_len;
 
-    key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), Z_STRVAL_P(username), Z_STRVAL_P(password));
+    key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), 
+		       username ? Z_STRVAL_P(username) : "", 
+		       password ? Z_STRVAL_P(password) : "");
+
     // if a connection is found, return it
     if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
       zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
@@ -637,12 +618,17 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
     int key_len;
 
     // save username and password for reconnection
-    if (Z_STRLEN_P(username) > 0 && Z_STRLEN_P(password) > 0) {
+    if (username && Z_STRLEN_P(username) > 0) {
       link->username = (char*)pestrdup(Z_STRVAL_P(username), link->persist);
+    }
+    if (password && Z_STRLEN_P(password) > 0) {
       link->password = (char*)pestrdup(Z_STRVAL_P(password), link->persist);
     }
 
-    key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), Z_STRVAL_P(username), Z_STRVAL_P(password));
+    key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), 
+		       username ? Z_STRVAL_P(username) : "", 
+		       password ? Z_STRVAL_P(password) : "");
+
     Z_TYPE(new_le) = le_pconnection;
     new_le.ptr = link;
 
@@ -847,12 +833,7 @@ PHP_METHOD(Mongo, selectDB) {
   }
 
   object_init_ex(return_value, mongo_ce_DB);
-
-  PUSH_PARAM(getThis()); PUSH_PARAM(db); PUSH_PARAM((void*)2);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, __construct)(2, &temp, NULL, return_value, return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM();
+  MONGO_METHOD(MongoDB, __construct, &temp, return_value, 2, getThis(), db);
 }
 /* }}} */
 
@@ -872,7 +853,7 @@ PHP_METHOD(Mongo, selectCollection) {
 
     // reusing db param from Mongo::selectCollection call...
     // a little funky, but kind of clever
-    MONGO_METHOD(Mongo, selectDB)(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
+    MONGO_METHOD_BASE(Mongo, selectDB)(1, temp_db, NULL, getThis(), 0 TSRMLS_CC);
 
     ok = (mongo_db*)zend_object_store_get_object(temp_db TSRMLS_CC);
     MONGO_CHECK_INITIALIZED(ok->name, MongoDB);
@@ -883,12 +864,7 @@ PHP_METHOD(Mongo, selectCollection) {
     zval_add_ref(&db);
   }
 
-  PUSH_PARAM(collection); PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, selectCollection)(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM();
-
+  MONGO_METHOD(MongoDB, selectCollection, return_value, db, 1, collection);
   zval_ptr_dtor(&db);
 }
 /* }}} */
@@ -907,54 +883,18 @@ PHP_METHOD(Mongo, dropDB) {
     MAKE_STD_ZVAL(temp_db);
 
     // reusing db param from Mongo::drop call
-    MONGO_METHOD(Mongo, selectDB)(1, temp_db, &temp_db, getThis(), return_value_used TSRMLS_CC);
+    MONGO_METHOD_BASE(Mongo, selectDB)(1, temp_db, NULL, getThis(), 0 TSRMLS_CC);
     db = temp_db;
   }
   else {
     zval_add_ref(&db);
   }
 
-  MONGO_METHOD(MongoDB, drop)(0, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
-
+  MONGO_METHOD(MongoDB, drop, return_value, db, 0);
   zval_ptr_dtor(&db);
 }
 /* }}} */
 
-/* {{{ Mongo::repairDB()
- */
-PHP_METHOD(Mongo, repairDB) {
-  zval *db, *preserve_clones = 0, *backup = 0;
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|zz", &db, mongo_ce_DB, &preserve_clones, &backup) == FAILURE) {
-    RETURN_FALSE;
-  }
-
-  if (!preserve_clones) {
-    MAKE_STD_ZVAL(preserve_clones);
-    ZVAL_BOOL(preserve_clones, 0);
-  }
-  else {
-    zval_add_ref(&preserve_clones);
-  }
-
-  if (!backup) {
-    MAKE_STD_ZVAL(backup);
-    ZVAL_BOOL(backup, 0);
-  }
-  else {
-    zval_add_ref(&backup);
-  }
-
-  PUSH_PARAM(preserve_clones); PUSH_PARAM(backup); PUSH_PARAM((void*)2);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(MongoDB, selectCollection)(1, return_value, return_value_ptr, db, return_value_used TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM(); POP_PARAM();
-
-  zval_ptr_dtor(&backup);
-  zval_ptr_dtor(&preserve_clones);
-}
-/* }}} */
 
 static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC) {
   zval *db_name, *db;
@@ -962,25 +902,21 @@ static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC) 
   ZVAL_STRING(db_name, "admin", 1);
 
   MAKE_STD_ZVAL(db);
-  PUSH_PARAM(db_name); PUSH_PARAM((void*)1);
-  PUSH_EO_PARAM();
-  MONGO_METHOD(Mongo, selectDB)(1, db, NULL, getThis(), 0 TSRMLS_CC);
-  POP_EO_PARAM();
-  POP_PARAM(); POP_PARAM();
+  MONGO_METHOD(Mongo, selectDB, db, getThis(), 1, db_name);
   zval_ptr_dtor(&db_name);
 
   switch (err_type) {
   case LAST_ERROR:
-    MONGO_METHOD(MongoDB, lastError)(0, return_value, NULL, db, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoDB, lastError, return_value, db, 0);
     break;
   case PREV_ERROR:
-    MONGO_METHOD(MongoDB, prevError)(0, return_value, NULL, db, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoDB, prevError, return_value, db, 0);
     break;
   case RESET_ERROR:
-    MONGO_METHOD(MongoDB, resetError)(0, return_value, NULL, db, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoDB, resetError, return_value, db, 0);
     break;
   case FORCE_ERROR:
-    MONGO_METHOD(MongoDB, forceError)(0, return_value, NULL, db, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoDB, forceError, return_value, db, 0);
     break;
   }
 
@@ -1196,9 +1132,8 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
     // need to call this after setting cursor->link
     // reset checks that cursor->link != 0
-    MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
-
-    MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval, 0);
+    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval, 0);
     if ((Z_TYPE_P(response) == IS_ARRAY ||
          Z_TYPE_P(response) == IS_OBJECT) &&
         zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
@@ -1219,8 +1154,8 @@ static int get_master(mongo_link *link TSRMLS_DC) {
     temp.server.single.socket = link->server.paired.rsocket;
     cursor->link = &temp;
 
-    MONGO_METHOD(MongoCursor, reset)(0, &temp_ret, NULL, cursor_zval, 0 TSRMLS_CC);
-    MONGO_METHOD(MongoCursor, getNext)(0, response, NULL, cursor_zval, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval, 0);
+    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval, 0);
     if ((Z_TYPE_P(response) == IS_ARRAY ||
          Z_TYPE_P(response) == IS_OBJECT) &&
         zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
@@ -1602,3 +1537,43 @@ static int mongo_get_sockaddr(struct sockaddr_in *addr, char *host, int port, zv
   return SUCCESS;
 }
 
+/*
+ * pushes an arbitrary number of arguments onto
+ * the stack before calling a zim_Class_method
+ */
+void php_mongo_push_params(TSRMLS_D, int num, ...) {
+  va_list list;
+  int count = 0;
+
+  // don't add anything if num is 0
+  if (!num) {
+    return;
+  }
+
+  va_start(list, num);
+  while (count++ < num) {
+    PUSH_PARAM(va_arg(list, zval*));
+  }
+  va_end(list);
+
+  PUSH_PARAM((void*)num);
+  PUSH_EO_PARAM();
+}
+
+/*
+ * pops arguments from the stack after a
+ * method has been called
+ */
+void php_mongo_pop_params(TSRMLS_D, int num) {
+  int count = 0;
+
+  // don't pop anything if num is 0
+  if (!num) {
+    return;
+  }
+
+  POP_EO_PARAM();
+  while (count++ <= num) {
+    POP_PARAM();
+  }
+}

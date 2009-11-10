@@ -84,11 +84,17 @@
 
 #if ZEND_MODULE_API_NO >= 20060613
 // normal, nice method
-#define MONGO_METHOD(classname, name) zim_##classname##_##name
+#define MONGO_METHOD_BASE(classname, name) zim_##classname##_##name
 #else
 // gah!  wtf, php 5.1?
-#define MONGO_METHOD(classname, name) zif_##classname##_##name
+#define MONGO_METHOD_BASE(classname, name) zif_##classname##_##name
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
+
+/* push parameters, call function, pop parameters */
+#define MONGO_METHOD(classname, name, retval, thisptr, num, params...)	\
+  php_mongo_push_params(TSRMLS_C, num, ##params);			\
+  MONGO_METHOD_BASE(classname, name)(num, retval, NULL, thisptr, 0 TSRMLS_CC); \
+  php_mongo_pop_params(TSRMLS_C, num);
 
 #define HASH_P(a) (Z_TYPE_P(a) == IS_ARRAY ? Z_ARRVAL_P(a) : Z_OBJPROP_P(a))
 #define HASH_PP(a) (Z_TYPE_PP(a) == IS_ARRAY ? Z_ARRVAL_PP(a) : Z_OBJPROP_PP(a))
@@ -287,7 +293,6 @@ PHP_METHOD(Mongo, __toString);
 PHP_METHOD(Mongo, selectDB);
 PHP_METHOD(Mongo, selectCollection);
 PHP_METHOD(Mongo, dropDB);
-PHP_METHOD(Mongo, repairDB);
 PHP_METHOD(Mongo, lastError);
 PHP_METHOD(Mongo, prevError);
 PHP_METHOD(Mongo, resetError);
@@ -321,6 +326,10 @@ void mongo_init_MongoDate(TSRMLS_D);
 void mongo_init_MongoBinData(TSRMLS_D);
 void mongo_init_MongoDBRef(TSRMLS_D);
 void mongo_init_MongoTimestamp(TSRMLS_D);
+
+void php_mongo_pop_params(TSRMLS_D, int num);
+void php_mongo_push_params(TSRMLS_D, int, ...);
+
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;

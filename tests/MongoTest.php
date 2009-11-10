@@ -298,12 +298,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($c->findOne(), NULL);
     }
 
-    public function testRepairDB() {
-        $this->object->connect();
-        $db = $this->object->selectDB('temp');
-        $this->object->repairDB($db);
-    }
-
     /**
      * @expectedException PHPUnit_Framework_Error
      */
