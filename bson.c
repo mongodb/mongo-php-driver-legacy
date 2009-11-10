@@ -694,7 +694,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       add_property_stringl(value, "code", code, code_len-1, DUP);
       add_property_zval(value, "scope", zcope);
 
-      // somehow, we pick up an extra zcope ref
+      // add_property_zval creates an extra zcope ref
       zval_ptr_dtor(&zcope);
       break;
     }

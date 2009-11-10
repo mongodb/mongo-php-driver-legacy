@@ -550,11 +550,11 @@ PHP_METHOD(MongoCollection, deleteIndex) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   MAKE_STD_ZVAL(data);
-  object_init(data);
-  add_property_zval(data, "deleteIndexes", c->name);
+  array_init(data);
+  add_assoc_zval(data, "deleteIndexes", c->name);
   zval_add_ref(&c->name);
+  add_assoc_zval(data, "index", key_str);
   zval_add_ref(&key_str);
-  add_property_zval(data, "index", key_str);
  
   PUSH_PARAM(data); PUSH_PARAM((void*)1);
   PUSH_EO_PARAM();

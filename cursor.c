@@ -562,15 +562,16 @@ PHP_METHOD(MongoCursor, count) {
 
   // create query
   MAKE_STD_ZVAL(data);
-  object_init(data);
+  array_init(data);
 
   // "count" => "collectionName"
-  add_property_string(data, "count", strchr(cursor->ns, '.')+1, 1);
+  add_assoc_string(data, "count", strchr(cursor->ns, '.')+1, 1);
 
   if (cursor->query) {
     zval **inner_query;
     if (zend_hash_find(HASH_P(cursor->query), "query", strlen("query")+1, (void**)&inner_query) == SUCCESS) {
-      add_property_zval(data, "query", *inner_query);
+      add_assoc_zval(data, "query", *inner_query);
+      zval_add_ref(inner_query);
     }
   }
 
