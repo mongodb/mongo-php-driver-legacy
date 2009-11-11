@@ -429,20 +429,31 @@ PHP_METHOD(Mongo, __construct) {
     return;
   }
 
+  /* I have no idea what this is for */
   if (!server) {
     zserver = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
     server = Z_STRVAL_P(zserver);
     server_len = Z_STRLEN_P(zserver);
   }
 
+  /* set up the fields */
   zend_update_property_stringl(mongo_ce_Mongo, getThis(), "server", strlen("server"), server, server_len TSRMLS_CC);
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), paired TSRMLS_CC);
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), persist TSRMLS_CC);
 
   if (connect) {
+    /*
+     * We are calling:
+     *
+     * $m->connect();
+     *
+     * so we don't need any parameters.  We've already set up the environment 
+     * above.
+     */
     MONGO_METHOD(Mongo, connect, return_value, getThis(), 0);
   }
   else {
+    /* if we aren't connecting, set Mongo::connected to false and return */
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 0 TSRMLS_CC);
   }
 }
@@ -452,14 +463,15 @@ PHP_METHOD(Mongo, __construct) {
 /* {{{ Mongo->connect
  */
 PHP_METHOD(Mongo, connect) {
-  MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  MONGO_METHOD(Mongo, connectUtil, return_value, getThis(), 0);
 }
 
 /* {{{ Mongo->pairConnect
  */
 PHP_METHOD(Mongo, pairConnect) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
-  MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+
+  MONGO_METHOD(Mongo, connectUtil, return_value, getThis(), 0);
 }
 
 /* {{{ Mongo->persistConnect
@@ -467,6 +479,11 @@ PHP_METHOD(Mongo, pairConnect) {
 PHP_METHOD(Mongo, persistConnect) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
+  /* 
+   * pass through any parameters Mongo::persistConnect got 
+   * we can't use MONGO_METHOD because we don't want
+   * to pop the parameters, yet.
+   */
   MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
@@ -476,16 +493,23 @@ PHP_METHOD(Mongo, pairPersistConnect) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
+  /* 
+   * pass through any parameters Mongo::pairPersistConnect got 
+   * we can't use MONGO_METHOD because we don't want
+   * to pop the parameters, yet.
+   */
   MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 
 PHP_METHOD(Mongo, connectUtil) {
   zval *connected, *server, *errmsg;
+
+  /* initialize and clear the error message */
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
 
-  // if we're already connected, disconnect
+  /* if we're already connected, disconnect */
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
   if (Z_BVAL_P(connected)) {
     // Mongo->close()
@@ -494,10 +518,14 @@ PHP_METHOD(Mongo, connectUtil) {
     // Mongo->connected = false
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
   }
+
+  /* try to actually connect */
   connect_already(INTERNAL_FUNCTION_PARAM_PASSTHRU, errmsg);
 
+  /* find out if we're connected */
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
-  // if connecting failed, throw an exception
+
+  /* if connecting failed, throw an exception */
   if (!Z_BVAL_P(connected)) {
     char *full_error;
     server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
@@ -511,7 +539,8 @@ PHP_METHOD(Mongo, connectUtil) {
   }
 
   zval_ptr_dtor(&errmsg);
-  // set the Mongo->connected property
+
+  /* set the Mongo->connected property */
   Z_LVAL_P(connected) = 1;
 }
 
@@ -558,6 +587,10 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
    * end of connection limit check
    */
 
+  /* 
+   * if we're trying to make a persistent connection, check if one already
+   * exists 
+   */
   if (Z_BVAL_P(persist)) {
     zend_rsrc_list_entry *le;
     char *key;
@@ -567,7 +600,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
 		       username ? Z_STRVAL_P(username) : "", 
 		       password ? Z_STRVAL_P(password) : "");
 
-    // if a connection is found, return it
+    /* if a connection is found, return it */
     if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
       zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
 
@@ -577,9 +610,12 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
       efree(key);
       return;
     }
+
+    /* if it isn't found, just clean up and keep going */
     efree(key);
   }
 
+  /* in the rare case when some idiot passes in "" as a server name */
   if (Z_STRLEN_P(server) == 0) {
     ZVAL_STRING(errmsg, "no server name given", 1);
     return;
@@ -588,8 +624,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
 
   link = (mongo_link*)pemalloc(sizeof(mongo_link), Z_BVAL_P(persist));
 
-  // zero pointers so it doesn't segfault on cleanup if
-  // connection fails
+  /* zero pointers so it doesn't segfault on cleanup if connection fails */
   link->username = 0;
   link->password = 0;
   link->paired = Z_BVAL_P(pair);
@@ -603,21 +638,30 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
     link->server.single.host = 0;
   }
 
+  /* do the actual connection */
   if (get_host_and_port(Z_STRVAL_P(server), link, errmsg TSRMLS_CC) == FAILURE ||
       mongo_do_socket_connect(link, errmsg TSRMLS_CC) == FAILURE) {
+    /* 
+     * if this fails, free the link memory.  We haven't registered the struct
+     * with PHP yet, so we have to do this manually 
+     */
     mongo_link_dtor(link);
     return;
   }
 
+  /* Mongo::connected = true */
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
 
-  // store a reference in the persistence list
+  /* 
+   * if we're doing a persistent connection, store a reference in the 
+   * persistence list
+   */
   if (Z_BVAL_P(persist)) {
     zend_rsrc_list_entry new_le;
     char *key;
     int key_len;
 
-    // save username and password for reconnection
+    /* save username and password for reconnection */
     if (username && Z_STRLEN_P(username) > 0) {
       link->username = (char*)pestrdup(Z_STRVAL_P(username), link->persist);
     }
@@ -642,7 +686,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
     ZEND_REGISTER_RESOURCE(return_value, link, le_pconnection);
     MonGlo(num_persistent)++;
   }
-  // otherwise, just return the connection
+  /* otherwise, just return the connection */
   else {
     ZEND_REGISTER_RESOURCE(return_value, link, le_connection);
   }

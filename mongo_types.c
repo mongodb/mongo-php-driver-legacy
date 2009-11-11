@@ -227,10 +227,9 @@ PHP_METHOD(MongoId, __toString) {
 /* {{{ MongoDate::__construct
  */
 PHP_METHOD(MongoDate, __construct) {
-  zval *arg = 0;
-  int usec = 0;
+  int arg = 0, usec = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zl", &arg, &usec) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &arg, &usec) == FAILURE) {
     return;
   }
 
@@ -247,16 +246,9 @@ PHP_METHOD(MongoDate, __construct) {
     add_property_long(getThis(), "usec", time.tv_usec);
 #endif
   }
-  else if (Z_TYPE_P(arg) == IS_LONG) {
-    add_property_long(getThis(), "sec", Z_LVAL_P(arg));
-    add_property_long(getThis(), "usec", usec);
-  }
   else {
-#   if ZEND_MODULE_API_NO >= 20060613
-    zend_throw_exception(spl_ce_InvalidArgumentException, "MongoDate::__construct()", 0 TSRMLS_CC);
-#   else
-    zend_throw_exception(zend_exception_get_default(), "MongoDate::__construct()", 0 TSRMLS_CC);
-#   endif
+    add_property_long(getThis(), "sec", arg);
+    add_property_long(getThis(), "usec", usec);
   }
 }
 /* }}} */

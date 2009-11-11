@@ -54,7 +54,7 @@ static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
     // create new MongoId
     MAKE_STD_ZVAL(newid);
     object_init_ex(newid, mongo_ce_Id);
-    MONGO_METHOD(MongoId, __construct)(0, &temp, NULL, newid, 0 TSRMLS_CC);
+    MONGO_METHOD(MongoId, __construct, &temp, newid, 0);
 
     // add to obj
     zend_hash_add(array, "_id", 4, &newid, sizeof(zval*), NULL);
