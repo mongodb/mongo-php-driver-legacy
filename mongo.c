@@ -1585,7 +1585,7 @@ static int mongo_get_sockaddr(struct sockaddr_in *addr, char *host, int port, zv
  * pushes an arbitrary number of arguments onto
  * the stack before calling a zim_Class_method
  */
-void php_mongo_push_params(TSRMLS_D, int num, ...) {
+void php_mongo_push_params(void ***tsrm_ls, int num, ...) {
   va_list list;
   int count = 0;
 
@@ -1608,7 +1608,7 @@ void php_mongo_push_params(TSRMLS_D, int num, ...) {
  * pops arguments from the stack after a
  * method has been called
  */
-void php_mongo_pop_params(TSRMLS_D, int num) {
+void php_mongo_pop_params(void ***tsrm_ls, int num) {
   int count = 0;
 
   // don't pop anything if num is 0

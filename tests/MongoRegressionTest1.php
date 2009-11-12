@@ -199,7 +199,8 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $this->assertEquals(10, $cursor->count());
 
         $cursor->limit(2);
-        $this->assertEquals(2, $cursor->count());
+        $this->assertEquals(10, $cursor->count());
+        $this->assertEquals(2, $cursor->count(true));
     }
 
     public function testCursorConversion() {

@@ -544,10 +544,14 @@ PHP_METHOD(MongoCursor, count) {
   zval **n;
   mongo_cursor *cursor;
   mongo_db *db_struct;
+  zend_bool all = 0;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &all) == FAILURE) {
+    return;
+  }
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
-
 
   // fake a MongoDB object
   MAKE_STD_ZVAL(db);
@@ -558,7 +562,6 @@ PHP_METHOD(MongoCursor, count) {
   zval_add_ref(&cursor->resource);
   MAKE_STD_ZVAL(db_struct->name);
   ZVAL_STRING(db_struct->name, estrndup(cursor->ns, strchr(cursor->ns, '.') - cursor->ns), 0);
-
 
   // create query
   MAKE_STD_ZVAL(data);
@@ -573,6 +576,15 @@ PHP_METHOD(MongoCursor, count) {
       add_assoc_zval(data, "query", *inner_query);
       zval_add_ref(inner_query);
     }
+    /*
+     * "all" creates a count based on what the cursor is actually going to return,
+     * including the query, sort, limit, and skip.
+     */
+    if (all) {
+      /* make the limit a hard limit */
+      add_assoc_long(data, "limit", cursor->limit);
+      add_assoc_long(data, "skip", cursor->skip);
+    }
   }
 
   MAKE_STD_ZVAL(response);
@@ -582,21 +594,14 @@ PHP_METHOD(MongoCursor, count) {
 
   // prep results
   if (zend_hash_find(HASH_P(response), "n", 2, (void**)&n) == SUCCESS) {
-    // don't allow count to return more than cursor->limit
-    if (cursor->limit > 0 && Z_DVAL_PP(n) > cursor->limit) {
-      RETVAL_LONG(cursor->limit);
-    }
-    else {
-      convert_to_long(*n);
-      RETVAL_ZVAL(*n, 1, 0);
-    }
+    convert_to_long(*n);
+    RETVAL_ZVAL(*n, 1, 0);
     zval_ptr_dtor(&response);
   }
   else {
     RETVAL_ZVAL(response, 0, 0);
   }
 
-  zend_objects_store_del_ref(db TSRMLS_CC);
   zval_ptr_dtor(&db);
 }
 

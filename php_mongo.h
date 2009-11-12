@@ -298,7 +298,6 @@ PHP_METHOD(Mongo, prevError);
 PHP_METHOD(Mongo, resetError);
 PHP_METHOD(Mongo, forceError);
 PHP_METHOD(Mongo, close);
-PHP_METHOD(Mongo, __destruct);
 
 
 /*
@@ -327,8 +326,8 @@ void mongo_init_MongoBinData(TSRMLS_D);
 void mongo_init_MongoDBRef(TSRMLS_D);
 void mongo_init_MongoTimestamp(TSRMLS_D);
 
-void php_mongo_pop_params(TSRMLS_D, int num);
-void php_mongo_push_params(TSRMLS_D, int, ...);
+void php_mongo_pop_params(void***, int);
+void php_mongo_push_params(void***, int, ...);
 
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
