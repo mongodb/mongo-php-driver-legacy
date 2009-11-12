@@ -82,7 +82,7 @@ void generate_id(char *data TSRMLS_DC) {
 
 int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_uint *serialized_length, zend_serialize_data *var_hash TSRMLS_DC) {
   zval str;
-  MONGO_METHOD(MongoId, __toString, &str, struc, 0);
+  MONGO_METHOD(MongoId, __toString, &str, struc, 0, NULL);
   *(serialized_length) = Z_STRLEN(str);
   *(serialized_data) = (unsigned char*)Z_STRVAL(str);
   return SUCCESS;

@@ -130,10 +130,10 @@ PHP_METHOD(MongoGridFS, drop) {
   zval *zchunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
   MAKE_STD_ZVAL(temp);
-  MONGO_METHOD(MongoCollection, drop, temp, zchunks, 0);
+  MONGO_METHOD(MongoCollection, drop, temp, zchunks, 0, NULL);
   zval_ptr_dtor(&temp);
   
-  MONGO_METHOD(MongoCollection, drop, return_value, getThis(), 0);
+  MONGO_METHOD(MongoCollection, drop, return_value, getThis(), 0, NULL);
 }
 
 PHP_METHOD(MongoGridFS, find) {
@@ -232,7 +232,7 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC) {
     // create an id for the file
     MAKE_STD_ZVAL(zid);
     object_init_ex(zid, mongo_ce_Id);
-    MONGO_METHOD(MongoId, __construct, &temp, zid, 0);
+    MONGO_METHOD(MongoId, __construct, &temp, zid, 0, NULL);
 
     add_assoc_zval(zfile, "_id", zid);
   }
@@ -363,7 +363,7 @@ static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC) {
     zval *upload_date;
     MAKE_STD_ZVAL(upload_date);
     object_init_ex(upload_date, mongo_ce_Date);
-    MONGO_METHOD(MongoDate, __construct, &temp, upload_date, 0);
+    MONGO_METHOD(MongoDate, __construct, &temp, upload_date, 0, NULL);
 
     add_assoc_zval(zfile, "uploadDate", upload_date);
   }
@@ -557,7 +557,7 @@ PHP_METHOD(MongoGridFS, remove) {
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
   MAKE_STD_ZVAL(next);
-  MONGO_METHOD(MongoCursor, getNext, next, zcursor, 0);
+  MONGO_METHOD(MongoCursor, getNext, next, zcursor, 0, NULL);
 
   while (Z_TYPE_P(next) != IS_NULL) {
     zval **id;
@@ -578,7 +578,7 @@ PHP_METHOD(MongoGridFS, remove) {
     zval_ptr_dtor(&temp);
     zval_ptr_dtor(&next);
     MAKE_STD_ZVAL(next);
-    MONGO_METHOD(MongoCursor, getNext, next, zcursor, 0);
+    MONGO_METHOD(MongoCursor, getNext, next, zcursor, 0, NULL);
   }
   zval_ptr_dtor(&next);
   zval_ptr_dtor(&zcursor);
@@ -834,7 +834,7 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
   zval *next;
 
   MAKE_STD_ZVAL(next);                                                                     
-  MONGO_METHOD(MongoCursor, getNext, next, cursor, 0);
+  MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
 
   while (Z_TYPE_P(next) != IS_NULL) {
     zval **zdata;
@@ -871,7 +871,7 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
     // get ready for the next iteration
     zval_ptr_dtor(&next);
     MAKE_STD_ZVAL(next);
-    MONGO_METHOD(MongoCursor, getNext, next, cursor, 0);
+    MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
   }
   zval_ptr_dtor(&next);
 
@@ -914,8 +914,8 @@ PHP_METHOD(MongoGridFSCursor, __construct) {
 }
 
 PHP_METHOD(MongoGridFSCursor, getNext) {
-  MONGO_METHOD(MongoCursor, next, return_value, getThis(), 0);
-  MONGO_METHOD(MongoGridFSCursor, current, return_value, getThis(), 0);
+  MONGO_METHOD(MongoCursor, next, return_value, getThis(), 0, NULL);
+  MONGO_METHOD(MongoGridFSCursor, current, return_value, getThis(), 0, NULL);
 }
 
 PHP_METHOD(MongoGridFSCursor, current) {

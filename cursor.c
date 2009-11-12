@@ -133,7 +133,7 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->query = q;
 
   // reset iteration pointer, just in case
-  MONGO_METHOD(MongoCursor, reset, return_value, getThis(), 0);
+  MONGO_METHOD(MongoCursor, reset, return_value, getThis(), 0, NULL);
 
   cursor->at = 0;
   cursor->num = 0;
@@ -158,7 +158,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
   if (!cursor->started_iterating) {
-    MONGO_METHOD(MongoCursor, doQuery, return_value, getThis(), 0);
+    MONGO_METHOD(MongoCursor, doQuery, return_value, getThis(), 0, NULL);
     cursor->started_iterating = 1;
   }
 
@@ -202,13 +202,13 @@ PHP_METHOD(MongoCursor, hasNext) {
 /* {{{ MongoCursor::getNext
  */
 PHP_METHOD(MongoCursor, getNext) {
-  MONGO_METHOD(MongoCursor, next, return_value, getThis(), 0);
+  MONGO_METHOD(MongoCursor, next, return_value, getThis(), 0, NULL);
   // will be null unless there was an error
   if (Z_TYPE_P(return_value) == IS_BOOL &&
       Z_BVAL_P(return_value) == 0) {
     return;
   }
-  MONGO_METHOD(MongoCursor, current, return_value, getThis(), 0);
+  MONGO_METHOD(MongoCursor, current, return_value, getThis(), 0, NULL);
 }
 /* }}} */
 
@@ -362,8 +362,8 @@ PHP_METHOD(MongoCursor, explain) {
   query = cursor->query;
   add_assoc_bool(query, "$explain", 1);
 
-  MONGO_METHOD(MongoCursor, reset, return_value, getThis(), 0);
-  MONGO_METHOD(MongoCursor, getNext, return_value, getThis(), 0);
+  MONGO_METHOD(MongoCursor, reset, return_value, getThis(), 0, NULL);
+  MONGO_METHOD(MongoCursor, getNext, return_value, getThis(), 0, NULL);
 
   // reset to original limit
   cursor->limit = temp_limit;
@@ -464,7 +464,7 @@ PHP_METHOD(MongoCursor, next) {
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
   if (!cursor->started_iterating) {
-    MONGO_METHOD(MongoCursor, doQuery, return_value, getThis(), 0);
+    MONGO_METHOD(MongoCursor, doQuery, return_value, getThis(), 0, NULL);
     cursor->started_iterating = 1;
   }
 
@@ -475,7 +475,7 @@ PHP_METHOD(MongoCursor, next) {
   }
 
   // check for results
-  MONGO_METHOD(MongoCursor, hasNext, &has_next, getThis(), 0);
+  MONGO_METHOD(MongoCursor, hasNext, &has_next, getThis(), 0, NULL);
   if (!Z_BVAL(has_next)) {
     // we're out of results
     RETURN_NULL();
@@ -506,8 +506,8 @@ PHP_METHOD(MongoCursor, next) {
 /* {{{ MongoCursor->rewind
  */
 PHP_METHOD(MongoCursor, rewind) {
-  MONGO_METHOD(MongoCursor, reset, return_value, getThis(), 0);
-  MONGO_METHOD(MongoCursor, next, return_value, getThis(), 0);
+  MONGO_METHOD(MongoCursor, reset, return_value, getThis(), 0, NULL);
+  MONGO_METHOD(MongoCursor, next, return_value, getThis(), 0, NULL);
 }
 /* }}} */
 

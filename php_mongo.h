@@ -92,7 +92,7 @@
 
 /* push parameters, call function, pop parameters */
 #define MONGO_METHOD(classname, name, retval, thisptr, num, params...)	\
-  php_mongo_push_params(TSRMLS_C, num, ##params);			\
+  php_mongo_push_params(TSRMLS_C, num, params);				\
   MONGO_METHOD_BASE(classname, name)(num, retval, NULL, thisptr, 0 TSRMLS_CC); \
   php_mongo_pop_params(TSRMLS_C, num);
 

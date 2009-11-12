@@ -206,7 +206,7 @@ PHP_METHOD(MongoCollection, insert) {
       return;
     }
 
-    MONGO_METHOD(MongoCursor, getNext, return_value, cursor_z, 0);
+    MONGO_METHOD(MongoCursor, getNext, return_value, cursor_z, 0, NULL);
 
     zval_ptr_dtor(&cursor_z);
     zval_ptr_dtor(&cmd_ns_z);
@@ -320,7 +320,7 @@ PHP_METHOD(MongoCollection, findOne) {
   MAKE_STD_ZVAL(cursor);
 
   if (!query) {
-    MONGO_METHOD(MongoCollection, find, cursor, getThis(), 0);
+    MONGO_METHOD(MongoCollection, find, cursor, getThis(), 0, NULL);
   }
   else if (!fields) {
     MONGO_METHOD(MongoCollection, find, cursor, getThis(), 1, query);
@@ -333,7 +333,7 @@ PHP_METHOD(MongoCollection, findOne) {
   limit.value.lval = -1;
 
   MONGO_METHOD(MongoCursor, limit, cursor, cursor, 1, &limit);
-  MONGO_METHOD(MongoCursor, getNext, return_value, cursor, 0);
+  MONGO_METHOD(MongoCursor, getNext, return_value, cursor, 0, NULL);
 
   zend_objects_store_del_ref(cursor TSRMLS_CC);
   zval_ptr_dtor(&cursor);
@@ -545,12 +545,12 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
   array_init(return_value);
 
   MAKE_STD_ZVAL(next);
-  MONGO_METHOD(MongoCursor, getNext, next, cursor, 0);
+  MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
   while (Z_TYPE_P(next) != IS_NULL) {
     add_next_index_zval(return_value, next);
 
     MAKE_STD_ZVAL(next);
-    MONGO_METHOD(MongoCursor, getNext, next, cursor, 0);
+    MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
   }
   zval_ptr_dtor(&next);
   zval_ptr_dtor(&cursor);

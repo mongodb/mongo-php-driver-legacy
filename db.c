@@ -236,7 +236,7 @@ PHP_METHOD(MongoDB, dropCollection) {
     collection = &temp;
   }
 
-  MONGO_METHOD(MongoCollection, drop, return_value, collection, 0);
+  MONGO_METHOD(MongoCollection, drop, return_value, collection, 0, NULL);
 }
 
 PHP_METHOD(MongoDB, listCollections) {
@@ -255,11 +255,11 @@ PHP_METHOD(MongoDB, listCollections) {
 
   // do find  
   MAKE_STD_ZVAL(cursor);
-  MONGO_METHOD(MongoCollection, find, cursor, collection, 0);
+  MONGO_METHOD(MongoCollection, find, cursor, collection, 0, NULL);
  
   // populate list
   MAKE_STD_ZVAL(next);  
-  MONGO_METHOD(MongoCursor, getNext, next, cursor, 0);
+  MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
   while (Z_TYPE_P(next) != IS_NULL) {
     zval *c, *zname;
     zval **collection;
@@ -272,7 +272,7 @@ PHP_METHOD(MongoDB, listCollections) {
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
 
-      MONGO_METHOD(MongoCursor, getNext, next, cursor, 0);
+      MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
       continue;
     }
 
@@ -285,7 +285,7 @@ PHP_METHOD(MongoDB, listCollections) {
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
 
-      MONGO_METHOD(MongoCursor, getNext, next, cursor, 0);
+      MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
       continue;
     }
 
@@ -306,7 +306,7 @@ PHP_METHOD(MongoDB, listCollections) {
     zval_ptr_dtor(&next);
     MAKE_STD_ZVAL(next);
 
-    MONGO_METHOD(MongoCursor, getNext, next, cursor, 0);
+    MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
   }
 
   zval_ptr_dtor(&next);
@@ -445,7 +445,7 @@ PHP_METHOD(MongoDB, command) {
   MONGO_METHOD(MongoCursor, limit, &temp, cursor, 1, &limit);
 
   // query
-  MONGO_METHOD(MongoCursor, getNext, return_value, cursor, 0);
+  MONGO_METHOD(MongoCursor, getNext, return_value, cursor, 0, NULL);
 
   zend_objects_store_del_ref(cursor TSRMLS_CC);
   zval_ptr_dtor(&cursor);
