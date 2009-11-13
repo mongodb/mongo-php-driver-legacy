@@ -120,7 +120,7 @@
   POP_PARAM(); POP_PARAM(); POP_PARAM();
 
 #define MONGO_METHOD5(classname, name, retval, thisptr, param1, param2, param3, param4, param5) \
-  PUSH_PARAM(param1); PUSH_PARAM(param2); PUSH_PARAM(param3); PUSH_PARAM(4); \
+  PUSH_PARAM(param1); PUSH_PARAM(param2); PUSH_PARAM(param3); PUSH_PARAM(param4); \
   MONGO_METHOD_HELPER(classname, name, retval, thisptr, 5, param5);	\
   POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 

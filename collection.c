@@ -318,16 +318,7 @@ PHP_METHOD(MongoCollection, findOne) {
   }
 
   MAKE_STD_ZVAL(cursor);
-
-  if (!query) {
-    MONGO_METHOD(MongoCursor, __construct, &temp, return_value);
-  }
-  else if (!fields) {
-    MONGO_METHOD1(MongoCursor, __construct, &temp, return_value, query);
-  }
-  else {
-    MONGO_METHOD2(MongoCursor, __construct, &temp, return_value, query, fields);
-  }
+  MONGO_METHOD_BASE(MongoCollection, find)(ZEND_NUM_ARGS(), cursor, NULL, getThis(), 0 TSRMLS_CC);
 
   ZVAL_LONG(limit, -1);
   MONGO_METHOD1(MongoCursor, limit, cursor, cursor, limit);
