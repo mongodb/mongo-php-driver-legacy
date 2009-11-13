@@ -82,7 +82,7 @@ void generate_id(char *data TSRMLS_DC) {
 
 int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_uint *serialized_length, zend_serialize_data *var_hash TSRMLS_DC) {
   zval str;
-  MONGO_METHOD(MongoId, __toString, &str, struc, 0, NULL);
+  MONGO_METHOD(MongoId, __toString, &str, struc);
   *(serialized_length) = Z_STRLEN(str);
   *(serialized_data) = (unsigned char*)Z_STRVAL(str);
   return SUCCESS;
@@ -98,7 +98,7 @@ int mongo_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned
 
   object_init_ex(*rval, mongo_ce_Id);
 
-  MONGO_METHOD(MongoId, __construct, &temp, *rval, 1, &str);
+  MONGO_METHOD1(MongoId, __construct, &temp, *rval, &str);
   efree(Z_STRVAL(str));
 
   return SUCCESS;
@@ -524,14 +524,14 @@ PHP_METHOD(MongoDBRef, get) {
   }
   
   MAKE_STD_ZVAL(collection);
-  MONGO_METHOD(MongoDB, selectCollection, collection, db, 1, *ns);
+  MONGO_METHOD1(MongoDB, selectCollection, collection, db, *ns);
   
   MAKE_STD_ZVAL(query);
   array_init(query);
   add_assoc_zval(query, "_id", *id);
   zval_add_ref(id);
   
-  MONGO_METHOD(MongoCollection, findOne, return_value, collection, 1, query);
+  MONGO_METHOD1(MongoCollection, findOne, return_value, collection, query);
   zval_ptr_dtor(&collection);
   zval_ptr_dtor(&query);
 }

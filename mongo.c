@@ -450,7 +450,7 @@ PHP_METHOD(Mongo, __construct) {
      * so we don't need any parameters.  We've already set up the environment 
      * above.
      */
-    MONGO_METHOD(Mongo, connect, return_value, getThis(), 0, NULL);
+    MONGO_METHOD(Mongo, connect, return_value, getThis());
   }
   else {
     /* if we aren't connecting, set Mongo::connected to false and return */
@@ -463,7 +463,7 @@ PHP_METHOD(Mongo, __construct) {
 /* {{{ Mongo->connect
  */
 PHP_METHOD(Mongo, connect) {
-  MONGO_METHOD(Mongo, connectUtil, return_value, getThis(), 0, NULL);
+  MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
 }
 
 /* {{{ Mongo->pairConnect
@@ -471,7 +471,7 @@ PHP_METHOD(Mongo, connect) {
 PHP_METHOD(Mongo, pairConnect) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
 
-  MONGO_METHOD(Mongo, connectUtil, return_value, getThis(), 0, NULL);
+  MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
 }
 
 /* {{{ Mongo->persistConnect
@@ -513,7 +513,7 @@ PHP_METHOD(Mongo, connectUtil) {
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
   if (Z_BVAL_P(connected)) {
     // Mongo->close()
-    MONGO_METHOD(Mongo, close, return_value, getThis(), 0, NULL);
+    MONGO_METHOD(Mongo, close, return_value, getThis());
 
     // Mongo->connected = false
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
@@ -877,7 +877,7 @@ PHP_METHOD(Mongo, selectDB) {
   }
 
   object_init_ex(return_value, mongo_ce_DB);
-  MONGO_METHOD(MongoDB, __construct, &temp, return_value, 2, getThis(), db);
+  MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), db);
 }
 /* }}} */
 
@@ -908,7 +908,7 @@ PHP_METHOD(Mongo, selectCollection) {
     zval_add_ref(&db);
   }
 
-  MONGO_METHOD(MongoDB, selectCollection, return_value, db, 1, collection);
+  MONGO_METHOD1(MongoDB, selectCollection, return_value, db, collection);
   zval_ptr_dtor(&db);
 }
 /* }}} */
@@ -934,7 +934,7 @@ PHP_METHOD(Mongo, dropDB) {
     zval_add_ref(&db);
   }
 
-  MONGO_METHOD(MongoDB, drop, return_value, db, 0, NULL);
+  MONGO_METHOD(MongoDB, drop, return_value, db);
   zval_ptr_dtor(&db);
 }
 /* }}} */
@@ -946,21 +946,21 @@ static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC) 
   ZVAL_STRING(db_name, "admin", 1);
 
   MAKE_STD_ZVAL(db);
-  MONGO_METHOD(Mongo, selectDB, db, getThis(), 1, db_name);
+  MONGO_METHOD1(Mongo, selectDB, db, getThis(), db_name);
   zval_ptr_dtor(&db_name);
 
   switch (err_type) {
   case LAST_ERROR:
-    MONGO_METHOD(MongoDB, lastError, return_value, db, 0, NULL);
+    MONGO_METHOD(MongoDB, lastError, return_value, db);
     break;
   case PREV_ERROR:
-    MONGO_METHOD(MongoDB, prevError, return_value, db, 0, NULL);
+    MONGO_METHOD(MongoDB, prevError, return_value, db);
     break;
   case RESET_ERROR:
-    MONGO_METHOD(MongoDB, resetError, return_value, db, 0, NULL);
+    MONGO_METHOD(MongoDB, resetError, return_value, db);
     break;
   case FORCE_ERROR:
-    MONGO_METHOD(MongoDB, forceError, return_value, db, 0, NULL);
+    MONGO_METHOD(MongoDB, forceError, return_value, db);
     break;
   }
 
@@ -1176,8 +1176,8 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 
     // need to call this after setting cursor->link
     // reset checks that cursor->link != 0
-    MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval, 0, NULL);
-    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval, 0, NULL);
+    MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval);
+    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
     if ((Z_TYPE_P(response) == IS_ARRAY ||
          Z_TYPE_P(response) == IS_OBJECT) &&
         zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
@@ -1198,8 +1198,8 @@ static int get_master(mongo_link *link TSRMLS_DC) {
     temp.server.single.socket = link->server.paired.rsocket;
     cursor->link = &temp;
 
-    MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval, 0, NULL);
-    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval, 0, NULL);
+    MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval);
+    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
     if ((Z_TYPE_P(response) == IS_ARRAY ||
          Z_TYPE_P(response) == IS_OBJECT) &&
         zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
@@ -1581,43 +1581,3 @@ static int mongo_get_sockaddr(struct sockaddr_in *addr, char *host, int port, zv
   return SUCCESS;
 }
 
-/*
- * pushes an arbitrary number of arguments onto
- * the stack before calling a zim_Class_method
- */
-void php_mongo_push_params(void ***tsrm_ls, int num, ...) {
-  va_list list;
-  int count = 0;
-
-  // don't add anything if num is 0
-  if (!num) {
-    return;
-  }
-
-  va_start(list, num);
-  while (count++ < num) {
-    PUSH_PARAM(va_arg(list, zval*));
-  }
-  va_end(list);
-
-  PUSH_PARAM((void*)num);
-  PUSH_EO_PARAM();
-}
-
-/*
- * pops arguments from the stack after a
- * method has been called
- */
-void php_mongo_pop_params(void ***tsrm_ls, int num) {
-  int count = 0;
-
-  // don't pop anything if num is 0
-  if (!num) {
-    return;
-  }
-
-  POP_EO_PARAM();
-  while (count++ <= num) {
-    POP_PARAM();
-  }
-}

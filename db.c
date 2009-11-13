@@ -94,7 +94,7 @@ PHP_METHOD(MongoDB, selectCollection) {
  
   object_init_ex(return_value, mongo_ce_Collection);
 
-  MONGO_METHOD(MongoCollection, __construct, &temp, return_value, 2, getThis(), collection); 
+  MONGO_METHOD2(MongoCollection, __construct, &temp, return_value, getThis(), collection); 
 }
 
 PHP_METHOD(MongoDB, getGridFS) {
@@ -108,13 +108,13 @@ PHP_METHOD(MongoDB, getGridFS) {
   object_init_ex(return_value, mongo_ce_GridFS);
 
   if (!arg1) {
-    MONGO_METHOD(MongoGridFS, __construct, &temp, return_value, 1, getThis());
+    MONGO_METHOD1(MongoGridFS, __construct, &temp, return_value, getThis());
   }
   else if (!arg2) {
-    MONGO_METHOD(MongoGridFS, __construct, &temp, return_value, 2, getThis(), arg1);
+    MONGO_METHOD2(MongoGridFS, __construct, &temp, return_value, getThis(), arg1);
   }
   else {
-    MONGO_METHOD(MongoGridFS, __construct, &temp, return_value, 3, getThis(), arg1, arg2);
+    MONGO_METHOD3(MongoGridFS, __construct, &temp, return_value, getThis(), arg1, arg2);
   }
 }
 
@@ -123,7 +123,7 @@ PHP_METHOD(MongoDB, getProfilingLevel) {
   Z_TYPE(l) = IS_LONG;
   Z_LVAL(l) = -1;
 
-  MONGO_METHOD(MongoDB, setProfilingLevel, return_value, getThis(), 1, &l);
+  MONGO_METHOD1(MongoDB, setProfilingLevel, return_value, getThis(), &l);
 }
 
 PHP_METHOD(MongoDB, setProfilingLevel) {
@@ -140,7 +140,7 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
   add_assoc_long(data, "profile", level);
 
   MAKE_STD_ZVAL(cmd_return);
-  MONGO_METHOD(MongoDB, command, cmd_return, getThis(), 1, data);
+  MONGO_CMD(cmd_return, getThis());
 
   zval_ptr_dtor(&data);
 
@@ -161,7 +161,7 @@ PHP_METHOD(MongoDB, drop) {
   array_init(data);
   add_assoc_long(data, "dropDatabase", 1);
 
-  MONGO_METHOD(MongoDB, command, return_value, getThis(), 1, data);
+  MONGO_CMD(return_value, getThis());
   zval_ptr_dtor(&data);
 }
 
@@ -179,7 +179,7 @@ PHP_METHOD(MongoDB, repair) {
   add_assoc_bool(data, "preserveClonedFilesOnFailure", cloned);
   add_assoc_bool(data, "backupOriginalFiles", original);
 
-  MONGO_METHOD(MongoDB, command, return_value, getThis(), 1, data);
+  MONGO_CMD(return_value, getThis());
 
   zval_ptr_dtor(&data);
 }
@@ -212,13 +212,13 @@ PHP_METHOD(MongoDB, createCollection) {
   }
 
   MAKE_STD_ZVAL(temp);
-  MONGO_METHOD(MongoDB, command, temp, getThis(), 1, data);
+  MONGO_CMD(temp, getThis());
   zval_ptr_dtor(&temp);
 
   zval_ptr_dtor(&data);
 
   // get the collection we just created
-  MONGO_METHOD(MongoDB, selectCollection, return_value, getThis(), 1, collection);
+  MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), collection);
 }
 
 PHP_METHOD(MongoDB, dropCollection) {
@@ -232,11 +232,11 @@ PHP_METHOD(MongoDB, dropCollection) {
   if (Z_TYPE_P(collection) != IS_OBJECT ||
       Z_OBJCE_P(collection) != mongo_ce_Collection) {
 
-    MONGO_METHOD(MongoDB, selectCollection, &temp, getThis(), 1, collection);
+    MONGO_METHOD1(MongoDB, selectCollection, &temp, getThis(), collection);
     collection = &temp;
   }
 
-  MONGO_METHOD(MongoCollection, drop, return_value, collection, 0, NULL);
+  MONGO_METHOD(MongoCollection, drop, return_value, collection);
 }
 
 PHP_METHOD(MongoDB, listCollections) {
@@ -247,7 +247,7 @@ PHP_METHOD(MongoDB, listCollections) {
   ZVAL_STRING(nss, "system.namespaces", 1);
 
   MAKE_STD_ZVAL(collection);
-  MONGO_METHOD(MongoDB, selectCollection, collection, getThis(), 1, nss);
+  MONGO_METHOD1(MongoDB, selectCollection, collection, getThis(), nss);
   
   // list to return
   MAKE_STD_ZVAL(list);
@@ -255,11 +255,11 @@ PHP_METHOD(MongoDB, listCollections) {
 
   // do find  
   MAKE_STD_ZVAL(cursor);
-  MONGO_METHOD(MongoCollection, find, cursor, collection, 0, NULL);
+  MONGO_METHOD(MongoCollection, find, cursor, collection);
  
   // populate list
   MAKE_STD_ZVAL(next);  
-  MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
+  MONGO_METHOD(MongoCursor, getNext, next, cursor);
   while (Z_TYPE_P(next) != IS_NULL) {
     zval *c, *zname;
     zval **collection;
@@ -272,7 +272,7 @@ PHP_METHOD(MongoDB, listCollections) {
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
 
-      MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
+      MONGO_METHOD(MongoCursor, getNext, next, cursor);
       continue;
     }
 
@@ -285,7 +285,7 @@ PHP_METHOD(MongoDB, listCollections) {
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
 
-      MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
+      MONGO_METHOD(MongoCursor, getNext, next, cursor);
       continue;
     }
 
@@ -298,7 +298,7 @@ PHP_METHOD(MongoDB, listCollections) {
     // name must be copied because it is a substring of
     // a string that will be garbage collected in a sec
     ZVAL_STRING(zname, name, 1);
-    MONGO_METHOD(MongoDB, selectCollection, c, getThis(), 1, zname);
+    MONGO_METHOD1(MongoDB, selectCollection, c, getThis(), zname);
 
     add_next_index_zval(list, c);
 
@@ -306,7 +306,7 @@ PHP_METHOD(MongoDB, listCollections) {
     zval_ptr_dtor(&next);
     MAKE_STD_ZVAL(next);
 
-    MONGO_METHOD(MongoCursor, getNext, next, cursor, 0, NULL);
+    MONGO_METHOD(MongoCursor, getNext, next, cursor);
   }
 
   zval_ptr_dtor(&next);
@@ -328,7 +328,7 @@ PHP_METHOD(MongoDB, createDBRef) {
   if (Z_TYPE_P(obj) == IS_ARRAY ||
       Z_TYPE_P(obj) == IS_OBJECT) {
     if (zend_hash_find(HASH_P(obj), "_id", 4, (void**)&id) == SUCCESS) {
-      MONGO_METHOD(MongoDBRef, create, return_value, NULL, 2, ns, *id);        
+      MONGO_METHOD2(MongoDBRef, create, return_value, NULL, ns, *id);
       return;
     }
     else if (Z_TYPE_P(obj) == IS_ARRAY) {
@@ -336,7 +336,7 @@ PHP_METHOD(MongoDB, createDBRef) {
     }
   }
 
-  MONGO_METHOD(MongoDBRef, create, return_value, NULL, 2, ns, obj);
+  MONGO_METHOD2(MongoDBRef, create, return_value, NULL, ns, obj);
 }
 
 PHP_METHOD(MongoDB, getDBRef) {
@@ -346,7 +346,7 @@ PHP_METHOD(MongoDB, getDBRef) {
     return;
   }
 
-  MONGO_METHOD(MongoDBRef, get, return_value, NULL, 2, getThis(), ref);
+  MONGO_METHOD2(MongoDBRef, get, return_value, NULL, getThis(), ref);
 }
 
 PHP_METHOD(MongoDB, execute) {
@@ -371,7 +371,7 @@ PHP_METHOD(MongoDB, execute) {
 
     MAKE_STD_ZVAL(obj);
     object_init_ex(obj, mongo_ce_Code);
-    MONGO_METHOD(MongoCode, __construct, return_value, obj, 1, code);
+    MONGO_METHOD1(MongoCode, __construct, return_value, obj, code);
     code = obj;
   }
   else {
@@ -384,7 +384,7 @@ PHP_METHOD(MongoDB, execute) {
   add_assoc_zval(zdata, "$eval", code);
   add_assoc_zval(zdata, "args", args);
 
-  MONGO_METHOD(MongoDB, command, return_value, getThis(), 1, zdata);
+  MONGO_METHOD1(MongoDB, command, return_value, getThis(), zdata);
 
   zval_ptr_dtor(&zdata);
 }
@@ -434,7 +434,7 @@ PHP_METHOD(MongoDB, command) {
   // create cursor
   MAKE_STD_ZVAL(cursor);
   object_init_ex(cursor, mongo_ce_Cursor);
-  MONGO_METHOD(MongoCursor, __construct, &temp, cursor, 3, db->link, ns, cmd); 
+  MONGO_METHOD3(MongoCursor, __construct, &temp, cursor, db->link, ns, cmd); 
 
   zval_ptr_dtor(&ns);
 
@@ -442,10 +442,10 @@ PHP_METHOD(MongoDB, command) {
   Z_TYPE(limit) = IS_LONG;
   Z_LVAL(limit) = -1;
 
-  MONGO_METHOD(MongoCursor, limit, &temp, cursor, 1, &limit);
+  MONGO_METHOD1(MongoCursor, limit, &temp, cursor, &limit);
 
   // query
-  MONGO_METHOD(MongoCursor, getNext, return_value, cursor, 0, NULL);
+  MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
 
   zend_objects_store_del_ref(cursor TSRMLS_CC);
   zval_ptr_dtor(&cursor);
@@ -459,7 +459,7 @@ static void run_err(char *cmd, zval *return_value, zval *db TSRMLS_DC) {
   array_init(data);
   add_assoc_long(data, cmd, 1);
   
-  MONGO_METHOD(MongoDB, command, return_value, db, 1, data);
+  MONGO_CMD(return_value, db);
   
   zval_ptr_dtor(&data);
 }

@@ -90,11 +90,42 @@
 #define MONGO_METHOD_BASE(classname, name) zif_##classname##_##name
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
 
-/* push parameters, call function, pop parameters */
-#define MONGO_METHOD(classname, name, retval, thisptr, num, params...)	\
-  php_mongo_push_params(TSRMLS_C, num, params);				\
+#define MONGO_METHOD_HELPER(classname, name, retval, thisptr, num, param) \
+  PUSH_PARAM(param); PUSH_PARAM((void*)num);				\
+  PUSH_EO_PARAM();							\
   MONGO_METHOD_BASE(classname, name)(num, retval, NULL, thisptr, 0 TSRMLS_CC); \
-  php_mongo_pop_params(TSRMLS_C, num);
+  POP_EO_PARAM();			\
+  POP_PARAM(); POP_PARAM();
+
+/* push parameters, call function, pop parameters */
+#define MONGO_METHOD(classname, name, retval, thisptr)			\
+  MONGO_METHOD_BASE(classname, name)(0, retval, NULL, thisptr, 0 TSRMLS_CC);
+
+#define MONGO_METHOD1(classname, name, retval, thisptr, param1)		\
+  MONGO_METHOD_HELPER(classname, name, retval, thisptr, 1, param1);
+
+#define MONGO_METHOD2(classname, name, retval, thisptr, param1, param2)	\
+  PUSH_PARAM(param1);							\
+  MONGO_METHOD_HELPER(classname, name, retval, thisptr, 2, param2);	\
+  POP_PARAM();
+
+#define MONGO_METHOD3(classname, name, retval, thisptr, param1, param2, param3) \
+  PUSH_PARAM(param1); PUSH_PARAM(param2);				\
+  MONGO_METHOD_HELPER(classname, name, retval, thisptr, 3, param3);	\
+  POP_PARAM(); POP_PARAM();
+
+#define MONGO_METHOD4(classname, name, retval, thisptr, param1, param2, param3, param4) \
+  PUSH_PARAM(param1); PUSH_PARAM(param2); PUSH_PARAM(param3);		\
+  MONGO_METHOD_HELPER(classname, name, retval, thisptr, 4, param4);	\
+  POP_PARAM(); POP_PARAM(); POP_PARAM();
+
+#define MONGO_METHOD5(classname, name, retval, thisptr, param1, param2, param3, param4, param5) \
+  PUSH_PARAM(param1); PUSH_PARAM(param2); PUSH_PARAM(param3); PUSH_PARAM(4); \
+  MONGO_METHOD_HELPER(classname, name, retval, thisptr, 5, param5);	\
+  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
+
+#define MONGO_CMD(retval, thisptr) MONGO_METHOD1(MongoDB, command, retval, thisptr, data)
+
 
 #define HASH_P(a) (Z_TYPE_P(a) == IS_ARRAY ? Z_ARRVAL_P(a) : Z_OBJPROP_P(a))
 #define HASH_PP(a) (Z_TYPE_PP(a) == IS_ARRAY ? Z_ARRVAL_PP(a) : Z_OBJPROP_PP(a))
@@ -325,9 +356,6 @@ void mongo_init_MongoDate(TSRMLS_D);
 void mongo_init_MongoBinData(TSRMLS_D);
 void mongo_init_MongoDBRef(TSRMLS_D);
 void mongo_init_MongoTimestamp(TSRMLS_D);
-
-void php_mongo_pop_params(void***, int);
-void php_mongo_push_params(void***, int, ...);
 
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
