@@ -261,7 +261,10 @@ class MongoTest extends PHPUnit_Framework_TestCase
             try {
                 $db = $this->object->selectCollection("", "xyz");
             }
-            catch(InvalidArgumentException $e) {
+	    catch(InvalidArgumentException $e1) {
+	        $threw = true;
+	    }
+            catch(MongoException $e2) {
                 $threw = true;
             }
             $this->assertTrue($threw);

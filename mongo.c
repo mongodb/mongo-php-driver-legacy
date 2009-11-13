@@ -1114,7 +1114,6 @@ PHP_FUNCTION(bson_encode) {
  * This only deserializes entire documents!
  */
 PHP_FUNCTION(bson_decode) {
-  zval *result;
   char *str;
   int str_len;
 
