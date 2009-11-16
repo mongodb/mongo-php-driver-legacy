@@ -452,6 +452,18 @@ PHP_METHOD(MongoDB, command) {
   zval_ptr_dtor(&cursor);
 }
 
+static void md5_hash(char *md5str, char *arg) {
+  PHP_MD5_CTX context;
+  unsigned char digest[16];
+  	
+  md5str[0] = '\0';
+  PHP_MD5Init(&context);
+  PHP_MD5Update(&context, arg, strlen(arg));
+  PHP_MD5Final(digest, &context);
+  make_digest_ex(md5str, digest, 16);
+}
+
+
 PHP_METHOD(MongoDB, authenticate) {
   char *username, *password;
   int ulen, plen;
@@ -471,39 +483,18 @@ PHP_METHOD(MongoDB, authenticate) {
   zval_ptr_dtor(&data);
 
   if (zend_hash_find(HASH_P(result), "nonce", strlen("nonce")+1, (void**)&nonce) == SUCCESS) {
-    zval *salt, *rash, *hash, *digest;
-    char *salt_s, *rash_s;
-    char hash_s[33], digest_s[33];
-
-    MAKE_STD_ZVAL(salt);
-    MAKE_STD_ZVAL(hash);
-    MAKE_STD_ZVAL(rash);
-    MAKE_STD_ZVAL(digest);
+    char *salt, *rash;
+    char hash[33], digest[33];
 
     // create username:mongo:password hash
-    spprintf(&salt_s, 0, "%s:mongo:%s", username, password);
-    ZVAL_STRING(salt, salt_s, 0);
-
-    PUSH_PARAM(salt); PUSH_PARAM((void*)1); 
-    PUSH_EO_PARAM();
-    php_if_md5(1, hash, NULL, NULL, 0 TSRMLS_CC);
-    POP_EO_PARAM(); 
-    POP_PARAM(); POP_PARAM();
-
-    zval_ptr_dtor(&salt);
+    spprintf(&salt, 0, "%s:mongo:%s", username, password);
+    md5_hash(hash, salt);
+    efree(salt);
 
     // create nonce|username|hash hash
-    spprintf(&rash_s, 0, "%s%s%s", Z_STRVAL_PP(nonce), username, Z_STRVAL_P(hash));
-    ZVAL_STRING(rash, rash_s, 0);
-
-    PUSH_PARAM(rash); PUSH_PARAM((void*)1); 
-    PUSH_EO_PARAM();
-    php_if_md5(1, digest, NULL, NULL, 0 TSRMLS_CC);
-    POP_EO_PARAM(); 
-    POP_PARAM(); POP_PARAM();
-
-    zval_ptr_dtor(&hash);
-    zval_ptr_dtor(&rash);
+    spprintf(&rash, 0, "%s%s%s", Z_STRVAL_PP(nonce), username, hash);
+    md5_hash(digest, rash);
+    efree(rash);
 
     // make actual authentication cmd
     MAKE_STD_ZVAL(data);
@@ -513,7 +504,7 @@ PHP_METHOD(MongoDB, authenticate) {
     add_assoc_stringl(data, "user", username, ulen, 1);
     add_assoc_zval(data, "nonce", *nonce);
     zval_add_ref(nonce);
-    add_assoc_zval(data, "key", digest);
+    add_assoc_string(data, "key", digest, 1);
 
     MONGO_CMD(return_value, getThis());
 
