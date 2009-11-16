@@ -40,5 +40,6 @@ PHP_METHOD(MongoDB, lastError);
 PHP_METHOD(MongoDB, prevError);
 PHP_METHOD(MongoDB, resetError);
 PHP_METHOD(MongoDB, forceError);
+PHP_METHOD(MongoDB, authenticate);
 
 #endif /* MONGO_DB_H */

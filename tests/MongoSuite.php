@@ -22,6 +22,7 @@ require_once 'MongoRegressionTest1.php';
 require_once 'MongoMemTest.php';
 require_once 'CmdSymbolTest.php';
 require_once 'SerializationTest.php';
+require_once 'AuthTest.php';
 
 include 'MongoAuthTest.php';
 include 'MongoGridFSClassicTest.php';
@@ -64,19 +65,20 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $suite->addTestSuite('SerializationTest');
 
         // try adding an admin user
-        if (class_exists("MongoAuth")) {
-            exec("mongo tests/addUser.js", $output, $exit_code);
-            if ($exit_code != 0) {
-                echo "\nNot running admin/auth tests\n";
-                echo implode("\n", $output);
-            }
-            else {
-                $suite->addTestSuite('MongoAuthTest');
-            }
-        }
-        else {
+	exec("mongo tests/addUser.js", $output, $exit_code);
+	if ($exit_code != 0) {
+	  echo "\nNot running admin/auth tests\n";
+	  echo implode("\n", $output);
+	}
+	else {
+	  $suite->addTestSuite('AuthTest');
+	  if (class_exists("MongoAuth")) {
+	    $suite->addTestSuite('MongoAuthTest');
+	  }
+	  else {
             echo "\nAdd \$pwd/php/ to include_path to run admin/auth tests\n";
-        }
+	  }
+	}
 
         if (class_exists("MongoGridFSFileClassic")) {
             $suite->addTestSuite('MongoGridFSFileClassicTest');

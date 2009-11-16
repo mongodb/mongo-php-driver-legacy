@@ -21,6 +21,7 @@
 #if ZEND_MODULE_API_NO >= 20060613
 #include "ext/spl/spl_exceptions.h"
 #endif
+#include <ext/standard/md5.h>
 
 #include "db.h"
 #include "php_mongo.h"
@@ -451,6 +452,80 @@ PHP_METHOD(MongoDB, command) {
   zval_ptr_dtor(&cursor);
 }
 
+PHP_METHOD(MongoDB, authenticate) {
+  char *username, *password;
+  int ulen, plen;
+  zval *data, *result, **nonce;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &username, &ulen, &password, &plen) == FAILURE) {
+    return;
+  }
+
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_long(data, "getnonce", 1);
+
+  MAKE_STD_ZVAL(result);
+  MONGO_CMD(result, getThis());
+
+  zval_ptr_dtor(&data);
+
+  if (zend_hash_find(HASH_P(result), "nonce", strlen("nonce")+1, (void**)&nonce) == SUCCESS) {
+    zval *salt, *rash, *hash, *digest;
+    char *salt_s, *rash_s;
+    char hash_s[33], digest_s[33];
+
+    MAKE_STD_ZVAL(salt);
+    MAKE_STD_ZVAL(hash);
+    MAKE_STD_ZVAL(rash);
+    MAKE_STD_ZVAL(digest);
+
+    // create username:mongo:password hash
+    spprintf(&salt_s, 0, "%s:mongo:%s", username, password);
+    ZVAL_STRING(salt, salt_s, 0);
+
+    PUSH_PARAM(salt); PUSH_PARAM((void*)1); 
+    PUSH_EO_PARAM();
+    php_if_md5(1, hash, NULL, NULL, 0 TSRMLS_CC);
+    POP_EO_PARAM(); 
+    POP_PARAM(); POP_PARAM();
+
+    zval_ptr_dtor(&salt);
+
+    // create nonce|username|hash hash
+    spprintf(&rash_s, 0, "%s%s%s", Z_STRVAL_PP(nonce), username, Z_STRVAL_P(hash));
+    ZVAL_STRING(rash, rash_s, 0);
+
+    PUSH_PARAM(rash); PUSH_PARAM((void*)1); 
+    PUSH_EO_PARAM();
+    php_if_md5(1, digest, NULL, NULL, 0 TSRMLS_CC);
+    POP_EO_PARAM(); 
+    POP_PARAM(); POP_PARAM();
+
+    zval_ptr_dtor(&hash);
+    zval_ptr_dtor(&rash);
+
+    // make actual authentication cmd
+    MAKE_STD_ZVAL(data);
+    array_init(data);
+
+    add_assoc_long(data, "authenticate", 1);
+    add_assoc_stringl(data, "user", username, ulen, 1);
+    add_assoc_zval(data, "nonce", *nonce);
+    zval_add_ref(nonce);
+    add_assoc_zval(data, "key", digest);
+
+    MONGO_CMD(return_value, getThis());
+
+    zval_ptr_dtor(&data);
+  }
+  else {
+    RETVAL_FALSE;
+  }
+
+  zval_ptr_dtor(&result);
+}
+
 
 static void run_err(char *cmd, zval *return_value, zval *db TSRMLS_DC) {
   zval *data;
@@ -515,6 +590,7 @@ static function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, prevError, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, forceError, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, authenticate, NULL, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
 };
 
