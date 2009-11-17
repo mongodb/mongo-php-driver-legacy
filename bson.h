@@ -76,4 +76,20 @@ int resize_buf(buffer*, int);
 int zval_to_bson(buffer*, HashTable*, int TSRMLS_DC);
 char* bson_to_zval(char*, HashTable* TSRMLS_DC);
 
+// just like memcpy, before calling mongo_memcpy, buffer size must be checked
+#if PHP_C_BIGENDIAN
+#define mongo_memcpy(out, in, len)		\
+  {						\
+    char *inp = (char*)in;			\
+    int count = 0;				\
+    while (count < len) {			\
+      out[count] = inp[len-count-1];		\
+      count++;					\
+    }						\
+  } 
+#else 
+// if we're working with a little endian machine
+#define mongo_memcpy(out, in, len) memcpy(out, in, len);
+#endif /* PHP_C_BIG_ENDIAN */
+
 #endif

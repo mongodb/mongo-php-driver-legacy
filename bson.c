@@ -432,7 +432,8 @@ void php_mongo_serialize_int(buffer *buf, int num) {
   if(BUF_REMAINING <= INT_32) {
     resize_buf(buf, INT_32);
   }
-  memcpy(buf->pos, &num, INT_32);
+  // use mongo_memcpy to deal with big-endianness
+  mongo_memcpy(buf->pos, &num, INT_32);
   buf->pos += INT_32;
 }
 
@@ -440,7 +441,8 @@ void php_mongo_serialize_long(buffer *buf, int64_t num) {
   if(BUF_REMAINING <= INT_64) {
     resize_buf(buf, INT_64);
   }
-  memcpy(buf->pos, &num, INT_64);
+  // use mongo_memcpy to deal with big-endianness
+  mongo_memcpy(buf->pos, &num, INT_64);
   buf->pos += INT_64;
 }
 
@@ -448,7 +450,8 @@ void php_mongo_serialize_double(buffer *buf, double num) {
   if(BUF_REMAINING <= INT_64) {
     resize_buf(buf, INT_64);
   }
-  memcpy(buf->pos, &num, DOUBLE_64);
+  // use mongo_memcpy to deal with big-endianness
+  mongo_memcpy(buf->pos, &num, DOUBLE_64);
   buf->pos += DOUBLE_64;
 }
 
@@ -514,7 +517,8 @@ void php_mongo_serialize_ns(buffer *buf, char *str TSRMLS_DC) {
  */
 void php_mongo_serialize_size(unsigned char *start, buffer *buf) {
   int total = buf->pos - start;
-  memcpy(start, &total, INT_32);
+  // use mongo_memcpy to deal with big-endianness
+  mongo_memcpy(start, &total, INT_32);
 
 }
 

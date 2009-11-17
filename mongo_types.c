@@ -58,6 +58,32 @@ void generate_id(char *data TSRMLS_DC) {
   unsigned t = (unsigned) time(0);
   char *T = (char*)&t;
 
+  // inc
+#ifdef WIN32
+  inc = php_rand(TSRMLS_C);
+#else
+  inc = MonGlo(inc);
+  MonGlo(inc)++;
+#endif /* WIN32 */
+
+  // actually generate the MongoId
+#if PHP_C_BIGENDIAN
+  // 4 bytes ts
+  memcpy(data, T, 4);
+
+  // we add 1 or 2 to the pointers so we don't end up with all 0s, as the
+  // interesting stuff is at the end for big endian systems
+
+  // 3 bytes machine
+  memcpy(data+4, &MonGlo(machine)+1, 3);
+
+  // 2 bytes pid
+  memcpy(data+7, &pid+2, 2);
+
+  // 3 bytes inc
+  memcpy(data+9, &inc+1, 3);
+#else
+  // 4 bytes ts
   data[0] = T[3];
   data[1] = T[2];
   data[2] = T[1];
@@ -70,14 +96,8 @@ void generate_id(char *data TSRMLS_DC) {
   memcpy(data+7, &pid, 2);
 
   // 3 bytes inc
-#ifdef WIN32
-  inc = php_rand(TSRMLS_C);
-#else
-  inc = MonGlo(inc);
-  MonGlo(inc)++;
-#endif
-
   memcpy(data+9, &inc, 3);
+#endif /* PHP_C_BIGENDIAN */
 }
 
 int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_uint *serialized_length, zend_serialize_data *var_hash TSRMLS_DC) {
