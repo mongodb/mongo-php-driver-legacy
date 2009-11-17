@@ -67,4 +67,15 @@ class MongoBinDataTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(2, ord($b->bin[2]));
         $this->assertEquals(3, ord($b->bin[3]));
     }
+
+    public function testConsts() {
+        $this->assertEquals(1, MongoBinData::FUNC);
+        $this->assertEquals(2, MongoBinData::BYTE_ARRAY);
+        $this->assertEquals(3, MongoBinData::UUID);
+        $this->assertEquals(5, MongoBinData::MD5);
+        $this->assertEquals(128, MongoBinData::CUSTOM);
+
+	$b = new MongoBinData("");
+	$this->assertEquals(MongoBinData::BYTE_ARRAY, $b->type);
+    }
 }

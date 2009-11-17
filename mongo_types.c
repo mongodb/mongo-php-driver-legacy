@@ -328,8 +328,18 @@ void mongo_init_MongoBinData(TSRMLS_D) {
   INIT_CLASS_ENTRY(ce, "MongoBinData", MongoBinData_methods);
   mongo_ce_BinData = zend_register_internal_class(&ce TSRMLS_CC);
 
+  // fields
   zend_declare_property_string(mongo_ce_BinData, "bin", strlen("bin"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
   zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+ 
+  // constants
+  // can't use FUNCTION because it's a reserved word
+  zend_declare_class_constant_long(mongo_ce_BinData, "FUNC", strlen("FUNC"), 0x01 TSRMLS_CC);
+  // can't use ARRAY because it's a reserved word
+  zend_declare_class_constant_long(mongo_ce_BinData, "BYTE_ARRAY", strlen("BYTE_ARRAY"), 0x02 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_BinData, "UUID", strlen("UUID"), 0x03 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_BinData, "MD5", strlen("MD5"), 0x05 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_BinData, "CUSTOM", strlen("CUSTOM"), 0x80 TSRMLS_CC);
 }
 
 /* {{{ MongoRegex::__construct() 
