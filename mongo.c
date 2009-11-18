@@ -80,7 +80,9 @@ zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_CursorException,
   *mongo_ce_ConnectionException,
   *mongo_ce_GridFSException,
-  *mongo_ce_Exception;
+  *mongo_ce_Exception,
+  *mongo_ce_MaxKey,
+  *mongo_ce_MinKey;
 
 /** Resources */
 int le_connection, le_pconnection;
@@ -231,10 +233,10 @@ static void php_connection_dtor( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 }
 
 
-
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(mongo) {
+  zend_class_entry max_key, min_key;
 
 #if ZEND_MODULE_API_NO < 20060613
   ZEND_INIT_MODULE_GLOBALS(mongo, mongo_init_globals, NULL);
@@ -264,6 +266,16 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoExceptions(TSRMLS_C);
 
   mongo_init_MongoTimestamp(TSRMLS_C);
+
+  /* 
+   * MongoMaxKey and MongoMinKey are completely non-interactive: they have no
+   * method, fields, or constants.
+   */
+  INIT_CLASS_ENTRY(max_key, "MongoMaxKey", NULL);
+  mongo_ce_MaxKey = zend_register_internal_class(&max_key TSRMLS_CC);
+  INIT_CLASS_ENTRY(min_key, "MongoMinKey", NULL);
+  mongo_ce_MinKey = zend_register_internal_class(&min_key TSRMLS_CC);
+
 
   // make mongo objects uncloneable
   memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));

@@ -36,7 +36,7 @@ class MongoAuthTest extends PHPUnit_Framework_TestCase
         $a2 = new MongoAdmin();
         $this->assertTrue($a2->connected);
         $a2->login("fred", "ted");
-        $this->assertTrue($a2->loggedIn);
+        $this->assertTrue($a2->loggedIn, json_encode($a2));
 
         $x = $this->object->changePassword("fred", "ted", "foobar");
         $this->assertEquals(1, $x['ok'], json_encode($x));
