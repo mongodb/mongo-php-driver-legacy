@@ -249,7 +249,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertNotNull($this->object->findOne(array("x" => 1)));
 
       // multiple update
-      $this->object->update(array("x" => 2), array('$set' => array('x' => 4)), false, true);
+      $this->object->update(array("x" => 2), array('$set' => array('x' => 4)), array("multiple" => true));
       $this->assertEquals(2, $this->object->count(array("x" => 4)));
 
       $cursor = $this->object->find(array("x" => 4))->sort(array("y" => 1));
@@ -260,7 +260,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(4, $obj['y']);
 
       // check with upsert if there are matches
-      $this->object->update(array("x" => 4), array('$set' => array("x" => 3)), true, true); 
+      $this->object->update(array("x" => 4), array('$set' => array("x" => 3)), array("upsert" => true, "multiple" => true)); 
       $this->assertEquals(2, $this->object->count(array("x" => 3)));
 
       $cursor = $this->object->find(array("x" => 3))->sort(array("y" => 1));
@@ -271,7 +271,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(4, $obj['y']);
 
       // check with upsert if there are no matches
-      $this->object->update(array("x" => 15), array('$set' => array("z" => 4)), true, true);
+      $this->object->update(array("x" => 15), array('$set' => array("z" => 4)), array("upsert" => true, "multiple" => true));
       $this->assertNotNull($this->object->findOne(array("z" => 4)));
 
       $this->assertEquals(5, $this->object->count());

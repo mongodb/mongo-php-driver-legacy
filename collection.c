@@ -329,14 +329,13 @@ PHP_METHOD(MongoCollection, findOne) {
 }
 
 PHP_METHOD(MongoCollection, update) {
-  zval temp, *criteria, *newobj;
-  zend_bool upsert = 0, multiple = 0;
+  zval temp, *criteria, *newobj, *options = 0;
   mongo_collection *c;
   mongo_link *link;
   mongo_msg_header header;
   buffer buf;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|bb", &criteria, &newobj, &upsert, &multiple) == FAILURE ||
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &criteria, &newobj, &options) == FAILURE ||
       IS_SCALAR_P(criteria) ||
       IS_SCALAR_P(newobj)) {
     return;
@@ -349,7 +348,27 @@ PHP_METHOD(MongoCollection, update) {
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_UPDATE);
-  php_mongo_serialize_int(&buf, (upsert << 0) | (multiple << 1));
+
+  /* 
+   * options could be a boolean (old-style, where "true" means "upsert") or an 
+   * array of "named parameters": array("upsert" => true, "multiple" => true)
+   */
+
+  // old-style
+  if (!options || IS_SCALAR_P(options)) {
+    zend_bool upsert = options ? Z_BVAL_P(options) : 0;
+    php_mongo_serialize_int(&buf, upsert << 0);
+  }
+  // new-style
+  else {
+    zval **upsert = 0, **multiple = 0;
+
+    zend_hash_find(HASH_P(options), "upsert", strlen("upsert")+1, (void**)&upsert);
+    zend_hash_find(HASH_P(options), "multiple", strlen("multiple")+1, (void**)&multiple);
+    php_mongo_serialize_int(&buf, 
+        ((upsert ? Z_BVAL_PP(upsert) : 0) << 0) | ((multiple ? Z_BVAL_PP(multiple) : 0) << 1));
+  }
+
   zval_to_bson(&buf, HASH_P(criteria), NO_PREP TSRMLS_CC);
   zval_to_bson(&buf, HASH_P(newobj), NO_PREP TSRMLS_CC);
   php_mongo_serialize_size(buf.start, &buf);
