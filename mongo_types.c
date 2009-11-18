@@ -505,19 +505,34 @@ void mongo_init_MongoCode(TSRMLS_D) {
 }
 
 /* {{{ MongoCode::create()
+ *
+ * DB refs are of the form:
+ * array( '$ref' => <collection>, '$id' => <id>[, $db => <dbname>] )
  */
 PHP_METHOD(MongoDBRef, create) {
-  zval *zns, *zid;
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &zns, &zid) == FAILURE) {
+  zval *zns, *zid, *zdb = 0;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &zns, &zid, &zdb) == FAILURE) {
     return;
   }
-  convert_to_string(zns);
 
   array_init(return_value);
+
+  // add collection name
+  convert_to_string(zns);
   add_assoc_zval(return_value, "$ref", zns); 
   zval_add_ref(&zns);
+
+  // add id field
   add_assoc_zval(return_value, "$id", zid); 
   zval_add_ref(&zid);
+
+  // if we got a database name, add that, too
+  if (zdb) {
+    convert_to_string(zdb);
+    add_assoc_zval(return_value, "$db", zdb);
+    zval_add_ref(&zdb);
+  }
 }
 /* }}} */
 
@@ -530,10 +545,13 @@ PHP_METHOD(MongoDBRef, isRef) {
     return;
   }
 
+  // check that $ref and $id fields exists
   if (zend_hash_exists(HASH_P(ref), "$ref", 5) &&
       zend_hash_exists(HASH_P(ref), "$id", 4)) {
+    // good enough
     RETURN_TRUE;
   }
+
   RETURN_FALSE;
 }
 /* }}} */
@@ -542,28 +560,78 @@ PHP_METHOD(MongoDBRef, isRef) {
  */
 PHP_METHOD(MongoDBRef, get) {
   zval *db, *ref, *collection, *query;
-  zval **ns, **id;
+  zval **ns, **id, **dbname;
+  zend_bool alloced_db = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &db, mongo_ce_DB, &ref) == FAILURE) {
     return;
   }
   
-  if (zend_hash_find(HASH_P(ref), "$ref", 5, (void**)&ns) == FAILURE ||
-      zend_hash_find(HASH_P(ref), "$id", 4, (void**)&id) == FAILURE) {
+  if (IS_SCALAR_P(ref) ||
+      zend_hash_find(HASH_P(ref), "$ref", strlen("$ref")+1, (void**)&ns) == FAILURE ||
+      zend_hash_find(HASH_P(ref), "$id", strlen("$id")+1, (void**)&id) == FAILURE) {
     RETURN_NULL();
   }
-  
+
+  if (Z_TYPE_PP(ns) != IS_STRING) {
+      zend_throw_exception(mongo_ce_Exception, "MongoDBRef::get: $ref field must be a string", 0 TSRMLS_CC);
+      return;
+  }
+
+  // if this reference contains a db name, we have to switch dbs
+  if (zend_hash_find(HASH_P(ref), "$db", strlen("$db")+1, (void**)&dbname) == SUCCESS) {
+    mongo_db *temp_db = (mongo_db*)zend_object_store_get_object(db TSRMLS_CC);
+
+    // just to be paranoid, make sure dbname is a string
+    if (Z_TYPE_PP(dbname) != IS_STRING) {
+      zend_throw_exception(mongo_ce_Exception, "MongoDBRef::get: $db field must be a string", 0 TSRMLS_CC);
+      return;
+    }
+
+    // if the name in the $db field doesn't match the current db, make up a new db
+    if (strcmp(Z_STRVAL_PP(dbname), Z_STRVAL_P(temp_db->name)) != 0) {
+      zval *new_db_z;
+      mongo_db *new_db;
+
+      // create the db
+      MAKE_STD_ZVAL(new_db_z);
+      object_init_ex(new_db_z, mongo_ce_DB);
+
+      new_db = (mongo_db*)zend_object_store_get_object(new_db_z TSRMLS_CC);
+      
+      // set up fields
+      new_db->link = temp_db->link;
+      zval_add_ref(&new_db->link);
+      new_db->name = *dbname;
+      zval_add_ref(&new_db->name);
+
+      // make the new db the current one
+      db = new_db_z;
+
+      // so we can dtor this later
+      alloced_db = 1;
+    }
+  }
+
+  // get the collection
   MAKE_STD_ZVAL(collection);
   MONGO_METHOD1(MongoDB, selectCollection, collection, db, *ns);
   
+  // query for the $id
   MAKE_STD_ZVAL(query);
   array_init(query);
   add_assoc_zval(query, "_id", *id);
   zval_add_ref(id);
   
+  // return whatever's there
   MONGO_METHOD1(MongoCollection, findOne, return_value, collection, query);
+
+  // cleanup
   zval_ptr_dtor(&collection);
   zval_ptr_dtor(&query);
+  if (alloced_db) {
+    zval_ptr_dtor(&db);
+  }
 }
 /* }}} */
 
