@@ -573,13 +573,19 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_DOUBLE: {
+#if PHP_C_BIGENDIAN
+      char d[8];
+      mongo_memcpy(d, buf, 8);
+      ZVAL_DOUBLE(value, *(double*)d);
+#else
       ZVAL_DOUBLE(value, *(double*)buf);
+#endif
       buf += DOUBLE_64;
       break;
     }
     case BSON_STRING: {
       // len includes \0
-      int len = *((int*)buf);
+      int len = MONGO_INT(*((int*)buf));
       buf += INT_32;
 
       ZVAL_STRINGL(value, buf, len-1, 1);
@@ -595,7 +601,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     case BSON_BINARY: {
       char type;
 
-      int len = *(int*)buf;
+      int len = MONGO_INT(*(int*)buf);
       buf += INT_32;
 
       type = *buf++;
@@ -609,7 +615,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
        * case, the data will be corrupted.
        */
       if ((int)type == 2) {
-        int len2 = *(int*)buf;
+        int len2 = MONGO_INT(*(int*)buf);
         /* if the lengths match, the data is to spec,
          * so we use len2 as the true length.
          */
@@ -638,17 +644,30 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_INT: {
-      ZVAL_LONG(value, *((int*)buf));
+      ZVAL_LONG(value, MONGO_INT(*((int*)buf)));
       buf += INT_32;
       break;
     }
     case BSON_LONG: {
+#if PHP_C_BIGENDIAN
+      int64_t li;
+      char *p = &li;
+      mongo_memcpy(p, buf, INT_64);
+      ZVAL_DOUBLE(value, (double)li);
+#else
       ZVAL_DOUBLE(value, (double)*((int64_t*)buf));
+#endif
       buf += INT_64;
       break;
     }
     case BSON_DATE: {
+#if PHP_C_BIGENDIAN
+      int64_t d;
+      char *p = &d;
+      mongo_memcpy(p, buf, INT_64);
+#else
       int64_t d = *((int64_t*)buf);
+#endif
       buf += INT_64;
       
       object_init_ex(value, mongo_ce_Date);
@@ -694,7 +713,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       }
 
       // length of code (includes \0)
-      code_len = *(int*)buf;
+      code_len = MONGO_INT(*(int*)buf);
       buf += INT_32;
 
       code = buf;
@@ -754,9 +773,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
      */
     case BSON_TIMESTAMP: {
       object_init_ex(value, mongo_ce_Timestamp);
-      zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), *(int*)buf TSRMLS_CC);
+      zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), MONGO_INT(*(int*)buf) TSRMLS_CC);
       buf += INT_32;
-      zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), *(int*)buf TSRMLS_CC);
+      zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), MONGO_INT(*(int*)buf) TSRMLS_CC);
       buf += INT_32;
       break;
     }

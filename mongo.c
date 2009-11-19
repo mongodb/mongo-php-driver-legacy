@@ -1232,6 +1232,8 @@ static int get_master(mongo_link *link TSRMLS_DC) {
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int sock = get_master(cursor->link TSRMLS_CC);
   int num_returned = 0;
+  int64_t temp_id;
+  char *cursor_ptr;
 
   if (check_connection(cursor->link, errmsg TSRMLS_CC) != SUCCESS) {
     ZVAL_STRING(errmsg, "could not establish db connection", 1);
@@ -1248,6 +1250,9 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     ZVAL_NULL(errmsg);
     return FAILURE;
   }
+
+  // switch the byte order, if necessary
+  cursor->header.length = MONGO_INT(cursor->header.length);
 
   // make sure we're not getting crazy data
   if (cursor->header.length == 0) {
@@ -1286,6 +1291,17 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     ZVAL_STRING(errmsg, "incomplete response", 1);
     return FAILURE;
   }
+
+  cursor_ptr = &temp_id;
+  mongo_memcpy(cursor_ptr, &cursor->cursor_id, INT_64);
+  cursor->cursor_id = temp_id;
+
+  cursor->header.request_id = MONGO_INT(cursor->header.request_id);
+  cursor->header.response_to = MONGO_INT(cursor->header.response_to);
+  cursor->header.op = MONGO_INT(cursor->header.op); 
+  cursor->flag = MONGO_INT(cursor->flag);
+  cursor->start = MONGO_INT(cursor->start);
+  num_returned = MONGO_INT(num_returned);
 
   // create buf
   cursor->header.length -= INT_32*9;

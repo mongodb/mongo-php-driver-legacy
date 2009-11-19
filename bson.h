@@ -78,6 +78,14 @@ char* bson_to_zval(char*, HashTable* TSRMLS_DC);
 
 // just like memcpy, before calling mongo_memcpy, buffer size must be checked
 #if PHP_C_BIGENDIAN
+// reverse the bytes in an int
+// wheeee stupid byte tricks
+#define BYTE1(b) ((b & 0xff000000) >> 24)
+#define BYTE2(b) ((b & 0x00ff0000) >> 8)
+#define BYTE3(b) ((b & 0x0000ff00) << 8)
+#define BYTE4(b) ((b & 0x000000ff) << 24)
+#define MONGO_INT(b) (BYTE4(b) | BYTE3(b) | BYTE2(b) | BYTE1(b))
+// reverse any length, uses intermediate variable
 #define mongo_memcpy(out, in, len)		\
   {						\
     char *inp = (char*)in;			\
@@ -89,7 +97,9 @@ char* bson_to_zval(char*, HashTable* TSRMLS_DC);
   } 
 #else 
 // if we're working with a little endian machine
-#define mongo_memcpy(out, in, len) memcpy(out, in, len);
+#define mongo_memcpy(out, in, len) memcpy(out, in, len)
+// no op
+#define MONGO_INT(b) b
 #endif /* PHP_C_BIG_ENDIAN */
 
 #endif

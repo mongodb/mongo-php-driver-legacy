@@ -56,7 +56,10 @@ void generate_id(char *data TSRMLS_DC) {
   int inc;
   int pid = (int)getpid();
   unsigned t = (unsigned) time(0);
-  char *T = (char*)&t;
+  char *T = (char*)&t, 
+    *M = (char*)&MonGlo(machine), 
+    *P = (char*)&pid, 
+    *I = (char*)&inc;
 
   // inc
 #ifdef WIN32
@@ -75,13 +78,13 @@ void generate_id(char *data TSRMLS_DC) {
   // interesting stuff is at the end for big endian systems
 
   // 3 bytes machine
-  memcpy(data+4, &MonGlo(machine)+1, 3);
+  memcpy(data+4, M+1, 3);
 
   // 2 bytes pid
-  memcpy(data+7, &pid+2, 2);
+  memcpy(data+7, P+2, 2);
 
   // 3 bytes inc
-  memcpy(data+9, &inc+1, 3);
+  memcpy(data+9, I+1, 3);
 #else
   // 4 bytes ts
   data[0] = T[3];
