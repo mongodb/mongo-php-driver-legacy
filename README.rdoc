@@ -17,7 +17,7 @@ See http://www.mongodb.org/display/DOCS/PHP+Language+Center for information on c
 
 = Documentation
 
-See http://us2.php.net/manual/en/book.mongo.php
+See http://us.php.net/manual/en/book.mongo.php
 
 = Testing
 

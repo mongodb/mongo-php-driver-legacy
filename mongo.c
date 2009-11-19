@@ -414,7 +414,7 @@ void mongo_init_Mongo(TSRMLS_D) {
 
   zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), MonGlo(default_host) TSRMLS_CC);
   zend_declare_class_constant_long(mongo_ce_Mongo, "DEFAULT_PORT", strlen("DEFAULT_PORT"), MonGlo(default_port) TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), "1.0.0+" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), "1.0.1" TSRMLS_CC);
 
   zend_declare_property_bool(mongo_ce_Mongo, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 
@@ -1292,7 +1292,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     return FAILURE;
   }
 
-  cursor_ptr = &temp_id;
+  cursor_ptr = (char*)&temp_id;
   mongo_memcpy(cursor_ptr, &cursor->cursor_id, INT_64);
   cursor->cursor_id = temp_id;
 
