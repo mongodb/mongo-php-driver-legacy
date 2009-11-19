@@ -273,6 +273,16 @@ PHP_METHOD(MongoCursor, slaveOkay) {
 /* }}} */
 
 
+/* {{{ MongoCursor::immortal
+ */
+PHP_METHOD(MongoCursor, immortal) {
+  preiteration_setup;
+  default_to_true(4);
+  RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
+
 /* {{{ MongoCursor::snapshot
  */
 PHP_METHOD(MongoCursor, snapshot) {
@@ -613,6 +623,7 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, immortal, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, dead, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, snapshot, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)

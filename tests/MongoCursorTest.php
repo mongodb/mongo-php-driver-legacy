@@ -426,6 +426,12 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->assertTrue(MongoCursor::$slaveOkay);
     }
 
+    public function testImmortal() {
+      $this->object->find()->immortal()->next();
+      $this->object->find()->immortal(true)->next();
+      $this->object->find()->immortal(false)->next();
+    }
+
     /*
      * Doesn't actually test functionality
      */
