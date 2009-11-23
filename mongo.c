@@ -1373,12 +1373,8 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
   // this can return FAILED if there is just no more data from db
   while(r < len && num > 0) {
 
-#ifdef WIN32
     // windows gives a WSAEFAULT if you try to get more bytes
     num = recv(get_master(link TSRMLS_CC), (char*)dest, 4096, FLAGS);
-#else
-    num = recv(get_master(link TSRMLS_CC), (char*)dest, len, FLAGS);
-#endif
 
     if (num < 0) {
       return FAILURE;

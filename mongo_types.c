@@ -62,12 +62,8 @@ void generate_id(char *data TSRMLS_DC) {
     *I = (char*)&inc;
 
   // inc
-#ifdef WIN32
-  inc = php_rand(TSRMLS_C);
-#else
   inc = MonGlo(inc);
   MonGlo(inc)++;
-#endif /* WIN32 */
 
   // actually generate the MongoId
 #if PHP_C_BIGENDIAN
