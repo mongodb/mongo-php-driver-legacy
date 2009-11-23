@@ -341,6 +341,18 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals("E11000", substr($err['err'], 0, 6), json_encode($err));
     }
 
+    public function testEnsureIndexOptions() {
+      $this->object->insert(array('x' => 1));
+      $this->object->insert(array('x' => 1));
+      $this->object->insert(array('x' => 2));
+
+      $this->object->ensureIndex(array('x' => 1), array('unique' => true, 'dropDups' => true));
+
+      $this->assertEquals(2, $this->object->count());
+      $this->object->insert(array('x' => 2));
+      $this->assertEquals(2, $this->object->count());
+    }
+
     public function testDeleteIndex() {
       $idx = $this->object->db->selectCollection('system.indexes');
 

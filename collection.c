@@ -420,11 +420,10 @@ PHP_METHOD(MongoCollection, remove) {
 }
 
 PHP_METHOD(MongoCollection, ensureIndex) {
-  zend_bool unique = 0;
-  zval *keys, *db, *system_indexes, *collection, *data, *key_str;
+  zval *keys, *options = 0, *db, *system_indexes, *collection, *data, *key_str;
   mongo_collection *c;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|b", &keys, &unique) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &keys, &options) == FAILURE) {
     return;
   }
 
@@ -475,7 +474,42 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
 
   add_assoc_zval(data, "name", key_str);
-  add_assoc_bool(data, "unique", unique);
+
+  /*
+   * in ye olden days, "options" only had one options: unique
+   * so, if we're parsing old-school code, "unique" is a boolean
+   * in ye new days, "options is an array with possible keys
+   * "unique" and "dropDups".
+   */
+  if (options) {
+
+    // old-style
+    if (IS_SCALAR_P(options)) {
+      /* 
+       * assumes the person correctly passed in a boolean.  if they passed in a
+       * string or something, it won't work and maybe they'll read the docs
+       */
+      add_assoc_zval(data, "unique", options);
+      // and, since we'll be destroying data later:
+      zval_add_ref(&options);
+    }
+    // new style
+    else {
+      zval **unique, **drop_dups;
+
+      // array( "unique" => true )
+      if (zend_hash_find(HASH_P(options), "unique", strlen("unique")+1, (void**)&unique) == SUCCESS) {
+        add_assoc_zval(data, "unique", *unique);
+        zval_add_ref(unique);
+      }
+
+      // array( "dropDups" => true )
+      if (zend_hash_find(HASH_P(options), "dropDups", strlen("dropDups")+1, (void**)&drop_dups) == SUCCESS) {
+        add_assoc_zval(data, "dropDups", *drop_dups);
+        zval_add_ref(drop_dups);
+      }
+    }
+  }
 
   // MongoCollection::insert()
   MONGO_METHOD1(MongoCollection, insert, return_value, collection, data);
