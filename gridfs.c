@@ -253,14 +253,17 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
   if (!zend_hash_exists(HASH_P(zfile), "md5", strlen("md5")+1)) {
     zval *data = 0, *response = 0, **md5 = 0;
 
+    // get the prefix
+    int prefix_len = strchr(Z_STRVAL_P(c->name), '.') - Z_STRVAL_P(c->name);
+    char *prefix = estrndup(Z_STRVAL_P(c->name), prefix_len);
+
     // create command
     MAKE_STD_ZVAL(data);
     array_init(data);
 
     add_assoc_zval(data, "filemd5", zid);
     zval_add_ref(&zid);
-    add_assoc_zval(data, "root", c->ns);
-    zval_add_ref(&c->ns);
+    add_assoc_stringl(data, "root", prefix, prefix_len, 0);
 
     MAKE_STD_ZVAL(response);
 
@@ -271,7 +274,8 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
     if (zend_hash_find(HASH_P(response), "md5", strlen("md5")+1, (void**)&md5) == SUCCESS) {
       // add it to zfile
       add_assoc_zval(zfile, "md5", *md5);
-      /* increment the refcount so it isn't cleaned up at 
+      /* 
+       * increment the refcount so it isn't cleaned up at 
        * the end of this method
        */
       zval_add_ref(md5);

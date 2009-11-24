@@ -141,7 +141,7 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('tests/somefile', $file['filename'], json_encode($file));
         $this->assertEquals(129, $file['length'], json_encode($file));
         $this->assertTrue($file['uploadDate'] instanceof MongoDate, json_encode($file));
-        $this->assertEquals("d41d8cd98f00b204e9800998ecf8427e", $file['md5'], json_encode($file));
+        $this->assertEquals("638975db5fddb781d747d75e77b370b4", $file['md5'], json_encode($file));
 
         $this->object->storeFile('tests/somefile', array('_id' => 4, 'filename' => 'foo', 'length' => 0, 'chunkSize'=>23, 'uploadDate' => 'yesterday', 'md5'=>16, 'md4'=>32));
         $file = $this->object->findOne(array('_id' => 4));
@@ -206,6 +206,19 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
       $id = $this->object->storeFile("tests/Formelsamling.pdf");
       $str2 = $this->object->findOne(array('_id' => $id))->getBytes();
       $this->assertEquals($str1, $str2);
+    }
+
+    public function testMD5() {
+      $mid = $this->object->storeFile("mongo.c");
+      $gid = $this->object->storeFile("gridfs.c");
+
+      $mongo = $this->object->findOne(array("_id" => $mid));
+      $gridfs = $this->object->findOne(array("_id" => $gid));
+
+      $this->assertNotEquals($mongo->file['md5'], $gridfs->file['md5']);
+
+      $this->assertEquals($mongo->file['md5'], md5(file_get_contents("mongo.c")));
+      $this->assertEquals($gridfs->file['md5'], md5(file_get_contents("gridfs.c")));
     }
 }
 
