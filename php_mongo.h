@@ -135,31 +135,28 @@
 
 
 typedef struct {
+  char *host;
+  int port;
+  int socket;
+  int connected;
+} mongo_server;
+
+typedef struct {
+  // ts keeps track of the last time we tried to connect, so we don't try to
+  // reconnect a zillion times in three seconds.
   int ts;
-  int paired;
+
+  // if the connection is persistent... this affects all memory allocated to
+  // this struct
   int persist;
+
+  // if num is greater than 1, master keeps track of the master connection
   int master;
 
-  union {
-    struct {
-      char *host;
-      int port;
-
-      int socket;
-      int connected;
-    } single;
-    struct {
-      char *left;
-      int lport;
-      int lsocket;
-      int lconnected;
-
-      char *right;
-      int rport;
-      int rsocket;
-      int rconnected;
-    } paired;
-  } server;
+  // number of servers
+  int num;
+  // 1 or more servers
+  mongo_server **server;
 
   char *username;
   char *password;
@@ -364,7 +361,7 @@ long max_links,max_persistent;
 long allow_persistent; 
 int auto_reconnect; 
 char *default_host; 
-long default_port;
+int default_port;
 int request_id; 
 int chunk_size;
 

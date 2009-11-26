@@ -57,9 +57,15 @@ class MongoTest extends PHPUnit_Framework_TestCase
 	$m = new Mongo("x:x");
     }
 
-    // these should actually work, though
+    /**
+     * @expectedException MongoConnectionException
+     */
     public function testDumbIPs4() {
 	$m = new Mongo("localhost:");
+    }
+
+    // these should actually work, though
+    public function testDumbIPs5() {
 	$m = new Mongo("localhost,localhost");
 	$m = new Mongo("localhost,localhost:27");
 	$m = new Mongo("localhost:27017,localhost:27018,");
@@ -82,15 +88,18 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function test__toString() {
+        $this->markTestSkipped();
+        return;
+
         if (preg_match($this->sharedFixture->version_51, phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
 
-        $this->assertEquals((string)$this->object, "localhost");
+        $this->assertEquals("localhost", (string)$this->object);
 
         $m = new Mongo();
-        $this->assertEquals((string)$m, "localhost:27017");
+        $this->assertEquals("localhost:27017", (string)$m);
     }
 
     public function testSelectDBException1()
@@ -368,6 +377,14 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
         $this->object->close();
         $this->assertFalse($this->object->connected);
+    }
+
+    public function testMongoFormat() {
+      $m = new Mongo("mongodb://localhost");
+      $m = new Mongo("mongodb://localhost:27017");
+      $m = new Mongo("mongodb://localhost:27017,localhost:27018");
+      $m = new Mongo("mongodb://localhost:27017,localhost:27018,localhost:27019");
+      $m = new Mongo("mongodb://localhost:27018,localhost,localhost:27019");
     }
 }
 ?>

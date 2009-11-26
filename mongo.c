@@ -60,16 +60,16 @@ extern zend_class_entry *mongo_ce_DB,
 
 static void mongo_link_dtor(mongo_link*);
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval*);
-static int get_master(mongo_link* TSRMLS_DC);
-static int check_connection(mongo_link*, zval* TSRMLS_DC);
-static int mongo_connect_nonb(int, char*, int, zval*);
-static int mongo_do_socket_connect(mongo_link*, zval* TSRMLS_DC);
-static int mongo_get_sockaddr(struct sockaddr_in*, char*, int, zval*);
-static char* getHost(char*, int);
-static int getPort(char*);
-static int get_host_and_port(char*, mongo_link*, zval* TSRMLS_DC);
+static int php_mongo_get_master(mongo_link* TSRMLS_DC);
+static int php_mongo_check_connection(mongo_link*, zval* TSRMLS_DC);
+static int php_mongo_connect_nonb(mongo_server*, zval*);
+static int php_mongo_do_socket_connect(mongo_link*, zval* TSRMLS_DC);
+static int php_mongo_get_sockaddr(struct sockaddr_in*, char*, int, zval*);
+static char* php_mongo_get_host(char**, int);
+static int php_mongo_get_port(char**);
 static void mongo_init_MongoExceptions(TSRMLS_D);
 static void run_err(int, zval*, zval* TSRMLS_DC);
+static mongo_link* php_mongo_parse_server(zval*, zval* TSRMLS_DC);
 
 inline void set_disconnected(mongo_link *link);
 
@@ -106,9 +106,9 @@ function_entry mongo_functions[] = {
 static function_entry mongo_methods[] = {
   PHP_ME(Mongo, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, connect, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, pairConnect, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, pairConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, persistConnect, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, pairPersistConnect, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, pairPersistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, connectUtil, NULL, ZEND_ACC_PROTECTED)
   PHP_ME(Mongo, __toString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, selectDB, NULL, ZEND_ACC_PUBLIC)
@@ -163,7 +163,7 @@ STD_PHP_INI_ENTRY_EX("mongo.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong,
 STD_PHP_INI_ENTRY_EX("mongo.max_connections", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_links, zend_mongo_globals, mongo_globals, display_link_numbers)
 STD_PHP_INI_ENTRY("mongo.default_host", "localhost", PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.default_port", "27017", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals)
-STD_PHP_INI_ENTRY("mongo.chunk_size", "262144", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals)
+STD_PHP_INI_ENTRY("mongo.chunk_size", "262144", PHP_INI_ALL, OnUpdateLong, chunk_size, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.cmd", "$", PHP_INI_ALL, OnUpdateString, cmd_char, zend_mongo_globals, mongo_globals)
 PHP_INI_END()
 /* }}} */
@@ -172,38 +172,28 @@ PHP_INI_END()
 
 static void mongo_link_dtor(mongo_link *link) {
   if (link) {
-    if (link->paired) {
+    int i;
+
+    if (link->server) {
+      for (i=0; i<link->num; i++) {
+
 #ifdef WIN32
-      closesocket(link->server.paired.lsocket);
-      closesocket(link->server.paired.rsocket);
+        closesocket(link->server[i]->socket);
 #else
-      close(link->server.paired.lsocket);
-      close(link->server.paired.rsocket);
+        close(link->server[i]->socket);
 #endif
 
-      if (link->server.paired.left) {
-        pefree(link->server.paired.left, link->persist);
-      }
-      if (link->server.paired.right) {
-        pefree(link->server.paired.right, link->persist);
-      }
-    }
-    else {
-      if (link->server.single.socket > -1) {
-      // close the connection
-#ifdef WIN32
-        closesocket(link->server.single.socket);
-#else
-        close(link->server.single.socket);
-#endif
-        link->server.single.socket = -1;
+        if (link->server[i]->host) {
+          pefree(link->server[i]->host, link->persist);
+          link->server[i]->host = 0;
+        }
+
+        pefree(link->server[i], link->persist);
+        link->server[i] = 0;
       }
 
-      // free strings
-      if (link->server.single.host) {
-        pefree(link->server.single.host, link->persist);
-        link->server.single.host = 0;
-      }
+      pefree(link->server, link->persist);
+      link->server = 0;
     }
 
     if (link->username) {
@@ -214,7 +204,7 @@ static void mongo_link_dtor(mongo_link *link) {
       pefree(link->password, link->persist);
       link->password = 0;
     }
-
+    
     // free connection
     pefree(link, link->persist);
   }
@@ -412,21 +402,160 @@ void mongo_init_Mongo(TSRMLS_D) {
   INIT_CLASS_ENTRY(ce, "Mongo", mongo_methods);
   mongo_ce_Mongo = zend_register_internal_class(&ce TSRMLS_CC);
 
-  zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), MonGlo(default_host) TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Mongo, "DEFAULT_PORT", strlen("DEFAULT_PORT"), MonGlo(default_port) TSRMLS_CC);
+  /* Mongo class constants */
+  zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), "localhost" TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Mongo, "DEFAULT_PORT", strlen("DEFAULT_PORT"), 27017 TSRMLS_CC);
   zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), "1.0.1+" TSRMLS_CC);
 
+  /* Mongo static fields */
+  // TODO: number of connections
+
+  /* Mongo fields */
   zend_declare_property_bool(mongo_ce_Mongo, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 
-  zend_declare_property_string(mongo_ce_Mongo, "server", strlen("server"), "localhost:27017", ZEND_ACC_PROTECTED TSRMLS_CC);
+  zend_declare_property_null(mongo_ce_Mongo, "server", strlen("server"), ZEND_ACC_PROTECTED TSRMLS_CC);
 
   zend_declare_property_string(mongo_ce_Mongo, "username", strlen("username"), "", ZEND_ACC_PROTECTED TSRMLS_CC);
   zend_declare_property_string(mongo_ce_Mongo, "password", strlen("password"), "", ZEND_ACC_PROTECTED TSRMLS_CC);
 
-  zend_declare_property_bool(mongo_ce_Mongo, "paired", strlen("paired"), 0, ZEND_ACC_PROTECTED TSRMLS_CC);
   zend_declare_property_bool(mongo_ce_Mongo, "persistent", strlen("persistent"), 0, ZEND_ACC_PROTECTED TSRMLS_CC);
 
   zend_declare_property_null(mongo_ce_Mongo, "connection", strlen("connection"), ZEND_ACC_PUBLIC TSRMLS_CC);
+}
+
+/*
+ * this deals with the new mongo connection format:
+ * mongodb://username:password@host:port,host:port
+ */
+static mongo_link* php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
+  int num_servers = 1;
+  zval *hosts_z, *persist_z;
+  char *hosts, *current, *comma;
+  zend_bool persist;
+  mongo_link *link;
+
+  hosts_z = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
+  hosts = Z_STRLEN_P(hosts_z) ? Z_STRVAL_P(hosts_z) : 0;
+  current = hosts;
+
+  persist_z = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), NOISY TSRMLS_CC);
+  persist = Z_BVAL_P(persist_z);
+
+  link = (mongo_link*)pemalloc(sizeof(mongo_link), persist);
+
+  /* zero pointers so it doesn't segfault on cleanup if connection fails */
+  link->num = 0;
+  link->master = 0;
+  link->username = 0;
+  link->password = 0;
+  link->persist = persist;
+
+  // go with the default setup:
+  // one connection to localhost:27017
+  if (!hosts) {
+    link->server = (mongo_server**)pemalloc(sizeof(mongo_server*), persist);
+    link->server[0] = (mongo_server*)pemalloc(sizeof(mongo_server), persist);
+
+    link->server[0]->host = estrdup(MonGlo(default_host));
+    link->server[0]->port = MonGlo(default_port);
+    link->server[0]->connected = 0;
+    link->num = 1;
+    return link;
+  }
+
+  // check if it has the right prefix for a mongo connection url
+  if (strstr(hosts, "mongodb://") == hosts) {
+    char *at, *colon;
+
+    // mongodb://user:pass@host:port,host:port
+    //           ^
+    current += 10;
+
+    // mongodb://user:pass@host:port,host:port
+    //                    ^
+    at = strchr(current, '@');
+
+    // mongodb://user:pass@host:port,host:port
+    //               ^
+    colon = strchr(current, ':');
+
+    // check for username:password
+    if (at) {
+      link->username = estrndup(current, colon-current);
+      link->password = estrndup(colon+1, at-colon);
+
+      // move current
+      // mongodb://user:pass@host:port,host:port
+      //                     ^
+      current = at+1;
+    }
+  }
+
+  // now we're doing the same thing, regardless of prefix
+  // host1[:27017][,host2[:27017]]+
+
+  // count the number of servers we'll be parsing so we can allocate the
+  // memory (thanks, c!)
+  comma = strchr(current, ',');
+  while (comma) {
+    num_servers++;
+    comma = strchr(comma+1, ',');
+  }
+
+  // allocate the server ptr
+  link->server = (mongo_server**)pemalloc(sizeof(mongo_server*) * num_servers, persist);
+
+  // current is now pointing at the first server name
+  while (*current) {
+    mongo_server *server;
+    char *host;
+    int port;
+
+    // localhost:1234
+    // localhost,
+    // localhost
+    // ^         
+    if ((host = php_mongo_get_host(&current, persist)) == 0) {
+      char *msg;
+      spprintf(&msg, 0, "failed to get host from %s of %s", current, hosts);
+      ZVAL_STRING(errmsg, msg, 0);
+
+      mongo_link_dtor(link);
+      return 0;
+    }
+
+    // localhost:27017
+    //          ^
+    if ((port = php_mongo_get_port(&current)) == 0) {
+      char *msg;
+      spprintf(&msg, 0, "failed to get port from %s of %s", current, hosts);
+      ZVAL_STRING(errmsg, msg, 0);
+
+      efree(host);
+      mongo_link_dtor(link);
+      return 0;
+    }
+
+    // create a struct for this server
+    server = (mongo_server*)pemalloc(sizeof(mongo_server), persist);
+    server->host = host;
+    server->port = port;
+    server->socket = 0;
+    server->connected = 0;
+
+    // append it to the link list
+    link->server[link->num] = server;
+    link->num++;
+
+    // localhost,
+    // localhost
+    //          ^
+    if (*current == ',') {
+      current++;
+    }
+  }
+
+  return link;
 }
 
 /* {{{ Mongo->__construct
@@ -441,16 +570,16 @@ PHP_METHOD(Mongo, __construct) {
     return;
   }
 
-  /* I have no idea what this is for */
-  if (!server) {
-    zserver = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
-    server = Z_STRVAL_P(zserver);
-    server_len = Z_STRLEN_P(zserver);
+  /*
+   * If someone accidently does something like $hst instead of $host, we'll get
+   * the empty string.
+   */
+  if (server && strlen(server) == 0) {
+    zend_throw_exception(mongo_ce_ConnectionException, "no server name given", 0 TSRMLS_CC);
   }
 
   /* set up the fields */
   zend_update_property_stringl(mongo_ce_Mongo, getThis(), "server", strlen("server"), server, server_len TSRMLS_CC);
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), paired TSRMLS_CC);
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), persist TSRMLS_CC);
 
   if (connect) {
@@ -481,8 +610,6 @@ PHP_METHOD(Mongo, connect) {
 /* {{{ Mongo->pairConnect
  */
 PHP_METHOD(Mongo, pairConnect) {
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
-
   MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
 }
 
@@ -502,7 +629,6 @@ PHP_METHOD(Mongo, persistConnect) {
 /* {{{ Mongo->pairPersistConnect
  */
 PHP_METHOD(Mongo, pairPersistConnect) {
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), 1 TSRMLS_CC);
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
 
   /* 
@@ -558,16 +684,15 @@ PHP_METHOD(Mongo, connectUtil) {
 
 
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
-  zval *username = 0, *password = 0, *server, *pair, *persist;
+  zval *id = 0, *garbage = 0, *server, *persist;
   mongo_link *link;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &username, &password) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &id, &garbage) == FAILURE) {
     return;
   }
 
-  server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
-  pair = zend_read_property(mongo_ce_Mongo, getThis(), "paired", strlen("paired"), NOISY TSRMLS_CC);
   persist = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), NOISY TSRMLS_CC);
+  server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
 
   /* 
    * check connection limits 
@@ -606,19 +731,18 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
   if (Z_BVAL_P(persist)) {
     zend_rsrc_list_entry *le;
     char *key;
-    int key_len;
 
-    key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), 
-		       username ? Z_STRVAL_P(username) : "", 
-		       password ? Z_STRVAL_P(password) : "");
+    spprintf(&key, 0, "%s%s", Z_STRVAL_P(server), id ? Z_STRVAL_P(id) : "");
 
     /* if a connection is found, return it */
-    if (zend_hash_find(&EG(persistent_list), key, key_len+1, (void**)&le) == SUCCESS) {
+    if (zend_hash_find(&EG(persistent_list), key, strlen(key)+1, (void**)&le) == SUCCESS) {
+
       zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
 
       link = (mongo_link*)le->ptr;
       ZEND_REGISTER_RESOURCE(return_value, link, le_pconnection);
       zend_update_property(mongo_ce_Mongo, getThis(), "connection", strlen("connection"), return_value TSRMLS_CC);
+
       efree(key);
       return;
     }
@@ -627,32 +751,15 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
     efree(key);
   }
 
-  /* in the rare case when some idiot passes in "" as a server name */
-  if (Z_STRLEN_P(server) == 0) {
-    ZVAL_STRING(errmsg, "no server name given", 1);
+  /* do the actual connection */
+  if (!(link = php_mongo_parse_server(getThis(), errmsg TSRMLS_CC))) {
+    // errmsg set in parse_server
     return;
   }
 
+  if (php_mongo_do_socket_connect(link, errmsg TSRMLS_CC) == FAILURE) {
+    // errmsg set in do_socket_connect
 
-  link = (mongo_link*)pemalloc(sizeof(mongo_link), Z_BVAL_P(persist));
-
-  /* zero pointers so it doesn't segfault on cleanup if connection fails */
-  link->username = 0;
-  link->password = 0;
-  link->paired = Z_BVAL_P(pair);
-  link->persist = Z_BVAL_P(persist);
-
-  if (link->paired) {
-    link->server.paired.left = 0;
-    link->server.paired.right = 0;
-  }
-  else {
-    link->server.single.host = 0;
-  }
-
-  /* do the actual connection */
-  if (get_host_and_port(Z_STRVAL_P(server), link, errmsg TSRMLS_CC) == FAILURE ||
-      mongo_do_socket_connect(link, errmsg TSRMLS_CC) == FAILURE) {
     /* 
      * if this fails, free the link memory.  We haven't registered the struct
      * with PHP yet, so we have to do this manually 
@@ -671,24 +778,14 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
   if (Z_BVAL_P(persist)) {
     zend_rsrc_list_entry new_le;
     char *key;
-    int key_len;
 
-    /* save username and password for reconnection */
-    if (username && Z_STRLEN_P(username) > 0) {
-      link->username = (char*)pestrdup(Z_STRVAL_P(username), link->persist);
-    }
-    if (password && Z_STRLEN_P(password) > 0) {
-      link->password = (char*)pestrdup(Z_STRVAL_P(password), link->persist);
-    }
-
-    key_len = spprintf(&key, 0, "%s_%s_%s", Z_STRVAL_P(server), 
-		       username ? Z_STRVAL_P(username) : "", 
-		       password ? Z_STRVAL_P(password) : "");
+    /* save id for reconnection */
+    spprintf(&key, 0, "%s%s", Z_STRVAL_P(server), id ? Z_STRVAL_P(id) : "");
 
     Z_TYPE(new_le) = le_pconnection;
     new_le.ptr = link;
 
-    if (zend_hash_update(&EG(persistent_list), key, key_len+1, (void*)&new_le, sizeof(zend_rsrc_list_entry), NULL)==FAILURE) {
+    if (zend_hash_update(&EG(persistent_list), key, strlen(key)+1, (void*)&new_le, sizeof(zend_rsrc_list_entry), NULL)==FAILURE) {
       php_connection_dtor(&new_le TSRMLS_CC);
       efree(key);
       RETURN_FALSE;
@@ -707,134 +804,92 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
   MonGlo(num_links)++;
 }
 
-static char* getHost(char *ip, int persist) {
-  char *colon = strchr(ip, ':');
+// get the next host from the server string
+static char* php_mongo_get_host(char **ip, int persist) {
+  char *colon = strchr(*ip, ':');
+  char *comma = strchr(*ip, ',');
+  char *end = 0;
+  char *retval;
 
-  if (colon) {
-    if (colon - ip > 1 && 
-	colon -ip < 256) {
-      int len = colon-ip;
-      return persist ? 
-	zend_strndup(ip, len) :
-	estrndup(ip, len);
+  // pick whichever exists and is sooner: ':', ',', or '\0' 
+
+  // localhost,localhost:27017
+  // localhost,localhost
+  if (!colon || (colon && comma && (comma - *ip < colon - *ip))) {
+    end = comma;
+  }
+  // localhost:27017,localhost
+  else if (colon) {
+    end = colon;
+  }
+
+  if (end) {
+    // sanity check
+    if (end - *ip > 1 && end - *ip < 256) {
+      int len = end-*ip;
+
+      // return a copy
+      retval = persist ? zend_strndup(*ip, len) : estrndup(*ip, len);
+
+      // move to the end of this section of string
+      *(ip) = end;
+
+      return retval;
     }
     else {
+      // you get nothing
       return 0;
     }
   }
-  return pestrdup(ip, persist);
+
+  // otherwise, this is the last thing in the string
+  retval = pestrdup(*ip, persist);
+
+  // move to the end of this string
+  *(ip) = *ip + strlen(*ip);
+
+  return retval;
 }
 
-static int getPort(char *ip) {
-  char *colon = strchr(ip, ':');
+// get the next port from the server string
+static int php_mongo_get_port(char **ip) {
+  int i, retval;
+  /* 
+   * end: ptr to the end of this port
+   * host1:27017,host2:27017
+   *            ^end
+   * host1:27017
+   *            ^end
+   */
+  char *end = strchr(*ip, ',');
+  end = end ? end : *ip+strlen(*ip);
 
-  if (colon && colon[1]) {
-    int i;
-
-    colon++;
-
-    // make sure the port is actually a number
-    for (i = 0; i < (ip+strlen(ip)) - colon; i++) {
-      if (colon[i] < '0' ||
-	  colon[i] > '9') {
-	return 0;
-      }
-    }
-
-    return atoi(colon);
+  // there might not even be a port
+  if (**ip != ':') {
+    return 27017;
   }
-  return 27017;
+
+  // if there is, move past the colon
+  // localhost:27017
+  //          ^
+  (*ip)++;
+
+  // make sure the port is actually a number
+  for (i = 0; i < (end - *ip); i++) {
+    if ((*ip)[i] < '0' || (*ip)[i] > '9') {
+      return 0;
+    }
+  }
+
+  // this just takes the first numeric characters
+  retval = atoi(*ip);
+  
+  // move past the port
+  *(ip) += (end - *ip);
+
+  return retval;
 }
 
-static int get_host_and_port(char *server, mongo_link *link, zval *errmsg TSRMLS_DC) {
-  char *host, *comma;
-  int port;
-
-  // extract host:port
-  comma = strchr(server, ',');
-
-  // two-part ip
-  if (comma) {
-    char *ip1;
-
-    ip1 = estrndup(server, comma-server);
-
-    if ((host = getHost(ip1, link->persist)) == 0 ||
-	(port = getPort(ip1)) == 0) {
-      char *errstr;
-      spprintf(&errstr, 0, "failed to get left host [%s] or port [%d] from %s", 
-               host ? host : "", port, server);
-      ZVAL_STRING(errmsg, errstr, 0);
-
-      if (host) {
-	efree(host);
-      }
-      efree(ip1);
-
-      return FAILURE;
-    }
-
-    efree(ip1);
-  }
-  else {
-    if ((host = getHost(server, link->persist)) == 0 ||
-	(port = getPort(server)) == 0) {
-      char *errstr;
-      spprintf(&errstr, 0, "failed to get host [%s] or port [%d] from %s", 
-               host ? host : "", port, server);
-      ZVAL_STRING(errmsg, errstr, 0);
-
-      if (host) {
-	efree(host);
-      }
-      return FAILURE;
-    }
-  }
-
-
-  if (link->paired) {
-
-    link->server.paired.left = host;
-    link->server.paired.lport = port;
-
-
-    // we get a string: host1:123,host2:456
-    comma = strchr(server, ',');
-    if (!comma) {
-      ZVAL_STRING(errmsg, "paired connection, but no right host given", 1);
-
-      // make sure the right hostname won't be 
-      // cleaned up, as it wasn't set
-      link->server.paired.right = 0;
-      return FAILURE;
-    }
-
-    // get to host2:456
-    comma++;
-
-    if ((host = getHost(comma, link->persist)) == 0 ||
-	(port = getPort(comma)) == 0) {
-      char *errstr;
-      spprintf(&errstr, 0, "failed to get right host [%s] or port [%d] from %s", 
-               host ? host : "", port, comma);
-      ZVAL_STRING(errmsg, errstr, 0);
-
-      if (host) {
-	efree(host);
-      }
-      return FAILURE;
-    }
-
-    link->server.paired.right = host;
-    link->server.paired.rport = port;
-  }
-  else {
-    link->server.single.host = host;
-    link->server.single.port = port;
-  }
-
-  return SUCCESS;
-}
 
 /* {{{ Mongo->close()
  */
@@ -859,21 +914,8 @@ PHP_METHOD(Mongo, __toString) {
   zval *zconn = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
 
   // if we haven't connected yet, there's no link
-  if (!Z_BVAL_P(zconn)) {
-    zval *s = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
-    RETURN_ZVAL(s, 1, 0);
-  }
-
-  // if there is a link, get the real server string
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection);
-
-  if (link->paired) {
-    spprintf(&server, 0, "%s:%d,%s:%d", link->server.paired.left, link->server.paired.lport, link->server.paired.right, link->server.paired.rport);
-  }
-  else {
-    spprintf(&server, 0, "%s:%d", link->server.single.host, link->server.single.port);
-  }
-  RETURN_STRING(server, 0);
+  zval *s = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
+  RETURN_ZVAL(s, 1, 0);
 }
 /* }}} */
 
@@ -1138,104 +1180,100 @@ PHP_FUNCTION(bson_decode) {
 }
 
 
-static int get_master(mongo_link *link TSRMLS_DC) {
-  zval temp_ret;
-  zval *cursor_zval, *query, *is_master, *response;
-  zval **ans;
-  mongo_link temp;
+static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
+  int i;
+  zval *cursor_zval, *query, *is_master;
   mongo_cursor *cursor;
 
-  if (!link->paired) {
-    return link->server.single.socket;
+  // for a single connection, return it
+  if (link->num == 1) {
+    return link->server[0]->socket;
   }
 
-  if (link->server.paired.lsocket == link->master &&
-      link->server.paired.lconnected) {
-    return link->server.paired.lsocket;
-  }
-  else if (link->server.paired.rsocket == link->master &&
-           link->server.paired.rconnected) {
-    return link->server.paired.rsocket;
+  // if we're still connected to master, return it
+  if (link->server[link->master]->connected) {
+    return link->server[link->master]->socket;
   }
 
+  // redetermine master
+
+  // create a cursor
   MAKE_STD_ZVAL(cursor_zval);
   object_init_ex(cursor_zval, mongo_ce_Cursor);
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
 
-  // redetermine master
+  // query = { query : { ismaster : 1 } }
   MAKE_STD_ZVAL(query);
   array_init(query);
+
+  // is_master = { ismaster : 1 }
   MAKE_STD_ZVAL(is_master);
   array_init(is_master);
+
   add_assoc_long(is_master, "ismaster", 1);
   add_assoc_zval(query, "query", is_master);
 
+  // admin.$cmd.findOne({ query : { ismaster : 1 } })
   cursor->ns = estrdup("admin.$cmd");
   cursor->query = query;
   cursor->fields = 0;
   cursor->limit = -1;
   cursor->skip = 0;
   cursor->opts = 0;
+  cursor->current = 0;
 
-  temp.paired = 0;
+  for (i=0; i<link->num; i++) {
+    zval temp_ret;
+    zval *response;
+    zval **ans;
+    mongo_link temp;
+    mongo_server temp_server;
+    mongo_server *temp_server_p = &temp_server;
+    temp.server = &temp_server_p;
 
-  MAKE_STD_ZVAL(response);
-  if (link->server.paired.lconnected) {
-    // check the left
-    temp.server.single.socket = link->server.paired.lsocket;
+    // skip anything we're not connected to
+    if (!link->server[i]->connected) {
+      continue;
+    }
+
+    // make a fake link
+    temp.num = 1;
+    temp.server[0]->socket = link->server[i]->socket; 
     cursor->link = &temp;
-
+   
     // need to call this after setting cursor->link
     // reset checks that cursor->link != 0
     MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval);
+    MAKE_STD_ZVAL(response);
     MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
-    if ((Z_TYPE_P(response) == IS_ARRAY ||
-         Z_TYPE_P(response) == IS_OBJECT) &&
+
+    if (!IS_SCALAR_P(response) &&
         zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
         Z_LVAL_PP(ans) == 1) {
       zval_ptr_dtor(&cursor_zval);
       zval_ptr_dtor(&query);
       zval_ptr_dtor(&response);
-      return link->master = link->server.paired.lsocket;
+
+      return link->server[link->master = i]->socket;
     }
 
     // reset response
     zval_ptr_dtor(&response);
-    MAKE_STD_ZVAL(response);
   }
 
-  if (link->server.paired.rconnected) {
-    // check the right
-    temp.server.single.socket = link->server.paired.rsocket;
-    cursor->link = &temp;
-
-    MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval);
-    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
-    if ((Z_TYPE_P(response) == IS_ARRAY ||
-         Z_TYPE_P(response) == IS_OBJECT) &&
-        zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS &&
-        Z_LVAL_PP(ans) == 1) {
-      zval_ptr_dtor(&cursor_zval);
-      zval_ptr_dtor(&query);
-      zval_ptr_dtor(&response);
-      return link->master = link->server.paired.rsocket;
-    }
-  }
-
-  zval_ptr_dtor(&response);
-  zval_ptr_dtor(&query);
   zval_ptr_dtor(&cursor_zval);
+  zval_ptr_dtor(&query);
   return FAILURE;
 }
 
 
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
-  int sock = get_master(cursor->link TSRMLS_CC);
+  int sock = php_mongo_get_master(cursor->link TSRMLS_CC);
   int num_returned = 0;
   int64_t temp_id;
   char *cursor_ptr;
 
-  if (check_connection(cursor->link, errmsg TSRMLS_CC) != SUCCESS) {
+  if (php_mongo_check_connection(cursor->link, errmsg TSRMLS_CC) != SUCCESS) {
     ZVAL_STRING(errmsg, "could not establish db connection", 1);
     return FAILURE;
   }
@@ -1349,14 +1387,14 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
 int mongo_say(mongo_link *link, buffer *buf, zval *errmsg TSRMLS_DC) {
   int sock, sent;
-  sock = get_master(link TSRMLS_CC);
+  sock = php_mongo_get_master(link TSRMLS_CC);
   sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
 
   if (sent == FAILURE) {
     set_disconnected(link);
 
-    if (check_connection(link, errmsg TSRMLS_CC) == SUCCESS) {
-      sock = get_master(link TSRMLS_CC);
+    if (php_mongo_check_connection(link, errmsg TSRMLS_CC) == SUCCESS) {
+      sock = php_mongo_get_master(link TSRMLS_CC);
       sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
     }
     else {
@@ -1374,7 +1412,7 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
   while(r < len && num > 0) {
 
     // windows gives a WSAEFAULT if you try to get more bytes
-    num = recv(get_master(link TSRMLS_CC), (char*)dest, 4096, FLAGS);
+    num = recv(php_mongo_get_master(link TSRMLS_CC), (char*)dest, 4096, FLAGS);
 
     if (num < 0) {
       return FAILURE;
@@ -1386,52 +1424,47 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
   return r;
 }
 
-static int check_connection(mongo_link *link, zval *errmsg TSRMLS_DC) {
-  int now = time(0);
+static int php_mongo_check_connection(mongo_link *link, zval *errmsg TSRMLS_DC) {
+  int now = time(0), connected = 0, i;
 
-  if (!MonGlo(auto_reconnect) ||
-      (!link->paired && link->server.single.connected) ||
-      (link->paired && (link->server.paired.lconnected || link->server.paired.rconnected))) {
+  for (i=0; i<link->num; i++) {
+    connected |= link->server[i]->connected;
+  }
+
+  /*
+   * if we're already connected or autoreconnect isn't set, we're all done 
+   */
+  if (!MonGlo(auto_reconnect) || connected) {
     return SUCCESS;
   }
 
   link->ts = now;
 
+  // close all connections -- should we be smarter about this?
+  for (i=0; i<link->num; i++) {
 #ifdef WIN32
-  if (link->paired) {
-    closesocket(link->server.paired.lsocket);
-    closesocket(link->server.paired.rsocket);
-  }
-  else {
-    closesocket(link->server.single.socket);
-  }
-  WSACleanup();
+    closesocket(link->server[i]->socket);
 #else
-  if (link->paired) {
-    close(link->server.paired.lsocket);
-    close(link->server.paired.rsocket);
+    close(link->server[i]->socket);
+#endif /* WIN32 */
+    link->server[i]->connected = 0;
   }
-  else {
-    close(link->server.single.socket);
-  }
-#endif
 
-  set_disconnected(link);
+#ifdef WIN32
+  WSACleanup();
+#endif /* WIN32 */
 
-  return mongo_do_socket_connect(link, errmsg TSRMLS_CC);
+  return php_mongo_do_socket_connect(link, errmsg TSRMLS_CC);
 }
 
 inline void set_disconnected(mongo_link *link) {
-  if (link->paired) {
-    link->server.paired.lconnected = 0;
-    link->server.paired.rconnected = 0;
-  }
-  else {
-    link->server.single.connected = 0;
+  int i;
+  for (i=0; i<link->num; i++) {
+    link->server[i]->connected = 0;
   }
 }
 
-static int mongo_connect_nonb(int sock, char *host, int port, zval *errmsg) {
+static int php_mongo_connect_nonb(mongo_server *server, zval *errmsg) {
   struct sockaddr_in addr, addr2;
   fd_set rset, wset;
   struct timeval tval;
@@ -1452,8 +1485,9 @@ static int mongo_connect_nonb(int sock, char *host, int port, zval *errmsg) {
   }
 
   // create socket
-  sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (sock == INVALID_SOCKET) {
+  server->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (server->socket == INVALID_SOCKET) {
+    ZVAL_STRING(errmsg, "Could not create socket", 1);
     return FAILURE;
   }
 
@@ -1462,7 +1496,7 @@ static int mongo_connect_nonb(int sock, char *host, int port, zval *errmsg) {
   int yes = 1;
 
   // create socket
-  if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
+  if ((server->socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
     ZVAL_STRING(errmsg, strerror(errno), 1);
     return FAILURE;
   }
@@ -1473,31 +1507,31 @@ static int mongo_connect_nonb(int sock, char *host, int port, zval *errmsg) {
   tval.tv_usec = 0;
 
   // get addresses
-  if (mongo_get_sockaddr(&addr, host, port, errmsg) == FAILURE) {
+  if (php_mongo_get_sockaddr(&addr, server->host, server->port, errmsg) == FAILURE) {
+    // errmsg set in mongo_get_sockaddr
     return FAILURE;
   }
 
-  setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
-  setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
+  setsockopt(server->socket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
+  setsockopt(server->socket, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
 
 #ifdef WIN32
-  ioctlsocket(sock, FIONBIO, (u_long*)&yes);
+  ioctlsocket(server->socket, FIONBIO, (u_long*)&yes);
 #else
-  fcntl(sock, F_SETFL, FLAGS|O_NONBLOCK);
+  fcntl(server->socket, F_SETFL, FLAGS|O_NONBLOCK);
 #endif
 
   FD_ZERO(&rset);
-  FD_SET(sock, &rset);
+  FD_SET(server->socket, &rset);
   FD_ZERO(&wset);
-  FD_SET(sock, &wset);
+  FD_SET(server->socket, &wset);
 
 
   // connect
-  if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+  if (connect(server->socket, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
 #ifdef WIN32
     errno = WSAGetLastError();
-    if (errno != WSAEINPROGRESS &&
-		errno != WSAEWOULDBLOCK)
+    if (errno != WSAEINPROGRESS && errno != WSAEWOULDBLOCK)
 #else
     if (errno != EINPROGRESS)
 #endif
@@ -1506,73 +1540,62 @@ static int mongo_connect_nonb(int sock, char *host, int port, zval *errmsg) {
       return FAILURE;
     }
 
-    if (select(sock+1, &rset, &wset, NULL, &tval) == 0) {
+    if (select(server->socket+1, &rset, &wset, NULL, &tval) == 0) {
       ZVAL_STRING(errmsg, strerror(errno), 1);      
       return FAILURE;
     }
 
     size = sizeof(addr2);
 
-    connected = getpeername(sock, (struct sockaddr*)&addr, &size);
+    connected = getpeername(server->socket, (struct sockaddr*)&addr, &size);
     if (connected == FAILURE) {
       ZVAL_STRING(errmsg, strerror(errno), 1);
       return FAILURE;
     }
+
+    // set connected
+    server->connected = 1;
   }
 
 // reset flags
 #ifdef WIN32
-  ioctlsocket(sock, FIONBIO, &no);
+  ioctlsocket(server->socket, FIONBIO, &no);
 #else
-  fcntl(sock, F_SETFL, FLAGS);
+  fcntl(server->socket, F_SETFL, FLAGS);
 #endif
-  return sock;
+  return SUCCESS;
 }
 
-static int mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC) {
-  int left, right;
-  if (link->paired) {
-    if ((link->server.paired.lsocket =
-         mongo_connect_nonb(link->server.paired.lsocket,
-                            link->server.paired.left,
-                            link->server.paired.lport, errmsg)) == FAILURE) {
+static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC) {
+  int i, connected = 0;
 
-      left = 0;
-    }
-    else {
-      left = 1;
-    }
-    if ((link->server.paired.rsocket =
-         mongo_connect_nonb(link->server.paired.rsocket,
-                            link->server.paired.right,
-                            link->server.paired.rport, errmsg)) == FAILURE) {
-      right = 0;
-    }
-    else {
-      right = 1;
-    }
+  for (i=0; i<link->num; i++) {
+    // FAILURE = -1
+    // SUCCESS = 0
+    connected |= php_mongo_connect_nonb(link->server[i], errmsg)+1;
 
-    if (!left && !right) {
-      return FAILURE;
-    }
-
-    link->server.paired.lconnected = left;
-    link->server.paired.rconnected = right;
-
-    if (get_master(link TSRMLS_CC) == FAILURE) {
-      ZVAL_STRING(errmsg, "couldn't determine master", 1);      
-      return FAILURE;
+    /*
+     * cases where we have an error message and don't care because there's a
+     * connection we can use:
+     *  - if a connections fails after we have at least one working
+     *  - if the first connection fails but a subsequent ones succeeds
+     */
+    if (connected && Z_TYPE_P(errmsg) == IS_STRING) {
+      zval_ptr_dtor(&errmsg);
+      MAKE_STD_ZVAL(errmsg);
+      ZVAL_NULL(errmsg);
     }
   }
-  else {
-    if ((link->server.single.socket =
-         mongo_connect_nonb(link->server.single.socket,
-                            link->server.single.host,
-                            link->server.single.port, errmsg)) == FAILURE) {
-      link->server.single.connected = 0;
-      return FAILURE;
-    }
-    link->server.single.connected = 1;
+
+  // if at least one returns !FAILURE, return success
+  if (!connected) {
+    // error message set in mongo_connect_nonb
+    return FAILURE;
+  }
+
+  if (php_mongo_get_master(link TSRMLS_CC) == FAILURE) {
+    ZVAL_STRING(errmsg, "couldn't determine master", 1);      
+    return FAILURE;
   }
 
   // set initial connection time
@@ -1581,7 +1604,7 @@ static int mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC) {
   return SUCCESS;
 }
 
-static int mongo_get_sockaddr(struct sockaddr_in *addr, char *host, int port, zval *errmsg) {
+static int php_mongo_get_sockaddr(struct sockaddr_in *addr, char *host, int port, zval *errmsg) {
   struct hostent *hostinfo;
 
   addr->sin_family = AF_INET;
