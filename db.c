@@ -460,7 +460,7 @@ static void md5_hash(char *md5str, char *arg) {
   PHP_MD5Init(&context);
   PHP_MD5Update(&context, arg, strlen(arg));
   PHP_MD5Final(digest, &context);
-  make_digest_ex(md5str, digest, 16);
+  make_digest(md5str, digest);
 }
 
 
