@@ -153,6 +153,18 @@ PHP_METHOD(MongoCollection, insert) {
     RETURN_FALSE;
   }
 
+  // throw an exception if the obj was too big
+  if(buf.pos - buf.start > MAX_OBJECT_LEN) {
+    char *msg;
+
+    spprintf(&msg, 0, "size of BSON is %d bytes, max 4MB", buf.pos-buf.start);
+    zend_throw_exception(mongo_ce_Exception, msg, 0 TSRMLS_CC);
+    efree(msg);
+
+    efree(buf.start);
+    return;
+  }
+
   MAKE_STD_ZVAL(temp);
   ZVAL_NULL(temp);
 
@@ -261,6 +273,18 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
     start = buf.pos-buf.start;
     zval_to_bson(&buf, HASH_PP(data), PREP TSRMLS_CC);
+
+    // throw an exception if the obj was too big
+    if(buf.pos - (buf.start+start) > MAX_OBJECT_LEN) {
+      char *msg;
+      
+      spprintf(&msg, 0, "size of %dth BSON is %d bytes, max 4MB", count, buf.pos-buf.start);
+      zend_throw_exception(mongo_ce_Exception, msg, 0 TSRMLS_CC);
+      efree(msg);
+      
+      efree(buf.start);
+      return;
+    }
 
     php_mongo_serialize_size(buf.start+start, &buf);
 

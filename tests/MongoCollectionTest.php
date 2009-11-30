@@ -132,6 +132,26 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertEquals((string)$nonassoc['_id'], (string)$x['_id']);
     }
     
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testBigInsert() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("bad file handling in 5.1");
+            return;
+        }
+
+        $x = array("files" => array());
+        $contents = file_get_contents('tests/Formelsamling.pdf');
+
+        for ($i=0; $i<20; $i++) {
+          $x['files'][] = $contents;
+        }
+
+        $this->object->insert($x);
+    }
+
     public function testBatchInsert() {
       $this->assertFalse($this->object->batchInsert(array()));
       $this->assertFalse($this->object->batchInsert(array(1,2,3)));
