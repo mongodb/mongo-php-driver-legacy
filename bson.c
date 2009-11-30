@@ -133,7 +133,7 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
 
   // if the key is a number in ascending order, we're still
   // dealing with an array, not an object, so increase the count
-  if (key->h == *num) {
+  if (key->h == (unsigned int)*num) {
     (*num)++;
   }
 
@@ -673,7 +673,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       object_init_ex(value, mongo_ce_Date);
 
       add_property_long(value, "sec", (long)(d/1000));
-      add_property_long(value, "usec", (d*1000)%1000000);
+      add_property_long(value, "usec", (long)((d*1000)%1000000));
 
       break;
     }
