@@ -54,7 +54,13 @@ zend_class_entry *mongo_ce_Date = NULL,
 
 void generate_id(char *data TSRMLS_DC) {
   int inc;
+
+#ifdef WIN32
+  int pid = GetCurrentThreadId();
+#else
   int pid = (int)getpid();
+#endif
+
   unsigned t = (unsigned) time(0);
   char *T = (char*)&t, 
     *M = (char*)&MonGlo(machine), 
