@@ -68,7 +68,7 @@ PHP_METHOD(MongoDB, __construct) {
 
   db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-  db->link = zend_read_property(mongo_ce_Mongo, zlink, "connection", strlen("connection"), NOISY TSRMLS_CC);
+  db->link = zlink;
   zval_add_ref(&db->link);
 
   MAKE_STD_ZVAL(db->name);

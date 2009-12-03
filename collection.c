@@ -140,7 +140,8 @@ PHP_METHOD(MongoCollection, insert) {
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  link = (mongo_link*)zend_object_store_get_object(c->db->link TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(link->server, Mongo);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_INSERT);
@@ -256,7 +257,8 @@ PHP_METHOD(MongoCollection, batchInsert) {
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  link = (mongo_link*)zend_object_store_get_object(c->db->link TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(link->server, Mongo);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_INSERT);
@@ -368,7 +370,8 @@ PHP_METHOD(MongoCollection, update) {
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  link = (mongo_link*)zend_object_store_get_object(c->db->link TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(link->server, Mongo);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_UPDATE);
@@ -426,7 +429,8 @@ PHP_METHOD(MongoCollection, remove) {
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &c->db->link, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  link = (mongo_link*)zend_object_store_get_object(c->db->link TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(link->server, Mongo);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_DELETE);

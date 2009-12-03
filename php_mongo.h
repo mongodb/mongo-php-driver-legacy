@@ -23,7 +23,6 @@
 
 // resource names
 #define PHP_CONNECTION_RES_NAME "mongo connection"
-#define PHP_AUTH_CONNECTION_RES_NAME "mongo authenticated connection"
 
 #ifdef WIN32
 #  ifndef int64_t
@@ -134,29 +133,57 @@
 #define IS_SCALAR_P(a) (Z_TYPE_P(a) != IS_ARRAY && Z_TYPE_P(a) != IS_OBJECT)
 #define IS_SCALAR_PP(a) (Z_TYPE_PP(a) != IS_ARRAY && Z_TYPE_PP(a) != IS_OBJECT)
 
+#define php_mongo_obj_new(mongo_obj)                    \
+  zend_object_value retval;                             \
+  mongo_obj *intern;                                    \
+  zval *tmp;                                            \
+                                                        \
+  intern = (mongo_obj*)emalloc(sizeof(mongo_obj));               \
+  memset(intern, 0, sizeof(mongo_obj));                          \
+                                                                 \
+  zend_object_std_init(&intern->std, class_type TSRMLS_CC);      \
+  zend_hash_copy(intern->std.properties,                         \
+     &class_type->default_properties,                            \
+     (copy_ctor_func_t) zval_add_ref,                            \
+     (void *) &tmp,                                              \
+     sizeof(zval *));                                            \
+                                                                 \
+  retval.handle = zend_objects_store_put(intern,                 \
+     (zend_objects_store_dtor_t) zend_objects_destroy_object,    \
+     php_##mongo_obj##_free, NULL TSRMLS_CC);                    \
+  retval.handlers = &mongo_default_handlers;                     \
+                                                                 \
+  return retval;
 
-typedef struct {
+
+
+typedef struct _mongo_server {
   char *host;
   int port;
   int socket;
   int connected;
+  struct _mongo_server *next;
 } mongo_server;
 
 typedef struct {
+  zend_object std;
+
   // ts keeps track of the last time we tried to connect, so we don't try to
   // reconnect a zillion times in three seconds.
   int ts;
 
-  // if the connection is persistent... this affects all memory allocated to
-  // this struct
+  /*
+   * persistent connections
+   *
+   * this affects all memory allocated to this struct.  if rsrc is greater than 
+   * 0, this is a pointer to the resource number of the persistent connection.
+   */
   int persist;
 
   // if num is greater than 1, master keeps track of the master connection
   int master;
 
-  // number of servers
   int num;
-  // 1 or more servers
   mongo_server **server;
 
   char *username;

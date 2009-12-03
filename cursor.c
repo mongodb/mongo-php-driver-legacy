@@ -83,7 +83,7 @@ PHP_METHOD(MongoCursor, __construct) {
   zval_add_ref(&zlink);
 
   // db connection resource
-  ZEND_FETCH_RESOURCE2(link, mongo_link*, &zlink, -1, PHP_CONNECTION_RES_NAME, le_connection, le_pconnection); 
+  link = (mongo_link*)zend_object_store_get_object(zlink TSRMLS_CC);
   cursor->link = link;
 
   // change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1}

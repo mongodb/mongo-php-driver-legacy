@@ -88,9 +88,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function test__toString() {
-        $this->markTestSkipped();
-        return;
-
         if (preg_match($this->sharedFixture->version_51, phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
@@ -385,6 +382,34 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $m = new Mongo("mongodb://localhost:27017,localhost:27018");
       $m = new Mongo("mongodb://localhost:27017,localhost:27018,localhost:27019");
       $m = new Mongo("mongodb://localhost:27018,localhost,localhost:27019");
+    }
+
+    public function testPersistConn() {
+      $m1 = new Mongo("localhost", true, true);
+
+      // uses the same connection as $m1
+      $m2 = new Mongo("localhost", false);
+      $m2->persistConnect();
+        
+      // creates a new connection
+      $m3 = new Mongo("127.0.0.1", false);
+      $m3->persistConnect();
+
+      // creates a new connection
+      $m4 = new Mongo("127.0.0.1:27017", false);
+      $m4->persistConnect();
+      
+      // creates a new connection
+      $m5 = new Mongo("localhost", false);
+      $m5->persistConnect("foo");
+
+      // uses the $m5 connection
+      $m6 = new Mongo("localhost", false);
+      $m6->persistConnect("foo");
+      
+      // creates a new connection
+      $m7 = new Mongo("localhost", false);
+      $m7->persistConnect("foo", "bar");
     }
 }
 ?>
