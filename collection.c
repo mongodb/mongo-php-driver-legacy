@@ -905,7 +905,7 @@ static function_entry MongoCollection_methods[] = {
   {NULL, NULL, NULL}
 };
 
-static void mongo_mongo_collection_free(void *object TSRMLS_DC) {
+static void php_mongo_collection_free(void *object TSRMLS_DC) {
   mongo_collection *c = (mongo_collection*)object;
 
   if (c) {
@@ -924,24 +924,10 @@ static void mongo_mongo_collection_free(void *object TSRMLS_DC) {
 }
 
 
-/* {{{ mongo_mongo_collection_new
+/* {{{ php_mongo_collection_new
  */
-zend_object_value mongo_mongo_collection_new(zend_class_entry *class_type TSRMLS_DC) {
-  zend_object_value retval;
-  mongo_collection *intern;
-  zval *tmp;
-
-  intern = (mongo_collection*)emalloc(sizeof(mongo_collection));
-  memset(intern, 0, sizeof(mongo_collection));
-
-  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
-  zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, 
-                 (void *) &tmp, sizeof(zval *));
-
-  retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, mongo_mongo_collection_free, NULL TSRMLS_CC);
-  retval.handlers = &mongo_default_handlers;
-
-  return retval;
+zend_object_value php_mongo_collection_new(zend_class_entry *class_type TSRMLS_DC) {
+  php_mongo_obj_new(mongo_collection);
 }
 /* }}} */
 
@@ -949,7 +935,7 @@ void mongo_init_MongoCollection(TSRMLS_D) {
   zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoCollection", MongoCollection_methods);
-  ce.create_object = mongo_mongo_collection_new;
+  ce.create_object = php_mongo_collection_new;
   mongo_ce_Collection = zend_register_internal_class(&ce TSRMLS_CC);
 
   zend_declare_property_null(mongo_ce_Collection, "db", strlen("db"), ZEND_ACC_PUBLIC TSRMLS_CC);

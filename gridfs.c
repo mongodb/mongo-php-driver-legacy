@@ -646,7 +646,7 @@ void mongo_init_MongoGridFS(TSRMLS_D) {
   zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoGridFS", MongoGridFS_methods);
-  ce.create_object = mongo_mongo_collection_new;
+  ce.create_object = php_mongo_collection_new;
   mongo_ce_GridFS = zend_register_internal_class_ex(&ce, mongo_ce_Collection, "MongoCollection" TSRMLS_CC);
 
   zend_declare_property_null(mongo_ce_GridFS, "chunks", strlen("chunks"), ZEND_ACC_PUBLIC TSRMLS_CC);

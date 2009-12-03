@@ -585,7 +585,7 @@ static function_entry MongoDB_methods[] = {
   { NULL, NULL, NULL }
 };
 
-static void mongo_mongo_db_free(void *object TSRMLS_DC) {
+static void php_mongo_db_free(void *object TSRMLS_DC) {
   mongo_db *db = (mongo_db*)object;
 
   if (db) {
@@ -604,22 +604,8 @@ static void mongo_mongo_db_free(void *object TSRMLS_DC) {
 
 /* {{{ mongo_mongo_db_new
  */
-zend_object_value mongo_mongo_db_new(zend_class_entry *class_type TSRMLS_DC) {
-  zend_object_value retval;
-  mongo_db *intern;
-  zval *tmp;
-
-  intern = (mongo_db*)emalloc(sizeof(mongo_db));
-  memset(intern, 0, sizeof(mongo_db));
-
-  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
-  zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, 
-                 (void *) &tmp, sizeof(zval *));
-
-  retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, mongo_mongo_db_free, NULL TSRMLS_CC);
-  retval.handlers = &mongo_default_handlers;
-
-  return retval;
+zend_object_value php_mongo_db_new(zend_class_entry *class_type TSRMLS_DC) {
+  php_mongo_obj_new(mongo_db);
 }
 /* }}} */
 
@@ -628,7 +614,7 @@ void mongo_init_MongoDB(TSRMLS_D) {
   zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoDB", MongoDB_methods);
-  ce.create_object = mongo_mongo_db_new;
+  ce.create_object = php_mongo_db_new;
   mongo_ce_DB = zend_register_internal_class(&ce TSRMLS_CC);
 
   zend_declare_class_constant_long(mongo_ce_DB, "PROFILING_OFF", strlen("PROFILING_OFF"), 0 TSRMLS_CC);

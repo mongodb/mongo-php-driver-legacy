@@ -36,8 +36,8 @@ void generate_id(char* TSRMLS_DC);
 PHP_METHOD(MongoId, __construct);
 PHP_METHOD(MongoId, __toString);
 
-int mongo_mongo_id_serialize(zval*, unsigned char**, zend_uint*, zend_serialize_data* TSRMLS_DC);
-int mongo_mongo_id_unserialize(zval**, zend_class_entry*, const unsigned char*, zend_uint, zend_unserialize_data* TSRMLS_DC);
+int php_mongo_id_serialize(zval*, unsigned char**, zend_uint*, zend_serialize_data* TSRMLS_DC);
+int php_mongo_id_unserialize(zval**, zend_class_entry*, const unsigned char*, zend_uint, zend_unserialize_data* TSRMLS_DC);
 
 PHP_METHOD(MongoRegex, __construct);
 PHP_METHOD(MongoRegex, __toString);

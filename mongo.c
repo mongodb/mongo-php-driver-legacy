@@ -431,27 +431,7 @@ void mongo_init_MongoExceptions(TSRMLS_D) {
 /* {{{ php_mongo_link_new
  */
 static zend_object_value php_mongo_link_new(zend_class_entry *class_type TSRMLS_DC) {
-  zend_object_value retval;
-  mongo_link *intern;
-  zval *tmp;
-  
-  intern = (mongo_link*)emalloc(sizeof(mongo_link));
-  memset(intern, 0, sizeof(mongo_link));
-  
-  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
-  zend_hash_copy(intern->std.properties,
-    &class_type->default_properties,
-    (copy_ctor_func_t) zval_add_ref,
-    (void *) &tmp,
-    sizeof(zval *));
-  
-  retval.handle = zend_objects_store_put(intern,
-    (zend_objects_store_dtor_t) zend_objects_destroy_object,
-    php_mongo_link_free, NULL TSRMLS_CC);
-
-  retval.handlers = &mongo_default_handlers;                     
-  
-  return retval;
+  php_mongo_obj_new(mongo_link);
 }
 /* }}} */
 

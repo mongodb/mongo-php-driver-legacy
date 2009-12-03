@@ -47,7 +47,7 @@ extern zend_object_handlers mongo_default_handlers;
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 static void kill_cursor(mongo_cursor *cursor TSRMLS_DC);
-static zend_object_value mongo_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
+static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
 
@@ -641,22 +641,8 @@ static function_entry MongoCursor_methods[] = {
 };
 
 
-static zend_object_value mongo_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC) {
-  zend_object_value retval;
-  mongo_cursor *intern;
-  zval *tmp;
-
-  intern = (mongo_cursor*)emalloc(sizeof(mongo_cursor));
-  memset(intern, 0, sizeof(mongo_cursor));
-
-  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
-  zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, 
-                 (void *) &tmp, sizeof(zval *));
-
-  retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, mongo_mongo_cursor_free, NULL TSRMLS_CC);
-  retval.handlers = &mongo_default_handlers;
-
-  return retval;
+static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC) {
+  php_mongo_obj_new(mongo_cursor);
 }
 
 
@@ -691,7 +677,7 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   mongo_say(cursor->link, &buf, &temp TSRMLS_CC);
 }
 
-void mongo_mongo_cursor_free(void *object TSRMLS_DC) {
+void php_mongo_cursor_free(void *object TSRMLS_DC) {
   mongo_cursor *cursor = (mongo_cursor*)object;
 
   if (cursor) {
@@ -717,7 +703,7 @@ void mongo_init_MongoCursor(TSRMLS_D) {
   zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoCursor", MongoCursor_methods);
-  ce.create_object = mongo_mongo_cursor_new;
+  ce.create_object = php_mongo_cursor_new;
   mongo_ce_Cursor = zend_register_internal_class(&ce TSRMLS_CC);
   zend_class_implements(mongo_ce_Cursor TSRMLS_CC, 1, zend_ce_iterator);
 

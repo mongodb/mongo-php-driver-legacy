@@ -105,7 +105,7 @@ void generate_id(char *data TSRMLS_DC) {
 #endif /* PHP_C_BIGENDIAN */
 }
 
-int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_uint *serialized_length, zend_serialize_data *var_hash TSRMLS_DC) {
+int php_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_uint *serialized_length, zend_serialize_data *var_hash TSRMLS_DC) {
   zval str;
   MONGO_METHOD(MongoId, __toString, &str, struc);
   *(serialized_length) = Z_STRLEN(str);
@@ -113,7 +113,7 @@ int mongo_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_
   return SUCCESS;
 }
 
-int mongo_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned char* p, zend_uint datalen, zend_unserialize_data* var_hash TSRMLS_DC) {
+int php_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned char* p, zend_uint datalen, zend_unserialize_data* var_hash TSRMLS_DC) {
   zval temp;
   zval str;
 
@@ -129,7 +129,7 @@ int mongo_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned
   return SUCCESS;
 }
 
-static void mongo_mongo_id_free(void *object TSRMLS_DC) {
+static void php_mongo_id_free(void *object TSRMLS_DC) {
   mongo_id *id = (mongo_id*)object;
   if (id) {
     if (id->id) {
@@ -140,22 +140,8 @@ static void mongo_mongo_id_free(void *object TSRMLS_DC) {
   }
 }
 
-static zend_object_value mongo_mongo_id_new(zend_class_entry *class_type TSRMLS_DC) {
-  zend_object_value retval;
-  mongo_id *intern;
-  zval *tmp;
-
-  intern = (mongo_id*)emalloc(sizeof(mongo_id));
-  memset(intern, 0, sizeof(mongo_id));
-
-  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
-  zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, 
-                 (void *) &tmp, sizeof(zval *));
-
-  retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, mongo_mongo_id_free, NULL TSRMLS_CC);
-  retval.handlers = &mongo_default_handlers;
-
-  return retval;
+static zend_object_value php_mongo_id_new(zend_class_entry *class_type TSRMLS_DC) {
+  php_mongo_obj_new(mongo_id);
 }
 
 static function_entry MongoId_methods[] = {
@@ -168,9 +154,9 @@ void mongo_init_MongoId(TSRMLS_D) {
   zend_class_entry id; 
   INIT_CLASS_ENTRY(id, "MongoId", MongoId_methods); 
 
-  id.create_object = mongo_mongo_id_new;
-  id.serialize = mongo_mongo_id_serialize;
-  id.unserialize = mongo_mongo_id_unserialize;
+  id.create_object = php_mongo_id_new;
+  id.serialize = php_mongo_id_serialize;
+  id.unserialize = php_mongo_id_unserialize;
 
   mongo_ce_Id = zend_register_internal_class(&id TSRMLS_CC); 
 }

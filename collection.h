@@ -18,7 +18,7 @@
 #ifndef MONGO_COLLECTION_H
 #define MONGO_COLLECTION_H
 
-zend_object_value mongo_mongo_collection_new(zend_class_entry* TSRMLS_DC);
+zend_object_value php_mongo_collection_new(zend_class_entry* TSRMLS_DC);
 
 PHP_METHOD(MongoCollection, __construct);
 PHP_METHOD(MongoCollection, __toString);
