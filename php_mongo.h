@@ -265,6 +265,8 @@ typedef struct {
   int skip;
   int opts;
 
+  char special;
+
   // response header
   mongo_msg_header header;
   // response fields

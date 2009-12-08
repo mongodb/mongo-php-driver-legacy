@@ -436,7 +436,6 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
      * Doesn't actually test functionality
      */
     public function testSnapshot() {
-      $this->object->drop();
       $this->object->insert(array('foo'=>'bar'));
       $cursor = $this->object->find()->snapshot();
       $this->assertNotNull($cursor->getNext());
@@ -447,8 +446,6 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoCursorException
      */
     public function testErr1() {
-      $this->object->drop();
-
       $this->object->insert(array("num" => 1, "foo" => 1));
       var_dump($this->object->find()->hint(array("num" => 1))->explain());
     }
@@ -457,8 +454,6 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoCursorException
      */
     public function testErr2() {
-      $this->object->drop();
-
       $this->object->insert(array("num" => 1, "foo" => 1));
       var_dump($this->object->find()->hint(array("num" => 1))->next());
     }
@@ -467,14 +462,11 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoCursorException
      */
     public function testErr3() {
-      $this->object->drop();
-
       $this->object->insert(array("num" => 1, "foo" => 1));
       var_dump($this->object->find()->hint(array("num" => 1))->getNext());
     }
 
     public function testDead() {
-      $this->object->drop();
       $this->object->insert(array('x' => 1));
       $cursor = $this->object->find();
       $this->assertFalse($cursor->dead());
@@ -483,8 +475,6 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
     }
 
     public function testExplainLimit() {
-      $this->object->drop();
-
       for ($i=0;$i<100;$i++) {
         $this->object->save(array("x" => $i));
       }
@@ -497,5 +487,16 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(20, $hard['n']);
     }
 
+    public function testSpecial() {
+      $this->object->insert(array("name" => "joe", "age" => 14));
+      $this->object->insert(array("name" => "karen", "age" => 20));
+      $this->object->insert(array("name" => "bill", "age" => 30));
+
+      $query = array('age' => array('$lt' => 15));
+      $names = $this->object->db->command(array('distinct' => 'c', 'key' => 'name', 'query' => $query));
+
+      $this->assertEquals(1, count($names['values']), json_encode($names));
+      $this->assertEquals("joe", $names['values'][0], json_encode($names));
+    }
 }
 ?>

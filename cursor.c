@@ -48,6 +48,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 static void kill_cursor(mongo_cursor *cursor TSRMLS_DC);
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
+static void make_special(mongo_cursor *);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
 
@@ -125,18 +126,15 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->ns = estrdup(Z_STRVAL_P(zns));
 
   // query
-  MAKE_STD_ZVAL(q);
-  array_init(q);
-
-  add_assoc_zval(q, "query", zquery);
+  cursor->query = zquery;
   zval_add_ref(&zquery);
-  cursor->query = q;
 
   // reset iteration pointer, just in case
   MONGO_METHOD(MongoCursor, reset, return_value, getThis());
 
   cursor->at = 0;
   cursor->num = 0;
+  cursor->special = 0;
 
   slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
   cursor->opts = Z_BVAL_P(slave_okay) ? (1 << 2) : 0;
@@ -145,6 +143,21 @@ PHP_METHOD(MongoCursor, __construct) {
   zval_ptr_dtor(&empty);
 }
 /* }}} */
+
+
+static void make_special(mongo_cursor *cursor) {
+  zval *temp;
+  if (cursor->special) {
+    return;
+  }
+
+  cursor->special = 1;
+
+  temp = cursor->query;
+  MAKE_STD_ZVAL(cursor->query);
+  array_init(cursor->query);
+  add_assoc_zval(cursor->query, "query", temp);
+}
 
 /* {{{ MongoCursor::hasNext
  */
@@ -295,6 +308,7 @@ PHP_METHOD(MongoCursor, snapshot) {
     return;
   }
 
+  make_special(cursor);
   query = cursor->query;
   add_assoc_bool(query, "$snapshot", 1);
 
@@ -320,6 +334,7 @@ PHP_METHOD(MongoCursor, sort) {
     return;
   }
 
+  make_special(cursor);
   query = cursor->query;
   zval_add_ref(&zfields);
   convert_to_object(zfields);
@@ -346,6 +361,7 @@ PHP_METHOD(MongoCursor, hint) {
     return;
   }
 
+  make_special(cursor);
   query = cursor->query;
   zval_add_ref(&zfields);
   add_assoc_zval(query, "$hint", zfields);
@@ -369,6 +385,7 @@ PHP_METHOD(MongoCursor, explain) {
     cursor->limit *= -1;
   }
 
+  make_special(cursor);
   query = cursor->query;
   add_assoc_bool(query, "$explain", 1);
 
@@ -582,10 +599,16 @@ PHP_METHOD(MongoCursor, count) {
 
   if (cursor->query) {
     zval **inner_query;
-    if (zend_hash_find(HASH_P(cursor->query), "query", strlen("query")+1, (void**)&inner_query) == SUCCESS) {
+
+    if (!cursor->special) {
+      add_assoc_zval(data, "query", cursor->query);
+      zval_add_ref(&cursor->query);
+    }
+    else if (zend_hash_find(HASH_P(cursor->query), "query", strlen("query")+1, (void**)&inner_query) == SUCCESS) {
       add_assoc_zval(data, "query", *inner_query);
       zval_add_ref(inner_query);
     }
+
     /*
      * "all" creates a count based on what the cursor is actually going to return,
      * including the query, sort, limit, and skip.
@@ -619,6 +642,8 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, __construct, NULL, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hasNext, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, getNext, NULL, ZEND_ACC_PUBLIC)
+
+  /* options */
   PHP_ME(MongoCursor, limit, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
@@ -628,15 +653,22 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, snapshot, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC) 
-  PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
+
+  /* query */
   PHP_ME(MongoCursor, doQuery, NULL, ZEND_ACC_PROTECTED)
+
+  /* iterator funcs */
   PHP_ME(MongoCursor, current, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, key, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, next, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, rewind, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, valid, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, reset, NULL, ZEND_ACC_PUBLIC)
+
+  /* stand-alones */
+  PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, count, NULL, ZEND_ACC_PUBLIC)
+
   {NULL, NULL, NULL}
 };
 
