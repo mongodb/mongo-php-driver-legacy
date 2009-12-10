@@ -147,6 +147,7 @@ static zend_object_value php_mongo_id_new(zend_class_entry *class_type TSRMLS_DC
 static function_entry MongoId_methods[] = {
   PHP_ME(MongoId, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoId, __toString, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoId, getTimestamp, NULL, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
 };
 
@@ -231,6 +232,21 @@ PHP_METHOD(MongoId, __toString) {
   id[24] = '\0';
 
   RETURN_STRING(id, NO_DUP);
+}
+/* }}} */
+
+/* {{{ MongoId::getTimestamp
+ */
+PHP_METHOD(MongoId, getTimestamp) {
+  int ts = 0, i;
+  mongo_id *id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED_STRING(id->id, MongoId);
+  
+  for (i=0; i<4; i++) {
+    ts = (ts*256) + id->id[i];
+  }
+
+  RETURN_LONG(ts);
 }
 /* }}} */
 

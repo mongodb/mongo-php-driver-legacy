@@ -79,6 +79,13 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
             $this->assertGreaterThan($id[$i]."", $id[$i+1]."", $id[$i] . ", " . $id[$i+1]);
         }
     }
+
+    public function testTimestamp() {
+        $id = new MongoId;
+        $time = time();
+
+        $this->assertEquals($id->getTimestamp(), $time);
+    }
 }
 
 ?>
