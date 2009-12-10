@@ -26,9 +26,6 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
-#if ZEND_MODULE_API_NO >= 20060613
-#include <ext/spl/spl_exceptions.h>
-#endif
 #include <ext/standard/php_rand.h>
 
 #include "mongo_types.h"
@@ -412,14 +409,6 @@ PHP_METHOD(MongoRegex, __construct) {
 
     add_property_stringl( getThis(), "regex", re+1, pattern_len, 1);
     add_property_stringl( getThis(), "flags", eopattern, flags_len, 1);
-  }
-  else {
-#   if ZEND_MODULE_API_NO >= 20060613
-    zend_throw_exception(spl_ce_InvalidArgumentException, "MongoRegex::__construct(): argument must be a string or MongoRegex", 0 TSRMLS_CC);
-#   else
-    zend_throw_exception(zend_exception_get_default(), "MongoRegex::__construct(): argument must be a string or MongoRegex", 0 TSRMLS_CC);
-#   endif
-    return;
   }
 }
 /* }}} */

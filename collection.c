@@ -16,10 +16,6 @@
  */
 
 #include <php.h>
-#include <zend_exceptions.h>
-#if ZEND_MODULE_API_NO >= 20060613
-#include "ext/spl/spl_exceptions.h"
-#endif
 
 #include "php_mongo.h"
 #include "collection.h"
