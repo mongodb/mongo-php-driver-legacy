@@ -411,5 +411,28 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $m7 = new Mongo("localhost", false);
       $m7->persistConnect("foo", "bar");
     }
+
+    public function testAuthenticate1() {
+      if ($this->sharedFixture->auth) {
+        $m = new Mongo("mongodb://testUser:testPass@localhost");
+      }
+    }
+
+    public function testAuthenticate2() {
+      if (!$this->sharedFixture->auth) {
+        $this->markTestSkipped("can't add user");
+        return;
+      }
+      $ok = true;
+
+      try {
+        $m = new Mongo("mongodb://testUser:testPa@localhost");
+      }
+      catch(MongoConnectionException $e) {
+        $ok = false;
+      }
+
+      $this->assertFalse($ok);
+    }
 }
 ?>
