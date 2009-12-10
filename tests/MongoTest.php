@@ -78,7 +78,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $m2 = new Mongo("localhost:27017", false);
       $m2->persistConnect("", "");
 
-      // TODO: check numLinks == numPersistentLinks
+      $this->assertEquals(Mongo::$connections, Mongo::$pconnections);
 
       // make sure this doesn't disconnect $m2      
       unset($m1);
@@ -384,42 +384,79 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $m = new Mongo("mongodb://localhost:27018,localhost,localhost:27019");
     }
 
+    public function testConnCount() {
+      $num = Mongo::$connections;
+      $m = new Mongo();
+      $this->assertEquals($num+1, Mongo::$connections);
+    }
+
     public function testPersistConn() {
+      $start = Mongo::$connections;
+      $pstart = Mongo::$pconnections;
+
       $m1 = new Mongo("localhost", true, true);
+
+      $this->assertEquals($pstart+1, Mongo::$pconnections);
+      $this->assertEquals($start+1, Mongo::$connections);
 
       // uses the same connection as $m1
       $m2 = new Mongo("localhost", false);
       $m2->persistConnect();
+
+      $this->assertEquals($pstart+1, Mongo::$pconnections);
+      $this->assertEquals($start+1, Mongo::$connections);
         
       // creates a new connection
       $m3 = new Mongo("127.0.0.1", false);
       $m3->persistConnect();
 
+      $this->assertEquals($pstart+2, Mongo::$pconnections);
+      $this->assertEquals($start+2, Mongo::$connections);
+
       // creates a new connection
       $m4 = new Mongo("127.0.0.1:27017", false);
       $m4->persistConnect();
+
+      $this->assertEquals($pstart+3, Mongo::$pconnections);
+      $this->assertEquals($start+3, Mongo::$connections);
       
       // creates a new connection
       $m5 = new Mongo("localhost", false);
       $m5->persistConnect("foo");
 
+      $this->assertEquals($pstart+4, Mongo::$pconnections);
+      $this->assertEquals($start+4, Mongo::$connections);
+
       // uses the $m5 connection
       $m6 = new Mongo("localhost", false);
       $m6->persistConnect("foo");
       
-      // creates a new connection
+      $this->assertEquals($pstart+4, Mongo::$pconnections);
+      $this->assertEquals($start+4, Mongo::$connections);
+
+      // uses $md5
       $m7 = new Mongo("localhost", false);
       $m7->persistConnect("foo", "bar");
+
+      $this->assertEquals($pstart+4, Mongo::$pconnections);
+      $this->assertEquals($start+4, Mongo::$connections);
+
+      $m8 = new Mongo();
+
+      $this->assertEquals($pstart+4, Mongo::$pconnections);
+      $this->assertEquals($start+5, Mongo::$connections);
     }
 
     public function testAuthenticate1() {
-      if ($this->sharedFixture->auth) {
+      exec("mongo tests/addUser.js", $output, $exit_code);
+      if ($exit_code == 0) {
         $m = new Mongo("mongodb://testUser:testPass@localhost");
       }
     }
 
     public function testAuthenticate2() {
-      if (!$this->sharedFixture->auth) {
+      exec("mongo tests/addUser.js", $output, $exit_code);
+      if ($exit_code != 0) {
         $this->markTestSkipped("can't add user");
         return;
       }

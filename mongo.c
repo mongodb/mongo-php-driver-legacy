@@ -236,6 +236,10 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
 
   // free connection, which is always a non-persistent struct
   efree(link);
+
+  // decrement the total number of links
+  MonGlo(num_links)--;
+  zend_update_static_property_long(mongo_ce_Mongo, "connections", strlen("connections"), MonGlo(num_links) TSRMLS_CC);
 }
 /* }}} */
 
@@ -248,8 +252,6 @@ static void php_mongo_link_pfree( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   // if it's a persistent connection, decrement the
   // number of open persistent links
   MonGlo(num_persistent)--;
-  // decrement the total number of links
-  MonGlo(num_links)--;
 
   rsrc->ptr = 0;
 }
@@ -448,7 +450,8 @@ void mongo_init_Mongo(TSRMLS_D) {
   zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), "1.0.1+" TSRMLS_CC);
 
   /* Mongo static fields */
-  // TODO: number of connections
+  zend_declare_property_bool(mongo_ce_Mongo, "connections", strlen("connections"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
+  zend_declare_property_bool(mongo_ce_Mongo, "pconnections", strlen("pconnections"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
 
   /* Mongo fields */
   zend_declare_property_bool(mongo_ce_Mongo, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
@@ -901,11 +904,13 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
     link->persist = rsrc;
 
     MonGlo(num_persistent)++;
+    zend_update_static_property_long(mongo_ce_Mongo, "pconnections", strlen("pconnections"), MonGlo(num_persistent) TSRMLS_CC);
   }
 
   /* otherwise, just return the connection */
 
   MonGlo(num_links)++;
+  zend_update_static_property_long(mongo_ce_Mongo, "connections", strlen("connections"), MonGlo(num_links) TSRMLS_CC);
 }
 
 // get the next host from the server string

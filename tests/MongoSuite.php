@@ -118,14 +118,6 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         }
 
         $this->sharedFixture->version_51 = "/5\.1\../";
-
-	exec("mongo tests/addUser.js", $output, $exit_code);
-	if ($exit_code != 0) {
-          $this->sharedFixture->auth = false;
-        }
-        else {
-          $this->sharedFixture->auth = true;
-        }
     }
  
     protected function tearDown()
