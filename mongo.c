@@ -461,7 +461,7 @@ void mongo_init_Mongo(TSRMLS_D) {
   zend_declare_property_null(mongo_ce_Mongo, "username", strlen("username"), ZEND_ACC_PROTECTED TSRMLS_CC);
   zend_declare_property_null(mongo_ce_Mongo, "password", strlen("password"), ZEND_ACC_PROTECTED TSRMLS_CC);
 
-  zend_declare_property_bool(mongo_ce_Mongo, "persistent", strlen("persistent"), 0, ZEND_ACC_PROTECTED TSRMLS_CC);
+  zend_declare_property_null(mongo_ce_Mongo, "persistent", strlen("persistent"), ZEND_ACC_PROTECTED TSRMLS_CC);
 }
 
 /*
@@ -618,11 +618,28 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
 PHP_METHOD(Mongo, __construct) {
   char *server = 0;
   int server_len = 0;
-  zend_bool connect = 1, paired = 0, persist = 0;
-  zval *zserver, *errmsg;
+  zend_bool connect = 1, garbage = 0, persist = 0;
+  zval *zserver, *options, *errmsg, **persist_z;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|sbbb", &server, &server_len, &connect, &persist, &paired) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|szbb", &server, &server_len, &options, &persist, &garbage) == FAILURE) {
     return;
+  }
+
+  /* for backwards compat */
+  if (options && !IS_SCALAR_P(options)) {
+    zval **connect_z, **persist_z;
+    if (zend_hash_find(HASH_P(options), "connect", strlen("connect")+1, (void**)&connect_z) == SUCCESS) {
+      connect = Z_BVAL_PP(connect_z);
+    }
+    if (zend_hash_find(HASH_P(options), "persist", strlen("persist")+1, (void**)&persist_z) == SUCCESS) {
+      zend_update_property_zval(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), persist_z TSRMLS_CC);
+      zval_add_ref(persist_z);
+    }
+  }
+  /* backwards compatibility */
+  else if (persist) {
+      zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
+    }
   }
 
   /*
@@ -632,10 +649,7 @@ PHP_METHOD(Mongo, __construct) {
   if (server && strlen(server) == 0) {
     zend_throw_exception(mongo_ce_ConnectionException, "no server name given", 0 TSRMLS_CC);
   }
-
-  /* set up the fields */
   zend_update_property_stringl(mongo_ce_Mongo, getThis(), "server", strlen("server"), server, server_len TSRMLS_CC);
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), persist TSRMLS_CC);
 
   if (connect) {
     /*

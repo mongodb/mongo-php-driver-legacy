@@ -24,7 +24,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
      * @access protected
      */
     public function setUp() {
-        $this->object = new Mongo("localhost", false);
+        $this->object = new Mongo("localhost", array("connect" => false));
     }
 
 
@@ -41,6 +41,11 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->object->connect();
         $this->object->connect();
         $this->assertTrue($this->object->connected);
+    }
+
+    public function testConnect2() {
+        $this->object = new Mongo("localhost", array("connect" => false));
+        $this->assertFalse($this->object->connected);
     }
 
     /**
@@ -72,19 +77,38 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testPersistConnect() {
-      $m1 = new Mongo("localhost:27017", false);
-      $m1->persistConnect("", "");
+        $c = Mongo::$connections;
+        $pc = Mongo::$pconnections;
 
-      $m2 = new Mongo("localhost:27017", false);
-      $m2->persistConnect("", "");
+        $m1 = new Mongo("localhost:27017", false);
+        $m1->persistConnect("", "");
+        
+        $m2 = new Mongo("localhost:27017", false);
+        $m2->persistConnect("", "");
+        
+        $this->assertEquals(Mongo::$connections-$c, Mongo::$pconnections-$pc);
+        
+        // make sure this doesn't disconnect $m2      
+        unset($m1);
+        
+        $c = $m2->selectCollection("foo","bar");
+        $c->findOne();
+    }
 
-      $this->assertEquals(Mongo::$connections, Mongo::$pconnections);
+    public function testPersistConnect2() {
+        $c = Mongo::$connections;
+        $pc = Mongo::$pconnections;
 
-      // make sure this doesn't disconnect $m2      
-      unset($m1);
+        $m1 = new Mongo("localhost:27017", array("persist" => true));
+        $m2 = new Mongo("localhost:27017", array("persist" => true));
+        
+        $this->assertEquals(Mongo::$connections-$c, Mongo::$pconnections-$pc);
+
+        // make sure this doesn't disconnect $m2      
+        unset($m1);
       
-      $c = $m2->selectCollection("foo","bar");
-      $c->findOne();
+        $c = $m2->selectCollection("foo","bar");
+        $c->findOne();
     }
 
     public function test__toString() {
@@ -445,6 +469,51 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
       $this->assertEquals($pstart+4, Mongo::$pconnections);
       $this->assertEquals($start+5, Mongo::$connections);
+    }
+
+    public function testPersistConn2() {
+      $start = Mongo::$connections;
+      $pstart = Mongo::$pconnections;
+
+      $m1 = new Mongo("localhost", array("persist" => true));
+
+      $this->assertEquals($pstart+1, Mongo::$pconnections);
+      $this->assertEquals($start+1, Mongo::$connections);
+
+      // uses the same connection as $m1
+      $m2 = new Mongo("localhost", array("persist" => true));
+
+      $this->assertEquals($pstart+1, Mongo::$pconnections);
+      $this->assertEquals($start+1, Mongo::$connections);
+        
+      // creates a new connection
+      $m3 = new Mongo("127.0.0.1", array("persist" => true));
+
+      $this->assertEquals($pstart+2, Mongo::$pconnections);
+      $this->assertEquals($start+2, Mongo::$connections);
+
+      // creates a new connection
+      $m4 = new Mongo("127.0.0.1:27017", array("persist" => true));
+
+      $this->assertEquals($pstart+3, Mongo::$pconnections);
+      $this->assertEquals($start+3, Mongo::$connections);
+      
+      // creates a new connection
+      $m5 = new Mongo("localhost", array("persist" => "foo"));
+
+      $this->assertEquals($pstart+3, Mongo::$pconnections);
+      $this->assertEquals($start+3, Mongo::$connections);
+
+      // uses the $m5 connection
+      $m6 = new Mongo("localhost", array("persist" => "foo"));
+      
+      $this->assertEquals($pstart+3, Mongo::$pconnections);
+      $this->assertEquals($start+3, Mongo::$connections);
+
+      $m8 = new Mongo();
+
+      $this->assertEquals($pstart+3, Mongo::$pconnections);
+      $this->assertEquals($start+4, Mongo::$connections);
     }
 
     public function testAuthenticate1() {
