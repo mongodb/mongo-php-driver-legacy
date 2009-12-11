@@ -201,6 +201,12 @@ static void php_mongo_server_free(mongo_server **server, int persist TSRMLS_DC) 
   } /* while loop */
     
   pefree(server, persist);
+
+  if (!persist) {
+    // decrement the total number of links
+    MonGlo(num_links)--;
+    zend_update_static_property_long(mongo_ce_Mongo, "connections", strlen("connections"), MonGlo(num_links) TSRMLS_CC);
+  }
 }
 
 
@@ -236,10 +242,6 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
 
   // free connection, which is always a non-persistent struct
   efree(link);
-
-  // decrement the total number of links
-  MonGlo(num_links)--;
-  zend_update_static_property_long(mongo_ce_Mongo, "connections", strlen("connections"), MonGlo(num_links) TSRMLS_CC);
 }
 /* }}} */
 
@@ -450,8 +452,8 @@ void mongo_init_Mongo(TSRMLS_D) {
   zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), "1.0.1+" TSRMLS_CC);
 
   /* Mongo static fields */
-  zend_declare_property_bool(mongo_ce_Mongo, "connections", strlen("connections"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
-  zend_declare_property_bool(mongo_ce_Mongo, "pconnections", strlen("pconnections"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Mongo, "connections", strlen("connections"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Mongo, "pconnections", strlen("pconnections"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
 
   /* Mongo fields */
   zend_declare_property_bool(mongo_ce_Mongo, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
@@ -481,7 +483,7 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
   current = hosts;
 
   persist_z = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), NOISY TSRMLS_CC);
-  persist = Z_BVAL_P(persist_z);
+  persist = Z_TYPE_P(persist_z) == IS_STRING;
 
   link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
@@ -625,19 +627,22 @@ PHP_METHOD(Mongo, __construct) {
     return;
   }
 
-  /* for backwards compat */
+  /* new format */
   if (options && !IS_SCALAR_P(options)) {
     zval **connect_z, **persist_z;
     if (zend_hash_find(HASH_P(options), "connect", strlen("connect")+1, (void**)&connect_z) == SUCCESS) {
       connect = Z_BVAL_PP(connect_z);
     }
     if (zend_hash_find(HASH_P(options), "persist", strlen("persist")+1, (void**)&persist_z) == SUCCESS) {
-      zend_update_property_zval(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), persist_z TSRMLS_CC);
+      convert_to_string(*persist_z);
+      zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), *persist_z TSRMLS_CC);
       zval_add_ref(persist_z);
     }
   }
   /* backwards compatibility */
-  else if (persist) {
+  else {
+    connect = Z_BVAL_P(options);
+    if (persist) {
       zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
     }
   }
@@ -687,7 +692,17 @@ PHP_METHOD(Mongo, pairConnect) {
 /* {{{ Mongo->persistConnect
  */
 PHP_METHOD(Mongo, persistConnect) {
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
+  zval *id = 0, *garbage = 0;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &id, &garbage) == FAILURE) {
+    return;
+  }
+
+  if (id) {
+    zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), id TSRMLS_CC);
+  }
+  else {
+    zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
+  }
 
   /* 
    * pass through any parameters Mongo::persistConnect got 
@@ -702,7 +717,17 @@ PHP_METHOD(Mongo, persistConnect) {
  * [DEPRECATED - use mongodb://host1,host2 syntax]
  */
 PHP_METHOD(Mongo, pairPersistConnect) {
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), 1 TSRMLS_CC);
+  zval *id = 0, *garbage = 0;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &id, &garbage) == FAILURE) {
+    return;
+  }
+
+  if (id) {
+    zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), id TSRMLS_CC);
+  }
+  else {
+    zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
+  }
 
   /* 
    * pass through any parameters Mongo::pairPersistConnect got 
@@ -803,12 +828,8 @@ PHP_METHOD(Mongo, connectUtil) {
 
 
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
-  zval *id = 0, *garbage = 0, *server, *persist;
+  zval *persist, *server;
   mongo_link *link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &id, &garbage) == FAILURE) {
-    return;
-  }
 
   persist = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), NOISY TSRMLS_CC);
   server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
@@ -827,10 +848,10 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
   }
   /* if persistent links aren't allowed, just create a normal link */
   if (!MonGlo(allow_persistent)) {
-    ZVAL_BOOL(persist, 0);
+    ZVAL_NULL(persist);
   }
   /* make sure that there aren't too many persistent links already */
-  if (Z_BVAL_P(persist) &&
+  if (Z_TYPE_P(persist) == IS_STRING &&
       MonGlo(max_persistent) > -1 &&
       MonGlo(max_persistent) <= MonGlo(num_persistent)) {
     char *errstr;
@@ -847,11 +868,11 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
    * if we're trying to make a persistent connection, check if one already
    * exists 
    */
-  if (Z_BVAL_P(persist)) {
+  if (Z_TYPE_P(persist) == IS_STRING) {
     zend_rsrc_list_entry *le;
     char *key;
 
-    spprintf(&key, 0, "%s%s", Z_STRVAL_P(server), id ? Z_STRVAL_P(id) : "");
+    spprintf(&key, 0, "%s%s", Z_STRVAL_P(server), Z_STRVAL_P(persist));
 
     /* if a connection is found, return it */
     if (zend_hash_find(&EG(persistent_list), key, strlen(key)+1, (void**)&le) == SUCCESS) {
@@ -893,14 +914,14 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
    * if we're doing a persistent connection, store a reference in the 
    * persistence list
    */
-  if (Z_BVAL_P(persist)) {
+  if (Z_TYPE_P(persist) == IS_STRING) {
     zend_rsrc_list_entry new_le;
     mongo_server *current = link->server[0];
     char *key;
     int rsrc = 0, count = 0;
 
     /* save id for reconnection */
-    spprintf(&key, 0, "%s%s", Z_STRVAL_P(server), id ? Z_STRVAL_P(id) : "");
+    spprintf(&key, 0, "%s%s", Z_STRVAL_P(server), Z_STRVAL_P(persist));
 
     Z_TYPE(new_le) = le_pconnection;
     new_le.ptr = link->server;
@@ -908,7 +929,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
     if (zend_hash_update(&EG(persistent_list), key, strlen(key)+1, (void*)&new_le, sizeof(zend_rsrc_list_entry), NULL)==FAILURE) {
       zend_throw_exception(mongo_ce_ConnectionException, "could not store persistent link", 0 TSRMLS_CC);
 
-      php_mongo_server_free(link->server, Z_BVAL_P(persist) TSRMLS_CC);
+      php_mongo_server_free(link->server, 1 TSRMLS_CC);
       efree(key);
       RETURN_FALSE;
     }
