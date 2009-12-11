@@ -23,6 +23,7 @@ zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
 
 PHP_METHOD(MongoDB, __construct);
 PHP_METHOD(MongoDB, __toString);
+PHP_METHOD(MongoDB, __get);
 PHP_METHOD(MongoDB, selectCollection);
 PHP_METHOD(MongoDB, getGridFS);
 PHP_METHOD(MongoDB, getProfilingLevel);

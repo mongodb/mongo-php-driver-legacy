@@ -97,6 +97,17 @@ static PHP_GINIT_FUNCTION(mongo);
 static void mongo_init_globals(zend_mongo_globals* g TSRMLS_DC);
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
 
+
+/* 
+ * arginfo needs to be set for __get because if PHP doesn't know it only takes
+ * one arg, it will issue a warning.
+ */
+static
+ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, name)
+ZEND_END_ARG_INFO()
+
+
 function_entry mongo_functions[] = {
   PHP_FE(bson_encode, NULL)
   PHP_FE(bson_decode, NULL)
@@ -111,6 +122,7 @@ static function_entry mongo_methods[] = {
   PHP_ME(Mongo, pairPersistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, connectUtil, NULL, ZEND_ACC_PROTECTED)
   PHP_ME(Mongo, __toString, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, __get, arginfo___get, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, selectDB, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, selectCollection, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, dropDB, NULL, ZEND_ACC_PUBLIC)
@@ -1131,6 +1143,22 @@ PHP_METHOD(Mongo, selectDB) {
   MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), db);
 }
 /* }}} */
+
+
+/* {{{ Mongo::__get
+ */
+PHP_METHOD(Mongo, __get) {
+  zval *name;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &name) == FAILURE) {
+    return;
+  }
+
+  // select this db
+  MONGO_METHOD1(Mongo, selectDB, return_value, getThis(), name);
+}
+/* }}} */
+
 
 /* {{{ Mongo::selectCollection()
  */

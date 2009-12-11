@@ -40,6 +40,16 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_Collection = NULL;
 
+/* 
+ * arginfo needs to be set for __get because if PHP doesn't know it only takes
+ * one arg, it will issue a warning.
+ */
+static
+ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, name)
+ZEND_END_ARG_INFO()
+
+
 PHP_METHOD(MongoCollection, __construct) {
   zval *db, *name, *zns;
   mongo_collection *c;
@@ -876,9 +886,39 @@ PHP_METHOD(MongoCollection, group) {
 }
 /* }}} */
 
+/* {{{ MongoCollection::__get
+ */
+PHP_METHOD(MongoCollection, __get) {
+  /*
+   * this is a little trickier than the getters in Mongo and MongoDB... we need
+   * to combine the current collection name with the parameter passed in, get 
+   * the parent db, then select the new collection from it.
+   */
+  zval *name, *full_name;
+  char *full_name_s;
+  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &name) == FAILURE) {
+    return;
+  }
+
+  spprintf(&full_name_s, 0, "%s.%s", Z_STRVAL_P(c->name), Z_STRVAL_P(name));
+  MAKE_STD_ZVAL(full_name);
+  ZVAL_STRING(full_name, full_name_s, 0);
+
+  // select this collection
+  MONGO_METHOD1(MongoDB, selectCollection, return_value, c->parent, full_name);
+
+  zval_ptr_dtor(&full_name);
+}
+/* }}} */
+
+
 static function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, __toString, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, __get, arginfo___get, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, getName, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, drop, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, validate, NULL, ZEND_ACC_PUBLIC)

@@ -348,6 +348,7 @@ PHP_METHOD(Mongo, persistConnect);
 PHP_METHOD(Mongo, pairPersistConnect);
 PHP_METHOD(Mongo, connectUtil);
 PHP_METHOD(Mongo, __toString);
+PHP_METHOD(Mongo, __get);
 PHP_METHOD(Mongo, selectDB);
 PHP_METHOD(Mongo, selectCollection);
 PHP_METHOD(Mongo, dropDB);

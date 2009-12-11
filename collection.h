@@ -22,6 +22,7 @@ zend_object_value php_mongo_collection_new(zend_class_entry* TSRMLS_DC);
 
 PHP_METHOD(MongoCollection, __construct);
 PHP_METHOD(MongoCollection, __toString);
+PHP_METHOD(MongoCollection, __get);
 PHP_METHOD(MongoCollection, getName);
 PHP_METHOD(MongoCollection, drop);
 PHP_METHOD(MongoCollection, validate);

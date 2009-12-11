@@ -45,6 +45,18 @@ extern zend_object_handlers mongo_default_handlers;
 
 zend_class_entry *mongo_ce_DB = NULL;
 
+/* 
+ * arginfo needs to be set for __get because if PHP doesn't know it only takes
+ * one arg, it will issue a warning.
+ */
+static
+ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, name)
+ZEND_END_ARG_INFO()
+
+
+/* {{{ MongoDB::__construct
+ */
 PHP_METHOD(MongoDB, __construct) {
   zval *zlink;
   char *name;
@@ -74,6 +86,7 @@ PHP_METHOD(MongoDB, __construct) {
   MAKE_STD_ZVAL(db->name);
   ZVAL_STRING(db->name, name, 1);
 }
+/* }}} */
 
 PHP_METHOD(MongoDB, __toString) {
   mongo_db *db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -560,10 +573,26 @@ PHP_METHOD(MongoDB, forceError) {
 }
 /* }}} */
 
+/* {{{ MongoDB::__get
+ */
+PHP_METHOD(MongoDB, __get) {
+  zval *name;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &name) == FAILURE) {
+    return;
+  }
+
+  // select this collection
+  MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), name);
+}
+/* }}} */
+
+
 
 static function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, __toString, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, __get, arginfo___get, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, getGridFS, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, getProfilingLevel, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, setProfilingLevel, NULL, ZEND_ACC_PUBLIC)

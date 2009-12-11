@@ -540,5 +540,23 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
       $this->assertFalse($ok);
     }
+
+    public function testGetters() {
+        $db = $this->sharedFixture->foo;
+        $this->assertTrue($db instanceof MongoDB);
+        $this->assertEquals("$db", "foo");
+        
+        $c = $db->bar;
+        $this->assertTrue($c instanceof MongoCollection);
+        $this->assertEquals("$c", "foo.bar");
+        
+        $c2 = $c->baz;
+        $this->assertTrue($c2 instanceof MongoCollection);
+        $this->assertEquals("$c2", "foo.bar.baz");
+
+        $x = $this->sharedFixture->foo->bar->baz;
+        $this->assertTrue($x instanceof MongoCollection);
+        $this->assertEquals("$x", "foo.bar.baz");
+    }
 }
 ?>
