@@ -102,7 +102,9 @@ static void mongo_init_globals(zend_mongo_globals* g TSRMLS_DC);
  * arginfo needs to be set for __get because if PHP doesn't know it only takes
  * one arg, it will issue a warning.
  */
+#if ZEND_MODULE_API_NO <= 20060613
 static
+#endif
 ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()

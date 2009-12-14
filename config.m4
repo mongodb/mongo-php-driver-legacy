@@ -12,10 +12,6 @@ if test "$PHP_MONGO" != "no"; then
   fi
   dnl default to little-endian
 
-  dnl extensions prerequisites
-  PHP_ADD_EXTENSION_DEP(mongo, date, false)
-  PHP_ADD_EXTENSION_DEP(mongo, spl, false)
-
   case $build_os in
   darwin10.*.*)
     AC_MSG_CHECKING([whether to compile for recent osx architectures])
