@@ -513,7 +513,7 @@ PHP_METHOD(MongoCursor, next) {
     zval **err;
     MAKE_STD_ZVAL(cursor->current);
     array_init(cursor->current);
-    cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
+    cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current), 0 TSRMLS_CC);
 
     // increment cursor position
     cursor->at++;

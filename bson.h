@@ -74,7 +74,7 @@ void php_mongo_serialize_ns(buffer*, char* TSRMLS_DC);
 int resize_buf(buffer*, int);
 
 int zval_to_bson(buffer*, HashTable*, int TSRMLS_DC);
-char* bson_to_zval(char*, HashTable* TSRMLS_DC);
+char* bson_to_zval(char*, HashTable*, int TSRMLS_DC);
 
 // just like memcpy, before calling mongo_memcpy, buffer size must be checked
 #if PHP_C_BIGENDIAN

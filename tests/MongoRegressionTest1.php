@@ -274,5 +274,38 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
       $this->assertEquals(true, $collection->ensureIndex($tmp));
       $this->assertEquals(1, $tmp['date']);
     }
+
+    public function testObjVsArray() {
+      $c = $this->sharedFixture->phpunit->c;
+      $c->drop();
+
+      $obj = new stdClass();
+      $obj->{'1'} = "foo";
+      $obj->{'x'} = array("foo", "bar", "baz");
+
+      $c->insert($obj);
+      $x = (object)$c->findOne();
+
+      $this->assertEquals("foo", $x->{'1'});
+      $this->assertEquals("foo", $x->{'x'}[0]);
+      $this->assertEquals("bar", $x->{'x'}[1]);
+      $this->assertEquals("baz", $x->{'x'}[2]);
+
+      $c->drop();
+      $c->insert(array("0" => "foo", "1" => "bar"));
+      $x = (object)$c->findOne();
+
+      $this->assertEquals("foo", $x->{"0"});
+      $this->assertEquals("bar", $x->{"1"});
+
+      $c->drop();
+      $c->insert(array("x" => array("0" => "foo", "1" => "bar")));
+      $x = (object)$c->findOne();
+
+      $this->assertEquals("foo", $x->{"x"}["0"]);
+      $this->assertEquals("bar", $x->{"x"}["1"]);
+
+
+    }
 }
 ?>

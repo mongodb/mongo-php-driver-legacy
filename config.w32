@@ -7,6 +7,4 @@ if (PHP_MONGO != "no") {
   EXTENSION('mongo', 'mongo.c mongo_types.c bson.c cursor.c collection.c db.c gridfs.c');
   
   AC_DEFINE('HAVE_MONGO', 1);
-  ADD_EXTENSION_DEP('mongo', 'spl', true);
-  ADD_EXTENSION_DEP('mongo', 'date', true);
 }
