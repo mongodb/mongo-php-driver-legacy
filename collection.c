@@ -133,17 +133,30 @@ PHP_METHOD(MongoCollection, validate) {
 }
 
 PHP_METHOD(MongoCollection, insert) {
-  zval *temp, *a;
-  zend_bool *safe = 0;
+  zval *temp, *a, *options = 0;
+  zend_bool safe = 0;
   mongo_collection *c;
   mongo_link *link;
   int response;
   mongo_msg_header header;
   buffer buf;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|b", &a, &safe) == FAILURE ||
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE ||
       IS_SCALAR_P(a)) {
     return;
+  }
+
+
+  if (options) {
+    zval **safe_z;
+    // new, just in case there are more options coming
+    if (!IS_SCALAR_P(options) && zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_z) == SUCCESS && Z_BVAL_PP(safe_z)) {
+      safe = 1;
+    }
+    // old boolean options
+    else {
+      safe = Z_BVAL_P(options);
+    }
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -457,7 +470,7 @@ PHP_METHOD(MongoCollection, remove) {
 }
 
 PHP_METHOD(MongoCollection, ensureIndex) {
-  zval *keys, *options = 0, *db, *system_indexes, *collection, *data, *key_str;
+  zval *keys, *options = 0, *db, *system_indexes, *collection, *data, *key_str, *safe_insert = 0;
   mongo_collection *c;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &keys, &options) == FAILURE) {
@@ -532,7 +545,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
     }
     // new style
     else {
-      zval **unique, **drop_dups;
+      zval **unique, **drop_dups, **safe;
 
       // array( "unique" => true )
       if (zend_hash_find(HASH_P(options), "unique", strlen("unique")+1, (void**)&unique) == SUCCESS) {
@@ -545,11 +558,24 @@ PHP_METHOD(MongoCollection, ensureIndex) {
         add_assoc_zval(data, "dropDups", *drop_dups);
         zval_add_ref(drop_dups);
       }
+
+      if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe) == SUCCESS) {
+        if (Z_BVAL_PP(safe)) {
+          MAKE_STD_ZVAL(safe_insert);
+          ZVAL_BOOL(safe_insert, 1);
+        }
+      }
     }
   }
 
   // MongoCollection::insert()
-  MONGO_METHOD1(MongoCollection, insert, return_value, collection, data);
+  if (safe_insert) {
+    MONGO_METHOD2(MongoCollection, insert, return_value, collection, data, safe_insert);
+    zval_ptr_dtor(&safe_insert);
+  }
+  else {
+    MONGO_METHOD1(MongoCollection, insert, return_value, collection, data);
+  }
 
   zval_ptr_dtor(&data); 
   zval_ptr_dtor(&system_indexes);
