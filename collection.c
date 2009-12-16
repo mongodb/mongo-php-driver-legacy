@@ -16,6 +16,7 @@
  */
 
 #include <php.h>
+#include <zend_exceptions.h>
 
 #include "php_mongo.h"
 #include "collection.h"

@@ -635,7 +635,7 @@ PHP_METHOD(Mongo, __construct) {
   char *server = 0;
   int server_len = 0;
   zend_bool connect = 1, garbage = 0, persist = 0;
-  zval *zserver, *options, *errmsg, **persist_z;
+  zval *options;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|szbb", &server, &server_len, &options, &persist, &garbage) == FAILURE) {
     return;
@@ -812,7 +812,7 @@ PHP_METHOD(Mongo, connectUtil) {
     if (Z_TYPE_P(ok) == IS_ARRAY) {
       zval **status;
       if (zend_hash_find(HASH_P(ok), "ok", strlen("ok")+1, (void**)&status) == SUCCESS) {
-        logged_in = Z_DVAL_PP(status);
+        logged_in = (int)Z_DVAL_PP(status);
       }
     } 
     else {

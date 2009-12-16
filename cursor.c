@@ -55,7 +55,7 @@ zend_class_entry *mongo_ce_Cursor = NULL;
 /* {{{ MongoCursor->__construct
  */
 PHP_METHOD(MongoCursor, __construct) {
-  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, *q, *slave_okay;
+  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, *slave_okay;
   zval **data;
   mongo_cursor *cursor;
   mongo_link *link;
