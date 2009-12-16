@@ -432,6 +432,11 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testGetters() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
         $db = $this->sharedFixture->foo;
         $this->assertTrue($db instanceof MongoDB);
         $this->assertEquals("$db", "foo");

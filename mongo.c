@@ -635,29 +635,31 @@ PHP_METHOD(Mongo, __construct) {
   char *server = 0;
   int server_len = 0;
   zend_bool connect = 1, garbage = 0, persist = 0;
-  zval *options;
+  zval *options = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|szbb", &server, &server_len, &options, &persist, &garbage) == FAILURE) {
     return;
   }
 
   /* new format */
-  if (options && !IS_SCALAR_P(options)) {
-    zval **connect_z, **persist_z;
-    if (zend_hash_find(HASH_P(options), "connect", strlen("connect")+1, (void**)&connect_z) == SUCCESS) {
-      connect = Z_BVAL_PP(connect_z);
+  if (options) {
+    if (!IS_SCALAR_P(options)) {
+      zval **connect_z, **persist_z;
+      if (zend_hash_find(HASH_P(options), "connect", strlen("connect")+1, (void**)&connect_z) == SUCCESS) {
+        connect = Z_BVAL_PP(connect_z);
+      }
+      if (zend_hash_find(HASH_P(options), "persist", strlen("persist")+1, (void**)&persist_z) == SUCCESS) {
+        convert_to_string(*persist_z);
+        zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), *persist_z TSRMLS_CC);
+        zval_add_ref(persist_z);
+      }
     }
-    if (zend_hash_find(HASH_P(options), "persist", strlen("persist")+1, (void**)&persist_z) == SUCCESS) {
-      convert_to_string(*persist_z);
-      zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), *persist_z TSRMLS_CC);
-      zval_add_ref(persist_z);
-    }
-  }
-  /* backwards compatibility */
-  else {
-    connect = Z_BVAL_P(options);
-    if (persist) {
-      zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
+    else {
+      /* backwards compatibility */
+      connect = Z_BVAL_P(options);
+      if (persist) {
+        zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
+      }
     }
   }
 
