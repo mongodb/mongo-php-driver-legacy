@@ -84,7 +84,7 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
         $id = new MongoId;
         $time = time();
 
-        $this->assertEquals($id->getTimestamp(), $time);
+        $this->assertTrue(abs($time-$id->getTimestamp()) < 1000);
     }
 }
 
