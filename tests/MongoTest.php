@@ -123,134 +123,45 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals("localhost:27017", (string)$m);
     }
 
+
+    /**
+     * @expectedException Exception
+     */
     public function testSelectDBException1()
     {
-        if (preg_match("/5\.1\../", phpversion())) {
-            $threw = false;
-            try {
-                $db = $this->object->selectDB("");
-            }
-            catch(Exception $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
-        else {
-            $threw = false;
-            try {
-                $db = $this->object->selectDB("");
-            }
-            catch(InvalidArgumentException $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
+        $db = $this->object->selectDB("");
     }
 
+    /**
+     * @expectedException Exception
+     */
     public function testSelectDBException2()
     {
-        if (preg_match("/5\.1\../", phpversion())) {
-            $threw = false;
-            try {
-                $db = $this->object->selectDB("my database");
-            }
-            catch(Exception $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
-        else {
-            $threw = false;
-            try {
-                $db = $this->object->selectDB("my database");
-            }
-            catch(InvalidArgumentException $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
+        $db = $this->object->selectDB("my database");
     }
 
+    /**
+     * @expectedException Exception
+     */
     public function testSelectDBException3()
     {
-        if (preg_match("/5\.1\../", phpversion())) {
-            $threw = false;
-            try {
-                $db = $this->object->selectDB("x.y.z");
-            }
-            catch(Exception $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
-        else {
-            $threw = false;
-            try {
-                $db = $this->object->selectDB("x.y.z");
-            }
-            catch(InvalidArgumentException $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
+        $db = $this->object->selectDB("x.y.z");
     }
 
+    /**
+     * @expectedException Exception
+     */
     public function testSelectDBException4()
     {
-        if (preg_match("/5\.1\../", phpversion())) {
-            $threw = false;
-            try {
-                $db = $this->object->selectDB(".");
-            }
-            catch(Exception $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
-        else {
-            $threw = false;
-            try {
-                $db = $this->object->selectDB(".");
-            }
-            catch(InvalidArgumentException $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
+        $db = $this->object->selectDB(".");
     }
 
+    /**
+     * @expectedException Exception
+     */
     public function testSelectDBException5()
     {
-        if (preg_match("/5\.1\../", phpversion())) {
-            $threw = false;
-            try {
-                $db = $this->object->selectDB(null);
-            }
-            catch(Exception $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
-        else {
-            $threw = false;
-            try {
-                $db = $this->object->selectDB(null);
-            }
-            catch(InvalidArgumentException $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
+        $db = $this->object->selectDB(null);
     }
 
     public function testSelectDB() {
@@ -273,33 +184,12 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals((string)$db, "\"");
     }
 
+    /**
+     * @expectedException Exception
+     */
     public function testSelectCollectionException1()
     {
-        if (preg_match("/5\.1\../", phpversion())) {
-            $threw = false;
-            try {
-                $db = $this->object->selectCollection("", "xyz");
-            }
-            catch(Exception $e) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
-        else {
-            $threw = false;
-            try {
-                $db = $this->object->selectCollection("", "xyz");
-            }
-	    catch(InvalidArgumentException $e1) {
-	        $threw = true;
-	    }
-            catch(MongoException $e2) {
-                $threw = true;
-            }
-            $this->assertTrue($threw);
-            return;
-        }
+        $db = $this->object->selectCollection("", "xyz");
     }
 
     public function testSelectCollection() {
