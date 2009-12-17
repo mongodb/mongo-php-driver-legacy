@@ -8,7 +8,7 @@ require_once 'PHPUnit/Framework.php';
 class MongoTest extends PHPUnit_Framework_TestCase
 {
     public function testVersion() {
-        $this->assertEquals("1.0.1+", Mongo::VERSION);
+        $this->assertEquals("1.0.2", Mongo::VERSION);
     }
 
     /**
@@ -76,6 +76,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
 	$m = new Mongo("localhost:27017,localhost:27018,");
     }
 
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
     public function testPersistConnect() {
         $c = Mongo::$connections;
         $pc = Mongo::$pconnections;
@@ -304,6 +307,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($num+1, Mongo::$connections);
     }
 
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
     public function testPersistConn() {
       $start = Mongo::$connections;
       $pstart = Mongo::$pconnections;
@@ -391,19 +397,19 @@ class MongoTest extends PHPUnit_Framework_TestCase
       // creates a new connection
       $m5 = new Mongo("localhost", array("persist" => "foo"));
 
-      $this->assertEquals($pstart+3, Mongo::$pconnections);
-      $this->assertEquals($start+3, Mongo::$connections);
+      $this->assertEquals($pstart+4, Mongo::$pconnections);
+      $this->assertEquals($start+4, Mongo::$connections);
 
       // uses the $m5 connection
       $m6 = new Mongo("localhost", array("persist" => "foo"));
       
-      $this->assertEquals($pstart+3, Mongo::$pconnections);
-      $this->assertEquals($start+3, Mongo::$connections);
+      $this->assertEquals($pstart+4, Mongo::$pconnections);
+      $this->assertEquals($start+4, Mongo::$connections);
 
       $m8 = new Mongo();
 
-      $this->assertEquals($pstart+3, Mongo::$pconnections);
-      $this->assertEquals($start+4, Mongo::$connections);
+      $this->assertEquals($pstart+4, Mongo::$pconnections);
+      $this->assertEquals($start+5, Mongo::$connections);
     }
 
     public function testAuthenticate1() {

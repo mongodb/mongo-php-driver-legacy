@@ -119,7 +119,7 @@ static function_entry mongo_methods[] = {
   PHP_ME(Mongo, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, connect, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, pairConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(Mongo, persistConnect, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, persistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, pairPersistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, connectUtil, NULL, ZEND_ACC_PROTECTED)
   PHP_ME(Mongo, __toString, NULL, ZEND_ACC_PUBLIC)
@@ -462,7 +462,7 @@ void mongo_init_Mongo(TSRMLS_D) {
   /* Mongo class constants */
   zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), "localhost" TSRMLS_CC);
   zend_declare_class_constant_long(mongo_ce_Mongo, "DEFAULT_PORT", strlen("DEFAULT_PORT"), 27017 TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), "1.0.1+" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), "1.0.2" TSRMLS_CC);
 
   /* Mongo static fields */
   zend_declare_property_long(mongo_ce_Mongo, "connections", strlen("connections"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
