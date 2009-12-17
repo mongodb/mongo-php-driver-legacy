@@ -81,10 +81,10 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
     }
 
     public function testTimestamp() {
-        $id = new MongoId;
         $time = time();
-
-        $this->assertTrue(abs($time-$id->getTimestamp()) < 1000);
+        $id = new MongoId();
+  
+        $this->assertTrue(abs($time-$id->getTimestamp()) < 1000, $time-$id->getTimestamp());
     }
 }
 
