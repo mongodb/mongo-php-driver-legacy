@@ -1405,7 +1405,7 @@ PHP_FUNCTION(bson_decode) {
   }
 
   array_init(return_value);
-  bson_to_zval(str, HASH_P(return_value), 0 TSRMLS_CC);
+  bson_to_zval(str, HASH_P(return_value) TSRMLS_CC);
 }
 
 

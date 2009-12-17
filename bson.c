@@ -533,7 +533,7 @@ void php_mongo_serialize_size(unsigned char *start, buffer *buf) {
 }
 
 
-char* bson_to_zval(char *buf, HashTable *result, int is_array TSRMLS_DC) {
+char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
   /* 
    * buf_start is used for debugging
    *
@@ -592,14 +592,10 @@ char* bson_to_zval(char *buf, HashTable *result, int is_array TSRMLS_DC) {
       buf += len;
       break;
     }
-    case BSON_OBJECT: {
-      array_init(value);
-      buf = bson_to_zval(buf, Z_ARRVAL_P(value), 0 TSRMLS_CC);
-      break;
-    }
+    case BSON_OBJECT: 
     case BSON_ARRAY: {
       array_init(value);
-      buf = bson_to_zval(buf, Z_ARRVAL_P(value), 1 TSRMLS_CC);
+      buf = bson_to_zval(buf, Z_ARRVAL_P(value) TSRMLS_CC);
       break;
     }
     case BSON_BINARY: {
@@ -724,7 +720,7 @@ char* bson_to_zval(char *buf, HashTable *result, int is_array TSRMLS_DC) {
       buf += code_len;
 
       if (type == BSON_CODE) {
-        buf = bson_to_zval(buf, HASH_P(zcope), 0 TSRMLS_CC);
+        buf = bson_to_zval(buf, HASH_P(zcope) TSRMLS_CC);
       }
 
       // exclude \0
@@ -819,12 +815,7 @@ char* bson_to_zval(char *buf, HashTable *result, int is_array TSRMLS_DC) {
     }
     }
 
-    if (is_array) {
-      zend_hash_index_update(result, atoi(name), &value, sizeof(zval*), NULL);
-    }
-    else {
-      zend_hash_update(result, name, strlen(name)+1, &value, sizeof(zval*), NULL);
-    }
+    zend_symtable_update(result, name, strlen(name)+1, &value, sizeof(zval*), NULL);
   }
 
   return buf;
