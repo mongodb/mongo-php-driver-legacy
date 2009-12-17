@@ -274,5 +274,17 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
       $this->assertEquals(true, $collection->ensureIndex($tmp));
       $this->assertEquals(1, $tmp['date']);
     }
+
+    public function testGridFSProps() {
+
+      $m = new Mongo();
+      $grid = $m->foo->getGridFS();
+
+      $x = new MongoGridFSFile($grid, array());
+      $this->assertNull($x->getFilename());
+      
+      $this->assertNull($x->getSize());
+    }
+
 }
 ?>

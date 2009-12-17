@@ -669,14 +669,18 @@ PHP_METHOD(MongoGridFSFile, __construct) {
 
 PHP_METHOD(MongoGridFSFile, getFilename) {
   zval *file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
-  zend_hash_find(HASH_P(file), "filename", strlen("filename")+1, (void**)&return_value_ptr);
-  RETURN_ZVAL(*return_value_ptr, 1, 0);
+  if (zend_hash_find(HASH_P(file), "filename", strlen("filename")+1, (void**)&return_value_ptr) == SUCCESS) {
+    RETURN_ZVAL(*return_value_ptr, 1, 0);
+  }
+  RETURN_NULL();
 }
 
 PHP_METHOD(MongoGridFSFile, getSize) {
   zval *file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
-  zend_hash_find(HASH_P(file), "length", strlen("length")+1, (void**)&return_value_ptr);
-  RETURN_ZVAL(*return_value_ptr, 1, 0);
+  if (zend_hash_find(HASH_P(file), "length", strlen("length")+1, (void**)&return_value_ptr) == SUCCESS) {
+    RETURN_ZVAL(*return_value_ptr, 1, 0);
+  }
+  RETURN_NULL();
 }
 
 PHP_METHOD(MongoGridFSFile, write) {
