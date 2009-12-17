@@ -70,8 +70,7 @@ static int php_mongo_get_port(char**);
 static void mongo_init_MongoExceptions(TSRMLS_D);
 static void run_err(int, zval*, zval* TSRMLS_DC);
 static int php_mongo_parse_server(zval*, zval* TSRMLS_DC);
-
-inline void set_disconnected(mongo_link *link);
+static void set_disconnected(mongo_link *link);
 
 zend_object_handlers mongo_default_handlers;
 
@@ -171,7 +170,7 @@ ZEND_GET_MODULE(mongo)
 
 /* {{{ PHP_INI */
 PHP_INI_BEGIN()
-STD_PHP_INI_BOOLEAN("mongo.auto_reconnect", "0", PHP_INI_SYSTEM, OnUpdateLong, auto_reconnect, zend_mongo_globals, mongo_globals)
+STD_PHP_INI_BOOLEAN("mongo.auto_reconnect", "1", PHP_INI_SYSTEM, OnUpdateLong, auto_reconnect, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_BOOLEAN("mongo.allow_persistent", "1", PHP_INI_SYSTEM, OnUpdateLong, allow_persistent, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY_EX("mongo.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_persistent, zend_mongo_globals, mongo_globals, display_link_numbers)
 STD_PHP_INI_ENTRY_EX("mongo.max_connections", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_links, zend_mongo_globals, mongo_globals, display_link_numbers)
@@ -343,7 +342,7 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
 
   mongo_globals->num_persistent = 0;
   mongo_globals->num_links = 0;
-  mongo_globals->auto_reconnect = 0;
+  mongo_globals->auto_reconnect = 1;
   mongo_globals->default_host = "localhost";
   mongo_globals->default_port = 27017;
   mongo_globals->request_id = 3;
@@ -503,7 +502,7 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
 
   /* zero pointers so it doesn't segfault on cleanup if connection fails */
   link->ts = 0;
-  link->master = 0;
+  link->master = -1;
   link->username = 0;
   link->password = 0;
   link->num = 0;
@@ -1420,7 +1419,7 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
   }
 
   // if we're still connected to master, return it
-  if (link->server[link->master]->connected) {
+  if (link->master >= 0 && link->server[link->master]->connected) {
     return link->server[link->master]->socket;
   }
 
@@ -1467,7 +1466,7 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
 
     // make a fake link
     temp.num = 1;
-    temp.server[0]->socket = link->server[i]->socket; 
+    temp.server[0] = link->server[i]; 
     cursor->link = &temp;
    
     // need to call this after setting cursor->link
@@ -1656,41 +1655,43 @@ int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
 static int php_mongo_check_connection(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int now = time(0), connected = 0, i;
 
-  for (i=0; i<link->num; i++) {
-    connected |= link->server[i]->connected;
+  if ((link->num == 1 && link->server[0]->connected) ||
+      (link->master >= 0 && link->server[link->master]->connected)) {
+    connected = 1;
   }
 
-  /*
-   * if we're already connected or autoreconnect isn't set, we're all done 
-   */
+  // if we're already connected or autoreconnect isn't set, we're all done 
   if (!MonGlo(auto_reconnect) || connected) {
     return SUCCESS;
   }
 
   link->ts = now;
 
-  // close all connections -- should we be smarter about this?
-  for (i=0; i<link->num; i++) {
-#ifdef WIN32
-    closesocket(link->server[i]->socket);
-#else
-    close(link->server[i]->socket);
-#endif /* WIN32 */
-    link->server[i]->connected = 0;
-  }
-
-#ifdef WIN32
-  WSACleanup();
-#endif /* WIN32 */
+  // close connection
+  set_disconnected(link);
 
   return php_mongo_do_socket_connect(link, errmsg TSRMLS_CC);
 }
 
-inline void set_disconnected(mongo_link *link) {
-  int i;
-  for (i=0; i<link->num; i++) {
-    link->server[i]->connected = 0;
+static void set_disconnected(mongo_link *link) {
+  // get the master connection
+  int master = (link->num == 1) ? 0 : link->master;
+
+  // already disconnected
+  if (master == -1) {
+    return;
   }
+
+  // sever it
+  link->server[master]->connected = 0;
+#ifdef WIN32
+  closesocket(link->server[master]->socket);
+  WSACleanup();
+#else
+  close(link->server[master]->socket);
+#endif /* WIN32 */
+
+  link->master = -1;
 }
 
 static int php_mongo_connect_nonb(mongo_server *server, zval *errmsg) {
@@ -1799,9 +1800,15 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
   int i, connected = 0;
 
   for (i=0; i<link->num; i++) {
-    // FAILURE = -1
-    // SUCCESS = 0
-    connected |= php_mongo_connect_nonb(link->server[i], errmsg)+1;
+    if (!link->server[i]->connected) {
+      int status = php_mongo_connect_nonb(link->server[i], errmsg);
+      // FAILURE = -1
+      // SUCCESS = 0
+      connected |= (status+1);
+    }
+    else {
+      connected = 1;
+    }
 
     /*
      * cases where we have an error message and don't care because there's a
