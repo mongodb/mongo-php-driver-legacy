@@ -13,11 +13,11 @@
    <email>kristina@10gen.com</email>
    <active>yes</active>
  </lead>
- <date>2009-11-19</date>
+ <date>2009-12-17</date>
  <time>12:00:00</time>
  <version>
-   <release>1.0.1</release>
-   <api>1.0.1</api>
+   <release>1.0.2</release>
+   <api>1.0.2</api>
  </version>
  <stability>
    <release>stable</release>
@@ -25,14 +25,10 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Big-endian support
-  MongoCollection::update can affect multiple documents
-  MongoCursor::count uses limit and skip, optionally
-  MongoDBRef supports $db
-  MongoMinKey and MongoMax Key
-  Cursor::immortal
-  Constants for binary types
-  MongoDB::authenticate
+  Better Mongo::__construct parameters
+  Getters for Mongo, MongoDB, and MongoCollection
+  MongoId::getTimestamp
+  MongoCollection::ensureIndex takes dropDups and safe opts
  </notes>
  <contents>
    <dir baseinstalldir="/" name="/">
@@ -67,6 +63,23 @@
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog>
+   <release>
+     <stability>
+       <release>stable</release>
+       <api>stable</api>
+     </stability>
+     <version>
+       <release>1.0.2</release>
+       <api>1.0.2</api>
+     </version>
+     <date>2009-12-17</date>
+     <notes>
+      Better Mongo::__construct parameters
+      Getters for Mongo, MongoDB, and MongoCollection
+      MongoId::getTimestamp
+      MongoCollection::ensureIndex takes dropDups and safe opts
+     </notes>
+   </release>
    <release>
      <stability>
        <release>stable</release>

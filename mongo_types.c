@@ -240,7 +240,8 @@ PHP_METHOD(MongoId, getTimestamp) {
   MONGO_CHECK_INITIALIZED_STRING(id->id, MongoId);
   
   for (i=0; i<4; i++) {
-    ts = (ts*256) + id->id[i];
+    int x = ((int)id->id[i] < 0) ? 256+id->id[i] : id->id[i];
+    ts = (ts*256) + x;
   }
 
   RETURN_LONG(ts);
