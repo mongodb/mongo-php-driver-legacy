@@ -107,9 +107,9 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($this->object->count(), 2);
       $cursor = $this->object->find();
 
-      $x = (object)$cursor->getNext();
-      $this->assertTrue(property_exists($x, '0'), json_encode($x));
-      $this->assertNull($x->{'0'});
+      $x = $cursor->getNext();
+      $this->assertTrue(array_key_exists('0', $x), json_encode($x));
+      $this->assertEquals($x['0'], null);
 
       $x = $cursor->getNext();
       $this->assertTrue(array_key_exists('', $x));
@@ -124,12 +124,12 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
         $nonassoc = array("x", "y", "z");
         $this->object->insert($nonassoc);
-        $x = (object)$this->object->findOne();
+        $x = $this->object->findOne();
 
-        $this->assertEquals("x", $x->{'0'});
-        $this->assertEquals("y", $x->{'1'});
-        $this->assertEquals("z", $x->{'2'});
-        $this->assertEquals((string)$nonassoc['_id'], (string)$x->{'_id'});
+        $this->assertEquals("x", $x['0']);
+        $this->assertEquals("y", $x['1']);
+        $this->assertEquals("z", $x['2']);
+        $this->assertEquals((string)$nonassoc['_id'], (string)$x['_id']);
     }
     
 
