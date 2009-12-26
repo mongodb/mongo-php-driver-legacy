@@ -122,6 +122,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
  
     protected function tearDown()
     {
+        $this->sharedFixture->dropDB("phpunit");
         $this->sharedFixture->close();
 
         // remove db user

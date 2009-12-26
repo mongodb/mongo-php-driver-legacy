@@ -162,8 +162,21 @@ typedef struct _mongo_server {
   int port;
   int socket;
   int connected;
-  struct _mongo_server *next;
 } mongo_server;
+
+typedef struct _mongo_server_set {
+  int num;
+  mongo_server **server;
+
+  /*
+   * this is the resource id if this is a persistent connection, so that we can
+   * delete it from the list of persistent connections
+   */
+  int rsrc;
+
+  // if num is greater than -1, master keeps track of the master connection
+  int master;
+} mongo_server_set;
 
 typedef struct {
   zend_object std;
@@ -172,19 +185,9 @@ typedef struct {
   // reconnect a zillion times in three seconds.
   int ts;
 
-  /*
-   * persistent connections
-   *
-   * this affects all memory allocated to this struct.  if rsrc is greater than 
-   * 0, this is a pointer to the resource number of the persistent connection.
-   */
   int persist;
 
-  // if num is greater than 1, master keeps track of the master connection
-  int master;
-
-  int num;
-  mongo_server **server;
+  mongo_server_set *server_set;
 
   char *username;
   char *password;

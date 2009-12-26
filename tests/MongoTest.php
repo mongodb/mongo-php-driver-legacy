@@ -80,16 +80,11 @@ class MongoTest extends PHPUnit_Framework_TestCase
      * @expectedException PHPUnit_Framework_Error
      */
     public function testPersistConnect() {
-        $c = Mongo::$connections;
-        $pc = Mongo::$pconnections;
-
         $m1 = new Mongo("localhost:27017", false);
         $m1->persistConnect("", "");
         
         $m2 = new Mongo("localhost:27017", false);
         $m2->persistConnect("", "");
-        
-        $this->assertEquals(Mongo::$connections-$c, Mongo::$pconnections-$pc);
         
         // make sure this doesn't disconnect $m2      
         unset($m1);
@@ -99,14 +94,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testPersistConnect2() {
-        $c = Mongo::$connections;
-        $pc = Mongo::$pconnections;
-
         $m1 = new Mongo("localhost:27017", array("persist" => true));
         $m2 = new Mongo("localhost:27017", array("persist" => true));
         
-        $this->assertEquals(Mongo::$connections-$c, Mongo::$pconnections-$pc);
-
         // make sure this doesn't disconnect $m2      
         unset($m1);
       
@@ -301,115 +291,58 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $m = new Mongo("mongodb://localhost:27018,localhost,localhost:27019");
     }
 
-    public function testConnCount() {
-      $num = Mongo::$connections;
-      $m = new Mongo();
-      $this->assertEquals($num+1, Mongo::$connections);
-    }
-
     /**
      * @expectedException PHPUnit_Framework_Error
      */
     public function testPersistConn() {
-      $start = Mongo::$connections;
-      $pstart = Mongo::$pconnections;
-
       $m1 = new Mongo("localhost", true, true);
-
-      $this->assertEquals($pstart+1, Mongo::$pconnections);
-      $this->assertEquals($start+1, Mongo::$connections);
 
       // uses the same connection as $m1
       $m2 = new Mongo("localhost", false);
       $m2->persistConnect();
 
-      $this->assertEquals($pstart+1, Mongo::$pconnections);
-      $this->assertEquals($start+1, Mongo::$connections);
-        
       // creates a new connection
       $m3 = new Mongo("127.0.0.1", false);
       $m3->persistConnect();
 
-      $this->assertEquals($pstart+2, Mongo::$pconnections);
-      $this->assertEquals($start+2, Mongo::$connections);
-
       // creates a new connection
       $m4 = new Mongo("127.0.0.1:27017", false);
       $m4->persistConnect();
-
-      $this->assertEquals($pstart+3, Mongo::$pconnections);
-      $this->assertEquals($start+3, Mongo::$connections);
       
       // creates a new connection
       $m5 = new Mongo("localhost", false);
       $m5->persistConnect("foo");
 
-      $this->assertEquals($pstart+4, Mongo::$pconnections);
-      $this->assertEquals($start+4, Mongo::$connections);
-
       // uses the $m5 connection
       $m6 = new Mongo("localhost", false);
       $m6->persistConnect("foo");
       
-      $this->assertEquals($pstart+4, Mongo::$pconnections);
-      $this->assertEquals($start+4, Mongo::$connections);
-
       // uses $md5
       $m7 = new Mongo("localhost", false);
       $m7->persistConnect("foo", "bar");
 
-      $this->assertEquals($pstart+4, Mongo::$pconnections);
-      $this->assertEquals($start+4, Mongo::$connections);
-
       $m8 = new Mongo();
-
-      $this->assertEquals($pstart+4, Mongo::$pconnections);
-      $this->assertEquals($start+5, Mongo::$connections);
     }
 
     public function testPersistConn2() {
-      $start = Mongo::$connections;
-      $pstart = Mongo::$pconnections;
-
       $m1 = new Mongo("localhost", array("persist" => true));
-
-      $this->assertEquals($pstart+1, Mongo::$pconnections);
-      $this->assertEquals($start+1, Mongo::$connections);
 
       // uses the same connection as $m1
       $m2 = new Mongo("localhost", array("persist" => true));
-
-      $this->assertEquals($pstart+1, Mongo::$pconnections);
-      $this->assertEquals($start+1, Mongo::$connections);
         
       // creates a new connection
       $m3 = new Mongo("127.0.0.1", array("persist" => true));
 
-      $this->assertEquals($pstart+2, Mongo::$pconnections);
-      $this->assertEquals($start+2, Mongo::$connections);
-
       // creates a new connection
       $m4 = new Mongo("127.0.0.1:27017", array("persist" => true));
-
-      $this->assertEquals($pstart+3, Mongo::$pconnections);
-      $this->assertEquals($start+3, Mongo::$connections);
       
       // creates a new connection
       $m5 = new Mongo("localhost", array("persist" => "foo"));
 
-      $this->assertEquals($pstart+4, Mongo::$pconnections);
-      $this->assertEquals($start+4, Mongo::$connections);
-
       // uses the $m5 connection
       $m6 = new Mongo("localhost", array("persist" => "foo"));
       
-      $this->assertEquals($pstart+4, Mongo::$pconnections);
-      $this->assertEquals($start+4, Mongo::$connections);
-
       $m8 = new Mongo();
-
-      $this->assertEquals($pstart+4, Mongo::$pconnections);
-      $this->assertEquals($start+5, Mongo::$connections);
     }
 
     public function testAuthenticate1() {
@@ -459,5 +392,26 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($x instanceof MongoCollection);
         $this->assertEquals("$x", "foo.bar.baz");
     }
+
+
+    public function testStatic() {
+        $start = memory_get_usage(true);
+
+        for ($i=0; $i<100; $i++) {
+          $t = new StaticFunctionTest();
+          $t::connect();
+        }
+        $this->assertEquals($start, memory_get_usage(true));
+    }
 }
+
+class StaticFunctionTest {
+  private static $conn = null;
+
+  public static function connect()
+  {
+    self::$conn = new Mongo;
+  }
+}
+
 ?>

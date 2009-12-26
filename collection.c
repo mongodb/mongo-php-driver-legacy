@@ -163,7 +163,7 @@ PHP_METHOD(MongoCollection, insert) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   link = (mongo_link*)zend_object_store_get_object(c->db->link TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(link->server, Mongo);
+  MONGO_CHECK_INITIALIZED(link->server_set, Mongo);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_INSERT);
@@ -280,7 +280,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   link = (mongo_link*)zend_object_store_get_object(c->db->link TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(link->server, Mongo);
+  MONGO_CHECK_INITIALIZED(link->server_set, Mongo);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_INSERT);
@@ -393,7 +393,7 @@ PHP_METHOD(MongoCollection, update) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   link = (mongo_link*)zend_object_store_get_object(c->db->link TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(link->server, Mongo);
+  MONGO_CHECK_INITIALIZED(link->server_set, Mongo);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_UPDATE);
@@ -452,7 +452,7 @@ PHP_METHOD(MongoCollection, remove) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   link = (mongo_link*)zend_object_store_get_object(c->db->link TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(link->server, Mongo);
+  MONGO_CHECK_INITIALIZED(link->server_set, Mongo);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_DELETE);
