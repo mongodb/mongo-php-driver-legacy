@@ -398,8 +398,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $start = memory_get_usage(true);
 
         for ($i=0; $i<100; $i++) {
-          $t = new StaticFunctionTest();
-          $t::connect();
+          StaticFunctionTest::connect();
         }
         $this->assertEquals($start, memory_get_usage(true));
     }
