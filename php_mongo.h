@@ -250,6 +250,7 @@ typedef struct {
     RETURN_STRING("", 1);                                               \
   }
 
+#define REPLY_HEADER_LEN 36
 
 typedef struct {
   zend_object std;
@@ -269,9 +270,11 @@ typedef struct {
   int opts;
 
   char special;
+  int timeout;
 
-  // response header
-  mongo_msg_header header;
+  mongo_msg_header send;
+  mongo_msg_header recv;
+
   // response fields
   int flag;
   int64_t cursor_id;

@@ -38,8 +38,7 @@ extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_Exception,
   *mongo_ce_CursorException;
 
-extern int le_connection,
-  le_pconnection;
+extern int le_pconnection;
 
 extern zend_object_handlers mongo_default_handlers;
 
@@ -135,6 +134,7 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->at = 0;
   cursor->num = 0;
   cursor->special = 0;
+  cursor->timeout = 0;
 
   slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
   cursor->opts = Z_BVAL_P(slave_okay) ? (1 << 2) : 0;
@@ -166,7 +166,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   buffer buf;
   int size;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  zval temp;
+  zval *temp;
 
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
@@ -193,22 +193,35 @@ PHP_METHOD(MongoCursor, hasNext) {
   buf.pos = buf.start;
   buf.end = buf.start + size;
 
-  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->header.request_id, OP_GET_MORE);
+  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
+  cursor->send.request_id = header.request_id;
+
   php_mongo_serialize_int(&buf, cursor->limit);
   php_mongo_serialize_long(&buf, cursor->cursor_id);
   php_mongo_serialize_size(buf.start, &buf);
 
   // fails if we're out of elems
-  if(mongo_say(cursor->link, &buf, &temp TSRMLS_CC) == FAILURE) {
+  MAKE_STD_ZVAL(temp);
+  ZVAL_NULL(temp);
+  if(mongo_say(cursor->link, &buf, temp TSRMLS_CC) == FAILURE) {
     efree(buf.start);
-    RETURN_FALSE;
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
+    zval_ptr_dtor(&temp);
+    return;
   }
 
   efree(buf.start);
 
-  // if we have cursor->at == cursor->num && recv fails,
-  // we're probably just out of results
-  RETURN_BOOL(php_mongo_get_reply(cursor, &temp TSRMLS_CC) == SUCCESS);
+  if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
+    zval_ptr_dtor(&temp);
+    return;
+  }
+
+  zval_ptr_dtor(&temp);
+
+  RETURN_TRUE;
+
 }
 /* }}} */
 
@@ -291,6 +304,24 @@ PHP_METHOD(MongoCursor, slaveOkay) {
 PHP_METHOD(MongoCursor, immortal) {
   preiteration_setup;
   default_to_true(4);
+  RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
+
+/* {{{ MongoCursor::timeout
+ */
+PHP_METHOD(MongoCursor, timeout) {
+  int timeout;
+  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timeout) == FAILURE) {
+    return;
+  }
+
+  cursor->timeout = timeout;
+
   RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
@@ -405,13 +436,14 @@ PHP_METHOD(MongoCursor, doQuery) {
   mongo_msg_header header;
   mongo_cursor *cursor;
   buffer buf;
-  zval temp;
+  zval *temp;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   CREATE_HEADER_WITH_OPTS(buf, cursor->ns, OP_QUERY, cursor->opts);
+  cursor->send.request_id = header.request_id;
 
   php_mongo_serialize_int(&buf, cursor->skip);
   php_mongo_serialize_int(&buf, cursor->limit);
@@ -423,14 +455,18 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   php_mongo_serialize_size(buf.start, &buf);
 
-  sent = mongo_say(cursor->link, &buf, &temp TSRMLS_CC);
+  MAKE_STD_ZVAL(temp);
+  ZVAL_NULL(temp);
+  sent = mongo_say(cursor->link, &buf, temp TSRMLS_CC);
   efree(buf.start);
   if (sent == FAILURE) {
     zend_throw_exception(mongo_ce_CursorException, "couldn't send query.", 0 TSRMLS_CC);
+    zval_ptr_dtor(&temp);
     return;
   }
 
-  php_mongo_get_reply(cursor, &temp TSRMLS_CC);
+  php_mongo_get_reply(cursor, temp TSRMLS_CC);
+  zval_ptr_dtor(&temp);
 }
 /* }}} */
 
@@ -649,6 +685,7 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, immortal, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, dead, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, snapshot, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
@@ -699,6 +736,7 @@ static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
   // std header
   CREATE_MSG_HEADER(MonGlo(request_id)++, 0, OP_KILL_CURSORS);
   APPEND_HEADER(buf, 0);
+  cursor->send.request_id = header.request_id;
 
   // # of cursors
   php_mongo_serialize_int(&buf, 1);
@@ -732,7 +770,7 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
 }
 
 void mongo_init_MongoCursor(TSRMLS_D) {
-  zend_class_entry ce;
+  zend_class_entry ce, cursor_e, cursor_to_e;
 
   INIT_CLASS_ENTRY(ce, "MongoCursor", MongoCursor_methods);
   ce.create_object = php_mongo_cursor_new;

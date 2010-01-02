@@ -50,6 +50,8 @@
 #include "bson.h"
 
 extern zend_class_entry *mongo_ce_DB, 
+  *mongo_ce_CursorException,
+  *mongo_ce_CursorTOException,
   *mongo_ce_Cursor,
   *mongo_ce_Id,
   *mongo_ce_Date,
@@ -78,6 +80,7 @@ zend_object_handlers mongo_default_handlers;
 zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_CursorException,
   *mongo_ce_ConnectionException,
+  *mongo_ce_CursorTOException,
   *mongo_ce_GridFSException,
   *mongo_ce_Exception,
   *mongo_ce_MaxKey,
@@ -134,7 +137,6 @@ static function_entry mongo_methods[] = {
   PHP_ME(Mongo, close, NULL, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
 };
-
 
 
 /* {{{ mongo_module_entry
@@ -418,7 +420,7 @@ PHP_MINFO_FUNCTION(mongo) {
 /* }}} */
 
 void mongo_init_MongoExceptions(TSRMLS_D) {
-  zend_class_entry e, ce, conn, e2;
+  zend_class_entry e, ce, conn, e2, ctoe;
 
   INIT_CLASS_ENTRY(e, "MongoException", NULL);
 
@@ -430,6 +432,9 @@ void mongo_init_MongoExceptions(TSRMLS_D) {
 
   INIT_CLASS_ENTRY(ce, "MongoCursorException", NULL);
   mongo_ce_CursorException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
+
+  INIT_CLASS_ENTRY(ctoe, "MongoCursorTimeoutException", NULL);
+  mongo_ce_CursorTOException = zend_register_internal_class_ex(&ctoe, mongo_ce_CursorException, NULL TSRMLS_CC);
 
   INIT_CLASS_ENTRY(conn, "MongoConnectionException", NULL);
   mongo_ce_ConnectionException = zend_register_internal_class_ex(&conn, mongo_ce_Exception, NULL TSRMLS_CC);
@@ -1437,6 +1442,7 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
   cursor->skip = 0;
   cursor->opts = 0;
   cursor->current = 0;
+  cursor->timeout = 0;
 
   for (i=0; i<link->server_set->num; i++) {
     zval temp_ret;
@@ -1484,6 +1490,58 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
   return FAILURE;
 }
 
+/*
+ * This method reads the message header for a database response
+ */
+static int get_header(int sock, mongo_cursor *cursor, zval *errmsg) {
+  if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) == FAILURE) {
+
+    set_disconnected(cursor->link);
+
+    ZVAL_STRING(errmsg, "couldn't get response header", 1);
+    return FAILURE;
+  }
+
+  // switch the byte order, if necessary
+  cursor->recv.length = MONGO_INT(cursor->recv.length);
+
+  // make sure we're not getting crazy data
+  if (cursor->recv.length == 0) {
+
+    set_disconnected(cursor->link);
+
+    ZVAL_STRING(errmsg, "no db response", 1);
+    return FAILURE;
+  }
+  else if (cursor->recv.length > MAX_RESPONSE_LEN ||
+           cursor->recv.length < REPLY_HEADER_SIZE) {
+    char *msg;
+
+    set_disconnected(cursor->link);
+
+    spprintf(&msg, 
+             0, 
+             "bad response length: %d, max: %d, did the db assert?", 
+             cursor->recv.length, 
+             MAX_RESPONSE_LEN);
+
+    ZVAL_STRING(errmsg, msg, 0);
+    return FAILURE;
+  }
+
+  if (recv(sock, (char*)&cursor->recv.request_id, INT_32, FLAGS) == FAILURE ||
+      recv(sock, (char*)&cursor->recv.response_to, INT_32, FLAGS) == FAILURE ||
+      recv(sock, (char*)&cursor->recv.op, INT_32, FLAGS) == FAILURE) {
+    ZVAL_STRING(errmsg, "incomplete header", 1);
+    return FAILURE;
+  }
+
+  cursor->recv.request_id = MONGO_INT(cursor->recv.request_id);
+  cursor->recv.response_to = MONGO_INT(cursor->recv.response_to);
+  cursor->recv.op = MONGO_INT(cursor->recv.op); 
+
+  return SUCCESS;
+}
 
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int sock = php_mongo_get_master(cursor->link TSRMLS_CC);
@@ -1496,50 +1554,53 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     return FAILURE;
   }
 
-  // if this fails, we might be disconnected... but we're probably
-  // just out of results
-  if (recv(sock, (char*)&cursor->header.length, INT_32, FLAGS) == FAILURE) {
+  // set a timeout
+  if (cursor->timeout && cursor->timeout > 0) {
+    struct timeval timeout;
+    fd_set readfds;
 
-    set_disconnected(cursor->link);
+    timeout.tv_sec = cursor->timeout / 1000 ;
+    timeout.tv_usec = (cursor->timeout % 1000) * 1000;
 
-    /* set the error message to NULL so we know this isn't a "real" error */
-    ZVAL_NULL(errmsg);
+    FD_ZERO(&readfds);
+    FD_SET(sock, &readfds);
+
+    select(sock+1, &readfds, NULL, NULL, &timeout);
+
+    if (!FD_ISSET(sock, &readfds)) {
+      ZVAL_NULL(errmsg);
+      zend_throw_exception(mongo_ce_CursorTOException, "Cursor timed out", 0 TSRMLS_CC);
+      return FAILURE;
+    }
+  }
+
+  if (get_header(sock, cursor, errmsg) == FAILURE) {
     return FAILURE;
   }
 
-  // switch the byte order, if necessary
-  cursor->header.length = MONGO_INT(cursor->header.length);
+  // check that this is actually the response we want
+  while (cursor->send.request_id != cursor->recv.response_to) {
+    // if it's not... 
 
-  // make sure we're not getting crazy data
-  if (cursor->header.length == 0) {
+    // TODO: check that the request_id isn't on async queue
+    // temp: we have no async queue, so this is always true
+    if (1) {
+      char temp[4096];
+      // throw out the rest of the headers and the response
+      if (recv(sock, (char*)temp, 20, FLAGS) == FAILURE ||
+          mongo_hear(cursor->link, (void*)temp, cursor->recv.length-REPLY_HEADER_LEN TSRMLS_CC) == FAILURE) {
+        ZVAL_STRING(errmsg, "couldn't get response to throw out", 1);
+        return FAILURE;
+      }
+    }
 
-    set_disconnected(cursor->link);
-
-    /* copy message to the heap */
-    ZVAL_STRING(errmsg, "no db response", 1);
-    return FAILURE;
-  }
-  else if (cursor->header.length > MAX_RESPONSE_LEN ||
-           cursor->header.length < REPLY_HEADER_SIZE) {
-    char *msg;
-
-    set_disconnected(cursor->link);
-
-    spprintf(&msg, 
-             0, 
-             "bad response length: %d, max: %d, did the db assert?", 
-             cursor->header.length, 
-             MAX_RESPONSE_LEN);
-
-    /* the message is already on the heap, so don't copy it again */
-    ZVAL_STRING(errmsg, msg, 0);
-    return FAILURE;
+    // get the next db response
+    if (get_header(sock, cursor, errmsg) == FAILURE) {
+      return FAILURE;
+    }
   }
 
-  if (recv(sock, (char*)&cursor->header.request_id, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->header.response_to, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->header.op, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->flag, INT_32, FLAGS) == FAILURE ||
+  if (recv(sock, (char*)&cursor->flag, INT_32, FLAGS) == FAILURE ||
       recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
       recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
       recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
@@ -1552,20 +1613,17 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   mongo_memcpy(cursor_ptr, &cursor->cursor_id, INT_64);
   cursor->cursor_id = temp_id;
 
-  cursor->header.request_id = MONGO_INT(cursor->header.request_id);
-  cursor->header.response_to = MONGO_INT(cursor->header.response_to);
-  cursor->header.op = MONGO_INT(cursor->header.op); 
   cursor->flag = MONGO_INT(cursor->flag);
   cursor->start = MONGO_INT(cursor->start);
   num_returned = MONGO_INT(num_returned);
 
   // create buf
-  cursor->header.length -= INT_32*9;
+  cursor->recv.length -= REPLY_HEADER_LEN;
 
   // point buf.start at buf's first char
   if (!cursor->buf.start) {
-    cursor->buf.start = (unsigned char*)emalloc(cursor->header.length);
-    cursor->buf.end = cursor->buf.start + cursor->header.length;
+    cursor->buf.start = (unsigned char*)emalloc(cursor->recv.length);
+    cursor->buf.end = cursor->buf.start + cursor->recv.length;
   }
   /* if we've already got a buffer allocated but it's too small, resize it
    * 
@@ -1573,14 +1631,14 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
    * this might actually be slower than freeing/reallocating, as it might
    * have to copy over all the bytes if there isn't contiguous free space.  
    */
-  else if (cursor->buf.end - cursor->buf.start < cursor->header.length) {
-    cursor->buf.start = (unsigned char*)erealloc(cursor->buf.start, cursor->header.length);
-    cursor->buf.end = cursor->buf.start + cursor->header.length;
+  else if (cursor->buf.end - cursor->buf.start < cursor->recv.length) {
+    cursor->buf.start = (unsigned char*)erealloc(cursor->buf.start, cursor->recv.length);
+    cursor->buf.end = cursor->buf.start + cursor->recv.length;
   }
   cursor->buf.pos = cursor->buf.start;
 
   /* get the actual response content */
-  if (mongo_hear(cursor->link, cursor->buf.pos, cursor->header.length TSRMLS_CC) == FAILURE) {
+  if (mongo_hear(cursor->link, cursor->buf.pos, cursor->recv.length TSRMLS_CC) == FAILURE) {
     char *msg;
 #ifdef WIN32
     spprintf(&msg, 0, "WSA error getting database response: %d", WSAGetLastError());
@@ -1623,23 +1681,24 @@ int mongo_say(mongo_link *link, buffer *buf, zval *errmsg TSRMLS_DC) {
   return sent;
 }
 
-int mongo_hear(mongo_link *link, void *dest, int len TSRMLS_DC) {
-  int num = 1, r = 0;
+int mongo_hear(mongo_link *link, void *dest, int total_len TSRMLS_DC) {
+  int num = 1, received = 0;
 
   // this can return FAILED if there is just no more data from db
-  while(r < len && num > 0) {
+  while(received < total_len && num > 0) {
+    int len = 4096 < (total_len - received) ? 4096 : total_len - received;
 
     // windows gives a WSAEFAULT if you try to get more bytes
-    num = recv(php_mongo_get_master(link TSRMLS_CC), (char*)dest, 4096, FLAGS);
+    num = recv(php_mongo_get_master(link TSRMLS_CC), (char*)dest, len, FLAGS);
 
     if (num < 0) {
       return FAILURE;
     }
 
     dest = (char*)dest + num;
-    r += num;
+    received += num;
   }
-  return r;
+  return received;
 }
 
 static int php_mongo_check_connection(mongo_link *link, zval *errmsg TSRMLS_DC) {

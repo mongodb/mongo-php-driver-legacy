@@ -235,6 +235,7 @@ PHP_METHOD(MongoCollection, insert) {
 
     /* get the response */
     cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
+    cursor->send.request_id = header.request_id;
     if (php_mongo_get_reply(cursor, temp TSRMLS_CC) == FAILURE) {
       zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
       zval_ptr_dtor(&temp);
