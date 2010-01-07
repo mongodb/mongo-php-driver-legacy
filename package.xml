@@ -13,11 +13,11 @@
    <email>kristina@10gen.com</email>
    <active>yes</active>
  </lead>
- <date>2009-12-17</date>
+ <date>2010-01-07</date>
  <time>12:00:00</time>
  <version>
-   <release>1.0.2</release>
-   <api>1.0.2</api>
+   <release>1.0.3</release>
+   <api>1.0.3</api>
  </version>
  <stability>
    <release>stable</release>
@@ -25,10 +25,9 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Better Mongo::__construct parameters
-  Getters for Mongo, MongoDB, and MongoCollection
-  MongoId::getTimestamp
-  MongoCollection::ensureIndex takes dropDups and safe opts
+  Fix Apache segfault
+  Cursor timeout
+  Faster array encoding
  </notes>
  <contents>
    <dir baseinstalldir="/" name="/">
@@ -63,6 +62,22 @@
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog>
+   <release>
+     <stability>
+       <release>stable</release>
+       <api>stable</api>
+     </stability>
+     <version>
+       <release>1.0.3</release>
+       <api>1.0.3</api>
+     </version>
+     <date>2010-01-07</date>
+     <notes>
+      Fix Apache segfault
+      Cursor timeout
+      Faster array encoding
+     </notes>
+   </release>
    <release>
      <stability>
        <release>stable</release>
