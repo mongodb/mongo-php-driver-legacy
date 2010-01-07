@@ -113,7 +113,6 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
 #endif /* ZEND_MODULE_API_NO >= 20090115 */
 {
   int retval;
-  char *name;
 
   buffer *buf = va_arg(args, buffer*);
   int prep = va_arg(args, int);
@@ -126,18 +125,38 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
   if (key->nKeyLength) {
     return php_mongo_serialize_element(key->arKey, (zval**)data, buf, prep TSRMLS_CC);
   }
+  else {
+    int current = key->h, pos = 11, negative = 0;
+    char name[12];
 
-  spprintf(&name, 0, "%ld", key->h);
-  retval = php_mongo_serialize_element(name, (zval**)data, buf, prep TSRMLS_CC);
-  efree(name);
+    // if the key is a number in ascending order, we're still
+    // dealing with an array, not an object, so increase the count
+    if (key->h == (unsigned int)*num) {
+      (*num)++;
+    }
 
-  // if the key is a number in ascending order, we're still
-  // dealing with an array, not an object, so increase the count
-  if (key->h == (unsigned int)*num) {
-    (*num)++;
+    name[pos--] = '\0';
+
+    // take care of negative indexes
+    if (current < 0) {
+      current *= -1;
+      negative = 1;
+    }
+
+    do {
+      int digit = current % 10;
+      digit += (int)'0';
+      name[pos--] = (char)digit;
+
+      current = current / 10;
+    } while (current > 0);
+
+    if (negative) {
+      name[pos--] = '-';
+    }
+
+    return php_mongo_serialize_element(name+pos+1, (zval**)data, buf, prep TSRMLS_CC);
   }
-
-  return retval;
 }
 
 int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) {

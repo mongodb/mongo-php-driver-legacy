@@ -3,6 +3,24 @@ require_once 'PHPUnit/Framework.php';
 
 class SerializationTest extends PHPUnit_Framework_TestCase
 {
+    public function arrayEncode() {
+      $c = $this->sharedFixture->phpunit->c->drop();
+
+      $a = array();
+      $a[-1] = 'foo';
+      $c->insert($a);
+      $a2 = $c->findOne();
+      $this->assertEquals('foo', $a2['-1'], json_encode($a2));
+
+      $c->remove();
+      $a[-2147483647] = "bar";
+
+      $c->insert($a);
+      $a2 = $c->findOne();
+      
+      $this->assertEquals('bar', $a2['-2147483647'], json_encode($a2));
+    }
+
     public function getChars($x) {
       $str = "";
       for ($i=0; $i < strlen($x); $i++) {
