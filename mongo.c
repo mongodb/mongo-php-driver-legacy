@@ -403,11 +403,12 @@ PHP_RINIT_FUNCTION(mongo) {
 /* {{{ PHP_MINFO_FUNCTION
  */
 PHP_MINFO_FUNCTION(mongo) {
-  char buf[32];
+  char buf[12];
 
   php_info_print_table_start();
 
   php_info_print_table_header(2, "MongoDB Support", "enabled");
+  php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
   snprintf(buf, sizeof(buf), "%ld", MonGlo(num_persistent));
   php_info_print_table_row(2, "Active Persistent Connections", buf);
   snprintf(buf, sizeof(buf), "%ld", MonGlo(num_links));
@@ -461,7 +462,7 @@ void mongo_init_Mongo(TSRMLS_D) {
   /* Mongo class constants */
   zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), "localhost" TSRMLS_CC);
   zend_declare_class_constant_long(mongo_ce_Mongo, "DEFAULT_PORT", strlen("DEFAULT_PORT"), 27017 TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), "1.0.2" TSRMLS_CC);
+  zend_declare_class_constant_string(mongo_ce_Mongo, "VERSION", strlen("VERSION"), PHP_MONGO_VERSION TSRMLS_CC);
 
   /* Mongo fields */
   zend_declare_property_bool(mongo_ce_Mongo, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
