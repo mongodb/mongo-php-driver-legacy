@@ -572,8 +572,9 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       $cursor->next();
 
       unset($m);
+      sleep(1);
 
-      while($cursor->next()) {sleep(1);}
+      while($cursor->next()) {}
 
       $this->sharedFixture->phpunit->kill->drop();
     }
@@ -597,5 +598,40 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       }
     }
 
+    public function testFatalForEach() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("who knows what 5.1 does with fatal errors? probably something stupid.");
+            return;
+        }
+
+        $output = "";
+        $exit_code = 0;
+        exec("php tests/fatal3.php", $output, $exit_code);
+        $uncallable = "Fatal error: Call to a member function foo() on a non-object";
+
+        if (count($output) > 0) {
+            $this->assertEquals($uncallable, substr($output[1], 0, strlen($uncallable)), json_encode($output)); 
+        }
+        $this->assertEquals(255, $exit_code);
+    }
+
+    public function testManualDtor1() {
+        $mongo = new Mongo();
+        $cursor = $mongo->phpunit->bar->find();
+        unset($mongo);
+        $this->assertNull($cursor->getNext());
+    }
+
+    public function testManualDtor2() {
+        $mongo = new Mongo();
+        $c = $mongo->phpunit->bar;
+        $c->insert(array("x"=>1));
+
+        $cursor = $c->find();
+        $cursor->next();
+        unset($cursor);
+        $cursor = $c->find();
+        $this->assertNotNull($cursor->getNext());
+    }
 }
 ?>
