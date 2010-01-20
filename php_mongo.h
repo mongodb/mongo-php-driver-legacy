@@ -23,6 +23,7 @@
 
 // resource names
 #define PHP_CONNECTION_RES_NAME "mongo connection"
+#define PHP_CURSOR_LIST_RES_NAME "cursor list"
 
 #ifdef WIN32
 #  ifndef int64_t
@@ -292,6 +293,24 @@ typedef struct {
 
 } mongo_cursor;
 
+/*
+ * unfortunately, cursors can be freed before or after link is destroyed, so 
+ * we can't actually depend on having a link to the database.  So, we're 
+ * going to keep a separate list of link ids associated with cursor ids.
+ *
+ * When a cursor is to be freed, we try to find this cursor in the list.  If 
+ * it's there, kill it.  If not, the db connection is probably already dead.
+ * 
+ * When a connection is killed, we sweep through the list and kill all the
+ * cursors for that link.
+ */
+typedef struct _cursor_node {
+  mongo_cursor *cursor;
+
+  struct _cursor_node *next;
+  struct _cursor_node *prev;
+} cursor_node;
+void php_mongo_free_cursor_node(cursor_node*, list_entry*);
 
 typedef struct {
   zend_object std;

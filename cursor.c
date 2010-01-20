@@ -38,14 +38,14 @@ extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_Exception,
   *mongo_ce_CursorException;
 
-extern int le_pconnection;
+extern int le_pconnection,
+  le_cursor_list;
 
 extern zend_object_handlers mongo_default_handlers;
 
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
-static void kill_cursor(mongo_cursor *cursor TSRMLS_DC);
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
 static void make_special(mongo_cursor *);
 
@@ -437,6 +437,8 @@ PHP_METHOD(MongoCursor, doQuery) {
   mongo_cursor *cursor;
   buffer buf;
   zval *temp;
+  list_entry *le;
+  cursor_node *new_node;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
@@ -467,6 +469,26 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   php_mongo_get_reply(cursor, temp TSRMLS_CC);
   zval_ptr_dtor(&temp);
+
+  /* we've got something to kill, make a note */
+  new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
+  new_node->cursor = cursor;
+  new_node->next = new_node->prev = 0;
+
+  if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, (void**)&le) == SUCCESS && le->ptr) {
+    cursor_node *current = le->ptr;
+    while (current->next) {
+      current = current->next;
+    }
+    current->next = new_node;
+    new_node->prev = current;
+  }
+  else {
+    list_entry new_le;
+    new_le.ptr = new_node;
+    new_le.type = le_cursor_list;
+    zend_hash_add(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, &new_le, sizeof(list_entry), NULL);
+  }
 }
 /* }}} */
 
@@ -715,43 +737,23 @@ static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRML
 }
 
 
-// tell db to destroy its cursor
-static void kill_cursor(mongo_cursor *cursor TSRMLS_DC) {
-  unsigned char quickbuf[128];
-  buffer buf;
-  mongo_msg_header header;
-  zval temp;
-
-  // we allocate a cursor even if no results are returned,
-  // but the database will throw an assertion if we try to
-  // kill a non-existant cursor
-  // non-cursors have ids of 0
-  if (cursor->cursor_id == 0) {
-    return;
-  }
-  buf.pos = quickbuf;
-  buf.start = buf.pos;
-  buf.end = buf.start + 128;
-
-  // std header
-  CREATE_MSG_HEADER(MonGlo(request_id)++, 0, OP_KILL_CURSORS);
-  APPEND_HEADER(buf, 0);
-  cursor->send.request_id = header.request_id;
-
-  // # of cursors
-  php_mongo_serialize_int(&buf, 1);
-  // cursor ids
-  php_mongo_serialize_long(&buf, cursor->cursor_id);
-  php_mongo_serialize_size(buf.start, &buf);
-
-  mongo_say(cursor->link, &buf, &temp TSRMLS_CC);
-}
-
 void php_mongo_cursor_free(void *object TSRMLS_DC) {
   mongo_cursor *cursor = (mongo_cursor*)object;
 
   if (cursor) {
-    kill_cursor(cursor TSRMLS_CC);
+    list_entry *le;
+    if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
+      cursor_node *current = le->ptr;
+
+      while (current) {
+        if (current->cursor->cursor_id == cursor->cursor_id) {
+          kill_cursor(current, le TSRMLS_CC);
+          // only one cursor to be freed
+          break;
+        }
+        current = current->next;
+      }
+    }
 
     if (cursor->current) zval_ptr_dtor(&cursor->current);
 

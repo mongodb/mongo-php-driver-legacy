@@ -61,6 +61,7 @@ extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_Timestamp;
 
 static void php_mongo_link_free(void* TSRMLS_DC);
+static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval*);
 static int php_mongo_get_master(mongo_link* TSRMLS_DC);
 static int php_mongo_check_connection(mongo_link*, zval* TSRMLS_DC);
@@ -87,7 +88,8 @@ zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_MinKey;
 
 /** Resources */
-int le_pconnection;
+int le_pconnection, 
+  le_cursor_list;
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
 
@@ -216,6 +218,66 @@ static void php_mongo_server_free(mongo_server_set *server_set, int persist TSRM
     // decrement the total number of links
     MonGlo(num_links)--;
   }
+
+}
+
+// tell db to destroy its cursor
+void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
+  mongo_cursor *cursor = node->cursor;
+  unsigned char quickbuf[128];
+  buffer buf;
+  mongo_msg_header header;
+  zval temp;
+
+  /* 
+   * If the cursor_id is 0, the db is out of results anyway.
+   */
+  if (cursor->cursor_id == 0) {
+    php_mongo_free_cursor_node(node, le);
+    return;
+  }
+
+  buf.pos = quickbuf;
+  buf.start = buf.pos;
+  buf.end = buf.start + 128;
+
+  CREATE_MSG_HEADER(MonGlo(request_id)++, 0, OP_KILL_CURSORS);
+  APPEND_HEADER(buf, 0);
+  cursor->send.request_id = header.request_id;
+
+  // # of cursors
+  php_mongo_serialize_int(&buf, 1);
+  // cursor ids
+  php_mongo_serialize_long(&buf, cursor->cursor_id);
+  php_mongo_serialize_size(buf.start, &buf);
+
+  mongo_say(cursor->link, &buf, &temp TSRMLS_CC);
+        
+  /* 
+   * if the connection is closed before the cursor is destroyed, the cursor
+   * might try to fetch more results with disasterous consequences.  Thus, the
+   * cursor_id is set to 0, so no more results will be fetched.
+   *
+   * this might not be the most elegant solution, since you could fetch 100
+   * results, get the first one, close the connection, get 99 more, and suddenly
+   * not be able to get any more.  Not sure if there's a better one, though. I
+   * guess the user can call dead() on the cursor.
+   */
+  cursor->cursor_id = 0;
+
+  // free this cursor/link pair
+  php_mongo_free_cursor_node(node, le);
+}
+
+void php_mongo_free_cursor_node(cursor_node *node, list_entry *le) {
+  if (node->prev) {
+    node->prev->next = node->next;
+  }
+  else {
+    le->ptr = node->next;
+  }
+
+  pefree(node, 1);
 }
 
 
@@ -224,10 +286,23 @@ static void php_mongo_server_free(mongo_server_set *server_set, int persist TSRM
 static void php_mongo_link_free(void *object TSRMLS_DC) {
   mongo_link *link = (mongo_link*)object;
   int persist;
+  list_entry *le;
 
   // already freed
   if (!link) {
     return;
+  }
+
+  // kill any associated cursors
+  if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
+    cursor_node *current = le->ptr;
+    while (current) {
+      if (current->cursor->link == link) {
+        kill_cursor(current, le TSRMLS_CC);
+        // keep going, free all cursor for this connection
+      }
+      current = current->next;
+    }
   }
 
   persist = link->persist;
@@ -268,6 +343,21 @@ static void php_mongo_link_pfree( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 }
 /* }}} */
 
+static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
+  cursor_node *node = (cursor_node*)rsrc->ptr;
+
+  if (!node)
+    return;
+
+  while (node->next) {
+    cursor_node *temp = node;
+    node = node->next;
+    pefree(temp, 1);
+  }
+  pefree(node, 1);
+}
+
+
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(mongo) {
@@ -280,6 +370,7 @@ PHP_MINIT_FUNCTION(mongo) {
   REGISTER_INI_ENTRIES();
 
   le_pconnection = zend_register_list_destructors_ex(NULL, php_mongo_link_pfree, PHP_CONNECTION_RES_NAME, module_number);
+  le_cursor_list = zend_register_list_destructors_ex(NULL, php_mongo_cursor_list_pfree, PHP_CURSOR_LIST_RES_NAME, module_number);
 
   mongo_init_Mongo(TSRMLS_C);
   mongo_init_MongoDB(TSRMLS_C);

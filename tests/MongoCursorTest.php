@@ -559,5 +559,24 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       $this->assertTrue(array_key_exists('interests', $x), json_encode($x));
     }
 
+    public function testKillConnection() {
+      $m = new Mongo();
+      $c = $m->phpunit->kill;
+      $c->drop();
+
+      for($i=0; $i<10; $i++) {
+        $c->insert(array("x" => $i));
+      }
+
+      $cursor = $c->find();
+      $cursor->next();
+
+      unset($m);
+
+      while($cursor->next()) {sleep(1);}
+
+      $this->sharedFixture->phpunit->kill->drop();
+    }
+
 }
 ?>
