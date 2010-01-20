@@ -589,18 +589,9 @@ PHP_METHOD(MongoDBRef, get) {
     if (strcmp(Z_STRVAL_PP(dbname), Z_STRVAL_P(temp_db->name)) != 0) {
       zval *new_db_z;
       mongo_db *new_db;
-
-      // create the db
       MAKE_STD_ZVAL(new_db_z);
-      object_init_ex(new_db_z, mongo_ce_DB);
 
-      new_db = (mongo_db*)zend_object_store_get_object(new_db_z TSRMLS_CC);
-      
-      // set up fields
-      new_db->link = temp_db->link;
-      zval_add_ref(&new_db->link);
-      new_db->name = *dbname;
-      zval_add_ref(&new_db->name);
+      MONGO_METHOD1(Mongo, selectDB, new_db_z, temp_db->link, *dbname);
 
       // make the new db the current one
       db = new_db_z;
