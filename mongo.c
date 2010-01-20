@@ -272,9 +272,15 @@ void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
 void php_mongo_free_cursor_node(cursor_node *node, list_entry *le) {
   if (node->prev) {
     node->prev->next = node->next;
+    if (node->next) {
+      node->next->prev = node->prev;
+    }
   }
   else {
     le->ptr = node->next;
+    if (node->next) {
+      node->next->prev = 0;
+    }
   }
 
   pefree(node, 1);

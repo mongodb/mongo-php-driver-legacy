@@ -578,5 +578,24 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       $this->sharedFixture->phpunit->kill->drop();
     }
 
+    public function testKillCursors() {
+      $c = $this->object;
+
+      for ($i=0; $i<100; $i++) {
+        $c->insert(array("x" => $i));
+      }
+      
+      $carr = array();
+      $carr[] = $c->find(array("x" => array('$gt' => 80)));
+      $carr[] = $c->find(array("x" => array('$lt' => 40)));
+      $carr[] = $c->find(array("x" => array('$gt' => 40, '$lt' => 80)));
+
+      foreach ($carr as $cursor) {
+        $this->assertFalse($cursor->valid());
+        $cursor->next();
+        $this->assertTrue($cursor->valid());
+      }
+    }
+
 }
 ?>
