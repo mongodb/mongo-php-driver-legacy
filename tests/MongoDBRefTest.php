@@ -39,8 +39,7 @@ class MongoDBRefTest extends PHPUnit_Framework_TestCase
       $this->object->db->d->insert(array("_id" => 123, "greeting" => "hi"));
       $c = $this->sharedFixture->phpunit_temp->d;
       $c->drop();
-      var_dump($c->insert(array("_id" => 123, "greeting" => "bye"), true));
-      var_dump($c->findOne());
+      $c->insert(array("_id" => 123, "greeting" => "bye"), true);
 
       $x = MongoDBRef::get($this->object->db, array('$ref' => "d", '$id' => 123));
       $this->assertNotNull($x);

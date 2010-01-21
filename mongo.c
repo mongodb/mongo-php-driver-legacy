@@ -1845,7 +1845,7 @@ static int php_mongo_connect_nonb(mongo_server *server, zval *errmsg) {
   struct sockaddr_in addr, addr2;
   fd_set rset, wset;
   struct timeval tval;
-  int connected = FAILURE;
+  int connected = FAILURE, status = FAILURE;
 
 #ifdef WIN32
   WORD version;
@@ -1905,7 +1905,8 @@ static int php_mongo_connect_nonb(mongo_server *server, zval *errmsg) {
 
 
   // connect
-  if (connect(server->socket, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+  status = connect(server->socket, (struct sockaddr*)&addr, sizeof(addr));
+  if (status < 0) {
 #ifdef WIN32
     errno = WSAGetLastError();
     if (errno != WSAEINPROGRESS && errno != WSAEWOULDBLOCK)
@@ -1933,6 +1934,10 @@ static int php_mongo_connect_nonb(mongo_server *server, zval *errmsg) {
     // set connected
     server->connected = 1;
   }
+  else if (status == SUCCESS) {
+    server->connected = 1;
+  }
+
 
 // reset flags
 #ifdef WIN32
