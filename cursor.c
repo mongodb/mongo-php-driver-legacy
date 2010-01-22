@@ -213,7 +213,12 @@ PHP_METHOD(MongoCursor, hasNext) {
   efree(buf.start);
 
   if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
+    if (Z_TYPE_P(temp) == IS_STRING) {
+      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
+    }
+    else {
+      RETURN_FALSE;
+    }
     zval_ptr_dtor(&temp);
     return;
   }
