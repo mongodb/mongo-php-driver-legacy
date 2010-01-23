@@ -529,6 +529,18 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(1, $g['retval'][0]['count']);
    }
 
+    public function testGroup2() {
+        $this->object->save(array("a" => 2));
+        $this->object->save(array("b" => 5));
+        $this->object->save(array("a" => 1));
+        $keys = array();
+        $initial = array("count" => 0);
+        $reduce = "function (obj, prev) { prev.count++; }";
+        
+        $g = $this->object->group($keys, $initial, $reduce);
+        $this->assertEquals(3, $g['count']);
+    }
+
     public function testSafeInsert() {
       $c = $this->object;
       $c->drop();

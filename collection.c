@@ -902,8 +902,10 @@ PHP_METHOD(MongoCollection, group) {
   zval_add_ref(&reduce);
   add_assoc_zval(group, "key", key);
   zval_add_ref(&key);
-  add_assoc_zval(group, "cond", condition);
-  zval_add_ref(&condition);
+  if (condition) {
+    add_assoc_zval(group, "cond", condition);
+    zval_add_ref(&condition);
+  }
   add_assoc_zval(group, "initial", initial);
   zval_add_ref(&initial);
 
