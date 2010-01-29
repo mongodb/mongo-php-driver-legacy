@@ -32,6 +32,7 @@
  <contents>
    <dir baseinstalldir="/" name="/">
      <file role="src" name="config.m4" />
+     <file role="src" name="config.w32" />
      <file role="doc" name="README.rdoc"/>
      <file role="src" name="mongo.c"/>
      <file role="src" name="php_mongo.h"/>
