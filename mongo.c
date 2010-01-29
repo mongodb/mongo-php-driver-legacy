@@ -717,6 +717,9 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
     //          ^
     if (*current == ',') {
       current++;
+      while (*current == ' ') {
+        current++;
+      }
     }
   }
 

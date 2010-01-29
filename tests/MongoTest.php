@@ -48,6 +48,12 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($this->object->connected);
     }
 
+    public function testSpaceChomp() {
+      $m = new Mongo("localhost:27018, localhost");
+      $m = new Mongo("localhost:27018,    localhost, localhost:27019");
+      $m = new Mongo("localhost:27018, localhost, ");
+    }
+
     /**
      * @expectedException MongoConnectionException 
      */
