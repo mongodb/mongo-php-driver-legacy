@@ -316,7 +316,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
       while (current) {
 
         if (type == MONGO_LINK) {
-          if (current->cursor->link == (mongo_link*)link) {
+          if (current->cursor->link == (mongo_link*)val) {
             kill_cursor(current, le TSRMLS_CC);
             // keep going, free all cursor for this connection
           }
@@ -340,7 +340,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
       
       while (tries++ < 3 && ret != 0) {
 #if WIN32
-        ret = ReleaseMutex(cursor_mutex)
+        ret = ReleaseMutex(cursor_mutex);
 #else
         ret = pthread_mutex_unlock(&cursor_mutex);
 #endif
