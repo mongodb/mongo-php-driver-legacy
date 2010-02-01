@@ -746,19 +746,7 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
   mongo_cursor *cursor = (mongo_cursor*)object;
 
   if (cursor) {
-    list_entry *le;
-    if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
-      cursor_node *current = le->ptr;
-
-      while (current) {
-        if (current->cursor->cursor_id == cursor->cursor_id) {
-          kill_cursor(current, le TSRMLS_CC);
-          // only one cursor to be freed
-          break;
-        }
-        current = current->next;
-      }
-    }
+    php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
 
     if (cursor->current) zval_ptr_dtor(&cursor->current);
 

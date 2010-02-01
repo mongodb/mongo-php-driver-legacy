@@ -25,23 +25,22 @@
 
 #ifdef WIN32
 #include <winsock2.h>
+#  ifndef int64_t
+     typedef __int64 int64_t;
+#  endif
 #else
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <pthread.h>
 #endif
 
 #include <php.h>
 #include <zend_exceptions.h>
 #include <php_ini.h>
 #include <ext/standard/info.h>
-#ifdef WIN32
-#  ifndef int64_t
-     typedef __int64 int64_t;
-#  endif
-#endif
 
 #include "php_mongo.h"
 #include "db.h"
@@ -74,6 +73,12 @@ static void mongo_init_MongoExceptions(TSRMLS_D);
 static void run_err(int, zval*, zval* TSRMLS_DC);
 static int php_mongo_parse_server(zval*, zval* TSRMLS_DC);
 static void set_disconnected(mongo_link *link);
+
+#if WIN32
+static HANDLE cursor_mutex;
+#else
+static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER; 
+#endif
 
 zend_object_handlers mongo_default_handlers;
 
@@ -286,31 +291,79 @@ void php_mongo_free_cursor_node(cursor_node *node, list_entry *le) {
   pefree(node, 1);
 }
 
+int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
+  list_entry *le;
+  int ret = -1;
+
+  if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
+    int tries = 0;
+    cursor_node *current;
+
+    // lock
+    while (tries++ < 3 && ret != 0) {
+#if WIN32
+      ret = WaitForSingleObject(cursor_mutex, INFINITE);
+#else
+      ret = pthread_mutex_lock(&cursor_mutex);
+#endif
+
+      if (ret != 0) {
+        continue;
+      }
+
+      current = le->ptr;
+
+      while (current) {
+
+        if (type == MONGO_LINK) {
+          if (current->cursor->link == (mongo_link*)link) {
+            kill_cursor(current, le TSRMLS_CC);
+            // keep going, free all cursor for this connection
+          }
+        }
+        else if (type == MONGO_CURSOR) {
+          if (current->cursor->cursor_id == ((mongo_cursor*)val)->cursor_id) {
+            kill_cursor(current, le TSRMLS_CC);
+            // only one cursor to be freed
+            break;
+          }
+        }
+
+        current = current->next;
+      }
+    }
+
+    // unlock
+    if (ret == 0) {
+      ret = -1;
+      tries = 0;
+      
+      while (tries++ < 3 && ret != 0) {
+#if WIN32
+        ret = ReleaseMutex(cursor_mutex)
+#else
+        ret = pthread_mutex_unlock(&cursor_mutex);
+#endif
+      }
+    }
+  }
+
+  return ret;
+}
+
 
 /* {{{ php_mongo_link_free
  */
 static void php_mongo_link_free(void *object TSRMLS_DC) {
   mongo_link *link = (mongo_link*)object;
   int persist;
-  list_entry *le;
 
   // already freed
   if (!link) {
     return;
   }
 
-  // kill any associated cursors
-  if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
-    cursor_node *current = le->ptr;
-    while (current) {
-      if (current->cursor->link == link) {
-        kill_cursor(current, le TSRMLS_CC);
-        // keep going, free all cursor for this connection
-      }
-      current = current->next;
-    }
-  }
-
+  php_mongo_free_cursor_le(link, MONGO_LINK TSRMLS_CC);
   persist = link->persist;
 
   // link->persist!=0 means it's either a persistent link or a copy of one
@@ -414,6 +467,20 @@ PHP_MINIT_FUNCTION(mongo) {
 
   // start random number generator
   srand(time(0));
+
+#ifdef WIN32
+  cursor_mutex = CreateMutex(NULL, FALSE, NULL);
+  if (cursor_mutex == NULL) {
+    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
+    return FAILURE;
+  }
+#else
+  if (pthread_mutex_init(&cursor_mutex, NULL) != 0) {
+    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't create a mutex: %s", strerror(errno));
+    return FAILURE;
+  }
+#endif
+
   return SUCCESS;
 }
 
@@ -481,6 +548,20 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
  */
 PHP_MSHUTDOWN_FUNCTION(mongo) {
   UNREGISTER_INI_ENTRIES();
+
+#if WIN32
+  // 0 is failure
+  if (CloseHandle(cursor_mutex) == 0) {
+    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
+    return FAILURE;
+  }
+#else
+  // 0 is success
+  if (pthread_mutex_destroy(&cursor_mutex) != 0) {
+    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't destroy a mutex: %s", strerror(errno));
+    return FAILURE;
+  }
+#endif
 
   return SUCCESS;
 }

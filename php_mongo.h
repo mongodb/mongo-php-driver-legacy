@@ -195,6 +195,11 @@ typedef struct {
 
 } mongo_link;
 
+#define MONGO_LINK 0
+#define MONGO_CURSOR 1
+
+int php_mongo_free_cursor_le(void*, int TSRMLS_DC);
+
 
 typedef struct {
   int length;
