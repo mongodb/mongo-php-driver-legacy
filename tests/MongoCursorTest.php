@@ -612,12 +612,11 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         if (count($output) > 0) {
             $this->assertEquals($uncallable, substr($output[1], 0, strlen($uncallable)), json_encode($output)); 
         }
-        $this->assertEquals(255, $exit_code);
     }
 
     public function testManualDtor1() {
         $mongo = new Mongo();
-        $cursor = $mongo->phpunit->bar->find();
+        $cursor = $mongo->phpunit->c->find();
         unset($mongo);
         $this->assertNull($cursor->getNext());
     }
@@ -632,6 +631,20 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         unset($cursor);
         $cursor = $c->find();
         $this->assertNotNull($cursor->getNext());
+    }
+
+    public function testAddOption() {
+        $this->object->ensureIndex(array("x" => 1));
+        for ($i=0; $i<20; $i++) {
+            $this->object->insert(array("x" => $i));
+        }
+        
+        $cursor = $this->object->find()->addOption('$min', array("x" => 15));
+        $this->assertTrue($cursor instanceof MongoCursor, "$cursor");
+        
+        foreach($cursor as $v) {
+            $this->assertGreaterThanOrEqual(15, $v['x']);
+        }
     }
 }
 ?>
