@@ -189,10 +189,7 @@ PHP_METHOD(MongoCursor, hasNext) {
 
   // we have to go and check with the db
   size = 34+strlen(cursor->ns);
-  buf.start = (unsigned char*)emalloc(size);
-  buf.pos = buf.start;
-  buf.end = buf.start + size;
-
+  CREATE_BUF(buf, size);
   CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
   cursor->send.request_id = header.request_id;
 
@@ -576,7 +573,7 @@ PHP_METHOD(MongoCursor, next) {
     zval **err;
     MAKE_STD_ZVAL(cursor->current);
     array_init(cursor->current);
-    cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
+    cursor->buf.pos = bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
 
     // increment cursor position
     cursor->at++;
@@ -765,7 +762,7 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
 }
 
 void mongo_init_MongoCursor(TSRMLS_D) {
-  zend_class_entry ce, cursor_e, cursor_to_e;
+  zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoCursor", MongoCursor_methods);
   ce.create_object = php_mongo_cursor_new;

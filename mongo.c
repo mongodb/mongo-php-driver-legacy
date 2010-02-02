@@ -230,7 +230,7 @@ static void php_mongo_server_free(mongo_server_set *server_set, int persist TSRM
 // tell db to destroy its cursor
 void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   mongo_cursor *cursor = node->cursor;
-  unsigned char quickbuf[128];
+  char quickbuf[128];
   buffer buf;
   mongo_msg_header header;
   zval temp;
@@ -1826,7 +1826,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   // point buf.start at buf's first char
   if (!cursor->buf.start) {
-    cursor->buf.start = (unsigned char*)emalloc(cursor->recv.length);
+    cursor->buf.start = (char*)emalloc(cursor->recv.length);
     cursor->buf.end = cursor->buf.start + cursor->recv.length;
   }
   /* if we've already got a buffer allocated but it's too small, resize it
@@ -1836,7 +1836,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
    * have to copy over all the bytes if there isn't contiguous free space.  
    */
   else if (cursor->buf.end - cursor->buf.start < cursor->recv.length) {
-    cursor->buf.start = (unsigned char*)erealloc(cursor->buf.start, cursor->recv.length);
+    cursor->buf.start = (char*)erealloc(cursor->buf.start, cursor->recv.length);
     cursor->buf.end = cursor->buf.start + cursor->recv.length;
   }
   cursor->buf.pos = cursor->buf.start;

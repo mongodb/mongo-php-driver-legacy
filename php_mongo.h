@@ -209,9 +209,9 @@ typedef struct {
 } mongo_msg_header;
 
 typedef struct {
-  unsigned char *start;
-  unsigned char *pos;
-  unsigned char *end;
+  char *start;
+  char *pos;
+  char *end;
 } buffer;
 
 #define CREATE_MSG_HEADER(rid, rto, opcode)     \
@@ -347,15 +347,10 @@ typedef struct {
 #define BUF_REMAINING (buf->end-buf->pos)
 
 #define CREATE_BUF(buf, size)                   \
-  buf.start = (unsigned char*)emalloc(size);    \
+  buf.start = (char*)emalloc(size);             \
   buf.pos = buf.start;                          \
   buf.end = buf.start + size;
 
-#define DEBUG_BUF(buf)                              \
-  unsigned char *temp = buf.start;                  \
-  while(temp != buf.pos) {                          \
-    php_printf("%d\n", *temp++);                    \
-  }
 
 PHP_MINIT_FUNCTION(mongo);
 PHP_MSHUTDOWN_FUNCTION(mongo);
