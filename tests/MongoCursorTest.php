@@ -640,7 +640,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         }
         
         $cursor = $this->object->find()->addOption('$min', array("x" => 15));
-        $this->assertTrue($cursor instanceof MongoCursor, "$cursor");
+        $this->assertTrue($cursor instanceof MongoCursor, get_class($cursor));
         
         foreach($cursor as $v) {
             $this->assertGreaterThanOrEqual(15, $v['x']);
