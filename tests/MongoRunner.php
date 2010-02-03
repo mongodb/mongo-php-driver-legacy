@@ -34,7 +34,7 @@ class MongoRunner extends PHPUnit_Framework_TestSuite
     {
         $suite = new MongoRunner('Mongo Tests');
         
-        $suite->addTestSuite('MongoDBRefTest');
+        $suite->addTestSuite('MongoTest');
         return $suite;
     }
  

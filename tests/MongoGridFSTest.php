@@ -220,6 +220,14 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($mongo->file['md5'], md5(file_get_contents("mongo.c")));
       $this->assertEquals($gridfs->file['md5'], md5(file_get_contents("gridfs.c")));
     }
+
+    public function testFH() {
+      $fh = fopen('tests/somefile', 'r');
+      $this->object->storeFile($fh, array('_id' => 1));
+      $file = $this->object->findOne();
+      $this->assertEquals(129, $file->file['length'], json_encode($file->file));
+      $this->assertEquals(1, $file->file['_id'], json_encode($file->file));
+    }
 }
 
 ?>

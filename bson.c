@@ -112,8 +112,6 @@ static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list 
 static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key)
 #endif /* ZEND_MODULE_API_NO >= 20090115 */
 {
-  int retval;
-
   buffer *buf = va_arg(args, buffer*);
   int prep = va_arg(args, int);
   int *num = va_arg(args, int*);
@@ -297,7 +295,7 @@ int resize_buf(buffer *buf, int size) {
     total += size;
   }
 
-  buf->start = (unsigned char*)erealloc(buf->start, total);
+  buf->start = (char*)erealloc(buf->start, total);
   buf->pos = buf->start + used;
   buf->end = buf->start + total;
   return total;
@@ -525,7 +523,6 @@ void php_mongo_serialize_ns(buffer *buf, char *str TSRMLS_DC) {
   }
 
   if (MonGlo(cmd_char) && strchr(collection, MonGlo(cmd_char)[0]) == collection) {
-    char *tmp = buf->pos;
     memcpy(buf->pos, str, collection-str);
     buf->pos += collection-str;
     *(buf->pos) = '$';
@@ -544,7 +541,7 @@ void php_mongo_serialize_ns(buffer *buf, char *str TSRMLS_DC) {
 /* the position is not increased, we are just filling
  * in the first 4 bytes with the size.
  */
-void php_mongo_serialize_size(unsigned char *start, buffer *buf) {
+void php_mongo_serialize_size(char *start, buffer *buf) {
   int total = buf->pos - start;
   // use mongo_memcpy to deal with big-endianness
   mongo_memcpy(start, &total, INT_32);

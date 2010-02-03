@@ -189,10 +189,7 @@ PHP_METHOD(MongoCursor, hasNext) {
 
   // we have to go and check with the db
   size = 34+strlen(cursor->ns);
-  buf.start = (unsigned char*)emalloc(size);
-  buf.pos = buf.start;
-  buf.end = buf.start + size;
-
+  CREATE_BUF(buf, size);
   CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
   cursor->send.request_id = header.request_id;
 
@@ -332,11 +329,19 @@ PHP_METHOD(MongoCursor, timeout) {
 /* }}} */
 
 
-/* {{{ MongoCursor::snapshot
+/* {{{ MongoCursor::addOption
  */
-PHP_METHOD(MongoCursor, snapshot) {
-  zval *query;
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+PHP_METHOD(MongoCursor, addOption) {
+  char *key;
+  int key_len;
+  zval *query, *value;
+  mongo_cursor *cursor;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &key, &key_len, &value) == FAILURE) {
+    return;
+  }
+
+  cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
   if (cursor->started_iterating) {
@@ -346,9 +351,30 @@ PHP_METHOD(MongoCursor, snapshot) {
 
   make_special(cursor);
   query = cursor->query;
-  add_assoc_bool(query, "$snapshot", 1);
+  add_assoc_zval(query, key, value);
+  zval_add_ref(&value);
 
   RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
+
+/* {{{ MongoCursor::snapshot
+ */
+PHP_METHOD(MongoCursor, snapshot) {
+  zval *snapshot, *yes;
+  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+
+  MAKE_STD_ZVAL(snapshot);
+  ZVAL_STRING(snapshot, "$snapshot", 1);
+  MAKE_STD_ZVAL(yes);
+  ZVAL_TRUE(yes); 
+
+  MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), snapshot, yes);
+
+  zval_ptr_dtor(&snapshot);
+  zval_ptr_dtor(&yes);
 }
 /* }}} */
 
@@ -356,53 +382,38 @@ PHP_METHOD(MongoCursor, snapshot) {
 /* {{{ MongoCursor->sort
  */
 PHP_METHOD(MongoCursor, sort) {
-  zval *zfields, *query;
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  zval *orderby, *fields;
 
-  if (cursor->started_iterating) {
-    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &fields) == FAILURE ||
+      IS_SCALAR_P(fields)) {
     return;
   }
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zfields) == FAILURE ||
-      IS_SCALAR_P(zfields)) {
-    return;
-  }
+  MAKE_STD_ZVAL(orderby);
+  ZVAL_STRING(orderby, "orderby", 1);
 
-  make_special(cursor);
-  query = cursor->query;
-  zval_add_ref(&zfields);
-  convert_to_object(zfields);
-  add_assoc_zval(query, "orderby", zfields);
+  MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), orderby, fields);
 
-  RETURN_ZVAL(getThis(), 1, 0);
+  zval_ptr_dtor(&orderby);
 }
 /* }}} */
 
 /* {{{ MongoCursor->hint
  */
 PHP_METHOD(MongoCursor, hint) {
-  zval *zfields, *query;
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  zval *hint, *fields;
 
-  if (cursor->started_iterating) {
-    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &fields) == FAILURE ||
+      IS_SCALAR_P(fields)) {
     return;
   }
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zfields) == FAILURE ||
-      IS_SCALAR_P(zfields)) {
-    return;
-  }
+  MAKE_STD_ZVAL(hint);
+  ZVAL_STRING(hint, "$hint", 1);
 
-  make_special(cursor);
-  query = cursor->query;
-  zval_add_ref(&zfields);
-  add_assoc_zval(query, "$hint", zfields);
+  MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), hint, fields);
 
-  RETURN_ZVAL(getThis(), 1, 0);
+  zval_ptr_dtor(&hint);
 }
 /* }}} */
 
@@ -411,9 +422,11 @@ PHP_METHOD(MongoCursor, hint) {
  */
 PHP_METHOD(MongoCursor, explain) {
   int temp_limit;
-  zval *query;
+  zval *explain, *yes;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+
+  MONGO_METHOD(MongoCursor, reset, return_value, getThis());
 
   // make explain use a hard limit
   temp_limit = cursor->limit;
@@ -421,11 +434,16 @@ PHP_METHOD(MongoCursor, explain) {
     cursor->limit *= -1;
   }
 
-  make_special(cursor);
-  query = cursor->query;
-  add_assoc_bool(query, "$explain", 1);
+  MAKE_STD_ZVAL(explain);
+  ZVAL_STRING(explain, "$explain", 1);
+  MAKE_STD_ZVAL(yes);
+  ZVAL_TRUE(yes); 
 
-  MONGO_METHOD(MongoCursor, reset, return_value, getThis());
+  MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), explain, yes);
+
+  zval_ptr_dtor(&explain);
+  zval_ptr_dtor(&yes);
+
   MONGO_METHOD(MongoCursor, getNext, return_value, getThis());
 
   // reset to original limit
@@ -576,7 +594,7 @@ PHP_METHOD(MongoCursor, next) {
     zval **err;
     MAKE_STD_ZVAL(cursor->current);
     array_init(cursor->current);
-    cursor->buf.pos = (unsigned char*)bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
+    cursor->buf.pos = bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
 
     // increment cursor position
     cursor->at++;
@@ -717,6 +735,7 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, snapshot, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC) 
+  PHP_ME(MongoCursor, addOption, NULL, ZEND_ACC_PUBLIC)
 
   /* query */
   PHP_ME(MongoCursor, doQuery, NULL, ZEND_ACC_PROTECTED)
@@ -765,7 +784,7 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
 }
 
 void mongo_init_MongoCursor(TSRMLS_D) {
-  zend_class_entry ce, cursor_e, cursor_to_e;
+  zend_class_entry ce;
 
   INIT_CLASS_ENTRY(ce, "MongoCursor", MongoCursor_methods);
   ce.create_object = php_mongo_cursor_new;

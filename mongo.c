@@ -73,6 +73,7 @@ static void mongo_init_MongoExceptions(TSRMLS_D);
 static void run_err(int, zval*, zval* TSRMLS_DC);
 static int php_mongo_parse_server(zval*, zval* TSRMLS_DC);
 static void set_disconnected(mongo_link *link);
+static char* stringify_server(mongo_server*, char*, int*, int*);
 
 #if WIN32
 static HANDLE cursor_mutex;
@@ -230,7 +231,7 @@ static void php_mongo_server_free(mongo_server_set *server_set, int persist TSRM
 // tell db to destroy its cursor
 void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   mongo_cursor *cursor = node->cursor;
-  unsigned char quickbuf[128];
+  char quickbuf[128];
   buffer buf;
   mongo_msg_header header;
   zval temp;
@@ -317,7 +318,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
       while (current) {
 
         if (type == MONGO_LINK) {
-          if (current->cursor->link == (mongo_link*)link) {
+          if (current->cursor->link == (mongo_link*)val) {
             kill_cursor(current, le TSRMLS_CC);
             // keep going, free all cursor for this connection
           }
@@ -341,7 +342,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
       
       while (tries++ < 3 && ret != 0) {
 #if WIN32
-        ret = ReleaseMutex(cursor_mutex)
+        ret = ReleaseMutex(cursor_mutex);
 #else
         ret = pthread_mutex_unlock(&cursor_mutex);
 #endif
@@ -1111,7 +1112,6 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
   if (Z_TYPE_P(persist) == IS_STRING) {
     zend_rsrc_list_entry new_le;
     char *key;
-    int rsrc = 0, count = 0;
 
     /* save id for reconnection */
     spprintf(&key, 0, "%s%s", Z_STRVAL_P(server), Z_STRVAL_P(persist));
@@ -1244,12 +1244,50 @@ PHP_METHOD(Mongo, close) {
 }
 /* }}} */
 
+static char* stringify_server(mongo_server *server, char *str, int *pos, int *len) {
+  char *port;
+
+  // length: "[" + strlen(hostname) + ":" + strlen(port (maxint=12)) + "]"
+  if (*len - *pos < strlen(server->host)+15) {
+    int new_len = *len + 256 + (2 * (strlen(server->host)+15));
+    str = (char*)erealloc(str, new_len);
+    *(len) = new_len;
+  }
+
+  // if this host is not connected, enclose in []s: [localhost:27017]
+  if (!server->connected) {
+    str[*pos] = '[';
+    *(pos) = *pos + 1;
+  }
+
+  // copy host
+  memcpy(str+*pos, server->host, strlen(server->host));
+  *(pos) = *pos + strlen(server->host);
+
+  str[*pos] = ':';
+  *(pos) = *pos + 1;
+
+  // copy port
+  spprintf(&port, 0, "%d", server->port);
+  memcpy(str+*pos, port, strlen(port));
+  *(pos) = *pos + strlen(port);
+  efree(port);
+
+  // close []s
+  if (!server->connected) {
+    str[*pos] = ']';
+    *(pos) = *pos + 1;
+  }
+
+  return str;
+}
+
 
 /* {{{ Mongo->__toString()
  */
 PHP_METHOD(Mongo, __toString) {
-  int i;
-  char str[256], *str_p;
+  int i, tpos = 0, tlen = 256, *pos, *len;
+  char *str;
 
   mongo_link *link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
@@ -1260,50 +1298,34 @@ PHP_METHOD(Mongo, __toString) {
     RETURN_ZVAL(server, 1, 0);
   }
 
-  str_p = str;
+  pos = &tpos;
+  len = &tlen;
+  str = (char*)emalloc(*len);
 
-  // TODO: list the master first
-
-  for (i=0; i<link->server_set->num; i++) {
-    char *port;
-
-    // TODO: if this is the master, continue
-
-    // if this is not the first one, add a comma
-    if (str != str_p) {
-      *(str_p) = ',';
-      str_p++;
-    }
-
-    // if this host is not connected, enclose in []s: [localhost:27017]
-    if (!link->server_set->server[i]->connected) {
-      *(str_p) = '[';
-      str_p++;
-    }
-
-    // copy host
-    memcpy(str_p, link->server_set->server[i]->host, strlen(link->server_set->server[i]->host));
-    str_p += strlen(link->server_set->server[i]->host);
-
-    *(str_p) = ':';
-    str_p++;
-
-    // copy port
-    spprintf(&port, 0, "%d", link->server_set->server[i]->port);
-    memcpy(str_p, port, strlen(port));
-    str_p += strlen(port);
-    efree(port);
-
-    // close []s
-    if (!link->server_set->server[i]->connected) {
-      *(str_p) = ']';
-      str_p++;
-    }
+  // stringify the master, if there is one
+  if (link->server_set->num > 1) {
+    mongo_server *master = link->server_set->server[link->server_set->master];
+    str = stringify_server(master, str, pos, len);
   }
 
-  *(str_p) = '\0';
+  // stringify each server
+  for (i=0; i<link->server_set->num; i++) {
+    if (i == link->server_set->master) {
+      continue;
+    }
 
-  RETURN_STRING(str, 1);
+    // if this is not the first one, add a comma
+    if (*pos != 0) {
+      str[*pos] = ',';
+      *(pos) = *pos+1;
+    }
+
+    str = stringify_server(link->server_set->server[i], str, pos, len);
+  }
+
+  str[*pos] = '\0';
+
+  RETURN_STRING(str, 0);
 }
 /* }}} */
 
@@ -1830,7 +1852,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   // point buf.start at buf's first char
   if (!cursor->buf.start) {
-    cursor->buf.start = (unsigned char*)emalloc(cursor->recv.length);
+    cursor->buf.start = (char*)emalloc(cursor->recv.length);
     cursor->buf.end = cursor->buf.start + cursor->recv.length;
   }
   /* if we've already got a buffer allocated but it's too small, resize it
@@ -1840,7 +1862,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
    * have to copy over all the bytes if there isn't contiguous free space.  
    */
   else if (cursor->buf.end - cursor->buf.start < cursor->recv.length) {
-    cursor->buf.start = (unsigned char*)erealloc(cursor->buf.start, cursor->recv.length);
+    cursor->buf.start = (char*)erealloc(cursor->buf.start, cursor->recv.length);
     cursor->buf.end = cursor->buf.start + cursor->recv.length;
   }
   cursor->buf.pos = cursor->buf.start;
@@ -2112,7 +2134,7 @@ static int php_mongo_get_sockaddr(struct sockaddr_in *addr, char *host, int port
   if (hostinfo == NULL) {
     char *errstr;
     spprintf(&errstr, 0, "couldn't get host info for %s", host); 
-    ZVAL_STRING(errmsg, errstr, 1);
+    ZVAL_STRING(errmsg, errstr, 0);
     return FAILURE;
   }
 

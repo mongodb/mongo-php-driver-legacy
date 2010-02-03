@@ -92,13 +92,13 @@ void generate_id(char *data TSRMLS_DC) {
   data[3] = T[0];
 
   // 3 bytes machine
-  memcpy(data+4, &MonGlo(machine), 3);
+  memcpy(data+4, M, 3);
 
   // 2 bytes pid
-  memcpy(data+7, &pid, 2);
+  memcpy(data+7, P, 2);
 
   // 3 bytes inc
-  memcpy(data+9, &inc, 3);
+  memcpy(data+9, I, 3);
 #endif /* PHP_C_BIGENDIAN */
 }
 
@@ -177,13 +177,13 @@ PHP_METHOD(MongoId, __construct) {
     int i;
     for(i=0;i<12;i++) {
       char digit1 = Z_STRVAL_P(id)[i*2], digit2 = Z_STRVAL_P(id)[i*2+1];
-      digit1 = digit1 >= 'a' && digit1 <= 'f' ? digit1 -= 87 : digit1;
-      digit1 = digit1 >= 'A' && digit1 <= 'F' ? digit1 -= 55 : digit1;
-      digit1 = digit1 >= '0' && digit1 <= '9' ? digit1 -= 48 : digit1;
+      digit1 = digit1 >= 'a' && digit1 <= 'f' ? digit1 - 87 : digit1;
+      digit1 = digit1 >= 'A' && digit1 <= 'F' ? digit1 - 55 : digit1;
+      digit1 = digit1 >= '0' && digit1 <= '9' ? digit1 - 48 : digit1;
       
-      digit2 = digit2 >= 'a' && digit2 <= 'f' ? digit2 -= 87 : digit2;
-      digit2 = digit2 >= 'A' && digit2 <= 'F' ? digit2 -= 55 : digit2;
-      digit2 = digit2 >= '0' && digit2 <= '9' ? digit2 -= 48 : digit2;
+      digit2 = digit2 >= 'a' && digit2 <= 'f' ? digit2 - 87 : digit2;
+      digit2 = digit2 >= 'A' && digit2 <= 'F' ? digit2 - 55 : digit2;
+      digit2 = digit2 >= '0' && digit2 <= '9' ? digit2 - 48 : digit2;
       
       this_id->id[i] = digit1*16+digit2;
     }
@@ -588,7 +588,6 @@ PHP_METHOD(MongoDBRef, get) {
     // if the name in the $db field doesn't match the current db, make up a new db
     if (strcmp(Z_STRVAL_PP(dbname), Z_STRVAL_P(temp_db->name)) != 0) {
       zval *new_db_z;
-      mongo_db *new_db;
       MAKE_STD_ZVAL(new_db_z);
 
       MONGO_METHOD1(Mongo, selectDB, new_db_z, temp_db->link, *dbname);
