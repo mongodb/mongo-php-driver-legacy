@@ -387,6 +387,7 @@ PHP_METHOD(Mongo, prevError);
 PHP_METHOD(Mongo, resetError);
 PHP_METHOD(Mongo, forceError);
 PHP_METHOD(Mongo, close);
+PHP_METHOD(Mongo, listDBs);
 
 
 /*

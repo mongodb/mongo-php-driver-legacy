@@ -141,6 +141,7 @@ static function_entry mongo_methods[] = {
   PHP_ME(Mongo, prevError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, resetError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, forceError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(Mongo, listDBs, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, close, NULL, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
 };
@@ -1392,6 +1393,31 @@ PHP_METHOD(Mongo, dropDB) {
   }
 
   MONGO_METHOD(MongoDB, drop, return_value, db);
+  zval_ptr_dtor(&db);
+}
+/* }}} */
+
+/* {{{ Mongo->listDBs
+ */
+PHP_METHOD(Mongo, listDBs) {
+  zval *admin, *data, *db;
+
+  MAKE_STD_ZVAL(admin);
+  ZVAL_STRING(admin, "admin", 1);
+
+  MAKE_STD_ZVAL(db);
+
+  MONGO_METHOD1(Mongo, selectDB, db, getThis(), admin);
+
+  zval_ptr_dtor(&admin);
+
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_long(data, "listDatabases", 1);
+
+  MONGO_CMD(return_value, db);
+
+  zval_ptr_dtor(&data);
   zval_ptr_dtor(&db);
 }
 /* }}} */

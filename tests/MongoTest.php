@@ -408,6 +408,14 @@ class MongoTest extends PHPUnit_Framework_TestCase
         }
         $this->assertEquals($start, memory_get_usage(true));
     }
+
+
+    public function testListDBs() {
+        $dbs = $this->sharedFixture->listDBs();
+        $this->assertEquals(1, $dbs['ok']);
+        $this->assertTrue(array_key_exists('databases', $dbs));
+        $this->assertTrue(array_key_exists('totalSize', $dbs));
+    }
 }
 
 class StaticFunctionTest {

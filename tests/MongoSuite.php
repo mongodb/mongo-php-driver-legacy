@@ -35,7 +35,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
     {
         $suite = new MongoSuite('Mongo Tests');
         
-        $suite->addTestSuite('MongoMemTest');
+        //$suite->addTestSuite('MongoMemTest');
 
         $suite->addTestSuite('MongoTest');
         $suite->addTestSuite('MongoDBTest');
