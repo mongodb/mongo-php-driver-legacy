@@ -252,55 +252,43 @@ PHP_METHOD(MongoId, getTimestamp) {
 /* {{{ MongoDate::__construct
  */
 PHP_METHOD(MongoDate, __construct) {
-  zval *arg = 0, *usec = 0;
+  zval *arg1 = 0, *arg2 = 0;
 
-  php_printf("in MongoDate::__construct\n");
-  php_printf("number of arguments: %d\n", ZEND_NUM_ARGS());
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &arg, &usec) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &arg1, &arg2) == FAILURE) {
     return;
   }
 
-  if (!arg) {
-    php_printf("0 arguments given.\n");
+  switch (ZEND_NUM_ARGS()) {
+  case 2:
+    php_printf("converting usec\n");
+    convert_to_long_ex(&arg2);
+    php_printf("setting usec\n");
+    zend_update_property(mongo_ce_Date, getThis(), "usec", strlen("usec"), arg2 TSRMLS_CC);
+    php_printf("set usec\n");
+    // fallthrough
+  case 1:
+    php_printf("converting sec\n");
+    convert_to_long_ex(&arg1);
+    php_printf("setting sec\n");
+    zend_update_property(mongo_ce_Date, getThis(), "sec", strlen("sec"), arg1 TSRMLS_CC);
+    php_printf("set sec\n");
+    // usec is already 0, if not set above
+    break;
+  case 0: {
 #ifdef WIN32
     time_t sec = time(0);
-    add_property_long(getThis(), "sec", sec);
-    add_property_long(getThis(), "usec", 0);
+    zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
+    zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), 0 TSRMLS_CC);
 #else
     struct timeval time;
-    php_printf("calling gettimeofday\n");
     gettimeofday(&time, NULL);
     php_printf("got time\n");
 
-    add_property_long(getThis(), "sec", time.tv_sec);
-    add_property_long(getThis(), "usec", time.tv_usec);
+    zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), time.tv_sec TSRMLS_CC);
+    zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), time.tv_usec TSRMLS_CC);
     php_printf("added properties\n");
 #endif
   }
-  else {
-    php_printf("at least one prop set\n");
-
-    php_printf("type: %d\n", Z_TYPE_P(arg));
-    if (Z_TYPE_P(arg) == IS_LONG) {
-      php_printf("lval: %ld\n", Z_LVAL_P(arg));
-    }
-    else if (Z_TYPE_P(arg) == IS_DOUBLE) {
-      php_printf("dval: %f\n", Z_DVAL_P(arg));
-      convert_to_long_ex(&arg);
-      php_printf("lval: %ld\n", Z_LVAL_P(arg));
-    }
-    else {
-      php_printf("converting to long\n");
-      convert_to_long_ex(&arg);
-      php_printf("other: %ld\n", Z_LVAL_P(arg));
-    }
-
-    php_printf("adding sec property\n");
-    zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), Z_LVAL_P(arg) TSRMLS_CC);
-    php_printf("adding usec property\n");
-    add_property_long(getThis(), "usec", 0);
-    php_printf("added properties\n");
   }
 }
 /* }}} */
