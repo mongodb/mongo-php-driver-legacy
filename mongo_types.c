@@ -252,28 +252,55 @@ PHP_METHOD(MongoId, getTimestamp) {
 /* {{{ MongoDate::__construct
  */
 PHP_METHOD(MongoDate, __construct) {
-  int arg = 0, usec = 0;
+  zval *arg = 0, *usec = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &arg, &usec) == FAILURE) {
+  php_printf("in MongoDate::__construct\n");
+  php_printf("number of arguments: %d\n", ZEND_NUM_ARGS());
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &arg, &usec) == FAILURE) {
     return;
   }
 
   if (!arg) {
+    php_printf("0 arguments given.\n");
 #ifdef WIN32
     time_t sec = time(0);
     add_property_long(getThis(), "sec", sec);
     add_property_long(getThis(), "usec", 0);
 #else
     struct timeval time;
+    php_printf("calling gettimeofday\n");
     gettimeofday(&time, NULL);
+    php_printf("got time\n");
 
     add_property_long(getThis(), "sec", time.tv_sec);
     add_property_long(getThis(), "usec", time.tv_usec);
+    php_printf("added properties\n");
 #endif
   }
   else {
-    add_property_long(getThis(), "sec", arg);
-    add_property_long(getThis(), "usec", usec);
+    php_printf("at least one prop set\n");
+
+    php_printf("type: %d\n", Z_TYPE_P(arg));
+    if (Z_TYPE_P(arg) == IS_LONG) {
+      php_printf("lval: %ld\n", Z_LVAL_P(arg));
+    }
+    else if (Z_TYPE_P(arg) == IS_DOUBLE) {
+      php_printf("dval: %f\n", Z_DVAL_P(arg));
+      convert_to_long_ex(&arg);
+      php_printf("lval: %ld\n", Z_LVAL_P(arg));
+    }
+    else {
+      php_printf("converting to long\n");
+      convert_to_long_ex(&arg);
+      php_printf("other: %ld\n", Z_LVAL_P(arg));
+    }
+
+    php_printf("adding sec property\n");
+    zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), Z_LVAL_P(arg) TSRMLS_CC);
+    php_printf("adding usec property\n");
+    add_property_long(getThis(), "usec", 0);
+    php_printf("added properties\n");
   }
 }
 /* }}} */
