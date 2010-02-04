@@ -260,18 +260,12 @@ PHP_METHOD(MongoDate, __construct) {
 
   switch (ZEND_NUM_ARGS()) {
   case 2:
-    php_printf("converting usec\n");
     convert_to_long_ex(&arg2);
-    php_printf("setting usec\n");
     zend_update_property(mongo_ce_Date, getThis(), "usec", strlen("usec"), arg2 TSRMLS_CC);
-    php_printf("set usec\n");
     // fallthrough
   case 1:
-    php_printf("converting sec\n");
     convert_to_long_ex(&arg1);
-    php_printf("setting sec\n");
     zend_update_property(mongo_ce_Date, getThis(), "sec", strlen("sec"), arg1 TSRMLS_CC);
-    php_printf("set sec\n");
     // usec is already 0, if not set above
     break;
   case 0: {
@@ -282,11 +276,9 @@ PHP_METHOD(MongoDate, __construct) {
 #else
     struct timeval time;
     gettimeofday(&time, NULL);
-    php_printf("got time\n");
 
     zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), time.tv_sec TSRMLS_CC);
     zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), time.tv_usec TSRMLS_CC);
-    php_printf("added properties\n");
 #endif
   }
   }
