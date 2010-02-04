@@ -316,6 +316,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
       current = le->ptr;
 
       while (current) {
+        cursor_node *next = current->next;
 
         if (type == MONGO_LINK) {
           if (current->cursor->link == (mongo_link*)val) {
@@ -331,7 +332,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
           }
         }
 
-        current = current->next;
+        current = next;
       }
     }
 
