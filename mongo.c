@@ -295,63 +295,77 @@ void php_mongo_free_cursor_node(cursor_node *node, list_entry *le) {
 
 int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
   list_entry *le;
-  int ret = -1;
+
+  LOCK
 
   if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
-    int tries = 0;
     cursor_node *current;
 
-    // lock
-    while (tries++ < 3 && ret != 0) {
-#if WIN32
-      ret = WaitForSingleObject(cursor_mutex, INFINITE);
-#else
-      ret = pthread_mutex_lock(&cursor_mutex);
-#endif
+    current = le->ptr;
 
-      if (ret != 0) {
-        continue;
-      }
+    while (current) {
+      cursor_node *next = current->next;
 
-      current = le->ptr;
-
-      while (current) {
-        cursor_node *next = current->next;
-
-        if (type == MONGO_LINK) {
-          if (current->cursor->link == (mongo_link*)val) {
-            kill_cursor(current, le TSRMLS_CC);
-            // keep going, free all cursor for this connection
-          }
+      if (type == MONGO_LINK) {
+        if (current->cursor->link == (mongo_link*)val) {
+          kill_cursor(current, le TSRMLS_CC);
+          // keep going, free all cursor for this connection
         }
-        else if (type == MONGO_CURSOR) {
-          if (current->cursor->cursor_id == ((mongo_cursor*)val)->cursor_id) {
-            kill_cursor(current, le TSRMLS_CC);
-            // only one cursor to be freed
-            break;
-          }
+      }
+      else if (type == MONGO_CURSOR) {
+        if (current->cursor->cursor_id == ((mongo_cursor*)val)->cursor_id) {
+          kill_cursor(current, le TSRMLS_CC);
+          // only one cursor to be freed
+          break;
         }
-
-        current = next;
       }
-    }
 
-    // unlock
-    if (ret == 0) {
-      ret = -1;
-      tries = 0;
-      
-      while (tries++ < 3 && ret != 0) {
-#if WIN32
-        ret = ReleaseMutex(cursor_mutex);
-#else
-        ret = pthread_mutex_unlock(&cursor_mutex);
-#endif
-      }
+      current = next;
     }
   }
 
-  return ret;
+  UNLOCK
+
+}
+
+int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC) {
+  list_entry *le;
+  cursor_node *new_node;
+
+  LOCK
+
+  new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
+  new_node->cursor = cursor;
+  new_node->next = new_node->prev = 0;
+
+  if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, (void**)&le) == SUCCESS && le->ptr) {
+    cursor_node *current = le->ptr;
+
+    if (current->cursor == cursor) {
+      pthread_mutex_unlock(&cursor_mutex);
+      pefree(new_node, 1);
+      return;
+    }
+
+    while (current->next) {
+      if (current->cursor == cursor) {
+        pthread_mutex_unlock(&cursor_mutex);
+        pefree(new_node, 1);
+        return;
+      }
+      current = current->next;
+    }
+    current->next = new_node;
+    new_node->prev = current;
+  }
+  else {
+    list_entry new_le;
+    new_le.ptr = new_node;
+    new_le.type = le_cursor_list;
+    zend_hash_add(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, &new_le, sizeof(list_entry), NULL);
+  }
+
+  UNLOCK
 }
 
 
@@ -1092,7 +1106,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
    * we can't do this earlier because, if this is a persistent connection, all 
    * the fields will be overwritten (memleak) in the block above
    */
-  if (php_mongo_parse_server(getThis(), errmsg TSRMLS_CC) == FAILURE) {
+  if (!link->server_set && php_mongo_parse_server(getThis(), errmsg TSRMLS_CC) == FAILURE) {
     // errmsg set in parse_server
     return;
   }

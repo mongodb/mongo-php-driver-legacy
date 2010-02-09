@@ -460,8 +460,6 @@ PHP_METHOD(MongoCursor, doQuery) {
   mongo_cursor *cursor;
   buffer buf;
   zval *temp;
-  list_entry *le;
-  cursor_node *new_node;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
@@ -494,24 +492,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   zval_ptr_dtor(&temp);
 
   /* we've got something to kill, make a note */
-  new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
-  new_node->cursor = cursor;
-  new_node->next = new_node->prev = 0;
-
-  if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, (void**)&le) == SUCCESS && le->ptr) {
-    cursor_node *current = le->ptr;
-    while (current->next) {
-      current = current->next;
-    }
-    current->next = new_node;
-    new_node->prev = current;
-  }
-  else {
-    list_entry new_le;
-    new_le.ptr = new_node;
-    new_le.type = le_cursor_list;
-    zend_hash_add(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, &new_le, sizeof(list_entry), NULL);
-  }
+  php_mongo_create_le(cursor TSRMLS_CC);
 }
 /* }}} */
 
@@ -772,7 +753,7 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
     if (cursor->query) zval_ptr_dtor(&cursor->query);
     if (cursor->fields) zval_ptr_dtor(&cursor->fields);
 
-    if (cursor->resource) zval_ptr_dtor(&cursor->resource);
+    //    if (cursor->resource) zval_ptr_dtor(&cursor->resource);
  
     if (cursor->buf.start) efree(cursor->buf.start);
     if (cursor->ns) efree(cursor->ns);
