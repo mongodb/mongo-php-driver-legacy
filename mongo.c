@@ -277,12 +277,29 @@ void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
 }
 
 void php_mongo_free_cursor_node(cursor_node *node, list_entry *le) {
+
+  /* 
+   * [node1][<->][NODE2][<->][node3] 
+   *   [node1][->][node3]
+   *   [node1][<->][node3]
+   *
+   * [node1][<->][NODE2]
+   *   [node1]
+   */
   if (node->prev) {
     node->prev->next = node->next;
     if (node->next) {
       node->next->prev = node->prev;
     }
   }
+  /*
+   * [NODE2][<->][node3] 
+   *   le->ptr = node3
+   *   [node3]
+   *
+   * [NODE2]
+   *   le->ptr = 0
+   */
   else {
     le->ptr = node->next;
     if (node->next) {
@@ -296,8 +313,11 @@ void php_mongo_free_cursor_node(cursor_node *node, list_entry *le) {
 int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
   list_entry *le;
 
-  LOCK
+  LOCK;
 
+  /*
+   * This should work if le->ptr is null or non-null
+   */
   if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
     cursor_node *current;
 
@@ -324,7 +344,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
     }
   }
 
-  UNLOCK
+  UNLOCK;
 
 }
 
@@ -332,31 +352,46 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC) {
   list_entry *le;
   cursor_node *new_node;
 
-  LOCK
+  LOCK;
 
   new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
   new_node->cursor = cursor;
   new_node->next = new_node->prev = 0;
 
+  /*
+   * 3 options: 
+   *   - le doesn't exist
+   *   - le exists and is null
+   *   - le exists and has elements
+   * In case 1 & 2, we want to create a new le ptr, otherwise we want to append
+   * to the existing ptr.
+   */
   if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, (void**)&le) == SUCCESS && le->ptr) {
     cursor_node *current = le->ptr;
+    cursor_node *prev = 0;
 
-    if (current->cursor == cursor) {
-      pthread_mutex_unlock(&cursor_mutex);
-      pefree(new_node, 1);
-      return;
-    }
-
-    while (current->next) {
+    do {
+      /*
+       * if we find the current cursor in the cursor list, we don't need another
+       * dtor for it so unlock the mutex & return.
+       */
       if (current->cursor == cursor) {
-        pthread_mutex_unlock(&cursor_mutex);
         pefree(new_node, 1);
+        UNLOCK;
         return;
       }
+
+      prev = current;
       current = current->next;
-    }
-    current->next = new_node;
-    new_node->prev = current;
+    } 
+    while (current);
+
+    /* 
+     * we didn't find the cursor.  add it to the list. (prev is pointing to the
+     * tail of the list, current is pointing to null.
+     */
+    prev->next = new_node;
+    new_node->prev = prev;
   }
   else {
     list_entry new_le;
@@ -365,7 +400,7 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC) {
     zend_hash_add(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, &new_le, sizeof(list_entry), NULL);
   }
 
-  UNLOCK
+  UNLOCK;
 }
 
 
@@ -419,18 +454,28 @@ static void php_mongo_link_pfree( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 }
 /* }}} */
 
-static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
-  cursor_node *node = (cursor_node*)rsrc->ptr;
+static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc) {
+  LOCK;
 
-  if (!node)
-    return;
+  {
+    cursor_node *node = (cursor_node*)rsrc->ptr;
 
-  while (node->next) {
-    cursor_node *temp = node;
-    node = node->next;
-    pefree(temp, 1);
+    if (!node)
+      return;
+
+    while (node->next) {
+      cursor_node *temp = node;
+      node = node->next;
+      pefree(temp, 1);
+    }
+    pefree(node, 1);
   }
-  pefree(node, 1);
+
+  UNLOCK;
+}
+
+static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
+  cursor_list_pfree_helper(rsrc);
 }
 
 
