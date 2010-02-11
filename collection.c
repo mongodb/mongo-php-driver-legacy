@@ -546,25 +546,15 @@ PHP_METHOD(MongoCollection, ensureIndex) {
     }
     // new style
     else {
-      zval **unique, **drop_dups, **safe;
-
-      // array( "unique" => true )
-      if (zend_hash_find(HASH_P(options), "unique", strlen("unique")+1, (void**)&unique) == SUCCESS) {
-        add_assoc_zval(data, "unique", *unique);
-        zval_add_ref(unique);
-      }
-
-      // array( "dropDups" => true )
-      if (zend_hash_find(HASH_P(options), "dropDups", strlen("dropDups")+1, (void**)&drop_dups) == SUCCESS) {
-        add_assoc_zval(data, "dropDups", *drop_dups);
-        zval_add_ref(drop_dups);
-      }
+      zval temp;
+      zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 
       if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe) == SUCCESS) {
         if (Z_BVAL_PP(safe)) {
           MAKE_STD_ZVAL(safe_insert);
           ZVAL_BOOL(safe_insert, 1);
         }
+        zend_hash_del(HASH_P(data), "safe", strlen("safe")+1);
       }
     }
   }
