@@ -228,6 +228,16 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(129, $file->file['length'], json_encode($file->file));
       $this->assertEquals(1, $file->file['_id'], json_encode($file->file));
     }
+
+    public function testOverwrite() {
+      $fh1 = fopen('tests/somefile', 'r');
+      $fh2 = fopen('mongo.c', 'r');
+      $this->object->storeFile($fh1, array('_id' => 1));
+      $this->object->storeFile($fh2, array('_id' => 1));
+
+      $file = $this->object->findOne();
+      $this->assertEquals(129, $file->file['length'], json_encode($file->file));
+    }
 }
 
 ?>

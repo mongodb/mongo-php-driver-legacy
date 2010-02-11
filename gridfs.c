@@ -86,10 +86,10 @@ static int get_chunk_size(zval *array TSRMLS_DC);
 static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC);
 static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
 static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size TSRMLS_DC);
-
+static void ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC);
 
 PHP_METHOD(MongoGridFS, __construct) {
-  zval *zdb, *files = 0, *chunks = 0, *zchunks, *zidx;
+  zval *zdb, *files = 0, *chunks = 0, *zchunks;
 
   // chunks is deprecated
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|zz", &zdb, mongo_ce_DB, &files, &chunks) == FAILURE) {
@@ -127,23 +127,36 @@ PHP_METHOD(MongoGridFS, __construct) {
   // add chunks collection as a property
   zend_update_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), zchunks TSRMLS_CC);
   
-  // ensure index on chunks.n
-  MAKE_STD_ZVAL(zidx);
-  array_init(zidx);
-  add_assoc_long(zidx, "files_id", 1);
-  add_assoc_long(zidx, "n", 1);
-
-  MONGO_METHOD1(MongoCollection, ensureIndex, return_value, zchunks, zidx);
+  ensure_gridfs_index(return_value, zchunks TSRMLS_CC);
 
   zend_update_property(mongo_ce_GridFS, getThis(), "filesName", strlen("filesName"), files TSRMLS_CC);
   zend_update_property(mongo_ce_GridFS, getThis(), "chunksName", strlen("chunksName"), chunks TSRMLS_CC);
 
   // cleanup
   zval_ptr_dtor(&zchunks);
-  zval_ptr_dtor(&zidx);
 
   zval_ptr_dtor(&files);
   zval_ptr_dtor(&chunks);
+}
+
+static void ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC) {
+  zval *index, *options;
+
+  // ensure index on chunks.n
+  MAKE_STD_ZVAL(index);
+  array_init(index);
+  add_assoc_long(index, "files_id", 1);
+  add_assoc_long(index, "n", 1);
+
+  MAKE_STD_ZVAL(options);
+  array_init(options);
+  add_assoc_bool(options, "unique", 1);
+  add_assoc_bool(options, "dropDups", 1);
+
+  MONGO_METHOD2(MongoCollection, ensureIndex, return_value, getThis(), index, options);
+
+  zval_ptr_dtor(&index);
+  zval_ptr_dtor(&options);
 }
 
 
@@ -771,7 +784,7 @@ PHP_METHOD(MongoGridFSFile, getSize) {
 PHP_METHOD(MongoGridFSFile, write) {
   char *filename = 0;
   int filename_len, total = 0;
-  zval *gridfs, *file, *chunks, *n, *query, *cursor, *sort;
+  zval *gridfs, *file, *chunks, *query, *cursor, *sort;
   zval **id;
   FILE *fp;
 
@@ -785,13 +798,7 @@ PHP_METHOD(MongoGridFSFile, write) {
   // make sure that there's an index on chunks so we can sort by chunk num
   chunks = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
-  MAKE_STD_ZVAL(n);
-  array_init(n);
-  add_assoc_long(n, "files_id", 1);
-  add_assoc_long(n, "n", 1);
-
-  MONGO_METHOD1(MongoCollection, ensureIndex, return_value, chunks, n);
-  zval_ptr_dtor(&n);
+  ensure_gridfs_index(return_value, chunks TSRMLS_CC);
 
   if (!filename) {
     zval **temp;
@@ -837,7 +844,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 }
 
 PHP_METHOD(MongoGridFSFile, getBytes) {
-  zval *file, *gridfs, *chunks, *n, *query, *cursor, *sort, *temp;
+  zval *file, *gridfs, *chunks, *query, *cursor, *sort, *temp;
   zval **id, **size;
   char *str, *str_ptr;
   int len;
@@ -855,13 +862,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   chunks = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
   MAKE_STD_ZVAL(temp);
-  MAKE_STD_ZVAL(n);
-  array_init(n);
-  add_assoc_long(n, "files_id", 1);  
-  add_assoc_long(n, "n", 1);  
-
-  MONGO_METHOD1(MongoCollection, ensureIndex, temp, chunks, n);
-  zval_ptr_dtor(&n);
+  ensure_gridfs_index(temp, chunks TSRMLS_CC);
 
   // query for chunks
   MAKE_STD_ZVAL(query);
