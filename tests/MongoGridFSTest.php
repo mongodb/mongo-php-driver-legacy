@@ -36,8 +36,8 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
     public function test__construct() {
         $db = $this->sharedFixture->selectDB('phpunit');
         $grid = $db->getGridFS('x', 'y');
-        $this->assertEquals((string)$grid, 'phpunit.x');
-        $this->assertEquals((string)$grid->chunks, 'phpunit.y');
+        $this->assertEquals((string)$grid, 'phpunit.x.files');
+        $this->assertEquals((string)$grid->chunks, 'phpunit.x.chunks');
 
         $grid = $db->getGridFS('x');
         $this->assertEquals((string)$grid, 'phpunit.x.files');

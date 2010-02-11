@@ -91,6 +91,7 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
 PHP_METHOD(MongoGridFS, __construct) {
   zval *zdb, *files = 0, *chunks = 0, *zchunks, *zidx;
 
+  // chunks is deprecated
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|zz", &zdb, mongo_ce_DB, &files, &chunks) == FAILURE) {
     return;
   }
@@ -101,7 +102,7 @@ PHP_METHOD(MongoGridFS, __construct) {
     MAKE_STD_ZVAL(chunks);
     ZVAL_STRING(chunks, "fs.chunks", 1);
   }
-  else if (!chunks) {
+  else {
     zval *temp_file;
     char *temp;
 
@@ -113,12 +114,6 @@ PHP_METHOD(MongoGridFS, __construct) {
     spprintf(&temp, 0, "%s.files", Z_STRVAL_P(files));
     ZVAL_STRING(temp_file, temp, 0);
     files = temp_file;
-  }
-  else {
-    convert_to_string(files);
-    zval_add_ref(&files);
-    convert_to_string(chunks);
-    zval_add_ref(&chunks);
   }
 
   // create files collection

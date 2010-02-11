@@ -57,8 +57,12 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals((string)$grid->chunks, "phpunit.foo.chunks");
 
         $grid = $this->object->getGridFS("foo", "bar");
-        $this->assertEquals((string)$grid, "phpunit.foo");
-        $this->assertEquals((string)$grid->chunks, "phpunit.bar");
+        $this->assertEquals((string)$grid, "phpunit.foo.files");
+        $this->assertEquals((string)$grid->chunks, "phpunit.foo.chunks");
+
+        $grid = $this->object->getGridFS(null);
+        $this->assertEquals((string)$grid, "phpunit.(null).files");
+        $this->assertEquals((string)$grid->chunks, "phpunit.(null).chunks");
     }
 
     public function testGetSetProfilingLevel() {

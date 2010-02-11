@@ -114,6 +114,7 @@ PHP_METHOD(MongoDB, getGridFS) {
   zval temp;
   zval *arg1 = 0, *arg2 = 0;
 
+  // arg2 is deprecated
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &arg1, &arg2) == FAILURE) {
     return;
   }
@@ -123,11 +124,8 @@ PHP_METHOD(MongoDB, getGridFS) {
   if (!arg1) {
     MONGO_METHOD1(MongoGridFS, __construct, &temp, return_value, getThis());
   }
-  else if (!arg2) {
-    MONGO_METHOD2(MongoGridFS, __construct, &temp, return_value, getThis(), arg1);
-  }
   else {
-    MONGO_METHOD3(MongoGridFS, __construct, &temp, return_value, getThis(), arg1, arg2);
+    MONGO_METHOD2(MongoGridFS, __construct, &temp, return_value, getThis(), arg1);
   }
 }
 
