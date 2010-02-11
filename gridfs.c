@@ -433,8 +433,8 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
   // create MongoBinData object
   MAKE_STD_ZVAL(zbin);
   object_init_ex(zbin, mongo_ce_BinData);
-  add_property_stringl(zbin, "bin", buf, chunk_size, DUP);
-  add_property_long(zbin, "type", 2);
+  zend_update_property_stringl(mongo_ce_BinData, zbin, "bin", strlen("bin"), buf, chunk_size TSRMLS_CC);
+  zend_update_property_long(mongo_ce_BinData, zbin, "type", strlen("type"), 2 TSRMLS_CC);
 
   add_assoc_zval(zchunk, "data", zbin);
 

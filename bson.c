@@ -643,10 +643,10 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
 
       object_init_ex(value, mongo_ce_BinData);
 
-      add_property_stringl(value, "bin", buf, len, DUP);
-      buf += len;
+      zend_update_property_stringl(mongo_ce_BinData, value, "bin", strlen("bin"), buf, len TSRMLS_CC);
+      zend_update_property_long(mongo_ce_BinData, value, "type", strlen("type"), type TSRMLS_CC);
 
-      add_property_long(value, "type", type);
+      buf += len;
       break;
     }
     case BSON_BOOL: {
@@ -688,8 +688,8 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       
       object_init_ex(value, mongo_ce_Date);
 
-      add_property_long(value, "sec", (long)(d/1000));
-      add_property_long(value, "usec", (long)((d*1000)%1000000));
+      zend_update_property_long(mongo_ce_Date, value, "sec", strlen("sec"), (long)(d/1000) TSRMLS_CC);
+      zend_update_property_long(mongo_ce_Date, value, "usec", strlen("usec"), (long)((d*1000)%1000000) TSRMLS_CC);
 
       break;
     }
@@ -707,8 +707,8 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
 
       object_init_ex(value, mongo_ce_Regex);
 
-      add_property_stringl(value, "regex", regex, regex_len, 1);
-      add_property_stringl(value, "flags", flags, flags_len, 1);
+      zend_update_property_stringl(mongo_ce_Regex, value, "regex", strlen("regex"), regex, regex_len TSRMLS_CC);
+      zend_update_property_stringl(mongo_ce_Regex, value, "flags", strlen("flags"), flags, flags_len TSRMLS_CC);
 
       break;
     }
@@ -718,7 +718,6 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       int code_len;
       char *code;
 
-      object_init_ex(value, mongo_ce_Code);
       // initialize scope array
       MAKE_STD_ZVAL(zcope);
       array_init(zcope);
@@ -739,12 +738,11 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
         buf = bson_to_zval(buf, HASH_P(zcope) TSRMLS_CC);
       }
 
+      object_init_ex(value, mongo_ce_Code);
       // exclude \0
-      add_property_stringl(value, "code", code, code_len-1, DUP);
-      add_property_zval(value, "scope", zcope);
+      zend_update_property_stringl(mongo_ce_Code, value, "code", strlen("code"), code, code_len-1 TSRMLS_CC);
+      zend_update_property(mongo_ce_Code, value, "scope", strlen("scope"), zcope TSRMLS_CC);
 
-      // add_property_zval creates an extra zcope ref
-      zval_ptr_dtor(&zcope);
       break;
     }
     /* DEPRECATED

@@ -92,7 +92,7 @@ PHP_METHOD(MongoCursor, __construct) {
     zval *fields;
 
     MAKE_STD_ZVAL(fields);
-    object_init(fields);
+    array_init(fields);
 
     // fields to return
     for(zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(zfields), &pointer); 
@@ -106,10 +106,10 @@ PHP_METHOD(MongoCursor, __construct) {
 
       if (key_type == HASH_KEY_IS_LONG &&
           Z_TYPE_PP(data) == IS_STRING) {
-        add_property_long(fields, Z_STRVAL_PP(data), 1);
+        add_assoc_long(fields, Z_STRVAL_PP(data), 1);
       }
       else {
-        add_property_long(fields, key, 1);
+        add_assoc_long(fields, key, 1);
       }
     }
     cursor->fields = fields;
