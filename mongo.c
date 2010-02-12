@@ -461,6 +461,7 @@ static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc) {
     cursor_node *node = (cursor_node*)rsrc->ptr;
 
     if (!node)
+      UNLOCK;
       return;
 
     while (node->next) {
@@ -889,9 +890,8 @@ PHP_METHOD(Mongo, __construct) {
         connect = Z_BVAL_PP(connect_z);
       }
       if (zend_hash_find(HASH_P(options), "persist", strlen("persist")+1, (void**)&persist_z) == SUCCESS) {
-        convert_to_string(*persist_z);
-        zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), *persist_z TSRMLS_CC);
-        zval_add_ref(persist_z);
+        convert_to_string_ex(persist_z);
+        zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), Z_STRVAL_PP(persist_z) TSRMLS_CC);
       }
     }
     else {

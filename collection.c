@@ -63,15 +63,16 @@ PHP_METHOD(MongoCollection, __construct) {
   }
   convert_to_string(name);
 
-  zend_update_property(mongo_ce_Collection, getThis(), "db", strlen("db"), db TSRMLS_CC);
-
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  c->db = (mongo_db*)zend_object_store_get_object(db TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(c->db->name, MongoDB);
+
+  zval_add_ref(&c->db->link);
 
   c->parent = db;
   zval_add_ref(&c->parent);
 
-  c->db = (mongo_db*)zend_object_store_get_object(db TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(c->db->name, MongoDB);
+  zend_update_property(mongo_ce_Collection, getThis(), "db", strlen("db"), db TSRMLS_CC);
 
   c->name = name;
   zval_add_ref(&name);
@@ -977,6 +978,10 @@ static void php_mongo_collection_free(void *object TSRMLS_DC) {
   mongo_collection *c = (mongo_collection*)object;
 
   if (c) {
+    if (c->db) {
+      zval_ptr_dtor(&c->db->link);
+    }
+
     if (c->parent) {
       zval_ptr_dtor(&c->parent);
     }

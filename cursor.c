@@ -756,6 +756,8 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
     if (cursor->buf.start) efree(cursor->buf.start);
     if (cursor->ns) efree(cursor->ns);
 
+    if (cursor->resource) zval_ptr_dtor(&cursor->resource);
+
     zend_object_std_dtor(&cursor->std TSRMLS_CC);
 
     efree(cursor);
