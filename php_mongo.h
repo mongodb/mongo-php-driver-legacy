@@ -384,6 +384,61 @@ PHP_METHOD(Mongo, forceError);
 PHP_METHOD(Mongo, close);
 PHP_METHOD(Mongo, listDBs);
 
+int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC);
+
+/*
+ * Mutex macros
+ */
+
+#define CHECK_LOCK_ERR if (ret == -1) {         \
+  if (errno == EAGAIN) {                        \
+    continue;                                   \
+  }                                             \
+  else {                                        \
+    return ret;                                 \
+  }                                             \
+}                                             
+
+#ifdef WIN32
+#define LOCK {                                  \
+    int ret = -1;                               \
+    int tries = 0;                              \
+                                                \
+    while (tries++ < 3 && ret != 0) {                     \
+      ret = WaitForSingleObject(cursor_mutex, INFINITE);  \
+      CHECK_LOCK_ERR                                      \
+    }                                                 \
+  }
+#define UNLOCK {                                    \
+    int ret = -1;                                   \
+    int tries = 0;                                  \
+                                                    \
+    while (tries++ < 3 && ret != 0) {               \
+      ret = ReleaseMutex(cursor_mutex);              \
+      CHECK_LOCK_ERR                                 \
+    }                                            \
+  }
+#else
+#define LOCK {                                  \
+  int ret = -1;                                 \
+  int tries = 0;                                \
+                                                \
+  while (tries++ < 3 && ret != 0) {             \
+    ret = pthread_mutex_lock(&cursor_mutex);              \
+    CHECK_LOCK_ERR                                        \
+  }                                                       \
+}
+#define UNLOCK {                                    \
+    int ret = -1;                                   \
+    int tries = 0;                                  \
+                                                    \
+    while (tries++ < 3 && ret != 0) {               \
+      ret = pthread_mutex_unlock(&cursor_mutex);    \
+      CHECK_LOCK_ERR                                 \
+    }                                            \
+  }
+#endif
+
 
 /*
  * Internal functions

@@ -277,12 +277,29 @@ void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
 }
 
 void php_mongo_free_cursor_node(cursor_node *node, list_entry *le) {
+
+  /* 
+   * [node1][<->][NODE2][<->][node3] 
+   *   [node1][->][node3]
+   *   [node1][<->][node3]
+   *
+   * [node1][<->][NODE2]
+   *   [node1]
+   */
   if (node->prev) {
     node->prev->next = node->next;
     if (node->next) {
       node->next->prev = node->prev;
     }
   }
+  /*
+   * [NODE2][<->][node3] 
+   *   le->ptr = node3
+   *   [node3]
+   *
+   * [NODE2]
+   *   le->ptr = 0
+   */
   else {
     le->ptr = node->next;
     if (node->next) {
@@ -295,63 +312,95 @@ void php_mongo_free_cursor_node(cursor_node *node, list_entry *le) {
 
 int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
   list_entry *le;
-  int ret = -1;
 
+  LOCK;
+
+  /*
+   * This should work if le->ptr is null or non-null
+   */
   if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
-    int tries = 0;
     cursor_node *current;
 
-    // lock
-    while (tries++ < 3 && ret != 0) {
-#if WIN32
-      ret = WaitForSingleObject(cursor_mutex, INFINITE);
-#else
-      ret = pthread_mutex_lock(&cursor_mutex);
-#endif
+    current = le->ptr;
 
-      if (ret != 0) {
-        continue;
-      }
+    while (current) {
+      cursor_node *next = current->next;
 
-      current = le->ptr;
-
-      while (current) {
-        cursor_node *next = current->next;
-
-        if (type == MONGO_LINK) {
-          if (current->cursor->link == (mongo_link*)val) {
-            kill_cursor(current, le TSRMLS_CC);
-            // keep going, free all cursor for this connection
-          }
+      if (type == MONGO_LINK) {
+        if (current->cursor->link == (mongo_link*)val) {
+          kill_cursor(current, le TSRMLS_CC);
+          // keep going, free all cursor for this connection
         }
-        else if (type == MONGO_CURSOR) {
-          if (current->cursor->cursor_id == ((mongo_cursor*)val)->cursor_id) {
-            kill_cursor(current, le TSRMLS_CC);
-            // only one cursor to be freed
-            break;
-          }
+      }
+      else if (type == MONGO_CURSOR) {
+        if (current->cursor->cursor_id == ((mongo_cursor*)val)->cursor_id) {
+          kill_cursor(current, le TSRMLS_CC);
+          // only one cursor to be freed
+          break;
         }
-
-        current = next;
       }
-    }
 
-    // unlock
-    if (ret == 0) {
-      ret = -1;
-      tries = 0;
-      
-      while (tries++ < 3 && ret != 0) {
-#if WIN32
-        ret = ReleaseMutex(cursor_mutex);
-#else
-        ret = pthread_mutex_unlock(&cursor_mutex);
-#endif
-      }
+      current = next;
     }
   }
 
-  return ret;
+  UNLOCK;
+
+}
+
+int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC) {
+  list_entry *le;
+  cursor_node *new_node;
+
+  LOCK;
+
+  new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
+  new_node->cursor = cursor;
+  new_node->next = new_node->prev = 0;
+
+  /*
+   * 3 options: 
+   *   - le doesn't exist
+   *   - le exists and is null
+   *   - le exists and has elements
+   * In case 1 & 2, we want to create a new le ptr, otherwise we want to append
+   * to the existing ptr.
+   */
+  if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, (void**)&le) == SUCCESS && le->ptr) {
+    cursor_node *current = le->ptr;
+    cursor_node *prev = 0;
+
+    do {
+      /*
+       * if we find the current cursor in the cursor list, we don't need another
+       * dtor for it so unlock the mutex & return.
+       */
+      if (current->cursor == cursor) {
+        pefree(new_node, 1);
+        UNLOCK;
+        return;
+      }
+
+      prev = current;
+      current = current->next;
+    } 
+    while (current);
+
+    /* 
+     * we didn't find the cursor.  add it to the list. (prev is pointing to the
+     * tail of the list, current is pointing to null.
+     */
+    prev->next = new_node;
+    new_node->prev = prev;
+  }
+  else {
+    list_entry new_le;
+    new_le.ptr = new_node;
+    new_le.type = le_cursor_list;
+    zend_hash_add(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, &new_le, sizeof(list_entry), NULL);
+  }
+
+  UNLOCK;
 }
 
 
@@ -405,18 +454,29 @@ static void php_mongo_link_pfree( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 }
 /* }}} */
 
-static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
-  cursor_node *node = (cursor_node*)rsrc->ptr;
+static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc) {
+  LOCK;
 
-  if (!node)
-    return;
+  {
+    cursor_node *node = (cursor_node*)rsrc->ptr;
 
-  while (node->next) {
-    cursor_node *temp = node;
-    node = node->next;
-    pefree(temp, 1);
+    if (!node)
+      UNLOCK;
+      return;
+
+    while (node->next) {
+      cursor_node *temp = node;
+      node = node->next;
+      pefree(temp, 1);
+    }
+    pefree(node, 1);
   }
-  pefree(node, 1);
+
+  UNLOCK;
+}
+
+static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
+  cursor_list_pfree_helper(rsrc);
 }
 
 
@@ -830,9 +890,8 @@ PHP_METHOD(Mongo, __construct) {
         connect = Z_BVAL_PP(connect_z);
       }
       if (zend_hash_find(HASH_P(options), "persist", strlen("persist")+1, (void**)&persist_z) == SUCCESS) {
-        convert_to_string(*persist_z);
-        zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), *persist_z TSRMLS_CC);
-        zval_add_ref(persist_z);
+        convert_to_string_ex(persist_z);
+        zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), Z_STRVAL_PP(persist_z) TSRMLS_CC);
       }
     }
     else {
@@ -1092,7 +1151,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
    * we can't do this earlier because, if this is a persistent connection, all 
    * the fields will be overwritten (memleak) in the block above
    */
-  if (php_mongo_parse_server(getThis(), errmsg TSRMLS_CC) == FAILURE) {
+  if (!link->server_set && php_mongo_parse_server(getThis(), errmsg TSRMLS_CC) == FAILURE) {
     // errmsg set in parse_server
     return;
   }
