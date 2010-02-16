@@ -72,8 +72,6 @@ PHP_METHOD(MongoCollection, __construct) {
   c->parent = db;
   zval_add_ref(&c->parent);
 
-  zend_update_property(mongo_ce_Collection, getThis(), "db", strlen("db"), db TSRMLS_CC);
-
   c->name = name;
   zval_add_ref(&name);
 
@@ -936,6 +934,15 @@ PHP_METHOD(MongoCollection, __get) {
     return;
   }
 
+  /* 
+   * If this is "db", return the parent database.  This can't actually be a
+   * property of the obj because apache does weird things on object destruction
+   * that will cause the link to be destroyed twice.
+   */
+  if (strcmp(Z_STRVAL_P(name), "db") == 0) {
+    RETURN_ZVAL(c->parent, 1, 0);
+  }
+
   spprintf(&full_name_s, 0, "%s.%s", Z_STRVAL_P(c->name), Z_STRVAL_P(name));
   MAKE_STD_ZVAL(full_name);
   ZVAL_STRING(full_name, full_name_s, 0);
@@ -1010,6 +1017,4 @@ void mongo_init_MongoCollection(TSRMLS_D) {
   INIT_CLASS_ENTRY(ce, "MongoCollection", MongoCollection_methods);
   ce.create_object = php_mongo_collection_new;
   mongo_ce_Collection = zend_register_internal_class(&ce TSRMLS_CC);
-
-  zend_declare_property_null(mongo_ce_Collection, "db", strlen("db"), ZEND_ACC_PUBLIC TSRMLS_CC);
 }
