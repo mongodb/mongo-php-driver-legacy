@@ -390,16 +390,15 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC);
  * Mutex macros
  */
 
-#define CHECK_LOCK_ERR if (ret == -1) {         \
-  if (errno == EAGAIN) {                        \
+#ifdef WIN32
+#define CHECK_LOCK_ERR                          \
+  if (ret == WAIT_TIMEOUT) {                    \
     continue;                                   \
   }                                             \
   else {                                        \
     return ret;                                 \
   }                                             \
-}                                             
-
-#ifdef WIN32
+}
 #define LOCK {                                  \
     int ret = -1;                               \
     int tries = 0;                              \
@@ -419,6 +418,14 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC);
     }                                            \
   }
 #else
+#define CHECK_LOCK_ERR if (ret == -1) {         \
+  if (errno == EAGAIN || errno == EBUSY) {      \
+    continue;                                   \
+  }                                             \
+  else {                                        \
+    return ret;                                 \
+  }                                             \
+}
 #define LOCK {                                  \
   int ret = -1;                                 \
   int tries = 0;                                \
