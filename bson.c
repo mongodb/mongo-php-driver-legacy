@@ -46,6 +46,7 @@ static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list 
 #else
 static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key);
 #endif /* ZEND_MODULE_API_NO >= 20090115 */
+static int is_utf8(const char *s, int len);
 
 
 static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
@@ -76,6 +77,9 @@ int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC) {
   uint start;
   int num = 0;
 
+  // clear the error message... should work with nesting
+  MonGlo(errmsg) = 0;
+
   // check buf size
   if(BUF_REMAINING <= 5) {
     resize_buf(buf, 5);
@@ -103,7 +107,7 @@ int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC) {
 
   php_mongo_serialize_null(buf);
   php_mongo_serialize_size(buf->start+start, buf);
-  return num;
+  return MonGlo(errmsg) ? -1 : num;
 }
 
 #if ZEND_MODULE_API_NO >= 20090115
@@ -187,6 +191,12 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
   case IS_STRING: {
     php_mongo_set_type(buf, BSON_STRING);
     php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+
+    // if this is not a valid string, stop
+    if (!is_utf8(Z_STRVAL_PP(data), Z_STRLEN_PP(data))) {
+      MonGlo(errmsg) = Z_STRVAL_PP(data);
+      return ZEND_HASH_APPLY_STOP;
+    }
 
     php_mongo_serialize_int(buf, Z_STRLEN_PP(data)+1);
     php_mongo_serialize_string(buf, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
@@ -835,3 +845,31 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
   return buf;
 }
 
+static int is_utf8(const char *s, int len) {
+  int i;
+
+  for (i=0; i<len; i++) {
+    if (i+3 < len &&
+        (s[i] & 248) == 240 &&
+        (s[i+1] & 192) == 128 &&
+        (s[i+2] & 192) == 128 &&
+        (s[i+3] & 192) == 128) {
+      i += 3;
+    }
+    else if (i+2 < len && 
+             (s[i] & 240) == 224 &&
+             (s[i+1] & 192) == 128 &&
+             (s[i+2] & 192) == 128) {
+      i += 2;
+    }
+    else if (i+1 < len &&
+             (s[i] & 224) == 192 &&
+             (s[i+2] & 192) == 128) {
+      i += 1;
+    }
+    else if ((s[i] & 128) != 0) {
+      return 0;
+    }
+  }
+  return 1;
+}

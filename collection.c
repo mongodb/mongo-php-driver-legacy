@@ -136,7 +136,7 @@ PHP_METHOD(MongoCollection, insert) {
   zend_bool safe = 0;
   mongo_collection *c;
   mongo_link *link;
-  int response;
+  int response, num;
   mongo_msg_header header;
   buffer buf;
 
@@ -168,13 +168,18 @@ PHP_METHOD(MongoCollection, insert) {
   CREATE_HEADER(buf, Z_STRVAL_P(c->ns), OP_INSERT);
 
   // serialize
-  if (zval_to_bson(&buf, HASH_P(a), PREP TSRMLS_CC) == 0 &&
-      zend_hash_num_elements(HASH_P(a)) == 0) {
+  num = zval_to_bson(&buf, HASH_P(a), PREP TSRMLS_CC);
+  if (num == FAILURE) {
+    efree(buf.start);
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+    return;
+  }
+  else if (num == 0 && zend_hash_num_elements(HASH_P(a)) == 0) {
     efree(buf.start);
     // return if there were 0 elements
     RETURN_FALSE;
   }
-
+    
   // throw an exception if the obj was too big
   if(buf.pos - buf.start > MAX_OBJECT_LEN) {
     char *msg;
@@ -212,8 +217,12 @@ PHP_METHOD(MongoCollection, insert) {
     array_init(cmd);
     add_assoc_long(cmd, "getlasterror", 1);
 
-    zval_to_bson(&buf, HASH_P(cmd), NO_PREP TSRMLS_CC);
-
+    if (zval_to_bson(&buf, HASH_P(cmd), NO_PREP TSRMLS_CC) == FAILURE) {
+      efree(buf.start);
+      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+      return;
+    }
+    
     php_mongo_serialize_size(buf.start + start, &buf);
 
     zval_ptr_dtor(&cmd);
@@ -296,7 +305,11 @@ PHP_METHOD(MongoCollection, batchInsert) {
     }
 
     start = buf.pos-buf.start;
-    zval_to_bson(&buf, HASH_PP(data), PREP TSRMLS_CC);
+    if (zval_to_bson(&buf, HASH_PP(data), PREP TSRMLS_CC) == FAILURE) {
+      efree(buf.start);
+      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+      return;
+    }
 
     // throw an exception if the obj was too big
     if(buf.pos - (buf.start+start) > MAX_OBJECT_LEN) {
@@ -418,8 +431,13 @@ PHP_METHOD(MongoCollection, update) {
         ((upsert ? Z_BVAL_PP(upsert) : 0) << 0) | ((multiple ? Z_BVAL_PP(multiple) : 0) << 1));
   }
 
-  zval_to_bson(&buf, HASH_P(criteria), NO_PREP TSRMLS_CC);
-  zval_to_bson(&buf, HASH_P(newobj), NO_PREP TSRMLS_CC);
+  if (zval_to_bson(&buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE ||
+      zval_to_bson(&buf, HASH_P(newobj), NO_PREP TSRMLS_CC) == FAILURE) {
+    efree(buf.start);
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+    return;
+  }
+
   php_mongo_serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(mongo_say(link, &buf, &temp TSRMLS_CC)+1);
@@ -460,7 +478,11 @@ PHP_METHOD(MongoCollection, remove) {
   mflags = (just_one == 1);
 
   php_mongo_serialize_int(&buf, mflags);
-  zval_to_bson(&buf, HASH_P(criteria), NO_PREP TSRMLS_CC);
+  if (zval_to_bson(&buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE) {
+    efree(buf.start);
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+    return;
+  }
   php_mongo_serialize_size(buf.start, &buf);
 
   RETVAL_BOOL(mongo_say(link, &buf, &temp TSRMLS_CC)+1);

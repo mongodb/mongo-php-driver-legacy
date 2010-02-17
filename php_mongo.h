@@ -485,6 +485,7 @@ int inc, pid, machine;
 
 // timestamp generation helper
 int ts_inc;
+char *errmsg;
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS

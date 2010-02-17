@@ -180,14 +180,14 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $w = chr(128);
         $bytes = "${x}4g7$y$z$w$x";
 
-        $this->object->storeBytes($bytes, array('myopt' => $bytes));
+        $this->object->storeBytes($bytes, array('myopt' => new MongoBinData($bytes)));
 
         $obj = $this->object->findOne();
         $this->assertNotNull($obj, "this can be caused by an old db version or if objcheck is on");
 
         $b = $obj->getBytes();
 
-        $this->assertEquals($b, $obj->file['myopt']);
+        $this->assertEquals($b, $obj->file['myopt']->bin);
         $this->assertEquals(8, strlen($b));
 
         $this->assertEquals(0, ord(substr($b, 0)));
