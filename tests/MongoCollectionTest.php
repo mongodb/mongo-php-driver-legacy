@@ -161,9 +161,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->batchInsert($a);
       $this->assertEquals(4, $this->object->count());
 
-      $cursor = $this->object->find()->sort(array("x" => -1));
-      $x = $cursor->getNext();
-      $this->assertEquals('bar', $x['foo']);
+      $cursor = $this->object->find(array("x"=>array('$exists' => 1)))->sort((object)array("x" => -1));
       $x = $cursor->getNext();
       $this->assertEquals('z', $x['x']);
       $x = $cursor->getNext();
