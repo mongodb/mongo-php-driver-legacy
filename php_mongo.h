@@ -397,8 +397,7 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC);
   }                                             \
   else {                                        \
     return ret;                                 \
-  }                                             \
-}
+  }
 #define LOCK {                                  \
     int ret = -1;                               \
     int tries = 0;                              \

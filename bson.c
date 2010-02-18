@@ -607,7 +607,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       void *ptr;
       int64_t i = *(int64_t*)buf;
       i = MONGO_64(i);
-      ptr = &i;
+      ptr = (void*)&i;
 
       ZVAL_DOUBLE(value, *(double*)ptr);
       buf += DOUBLE_64;
