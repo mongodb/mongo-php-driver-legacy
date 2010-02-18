@@ -860,7 +860,7 @@ static int is_utf8(const char *s, int len) {
     }
     else if (i+1 < len &&
              (s[i] & 224) == 192 &&
-             (s[i+2] & 192) == 128) {
+             (s[i+1] & 192) == 128) {
       i += 1;
     }
     else if ((s[i] & 128) != 0) {
