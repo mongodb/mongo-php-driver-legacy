@@ -488,14 +488,16 @@ void php_mongo_serialize_long(buffer *buf, int64_t num) {
 }
 
 void php_mongo_serialize_double(buffer *buf, double num) {
-  void *ptr = &num;
-  int64_t i = MONGO_64(*(int64_t*)ptr);
+  int64_t dest, *dest_p;
+  dest_p = &dest;
+  memcpy(dest_p, &num, 8);
+  dest = MONGO_64(dest);
 
   if(BUF_REMAINING <= INT_64) {
     resize_buf(buf, INT_64);
   }
 
-  memcpy(buf->pos, &i, DOUBLE_64);
+  memcpy(buf->pos, dest_p, DOUBLE_64);
   buf->pos += DOUBLE_64;
 }
 
@@ -604,12 +606,15 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_DOUBLE: {
-      void *ptr;
-      int64_t i = *(int64_t*)buf;
-      i = MONGO_64(i);
-      ptr = (void*)&i;
+      double d = *(double*)buf;
+      int64_t i, *i_p;
+      i_p = &i;
 
-      ZVAL_DOUBLE(value, *(double*)ptr);
+      memcpy(i_p, &d, DOUBLE_64);
+      i = MONGO_64(i);
+      memcpy(&d, i_p, DOUBLE_64);
+
+      ZVAL_DOUBLE(value, d);
       buf += DOUBLE_64;
       break;
     }
