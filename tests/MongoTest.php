@@ -426,6 +426,24 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertTrue(array_key_exists('databases', $dbs));
         $this->assertTrue(array_key_exists('totalSize', $dbs));
     }
+
+    /*
+     * our current test framework can't really test this, so this just passes
+     * a couple options and checks things don't explode.
+     */
+    public function testTimeout() {
+      $m = new Mongo("localhost", array("timeout" => 0));
+      $m = new Mongo("localhost", array("timeout" => 200000));
+      $m = new Mongo("localhost", array("timeout" => -2));
+      $m = new Mongo("localhost", array("timeout" => "foo"));
+      $m = new Mongo("localhost", array("timeout" => array("x" => 1)));
+
+      $c = $m->phpunit->c;
+      $c->drop();
+      $c->insert(array("x" => 1));
+      $obj = $c->findOne();
+      $this->assertEquals(1, $obj['x']);
+    }
 }
 
 class StaticFunctionTest {

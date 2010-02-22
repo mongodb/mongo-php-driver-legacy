@@ -185,6 +185,7 @@ typedef struct {
   // ts keeps track of the last time we tried to connect, so we don't try to
   // reconnect a zillion times in three seconds.
   int ts;
+  int timeout;
 
   int persist;
 

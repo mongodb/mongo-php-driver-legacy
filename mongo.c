@@ -64,7 +64,7 @@ static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval*);
 static int php_mongo_get_master(mongo_link* TSRMLS_DC);
 static int php_mongo_check_connection(mongo_link*, zval* TSRMLS_DC);
-static int php_mongo_connect_nonb(mongo_server*, zval*);
+static int php_mongo_connect_nonb(mongo_server*, int, zval*);
 static int php_mongo_do_socket_connect(mongo_link*, zval* TSRMLS_DC);
 static int php_mongo_get_sockaddr(struct sockaddr_in*, char*, int, zval*);
 static char* php_mongo_get_host(char**, int);
@@ -889,13 +889,18 @@ PHP_METHOD(Mongo, __construct) {
   /* new format */
   if (options) {
     if (!IS_SCALAR_P(options)) {
-      zval **connect_z, **persist_z;
+      zval **connect_z, **persist_z, **timeout_z;
       if (zend_hash_find(HASH_P(options), "connect", strlen("connect")+1, (void**)&connect_z) == SUCCESS) {
         connect = Z_BVAL_PP(connect_z);
       }
       if (zend_hash_find(HASH_P(options), "persist", strlen("persist")+1, (void**)&persist_z) == SUCCESS) {
         convert_to_string_ex(persist_z);
         zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), Z_STRVAL_PP(persist_z) TSRMLS_CC);
+      }
+      if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_z) == SUCCESS) {
+        mongo_link *link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
+        convert_to_long_ex(timeout_z);
+        link->timeout = Z_LVAL_PP(timeout_z);
       }
     }
     else {
@@ -2032,7 +2037,7 @@ static void set_disconnected(mongo_link *link) {
   link->server_set->master = -1;
 }
 
-static int php_mongo_connect_nonb(mongo_server *server, zval *errmsg) {
+static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errmsg) {
   struct sockaddr_in addr, addr2;
   fd_set rset, wset;
   struct timeval tval;
@@ -2070,9 +2075,9 @@ static int php_mongo_connect_nonb(mongo_server *server, zval *errmsg) {
   }
 #endif
 
-  // timeout
-  tval.tv_sec = 20;
-  tval.tv_usec = 0;
+  // timeout: set in ms or default of 20
+  tval.tv_sec = timeout == 0 ? 20 : timeout / 1000;
+  tval.tv_usec = timeout % 1000;
 
   // get addresses
   if (php_mongo_get_sockaddr(&addr, server->host, server->port, errmsg) == FAILURE) {
@@ -2144,7 +2149,7 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
 
   for (i=0; i<link->server_set->num; i++) {
     if (!link->server_set->server[i]->connected) {
-      int status = php_mongo_connect_nonb(link->server_set->server[i], errmsg);
+      int status = php_mongo_connect_nonb(link->server_set->server[i], link->timeout, errmsg);
       // FAILURE = -1
       // SUCCESS = 0
       connected |= (status+1);
