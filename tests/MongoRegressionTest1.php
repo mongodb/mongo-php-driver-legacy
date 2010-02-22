@@ -240,7 +240,8 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
       }
 
       $cursor = $c->find();
-      $this->assertTrue(is_int($cursor->count()));
+      $x = $cursor->count();
+      $this->assertTrue(is_int($x), $x);
 
       $cursor->limit(4);
       $this->assertTrue(is_int($cursor->count()));
@@ -311,6 +312,22 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $count++;
       }
       $this->assertEquals(10, $count);
+    }
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testNonUTF81() {
+      $c = $this->sharedFixture->phpunit->c;
+      $c->insert(array("x" => "\xFE"));
+    }
+
+    public function testNonUTF82() {
+      $c = $this->sharedFixture->phpunit->c;
+      ini_set("mongo.utf8", 0);
+      $c->insert(array("x" => "\xFE"));
+      ini_set("mongo.utf8", 1);
+      $c->drop();
     }
 
 }

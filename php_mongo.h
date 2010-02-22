@@ -472,7 +472,6 @@ void mongo_init_MongoBinData(TSRMLS_D);
 void mongo_init_MongoDBRef(TSRMLS_D);
 void mongo_init_MongoTimestamp(TSRMLS_D);
 
-
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 long num_links,num_persistent;
 long max_links,max_persistent;
@@ -482,6 +481,7 @@ char *default_host;
 int default_port;
 int request_id; 
 int chunk_size;
+int utf8;
 
 // $ alternative
 char *cmd_char;

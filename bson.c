@@ -193,7 +193,7 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
     php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
 
     // if this is not a valid string, stop
-    if (!is_utf8(Z_STRVAL_PP(data), Z_STRLEN_PP(data))) {
+    if (MonGlo(utf8) && !is_utf8(Z_STRVAL_PP(data), Z_STRLEN_PP(data))) {
       MonGlo(errmsg) = Z_STRVAL_PP(data);
       return ZEND_HASH_APPLY_STOP;
     }
