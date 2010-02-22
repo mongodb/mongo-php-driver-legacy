@@ -74,6 +74,7 @@ static void run_err(int, zval*, zval* TSRMLS_DC);
 static int php_mongo_parse_server(zval*, zval* TSRMLS_DC);
 static void set_disconnected(mongo_link *link);
 static char* stringify_server(mongo_server*, char*, int*, int*);
+static int php_mongo_do_authenticate(mongo_link*, zval* TSRMLS_DC);
 
 #if WIN32
 static HANDLE cursor_mutex;
@@ -426,12 +427,10 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
   }
 
   if (link->username) {
-    efree(link->username);
-    link->username = 0;
+    zval_ptr_dtor(&link->username);
   }
   if (link->password) {
-    efree(link->password);
-    link->password = 0;
+    zval_ptr_dtor(&link->password);
   }
 
   zend_object_std_dtor(&link->std TSRMLS_CC);
@@ -714,9 +713,6 @@ void mongo_init_Mongo(TSRMLS_D) {
 
   zend_declare_property_null(mongo_ce_Mongo, "server", strlen("server"), ZEND_ACC_PROTECTED TSRMLS_CC);
 
-  zend_declare_property_null(mongo_ce_Mongo, "username", strlen("username"), ZEND_ACC_PROTECTED TSRMLS_CC);
-  zend_declare_property_null(mongo_ce_Mongo, "password", strlen("password"), ZEND_ACC_PROTECTED TSRMLS_CC);
-
   zend_declare_property_null(mongo_ce_Mongo, "persistent", strlen("persistent"), ZEND_ACC_PROTECTED TSRMLS_CC);
 }
 
@@ -740,10 +736,6 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
 
   link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-  /* zero pointers so it doesn't segfault on cleanup if connection fails */
-  link->ts = 0;
-  link->username = 0;
-  link->password = 0;
   // assume a non-persistent connection for now, we can change it soon
   link->persist = persist;
 
@@ -784,11 +776,11 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
 
     // check for username:password
     if (at) {
-      link->username = estrndup(current, colon-current);
-      link->password = estrndup(colon+1, at-(colon+1));
+      MAKE_STD_ZVAL(link->username);
+      ZVAL_STRINGL(link->username, current, colon-current, 1);
 
-      zend_update_property_stringl(mongo_ce_Mongo, this_ptr, "username", strlen("username"), link->username, strlen(link->username) TSRMLS_CC);
-      zend_update_property_stringl(mongo_ce_Mongo, this_ptr, "password", strlen("password"), link->password, strlen(link->password) TSRMLS_CC);
+      MAKE_STD_ZVAL(link->password);
+      ZVAL_STRINGL(link->password, colon+1, at-(colon+1), 1);
 
       // move current
       // mongodb://user:pass@host:port,host:port
@@ -1004,7 +996,7 @@ PHP_METHOD(Mongo, pairPersistConnect) {
 
 
 PHP_METHOD(Mongo, connectUtil) {
-  zval *connected, *server, *errmsg, *username, *password;
+  zval *connected, *server, *errmsg;
 
   /* initialize and clear the error message */
   MAKE_STD_ZVAL(errmsg);
@@ -1037,52 +1029,6 @@ PHP_METHOD(Mongo, connectUtil) {
     zval_ptr_dtor(&errmsg);
     efree(full_error);
     return;
-  }
-
-  /* try to authenticate the session, if username and password were given */
-  username = zend_read_property(mongo_ce_Mongo, getThis(), "username", strlen("username"), NOISY TSRMLS_CC);
-  password = zend_read_property(mongo_ce_Mongo, getThis(), "password", strlen("password"), NOISY TSRMLS_CC);
-
-  if (Z_TYPE_P(username) == IS_STRING && Z_TYPE_P(password) == IS_STRING) {
-    zval *db, *admin, *ok;
-    int logged_in = 0;
-    MAKE_STD_ZVAL(db);
-
-    // get admin db
-    MAKE_STD_ZVAL(admin);
-    ZVAL_STRING(admin, "admin", 1);
-    MONGO_METHOD1(Mongo, selectDB, db, getThis(), admin);
-    zval_ptr_dtor(&admin);
-
-    // log in
-    MAKE_STD_ZVAL(ok);
-    MONGO_METHOD2(MongoDB, authenticate, ok, db, username, password);
-
-    zval_ptr_dtor(&db);
-
-    if (Z_TYPE_P(ok) == IS_ARRAY) {
-      zval **status;
-      if (zend_hash_find(HASH_P(ok), "ok", strlen("ok")+1, (void**)&status) == SUCCESS) {
-        logged_in = (int)Z_DVAL_PP(status);
-      }
-    } 
-    else {
-      logged_in = Z_BVAL_P(ok);
-    }
-
-    // check if we've logged in successfully
-    if (!logged_in) {
-      char *full_error;
-      spprintf(&full_error, 0, "Couldn't authenticate with database admin: username [%s], password [%s]", Z_STRVAL_P(username), Z_STRVAL_P(password));
-
-      zval_ptr_dtor(&ok);
-
-      zend_throw_exception(mongo_ce_ConnectionException, full_error, 0 TSRMLS_CC);
-      return;
-    }
-
-    // successfully logged in
-    zval_ptr_dtor(&ok);
   }
 
   zval_ptr_dtor(&errmsg);
@@ -2185,8 +2131,75 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
   // set initial connection time
   link->ts = time(0);
 
+  php_mongo_do_authenticate(link, errmsg TSRMLS_CC);
+
   return SUCCESS;
 }
+
+static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
+  zval *connection, *db, *admin, *ok;
+  int logged_in = 0;
+  mongo_link *temp_link;
+
+  if (!link->username || !link->password) { 
+    return;
+  }
+
+  // make a "fake" connection
+  MAKE_STD_ZVAL(connection);
+  object_init_ex(connection, mongo_ce_Mongo);
+  temp_link = (mongo_link*)zend_object_store_get_object(connection TSRMLS_CC);
+  temp_link->server_set = (mongo_server_set*)emalloc(sizeof(mongo_server_set));
+  temp_link->server_set->num = 1;
+  temp_link->server_set->server = (mongo_server**)emalloc(sizeof(mongo_server*));
+  temp_link->server_set->server[0] = (mongo_server*)emalloc(sizeof(mongo_server));
+  temp_link->server_set->server[0]->socket = php_mongo_get_master(link TSRMLS_CC);
+  temp_link->server_set->server[0]->connected = 1;
+
+  MAKE_STD_ZVAL(db);
+  
+  // get admin db
+  MAKE_STD_ZVAL(admin);
+  ZVAL_STRING(admin, "admin", 1);
+  MONGO_METHOD1(Mongo, selectDB, db, connection, admin);
+  zval_ptr_dtor(&admin);
+  
+  // log in
+  MAKE_STD_ZVAL(ok);
+  MONGO_METHOD2(MongoDB, authenticate, ok, db, link->username, link->password);
+
+  zval_ptr_dtor(&db);
+
+  // reset the socket so we don't close it when this is dtored
+  efree(temp_link->server_set->server[0]);
+  temp_link->server_set->server[0] = 0;
+  temp_link->server_set->num = 0;
+  zval_ptr_dtor(&connection);  
+
+  if (Z_TYPE_P(ok) == IS_ARRAY) {
+    zval **status;
+    if (zend_hash_find(HASH_P(ok), "ok", strlen("ok")+1, (void**)&status) == SUCCESS) {
+      logged_in = (int)Z_DVAL_PP(status);
+    }
+  } 
+  else {
+    logged_in = Z_BVAL_P(ok);
+  }
+  
+  // check if we've logged in successfully
+  if (!logged_in) {
+    char *full_error;
+    spprintf(&full_error, 0, "Couldn't authenticate with database admin: username [%s], password [%s]", Z_STRVAL_P(link->username), Z_STRVAL_P(link->password));
+    ZVAL_STRING(errmsg, full_error, 0);
+    zval_ptr_dtor(&ok);
+    return FAILURE;
+  }
+
+  // successfully logged in
+  zval_ptr_dtor(&ok);
+  return SUCCESS;
+}
+
 
 static int php_mongo_get_sockaddr(struct sockaddr_in *addr, char *host, int port, zval *errmsg) {
   struct hostent *hostinfo;
