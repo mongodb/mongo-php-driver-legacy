@@ -432,6 +432,9 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
   if (link->password) {
     zval_ptr_dtor(&link->password);
   }
+  if (link->db) {
+    zval_ptr_dtor(&link->db);
+  }
 
   zend_object_std_dtor(&link->std TSRMLS_CC);
 
@@ -811,7 +814,7 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
   link->server_set->server = (mongo_server**)pemalloc(sizeof(mongo_server*) * num_servers, persist);
 
   // current is now pointing at the first server name
-  while (*current) {
+  while (*current && *current != '/') {
     mongo_server *server;
     char *host;
     int port;
@@ -861,6 +864,17 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
         current++;
       }
     }
+  }
+
+  if (*current == '/') {
+    current++;
+    MAKE_STD_ZVAL(link->db);
+    ZVAL_STRING(link->db, current, 1);
+  }
+  // if we need to authenticate but weren't given a database, assume admin
+  else if (link->username && link->password) {
+    MAKE_STD_ZVAL(link->db);
+    ZVAL_STRING(link->db, "admin", 1);
   }
 
   return SUCCESS;
@@ -1156,45 +1170,32 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
 
 // get the next host from the server string
 static char* php_mongo_get_host(char **ip, int persist) {
-  char *colon = strchr(*ip, ':');
-  char *comma = strchr(*ip, ',');
-  char *end = 0;
-  char *retval;
+  char *colon = strchr(*ip, ':'),
+    *comma = strchr(*ip, ','),
+    *slash = strchr(*ip, '/'),
+    *end = *ip,
+    *retval;
 
-  // pick whichever exists and is sooner: ':', ',', or '\0' 
-
-  // localhost,localhost
-  // localhost,localhost:27017
-  if (!colon || (colon && comma && (comma - *ip < colon - *ip))) {
-    end = comma;
+  // pick whichever exists and is sooner: ':', ',', '/', or '\0' 
+  while (*end && *end != ',' && *end != ':' && *end != '/') {
+    end++;
   }
-  // ,whatever
-  // :whatever
-  else if ((comma && comma == *ip) || (colon && colon == *ip)) {
+
+  // sanity check
+  if (end - *ip > 1 && end - *ip < 256) {
+    int len = end-*ip;
+    
+    // return a copy
+    retval = persist ? zend_strndup(*ip, len) : estrndup(*ip, len);
+    
+    // move to the end of this section of string
+    *(ip) = end;
+    
+    return retval;
+  }
+  else {
+    // you get nothing
     return 0;
-  }
-  // localhost:27017,localhost
-  else if (colon) {
-    end = colon;
-  }
-
-  if (end) {
-    // sanity check
-    if (end - *ip > 1 && end - *ip < 256) {
-      int len = end-*ip;
-
-      // return a copy
-      retval = persist ? zend_strndup(*ip, len) : estrndup(*ip, len);
-
-      // move to the end of this section of string
-      *(ip) = end;
-
-      return retval;
-    }
-    else {
-      // you get nothing
-      return 0;
-    }
   }
 
   // otherwise, this is the last thing in the string
@@ -2131,9 +2132,7 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
   // set initial connection time
   link->ts = time(0);
 
-  php_mongo_do_authenticate(link, errmsg TSRMLS_CC);
-
-  return SUCCESS;
+  return php_mongo_do_authenticate(link, errmsg TSRMLS_CC);
 }
 
 static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
@@ -2141,8 +2140,9 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int logged_in = 0;
   mongo_link *temp_link;
 
+  // if we're not using authentication, we're always logged in
   if (!link->username || !link->password) { 
-    return;
+    return SUCCESS;
   }
 
   // make a "fake" connection
@@ -2156,13 +2156,10 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
   temp_link->server_set->server[0]->socket = php_mongo_get_master(link TSRMLS_CC);
   temp_link->server_set->server[0]->connected = 1;
 
-  MAKE_STD_ZVAL(db);
   
   // get admin db
-  MAKE_STD_ZVAL(admin);
-  ZVAL_STRING(admin, "admin", 1);
-  MONGO_METHOD1(Mongo, selectDB, db, connection, admin);
-  zval_ptr_dtor(&admin);
+  MAKE_STD_ZVAL(db);
+  MONGO_METHOD1(Mongo, selectDB, db, connection, link->db);
   
   // log in
   MAKE_STD_ZVAL(ok);

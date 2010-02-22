@@ -191,6 +191,7 @@ typedef struct {
 
   mongo_server_set *server_set;
 
+  zval *db;
   zval *username;
   zval *password;
 

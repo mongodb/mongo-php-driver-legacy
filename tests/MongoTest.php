@@ -444,6 +444,15 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $obj = $c->findOne();
       $this->assertEquals(1, $obj['x']);
     }
+
+    /*
+     * again, not really testing functionality.
+     */
+    public function testDB() {
+      $m = new Mongo("localhost/foo");
+      $m = new Mongo("localhost/bar/baz");
+      $m = new Mongo("localhost/");
+    }
 }
 
 class StaticFunctionTest {
