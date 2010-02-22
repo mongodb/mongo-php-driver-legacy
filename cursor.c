@@ -69,7 +69,7 @@ PHP_METHOD(MongoCursor, __construct) {
 
   // these are both initialized to the same zval, but that's okay because 
   // there's no way to change them without creating a new cursor
-  if (!zquery) {
+  if (!zquery || (Z_TYPE_P(zquery) == IS_ARRAY && zend_hash_num_elements(HASH_P(zquery)) == 0)) {
     zquery = empty;
   }
   if (!zfields) {

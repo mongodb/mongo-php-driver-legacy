@@ -286,5 +286,32 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
       $this->assertNull($x->getSize());
     }
 
+    public function testCryllic() {
+      $c = $this->sharedFixture->phpunit->c;
+      try { 
+        $c->insert(array("x" => "\xC3\x84"));
+      }
+      catch (MongoException $e) {
+        $this->assertTrue(false, $e);
+      }
+    }
+
+    public function testEmptyQuery() {
+      $c = $this->sharedFixture->phpunit->c;
+      $c->drop();
+
+      for ($i=0; $i<10; $i++) {
+        $c->insert(array("x" => $i));
+      }
+      
+      $cursor = $c->find(array(), array("x" => 1))->sort(array("x" => 1));
+
+      $count = 0;
+      foreach ($cursor as $doc) {
+        $count++;
+      }
+      $this->assertEquals(10, $count);
+    }
+
 }
 ?>
