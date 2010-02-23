@@ -62,6 +62,10 @@ PHP_METHOD(MongoCursor, __construct) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|zz", &zlink, &zns, &zquery, &zfields) == FAILURE) {
     return;
   }
+  if ((zquery && IS_SCALAR_P(zquery)) || (zfields && IS_SCALAR_P(zfields))) {
+    zend_error(E_WARNING, "MongoCursor::__construct() expects parameters 3 and 4 to be arrays or objects");
+    return;
+  }
 
   // if query or fields weren't passed, make them default to an empty array
   MAKE_STD_ZVAL(empty);

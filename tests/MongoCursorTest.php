@@ -30,6 +30,33 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         //        $this->assertEquals($start, memory_get_usage(true));
     }
 
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
+    public function test__construct() {
+      $c = $this->object->find(null);
+    }
+
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
+    public function test__construct1() {
+      $c = $this->object->find(null, null);
+    }
+
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
+    public function test__construct2() {
+      $c = $this->object->find(array(), null);
+    }
+
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
+    public function test__construct3() {
+      $c = new MongoCursor($this->sharedFixture, "foo.bar", null);
+    }
 
     public function testHasNext() {
         $c = $this->object->find();

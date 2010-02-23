@@ -345,9 +345,7 @@ PHP_METHOD(MongoCollection, find) {
   mongo_collection *c;
   zval temp;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE ||
-      (ZEND_NUM_ARGS() > 0 && IS_SCALAR_P(query)) ||
-      (ZEND_NUM_ARGS() > 1 && IS_SCALAR_P(fields))) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
     return;
   }
 
