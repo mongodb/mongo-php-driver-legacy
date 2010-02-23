@@ -140,8 +140,11 @@ PHP_METHOD(MongoCollection, insert) {
   mongo_msg_header header;
   buffer buf;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE ||
-      IS_SCALAR_P(a)) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE) {
+    return;
+  }
+  if (IS_SCALAR_P(a)) {
+    zend_error(E_WARNING, "MongoCollection::insert() expects parameter 1 to be an array or object");
     return;
   }
 
@@ -370,9 +373,7 @@ PHP_METHOD(MongoCollection, findOne) {
   zval temp;
   zval *limit = &temp;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE ||
-      (ZEND_NUM_ARGS() > 0 && IS_SCALAR_P(query)) ||
-      (ZEND_NUM_ARGS() > 1 && IS_SCALAR_P(fields))) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
     return;
   }
 
@@ -394,9 +395,11 @@ PHP_METHOD(MongoCollection, update) {
   mongo_msg_header header;
   buffer buf;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &criteria, &newobj, &options) == FAILURE ||
-      IS_SCALAR_P(criteria) ||
-      IS_SCALAR_P(newobj)) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &criteria, &newobj, &options) == FAILURE) {
+    return;
+  }
+  if (IS_SCALAR_P(criteria) || IS_SCALAR_P(newobj)) {
+    zend_error(E_WARNING, "MongoCollection::update() expects parameters 1 and 2 to be arrays or objects");
     return;
   }
 
@@ -451,8 +454,11 @@ PHP_METHOD(MongoCollection, remove) {
   mongo_msg_header header;
   buffer buf;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zb", &criteria, &just_one) == FAILURE ||
-      (ZEND_NUM_ARGS() > 0 && IS_SCALAR_P(criteria))) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zb", &criteria, &just_one) == FAILURE) {
+    return;
+  }
+  if (criteria && IS_SCALAR_P(criteria)) {
+    zend_error(E_WARNING, "MongoCollection::remove() expects parameter 1 to be an array or object");
     return;
   }
 
@@ -708,8 +714,11 @@ PHP_METHOD(MongoCollection, save) {
   zval *a;
   zval **id;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &a) == FAILURE ||
-      IS_SCALAR_P(a)) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &a) == FAILURE) {
+    return;
+  }
+  if (IS_SCALAR_P(a)) {
+    zend_error(E_WARNING, "MongoCollection::save() expects parameter 1 to be an array or object");
     return;
   }
 

@@ -388,8 +388,11 @@ PHP_METHOD(MongoCursor, snapshot) {
 PHP_METHOD(MongoCursor, sort) {
   zval *orderby, *fields;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &fields) == FAILURE ||
-      IS_SCALAR_P(fields)) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &fields) == FAILURE) {
+    return;
+  }
+  if (IS_SCALAR_P(fields)) {
+    zend_error(E_WARNING, "MongoCursor::sort() expects parameter 1 to be an array or object");
     return;
   }
 
@@ -407,10 +410,14 @@ PHP_METHOD(MongoCursor, sort) {
 PHP_METHOD(MongoCursor, hint) {
   zval *hint, *fields;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &fields) == FAILURE ||
-      IS_SCALAR_P(fields)) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &fields) == FAILURE) {
     return;
   }
+  if (IS_SCALAR_P(fields)) {
+    zend_error(E_WARNING, "MongoCursor::hint() expects parameter 1 to be an array or object");
+    return;
+  }
+
 
   MAKE_STD_ZVAL(hint);
   ZVAL_STRING(hint, "$hint", 1);

@@ -429,8 +429,11 @@ PHP_METHOD(MongoDB, command) {
   mongo_db *db;
   char *cmd_ns;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &cmd) == FAILURE ||
-      IS_SCALAR_P(cmd)) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &cmd) == FAILURE) {
+    return;
+  }
+  if (IS_SCALAR_P(cmd)) {
+    zend_error(E_WARNING, "MongoDB::command() expects parameter 1 to be an array or object");
     return;
   }
 
