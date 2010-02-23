@@ -482,9 +482,17 @@ PHP_METHOD(MongoCursor, doQuery) {
   php_mongo_serialize_int(&buf, cursor->skip);
   php_mongo_serialize_int(&buf, cursor->limit);
 
-  zval_to_bson(&buf, HASH_P(cursor->query), NO_PREP TSRMLS_CC);
+  if (zval_to_bson(&buf, HASH_P(cursor->query), NO_PREP TSRMLS_CC) == FAILURE) {
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+    efree(buf.start);
+    return;
+  }
   if (cursor->fields && zend_hash_num_elements(HASH_P(cursor->fields)) > 0) {
-    zval_to_bson(&buf, HASH_P(cursor->fields), NO_PREP TSRMLS_CC);
+    if (zval_to_bson(&buf, HASH_P(cursor->fields), NO_PREP TSRMLS_CC) == FAILURE) {
+      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+      efree(buf.start);
+      return;
+    }
   }
 
   php_mongo_serialize_size(buf.start, &buf);

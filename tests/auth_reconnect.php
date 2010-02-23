@@ -1,10 +1,11 @@
 <?php
 
-$mongo = new Mongo("mongodb://kristina:foobar@localhost");
+$mongo = new Mongo("mongodb://kristina:foo@localhost");
 $col = $mongo->foo->bar;
 
-while (true) {
-  echo "inserting...\n";
+$count = 0;
+while ($count < 10) {
+  echo "inserting $count...\n";
   try {
     $cursor = $col->insert(array("name" => 1), array("safe" => true));
   }
@@ -12,6 +13,7 @@ while (true) {
     echo "connection exception!\n";
   }
   sleep(3);
+  $count++;
 }
 
 

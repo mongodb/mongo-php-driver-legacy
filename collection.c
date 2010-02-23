@@ -222,6 +222,7 @@ PHP_METHOD(MongoCollection, insert) {
 
     if (zval_to_bson(&buf, HASH_P(cmd), NO_PREP TSRMLS_CC) == FAILURE) {
       efree(buf.start);
+      zval_ptr_dtor(&temp);
       zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
       return;
     }
@@ -250,6 +251,8 @@ PHP_METHOD(MongoCollection, insert) {
     if (php_mongo_get_reply(cursor, temp TSRMLS_CC) == FAILURE) {
       zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
       zval_ptr_dtor(&temp);
+      zval_ptr_dtor(&cursor_z);
+      zval_ptr_dtor(&cmd_ns_z);
       return;
     }
 
@@ -261,6 +264,7 @@ PHP_METHOD(MongoCollection, insert) {
     /* if getlasterror returned an error, throw an exception */
     zend_hash_find(Z_ARRVAL_P(return_value), "err", strlen("err")+1, (void**)&err);
     if (Z_TYPE_PP(err) == IS_STRING) {
+      zval_ptr_dtor(&temp);
       zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 0 TSRMLS_CC);
       return;
     }

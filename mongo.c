@@ -196,7 +196,7 @@ PHP_INI_END()
 static void php_mongo_server_free(mongo_server_set *server_set, int persist TSRMLS_DC) {
   int i;
 
-  if (!server_set || !server_set->num) {
+  if (!server_set || !server_set->server) {
     return;
   }
 
@@ -1335,17 +1335,9 @@ PHP_METHOD(Mongo, selectCollection) {
     return;
   }
 
-  if (Z_TYPE_P(db) != IS_OBJECT ||
-      Z_OBJCE_P(db) != mongo_ce_DB) {
+  if (Z_TYPE_P(db) == IS_STRING) {
     MAKE_STD_ZVAL(temp_db);
-
-    // reusing db param from Mongo::selectCollection call...
-    // a little funky, but kind of clever
-    MONGO_METHOD_BASE(Mongo, selectDB)(1, temp_db, NULL, getThis(), 0 TSRMLS_CC);
-
-    ok = (mongo_db*)zend_object_store_get_object(temp_db TSRMLS_CC);
-    MONGO_CHECK_INITIALIZED(ok->name, MongoDB);
-
+    MONGO_METHOD1(Mongo, selectDB, temp_db, getThis(), db);
     db = temp_db;
   }
   else {
@@ -1742,7 +1734,6 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int num_returned = 0;
 
   if (php_mongo_check_connection(cursor->link, errmsg TSRMLS_CC) != SUCCESS) {
-    ZVAL_STRING(errmsg, "could not establish db connection", 1);
     return FAILURE;
   }
 
@@ -2117,8 +2108,9 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
 
   // reset the socket so we don't close it when this is dtored
   efree(temp_link->server_set->server[0]);
-  temp_link->server_set->server[0] = 0;
-  temp_link->server_set->num = 0;
+  efree(temp_link->server_set->server);
+  efree(temp_link->server_set);
+  temp_link->server_set = 0;
   zval_ptr_dtor(&connection);  
 
   if (Z_TYPE_P(ok) == IS_ARRAY) {

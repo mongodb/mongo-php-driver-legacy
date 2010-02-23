@@ -209,7 +209,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
         $c = $this->object->selectCollection("foo", "bar.baz");
         $this->assertEquals((string)$c, "foo.bar.baz");
-        $c = $this->object->selectCollection(1, 6);
+        $c = $this->object->selectCollection("1", "6");
         $this->assertEquals((string)$c, "1.6"); 
         $c = $this->object->selectCollection("foo", '$cmd');
         $this->assertEquals((string)$c, 'foo.$cmd');

@@ -511,7 +511,7 @@ void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRML
   }
 
   if (prep && (strchr(str, '.') != 0)) {
-    zend_error(E_ERROR, "invalid key name: [%s]", str);
+    zend_error(E_WARNING, "invalid key name: [%s]", str);
   }
 
   if (MonGlo(cmd_char) && strchr(str, MonGlo(cmd_char)[0]) == str) {
@@ -748,6 +748,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       // exclude \0
       zend_update_property_stringl(mongo_ce_Code, value, "code", strlen("code"), code, code_len-1 TSRMLS_CC);
       zend_update_property(mongo_ce_Code, value, "scope", strlen("scope"), zcope TSRMLS_CC);
+      zval_ptr_dtor(&zcope);
 
       break;
     }
