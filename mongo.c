@@ -184,8 +184,6 @@ ZEND_GET_MODULE(mongo)
 PHP_INI_BEGIN()
 STD_PHP_INI_BOOLEAN("mongo.auto_reconnect", "1", PHP_INI_SYSTEM, OnUpdateLong, auto_reconnect, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_BOOLEAN("mongo.allow_persistent", "1", PHP_INI_SYSTEM, OnUpdateLong, allow_persistent, zend_mongo_globals, mongo_globals)
-STD_PHP_INI_ENTRY_EX("mongo.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_persistent, zend_mongo_globals, mongo_globals, display_link_numbers)
-STD_PHP_INI_ENTRY_EX("mongo.max_connections", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_links, zend_mongo_globals, mongo_globals, display_link_numbers)
 STD_PHP_INI_ENTRY("mongo.default_host", "localhost", PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.default_port", "27017", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.chunk_size", "262144", PHP_INI_ALL, OnUpdateLong, chunk_size, zend_mongo_globals, mongo_globals)
@@ -222,12 +220,6 @@ static void php_mongo_server_free(mongo_server_set *server_set, int persist TSRM
     
   pefree(server_set->server, persist);
   pefree(server_set, persist);
-
-  if (!persist) {
-    // decrement the total number of links
-    MonGlo(num_links)--;
-  }
-
 }
 
 // tell db to destroy its cursor
@@ -448,11 +440,6 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
 static void php_mongo_link_pfree( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo_server_set *server_set = (mongo_server_set*)rsrc->ptr;
   php_mongo_server_free(server_set, 1 TSRMLS_CC);
-
-  // if it's a persistent connection, decrement the
-  // number of open persistent links
-  MonGlo(num_persistent)--;
-
   rsrc->ptr = 0;
 }
 /* }}} */
@@ -566,8 +553,6 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   int nKeyLength;
   register ulong hash;
 
-  mongo_globals->num_persistent = 0;
-  mongo_globals->num_links = 0;
   mongo_globals->auto_reconnect = 1;
   mongo_globals->default_host = "localhost";
   mongo_globals->default_port = 27017;
@@ -640,8 +625,6 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
 /* {{{ PHP_RINIT_FUNCTION
  */
 PHP_RINIT_FUNCTION(mongo) {
-  MonGlo(num_links) = MonGlo(num_persistent);
-
   return SUCCESS;
 }
 /* }}} */
@@ -650,16 +633,10 @@ PHP_RINIT_FUNCTION(mongo) {
 /* {{{ PHP_MINFO_FUNCTION
  */
 PHP_MINFO_FUNCTION(mongo) {
-  char buf[12];
-
   php_info_print_table_start();
 
   php_info_print_table_header(2, "MongoDB Support", "enabled");
   php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
-  snprintf(buf, sizeof(buf), "%ld", MonGlo(num_persistent));
-  php_info_print_table_row(2, "Active Persistent Connections", buf);
-  snprintf(buf, sizeof(buf), "%ld", MonGlo(num_links));
-  php_info_print_table_row(2, "Active Connections", buf);
 
   php_info_print_table_end();
 
@@ -1059,35 +1036,10 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
   persist = zend_read_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), NOISY TSRMLS_CC);
   server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
 
-  /* 
-   * check connection limits 
-   */
-
-  /* make sure that there aren't too many links already */
-  if (MonGlo(max_links) > -1 &&
-      MonGlo(max_links) <= MonGlo(num_links)) {
-    char *errstr;
-    spprintf(&errstr, 0, "more links than your body has room for: %ld of %ld", MonGlo(num_links), MonGlo(max_links));
-    ZVAL_STRING(errmsg, errstr, 0);
-    RETURN_FALSE;
-  }
   /* if persistent links aren't allowed, just create a normal link */
   if (!MonGlo(allow_persistent)) {
     ZVAL_NULL(persist);
   }
-  /* make sure that there aren't too many persistent links already */
-  if (Z_TYPE_P(persist) == IS_STRING &&
-      MonGlo(max_persistent) > -1 &&
-      MonGlo(max_persistent) <= MonGlo(num_persistent)) {
-    char *errstr;
-    spprintf(&errstr, 0, "more persistent links than your body has room for: %ld of %ld", MonGlo(num_persistent), MonGlo(max_persistent));
-    ZVAL_STRING(errmsg, errstr, 0);
-    RETURN_FALSE;
-  }
-
-  /* 
-   * end of connection limit check
-   */
 
   /* 
    * if we're trying to make a persistent connection, check if one already
@@ -1159,13 +1111,9 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
 
     link->server_set->rsrc = ZEND_REGISTER_RESOURCE(NULL, link->server_set, le_pconnection);
     link->persist = 1;
-
-    MonGlo(num_persistent)++;
   }
 
   /* otherwise, just return the connection */
-
-  MonGlo(num_links)++;
 }
 
 // get the next host from the server string

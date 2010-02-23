@@ -475,8 +475,6 @@ void mongo_init_MongoDBRef(TSRMLS_D);
 void mongo_init_MongoTimestamp(TSRMLS_D);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
-long num_links,num_persistent;
-long max_links,max_persistent;
 long allow_persistent; 
 int auto_reconnect; 
 char *default_host; 
