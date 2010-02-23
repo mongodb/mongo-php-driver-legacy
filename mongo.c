@@ -1962,7 +1962,7 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
 #endif
 
   // timeout: set in ms or default of 20
-  tval.tv_sec = timeout == 0 ? 20 : timeout / 1000;
+  tval.tv_sec = timeout <= 0 ? 20 : timeout / 1000;
   tval.tv_usec = (timeout % 1000) * 1000;
 
   // get addresses
