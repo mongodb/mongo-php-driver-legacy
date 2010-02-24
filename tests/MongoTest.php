@@ -453,6 +453,16 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $m = new Mongo("localhost/bar/baz");
       $m = new Mongo("localhost/");
     }
+
+    /*
+     * test with ports
+     */
+    public function testDBPorts() {
+      $m = new Mongo("localhost:27017/foo");
+      $m = new Mongo("localhost:27017/bar/baz");
+      $m = new Mongo("localhost:27017/");
+      $m = new Mongo("localhost:27017,localhost:27019/");
+    }
 }
 
 class StaticFunctionTest {

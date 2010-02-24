@@ -1157,16 +1157,8 @@ static char* php_mongo_get_host(char **ip, int persist) {
 
 // get the next port from the server string
 static int php_mongo_get_port(char **ip) {
-  int i, retval;
-  /* 
-   * end: ptr to the end of this port
-   * host1:27017,host2:27017
-   *            ^end
-   * host1:27017
-   *            ^end
-   */
-  char *end = strchr(*ip, ',');
-  end = end ? end : *ip+strlen(*ip);
+  char *end;
+  int retval;
 
   // there might not even be a port
   if (**ip != ':') {
@@ -1178,19 +1170,22 @@ static int php_mongo_get_port(char **ip) {
   //          ^
   (*ip)++;
 
+  end = *ip;
   // make sure the port is actually a number
-  for (i = 0; i < (end - *ip); i++) {
-    if ((*ip)[i] < '0' || (*ip)[i] > '9') {
-      return 0;
-    }
+  while (*end >= '0' && *end <= '9') {
+    end++;
+  }
+
+  if (end == *ip) {
+    return 0;
   }
 
   // this just takes the first numeric characters
   retval = atoi(*ip);
-  
+    
   // move past the port
   *(ip) += (end - *ip);
-
+  
   return retval;
 }
 
