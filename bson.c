@@ -625,11 +625,10 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     case BSON_STRING: {
       // len includes \0
       int len = MONGO_32(*((int*)buf));
-      buf += INT_32;
-
-      if (len < 0 || len > MAX_RESPONSE_LEN) {
+      if (INVALID_STRING_LEN(len)) {
         return 0;
       }
+      buf += INT_32;
 
       ZVAL_STRINGL(value, buf, len-1, 1);
       buf += len;
@@ -639,7 +638,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     case BSON_ARRAY: {
       array_init(value);
       buf = bson_to_zval(buf, Z_ARRVAL_P(value) TSRMLS_CC);
-      if (!buf) {
+      if (buf == 0) {
         return 0;
       }
       break;
@@ -648,6 +647,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       char type;
 
       int len = MONGO_32(*(int*)buf);
+      if (INVALID_STRING_LEN(len)) {
+        return 0;
+      }
       buf += INT_32;
 
       type = *buf++;
@@ -662,6 +664,10 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
        */
       if ((int)type == 2) {
         int len2 = MONGO_32(*(int*)buf);
+        if (INVALID_STRING_LEN(len2)) {
+          return 0;
+        }
+
         /* if the lengths match, the data is to spec,
          * so we use len2 as the true length.
          */
@@ -735,10 +741,6 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       int code_len;
       char *code;
 
-      // initialize scope array
-      MAKE_STD_ZVAL(zcope);
-      array_init(zcope);
-
       // CODE has a useless total size field
       if (type == BSON_CODE) {
         buf += INT_32;
@@ -746,15 +748,22 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
 
       // length of code (includes \0)
       code_len = MONGO_32(*(int*)buf);
+      if (INVALID_STRING_LEN(code_len)) {
+        return 0;
+      }
       buf += INT_32;
 
       code = buf;
       buf += code_len;
 
+      // initialize scope array
+      MAKE_STD_ZVAL(zcope);
+      array_init(zcope);
+
       if (type == BSON_CODE) {
         buf = bson_to_zval(buf, HASH_P(zcope) TSRMLS_CC);
         if (!buf) {
-          zval_ptr_dtor(zcope);
+          zval_ptr_dtor(&zcope);
           return 0;
         }
       }
@@ -783,6 +792,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
 
       // ns
       ns_len = *(int*)buf;
+      if (INVALID_STRING_LEN(ns_len)) {
+        return 0;
+      }
       buf += INT_32;
       ns = buf;
       buf += ns_len;

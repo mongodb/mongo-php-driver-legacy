@@ -53,6 +53,7 @@
 #define MAX_RESPONSE_LEN 5242880
 #define MAX_OBJECT_LEN 4194304
 #define DEFAULT_CHUNK_SIZE (256*1024)
+#define INVALID_STRING_LEN(len) (len < 0 || len > MAX_RESPONSE_LEN)
 
 // if _id field should be added
 #define PREP 1
