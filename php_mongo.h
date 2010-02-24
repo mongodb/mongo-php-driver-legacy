@@ -486,13 +486,13 @@ int chunk_size;
 char *cmd_char;
 int utf8;
 
-
 // _id generation helpers
 int inc, pid, machine;
 
 // timestamp generation helper
 int ts_inc;
 char *errmsg;
+int response_num;
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS

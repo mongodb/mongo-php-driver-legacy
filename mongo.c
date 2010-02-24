@@ -563,6 +563,7 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   mongo_globals->utf8 = 1;
 
   mongo_globals->inc = 0;
+  mongo_globals->response_num = 0;
   mongo_globals->errmsg = 0;
 
   lh = gethostbyname("localhost");
@@ -1675,7 +1676,7 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
 /*
  * This method reads the message header for a database response
  */
-static int get_header(int sock, mongo_cursor *cursor, zval *errmsg) {
+static int get_header(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) == FAILURE) {
 
     set_disconnected(cursor->link);
@@ -1722,6 +1723,8 @@ static int get_header(int sock, mongo_cursor *cursor, zval *errmsg) {
   cursor->recv.response_to = MONGO_32(cursor->recv.response_to);
   cursor->recv.op = MONGO_32(cursor->recv.op); 
 
+  MonGlo(response_num) = cursor->recv.response_to;
+
   return SUCCESS;
 }
 
@@ -1729,7 +1732,17 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int sock = php_mongo_get_master(cursor->link TSRMLS_CC);
   int num_returned = 0;
 
+  LOCK;
+
+  // this cursor has already been passed
+  if (cursor->send.request_id < MonGlo(response_num)) {
+    ZVAL_STRING(errmsg, "threw away reply, please try again", 1);
+    UNLOCK;
+    return FAILURE;
+  }
+
   if (php_mongo_check_connection(cursor->link, errmsg TSRMLS_CC) != SUCCESS) {
+    UNLOCK;
     return FAILURE;
   }
 
@@ -1749,11 +1762,14 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     if (!FD_ISSET(sock, &readfds)) {
       ZVAL_NULL(errmsg);
       zend_throw_exception(mongo_ce_CursorTOException, "Cursor timed out", 0 TSRMLS_CC);
+
+      UNLOCK;
       return FAILURE;
     }
   }
 
-  if (get_header(sock, cursor, errmsg) == FAILURE) {
+  if (get_header(sock, cursor, errmsg TSRMLS_CC) == FAILURE) {
+    UNLOCK;
     return FAILURE;
   }
 
@@ -1769,12 +1785,15 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       if (recv(sock, (char*)temp, 20, FLAGS) == FAILURE ||
           mongo_hear(cursor->link, (void*)temp, cursor->recv.length-REPLY_HEADER_LEN TSRMLS_CC) == FAILURE) {
         ZVAL_STRING(errmsg, "couldn't get response to throw out", 1);
+
+        UNLOCK;
         return FAILURE;
       }
     }
 
     // get the next db response
-    if (get_header(sock, cursor, errmsg) == FAILURE) {
+    if (get_header(sock, cursor, errmsg TSRMLS_CC) == FAILURE) {
+      UNLOCK;
       return FAILURE;
     }
   }
@@ -1785,6 +1804,8 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
 
     ZVAL_STRING(errmsg, "incomplete response", 1);
+
+    UNLOCK;
     return FAILURE;
   }
 
@@ -1822,8 +1843,12 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     spprintf(&msg, 0, "error getting database response: %s", strerror(errno));
 #endif
     ZVAL_STRING(errmsg, msg, 0);
+
+    UNLOCK;
     return FAILURE;
   }
+
+  UNLOCK;
 
   /* cursor->num is the total of the elements we've retrieved
    * (elements already iterated through + elements in db response
