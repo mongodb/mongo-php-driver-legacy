@@ -579,6 +579,10 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
   char *buf_start = buf;
   char type;
 
+  if (buf == 0) {
+    return 0;
+  }
+
   // for size
   buf += INT_32;
   
@@ -623,6 +627,10 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       int len = MONGO_32(*((int*)buf));
       buf += INT_32;
 
+      if (len < 0 || len > MAX_RESPONSE_LEN) {
+        return 0;
+      }
+
       ZVAL_STRINGL(value, buf, len-1, 1);
       buf += len;
       break;
@@ -631,6 +639,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     case BSON_ARRAY: {
       array_init(value);
       buf = bson_to_zval(buf, Z_ARRVAL_P(value) TSRMLS_CC);
+      if (!buf) {
+        return 0;
+      }
       break;
     }
     case BSON_BINARY: {
@@ -742,6 +753,10 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
 
       if (type == BSON_CODE) {
         buf = bson_to_zval(buf, HASH_P(zcope) TSRMLS_CC);
+        if (!buf) {
+          zval_ptr_dtor(zcope);
+          return 0;
+        }
       }
 
       object_init_ex(value, mongo_ce_Code);

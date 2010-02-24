@@ -596,6 +596,11 @@ PHP_METHOD(MongoCursor, next) {
     array_init(cursor->current);
     cursor->buf.pos = bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
 
+    if (cursor->buf.pos == 0) {
+      zend_throw_exception(mongo_ce_CursorException, "error parsing bson", 0 TSRMLS_CC);
+      RETURN_FALSE;
+    }
+
     // increment cursor position
     cursor->at++;
 
