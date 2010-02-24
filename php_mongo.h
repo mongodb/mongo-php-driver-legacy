@@ -476,16 +476,16 @@ void mongo_init_MongoDBRef(TSRMLS_D);
 void mongo_init_MongoTimestamp(TSRMLS_D);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
-long allow_persistent; 
 int auto_reconnect; 
+int allow_persistent; 
 char *default_host; 
 int default_port;
 int request_id; 
 int chunk_size;
-int utf8;
-
 // $ alternative
 char *cmd_char;
+int utf8;
+
 
 // _id generation helpers
 int inc, pid, machine;
