@@ -8,61 +8,89 @@
  <summary>Mongo Database Driver</summary>
  <description>This package provides an interface for communicating with the Mongo database in PHP.</description>
  <lead>
-   <name>Kristina Chodorow</name>
-   <user>kristina</user>
-   <email>kristina@10gen.com</email>
-   <active>yes</active>
+  <name>Kristina Chodorow</name>
+  <user>kristina</user>
+  <email>kristina@10gen.com</email>
+  <active>yes</active>
  </lead>
- <date>2010-01-07</date>
+ <date>2010-02-25</date>
  <time>12:00:00</time>
  <version>
-   <release>1.0.3</release>
-   <api>1.0.3</api>
+  <release>1.0.4</release>
+  <api>1.0.4</api>
  </version>
  <stability>
-   <release>stable</release>
-   <api>stable</api>
+  <release>stable</release>
+  <api>stable</api>
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Fix Apache segfault
-  Cursor timeout
-  Faster array encoding
+  Authenticate with any DB (not just admin) on login: "mongodb://username:password@host/db"
+  Connection timeout option, see doc for Mongo::__construct
+  Throws exception for non-UTF8 strings
+  Added Mongo::listDBs function
+  Added MongoCursor::addOption for $min and $max queries
+  Tailable cursors fixed
+  MongoDate segfault fix
+  NEW - a bunch of mutex/threading stuff... if this doesn't work with your OS's
+  threading library, please file a bug!
  </notes>
  <contents>
-   <dir baseinstalldir="/" name="/">
-     <file role="src" name="config.m4" />
-     <file role="src" name="config.w32" />
-     <file role="doc" name="README.rdoc"/>
-     <file role="src" name="mongo.c"/>
-     <file role="src" name="php_mongo.h"/>
-     <file role="src" name="mongo_types.c"/>
-     <file role="src" name="mongo_types.h"/>
-     <file role="src" name="bson.c"/>
-     <file role="src" name="bson.h"/>
-     <file role="src" name="collection.c"/>
-     <file role="src" name="collection.h"/>
-     <file role="src" name="db.c"/>
-     <file role="src" name="db.h"/>
-     <file role="src" name="cursor.c"/>
-     <file role="src" name="cursor.h"/>
-     <file role="src" name="gridfs.c"/>
-     <file role="src" name="gridfs.h"/>
-   </dir>
+  <dir baseinstalldir="/" name="/">
+   <file role="src" name="config.m4" />
+   <file role="src" name="config.w32" />
+   <file role="doc" name="README.rdoc"/>
+   <file role="src" name="mongo.c"/>
+   <file role="src" name="php_mongo.h"/>
+   <file role="src" name="mongo_types.c"/>
+   <file role="src" name="mongo_types.h"/>
+   <file role="src" name="bson.c"/>
+   <file role="src" name="bson.h"/>
+   <file role="src" name="collection.c"/>
+   <file role="src" name="collection.h"/>
+   <file role="src" name="db.c"/>
+   <file role="src" name="db.h"/>
+   <file role="src" name="cursor.c"/>
+   <file role="src" name="cursor.h"/>
+   <file role="src" name="gridfs.c"/>
+   <file role="src" name="gridfs.h"/>
+  </dir>
  </contents>
  <dependencies>
-   <required>
-     <php>
-       <min>5.1.0</min>
-     </php>
-     <pearinstaller>
-       <min>1.4.3</min>
-     </pearinstaller> 
-   </required>
+  <required>
+   <php>
+    <min>5.1.0</min>
+   </php>
+   <pearinstaller>
+    <min>1.4.3</min>
+   </pearinstaller> 
+  </required>
  </dependencies>
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.0.4</release>
+    <api>1.0.4</api>
+   </version>
+   <date>2010-02-25</date>
+   <notes>
+    Authenticate with any DB (not just admin) on login: "mongodb://username:password@host/db"
+    Connection timeout option, see doc for Mongo::__construct
+    Throws exception for non-UTF8 strings
+    Added Mongo::listDBs function
+    Added MongoCursor::addOption for $min and $max queries
+    Tailable cursors fixed
+    MongoDate segfault fix
+    NEW - a bunch of mutex/threading stuff... if this doesn't work with your OS's
+    threading library, please file a bug!
+   </notes>
+  </release>
    <release>
      <stability>
        <release>stable</release>
