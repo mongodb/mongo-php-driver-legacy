@@ -502,6 +502,7 @@ PHP_METHOD(MongoCollection, remove) {
 PHP_METHOD(MongoCollection, ensureIndex) {
   zval *keys, *options = 0, *db, *system_indexes, *collection, *data, *key_str, *safe_insert = 0;
   mongo_collection *c;
+  zend_bool done_name = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &keys, &options) == FAILURE) {
     return;
@@ -547,14 +548,6 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   add_assoc_zval(data, "key", keys);
   zval_add_ref(&keys);
 
-  // turn keys into a string
-  MAKE_STD_ZVAL(key_str);
-
-  // MongoCollection::toIndexString()
-  MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
-
-  add_assoc_zval(data, "name", key_str);
-
   /*
    * in ye olden days, "options" only had one options: unique
    * so, if we're parsing old-school code, "unique" is a boolean
@@ -575,7 +568,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
     }
     // new style
     else {
-      zval temp, **safe;
+      zval temp, **safe, **name;
       zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 
       if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe) == SUCCESS) {
@@ -585,7 +578,20 @@ PHP_METHOD(MongoCollection, ensureIndex) {
         }
         zend_hash_del(HASH_P(data), "safe", strlen("safe")+1);
       }
+      if (zend_hash_find(HASH_P(options), "name", strlen("name")+1, (void**)&name) == SUCCESS) {
+        done_name = 1;
+      }
     }
+  }
+
+  if (!done_name) {
+    // turn keys into a string
+    MAKE_STD_ZVAL(key_str);
+        
+    // MongoCollection::toIndexString()
+    MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
+        
+    add_assoc_zval(data, "name", key_str);
   }
 
   // MongoCollection::insert()
@@ -601,7 +607,10 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   zval_ptr_dtor(&system_indexes);
   zval_ptr_dtor(&collection);
   zval_ptr_dtor(&keys);
-  zval_ptr_dtor(&key_str);
+
+  if (!done_name) {
+    zval_ptr_dtor(&key_str);
+  }
 }
 
 PHP_METHOD(MongoCollection, deleteIndex) {

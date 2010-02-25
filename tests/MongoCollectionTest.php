@@ -371,6 +371,15 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(2, $this->object->count());
     }
 
+    public function testEnsureNamedIndex() {
+      $db = $this->object->db;
+      $this->object->ensureIndex(array("foo" => 1), array("name" => "bar"));
+      $idx = $db->system->indexes->findOne(array("name" => "bar"));
+      $this->assertNotNull($idx);
+      $this->assertEquals("phpunit.c", $idx["ns"]);
+      $this->assertEquals(1, $idx["key"]["foo"]);
+    }
+
     public function testDeleteIndex() {
       $idx = $this->object->db->selectCollection('system.indexes');
 
