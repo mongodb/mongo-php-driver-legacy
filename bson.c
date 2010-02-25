@@ -664,9 +664,6 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
        */
       if ((int)type == 2) {
         int len2 = MONGO_32(*(int*)buf);
-        if (INVALID_STRING_LEN(len2)) {
-          return 0;
-        }
 
         /* if the lengths match, the data is to spec,
          * so we use len2 as the true length.
