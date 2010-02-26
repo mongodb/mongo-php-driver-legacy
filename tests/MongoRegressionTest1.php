@@ -330,5 +330,40 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
       $c->drop();
     }
 
+    /**
+     * @expectedException MongoConnectionException
+     */
+    public function testNoPassword1() {
+      new Mongo("mongodb://admin@anyhost-and-nonexistent");
+    }
+
+    /**
+     * @expectedException MongoConnectionException
+     */
+    public function testNoPassword2() {
+      new Mongo("mongodb://admin@anyhost-and-nonexistent:foo");
+    }
+
+    /**
+     * @expectedException MongoConnectionException
+     */
+    public function testNoPassword3() {
+      new Mongo("mongodb://admin@anyhost-and-nonexistent:27017");
+    }
+
+    /**
+     * @expectedException MongoConnectionException
+     */
+    public function testNoPassword4() {
+      new Mongo("mongodb://@anyhost-and-nonexistent:27017");
+    }
+
+    /**
+     * @expectedException MongoConnectionException
+     */
+    public function testNoPassword5() {
+      new Mongo("mongodb://:@anyhost-and-nonexistent");
+    }
+
 }
 ?>

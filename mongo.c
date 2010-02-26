@@ -757,7 +757,7 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
     colon = strchr(current, ':');
 
     // check for username:password
-    if (at) {
+    if (at && colon && at - colon > 0) {
       MAKE_STD_ZVAL(link->username);
       ZVAL_STRINGL(link->username, current, colon-current, 1);
 
