@@ -79,7 +79,7 @@ static int php_mongo_do_authenticate(mongo_link*, zval* TSRMLS_DC);
 #if WIN32
 static HANDLE cursor_mutex;
 #else
-static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER; 
+static pthread_mutex_t cursor_mutex; 
 #endif
 
 zend_object_handlers mongo_default_handlers;

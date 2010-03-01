@@ -571,6 +571,29 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($success['err'], "E11000 duplicate key errorindex: phpunit.c.\$_id_  dup key: { : \"bar\" }");
     }
 
+    public function testGroupKeyf() {
+      // group by divisors
+      for ($i=0; $i<100; $i++) {
+        $this->object->insert(array("x" => $i));
+      }
+
+      $result = $this->object->group(new MongoCode("function(doc) { return {mod : doc.x % 7}; }"),
+                                     array("count" => 0),
+                                     new MongoCode("function(doc, total) { total.count++; }"));
+
+      $this->assertEquals(100, $result['count']);
+      $this->assertEquals(14, $result['retval'][6]['count']);
+      $this->assertEquals(6, $result['retval'][6]['mod']);  
+      $this->assertEquals(15, $result['retval'][1]['count']);
+      $this->assertEquals(1, $result['retval'][1]['mod']); 
+    }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testInvalidKey() {
+      $this->object->group("key", array("count" => 0), "reduce");
+    }
 }
 
 class TestToIndexString extends MongoCollection {

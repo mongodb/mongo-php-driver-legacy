@@ -904,7 +904,7 @@ PHP_METHOD(MongoCollection, group) {
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aaz|z", &key, &initial, &reduce, &condition) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zaz|z", &key, &initial, &reduce, &condition) == FAILURE) {
     return;
   }
 
@@ -922,8 +922,6 @@ PHP_METHOD(MongoCollection, group) {
     zval_add_ref(&reduce);
   }
 
-  MAKE_STD_ZVAL(data);
-  array_init(data);
 
   MAKE_STD_ZVAL(group);
   array_init(group);
@@ -931,8 +929,21 @@ PHP_METHOD(MongoCollection, group) {
   zval_add_ref(&c->name);
   add_assoc_zval(group, "$reduce", reduce);
   zval_add_ref(&reduce);
-  add_assoc_zval(group, "key", key);
+
+  if (Z_TYPE_P(key) == IS_OBJECT && Z_OBJCE_P(key) == mongo_ce_Code) {
+    add_assoc_zval(group, "$keyf", key);
+  }
+  else if (!IS_SCALAR_P(key)) {
+    add_assoc_zval(group, "key", key);
+  }
+  else {
+    zval_ptr_dtor(&group);
+    zval_ptr_dtor(&reduce);
+    zend_throw_exception(mongo_ce_Exception, "MongoCollection::group takes an array, object, or MongoCode key", 0 TSRMLS_CC);
+    return;  
+  }
   zval_add_ref(&key);
+
   if (condition) {
     add_assoc_zval(group, "cond", condition);
     zval_add_ref(&condition);
@@ -940,6 +951,8 @@ PHP_METHOD(MongoCollection, group) {
   add_assoc_zval(group, "initial", initial);
   zval_add_ref(&initial);
 
+  MAKE_STD_ZVAL(data);
+  array_init(data);
   add_assoc_zval(data, "group", group);
 
   MONGO_CMD(return_value, c->parent);
