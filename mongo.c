@@ -445,15 +445,16 @@ static void php_mongo_link_pfree( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
 }
 /* }}} */
 
-static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc) {
+static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
   LOCK;
 
   {
     cursor_node *node = (cursor_node*)rsrc->ptr;
 
-    if (!node)
+    if (!node) {
       UNLOCK;
-      return;
+      return 0;
+    }
 
     while (node->next) {
       cursor_node *temp = node;
@@ -464,10 +465,11 @@ static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc) {
   }
 
   UNLOCK;
+  return 0;
 }
 
 static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
-  cursor_list_pfree_helper(rsrc);
+  cursor_list_pfree_helper(rsrc TSRMLS_CC);
 }
 
 
@@ -1736,8 +1738,8 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   // this cursor has already been passed
   if (cursor->send.request_id < MonGlo(response_num)) {
-    ZVAL_STRING(errmsg, "threw away reply, please try again", 1);
     UNLOCK;
+    ZVAL_STRING(errmsg, "threw away reply, please try again", 1);
     return FAILURE;
   }
 
@@ -1760,10 +1762,11 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     select(sock+1, &readfds, NULL, NULL, &timeout);
 
     if (!FD_ISSET(sock, &readfds)) {
+      UNLOCK;
+
       ZVAL_NULL(errmsg);
       zend_throw_exception(mongo_ce_CursorTOException, "Cursor timed out", 0 TSRMLS_CC);
 
-      UNLOCK;
       return FAILURE;
     }
   }
@@ -1784,9 +1787,10 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       // throw out the rest of the headers and the response
       if (recv(sock, (char*)temp, 20, FLAGS) == FAILURE ||
           mongo_hear(cursor->link, (void*)temp, cursor->recv.length-REPLY_HEADER_LEN TSRMLS_CC) == FAILURE) {
+        UNLOCK;
+
         ZVAL_STRING(errmsg, "couldn't get response to throw out", 1);
 
-        UNLOCK;
         return FAILURE;
       }
     }
@@ -1803,9 +1807,10 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
       recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
 
+    UNLOCK;
+
     ZVAL_STRING(errmsg, "incomplete response", 1);
 
-    UNLOCK;
     return FAILURE;
   }
 
@@ -1848,13 +1853,13 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     return FAILURE;
   }
 
-  UNLOCK;
-
   /* cursor->num is the total of the elements we've retrieved
    * (elements already iterated through + elements in db response
    * but not yet iterated through) 
    */
   cursor->num += num_returned;
+
+  UNLOCK;
 
   /* if no catastrophic error has happened yet, we're fine, set errmsg to null */
   ZVAL_NULL(errmsg);
