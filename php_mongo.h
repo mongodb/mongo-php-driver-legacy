@@ -394,32 +394,28 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC);
  */
 
 #ifdef WIN32
-#define CHECK_LOCK_ERR                          \
-  if (ret != 0) {                               \
-    if (ret == WAIT_TIMEOUT) {                  \
-      continue;                                 \
-    }                                           \
-    else {                                      \
-      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "mutex error: %d", GetLastError()); \
-      return ret;                               \
-    }                                           \
-  }
 #define LOCK {                                  \
     int ret = -1;                               \
     int tries = 0;                              \
                                                 \
     while (tries++ < 3 && ret != 0) {                 \
       ret = WaitForSingleObject(cursor_mutex, 5000);  \
-      CHECK_LOCK_ERR;                                 \
+      if (ret != 0) {\
+        if (ret == WAIT_TIMEOUT) {                  \
+          continue;                                 \
+        }                                           \
+        else { \
+          zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "mutex error: %s", strerror(GetLastError())); \
+          return ret;                               \
+        }                                           \
+      }\
     }                                                 \
   }
 #define UNLOCK {                                    \
-    int ret = -1;                                   \
-    int tries = 0;                                  \
-                                                    \
-    while (tries++ < 3 && ret != 0) {                \
-      ret = ReleaseMutex(cursor_mutex);              \
-      CHECK_LOCK_ERR;                                \
+    int ret = ReleaseMutex(cursor_mutex);              \
+    if (ret == 0) {\
+      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "mutex error: %s", strerror(GetLastError())); \
+      return ret;                               \
     }                                                \
   }
 #else

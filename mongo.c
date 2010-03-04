@@ -340,7 +340,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
   }
 
   UNLOCK;
-
+  return 0;
 }
 
 int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC) {
@@ -373,7 +373,7 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC) {
       if (current->cursor == cursor) {
         pefree(new_node, 1);
         UNLOCK;
-        return;
+        return 0;
       }
 
       prev = current;
@@ -396,6 +396,7 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC) {
   }
 
   UNLOCK;
+  return 0;
 }
 
 
@@ -1211,7 +1212,7 @@ static char* stringify_server(mongo_server *server, char *str, int *pos, int *le
   char *port;
 
   // length: "[" + strlen(hostname) + ":" + strlen(port (maxint=12)) + "]"
-  if (*len - *pos < strlen(server->host)+15) {
+  if (*len - *pos < (int)strlen(server->host)+15) {
     int new_len = *len + 256 + (2 * (strlen(server->host)+15));
     str = (char*)erealloc(str, new_len);
     *(len) = new_len;
@@ -1328,7 +1329,6 @@ PHP_METHOD(Mongo, __get) {
  */
 PHP_METHOD(Mongo, selectCollection) {
   zval *db, *collection, *temp_db;
-  mongo_db *ok;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &db, &collection) == FAILURE) {
     return;
@@ -1863,6 +1863,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   /* if no catastrophic error has happened yet, we're fine, set errmsg to null */
   ZVAL_NULL(errmsg);
+
   return num_returned == 0 ? FAILURE : SUCCESS;
 }
 
@@ -1908,7 +1909,7 @@ int mongo_hear(mongo_link *link, void *dest, int total_len TSRMLS_DC) {
 }
 
 static int php_mongo_check_connection(mongo_link *link, zval *errmsg TSRMLS_DC) {
-  int now = time(0), connected = 0, i;
+  int now = time(0), connected = 0;
 
   if ((link->server_set->num == 1 && link->server_set->server[0]->connected) ||
       (link->server_set->master >= 0 && link->server_set->server[link->server_set->master]->connected)) {
@@ -2101,7 +2102,7 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
 }
 
 static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
-  zval *connection, *db, *admin, *ok;
+  zval *connection, *db, *ok;
   int logged_in = 0;
   mongo_link *temp_link;
 
