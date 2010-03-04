@@ -594,6 +594,23 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     public function testInvalidKey() {
       $this->object->group("key", array("count" => 0), "reduce");
     }
+
+    public function testFields() {
+      $this->object->insert(array("x" => 1, "y" => 1));
+
+      $cursor = $this->object->find(array(), array("x" => false));
+      $r = $cursor->getNext();
+      $this->assertTrue(array_key_exists("_id", $r));
+      $this->assertTrue(array_key_exists("y", $r));
+      $this->assertFalse(array_key_exists("x", $r));
+
+      // make sure this is ok
+      $cursor = $this->object->find(array(), array("x" => array()));
+      $r = $cursor->getNext();
+      $this->assertTrue(array_key_exists("_id", $r));
+      $this->assertTrue(array_key_exists("x", $r));
+      $this->assertFalse(array_key_exists("y", $r));
+    }
 }
 
 class TestToIndexString extends MongoCollection {

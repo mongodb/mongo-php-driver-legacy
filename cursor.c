@@ -112,6 +112,9 @@ PHP_METHOD(MongoCursor, __construct) {
           Z_TYPE_PP(data) == IS_STRING) {
         add_assoc_long(fields, Z_STRVAL_PP(data), 1);
       }
+      else if (IS_SCALAR_PP(data)) {
+        add_assoc_long(fields, key, Z_LVAL_PP(data));
+      }
       else {
         add_assoc_long(fields, key, 1);
       }
