@@ -74,14 +74,14 @@
 
 #if ZEND_MODULE_API_NO >= 20090115
 # define PUSH_PARAM(arg) zend_vm_stack_push(arg TSRMLS_CC)
-# define POP_PARAM() zend_vm_stack_pop(TSRMLS_C)
+# define POP_PARAM() (void)zend_vm_stack_pop(TSRMLS_C)
 # define PUSH_EO_PARAM()
 # define POP_EO_PARAM()
 #else
 # define PUSH_PARAM(arg) zend_ptr_stack_push(&EG(argument_stack), arg)
-# define POP_PARAM() zend_ptr_stack_pop(&EG(argument_stack))
+# define POP_PARAM() (void)zend_ptr_stack_pop(&EG(argument_stack))
 # define PUSH_EO_PARAM() zend_ptr_stack_push(&EG(argument_stack), NULL)
-# define POP_EO_PARAM() zend_ptr_stack_pop(&EG(argument_stack))
+# define POP_EO_PARAM() (void)zend_ptr_stack_pop(&EG(argument_stack))
 #endif
 
 #if ZEND_MODULE_API_NO >= 20060613
@@ -398,23 +398,23 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC);
                                                 \
     while (tries++ < 3 && ret != 0) {                 \
       ret = WaitForSingleObject(cursor_mutex, 5000);  \
-      if (ret != 0) {\
-        if (ret == WAIT_TIMEOUT) {                  \
-          continue;                                 \
-        }                                           \
-        else { \
+      if (ret != 0) {                                 \
+        if (ret == WAIT_TIMEOUT) {                    \
+          continue;                                   \
+        }                                             \
+        else {                                                          \
           zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "mutex error: %s", strerror(GetLastError())); \
-          return ret;                               \
-        }                                           \
-      }\
-    }                                                 \
+          return ret;                                                   \
+        }                                                               \
+      }                                                                 \
+    }                                                                   \
   }
-#define UNLOCK {                                    \
+#define UNLOCK {                                       \
     int ret = ReleaseMutex(cursor_mutex);              \
-    if (ret == 0) {\
+    if (ret == 0) {                                                     \
       zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "mutex error: %s", strerror(GetLastError())); \
-      return ret;                               \
-    }                                                \
+      return ret;                                                       \
+    }                                                                   \
   }
 #else
 #define CHECK_LOCK_ERR                          \
@@ -423,7 +423,7 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC);
       continue;                                 \
     }                                           \
     else {                                      \
-      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "mutex error: %d", errno); \
+      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "mutex error: %d", strerror(errno)); \
       return ret;                               \
     }                                           \
   }
