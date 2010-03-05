@@ -365,5 +365,31 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
       new Mongo("mongodb://:@anyhost-and-nonexistent");
     }
 
+    public function testFatalRecursion() {
+        $output = "";
+        $exit_code = 0;
+        exec("php tests/fatal4.php", $output, $exit_code);
+        $msg = "Fatal error: Nesting level too deep";
+
+        if (count($output) > 0) {
+            $this->assertEquals($msg, substr($output[1], 0, strlen($msg)), json_encode($output)); 
+        }
+        $this->assertEquals(255, $exit_code);
+    }
+
+    public function testStaticDtor() {
+        $f = new Foo2();
+        $f->f();
+    }
 }
+
+class Foo2 {
+  static $c;
+  public function f() {
+    $m = new Mongo();
+    $db = new MongoDB($m, 'foo');
+    Foo2::$c = new MongoCollection($db, 'bar');
+  }
+}
+
 ?>

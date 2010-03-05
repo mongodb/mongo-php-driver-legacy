@@ -224,7 +224,7 @@ static void php_mongo_server_free(mongo_server_set *server_set, int persist TSRM
 }
 
 // tell db to destroy its cursor
-void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
+static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   mongo_cursor *cursor = node->cursor;
   char quickbuf[128];
   buffer buf;
@@ -1123,10 +1123,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
 
 // get the next host from the server string
 static char* php_mongo_get_host(char **ip, int persist) {
-  char *colon = strchr(*ip, ':'),
-    *comma = strchr(*ip, ','),
-    *slash = strchr(*ip, '/'),
-    *end = *ip,
+  char *end = *ip,
     *retval;
 
   // pick whichever exists and is sooner: ':', ',', '/', or '\0' 

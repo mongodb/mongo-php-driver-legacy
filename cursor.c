@@ -34,6 +34,7 @@
 
 // externs
 extern zend_class_entry *mongo_ce_Id,
+  *mongo_ce_Mongo,
   *mongo_ce_DB,
   *mongo_ce_Exception,
   *mongo_ce_CursorException;
@@ -59,7 +60,7 @@ PHP_METHOD(MongoCursor, __construct) {
   mongo_cursor *cursor;
   mongo_link *link;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|zz", &zlink, &zns, &zquery, &zfields) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz|zz", &zlink, mongo_ce_Mongo, &zns, &zquery, &zfields) == FAILURE) {
     return;
   }
   if ((zquery && IS_SCALAR_P(zquery)) || (zfields && IS_SCALAR_P(zfields))) {

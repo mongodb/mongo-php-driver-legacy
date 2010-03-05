@@ -337,9 +337,7 @@ typedef struct {
 
   // parent database
   zval *parent;
-
-  // db obj
-  mongo_db *db;
+  zval *link;
 
   // names
   zval *name;

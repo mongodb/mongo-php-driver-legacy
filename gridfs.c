@@ -201,7 +201,7 @@ PHP_METHOD(MongoGridFS, find) {
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
 
-  MONGO_METHOD5(MongoGridFSCursor, __construct, &temp, return_value, getThis(), c->db->link, c->ns, zquery, zfields);
+  MONGO_METHOD5(MongoGridFSCursor, __construct, &temp, return_value, getThis(), c->link, c->ns, zquery, zfields);
 
   zval_ptr_dtor(&zquery);
   zval_ptr_dtor(&zfields);
