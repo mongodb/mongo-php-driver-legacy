@@ -432,6 +432,31 @@ PHP_METHOD(MongoCursor, hint) {
 }
 /* }}} */
 
+/* {{{ MongoCursor->getQuery: Return information about the current query (by @crodas)
+ */
+PHP_METHOD(MongoCursor, getQuery)
+{
+    mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+    MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+    array_init(return_value);
+
+    add_assoc_string(return_value, "ns", cursor->ns, 1);
+    add_assoc_long(return_value, "limit", cursor->limit);
+    add_assoc_long(return_value, "skip", cursor->skip);
+    if (cursor->query) {
+        add_assoc_zval(return_value, "query", cursor->query);
+        zval_add_ref(&cursor->query);
+    } else {
+        add_assoc_null(return_value, "query");
+    }
+    if (cursor->fields) {
+        add_assoc_zval(return_value, "fields", cursor->fields);
+        zval_add_ref(&cursor->fields);
+    } else {
+        add_assoc_null(return_value, "fields");
+    }
+}
+/* }}} */
 
 /* {{{ MongoCursor->explain
  */
@@ -760,6 +785,7 @@ static function_entry MongoCursor_methods[] = {
   /* stand-alones */
   PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, count, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, getQuery, NULL, ZEND_ACC_PUBLIC)
 
   {NULL, NULL, NULL}
 };
