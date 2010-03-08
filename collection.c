@@ -902,11 +902,11 @@ PHP_METHOD(MongoCollection, toIndexString) {
 /* {{{ MongoCollection::group
  */
 PHP_METHOD(MongoCollection, group) {
-  zval *key, *initial, *condition = 0, *group, *data, *reduce;
+  zval *key, *initial, *options = 0, *group, *data, *reduce;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zaz|z", &key, &initial, &reduce, &condition) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zaz|z", &key, &initial, &reduce, &options) == FAILURE) {
     return;
   }
 
@@ -919,11 +919,9 @@ PHP_METHOD(MongoCollection, group) {
 
     reduce = code;
   }
-  else if (Z_TYPE_P(reduce) == IS_OBJECT &&
-           Z_OBJCE_P(reduce) == mongo_ce_Code) {
+  else {
     zval_add_ref(&reduce);
   }
-
 
   MAKE_STD_ZVAL(group);
   array_init(group);
@@ -946,10 +944,27 @@ PHP_METHOD(MongoCollection, group) {
   }
   zval_add_ref(&key);
 
-  if (condition) {
-    add_assoc_zval(group, "cond", condition);
-    zval_add_ref(&condition);
+  /*
+   * options used to just be "condition" but now can be "condition" or "finalize"
+   */
+  if (options) {
+    zval **condition = 0, **finalize = 0;
+
+    // new case
+    if (zend_hash_find(HASH_P(options), "condition", strlen("condition")+1, (void**)&condition) == SUCCESS) {
+      add_assoc_zval(group, "cond", *condition);
+      zval_add_ref(condition);
+    }
+    if (zend_hash_find(HASH_P(options), "finalize", strlen("finalize")+1, (void**)&finalize) == SUCCESS) {
+      add_assoc_zval(group, "finalize", *finalize);
+      zval_add_ref(finalize);
+    }
+    if (!condition && !finalize) {
+      add_assoc_zval(group, "cond", options);
+      zval_add_ref(&options);
+    }
   }
+
   add_assoc_zval(group, "initial", initial);
   zval_add_ref(&initial);
 

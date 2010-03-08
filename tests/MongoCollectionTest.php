@@ -611,6 +611,66 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertTrue(array_key_exists("x", $r));
       $this->assertFalse(array_key_exists("y", $r));
     }
+
+    public function testGroupFinalize() {
+      $this->object->insert(array("i" => 1, "j" => 3));
+      $this->object->insert(array("i" => 1, "j" => 3));
+      $this->object->insert(array("i" => 2, "j" => 4));
+
+      $group = $this->object->group(array("i" => 1), 
+                           array("count" => 0), 
+                           new MongoCode("function(obj, prev) { prev.count += obj.j; }"),
+                           array("finalize" => new MongoCode("function(obj) { return 'total: '+obj.count; }")));
+
+      $this->assertEquals(1, $group['ok'], json_encode($group));
+
+      $this->assertEquals("total: 6", $group['retval'][0], json_encode($group));
+      $this->assertEquals("total: 4", $group['retval'][1], json_encode($group));
+      $this->assertEquals(3, $group['count'], json_encode($group));
+      $this->assertEquals(2, $group['keys'], json_encode($group));
+
+    }
+    public function testGroupFandC() {
+      $this->object->insert(array("i" => 1, "j" => 2, "k" => 3));
+      $this->object->insert(array("i" => 1, "j" => 2, "k" => 3));
+      $this->object->insert(array("i" => 1, "j" => 2, "k" => 4));
+      $this->object->insert(array("i" => 1, "j" => 2, "k" => 4));
+      $this->object->insert(array("i" => 3, "j" => 1, "k" => 1));
+
+      $group = $this->object->group(array("k" => 1), 
+                                    array("count" => 0), 
+                                    new MongoCode("function(obj, prev) { prev.count++; }"),
+                                    array("finalize" => new MongoCode("function(obj) { return obj.count; }"),
+                                          "condition" => array("i" => 1)));
+
+      $this->assertEquals(1, $group['ok'], json_encode($group));
+
+      $this->assertEquals(2, $group['retval'][0], json_encode($group));
+      $this->assertEquals(2, $group['retval'][1], json_encode($group));
+      $this->assertEquals(4, $group['count'], json_encode($group));
+      $this->assertEquals(2, $group['keys'], json_encode($group));
+    }
+
+    public function testGroupNeitherOpt() {
+      $this->object->insert(array("i" => 1, "j" => 2, "k" => 3));
+      $this->object->insert(array("i" => 1, "j" => 2, "k" => 3));
+      $this->object->insert(array("i" => 1, "j" => 2, "k" => 4));
+      $this->object->insert(array("i" => 1, "j" => 2, "k" => 4));
+      $this->object->insert(array("i" => 3, "j" => 1, "k" => 1));
+
+      $group = $this->object->group(array("k" => 1), 
+                                    array("count" => 0), 
+                                    new MongoCode("function(obj, prev) { prev.count++; }"),
+                                    array());
+
+      $this->assertEquals(1, $group['ok'], json_encode($group));
+
+      $this->assertEquals(2, $group['retval'][0]['count'], json_encode($group));
+      $this->assertEquals(2, $group['retval'][1]['count'], json_encode($group));
+      $this->assertEquals(1, $group['retval'][2]['count'], json_encode($group));
+      $this->assertEquals(5, $group['count'], json_encode($group));
+      $this->assertEquals(3, $group['keys'], json_encode($group));
+    }
 }
 
 class TestToIndexString extends MongoCollection {
