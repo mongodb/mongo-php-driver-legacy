@@ -39,6 +39,7 @@ PHP_METHOD(MongoId, getTimestamp);
 
 int php_mongo_id_serialize(zval*, unsigned char**, zend_uint*, zend_serialize_data* TSRMLS_DC);
 int php_mongo_id_unserialize(zval**, zend_class_entry*, const unsigned char*, zend_uint, zend_unserialize_data* TSRMLS_DC);
+int php_mongo_compare_ids(zval*, zval* TSRMLS_DC);
 
 PHP_METHOD(MongoRegex, __construct);
 PHP_METHOD(MongoRegex, __toString);

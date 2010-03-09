@@ -86,6 +86,45 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
   
         $this->assertTrue(abs($time-$id->getTimestamp()) < 1000, $time-$id->getTimestamp());
     }
+
+    public function testCompare() {
+      $id1 = new MongoId('012345678901234567890123');
+      $id2 = new MongoId('012345678901234567890123');
+      $id3 = new MongoId();
+
+      // in_array() 
+      $array = array($id1); 
+      $ok = in_array($id2, $array); 
+      $this->assertTrue($ok);
+ 
+      $ok = in_array($id3, $array); 
+      $this->assertFalse($ok);
+     
+      // array_search() 
+      $array = array($id3, $id1, $id2); 
+      $key = array_search($id2, $array); 
+      $this->assertEquals(1, $key);
+      
+      $this->assertTrue($id1 == $id2);
+      $this->assertFalse($id1 == $id3);
+
+      $ids = array();
+      for ($i=0; $i<8;$i++) {
+        $ids[] = new MongoId();
+      }
+
+      $mess = array($ids[5], $ids[2], $ids[7], $ids[1], $ids[0], $ids[3], $ids[4], $ids[7]);
+      asort($mess);
+
+      $this->assertEquals($ids[0], $mess[0]);
+      $this->assertEquals($ids[1], $mess[1]);
+      $this->assertEquals($ids[2], $mess[2]);
+      $this->assertEquals($ids[3], $mess[3]);
+      $this->assertEquals($ids[4], $mess[4]);
+      $this->assertEquals($ids[5], $mess[5]);
+      $this->assertEquals($ids[7], $mess[6]);
+      $this->assertEquals($ids[7], $mess[7]);
+    }
 }
 
 ?>

@@ -82,7 +82,8 @@ static HANDLE cursor_mutex;
 static pthread_mutex_t cursor_mutex; 
 #endif
 
-zend_object_handlers mongo_default_handlers;
+zend_object_handlers mongo_default_handlers,
+  mongo_id_handlers;
 
 /** Classes */
 zend_class_entry *mongo_ce_Mongo,
@@ -521,6 +522,10 @@ PHP_MINIT_FUNCTION(mongo) {
   // make mongo objects uncloneable
   memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
   mongo_default_handlers.clone_obj = NULL;
+
+  // add compare_objects for MongoId
+  memcpy(&mongo_id_handlers, &mongo_default_handlers, sizeof(zend_object_handlers));
+  mongo_id_handlers.compare_objects = php_mongo_compare_ids;
 
   // start random number generator
   srand(time(0));

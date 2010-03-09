@@ -37,7 +37,8 @@
 extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_Exception;
 
-extern zend_object_handlers mongo_default_handlers;
+extern zend_object_handlers mongo_default_handlers,
+  mongo_id_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -126,6 +127,30 @@ int php_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned c
   return SUCCESS;
 }
 
+int php_mongo_compare_ids(zval *o1, zval *o2 TSRMLS_DC) {
+
+  if (Z_TYPE_P(o1) == IS_OBJECT && Z_TYPE_P(o2) == IS_OBJECT &&
+      instanceof_function(Z_OBJCE_P(o1), mongo_ce_Id TSRMLS_CC) &&
+      instanceof_function(Z_OBJCE_P(o2), mongo_ce_Id TSRMLS_CC)) {
+    int i;
+
+    mongo_id *id1 = (mongo_id*)zend_object_store_get_object(o1 TSRMLS_CC);
+    mongo_id *id2 = (mongo_id*)zend_object_store_get_object(o2 TSRMLS_CC);
+
+    for (i=0; i<12; i++) {
+      if (id1->id[i] < id2->id[i]) {
+        return -1;
+      }
+      else if (id1->id[i] > id2->id[i]) {
+        return 1;
+      }
+    }
+    return 0;
+  }
+
+  return 1;
+}
+
 static void php_mongo_id_free(void *object TSRMLS_DC) {
   mongo_id *id = (mongo_id*)object;
   if (id) {
@@ -138,7 +163,26 @@ static void php_mongo_id_free(void *object TSRMLS_DC) {
 }
 
 static zend_object_value php_mongo_id_new(zend_class_entry *class_type TSRMLS_DC) {
-  php_mongo_obj_new(mongo_id);
+  zend_object_value retval;
+  mongo_id *intern;
+  zval *tmp;
+
+  intern = (mongo_id*)emalloc(sizeof(mongo_id));
+  memset(intern, 0, sizeof(mongo_id));
+
+  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
+  zend_hash_copy(intern->std.properties,
+     &class_type->default_properties,
+     (copy_ctor_func_t) zval_add_ref,
+     (void *) &tmp,
+     sizeof(zval *));
+
+  retval.handle = zend_objects_store_put(intern,
+     (zend_objects_store_dtor_t) zend_objects_destroy_object,
+     php_mongo_id_free, NULL TSRMLS_CC);
+  retval.handlers = &mongo_id_handlers;
+
+  return retval;
 }
 
 static function_entry MongoId_methods[] = {
