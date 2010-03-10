@@ -436,13 +436,17 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
      * BLOCKED BY: buildbot support for master/slave
      */
     public function testSlaveOkay() {
-        $cursor = $this->object->find()->slaveOkay()->tailable();
+        $c = $this->object->db->createCollection("foo", true, 1000);
+
+        $cursor = $c->find()->slaveOkay()->tailable();
         $cursor->getNext();
 
         $cursor->reset();
-        $cursor = $this->object->find()->slaveOkay(false)->tailable(false);
+        $cursor = $c->find()->slaveOkay(false)->tailable(false);
         $cursor->slaveOkay(true)->tailable(true);
         $cursor->getNext();
+
+        $c->drop();
     }
 
     public function testSlaveOkay2() {
