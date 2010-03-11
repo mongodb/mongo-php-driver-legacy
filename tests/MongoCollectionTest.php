@@ -152,9 +152,21 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->object->insert($x);
     }
 
+    /**
+     * @expectedException MongoException
+     */
+    public function testNoBatch1() {
+      $this->object->batchInsert(array());
+    }
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testNoBatch2() {
+      $this->object->batchInsert(array(1,2,3));
+    }
+
     public function testBatchInsert() {
-      $this->assertFalse($this->object->batchInsert(array()));
-      $this->assertFalse($this->object->batchInsert(array(1,2,3)));
       $this->assertTrue($this->object->batchInsert(array('z'=>array('foo'=>'bar'))));
 
       $a = array( array( "x" => "y"), array( "x"=> "z"), array("x"=>"foo"));

@@ -175,8 +175,6 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
     }
     
     public function testBatchInsert() {
-      $this->assertFalse($this->object->batchInsert(array()));
-      $this->assertFalse($this->object->batchInsert(array(1,2,3)));
       $this->assertTrue($this->object->batchInsert(array('z'=>(object)array('foo'=>'bar'))));
 
       $a = array( (object)array( "x" => "y"), (object)array( "x"=> "z"), (object)array("x"=>"foo"));

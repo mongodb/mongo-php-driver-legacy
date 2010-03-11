@@ -235,16 +235,16 @@ typedef struct {
   CREATE_RESPONSE_HEADER(buf, ns, 0, opcode);                    
 
 
-#define APPEND_HEADER(buf, opts) buf.pos += INT_32;     \
-  php_mongo_serialize_int(&buf, header.request_id);     \
-  php_mongo_serialize_int(&buf, header.response_to);    \
-  php_mongo_serialize_int(&buf, header.op);             \
-  php_mongo_serialize_int(&buf, opts);                                
+#define APPEND_HEADER(buf, opts) buf->pos += INT_32;     \
+  php_mongo_serialize_int(buf, header.request_id);     \
+  php_mongo_serialize_int(buf, header.response_to);    \
+  php_mongo_serialize_int(buf, header.op);             \
+  php_mongo_serialize_int(buf, opts);                                
 
 
 #define APPEND_HEADER_NS(buf, ns, opts)                         \
   APPEND_HEADER(buf, opts);                                     \
-  php_mongo_serialize_ns(&buf, ns TSRMLS_CC);
+  php_mongo_serialize_ns(buf, ns TSRMLS_CC);
 
 
 #define MONGO_CHECK_INITIALIZED(member, class_name)                     \
@@ -258,6 +258,19 @@ typedef struct {
     zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
     RETURN_STRING("", 1);                                               \
   }
+
+#define PHP_MONGO_GET_LINK(obj)                                         \
+  link = (mongo_link*)zend_object_store_get_object((obj) TSRMLS_CC);    \
+  MONGO_CHECK_INITIALIZED(link->server_set, Mongo);
+
+#define PHP_MONGO_GET_DB(obj)                                           \
+  db = (mongo_db*)zend_object_store_get_object((obj) TSRMLS_CC);        \
+  MONGO_CHECK_INITIALIZED(db->name, MongoDB);
+
+#define PHP_MONGO_GET_COLLECTION(obj)                                   \
+  c = (mongo_collection*)zend_object_store_get_object((obj) TSRMLS_CC); \
+  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+
 
 #define REPLY_HEADER_LEN 36
 

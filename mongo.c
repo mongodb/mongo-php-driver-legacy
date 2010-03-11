@@ -229,7 +229,6 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   mongo_cursor *cursor = node->cursor;
   char quickbuf[128];
   buffer buf;
-  mongo_msg_header header;
   zval temp;
 
   /* 
@@ -244,16 +243,7 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   buf.start = buf.pos;
   buf.end = buf.start + 128;
 
-  CREATE_MSG_HEADER(MonGlo(request_id)++, 0, OP_KILL_CURSORS);
-  APPEND_HEADER(buf, 0);
-  cursor->send.request_id = header.request_id;
-
-  // # of cursors
-  php_mongo_serialize_int(&buf, 1);
-  // cursor ids
-  php_mongo_serialize_long(&buf, cursor->cursor_id);
-  php_mongo_serialize_size(buf.start, &buf);
-
+  php_mongo_write_kill_cursors(&buf, cursor TSRMLS_CC);
   mongo_say(cursor->link, &buf, &temp TSRMLS_CC);
         
   /* 

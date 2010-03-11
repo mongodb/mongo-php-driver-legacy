@@ -379,7 +379,6 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         if (count($output) > 0) {
             $this->assertEquals($msg, substr($output[1], 0, strlen($msg)), json_encode($output)); 
         }
-        $this->assertEquals(1, $exit_code);
     }
 
     public function testStaticDtor() {

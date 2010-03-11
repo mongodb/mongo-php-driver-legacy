@@ -170,7 +170,6 @@ static void make_special(mongo_cursor *cursor) {
 /* {{{ MongoCursor::hasNext
  */
 PHP_METHOD(MongoCursor, hasNext) {
-  mongo_msg_header header;
   buffer buf;
   int size;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -194,16 +193,13 @@ PHP_METHOD(MongoCursor, hasNext) {
     RETURN_FALSE;
   }
 
-
   // we have to go and check with the db
   size = 34+strlen(cursor->ns);
   CREATE_BUF(buf, size);
-  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
-  cursor->send.request_id = header.request_id;
-
-  php_mongo_serialize_int(&buf, cursor->limit);
-  php_mongo_serialize_long(&buf, cursor->cursor_id);
-  php_mongo_serialize_size(buf.start, &buf);
+  if (FAILURE == php_mongo_write_get_more(&buf, cursor TSRMLS_CC)) {
+    efree(buf.start);
+    return;
+  }
 
   // fails if we're out of elems
   MAKE_STD_ZVAL(temp);
@@ -496,48 +492,37 @@ PHP_METHOD(MongoCursor, explain) {
  */
 PHP_METHOD(MongoCursor, doQuery) {
   int sent;
-  mongo_msg_header header;
   mongo_cursor *cursor;
   buffer buf;
-  zval *temp;
+  zval *errmsg;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
-  CREATE_HEADER_WITH_OPTS(buf, cursor->ns, OP_QUERY, cursor->opts);
-  cursor->send.request_id = header.request_id;
-
-  php_mongo_serialize_int(&buf, cursor->skip);
-  php_mongo_serialize_int(&buf, cursor->limit);
-
-  if (zval_to_bson(&buf, HASH_P(cursor->query), NO_PREP TSRMLS_CC) == FAILURE) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+  if (php_mongo_write_query(&buf, cursor TSRMLS_CC) == FAILURE) {
     efree(buf.start);
     return;
   }
-  if (cursor->fields && zend_hash_num_elements(HASH_P(cursor->fields)) > 0) {
-    if (zval_to_bson(&buf, HASH_P(cursor->fields), NO_PREP TSRMLS_CC) == FAILURE) {
-      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
-      efree(buf.start);
-      return;
-    }
-  }
 
-  php_mongo_serialize_size(buf.start, &buf);
+  MAKE_STD_ZVAL(errmsg);
+  ZVAL_NULL(errmsg);
 
-  MAKE_STD_ZVAL(temp);
-  ZVAL_NULL(temp);
-  sent = mongo_say(cursor->link, &buf, temp TSRMLS_CC);
-  efree(buf.start);
-  if (sent == FAILURE) {
+  if (mongo_say(cursor->link, &buf, errmsg TSRMLS_CC) == FAILURE) {
     zend_throw_exception(mongo_ce_CursorException, "couldn't send query.", 0 TSRMLS_CC);
-    zval_ptr_dtor(&temp);
+    efree(buf.start);
+    zval_ptr_dtor(&errmsg);
     return;
   }
 
-  php_mongo_get_reply(cursor, temp TSRMLS_CC);
-  zval_ptr_dtor(&temp);
+  efree(buf.start);
+
+  if (php_mongo_get_reply(cursor, errmsg TSRMLS_CC) == FAILURE) {
+    zval_ptr_dtor(&errmsg);
+    return;
+  }
+
+  zval_ptr_dtor(&errmsg);
 
   /* we've got something to kill, make a note */
   php_mongo_create_le(cursor TSRMLS_CC);

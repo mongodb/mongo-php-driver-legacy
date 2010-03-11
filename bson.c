@@ -565,6 +565,200 @@ void php_mongo_serialize_size(char *start, buffer *buf) {
   memcpy(start, &total, INT_32);
 }
 
+static int insert_helper(buffer *buf, zval *doc TSRMLS_DC) {
+  int start = buf->pos - buf->start;
+
+  int result = zval_to_bson(buf, HASH_P(doc), PREP TSRMLS_CC);
+
+  // throw exception if serialization crapped out
+  if (FAILURE == result) {
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+    return FAILURE;
+  }
+  // return if there were 0 elements
+  else if (0 == result) {
+    return FAILURE;
+  }
+
+  // throw an exception if the doc was too big
+  if(buf->pos - (buf->start + start) > MAX_OBJECT_LEN) {
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "size of BSON doc is %d bytes, max 4MB", buf->pos - (buf->start + start));
+    return FAILURE;
+  }
+  
+  php_mongo_serialize_size(buf->start + start, buf);
+
+  return SUCCESS;
+}
+
+int php_mongo_write_insert(buffer *buf, char *ns, zval *doc TSRMLS_DC) {
+  mongo_msg_header header;
+  int start = buf->pos - buf->start;
+
+  CREATE_HEADER(buf, ns, OP_INSERT);
+
+  if (FAILURE == insert_helper(buf, doc TSRMLS_CC)) {
+    return FAILURE;
+  }
+
+  php_mongo_serialize_size(buf->start + start, buf);
+
+  return SUCCESS;
+}
+
+int php_mongo_write_batch_insert(buffer *buf, char *ns, zval *docs TSRMLS_DC) {
+  int start = buf->pos - buf->start, count = 0;
+  HashPosition pointer;
+  zval **doc;
+  mongo_msg_header header;
+
+  CREATE_HEADER(buf, ns, OP_INSERT);
+
+  for(zend_hash_internal_pointer_reset_ex(HASH_P(docs), &pointer); 
+      zend_hash_get_current_data_ex(HASH_P(docs), (void**)&doc, &pointer) == SUCCESS; 
+      zend_hash_move_forward_ex(HASH_P(docs), &pointer)) {
+
+    if(IS_SCALAR_PP(doc)) {
+      continue;
+    }
+
+    if (FAILURE == insert_helper(buf, *doc TSRMLS_CC)) {
+      return FAILURE;
+    }
+
+    count++;
+  }
+
+  // if there are no elements, don't bother saving
+  if (count == 0) {
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "no documents given");
+    return FAILURE;
+  }
+
+  php_mongo_serialize_size(buf->start + start, buf);
+
+  return SUCCESS;
+}
+
+int php_mongo_write_update(buffer *buf, char *ns, int flags, zval *criteria, zval *newobj TSRMLS_DC) {
+  mongo_msg_header header;
+  int start = buf->pos - buf->start;
+
+  CREATE_HEADER(buf, ns, OP_UPDATE);
+
+  php_mongo_serialize_int(buf, flags);
+
+  if (zval_to_bson(buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE ||
+      zval_to_bson(buf, HASH_P(newobj), NO_PREP TSRMLS_CC) == FAILURE) {
+    efree(buf->start);
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+    return;
+  }
+
+  php_mongo_serialize_size(buf->start+start, buf);
+
+}
+
+int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria TSRMLS_DC) {
+  mongo_msg_header header;
+  int start = buf->pos - buf->start;
+
+  CREATE_HEADER(buf, ns, OP_DELETE);
+
+  php_mongo_serialize_int(buf, flags);
+
+  if (zval_to_bson(buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE) {
+    efree(buf->start);
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+    return FAILURE;
+  }
+
+  php_mongo_serialize_size(buf->start+start, buf);
+
+  return SUCCESS;
+}
+
+/*
+ * Creates a query string in buf. 
+ *
+ * The following fields of cursor are used:
+ *  - ns
+ *  - opts
+ *  - skip
+ *  - limit
+ *  - query
+ *  - fields
+ *
+ */
+int php_mongo_write_query(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
+  mongo_msg_header header;
+  int start = buf->pos - buf->start;
+
+  CREATE_HEADER_WITH_OPTS(buf, cursor->ns, OP_QUERY, cursor->opts);
+  cursor->send.request_id = header.request_id;
+
+  php_mongo_serialize_int(buf, cursor->skip);
+  php_mongo_serialize_int(buf, cursor->limit);
+
+  if (zval_to_bson(buf, HASH_P(cursor->query), NO_PREP TSRMLS_CC) == FAILURE) {
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+    return FAILURE;
+  }
+  if (cursor->fields && zend_hash_num_elements(HASH_P(cursor->fields)) > 0) {
+    if (zval_to_bson(buf, HASH_P(cursor->fields), NO_PREP TSRMLS_CC) == FAILURE) {
+      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+      return FAILURE;
+    }
+  }
+
+  php_mongo_serialize_size(buf->start+start, buf);
+  return SUCCESS;
+}
+
+int php_mongo_write_kill_cursors(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
+  mongo_msg_header header;
+
+  php_printf("writing kill\n");
+
+  CREATE_MSG_HEADER(MonGlo(request_id)++, 0, OP_KILL_CURSORS);
+  APPEND_HEADER(buf, 0);
+  cursor->send.request_id = header.request_id;
+
+  // # of cursors
+  php_mongo_serialize_int(buf, 1);
+  // cursor ids
+  php_mongo_serialize_long(buf, cursor->cursor_id);
+  php_mongo_serialize_size(buf->start, buf);
+
+  return SUCCESS;
+}
+
+/*
+ * Creates a GET_MORE request
+ *
+ * The following fields of cursor are used:
+ *  - ns
+ *  - recv.request_id
+ *  - limit
+ *  - cursor_id
+ */
+int php_mongo_write_get_more(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
+  mongo_msg_header header;
+  int start = buf->pos - buf->start;
+
+  php_printf("writing more\n");
+
+  CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
+  cursor->send.request_id = header.request_id;
+
+  php_mongo_serialize_int(buf, cursor->limit);
+  php_mongo_serialize_long(buf, cursor->cursor_id);
+
+  php_mongo_serialize_size(buf->start+start, buf);
+
+  return SUCCESS;
+}
+
 
 char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
   /* 
