@@ -158,6 +158,7 @@ static zval* append_getlasterror(mongo_collection *c, buffer *buf TSRMLS_DC) {
   object_init_ex(cursor_z, mongo_ce_Cursor);
 
   MAKE_STD_ZVAL(temp);
+  ZVAL_NULL(temp);
   MONGO_METHOD2(MongoCursor, __construct, temp, cursor_z, c->link, cmd_ns_z);
   zval_ptr_dtor(&temp);
 
