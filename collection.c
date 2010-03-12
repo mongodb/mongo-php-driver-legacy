@@ -132,6 +132,10 @@ PHP_METHOD(MongoCollection, validate) {
   zval_ptr_dtor(&data);
 }
 
+/*
+ * this should probably be split into two methods... right now appends the 
+ * getlasterror query to the buffer and alloc & inits the cursor zval.
+ */
 static zval* append_getlasterror(mongo_collection *c, buffer *buf TSRMLS_DC) {
   zval *cmd_ns_z, *cmd, *cursor_z, *temp;
   char *cmd_ns;
@@ -161,15 +165,14 @@ static zval* append_getlasterror(mongo_collection *c, buffer *buf TSRMLS_DC) {
 
   cursor->limit = -1;
   zval_ptr_dtor(&cursor->query);
+  // cmd is now part of cursor, so it shouldn't be dtored until cursor is
   cursor->query = cmd;
 
   // append the query
   response = php_mongo_write_query(buf, cursor TSRMLS_CC);
   zval_ptr_dtor(&cmd_ns_z);
-  zval_ptr_dtor(&cmd);
 
   if (FAILURE == response) {
-    zval_ptr_dtor(&cursor_z);
     return 0;
   }
 
@@ -181,7 +184,8 @@ static int safe_op(mongo_link *link, mongo_collection *c, buffer *buf, zval *ret
   mongo_cursor *cursor;
   int response;
 
-  if ((cursor_z = append_getlasterror(c, buf TSRMLS_CC)) == 0) {
+  if (0 == (cursor_z = append_getlasterror(c, buf TSRMLS_CC))) {
+    zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
 
@@ -204,8 +208,8 @@ static int safe_op(mongo_link *link, mongo_collection *c, buffer *buf, zval *ret
   response = php_mongo_get_reply(cursor, errmsg TSRMLS_CC);
   if (FAILURE == response) {
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 0 TSRMLS_CC);
-    zval_ptr_dtor(&cursor_z);
     zval_ptr_dtor(&errmsg);
+    zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
   zval_ptr_dtor(&errmsg);

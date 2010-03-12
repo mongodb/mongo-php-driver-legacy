@@ -579,8 +579,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
       $success = $c->insert(array("_id" => "bar"), true);
       $this->assertEquals($success['err'], null);
-      $success = $c->insert(array("_id" => "bar"), true);
-      $this->assertEquals($success['err'], "E11000 duplicate key errorindex: phpunit.c.\$_id_  dup key: { : \"bar\" }");
+      $c->insert(array("_id" => "bar"), true);
     }
 
     public function testGroupKeyf() {
