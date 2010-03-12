@@ -187,10 +187,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals((string)$db, "[x,y]");
         $db = $this->object->selectDB(4);
         $this->assertEquals((string)$db, "4");
-        $db = $this->object->selectDB("/");
-        $this->assertEquals((string)$db, "/");
-        $db = $this->object->selectDB("\"");
-        $this->assertEquals((string)$db, "\"");
     }
 
     /**

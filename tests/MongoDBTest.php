@@ -29,6 +29,27 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
       //        $this->assertEquals($this->object->start, memory_get_usage(true));
     }
 
+    /**
+     * @expectedException Exception 
+     */
+    public function testDumbDBName3() {
+      $db = new MongoDB($this->sharedFixture, "\\");
+    }
+
+    /**
+     * @expectedException Exception 
+     */
+    public function testDumbDBName4() {
+      $db = new MongoDB($this->sharedFixture, "\$");
+    }
+
+    /**
+     * @expectedException Exception
+     */
+    public function testDumbDBName5() {
+      $db = new MongoDB($this->sharedFixture, "/");
+    }
+
     public function test__toString() {
         if (preg_match($this->sharedFixture->version_51, phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");

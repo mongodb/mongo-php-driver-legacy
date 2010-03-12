@@ -66,13 +66,13 @@ PHP_METHOD(MongoDB, __construct) {
     return;
   }
 
-  if (name_len == 0 ||
-      strchr(name, ' ') ||
-      strchr(name, '.')) {
+  if (0 == name_len ||
+      0 != strchr(name, ' ') || 0 != strchr(name, '.') || 0 != strchr(name, '\\') || 
+      0 != strchr(name, '/') || 0 != strchr(name, '$')) {
 #if ZEND_MODULE_API_NO >= 20060613
-    zend_throw_exception(zend_exception_get_default(TSRMLS_C), "MongoDB::__construct(): database names must be at least one character and cannot contain ' ' or  '.'", 0 TSRMLS_CC);
+    zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name);
 #else
-    zend_throw_exception(zend_exception_get_default(), "MongoDB::__construct(): database names must be at least one character and cannot contain ' ' or  '.'", 0 TSRMLS_CC);
+    zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC "MongoDB::__construct(): invalid name %s", name);
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
     return;
   }
