@@ -72,7 +72,7 @@ PHP_METHOD(MongoDB, __construct) {
 #if ZEND_MODULE_API_NO >= 20060613
     zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name);
 #else
-    zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC "MongoDB::__construct(): invalid name %s", name);
+    zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name);
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
     return;
   }
