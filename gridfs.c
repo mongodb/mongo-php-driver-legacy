@@ -492,6 +492,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
     if (stdio_fptr->file) {
       if ((size = setup_file(stdio_fptr->file, filename TSRMLS_CC)) == FAILURE) {
+        zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error setting up file: %s", filename);
         return;
       }
       fp = stdio_fptr->file;
@@ -505,6 +506,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
     // no point in continuing if we can't open the file
     if ((size = setup_file(fp, filename TSRMLS_CC)) == FAILURE) {
+      zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error setting up file: %s", filename);
       return;
     }
   }
