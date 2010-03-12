@@ -70,6 +70,28 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($c->hasNext());
     }
 
+    public function testGetQuery()
+    {
+        $filter = array(
+            'property1' => 'value1',
+            'property2' => array('$in' => array(1,2)),
+        );
+
+        $cursor = $this->object->find($filter);
+        $query  = $cursor->getQuery();
+
+
+        foreach (array('limit', 'skip', 'query', 'ns') as $property) {
+            $this->assertTrue(isset($query[$property]));
+        }
+
+        $this->assertEquals($query['ns'], 'phpunit.c');
+        $this->assertEquals($query['limit'], 0);
+        $this->assertEquals($query['skip'], 0);
+        $this->assertEquals($query['query'], $filter);
+        $this->assertEquals(get_object_vars($query['fields']), array());
+    }
+
     public function testGetNext() {
         $c = $this->object->find();
         $this->assertEquals($c->getNext(), null);
