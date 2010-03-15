@@ -293,13 +293,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
     return;
   }
 
-  if (options && !IS_SCALAR_P(options)) {
-    zval **safe_pp;
-
-    if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp)) {
-      safe = Z_BVAL_PP(safe_pp);
-    }
-  }
+  GET_SAFE_OPTION;
 
   PHP_MONGO_GET_COLLECTION(getThis());
 

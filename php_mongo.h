@@ -285,6 +285,16 @@ typedef struct {
     zval_ptr_dtor(&temp);                                       \
   }
 
+#define GET_SAFE_OPTION                                                 \
+  if (options && !IS_SCALAR_P(options)) {                               \
+    zval **safe_pp;                                                     \
+                                                                        \
+    if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp)) { \
+      safe = Z_BVAL_PP(safe_pp);                                        \
+    }                                                                   \
+  }
+
+
 #define REPLY_HEADER_LEN 36
 
 typedef struct {

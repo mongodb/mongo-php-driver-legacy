@@ -85,7 +85,7 @@ static int setup_file(FILE *fpp, char *filename TSRMLS_DC);
 static int get_chunk_size(zval *array TSRMLS_DC);
 static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC);
 static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
-static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size TSRMLS_DC);
+static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options TSRMLS_DC);
 static void ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC);
 
 PHP_METHOD(MongoGridFS, __construct) {
@@ -333,17 +333,19 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
  */
 PHP_METHOD(MongoGridFS, storeBytes) {
   char *bytes = 0;
-  int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, pos = 0;
+  int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, pos = 0, safe = 0;
 
   zval temp;
-  zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0;
+  zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &bytes, &bytes_len, &extra) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|az", &bytes, &bytes_len, &extra, &options) == FAILURE) {
     return;
   }
+
+  GET_SAFE_OPTION;
 
   // file array object
   MAKE_STD_ZVAL(zfile);
@@ -363,8 +365,11 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   while (pos < bytes_len) {
     chunk_size = bytes_len-pos >= global_chunk_size ? global_chunk_size : bytes_len-pos;
 
-    insert_chunk(chunks, zid, chunk_num, bytes+pos, chunk_size TSRMLS_CC);
-    
+    insert_chunk(chunks, zid, chunk_num, bytes+pos, chunk_size, options TSRMLS_CC);
+    if (safe && EG(exception)) {
+      return;
+    }
+
     // increment counters
     pos += chunk_size;
     chunk_num++; 
@@ -426,7 +431,7 @@ static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC) {
  * - 1 ref to zid
  * - buf
  */
-static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size TSRMLS_DC) {
+static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options  TSRMLS_DC) {
   zval temp;
   zval *zchunk, *zbin;
 
@@ -447,8 +452,13 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
   add_assoc_zval(zchunk, "data", zbin);
 
   // insert chunk
-  MONGO_METHOD1(MongoCollection, insert, &temp, chunks, zchunk);
-    
+  if (options) {
+    MONGO_METHOD2(MongoCollection, insert, &temp, chunks, zchunk, options);
+  }
+  else {
+    MONGO_METHOD1(MongoCollection, insert, &temp, chunks, zchunk);
+  }
+
   // increment counters
   zval_ptr_dtor(&zchunk); // zid->refcount = 1
 
@@ -457,20 +467,22 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
 
 
 PHP_METHOD(MongoGridFS, storeFile) {
-  zval *fh;
+  zval *fh, *extra = 0, *options = 0;
   char *filename = 0;
-  int chunk_num = 0, chunk_size = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1;
+  int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1, safe = 0;
   FILE *fp = 0;
 
   zval temp;
-  zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0;
+  zval *zid = 0, *zfile = 0, *chunks = 0;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &fh, &extra) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|az", &fh, &extra, &options) == FAILURE) {
     return;
   }
+
+  GET_SAFE_OPTION;
 
   if (Z_TYPE_P(fh) == IS_RESOURCE) {
     zend_rsrc_list_entry *le;
@@ -536,7 +548,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
     int result = 0;
     char *buf;
 
-    chunk_size = size-pos >= global_chunk_size || fp == 0 ? global_chunk_size : size-pos;
+    int chunk_size = size-pos >= global_chunk_size || fp == 0 ? global_chunk_size : size-pos;
     buf = (char*)emalloc(chunk_size); 
 
     if (fp) {
@@ -555,8 +567,11 @@ PHP_METHOD(MongoGridFS, storeFile) {
       pos += result;
     }
 
-    insert_chunk(chunks, zid, chunk_num, buf, chunk_size TSRMLS_CC);
-    
+    insert_chunk(chunks, zid, chunk_num, buf, chunk_size, options TSRMLS_CC);
+    if (safe && EG(exception)) {
+      return;
+    }
+
     chunk_num++; 
 
     efree(buf);
