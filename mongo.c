@@ -1861,20 +1861,27 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
 
 int mongo_say(mongo_link *link, buffer *buf, zval *errmsg TSRMLS_DC) {
-  int sock, sent;
+  int sock = 0, sent = 0, total = 0, status = 1;
   sock = php_mongo_get_master(link TSRMLS_CC);
-  sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
+  total = buf->pos - buf->start;
 
-  if (sent == FAILURE) {
-    set_disconnected(link);
+  while (sent < total && status > 0) {
+    int len = 4096 < (total - sent) ? 4096 : total - sent;
 
-    if (php_mongo_check_connection(link, errmsg TSRMLS_CC) == SUCCESS) {
-      sock = php_mongo_get_master(link TSRMLS_CC);
-      sent = send(sock, (const char*)buf->start, buf->pos-buf->start, FLAGS);
+    status = send(sock, (const char*)buf->start + sent, len, FLAGS);
+
+    if (status == FAILURE) {
+      set_disconnected(link);
+
+      if (php_mongo_check_connection(link, errmsg TSRMLS_CC) == SUCCESS) {
+        sock = php_mongo_get_master(link TSRMLS_CC);
+        status = send(sock, (const char*)buf->start + sent, len, FLAGS);
+      }
+      else {
+        return FAILURE;
+      }
     }
-    else {
-      return FAILURE;
-    }
+    sent += status;
   }
 
   return sent;
