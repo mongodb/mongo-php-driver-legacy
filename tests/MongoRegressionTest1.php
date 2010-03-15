@@ -34,6 +34,14 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $c->insert(array('_id' => 1));
         $obj = $c->findOne();
         $this->assertEquals($obj['_id'], 1);
+    }
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testTinyInsert2() {
+        $c = $this->sharedFixture->selectCollection("phpunit", "c");
+        $c->drop();
 
         $c->remove();
         $c->insert(array());

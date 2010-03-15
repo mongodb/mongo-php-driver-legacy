@@ -271,6 +271,19 @@ typedef struct {
   c = (mongo_collection*)zend_object_store_get_object((obj) TSRMLS_CC); \
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
+#define SEND_MSG                                                \
+  PHP_MONGO_GET_LINK(c->link);                                  \
+  if (safe) {                                                   \
+    safe_op(link, c, &buf, return_value TSRMLS_CC);             \
+  }                                                             \
+  else {                                                        \
+    zval *temp;                                                 \
+    MAKE_STD_ZVAL(temp);                                        \
+    ZVAL_NULL(temp);                                            \
+                                                                \
+    RETVAL_BOOL(mongo_say(link, &buf, temp TSRMLS_CC)+1);       \
+    zval_ptr_dtor(&temp);                                       \
+  }
 
 #define REPLY_HEADER_LEN 36
 

@@ -458,6 +458,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
      * BLOCKED BY: buildbot support for master/slave
      */
     public function testSlaveOkay() {
+        $this->sharedFixture->foo->drop();
         $c = $this->sharedFixture->foo->createCollection("foo", true);
         $c->findOne();
         echo "created capped coll\n";

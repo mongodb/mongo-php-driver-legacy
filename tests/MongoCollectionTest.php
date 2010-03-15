@@ -96,8 +96,15 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertNotNull($obj['_id']);
       $this->assertEquals($obj['string'], 'string');
 
-      $this->assertFalse($this->object->insert(array()));
       $this->assertTrue($this->object->insert(array(1,2,3,4,5)));
+    }
+
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testInsertMsg() {
+      $this->assertFalse($this->object->insert(array()));
     }
 
     public function testInsert2() {
@@ -114,6 +121,23 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $x = $cursor->getNext();
       $this->assertTrue(array_key_exists('', $x));
       $this->assertEquals($x[''], '1');
+    }
+
+    public function testSafeInsert3() {
+      $response = $this->object->insert(array("_id" => 1), array("safe" => true));
+      $this->assertEquals(1, $response['ok'], json_encode($response));
+      $this->assertNull($response['err']);
+
+      $response = $this->object->insert(array("_id" => 1), array());
+      $this->assertTrue($response);
+    }
+
+    /**
+     * @expectedException MongoCursorException
+     */
+    public function testSafeInsert4() {
+      $this->object->insert(array("_id" => 1), array("safe" => true));
+      $this->object->insert(array("_id" => 1), array("safe" => true));
     }
 
     public function testInsertNonAssoc() {
@@ -180,6 +204,18 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals('y', $x['x']);
       $x = $cursor->getNext();
       $this->assertEquals('foo', $x['x']);
+    }
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testSafeBatchInsert() {
+      $this->object->batchInsert(array(array("_id" => 1), array("_id" => 1)), array("safe" => true));
+    }
+
+    public function testSafeBatchInsert2() {
+      $result = $this->object->batchInsert(array(array("_id" => 1), array("_id" => 1)));
+      $this->assertTrue($result);
     }
 
     public function testFind() {
@@ -266,6 +302,28 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($obj['foo'], 'baz');      
     }
 
+    /**
+     * @expectedException MongoException
+     */
+    public function testSafeUpdate1() {
+      $this->object->update(array(), array('$inc' => array("foo" => "bar")), array("upsert" => true, "safe" => true));
+    }
+
+    public function testSafeUpdate2() {
+      $result = $this->object->update(array(), array("foo" => "bar"), array("upsert" => true, "safe" => true));
+      $this->assertEquals(1, $result['ok']);
+      $this->assertNull($result['err']);
+      $this->assertEquals(1, $result['n']);
+      $this->assertFalse($result['updatedExisting']);
+
+      $result = $this->object->update(array(), array('$set' => array("foo" => "baz")), array("upsert" => true, "safe" => true));
+      $this->assertEquals(1, $result['ok']);
+      $this->assertNull($result['err']);
+      $this->assertEquals(1, $result['n']);
+      $this->assertTrue($result['updatedExisting']);
+    }
+
+
     public function testUpdateMultiple() {
       $this->object->insert(array("x" => 1));
       $this->object->insert(array("x" => 1));
@@ -326,6 +384,28 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($this->object->count(), 15);
       $this->object->remove();      
       $this->assertEquals($this->object->count(), 0);
+    }
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testSafeRemove() {
+      $indexes = $this->object->db->system->indexes;
+      $indexes->remove(array(), array("safe" => true));
+    }
+
+    public function testSafeRemove2() {
+      $result = $this->object->remove(array(), array("safe" => true));
+      $this->assertEquals(1, $result['ok']);
+      $this->assertEquals(0, $result['n']);
+      $this->assertNull($result['err']);
+
+      $this->object->batchInsert(array(array("x"=>1),array("x"=>1),array("x"=>1)));
+
+      $result = $this->object->remove(array(), array("safe" => true));
+      $this->assertEquals(1, $result['ok']);
+      $this->assertEquals(3, $result['n']);
+      $this->assertNull($result['err']);
     }
 
     public function testEnsureIndex() {
@@ -483,8 +563,21 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
       $a = $this->object->findOne();
       $this->assertEquals($a['x'], 2);
+    }
 
+    public function testSafeSave() {
+      $result = $this->object->save(array("x"=>1), array("safe" => true));
+      $this->assertEquals(1, $result['ok']);
+      $this->assertEquals(0, $result['n']);
+      $this->assertNull($result['err']);
 
+      $x = $this->object->findOne();
+
+      $result = $this->object->save($x, array("safe" => true));
+      $this->assertEquals(1, $result['ok']);
+      $this->assertEquals(1, $result['n']);
+      $this->assertTrue($result['updatedExisting']);
+      $this->assertNull($result['err']);
     }
 
     public function testGetDBRef() {
