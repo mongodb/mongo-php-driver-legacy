@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2010-02-25</date>
+ <date>2010-03-16</date>
  <time>12:00:00</time>
  <version>
-  <release>1.0.4</release>
-  <api>1.0.4</api>
+  <release>1.0.5</release>
+  <api>1.0.5</api>
  </version>
  <stability>
   <release>stable</release>
@@ -25,15 +25,14 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Authenticate with any DB (not just admin) on login: "mongodb://username:password@host/db"
-  Connection timeout option, see doc for Mongo::__construct
-  Throws exception for non-UTF8 strings
-  Added Mongo::listDBs function
-  Added MongoCursor::addOption for $min and $max queries
-  Tailable cursors fixed
-  MongoDate segfault fix
-  NEW - a bunch of mutex/threading stuff... if this doesn't work with your OS's
-  threading library, please file a bug!
+  Mutex fixes (especially on Windows) and improvements (failures throw exceptions).
+  New Cursor::info() function, which gives the query, fields, namespace, limit, and
+  skip (by Cesar Rodas)
+  Added safe option for remove, update, batch, and gridfs insert methods.
+  Added keyf option for MongoCollection::group: pass a MongoCode instance as the 
+  grouping key to use keyf.
+  Added comparison handlers for MongoId, allowing you to use, for example, in_array
+  with MongoIds.
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -75,6 +74,27 @@
     <api>stable</api>
    </stability>
    <version>
+    <release>1.0.5</release>
+    <api>1.0.5</api>
+   </version>
+   <date>2010-03-16</date>
+   <notes>
+    Mutex fixes (especially on Windows) and improvements (failures throw exceptions).
+    New Cursor::info() function, which gives the query, fields, namespace, limit, and
+    skip (by Cesar Rodas)
+    Added safe option for remove, update, batch, and gridfs insert methods.
+    Added keyf option for MongoCollection::group: pass a MongoCode instance as the 
+    grouping key to use keyf.
+    Added comparison handlers for MongoId, allowing you to use, for example, in_array
+    with MongoIds.
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
     <release>1.0.4</release>
     <api>1.0.4</api>
    </version>
@@ -91,39 +111,39 @@
     threading library, please file a bug!
    </notes>
   </release>
-   <release>
-     <stability>
-       <release>stable</release>
-       <api>stable</api>
-     </stability>
-     <version>
-       <release>1.0.3</release>
-       <api>1.0.3</api>
-     </version>
-     <date>2010-01-07</date>
-     <notes>
-      Fix Apache segfault
-      Cursor timeout
-      Faster array encoding
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>stable</release>
-       <api>stable</api>
-     </stability>
-     <version>
-       <release>1.0.2</release>
-       <api>1.0.2</api>
-     </version>
-     <date>2009-12-17</date>
-     <notes>
-      Better Mongo::__construct parameters
-      Getters for Mongo, MongoDB, and MongoCollection
-      MongoId::getTimestamp
-      MongoCollection::ensureIndex takes dropDups and safe opts
-     </notes>
-   </release>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.0.3</release>
+    <api>1.0.3</api>
+   </version>
+   <date>2010-01-07</date>
+   <notes>
+    Fix Apache segfault
+    Cursor timeout
+    Faster array encoding
+   </notes>
+  </release>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.0.2</release>
+    <api>1.0.2</api>
+   </version>
+   <date>2009-12-17</date>
+   <notes>
+    Better Mongo::__construct parameters
+    Getters for Mongo, MongoDB, and MongoCollection
+    MongoId::getTimestamp
+    MongoCollection::ensureIndex takes dropDups and safe opts
+   </notes>
+  </release>
    <release>
      <stability>
        <release>stable</release>

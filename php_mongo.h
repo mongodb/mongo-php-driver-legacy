@@ -18,7 +18,7 @@
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1
 
-#define PHP_MONGO_VERSION "1.0.4+"
+#define PHP_MONGO_VERSION "1.0.5"
 #define PHP_MONGO_EXTNAME "mongo"
 
 // resource names
