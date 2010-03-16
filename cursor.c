@@ -491,7 +491,6 @@ PHP_METHOD(MongoCursor, explain) {
 /* {{{ MongoCursor->doQuery
  */
 PHP_METHOD(MongoCursor, doQuery) {
-  int sent;
   mongo_cursor *cursor;
   buffer buf;
   zval *errmsg;

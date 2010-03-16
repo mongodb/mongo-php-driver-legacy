@@ -16,6 +16,7 @@
  */
 
 #include <php.h>
+#include <zend_exceptions.h>
 
 #ifdef WIN32
 #  include <memory.h>
@@ -652,11 +653,12 @@ int php_mongo_write_update(buffer *buf, char *ns, int flags, zval *criteria, zva
       zval_to_bson(buf, HASH_P(newobj), NO_PREP TSRMLS_CC) == FAILURE) {
     efree(buf->start);
     zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
-    return;
+    return FAILURE;
   }
 
   php_mongo_serialize_size(buf->start+start, buf);
 
+  return SUCCESS;
 }
 
 int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria TSRMLS_DC) {
