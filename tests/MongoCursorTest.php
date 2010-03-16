@@ -70,7 +70,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($c->hasNext());
     }
 
-    public function testGetQuery()
+    public function testInfo()
     {
         $filter = array(
             'property1' => 'value1',
@@ -78,7 +78,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         );
 
         $cursor = $this->object->find($filter);
-        $query  = $cursor->getQuery();
+        $query  = $cursor->info();
 
 
         foreach (array('limit', 'skip', 'query', 'ns') as $property) {

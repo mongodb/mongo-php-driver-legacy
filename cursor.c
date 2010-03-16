@@ -428,9 +428,9 @@ PHP_METHOD(MongoCursor, hint) {
 }
 /* }}} */
 
-/* {{{ MongoCursor->getQuery: Return information about the current query (by @crodas)
+/* {{{ MongoCursor->getCursorInfo: Return information about the current query (by @crodas)
  */
-PHP_METHOD(MongoCursor, getQuery)
+PHP_METHOD(MongoCursor, info)
 {
     mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
     MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
@@ -770,7 +770,7 @@ static function_entry MongoCursor_methods[] = {
   /* stand-alones */
   PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, count, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, getQuery, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, info, NULL, ZEND_ACC_PUBLIC)
 
   {NULL, NULL, NULL}
 };

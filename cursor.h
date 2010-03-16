@@ -43,6 +43,7 @@ PHP_METHOD(MongoCursor, rewind);
 PHP_METHOD(MongoCursor, valid);
 PHP_METHOD(MongoCursor, reset);
 PHP_METHOD(MongoCursor, count);
+PHP_METHOD(MongoCursor, info);
 
 #define preiteration_setup   zval *z = 0;                               \
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC); \
