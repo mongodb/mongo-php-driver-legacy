@@ -783,7 +783,7 @@ PHP_METHOD(MongoCollection, toIndexString) {
   int len = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zkeys) == FAILURE) {
-    RETURN_FALSE;
+    return;
   }
 
   if (Z_TYPE_P(zkeys) == IS_ARRAY || 
@@ -804,8 +804,12 @@ PHP_METHOD(MongoCollection, toIndexString) {
       case HASH_KEY_IS_STRING: {
         len += key_len;
 
-        convert_to_long(*data);
-        len += Z_LVAL_PP(data) == 1 ? 2 : 3;
+        if (Z_TYPE_PP(data) == IS_STRING) {
+          len += Z_STRLEN_PP(data)+1;
+        }
+        else {
+          len += Z_LVAL_PP(data) == 1 ? 2 : 3;
+        }
 
         break;
       }
@@ -844,11 +848,16 @@ PHP_METHOD(MongoCollection, toIndexString) {
       
       *(position)++ = '_';
       
-      convert_to_long(*data);
-      if (Z_LVAL_PP(data) != 1) {
-        *(position)++ = '-';
+      if (Z_TYPE_PP(data) == IS_STRING) {
+        memcpy(position, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+        position += Z_STRLEN_PP(data);
       }
-      *(position)++ = '1';
+      else {
+        if (Z_LVAL_PP(data) != 1) {
+          *(position)++ = '-';
+        }
+        *(position)++ = '1';
+      }
 
       if (key_type == HASH_KEY_IS_LONG) {
         efree(key);
