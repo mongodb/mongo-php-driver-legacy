@@ -894,7 +894,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_LONG: {
-      ZVAL_DOUBLE(value, MONGO_64((double)*((int64_t*)buf)));
+      ZVAL_DOUBLE(value, (double)MONGO_64(*((int64_t*)buf)));
       buf += INT_64;
       break;
     }
