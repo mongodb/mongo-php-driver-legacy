@@ -720,8 +720,6 @@ int php_mongo_write_query(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
 int php_mongo_write_kill_cursors(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
   mongo_msg_header header;
 
-  php_printf("writing kill\n");
-
   CREATE_MSG_HEADER(MonGlo(request_id)++, 0, OP_KILL_CURSORS);
   APPEND_HEADER(buf, 0);
   cursor->send.request_id = header.request_id;
@@ -747,8 +745,6 @@ int php_mongo_write_kill_cursors(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
 int php_mongo_write_get_more(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
   mongo_msg_header header;
   int start = buf->pos - buf->start;
-
-  php_printf("writing more\n");
 
   CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
   cursor->send.request_id = header.request_id;

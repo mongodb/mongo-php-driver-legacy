@@ -393,6 +393,18 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
         $f = new Foo2();
         $f->f();
     }
+
+    public function testGetMore() {
+      $c = $this->sharedFixture->phpunit->c;
+      
+      for($i=0; $i<500; $i++) {
+        $c->insert(array("x" => new MongoDate(), "count" => $i, "my string" => "doo dee doo"));
+      }
+
+      $cursor = $c->find();
+      foreach ($cursor as $v) {
+      }
+    }
 }
 
 class Foo2 {
