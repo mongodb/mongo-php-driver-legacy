@@ -481,6 +481,9 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertNotNull($idx);
       $this->assertEquals("phpunit.c", $idx["ns"]);
       $this->assertEquals("2d", $idx["key"]["x"]);
+
+      $cursor = $this->object->find(array("x" => array( "\$near" => array('x' => 44, 'y' => 93))));
+      $cursor->hasNext();
     }
 
     public function testDeleteIndex() {

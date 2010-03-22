@@ -25,6 +25,7 @@ PHP_METHOD(MongoCursor, getNext);
 PHP_METHOD(MongoCursor, hasNext);
 PHP_METHOD(MongoCursor, limit);
 PHP_METHOD(MongoCursor, skip);
+PHP_METHOD(MongoCursor, fields);
 PHP_METHOD(MongoCursor, slaveOkay);
 PHP_METHOD(MongoCursor, tailable);
 PHP_METHOD(MongoCursor, immortal);

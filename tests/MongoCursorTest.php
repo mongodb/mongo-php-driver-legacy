@@ -461,7 +461,6 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->sharedFixture->foo->drop();
         $c = $this->sharedFixture->foo->createCollection("foo", true);
         $c->findOne();
-        echo "created capped coll\n";
 
         $cursor = $c->find()->slaveOkay()->tailable();
         $cursor->getNext();
@@ -702,5 +701,58 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
             $this->assertGreaterThanOrEqual(15, $v['x']);
         }
     }
+
+    public function testGeoBox() {
+      $this->markTestSkipped("server bug");
+      return;
+
+      $this->object->ensureIndex(array("loc" => "2d"), array("min" => 0, "max" => 10));
+
+      for($i=1; $i<10; $i++) {
+        for ($j=1; $j<10; $j++) {
+          $this->object->insert(array("loc" => array($i, $j)));
+        }
+      }
+
+      $cursor = $this->object->find(array("loc" => array('$within' => array('$box' => array(array(4,4), array(6,6))))))->sort(array("loc" => 1));
+
+      for ($i=4; $i<7; $i++) {
+        for ($j=4; $j<7; $j++) {
+          $val = $cursor->getNext();
+          $this->assertEquals($i, $val['loc'][0]);
+          $this->assertEquals($j, $val['loc'][1]);
+        }
+      }
+    }
+      
+    public function testFields() {
+      $this->object->insert(array("x" => 1, "y" => 1));
+
+      $cursor = $this->object->find()->fields(array("x"=>1));
+      $x = $cursor->getNext();
+      $this->assertTrue(array_key_exists('x', $x));
+      $this->assertTrue(array_key_exists('_id', $x));
+      $this->assertFalse(array_key_exists('y', $x));
+
+      $cursor = $this->object->find(array(), array("y" => 1))->fields(array("x"=>1));
+      $x = $cursor->getNext();
+      $this->assertTrue(array_key_exists('x', $x));
+      $this->assertTrue(array_key_exists('_id', $x));
+      $this->assertFalse(array_key_exists('y', $x));
+      
+      $cursor = $this->object->find(array(), array("y" => 1))->fields(array("x"=>1))->fields(array("y"=>1));
+      $x = $cursor->getNext();
+      $this->assertTrue(array_key_exists('y', $x));
+      $this->assertTrue(array_key_exists('_id', $x));
+      $this->assertFalse(array_key_exists('x', $x));
+      
+      $fields = array("y" => 1);
+      $cursor = $this->object->find(array(), $fields)->fields($fields)->fields($fields);
+      $x = $cursor->getNext();
+      $this->assertTrue(array_key_exists('y', $x));
+      $this->assertTrue(array_key_exists('_id', $x));
+      $this->assertFalse(array_key_exists('x', $x));
+    }
+
 }
 ?>

@@ -274,6 +274,27 @@ PHP_METHOD(MongoCursor, skip) {
 }
 /* }}} */
 
+/* {{{ MongoCursor::fields
+ */
+PHP_METHOD(MongoCursor, fields) {
+  preiteration_setup;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
+    return;
+  }
+
+  if (IS_SCALAR_P(z)) {
+    zend_throw_exception(mongo_ce_CursorException, "cannot set fields to a scalar.", 0 TSRMLS_CC);
+    return;
+  }
+
+  zval_ptr_dtor(&cursor->fields);
+  cursor->fields = z;
+  zval_add_ref(&z);
+
+  RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
 
 /* {{{ MongoCursor::tailable
  */
@@ -745,6 +766,7 @@ static function_entry MongoCursor_methods[] = {
   /* options */
   PHP_ME(MongoCursor, limit, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, fields, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, immortal, NULL, ZEND_ACC_PUBLIC)
