@@ -164,7 +164,7 @@ static void make_special(mongo_cursor *cursor) {
   temp = cursor->query;
   MAKE_STD_ZVAL(cursor->query);
   array_init(cursor->query);
-  add_assoc_zval(cursor->query, "query", temp);
+  add_assoc_zval(cursor->query, "$query", temp);
 }
 
 /* {{{ MongoCursor::hasNext
@@ -282,9 +282,8 @@ PHP_METHOD(MongoCursor, fields) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
     return;
   }
-
   if (IS_SCALAR_P(z)) {
-    zend_throw_exception(mongo_ce_CursorException, "cannot set fields to a scalar.", 0 TSRMLS_CC);
+    zend_error(E_WARNING, "MongoCursor::fields() expects parameter 1 to be an array or object");
     return;
   }
 
@@ -418,7 +417,7 @@ PHP_METHOD(MongoCursor, sort) {
   }
 
   MAKE_STD_ZVAL(orderby);
-  ZVAL_STRING(orderby, "orderby", 1);
+  ZVAL_STRING(orderby, "$orderby", 1);
 
   MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), orderby, fields);
 
@@ -724,7 +723,7 @@ PHP_METHOD(MongoCursor, count) {
       add_assoc_zval(data, "query", cursor->query);
       zval_add_ref(&cursor->query);
     }
-    else if (zend_hash_find(HASH_P(cursor->query), "query", strlen("query")+1, (void**)&inner_query) == SUCCESS) {
+    else if (zend_hash_find(HASH_P(cursor->query), "$query", strlen("$query")+1, (void**)&inner_query) == SUCCESS) {
       add_assoc_zval(data, "query", *inner_query);
       zval_add_ref(inner_query);
     }
