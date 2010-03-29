@@ -272,8 +272,6 @@ PHP_METHOD(MongoCollection, insert) {
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a TSRMLS_CC)) {
     efree(buf.start);
-
-    zend_throw_exception(mongo_ce_Exception, "couldn't create insert msg", 0 TSRMLS_CC);
     RETURN_FALSE;
   }
 
@@ -301,8 +299,6 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), docs TSRMLS_CC) == FAILURE) {
     efree(buf.start);
-
-    zend_throw_exception(mongo_ce_Exception, "couldn't create batch insert msg", 0 TSRMLS_CC);
     return;
   }
 
@@ -400,8 +396,6 @@ PHP_METHOD(MongoCollection, update) {
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), opts, criteria, newobj TSRMLS_CC)) {
     efree(buf.start);
-
-    zend_throw_exception(mongo_ce_Exception, "couldn't create update msg", 0 TSRMLS_CC);
     return;
   }
 
@@ -456,8 +450,6 @@ PHP_METHOD(MongoCollection, remove) {
   if (FAILURE == php_mongo_write_delete(&buf, Z_STRVAL_P(c->ns), flags, criteria TSRMLS_CC)) {
     efree(buf.start);
     zval_ptr_dtor(&criteria);
-
-    zend_throw_exception(mongo_ce_Exception, "couldn't create remove msg", 0 TSRMLS_CC);
     return;
   }
 
