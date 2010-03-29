@@ -578,6 +578,7 @@ static int insert_helper(buffer *buf, zval *doc TSRMLS_DC) {
   }
   // return if there were 0 elements
   else if (0 == result) {
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "no elements in doc");
     return FAILURE;
   }
 

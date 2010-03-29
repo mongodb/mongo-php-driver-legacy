@@ -104,7 +104,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoException
      */
     public function testInsertMsg() {
-      $this->assertFalse($this->object->insert(array()));
+      $this->object->insert(array());
     }
 
     public function testInsert2() {
