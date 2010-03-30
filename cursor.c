@@ -55,7 +55,7 @@ zend_class_entry *mongo_ce_Cursor = NULL;
 /* {{{ MongoCursor->__construct
  */
 PHP_METHOD(MongoCursor, __construct) {
-  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, *slave_okay;
+  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, *slave_okay, *timeout;
   zval **data;
   mongo_cursor *cursor;
   mongo_link *link;
@@ -142,7 +142,9 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->at = 0;
   cursor->num = 0;
   cursor->special = 0;
-  cursor->timeout = 0;
+
+  timeout = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
+  cursor->timeout = Z_LVAL_P(timeout);
 
   slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
   cursor->opts = Z_BVAL_P(slave_okay) ? (1 << 2) : 0;
@@ -832,5 +834,6 @@ void mongo_init_MongoCursor(TSRMLS_D) {
   zend_class_implements(mongo_ce_Cursor TSRMLS_CC, 1, zend_ce_iterator);
 
   zend_declare_property_bool(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Cursor, "timeout", strlen("timeout"), 30000, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
 }
 

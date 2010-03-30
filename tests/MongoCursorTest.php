@@ -754,5 +754,21 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       $this->assertFalse(array_key_exists('x', $x));
     }
 
+    /**
+     * @expectedException MongoCursorTimeoutException
+     */
+    public function testStaticTimeout() {
+      MongoCursor::$timeout = 1;
+
+      for ($i=0; $i<1000; $i++) {
+        $this->object->insert(array("x" => "sdfjnaireojaerkgmdfkngkdsflngklsgntoigneorisgmsrklgd$i", "y" => $i));
+      }
+
+      $rows = $this->object->find(array('$eval' => 'r = 0; cursor = db.c.find(); while (cursor.hasNext()) { x = cursor.next(); for (i=0; i<200; i++) { if (x.name == "joe"+i) { r++; } } } return r;'));
+      foreach ($rows as $row);
+
+      MongoCursor::$timeout = 30000;
+    }
+
 }
 ?>
