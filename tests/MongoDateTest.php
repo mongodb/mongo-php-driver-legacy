@@ -20,6 +20,25 @@ class MongoDateTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(0, $d3->usec);
     }
 
+    public function testCompare() {
+      $x = array(0,1,2,3,4);
+      $y = array();
+
+      for ($i=4; $i>=0; $i--) {
+        $x[$i] = new MongoDate();
+        $y[] = $x[$i];
+        sleep(1);
+      }
+
+      sort($x);
+
+      $this->assertEquals($x[0], $y[0]);
+      $this->assertEquals($x[1], $y[1]);
+      $this->assertEquals($x[2], $y[2]);
+      $this->assertEquals($x[3], $y[3]);
+      $this->assertEquals($x[4], $y[4]);
+    }
+
 }
 
 ?>
