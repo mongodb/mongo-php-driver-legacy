@@ -319,7 +319,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
         }
       }
       else if (type == MONGO_CURSOR) {
-        if (current->cursor->cursor_id == ((mongo_cursor*)val)->cursor_id) {
+        if (current->cursor == (mongo_cursor*)val) {
           kill_cursor(current, le TSRMLS_CC);
           // only one cursor to be freed
           break;
@@ -1856,7 +1856,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   /* if no catastrophic error has happened yet, we're fine, set errmsg to null */
   ZVAL_NULL(errmsg);
 
-  return num_returned == 0 ? FAILURE : SUCCESS;
+  return SUCCESS;
 }
 
 
