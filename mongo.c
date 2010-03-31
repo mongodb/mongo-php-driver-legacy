@@ -1757,7 +1757,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       UNLOCK;
 
       ZVAL_NULL(errmsg);
-      zend_throw_exception(mongo_ce_CursorTOException, "Cursor timed out", 0 TSRMLS_CC);
+      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC, "cursor timed out: %d", cursor->timeout);
 
       return FAILURE;
     }
