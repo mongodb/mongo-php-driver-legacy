@@ -36,6 +36,7 @@
 #define BSON_REGEX 11
 #define BSON_DBREF 12
 #define BSON_CODE__D 13
+#define BSON_SYMBOL 14
 #define BSON_CODE 15
 #define BSON_INT 16
 #define BSON_TIMESTAMP 17

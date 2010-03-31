@@ -815,6 +815,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       buf += DOUBLE_64;
       break;
     }
+    case BSON_SYMBOL:
     case BSON_STRING: {
       // len includes \0
       int len = MONGO_32(*((int*)buf));
