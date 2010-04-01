@@ -176,6 +176,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   int size;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   zval *temp;
+  int64_t id;
 
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
@@ -215,6 +216,7 @@ PHP_METHOD(MongoCursor, hasNext) {
 
   efree(buf.start);
 
+  id = cursor->cursor_id;
   if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
     if (Z_TYPE_P(temp) == IS_STRING) {
       zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
@@ -227,6 +229,12 @@ PHP_METHOD(MongoCursor, hasNext) {
   }
 
   zval_ptr_dtor(&temp);
+
+  if (cursor->cursor_id == 0) {
+    cursor->cursor_id = id;
+    php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
+    cursor->cursor_id = 0;
+  }
 
   RETURN_TRUE;
 
@@ -546,7 +554,9 @@ PHP_METHOD(MongoCursor, doQuery) {
   zval_ptr_dtor(&errmsg);
 
   /* we've got something to kill, make a note */
-  php_mongo_create_le(cursor TSRMLS_CC);
+  if (cursor->cursor_id != 0) {
+    php_mongo_create_le(cursor TSRMLS_CC);
+  }
 }
 /* }}} */
 
@@ -807,7 +817,9 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
   mongo_cursor *cursor = (mongo_cursor*)object;
 
   if (cursor) {
-    php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
+    if (cursor->cursor_id != 0) {
+      php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
+    }
 
     if (cursor->current) zval_ptr_dtor(&cursor->current);
 
