@@ -30,6 +30,7 @@
 #include "bson.h"
 #include "db.h"
 #include "cursor.h"
+#include "collection.h"
 #include "mongo_types.h"
 
 // externs
@@ -698,7 +699,7 @@ PHP_METHOD(MongoCursor, reset) {
 /* }}} */
 
 PHP_METHOD(MongoCursor, count) {
-  zval *response, *data, *db_z, *coll, *query;
+  zval *db_z, *coll, *query;
   mongo_cursor *cursor;
   mongo_collection *c;
   mongo_db *db;
