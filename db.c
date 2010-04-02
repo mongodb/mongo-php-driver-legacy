@@ -437,8 +437,7 @@ PHP_METHOD(MongoDB, command) {
     return;
   }
 
-  db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(db->name, MongoDB);
+  PHP_MONGO_GET_DB(getThis());
 
   // create db.$cmd
   MAKE_STD_ZVAL(ns);

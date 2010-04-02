@@ -271,6 +271,10 @@ typedef struct {
   c = (mongo_collection*)zend_object_store_get_object((obj) TSRMLS_CC); \
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
+#define PHP_MONGO_GET_CURSOR(obj)                                       \
+  cursor = (mongo_cursor*)zend_object_store_get_object((obj) TSRMLS_CC); \
+  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+
 #define SEND_MSG                                                \
   PHP_MONGO_GET_LINK(c->link);                                  \
   if (safe) {                                                   \

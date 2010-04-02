@@ -652,15 +652,15 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
 
 PHP_METHOD(MongoCollection, count) {
   zval *response, *data, *query=0;
+  int limit = 0, skip = 0;
   zval **n;
-  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+  mongo_collection *c;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &query) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zll", &query, &limit, &skip) == FAILURE) {
     return;
   }
 
-  MAKE_STD_ZVAL(response);
+  PHP_MONGO_GET_COLLECTION(getThis());
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -669,10 +669,25 @@ PHP_METHOD(MongoCollection, count) {
     add_assoc_zval(data, "query", query);
     zval_add_ref(&query);
   }
-
+  if (limit) {
+    add_assoc_long(data, "limit", limit);
+  }
+  if (skip) {
+    add_assoc_long(data, "skip", skip);
+  }
+  
+  MAKE_STD_ZVAL(response);
+  ZVAL_NULL(response);
+  
   MONGO_CMD(response, c->parent);
 
   zval_ptr_dtor(&data);
+
+  if (EG(exception)) {
+    zval_ptr_dtor(&response);
+    return;
+  }
+  
   if (zend_hash_find(HASH_P(response), "n", 2, (void**)&n) == SUCCESS) {
     convert_to_long(*n);
     RETVAL_ZVAL(*n, 1, 0);

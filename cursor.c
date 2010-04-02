@@ -36,6 +36,7 @@
 extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_Mongo,
   *mongo_ce_DB,
+  *mongo_ce_Collection,
   *mongo_ce_Exception,
   *mongo_ce_CursorException;
 
@@ -613,8 +614,7 @@ PHP_METHOD(MongoCursor, next) {
   zval has_next;
   mongo_cursor *cursor;
 
-  cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  PHP_MONGO_GET_CURSOR(getThis());
 
   if (!cursor->started_iterating) {
     MONGO_METHOD(MongoCursor, doQuery, return_value, getThis());
@@ -698,75 +698,77 @@ PHP_METHOD(MongoCursor, reset) {
 /* }}} */
 
 PHP_METHOD(MongoCursor, count) {
-  zval *response, *data, *db;
-  zval **n;
+  zval *response, *data, *db_z, *coll, *query;
   mongo_cursor *cursor;
-  mongo_db *db_struct;
+  mongo_collection *c;
+  mongo_db *db;
   zend_bool all = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &all) == FAILURE) {
     return;
   }
 
-  cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  PHP_MONGO_GET_CURSOR(getThis());
 
   // fake a MongoDB object
-  MAKE_STD_ZVAL(db);
-  object_init_ex(db, mongo_ce_DB);
-  db_struct = (mongo_db*)zend_object_store_get_object(db TSRMLS_CC);
+  MAKE_STD_ZVAL(db_z);
+  object_init_ex(db_z, mongo_ce_DB);
+  db = (mongo_db*)zend_object_store_get_object(db_z TSRMLS_CC);
+  db->link = cursor->resource;
+  MAKE_STD_ZVAL(db->name);
+  ZVAL_STRING(db->name, estrndup(cursor->ns, strchr(cursor->ns, '.') - cursor->ns), 0);
 
-  db_struct->link = cursor->resource;
-  zval_add_ref(&cursor->resource);
-  MAKE_STD_ZVAL(db_struct->name);
-  ZVAL_STRING(db_struct->name, estrndup(cursor->ns, strchr(cursor->ns, '.') - cursor->ns), 0);
-
-  // create query
-  MAKE_STD_ZVAL(data);
-  array_init(data);
-
-  // "count" => "collectionName"
-  add_assoc_string(data, "count", strchr(cursor->ns, '.')+1, 1);
+  // fake a MongoCollection object
+  MAKE_STD_ZVAL(coll);
+  object_init_ex(coll, mongo_ce_Collection);
+  c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
+  MAKE_STD_ZVAL(c->ns);
+  ZVAL_STRING(c->ns, estrdup(cursor->ns), 0);
+  MAKE_STD_ZVAL(c->name);
+  ZVAL_STRING(c->name, estrdup(cursor->ns + (strchr(cursor->ns, '.') - cursor->ns) + 1), 0);
+  c->parent = db_z;
 
   if (cursor->query) {
-    zval **inner_query;
+    zval **inner_query = 0;
 
     if (!cursor->special) {
-      add_assoc_zval(data, "query", cursor->query);
-      zval_add_ref(&cursor->query);
+      query = cursor->query;
+      zval_add_ref(&query);
     }
     else if (zend_hash_find(HASH_P(cursor->query), "$query", strlen("$query")+1, (void**)&inner_query) == SUCCESS) {
-      add_assoc_zval(data, "query", *inner_query);
-      zval_add_ref(inner_query);
+      query = *inner_query;
+      zval_add_ref(&query);
     }
-
-    /*
-     * "all" creates a count based on what the cursor is actually going to return,
-     * including the query, sort, limit, and skip.
-     */
-    if (all) {
-      /* make the limit a hard limit */
-      add_assoc_long(data, "limit", cursor->limit);
-      add_assoc_long(data, "skip", cursor->skip);
-    }
-  }
-
-  MAKE_STD_ZVAL(response);
-  MONGO_CMD(response, db);
-
-  zval_ptr_dtor(&data);
-
-  // prep results
-  if (zend_hash_find(HASH_P(response), "n", 2, (void**)&n) == SUCCESS) {
-    convert_to_long(*n);
-    RETVAL_ZVAL(*n, 1, 0);
-    zval_ptr_dtor(&response);
   }
   else {
-    RETVAL_ZVAL(response, 0, 0);
+    MAKE_STD_ZVAL(query);
+    array_init(query);
   }
 
-  zval_ptr_dtor(&db);
+  if (all) {
+    zval limit_z, skip_z;
+
+    Z_TYPE(limit_z) = IS_LONG;
+    Z_LVAL(limit_z) = cursor->limit;
+
+    Z_TYPE(skip_z) = IS_LONG;
+    Z_LVAL(skip_z) = cursor->skip;
+
+    MONGO_METHOD3(MongoCollection, count, return_value, coll, query, &limit_z, &skip_z);
+  }
+  else {
+    MONGO_METHOD1(MongoCollection, count, return_value, coll, query);
+  }
+
+  zval_ptr_dtor(&query);
+
+  c->parent = 0;
+  zend_objects_store_del_ref(coll TSRMLS_CC);
+  zval_ptr_dtor(&coll);
+
+  db->link = 0;
+  zend_objects_store_del_ref(db_z TSRMLS_CC);
+  zval_ptr_dtor(&db_z);
 }
 
 static function_entry MongoCursor_methods[] = {
