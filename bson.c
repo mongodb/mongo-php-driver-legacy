@@ -652,7 +652,6 @@ int php_mongo_write_update(buffer *buf, char *ns, int flags, zval *criteria, zva
 
   if (zval_to_bson(buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE ||
       zval_to_bson(buf, HASH_P(newobj), NO_PREP TSRMLS_CC) == FAILURE) {
-    efree(buf->start);
     zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
     return FAILURE;
   }
@@ -671,7 +670,6 @@ int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria TSRM
   php_mongo_serialize_int(buf, flags);
 
   if (zval_to_bson(buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE) {
-    efree(buf->start);
     zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
     return FAILURE;
   }

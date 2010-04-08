@@ -115,5 +115,21 @@ class SerializationTest extends PHPUnit_Framework_TestCase
       $x = bson_encode(NULL);
       $this->assertEquals("", $x);
     }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testUpdateFree() {
+      $c = $this->sharedFixture->phpunit->c;
+      $c->update(array("foo" => "\xFE\xF0"), array("foo" => "\xFE\xF0"));
+    }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testRemoveFree() {
+      $c = $this->sharedFixture->phpunit->c;
+      $c->remove(array("foo" => "\xFE\xF0"));
+    }
 }
 ?>
