@@ -1940,7 +1940,7 @@ static void set_disconnected(mongo_link *link) {
 
 static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errmsg) {
   struct sockaddr_in addr, addr2;
-  fd_set rset, wset;
+  fd_set rset, wset, eset;
   struct timeval tval;
   int connected = FAILURE, status = FAILURE;
 
@@ -1978,7 +1978,7 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
 
   // timeout: set in ms or default of 20
   tval.tv_sec = timeout <= 0 ? 20 : timeout / 1000;
-  tval.tv_usec = (timeout % 1000) * 1000;
+  tval.tv_usec = timeout <= 0 ? 0 : (timeout % 1000) * 1000;
 
   // get addresses
   if (php_mongo_get_sockaddr(&addr, server->host, server->port, errmsg) == FAILURE) {
@@ -1999,6 +1999,8 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   FD_SET(server->socket, &rset);
   FD_ZERO(&wset);
   FD_SET(server->socket, &wset);
+  FD_ZERO(&eset);
+  FD_SET(server->socket, &eset);
 
 
   // connect
@@ -2015,9 +2017,23 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
       return FAILURE;
     }
 
-    if (select(server->socket+1, &rset, &wset, NULL, &tval) == 0) {
-      ZVAL_STRING(errmsg, strerror(errno), 1);      
-      return FAILURE;
+    while (1) {
+	if (select(server->socket+1, &rset, &wset, &eset, &tval) == 0) {
+	    ZVAL_STRING(errmsg, strerror(errno), 1);      
+	    return FAILURE;
+	}
+	//if our descriptor has an error
+	if (FD_ISSET(server->socket, &eset)) {
+	    ZVAL_STRING(errmsg, strerror(errno), 1);      
+	    return FAILURE;
+	}
+	//If our descriptor is ready break out
+	if (FD_ISSET(server->socket, &wset) || FD_ISSET(server->socket, &rset))
+	    break;
+	//Reset the array to include our descriptor
+	FD_SET(server->socket, &rset);
+	FD_SET(server->socket, &wset);
+	FD_SET(server->socket, &eset);
     }
 
     size = sizeof(addr2);

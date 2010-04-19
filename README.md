@@ -50,3 +50,6 @@ Pierre-Alain Joye
 
 Cesar Rodas
 * Created the MongoCursor::info method
+
+William Volkman
+* Made connection code check & handle error status
