@@ -79,7 +79,7 @@ static int php_mongo_do_authenticate(mongo_link*, zval* TSRMLS_DC);
 #if WIN32
 static HANDLE cursor_mutex;
 #else
-static pthread_mutex_t cursor_mutex; 
+static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER; 
 #endif
 
 zend_object_handlers mongo_default_handlers,
@@ -526,11 +526,6 @@ PHP_MINIT_FUNCTION(mongo) {
     php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
     return FAILURE;
   }
-#else
-  if (pthread_mutex_init(&cursor_mutex, NULL) != 0) {
-    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't create a mutex: %s", strerror(errno));
-    return FAILURE;
-  }
 #endif
 
   return SUCCESS;
@@ -607,12 +602,6 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
   // 0 is failure
   if (CloseHandle(cursor_mutex) == 0) {
     php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
-    return FAILURE;
-  }
-#else
-  // 0 is success
-  if (pthread_mutex_destroy(&cursor_mutex) != 0) {
-    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't destroy a mutex: %s", strerror(errno));
     return FAILURE;
   }
 #endif
