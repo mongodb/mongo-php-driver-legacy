@@ -747,15 +747,19 @@ PHP_METHOD(MongoCursor, count) {
   }
 
   if (all) {
-    zval limit_z, skip_z;
+    // these must be pointers because it makes refcounting easier
+    zval *limit_z, *skip_z;
 
-    Z_TYPE(limit_z) = IS_LONG;
-    Z_LVAL(limit_z) = cursor->limit;
+    MAKE_STD_ZVAL(limit_z);
+    MAKE_STD_ZVAL(skip_z);
 
-    Z_TYPE(skip_z) = IS_LONG;
-    Z_LVAL(skip_z) = cursor->skip;
+    ZVAL_LONG(limit_z, cursor->limit);
+    ZVAL_LONG(skip_z, cursor->skip);
 
-    MONGO_METHOD3(MongoCollection, count, return_value, coll, query, &limit_z, &skip_z);
+    MONGO_METHOD3(MongoCollection, count, return_value, coll, query, limit_z, skip_z);
+
+    zval_ptr_dtor(&limit_z);
+    zval_ptr_dtor(&skip_z);
   }
   else {
     MONGO_METHOD1(MongoCollection, count, return_value, coll, query);
