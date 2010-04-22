@@ -747,7 +747,6 @@ PHP_METHOD(MongoCursor, count) {
   }
 
   if (all) {
-    // these must be pointers because it makes refcounting easier
     zval *limit_z, *skip_z;
 
     MAKE_STD_ZVAL(limit_z);

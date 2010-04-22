@@ -651,13 +651,21 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
 }
 
 PHP_METHOD(MongoCollection, count) {
-  zval *response, *data, *query=0;
-  int limit = 0, skip = 0;
+  zval *response, *data, *query=0, *limit = 0, *skip = 0;
   zval **n;
   mongo_collection *c;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zll", &query, &limit, &skip) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zzz", &query, &limit, &skip) == FAILURE) {
     return;
+  }
+
+  if ((limit && Z_TYPE_P(limit) != IS_LONG) || 
+      (skip && Z_TYPE_P(skip) != IS_LONG)) {
+#if ZEND_MODULE_API_NO >= 20060613
+    zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoCollection::count(): limit and skip must be ints");
+#else
+    zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC, "MongoCollection::count(): limit and skip must be ints");
+#endif /* ZEND_MODULE_API_NO >= 20060613 */
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
@@ -670,10 +678,12 @@ PHP_METHOD(MongoCollection, count) {
     zval_add_ref(&query);
   }
   if (limit) {
-    add_assoc_long(data, "limit", limit);
+    add_assoc_zval(data, "limit", limit);
+    zval_add_ref(&limit);
   }
   if (skip) {
-    add_assoc_long(data, "skip", skip);
+    add_assoc_zval(data, "skip", skip);
+    zval_add_ref(&skip);
   }
   
   MAKE_STD_ZVAL(response);
