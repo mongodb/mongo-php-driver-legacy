@@ -552,6 +552,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
     MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
         
     add_assoc_zval(data, "name", key_str);
+    zval_add_ref(&key_str);
   }
 
   // MongoCollection::insert()
