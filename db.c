@@ -155,6 +155,11 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
 
   zval_ptr_dtor(&data);
 
+  if (EG(exception)) {
+    zval_ptr_dtor(&cmd_return);
+    return;
+  }
+
   if (zend_hash_find(HASH_P(cmd_return), "ok", 3, (void**)&ok) == SUCCESS &&
       Z_DVAL_PP(ok) == 1) {
     zend_hash_find(HASH_P(cmd_return), "was", 4, (void**)&ok);

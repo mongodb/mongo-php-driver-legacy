@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2010-03-24</date>
+ <date>2010-04-28</date>
  <time>12:00:00</time>
  <version>
-  <release>1.0.6</release>
-  <api>1.0.6</api>
+  <release>1.0.7</release>
+  <api>1.0.7</api>
  </version>
  <stability>
   <release>stable</release>
@@ -25,10 +25,12 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Allow MongoCollection::ensureIndex to create 2D indexes.
-  Added MongoCursor::fields().
-  Fixed for big endian machines.
-  Removed debug statements.
+  The bug fix release!  A zillion bugfixes and the new static 
+  MongoCursor::$timeout property for setting a default timeout for requests.
+  Bug fixes include count error handling, fixing double frees with BSON errors
+  and ensureIndex, a mutex fix for FreeBSD, catching socket connection errors 
+  (William Volkman), database commands propagate exceptions, and cursor killing 
+  is more efficient.
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -64,6 +66,25 @@
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.0.7</release>
+    <api>1.0.7</api>
+   </version>
+   <date>2010-04-28</date>
+   <notes>
+    The bug fix release!  A zillion bugfixes and the new static 
+    MongoCursor::$timeout property for setting a default timeout for requests.
+    Bug fixes include count error handling, fixing double frees with BSON errors
+    and ensureIndex, a mutex fix for FreeBSD, catching socket connection errors 
+    (William Volkman), database commands propagate exceptions, and cursor killing 
+    is more efficient.
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>
