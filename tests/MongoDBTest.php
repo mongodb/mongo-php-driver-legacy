@@ -176,6 +176,34 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($ns->findOne(array('name'=> new MongoRegex('/droopy/'))), null);
     }
 
+    public function testDropCollection2() {
+      $ns = $this->object->selectCollection('system.namespaces');
+
+      $this->object->x->insert(array("foo"=>"bar"));
+      $this->assertNotNull($ns->findOne(array('name'=> new MongoRegex('/.x$/'))));
+
+      $this->object->dropCollection('x');
+      $this->assertEquals($ns->findOne(array('name'=> new MongoRegex('/.x$/'))), null);
+
+      $this->object->x->insert(array("foo"=>"bar"));
+      $this->assertNotNull($ns->findOne(array('name'=> new MongoRegex('/.x$/'))));
+
+      $this->object->dropCollection($this->object->x);
+      $this->assertEquals($ns->findOne(array('name'=> new MongoRegex('/.x$/'))), null);
+
+      $mem = memory_get_usage(true);
+      for ($i=0; $i<1000; $i++) {
+        $this->object->dropCollection("form");
+      }
+      $this->assertEquals($mem, memory_get_usage(true));
+
+      $mem = memory_get_usage(true);
+      for ($i=0; $i<1000; $i++) {
+        $this->object->dropCollection($this->object->form);
+      }
+      $this->assertEquals($mem, memory_get_usage(true));
+    }
+
     public function testListCollections() {
         $ns = $this->object->selectCollection('system.namespaces');
 
