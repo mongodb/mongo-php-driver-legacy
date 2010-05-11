@@ -713,7 +713,7 @@ PHP_METHOD(MongoCollection, save) {
   zval *a, *options = 0;
   zval **id;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &a, &options) == FAILURE) {
     return;
   }
   if (IS_SCALAR_P(a) || (options && IS_SCALAR_P(options))) {
@@ -730,20 +730,17 @@ PHP_METHOD(MongoCollection, save) {
   }
 
   if (zend_hash_find(HASH_P(a), "_id", 4, (void**)&id) == SUCCESS) {
-    zval *zupsert, *criteria;
+    zval *criteria;
 
     MAKE_STD_ZVAL(criteria);
     array_init(criteria);
     add_assoc_zval(criteria, "_id", *id);
     zval_add_ref(id);
 
-    MAKE_STD_ZVAL(zupsert);
-    ZVAL_BOOL(zupsert, 1);
-    zend_hash_add(HASH_P(options), "upsert", strlen("upsert")+1, &zupsert, sizeof(zval*), NULL);
+    add_assoc_bool(options, "upsert", 1);
 
     MONGO_METHOD3(MongoCollection, update, return_value, getThis(), criteria, a, options);
 
-    zval_ptr_dtor(&zupsert);
     zval_ptr_dtor(&criteria);
     zval_ptr_dtor(&options);
     return;
