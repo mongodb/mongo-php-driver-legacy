@@ -90,7 +90,7 @@ PHP_METHOD(MongoCursor, __construct) {
   zval_add_ref(&zlink);
 
   // db connection resource
-  link = (mongo_link*)zend_object_store_get_object(zlink TSRMLS_CC);
+  PHP_MONGO_GET_LINK(zlink);
   cursor->link = link;
 
   // change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1}
@@ -527,8 +527,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   buffer buf;
   zval *errmsg;
 
-  cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  PHP_MONGO_GET_CURSOR(getThis());
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (php_mongo_write_query(&buf, cursor TSRMLS_CC) == FAILURE) {
@@ -619,6 +618,9 @@ PHP_METHOD(MongoCursor, next) {
 
   if (!cursor->started_iterating) {
     MONGO_METHOD(MongoCursor, doQuery, return_value, getThis());
+    if (EG(exception)) {
+      return;
+    }
     cursor->started_iterating = 1;
   }
 
@@ -630,6 +632,9 @@ PHP_METHOD(MongoCursor, next) {
 
   // check for results
   MONGO_METHOD(MongoCursor, hasNext, &has_next, getThis());
+  if (EG(exception)) {
+    return;
+  }
   if (!Z_BVAL(has_next)) {
     // we're out of results
     RETURN_NULL();
