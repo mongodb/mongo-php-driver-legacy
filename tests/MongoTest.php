@@ -459,6 +459,23 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $m = new Mongo("localhost:27017/");
       $m = new Mongo("localhost:27017,localhost:27019/");
     }
+
+    /*
+     * regression
+     */
+    public function testGetter() {
+      $db = $this->object->selectDB('db');
+      $this->assertEquals('db', "$db");
+      $db = $this->object->selectDB($db);
+      $this->assertEquals('db', "$db");
+    }
+
+    public function testGetter2() {
+      $db = $this->object->__get('db');
+      $this->assertEquals('db', "$db");
+      $db = $this->object->__get($db);
+      $this->assertEquals('db', "$db");
+    }
 }
 
 class StaticFunctionTest {

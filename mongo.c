@@ -1278,15 +1278,21 @@ PHP_METHOD(Mongo, __toString) {
 /* {{{ Mongo->selectDB()
  */
 PHP_METHOD(Mongo, selectDB) {
-  zval temp;
-  zval *db;
+  zval temp, *name;
+  char *db;
+  int db_len;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &db) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &db, &db_len) == FAILURE) {
     return;
   }
 
+  MAKE_STD_ZVAL(name);
+  ZVAL_STRING(name, db, 1);
+
   object_init_ex(return_value, mongo_ce_DB);
-  MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), db);
+  MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), name);
+
+  zval_ptr_dtor(&name);
 }
 /* }}} */
 
