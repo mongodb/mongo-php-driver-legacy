@@ -162,6 +162,10 @@ static zval* append_getlasterror(mongo_collection *c, buffer *buf TSRMLS_DC) {
   ZVAL_NULL(temp);
   MONGO_METHOD2(MongoCursor, __construct, temp, cursor_z, c->link, cmd_ns_z);
   zval_ptr_dtor(&temp);
+  if (EG(exception)) {
+    zval_ptr_dtor(&cmd_ns_z);
+    return 0;
+  }
 
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
 
@@ -343,6 +347,7 @@ PHP_METHOD(MongoCollection, findOne) {
 
   MAKE_STD_ZVAL(cursor);
   MONGO_METHOD_BASE(MongoCollection, find)(ZEND_NUM_ARGS(), cursor, NULL, getThis(), 0 TSRMLS_CC);
+  PHP_MONGO_CHECK_EXCEPTION1(&cursor);
 
   ZVAL_LONG(limit, -1);
   MONGO_METHOD1(MongoCursor, limit, cursor, cursor, limit);
@@ -496,6 +501,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
 
   MAKE_STD_ZVAL(collection);
   MONGO_METHOD1(MongoDB, selectCollection, collection, db, system_indexes);
+  PHP_MONGO_CHECK_EXCEPTION3(&keys, &system_indexes, &collection);
 
   // set up data
   MAKE_STD_ZVAL(data);
@@ -585,8 +591,7 @@ PHP_METHOD(MongoCollection, deleteIndex) {
   MAKE_STD_ZVAL(key_str);
   MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
 
-  c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+  PHP_MONGO_GET_COLLECTION(getThis());
 
   MAKE_STD_ZVAL(data);
   array_init(data);
@@ -626,6 +631,7 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
   ZVAL_STRING(i_str, "system.indexes", 1);
   MONGO_METHOD1(MongoDB, selectCollection, collection, c->parent, i_str);
   zval_ptr_dtor(&i_str);
+  PHP_MONGO_CHECK_EXCEPTION1(&collection);
 
   MAKE_STD_ZVAL(query);
   array_init(query);
@@ -633,6 +639,7 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
 
   MAKE_STD_ZVAL(cursor);
   MONGO_METHOD1(MongoCollection, find, cursor, collection, query);
+  PHP_MONGO_CHECK_EXCEPTION3(&collection, &query, &cursor);
 
   zval_ptr_dtor(&query);
   zval_ptr_dtor(&collection);
@@ -641,11 +648,13 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
 
   MAKE_STD_ZVAL(next);
   MONGO_METHOD(MongoCursor, getNext, next, cursor);
+  PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
   while (Z_TYPE_P(next) != IS_NULL) {
     add_next_index_zval(return_value, next);
 
     MAKE_STD_ZVAL(next);
     MONGO_METHOD(MongoCursor, getNext, next, cursor);
+    PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
   }
   zval_ptr_dtor(&next);
   zval_ptr_dtor(&cursor);
