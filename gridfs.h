@@ -26,6 +26,9 @@ PHP_METHOD(MongoGridFS, findOne);
 PHP_METHOD(MongoGridFS, remove);
 PHP_METHOD(MongoGridFS, storeUpload);
 PHP_METHOD(MongoGridFS, storeBytes);
+PHP_METHOD(MongoGridFS, get);
+PHP_METHOD(MongoGridFS, put);
+PHP_METHOD(MongoGridFS, delete);
 
 PHP_METHOD(MongoGridFSFile, __construct);
 PHP_METHOD(MongoGridFSFile, getFilename);

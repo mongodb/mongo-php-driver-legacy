@@ -248,6 +248,36 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(1, $x['n']);
       $this->assertNull($x['err']);
     }
+
+    public function testPut() {
+      $filename = 'tests/Formelsamling.pdf';
+      $id = $this->object->put($filename);
+
+      $db = $this->object->db;
+      $files = $db->fs->files;
+
+      $file = $files->findOne(array("_id" => $id));
+      $this->assertEquals($id, $file['_id']);
+      $this->assertEquals($filename, $file['filename']);
+    }
+
+    public function testGet() {
+      $filename = 'tests/Formelsamling.pdf';
+      $id = $this->object->put($filename);
+
+      $file = $this->object->get($id);
+      $this->assertEquals($id, $file->file['_id']);
+      $this->assertEquals($filename, $file->file['filename']);
+    }
+
+    public function testDelete() {
+      $filename = 'tests/Formelsamling.pdf';
+      $id = $this->object->put($filename);
+
+      $this->object->delete($id);
+      $file = $this->object->get($id);
+      $this->assertNull($file);
+    }
 }
 
 ?>

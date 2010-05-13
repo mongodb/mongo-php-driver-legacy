@@ -754,6 +754,47 @@ PHP_METHOD(MongoGridFS, storeUpload) {
   zval_ptr_dtor(&extra);
 }
 
+/*
+ * New GridFS API
+ */
+
+PHP_METHOD(MongoGridFS, delete) {
+  zval *id, *criteria;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O", &id, mongo_ce_Id) == FAILURE) {
+    return;
+  }
+
+  MAKE_STD_ZVAL(criteria);
+  array_init(criteria);
+  add_assoc_zval(criteria, "_id", id);
+  zval_add_ref(&id);
+
+  MONGO_METHOD1(MongoGridFS, remove, return_value, getThis(), criteria);
+
+  zval_ptr_dtor(&criteria);
+}
+
+PHP_METHOD(MongoGridFS, get) {
+  zval *id, *criteria;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O", &id, mongo_ce_Id) == FAILURE) {
+    return;
+  }
+
+  MAKE_STD_ZVAL(criteria);
+  array_init(criteria);
+  add_assoc_zval(criteria, "_id", id);
+  zval_add_ref(&id);
+
+  MONGO_METHOD1(MongoGridFS, findOne, return_value, getThis(), criteria);
+
+  zval_ptr_dtor(&criteria);
+}
+
+PHP_METHOD(MongoGridFS, put) {
+  MONGO_METHOD_BASE(MongoGridFS, storeFile)(ZEND_NUM_ARGS(), return_value, NULL, getThis(), 0 TSRMLS_CC);
+}
 
 static function_entry MongoGridFS_methods[] = {
   PHP_ME(MongoGridFS, __construct, NULL, ZEND_ACC_PUBLIC)
@@ -764,6 +805,9 @@ static function_entry MongoGridFS_methods[] = {
   PHP_ME(MongoGridFS, findOne, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, remove, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, storeUpload, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFS, delete, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFS, get, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFS, put, NULL, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
 
