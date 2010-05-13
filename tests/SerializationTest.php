@@ -158,5 +158,13 @@ class SerializationTest extends PHPUnit_Framework_TestCase
       $c = $this->sharedFixture->phpunit->c;
       $c->insert(array("x" => $cls));
     }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testDots() {
+      $c = $this->sharedFixture->phpunit->c;
+      $c->insert(array("x.y" => 'yz'));
+    }
 }
 ?>
