@@ -344,6 +344,17 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertNotNull($err['err']);
         $this->assertEquals($err['n'], 0);
         $this->assertEquals($err['ok'], 1);
-    }    
+    }
+
+    public function testW() {
+      $this->assertEquals(1, $this->object->w);
+      $this->assertEquals(10000, $this->object->wtimeout);
+
+      $this->object->w = 4;
+      $this->object->wtimeout = 60;
+ 
+      $this->assertEquals(4, $this->object->w);
+      $this->assertEquals(60, $this->object->wtimeout);
+   }
 }
 ?>

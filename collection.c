@@ -54,7 +54,7 @@ ZEND_END_ARG_INFO()
 
 
 PHP_METHOD(MongoCollection, __construct) {
-  zval *parent, *name, *zns;
+  zval *parent, *name, *zns, *w, *wtimeout;
   mongo_collection *c;
   mongo_db *db;
   char *ns;
@@ -82,6 +82,11 @@ PHP_METHOD(MongoCollection, __construct) {
   MAKE_STD_ZVAL(zns);
   ZVAL_STRING(zns, ns, 0);
   c->ns = zns;
+
+  w = zend_read_property(mongo_ce_DB, parent, "w", strlen("w"), NOISY TSRMLS_CC);
+  zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_LVAL_P(w) TSRMLS_CC);
+  wtimeout = zend_read_property(mongo_ce_DB, parent, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
+  zend_update_property_long(mongo_ce_Collection, getThis(), "wtimeout", strlen("wtimeout"), Z_LVAL_P(wtimeout) TSRMLS_CC);
 }
 
 PHP_METHOD(MongoCollection, __toString) {
@@ -137,10 +142,11 @@ PHP_METHOD(MongoCollection, validate) {
  * this should probably be split into two methods... right now appends the 
  * getlasterror query to the buffer and alloc & inits the cursor zval.
  */
-static zval* append_getlasterror(mongo_collection *c, buffer *buf TSRMLS_DC) {
-  zval *cmd_ns_z, *cmd, *cursor_z, *temp;
+static zval* append_getlasterror(zval *coll, buffer *buf TSRMLS_DC) {
+  zval *cmd_ns_z, *cmd, *w, *cursor_z, *temp;
   char *cmd_ns;
   mongo_cursor *cursor;
+  mongo_collection *c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
   mongo_db *db = (mongo_db*)zend_object_store_get_object(c->parent TSRMLS_CC);
   int response;
 
@@ -153,6 +159,16 @@ static zval* append_getlasterror(mongo_collection *c, buffer *buf TSRMLS_DC) {
   MAKE_STD_ZVAL(cmd);
   array_init(cmd);
   add_assoc_long(cmd, "getlasterror", 1);
+
+  w = zend_read_property(mongo_ce_Collection, coll, "w", strlen("w"), NOISY TSRMLS_CC);
+  if (Z_LVAL_P(w) > 1) {
+    zval *wtimeout;
+
+    add_assoc_long(cmd, "w", Z_LVAL_P(w)); 
+
+    wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
+    add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
+  }
 
   // get cursor
   MAKE_STD_ZVAL(cursor_z);
@@ -185,12 +201,12 @@ static zval* append_getlasterror(mongo_collection *c, buffer *buf TSRMLS_DC) {
   return cursor_z;
 }
 
-static int safe_op(mongo_link *link, mongo_collection *c, buffer *buf, zval *return_value TSRMLS_DC) {
-  zval *cursor_z, *errmsg, **err;
+static int safe_op(mongo_link *link, zval *coll, buffer *buf, zval *return_value TSRMLS_DC) {
+  zval *cursor_z, *w, *errmsg, **err;
   mongo_cursor *cursor;
   int response;
 
-  if (0 == (cursor_z = append_getlasterror(c, buf TSRMLS_CC))) {
+  if (0 == (cursor_z = append_getlasterror(coll, buf TSRMLS_CC))) {
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
@@ -231,9 +247,19 @@ static int safe_op(mongo_link *link, mongo_collection *c, buffer *buf, zval *ret
    * this isn't the same as checking for $err in cursor.c, as this isn't a query
    * error but just the status.
    */
-  zend_hash_find(Z_ARRVAL_P(return_value), "err", strlen("err")+1, (void**)&err);
-  if (Z_TYPE_PP(err) == IS_STRING) {
+  if (zend_hash_find(Z_ARRVAL_P(return_value), "err", strlen("err")+1, (void**)&err) == SUCCESS &&
+      Z_TYPE_PP(err) == IS_STRING) {
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 0 TSRMLS_CC);
+    return FAILURE;
+  }
+  // w timeout
+  if (zend_hash_find(Z_ARRVAL_P(return_value), "errmsg", strlen("errmsg")+1, (void**)&err) == SUCCESS &&
+      Z_TYPE_PP(err) == IS_STRING) {
+    zval **code;
+    int status = zend_hash_find(Z_ARRVAL_P(return_value), "n", strlen("n")+1, (void**)&code);
+
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 
+                         (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC);
     return FAILURE;
   }
 
@@ -1084,4 +1110,7 @@ void mongo_init_MongoCollection(TSRMLS_D) {
   INIT_CLASS_ENTRY(ce, "MongoCollection", MongoCollection_methods);
   ce.create_object = php_mongo_collection_new;
   mongo_ce_Collection = zend_register_internal_class(&ce TSRMLS_CC);
+
+  zend_declare_property_long(mongo_ce_Collection, "w", strlen("w"), 1, ZEND_ACC_PUBLIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Collection, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_TIMEOUT, ZEND_ACC_PUBLIC TSRMLS_CC);
 }

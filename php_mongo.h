@@ -55,6 +55,8 @@
 #define DEFAULT_CHUNK_SIZE (256*1024)
 #define INVALID_STRING_LEN(len) (len < 0 || len > MAX_RESPONSE_LEN)
 
+#define PHP_MONGO_DEFAULT_TIMEOUT 10000
+
 // if _id field should be added
 #define PREP 1
 #define NO_PREP 0
@@ -313,7 +315,7 @@ typedef struct {
 #define SEND_MSG                                                \
   PHP_MONGO_GET_LINK(c->link);                                  \
   if (safe) {                                                   \
-    safe_op(link, c, &buf, return_value TSRMLS_CC);             \
+    safe_op(link, getThis(), &buf, return_value TSRMLS_CC);     \
   }                                                             \
   else {                                                        \
     zval *temp;                                                 \

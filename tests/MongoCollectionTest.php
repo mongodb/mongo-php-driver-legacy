@@ -789,6 +789,55 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(5, $group['count'], json_encode($group));
       $this->assertEquals(3, $group['keys'], json_encode($group));
     }
+
+    public function testW() {
+      $this->assertEquals(1, $this->object->w);
+      $this->assertEquals(10000, $this->object->wtimeout);
+
+      $this->object->w = 4;
+      $this->object->wtimeout = 60;
+ 
+      $this->assertEquals(4, $this->object->w);
+      $this->assertEquals(60, $this->object->wtimeout);
+    }
+
+    public function testWInherit() {
+      $db = $this->object->db;
+
+      $db->w = 4;
+      $db->wtimeout = 60;
+
+      $c = $db->foo;
+
+      $this->assertEquals(4, $c->w);
+      $this->assertEquals(60, $c->wtimeout);
+    }
+
+    /**
+     * @expectedException MongoCursorException 
+     */
+    public function testSafeW() {
+      $this->object->w = 4;
+      $this->object->wtimeout = 10;
+
+      $this->object->insert(array("x" => 1), array("safe" => true));
+    }
+
+    public function testWException() {
+      $this->object->w = 4;
+      $this->object->wtimeout = 10;
+
+      try {
+        $this->object->insert(array("x" => 1), array("safe" => true));
+      }
+      catch(MongoCursorException $e) {
+        $msg = $e->getMessage();
+        $code = $e->getCode();
+      }
+
+      $this->assertEquals('timed out waiting for slaves', $msg);
+      $this->assertEquals(0, $code);
+    }
 }
 
 class TestToIndexString extends MongoCollection {
