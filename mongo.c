@@ -1301,13 +1301,20 @@ PHP_METHOD(Mongo, selectDB) {
  */
 PHP_METHOD(Mongo, __get) {
   zval *name;
+  char *str;
+  int str_len;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &name) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
     return;
   }
 
+  MAKE_STD_ZVAL(name);
+  ZVAL_STRING(name, str, 1);
+
   // select this db
   MONGO_METHOD1(Mongo, selectDB, return_value, getThis(), name);
+
+  zval_ptr_dtor(&name);
 }
 /* }}} */
 
