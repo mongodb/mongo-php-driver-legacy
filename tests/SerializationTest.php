@@ -131,5 +131,32 @@ class SerializationTest extends PHPUnit_Framework_TestCase
       $c = $this->sharedFixture->phpunit->c;
       $c->remove(array("foo" => "\xFE\xF0"));
     }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testIdUTF8() {
+      $c = $this->sharedFixture->phpunit->c;
+      $c->insert(array("_id" => "\xFE\xF0"));
+    }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testCodeUTF8() {
+      $code = new MongoCode("return 4;", array("x" => "\xFE\xF0"));
+      $c = $this->sharedFixture->phpunit->c;
+      $c->insert(array("x" => $code));
+    }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testClassUTF8() {
+      $cls = new StdClass;
+      $cls->x = "\xFE\xF0";
+      $c = $this->sharedFixture->phpunit->c;
+      $c->insert(array("x" => $cls));
+    }
 }
 ?>

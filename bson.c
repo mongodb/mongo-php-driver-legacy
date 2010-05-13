@@ -68,6 +68,9 @@ static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
   }
 
   php_mongo_serialize_element("_id", data, buf, 0 TSRMLS_CC);
+  if (EG(exception)) {
+    return FAILURE;
+  }
 
   return SUCCESS;
 }
@@ -77,9 +80,6 @@ static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC) {
 int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC) {
   uint start;
   int num = 0;
-
-  // clear the error message... should work with nesting
-  MonGlo(errmsg) = 0;
 
   // check buf size
   if(BUF_REMAINING <= 5) {
@@ -108,7 +108,7 @@ int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC) {
 
   php_mongo_serialize_null(buf);
   php_mongo_serialize_size(buf->start+start, buf);
-  return MonGlo(errmsg) ? -1 : num;
+  return EG(exception) ? FAILURE : num;
 }
 
 #if ZEND_MODULE_API_NO >= 20090115
@@ -195,7 +195,7 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
 
     // if this is not a valid string, stop
     if (MonGlo(utf8) && !is_utf8(Z_STRVAL_PP(data), Z_STRLEN_PP(data))) {
-      MonGlo(errmsg) = Z_STRVAL_PP(data);
+      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", Z_STRVAL_PP(data));
       return ZEND_HASH_APPLY_STOP;
     }
 
@@ -214,6 +214,9 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
     //serialize
     php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
     num = zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
+    if (EG(exception)) {
+      return ZEND_HASH_APPLY_STOP;
+    }
 
     // now go back and set the type bit
     //php_mongo_set_type(buf, BSON_ARRAY);
@@ -259,6 +262,9 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
       php_mongo_set_type(buf, BSON_CODE);
       php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
       php_mongo_serialize_code(buf, *data TSRMLS_CC);
+      if (EG(exception)) {
+        return ZEND_HASH_APPLY_STOP;
+      }
     }
     // MongoBin
     else if (clazz == mongo_ce_BinData) {
@@ -289,6 +295,9 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
       php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
 
       zval_to_bson(buf, hash, NO_PREP TSRMLS_CC);
+      if (EG(exception)) {
+        return ZEND_HASH_APPLY_STOP;
+      }
     } 
     break;
   }
@@ -366,7 +375,10 @@ void php_mongo_serialize_code(buffer *buf, zval *code TSRMLS_DC) {
   // scope
   zid = zend_read_property(mongo_ce_Code, code, "scope", 5, NOISY TSRMLS_CC);
   zval_to_bson(buf, HASH_P(zid), NO_PREP TSRMLS_CC);
-  
+  if (EG(exception)) {
+    return;
+  }
+
   // get total size
   php_mongo_serialize_size(buf->start+start, buf);
 }
@@ -572,8 +584,7 @@ static int insert_helper(buffer *buf, zval *doc TSRMLS_DC) {
   int result = zval_to_bson(buf, HASH_P(doc), PREP TSRMLS_CC);
 
   // throw exception if serialization crapped out
-  if (FAILURE == result) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+  if (EG(exception) || FAILURE == result) {
     return FAILURE;
   }
   // return if there were 0 elements
@@ -651,8 +662,9 @@ int php_mongo_write_update(buffer *buf, char *ns, int flags, zval *criteria, zva
   php_mongo_serialize_int(buf, flags);
 
   if (zval_to_bson(buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE ||
-      zval_to_bson(buf, HASH_P(newobj), NO_PREP TSRMLS_CC) == FAILURE) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+      EG(exception) ||
+      zval_to_bson(buf, HASH_P(newobj), NO_PREP TSRMLS_CC) == FAILURE ||
+      EG(exception)) {
     return FAILURE;
   }
 
@@ -669,8 +681,8 @@ int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria TSRM
 
   php_mongo_serialize_int(buf, flags);
 
-  if (zval_to_bson(buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+  if (zval_to_bson(buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE ||
+      EG(exception)) {
     return FAILURE;
   }
 
@@ -701,13 +713,13 @@ int php_mongo_write_query(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
   php_mongo_serialize_int(buf, cursor->skip);
   php_mongo_serialize_int(buf, cursor->limit);
 
-  if (zval_to_bson(buf, HASH_P(cursor->query), NO_PREP TSRMLS_CC) == FAILURE) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+  if (zval_to_bson(buf, HASH_P(cursor->query), NO_PREP TSRMLS_CC) == FAILURE ||
+      EG(exception)) {
     return FAILURE;
   }
   if (cursor->fields && zend_hash_num_elements(HASH_P(cursor->fields)) > 0) {
-    if (zval_to_bson(buf, HASH_P(cursor->fields), NO_PREP TSRMLS_CC) == FAILURE) {
-      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", MonGlo(errmsg));
+    if (zval_to_bson(buf, HASH_P(cursor->fields), NO_PREP TSRMLS_CC) == FAILURE ||
+        EG(exception)) {
       return FAILURE;
     }
   }

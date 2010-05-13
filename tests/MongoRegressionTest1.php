@@ -405,6 +405,13 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
       foreach ($cursor as $v) {
       }
     }
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testNonUTF8Embed() {
+      $this->sharedFixture->phpunit->c->insert(array('x'=>array("y" => "\xFF"), "y" => array()));
+    }
 }
 
 class Foo2 {
