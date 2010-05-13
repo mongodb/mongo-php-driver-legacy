@@ -125,6 +125,22 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($ids[7], $mess[6]);
       $this->assertEquals($ids[7], $mess[7]);
     }
+
+    public function setState() {
+      $c = $this->sharedFixture->phpunit->c;
+      $c->drop();
+
+      $c->insert(array('x'=>1));
+
+      $cursor = $c->find();
+      eval('$x='.var_export(iterator_to_array($cursor), true).';');
+
+      foreach ($x as $k => $v) {
+        $this->assertEquals(24, strlen($k));
+        $this->assertEquals("00000000000000000000000", $v['_id']."");
+        $this->assertTrue($v['_id'] instanceof MongoId);
+      }
+    }
 }
 
 ?>
