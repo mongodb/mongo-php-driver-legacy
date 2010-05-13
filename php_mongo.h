@@ -275,6 +275,35 @@ typedef struct {
   cursor = (mongo_cursor*)zend_object_store_get_object((obj) TSRMLS_CC); \
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
+#define PHP_MONGO_CHECK_EXCEPTION() if (EG(exception)) { return; }
+#define PHP_MONGO_CHECK_EXCEPTION1(arg1)                        \
+  if (EG(exception)) {                                          \
+    zval_ptr_dtor(arg1);                                        \
+    return;                                                     \
+  }
+#define PHP_MONGO_CHECK_EXCEPTION2(arg1, arg2)                  \
+  if (EG(exception)) {                                          \
+    zval_ptr_dtor(arg1);                                        \
+    zval_ptr_dtor(arg2);                                        \
+    return;                                                     \
+  }
+#define PHP_MONGO_CHECK_EXCEPTION3(arg1, arg2, arg3)            \
+  if (EG(exception)) {                                          \
+    zval_ptr_dtor(arg1);                                        \
+    zval_ptr_dtor(arg2);                                        \
+    zval_ptr_dtor(arg3);                                        \
+    return;                                                     \
+  }
+#define PHP_MONGO_CHECK_EXCEPTION4(arg1, arg2, arg3, arg4)      \
+  if (EG(exception)) {                                          \
+    zval_ptr_dtor(arg1);                                        \
+    zval_ptr_dtor(arg2);                                        \
+    zval_ptr_dtor(arg3);                                        \
+    zval_ptr_dtor(arg4);                                        \
+    return;                                                     \
+  }
+
+
 #define SEND_MSG                                                \
   PHP_MONGO_GET_LINK(c->link);                                  \
   if (safe) {                                                   \

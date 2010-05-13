@@ -646,11 +646,9 @@ PHP_METHOD(MongoGridFS, findOne) {
 
 
 PHP_METHOD(MongoGridFS, remove) {
-  zval zjust_one;
-  zval *criteria = 0, *zfields, *zcursor, *chunks, *next;
-  zend_bool just_one = 0;
+  zval *criteria = 0, *options = 0, *zfields, *zcursor, *chunks, *next;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zb", &criteria, &just_one) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|za", &criteria, &options) == FAILURE) {
     return;
   }
 
@@ -662,6 +660,14 @@ PHP_METHOD(MongoGridFS, remove) {
     zval_add_ref(&criteria);
   }
 
+  if (!options) {
+    MAKE_STD_ZVAL(options);
+    array_init(options);
+  }
+  else {
+    zval_add_ref(&options);
+  }
+
   // { _id : 1 }
   MAKE_STD_ZVAL(zfields);
   array_init(zfields);
@@ -670,17 +676,18 @@ PHP_METHOD(MongoGridFS, remove) {
   // cursor = db.fs.files.find(criteria, {_id : 1});
   MAKE_STD_ZVAL(zcursor);
   MONGO_METHOD2(MongoCollection, find, zcursor, getThis(), criteria, zfields);
-
   zval_ptr_dtor(&zfields);
+  PHP_MONGO_CHECK_EXCEPTION3(&zcursor, &criteria, &options);
 
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
   MAKE_STD_ZVAL(next);
   MONGO_METHOD(MongoCursor, getNext, next, zcursor);
+  PHP_MONGO_CHECK_EXCEPTION4(&next, &zcursor, &criteria, &options);
 
   while (Z_TYPE_P(next) != IS_NULL) {
     zval **id;
-    zval *temp;
+    zval *temp, *temp_return;
 
     if (zend_hash_find(HASH_P(next), "_id", 4, (void**)&id) == FAILURE) {
       // uh oh
@@ -692,22 +699,25 @@ PHP_METHOD(MongoGridFS, remove) {
     zval_add_ref(id);
     add_assoc_zval(temp, "files_id", *id);
 
-    MONGO_METHOD1(MongoCollection, remove, return_value, chunks, temp);
+    MAKE_STD_ZVAL(temp_return);
 
+    MONGO_METHOD2(MongoCollection, remove, temp_return, chunks, temp, options);
     zval_ptr_dtor(&temp);
+    zval_ptr_dtor(&temp_return);
     zval_ptr_dtor(&next);
+    PHP_MONGO_CHECK_EXCEPTION3(&zcursor, &criteria, &options);
+
     MAKE_STD_ZVAL(next);
     MONGO_METHOD(MongoCursor, getNext, next, zcursor);
+    PHP_MONGO_CHECK_EXCEPTION4(&next, &zcursor, &criteria, &options);
   }
   zval_ptr_dtor(&next);
   zval_ptr_dtor(&zcursor);
 
-  Z_TYPE(zjust_one) = IS_BOOL;
-  zjust_one.value.lval = just_one;
-
-  MONGO_METHOD2(MongoCollection, remove, return_value, getThis(), criteria, &zjust_one);
+  MONGO_METHOD2(MongoCollection, remove, return_value, getThis(), criteria, options);
 
   zval_ptr_dtor(&criteria);
+  zval_ptr_dtor(&options);
 }
 
 PHP_METHOD(MongoGridFS, storeUpload) {
