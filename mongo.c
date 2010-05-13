@@ -1322,23 +1322,29 @@ PHP_METHOD(Mongo, __get) {
 /* {{{ Mongo::selectCollection()
  */
 PHP_METHOD(Mongo, selectCollection) {
-  zval *db, *collection, *temp_db;
+  char *db, *coll;
+  int db_len, coll_len;
+  zval *db_name, *coll_name, *temp_db;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &db, &collection) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &db, &db_len, &coll, &coll_len) == FAILURE) {
     return;
   }
 
-  if (Z_TYPE_P(db) == IS_STRING) {
-    MAKE_STD_ZVAL(temp_db);
-    MONGO_METHOD1(Mongo, selectDB, temp_db, getThis(), db);
-    db = temp_db;
-  }
-  else {
-    zval_add_ref(&db);
-  }
+  MAKE_STD_ZVAL(db_name);
+  ZVAL_STRING(db_name, db, 1);
 
-  MONGO_METHOD1(MongoDB, selectCollection, return_value, db, collection);
-  zval_ptr_dtor(&db);
+  MAKE_STD_ZVAL(temp_db);
+  MONGO_METHOD1(Mongo, selectDB, temp_db, getThis(), db_name);
+  zval_ptr_dtor(&db_name);
+  PHP_MONGO_CHECK_EXCEPTION1(&temp_db);
+
+  MAKE_STD_ZVAL(coll_name);
+  ZVAL_STRING(coll_name, coll, 1);
+
+  MONGO_METHOD1(MongoDB, selectCollection, return_value, temp_db, coll_name);
+
+  zval_ptr_dtor(&coll_name);
+  zval_ptr_dtor(&temp_db);
 }
 /* }}} */
 
