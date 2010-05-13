@@ -303,6 +303,12 @@ typedef struct {
     return;                                                     \
   }
 
+#define PHP_MONGO_SERIALIZE_KEY(type)                           \
+  php_mongo_set_type(buf, type);                                \
+  php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC); \
+  if (EG(exception)) {                                          \
+    return ZEND_HASH_APPLY_STOP;                                \
+  }
 
 #define SEND_MSG                                                \
   PHP_MONGO_GET_LINK(c->link);                                  \

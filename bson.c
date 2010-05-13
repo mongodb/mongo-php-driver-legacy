@@ -171,27 +171,22 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
 
   switch (Z_TYPE_PP(data)) {
   case IS_NULL:
-    php_mongo_set_type(buf, BSON_NULL);
-    php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+    PHP_MONGO_SERIALIZE_KEY(BSON_NULL);
     break;
   case IS_LONG:
-    php_mongo_set_type(buf, BSON_INT);
-    php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+    PHP_MONGO_SERIALIZE_KEY(BSON_INT);
     php_mongo_serialize_int(buf, Z_LVAL_PP(data));
     break;
   case IS_DOUBLE:
-    php_mongo_set_type(buf, BSON_DOUBLE);
-    php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+    PHP_MONGO_SERIALIZE_KEY(BSON_DOUBLE);
     php_mongo_serialize_double(buf, Z_DVAL_PP(data));
     break;
   case IS_BOOL:
-    php_mongo_set_type(buf, BSON_BOOL);
-    php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+    PHP_MONGO_SERIALIZE_KEY(BSON_BOOL);
     php_mongo_serialize_bool(buf, Z_BVAL_PP(data));
     break;
   case IS_STRING: {
-    php_mongo_set_type(buf, BSON_STRING);
-    php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+    PHP_MONGO_SERIALIZE_KEY(BSON_STRING);
 
     // if this is not a valid string, stop
     if (MonGlo(utf8) && !is_utf8(Z_STRVAL_PP(data), Z_STRLEN_PP(data))) {
@@ -208,11 +203,9 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
 
     // if we realloc, we need an offset, not an abs pos (phew)
     int type_offset = buf->pos-buf->start;
-    // skip type until we know whether it was an array or an object
-    buf->pos++;
 
     //serialize
-    php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+    PHP_MONGO_SERIALIZE_KEY(BSON_ARRAY);
     num = zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
     if (EG(exception)) {
       return ZEND_HASH_APPLY_STOP;
@@ -236,8 +229,7 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
     if(clazz == mongo_ce_Id) {
       mongo_id *id;
 
-      php_mongo_set_type(buf, BSON_OID);
-      php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+      PHP_MONGO_SERIALIZE_KEY(BSON_OID);
       id = (mongo_id*)zend_object_store_get_object(*data TSRMLS_CC);
       if (!id->id) {
 	return ZEND_HASH_APPLY_KEEP;
@@ -247,20 +239,17 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
     }
     // MongoDate
     else if (clazz == mongo_ce_Date) {
-      php_mongo_set_type(buf, BSON_DATE);
-      php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+      PHP_MONGO_SERIALIZE_KEY(BSON_DATE);
       php_mongo_serialize_date(buf, *data TSRMLS_CC);
     }
     // MongoRegex
     else if (clazz == mongo_ce_Regex) {
-      php_mongo_set_type(buf, BSON_REGEX);
-      php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+      PHP_MONGO_SERIALIZE_KEY(BSON_REGEX);
       php_mongo_serialize_regex(buf, *data TSRMLS_CC);
     }
     // MongoCode
     else if (clazz == mongo_ce_Code) {
-      php_mongo_set_type(buf, BSON_CODE);
-      php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+      PHP_MONGO_SERIALIZE_KEY(BSON_CODE);
       php_mongo_serialize_code(buf, *data TSRMLS_CC);
       if (EG(exception)) {
         return ZEND_HASH_APPLY_STOP;
@@ -268,31 +257,26 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
     }
     // MongoBin
     else if (clazz == mongo_ce_BinData) {
-      php_mongo_set_type(buf, BSON_BINARY);
-      php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+      PHP_MONGO_SERIALIZE_KEY(BSON_BINARY);
       php_mongo_serialize_bin_data(buf, *data TSRMLS_CC);
     }
     // MongoTimestamp
     else if (clazz == mongo_ce_Timestamp) {
-      php_mongo_set_type(buf, BSON_TIMESTAMP);
-      php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+      PHP_MONGO_SERIALIZE_KEY(BSON_TIMESTAMP);
       php_mongo_serialize_ts(buf, *data TSRMLS_CC);
     }
     else if (clazz == mongo_ce_MinKey) {
-      php_mongo_set_type(buf, BSON_MINKEY);
-      php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+      PHP_MONGO_SERIALIZE_KEY(BSON_MINKEY);
     }
     else if (clazz == mongo_ce_MaxKey) {
-      php_mongo_set_type(buf, BSON_MAXKEY);
-      php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+      PHP_MONGO_SERIALIZE_KEY(BSON_MAXKEY);
     }
     // serialize a normal obj
     else {
       HashTable *hash = Z_OBJPROP_PP(data);
 
       // go through the k/v pairs and serialize them
-      php_mongo_set_type(buf, BSON_OBJECT);
-      php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC);
+      PHP_MONGO_SERIALIZE_KEY(BSON_OBJECT);
 
       zval_to_bson(buf, hash, NO_PREP TSRMLS_CC);
       if (EG(exception)) {
@@ -524,7 +508,8 @@ void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRML
   }
 
   if (prep && (strchr(str, '.') != 0)) {
-    zend_error(E_WARNING, "invalid key name: [%s]", str);
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "'.' not allowed in key: %s", str);
+    return;
   }
 
   if (MonGlo(cmd_char) && strchr(str, MonGlo(cmd_char)[0]) == str) {
