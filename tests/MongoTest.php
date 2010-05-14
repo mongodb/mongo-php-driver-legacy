@@ -465,16 +465,16 @@ class MongoTest extends PHPUnit_Framework_TestCase
      */
     public function testGetter() {
       $db = $this->object->selectDB('db');
-      $this->assertEquals('db', "$db");
+      $this->assertEquals('db', $db->__toString());
       $db = $this->object->selectDB($db);
-      $this->assertEquals('db', "$db");
+      $this->assertEquals('db', $db->__toString());
     }
 
     public function testGetter2() {
       $db = $this->object->__get('db');
-      $this->assertEquals('db', "$db");
+      $this->assertEquals('db', $db->__toString());
       $db = $this->object->__get($db);
-      $this->assertEquals('db', "$db");
+      $this->assertEquals('db', $db->__toString());
     }
 }
 
