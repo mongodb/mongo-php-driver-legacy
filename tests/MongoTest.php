@@ -464,6 +464,11 @@ class MongoTest extends PHPUnit_Framework_TestCase
      * regression
      */
     public function testGetter() {
+      if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        $this->markTestSkipped("No implicit __toString in 5.1");
+        return;
+      }
+
       $db = $this->object->selectDB('db');
       $this->assertEquals('db', $db->__toString());
       $db = $this->object->selectDB($db);
@@ -471,6 +476,11 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testGetter2() {
+      if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        $this->markTestSkipped("No implicit __toString in 5.1");
+        return;
+      }
+
       $db = $this->object->__get('db');
       $this->assertEquals('db', $db->__toString());
       $db = $this->object->__get($db);
