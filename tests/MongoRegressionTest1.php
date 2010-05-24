@@ -412,6 +412,13 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
     public function testNonUTF8Embed() {
       $this->sharedFixture->phpunit->c->insert(array('x'=>array("y" => "\xFF"), "y" => array()));
     }
+
+    /**
+     * @expectedException MongoConnectionException
+     */
+    public function testInvalidConnectionSyntax() {
+      $m = new Mongo("mongodb://name:password@localhost/");
+    }
 }
 
 class Foo2 {

@@ -832,7 +832,8 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
     }
   }
 
-  if (*current == '/') {
+  // if this isn't the (invalid) form "host:port/"
+  if (*current == '/' && *(current+1) != '\0') {
     current++;
     MAKE_STD_ZVAL(link->db);
     ZVAL_STRING(link->db, current, 1);
