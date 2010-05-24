@@ -838,6 +838,24 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals('timed out waiting for slaves', $msg);
       $this->assertEquals(0, $code);
     }
+
+    public function testGroupFinalize2() {
+      for ($i=0; $i<100; $i++) {
+        $this->object->insert(array("x" => $i, "y" => $i%7, "z" => "foo$i"));
+      }
+
+      $result = $this->object->group(array("y" => 1), array("count" => 0), 
+                                     "function(cur, prev) { prev.count++; }",
+                                     array("finalize" => "function(out) { return 1; }"));
+
+      $this->assertEquals(1, $result['ok'], json_encode($result));
+      foreach ($result['retval'] as $val) {
+        $this->assertEquals(1, $val);
+      }
+
+      $this->assertEquals(100, $result['count']);
+      $this->assertEquals(7, $result['keys']);
+    }
 }
 
 class TestToIndexString extends MongoCollection {
