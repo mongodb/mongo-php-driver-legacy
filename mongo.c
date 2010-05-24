@@ -1730,6 +1730,9 @@ static int get_header(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   return SUCCESS;
 }
 
+/*
+ * throws exception on FAILURE
+ */
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int sock = php_mongo_get_master(cursor->link TSRMLS_CC);
   int num_returned = 0;
@@ -1739,40 +1742,48 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   // this cursor has already been passed
   if (cursor->send.request_id < MonGlo(response_num)) {
     UNLOCK;
-    ZVAL_STRING(errmsg, "threw away reply, please try again", 1);
+    zend_throw_exception(mongo_ce_CursorException, "threw away reply, please try again", 0 TSRMLS_CC);
     return FAILURE;
   }
 
   if (php_mongo_check_connection(cursor->link, errmsg TSRMLS_CC) != SUCCESS) {
     UNLOCK;
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 1 TSRMLS_CC);
     return FAILURE;
   }
 
   // set a timeout
   if (cursor->timeout && cursor->timeout > 0) {
     struct timeval timeout;
-    fd_set readfds;
+    fd_set readfds, exceptfds;
+    int status = 0;
 
     timeout.tv_sec = cursor->timeout / 1000 ;
     timeout.tv_usec = (cursor->timeout % 1000) * 1000;
 
     FD_ZERO(&readfds);
     FD_SET(sock, &readfds);
+    FD_ZERO(&exceptfds);
+    FD_SET(sock, &exceptfds);
 
-    select(sock+1, &readfds, NULL, NULL, &timeout);
+    status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
 
-    if (!FD_ISSET(sock, &readfds)) {
+    if (status == -1 || FD_ISSET(sock, &exceptfds)) {
       UNLOCK;
+      zend_throw_exception(mongo_ce_CursorException, strerror(errno), 2 TSRMLS_CC);
+      return FAILURE;
+    }
 
-      ZVAL_NULL(errmsg);
-      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC, "cursor timed out: %d", cursor->timeout);
-
+    if (status == 0 || !FD_ISSET(sock, &readfds)) {
+      UNLOCK;
+      zend_throw_exception(mongo_ce_CursorTOException, "cursor timed out", 3 TSRMLS_CC);
       return FAILURE;
     }
   }
 
   if (get_header(sock, cursor, errmsg TSRMLS_CC) == FAILURE) {
     UNLOCK;
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 4 TSRMLS_CC);
     return FAILURE;
   }
 
@@ -1784,20 +1795,31 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     // temp: we have no async queue, so this is always true
     if (1) {
       char temp[4096];
+      int len = cursor->recv.length-REPLY_HEADER_LEN;
+
       // throw out the rest of the headers and the response
-      if (recv(sock, (char*)temp, 20, FLAGS) == FAILURE ||
-          mongo_hear(cursor->link, (void*)temp, cursor->recv.length-REPLY_HEADER_LEN TSRMLS_CC) == FAILURE) {
+      if (recv(sock, (char*)temp, 20, FLAGS) == FAILURE) {
         UNLOCK;
-
-        ZVAL_STRING(errmsg, "couldn't get response to throw out", 1);
-
+        zend_throw_exception(mongo_ce_CursorException, "couldn't get header of response to throw out", 5 TSRMLS_CC);
         return FAILURE;
       }
+
+      do {
+        int temp_len = len > 4096 ? 4096 : len;
+        len -= temp_len;
+
+        if (mongo_hear(cursor->link, (void*)temp, temp_len TSRMLS_CC) == FAILURE) {
+          UNLOCK;
+          zend_throw_exception(mongo_ce_CursorException, "couldn't get response to throw out", 6 TSRMLS_CC);
+          return FAILURE;
+        }
+      } while (len > 0);
     }
 
     // get the next db response
     if (get_header(sock, cursor, errmsg TSRMLS_CC) == FAILURE) {
       UNLOCK;
+      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 6 TSRMLS_CC);
       return FAILURE;
     }
   }
@@ -1808,9 +1830,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
 
     UNLOCK;
-
-    ZVAL_STRING(errmsg, "incomplete response", 1);
-
+    zend_throw_exception(mongo_ce_CursorException, "incomplete response", 7 TSRMLS_CC);
     return FAILURE;
   }
 
@@ -1841,15 +1861,12 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   /* get the actual response content */
   if (mongo_hear(cursor->link, cursor->buf.pos, cursor->recv.length TSRMLS_CC) == FAILURE) {
-    char *msg;
-#ifdef WIN32
-    spprintf(&msg, 0, "WSA error getting database response: %d", WSAGetLastError());
-#else
-    spprintf(&msg, 0, "error getting database response: %s", strerror(errno));
-#endif
-    ZVAL_STRING(errmsg, msg, 0);
-
     UNLOCK;
+#ifdef WIN32
+    zend_throw_exception_ex(mongo_ce_CursorException, 8 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
+#else
+    zend_throw_exception_ex(mongo_ce_CursorException, 8 TSRMLS_CC, "error getting database response: %d", strerror(errno));
+#endif
     return FAILURE;
   }
 
@@ -1915,6 +1932,9 @@ int mongo_hear(mongo_link *link, void *dest, int total_len TSRMLS_DC) {
   return received;
 }
 
+/*
+ * sets errmsg on FAILURE
+ */
 static int php_mongo_check_connection(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int now = time(0), connected = 0;
 
@@ -1959,7 +1979,6 @@ static void set_disconnected(mongo_link *link) {
 
 static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errmsg) {
   struct sockaddr_in addr, addr2;
-  fd_set rset, wset, eset;
   struct timeval tval;
   int connected = FAILURE, status = FAILURE;
 
@@ -2014,14 +2033,6 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   fcntl(server->socket, F_SETFL, FLAGS|O_NONBLOCK);
 #endif
 
-  FD_ZERO(&rset);
-  FD_SET(server->socket, &rset);
-  FD_ZERO(&wset);
-  FD_SET(server->socket, &wset);
-  FD_ZERO(&eset);
-  FD_SET(server->socket, &eset);
-
-
   // connect
   status = connect(server->socket, (struct sockaddr*)&addr, sizeof(addr));
   if (status < 0) {
@@ -2037,22 +2048,30 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
     }
 
     while (1) {
-	if (select(server->socket+1, &rset, &wset, &eset, &tval) == 0) {
-	    ZVAL_STRING(errmsg, strerror(errno), 1);      
-	    return FAILURE;
-	}
-	//if our descriptor has an error
-	if (FD_ISSET(server->socket, &eset)) {
-	    ZVAL_STRING(errmsg, strerror(errno), 1);      
-	    return FAILURE;
-	}
-	//If our descriptor is ready break out
-	if (FD_ISSET(server->socket, &wset) || FD_ISSET(server->socket, &rset))
-	    break;
-	//Reset the array to include our descriptor
-	FD_SET(server->socket, &rset);
-	FD_SET(server->socket, &wset);
-	FD_SET(server->socket, &eset);
+      fd_set rset, wset, eset;
+
+      FD_ZERO(&rset);
+      FD_SET(server->socket, &rset);
+      FD_ZERO(&wset);
+      FD_SET(server->socket, &wset);
+      FD_ZERO(&eset);
+      FD_SET(server->socket, &eset);
+
+      if (select(server->socket+1, &rset, &wset, &eset, &tval) == 0) {
+        ZVAL_STRING(errmsg, strerror(errno), 1);      
+        return FAILURE;
+      }
+
+      // if our descriptor has an error
+      if (FD_ISSET(server->socket, &eset)) {
+        ZVAL_STRING(errmsg, strerror(errno), 1);      
+        return FAILURE;
+      }
+
+      // if our descriptor is ready break out
+      if (FD_ISSET(server->socket, &wset) || FD_ISSET(server->socket, &rset)) {
+        break;
+      }
     }
 
     size = sizeof(addr2);
@@ -2080,6 +2099,9 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   return SUCCESS;
 }
 
+/*
+ * sets errmsg
+ */
 static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int i, connected = 0;
 

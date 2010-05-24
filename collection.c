@@ -229,7 +229,6 @@ static int safe_op(mongo_link *link, zval *coll, buffer *buf, zval *return_value
   // get reply
   response = php_mongo_get_reply(cursor, errmsg TSRMLS_CC);
   if (FAILURE == response) {
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 0 TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
     zval_ptr_dtor(&cursor_z);
     return FAILURE;

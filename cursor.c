@@ -220,12 +220,6 @@ PHP_METHOD(MongoCursor, hasNext) {
 
   id = cursor->cursor_id;
   if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
-    if (Z_TYPE_P(temp) == IS_STRING) {
-      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
-    }
-    else {
-      RETURN_FALSE;
-    }
     zval_ptr_dtor(&temp);
     return;
   }
@@ -248,8 +242,8 @@ PHP_METHOD(MongoCursor, hasNext) {
 PHP_METHOD(MongoCursor, getNext) {
   MONGO_METHOD(MongoCursor, next, return_value, getThis());
   // will be null unless there was an error
-  if (Z_TYPE_P(return_value) == IS_BOOL &&
-      Z_BVAL_P(return_value) == 0) {
+  if (EG(exception) ||
+      (Z_TYPE_P(return_value) == IS_BOOL && Z_BVAL_P(return_value) == 0)) {
     return;
   }
   MONGO_METHOD(MongoCursor, current, return_value, getThis());
