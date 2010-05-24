@@ -1,7 +1,7 @@
 <?php
 require_once 'PHPUnit/Framework.php';
 
-class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
+class RegressionTest1 extends PHPUnit_Framework_TestCase
 {
 
     /**
@@ -418,6 +418,20 @@ class MongoRegressionTest1 extends PHPUnit_Framework_TestCase
      */
     public function testInvalidConnectionSyntax() {
       $m = new Mongo("mongodb://name:password@localhost/");
+    }
+
+    /**
+     * @expectedException MongoException
+     */
+    public function testTooBigInsert() {
+      $contents = file_get_contents('tests/pycon-poster.pdf');
+
+      $arr = array();
+      for ($i=0; $i<7; $i++) {
+        $arr[] = array("content" => new MongoBinData($contents), "i" => $i);
+      }
+
+      $this->sharedFixture->phpunit->c->batchInsert($arr);
     }
 }
 

@@ -17,7 +17,7 @@ require_once 'MongoTimestampTest.php';
 require_once 'MongoObjectsTest.php';
 require_once 'MongoObjDBTest.php';
 
-require_once 'MongoRegressionTest1.php';
+require_once 'RegressionTest1.php';
 
 require_once 'MongoMemTest.php';
 require_once 'CmdSymbolTest.php';
@@ -60,7 +60,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $suite->addTestSuite('MongoObjectsTest');
         $suite->addTestSuite('MongoObjDBTest');
         
-        $suite->addTestSuite('MongoRegressionTest1');
+        $suite->addTestSuite('RegressionTest1');
         $suite->addTestSuite('CmdSymbolTest');
         $suite->addTestSuite('SerializationTest');
 	$suite->addTestSuite('MinMaxKeyTest');

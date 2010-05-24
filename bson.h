@@ -46,7 +46,7 @@
 
 #define GROW_SLOWLY 1048576
 
-void php_mongo_serialize_size(char*, buffer*);
+int php_mongo_serialize_size(char *start, buffer *buf TSRMLS_DC);
 
 /* driver */
 int php_mongo_serialize_element(char*, zval**, buffer*, int TSRMLS_DC);

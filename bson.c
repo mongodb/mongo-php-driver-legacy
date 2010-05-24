@@ -107,7 +107,7 @@ int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC) {
   }
 
   php_mongo_serialize_null(buf);
-  php_mongo_serialize_size(buf->start+start, buf);
+  php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
   return EG(exception) ? FAILURE : num;
 }
 
@@ -364,7 +364,7 @@ void php_mongo_serialize_code(buffer *buf, zval *code TSRMLS_DC) {
   }
 
   // get total size
-  php_mongo_serialize_size(buf->start+start, buf);
+  php_mongo_serialize_size(buf->start+start, buf TSRMLS_CC);
 }
 
 /*
@@ -558,9 +558,14 @@ void php_mongo_serialize_ns(buffer *buf, char *str TSRMLS_DC) {
 /* the position is not increased, we are just filling
  * in the first 4 bytes with the size.
  */
-void php_mongo_serialize_size(char *start, buffer *buf) {
+int php_mongo_serialize_size(char *start, buffer *buf TSRMLS_DC) {
   int total = MONGO_32((buf->pos - start));
+  if (buf->pos - start > 16000000) {
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "insert too large: %d, max: 16000000", buf->pos - start);
+    return FAILURE;
+  }
   memcpy(start, &total, INT_32);
+  return SUCCESS;
 }
 
 static int insert_helper(buffer *buf, zval *doc TSRMLS_DC) {
@@ -584,9 +589,7 @@ static int insert_helper(buffer *buf, zval *doc TSRMLS_DC) {
     return FAILURE;
   }
   
-  php_mongo_serialize_size(buf->start + start, buf);
-
-  return SUCCESS;
+  return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
 }
 
 int php_mongo_write_insert(buffer *buf, char *ns, zval *doc TSRMLS_DC) {
@@ -599,9 +602,7 @@ int php_mongo_write_insert(buffer *buf, char *ns, zval *doc TSRMLS_DC) {
     return FAILURE;
   }
 
-  php_mongo_serialize_size(buf->start + start, buf);
-
-  return SUCCESS;
+  return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
 }
 
 int php_mongo_write_batch_insert(buffer *buf, char *ns, zval *docs TSRMLS_DC) {
@@ -633,9 +634,13 @@ int php_mongo_write_batch_insert(buffer *buf, char *ns, zval *docs TSRMLS_DC) {
     return FAILURE;
   }
 
-  php_mongo_serialize_size(buf->start + start, buf);
+  // this is a hard limit in the db server (util/messages.cpp)
+  if (buf->pos - (buf->start + start) > 16000000) {
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "insert too large: %d, max: 16000000", buf->pos - (buf->start+start));
+    return FAILURE;
+  }
 
-  return SUCCESS;
+  return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
 }
 
 int php_mongo_write_update(buffer *buf, char *ns, int flags, zval *criteria, zval *newobj TSRMLS_DC) {
@@ -653,9 +658,7 @@ int php_mongo_write_update(buffer *buf, char *ns, int flags, zval *criteria, zva
     return FAILURE;
   }
 
-  php_mongo_serialize_size(buf->start+start, buf);
-
-  return SUCCESS;
+  return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
 }
 
 int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria TSRMLS_DC) {
@@ -671,9 +674,7 @@ int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria TSRM
     return FAILURE;
   }
 
-  php_mongo_serialize_size(buf->start+start, buf);
-
-  return SUCCESS;
+  return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
 }
 
 /*
@@ -709,8 +710,7 @@ int php_mongo_write_query(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
     }
   }
 
-  php_mongo_serialize_size(buf->start+start, buf);
-  return SUCCESS;
+  return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
 }
 
 int php_mongo_write_kill_cursors(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
@@ -724,9 +724,7 @@ int php_mongo_write_kill_cursors(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
   php_mongo_serialize_int(buf, 1);
   // cursor ids
   php_mongo_serialize_long(buf, cursor->cursor_id);
-  php_mongo_serialize_size(buf->start, buf);
-
-  return SUCCESS;
+  return php_mongo_serialize_size(buf->start, buf TSRMLS_CC);
 }
 
 /*
@@ -748,9 +746,7 @@ int php_mongo_write_get_more(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
   php_mongo_serialize_int(buf, cursor->limit);
   php_mongo_serialize_long(buf, cursor->cursor_id);
 
-  php_mongo_serialize_size(buf->start+start, buf);
-
-  return SUCCESS;
+  return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
 }
 
 
