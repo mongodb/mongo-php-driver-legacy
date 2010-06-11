@@ -17,10 +17,10 @@ class AuthTest extends PHPUnit_Framework_TestCase
 
     public function testAuthBasic() {
 	$ok = $this->object->authenticate("testUser", "testPass");
-	$this->assertEquals($ok['ok'], 1, json_encode($ok));
+	$this->assertEquals((bool)$ok['ok'], true, json_encode($ok));
 
 	$ok = $this->object->authenticate("testUser", "bar");
-	$this->assertEquals($ok['ok'], 0, json_encode($ok));
+	$this->assertEquals((bool)$ok['ok'], false, json_encode($ok));
     }
 
 }

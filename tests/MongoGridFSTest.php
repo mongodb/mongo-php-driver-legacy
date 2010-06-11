@@ -244,7 +244,7 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
       $id = $grid->storeFile('tests/Formelsamling.pdf');
       
       $x = $grid->remove(array("_id" => $id), array("safe" => true));
-      $this->assertEquals(1, $x['ok']);
+      $this->assertEquals(true, (bool)$x['ok']);
       $this->assertEquals(1, $x['n']);
       $this->assertNull($x['err']);
     }

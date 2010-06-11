@@ -110,16 +110,16 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
 
     public function testDrop() {
       $r = $this->object->drop();
-      $this->assertEquals(1, $r['ok'], json_encode($r));
+      $this->assertEquals(true, (bool)$r['ok'], json_encode($r));
     }
 
     public function testRepair() {
       $r = $this->object->repair();
-      $this->assertEquals(1, $r['ok'], json_encode($r));
+      $this->assertEquals(true, (bool)$r['ok'], json_encode($r));
       $r = $this->object->repair(true);
-      $this->assertEquals(1, $r['ok'], json_encode($r));
+      $this->assertEquals(true, (bool)$r['ok'], json_encode($r));
       $r = $this->object->repair(true, true);
-      $this->assertEquals(1, $r['ok'], json_encode($r));
+      $this->assertEquals(true, (bool)$r['ok'], json_encode($r));
     }
 
     public function testSelectCollection() {
@@ -274,14 +274,14 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     public function testDBCommand() {
         $x = $this->object->command(array());
         $this->assertEquals($x['errmsg'], "no such cmd");
-        $this->assertEquals($x['ok'], 0);
+        $this->assertEquals((bool)$x['ok'], false);
 
         $created = $this->object->createCollection("system.profile", true, 5000);
 
         $this->object->command(array('profile' => 0));
         $x = $this->object->command(array('profile' => 1));
         $this->assertEquals($x['was'], 0, json_encode($x));
-        $this->assertEquals($x['ok'], 1, json_encode($x));
+        $this->assertEquals((bool)$x['ok'], true, json_encode($x));
     }
 
     public function testCreateRef() {
@@ -305,13 +305,13 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $err = $this->object->lastError();
         $this->assertEquals(null, $err['err'], json_encode($err));
         $this->assertEquals(0, $err['n'], json_encode($err));
-        $this->assertEquals(1, $err['ok'], json_encode($err));
+        $this->assertEquals(true, (bool)$err['ok'], json_encode($err));
 
         $this->object->forceError();
         $err = $this->object->lastError();
         $this->assertNotNull($err['err']);
         $this->assertEquals($err['n'], 0);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals((bool)$err['ok'], true);
     }
 
     public function testPrevError() {
@@ -320,14 +320,14 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($err['err'], null);
         $this->assertEquals($err['n'], 0);
         $this->assertEquals($err['nPrev'], -1);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals((bool)$err['ok'], true);
         
         $this->object->forceError();
         $err = $this->object->prevError();
         $this->assertNotNull($err['err']);
         $this->assertEquals($err['n'], 0);
         $this->assertEquals($err['nPrev'], 1);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals((bool)$err['ok'], true);
     }
 
     public function testResetError() {
@@ -335,7 +335,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $err = $this->object->lastError();
         $this->assertEquals($err['err'], null);
         $this->assertEquals($err['n'], 0);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals((bool)$err['ok'], true);
     }
 
     public function testForceError() {
@@ -343,7 +343,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $err = $this->object->lastError();
         $this->assertNotNull($err['err']);
         $this->assertEquals($err['n'], 0);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals((bool)$err['ok'], true);
     }
 
     public function testW() {

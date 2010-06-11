@@ -106,12 +106,12 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
 
     public function testValidate() {
         $v = $this->object->validate();
-        $this->assertEquals($v['ok'], 0);
+        $this->assertEquals((bool)$v['ok'], false);
         $this->assertEquals('ns not found', $v['errmsg']);
         
         $this->object->insert((object)array('a' => 'foo'));
         $v = $this->object->validate();
-        $this->assertEquals($v['ok'], 1);
+        $this->assertEquals((bool)$v['ok'], true);
         $this->assertEquals($v['ns'], 'phpunit.c');
         $this->assertNotNull($v['result']);
     }

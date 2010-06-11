@@ -56,12 +56,12 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
     public function testValidate() {
       $v = $this->object->validate();
-      $this->assertEquals($v['ok'], 0);
+      $this->assertEquals((bool)$v['ok'], false);
       $this->assertEquals($v['errmsg'], 'ns not found');
 
       $this->object->insert(array('a' => 'foo'));
       $v = $this->object->validate();
-      $this->assertEquals($v['ok'], 1);
+      $this->assertEquals((bool)$v['ok'], true);
       $this->assertEquals($v['ns'], 'phpunit.c');
       $this->assertNotNull($v['result']);
     }
@@ -125,7 +125,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
     public function testSafeInsert3() {
       $response = $this->object->insert(array("_id" => 1), array("safe" => true));
-      $this->assertEquals(1, $response['ok'], json_encode($response));
+      $this->assertEquals(true, (bool)$response['ok'], json_encode($response));
       $this->assertNull($response['err']);
 
       $response = $this->object->insert(array("_id" => 1), array());
@@ -311,13 +311,13 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
     public function testSafeUpdate2() {
       $result = $this->object->update(array(), array("foo" => "bar"), array("upsert" => true, "safe" => true));
-      $this->assertEquals(1, $result['ok']);
+      $this->assertEquals(true, (bool)$result['ok']);
       $this->assertNull($result['err']);
       $this->assertEquals(1, $result['n']);
       $this->assertFalse($result['updatedExisting']);
 
       $result = $this->object->update(array(), array('$set' => array("foo" => "baz")), array("upsert" => true, "safe" => true));
-      $this->assertEquals(1, $result['ok']);
+      $this->assertEquals(true, (bool)$result['ok']);
       $this->assertNull($result['err']);
       $this->assertEquals(1, $result['n']);
       $this->assertTrue($result['updatedExisting']);
@@ -396,14 +396,14 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
     public function testSafeRemove2() {
       $result = $this->object->remove(array(), array("safe" => true));
-      $this->assertEquals(1, $result['ok']);
+      $this->assertEquals(true, (bool)$result['ok']);
       $this->assertEquals(0, $result['n']);
       $this->assertNull($result['err']);
 
       $this->object->batchInsert(array(array("x"=>1),array("x"=>1),array("x"=>1)));
 
       $result = $this->object->remove(array(), array("safe" => true));
-      $this->assertEquals(1, $result['ok']);
+      $this->assertEquals(true, (bool)$result['ok']);
       $this->assertEquals(3, $result['n']);
       $this->assertNull($result['err']);
     }
@@ -581,14 +581,14 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
     public function testSafeSave() {
       $result = $this->object->save(array("x"=>1), array("safe" => true));
-      $this->assertEquals(1, $result['ok']);
+      $this->assertEquals(true, (bool)$result['ok']);
       $this->assertEquals(0, $result['n']);
       $this->assertNull($result['err']);
 
       $x = $this->object->findOne();
 
       $result = $this->object->save($x, array("safe" => true));
-      $this->assertEquals(1, $result['ok']);
+      $this->assertEquals(true, (bool)$result['ok']);
       $this->assertEquals(1, $result['n']);
       $this->assertTrue($result['updatedExisting']);
       $this->assertNull($result['err']);
@@ -740,7 +740,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
                            new MongoCode("function(obj, prev) { prev.count += obj.j; }"),
                            array("finalize" => new MongoCode("function(obj) { return 'total: '+obj.count; }")));
 
-      $this->assertEquals(1, $group['ok'], json_encode($group));
+      $this->assertEquals(true, (bool)$group['ok'], json_encode($group));
 
       $this->assertEquals("total: 6", $group['retval'][0], json_encode($group));
       $this->assertEquals("total: 4", $group['retval'][1], json_encode($group));
@@ -761,7 +761,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
                                     array("finalize" => new MongoCode("function(obj) { return obj.count; }"),
                                           "condition" => array("i" => 1)));
 
-      $this->assertEquals(1, $group['ok'], json_encode($group));
+      $this->assertEquals(true, (bool)$group['ok'], json_encode($group));
 
       $this->assertEquals(2, $group['retval'][0], json_encode($group));
       $this->assertEquals(2, $group['retval'][1], json_encode($group));
@@ -781,7 +781,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
                                     new MongoCode("function(obj, prev) { prev.count++; }"),
                                     array());
 
-      $this->assertEquals(1, $group['ok'], json_encode($group));
+      $this->assertEquals(true, (bool)$group['ok'], json_encode($group));
 
       $this->assertEquals(2, $group['retval'][0]['count'], json_encode($group));
       $this->assertEquals(2, $group['retval'][1]['count'], json_encode($group));
@@ -848,7 +848,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
                                      "function(cur, prev) { prev.count++; }",
                                      array("finalize" => "function(out) { return 1; }"));
 
-      $this->assertEquals(1, $result['ok'], json_encode($result));
+      $this->assertEquals(true, (bool)$result['ok'], json_encode($result));
       foreach ($result['retval'] as $val) {
         $this->assertEquals(1, $val);
       }

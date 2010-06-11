@@ -234,13 +234,13 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $err = $this->sharedFixture->lastError();
         $this->assertEquals(null, $err['err'], json_encode($err));
         $this->assertEquals(0, $err['n'], json_encode($err));
-        $this->assertEquals(1, $err['ok'], json_encode($err));
+        $this->assertEquals(true, (bool)$err['ok'], json_encode($err));
 
         $this->sharedFixture->forceError();
         $err = $this->sharedFixture->lastError();
         $this->assertNotNull($err['err']);
         $this->assertEquals($err['n'], 0);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals((bool)$err['ok'], true);
     }
 
     /**
@@ -252,14 +252,14 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($err['err'], null);
         $this->assertEquals($err['n'], 0);
         $this->assertEquals($err['nPrev'], -1);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals((bool)$err['ok'], true);
         
         $this->sharedFixture->forceError();
         $err = $this->sharedFixture->prevError();
         $this->assertNotNull($err['err']);
         $this->assertEquals($err['n'], 0);
         $this->assertEquals($err['nPrev'], 1);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals((bool)$err['ok'], true);
     }
 
     /**
@@ -270,7 +270,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $err = $this->sharedFixture->lastError();
         $this->assertEquals($err['err'], null);
         $this->assertEquals($err['n'], 0);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals((bool)$err['ok'], true);
     }
 
     /**
@@ -281,7 +281,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $err = $this->sharedFixture->lastError();
         $this->assertNotNull($err['err']);
         $this->assertEquals($err['n'], 0);
-        $this->assertEquals($err['ok'], 1);
+        $this->assertEquals((bool)$err['ok'], true);
     }
 
     public function testClose() {
@@ -418,7 +418,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
     public function testListDBs() {
         $dbs = $this->sharedFixture->listDBs();
-        $this->assertEquals(1, $dbs['ok']);
+        $this->assertEquals(true, (bool)$dbs['ok']);
         $this->assertTrue(array_key_exists('databases', $dbs));
         $this->assertTrue(array_key_exists('totalSize', $dbs));
     }

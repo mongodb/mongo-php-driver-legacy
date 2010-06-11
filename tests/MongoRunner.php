@@ -17,7 +17,7 @@ require_once 'MongoTimestampTest.php';
 require_once 'MongoObjectsTest.php';
 require_once 'MongoObjDBTest.php';
 
-require_once 'MongoRegressionTest1.php';
+require_once 'RegressionTest1.php';
 
 require_once 'MongoMemTest.php';
 require_once 'CmdSymbolTest.php';

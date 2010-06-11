@@ -30,12 +30,12 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
 
     public function testDBDrop() {
         $r = $this->object->drop();
-        $this->assertEquals(1, $r['ok'], json_encode($r));
+        $this->assertEquals(true, (bool)$r['ok'], json_encode($r));
     }
 
     public function testRepair() {
       $r = $this->object->repair();
-      $this->assertEquals(1, $r['ok'], json_encode($r));
+      $this->assertEquals(true, (bool)$r['ok'], json_encode($r));
     }
 
     public function testCreateCollection() {
@@ -124,14 +124,14 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
     public function testDBCommand() {
         $x = $this->object->command((object)array());
         $this->assertEquals($x['errmsg'], "no such cmd");
-        $this->assertEquals($x['ok'], 0);
+        $this->assertEquals($x['ok'], false);
 
         $created = $this->object->createCollection("system.profile", true, 5000);
 
         $this->object->command((object)array('profile' => 0));
         $x = $this->object->command((object)array('profile' => 1));
         $this->assertEquals($x['was'], 0, json_encode($x));
-        $this->assertEquals($x['ok'], 1);
+        $this->assertEquals($x['ok'], true);
     }
 
     public function testCreateRef() {
