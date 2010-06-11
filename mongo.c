@@ -2189,7 +2189,7 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
   if (Z_TYPE_P(ok) == IS_ARRAY) {
     zval **status;
     if (zend_hash_find(HASH_P(ok), "ok", strlen("ok")+1, (void**)&status) == SUCCESS) {
-      logged_in = (int)Z_DVAL_PP(status);
+      logged_in = (Z_TYPE_PP(status) == IS_BOOL && Z_BVAL_PP(status)) || Z_DVAL_PP(status) == 1;
     }
   } 
   else {

@@ -161,7 +161,7 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
   }
 
   if (zend_hash_find(HASH_P(cmd_return), "ok", 3, (void**)&ok) == SUCCESS &&
-      Z_DVAL_PP(ok) == 1) {
+      ((Z_TYPE_PP(ok) == IS_BOOL && Z_BVAL_PP(ok)) || Z_DVAL_PP(ok) == 1)) {
     zend_hash_find(HASH_P(cmd_return), "was", 4, (void**)&ok);
     RETVAL_ZVAL(*ok, 1, 0);
   }
