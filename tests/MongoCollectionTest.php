@@ -813,32 +813,6 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(60, $c->wtimeout);
     }
 
-    /**
-     * @expectedException MongoCursorException 
-     */
-    public function testSafeW() {
-      $this->object->w = 4;
-      $this->object->wtimeout = 10;
-
-      $this->object->insert(array("x" => 1), array("safe" => true));
-    }
-
-    public function testWException() {
-      $this->object->w = 4;
-      $this->object->wtimeout = 10;
-
-      try {
-        $this->object->insert(array("x" => 1), array("safe" => true));
-      }
-      catch(MongoCursorException $e) {
-        $msg = $e->getMessage();
-        $code = $e->getCode();
-      }
-
-      $this->assertEquals('timed out waiting for slaves', $msg);
-      $this->assertEquals(0, $code);
-    }
-
     public function testGroupFinalize2() {
       for ($i=0; $i<100; $i++) {
         $this->object->insert(array("x" => $i, "y" => $i%7, "z" => "foo$i"));
