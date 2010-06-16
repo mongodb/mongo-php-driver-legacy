@@ -93,6 +93,25 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $this->assertNotNull($obj);
     }
 
+    public function testFindOneFields() {
+        $this->object->storeFile('tests/somefile', array("x" => 1, "y" => "foo", "z" => "bar"));
+        $obj = $this->object->findOne(array(), array("x" => 1, "y" => 1));
+
+        $this->assertEquals(1, $obj->file['x']);
+        $this->assertEquals("foo", $obj->file['y']);
+        $this->assertArrayNotHasKey("z", $obj->file);
+        $this->assertArrayNotHasKey("length", $obj->file);
+    }
+
+    /**
+     * @expectedException MongoGridFSException 
+     */
+    public function testFindOneFields2() {
+        $this->object->storeFile('tests/somefile', array("x" => 1, "y" => "foo", "z" => "bar"));
+        $obj = $this->object->findOne(array(), array("x" => 1, "y" => 1));
+        $obj->getBytes();
+    }
+
     public function testRemove()
     {
         $this->object->storeFile('tests/somefile');

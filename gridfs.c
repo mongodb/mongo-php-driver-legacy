@@ -603,8 +603,8 @@ PHP_METHOD(MongoGridFS, storeFile) {
 }
 
 PHP_METHOD(MongoGridFS, findOne) {
-  zval *zquery = 0, *file;
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &zquery) == FAILURE) {
+  zval *zquery = 0, *zfields = 0, *file;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &zquery, &zfields) == FAILURE) {
     return;
   }
 
@@ -627,8 +627,16 @@ PHP_METHOD(MongoGridFS, findOne) {
     zval_add_ref(&zquery);
   }
 
+  if (!zfields) {
+    MAKE_STD_ZVAL(zfields);
+    array_init(zfields);
+  }
+  else {
+    zval_add_ref(&zfields);
+  }
+
   MAKE_STD_ZVAL(file);
-  MONGO_METHOD1(MongoCollection, findOne, file, getThis(), zquery);
+  MONGO_METHOD2(MongoCollection, findOne, file, getThis(), zquery, zfields);
 
   if (Z_TYPE_P(file) == IS_NULL) {
     RETVAL_ZVAL(file, 0, 1);
@@ -642,6 +650,7 @@ PHP_METHOD(MongoGridFS, findOne) {
 
   zval_ptr_dtor(&file);
   zval_ptr_dtor(&zquery);
+  zval_ptr_dtor(&zfields);
 }
 
 
