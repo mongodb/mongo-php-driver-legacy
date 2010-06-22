@@ -314,17 +314,27 @@ PHP_METHOD(MongoId, getTimestamp) {
 PHP_METHOD(MongoDate, __construct) {
   zval *arg1 = 0, *arg2 = 0;
 
+  // using "ll" caused segfaults in some 64-bit suhosin-patched php systems
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &arg1, &arg2) == FAILURE) {
     return;
   }
 
   switch (ZEND_NUM_ARGS()) {
   case 2:
-    convert_to_long_ex(&arg2);
+    if (Z_TYPE_P(arg2) != IS_LONG) {
+      zend_error(E_WARNING, "MongoDate:__construct() expects integer values");
+      return;
+    }
+
     zend_update_property(mongo_ce_Date, getThis(), "usec", strlen("usec"), arg2 TSRMLS_CC);
+
     // fallthrough
   case 1:
-    convert_to_long_ex(&arg1);
+    if (Z_TYPE_P(arg1) != IS_LONG) {
+      zend_error(E_WARNING, "MongoDate:__construct() expects integer values");
+      return;
+    }
+
     zend_update_property(mongo_ce_Date, getThis(), "sec", strlen("sec"), arg1 TSRMLS_CC);
     // usec is already 0, if not set above
     break;
