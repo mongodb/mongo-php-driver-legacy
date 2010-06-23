@@ -232,8 +232,14 @@ PHP_METHOD(MongoCursor, hasNext) {
     cursor->cursor_id = 0;
   }
 
-  RETURN_TRUE;
-
+  // sometimes we'll have a cursor_id but there won't be any more results
+  if (cursor->at >= cursor->num) {
+    RETURN_FALSE;
+  }
+  // but sometimes there will be
+  else {
+    RETURN_TRUE;
+  }
 }
 /* }}} */
 
