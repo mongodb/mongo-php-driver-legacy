@@ -37,6 +37,7 @@ PHP_METHOD(MongoId, __construct);
 PHP_METHOD(MongoId, __toString);
 PHP_METHOD(MongoId, __set_state);
 PHP_METHOD(MongoId, getTimestamp);
+PHP_METHOD(MongoId, getHostname);
 
 int php_mongo_id_serialize(zval*, unsigned char**, zend_uint*, zend_serialize_data* TSRMLS_DC);
 int php_mongo_id_unserialize(zval**, zend_class_entry*, const unsigned char*, zend_uint, zend_unserialize_data* TSRMLS_DC);

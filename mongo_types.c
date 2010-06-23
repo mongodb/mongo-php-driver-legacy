@@ -190,6 +190,7 @@ static function_entry MongoId_methods[] = {
   PHP_ME(MongoId, __toString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoId, __set_state, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(MongoId, getTimestamp, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoId, getHostname, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   { NULL, NULL, NULL }
 };
 
@@ -308,6 +309,14 @@ PHP_METHOD(MongoId, getTimestamp) {
 }
 /* }}} */
 
+/* {{{ MongoId::getHostname
+ */
+PHP_METHOD(MongoId, getHostname) {
+  char hostname[256];
+  gethostname(hostname, 256);
+  RETURN_STRING(hostname, 1);
+}
+/* }}} */
 
 /* {{{ MongoDate::__construct
  */

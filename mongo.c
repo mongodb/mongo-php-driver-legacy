@@ -542,9 +542,12 @@ static PHP_GINIT_FUNCTION(mongo)
 static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC) 
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
 {
-  struct hostent *lh;
-  char *arKey;
-  int nKeyLength;
+  // on windows, the max length is 256.  linux doesn't have a limit, but it will
+  // fill in the first 256 chars of hostname even if the actual hostname is 
+  // longer.  if you can't get a unique character in the first 256 chars of your
+  // hostname, you're doing it wrong.
+  int len, win_max = 256;
+  char *hostname, host_start[256];
   register ulong hash;
 
   mongo_globals->auto_reconnect = 1;
@@ -559,33 +562,42 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   mongo_globals->response_num = 0;
   mongo_globals->errmsg = 0;
 
-  lh = gethostbyname("localhost");
-  arKey = lh ? lh->h_name : "borkdebork";
-  nKeyLength = strlen(arKey);
+  hostname = host_start;
+  // from the gnu manual:
+  //     gethostname stores the beginning of the host name in name even if the 
+  //     host name won't entirely fit. For some purposes, a truncated host name 
+  //     is good enough. If it is, you can ignore the error code.
+  // so we'll ignore the error code.  
+  // returns 0-terminated hostname.
+  gethostname(hostname, win_max);
+  len = strlen(hostname);
+
   hash = 5381;
 
   /* from zend_hash.h */
   /* variant with the hash unrolled eight times */
-  for (; nKeyLength >= 8; nKeyLength -= 8) {
-    hash = ((hash << 5) + hash) + *arKey++;
-    hash = ((hash << 5) + hash) + *arKey++;
-    hash = ((hash << 5) + hash) + *arKey++;
-    hash = ((hash << 5) + hash) + *arKey++;
-    hash = ((hash << 5) + hash) + *arKey++;
-    hash = ((hash << 5) + hash) + *arKey++;
-    hash = ((hash << 5) + hash) + *arKey++;
-    hash = ((hash << 5) + hash) + *arKey++;
+  for (; len >= 8; len -= 8) {
+    hash = ((hash << 5) + hash) + *hostname++;
+    hash = ((hash << 5) + hash) + *hostname++;
+    hash = ((hash << 5) + hash) + *hostname++;
+    hash = ((hash << 5) + hash) + *hostname++;
+    hash = ((hash << 5) + hash) + *hostname++;
+    hash = ((hash << 5) + hash) + *hostname++;
+    hash = ((hash << 5) + hash) + *hostname++;
+    hash = ((hash << 5) + hash) + *hostname++;
   }
-  switch (nKeyLength) {
-  case 7: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
-  case 6: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
-  case 5: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
-  case 4: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
-  case 3: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
-  case 2: hash = ((hash << 5) + hash) + *arKey++; /* fallthrough... */
-  case 1: hash = ((hash << 5) + hash) + *arKey++; break;
+
+  switch (len) {
+  case 7: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+  case 6: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+  case 5: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+  case 4: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+  case 3: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+  case 2: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+  case 1: hash = ((hash << 5) + hash) + *hostname++; break;
   case 0: break;
   }
+
   mongo_globals->machine = hash;
 
   mongo_globals->ts_inc = 0;

@@ -126,7 +126,7 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($ids[7], $mess[7]);
     }
 
-    public function setState() {
+    public function testSetState() {
       $c = $this->sharedFixture->phpunit->c;
       $c->drop();
 
@@ -140,6 +140,12 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
         $this->assertEquals("00000000000000000000000", $v['_id']."");
         $this->assertTrue($v['_id'] instanceof MongoId);
       }
+    }
+
+    public function testGetHostname() {
+      $host1 = gethostname();
+      $host2 = MongoId::getHostname();
+      $this->assertEquals($host1, $host2);
     }
 }
 
