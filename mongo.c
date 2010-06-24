@@ -2211,7 +2211,7 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
   // check if we've logged in successfully
   if (!logged_in) {
     char *full_error;
-    spprintf(&full_error, 0, "Couldn't authenticate with database admin: username [%s], password [%s]", Z_STRVAL_P(link->username), Z_STRVAL_P(link->password));
+    spprintf(&full_error, 0, "Couldn't authenticate with database %s: username [%s], password [%s]", Z_STRVAL_P(link->db), Z_STRVAL_P(link->username), Z_STRVAL_P(link->password));
     ZVAL_STRING(errmsg, full_error, 0);
     zval_ptr_dtor(&ok);
     return FAILURE;
