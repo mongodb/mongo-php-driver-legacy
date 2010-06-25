@@ -341,6 +341,9 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
 
+  chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
+  ensure_gridfs_index(&temp, chunks TSRMLS_CC);
+
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|az", &bytes, &bytes_len, &extra, &options) == FAILURE) {
     return;
   }
@@ -361,7 +364,6 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   }
 
   // insert chunks
-  chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   while (pos < bytes_len) {
     chunk_size = bytes_len-pos >= global_chunk_size ? global_chunk_size : bytes_len-pos;
 
@@ -477,6 +479,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
+  chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
+
+  ensure_gridfs_index(&temp, chunks TSRMLS_CC);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|az", &fh, &extra, &options) == FAILURE) {
     return;
@@ -543,7 +548,6 @@ PHP_METHOD(MongoGridFS, storeFile) {
   global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
 
   // insert chunks
-  chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   while (pos < size || fp == 0) {
     int result = 0;
     char *buf;
@@ -655,7 +659,10 @@ PHP_METHOD(MongoGridFS, findOne) {
 
 
 PHP_METHOD(MongoGridFS, remove) {
-  zval *criteria = 0, *options = 0, *zfields, *zcursor, *chunks, *next;
+  zval *criteria = 0, *options = 0, *zfields, *zcursor, *chunks, *next, temp;
+
+  chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
+  ensure_gridfs_index(&temp, chunks TSRMLS_CC);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|za", &criteria, &options) == FAILURE) {
     return;
@@ -687,8 +694,6 @@ PHP_METHOD(MongoGridFS, remove) {
   MONGO_METHOD2(MongoCollection, find, zcursor, getThis(), criteria, zfields);
   zval_ptr_dtor(&zfields);
   PHP_MONGO_CHECK_EXCEPTION3(&zcursor, &criteria, &options);
-
-  chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
   MAKE_STD_ZVAL(next);
   MONGO_METHOD(MongoCursor, getNext, next, zcursor);
@@ -877,7 +882,6 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   // make sure that there's an index on chunks so we can sort by chunk num
   chunks = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
-
   ensure_gridfs_index(return_value, chunks TSRMLS_CC);
 
   if (!filename) {
