@@ -111,9 +111,16 @@ PHP_METHOD(MongoCursor, __construct) {
       
       key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(zfields), &key, (uint*)&key_len, &index, NO_DUP, &pointer);
 
-      if (key_type == HASH_KEY_IS_LONG &&
-          Z_TYPE_PP(data) == IS_STRING) {
-        add_assoc_long(fields, Z_STRVAL_PP(data), 1);
+      if (key_type == HASH_KEY_IS_LONG) {
+        if (Z_TYPE_PP(data) == IS_STRING) {
+          add_assoc_long(fields, Z_STRVAL_PP(data), 1);
+        }
+        else {
+          zval_ptr_dtor(&empty);
+          zval_ptr_dtor(&fields);
+          zend_throw_exception(mongo_ce_Exception, "field names must be strings", 0 TSRMLS_CC);
+          return;
+        }
       }
       else if (IS_SCALAR_PP(data)) {
         add_assoc_long(fields, key, Z_LVAL_PP(data));
