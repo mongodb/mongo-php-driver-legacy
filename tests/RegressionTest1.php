@@ -424,6 +424,11 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
      * @expectedException MongoException
      */
     public function testTooBigInsert() {
+      if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        $this->markTestSkipped('annoying output in 5.1.');
+        return;
+      }
+
       $contents = file_get_contents('tests/pycon-poster.pdf');
 
       $arr = array();
