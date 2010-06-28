@@ -127,6 +127,11 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
     }
 
     public function testSetState() {
+      if (preg_match('/5\.1\..+/', phpversion())) {
+        $this->markTestSkipped("No implicit __toString() 5.1");
+        return;
+      }
+
       $c = $this->sharedFixture->phpunit->c;
       $c->drop();
 
