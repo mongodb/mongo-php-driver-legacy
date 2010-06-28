@@ -143,6 +143,11 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
     }
 
     public function testGetHostname() {
+      if (preg_match('/5\.[12]\..+/', phpversion())) {
+        $this->markTestSkipped("No gethostname() 5.1 or 5.2");
+        return;
+      }
+
       $host1 = gethostname();
       $host2 = MongoId::getHostname();
       $this->assertEquals($host1, $host2);
