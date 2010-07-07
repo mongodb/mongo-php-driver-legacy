@@ -1690,13 +1690,41 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
 
 /*
  * This method reads the message header for a database response
+ * It returns failure or success and throws an exception on failure.
  */
-static int get_header(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
+static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
+  // set a timeout
+  if (cursor->timeout && cursor->timeout > 0) {
+    struct timeval timeout;
+    fd_set readfds, exceptfds;
+    int status = 0;
+
+    timeout.tv_sec = cursor->timeout / 1000 ;
+    timeout.tv_usec = (cursor->timeout % 1000) * 1000;
+
+    FD_ZERO(&readfds);
+    FD_SET(sock, &readfds);
+    FD_ZERO(&exceptfds);
+    FD_SET(sock, &exceptfds);
+
+    status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
+
+    if (status == -1 || FD_ISSET(sock, &exceptfds)) {
+      zend_throw_exception(mongo_ce_CursorException, strerror(errno), 2 TSRMLS_CC);
+      return FAILURE;
+    }
+
+    if (status == 0 || !FD_ISSET(sock, &readfds)) {
+      zend_throw_exception(mongo_ce_CursorTOException, "cursor timed out", 3 TSRMLS_CC);
+      return FAILURE;
+    }
+  }
+
   if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) == FAILURE) {
 
     set_disconnected(cursor->link);
 
-    ZVAL_STRING(errmsg, "couldn't get response header", 1);
+    zend_throw_exception(mongo_ce_CursorException, "couldn't get response header", 4 TSRMLS_CC);
     return FAILURE;
   }
 
@@ -1705,32 +1733,23 @@ static int get_header(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   // make sure we're not getting crazy data
   if (cursor->recv.length == 0) {
-
     set_disconnected(cursor->link);
-
-    ZVAL_STRING(errmsg, "no db response", 1);
+    zend_throw_exception(mongo_ce_CursorException, "no db response", 5 TSRMLS_CC);
     return FAILURE;
   }
   else if (cursor->recv.length > MAX_RESPONSE_LEN ||
            cursor->recv.length < REPLY_HEADER_SIZE) {
-    char *msg;
-
     set_disconnected(cursor->link);
-
-    spprintf(&msg, 
-             0, 
-             "bad response length: %d, max: %d, did the db assert?", 
-             cursor->recv.length, 
-             MAX_RESPONSE_LEN);
-
-    ZVAL_STRING(errmsg, msg, 0);
+    zend_throw_exception_ex(mongo_ce_CursorException, 6 TSRMLS_CC, 
+                            "bad response length: %d, max: %d, did the db assert?", 
+                            cursor->recv.length, MAX_RESPONSE_LEN);
     return FAILURE;
   }
 
   if (recv(sock, (char*)&cursor->recv.request_id, INT_32, FLAGS) == FAILURE ||
       recv(sock, (char*)&cursor->recv.response_to, INT_32, FLAGS) == FAILURE ||
       recv(sock, (char*)&cursor->recv.op, INT_32, FLAGS) == FAILURE) {
-    ZVAL_STRING(errmsg, "incomplete header", 1);
+    zend_throw_exception(mongo_ce_CursorException, "incomplete header", 7 TSRMLS_CC);
     return FAILURE;
   }
 
@@ -1765,38 +1784,8 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     return FAILURE;
   }
 
-  // set a timeout
-  if (cursor->timeout && cursor->timeout > 0) {
-    struct timeval timeout;
-    fd_set readfds, exceptfds;
-    int status = 0;
-
-    timeout.tv_sec = cursor->timeout / 1000 ;
-    timeout.tv_usec = (cursor->timeout % 1000) * 1000;
-
-    FD_ZERO(&readfds);
-    FD_SET(sock, &readfds);
-    FD_ZERO(&exceptfds);
-    FD_SET(sock, &exceptfds);
-
-    status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
-
-    if (status == -1 || FD_ISSET(sock, &exceptfds)) {
-      UNLOCK;
-      zend_throw_exception(mongo_ce_CursorException, strerror(errno), 2 TSRMLS_CC);
-      return FAILURE;
-    }
-
-    if (status == 0 || !FD_ISSET(sock, &readfds)) {
-      UNLOCK;
-      zend_throw_exception(mongo_ce_CursorTOException, "cursor timed out", 3 TSRMLS_CC);
-      return FAILURE;
-    }
-  }
-
-  if (get_header(sock, cursor, errmsg TSRMLS_CC) == FAILURE) {
+  if (get_header(sock, cursor TSRMLS_CC) == FAILURE) {
     UNLOCK;
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 4 TSRMLS_CC);
     return FAILURE;
   }
 
@@ -1830,9 +1819,8 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     }
 
     // get the next db response
-    if (get_header(sock, cursor, errmsg TSRMLS_CC) == FAILURE) {
+    if (get_header(sock, cursor TSRMLS_CC) == FAILURE) {
       UNLOCK;
-      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 6 TSRMLS_CC);
       return FAILURE;
     }
   }
