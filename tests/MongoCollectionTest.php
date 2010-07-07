@@ -830,6 +830,11 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(100, $result['count']);
       $this->assertEquals(7, $result['keys']);
     }
+
+    public function testConsts() {
+      $this->assertEquals(1, MongoCollection::ASCENDING);
+      $this->assertEquals(-1, MongoCollection::DESCENDING);
+    }
 }
 
 class TestToIndexString extends MongoCollection {

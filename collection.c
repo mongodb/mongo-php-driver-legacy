@@ -1110,6 +1110,9 @@ void mongo_init_MongoCollection(TSRMLS_D) {
   ce.create_object = php_mongo_collection_new;
   mongo_ce_Collection = zend_register_internal_class(&ce TSRMLS_CC);
 
+  zend_declare_class_constant_long(mongo_ce_Collection, "ASCENDING", strlen("ASCENDING"), 1 TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Collection, "DESCENDING", strlen("DESCENDING"), -1 TSRMLS_CC);
+
   zend_declare_property_long(mongo_ce_Collection, "w", strlen("w"), 1, ZEND_ACC_PUBLIC TSRMLS_CC);
   zend_declare_property_long(mongo_ce_Collection, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_TIMEOUT, ZEND_ACC_PUBLIC TSRMLS_CC);
 }
