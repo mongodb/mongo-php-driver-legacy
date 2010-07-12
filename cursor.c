@@ -238,6 +238,10 @@ PHP_METHOD(MongoCursor, hasNext) {
     php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
     cursor->cursor_id = 0;
   }
+  if (cursor->flag == 1) {
+    zend_throw_exception(mongo_ce_CursorException, "cursor not found", 0 TSRMLS_CC);
+    return;    
+  }
 
   // sometimes we'll have a cursor_id but there won't be any more results
   if (cursor->at >= cursor->num) {
