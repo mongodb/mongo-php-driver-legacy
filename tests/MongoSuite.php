@@ -2,6 +2,7 @@
 require_once 'MongoTest.php';
 require_once 'MongoDBTest.php';
 require_once 'MongoCollectionTest.php';
+require_once 'MongoCollectionTest2.php';
 require_once 'MongoCursorTest.php';
 require_once 'MongoGridFSTest.php';
 require_once 'MongoGridFSFileTest.php';
@@ -38,6 +39,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $suite->addTestSuite('MongoTest');
         $suite->addTestSuite('MongoDBTest');
         $suite->addTestSuite('MongoCollectionTest');
+        $suite->addTestSuite('MongoCollectionTest2');
         $suite->addTestSuite('MongoCursorTest');
         
         // */

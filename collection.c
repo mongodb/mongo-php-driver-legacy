@@ -41,6 +41,8 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_Collection = NULL;
 
+static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
+static zval* append_getlasterror(zval *coll, buffer *buf, int safe, int fsync TSRMLS_DC);
 /* 
  * arginfo needs to be set for __get because if PHP doesn't know it only takes
  * one arg, it will issue a warning.
@@ -142,7 +144,7 @@ PHP_METHOD(MongoCollection, validate) {
  * this should probably be split into two methods... right now appends the 
  * getlasterror query to the buffer and alloc & inits the cursor zval.
  */
-static zval* append_getlasterror(zval *coll, buffer *buf TSRMLS_DC) {
+static zval* append_getlasterror(zval *coll, buffer *buf, int safe, int fsync TSRMLS_DC) {
   zval *cmd_ns_z, *cmd, *w, *cursor_z, *temp;
   char *cmd_ns;
   mongo_cursor *cursor;
@@ -160,14 +162,21 @@ static zval* append_getlasterror(zval *coll, buffer *buf TSRMLS_DC) {
   array_init(cmd);
   add_assoc_long(cmd, "getlasterror", 1);
 
-  w = zend_read_property(mongo_ce_Collection, coll, "w", strlen("w"), NOISY TSRMLS_CC);
-  if (Z_LVAL_P(w) > 1) {
+  if (safe == 1) {
+    zval *w = zend_read_property(mongo_ce_Collection, coll, "w", strlen("w"), NOISY TSRMLS_CC);
+    safe = Z_LVAL_P(w);
+  }
+
+  if (safe > 1) {
     zval *wtimeout;
 
-    add_assoc_long(cmd, "w", Z_LVAL_P(w)); 
+    add_assoc_long(cmd, "w", safe); 
 
     wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
     add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
+  }
+  if (fsync) {
+    add_assoc_bool(cmd, "fsync", 1);
   }
 
   // get cursor
@@ -201,15 +210,10 @@ static zval* append_getlasterror(zval *coll, buffer *buf TSRMLS_DC) {
   return cursor_z;
 }
 
-static int safe_op(mongo_link *link, zval *coll, buffer *buf, zval *return_value TSRMLS_DC) {
-  zval *cursor_z, *w, *errmsg, **err;
+static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC) {
+  zval *w, *errmsg, **err;
   mongo_cursor *cursor;
   int response;
-
-  if (0 == (cursor_z = append_getlasterror(coll, buf TSRMLS_CC))) {
-    zval_ptr_dtor(&cursor_z);
-    return FAILURE;
-  }
 
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
@@ -268,7 +272,7 @@ static int safe_op(mongo_link *link, zval *coll, buffer *buf, zval *return_value
 
 PHP_METHOD(MongoCollection, insert) {
   zval *a, *options = 0;
-  zend_bool safe = 0;
+  int safe = 0, fsync = 0;
   mongo_collection *c;
   mongo_link *link;
   buffer buf;
@@ -283,12 +287,16 @@ PHP_METHOD(MongoCollection, insert) {
   }
 
   if (options) {
-    zval **safe_pp;
-
-    // new, just in case there are more options coming
     if (!IS_SCALAR_P(options)) {
+      zval **safe_pp, **fsync_pp;
       if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp)) {
-        safe = Z_BVAL_PP(safe_pp);
+        safe = Z_LVAL_PP(safe_pp);
+      }
+      if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fysnc")+1, (void**)&fsync_pp)) {
+        fsync = Z_BVAL_PP(fsync_pp);
+        if (fsync && !safe) {
+          safe = 1;
+        }
       }
     }
     // old boolean options
@@ -312,7 +320,7 @@ PHP_METHOD(MongoCollection, insert) {
 
 PHP_METHOD(MongoCollection, batchInsert) {
   zval *docs, *options = 0;
-  int safe = 0;
+  int safe = 0, fsync = 0;
   mongo_collection *c;
   mongo_link *link;
   buffer buf;
@@ -387,7 +395,7 @@ PHP_METHOD(MongoCollection, update) {
   mongo_collection *c;
   mongo_link *link;
   buffer buf;
-  int safe = 0, opts = 0;
+  int safe = 0, fsync = 0, opts = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &criteria, &newobj, &options) == FAILURE) {
     return;
@@ -408,7 +416,7 @@ PHP_METHOD(MongoCollection, update) {
   }
   // new-style
   else {
-    zval **upsert = 0, **multiple = 0, **safe_pp = 0;
+    zval **upsert = 0, **multiple = 0, **safe_pp = 0, **fsync_pp;
 
     zend_hash_find(HASH_P(options), "upsert", strlen("upsert")+1, (void**)&upsert);
     opts = (upsert ? Z_BVAL_PP(upsert) : 0) << 0;
@@ -418,6 +426,12 @@ PHP_METHOD(MongoCollection, update) {
 
     if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS) {
       safe = Z_BVAL_PP(safe_pp);
+    }
+    if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS) {
+      fsync = Z_BVAL_PP(fsync_pp);
+      if (fsync && !safe) {
+        safe = 1;
+      }
     }
   }
 
@@ -436,7 +450,7 @@ PHP_METHOD(MongoCollection, update) {
 
 PHP_METHOD(MongoCollection, remove) {
   zval *criteria = 0, *options = 0;
-  int flags = 0, safe = 0;
+  int flags = 0, safe = 0, fsync = 0;
   mongo_collection *c;
   mongo_link *link;
   buffer buf;
@@ -463,13 +477,19 @@ PHP_METHOD(MongoCollection, remove) {
       flags = Z_BVAL_P(options);
     }
     else {
-      zval **just_one, **safe_pp;
+      zval **just_one, **safe_pp, **fsync_pp;
 
       if (zend_hash_find(HASH_P(options), "justOne", strlen("justOne")+1, (void**)&just_one) == SUCCESS) {
         flags = Z_BVAL_PP(just_one);
       }
       if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS) {
         safe = Z_BVAL_PP(safe_pp);
+      }
+      if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS) {
+        fsync = Z_BVAL_PP(fsync_pp);
+        if (fsync && !safe) {
+          safe = 1;
+        }
       }
     }
   }

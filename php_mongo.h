@@ -314,8 +314,14 @@ typedef struct {
 
 #define SEND_MSG                                                \
   PHP_MONGO_GET_LINK(c->link);                                  \
-  if (safe) {                                                   \
-    safe_op(link, getThis(), &buf, return_value TSRMLS_CC);     \
+  if (safe) {                                                           \
+    zval *cursor;                                                       \
+    if (0 == (cursor = append_getlasterror(getThis(), &buf, safe, fsync TSRMLS_CC))) { \
+      zval_ptr_dtor(&cursor);                                           \
+      RETURN_FALSE;                                                     \
+    }                                                                   \
+                                                                        \
+    safe_op(link, cursor, &buf, return_value TSRMLS_CC);                \
   }                                                             \
   else {                                                        \
     zval *temp;                                                 \
@@ -328,10 +334,16 @@ typedef struct {
 
 #define GET_SAFE_OPTION                                                 \
   if (options && !IS_SCALAR_P(options)) {                               \
-    zval **safe_pp;                                                     \
+    zval **safe_pp, **fsync_pp;                                         \
                                                                         \
     if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp)) { \
       safe = Z_BVAL_PP(safe_pp);                                        \
+    }                                                                   \
+    if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fysnc")+1, (void**)&fsync_pp)) { \
+      fsync = Z_BVAL_PP(fsync_pp);                                      \
+      if (fsync && !safe) {                                             \
+        safe = 1;                                                       \
+      }                                                                 \
     }                                                                   \
   }
 
