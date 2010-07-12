@@ -357,7 +357,7 @@ PHP_METHOD(MongoDate, __construct) {
     gettimeofday(&time, NULL);
 
     zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), time.tv_sec TSRMLS_CC);
-    zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), time.tv_usec TSRMLS_CC);
+    zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), (time.tv_usec/1000)*1000 TSRMLS_CC);
 #endif
   }
   }

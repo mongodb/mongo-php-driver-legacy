@@ -20,6 +20,11 @@ class MongoDateTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(0, $d3->usec);
     }
 
+    public function testMilliseconds() {
+        $d = new MongoDate();
+        $this->assertEquals($d->usec, ($d->usec/1000)*1000);
+    }
+
     public function testCompare() {
       $x = array(0,1,2,3,4);
       $y = array();
