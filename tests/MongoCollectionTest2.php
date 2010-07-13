@@ -24,16 +24,9 @@ class MongoCollectionTest2 extends PHPUnit_Framework_TestCase
         $this->assertArrayHasKey("fsyncFiles", $result);
     }
 
-    /**
-     * @expectedException MongoCursorException
-     */
     public function testSafeW() {
-      $temp = $this->object->wtimeout;
-      $this->object->wtimeout = 1000;
-
-      $this->object->insert(array("category" => "fruit", "name" => "apple"), array("safe" => 3));
-
-      $this->object->wtimeout = $temp;
+        $result = $this->object->insert(array("category" => "fruit", "name" => "apple"), array("safe" => 3));
+        $this->assertArrayHasKey("wtime", $result);
     }
 }
 

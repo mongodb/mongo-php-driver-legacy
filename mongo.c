@@ -184,8 +184,8 @@ ZEND_GET_MODULE(mongo)
 /* {{{ PHP_INI */
 // these must be in the same order as mongo_globals are declared or it will segfault on 64-bit machines!
 PHP_INI_BEGIN()
-STD_PHP_INI_BOOLEAN("mongo.auto_reconnect", "1", PHP_INI_SYSTEM, OnUpdateLong, auto_reconnect, zend_mongo_globals, mongo_globals)
-STD_PHP_INI_BOOLEAN("mongo.allow_persistent", "1", PHP_INI_SYSTEM, OnUpdateLong, allow_persistent, zend_mongo_globals, mongo_globals)
+STD_PHP_INI_ENTRY("mongo.auto_reconnect", "1", PHP_INI_ALL, OnUpdateLong, auto_reconnect, zend_mongo_globals, mongo_globals)
+STD_PHP_INI_ENTRY("mongo.allow_persistent", "1", PHP_INI_ALL, OnUpdateLong, allow_persistent, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.default_host", "localhost", PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.default_port", "27017", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.chunk_size", "262144", PHP_INI_ALL, OnUpdateLong, chunk_size, zend_mongo_globals, mongo_globals)
@@ -879,12 +879,12 @@ PHP_METHOD(Mongo, __construct) {
         connect = Z_BVAL_PP(connect_z);
       }
       if (zend_hash_find(HASH_P(options), "persist", strlen("persist")+1, (void**)&persist_z) == SUCCESS) {
-        convert_to_string_ex(persist_z);
-        zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), Z_STRVAL_PP(persist_z) TSRMLS_CC);
+        if (Z_TYPE_PP(persist_z) == IS_STRING) {
+          zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), *persist_z TSRMLS_CC);
+        }
       }
       if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_z) == SUCCESS) {
         mongo_link *link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
-        convert_to_long_ex(timeout_z);
         link->timeout = Z_LVAL_PP(timeout_z);
       }
     }
@@ -915,7 +915,7 @@ PHP_METHOD(Mongo, __construct) {
      * so we don't need any parameters.  We've already set up the environment 
      * above.
      */
-    MONGO_METHOD(Mongo, connect, return_value, getThis());
+    MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
   }
   else {
     /* if we aren't connecting, set Mongo::connected to false and return */
@@ -936,6 +936,9 @@ PHP_METHOD(Mongo, connect) {
  * [DEPRECATED - use mongodb://host1,host2 syntax]
  */
 PHP_METHOD(Mongo, pairConnect) {
+
+  zend_error(E_WARNING, "Deprecated, use constructor and connect() instead");
+
   MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
 }
 
@@ -943,6 +946,9 @@ PHP_METHOD(Mongo, pairConnect) {
  */
 PHP_METHOD(Mongo, persistConnect) {
   zval *id = 0, *garbage = 0;
+
+  zend_error(E_WARNING, "Deprecated, use constructor and connect() instead");
+
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &id, &garbage) == FAILURE) {
     return;
   }
@@ -968,6 +974,9 @@ PHP_METHOD(Mongo, persistConnect) {
  */
 PHP_METHOD(Mongo, pairPersistConnect) {
   zval *id = 0, *garbage = 0;
+
+  zend_error(E_WARNING, "Deprecated, use constructor and connect() instead");
+
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &id, &garbage) == FAILURE) {
     return;
   }
@@ -989,7 +998,7 @@ PHP_METHOD(Mongo, pairPersistConnect) {
 
 
 PHP_METHOD(Mongo, connectUtil) {
-  zval *connected, *server, *errmsg;
+  zval *connected, *errmsg;
 
   /* initialize and clear the error message */
   MAKE_STD_ZVAL(errmsg);
@@ -1013,14 +1022,12 @@ PHP_METHOD(Mongo, connectUtil) {
 
   /* if connecting failed, throw an exception */
   if (!Z_BVAL_P(connected)) {
-    char *full_error;
-    server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
+    zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
 
-    spprintf(&full_error, 0, "%s: %s", Z_STRVAL_P(server), Z_STRVAL_P(errmsg));
-    zend_throw_exception(mongo_ce_ConnectionException, full_error, 0 TSRMLS_CC);
+    zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
+                            "connection to %s failed: %s", Z_STRVAL_P(server), Z_STRVAL_P(errmsg));
 
     zval_ptr_dtor(&errmsg);
-    efree(full_error);
     return;
   }
 
