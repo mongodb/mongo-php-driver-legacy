@@ -333,7 +333,8 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
  */
 PHP_METHOD(MongoGridFS, storeBytes) {
   char *bytes = 0;
-  int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, pos = 0, safe = 0;
+  int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, 
+    pos = 0, safe = 0, fsync = 0;
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
@@ -471,7 +472,7 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
 PHP_METHOD(MongoGridFS, storeFile) {
   zval *fh, *extra = 0, *options = 0;
   char *filename = 0;
-  int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1, safe = 0;
+  int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1, safe = 0, fsync = 0;
   FILE *fp = 0;
 
   zval temp;
