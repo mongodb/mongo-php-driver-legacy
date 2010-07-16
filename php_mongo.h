@@ -31,6 +31,11 @@
 #  endif
 #endif
 
+#ifdef DEBUG
+#define DEBUG_CONN
+#define DEBUG_CURSOR
+#endif
+
 // db ops
 #define OP_REPLY 1
 #define OP_MSG 1000
@@ -166,11 +171,13 @@ typedef struct _mongo_server {
   int port;
   int socket;
   int connected;
+
+  struct _mongo_server *next;
 } mongo_server;
 
 typedef struct _mongo_server_set {
   int num;
-  mongo_server **server;
+  mongo_server *server;
 
   /*
    * this is the resource id if this is a persistent connection, so that we can
@@ -178,8 +185,10 @@ typedef struct _mongo_server_set {
    */
   int rsrc;
 
-  // if num is greater than -1, master keeps track of the master connection
-  int master;
+  // if num is greater than -1, master keeps track of the master connection,
+  // otherwise it points to "server"
+  mongo_server *master;
+  mongo_server *eo_seeds;
 } mongo_server_set;
 
 typedef struct {
@@ -193,12 +202,15 @@ typedef struct {
   int persist;
 
   mongo_server_set *server_set;
+  // if this is a replica set
+  int rs;
 
   zval *db;
   zval *username;
   zval *password;
 
 } mongo_link;
+
 
 #define MONGO_LINK 0
 #define MONGO_CURSOR 1
@@ -407,6 +419,7 @@ typedef struct _cursor_node {
   struct _cursor_node *next;
   struct _cursor_node *prev;
 } cursor_node;
+
 void php_mongo_free_cursor_node(cursor_node*, list_entry*);
 
 typedef struct {
@@ -543,7 +556,7 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC);
 void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
 int mongo_say(mongo_link*, buffer*, zval* TSRMLS_DC);
-int mongo_hear(mongo_link*, void*, int TSRMLS_DC);
+int mongo_hear(int sock, void*, int TSRMLS_DC);
 int php_mongo_get_reply(mongo_cursor*, zval* TSRMLS_DC);
 
 void mongo_init_Mongo(TSRMLS_D);
