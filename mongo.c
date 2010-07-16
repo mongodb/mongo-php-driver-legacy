@@ -197,7 +197,6 @@ PHP_INI_END()
 
 
 static void php_mongo_server_free(mongo_server_set *server_set, int persist TSRMLS_DC) {
-  int i;
   mongo_server *current;
 
   if (!server_set || !server_set->server) {
@@ -707,7 +706,7 @@ void mongo_init_Mongo(TSRMLS_D) {
  */
 static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
   zval *hosts_z, *persist_z;
-  char *hosts, *current, *comma;
+  char *hosts, *current;
   zend_bool persist;
   mongo_link *link;
   mongo_server *current_server;
@@ -794,8 +793,7 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
   // current is now pointing at the first server name
   while (*current && *current != '/') {
     mongo_server *server;
-    char *host, **current_ptr = &current;
-    int port;
+    char **current_ptr = &current;
 
 #ifdef DEBUG_CONN
     php_printf("current: %s\n", current);
@@ -1293,7 +1291,7 @@ static char* stringify_server(mongo_server *server, char *str, int *pos, int *le
 PHP_METHOD(Mongo, __toString) {
   int i, tpos = 0, tlen = 256, *pos, *len;
   char *str;
-
+  mongo_server *server;
   mongo_link *link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
   // if we haven't connected yet, we should still be able to get the __toString 
@@ -1312,8 +1310,8 @@ PHP_METHOD(Mongo, __toString) {
     str = stringify_server(link->server_set->master, str, pos, len);
   }
 
+  server = link->server_set->server;
   // stringify each server
-  mongo_server *server = link->server_set->server;
   while (server) {
     if (server == link->server_set->master) {
       server = server->next;

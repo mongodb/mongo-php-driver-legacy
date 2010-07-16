@@ -145,7 +145,7 @@ PHP_METHOD(MongoCollection, validate) {
  * getlasterror query to the buffer and alloc & inits the cursor zval.
  */
 static zval* append_getlasterror(zval *coll, buffer *buf, int safe, int fsync TSRMLS_DC) {
-  zval *cmd_ns_z, *cmd, *w, *cursor_z, *temp;
+  zval *cmd_ns_z, *cmd, *cursor_z, *temp;
   char *cmd_ns;
   mongo_cursor *cursor;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
@@ -211,7 +211,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, int safe, int fsync TS
 }
 
 static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC) {
-  zval *w, *errmsg, **err;
+  zval *errmsg, **err;
   mongo_cursor *cursor;
   int response;
 
