@@ -418,9 +418,8 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
     public function testListDBs() {
         $dbs = $this->sharedFixture->listDBs();
-        $this->assertEquals(true, (bool)$dbs['ok']);
+        $this->assertEquals(true, (bool)$dbs['ok'], json_encode($dbs));
         $this->assertTrue(array_key_exists('databases', $dbs));
-        $this->assertTrue(array_key_exists('totalSize', $dbs));
     }
 
     /*

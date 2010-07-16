@@ -314,22 +314,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals((bool)$err['ok'], true);
     }
 
-    public function testPrevError() {
-        $this->object->resetError();
-        $err = $this->object->prevError();
-        $this->assertEquals($err['err'], null);
-        $this->assertEquals($err['n'], 0);
-        $this->assertEquals($err['nPrev'], -1);
-        $this->assertEquals((bool)$err['ok'], true);
-        
-        $this->object->forceError();
-        $err = $this->object->prevError();
-        $this->assertNotNull($err['err']);
-        $this->assertEquals($err['n'], 0);
-        $this->assertEquals($err['nPrev'], 1);
-        $this->assertEquals((bool)$err['ok'], true);
-    }
-
     public function testResetError() {
         $this->object->resetError();
         $err = $this->object->lastError();
