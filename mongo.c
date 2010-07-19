@@ -76,6 +76,7 @@ static void set_disconnected(mongo_link *link);
 static char* stringify_server(mongo_server*, char*, int*, int*);
 static int php_mongo_do_authenticate(mongo_link*, zval* TSRMLS_DC);
 static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link, zval *errmsg);
+static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC);
 
 #if WIN32
 static HANDLE cursor_mutex;
@@ -1904,12 +1905,48 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
   return SUCCESS;
 }
 
+static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
+  int num_returned = 0;
+
+  if (recv(sock, (char*)&cursor->flag, INT_32, FLAGS) == FAILURE ||
+      recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
+      recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
+      recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
+    zend_throw_exception(mongo_ce_CursorException, "incomplete response", 7 TSRMLS_CC);
+    return FAILURE;
+  }
+
+  cursor->cursor_id = MONGO_64(cursor->cursor_id);
+  cursor->flag = MONGO_32(cursor->flag);
+  cursor->start = MONGO_32(cursor->start);
+  num_returned = MONGO_32(num_returned);
+
+  /* cursor->num is the total of the elements we've retrieved
+   * (elements already iterated through + elements in db response
+   * but not yet iterated through) 
+   */
+  cursor->num += num_returned;
+
+  // create buf
+  cursor->recv.length -= REPLY_HEADER_LEN;
+
+  if (cursor->buf.start) {
+    efree(cursor->buf.start);
+  }
+
+  cursor->buf.start = (char*)emalloc(cursor->recv.length);
+  cursor->buf.end = cursor->buf.start + cursor->recv.length;
+  cursor->buf.pos = cursor->buf.start;
+
+  // finish populating cursor
+  return mongo_hear(sock, cursor->buf.pos, cursor->recv.length TSRMLS_CC);
+}
+
 /*
  * throws exception on FAILURE
  */
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int sock;
-  int num_returned = 0;
 
 #ifdef DEBUG
   php_printf("hearing something\n");
@@ -1948,35 +1985,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     // if we're getting the response to an earlier request, put the response on
     // the queue
     if (cursor->send.request_id > cursor->recv.response_to) {
-      if (recv(sock, (char*)&cursor->flag, INT_32, FLAGS) == FAILURE ||
-          recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
-          recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
-          recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
-
-        UNLOCK;
-        zend_throw_exception(mongo_ce_CursorException, "incomplete response", 7 TSRMLS_CC);
-        return FAILURE;
-      }
-
-      cursor->cursor_id = MONGO_64(cursor->cursor_id);
-      cursor->flag = MONGO_32(cursor->flag);
-      cursor->start = MONGO_32(cursor->start);
-      num_returned = MONGO_32(num_returned);
-      cursor->num += num_returned;
-
-      // create buf
-      cursor->recv.length -= REPLY_HEADER_LEN;
-
-      if (cursor->buf.start) {
-        efree(cursor->buf.start);
-      }
-
-      cursor->buf.start = (char*)emalloc(cursor->recv.length);
-      cursor->buf.end = cursor->buf.start + cursor->recv.length;
-      cursor->buf.pos = cursor->buf.start;
-
-      // finish populating cursor
-      if (mongo_hear(sock, cursor->buf.pos, cursor->recv.length TSRMLS_CC) != FAILURE) {
+      if (FAILURE != get_cursor_body(sock, cursor TSRMLS_CC)) {
         // add to list
         UNLOCK;
         php_mongo_create_le(cursor, "response_list" TSRMLS_CC);
@@ -2023,34 +2032,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     }
   }
 
-  if (recv(sock, (char*)&cursor->flag, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
-
-    UNLOCK;
-    zend_throw_exception(mongo_ce_CursorException, "incomplete response", 7 TSRMLS_CC);
-    return FAILURE;
-  }
-
-  cursor->cursor_id = MONGO_64(cursor->cursor_id);
-  cursor->flag = MONGO_32(cursor->flag);
-  cursor->start = MONGO_32(cursor->start);
-  num_returned = MONGO_32(num_returned);
-
-  // create buf
-  cursor->recv.length -= REPLY_HEADER_LEN;
-
-  if (cursor->buf.start) {
-    efree(cursor->buf.start);
-  }
-
-  cursor->buf.start = (char*)emalloc(cursor->recv.length);
-  cursor->buf.end = cursor->buf.start + cursor->recv.length;
-  cursor->buf.pos = cursor->buf.start;
-
-  /* get the actual response content */
-  if (mongo_hear(sock, cursor->buf.pos, cursor->recv.length TSRMLS_CC) == FAILURE) {
+  if (FAILURE == get_cursor_body(sock, cursor TSRMLS_CC)) {
     UNLOCK;
 #ifdef WIN32
     zend_throw_exception_ex(mongo_ce_CursorException, 8 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
@@ -2059,12 +2041,6 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 #endif
     return FAILURE;
   }
-
-  /* cursor->num is the total of the elements we've retrieved
-   * (elements already iterated through + elements in db response
-   * but not yet iterated through) 
-   */
-  cursor->num += num_returned;
 
   UNLOCK;
 
