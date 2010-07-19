@@ -337,7 +337,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
   return 0;
 }
 
-int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC) {
+int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC) {
   list_entry *le;
   cursor_node *new_node;
 
@@ -355,7 +355,7 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC) {
    * In case 1 & 2, we want to create a new le ptr, otherwise we want to append
    * to the existing ptr.
    */
-  if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, (void**)&le) == SUCCESS && le->ptr) {
+  if (zend_hash_find(&EG(persistent_list), name, strlen(name)+1, (void**)&le) == SUCCESS && le->ptr) {
     cursor_node *current = le->ptr;
     cursor_node *prev = 0;
 
@@ -386,7 +386,7 @@ int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC) {
     list_entry new_le;
     new_le.ptr = new_node;
     new_le.type = le_cursor_list;
-    zend_hash_add(&EG(persistent_list), "cursor_list", strlen("cursor_list")+1, &new_le, sizeof(list_entry), NULL);
+    zend_hash_add(&EG(persistent_list), name, strlen(name)+1, &new_le, sizeof(list_entry), NULL);
   }
 
   UNLOCK;
@@ -1939,31 +1939,81 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   // check that this is actually the response we want
   while (cursor->send.request_id != cursor->recv.response_to) {
+#ifdef DEBUG
+    php_printf("request/cursor mismatch: %d vs %d\n", cursor->send.request_id, cursor->recv.response_to);
+#endif
+
     // if it's not... 
 
-    // TODO: check that the request_id isn't on async queue
-    // temp: we have no async queue, so this is always true
-    if (1) {
-      char temp[4096];
-      int len = cursor->recv.length-REPLY_HEADER_LEN;
+    // if we're getting the response to an earlier request, put the response on
+    // the queue
+    if (cursor->send.request_id > cursor->recv.response_to) {
+      if (recv(sock, (char*)&cursor->flag, INT_32, FLAGS) == FAILURE ||
+          recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
+          recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
+          recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
 
-      // throw out the rest of the headers and the response
-      if (recv(sock, (char*)temp, 20, FLAGS) == FAILURE) {
         UNLOCK;
-        zend_throw_exception(mongo_ce_CursorException, "couldn't get header of response to throw out", 5 TSRMLS_CC);
+        zend_throw_exception(mongo_ce_CursorException, "incomplete response", 7 TSRMLS_CC);
         return FAILURE;
       }
 
-      do {
-        int temp_len = len > 4096 ? 4096 : len;
-        len -= temp_len;
+      cursor->cursor_id = MONGO_64(cursor->cursor_id);
+      cursor->flag = MONGO_32(cursor->flag);
+      cursor->start = MONGO_32(cursor->start);
+      num_returned = MONGO_32(num_returned);
+      cursor->num += num_returned;
 
-        if (mongo_hear(sock, (void*)temp, temp_len TSRMLS_CC) == FAILURE) {
-          UNLOCK;
-          zend_throw_exception(mongo_ce_CursorException, "couldn't get response to throw out", 6 TSRMLS_CC);
-          return FAILURE;
+      // create buf
+      cursor->recv.length -= REPLY_HEADER_LEN;
+
+      if (cursor->buf.start) {
+        efree(cursor->buf.start);
+      }
+
+      cursor->buf.start = (char*)emalloc(cursor->recv.length);
+      cursor->buf.end = cursor->buf.start + cursor->recv.length;
+      cursor->buf.pos = cursor->buf.start;
+
+      // finish populating cursor
+      if (mongo_hear(sock, cursor->buf.pos, cursor->recv.length TSRMLS_CC) != FAILURE) {
+        // add to list
+        UNLOCK;
+        php_mongo_create_le(cursor, "response_list" TSRMLS_CC);
+        LOCK;
+      }
+
+      // else if we've failed, just don't add to queue and continue
+
+    }
+    // otherwise, check if the response may on the queue
+    else {
+      int found = 0;
+      cursor_node *response = 0;
+      list_entry *le;
+
+      if (zend_hash_find(&EG(persistent_list), "response_list", strlen("response_list") + 1, (void**)&le) == SUCCESS) {
+        response = le->ptr;
+      }
+
+      while (response) {
+        if (response->cursor->send.request_id == cursor->recv.response_to) {
+          found = 1;
+          break;
         }
-      } while (len > 0);
+        response = response->next;
+      }
+
+      // if it is, then pull it off & use it
+      if (found) { 
+        memcpy(cursor, response->cursor, sizeof(mongo_cursor));
+        php_mongo_free_cursor_node(response, le);
+      }
+      else {
+        UNLOCK;
+        zend_throw_exception(mongo_ce_CursorException, "couldn't find a response", 9 TSRMLS_CC);
+        return FAILURE;
+      }
     }
 
     // get the next db response

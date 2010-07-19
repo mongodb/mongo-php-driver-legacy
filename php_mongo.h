@@ -487,7 +487,7 @@ PHP_METHOD(Mongo, forceError);
 PHP_METHOD(Mongo, close);
 PHP_METHOD(Mongo, listDBs);
 
-int php_mongo_create_le(mongo_cursor *cursor TSRMLS_DC);
+int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 
 /*
  * Mutex macros

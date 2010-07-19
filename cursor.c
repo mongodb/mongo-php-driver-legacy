@@ -567,7 +567,7 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   /* we've got something to kill, make a note */
   if (cursor->cursor_id != 0) {
-    php_mongo_create_le(cursor TSRMLS_CC);
+    php_mongo_create_le(cursor, "cursor_list" TSRMLS_CC);
   }
 }
 /* }}} */
