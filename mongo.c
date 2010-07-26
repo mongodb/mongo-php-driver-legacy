@@ -197,7 +197,22 @@ PHP_INI_END()
 /* }}} */
 
 
-static void php_mongo_server_free(mongo_server_set *server_set, int persist TSRMLS_DC) {
+static void php_mongo_server_free(mongo_server *server, int persist TSRMLS_DC) {
+#ifdef WIN32
+    closesocket(server->socket);
+#else
+    close(server->socket);
+#endif
+
+    if (server->host) {
+      pefree(server->host, persist);
+      server->host = 0;
+    }
+
+    pefree(server, persist);
+}
+
+static void php_mongo_server_set_free(mongo_server_set *server_set, int persist TSRMLS_DC) {
   mongo_server *current;
 
   if (!server_set || !server_set->server) {
@@ -207,24 +222,11 @@ static void php_mongo_server_free(mongo_server_set *server_set, int persist TSRM
   current = server_set->server;
 
   while (current) {
-    mongo_server *temp;
+    mongo_server *temp = current->next;
+    php_mongo_server_free(current, persist TSRMLS_CC);
+    current = temp;
+  }
 
-#ifdef WIN32
-    closesocket(current->socket);
-#else
-    close(current->socket);
-#endif
-
-    if (current->host) {
-      pefree(current->host, persist);
-      current->host = 0;
-    }
-
-    temp = current;
-    current = current->next;
-    pefree(temp, persist);
-  } /* while loop */
-    
   pefree(server_set, persist);
 }
 
@@ -412,7 +414,7 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
   // link->persist!=0 means it's either a persistent link or a copy of one
   // either way, we don't want to deallocate the memory yet
   if (!persist) {
-    php_mongo_server_free(link->server_set, 0 TSRMLS_CC);
+    php_mongo_server_set_free(link->server_set, 0 TSRMLS_CC);
   }
 
   if (link->username) {
@@ -436,7 +438,7 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
  */
 static void php_mongo_link_pfree( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
   mongo_server_set *server_set = (mongo_server_set*)rsrc->ptr;
-  php_mongo_server_free(server_set, 1 TSRMLS_CC);
+  php_mongo_server_set_free(server_set, 1 TSRMLS_CC);
   rsrc->ptr = 0;
 }
 /* }}} */
@@ -1151,7 +1153,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
     if (zend_hash_update(&EG(persistent_list), key, strlen(key)+1, (void*)&new_le, sizeof(zend_rsrc_list_entry), NULL)==FAILURE) {
       zend_throw_exception(mongo_ce_ConnectionException, "could not store persistent link", 0 TSRMLS_CC);
 
-      php_mongo_server_free(link->server_set, 1 TSRMLS_CC);
+      php_mongo_server_set_free(link->server_set, 1 TSRMLS_CC);
       efree(key);
       RETURN_FALSE;
     }
@@ -1738,18 +1740,23 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
 
     // check if this is a replica set
     if (zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1, (void**)&hosts) == SUCCESS) {
-      mongo_server *current = link->server_set->eo_seeds->next;
+      mongo_server *current;
       zval **data, *errmsg;
       HashTable *hash;
       HashPosition pointer;
+
+#ifdef DEBUG_CONN
+      php_printf("parsing replica set\n");
+#endif
 
       MAKE_STD_ZVAL(errmsg);
       ZVAL_NULL(errmsg);
 
       // kill the existing linked list
+      current = link->server_set->eo_seeds->next;
       while (current) {
         mongo_server *temp = current->next;
-        pefree(current, link->persist);
+        php_mongo_server_free(current, link->persist TSRMLS_CC);
         current = temp;
       }
 
@@ -1768,6 +1775,10 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
           zval_ptr_dtor(&errmsg);
           continue;
         }
+
+#ifdef DEBUG_CONN
+        php_printf("appending to list: %s:%d\n", server->host, server->port);
+#endif
 
         // append to list
         current->next = server;
@@ -1798,16 +1809,24 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
             continue;
           }
 
+          zval_ptr_dtor(&errmsg);
+
+#ifdef DEBUG_CONN
+          php_printf("connected to %s:%d\n", server->host, server->port);
+#endif
+
+          zval_ptr_dtor(&cursor_zval);
+          zval_ptr_dtor(&query);
+          zval_ptr_dtor(&errmsg);
+          zval_ptr_dtor(&response);
+
           // if successful, we're connected to the master
           link->server_set->master = server;
-
-          zval_ptr_dtor(&errmsg);
-          break;
+          return link->server_set->master->socket;
         }
-
-        zval_ptr_dtor(&errmsg);
       }
-
+      
+      zval_ptr_dtor(&errmsg);
       zval_ptr_dtor(&cursor_zval);
       zval_ptr_dtor(&query);
     }
