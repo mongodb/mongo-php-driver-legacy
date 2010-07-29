@@ -1975,11 +1975,31 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   LOCK;
 
-  // this cursor has already been passed
+  // this cursor has already been processed
   if (cursor->send.request_id < MonGlo(response_num)) {
-    UNLOCK;
-    zend_throw_exception(mongo_ce_CursorException, "threw away reply, please try again", 0 TSRMLS_CC);
-    return FAILURE;
+    cursor_node *response = 0;
+    list_entry *le;
+
+    if (zend_hash_find(&EG(persistent_list), "response_list", strlen("response_list") + 1, (void**)&le) == SUCCESS) {
+      response = le->ptr;
+    }
+
+    while (response) {
+      if (response->cursor->recv.response_to == cursor->send.request_id) {
+        memcpy(cursor, response->cursor, sizeof(mongo_cursor));
+        UNLOCK;
+        php_mongo_free_cursor_node(response, le);
+        return SUCCESS;
+      }
+      response = response->next;
+    }
+
+    // if we didn't find it, give up
+    if (!response) {
+      UNLOCK;
+      zend_throw_exception(mongo_ce_CursorException, "couldn't find reply, please try again", 0 TSRMLS_CC);
+      return FAILURE;
+    }
   }
 
   if (php_mongo_check_connection(cursor->link, errmsg TSRMLS_CC) != SUCCESS) {
@@ -2014,9 +2034,8 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       // else if we've failed, just don't add to queue and continue
 
     }
-    // otherwise, check if the response may on the queue
+    // otherwise, check if the response is on the queue
     else {
-      int found = 0;
       cursor_node *response = 0;
       list_entry *le;
 
@@ -2025,19 +2044,17 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       }
 
       while (response) {
+        // if it is, then pull it off & use it
         if (response->cursor->send.request_id == cursor->recv.response_to) {
-          found = 1;
-          break;
+          memcpy(cursor, response->cursor, sizeof(mongo_cursor));
+          UNLOCK;
+          php_mongo_free_cursor_node(response, le);
+          return SUCCESS;
         }
         response = response->next;
       }
 
-      // if it is, then pull it off & use it
-      if (found) { 
-        memcpy(cursor, response->cursor, sizeof(mongo_cursor));
-        php_mongo_free_cursor_node(response, le);
-      }
-      else {
+      if (!response) { 
         UNLOCK;
         zend_throw_exception(mongo_ce_CursorException, "couldn't find a response", 9 TSRMLS_CC);
         return FAILURE;
