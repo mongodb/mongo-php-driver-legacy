@@ -588,7 +588,8 @@ int chunk_size;
 // $ alternative
 char *cmd_char;
 int utf8;
-int native_int;
+int native_long;
+int long_as_object;
 
 // _id generation helpers
 int inc, pid, machine;

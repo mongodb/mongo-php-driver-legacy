@@ -177,7 +177,7 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
     PHP_MONGO_SERIALIZE_KEY(BSON_NULL);
     break;
   case IS_LONG:
-    if (MonGlo(native_int)) {
+    if (MonGlo(native_long)) {
 #if SIZEOF_LONG == 4
       PHP_MONGO_SERIALIZE_KEY(BSON_INT);
       php_mongo_serialize_int(buf, Z_LVAL_PP(data));
@@ -947,18 +947,27 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_LONG: {
-      if (MonGlo(native_int)) {
+      if (MonGlo(long_as_object)) {
+        char buffer[33];
+
+        slprintf(buffer, 32, "%lld", (int64_t)MONGO_64(*((int64_t*)buf)));
+        object_init_ex(value, mongo_ce_Int64);
+
+        zend_update_property_string(mongo_ce_Int64, value, "value", strlen("value"), buffer TSRMLS_CC);
+      } else {
+        if (MonGlo(native_long)) {
 #if SIZEOF_LONG == 4
-        ZVAL_DOUBLE(value, (double)MONGO_64(*((int64_t*)buf)));
+          zend_throw_exception_ex(mongo_ce_CursorException, 1 TSRMLS_CC, "Can not natively represent the long %llu on this platform", (int64_t)MONGO_64(*((int64_t*)buf)));
 #else
 # if SIZEOF_LONG == 8
-        ZVAL_LONG(value, (long)MONGO_64(*((int64_t*)buf)));
+          ZVAL_LONG(value, (long)MONGO_64(*((int64_t*)buf)));
 # else
 #  error The PHP number size is neither 4 or 8 bytes; no clue what to do with that!
 # endif
 #endif
-      } else {
-        ZVAL_DOUBLE(value, (double)MONGO_64(*((int64_t*)buf)));
+        } else {
+          ZVAL_DOUBLE(value, (double)MONGO_64(*((int64_t*)buf)));
+        }
       }
       buf += INT_64;
       break;
