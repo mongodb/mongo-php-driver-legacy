@@ -57,6 +57,8 @@ void php_mongo_serialize_regex(buffer*, zval* TSRMLS_DC);
 void php_mongo_serialize_code(buffer*, zval* TSRMLS_DC);
 void php_mongo_serialize_ts(buffer*, zval* TSRMLS_DC);
 void php_mongo_serialize_bin_data(buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_int32(buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_int64(buffer*, zval* TSRMLS_DC);
 
 /* simple types */
 void php_mongo_serialize_double(buffer*, double);

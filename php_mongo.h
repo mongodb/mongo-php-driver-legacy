@@ -575,6 +575,8 @@ void mongo_init_MongoDate(TSRMLS_D);
 void mongo_init_MongoBinData(TSRMLS_D);
 void mongo_init_MongoDBRef(TSRMLS_D);
 void mongo_init_MongoTimestamp(TSRMLS_D);
+void mongo_init_MongoInt32(TSRMLS_D);
+void mongo_init_MongoInt64(TSRMLS_D);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 int auto_reconnect; 
@@ -586,6 +588,7 @@ int chunk_size;
 // $ alternative
 char *cmd_char;
 int utf8;
+int native_int;
 
 // _id generation helpers
 int inc, pid, machine;

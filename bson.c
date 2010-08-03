@@ -38,7 +38,9 @@ extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_MinKey,
   *mongo_ce_MaxKey,
   *mongo_ce_Exception,
-  *mongo_ce_CursorException;
+  *mongo_ce_CursorException,
+  *mongo_ce_Int32,
+  *mongo_ce_Int64;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -175,8 +177,22 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
     PHP_MONGO_SERIALIZE_KEY(BSON_NULL);
     break;
   case IS_LONG:
-    PHP_MONGO_SERIALIZE_KEY(BSON_INT);
-    php_mongo_serialize_int(buf, Z_LVAL_PP(data));
+    if (MonGlo(native_int)) {
+#if SIZEOF_LONG == 4
+      PHP_MONGO_SERIALIZE_KEY(BSON_INT);
+      php_mongo_serialize_int(buf, Z_LVAL_PP(data));
+#else
+# if SIZEOF_LONG == 8
+      PHP_MONGO_SERIALIZE_KEY(BSON_LONG);
+      php_mongo_serialize_long(buf, Z_LVAL_PP(data));
+# else
+#  error The PHP number size is neither 4 or 8 bytes; no clue what to do with that!
+# endif
+#endif
+    } else {
+      PHP_MONGO_SERIALIZE_KEY(BSON_INT);
+      php_mongo_serialize_int(buf, Z_LVAL_PP(data));
+    }
     break;
   case IS_DOUBLE:
     PHP_MONGO_SERIALIZE_KEY(BSON_DOUBLE);
@@ -272,6 +288,15 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
     else if (clazz == mongo_ce_MaxKey) {
       PHP_MONGO_SERIALIZE_KEY(BSON_MAXKEY);
     }
+    // Integer types
+    else if (clazz == mongo_ce_Int32) {
+      PHP_MONGO_SERIALIZE_KEY(BSON_INT);
+      php_mongo_serialize_int32(buf, *data TSRMLS_CC);
+    }
+    else if (clazz == mongo_ce_Int64) {
+      PHP_MONGO_SERIALIZE_KEY(BSON_LONG);
+      php_mongo_serialize_int64(buf, *data TSRMLS_CC);
+    }
     // serialize a normal obj
     else {
       HashTable *hash = Z_OBJPROP_PP(data);
@@ -319,6 +344,39 @@ void php_mongo_serialize_date(buffer *buf, zval *date TSRMLS_DC) {
   
   ms = ((int64_t)Z_LVAL_P(sec) * 1000) + ((int64_t)Z_LVAL_P(usec) / 1000);
   php_mongo_serialize_long(buf, ms);
+}
+
+#if defined(_MSC_VER)
+# define strtoll(s, f, b) _atoi64(s)
+#elif !defined(HAVE_STRTOLL)
+# if defined(HAVE_ATOLL)
+#  define strtoll(s, f, b) atoll(s)
+# else
+#  define strtoll(s, f, b) strtol(s, f, b)
+# endif
+#endif
+
+
+/*
+ * create a bson int from an Int32 object
+ */
+void php_mongo_serialize_int32(buffer *buf, zval *data TSRMLS_DC) {
+  int value;
+  zval *zvalue = zend_read_property(mongo_ce_Int32, data, "value", 5, 0 TSRMLS_CC);
+  value = strtol(Z_STRVAL_P(zvalue), NULL, 10);
+  
+  php_mongo_serialize_int(buf, value);
+}
+
+/*
+ * create a bson long from an Int64 object
+ */
+void php_mongo_serialize_int64(buffer *buf, zval *data TSRMLS_DC) {
+  int64_t value;
+  zval *zvalue = zend_read_property(mongo_ce_Int64, data, "value", 5, 0 TSRMLS_CC);
+  value = strtoll(Z_STRVAL_P(zvalue), NULL, 10);
+  
+  php_mongo_serialize_long(buf, value);
 }
 
 /*
@@ -889,7 +947,19 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_LONG: {
-      ZVAL_DOUBLE(value, (double)MONGO_64(*((int64_t*)buf)));
+      if (MonGlo(native_int)) {
+#if SIZEOF_LONG == 4
+        ZVAL_DOUBLE(value, (double)MONGO_64(*((int64_t*)buf)));
+#else
+# if SIZEOF_LONG == 8
+        ZVAL_LONG(value, (long)MONGO_64(*((int64_t*)buf)));
+# else
+#  error The PHP number size is neither 4 or 8 bytes; no clue what to do with that!
+# endif
+#endif
+      } else {
+        ZVAL_DOUBLE(value, (double)MONGO_64(*((int64_t*)buf)));
+      }
       buf += INT_64;
       break;
     }

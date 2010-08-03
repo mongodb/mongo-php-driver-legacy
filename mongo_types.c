@@ -48,7 +48,9 @@ zend_class_entry *mongo_ce_Date = NULL,
   *mongo_ce_Id = NULL,
   *mongo_ce_Code = NULL,
   *mongo_ce_Regex = NULL,
-  *mongo_ce_Timestamp = NULL;
+  *mongo_ce_Timestamp = NULL,
+  *mongo_ce_Int32 = NULL,
+  *mongo_ce_Int64 = NULL;
 
 void generate_id(char *data TSRMLS_DC) {
   int inc;
@@ -773,4 +775,86 @@ PHP_METHOD(MongoTimestamp, __toString) {
   zval *sec = zend_read_property(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), NOISY TSRMLS_CC);
   spprintf(&str, 0, "%ld", Z_LVAL_P(sec));
   RETURN_STRING(str, 0);
+}
+
+
+
+/* {{{ MongoInt32::__construct(string) 
+ */
+PHP_METHOD(MongoInt32, __construct) {
+  char *value;
+  int value_len;
+  zval *zcope = 0;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &value, &value_len) == FAILURE) {
+    return;
+  }
+
+  zend_update_property_stringl(mongo_ce_Int32, getThis(), "value", strlen("value"), value, value_len TSRMLS_CC);
+}
+/* }}} */
+
+
+/* {{{ MongoInt32::__toString() 
+ */
+PHP_METHOD(MongoInt32, __toString ) {
+  zval *zode = zend_read_property(mongo_ce_Int32, getThis(), "value", strlen("value"), NOISY TSRMLS_CC);
+  RETURN_STRING(Z_STRVAL_P(zode), 1 );
+}
+/* }}} */
+
+
+static function_entry MongoInt32_methods[] = {
+  PHP_ME(MongoInt32, __construct, NULL, ZEND_ACC_PUBLIC )
+  PHP_ME(MongoInt32, __toString, NULL, ZEND_ACC_PUBLIC )
+  { NULL, NULL, NULL }
+};
+
+void mongo_init_MongoInt32(TSRMLS_D) {
+  zend_class_entry ce; 
+  INIT_CLASS_ENTRY(ce, "MongoInt32", MongoInt32_methods); 
+  mongo_ce_Int32 = zend_register_internal_class(&ce TSRMLS_CC); 
+
+  zend_declare_property_string(mongo_ce_Int32, "value", strlen("value"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
+}
+
+
+
+/* {{{ MongoInt64::__construct(string) 
+ */
+PHP_METHOD(MongoInt64, __construct) {
+  char *value;
+  int value_len;
+  zval *zcope = 0;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &value, &value_len) == FAILURE) {
+    return;
+  }
+
+  zend_update_property_stringl(mongo_ce_Int64, getThis(), "value", strlen("value"), value, value_len TSRMLS_CC);
+}
+/* }}} */
+
+
+/* {{{ MongoInt64::__toString() 
+ */
+PHP_METHOD(MongoInt64, __toString ) {
+  zval *zode = zend_read_property(mongo_ce_Int64, getThis(), "value", strlen("value"), NOISY TSRMLS_CC);
+  RETURN_STRING(Z_STRVAL_P(zode), 1 );
+}
+/* }}} */
+
+
+static function_entry MongoInt64_methods[] = {
+  PHP_ME(MongoInt64, __construct, NULL, ZEND_ACC_PUBLIC )
+  PHP_ME(MongoInt64, __toString, NULL, ZEND_ACC_PUBLIC )
+  { NULL, NULL, NULL }
+};
+
+void mongo_init_MongoInt64(TSRMLS_D) {
+  zend_class_entry ce; 
+  INIT_CLASS_ENTRY(ce, "MongoInt64", MongoInt64_methods); 
+  mongo_ce_Int64 = zend_register_internal_class(&ce TSRMLS_CC); 
+
+  zend_declare_property_string(mongo_ce_Int64, "value", strlen("value"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
 }

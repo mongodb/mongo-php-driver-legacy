@@ -57,7 +57,9 @@ extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_Regex,
   *mongo_ce_Code,
   *mongo_ce_BinData,
-  *mongo_ce_Timestamp;
+  *mongo_ce_Timestamp,
+  *mongo_ce_Int32,
+  *mongo_ce_Int64;
 
 static void php_mongo_link_free(void* TSRMLS_DC);
 static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
@@ -193,6 +195,7 @@ STD_PHP_INI_ENTRY("mongo.default_port", "27017", PHP_INI_ALL, OnUpdateLong, defa
 STD_PHP_INI_ENTRY("mongo.chunk_size", "262144", PHP_INI_ALL, OnUpdateLong, chunk_size, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.cmd", "$", PHP_INI_ALL, OnUpdateStringUnempty, cmd_char, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.utf8", "1", PHP_INI_ALL, OnUpdateLong, utf8, zend_mongo_globals, mongo_globals)
+STD_PHP_INI_ENTRY("mongo.native_int", "0", PHP_INI_ALL, OnUpdateLong, native_int, zend_mongo_globals, mongo_globals)
 PHP_INI_END()
 /* }}} */
 
@@ -504,6 +507,8 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoExceptions(TSRMLS_C);
 
   mongo_init_MongoTimestamp(TSRMLS_C);
+  mongo_init_MongoInt32(TSRMLS_C);
+  mongo_init_MongoInt64(TSRMLS_C);
 
   /* 
    * MongoMaxKey and MongoMinKey are completely non-interactive: they have no
