@@ -1822,7 +1822,6 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
 #endif
 
           zval_ptr_dtor(&cursor_zval);
-          zval_ptr_dtor(&query);
           zval_ptr_dtor(&errmsg);
           zval_ptr_dtor(&response);
 
@@ -1833,8 +1832,6 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       }
       
       zval_ptr_dtor(&errmsg);
-      zval_ptr_dtor(&cursor_zval);
-      zval_ptr_dtor(&query);
     }
 
     // reset response
@@ -1842,7 +1839,6 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
 
     if (ismaster) {
       zval_ptr_dtor(&cursor_zval);
-      zval_ptr_dtor(&query);
 
       link->server_set->master = current;
       return current->socket;
@@ -1852,7 +1848,6 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
   }
 
   zval_ptr_dtor(&cursor_zval);
-  zval_ptr_dtor(&query);
   return FAILURE;
 }
 
@@ -2341,8 +2336,7 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
      *  - if the first connection fails but a subsequent ones succeeds
      */
     if (connected && Z_TYPE_P(errmsg) == IS_STRING) {
-      zval_ptr_dtor(&errmsg);
-      MAKE_STD_ZVAL(errmsg);
+      efree(Z_STRVAL_P(errmsg));
       ZVAL_NULL(errmsg);
     }
 
