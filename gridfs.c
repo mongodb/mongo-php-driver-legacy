@@ -562,6 +562,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
         return;
       }
       pos += chunk_size;
+      insert_chunk(chunks, zid, chunk_num, buf, chunk_size, options TSRMLS_CC);
     }
     else {
       result = read(fd, buf, chunk_size);
@@ -570,9 +571,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
         return;
       }
       pos += result;
+      insert_chunk(chunks, zid, chunk_num, buf, result, options TSRMLS_CC);
     }
 
-    insert_chunk(chunks, zid, chunk_num, buf, chunk_size, options TSRMLS_CC);
     if (safe && EG(exception)) {
       return;
     }
