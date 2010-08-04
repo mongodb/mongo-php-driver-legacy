@@ -122,11 +122,9 @@ PHP_METHOD(MongoCursor, __construct) {
           return;
         }
       }
-      else if (IS_SCALAR_PP(data)) {
-        add_assoc_long(fields, key, Z_LVAL_PP(data));
-      }
       else {
-        add_assoc_long(fields, key, 1);
+        add_assoc_zval(fields, key, *data);
+        zval_add_ref(data);
       }
     }
     cursor->fields = fields;
