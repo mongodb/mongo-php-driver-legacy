@@ -108,19 +108,18 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     }
 
     public function testInsert2() {
-      $this->assertTrue($this->object->insert(array(NULL)));
-      $this->assertTrue($this->object->insert(array(NULL=>"1")));
+      $this->assertTrue($this->object->insert(array(0)));
+      $this->assertTrue($this->object->insert(array(0=>"1")));
       
       $this->assertEquals($this->object->count(), 2);
       $cursor = $this->object->find();
 
       $x = $cursor->getNext();
       $this->assertTrue(array_key_exists('0', $x), json_encode($x));
-      $this->assertEquals($x['0'], null);
 
       $x = $cursor->getNext();
-      $this->assertTrue(array_key_exists('', $x));
-      $this->assertEquals($x[''], '1');
+      $this->assertTrue(array_key_exists('0', $x));
+      $this->assertEquals($x['0'], '1');
     }
 
     public function testSafeInsert3() {

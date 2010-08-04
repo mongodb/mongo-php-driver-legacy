@@ -562,6 +562,11 @@ void php_mongo_serialize_double(buffer *buf, double num) {
  *    we are inserting, so keys can't have .s in them
  */
 void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRMLS_DC) {
+  if (strlen(str) == 0) {
+    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "zero-length keys are not allowed, did you use $ with double quotes?");
+    return;
+  }
+
   if(BUF_REMAINING <= str_len+1) {
     resize_buf(buf, str_len+1);
   }

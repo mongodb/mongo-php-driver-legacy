@@ -166,5 +166,29 @@ class SerializationTest extends PHPUnit_Framework_TestCase
       $c = $this->sharedFixture->phpunit->c;
       $c->insert(array("x.y" => 'yz'));
     }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testEmptyKey1() {
+        $c = $this->sharedFixture->phpunit->c;
+        $c->save(array("" => "foo"));
+    }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testEmptyKey2() {
+        $c = $this->sharedFixture->phpunit->c;
+        $c->save(array("x" => array("" => "foo")));
+    }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testEmptyKey3() {
+        $c = $this->sharedFixture->phpunit->c;
+        $c->save(array("x" => array("" => "foo"), "y" => "z"));
+    }
 }
 ?>

@@ -147,17 +147,6 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($obj['string'], 'string');
     }
 
-    public function testInsert2() {
-      $this->assertTrue($this->object->insert((object)array(NULL)));
-      $this->assertTrue($this->object->insert((object)array(NULL=>"1")));
-      
-      $this->assertEquals($this->object->count(), 2);
-      $cursor = $this->object->find();
-
-      $x = $cursor->getNext();
-      $x = $cursor->getNext();
-    }
-
     public function testInsertNonAssoc() {
         if (preg_match($this->sharedFixture->version_51, phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
