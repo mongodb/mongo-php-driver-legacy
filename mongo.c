@@ -1878,7 +1878,7 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     }
 
     if (status == 0 || !FD_ISSET(sock, &readfds)) {
-      zend_throw_exception(mongo_ce_CursorTOException, "cursor timed out", 3 TSRMLS_CC);
+      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC, "cursor timed out (%d ms)", cursor->timeout);
       return FAILURE;
     }
   }
