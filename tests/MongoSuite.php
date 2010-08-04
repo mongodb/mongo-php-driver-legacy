@@ -1,4 +1,8 @@
 <?php
+
+require_once 'MongoInt32Test.php';
+require_once 'MongoInt64Test.php';
+
 require_once 'MongoTest.php';
 require_once 'MongoDBTest.php';
 require_once 'MongoCollectionTest.php';
@@ -36,6 +40,8 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
     {
         $suite = new MongoSuite('Mongo Tests');
         
+		$suite->addTestSuite('MongoInt32Test');
+		$suite->addTestSuite('MongoInt64Test');
         $suite->addTestSuite('MongoTest');
         $suite->addTestSuite('MongoDBTest');
         $suite->addTestSuite('MongoCollectionTest');
