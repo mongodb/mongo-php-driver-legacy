@@ -53,3 +53,6 @@ Cesar Rodas
 
 William Volkman
 * Made connection code check & handle error status
+
+Derick Rethans
+* Implemented MongoInt32, MongoInt64 and related ini options.

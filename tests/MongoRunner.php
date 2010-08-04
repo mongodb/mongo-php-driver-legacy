@@ -14,6 +14,8 @@ require_once 'MongoRegexTest.php';
 require_once 'MongoBinDataTest.php';
 require_once 'MongoDateTest.php';
 require_once 'MongoTimestampTest.php';
+require_once 'MongoInt32Test.php';
+require_once 'MongoInt64Test.php';
 
 require_once 'MongoObjectsTest.php';
 require_once 'MongoObjDBTest.php';
