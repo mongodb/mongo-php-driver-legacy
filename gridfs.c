@@ -126,9 +126,6 @@ PHP_METHOD(MongoGridFS, __construct) {
   
   // add chunks collection as a property
   zend_update_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), zchunks TSRMLS_CC);
-  
-  ensure_gridfs_index(return_value, zchunks TSRMLS_CC);
-
   zend_update_property(mongo_ce_GridFS, getThis(), "filesName", strlen("filesName"), files TSRMLS_CC);
   zend_update_property(mongo_ce_GridFS, getThis(), "chunksName", strlen("chunksName"), chunks TSRMLS_CC);
 
