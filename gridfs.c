@@ -644,7 +644,7 @@ PHP_METHOD(MongoGridFS, findOne) {
   MONGO_METHOD2(MongoCollection, findOne, file, getThis(), zquery, zfields);
 
   if (Z_TYPE_P(file) == IS_NULL) {
-    RETVAL_ZVAL(file, 0, 1);
+    RETVAL_NULL();
   }
   else {
     zval temp;
