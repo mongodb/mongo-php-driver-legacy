@@ -485,6 +485,13 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $db = $this->object->__get($db);
       $this->assertEquals('db', $db->__toString());
     }
+
+    public function testDomainSock() {
+        $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock");
+        $this->assertEquals(true, $conn->connected);
+        $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock:0/foo");
+        $this->assertEquals(true, $conn->connected);
+    }
 }
 
 class StaticFunctionTest {

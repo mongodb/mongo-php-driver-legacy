@@ -35,6 +35,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <pthread.h>
+#include <sys/un.h>
 #endif
 
 #include <php.h>
@@ -68,8 +69,8 @@ static int php_mongo_get_master(mongo_link* TSRMLS_DC);
 static int php_mongo_check_connection(mongo_link*, zval* TSRMLS_DC);
 static int php_mongo_connect_nonb(mongo_server*, int, zval*);
 static int php_mongo_do_socket_connect(mongo_link*, zval* TSRMLS_DC);
-static int php_mongo_get_sockaddr(struct sockaddr_in*, char*, int, zval*);
-static char* php_mongo_get_host(char**, int);
+static int php_mongo_get_sockaddr(struct sockaddr *sa, int family, char*, int, zval*);
+static char* php_mongo_get_host(char** current, int persist, int domain_socket);
 static int php_mongo_get_port(char**);
 static void mongo_init_MongoExceptions(TSRMLS_D);
 static void run_err(int, zval*, zval* TSRMLS_DC);
@@ -719,9 +720,10 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
   zend_bool persist;
   mongo_link *link;
   mongo_server *current_server;
+  int domain_socket;
 
 #ifdef DEBUG_CONN
-    php_printf("parsing servers\n");
+  php_printf("parsing servers\n");
 #endif
 
   hosts_z = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
@@ -750,6 +752,7 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
     link->server_set->server->host = pestrdup(MonGlo(default_host), persist);
     link->server_set->server->port = MonGlo(default_port);
     link->server_set->server->connected = 0;
+    link->server_set->server->domain_socket = 0;
     link->server_set->server->next = 0;
     link->server_set->master = link->server_set->server;
     return SUCCESS;
@@ -800,7 +803,9 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
   link->server_set->server = current_server = 0;
 
   // current is now pointing at the first server name
-  while (*current && *current != '/') {
+
+  // normal hostname
+  while (*current) {
     mongo_server *server;
     char **current_ptr = &current;
 
@@ -827,6 +832,11 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
       current_server = current_server->next;
     }
 
+    // localhost/dbname
+    //          ^
+    if (*current == '/') {
+      break;
+    }
     // localhost,
     // localhost
     //          ^
@@ -864,12 +874,18 @@ static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link
   char *host;
   int port;
   mongo_server *server;
+  int domain_socket = 0;
 
   // localhost:1234
   // localhost,
   // localhost
+  // /tmp/mongodb-port.sock
   // ^
-  if ((host = php_mongo_get_host(current, link->persist)) == 0) {
+  if (**current == '/') {
+    domain_socket = 1;
+  }
+
+  if ((host = php_mongo_get_host(current, link->persist, domain_socket)) == 0) {
     char *msg;
     spprintf(&msg, 0, "failed to get host from %s of %s", *current, hosts);
     ZVAL_STRING(errmsg, msg, 0);
@@ -879,7 +895,16 @@ static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link
 
   // localhost:27017
   //          ^
-  if ((port = php_mongo_get_port(current)) == 0) {
+  if (domain_socket) {
+    port = 0;
+    if (**current == ':') {
+      (*current)++;
+      while (**current >= '0' && **current <= '9') {
+        (*current)++;
+      }
+    }
+  }
+  else if ((port = php_mongo_get_port(current)) < 0) {
     char *msg;
     spprintf(&msg, 0, "failed to get port from %s of %s", *current, hosts);
     ZVAL_STRING(errmsg, msg, 0);
@@ -894,6 +919,7 @@ static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link
   server->port = port;
   server->socket = 0;
   server->connected = 0;
+  server->domain_socket = 1;
   server->next = 0;
 
   return server;
@@ -1173,12 +1199,12 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
 }
 
 // get the next host from the server string
-static char* php_mongo_get_host(char **ip, int persist) {
+static char* php_mongo_get_host(char **ip, int persist, int domain_socket) {
   char *end = *ip,
     *retval;
 
   // pick whichever exists and is sooner: ':', ',', '/', or '\0' 
-  while (*end && *end != ',' && *end != ':' && *end != '/') {
+  while (*end && *end != ',' && *end != ':' && (*end != '/' || domain_socket)) {
     end++;
   }
 
@@ -2180,7 +2206,11 @@ static void set_disconnected(mongo_link *link) {
 }
 
 static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errmsg) {
-  struct sockaddr_in addr, addr2;
+  struct sockaddr_in si;
+  struct sockaddr_un su;
+  struct sockaddr* sa;
+  socklen_t sn;
+  int family;
   struct timeval tval;
   int connected = FAILURE, status = FAILURE;
 
@@ -2190,7 +2220,20 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   int size, error;
   u_long no = 0;
   const char yes = 1;
+#endif
 
+  // domain socket
+  if (server->port==0) {
+    family = AF_UNIX;
+    sa = (struct sockaddr*)(&su);
+    sn = sizeof(su);
+  } else {
+    family = AF_INET;
+    sa = (struct sockaddr*)(&si);
+    sn = sizeof(si);
+  }
+
+#ifdef WIN32
   version = MAKEWORD(2,2);
   error = WSAStartup(version, &wsaData);
 
@@ -2199,7 +2242,7 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   }
 
   // create socket
-  server->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  server->socket = socket(family, SOCK_STREAM, 0);
   if (server->socket == INVALID_SOCKET) {
     ZVAL_STRING(errmsg, "Could not create socket", 1);
     return FAILURE;
@@ -2210,7 +2253,7 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   int yes = 1;
 
   // create socket
-  if ((server->socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == FAILURE) {
+  if ((server->socket = socket(family, SOCK_STREAM, 0)) == FAILURE) {
     ZVAL_STRING(errmsg, strerror(errno), 1);
     return FAILURE;
   }
@@ -2221,7 +2264,7 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   tval.tv_usec = timeout <= 0 ? 0 : (timeout % 1000) * 1000;
 
   // get addresses
-  if (php_mongo_get_sockaddr(&addr, server->host, server->port, errmsg) == FAILURE) {
+  if (php_mongo_get_sockaddr(sa, family, server->host, server->port, errmsg) == FAILURE) {
     // errmsg set in mongo_get_sockaddr
     return FAILURE;
   }
@@ -2236,7 +2279,7 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
 #endif
 
   // connect
-  status = connect(server->socket, (struct sockaddr*)&addr, sizeof(addr));
+  status = connect(server->socket, sa, sn);
   if (status < 0) {
 #ifdef WIN32
     errno = WSAGetLastError();
@@ -2276,9 +2319,9 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
       }
     }
 
-    size = sizeof(addr2);
+    size = sn;
 
-    connected = getpeername(server->socket, (struct sockaddr*)&addr, &size);
+    connected = getpeername(server->socket, sa, &size);
     if (connected == FAILURE) {
       ZVAL_STRING(errmsg, strerror(errno), 1);
       return FAILURE;
@@ -2421,26 +2464,32 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
   return SUCCESS;
 }
 
+static int php_mongo_get_sockaddr(struct sockaddr *sa, int family, char *host, int port, zval *errmsg) {
+  if (family == AF_UNIX) {
+    struct sockaddr_un* su = (struct sockaddr_un*)(sa);
+    su->sun_family = AF_UNIX;
+    strncpy(su->sun_path, host, sizeof(su->sun_path));
+  } else {
+    struct hostent *hostinfo;
+    struct sockaddr_in* si = (struct sockaddr_in*)(sa);
 
-static int php_mongo_get_sockaddr(struct sockaddr_in *addr, char *host, int port, zval *errmsg) {
-  struct hostent *hostinfo;
+    si->sin_family = AF_INET;
+    si->sin_port = htons(port);
+    hostinfo = (struct hostent*)gethostbyname(host);
 
-  addr->sin_family = AF_INET;
-  addr->sin_port = htons(port);
-  hostinfo = (struct hostent*)gethostbyname(host);
-
-  if (hostinfo == NULL) {
-    char *errstr;
-    spprintf(&errstr, 0, "couldn't get host info for %s", host); 
-    ZVAL_STRING(errmsg, errstr, 0);
-    return FAILURE;
-  }
+    if (hostinfo == NULL) {
+      char *errstr;
+      spprintf(&errstr, 0, "couldn't get host info for %s", host); 
+      ZVAL_STRING(errmsg, errstr, 0);
+      return FAILURE;
+    }
 
 #ifdef WIN32
-  addr->sin_addr.s_addr = ((struct in_addr*)(hostinfo->h_addr))->s_addr;
+    si->sin_addr.s_addr = ((struct in_addr*)(hostinfo->h_addr))->s_addr;
 #else
-  addr->sin_addr = *((struct in_addr*)hostinfo->h_addr);
+    si->sin_addr = *((struct in_addr*)hostinfo->h_addr);
 #endif
+  }
 
   return SUCCESS;
 }

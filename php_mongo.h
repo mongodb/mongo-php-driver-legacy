@@ -170,6 +170,7 @@ typedef struct _mongo_server {
   char *host;
   int port;
   int socket;
+  int domain_socket;
   int connected;
 
   struct _mongo_server *next;
