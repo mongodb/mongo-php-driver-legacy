@@ -953,12 +953,14 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     }
     case BSON_LONG: {
       if (MonGlo(long_as_object)) {
-        char buffer[33];
+        char *buffer;
 
-        slprintf(buffer, 32, "%lld", (int64_t)MONGO_64(*((int64_t*)buf)));
+        spprintf(&buffer, 0, "%lld", (int64_t)MONGO_64(*((int64_t*)buf)));
         object_init_ex(value, mongo_ce_Int64);
 
         zend_update_property_string(mongo_ce_Int64, value, "value", strlen("value"), buffer TSRMLS_CC);
+
+        efree(buffer);
       } else {
         if (MonGlo(native_long)) {
 #if SIZEOF_LONG == 4
