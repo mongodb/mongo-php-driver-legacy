@@ -2465,11 +2465,13 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
 }
 
 static int php_mongo_get_sockaddr(struct sockaddr *sa, int family, char *host, int port, zval *errmsg) {
+#ifndef WIN32
   if (family == AF_UNIX) {
     struct sockaddr_un* su = (struct sockaddr_un*)(sa);
     su->sun_family = AF_UNIX;
     strncpy(su->sun_path, host, sizeof(su->sun_path));
   } else {
+#endif
     struct hostent *hostinfo;
     struct sockaddr_in* si = (struct sockaddr_in*)(sa);
 
@@ -2488,8 +2490,8 @@ static int php_mongo_get_sockaddr(struct sockaddr *sa, int family, char *host, i
     si->sin_addr.s_addr = ((struct in_addr*)(hostinfo->h_addr))->s_addr;
 #else
     si->sin_addr = *((struct in_addr*)hostinfo->h_addr);
-#endif
   }
+#endif
 
   return SUCCESS;
 }
