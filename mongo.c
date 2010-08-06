@@ -720,7 +720,6 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
   zend_bool persist;
   mongo_link *link;
   mongo_server *current_server;
-  int domain_socket;
 
 #ifdef DEBUG_CONN
   php_printf("parsing servers\n");
@@ -1324,7 +1323,7 @@ static char* stringify_server(mongo_server *server, char *str, int *pos, int *le
 /* {{{ Mongo->__toString()
  */
 PHP_METHOD(Mongo, __toString) {
-  int i, tpos = 0, tlen = 256, *pos, *len;
+  int tpos = 0, tlen = 256, *pos, *len;
   char *str;
   mongo_server *server;
   mongo_link *link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -1682,7 +1681,6 @@ PHP_FUNCTION(bson_decode) {
 
 
 static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
-  int i;
   zval *cursor_zval, *query, *is_master;
   mongo_cursor *cursor;
   mongo_server *current;
@@ -2206,9 +2204,8 @@ static void set_disconnected(mongo_link *link) {
 }
 
 static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errmsg) {
-  struct sockaddr_in si;
-  struct sockaddr_un su;
   struct sockaddr* sa;
+  struct sockaddr_in si;
   socklen_t sn;
   int family;
   struct timeval tval;
@@ -2220,20 +2217,11 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   int size, error;
   u_long no = 0;
   const char yes = 1;
-#endif
 
-  // domain socket
-  if (server->port==0) {
-    family = AF_UNIX;
-    sa = (struct sockaddr*)(&su);
-    sn = sizeof(su);
-  } else {
-    family = AF_INET;
-    sa = (struct sockaddr*)(&si);
-    sn = sizeof(si);
-  }
+  family = AF_INET;
+  sa = (struct sockaddr*)(&si);
+  sn = sizeof(si);
 
-#ifdef WIN32
   version = MAKEWORD(2,2);
   error = WSAStartup(version, &wsaData);
 
@@ -2249,8 +2237,20 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   }
 
 #else
+  struct sockaddr_un su;
   uint size;
   int yes = 1;
+
+  // domain socket
+  if (server->port==0) {
+    family = AF_UNIX;
+    sa = (struct sockaddr*)(&su);
+    sn = sizeof(su);
+  } else {
+    family = AF_INET;
+    sa = (struct sockaddr*)(&si);
+    sn = sizeof(si);
+  }
 
   // create socket
   if ((server->socket = socket(family, SOCK_STREAM, 0)) == FAILURE) {
@@ -2348,7 +2348,7 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
  * sets errmsg
  */
 static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC) {
-  int i, connected = 0;
+  int connected = 0;
   mongo_server *server = link->server_set->server;
 
 #ifdef DEBUG_CONN
