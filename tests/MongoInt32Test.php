@@ -300,10 +300,10 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 	function testObjectCreationInt32()
 	{
 		$a = new MongoInt32('1234567890');
-		$this->assertSame('1234567890', (string) $a);
+		$this->assertSame('1234567890', $a->__toString());
 
 		$a = new MongoInt32('1234567890123456');
-		$this->assertSame('1234567890123456', (string) $a);
+		$this->assertSame('1234567890123456', $a->__toString());
 
 		$a = new MongoInt32('123456789012345678901234567890');
 		$this->assertSame('123456789012345678901234567890', $a->__toString());
@@ -312,10 +312,10 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 	function testObjectCreationInt64()
 	{
 		$a = new MongoInt64('1234567890');
-		$this->assertSame('1234567890', (string) $a);
+		$this->assertSame('1234567890', $a->__toString());
 
 		$a = new MongoInt64('1234567890123456');
-		$this->assertSame('1234567890123456', (string) $a);
+		$this->assertSame('1234567890123456', $a->__toString());
 
 		$a = new MongoInt64('123456789012345678901234567890');
 		$this->assertSame('123456789012345678901234567890', $a->__toString());
