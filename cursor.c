@@ -33,6 +33,15 @@
 #include "collection.h"
 #include "mongo_types.h"
 
+/*
+ * MongoCursorException codes:
+ * 0 - cannot modify cursor after beginning iteration
+ * 1 - send error
+ * 2 - cursor id not found
+ * 3 - cursor->buf.pos is null
+ * 4 - database error
+ */
+
 // externs
 extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_Mongo,
@@ -216,7 +225,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   ZVAL_NULL(temp);
   if(mongo_say(cursor->link, &buf, temp TSRMLS_CC) == FAILURE) {
     efree(buf.start);
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 0 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 1 TSRMLS_CC);
     zval_ptr_dtor(&temp);
     return;
   }
@@ -237,7 +246,7 @@ PHP_METHOD(MongoCursor, hasNext) {
     cursor->cursor_id = 0;
   }
   if (cursor->flag == 1) {
-    zend_throw_exception(mongo_ce_CursorException, "cursor not found", 0 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_CursorException, "cursor not found", 2 TSRMLS_CC);
     return;    
   }
 
@@ -360,12 +369,13 @@ PHP_METHOD(MongoCursor, immortal) {
  */
 PHP_METHOD(MongoCursor, timeout) {
   int timeout;
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  mongo_cursor *cursor;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timeout) == FAILURE) {
     return;
   }
+
+  PHP_MONGO_GET_CURSOR(getThis());
 
   cursor->timeout = timeout;
 
@@ -548,7 +558,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   ZVAL_NULL(errmsg);
 
   if (mongo_say(cursor->link, &buf, errmsg TSRMLS_CC) == FAILURE) {
-    zend_throw_exception(mongo_ce_CursorException, "couldn't send query.", 0 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_CursorException, "couldn't send query.", 1 TSRMLS_CC);
     efree(buf.start);
     zval_ptr_dtor(&errmsg);
     return;
@@ -668,7 +678,7 @@ PHP_METHOD(MongoCursor, next) {
     // check for err
     if (cursor->num == 1 &&
         zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", 5, (void**)&err) == SUCCESS) {
-      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 0 TSRMLS_CC);
+      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 4 TSRMLS_CC);
       RETURN_FALSE;
     }
   }
