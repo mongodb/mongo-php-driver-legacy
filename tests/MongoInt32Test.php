@@ -283,7 +283,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$c->insert(array('int64' => new MongoInt64('1234567890')));
 		$x = $c->findOne();
 		$this->assertEquals(new MongoInt64('1234567890'), $x['int64']);
-		$this->assertSame('1234567890', (string) $x['int64']);
+		$this->assertSame('1234567890', $x['int64']->__toString());
 	}
 
 	function testInsertStringMongo64LongAsObjectB()
@@ -293,7 +293,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$c->insert(array('int64' => new MongoInt64('123456789012345')));
 		$x = $c->findOne();
 		$this->assertEquals(new MongoInt64('123456789012345'), $x['int64']);
-		$this->assertSame('123456789012345', (string) $x['int64']);
+		$this->assertSame('123456789012345', $x['int64']->__toString());
 	}
 
 	/** Tests for object generation */
@@ -306,7 +306,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$this->assertSame('1234567890123456', (string) $a);
 
 		$a = new MongoInt32('123456789012345678901234567890');
-		$this->assertSame('123456789012345678901234567890', (string) $a);
+		$this->assertSame('123456789012345678901234567890', $a->__toString());
 	}
 
 	function testObjectCreationInt64()
@@ -318,7 +318,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$this->assertSame('1234567890123456', (string) $a);
 
 		$a = new MongoInt64('123456789012345678901234567890');
-		$this->assertSame('123456789012345678901234567890', (string) $a);
+		$this->assertSame('123456789012345678901234567890', $a->__toString());
 	}
 
 	/** Tests for things outside of the int64 range */
