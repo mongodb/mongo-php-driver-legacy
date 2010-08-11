@@ -132,8 +132,9 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
     return php_mongo_serialize_element(key->arKey, (zval**)data, buf, prep TSRMLS_CC);
   }
   else {
-    int current = key->h, pos = 11, negative = 0;
-    char name[12];
+    long current = key->h;
+    int pos = 29, negative = 0;
+    char name[30];
 
     // if the key is a number in ascending order, we're still
     // dealing with an array, not an object, so increase the count
