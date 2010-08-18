@@ -245,18 +245,22 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
 
   zval_ptr_dtor(&cursor_z);
 
+  if (EG(exception) || 
+      (Z_TYPE_P(return_value) ==IS_BOOL && Z_BVAL_P(return_value) == 0)) {
+    return FAILURE;
+  }
   /* if getlasterror returned an error, throw an exception 
    *
    * this isn't the same as checking for $err in cursor.c, as this isn't a query
    * error but just the status.
    */
-  if (zend_hash_find(Z_ARRVAL_P(return_value), "err", strlen("err")+1, (void**)&err) == SUCCESS &&
+  else if (zend_hash_find(Z_ARRVAL_P(return_value), "err", strlen("err")+1, (void**)&err) == SUCCESS &&
       Z_TYPE_PP(err) == IS_STRING) {
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 0 TSRMLS_CC);
     return FAILURE;
   }
   // w timeout
-  if (zend_hash_find(Z_ARRVAL_P(return_value), "errmsg", strlen("errmsg")+1, (void**)&err) == SUCCESS &&
+  else if (zend_hash_find(Z_ARRVAL_P(return_value), "errmsg", strlen("errmsg")+1, (void**)&err) == SUCCESS &&
       Z_TYPE_PP(err) == IS_STRING) {
     zval **code;
     int status = zend_hash_find(Z_ARRVAL_P(return_value), "n", strlen("n")+1, (void**)&code);

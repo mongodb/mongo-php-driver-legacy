@@ -558,7 +558,12 @@ PHP_METHOD(MongoCursor, doQuery) {
   ZVAL_NULL(errmsg);
 
   if (mongo_say(cursor->link, &buf, errmsg TSRMLS_CC) == FAILURE) {
-    zend_throw_exception(mongo_ce_CursorException, "couldn't send query.", 1 TSRMLS_CC);
+    if (Z_TYPE_P(errmsg) == IS_STRING) {
+      zend_throw_exception_ex(mongo_ce_CursorException, 1 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
+    }
+    else {
+      zend_throw_exception(mongo_ce_CursorException, "couldn't send query", 1 TSRMLS_CC);
+    }
     efree(buf.start);
     zval_ptr_dtor(&errmsg);
     return;

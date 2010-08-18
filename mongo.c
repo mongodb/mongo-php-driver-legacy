@@ -2133,6 +2133,7 @@ int mongo_say(mongo_link *link, buffer *buf, zval *errmsg TSRMLS_DC) {
 
     if (status == FAILURE) {
       set_disconnected(link);
+      ZVAL_STRING(errmsg, strerror(errno), 1);
       return FAILURE;
     }
     sent += status;
