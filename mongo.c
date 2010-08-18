@@ -2211,9 +2211,6 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   int family;
   struct timeval tval;
   int connected = FAILURE, status = FAILURE;
-#ifdef SO_LINGER
-  struct linger ling;
-#endif
 
 #ifdef WIN32
   WORD version;
@@ -2274,6 +2271,7 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
   }
 
 #ifdef SO_LINGER
+  struct linger ling;
   ling.l_onoff = 1;
   ling.l_linger = 0;
   setsockopt(server->socket, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
