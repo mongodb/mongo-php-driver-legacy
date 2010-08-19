@@ -206,6 +206,7 @@ static void php_mongo_server_free(mongo_server *server, int persist TSRMLS_DC) {
 #ifdef WIN32
     closesocket(server->socket);
 #else
+    shutdown(server->socket, 2);
     close(server->socket);
 #endif
 
