@@ -404,7 +404,7 @@ void mongo_init_MongoDate(TSRMLS_D) {
  */
 PHP_METHOD(MongoBinData, __construct) {
   char *bin;
-  int bin_len, type = 2;
+  long bin_len, type = 2;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &bin, &bin_len, &type) == FAILURE) {
     return;
