@@ -48,6 +48,13 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $this->assertEquals((string)$grid->chunks, 'phpunit.fs.chunks');
     }
 
+    /**
+     * @expectedException Exception 
+     */
+    public function test__construct2() {
+        $this->sharedFixture->foo->getGridFS(null);
+    }
+
     public function testDrop() {
         $this->object->storeFile('tests/somefile');
         $c = $this->object->chunks->count();

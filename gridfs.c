@@ -106,6 +106,18 @@ PHP_METHOD(MongoGridFS, __construct) {
     zval *temp_file;
     char *temp;
 
+    if (Z_TYPE_P(files) != IS_STRING || Z_STRLEN_P(files) == 0 ) {
+#if ZEND_MODULE_API_NO >= 20060613
+        zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 
+                                TSRMLS_CC, 
+                                "MongoGridFS::__construct(): invalid prefix");
+#else
+        zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC, 
+                                "MongoGridFS::__construct(): invalid prefix");
+#endif /* ZEND_MODULE_API_NO >= 20060613 */
+        return;
+    }
+
     MAKE_STD_ZVAL(chunks);
     spprintf(&temp, 0, "%s.chunks", Z_STRVAL_P(files));
     ZVAL_STRING(chunks, temp, 0);
