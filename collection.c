@@ -256,7 +256,15 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
    */
   else if (zend_hash_find(Z_ARRVAL_P(return_value), "err", strlen("err")+1, (void**)&err) == SUCCESS &&
       Z_TYPE_PP(err) == IS_STRING) {
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 0 TSRMLS_CC);
+    zval **code_z;
+    int code = 10;
+
+    // get error code
+    if (zend_hash_find(Z_ARRVAL_P(return_value), "code", strlen("code")+1, (void**)&code_z) == SUCCESS) {
+      code = Z_LVAL_PP(code_z);
+    }
+
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), code TSRMLS_CC);
     return FAILURE;
   }
   // w timeout

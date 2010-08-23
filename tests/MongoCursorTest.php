@@ -780,5 +780,18 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       MongoCursor::$timeout = 30000;
     }
 
+    public function testErrorCode() {
+        $code = 0;
+        $this->object->insert(array("_id" => 1), array("safe" => true));
+        try {
+            $this->object->insert(array("_id" => 1), array("safe" => true));
+        }
+        catch(MongoCursorException $e) {
+            $code = $e->getCode();
+        }
+
+        $this->assertEquals(11000, $code);
+    }
+
 }
 ?>
