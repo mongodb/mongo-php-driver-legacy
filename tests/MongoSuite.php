@@ -119,7 +119,8 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
 
         $this->sharedFixture->version_51 = "/5\.1\../";
 
-        var_dump($this->sharedFixture->listDBs());
+        $result = $this->sharedFixture->listDBs();
+        echo "size: ".$result['totalSize']."\n";
     }
  
     protected function tearDown()

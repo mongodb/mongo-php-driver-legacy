@@ -489,14 +489,19 @@ class MongoTest extends PHPUnit_Framework_TestCase
     public function testDomainSock() {
         $os = php_uname("s");
         if (preg_match("/win/i", $os)) {
-            $this->markTestSkipped("No implicit __toString in 5.1");
+            $this->markTestSkipped("no domain sockets on windows");
             return;
         }
 
-        $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock");
-        $this->assertEquals(true, $conn->connected);
-        $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock:0/foo");
-        $this->assertEquals(true, $conn->connected);
+        try {
+            $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock");
+            $this->assertEquals(true, $conn->connected);
+            $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock:0/foo");
+            $this->assertEquals(true, $conn->connected);
+        }
+        catch (MongoConnectionException $e) {
+            $this->markTestSkipped("connecting to domain sockets failed: ".$e->getMessage());
+        }
     }
 
     /**
