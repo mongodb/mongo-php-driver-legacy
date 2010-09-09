@@ -505,6 +505,11 @@ PHP_METHOD(MongoDB, authenticate) {
 
   zval_ptr_dtor(&data);
 
+  if (EG(exception)) {
+    zval_ptr_dtor(&result);
+    RETURN_FALSE;
+  }
+
   if (zend_hash_find(HASH_P(result), "nonce", strlen("nonce")+1, (void**)&nonce) == SUCCESS) {
     char *salt, *rash;
     char hash[33], digest[33];

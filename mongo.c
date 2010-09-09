@@ -864,7 +864,7 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
   }
 
 #ifdef DEBUG_CONN
-    php_printf("done parsing\n", current);
+  php_printf("done parsing\n", current);
 #endif
 
   return SUCCESS;
@@ -1090,6 +1090,11 @@ PHP_METHOD(Mongo, connectUtil) {
   /* try to actually connect */
   connect_already(INTERNAL_FUNCTION_PARAM_PASSTHRU, errmsg);
 
+  if (EG(exception)) {
+    zval_ptr_dtor(&errmsg);
+    return;
+  }
+  
   /* find out if we're connected */
   connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
 
@@ -2442,6 +2447,11 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
   temp_link->server_set = 0;
   zval_ptr_dtor(&connection);  
 
+  if (EG(exception)) {
+    zval_ptr_dtor(&ok);
+    return FAILURE;
+  }
+  
   if (Z_TYPE_P(ok) == IS_ARRAY) {
     zval **status;
     if (zend_hash_find(HASH_P(ok), "ok", strlen("ok")+1, (void**)&status) == SUCCESS) {
