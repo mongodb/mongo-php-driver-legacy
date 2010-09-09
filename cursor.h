@@ -46,30 +46,25 @@ PHP_METHOD(MongoCursor, reset);
 PHP_METHOD(MongoCursor, count);
 PHP_METHOD(MongoCursor, info);
 
-#define preiteration_setup   zval *z = 0;                               \
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC); \
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);                   \
+#define preiteration_setup   mongo_cursor *cursor;                      \
+  PHP_MONGO_GET_CURSOR(getThis());                                      \
                                                                         \
   if (cursor->started_iterating) {                                      \
-    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC); \
+    zend_throw_exception(mongo_ce_CursorException,                      \
+                         "cannot modify cursor after beginning iteration.", 0 \
+                         TSRMLS_CC);                                    \
     return;                                                             \
   }
 
 #define default_to_true(bit)                                            \
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &z) == FAILURE) { \
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &z) == FAILURE) { \
     return;                                                             \
   }                                                                     \
                                                                         \
-  if (!z) {                                                             \
+  if (z) {                                                              \
     cursor->opts |= 1 << bit;                                           \
-  }                                                                     \
-  else {                                                                \
-    convert_to_boolean(z);                                              \
-    if (Z_BVAL_P(z)) {                                                  \
-      cursor->opts |= 1 << bit;                                         \
-    } else {                                                            \
-      cursor->opts &= !(1 << bit);                                      \
-    }                                                                   \
+  } else {                                                              \
+    cursor->opts &= !(1 << bit);                                        \
   }
 
 

@@ -277,14 +277,14 @@ PHP_METHOD(MongoCursor, getNext) {
 /* {{{ MongoCursor::limit
  */
 PHP_METHOD(MongoCursor, limit) {
+  long l;
   preiteration_setup;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
     return;
   }
-  convert_to_long(z);
 
-  cursor->limit = Z_LVAL_P(z);
+  cursor->limit = l;
   RETVAL_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
@@ -292,14 +292,14 @@ PHP_METHOD(MongoCursor, limit) {
 /* {{{ MongoCursor::skip
  */
 PHP_METHOD(MongoCursor, skip) {
+  long l;
   preiteration_setup;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
     return;
   }
-  convert_to_long(z);
 
-  cursor->skip = Z_LVAL_P(z);
+  cursor->skip = l;
   RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
@@ -307,6 +307,7 @@ PHP_METHOD(MongoCursor, skip) {
 /* {{{ MongoCursor::fields
  */
 PHP_METHOD(MongoCursor, fields) {
+  zval *z;
   preiteration_setup;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
@@ -328,6 +329,7 @@ PHP_METHOD(MongoCursor, fields) {
 /* {{{ MongoCursor::tailable
  */
 PHP_METHOD(MongoCursor, tailable) {
+  zend_bool z = 1;
   preiteration_setup;
   default_to_true(1);
   RETURN_ZVAL(getThis(), 1, 0);
@@ -348,6 +350,7 @@ PHP_METHOD(MongoCursor, dead) {
 /* {{{ MongoCursor::slaveOkay
  */
 PHP_METHOD(MongoCursor, slaveOkay) {
+  zend_bool z = 1;
   preiteration_setup;
   default_to_true(2);
   RETURN_ZVAL(getThis(), 1, 0);
@@ -358,6 +361,7 @@ PHP_METHOD(MongoCursor, slaveOkay) {
 /* {{{ MongoCursor::immortal
  */
 PHP_METHOD(MongoCursor, immortal) {
+  zend_bool z = 1;
   preiteration_setup;
   default_to_true(4);
   RETURN_ZVAL(getThis(), 1, 0);
@@ -368,7 +372,7 @@ PHP_METHOD(MongoCursor, immortal) {
 /* {{{ MongoCursor::timeout
  */
 PHP_METHOD(MongoCursor, timeout) {
-  int timeout;
+  long timeout;
   mongo_cursor *cursor;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timeout) == FAILURE) {
@@ -882,6 +886,6 @@ void mongo_init_MongoCursor(TSRMLS_D) {
   zend_class_implements(mongo_ce_Cursor TSRMLS_CC, 1, zend_ce_iterator);
 
   zend_declare_property_bool(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
-  zend_declare_property_long(mongo_ce_Cursor, "timeout", strlen("timeout"), 30000, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Cursor, "timeout", strlen("timeout"), 30000L, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
