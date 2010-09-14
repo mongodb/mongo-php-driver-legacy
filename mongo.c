@@ -1002,6 +1002,8 @@ PHP_METHOD(Mongo, __construct) {
     return;
   }
 
+  save_persistent_connection(getThis() TSRMLS_CC);
+
   if (connect) {
     MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
   }
@@ -1082,28 +1084,21 @@ PHP_METHOD(Mongo, pairPersistConnect) {
 
 
 PHP_METHOD(Mongo, connectUtil) {
-  zval *connected, *errmsg;
+  zval *errmsg;
+  mongo_link *link;
+  
+  /* if we're already connected, disconnect */
+  disconnect_if_connected(getThis() TSRMLS_CC);
+
+  link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
   /* initialize and clear the error message */
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
 
-  /* if we're already connected, disconnect */
-  disconnect_if_connected(getThis() TSRMLS_CC);
-  
   /* try to actually connect */
-  connect_already(INTERNAL_FUNCTION_PARAM_PASSTHRU, errmsg);
-
-  if (EG(exception)) {
-    zval_ptr_dtor(&errmsg);
-    return;
-  }
-  
-  /* find out if we're connected */
-  connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
-
-  /* if connecting failed, throw an exception */
-  if (!Z_BVAL_P(connected)) {
+  if (php_mongo_do_socket_connect(link, errmsg TSRMLS_CC) == FAILURE) {
+    /* if connecting failed, throw an exception */
     zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
 
     zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
@@ -1114,6 +1109,9 @@ PHP_METHOD(Mongo, connectUtil) {
   }
 
   zval_ptr_dtor(&errmsg);
+  
+  /* Mongo::connected = true */
+  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
 }
 
 static void disconnect_if_connected(zval *this_ptr TSRMLS_DC) {
@@ -1131,22 +1129,6 @@ static void disconnect_if_connected(zval *this_ptr TSRMLS_DC) {
     // Mongo->connected = false
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 0 TSRMLS_CC);
   }
-}
-
-static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
-  mongo_link *link;
-  
-  link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
-  if (php_mongo_do_socket_connect(link, errmsg TSRMLS_CC) == FAILURE) {
-    // errmsg set in do_socket_connect
-    return;
-  }
-
-  /* Mongo::connected = true */
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
-
-  save_persistent_connection(getThis() TSRMLS_CC);
 }
 
 static int have_persistent_connection(zval *this_ptr TSRMLS_DC) {
