@@ -74,11 +74,11 @@ static char* php_mongo_get_host(char** current, int persist, int domain_socket);
 static int php_mongo_get_port(char**);
 static void mongo_init_MongoExceptions(TSRMLS_D);
 static void run_err(int, zval*, zval* TSRMLS_DC);
-static int php_mongo_parse_server(zval*, zval* TSRMLS_DC);
+static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC);
 static void set_disconnected(mongo_link *link);
 static char* stringify_server(mongo_server*, char*, int*, int*);
 static int php_mongo_do_authenticate(mongo_link*, zval* TSRMLS_DC);
-static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link, zval *errmsg);
+static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link TSRMLS_DC);
 static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC);
 static void disconnect_if_connected(zval *this_ptr TSRMLS_DC);
 static int have_persistent_connection(zval *this_ptr TSRMLS_DC);
@@ -717,8 +717,10 @@ void mongo_init_Mongo(TSRMLS_D) {
 /*
  * this deals with the new mongo connection format:
  * mongodb://username:password@host:port,host:port
+ *
+ * throws exception
  */
-static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
+static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
   zval *hosts_z, *persist_z;
   char *hosts, *current;
   zend_bool persist;
@@ -816,8 +818,8 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
     php_printf("current: %s\n", current);
 #endif
 
-    // method generates errmsg
-    if (!(server = create_mongo_server(current_ptr, hosts, link, errmsg))) {
+    // method throws exception
+    if (!(server = create_mongo_server(current_ptr, hosts, link TSRMLS_CC))) {
       return FAILURE;
     }
     current = *current_ptr;
@@ -873,7 +875,10 @@ static int php_mongo_parse_server(zval *this_ptr, zval *errmsg TSRMLS_DC) {
   return SUCCESS;
 }
 
-static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link, zval *errmsg) {
+/*
+ * throws exception
+ */
+static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link TSRMLS_DC) {
   char *host;
   int port;
   mongo_server *server;
@@ -889,10 +894,8 @@ static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link
   }
 
   if ((host = php_mongo_get_host(current, link->persist, domain_socket)) == 0) {
-    char *msg;
-    spprintf(&msg, 0, "failed to get host from %s of %s", *current, hosts);
-    ZVAL_STRING(errmsg, msg, 0);
-
+    zend_throw_exception_ex(mongo_ce_ConnectionException, 10 TSRMLS_CC,
+                            "failed to get host from %s of %s", *current, hosts);
     return 0;
   } 
 
@@ -908,10 +911,8 @@ static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link
     }
   }
   else if ((port = php_mongo_get_port(current)) < 0) {
-    char *msg;
-    spprintf(&msg, 0, "failed to get port from %s of %s", *current, hosts);
-    ZVAL_STRING(errmsg, msg, 0);
-
+    zend_throw_exception_ex(mongo_ce_ConnectionException, 11 TSRMLS_CC,
+                            "failed to get port from %s of %s", *current, hosts);
     efree(host);
     return 0;
   }
@@ -1791,16 +1792,13 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
     // check if this is a replica set
     if (zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1, (void**)&hosts) == SUCCESS) {
       mongo_server *current;
-      zval **data, *errmsg;
+      zval **data;
       HashTable *hash;
       HashPosition pointer;
 
 #ifdef DEBUG_CONN
       php_printf("parsing replica set\n");
 #endif
-
-      MAKE_STD_ZVAL(errmsg);
-      ZVAL_NULL(errmsg);
 
       // kill the existing linked list
       current = link->server_set->eo_seeds->next;
@@ -1821,8 +1819,7 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
         char *host = Z_STRVAL_PP(data);
         mongo_server *server;
 
-        if (!(server = create_mongo_server(&host, host, link, errmsg))) {
-          zval_ptr_dtor(&errmsg);
+        if (!(server = create_mongo_server(&host, host, link TSRMLS_CC))) {
           continue;
         }
 
@@ -1844,8 +1841,9 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
           // create new server
           char *host = Z_STRVAL_PP(primary);
           mongo_server *server;
+          zval *errmsg;
 
-          if (!(server = create_mongo_server(&host, host, link, errmsg))) {
+          if (!(server = create_mongo_server(&host, host, link TSRMLS_CC))) {
             zval_ptr_dtor(&errmsg);
             continue;
           }
@@ -1854,8 +1852,12 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
           current->next = server;
           link->server_set->num++;          
 
+          MAKE_STD_ZVAL(errmsg);
+          ZVAL_NULL(errmsg);
+
           // TODO: auth, but it won't work in 1.6 anyway
           if (php_mongo_connect_nonb(server, link->timeout, errmsg) == FAILURE) {
+            zval_ptr_dtor(&errmsg);
             continue;
           }
 
@@ -1874,8 +1876,6 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
           return link->server_set->master->socket;
         }
       }
-      
-      zval_ptr_dtor(&errmsg);
     }
 
     // reset response
