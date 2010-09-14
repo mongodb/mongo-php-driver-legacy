@@ -980,19 +980,7 @@ PHP_METHOD(Mongo, __construct) {
   zend_update_property_stringl(mongo_ce_Mongo, getThis(), "server", strlen("server"), server, server_len TSRMLS_CC);
 
   if (connect) {
-    /*
-     * We are calling:
-     *
-     * $m->connect();
-     *
-     * so we don't need any parameters.  We've already set up the environment 
-     * above.
-     */
     MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
-  }
-  else {
-    /* if we aren't connecting, set Mongo::connected to false and return */
-    zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 0 TSRMLS_CC);
   }
 } 
 /* }}} */
@@ -1205,8 +1193,7 @@ static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
 
 // get the next host from the server string
 static char* php_mongo_get_host(char **ip, int persist, int domain_socket) {
-  char *end = *ip,
-    *retval;
+  char *end = *ip, *retval;
 
   // pick whichever exists and is sooner: ':', ',', '/', or '\0' 
   while (*end && *end != ',' && *end != ':' && (*end != '/' || domain_socket)) {
@@ -1277,8 +1264,9 @@ static int php_mongo_get_port(char **ip) {
 /* {{{ Mongo->close()
  */
 PHP_METHOD(Mongo, close) {
-  mongo_link *link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(link->server_set, Mongo);
+  mongo_link *link;
+
+  PHP_MONGO_GET_LINK(getThis());
 
   set_disconnected(link);
 
