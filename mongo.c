@@ -66,7 +66,7 @@ static void php_mongo_link_free(void* TSRMLS_DC);
 static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval*);
 static int php_mongo_get_master(mongo_link* TSRMLS_DC);
-static int php_mongo_check_connection(mongo_link*, zval* TSRMLS_DC);
+static int get_socket(mongo_link*, zval* TSRMLS_DC);
 static int php_mongo_connect_nonb(mongo_server*, int, zval*);
 static int php_mongo_do_socket_connect(mongo_link*, zval* TSRMLS_DC);
 static int php_mongo_get_sockaddr(struct sockaddr *sa, int family, char*, int, zval*);
@@ -1714,7 +1714,10 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
 
   // for a single connection, return it
   if (!link->rs && link->server_set->num == 1) {
-    return link->server_set->server->socket;
+    if (link->server_set->server->connected) {
+      return link->server_set->server->socket;
+    }
+    return FAILURE;
   }
 
   // if we're still connected to master, return it
@@ -2018,8 +2021,6 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   php_printf("hearing something\n");
 #endif
 
-  sock = php_mongo_get_master(cursor->link TSRMLS_CC);
-
   LOCK;
 
   // this cursor has already been processed
@@ -2049,7 +2050,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     }
   }
 
-  if (php_mongo_check_connection(cursor->link, errmsg TSRMLS_CC) != SUCCESS) {
+  if ((sock = get_socket(cursor->link, errmsg TSRMLS_CC)) == FAILURE) {
     UNLOCK;
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 1 TSRMLS_CC);
     return FAILURE;
@@ -2141,8 +2142,7 @@ int mongo_say(mongo_link *link, buffer *buf, zval *errmsg TSRMLS_DC) {
   php_printf("saying something\n");
 #endif
 
-  sock = php_mongo_get_master(link TSRMLS_CC);
-  if (sock == FAILURE && php_mongo_check_connection(link, errmsg TSRMLS_CC) == FAILURE) {
+  if ((sock = get_socket(link, errmsg TSRMLS_CC)) == FAILURE) {
     return FAILURE;
   }
 
@@ -2185,11 +2185,14 @@ int mongo_hear(int sock, void *dest, int total_len TSRMLS_DC) {
 }
 
 /*
+ * If the socket is connected, returns the master.  If the socket is
+ * disconnected, it attempts to reconnect and return the master.
+ *
  * sets errmsg on FAILURE
  */
-static int php_mongo_check_connection(mongo_link *link, zval *errmsg TSRMLS_DC) {
+static int get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int now = time(0), connected = 0;
-
+  
   if ((link->server_set->num == 1 && !link->rs && link->server_set->server->connected) ||
       (link->server_set->master && link->server_set->master->connected)) {
     connected = 1;
@@ -2197,7 +2200,7 @@ static int php_mongo_check_connection(mongo_link *link, zval *errmsg TSRMLS_DC) 
 
   // if we're already connected or autoreconnect isn't set, we're all done 
   if (!MonGlo(auto_reconnect) || connected) {
-    return SUCCESS;
+    return php_mongo_get_master(link TSRMLS_CC);
   }
 
   link->ts = now;
@@ -2205,7 +2208,10 @@ static int php_mongo_check_connection(mongo_link *link, zval *errmsg TSRMLS_DC) 
   // close connection
   set_disconnected(link);
 
-  return php_mongo_do_socket_connect(link, errmsg TSRMLS_CC);
+  if (SUCCESS == php_mongo_do_socket_connect(link, errmsg TSRMLS_CC)) {
+    return php_mongo_get_master(link TSRMLS_CC);
+  }
+  return FAILURE;
 }
 
 static void set_disconnected(mongo_link *link) {
