@@ -206,19 +206,22 @@ PHP_INI_END()
 
 
 static void php_mongo_server_free(mongo_server *server, int persist TSRMLS_DC) {
+  if (server->connected) {
 #ifdef WIN32
-    closesocket(server->socket);
-#else
     shutdown(server->socket, 2);
+    closesocket(server->socket);
+    WSACleanup();
+#else
     close(server->socket);
 #endif
+  }
 
-    if (server->host) {
-      pefree(server->host, persist);
-      server->host = 0;
-    }
+  if (server->host) {
+    pefree(server->host, persist);
+    server->host = 0;
+  }
 
-    pefree(server, persist);
+  pefree(server, persist);
 }
 
 static void php_mongo_server_set_free(mongo_server_set *server_set, int persist TSRMLS_DC) {
@@ -921,7 +924,6 @@ static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link
   server = (mongo_server*)pemalloc(sizeof(mongo_server), link->persist);
   server->host = host;
   server->port = port;
-  server->socket = 0;
   server->connected = 0;
   server->domain_socket = 1;
   server->next = 0;
@@ -2198,13 +2200,15 @@ static int get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
 
 static void set_disconnected(mongo_link *link) {
   // already disconnected
-  if (!link->server_set->master) {
+  if (!link->server_set->master ||
+      !link->server_set->master->connected) {
     return;
   }
 
   // sever it
   link->server_set->master->connected = 0;
 #ifdef WIN32
+  shutdown(link->server_set->master->socket, 2);
   closesocket(link->server_set->master->socket);
   WSACleanup();
 #else
