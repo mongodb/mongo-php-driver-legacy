@@ -987,6 +987,21 @@ PHP_METHOD(Mongo, __construct) {
   }
   zend_update_property_stringl(mongo_ce_Mongo, getThis(), "server", strlen("server"), server, server_len TSRMLS_CC);
 
+  // use a persistent connection, if one exists
+  if (SUCCESS == have_persistent_connection(getThis() TSRMLS_CC)) {
+    return;
+  }
+  
+  /* parse the server name given
+   *
+   * we can't do this earlier because, if this is a persistent connection, all 
+   * the fields will be overwritten (memleak) in the block above
+   */
+  if (!link->server_set && php_mongo_parse_server(getThis() TSRMLS_CC) == FAILURE) {
+    // exception thrown in parse_server
+    return;
+  }
+
   if (connect) {
     MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
   }
@@ -1120,21 +1135,8 @@ static void disconnect_if_connected(zval *this_ptr TSRMLS_DC) {
 
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval *errmsg) {
   mongo_link *link;
-
-  if (SUCCESS == have_persistent_connection(getThis() TSRMLS_CC)) {
-    return;
-  }
   
-  /* parse the server name given
-   *
-   * we can't do this earlier because, if this is a persistent connection, all 
-   * the fields will be overwritten (memleak) in the block above
-   */
   link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  if (!link->server_set && php_mongo_parse_server(getThis(), errmsg TSRMLS_CC) == FAILURE) {
-    // errmsg set in parse_server
-    return;
-  }
 
   if (php_mongo_do_socket_connect(link, errmsg TSRMLS_CC) == FAILURE) {
     // errmsg set in do_socket_connect
