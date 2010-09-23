@@ -323,7 +323,7 @@ PHP_METHOD(MongoId, getHostname) {
 /* {{{ MongoDate::__construct
  */
 PHP_METHOD(MongoDate, __construct) {
-  long *arg1 = 0, *arg2 = 0;
+  long arg1 = 0, arg2 = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &arg1, &arg2) == FAILURE) {
     return;
