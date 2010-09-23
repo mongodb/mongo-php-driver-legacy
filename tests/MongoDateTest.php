@@ -44,20 +44,16 @@ class MongoDateTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($x[4], $y[4]);
     }
 
-    /**
-     * @expectedException PHPUnit_Framework_Error
-     */
     public function testInvalidParam1() {
       $object = array( 'created' => '1008597415', ); 
-      $object['created'] = new MongoDate($object['created']); 
+      $object['created'] = new MongoDate($object['created']);
+      $this->assertEquals(1008597415, $object['created']->sec);
     }
 
-    /**
-     * @expectedException PHPUnit_Framework_Error
-     */
     public function testInvalidParam2() {
       $object = array( 'created' => '1008597415', ); 
       $object['created'] = new MongoDate(0, $object['created']); 
+      $this->assertEquals(1008597415, $object['created']->usec);
     }
 }
 
