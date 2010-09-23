@@ -116,8 +116,10 @@ class MongoTest extends PHPUnit_Framework_TestCase
             return;
         }
 
-        $this->assertEquals("localhost", (string)$this->object);
-
+        $this->assertEquals("[localhost:27017]", (string)$this->object);
+        $this->object->connect();
+        $this->assertEquals("localhost:27017", (string)$this->object);        
+        
         $m = new Mongo();
         $this->assertEquals("localhost:27017", (string)$m);
     }
