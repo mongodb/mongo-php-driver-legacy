@@ -31,8 +31,8 @@ require_once 'AuthTest.php';
 require_once 'MinMaxKeyTest.php';
 require_once 'MongoDBRefTest.php';
 
-include 'MongoAuthTest.php';
-include 'MongoGridFSClassicTest.php';
+//include 'MongoAuthTest.php';
+//include 'MongoGridFSClassicTest.php';
  
 class MongoSuite extends PHPUnit_Framework_TestSuite
 {
@@ -75,7 +75,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
 	$suite->addTestSuite('MongoDBRefTest');
 
         // try adding an admin user
-	exec("mongo tests/addUser.js", $output, $exit_code);
+	/* exec("mongo tests/addUser.js", $output, $exit_code);
 	if ($exit_code != 0) {
 	  echo "\nNot running admin/auth tests\n";
 	  echo implode("\n", $output);
