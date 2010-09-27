@@ -370,9 +370,15 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC) {
    * In case 1 & 2, we want to create a new le ptr, otherwise we want to append
    * to the existing ptr.
    */
-  if (zend_hash_find(&EG(persistent_list), name, strlen(name)+1, (void**)&le) == SUCCESS && le->ptr) {
+  if (zend_hash_find(&EG(persistent_list), name, strlen(name)+1, (void**)&le) == SUCCESS) {
     cursor_node *current = le->ptr;
     cursor_node *prev = 0;
+
+    if (current == 0) {
+      le->ptr = new_node;
+      UNLOCK;
+      return 0;
+    }
 
     do {
       /*
