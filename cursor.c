@@ -506,7 +506,11 @@ PHP_METHOD(MongoCursor, info)
     } else {
         add_assoc_null(return_value, "fields");
     }
+    
     add_assoc_bool(return_value, "started_iterating", cursor->started_iterating);
+    if (cursor->started_iterating) {
+      add_assoc_long(return_value, "id", cursor->cursor_id);
+    }
 }
 /* }}} */
 
