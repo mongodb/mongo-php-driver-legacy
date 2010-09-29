@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2010-08-06</date>
+ <date>2010-09-29</date>
  <time>12:00:00</time>
  <version>
-  <release>1.0.9</release>
-  <api>1.0.9</api>
+  <release>1.0.10</release>
+  <api>1.0.10</api>
  </version>
  <stability>
   <release>stable</release>
@@ -25,12 +25,11 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Added 64-bit integer handling: see docs MongoInt32, MongoInt64, and ini
-  options (Derick Rethans)
-  Replica set support
-  Added support for domain sockets
-  w and fsync options are customizable per operation
-  Added MongoCollection::ASCENDING and DESCENDING constants
+  Make reconnection more aggressive
+  Fix cursor killing bug
+  Exception codes match database error codes
+  Fixed bindata types on 64-bit systems
+  Added query state and cursor id fields to MongoCursor::info
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -66,6 +65,24 @@
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog> 
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.0.10</release>
+    <api>1.0.10</api>
+   </version>
+   <date>2010-09-29</date>
+   <notes>
+    Make reconnection more aggressive
+    Fix cursor killing bug
+    Exception codes match database error codes
+    Fixed bindata types on 64-bit systems
+    Added query state and cursor id fields to MongoCursor::info
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>
