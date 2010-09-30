@@ -1177,3 +1177,130 @@ static int is_utf8(const char *s, int len) {
   }
   return 1;
 }
+
+/*
+ * Takes any type of PHP var and turns it into BSON
+ */
+PHP_FUNCTION(bson_encode) {
+  zval *z;
+  buffer buf;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
+    return;
+  }
+
+  switch (Z_TYPE_P(z)) {
+  case IS_NULL: {
+    RETURN_STRING("", 1);
+    break;
+  }
+  case IS_LONG: {
+    CREATE_BUF_STATIC(9);
+#if SIZEOF_LONG == 4
+    php_mongo_serialize_int(&buf, Z_LVAL_P(z));
+    RETURN_STRINGL(buf.start, 4, 1);
+#else
+    php_mongo_serialize_long(&buf, Z_LVAL_P(z));
+    RETURN_STRINGL(buf.start, 8, 1);
+#endif
+    break;
+  }
+  case IS_DOUBLE: {
+    CREATE_BUF_STATIC(9);
+    php_mongo_serialize_double(&buf, Z_DVAL_P(z));
+    RETURN_STRINGL(b, 8, 1);
+    break;
+  }
+  case IS_BOOL: {
+    if (Z_BVAL_P(z)) {
+      RETURN_STRINGL("\x01", 1, 1);
+    }
+    else {
+      RETURN_STRINGL("\x00", 1, 1);
+    }
+    break;
+  }
+  case IS_STRING: {
+    RETURN_STRINGL(Z_STRVAL_P(z), Z_STRLEN_P(z), 1);
+    break;
+  }
+  case IS_OBJECT: {
+    zend_class_entry *clazz = Z_OBJCE_P(z);
+    if (clazz == mongo_ce_Id) {
+      mongo_id *id = (mongo_id*)zend_object_store_get_object(z TSRMLS_CC);
+      RETURN_STRINGL(id->id, 12, 1);
+      break;
+    }
+    else if (clazz == mongo_ce_Date) {
+      CREATE_BUF_STATIC(9);
+      php_mongo_serialize_date(&buf, z TSRMLS_CC);
+      RETURN_STRINGL(buf.start, 8, 0);
+      break;
+    }
+    else if (clazz == mongo_ce_Regex) {
+      CREATE_BUF(buf, 128);
+
+      php_mongo_serialize_regex(&buf, z TSRMLS_CC);
+      RETVAL_STRINGL(buf.start, buf.pos-buf.start, 1);
+      efree(buf.start);
+      break;
+    }
+    else if (clazz == mongo_ce_Code) {
+      CREATE_BUF(buf, INITIAL_BUF_SIZE);
+
+      php_mongo_serialize_code(&buf, z TSRMLS_CC);
+      RETVAL_STRINGL(buf.start, buf.pos-buf.start, 1);
+      efree(buf.start);
+      break;
+    }
+    else if (clazz == mongo_ce_BinData) {
+      CREATE_BUF(buf, INITIAL_BUF_SIZE);
+
+      php_mongo_serialize_bin_data(&buf, z TSRMLS_CC);
+      RETVAL_STRINGL(buf.start, buf.pos-buf.start, 1);
+      efree(buf.start);
+      break;
+    }
+    else if (clazz == mongo_ce_Timestamp) {
+      CREATE_BUF(buf, 9);
+      buf.pos[8] = (char)0;
+
+      php_mongo_serialize_bin_data(&buf, z TSRMLS_CC);
+      RETURN_STRINGL(buf.start, 8, 0);
+      break;
+    }
+  }
+  /* fallthrough for a normal obj */
+  case IS_ARRAY: {
+    CREATE_BUF(buf, INITIAL_BUF_SIZE);
+    zval_to_bson(&buf, HASH_P(z), 0 TSRMLS_CC);
+
+    RETVAL_STRINGL(buf.start, buf.pos-buf.start, 1);
+    efree(buf.start);
+    break;
+  }
+  default:
+#if ZEND_MODULE_API_NO >= 20060613
+    zend_throw_exception(zend_exception_get_default(TSRMLS_C), "couldn't serialize element", 0 TSRMLS_CC);
+#else
+    zend_throw_exception(zend_exception_get_default(), "couldn't serialize element", 0 TSRMLS_CC);
+#endif
+    return;
+  }
+}
+
+/*
+ * Takes a serialized BSON object and turns it into a PHP array.
+ * This only deserializes entire documents!
+ */
+PHP_FUNCTION(bson_decode) {
+  char *str;
+  int str_len;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
+    return;
+  }
+
+  array_init(return_value);
+  bson_to_zval(str, HASH_P(return_value) TSRMLS_CC);
+}

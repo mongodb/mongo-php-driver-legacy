@@ -46,6 +46,10 @@
 
 #define GROW_SLOWLY 1048576
 
+#define CREATE_BUF_STATIC(n) char b[n];         \
+  buf.start = buf.pos = b;                      \
+  buf.end = b+n;
+
 int php_mongo_serialize_size(char *start, buffer *buf TSRMLS_DC);
 
 /* driver */
