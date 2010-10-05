@@ -39,8 +39,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($this->object->connected);
 
         $this->object->connect();
-        $this->object->connect();
+        $x = $this->object->connect();
         $this->assertTrue($this->object->connected);
+        $this->assertTrue($x);
     }
 
     public function testConnect2() {

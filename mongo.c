@@ -1120,6 +1120,7 @@ PHP_METHOD(Mongo, connectUtil) {
   
   /* Mongo::connected = true */
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
+  ZVAL_BOOL(return_value, 1);
 }
 
 static void disconnect_if_connected(zval *this_ptr TSRMLS_DC) {
