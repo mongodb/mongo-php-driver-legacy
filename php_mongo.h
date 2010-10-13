@@ -560,6 +560,7 @@ void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval 
 int mongo_say(mongo_link*, buffer*, zval* TSRMLS_DC);
 int mongo_hear(int sock, void*, int TSRMLS_DC);
 int php_mongo_get_reply(mongo_cursor*, zval* TSRMLS_DC);
+void php_mongo_set_disconnected(mongo_link *link);
 
 void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);

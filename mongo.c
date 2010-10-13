@@ -75,7 +75,6 @@ static int php_mongo_get_port(char**);
 static void mongo_init_MongoExceptions(TSRMLS_D);
 static void run_err(int, zval*, zval* TSRMLS_DC);
 static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC);
-static void set_disconnected(mongo_link *link);
 static char* stringify_server(mongo_server*, char*, int*, int*);
 static int php_mongo_do_authenticate(mongo_link*, zval* TSRMLS_DC);
 static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link TSRMLS_DC);
@@ -1308,7 +1307,7 @@ PHP_METHOD(Mongo, close) {
 
   PHP_MONGO_GET_LINK(getThis());
 
-  set_disconnected(link);
+  php_mongo_set_disconnected(link);
 
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 0 TSRMLS_CC);
   RETURN_TRUE;
@@ -1841,7 +1840,7 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
   if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) == FAILURE) {
 
-    set_disconnected(cursor->link);
+    php_mongo_set_disconnected(cursor->link);
 
     zend_throw_exception(mongo_ce_CursorException, "couldn't get response header", 4 TSRMLS_CC);
     return FAILURE;
@@ -1852,13 +1851,13 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
   // make sure we're not getting crazy data
   if (cursor->recv.length == 0) {
-    set_disconnected(cursor->link);
+    php_mongo_set_disconnected(cursor->link);
     zend_throw_exception(mongo_ce_CursorException, "no db response", 5 TSRMLS_CC);
     return FAILURE;
   }
   else if (cursor->recv.length > MAX_RESPONSE_LEN ||
            cursor->recv.length < REPLY_HEADER_SIZE) {
-    set_disconnected(cursor->link);
+    php_mongo_set_disconnected(cursor->link);
     zend_throw_exception_ex(mongo_ce_CursorException, 6 TSRMLS_CC, 
                             "bad response length: %d, max: %d, did the db assert?", 
                             cursor->recv.length, MAX_RESPONSE_LEN);
@@ -2080,7 +2079,7 @@ int mongo_say(mongo_link *link, buffer *buf, zval *errmsg TSRMLS_DC) {
     status = send(sock, (const char*)buf->start + sent, len, FLAGS);
 
     if (status == FAILURE) {
-      set_disconnected(link);
+      php_mongo_set_disconnected(link);
       ZVAL_STRING(errmsg, strerror(errno), 1);
       return FAILURE;
     }
@@ -2132,7 +2131,7 @@ static int get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   link->ts = now;
 
   // close connection
-  set_disconnected(link);
+  php_mongo_set_disconnected(link);
 
   if (SUCCESS == php_mongo_do_socket_connect(link, errmsg TSRMLS_CC)) {
     return php_mongo_get_master(link TSRMLS_CC);
@@ -2140,7 +2139,7 @@ static int get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   return FAILURE;
 }
 
-static void set_disconnected(mongo_link *link) {
+void php_mongo_set_disconnected(mongo_link *link) {
   // already disconnected
   if (!link->server_set->master ||
       !link->server_set->master->connected) {

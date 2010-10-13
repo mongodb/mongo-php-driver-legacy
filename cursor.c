@@ -692,7 +692,26 @@ PHP_METHOD(MongoCursor, next) {
 
     // check for err
     if (cursor->num == 1 &&
-        zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", 5, (void**)&err) == SUCCESS) {
+        zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err")+1, (void**)&err) == SUCCESS) {
+      zval **code_z;
+      // default error code
+      int code = 4;
+      
+      if (zend_hash_find(Z_ARRVAL_P(cursor->current), "code", strlen("code")+1, (void**)&code_z) == SUCCESS) {
+        // check for not master
+        if (Z_TYPE_PP(code_z) == IS_LONG) {
+          code = Z_LVAL_PP(code_z);
+
+          // this shouldn't be necessary after 1.7.* is standard, it forces
+          // failover in case the master steps down.
+          // not master: 10107
+          // not master & slaveok = false (more recent): 13435
+          if (cursor->link->rs && (code == 13435 || code == 10107)) {
+            php_mongo_set_disconnected(cursor->link);
+          }
+        }
+      }
+      
       zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 4 TSRMLS_CC);
       RETURN_FALSE;
     }
