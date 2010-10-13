@@ -774,7 +774,6 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     // never a persistent connection
     spprintf(&link->server_set->server->label, 0, "%s:%d", MonGlo(default_host), MonGlo(default_port));
     link->server_set->server->connected = 0;
-    link->server_set->server->domain_socket = 0;
     link->server_set->server->next = 0;
     link->server_set->master = link->server_set->server;
     
@@ -953,7 +952,6 @@ static mongo_server* create_mongo_server(char **current, char *hosts, mongo_link
   server->host = host;
   server->port = port;
   server->connected = 0;
-  server->domain_socket = 1;
   server->next = 0;
 
   return server;
