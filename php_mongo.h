@@ -172,6 +172,7 @@ typedef struct _mongo_server {
   int socket;
   int domain_socket;
   int connected;
+  char *label;
 
   struct _mongo_server *next;
 } mongo_server;
@@ -398,6 +399,7 @@ typedef struct {
   buffer buf;
 
   zend_bool started_iterating;
+  zend_bool persist;
 
   zval *current;
 
