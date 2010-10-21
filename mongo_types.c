@@ -205,12 +205,14 @@ void mongo_init_MongoId(TSRMLS_D) {
   id.unserialize = php_mongo_id_unserialize;
 
   mongo_ce_Id = zend_register_internal_class(&id TSRMLS_CC); 
+
+  zend_declare_property_null(mongo_ce_Id, "$id", strlen("$id"), ZEND_ACC_PUBLIC TSRMLS_CC);
 }
 
 /* {{{ MongoId::__construct()
  */
 PHP_METHOD(MongoId, __construct) {
-  zval *id = 0;
+  zval *id = 0, *str = 0;
   mongo_id *this_id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
   this_id->id = (char*)emalloc(OID_SIZE+1);
   this_id->id[OID_SIZE] = '\0';
@@ -245,6 +247,13 @@ PHP_METHOD(MongoId, __construct) {
   else {
     generate_id(this_id->id TSRMLS_CC);
   }
+
+  MAKE_STD_ZVAL(str);
+  ZVAL_NULL(str);
+
+  MONGO_METHOD(MongoId, __toString, str, getThis());
+  zend_update_property(mongo_ce_Date, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
+  zval_ptr_dtor(&str);
 }
 /* }}} */
 

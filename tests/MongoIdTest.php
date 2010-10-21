@@ -114,7 +114,7 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
       }
 
       $mess = array($ids[5], $ids[2], $ids[7], $ids[1], $ids[0], $ids[3], $ids[4], $ids[7]);
-      asort($mess);
+      sort($mess);
 
       $this->assertEquals($ids[0], $mess[0]);
       $this->assertEquals($ids[1], $mess[1]);
@@ -156,6 +156,12 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
       $host1 = gethostname();
       $host2 = MongoId::getHostname();
       $this->assertEquals($host1, $host2);
+    }
+
+    public function testJsonEncode() {
+      $id = new MongoId();
+      $json = json_encode($id);
+      $this->assertEquals('{"$id":"'.$id.'"}', $json);
     }
 }
 
