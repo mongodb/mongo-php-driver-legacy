@@ -252,7 +252,7 @@ PHP_METHOD(MongoId, __construct) {
   ZVAL_NULL(str);
 
   MONGO_METHOD(MongoId, __toString, str, getThis());
-  zend_update_property(mongo_ce_Date, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
+  zend_update_property(mongo_ce_Id, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
   zval_ptr_dtor(&str);
 }
 /* }}} */
