@@ -974,7 +974,7 @@ PHP_METHOD(Mongo, __construct) {
   /* new format */
   if (options) {
     if (!IS_SCALAR_P(options)) {
-      zval **connect_z, **persist_z, **timeout_z, **replica_z;
+      zval **connect_z, **persist_z, **timeout_z, **replica_z, **slave_okay_z;
 
       if (zend_hash_find(HASH_P(options), "connect", strlen("connect")+1, (void**)&connect_z) == SUCCESS) {
         connect = Z_BVAL_PP(connect_z);
@@ -995,6 +995,14 @@ PHP_METHOD(Mongo, __construct) {
       else {
         link->rs = 0;
       }
+
+      if (zend_hash_find(HASH_P(options), "slaveOkay", strlen("slaveOkay")+1, (void**)&slave_okay_z) == SUCCESS) {
+        if (!link->rs) {
+          zend_throw_exception(mongo_ce_ConnectionException, "can't use slaveOkay without replicaSet", 2 TSRMLS_CC);
+          return;
+        }
+        link->slave_okay = Z_BVAL_PP(slave_okay_z);
+      }      
     }
     else {
       /* backwards compatibility */

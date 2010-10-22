@@ -205,6 +205,8 @@ typedef struct {
   mongo_server_set *server_set;
   // if this is a replica set
   int rs;
+  // if this connection should distribute reads to slaves
+  zend_bool slave_okay;
 
   zval *db;
   zval *username;

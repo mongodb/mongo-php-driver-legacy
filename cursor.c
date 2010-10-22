@@ -164,7 +164,7 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->timeout = Z_LVAL_P(timeout);
 
   slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
-  cursor->opts = Z_BVAL_P(slave_okay) ? (1 << 2) : 0;
+  cursor->opts = (link->slave_okay || Z_BVAL_P(slave_okay)) ? (1 << 2) : 0;
 
   // get rid of extra ref
   zval_ptr_dtor(&empty);

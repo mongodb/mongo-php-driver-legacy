@@ -513,6 +513,17 @@ class MongoTest extends PHPUnit_Framework_TestCase
     public function testDomainSock2() {
         $conn = new Mongo("mongodb:///tmp/foo");
     }
+
+    public function testSlaveOkay1() {
+        $conn = new Mongo("mongodb://localhost", array("replicaSet" => true, "slaveOkay" => true));
+    }
+
+    /**
+     * @expectedException MongoConnectionException
+     */
+    public function testSlaveOkay2() {
+        $conn = new Mongo("mongodb://localhost", array("slaveOkay" => true));
+    }
 }
 
 class StaticFunctionTest {
