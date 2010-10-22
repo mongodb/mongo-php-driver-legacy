@@ -33,14 +33,6 @@
 #include "collection.h"
 #include "mongo_types.h"
 
-/*
- * MongoCursorException codes:
- * 0 - cannot modify cursor after beginning iteration
- * 1 - send error
- * 2 - cursor id not found
- * 3 - cursor->buf.pos is null
- * 4 - database error
- */
 
 // externs
 extern zend_class_entry *mongo_ce_Id,
@@ -569,10 +561,10 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   if (mongo_say(cursor->link, &buf, errmsg TSRMLS_CC) == FAILURE) {
     if (Z_TYPE_P(errmsg) == IS_STRING) {
-      zend_throw_exception_ex(mongo_ce_CursorException, 1 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
+      zend_throw_exception_ex(mongo_ce_CursorException, 14 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
     }
     else {
-      zend_throw_exception(mongo_ce_CursorException, "couldn't send query", 1 TSRMLS_CC);
+      zend_throw_exception(mongo_ce_CursorException, "couldn't send query", 14 TSRMLS_CC);
     }
     efree(buf.start);
     zval_ptr_dtor(&errmsg);
@@ -712,7 +704,7 @@ PHP_METHOD(MongoCursor, next) {
         }
       }
       
-      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 4 TSRMLS_CC);
+      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), code TSRMLS_CC);
       RETURN_FALSE;
     }
   }

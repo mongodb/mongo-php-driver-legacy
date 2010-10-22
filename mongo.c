@@ -1018,7 +1018,7 @@ PHP_METHOD(Mongo, __construct) {
    * the empty string.
    */
   if (server && strlen(server) == 0) {
-    zend_throw_exception(mongo_ce_ConnectionException, "no server name given", 0 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_ConnectionException, "no server name given", 1 TSRMLS_CC);
   }
   zend_update_property_stringl(mongo_ce_Mongo, getThis(), "server", strlen("server"), server, server_len TSRMLS_CC);
 
@@ -1225,7 +1225,7 @@ static void save_persistent_connection(zval *this_ptr TSRMLS_DC) {
   new_le.ptr = link->server_set;
   
   if (zend_hash_update(&EG(persistent_list), key, strlen(key)+1, (void*)&new_le, sizeof(zend_rsrc_list_entry), NULL)==FAILURE) {
-    zend_throw_exception(mongo_ce_ConnectionException, "could not store persistent link", 0 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_ConnectionException, "could not store persistent link", 3 TSRMLS_CC);
     
     php_mongo_server_set_free(link->server_set, 1 TSRMLS_CC);
     efree(key);
@@ -1836,7 +1836,7 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
 
     if (status == -1 || FD_ISSET(sock, &exceptfds)) {
-      zend_throw_exception(mongo_ce_CursorException, strerror(errno), 2 TSRMLS_CC);
+      zend_throw_exception(mongo_ce_CursorException, strerror(errno), 13 TSRMLS_CC);
       return FAILURE;
     }
 
@@ -1895,7 +1895,7 @@ static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
       recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
       recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
       recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
-    zend_throw_exception(mongo_ce_CursorException, "incomplete response", 7 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_CursorException, "incomplete response", 8 TSRMLS_CC);
     return FAILURE;
   }
 
@@ -1959,14 +1959,14 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     // if we didn't find it, give up
     if (!response) {
       UNLOCK;
-      zend_throw_exception(mongo_ce_CursorException, "couldn't find reply, please try again", 0 TSRMLS_CC);
+      zend_throw_exception(mongo_ce_CursorException, "couldn't find reply, please try again", 11 TSRMLS_CC);
       return FAILURE;
     }
   }
 
   if ((sock = get_socket(cursor->link, errmsg TSRMLS_CC)) == FAILURE) {
     UNLOCK;
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 1 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 10 TSRMLS_CC);
     return FAILURE;
   }
 
@@ -2034,9 +2034,9 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   if (FAILURE == get_cursor_body(sock, cursor TSRMLS_CC)) {
     UNLOCK;
 #ifdef WIN32
-    zend_throw_exception_ex(mongo_ce_CursorException, 8 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
+    zend_throw_exception_ex(mongo_ce_CursorException, 12 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
 #else
-    zend_throw_exception_ex(mongo_ce_CursorException, 8 TSRMLS_CC, "error getting database response: %d", strerror(errno));
+    zend_throw_exception_ex(mongo_ce_CursorException, 12 TSRMLS_CC, "error getting database response: %d", strerror(errno));
 #endif
     return FAILURE;
   }

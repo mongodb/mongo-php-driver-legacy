@@ -616,3 +616,34 @@ extern zend_module_entry mongo_module_entry;
 #define phpext_mongo_ptr &mongo_module_entry
 
 #endif
+
+/*
+ * Error codes
+ *
+ * MongoConnectionException:
+ * 0: connection to <host> failed: <errmsg>
+ * 1: no server name given
+ * 2: can't use slaveOkay without replicaSet
+ * 3: could not store persistent link
+ * 10: failed to get host from <substr> of <str>
+ * 11: failed to get port from <substr> of <str>
+ *
+ * MongoCursorException:
+ * 0: cannot modify cursor after beginning iteration
+ * 1: get more: send error (C error string)
+ * 2: get more: cursor not found
+ * 3: cursor->buf.pos is null
+ * 4: couldn't get response header
+ * 5: no db response
+ * 6: bad response length: <len>, max: <len>, did the db assert?
+ * 7: incomplete header
+ * 8: incomplete response
+ * 9: couldn't find a response
+ * 10: error getting socket
+ * 11: couldn't find reply, please try again
+ * 12: [WSA ]error getting database response: <err>
+ * 13: Timeout error (C error)
+ * 14: couldn't send query: <err>
+ * various: database error
+ */
+
