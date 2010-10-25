@@ -500,14 +500,14 @@ PHP_METHOD(MongoRegex, __construct) {
     char *eopattern = strrchr(re, '/');
 
     if (!eopattern) {
-      zend_throw_exception(mongo_ce_Exception, "invalid regex", 0 TSRMLS_CC);
+      zend_throw_exception(mongo_ce_Exception, "invalid regex", 9 TSRMLS_CC);
       return;
     }
 
     pattern_len = eopattern - re - 1;
 
     if (pattern_len < 0) {
-      zend_throw_exception(mongo_ce_Exception, "invalid regex", 0 TSRMLS_CC);
+      zend_throw_exception(mongo_ce_Exception, "invalid regex", 9 TSRMLS_CC);
       return;
     }
 
@@ -678,7 +678,7 @@ PHP_METHOD(MongoDBRef, get) {
   }
 
   if (Z_TYPE_PP(ns) != IS_STRING) {
-      zend_throw_exception(mongo_ce_Exception, "MongoDBRef::get: $ref field must be a string", 0 TSRMLS_CC);
+      zend_throw_exception(mongo_ce_Exception, "MongoDBRef::get: $ref field must be a string", 10 TSRMLS_CC);
       return;
   }
 
@@ -688,7 +688,7 @@ PHP_METHOD(MongoDBRef, get) {
 
     // just to be paranoid, make sure dbname is a string
     if (Z_TYPE_PP(dbname) != IS_STRING) {
-      zend_throw_exception(mongo_ce_Exception, "MongoDBRef::get: $db field must be a string", 0 TSRMLS_CC);
+      zend_throw_exception(mongo_ce_Exception, "MongoDBRef::get: $db field must be a string", 11 TSRMLS_CC);
       return;
     }
 

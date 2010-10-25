@@ -208,7 +208,7 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
 
     // if this is not a valid string, stop
     if (MonGlo(utf8) && !is_utf8(Z_STRVAL_PP(data), Z_STRLEN_PP(data))) {
-      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "non-utf8 string: %s", Z_STRVAL_PP(data));
+      zend_throw_exception_ex(mongo_ce_Exception, 12 TSRMLS_CC, "non-utf8 string: %s", Z_STRVAL_PP(data));
       return ZEND_HASH_APPLY_STOP;
     }
 
@@ -564,7 +564,7 @@ void php_mongo_serialize_double(buffer *buf, double num) {
  */
 void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRMLS_DC) {
   if (strlen(str) == 0) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "zero-length keys are not allowed, did you use $ with double quotes?");
+    zend_throw_exception_ex(mongo_ce_Exception, 1 TSRMLS_CC, "zero-length keys are not allowed, did you use $ with double quotes?");
     return;
   }
 
@@ -573,7 +573,7 @@ void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRML
   }
 
   if (prep && (strchr(str, '.') != 0)) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "'.' not allowed in key: %s", str);
+    zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "'.' not allowed in key: %s", str);
     return;
   }
 
@@ -626,7 +626,7 @@ void php_mongo_serialize_ns(buffer *buf, char *str TSRMLS_DC) {
 int php_mongo_serialize_size(char *start, buffer *buf TSRMLS_DC) {
   int total = MONGO_32((buf->pos - start));
   if (buf->pos - start > 16000000) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "insert too large: %d, max: 16000000", buf->pos - start);
+    zend_throw_exception_ex(mongo_ce_Exception, 3 TSRMLS_CC, "insert too large: %d, max: 16000000", buf->pos - start);
     return FAILURE;
   }
   memcpy(start, &total, INT_32);
@@ -644,13 +644,13 @@ static int insert_helper(buffer *buf, zval *doc TSRMLS_DC) {
   }
   // return if there were 0 elements
   else if (0 == result) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "no elements in doc");
+    zend_throw_exception_ex(mongo_ce_Exception, 4 TSRMLS_CC, "no elements in doc");
     return FAILURE;
   }
 
   // throw an exception if the doc was too big
   if(buf->pos - (buf->start + start) > MAX_OBJECT_LEN) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "size of BSON doc is %d bytes, max 4MB", buf->pos - (buf->start + start));
+    zend_throw_exception_ex(mongo_ce_Exception, 5 TSRMLS_CC, "size of BSON doc is %d bytes, max 4MB", buf->pos - (buf->start + start));
     return FAILURE;
   }
   
@@ -695,13 +695,13 @@ int php_mongo_write_batch_insert(buffer *buf, char *ns, zval *docs TSRMLS_DC) {
 
   // if there are no elements, don't bother saving
   if (count == 0) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "no documents given");
+    zend_throw_exception_ex(mongo_ce_Exception, 6 TSRMLS_CC, "no documents given");
     return FAILURE;
   }
 
   // this is a hard limit in the db server (util/messages.cpp)
   if (buf->pos - (buf->start + start) > 16000000) {
-    zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "insert too large: %d, max: 16000000", buf->pos - (buf->start+start));
+    zend_throw_exception_ex(mongo_ce_Exception, 3 TSRMLS_CC, "insert too large: %d, max: 16000000", buf->pos - (buf->start+start));
     return FAILURE;
   }
 

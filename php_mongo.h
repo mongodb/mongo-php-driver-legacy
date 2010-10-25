@@ -509,7 +509,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
           continue;                                   \
         }                                             \
         else {                                                          \
-          zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "mutex error: %s", strerror(GetLastError())); \
+          zend_throw_exception_ex(mongo_ce_Exception, 13 TSRMLS_CC, "mutex error: %s", strerror(GetLastError())); \
           return ret;                                                   \
         }                                                               \
       }                                                                 \
@@ -518,7 +518,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 #define UNLOCK {                                       \
     int ret = ReleaseMutex(cursor_mutex);              \
     if (ret == 0) {                                                     \
-      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "mutex error: %s", strerror(GetLastError())); \
+      zend_throw_exception_ex(mongo_ce_Exception, 13 TSRMLS_CC, "mutex error: %s", strerror(GetLastError())); \
       return ret;                                                       \
     }                                                                   \
   }
@@ -529,7 +529,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
       continue;                                 \
     }                                           \
     else {                                      \
-      zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "mutex error: %d", strerror(errno)); \
+      zend_throw_exception_ex(mongo_ce_Exception, 13 TSRMLS_CC, "mutex error: %d", strerror(errno)); \
       return ret;                               \
     }                                           \
   }
@@ -619,6 +619,23 @@ extern zend_module_entry mongo_module_entry;
 
 /*
  * Error codes
+ *
+ * MongoException:
+ * 0: The <class> object has not been correctly initialized by its constructor
+ * 1: zero-length keys are not allowed, did you use $ with double quotes?
+ * 2: '.' not allowed in key: <key>
+ * 3: insert too large: <size>, max: 16000000
+ * 4: no elements in doc
+ * 5: size of BSON doc is <size> bytes, max 4MB
+ * 6: no documents given
+ * 7: MongoCollection::group takes an array, object, or MongoCode key
+ * 8: field names must be strings
+ * 9: invalid regex
+ * 10: MongoDBRef::get: $ref field must be a string
+ * 11: MongoDBRef::get: $db field must be a string
+ * 12: non-utf8 string: <str>
+ * 13: mutex error: <err>
+ * 14: index name too long: <len>, max <max> characters
  *
  * MongoConnectionException:
  * 0: connection to <host> failed: <errmsg>
