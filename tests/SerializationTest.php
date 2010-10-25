@@ -190,5 +190,12 @@ class SerializationTest extends PHPUnit_Framework_TestCase
         $c = $this->sharedFixture->phpunit->c;
         $c->save(array("x" => array("" => "foo"), "y" => "z"));
     }
+
+    public function testEmptyKey4() {
+        ini_set("mongo.allow_empty_keys", true);
+        $c = $this->sharedFixture->phpunit->c;
+        $c->save(array("x" => array("" => "foo"), "y" => "z"));
+        ini_set("mongo.allow_empty_keys", false);
+    }
 }
 ?>
