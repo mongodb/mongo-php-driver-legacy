@@ -193,6 +193,8 @@ static function_entry MongoId_methods[] = {
   PHP_ME(MongoId, __set_state, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(MongoId, getTimestamp, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoId, getHostname, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(MongoId, getPID, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoId, getInc, NULL, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
 };
 
@@ -319,6 +321,32 @@ PHP_METHOD(MongoId, getTimestamp) {
   RETURN_LONG(ts);
 }
 /* }}} */
+
+/* {{{ MongoId::getPID
+ */
+PHP_METHOD(MongoId, getPID) {
+  int pid;
+  
+#ifdef WIN32
+  pid = GetCurrentThreadId();
+#else
+  pid = (int)getpid();
+#endif
+
+  RETURN_LONG(pid);
+}
+/* }}} */
+
+PHP_METHOD(MongoId, getInc) {
+  int inc;
+  mongo_id *id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED_STRING(id->id, MongoId);
+
+  // 9, 10, 11, '\0' 
+  inc = (int)id->id[9];
+  
+  RETURN_LONG(inc);
+}
 
 /* {{{ MongoId::getHostname
  */

@@ -37,6 +37,8 @@ PHP_METHOD(MongoId, __construct);
 PHP_METHOD(MongoId, __toString);
 PHP_METHOD(MongoId, __set_state);
 PHP_METHOD(MongoId, getTimestamp);
+PHP_METHOD(MongoId, getPID);
+PHP_METHOD(MongoId, getInc);
 PHP_METHOD(MongoId, getHostname);
 
 PHP_METHOD(MongoInt32, __construct);
