@@ -43,6 +43,20 @@ class MongoCollectionTest2 extends PHPUnit_Framework_TestCase
         $this->assertFalse(array_key_exists(3, $r));
         $this->assertFalse(array_key_exists(4, $r));
     }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testIndexNameLen1() {
+      $this->object->ensureIndex(array("x" => 1), array("name" => "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"));
+    }
+
+    /**
+     * @expectedException MongoException 
+     */
+    public function testIndexNameLen2() {
+      $this->object->ensureIndex(array("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz" => 1));
+    }
 }
 
 ?>

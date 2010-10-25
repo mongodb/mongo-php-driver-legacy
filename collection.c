@@ -602,6 +602,11 @@ PHP_METHOD(MongoCollection, ensureIndex) {
         zend_hash_del(HASH_P(data), "safe", strlen("safe")+1);
       }
       if (zend_hash_find(HASH_P(options), "name", strlen("name")+1, (void**)&name) == SUCCESS) {
+        if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
+          zval_ptr_dtor(&data);
+          zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
+          return;
+        }
         done_name = 1;
       }
     }
@@ -613,7 +618,14 @@ PHP_METHOD(MongoCollection, ensureIndex) {
         
     // MongoCollection::toIndexString()
     MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
-        
+
+    if (Z_STRLEN_P(key_str) > MAX_INDEX_NAME_LEN) {
+      zval_ptr_dtor(&data);
+      zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_P(key_str), MAX_INDEX_NAME_LEN);
+      zval_ptr_dtor(&key_str);
+      return;
+    }
+
     add_assoc_zval(data, "name", key_str);
     zval_add_ref(&key_str);
   }

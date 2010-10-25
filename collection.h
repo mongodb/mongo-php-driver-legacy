@@ -18,6 +18,8 @@
 #ifndef MONGO_COLLECTION_H
 #define MONGO_COLLECTION_H
 
+#define MAX_INDEX_NAME_LEN 127
+
 zend_object_value php_mongo_collection_new(zend_class_entry* TSRMLS_DC);
 
 PHP_METHOD(MongoCollection, __construct);
