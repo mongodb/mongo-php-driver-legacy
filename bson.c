@@ -849,11 +849,19 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     switch(type) {
     case BSON_OID: {
       mongo_id *this_id;
-
+      zval *str = 0;
+      
       object_init_ex(value, mongo_ce_Id);
 
       this_id = (mongo_id*)zend_object_store_get_object(value TSRMLS_CC);
       this_id->id = estrndup(buf, OID_SIZE);
+
+      MAKE_STD_ZVAL(str);
+      ZVAL_NULL(str);
+
+      MONGO_METHOD(MongoId, __toString, str, value);
+      zend_update_property(mongo_ce_Id, value, "$id", strlen("$id"), str TSRMLS_CC);
+      zval_ptr_dtor(&str);
 
       buf += OID_SIZE;
       break;

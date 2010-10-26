@@ -164,6 +164,17 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
       $this->assertEquals('{"$id":"'.$id.'"}', $json);
     }
 
+    public function testJsonEncode2() {
+        $id = new MongoId();
+        $c = $this->sharedFixture->phpunit->c;
+        $c->drop();
+        $c->insert(array("_id" => $id));
+        $result = $c->findOne();
+        
+        $json = json_encode($result);
+        $this->assertEquals('{"_id":{"$id":"'.$id.'"}}', $json);
+    }
+
     public function testGetInc() {
       $id = new MongoId();
       $inc1 = $id->getInc();
