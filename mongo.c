@@ -2315,7 +2315,8 @@ static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errms
 static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int connected = 0;
   mongo_server *server = link->server_set->server;
-
+  zval *errmsg_holder = 0;
+  
 #ifdef DEBUG_CONN
   php_printf("connecting\n");
 #endif
@@ -2332,8 +2333,17 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
       php_printf("%s:%d connected? %s\n", server->host, server->port, status == 0 ? "true" : "false");
 #endif
 
-      if (Z_TYPE_P(errmsg) == IS_STRING) {
-        efree(Z_STRVAL_P(errmsg));
+      // store some error message, but don't store one for every failure
+      if (status == FAILURE && Z_TYPE_P(errmsg) == IS_STRING) {
+        if (!errmsg_holder) {
+          errmsg_holder = errmsg;
+          // reallocate errmsg somewhere else
+          MAKE_STD_ZVAL(errmsg);
+        }
+        else {
+          // if errmsg_holder is already set, discard the errmsg
+          efree(Z_STRVAL_P(errmsg));
+        }
         ZVAL_NULL(errmsg);
       }
     }
@@ -2341,18 +2351,18 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
       connected = 1;
     }
 
-    /*
-     * cases where we have an error message and don't care because there's a
-     * connection we can use:
-     *  - if a connections fails after we have at least one working
-     *  - if the first connection fails but a subsequent ones succeeds
-     */
-    if (connected && Z_TYPE_P(errmsg) == IS_STRING) {
-      efree(Z_STRVAL_P(errmsg));
-      ZVAL_NULL(errmsg);
-    }
-
     server = server->next;
+  }
+
+  /*
+   * cases where we have an error message and don't care because there's a
+   * connection we can use:
+   *  - if a connections fails after we have at least one working
+   *  - if the first connection fails but a subsequent ones succeeds
+   */
+  if (connected && errmsg_holder) {
+    efree(Z_STRVAL_P(errmsg_holder));
+    ZVAL_NULL(errmsg_holder);
   }
 
   // if at least one returns !FAILURE, return success
