@@ -762,7 +762,7 @@ PHP_METHOD(MongoCollection, count) {
 
   zval_ptr_dtor(&data);
 
-  if (EG(exception)) {
+  if (EG(exception) || Z_TYPE_P(response) != IS_ARRAY) {
     zval_ptr_dtor(&response);
     return;
   }
