@@ -565,68 +565,6 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       $this->assertEquals("joe", $names['values'][0], json_encode($names));
     }
 
-    public function testTimeout2() {
-      $cmd = $this->object->db->selectCollection('$cmd');
-
-      for ($i=0; $i<10000; $i++) {
-        $this->object->insert(array("name" => "joe".$i, "interests" => array(rand(), rand(), rand())));
-      }
-
-      // shouldn't time out
-      $r = $this->object->find()->timeout(5000)->getNext();
-
-      // not testing functionality, just making sure it's testing the right data
-      $this->assertEquals("joe", substr($r['name'], 0, 3));
-
-      // shouldn't time out, does take a while
-      $query = 'r = 0; cursor = db.c.find(); while (cursor.hasNext()) { x = cursor.next(); for (i=0; i<200; i++) { if (x.name == "joe"+i) { r++; } } } return r;';
-      $r = $cmd->find(array('$eval'  => $query))->limit(-1)->getNext();
-    }
-
-    /**
-     * @expectedException MongoCursorTimeoutException
-     */
-    public function testTimeout() {
-      $cmd = $this->object->db->selectCollection('$cmd');
-
-      for ($i=0; $i<10000; $i++) {
-        $this->object->insert(array("name" => "joe".$i, "interests" => array(rand(), rand(), rand())));
-      }
-
-      // should time out
-      $query = 'r = 0; cursor = db.c.find(); while (cursor.hasNext()) { x = cursor.next(); for (i=0; i<200; i++) { if (x.name == "joe"+i) { r++; } } } return r;';
-      $cursor = $cmd->find(array('$eval'  => $query))->limit(-1)->timeout(2000);
-      $this->assertNull($cursor->getNext());
-    }
-
-    public function testTimeout3() {
-      for ($i=0; $i<10000; $i++) {
-        $this->object->insert(array("name" => "joe".$i, "interests" => array(rand(), rand(), rand())));
-      }
-
-      $cmd = $this->object->db->selectCollection('$cmd');
-
-      $query = 'r = 0; cursor = db.c.find(); while (cursor.hasNext()) { x = cursor.next(); for (i=0; i<200; i++) { if (x.name == "joe"+i) { r++; } } } return r;';
-      $count = 0;
-      for ($i=0; $i<3; $i++) {
-        $cursor = $cmd->find(array('$eval'  => $query))->limit(-1)->timeout(500);
-        
-        try {
-          $x = $cursor->getNext();
-          $this->assertFalse(true, json_encode($x));
-        }
-        catch(MongoCursorTimeoutException $e) {
-          $count++;
-        }
-      }
-
-      $this->assertEquals(3, $count);
-      $x = $this->object->findOne();
-      $this->assertNotNull($x);
-      $this->assertTrue(array_key_exists('name', $x), json_encode($x));
-      $this->assertTrue(array_key_exists('interests', $x), json_encode($x));
-    }
-
     public function testKillConnection() {
       $m = new Mongo();
       $c = $m->phpunit->kill;
@@ -767,24 +705,6 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       $this->assertFalse(array_key_exists('x', $x));
     }
 
-    /**
-     * @expectedException MongoCursorTimeoutException
-     */
-    public function testStaticTimeout() {
-      $this->markTestSkipped("for now");
-      return;
-
-      MongoCursor::$timeout = 1;
-
-      for ($i=0; $i<1000; $i++) {
-        $this->object->insert(array("x" => "sdfjnaireojaerkgmdfkngkdsflngklsgntoigneorisgmsrklgd$i", "y" => $i));
-      }
-
-      $rows = $this->object->find(array('$eval' => 'r = 0; cursor = db.c.find(); while (cursor.hasNext()) { x = cursor.next(); for (i=0; i<200; i++) { if (x.name == "joe"+i) { r++; } } } return r;'));
-      foreach ($rows as $row);
-
-      MongoCursor::$timeout = 30000;
-    }
 
     public function testErrorCode() {
         $code = 0;
