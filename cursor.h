@@ -24,6 +24,7 @@ PHP_METHOD(MongoCursor, __construct);
 PHP_METHOD(MongoCursor, getNext);
 PHP_METHOD(MongoCursor, hasNext);
 PHP_METHOD(MongoCursor, limit);
+PHP_METHOD(MongoCursor, batchSize);
 PHP_METHOD(MongoCursor, skip);
 PHP_METHOD(MongoCursor, fields);
 PHP_METHOD(MongoCursor, slaveOkay);

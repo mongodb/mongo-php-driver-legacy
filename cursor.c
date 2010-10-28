@@ -282,6 +282,21 @@ PHP_METHOD(MongoCursor, limit) {
 }
 /* }}} */
 
+/* {{{ MongoCursor::batchSize
+ */
+PHP_METHOD(MongoCursor, batchSize) {
+  long l;
+  preiteration_setup;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
+    return;
+  }
+
+  cursor->batch_size = l;
+  RETVAL_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
 /* {{{ MongoCursor::skip
  */
 PHP_METHOD(MongoCursor, skip) {
@@ -480,30 +495,33 @@ PHP_METHOD(MongoCursor, hint) {
  */
 PHP_METHOD(MongoCursor, info)
 {
-    mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-    MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
-    array_init(return_value);
+  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  array_init(return_value);
 
-    add_assoc_string(return_value, "ns", cursor->ns, 1);
-    add_assoc_long(return_value, "limit", cursor->limit);
-    add_assoc_long(return_value, "skip", cursor->skip);
-    if (cursor->query) {
-        add_assoc_zval(return_value, "query", cursor->query);
-        zval_add_ref(&cursor->query);
-    } else {
-        add_assoc_null(return_value, "query");
-    }
-    if (cursor->fields) {
-        add_assoc_zval(return_value, "fields", cursor->fields);
-        zval_add_ref(&cursor->fields);
-    } else {
-        add_assoc_null(return_value, "fields");
-    }
+  add_assoc_string(return_value, "ns", cursor->ns, 1);
+  add_assoc_long(return_value, "limit", cursor->limit);
+  add_assoc_long(return_value, "batchSize", cursor->batch_size);
+  add_assoc_long(return_value, "skip", cursor->skip);
+  if (cursor->query) {
+    add_assoc_zval(return_value, "query", cursor->query);
+    zval_add_ref(&cursor->query);
+  } else {
+    add_assoc_null(return_value, "query");
+  }
+  if (cursor->fields) {
+    add_assoc_zval(return_value, "fields", cursor->fields);
+    zval_add_ref(&cursor->fields);
+  } else {
+    add_assoc_null(return_value, "fields");
+  }
     
-    add_assoc_bool(return_value, "started_iterating", cursor->started_iterating);
-    if (cursor->started_iterating) {
-      add_assoc_long(return_value, "id", cursor->cursor_id);
-    }
+  add_assoc_bool(return_value, "started_iterating", cursor->started_iterating);
+  if (cursor->started_iterating) {
+    add_assoc_long(return_value, "id", cursor->cursor_id);
+    add_assoc_long(return_value, "at", cursor->at);
+    add_assoc_long(return_value, "numReturned", cursor->num);
+  }
 }
 /* }}} */
 
@@ -833,6 +851,7 @@ static function_entry MongoCursor_methods[] = {
 
   /* options */
   PHP_ME(MongoCursor, limit, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, batchSize, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, fields, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)

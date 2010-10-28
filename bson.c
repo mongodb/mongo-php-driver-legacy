@@ -44,6 +44,7 @@ extern zend_class_entry *mongo_ce_BinData,
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
+static int get_limit(mongo_cursor *cursor);
 static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC);
 #if ZEND_MODULE_API_NO >= 20090115
 static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key);
@@ -762,7 +763,7 @@ int php_mongo_write_query(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
   cursor->send.request_id = header.request_id;
 
   php_mongo_serialize_int(buf, cursor->skip);
-  php_mongo_serialize_int(buf, cursor->limit);
+  php_mongo_serialize_int(buf, get_limit(cursor));
 
   if (zval_to_bson(buf, HASH_P(cursor->query), NO_PREP TSRMLS_CC) == FAILURE ||
       EG(exception)) {
@@ -808,10 +809,32 @@ int php_mongo_write_get_more(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
   CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
   cursor->send.request_id = header.request_id;
 
-  php_mongo_serialize_int(buf, cursor->limit);
+  php_mongo_serialize_int(buf, get_limit(cursor));
   php_mongo_serialize_long(buf, cursor->cursor_id);
 
   return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
+}
+
+
+static int get_limit(mongo_cursor *cursor) {
+  int lim_at;
+  
+  if (cursor->limit < 0) {
+    return cursor->limit;
+  }
+  else if (cursor->batch_size < 0) {
+    return cursor->batch_size;
+  }
+  
+  lim_at = cursor->limit > cursor->batch_size ? cursor->limit - cursor->at : cursor->limit;
+  if (cursor->batch_size && (!lim_at || cursor->batch_size <= lim_at)) {
+    return cursor->batch_size;
+  }
+  else if (lim_at && (!cursor->batch_size || lim_at < cursor->batch_size)) {
+    return lim_at;
+  }
+  
+  return 0;
 }
 
 

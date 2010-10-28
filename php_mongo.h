@@ -379,6 +379,7 @@ typedef struct {
   zval *query;
   zval *fields;
   int limit;
+  int batch_size;
   int skip;
   int opts;
 

@@ -400,7 +400,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
     }
 
     public function testCount() {
-      $this->object->insert(array('x'=>1));
+        $this->object->insert(array('x'=>1));
         $this->object->insert(array('x'=>2));
         $this->object->insert(array('x'=>3, 'y'=>1));
         
@@ -799,5 +799,72 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(11000, $code);
     }
 
+    public function testBatchSize() {
+        for ($i = 0; $i<2000; $i++) {
+            $this->object->insert(array("x" => 1, "y" => $i, "z" => new MongoDate(), "w" => "all the talk on the market"));
+        }
+
+        $cursor = $this->object->find();
+
+        // b: 7   l: 20
+        $batch = 7;
+        $count = 0;
+        $cursor->batchSize($batch)->limit(20);
+        while ($cursor->hasNext()) {
+            $cursor->getNext();
+            $info = $cursor->info();
+            $this->assertEquals($batch, $info['numReturned']);
+            $count++;
+            if ($count % 7 == 0) {
+                if ($batch == 7) {
+                    $batch = 14;
+                }
+                else {
+                    $batch=20;
+                }
+            }
+        }
+        $this->assertEquals(20, $count);
+        
+        // b: 20  l: 7
+        $count = 0;
+        $cursor->reset();
+        $cursor->batchSize(20)->limit(7);
+        while ($cursor->hasNext()) {
+            $cursor->getNext();
+            $info = $cursor->info();
+            $this->assertEquals(7, $info['numReturned']);
+            $count++;
+        }
+        $this->assertEquals(7, $count);
+        
+        // b: 0   l: 20
+        $count = 0;
+        $cursor->reset();
+        $cursor->batchSize(0)->limit(20);
+        while ($cursor->hasNext()) {
+            $cursor->getNext();
+            $info = $cursor->info();
+            $this->assertEquals(20, $info['numReturned']);
+            $count++;
+        }
+        $this->assertEquals(20, $count);
+
+        
+        // b: 20  l: 0
+        $count = 0;
+        $cursor->reset();
+        $cursor->batchSize(20)->limit(0);
+        while ($cursor->hasNext()) {
+            $cursor->getNext();
+            $info = $cursor->info();
+            $this->assertEquals($batch, $info['numReturned']);
+            $count++;
+            if ($count % 20 == 0) {
+                $batch+=20;
+            }
+        }
+        $this->assertEquals(2000, $count);
+    }
 }
 ?>
