@@ -902,14 +902,14 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
     if (cursor->query) zval_ptr_dtor(&cursor->query);
     if (cursor->fields) zval_ptr_dtor(&cursor->fields);
 
-    if (cursor->buf.start) pefree(cursor->buf.start, cursor->persist);
-    if (cursor->ns) pefree(cursor->ns, cursor->persist);
+    if (cursor->buf.start) efree(cursor->buf.start);
+    if (cursor->ns) efree(cursor->ns);
 
     if (cursor->resource) zval_ptr_dtor(&cursor->resource);
 
     zend_object_std_dtor(&cursor->std TSRMLS_CC);
 
-    pefree(cursor, cursor->persist);
+    efree(cursor);
   }
 }
 

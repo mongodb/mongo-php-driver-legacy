@@ -84,6 +84,7 @@ static int have_persistent_connection(zval *this_ptr TSRMLS_DC);
 static void save_persistent_connection(zval *this_ptr TSRMLS_DC);
 static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC);
 static mongo_cursor* make_persistent_cursor(mongo_cursor *cursor);
+static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor);
 
 #if WIN32
 static HANDLE cursor_mutex;
@@ -1884,7 +1885,9 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
   cursor->recv.response_to = MONGO_32(cursor->recv.response_to);
   cursor->recv.op = MONGO_32(cursor->recv.op); 
 
-  MonGlo(response_num) = cursor->recv.response_to;
+  if (cursor->recv.response_to > MonGlo(response_num)) {
+    MonGlo(response_num) = cursor->recv.response_to;
+  }
 
   return SUCCESS;
 }
@@ -1949,7 +1952,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
     while (response) {
       if (response->cursor->recv.response_to == cursor->send.request_id) {
-        memcpy(cursor, response->cursor, sizeof(mongo_cursor));
+        make_unpersistent_cursor(response->cursor, cursor);
         UNLOCK;
         php_mongo_free_cursor_node(response, le);
         return SUCCESS;
@@ -2055,18 +2058,52 @@ static mongo_cursor* make_persistent_cursor(mongo_cursor *cursor) {
   int len;
 
   pcursor = (mongo_cursor*)pemalloc(sizeof(mongo_cursor), 1);
+  // copying the whole cursor is easier, but we'll only need certain fields
   memcpy(pcursor, cursor, sizeof(mongo_cursor));
 
+  pcursor->recv.length = cursor->recv.length;
+  pcursor->recv.request_id = cursor->recv.request_id;
+  pcursor->recv.response_to = cursor->recv.response_to;
+  pcursor->recv.op = cursor->recv.op;
+  
   len = cursor->buf.end - cursor->buf.start;
   pcursor->buf.start = (char*)pemalloc(len, 1);
   memcpy(pcursor->buf.start, cursor, len);
   pcursor->buf.pos = pcursor->buf.start;
   pcursor->buf.end = pcursor->buf.start+len;
 
-  pcursor->ns = pestrdup(cursor->ns, 1);
-  
-  pcursor->persist = 1;
   return pcursor;
+}
+
+/*
+ * Copy response fields from a persistent cursor to a normal cursor and then
+ * free the persistent cursor.
+ */
+static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor) {
+  int len;
+
+  // header
+  cursor->recv.length = pcursor->recv.length;
+  cursor->recv.request_id = pcursor->recv.request_id;
+  cursor->recv.response_to = pcursor->recv.response_to;
+  cursor->recv.op = pcursor->recv.op;
+
+  // field populated by the response
+  cursor->flag = pcursor->flag;
+  cursor->cursor_id = pcursor->cursor_id;
+  cursor->start = pcursor->start;
+  cursor->num = pcursor->num;
+
+  // the actual response
+  len = pcursor->buf.end - pcursor->buf.start;
+  cursor->buf.start = (char*)emalloc(len);
+  memcpy(cursor->buf.start, pcursor, len);
+  cursor->buf.pos = cursor->buf.start;
+  cursor->buf.end = cursor->buf.start+len;
+
+  // free persistent cursor
+  pefree(pcursor->buf.start, 1);
+  pefree(pcursor, 1);
 }
 
 int mongo_say(mongo_link *link, buffer *buf, zval *errmsg TSRMLS_DC) {
