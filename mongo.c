@@ -1837,13 +1837,23 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
     status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
 
+    if (errno == EINTR) {
+      zend_throw_exception_ex(mongo_ce_CursorTOException, 1 TSRMLS_CC, "got a signal while waiting for response");
+      return FAILURE;
+    }
+
     if (status == -1 || FD_ISSET(sock, &exceptfds)) {
       zend_throw_exception(mongo_ce_CursorException, strerror(errno), 13 TSRMLS_CC);
       return FAILURE;
     }
+    
+    if (status == 0) {
+      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC, "socket is not yet readable, cursor timed out (%d ms)", cursor->timeout);
+      return FAILURE;
+    }
 
-    if (status == 0 || !FD_ISSET(sock, &readfds)) {
-      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC, "cursor timed out (%d ms)", cursor->timeout);
+    if (!FD_ISSET(sock, &readfds)) {
+     zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC, "cursor timed out (%d ms)", cursor->timeout);
       return FAILURE;
     }
   }
