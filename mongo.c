@@ -1848,7 +1848,9 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
 
     if (errno == EINTR) {
-      zend_throw_exception_ex(mongo_ce_CursorTOException, 1 TSRMLS_CC, "got a signal while waiting for response");
+      zend_throw_exception_ex(mongo_ce_CursorTOException, 1 TSRMLS_CC,
+                              "got a signal while waiting for response: %d",
+                              status);
       return FAILURE;
     }
 
@@ -1863,7 +1865,9 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     }
 
     if (!FD_ISSET(sock, &readfds)) {
-     zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC, "cursor timed out (%d ms)", cursor->timeout);
+      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC,
+                              "cursor timed out (%d ms), status: %d",
+                              cursor->timeout, status);
       return FAILURE;
     }
   }
