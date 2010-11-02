@@ -1136,10 +1136,19 @@ PHP_METHOD(Mongo, connectUtil) {
   /* try to actually connect */
   if (php_mongo_do_socket_connect(link, errmsg TSRMLS_CC) == FAILURE) {
     /* if connecting failed, throw an exception */
-    zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
+    zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server",
+                                      strlen("server"), NOISY TSRMLS_CC);
 
-    zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
-                            "connection to %s failed: %s", Z_STRVAL_P(server), Z_STRVAL_P(errmsg));
+    if (Z_TYPE_P(errmsg) == IS_STRING) {    
+      zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
+                              "connecting to %s failed: %s", Z_STRVAL_P(server),
+                              Z_STRVAL_P(errmsg));
+    }
+    // there should always be an error message, we should never get here
+    else {
+      zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
+                              "connection to %s failed", Z_STRVAL_P(server));
+    }      
 
     zval_ptr_dtor(&errmsg);
     return;
@@ -1148,7 +1157,8 @@ PHP_METHOD(Mongo, connectUtil) {
   zval_ptr_dtor(&errmsg);
   
   /* Mongo::connected = true */
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
+  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
+                            strlen("connected"), 1 TSRMLS_CC);
   ZVAL_BOOL(return_value, 1);
 }
 
