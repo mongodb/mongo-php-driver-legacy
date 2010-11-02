@@ -264,6 +264,11 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
       code = Z_LVAL_PP(code_z);
     }
 
+    /* not master */
+    if (code == 10058) {
+      php_mongo_set_disconnected(cursor->link);
+    }
+
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), code TSRMLS_CC);
     return FAILURE;
   }
