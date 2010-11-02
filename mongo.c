@@ -1860,14 +1860,14 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     }
     
     if (status == 0) {
-      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC, "socket is not yet readable, cursor timed out (%d ms)", cursor->timeout);
+      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC, "socket is not yet readable, cursor timed out (%d, %d)", timeout.tv_sec, timeout.tv_usec);
       return FAILURE;
     }
 
     if (!FD_ISSET(sock, &readfds)) {
       zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC,
-                              "cursor timed out (%d ms), status: %d",
-                              cursor->timeout, status);
+                              "cursor timed out (%d, %d), status: %d",
+                              timeout.tv_sec, timeout.tv_usec, status);
       return FAILURE;
     }
   }
