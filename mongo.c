@@ -987,6 +987,10 @@ PHP_METHOD(Mongo, __construct) {
         if (Z_TYPE_PP(persist_z) == IS_STRING) {
           zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), *persist_z TSRMLS_CC);
         }
+        else {
+          zend_throw_exception(mongo_ce_ConnectionException, "pass in an identifying string to get a persistent connection", 4 TSRMLS_CC);
+          return;
+        }
       }
       if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_z) == SUCCESS) {
         link->timeout = Z_LVAL_PP(timeout_z);

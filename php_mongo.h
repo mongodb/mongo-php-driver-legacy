@@ -646,6 +646,7 @@ extern zend_module_entry mongo_module_entry;
  * 1: no server name given
  * 2: can't use slaveOkay without replicaSet
  * 3: could not store persistent link
+ * 4: pass in an identifying string to get a persistent connection
  * 10: failed to get host from <substr> of <str>
  * 11: failed to get port from <substr> of <str>
  *
