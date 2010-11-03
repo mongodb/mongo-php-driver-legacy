@@ -1838,41 +1838,39 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
   // set a timeout
   if (cursor->timeout && cursor->timeout > 0) {
     struct timeval timeout;
-    fd_set readfds, exceptfds;
-    int status = 0;
-
+    
     timeout.tv_sec = cursor->timeout / 1000 ;
     timeout.tv_usec = (cursor->timeout % 1000) * 1000;
 
-    FD_ZERO(&readfds);
-    FD_SET(sock, &readfds);
-    FD_ZERO(&exceptfds);
-    FD_SET(sock, &exceptfds);
-
-    status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
-
-    if (errno == EINTR) {
-      zend_throw_exception_ex(mongo_ce_CursorTOException, 1 TSRMLS_CC,
-                              "got a signal while waiting for response: %d",
-                              status);
-      return FAILURE;
-    }
-
-    if (status == -1 || FD_ISSET(sock, &exceptfds)) {
-      zend_throw_exception(mongo_ce_CursorException, strerror(errno), 13 TSRMLS_CC);
-      return FAILURE;
-    }
+    while (1) {
+      int status;
+      fd_set readfds, exceptfds;
     
-    if (status == 0) {
-      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC, "socket is not yet readable, cursor timed out (%d, %d)", timeout.tv_sec, timeout.tv_usec);
-      return FAILURE;
-    }
+      FD_ZERO(&readfds);
+      FD_SET(sock, &readfds);
+      FD_ZERO(&exceptfds);
+      FD_SET(sock, &exceptfds);
 
-    if (!FD_ISSET(sock, &readfds)) {
-      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC,
-                              "cursor timed out (%d, %d), status: %d",
-                              timeout.tv_sec, timeout.tv_usec, status);
-      return FAILURE;
+      status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
+
+      if (status == -1 || FD_ISSET(sock, &exceptfds)) {
+        zend_throw_exception(mongo_ce_CursorException, strerror(errno), 13
+                             TSRMLS_CC);
+        return FAILURE;
+      }
+    
+      if (status == 0 && !FD_ISSET(sock, &readfds)) {
+        zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC,
+                                "cursor timed out (timeout: %d, time left: %d:%d, status: %d)",
+                                cursor->timeout, timeout.tv_sec, timeout.tv_usec,
+                                status);
+        return FAILURE;
+      }
+
+      // if our descriptor is ready break out
+      if (FD_ISSET(sock, &readfds)) {
+        break;
+      }
     }
   }
 
