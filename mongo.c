@@ -993,8 +993,8 @@ PHP_METHOD(Mongo, __construct) {
           
           memcpy(persist, Z_STRVAL_PP(persist_z), len);
           
-          zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent",
-            strlen("persistent")+1, persist TSRMLS_CC);
+          zend_update_property_stringl(mongo_ce_Mongo, getThis(), "persistent",
+            strlen("persistent"), persist, len TSRMLS_CC);
         }
         else {
           zend_throw_exception(mongo_ce_ConnectionException, "pass in an identifying string to get a persistent connection", 4 TSRMLS_CC);
