@@ -310,46 +310,46 @@ class MongoTest extends PHPUnit_Framework_TestCase
      * @expectedException PHPUnit_Framework_Error
      */
     public function testPersistConn() {
-      $m1 = new Mongo("localhost", true, true);
+      $m1 = new Mongo("localhost", array("persist" => ""));
 
       // uses the same connection as $m1
-      $m2 = new Mongo("localhost", false);
+      $m2 = new Mongo("localhost", array("persist" => ""));
       $m2->persistConnect();
 
       // creates a new connection
-      $m3 = new Mongo("127.0.0.1", false);
+      $m3 = new Mongo("127.0.0.1", array("persist" => ""));
       $m3->persistConnect();
 
       // creates a new connection
-      $m4 = new Mongo("127.0.0.1:27017", false);
+      $m4 = new Mongo("127.0.0.1:27017", array("persist" => ""));
       $m4->persistConnect();
       
       // creates a new connection
-      $m5 = new Mongo("localhost", false);
+      $m5 = new Mongo("localhost", array("persist" => ""));
       $m5->persistConnect("foo");
 
       // uses the $m5 connection
-      $m6 = new Mongo("localhost", false);
+      $m6 = new Mongo("localhost", array("persist" => ""));
       $m6->persistConnect("foo");
       
       // uses $md5
-      $m7 = new Mongo("localhost", false);
+      $m7 = new Mongo("localhost", array("persist" => ""));
       $m7->persistConnect("foo", "bar");
 
       $m8 = new Mongo();
     }
 
     public function testPersistConn2() {
-      $m1 = new Mongo("localhost", array("persist" => true));
+      $m1 = new Mongo("localhost", array("persist" => ""));
 
       // uses the same connection as $m1
-      $m2 = new Mongo("localhost", array("persist" => true));
+      $m2 = new Mongo("localhost", array("persist" => ""));
         
       // creates a new connection
-      $m3 = new Mongo("127.0.0.1", array("persist" => true));
+      $m3 = new Mongo("127.0.0.1", array("persist" => ""));
 
       // creates a new connection
-      $m4 = new Mongo("127.0.0.1:27017", array("persist" => true));
+      $m4 = new Mongo("127.0.0.1:27017", array("persist" => ""));
       
       // creates a new connection
       $m5 = new Mongo("localhost", array("persist" => "foo"));
