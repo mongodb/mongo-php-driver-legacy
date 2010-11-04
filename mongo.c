@@ -985,7 +985,16 @@ PHP_METHOD(Mongo, __construct) {
           zend_hash_find(HASH_P(options), "persist", strlen("persist")+1, (void**)&persist_z) == SUCCESS ||
           zend_hash_find(HASH_P(options), "persistent", strlen("persistent")+1, (void**)&persist_z) == SUCCESS) {
         if (Z_TYPE_PP(persist_z) == IS_STRING) {
-          zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), *persist_z TSRMLS_CC);
+          // For some reason, if we use the heap, it will segfault when run with
+          // multiple threads.  So we'll allocate this on the stack, which works
+          // (for unknown reasons).
+          char persist[256];
+          int len = Z_STRLEN_PP(persist_z) > 255 ? 255 : Z_STRLEN_PP(persist_z);
+          
+          memcpy(persist, Z_STRVAL_PP(persist_z), len);
+          
+          zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent",
+            strlen("persistent")+1, persist TSRMLS_CC);
         }
         else {
           zend_throw_exception(mongo_ce_ConnectionException, "pass in an identifying string to get a persistent connection", 4 TSRMLS_CC);
