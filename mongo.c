@@ -730,9 +730,8 @@ void mongo_init_Mongo(TSRMLS_D) {
 
   /* Mongo fields */
   zend_declare_property_bool(mongo_ce_Mongo, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
-
+  zend_declare_property_null(mongo_ce_Mongo, "status", strlen("status"), ZEND_ACC_PUBLIC TSRMLS_CC);
   zend_declare_property_null(mongo_ce_Mongo, "server", strlen("server"), ZEND_ACC_PROTECTED TSRMLS_CC);
-
   zend_declare_property_null(mongo_ce_Mongo, "persistent", strlen("persistent"), ZEND_ACC_PROTECTED TSRMLS_CC);
 }
 
@@ -1058,7 +1057,8 @@ PHP_METHOD(Mongo, __construct) {
 
   save_persistent_connection(getThis() TSRMLS_CC);
 
-  if (connect) {
+  // save_persistent_connection can throw (although it's unlikely)
+  if (!EG(exception) && connect) {
     MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
   }
 } 
@@ -1224,6 +1224,7 @@ static int have_persistent_connection(zval *this_ptr TSRMLS_DC) {
   
   // set vars after reseting prop table
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
+  zend_update_property_string(mongo_ce_Mongo, getThis(), "status", strlen("status"), "recycled" TSRMLS_CC);  
   
   efree(key);
   return SUCCESS;
@@ -1263,6 +1264,7 @@ static void save_persistent_connection(zval *this_ptr TSRMLS_DC) {
 
   efree(key);
   
+  zend_update_property_string(mongo_ce_Mongo, getThis(), "status", strlen("status"), "new" TSRMLS_CC);  
   link->persist = 1;
 }
 

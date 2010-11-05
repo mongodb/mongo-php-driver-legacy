@@ -101,8 +101,8 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testPersistConnect2() {
-        $m1 = new Mongo("localhost:27017", array("persist" => true));
-        $m2 = new Mongo("localhost:27017", array("persist" => true));
+        $m1 = new Mongo("localhost:27017", array("persist" => ""));
+        $m2 = new Mongo("localhost:27017", array("persist" => ""));
         
         // make sure this doesn't disconnect $m2      
         unset($m1);
@@ -523,6 +523,13 @@ class MongoTest extends PHPUnit_Framework_TestCase
      */
     public function testSlaveOkay2() {
         $conn = new Mongo("mongodb://localhost", array("slaveOkay" => true));
+    }
+
+    public function testPersistStatus() {
+        $conn = new Mongo("mongodb://localhost", array("persist" => "chkPS"));
+        $this->assertEquals($conn->status, "new");
+        $conn2 = new Mongo("mongodb://localhost", array("persist" => "chkPS"));
+        $this->assertEquals($conn2->status, "recycled");
     }
 }
 
