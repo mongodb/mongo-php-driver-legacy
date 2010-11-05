@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2010-09-29</date>
+ <date>2010-11-05</date>
  <time>12:00:00</time>
  <version>
-  <release>1.0.10</release>
-  <api>1.0.10</api>
+  <release>1.0.11</release>
+  <api>1.0.11</api>
  </version>
  <stability>
   <release>stable</release>
@@ -25,11 +25,13 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Make reconnection more aggressive
-  Fix cursor killing bug
-  Exception codes match database error codes
-  Fixed bindata types on 64-bit systems
-  Added query state and cursor id fields to MongoCursor::info
+  Better replica set connection error handling
+  Added MongoCursor::batchSize()
+  Added mongo.allow_empty_keys option
+  Added unique codes for all MongoExceptions and MongoCursorExceptions
+  Added MongoId::getPID() and MongoId::getInc() methods
+  Added $id field to MongoId so that json_encode turns it into {$id:...}
+  Fixed cursor timeout bug
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -65,6 +67,26 @@
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog> 
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.0.11</release>
+    <api>1.0.11</api>
+   </version>
+   <date>2010-11-5</date>
+   <notes>
+    Better replica set connection error handling
+    Added MongoCursor::batchSize()
+    Added mongo.allow_empty_keys option
+    Added unique codes for all MongoExceptions and MongoCursorExceptions
+    Added MongoId::getPID() and MongoId::getInc() methods
+    Added $id field to MongoId so that json_encode turns it into {$id:...}
+    Fixed cursor timeout bug
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>
