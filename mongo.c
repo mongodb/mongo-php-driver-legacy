@@ -462,7 +462,13 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
 /* {{{ php_mongo_link_pfree
  */
 static void php_mongo_link_pfree( zend_rsrc_list_entry *rsrc TSRMLS_DC ) {
-  mongo_server_set *server_set = (mongo_server_set*)rsrc->ptr;
+  mongo_server_set *server_set;
+
+  if (!(rsrc && rsrc->ptr)) {
+    return;
+  }
+  
+  server_set = (mongo_server_set*)rsrc->ptr;
   php_mongo_server_set_free(server_set, 1 TSRMLS_CC);
   rsrc->ptr = 0;
 }
@@ -765,7 +771,6 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     // set the top-level server set fields
     link->server_set = (mongo_server_set*)pemalloc(sizeof(mongo_server_set), persist);
     link->server_set->num = 1;
-    link->server_set->rsrc = 0;
 
     // allocate one server
     link->server_set->server = (mongo_server*)pemalloc(sizeof(mongo_server), persist);
@@ -818,7 +823,6 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
   // allocate the server ptr
   link->server_set = (mongo_server_set*)pemalloc(sizeof(mongo_server_set), persist);
   // allocate the top-level server set fields
-  link->server_set->rsrc = 0;
   link->server_set->num = 0;
   link->server_set->master = 0;
 
@@ -1241,14 +1245,14 @@ static void save_persistent_connection(zval *this_ptr TSRMLS_DC) {
     return;
   }
   
-  /* save id for reconnection */
-  spprintf(&key, 0, "%s%s", Z_STRVAL_P(server), Z_STRVAL_P(persist));
-
   link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
   Z_TYPE(new_le) = le_pconnection;
   new_le.ptr = link->server_set;
   
+  /* save id for reconnection */
+  spprintf(&key, 0, "%s%s", Z_STRVAL_P(server), Z_STRVAL_P(persist));
+
   if (zend_hash_update(&EG(persistent_list), key, strlen(key)+1, (void*)&new_le, sizeof(zend_rsrc_list_entry), NULL)==FAILURE) {
     zend_throw_exception(mongo_ce_ConnectionException, "could not store persistent link", 3 TSRMLS_CC);
     
@@ -1259,7 +1263,6 @@ static void save_persistent_connection(zval *this_ptr TSRMLS_DC) {
 
   efree(key);
   
-  link->server_set->rsrc = ZEND_REGISTER_RESOURCE(NULL, link->server_set, le_pconnection);
   link->persist = 1;
 }
 

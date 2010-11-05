@@ -180,12 +180,6 @@ typedef struct _mongo_server_set {
   int num;
   mongo_server *server;
 
-  /*
-   * this is the resource id if this is a persistent connection, so that we can
-   * delete it from the list of persistent connections
-   */
-  int rsrc;
-
   // if num is greater than -1, master keeps track of the master connection,
   // otherwise it points to "server"
   mongo_server *master;
