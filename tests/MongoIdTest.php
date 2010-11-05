@@ -159,12 +159,22 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
     }
 
     public function testJsonEncode() {
+      if (preg_match('/5\.1\..+/', phpversion())) {
+        $this->markTestSkipped("No json_encode() in 5.1");
+        return;
+      }
+
       $id = new MongoId();
       $json = json_encode($id);
       $this->assertEquals('{"$id":"'.$id.'"}', $json);
     }
 
     public function testJsonEncode2() {
+        if (preg_match('/5\.1\..+/', phpversion())) {
+          $this->markTestSkipped("No json_encode() in 5.1");
+          return;
+        }
+
         $id = new MongoId();
         $c = $this->sharedFixture->phpunit->c;
         $c->drop();
