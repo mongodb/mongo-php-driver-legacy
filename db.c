@@ -204,7 +204,7 @@ PHP_METHOD(MongoDB, repair) {
 PHP_METHOD(MongoDB, createCollection) {
   zval *collection, *data, *temp;
   zend_bool capped=0;
-  int size=0, max=0;
+  long size=0, max=0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|bll", &collection, &capped, &size, &max) == FAILURE) {
     return;
