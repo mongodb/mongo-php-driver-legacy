@@ -142,6 +142,15 @@
 #define IS_SCALAR_P(a) (Z_TYPE_P(a) != IS_ARRAY && Z_TYPE_P(a) != IS_OBJECT)
 #define IS_SCALAR_PP(a) (Z_TYPE_PP(a) != IS_ARRAY && Z_TYPE_PP(a) != IS_OBJECT)
 
+// TODO: this should be expanded to handle long_as_object being set
+#define Z_NUMVAL_P(variable, value)                                     \
+  ((Z_TYPE_P(variable) == IS_LONG && Z_LVAL_P(variable) == value) ||    \
+   (Z_TYPE_P(variable) == IS_DOUBLE && Z_DVAL_P(variable) == value))
+#define Z_NUMVAL_PP(variable, value)                                    \
+  ((Z_TYPE_PP(variable) == IS_LONG && Z_LVAL_PP(variable) == value) ||  \
+   (Z_TYPE_PP(variable) == IS_DOUBLE && Z_DVAL_PP(variable) == value))
+
+
 #define php_mongo_obj_new(mongo_obj)                    \
   zend_object_value retval;                             \
   mongo_obj *intern;                                    \
@@ -164,7 +173,8 @@
                                                                  \
   return retval;
 
-
+#define RS_PRIMARY 1
+#define RS_SECONDARY 2
 
 typedef struct _mongo_server {
   char *host;
@@ -179,19 +189,25 @@ typedef struct _mongo_server {
 typedef struct _mongo_server_set {
   int num;
   mongo_server *server;
+  // ts keeps track of the last time we tried to connect, so we don't try to
+  // reconnect a zillion times in three seconds.
+  int ts;
 
   // if num is greater than -1, master keeps track of the master connection,
   // otherwise it points to "server"
   mongo_server *master;
+  
+  // this ptr iterates through the array of servers to round-robin slave reads.
+  mongo_server *slave_ptr;
+  
   mongo_server *eo_seeds;
+
+  HashTable *hosts;
 } mongo_server_set;
 
 typedef struct {
   zend_object std;
 
-  // ts keeps track of the last time we tried to connect, so we don't try to
-  // reconnect a zillion times in three seconds.
-  int ts;
   int timeout;
 
   int persist;
@@ -201,6 +217,8 @@ typedef struct {
   int rs;
   // if this connection should distribute reads to slaves
   zend_bool slave_okay;
+  // slave to send reads to
+  mongo_server *slave;
 
   zval *db;
   zval *username;
@@ -485,6 +503,9 @@ PHP_METHOD(Mongo, resetError);
 PHP_METHOD(Mongo, forceError);
 PHP_METHOD(Mongo, close);
 PHP_METHOD(Mongo, listDBs);
+PHP_METHOD(Mongo, getHosts);
+PHP_METHOD(Mongo, getSlave);
+PHP_METHOD(Mongo, switchSlave);
 
 int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 
@@ -634,6 +655,8 @@ extern zend_module_entry mongo_module_entry;
  * 12: non-utf8 string: <str>
  * 13: mutex error: <err>
  * 14: index name too long: <len>, max <max> characters
+ * 15: Reading from slaves won't work without using the replicaSet option on connect
+ * 16: No server found for reads
  *
  * MongoConnectionException:
  * 0: connection to <host> failed: <errmsg>
@@ -641,6 +664,7 @@ extern zend_module_entry mongo_module_entry;
  * 2: can't use slaveOkay without replicaSet
  * 3: could not store persistent link
  * 4: pass in an identifying string to get a persistent connection
+ * 5: failed to get primary or secondary
  * 10: failed to get host from <substr> of <str>
  * 11: failed to get port from <substr> of <str>
  *
