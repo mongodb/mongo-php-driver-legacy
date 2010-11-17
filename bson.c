@@ -1163,14 +1163,37 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
        * because we don't keep track of the size.  Besides,
        * if it is corrupt, the size might be messed up, too.
        */
-      int i;
-      php_printf("type %d not supported\n", type);
+      char *msg, *pos, *template;
+      int i, width, len;
+      unsigned char t = type;
+
+      template = "type 0x00 not supported:";
+      
+      // each byte is " xx" (3 chars)
+      width = 3;
+      len = (buf - buf_start) * width;
+
+      msg = (char*)emalloc(strlen(template)+len+1);
+      memcpy(msg, template, strlen(template));
+      pos = msg+7;
+
+      sprintf(pos++, "%x", t/16);
+      t = t%16;
+      sprintf(pos++, "%x", t);
+      // remove '\0' added by sprintf
+      *(pos) = ' ';
+
+      // jump to end of template
+      pos = msg + strlen(template);
       for (i=0; i<buf-buf_start; i++) {
-        printf("%d ", buf_start[i]);
+        sprintf(pos, " %02x", (unsigned char)buf_start[i]);
+        pos += width;
       }
-      printf("<-- \n");
-      // give up, it'll be trouble if we keep going
-      return buf;
+      // sprintf 0-terminates the string
+      
+      zend_throw_exception(mongo_ce_Exception, msg, 17 TSRMLS_CC);
+      efree(msg);
+      return 0;
     }
     }
 
