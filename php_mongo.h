@@ -593,6 +593,7 @@ int utf8;
 int native_long;
 int long_as_object;
 int allow_empty_keys;
+int no_id;
 
 // _id generation helpers
 int inc, pid, machine;
