@@ -208,7 +208,9 @@ void mongo_init_MongoId(TSRMLS_D) {
 
   mongo_ce_Id = zend_register_internal_class(&id TSRMLS_CC); 
 
-  zend_declare_property_null(mongo_ce_Id, "$id", strlen("$id"), ZEND_ACC_PUBLIC TSRMLS_CC);
+  if (!MonGlo(no_id)) {
+    zend_declare_property_null(mongo_ce_Id, "$id", strlen("$id"), ZEND_ACC_PUBLIC TSRMLS_CC);
+  }
 }
 
 /* {{{ MongoId::__construct()
@@ -250,12 +252,14 @@ PHP_METHOD(MongoId, __construct) {
     generate_id(this_id->id TSRMLS_CC);
   }
 
-  MAKE_STD_ZVAL(str);
-  ZVAL_NULL(str);
-
-  MONGO_METHOD(MongoId, __toString, str, getThis());
-  zend_update_property(mongo_ce_Id, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
-  zval_ptr_dtor(&str);
+  if (!MonGlo(no_id)) {
+    MAKE_STD_ZVAL(str);
+    ZVAL_NULL(str);
+    
+    MONGO_METHOD(MongoId, __toString, str, getThis());
+    zend_update_property(mongo_ce_Id, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
+    zval_ptr_dtor(&str);
+  }
 }
 /* }}} */
 
