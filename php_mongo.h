@@ -226,6 +226,8 @@ typedef struct {
 
 } mongo_link;
 
+int php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
+
 
 #define MONGO_LINK 0
 #define MONGO_CURSOR 1
@@ -352,11 +354,18 @@ typedef struct {
   }                                                             \
   else {                                                        \
     zval *temp;                                                 \
+    int sock;                                                   \
+                                                                \
     MAKE_STD_ZVAL(temp);                                        \
     ZVAL_NULL(temp);                                            \
                                                                 \
-    RETVAL_BOOL(mongo_say(link, &buf, temp TSRMLS_CC)+1);       \
+    if ((sock = php_mongo_get_socket(link, temp TSRMLS_CC)) == FAILURE || \
+        mongo_say(sock, &buf, temp TSRMLS_CC) == FAILURE) {     \
+      zval_ptr_dtor(&temp);                                     \
+      RETURN_FALSE;                                             \
+    }                                                           \
     zval_ptr_dtor(&temp);                                       \
+    RETURN_TRUE;                                                \
   }
 
 #define GET_SAFE_OPTION                                                 \
@@ -575,7 +584,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
  */
 void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
-int mongo_say(mongo_link*, buffer*, zval* TSRMLS_DC);
+int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
 int mongo_hear(int sock, void*, int TSRMLS_DC);
 int php_mongo_get_reply(mongo_cursor*, zval* TSRMLS_DC);
 void php_mongo_set_disconnected(mongo_link *link);
@@ -685,6 +694,8 @@ extern zend_module_entry mongo_module_entry;
  * 12: [WSA ]error getting database response: <err>
  * 13: Timeout error (C error)
  * 14: couldn't send query: <err>
+ * 15: couldn't get sock for safe op
+ * 16: couldn't send safe op
  * various: database error
  */
 

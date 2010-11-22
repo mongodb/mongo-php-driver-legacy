@@ -182,7 +182,7 @@ static void make_special(mongo_cursor *cursor) {
  */
 PHP_METHOD(MongoCursor, hasNext) {
   buffer buf;
-  int size;
+  int size, sock;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   zval *temp;
   int64_t id;
@@ -216,7 +216,16 @@ PHP_METHOD(MongoCursor, hasNext) {
   // fails if we're out of elems
   MAKE_STD_ZVAL(temp);
   ZVAL_NULL(temp);
-  if(mongo_say(cursor->link, &buf, temp TSRMLS_CC) == FAILURE) {
+
+  if ((sock = php_mongo_get_socket(cursor->link, temp TSRMLS_CC)) == FAILURE) {
+    efree(buf.start);
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 1 TSRMLS_CC);
+    zval_ptr_dtor(&temp);
+    return;
+  }
+  
+  if(mongo_say(sock, &buf, temp TSRMLS_CC) == FAILURE) {
+    php_mongo_set_disconnected(cursor->link);
     efree(buf.start);
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 1 TSRMLS_CC);
     zval_ptr_dtor(&temp);
@@ -565,6 +574,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   mongo_cursor *cursor;
   buffer buf;
   zval *errmsg;
+  int sock;
 
   PHP_MONGO_GET_CURSOR(getThis());
 
@@ -577,7 +587,16 @@ PHP_METHOD(MongoCursor, doQuery) {
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
 
-  if (mongo_say(cursor->link, &buf, errmsg TSRMLS_CC) == FAILURE) {
+  if ((sock = php_mongo_get_socket(cursor->link, errmsg TSRMLS_CC)) == FAILURE) {
+    efree(buf.start);
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 14 TSRMLS_CC);
+    zval_ptr_dtor(&errmsg);
+    return;
+  }
+
+  if (mongo_say(sock, &buf, errmsg TSRMLS_CC) == FAILURE) {  
+    php_mongo_set_disconnected(cursor->link);
+    
     if (Z_TYPE_P(errmsg) == IS_STRING) {
       zend_throw_exception_ex(mongo_ce_CursorException, 14 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
     }

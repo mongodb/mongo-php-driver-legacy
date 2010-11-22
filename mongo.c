@@ -66,7 +66,6 @@ static void php_mongo_link_free(void* TSRMLS_DC);
 static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval*);
 static int php_mongo_get_master(mongo_link* TSRMLS_DC);
-static int get_socket(mongo_link*, zval* TSRMLS_DC);
 static int php_mongo_connect_nonb(mongo_server*, int, zval*);
 static int php_mongo_do_socket_connect(mongo_link*, zval* TSRMLS_DC);
 static int php_mongo_get_sockaddr(struct sockaddr *sa, int family, char*, int, zval*);
@@ -266,6 +265,7 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   char quickbuf[128];
   buffer buf;
   zval temp;
+  int sock;
 
   /* 
    * If the cursor_id is 0, the db is out of results anyway.
@@ -280,8 +280,14 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   buf.end = buf.start + 128;
 
   php_mongo_write_kill_cursors(&buf, cursor TSRMLS_CC);
-  mongo_say(cursor->link, &buf, &temp TSRMLS_CC);
-        
+  
+  if ((sock = php_mongo_get_socket(cursor->link, &temp TSRMLS_CC)) == FAILURE) {
+    efree(Z_STRVAL(temp));
+    Z_TYPE(temp) = IS_NULL;
+    return;
+  }
+  mongo_say(sock, &buf, &temp TSRMLS_CC); 
+       
   /* 
    * if the connection is closed before the cursor is destroyed, the cursor
    * might try to fetch more results with disasterous consequences.  Thus, the
@@ -2265,7 +2271,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     }
   }
 
-  if ((sock = get_socket(cursor->link, errmsg TSRMLS_CC)) == FAILURE) {
+  if ((sock = php_mongo_get_socket(cursor->link, errmsg TSRMLS_CC)) == FAILURE) {
     UNLOCK;
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 10 TSRMLS_CC);
     return FAILURE;
@@ -2403,16 +2409,20 @@ static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor
   pefree(pcursor, 1);
 }
 
-int mongo_say(mongo_link *link, buffer *buf, zval *errmsg TSRMLS_DC) {
-  int sock = 0, sent = 0, total = 0, status = 1;
+/*
+ * Low-level send function.
+ *
+ * Goes through the buffer sending 4K byte batches.
+ * On failure, sets errmsg to errno string.
+ * On success, returns number of bytes sent.
+ * Does not attempt to reconnect nor throw any exceptions.
+ */
+int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC) {
+  int sent = 0, total = 0, status = 1;
 
 #ifdef DEBUG
   php_printf("saying something\n");
 #endif
-
-  if ((sock = get_socket(link, errmsg TSRMLS_CC)) == FAILURE) {
-    return FAILURE;
-  }
 
   total = buf->pos - buf->start;
 
@@ -2422,7 +2432,6 @@ int mongo_say(mongo_link *link, buffer *buf, zval *errmsg TSRMLS_DC) {
     status = send(sock, (const char*)buf->start + sent, len, FLAGS);
 
     if (status == FAILURE) {
-      php_mongo_set_disconnected(link);
       ZVAL_STRING(errmsg, strerror(errno), 1);
       return FAILURE;
     }
@@ -2458,7 +2467,7 @@ int mongo_hear(int sock, void *dest, int total_len TSRMLS_DC) {
  *
  * sets errmsg on FAILURE
  */
-static int get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
+int php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int now = time(0), connected = 0;
   
   if ((link->server_set->num == 1 && !link->rs && link->server_set->server->connected) ||

@@ -213,16 +213,22 @@ static zval* append_getlasterror(zval *coll, buffer *buf, int safe, int fsync TS
 static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC) {
   zval *errmsg, **err;
   mongo_cursor *cursor;
-  int response;
+  int sock;
 
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
 
   // send everything
-  response = mongo_say(link, buf, errmsg TSRMLS_CC);
+  if ((sock = php_mongo_get_socket(link, errmsg TSRMLS_CC)) == FAILURE) {
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 15 TSRMLS_CC);
+    zval_ptr_dtor(&errmsg);
+    zval_ptr_dtor(&cursor_z);
+    return FAILURE;
+  }
 
-  if (FAILURE == response) {
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 0 TSRMLS_CC);
+  if (FAILURE == mongo_say(sock, buf, errmsg TSRMLS_CC)) {
+    php_mongo_set_disconnected(link);
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 16 TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
@@ -231,8 +237,7 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
 
   // get reply
-  response = php_mongo_get_reply(cursor, errmsg TSRMLS_CC);
-  if (FAILURE == response) {
+  if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
     zval_ptr_dtor(&errmsg);
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
