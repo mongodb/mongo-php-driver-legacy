@@ -435,7 +435,7 @@ static char *get_cmd_ns(char *db, int db_len) {
 }
 
 PHP_METHOD(MongoDB, command) {
-  zval temp, limit;
+  zval temp, limit, slave_okay;
   zval *cmd, *cursor, *ns;
   mongo_db *db;
   char *cmd_ns;
@@ -465,8 +465,12 @@ PHP_METHOD(MongoDB, command) {
   // limit
   Z_TYPE(limit) = IS_LONG;
   Z_LVAL(limit) = -1;
+  MONGO_METHOD1(MongoCursor, limit, &temp, cursor, &limit); 
 
-  MONGO_METHOD1(MongoCursor, limit, &temp, cursor, &limit);
+  // make sure commands aren't be sent to slaves
+  Z_TYPE(slave_okay) = IS_BOOL;
+  Z_LVAL(slave_okay) = 0;
+  MONGO_METHOD1(MongoCursor, slaveOkay, &temp, cursor, &slave_okay);
 
   // query
   MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
