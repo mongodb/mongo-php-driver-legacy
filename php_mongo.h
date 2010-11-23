@@ -340,14 +340,15 @@ typedef struct {
 
 #define SEND_MSG                                                \
   PHP_MONGO_GET_LINK(c->link);                                  \
-  if (safe) {                                                           \
-    zval *cursor;                                                       \
+  if (safe) {                                                   \
+    zval *cursor;                                               \
     if (0 == (cursor = append_getlasterror(getThis(), &buf, safe, fsync TSRMLS_CC))) { \
-      zval_ptr_dtor(&cursor);                                           \
-      RETURN_FALSE;                                                     \
-    }                                                                   \
-                                                                        \
-    safe_op(link, cursor, &buf, return_value TSRMLS_CC);                \
+      zval_ptr_dtor(&cursor);                                   \
+      RETVAL_FALSE;                                             \
+    }                                                           \
+    else {                                                      \
+      safe_op(link, cursor, &buf, return_value TSRMLS_CC);      \
+    }                                                           \
   }                                                             \
   else {                                                        \
     zval *temp;                                                 \
@@ -358,11 +359,12 @@ typedef struct {
                                                                 \
     if ((sock = php_mongo_get_socket(link, temp TSRMLS_CC)) == FAILURE || \
         mongo_say(sock, &buf, temp TSRMLS_CC) == FAILURE) {     \
-      zval_ptr_dtor(&temp);                                     \
-      RETURN_FALSE;                                             \
+      RETVAL_FALSE;                                             \
+    }                                                           \
+    else {                                                      \
+      RETVAL_TRUE;                                              \
     }                                                           \
     zval_ptr_dtor(&temp);                                       \
-    RETURN_TRUE;                                                \
   }
 
 #define GET_SAFE_OPTION                                                 \
