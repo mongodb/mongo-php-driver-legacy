@@ -237,7 +237,7 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
 
   // get reply
-  if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
+  if (FAILURE == php_mongo_get_reply(sock, cursor, errmsg TSRMLS_CC)) {
     zval_ptr_dtor(&errmsg);
     zval_ptr_dtor(&cursor_z);
     return FAILURE;

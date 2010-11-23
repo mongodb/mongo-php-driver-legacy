@@ -18,6 +18,14 @@
 #ifndef MONGO_CURSOR_H
 #define MONGO_CURSOR_H 1
 
+// Cursor flags
+#define TAILABLE 2
+#define SLAVE_OKAY 4 
+#define OPLOG_REPLAY 8
+#define NO_CURSOR_TO 16
+#define AWAIT_DATA 32
+#define EXHAUST 64
+
 void php_mongo_cursor_free(void *object TSRMLS_DC);
 
 PHP_METHOD(MongoCursor, __construct);

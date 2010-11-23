@@ -226,9 +226,6 @@ typedef struct {
 
 } mongo_link;
 
-int php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
-
-
 #define MONGO_LINK 0
 #define MONGO_CURSOR 1
 
@@ -586,7 +583,9 @@ void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
 int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
 int mongo_hear(int sock, void*, int TSRMLS_DC);
-int php_mongo_get_reply(mongo_cursor*, zval* TSRMLS_DC);
+int php_mongo_get_reply(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
+int php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
+int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
 void php_mongo_set_disconnected(mongo_link *link);
 
 void mongo_init_Mongo(TSRMLS_D);

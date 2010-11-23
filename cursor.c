@@ -235,7 +235,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   efree(buf.start);
 
   id = cursor->cursor_id;
-  if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
+  if (php_mongo_get_reply(sock, cursor, temp TSRMLS_CC) != SUCCESS) {
     zval_ptr_dtor(&temp);
     return;
   }
@@ -587,7 +587,11 @@ PHP_METHOD(MongoCursor, doQuery) {
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
 
-  if ((sock = php_mongo_get_socket(cursor->link, errmsg TSRMLS_CC)) == FAILURE) {
+  // If slave_okay is set, read from a slave.
+  if ((cursor->link->rs && cursor->opts & SLAVE_OKAY &&
+       (sock = php_mongo_get_slave_socket(cursor->link, errmsg TSRMLS_CC)) == FAILURE) || 
+      (!(cursor->link->rs && cursor->opts & SLAVE_OKAY) &&
+       (sock = php_mongo_get_socket(cursor->link, errmsg TSRMLS_CC)) == FAILURE)) {
     efree(buf.start);
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 14 TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
@@ -610,7 +614,7 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   efree(buf.start);
 
-  if (php_mongo_get_reply(cursor, errmsg TSRMLS_CC) == FAILURE) {
+  if (php_mongo_get_reply(sock, cursor, errmsg TSRMLS_CC) == FAILURE) {
     zval_ptr_dtor(&errmsg);
     return;
   }
@@ -619,6 +623,7 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   /* we've got something to kill, make a note */
   if (cursor->cursor_id != 0) {
+    // TODO: lock the cursor and slave together
     php_mongo_create_le(cursor, "cursor_list" TSRMLS_CC);
   }
 }

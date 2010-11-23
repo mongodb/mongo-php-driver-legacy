@@ -1217,6 +1217,8 @@ PHP_METHOD(Mongo, connectUtil) {
  * secondary and the primary is down, it will return FAILURE.  Otherwise, it
  * returns RS_SECONDARY if it is connected to a slave and RS_PRIMARY if it is
  * connected to the master.
+ *
+ * TODO: if there are any open cursors, we shouldn't be able to change slaves.
  */
 static int set_a_slave(mongo_link *link, char **errmsg) {
   mongo_server *start;
@@ -2235,8 +2237,7 @@ static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
 /*
  * throws exception on FAILURE
  */
-int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
-  int sock;
+int php_mongo_get_reply(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
 #ifdef DEBUG
   php_printf("hearing something\n");
@@ -2269,12 +2270,6 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       zend_throw_exception(mongo_ce_CursorException, "couldn't find reply, please try again", 11 TSRMLS_CC);
       return FAILURE;
     }
-  }
-
-  if ((sock = php_mongo_get_socket(cursor->link, errmsg TSRMLS_CC)) == FAILURE) {
-    UNLOCK;
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 10 TSRMLS_CC);
-    return FAILURE;
   }
 
   if (get_header(sock, cursor TSRMLS_CC) == FAILURE) {
@@ -2459,6 +2454,65 @@ int mongo_hear(int sock, void *dest, int total_len TSRMLS_DC) {
     received += num;
   }
   return received;
+}
+
+/** Attempts to find a slave to read from.
+ * Sets errmsg on failure.
+ */
+int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
+  int now, status;
+  
+  // sanity check
+  if (!link->rs) {
+    ZVAL_STRING(errmsg, "Connection is not a replica set", 1);
+    return FAILURE;
+  }
+
+  if (link->slave) {
+    mongo_link *fake_link;
+    mongo_server_set fake_set;
+    mongo_server *temp;
+
+    if (link->slave->connected) {
+      return link->slave->socket;
+    }
+
+    fake_link = (mongo_link*)emalloc(sizeof(mongo_link));
+    memcpy(fake_link, link, sizeof(mongo_link));    
+    fake_link->server_set = &fake_set;
+    fake_link->rs = 0;
+
+    temp = link->slave->next;
+    link->slave->next = 0;
+    fake_set.server = link->slave;
+    fake_set.master = link->slave;
+    fake_set.num = 1;
+    fake_set.ts = time(0);
+    
+    if (php_mongo_do_socket_connect(fake_link, errmsg TSRMLS_CC) == SUCCESS) {
+      link->slave->next = temp;
+      efree(fake_link);
+      return link->slave->socket;
+    }
+    link->slave->next = temp;
+    efree(fake_link);
+    
+    // TODO: what if we can't reconnect?  close cursors? grab another slave?
+  }
+  
+  // every 5 seconds, try to update hosts
+  now = time(0);
+  if (link->server_set && link->server_set->ts + 5 < now) {    
+    // TODO: update hosts
+  }
+
+  status = set_a_slave(link, &(Z_STRVAL_P(errmsg)));
+  if (status == FAILURE) {
+    ZVAL_STRING(errmsg, "Could not find any server to read from", 1);
+    return FAILURE;
+  }
+
+  return link->slave->socket;
 }
 
 /*
@@ -2714,13 +2768,13 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
     return FAILURE;
   }
 
+  // set initial connection time
+  link->server_set->ts = 0;
+
   if (php_mongo_get_master(link TSRMLS_CC) == FAILURE) {
     ZVAL_STRING(errmsg, "couldn't determine master", 1);      
     return FAILURE;
   }
-
-  // set initial connection time
-  link->server_set->ts = 0;
 
   return php_mongo_do_authenticate(link, errmsg TSRMLS_CC);
 }
