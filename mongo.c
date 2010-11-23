@@ -2469,6 +2469,7 @@ int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   }
 
   if (link->slave) {
+    zval *fake_zval;
     mongo_link *fake_link;
     mongo_server_set fake_set;
     mongo_server *temp;
@@ -2477,11 +2478,12 @@ int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
       return link->slave->socket;
     }
 
-    fake_link = (mongo_link*)emalloc(sizeof(mongo_link));
-    memcpy(fake_link, link, sizeof(mongo_link));    
+    MAKE_STD_ZVAL(fake_zval);
+    object_init_ex(fake_zval, mongo_ce_Mongo);
+    fake_link = (mongo_link*)zend_object_store_get_object(fake_zval TSRMLS_CC);
     fake_link->server_set = &fake_set;
     fake_link->rs = 0;
-
+    
     temp = link->slave->next;
     link->slave->next = 0;
     fake_set.server = link->slave;
