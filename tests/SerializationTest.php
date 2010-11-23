@@ -39,7 +39,12 @@ class SerializationTest extends PHPUnit_Framework_TestCase
 
       $z = chr(0);
       $s = chr(123);
-      $this->assertEquals("$s$z$z$z", $x, $this->getChars($x));
+      if (strlen($x) == 8) {
+        $this->assertEquals("$s$z$z$z$z$z$z$z", $x, $this->getChars($x));
+      }
+      else {
+        $this->assertEquals("$s$z$z$z", $x, $this->getChars($x));
+      }
     }
 
     public function testDouble() {
