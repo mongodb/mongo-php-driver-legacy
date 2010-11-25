@@ -740,7 +740,8 @@ PHP_METHOD(MongoCursor, next) {
           // failover in case the master steps down.
           // not master: 10107
           // not master & slaveok = false (more recent): 13435
-          if (cursor->link->rs && (code == 13435 || code == 10107)) {
+          // not master or secondary: 13436
+          if (cursor->link->rs && (code == 13435 || code == 10107 || code == 13436)) {
             php_mongo_set_disconnected(cursor->link);
           }
         }
