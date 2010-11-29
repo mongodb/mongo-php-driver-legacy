@@ -529,6 +529,7 @@ PHP_METHOD(MongoCursor, info)
     add_assoc_long(return_value, "id", cursor->cursor_id);
     add_assoc_long(return_value, "at", cursor->at);
     add_assoc_long(return_value, "numReturned", cursor->num);
+    add_assoc_string(return_value, "server", cursor->server->label, 1);
   }
 }
 /* }}} */
