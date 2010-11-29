@@ -739,7 +739,7 @@ PHP_METHOD(MongoCursor, next) {
           // not master & slaveok = false (more recent): 13435
           // not master or secondary: 13436
           if (cursor->link->rs && (code == 13435 || code == 10107 || code == 13436)) {
-            php_mongo_disconnect_link(cursor->link);
+            php_mongo_disconnect_server(cursor->server);
           }
         }
       }
