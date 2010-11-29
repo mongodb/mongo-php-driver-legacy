@@ -186,7 +186,6 @@ PHP_METHOD(MongoCursor, hasNext) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   zval *temp;
   int64_t id;
-  mongo_server *server;
 
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
@@ -205,6 +204,11 @@ PHP_METHOD(MongoCursor, hasNext) {
   else if (cursor->cursor_id == 0) {
     RETURN_FALSE;
   }
+  // if we have a cursor_id, we should have a server
+  else if (cursor->server == 0) {
+    zend_throw_exception(mongo_ce_CursorException, "Trying to get more, but cannot find server", 18 TSRMLS_CC);
+    return;
+  }
 
   // we have to go and check with the db
   size = 34+strlen(cursor->ns);
@@ -213,20 +217,12 @@ PHP_METHOD(MongoCursor, hasNext) {
     efree(buf.start);
     return;
   }
-
-  // fails if we're out of elems
+  
   MAKE_STD_ZVAL(temp);
   ZVAL_NULL(temp);
 
-  if ((server = php_mongo_get_socket(cursor->link, temp TSRMLS_CC)) == 0) {
-    efree(buf.start);
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 1 TSRMLS_CC);
-    zval_ptr_dtor(&temp);
-    return;
-  }
-  
-  if(mongo_say(server->socket, &buf, temp TSRMLS_CC) == FAILURE) {
-    php_mongo_disconnect_server(server);
+  if(mongo_say(cursor->server->socket, &buf, temp TSRMLS_CC) == FAILURE) {
+    php_mongo_disconnect_server(cursor->server);
     efree(buf.start);
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 1 TSRMLS_CC);
     zval_ptr_dtor(&temp);
@@ -236,7 +232,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   efree(buf.start);
 
   id = cursor->cursor_id;
-  if (php_mongo_get_reply(server->socket, cursor, temp TSRMLS_CC) != SUCCESS) {
+  if (php_mongo_get_reply(cursor->server->socket, cursor, temp TSRMLS_CC) != SUCCESS) {
     zval_ptr_dtor(&temp);
     return;
   }
@@ -248,9 +244,11 @@ PHP_METHOD(MongoCursor, hasNext) {
     php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
     cursor->cursor_id = 0;
   }
+  // if cursor_id != 0, server should stay the same
+  
   if (cursor->flag & 1) {
-    zend_throw_exception(mongo_ce_CursorException, "cursor not found", 2 TSRMLS_CC);
-    return;    
+    zend_throw_exception(mongo_ce_CursorException, "Cursor not found", 2 TSRMLS_CC);
+    return;
   }
 
   // sometimes we'll have a cursor_id but there won't be any more results
@@ -624,7 +622,7 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   /* we've got something to kill, make a note */
   if (cursor->cursor_id != 0) {
-    // TODO: lock the cursor and slave together
+    cursor->server = server;
     php_mongo_create_le(cursor, "cursor_list" TSRMLS_CC);
   }
 }

@@ -411,7 +411,6 @@ typedef struct {
 
   // response fields
   int flag;
-  int64_t cursor_id;
   int start;
   // number of results used
   int at;
@@ -419,6 +418,14 @@ typedef struct {
   int num;
   // results
   buffer buf;
+
+  // cursor_id indicates if there are more results to fetch.  If cursor_id is 0,
+  // the cursor is "dead."  If cursor_id != 0, server is set to the server that
+  // was queried, so a get_more doesn't try to fetch results from the wrong
+  // server.  server just points to a member of link, so it should never need to
+  // be freed.
+  int64_t cursor_id;
+  mongo_server *server;
 
   zend_bool started_iterating;
   zend_bool persist;
@@ -698,6 +705,7 @@ extern zend_module_entry mongo_module_entry;
  * 14: couldn't send query: <err>
  * 15: couldn't get sock for safe op
  * 16: couldn't send safe op
+ * 18: Trying to get more, but cannot find server
  * various: database error
  */
 
