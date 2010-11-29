@@ -1919,31 +1919,10 @@ static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC)
   return server;
 }
 
-static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
+static zval* create_fake_cursor(mongo_link *link TSRMLS_DC) {
   zval *cursor_zval, *query, *is_master;
   mongo_cursor *cursor;
-  mongo_server *current;
-
-#ifdef DEBUG_CONN
-  php_printf("[c:php_mongo_get_master] servers: %d, rs? %d\n", link->server_set->num, link->rs);
-#endif
-
-  // for a single connection, return it
-  if (!link->rs && link->server_set->num == 1) {
-    if (link->server_set->server->connected) {
-      return link->server_set->server;
-    }
-    return 0;
-  }
-
-  // if we're still connected to master, return it
-  if (link->server_set->master && link->server_set->master->connected) {
-    return link->server_set->master;
-  }
-
-  // redetermine master
-
-  // create a cursor
+  
   MAKE_STD_ZVAL(cursor_zval);
   object_init_ex(cursor_zval, mongo_ce_Cursor);
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
@@ -1969,8 +1948,38 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
   cursor->current = 0;
   cursor->timeout = 0;
 
-  current = link->server_set->server;
+  return cursor_zval;
+}
 
+static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
+  zval *cursor_zval;
+  mongo_cursor *cursor;
+  mongo_server *current;
+
+#ifdef DEBUG_CONN
+  php_printf("[c:php_mongo_get_master] servers: %d, rs? %d\n", link->server_set->num, link->rs);
+#endif
+
+  // for a single connection, return it
+  if (!link->rs && link->server_set->num == 1) {
+    if (link->server_set->server->connected) {
+      return link->server_set->server;
+    }
+    return 0;
+  }
+
+  // if we're still connected to master, return it
+  if (link->server_set->master && link->server_set->master->connected) {
+    return link->server_set->master;
+  }
+
+  // redetermine master
+
+  // create a cursor
+  cursor_zval = create_fake_cursor(link TSRMLS_CC);
+  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
+
+  current = link->server_set->server;
   while (current) {
     zval temp_ret, *response, **hosts, **ans, *errmsg;
     int ismaster = 0;
@@ -2061,6 +2070,7 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       }
 
       // we're definitely going home
+      cursor->link = 0;
       zval_ptr_dtor(&cursor_zval);
       // can't free response until we're done with primary
       
@@ -2104,6 +2114,7 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
     current = current->next;
   }
 
+  cursor->link = 0;
   zval_ptr_dtor(&cursor_zval);
   return 0;
 }
@@ -2525,7 +2536,7 @@ mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_D
  * If the socket is connected, returns the master.  If the socket is
  * disconnected, it attempts to reconnect and return the master.
  *
- * sets errmsg on FAILURE
+ * sets errmsg and returns 0 on failure
  */
 mongo_server* php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int now = time(0), connected = 0;
@@ -2537,7 +2548,11 @@ mongo_server* php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
 
   // if we're already connected or autoreconnect isn't set, we're all done 
   if (!MonGlo(auto_reconnect) || connected) {
-    return php_mongo_get_master(link TSRMLS_CC);
+    mongo_server *server = php_mongo_get_master(link TSRMLS_CC);
+    if (!server) {
+      ZVAL_STRING(errmsg, "Couldn't determine master", 1);
+    }
+    return server;
   }
 
   link->server_set->ts = now;
@@ -2546,8 +2561,14 @@ mongo_server* php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   php_mongo_disconnect_link(link);
 
   if (SUCCESS == php_mongo_do_socket_connect(link, errmsg TSRMLS_CC)) {
-    return php_mongo_get_master(link TSRMLS_CC);
+    mongo_server *server = php_mongo_get_master(link TSRMLS_CC);
+    if (!server) {
+      ZVAL_STRING(errmsg, "Couldn't determine master", 1);
+    }
+    return server;
   }
+
+  ZVAL_STRING(errmsg, "Couldn't connect to master", 1);
   return 0;
 }
 
@@ -2787,7 +2808,7 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
   link->server_set->ts = 0;
 
   if (php_mongo_get_master(link TSRMLS_CC) == 0) {
-    ZVAL_STRING(errmsg, "couldn't determine master", 1);      
+    ZVAL_STRING(errmsg, "Couldn't determine master", 1);      
     return FAILURE;
   }
 
