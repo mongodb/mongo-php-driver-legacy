@@ -588,7 +588,8 @@ int mongo_hear(int sock, void*, int TSRMLS_DC);
 int php_mongo_get_reply(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
 int php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
 int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
-void php_mongo_set_disconnected(mongo_link *link);
+void php_mongo_disconnect_link(mongo_link *link);
+int php_mongo_disconnect_server(mongo_server *server);
 
 void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);

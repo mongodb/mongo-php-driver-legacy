@@ -1543,7 +1543,7 @@ PHP_METHOD(Mongo, close) {
 
   PHP_MONGO_GET_LINK(getThis());
 
-  php_mongo_set_disconnected(link);
+  php_mongo_disconnect_link(link);
 
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 0 TSRMLS_CC);
   RETURN_TRUE;
@@ -2155,7 +2155,7 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
   if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) == FAILURE) {
 
-    php_mongo_set_disconnected(cursor->link);
+    php_mongo_disconnect_link(cursor->link);
 
     zend_throw_exception(mongo_ce_CursorException, "couldn't get response header", 4 TSRMLS_CC);
     return FAILURE;
@@ -2166,13 +2166,13 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
   // make sure we're not getting crazy data
   if (cursor->recv.length == 0) {
-    php_mongo_set_disconnected(cursor->link);
+    php_mongo_disconnect_link(cursor->link);
     zend_throw_exception(mongo_ce_CursorException, "no db response", 5 TSRMLS_CC);
     return FAILURE;
   }
   else if (cursor->recv.length > MAX_RESPONSE_LEN ||
            cursor->recv.length < REPLY_HEADER_SIZE) {
-    php_mongo_set_disconnected(cursor->link);
+    php_mongo_disconnect_link(cursor->link);
     zend_throw_exception_ex(mongo_ce_CursorException, 6 TSRMLS_CC, 
                             "bad response length: %d, max: %d, did the db assert?", 
                             cursor->recv.length, MAX_RESPONSE_LEN);
@@ -2539,7 +2539,7 @@ int php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   link->server_set->ts = now;
 
   // close connection
-  php_mongo_set_disconnected(link);
+  php_mongo_disconnect_link(link);
 
   if (SUCCESS == php_mongo_do_socket_connect(link, errmsg TSRMLS_CC)) {
     return php_mongo_get_master(link TSRMLS_CC);
@@ -2547,7 +2547,7 @@ int php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   return FAILURE;
 }
 
-void php_mongo_set_disconnected(mongo_link *link) {
+void php_mongo_disconnect_link(mongo_link *link) {
   // already disconnected
   if (!link->server_set->master ||
       !link->server_set->master->connected) {
@@ -2555,16 +2555,25 @@ void php_mongo_set_disconnected(mongo_link *link) {
   }
 
   // sever it
-  link->server_set->master->connected = 0;
+  php_mongo_disconnect_server(link->server_set->master);
+  link->server_set->master = 0;
+}
+
+int php_mongo_disconnect_server(mongo_server *server) {
+  if (!server || !server->connected) {
+    return 0;
+  }
+  
+  server->connected = 0;
 #ifdef WIN32
-  shutdown(link->server_set->master->socket, 2);
-  closesocket(link->server_set->master->socket);
+  shutdown(server->socket, 2);
+  closesocket(server->socket);
   WSACleanup();
 #else
-  close(link->server_set->master->socket);
+  close(server->socket);
 #endif /* WIN32 */
 
-  link->server_set->master = 0;
+  return 1;
 }
 
 static int php_mongo_connect_nonb(mongo_server *server, int timeout, zval *errmsg) {

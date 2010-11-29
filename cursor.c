@@ -225,7 +225,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   }
   
   if(mongo_say(sock, &buf, temp TSRMLS_CC) == FAILURE) {
-    php_mongo_set_disconnected(cursor->link);
+    php_mongo_disconnect_link(cursor->link);
     efree(buf.start);
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 1 TSRMLS_CC);
     zval_ptr_dtor(&temp);
@@ -599,7 +599,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   }
 
   if (mongo_say(sock, &buf, errmsg TSRMLS_CC) == FAILURE) {  
-    php_mongo_set_disconnected(cursor->link);
+    php_mongo_disconnect_link(cursor->link);
     
     if (Z_TYPE_P(errmsg) == IS_STRING) {
       zend_throw_exception_ex(mongo_ce_CursorException, 14 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
@@ -742,7 +742,7 @@ PHP_METHOD(MongoCursor, next) {
           // not master & slaveok = false (more recent): 13435
           // not master or secondary: 13436
           if (cursor->link->rs && (code == 13435 || code == 10107 || code == 13436)) {
-            php_mongo_set_disconnected(cursor->link);
+            php_mongo_disconnect_link(cursor->link);
           }
         }
       }
