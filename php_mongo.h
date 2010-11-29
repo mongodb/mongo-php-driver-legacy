@@ -352,13 +352,13 @@ typedef struct {
   }                                                             \
   else {                                                        \
     zval *temp;                                                 \
-    int sock;                                                   \
+    mongo_server *server;                                       \
                                                                 \
     MAKE_STD_ZVAL(temp);                                        \
     ZVAL_NULL(temp);                                            \
                                                                 \
-    if ((sock = php_mongo_get_socket(link, temp TSRMLS_CC)) == FAILURE || \
-        mongo_say(sock, &buf, temp TSRMLS_CC) == FAILURE) {     \
+    if ((server = php_mongo_get_socket(link, temp TSRMLS_CC)) == 0 ||   \
+        mongo_say(server->socket, &buf, temp TSRMLS_CC) == FAILURE) {   \
       RETVAL_FALSE;                                             \
     }                                                           \
     else {                                                      \
@@ -586,8 +586,8 @@ void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval 
 int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
 int mongo_hear(int sock, void*, int TSRMLS_DC);
 int php_mongo_get_reply(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
-int php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
-int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
+mongo_server* php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
+mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
 void php_mongo_disconnect_link(mongo_link *link);
 int php_mongo_disconnect_server(mongo_server *server);
 

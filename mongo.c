@@ -65,7 +65,7 @@ extern zend_class_entry *mongo_ce_DB,
 static void php_mongo_link_free(void* TSRMLS_DC);
 static void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
 static void connect_already(INTERNAL_FUNCTION_PARAMETERS, zval*);
-static int php_mongo_get_master(mongo_link* TSRMLS_DC);
+static mongo_server* php_mongo_get_master(mongo_link* TSRMLS_DC);
 static int php_mongo_connect_nonb(mongo_server*, int, zval*);
 static int php_mongo_do_socket_connect(mongo_link*, zval* TSRMLS_DC);
 static int php_mongo_get_sockaddr(struct sockaddr *sa, int family, char*, int, zval*);
@@ -265,7 +265,7 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   char quickbuf[128];
   buffer buf;
   zval temp;
-  int sock;
+  mongo_server *server;
 
   /* 
    * If the cursor_id is 0, the db is out of results anyway.
@@ -281,12 +281,12 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
 
   php_mongo_write_kill_cursors(&buf, cursor TSRMLS_CC);
   
-  if ((sock = php_mongo_get_socket(cursor->link, &temp TSRMLS_CC)) == FAILURE) {
+  if ((server = php_mongo_get_socket(cursor->link, &temp TSRMLS_CC)) == 0) {
     efree(Z_STRVAL(temp));
     Z_TYPE(temp) = IS_NULL;
     return;
   }
-  mongo_say(sock, &buf, &temp TSRMLS_CC); 
+  mongo_say(server->socket, &buf, &temp TSRMLS_CC); 
        
   /* 
    * if the connection is closed before the cursor is destroyed, the cursor
@@ -1919,7 +1919,7 @@ static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC)
   return server;
 }
 
-static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
+static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
   zval *cursor_zval, *query, *is_master;
   mongo_cursor *cursor;
   mongo_server *current;
@@ -1931,14 +1931,14 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
   // for a single connection, return it
   if (!link->rs && link->server_set->num == 1) {
     if (link->server_set->server->connected) {
-      return link->server_set->server->socket;
+      return link->server_set->server;
     }
-    return FAILURE;
+    return 0;
   }
 
   // if we're still connected to master, return it
   if (link->server_set->master && link->server_set->master->connected) {
-    return link->server_set->master->socket;
+    return link->server_set->master;
   }
 
   // redetermine master
@@ -2067,7 +2067,7 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       host = Z_STRVAL_PP(primary);
       if (!(server = find_or_make_server(host, link TSRMLS_CC))) {
         zval_ptr_dtor(&response);
-        return FAILURE;
+        return 0;
       }
 
       zval_ptr_dtor(&response);
@@ -2078,7 +2078,7 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       // TODO: auth, but it won't work in 1.6 anyway
       if (!server->connected && php_mongo_connect_nonb(server, link->timeout, errmsg) == FAILURE) {
         zval_ptr_dtor(&errmsg);
-        return FAILURE;
+        return 0;
       }
       zval_ptr_dtor(&errmsg);
 
@@ -2088,7 +2088,7 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
 
       // if successful, we're connected to the master
       link->server_set->master = server;
-      return link->server_set->master->socket;
+      return link->server_set->master;
     }
 
     // reset response
@@ -2099,13 +2099,13 @@ static int php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       zval_ptr_dtor(&cursor_zval);
 
       link->server_set->master = current;
-      return current->socket;
+      return current;
     }
     current = current->next;
   }
 
   zval_ptr_dtor(&cursor_zval);
-  return FAILURE;
+  return 0;
 }
 
 
@@ -2459,13 +2459,13 @@ int mongo_hear(int sock, void *dest, int total_len TSRMLS_DC) {
 /** Attempts to find a slave to read from.
  * Sets errmsg on failure.
  */
-int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
+mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int now, status;
   
   // sanity check
   if (!link->rs) {
     ZVAL_STRING(errmsg, "Connection is not a replica set", 1);
-    return FAILURE;
+    return 0;
   }
 
   if (link->slave) {
@@ -2475,7 +2475,7 @@ int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
     mongo_server *temp;
 
     if (link->slave->connected) {
-      return link->slave->socket;
+      return link->slave;
     }
 
     MAKE_STD_ZVAL(fake_zval);
@@ -2493,8 +2493,9 @@ int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
     
     if (php_mongo_do_socket_connect(fake_link, errmsg TSRMLS_CC) == SUCCESS) {
       link->slave->next = temp;
-      efree(fake_link);
-      return link->slave->socket;
+      fake_link->server_set = 0;
+      zval_ptr_dtor(&fake_zval);
+      return link->slave;
     }
     link->slave->next = temp;
     efree(fake_link);
@@ -2511,10 +2512,10 @@ int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   status = set_a_slave(link, &(Z_STRVAL_P(errmsg)));
   if (status == FAILURE) {
     ZVAL_STRING(errmsg, "Could not find any server to read from", 1);
-    return FAILURE;
+    return 0;
   }
 
-  return link->slave->socket;
+  return link->slave;
 }
 
 /*
@@ -2523,7 +2524,7 @@ int php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
  *
  * sets errmsg on FAILURE
  */
-int php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
+mongo_server* php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int now = time(0), connected = 0;
   
   if ((link->server_set->num == 1 && !link->rs && link->server_set->server->connected) ||
@@ -2544,7 +2545,7 @@ int php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   if (SUCCESS == php_mongo_do_socket_connect(link, errmsg TSRMLS_CC)) {
     return php_mongo_get_master(link TSRMLS_CC);
   }
-  return FAILURE;
+  return 0;
 }
 
 void php_mongo_disconnect_link(mongo_link *link) {
@@ -2782,7 +2783,7 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
   // set initial connection time
   link->server_set->ts = 0;
 
-  if (php_mongo_get_master(link TSRMLS_CC) == FAILURE) {
+  if (php_mongo_get_master(link TSRMLS_CC) == 0) {
     ZVAL_STRING(errmsg, "couldn't determine master", 1);      
     return FAILURE;
   }
@@ -2794,6 +2795,7 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
   zval *connection, *db, *ok;
   int logged_in = 0;
   mongo_link *temp_link;
+  mongo_server *temp_server;
 
   // if we're not using authentication, we're always logged in
   if (!link->username || !link->password) { 
@@ -2807,7 +2809,13 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
   temp_link->server_set = (mongo_server_set*)emalloc(sizeof(mongo_server_set));
   temp_link->server_set->num = 1;
   temp_link->server_set->server = (mongo_server*)emalloc(sizeof(mongo_server));
-  temp_link->server_set->server->socket = php_mongo_get_master(link TSRMLS_CC);
+  if ((temp_server = php_mongo_get_master(link TSRMLS_CC)) == 0) {
+    efree(temp_link->server_set->server);
+    temp_link->server_set->server = 0;
+    zval_ptr_dtor(&connection);
+    return FAILURE;
+  }
+  temp_link->server_set->server->socket = temp_server->socket;
   temp_link->server_set->server->connected = 1;
   temp_link->server_set->master = temp_link->server_set->server;
   
