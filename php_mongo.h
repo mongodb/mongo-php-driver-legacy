@@ -592,7 +592,7 @@ void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
 void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
 int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
 int mongo_hear(int sock, void*, int TSRMLS_DC);
-int php_mongo_get_reply(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
+int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
 mongo_server* php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
 mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
 void php_mongo_disconnect_link(mongo_link *link);

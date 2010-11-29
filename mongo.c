@@ -2237,14 +2237,15 @@ static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
 /*
  * throws exception on FAILURE
  */
-int php_mongo_get_reply(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
-
+int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
+  int sock;
+  
 #ifdef DEBUG
   php_printf("hearing something\n");
 #endif
 
   LOCK;
-
+  
   // this cursor has already been processed
   if (cursor->send.request_id < MonGlo(response_num)) {
     cursor_node *response = 0;
@@ -2271,6 +2272,8 @@ int php_mongo_get_reply(int sock, mongo_cursor *cursor, zval *errmsg TSRMLS_DC) 
       return FAILURE;
     }
   }
+
+  sock = cursor->server->socket;
 
   if (get_header(sock, cursor TSRMLS_CC) == FAILURE) {
     UNLOCK;
