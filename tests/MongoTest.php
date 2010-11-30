@@ -518,18 +518,39 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $conn = new Mongo("mongodb://localhost", array("replicaSet" => true, "slaveOkay" => true));
     }
 
-    /**
-     * @expectedException MongoConnectionException
-     */
-    public function testSlaveOkay2() {
-        $conn = new Mongo("mongodb://localhost", array("slaveOkay" => true));
-    }
-
     public function testPersistStatus() {
         $conn = new Mongo("mongodb://localhost", array("persist" => "chkPS"));
         $this->assertEquals($conn->status, "new");
         $conn2 = new Mongo("mongodb://localhost", array("persist" => "chkPS"));
         $this->assertEquals($conn2->status, "recycled");
+    }
+
+    public function testSlaveOkay() {
+        $conn = new Mongo("mongodb://localhost", array("replicaSet" => true, "slaveOkay" => true));
+        $this->assertTrue($conn->getSlaveOkay());
+        $db = $conn->somedb;
+        $this->assertTrue($db->getSlaveOkay());
+        $c = $db->somec;
+        $this->assertTrue($c->getSlaveOkay());
+        
+        $conn->setSlaveOkay(false);
+        $this->assertFalse($conn->getSlaveOkay());
+        $this->assertTrue($db->getSlaveOkay());
+        $this->assertTrue($c->getSlaveOkay());
+
+        $db = $conn->somedb;
+        $this->assertFalse($db->getSlaveOkay());
+        $c = $db->somec;
+        $this->assertFalse($c->getSlaveOkay());
+
+        $db->setSlaveOkay(true);
+        $this->assertTrue($db->getSlaveOkay());
+        
+        $c->setSlaveOkay(true);
+        $this->assertTrue($c->getSlaveOkay());
+
+        $conn->setSlaveOkay(true);
+        $this->assertTrue($conn->getSlaveOkay());
     }
 }
 

@@ -150,6 +150,8 @@ static function_entry mongo_methods[] = {
   PHP_ME(Mongo, __get, arginfo___get, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, selectDB, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, selectCollection, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, getSlaveOkay, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, setSlaveOkay, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, dropDB, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, lastError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, prevError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
@@ -999,7 +1001,7 @@ PHP_METHOD(Mongo, __construct) {
   char *server = 0;
   int server_len = 0;
   zend_bool connect = 1, garbage = 0, persist = 0;
-  zval *options = 0;
+  zval *options = 0, *slave_okay = 0;
   mongo_link *link;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|szbb", &server, &server_len, &options, &persist, &garbage) == FAILURE) {
@@ -1008,6 +1010,9 @@ PHP_METHOD(Mongo, __construct) {
 
   link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
+  slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
+  link->slave_okay = Z_BVAL_P(slave_okay);
+  
   /* new format */
   if (options) {
     if (!IS_SCALAR_P(options)) {
@@ -1047,12 +1052,8 @@ PHP_METHOD(Mongo, __construct) {
       }
 
       if (zend_hash_find(HASH_P(options), "slaveOkay", strlen("slaveOkay")+1, (void**)&slave_okay_z) == SUCCESS) {
-        if (!link->rs) {
-          zend_throw_exception(mongo_ce_ConnectionException, "can't use slaveOkay without replicaSet", 2 TSRMLS_CC);
-          return;
-        }
         link->slave_okay = Z_BVAL_PP(slave_okay_z);
-      }      
+      }
     }
     else {
       /* backwards compatibility */
@@ -1738,6 +1739,27 @@ PHP_METHOD(Mongo, selectCollection) {
   zval_ptr_dtor(&temp_db);
 }
 /* }}} */
+
+PHP_METHOD(Mongo, getSlaveOkay) {
+  mongo_link *link;
+  PHP_MONGO_GET_LINK(getThis());
+  RETURN_BOOL(link->slave_okay);
+}
+
+PHP_METHOD(Mongo, setSlaveOkay) {
+  zend_bool slave_okay;
+  mongo_link *link;
+  
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
+    return;
+  }
+
+  PHP_MONGO_GET_LINK(getThis());
+  
+  RETVAL_BOOL(link->slave_okay);
+  link->slave_okay = slave_okay;
+}
+
 
 /* {{{ Mongo::dropDB()
  */

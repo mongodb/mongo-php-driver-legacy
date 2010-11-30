@@ -465,6 +465,8 @@ typedef struct {
   zend_object std;
   zval *link;
   zval *name;
+  
+  zend_bool slave_okay;
 } mongo_db;
 
 typedef struct {
@@ -477,6 +479,8 @@ typedef struct {
   // names
   zval *name;
   zval *ns;
+
+  zend_bool slave_okay;
 } mongo_collection;
 
 
@@ -512,6 +516,8 @@ PHP_METHOD(Mongo, __toString);
 PHP_METHOD(Mongo, __get);
 PHP_METHOD(Mongo, selectDB);
 PHP_METHOD(Mongo, selectCollection);
+PHP_METHOD(Mongo, getSlaveOkay);
+PHP_METHOD(Mongo, setSlaveOkay);
 PHP_METHOD(Mongo, dropDB);
 PHP_METHOD(Mongo, lastError);
 PHP_METHOD(Mongo, prevError);
