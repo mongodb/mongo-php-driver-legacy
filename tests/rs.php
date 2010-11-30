@@ -10,9 +10,9 @@ while (true) {
     $c->findOne();
   }
   catch (Exception $e) {
-    echo $e->getMessage();
+    echo $e->getMessage()." ";
   }
-  echo "\n";
+  echo "$m\n";
 
   sleep(1);
 }
