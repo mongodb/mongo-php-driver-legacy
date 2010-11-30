@@ -181,25 +181,26 @@ typedef struct _mongo_server {
   int port;
   int socket;
   int connected;
+  int readable;
   char *label;
-
+  
   struct _mongo_server *next;
 } mongo_server;
 
 typedef struct _mongo_server_set {
   int num;
-  mongo_server *server;
   // ts keeps track of the last time we tried to connect, so we don't try to
   // reconnect a zillion times in three seconds.
   int ts;
+  // this is the number of readable, non-primary members
+  size_t slaves;
+
+  mongo_server *server;
 
   // if num is greater than -1, master keeps track of the master connection,
   // otherwise it points to "server"
   mongo_server *master;
-  
-  // this ptr iterates through the array of servers to round-robin slave reads.
-  mongo_server *slave_ptr;
-  
+    
   mongo_server *eo_seeds;
 
   HashTable *hosts;
@@ -705,6 +706,7 @@ extern zend_module_entry mongo_module_entry;
  * 14: couldn't send query: <err>
  * 15: couldn't get sock for safe op
  * 16: couldn't send safe op
+ * 17: exceptional condition on socket
  * 18: Trying to get more, but cannot find server
  * various: database error
  */
