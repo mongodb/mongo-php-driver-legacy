@@ -1210,6 +1210,14 @@ PHP_METHOD(Mongo, connectUtil) {
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
                             strlen("connected"), 1 TSRMLS_CC);
   ZVAL_BOOL(return_value, 1);
+
+  if (link->rs) {
+    zval *temp;
+    MAKE_STD_ZVAL(temp);
+    ZVAL_NULL(temp);
+    MONGO_METHOD(Mongo, switchSlave, temp, getThis());
+    zval_ptr_dtor(&temp);
+  }
 }
 
 /**
@@ -2041,7 +2049,6 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       zval **data;
       HashTable *hash;
       HashPosition pointer;
-      char *errmsg = 0;
 
       link->server_set->ts = time(0);
       
@@ -2060,9 +2067,6 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
         // this could fail if host is invalid, but it's okay if it does
         find_or_make_server(host, link TSRMLS_CC);
       }
-
-      set_a_slave(link, &errmsg);
-      if (errmsg) { efree(errmsg); }
     }
     
     if (!ismaster) {
