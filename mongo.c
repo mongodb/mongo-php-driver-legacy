@@ -1879,7 +1879,6 @@ PHP_METHOD(Mongo, forceError) {
 
 static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC) {
   mongo_server *target_server, *eo_list, *server;
-  zval *null_p;
   
   target_server = link->server_set->server;
   while (target_server) {
@@ -1910,11 +1909,14 @@ static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC)
   link->server_set->num++;
 
   // add this to the hosts list
-  MAKE_STD_ZVAL(null_p);
-  ZVAL_NULL(null_p);
+  if (link->rs && link->server_set->hosts) {
+    zval *null_p;
+    MAKE_STD_ZVAL(null_p);
+    ZVAL_NULL(null_p);
   
-  zend_hash_add(link->server_set->hosts, server->label, strlen(server->label)+1,
-                &null_p, sizeof(zval), NULL);
+    zend_hash_add(link->server_set->hosts, server->label, strlen(server->label)+1,
+                  &null_p, sizeof(zval), NULL);
+  }
   
   return server;
 }
@@ -1925,7 +1927,6 @@ static zval* create_fake_cursor(mongo_link *link TSRMLS_DC) {
   
   MAKE_STD_ZVAL(cursor_zval);
   object_init_ex(cursor_zval, mongo_ce_Cursor);
-  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
 
   // query = { query : { ismaster : 1 } }
   MAKE_STD_ZVAL(query);
@@ -1937,6 +1938,8 @@ static zval* create_fake_cursor(mongo_link *link TSRMLS_DC) {
 
   add_assoc_long(is_master, "ismaster", 1);
   add_assoc_zval(query, "query", is_master);
+
+  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
 
   // admin.$cmd.findOne({ query : { ismaster : 1 } })
   cursor->ns = estrdup("admin.$cmd");
@@ -1982,7 +1985,7 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
   current = link->server_set->server;
   while (current) {
     zval temp_ret, *response, **hosts, **ans, *errmsg;
-    int ismaster = 0;
+    int ismaster = 0, exception = 0;
     mongo_link temp;
     mongo_server_set temp_server_set;
 
@@ -2012,11 +2015,17 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
     // need to call this after setting cursor->link
     // reset checks that cursor->link != 0
     MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval);
+    
     MAKE_STD_ZVAL(response);
     ZVAL_NULL(response);
-    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
 
-    if (IS_SCALAR_P(response)) {
+    zend_try {
+      MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
+    } zend_catch {
+      exception = 1;
+    } zend_end_try();
+
+    if (exception || IS_SCALAR_P(response)) {
       zval_ptr_dtor(&response);
       current = current->next;
       continue;
