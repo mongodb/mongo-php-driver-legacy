@@ -1287,7 +1287,7 @@ static int set_a_slave(mongo_link *link, char **errmsg) {
       Z_TYPE_PP(master) == IS_ARRAY &&
       zend_hash_find(Z_ARRVAL_PP(master), "health", strlen("health")+1,
                      (void**)&health) == SUCCESS &&
-      Z_LVAL_PP(health) == 1) {
+      Z_NUMVAL_PP(health, 1)) {
 
     link->slave = link->server_set->master;
     return RS_PRIMARY;
@@ -1935,8 +1935,8 @@ PHP_METHOD(Mongo, forceError) {
 
 
 static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC) {
-  mongo_server *target_server, *eo_list, *server;
-  
+  mongo_server *target_server, *eo_list = 0, *server;
+
   target_server = link->server_set->server;
   while (target_server) {
     // if we've found the "host" server, we're done
@@ -1952,19 +1952,25 @@ static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC)
     return 0;
   }
 
-  // get to the end of the server list
-  if (eo_list->next) {
-    while (eo_list->next) {
-      eo_list = eo_list->next;
-    }
-  }
-
 #ifdef DEBUG_CONN
   php_printf("appending to list: %s\n", server->label);
 #endif
-  eo_list->next = server;
-  link->server_set->num++;
 
+  // get to the end of the server list
+  if (!link->server_set->server) {
+    link->server_set->server = server;
+  }
+  else {
+    if (eo_list && eo_list->next) {
+      while (eo_list->next) {
+        eo_list = eo_list->next;
+      }
+    }
+
+    eo_list->next = server;
+  } 
+  link->server_set->num++;
+ 
   // add this to the hosts list
   if (link->rs && link->server_set->hosts) {
     zval *null_p;
@@ -2098,8 +2104,18 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       zval **data;
       HashTable *hash;
       HashPosition pointer;
-
+      mongo_server *cur;
+      
       link->server_set->ts = time(0);
+      
+      // we are going clear the hosts list and repopulate
+      cur = link->server_set->server;
+      while(cur) {
+        mongo_server *prev = cur;
+        cur = cur->next;
+        php_mongo_server_free(prev, link->persist TSRMLS_CC);
+      }
+      link->server_set->server = 0;
       
 #ifdef DEBUG_CONN
       php_printf("parsing replica set\n");
