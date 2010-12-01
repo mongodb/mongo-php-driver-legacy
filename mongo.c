@@ -2538,6 +2538,25 @@ mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_D
     return 0;
   }
 
+  // every 5 seconds, try to update hosts
+  now = time(0);
+  if (link->server_set && link->server_set->ts + 5 < now) {
+    zval *fake_zval;
+    mongo_link *fake_link;
+    
+    link->server_set->ts = now;
+    
+    MAKE_STD_ZVAL(fake_zval);
+    object_init_ex(fake_zval, mongo_ce_Mongo);
+    fake_link = (mongo_link*)zend_object_store_get_object(fake_zval TSRMLS_CC);
+    fake_link->server_set = link->server_set;
+
+    get_heartbeats(fake_zval, &(Z_STRVAL_P(errmsg)));
+    
+    fake_link->server_set = 0;
+    zval_ptr_dtor(&fake_zval);
+  }
+
   if (link->slave) {
     zval *fake_zval;
     mongo_link *fake_link;
@@ -2573,12 +2592,6 @@ mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_D
     // TODO: what if we can't reconnect?  close cursors? grab another slave?
   }
   
-  // every 5 seconds, try to update hosts
-  now = time(0);
-  if (link->server_set && link->server_set->ts + 5 < now) {    
-    // TODO: update hosts
-  }
-
   status = set_a_slave(link, &(Z_STRVAL_P(errmsg)));
   if (status == FAILURE) {
     ZVAL_STRING(errmsg, "Could not find any server to read from", 1);
