@@ -1248,11 +1248,18 @@ static int set_a_slave(mongo_link *link, char **errmsg) {
   if (skip < 0) {
     skip *= -1;
   }
-  skip %= link->server_set->slaves;
 
+  if (link->server_set->slaves) {
+    skip %= link->server_set->slaves;
+    possible_slave = link->server_set->server;
+  }
+  // if there are no slaves, don't check for them
+  else {
+    possible_slave = 0;
+  }
+  
   // skip to the Sth server
   link->slave = 0;
-  possible_slave = link->server_set->server;
   while (possible_slave) {      
    
     if (!possible_slave->readable) {
