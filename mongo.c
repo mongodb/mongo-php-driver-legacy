@@ -791,6 +791,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     link->server_set->num = 1;
     link->server_set->hosts = 0;
     link->server_set->slaves = 0;
+    link->server_set->ts = 0;
 
     // allocate one server
     link->server_set->server = (mongo_server*)pemalloc(sizeof(mongo_server), persist);
@@ -844,6 +845,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
   // allocate the server ptr
   link->server_set = (mongo_server_set*)pemalloc(sizeof(mongo_server_set), persist);
   link->server_set->slaves = 0;
+  link->server_set->ts = 0;
   
   // allocate the hosts hash
   if (link->rs) {
@@ -2099,14 +2101,12 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
     }
 
     // check if this is a replica set
-    if (link->rs && link->server_set->ts + 5 <= time(0) &&
+    if (link->rs &&
         zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1, (void**)&hosts) == SUCCESS) {
       zval **data;
       HashTable *hash;
       HashPosition pointer;
       mongo_server *cur;
-      
-      link->server_set->ts = time(0);
       
       // we are going clear the hosts list and repopulate
       cur = link->server_set->server;
@@ -2647,8 +2647,6 @@ mongo_server* php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
     return server;
   }
 
-  link->server_set->ts = now;
-
   // close connection
   php_mongo_disconnect_link(link);
 
@@ -2896,9 +2894,6 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
     return FAILURE;
   }
 
-  // set initial connection time
-  link->server_set->ts = 0;
-
   if (php_mongo_get_master(link TSRMLS_CC) == 0) {
     ZVAL_STRING(errmsg, "Couldn't determine master", 1);      
     return FAILURE;
@@ -2925,6 +2920,7 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
   temp_link->server_set = (mongo_server_set*)emalloc(sizeof(mongo_server_set));
   temp_link->server_set->num = 1;
   temp_link->server_set->slaves = 0;
+  temp_link->server_set->ts = 0;
   temp_link->server_set->server = (mongo_server*)emalloc(sizeof(mongo_server));
   if ((temp_server = php_mongo_get_master(link TSRMLS_CC)) == 0) {
     efree(temp_link->server_set->server);
