@@ -2574,7 +2574,7 @@ mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_D
     fake_link = (mongo_link*)zend_object_store_get_object(fake_zval TSRMLS_CC);
     fake_link->server_set = link->server_set;
 
-    get_heartbeats(fake_zval, &(Z_STRVAL_P(errmsg)));
+    get_heartbeats(fake_zval, &(Z_STRVAL_P(errmsg)) TSRMLS_CC);
     
     fake_link->server_set = 0;
     zval_ptr_dtor(&fake_zval);
