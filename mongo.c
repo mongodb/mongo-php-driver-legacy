@@ -1219,11 +1219,17 @@ PHP_METHOD(Mongo, connectUtil) {
   ZVAL_BOOL(return_value, 1);
 
   if (link->rs) {
-    zval *temp;
-    MAKE_STD_ZVAL(temp);
-    ZVAL_NULL(temp);
-    MONGO_METHOD(Mongo, switchSlave, temp, getThis());
-    zval_ptr_dtor(&temp);
+    char *errmsg = 0;
+    
+    // We don't want to throw anything if this doesn't succeed.  We can always
+    // get a slave later.
+    if (get_heartbeats(getThis(), &errmsg TSRMLS_CC) != FAILURE) {
+      set_a_slave(link, &errmsg);
+    }
+    
+    if (errmsg) {
+      efree(errmsg);
+    }
   }
 }
 

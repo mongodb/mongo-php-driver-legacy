@@ -96,7 +96,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($query['limit'], 0);
         $this->assertEquals($query['skip'], 0);
         $this->assertEquals($query['query'], $filter);
-        $this->assertEquals(get_object_vars($query['fields']), array());
+        $this->assertEquals($query['fields'], array());
 
         $this->assertEquals($query['started_iterating'], false);
         $cursor->next();
