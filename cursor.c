@@ -740,18 +740,23 @@ PHP_METHOD(MongoCursor, next) {
         // check for not master
         if (Z_TYPE_PP(code_z) == IS_LONG) {
           code = Z_LVAL_PP(code_z);
-
-          // this shouldn't be necessary after 1.7.* is standard, it forces
-          // failover in case the master steps down.
-          // not master: 10107
-          // not master & slaveok = false (more recent): 13435
-          // not master or secondary: 13436
-          if (cursor->link->rs && (code == 13435 || code == 10107 || code == 13436)) {
-            php_mongo_disconnect_server(cursor->server);
-          }
+        }
+        else if (Z_TYPE_PP(code_z) == IS_DOUBLE) {
+          code = Z_DVAL_PP(code_z);
+        }
+        // else code == 4
+        
+        // this shouldn't be necessary after 1.7.* is standard, it forces
+        // failover in case the master steps down.
+        // not master: 10107
+        // not master and slaveok=false (more recent): 13435
+        // not master or secondary: 13436
+        if (cursor->link->rs && (code == 10107 || code == 13435 || code == 13436)) {
+          php_mongo_disconnect_server(cursor->server);
         }
       }
-      
+
+      php_printf("throwing exception %d\n", code);
       zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), code TSRMLS_CC);
       RETURN_FALSE;
     }
