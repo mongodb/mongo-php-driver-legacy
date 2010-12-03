@@ -283,13 +283,16 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
 
   php_mongo_write_kill_cursors(&buf, cursor TSRMLS_CC);
   
-  if ((server = php_mongo_get_socket(cursor->link, &temp TSRMLS_CC)) == 0) {
-    efree(Z_STRVAL(temp));
-    Z_TYPE(temp) = IS_NULL;
+  if (!cursor->server) {
     return;
   }
-  mongo_say(server->socket, &buf, &temp TSRMLS_CC); 
-       
+  Z_TYPE(temp) = IS_NULL;
+  mongo_say(cursor->server->socket, &buf, &temp TSRMLS_CC); 
+  if (Z_TYPE(temp) == IS_STRING) {
+    efree(Z_STRVAL(temp));
+    Z_TYPE(temp) = IS_NULL;
+  }
+  
   /* 
    * if the connection is closed before the cursor is destroyed, the cursor
    * might try to fetch more results with disasterous consequences.  Thus, the
