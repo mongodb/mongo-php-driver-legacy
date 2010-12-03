@@ -592,9 +592,16 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   // If slave_okay is set, read from a slave.
   if ((cursor->link->rs && cursor->opts & SLAVE_OKAY &&
-       (cursor->server = php_mongo_get_slave_socket(cursor->link, errmsg TSRMLS_CC)) == 0) || 
-      (!(cursor->link->rs && cursor->opts & SLAVE_OKAY) &&
-       (cursor->server = php_mongo_get_socket(cursor->link, errmsg TSRMLS_CC)) == 0)) {
+       (cursor->server = php_mongo_get_slave_socket(cursor->link, errmsg TSRMLS_CC)) == 0)) {
+    // ignore errors and reset errmsg
+    zval_ptr_dtor(&errmsg);
+    MAKE_STD_ZVAL(errmsg);
+    ZVAL_NULL(errmsg);
+  }
+
+  // if getting the slave didn't work (or we're not using a rs), just get master socket
+  if (cursor->server == 0 &&
+      (cursor->server = php_mongo_get_socket(cursor->link, errmsg TSRMLS_CC)) == 0) {
     efree(buf.start);
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 14 TSRMLS_CC);
     zval_ptr_dtor(&errmsg);

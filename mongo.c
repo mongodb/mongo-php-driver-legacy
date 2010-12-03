@@ -2556,7 +2556,7 @@ int mongo_hear(int sock, void *dest, int total_len TSRMLS_DC) {
 }
 
 /** Attempts to find a slave to read from.
- * Sets errmsg on failure.
+ * Returns 0 and sets errmsg on failure.
  */
 mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int now, status;
@@ -2582,6 +2582,7 @@ mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_D
 
     get_heartbeats(fake_zval, &(Z_STRVAL_P(errmsg)) TSRMLS_CC);
     
+    // if get_heartbeats fails, ignore
     fake_link->server_set = 0;
     zval_ptr_dtor(&fake_zval);
   }
@@ -2615,9 +2616,10 @@ mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_D
       zval_ptr_dtor(&fake_zval);
       return link->slave;
     }
-    link->slave->next = temp;
-    efree(fake_link);
-    
+    link->slave->next = temp; 
+    fake_link->server_set = 0;
+    zval_ptr_dtor(&fake_zval);
+
     // TODO: what if we can't reconnect?  close cursors? grab another slave?
   }
   
