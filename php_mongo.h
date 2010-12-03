@@ -189,8 +189,9 @@ typedef struct _mongo_server {
 
 typedef struct _mongo_server_set {
   int num;
-  // ts keeps track of the last time we tried to connect, so we don't try to
-  // reconnect a zillion times in three seconds.
+  // the last time we repopulated the server list
+  int server_ts;
+  // the last time we updated the hosts hash
   int ts;
   // this is the number of readable, non-primary members
   size_t slaves;
