@@ -58,14 +58,13 @@ zend_class_entry *mongo_ce_Cursor = NULL;
 /* {{{ MongoCursor->__construct
  */
 PHP_METHOD(MongoCursor, __construct) {
-  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, **slave_okay,
-    *timeout, *options = 0;
+  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, *timeout;
   zval **data;
   mongo_cursor *cursor;
   mongo_link *link;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz|zza", &zlink,
-                            mongo_ce_Mongo, &zns, &zquery, &zfields, &options) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz|zz", &zlink,
+                            mongo_ce_Mongo, &zns, &zquery, &zfields) == FAILURE) {
     return;
   }
   if ((zquery && IS_SCALAR_P(zquery)) || (zfields && IS_SCALAR_P(zfields))) {
@@ -157,10 +156,7 @@ PHP_METHOD(MongoCursor, __construct) {
   timeout = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
   cursor->timeout = Z_LVAL_P(timeout);
 
-  if (options && zend_hash_find(Z_ARRVAL_P(options), "slaveOkay",
-                                sizeof("slaveOkay"), (void**)&slave_okay) == SUCCESS) {
-    cursor->opts = Z_BVAL_PP(slave_okay) ? (1 << 2) : 0;
-  }
+  cursor->opts = link->slave_okay ? (1 << 2) : 0;
   
   // get rid of extra ref
   zval_ptr_dtor(&empty);

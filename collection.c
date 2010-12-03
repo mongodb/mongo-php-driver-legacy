@@ -56,12 +56,12 @@ ZEND_END_ARG_INFO()
 
 
 PHP_METHOD(MongoCollection, __construct) {
-  zval *parent, *name, *zns, *w, *wtimeout, *options = 0, **slave_okay = 0;
+  zval *parent, *name, *zns, *w, *wtimeout, **slave_okay = 0;
   mongo_collection *c;
   mongo_db *db;
   char *ns;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz|a", &parent, mongo_ce_DB, &name, &options) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &parent, mongo_ce_DB, &name) == FAILURE) {
     return;
   }
   convert_to_string(name);
@@ -84,14 +84,7 @@ PHP_METHOD(MongoCollection, __construct) {
   MAKE_STD_ZVAL(zns);
   ZVAL_STRING(zns, ns, 0);
   c->ns = zns;
-
-  if (options && zend_hash_find(Z_ARRVAL_P(options), "slaveOkay",
-                                sizeof("slaveOkay"), (void**)&slave_okay) == SUCCESS) {
-    c->slave_okay = Z_BVAL_PP(slave_okay);
-  }
-  else {
-    c->slave_okay = db->slave_okay;
-  }
+  c->slave_okay = db->slave_okay;
   
   w = zend_read_property(mongo_ce_DB, parent, "w", strlen("w"), NOISY TSRMLS_CC);
   zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_LVAL_P(w) TSRMLS_CC);
@@ -395,8 +388,10 @@ PHP_METHOD(MongoCollection, batchInsert) {
 }
 
 PHP_METHOD(MongoCollection, find) {
-  zval *query = 0, *fields = 0, *opts = 0;
+  zval *query = 0, *fields = 0;
+  zend_bool slave_okay;
   mongo_collection *c;
+  mongo_link *link;
   zval temp;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
@@ -404,32 +399,25 @@ PHP_METHOD(MongoCollection, find) {
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
+  PHP_MONGO_GET_LINK(c->link);
 
   object_init_ex(return_value, mongo_ce_Cursor);
 
-  MAKE_STD_ZVAL(opts);
-  array_init(opts);
-  add_assoc_bool(opts, "slaveOkay", c->slave_okay);
+  // save & replace slave_okay
+  slave_okay = link->slave_okay;
+  link->slave_okay = c->slave_okay;
   
   if (!query) {
-    MAKE_STD_ZVAL(query);
-    array_init(query);
+    MONGO_METHOD2(MongoCursor, __construct, &temp, return_value, c->link, c->ns);
+  }
+  else if (!fields) {
+    MONGO_METHOD3(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query);
   }
   else {
-    zval_add_ref(&query);
+    MONGO_METHOD4(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query, fields);
   }
-  if (!fields) {
-    MAKE_STD_ZVAL(fields);
-    array_init(fields);
-  }
-  else {
-    zval_add_ref(&fields);
-  }
-  
-  MONGO_METHOD5(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query, fields, opts);
-  
-  zval_ptr_dtor(&query);
-  zval_ptr_dtor(&fields);
+
+  link->slave_okay = slave_okay;
 }
 
 PHP_METHOD(MongoCollection, findOne) {

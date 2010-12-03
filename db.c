@@ -57,12 +57,13 @@ ZEND_END_ARG_INFO()
 /* {{{ MongoDB::__construct
  */
 PHP_METHOD(MongoDB, __construct) {
-  zval *zlink, *options = 0, **slave_okay = 0;
+  zval *zlink, **slave_okay = 0;
   char *name;
   int name_len;
   mongo_db *db;
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os|a", &zlink, mongo_ce_Mongo, &name, &name_len, &options) == FAILURE) {
+  mongo_link *link;
+  
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &zlink, mongo_ce_Mongo, &name, &name_len) == FAILURE) {
     return;
   }
 
@@ -81,15 +82,9 @@ PHP_METHOD(MongoDB, __construct) {
 
   db->link = zlink;
   zval_add_ref(&db->link);
-
-  if (options && zend_hash_find(Z_ARRVAL_P(options), "slaveOkay",
-                                sizeof("slaveOkay"), (void**)&slave_okay) == SUCCESS) {
-    db->slave_okay = Z_BVAL_PP(slave_okay);
-  }
-  else {
-    mongo_link *link = (mongo_link*)zend_object_store_get_object(zlink TSRMLS_CC);
-    db->slave_okay = link->slave_okay;
-  }
+  
+  PHP_MONGO_GET_LINK(zlink);
+  db->slave_okay = link->slave_okay;
   
   MAKE_STD_ZVAL(db->name);
   ZVAL_STRING(db->name, name, 1);
