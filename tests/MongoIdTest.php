@@ -80,6 +80,23 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
         }
     }
 
+    public function testInc2() {
+        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+            $this->markTestSkipped("No implicit __toString in 5.1");
+            return;
+        }
+
+        $num = 10;
+        $id = array();
+        for ($i=0; $i<$num; $i++) {
+            $id[] = new MongoId();
+        }
+        
+        for ($i=0; $i<$num-1; $i++) {
+            $this->assertGreaterThan($id[$i]."", $id[$i+1]."", $id[$i] . ", " . $id[$i+1]);
+        }        
+    }
+
     public function testTimestamp() {
         $time = time();
         $id = new MongoId();
