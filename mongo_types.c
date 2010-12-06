@@ -101,7 +101,9 @@ void generate_id(char *data TSRMLS_DC) {
   memcpy(data+7, P, 2);
 
   // 3 bytes inc
-  memcpy(data+9, I, 3);
+  data[9] = I[2];
+  data[10] = I[1];
+  data[11] = I[0];
 #endif /* PHP_C_BIGENDIAN */
 }
 
@@ -342,13 +344,16 @@ PHP_METHOD(MongoId, getPID) {
 /* }}} */
 
 PHP_METHOD(MongoId, getInc) {
-  int inc;
+  int inc = 0;
+  char *ptr = (char*)&inc;
   mongo_id *id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED_STRING(id->id, MongoId);
 
-  // 9, 10, 11, '\0' 
-  inc = (int)id->id[9];
-  
+  // 11, 10, 9, '\0'
+  ptr[0] = id->id[11];
+  ptr[1] = id->id[10];
+  ptr[2] = id->id[9];
+
   RETURN_LONG(inc);
 }
 
