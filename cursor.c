@@ -756,8 +756,9 @@ PHP_METHOD(MongoCursor, next) {
         }
       }
 
-      php_printf("throwing exception %d\n", code);
       zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), code TSRMLS_CC);
+      zval_ptr_dtor(&cursor->current);
+      cursor->current = 0;
       RETURN_FALSE;
     }
   }

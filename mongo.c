@@ -2675,7 +2675,7 @@ mongo_server* php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
     return server;
   }
 
-  ZVAL_STRING(errmsg, "Couldn't connect to master", 1);
+  // errmsg set in do_socket_connect
   return 0;
 }
 
@@ -2856,6 +2856,9 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
   int connected = 0;
   mongo_server *server = link->server_set->server;
   zval *errmsg_holder = 0;
+
+  MAKE_STD_ZVAL(errmsg_holder);
+  ZVAL_NULL(errmsg_holder);
   
 #ifdef DEBUG_CONN
   php_printf("connecting\n");
@@ -2863,7 +2866,7 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
 
   while (server) {
     if (!server->connected) {
-      int status = php_mongo_connect_nonb(server, link->timeout, errmsg);
+      int status = php_mongo_connect_nonb(server, link->timeout, errmsg_holder);
 
       // FAILURE = -1
       // SUCCESS = 0
@@ -2873,18 +2876,13 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
       php_printf("%s:%d connected? %s\n", server->host, server->port, status == 0 ? "true" : "false");
 #endif
 
-      // store some error message, but don't store one for every failure
-      if (status == FAILURE && Z_TYPE_P(errmsg) == IS_STRING) {
-        if (!errmsg_holder) {
-          errmsg_holder = errmsg;
-          // reallocate errmsg somewhere else
-          MAKE_STD_ZVAL(errmsg);
+      if (Z_TYPE_P(errmsg_holder) == IS_STRING) {
+        if (Z_TYPE_P(errmsg) == IS_NULL) {
+          ZVAL_STRING(errmsg, Z_STRVAL_P(errmsg_holder), 1);
         }
-        else {
-          // if errmsg_holder is already set, discard the errmsg
-          efree(Z_STRVAL_P(errmsg));
-        }
-        ZVAL_NULL(errmsg);
+        zval_ptr_dtor(&errmsg_holder);
+        MAKE_STD_ZVAL(errmsg_holder);
+        ZVAL_NULL(errmsg_holder);
       }
     }
     else {
@@ -2894,15 +2892,17 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
     server = server->next;
   }
 
+  zval_ptr_dtor(&errmsg_holder);
+  
   /*
    * cases where we have an error message and don't care because there's a
    * connection we can use:
    *  - if a connections fails after we have at least one working
    *  - if the first connection fails but a subsequent ones succeeds
    */
-  if (connected && errmsg_holder) {
-    efree(Z_STRVAL_P(errmsg_holder));
-    ZVAL_NULL(errmsg_holder);
+  if (connected && Z_TYPE_P(errmsg) == IS_STRING) {
+    efree(Z_STRVAL_P(errmsg));
+    ZVAL_NULL(errmsg);
   }
 
   // if at least one returns !FAILURE, return success
