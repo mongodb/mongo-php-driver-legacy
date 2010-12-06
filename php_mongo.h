@@ -202,8 +202,6 @@ typedef struct _mongo_server_set {
   // otherwise it points to "server"
   mongo_server *master;
     
-  mongo_server *eo_seeds;
-
   HashTable *hosts;
 } mongo_server_set;
 

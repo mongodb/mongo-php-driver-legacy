@@ -914,9 +914,6 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     }
   }
 
-  // mark the end of the predefined servers
-  link->server_set->eo_seeds = current_server;
-
   // if this isn't the (invalid) form "host:port/"
   if (*current == '/' && *(current+1) != '\0') {
     current++;
@@ -2063,6 +2060,7 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
     zval temp_ret, *response, **hosts, **ans, *errmsg;
     int ismaster = 0, exception = 0, now = 0;
     mongo_link temp;
+    mongo_server *temp_next = 0;
     mongo_server_set temp_server_set;
 
     MAKE_STD_ZVAL(errmsg);
@@ -2086,6 +2084,8 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
     }
     zval_ptr_dtor(&errmsg);
 
+    temp_next = current->next;
+    current->next = 0;
     cursor->link = &temp;
    
     // need to call this after setting cursor->link
@@ -2101,6 +2101,8 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       exception = 1;
     } zend_end_try();
 
+    current->next = temp_next;
+
     if (exception || IS_SCALAR_P(response)) {
       zval_ptr_dtor(&response);
       current = current->next;
@@ -2108,7 +2110,7 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
     }
 
     if (zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS) {
-      ismaster = Z_LVAL_PP(ans);
+      ismaster = Z_BVAL_PP(ans);
     }
 
     // check if this is a replica set
@@ -2147,6 +2149,10 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
         // this could fail if host is invalid, but it's okay if it does
         find_or_make_server(host, link TSRMLS_CC);
       }
+
+      // now that we've replaced the host list, start over
+      current = link->server_set->server;
+      continue;
     }
     
     if (!ismaster) {
