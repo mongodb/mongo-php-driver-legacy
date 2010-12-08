@@ -800,6 +800,7 @@ PHP_METHOD(MongoCursor, reset) {
   cursor->current = 0;
   cursor->at = 0;
   cursor->num = 0;
+  cursor->server = 0;
 }
 /* }}} */
 
