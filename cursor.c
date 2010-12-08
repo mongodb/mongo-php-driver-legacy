@@ -185,7 +185,6 @@ PHP_METHOD(MongoCursor, hasNext) {
   int size;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   zval *temp;
-  int64_t id;
 
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
@@ -231,7 +230,6 @@ PHP_METHOD(MongoCursor, hasNext) {
 
   efree(buf.start);
 
-  id = cursor->cursor_id;
   if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
     zval_ptr_dtor(&temp);
     return;
@@ -240,9 +238,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   zval_ptr_dtor(&temp);
 
   if (cursor->cursor_id == 0) {
-    cursor->cursor_id = id;
     php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
-    cursor->cursor_id = 0;
   }
   // if cursor_id != 0, server should stay the same
   
