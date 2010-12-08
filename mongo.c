@@ -2141,6 +2141,19 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
         find_or_make_server(host, link TSRMLS_CC);
       }
 
+      if (zend_hash_find(HASH_P(response), "passives", strlen("passives")+1, (void**)&hosts) == SUCCESS) {
+        hash = Z_ARRVAL_PP(hosts);
+        for (zend_hash_internal_pointer_reset_ex(hash, &pointer); 
+             zend_hash_get_current_data_ex(hash, (void**) &data, &pointer) == SUCCESS; 
+             zend_hash_move_forward_ex(hash, &pointer)) {
+        
+          char *host = Z_STRVAL_PP(data);
+        
+          // this could fail if host is invalid, but it's okay if it does
+          find_or_make_server(host, link TSRMLS_CC);
+        }        
+      }
+    
       // now that we've replaced the host list, start over
       current = link->server_set->server;
       continue;
