@@ -1613,17 +1613,8 @@ static char* stringify_server(mongo_server *server, char *str, int *pos, int *le
   }
 
   // copy host
-  memcpy(str+*pos, server->host, strlen(server->host));
-  *(pos) = *pos + strlen(server->host);
-
-  str[*pos] = ':';
-  *(pos) = *pos + 1;
-
-  // copy port
-  spprintf(&port, 0, "%d", server->port);
-  memcpy(str+*pos, port, strlen(port));
-  *(pos) = *pos + strlen(port);
-  efree(port);
+  memcpy(str+*pos, server->label, strlen(server->label));
+  *(pos) = *pos + strlen(server->label);
 
   // close []s
   if (!server->connected) {
