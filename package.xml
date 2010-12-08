@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2010-11-05</date>
+ <date>2010-12-08</date>
  <time>12:00:00</time>
  <version>
-  <release>1.0.11</release>
-  <api>1.0.11</api>
+  <release>1.1.0</release>
+  <api>1.1.0</api>
  </version>
  <stability>
   <release>stable</release>
@@ -25,13 +25,14 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Better replica set connection error handling
-  Added MongoCursor::batchSize()
-  Added mongo.allow_empty_keys option
-  Added unique codes for all MongoExceptions and MongoCursorExceptions
-  Added MongoId::getPID() and MongoId::getInc() methods
-  Added $id field to MongoId so that json_encode turns it into {$id:...}
-  Fixed cursor timeout bug
+  Replica set reads can be distributed to slaves.  This can be done by calling
+  setSlaveOkay on a connection, database, or collection.  You can see the slave 
+  that will be used with Mongo::getSlave and see/refresh the set status with 
+  Mongo::getHosts.You can now see the server used for a query with 
+  MongoCursor::info.
+  Added mongo.no_id php.ini option.  
+  Better exception is thrown when the database is corrupt.
+  Fixed MongoDB::createCollection parameter parsing on 64-bit machines.
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -67,6 +68,27 @@
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog> 
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.1.0</release>
+    <api>1.1.0</api>
+   </version>
+   <date>2010-12-08</date>
+   <notes>
+    Replica set reads can be distributed to slaves.  This can be done by calling
+    setSlaveOkay on a connection, database, or collection.  You can see the slave 
+    that will be used with Mongo::getSlave and see/refresh the set status with 
+    Mongo::getHosts.You can now see the server used for a query with 
+    MongoCursor::info.
+    Added mongo.no_id php.ini option.  
+    Better exception is thrown when the database is corrupt.
+    Fixed MongoDB::createCollection parameter parsing on 64-bit machines.
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>
