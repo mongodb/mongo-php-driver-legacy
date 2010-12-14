@@ -776,30 +776,21 @@ void mongo_init_MongoTimestamp(TSRMLS_D) {
  * Timestamp is 4 bytes of seconds since epoch and 4 bytes of increment.
  */
 PHP_METHOD(MongoTimestamp, __construct) {
-  zval *sec = 0, *inc = 0;
+  long sec = 0, inc = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &sec, &inc) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &sec, &inc) == FAILURE) {
     return;
   }
 
-  if (sec) {
-    /* this isn't the most elegant thing ever, but if someone passes in
-     * something that isn't a long, convert it to a long (same with inc).
-     */
-    convert_to_long(sec);
-    zend_update_property(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
+  if (ZEND_NUM_ARGS() == 0) {
+    sec = time(0);
   }
-  else {
-    zend_update_property_long(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), time(0) TSRMLS_CC);
+  if (ZEND_NUM_ARGS() <= 1 && !inc) {
+    inc = MonGlo(ts_inc)++;
   }
-
-  if (inc) {
-    convert_to_long(inc);
-    zend_update_property(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), inc TSRMLS_CC);
-  }
-  else {
-    zend_update_property_long(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), MonGlo(ts_inc)++ TSRMLS_CC);
-  }
+  
+  zend_update_property_long(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
+  zend_update_property_long(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), inc TSRMLS_CC);
 }
 
 /*
