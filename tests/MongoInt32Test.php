@@ -11,7 +11,8 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		ini_set('mongo.native_long', 0);
 		ini_set('mongo.long_as_object', 0);
 
-		$this->object = $this->sharedFixture->selectCollection("phpunit", "ints");
+                $m = new Mongo();
+		$this->object = $m->selectCollection("phpunit", "ints");
 		$this->object->drop();
 	}
 

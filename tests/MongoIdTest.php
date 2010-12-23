@@ -8,7 +8,7 @@ require_once 'PHPUnit/Framework.php';
 class MongoIdTest extends PHPUnit_Framework_TestCase
 {
     public function testBasic() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -21,8 +21,9 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
 
         $id2 = new MongoId('49c10bb63eba810c0c3fc158');
         $this->assertEquals((string)$id2, '49c10bb63eba810c0c3fc158');
-      
-        $c = $this->sharedFixture->selectCollection("phpunit", "id");
+
+        $m = new Mongo();
+        $c = $m->selectCollection("phpunit", "id");
         $c->drop();
         $c->insert(array("_id" => 1));
         $obj = $c->findOne();
@@ -31,7 +32,7 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
 
     // shouldn't throw an error, just ignore it
     public function testIncorrect() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -48,7 +49,7 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
     }
   
     public function testSerialize() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -63,7 +64,7 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
     }
 
     public function testIncrement() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -81,7 +82,7 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
     }
 
     public function testInc2() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -149,7 +150,8 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
         return;
       }
 
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       $c->drop();
 
       $c->insert(array('x'=>1));
@@ -193,7 +195,8 @@ class MongoIdTest extends PHPUnit_Framework_TestCase
         }
 
         $id = new MongoId();
-        $c = $this->sharedFixture->phpunit->c;
+        $m = new Mongo();
+        $c = $m->phpunit->c;
         $c->drop();
         $c->insert(array("_id" => $id));
         $result = $c->findOne();

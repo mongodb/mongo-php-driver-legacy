@@ -16,7 +16,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
      * Bug PHP-9
      */
     public function testMem() {
-        $c = $this->sharedFixture->selectCollection("phpunit", "c");
+        $m = new Mongo();
+        $c = $m->selectCollection("phpunit", "c");
         $arr = array("test" => "1, 2, 3"); 
         $start = memory_get_usage(true);
 
@@ -28,7 +29,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testTinyInsert() {
-        $c = $this->sharedFixture->selectCollection("phpunit", "c");
+        $m = new Mongo();
+        $c = $m->selectCollection("phpunit", "c");
         $c->drop();
 
         $c->insert(array('_id' => 1));
@@ -40,7 +42,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
      * @expectedException MongoException
      */
     public function testTinyInsert2() {
-        $c = $this->sharedFixture->selectCollection("phpunit", "c");
+        $m = new Mongo();
+        $c = $m->selectCollection("phpunit", "c");
         $c->drop();
 
         $c->remove();
@@ -50,12 +53,13 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testIdInsert() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
 
-        $c = $this->sharedFixture->selectCollection("phpunit", "c");
+        $m = new Mongo();
+        $c = $m->selectCollection("phpunit", "c");
 
         $a = array('_id' => 1);
         $c->insert($a);
@@ -92,12 +96,13 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testRealloc() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped('Cannot open files w/out absolute path in 5.1.');
             return;
         }
 
-        $db = $this->sharedFixture->selectDB('webgenius');
+        $m = new Mongo();
+        $db = $m->selectDB('webgenius');
         $tbColl = $db->selectCollection('Text_Block');
         
         $text = file_get_contents('tests/mongo-bug.txt');
@@ -107,12 +112,13 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testIdRealloc() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped('Cannot open files w/out absolute path in 5.1.');
             return;
         }
 
-        $db = $this->sharedFixture->selectDB('webgenius');
+        $m = new Mongo();
+        $db = $m->selectDB('webgenius');
         $tbColl = $db->selectCollection('Text_Block');
 
         $text = file_get_contents('tests/id-alloc.txt');
@@ -121,12 +127,13 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testSafeInsertRealloc() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped('Cannot open files w/out absolute path in 5.1.');
             return;
         }
 
-        $db = $this->sharedFixture->selectDB('webgenius');
+        $m = new Mongo();
+        $db = $m->selectDB('webgenius');
         $tbColl = $db->selectCollection('Text_Block');
 
         $text = file_get_contents('tests/id-alloc.txt');
@@ -136,7 +143,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testForEachKey() {
-        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $m = new Mongo();
+        $c = $m->selectCollection('x', 'y');
         $c->drop();
 
         $c->insert(array('_id' => "xsf0", 'x' => 1));
@@ -161,7 +169,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testIn() {
-        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $m = new Mongo();
+        $c = $m->selectCollection('x', 'y');
         $x = $c->findOne(array('oldId' =>array('$in' =>array ())));
         if ($x != NULL) {
             $this->assertArrayNotHasKey('$err', $x, json_encode($x));
@@ -169,7 +178,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testBatchInsert() {
-        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $m = new Mongo();
+        $c = $m->selectCollection('x', 'y');
         $c->drop();
 
         $a = array();
@@ -196,7 +206,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testCursorCount() {
-        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $m = new Mongo();
+        $c = $m->selectCollection('x', 'y');
         $c->drop();
 
         for($i=0; $i < 10; $i++) {
@@ -212,7 +223,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testCursorConversion() {
-        $c = $this->sharedFixture->selectCollection('x', 'y');
+        $m = new Mongo();
+        $c = $m->selectCollection('x', 'y');
         $c->drop();
 
         for($i=0; $i < 10; $i++) {
@@ -236,7 +248,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testCountReturnsInt() {
-      $c = $this->sharedFixture->selectCollection('x', 'y');
+      $m = new Mongo();
+      $c = $m->selectCollection('x', 'y');
       $c->drop();
 
       $this->assertTrue(is_int($c->count()));
@@ -296,7 +309,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testCryllic() {
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       try { 
         $c->insert(array("x" => "\xC3\x84"));
       }
@@ -306,7 +320,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testEmptyQuery() {
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       $c->drop();
 
       for ($i=0; $i<10; $i++) {
@@ -326,12 +341,14 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
      * @expectedException MongoException
      */
     public function testNonUTF81() {
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       $c->insert(array("x" => "\xFE"));
     }
 
     public function testNonUTF82() {
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       ini_set("mongo.utf8", 0);
       $c->insert(array("x" => "\xFE"));
       ini_set("mongo.utf8", 1);
@@ -374,7 +391,7 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testFatalRecursion() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped('annoying output in 5.1.');
             return;
         }
@@ -395,7 +412,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     public function testGetMore() {
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       
       for($i=0; $i<500; $i++) {
         $c->insert(array("x" => new MongoDate(), "count" => $i, "my string" => "doo dee doo"));
@@ -410,7 +428,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
      * @expectedException MongoException
      */
     public function testNonUTF8Embed() {
-      $this->sharedFixture->phpunit->c->insert(array('x'=>array("y" => "\xFF"), "y" => array()));
+      $m = new Mongo();
+      $m->phpunit->c->insert(array('x'=>array("y" => "\xFF"), "y" => array()));
     }
 
     /**
@@ -424,7 +443,7 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
      * @expectedException MongoException
      */
     public function testTooBigInsert() {
-      if (preg_match($this->sharedFixture->version_51, phpversion())) {
+      if (preg_match("/5\.1\../", phpversion())) {
         $this->markTestSkipped('annoying output in 5.1.');
         return;
       }
@@ -436,7 +455,8 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
         $arr[] = array("content" => new MongoBinData($contents), "i" => $i);
       }
 
-      $this->sharedFixture->phpunit->c->batchInsert($arr);
+      $m = new Mongo();
+      $m->phpunit->c->batchInsert($arr);
     }
 }
 

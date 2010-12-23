@@ -21,7 +21,8 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
      */
     protected function setUp()
     {
-        $db = $this->sharedFixture->selectDB('phpunit');
+        $m = new Mongo();
+        $db = $m->selectDB('phpunit');
         $this->object = $db->getGridFS();
         $this->object->drop();
         $this->object->start = memory_get_usage(true);
@@ -34,7 +35,8 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
     }
 
     public function test__construct() {
-        $db = $this->sharedFixture->selectDB('phpunit');
+        $m = new Mongo();
+        $db = $m->selectDB('phpunit');
         $grid = $db->getGridFS('x', 'y');
         $this->assertEquals((string)$grid, 'phpunit.x.files');
         $this->assertEquals((string)$grid->chunks, 'phpunit.x.chunks');
@@ -52,7 +54,8 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
      * @expectedException Exception 
      */
     public function test__construct2() {
-        $this->sharedFixture->foo->getGridFS(null);
+        $m = new mongo();
+        $m->foo->getGridFS(null);
     }
 
     public function testDrop() {

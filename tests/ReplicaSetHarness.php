@@ -16,7 +16,7 @@ function query() {
         //echo "iterated through $counter results from ".$info['server']."\n";
     }
     catch (MongoCursorException $e) {
-        echo "EXCEPTION (query): ".$e->getMessage()."\n";
+        //echo "EXCEPTION (query): ".$e->getMessage()."\n";
     }
 }
 
@@ -35,7 +35,7 @@ function querySlave() {
         //echo "iterated through $counter results from ".$info['server']."\n";
     }
     catch (MongoCursorException $e) {
-        echo "EXCEPTION (query): ".$e->getMessage()."\n";
+        //echo "EXCEPTION (query): ".$e->getMessage()."\n";
     }
 }
 

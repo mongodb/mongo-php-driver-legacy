@@ -21,7 +21,8 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
      */
     public function setUp() {
       ini_set('mongo.objects', 1);
-      $this->object = $this->sharedFixture->selectDB("phpunit");
+      $m = new Mongo();
+      $this->object = $m->selectDB("phpunit");
     }
 
     public function tearDown() {
@@ -78,7 +79,7 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
         $list = $this->object->listCollections();
         for($i=0;$i<10;$i++) {
             $this->assertTrue($list[$i] instanceof MongoCollection);
-            if (!preg_match($this->sharedFixture->version_51, phpversion())) {
+            if (!preg_match("/5\.1\../", phpversion())) {
               $this->assertTrue(in_array("phpunit.x$i", $list));
             }
         }

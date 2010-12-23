@@ -7,6 +7,13 @@ require_once 'PHPUnit/Framework.php';
  */
 class MongoCodeTest extends PHPUnit_Framework_TestCase
 {
+    protected function setUp()
+    {
+        $m = new Mongo();
+        $this->object = $m->selectCollection("phpunit", "bindata");
+        $this->object->drop();
+    }
+
     public function testWeird() {
         $c = new MongoCode(3);
         $this->assertEquals($c->code, "3");
@@ -21,7 +28,7 @@ class MongoCodeTest extends PHPUnit_Framework_TestCase
     public function testBasic() {
       $code_str = "if(x<5){ return true; } else { return false;}";
 
-      $c = $this->sharedFixture->selectCollection("x", "y");
+      $c = $this->object;
       $c->drop();
 
       $code = new MongoCode($code_str, array());

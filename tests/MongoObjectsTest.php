@@ -20,65 +20,70 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
      * @access protected
      */
     public function setUp() {
-      $this->object = $this->sharedFixture->selectCollection("phpunit", "c");
-      $this->object->drop();
+        $m = new Mongo();
+        $this->object = $m->selectCollection("phpunit", "c");
+        $this->object->drop();
     }
 
     public function testObjects() {
-      $c = $this->sharedFixture->selectCollection('phpunit', 'objs1');
-      $c->drop();
+        $m = new Mongo();
+        $c = $m->selectCollection('phpunit', 'objs1');
+        $c->drop();
 
-      $obj = (object)array('x' => 1);
-      $x = array('obj' => $obj);
+        $obj = (object)array('x' => 1);
+        $x = array('obj' => $obj);
 
-      $c->insert($x);
-      $x = $c->findOne();
+        $c->insert($x);
+        $x = $c->findOne();
 
-      $this->assertTrue(is_array($x['obj']));
-      $this->assertEquals(1, $x['obj']['x']);
+        $this->assertTrue(is_array($x['obj']));
+        $this->assertEquals(1, $x['obj']['x']);
     }
 
     public function testNested() {
-      $c = $this->sharedFixture->selectCollection('phpunit', 'objs2');
-      $c->drop();
+        $m = new Mongo();
+        $c = $m->selectCollection('phpunit', 'objs2');
+        $c->drop();
 
-      $obj2 = (object)array('x' => (object)array('foo' => (object)array()));
-      $c->insert(array('obj' => $obj2));
+        $obj2 = (object)array('x' => (object)array('foo' => (object)array()));
+        $c->insert(array('obj' => $obj2));
 
-      $x = $c->findOne();
+        $x = $c->findOne();
 
-      $this->assertTrue(is_array($x['obj']));
-      $this->assertTrue(is_array($x['obj']['x']));
-      $this->assertTrue(is_array($x['obj']['x']['foo']));
+        $this->assertTrue(is_array($x['obj']));
+        $this->assertTrue(is_array($x['obj']['x']));
+        $this->assertTrue(is_array($x['obj']['x']['foo']));
     }
 
     public function testClass() {
-      $c = $this->sharedFixture->selectCollection('phpunit', 'objs3');
-      $c->drop();
+        $m = new Mongo();
+        $c = $m->selectCollection('phpunit', 'objs3');
+        $c->drop();
 
-      $f = new Foo();
-      $a = array('foo' => $f);
-      $c->insert($a);
+        $f = new Foo();
+        $a = array('foo' => $f);
+        $c->insert($a);
 
-      $foo = $c->findOne();
-      $this->assertTrue(is_array($foo['foo']));
-      $this->assertEquals(1, $foo['foo']['x']);
-      $this->assertEquals(2, $foo['foo']['y']);
-      $this->assertEquals("hello", $foo['foo']['z']);
+        $foo = $c->findOne();
+        $this->assertTrue(is_array($foo['foo']));
+        $this->assertEquals(1, $foo['foo']['x']);
+        $this->assertEquals(2, $foo['foo']['y']);
+        $this->assertEquals("hello", $foo['foo']['z']);
     }
 
     public function testMethods() {
-      $c = $this->sharedFixture->selectCollection('phpunit', 'objs4');
-      $c->drop();
+        $m = new Mongo();
+        $c = $m->selectCollection('phpunit', 'objs4');
+        $c->drop();
 
-      $f = new Foo();
+        $f = new Foo();
 
-      $c->insert($f);
-      $f->x = 3;
-      $c->save($f);
-      $f->y = 7;
-      $c->update(array('_id' => $f->_id), $f);
-      $c->remove($f);
+        $c->insert($f);
+        $f->x = 3;
+        $c->save($f);
+        $f->y = 7;
+        $c->update(array('_id' => $f->_id), $f);
+        $c->remove($f);
     }
 
     public function testDrop() {
@@ -148,7 +153,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
     }
 
     public function testInsertNonAssoc() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }

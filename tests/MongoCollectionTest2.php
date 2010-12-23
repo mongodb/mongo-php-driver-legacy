@@ -14,7 +14,8 @@ class MongoCollectionTest2 extends PHPUnit_Framework_TestCase
      */
     protected function setUp()
     {
-        $db = new MongoDB($this->sharedFixture, "phpunit");
+        $m = new Mongo();
+        $db = new MongoDB($m, "phpunit");
         $this->object = $db->selectCollection('c');
         $this->object->drop();
     }

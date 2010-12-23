@@ -4,7 +4,8 @@ require_once 'PHPUnit/Framework.php';
 class SerializationTest extends PHPUnit_Framework_TestCase
 {
     public function arrayEncode() {
-      $c = $this->sharedFixture->phpunit->c->drop();
+      $m = new Mongo();
+      $c = $m->phpunit->c->drop();
 
       $a = array();
       $a[-1] = 'foo';
@@ -125,7 +126,8 @@ class SerializationTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoException 
      */
     public function testUpdateFree() {
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       $c->update(array("foo" => "\xFE\xF0"), array("foo" => "\xFE\xF0"));
     }
 
@@ -133,7 +135,8 @@ class SerializationTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoException 
      */
     public function testRemoveFree() {
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       $c->remove(array("foo" => "\xFE\xF0"));
     }
 
@@ -141,7 +144,8 @@ class SerializationTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoException 
      */
     public function testIdUTF8() {
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       $c->insert(array("_id" => "\xFE\xF0"));
     }
 
@@ -150,7 +154,8 @@ class SerializationTest extends PHPUnit_Framework_TestCase
      */
     public function testCodeUTF8() {
       $code = new MongoCode("return 4;", array("x" => "\xFE\xF0"));
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       $c->insert(array("x" => $code));
     }
 
@@ -160,7 +165,8 @@ class SerializationTest extends PHPUnit_Framework_TestCase
     public function testClassUTF8() {
       $cls = new StdClass;
       $cls->x = "\xFE\xF0";
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       $c->insert(array("x" => $cls));
     }
 
@@ -168,7 +174,8 @@ class SerializationTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoException 
      */
     public function testDots() {
-      $c = $this->sharedFixture->phpunit->c;
+      $m = new Mongo();
+      $c = $m->phpunit->c;
       $c->insert(array("x.y" => 'yz'));
     }
 
@@ -176,7 +183,8 @@ class SerializationTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoException 
      */
     public function testEmptyKey1() {
-        $c = $this->sharedFixture->phpunit->c;
+        $m = new Mongo();
+        $c = $m->phpunit->c;
         $c->save(array("" => "foo"));
     }
 
@@ -184,7 +192,8 @@ class SerializationTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoException 
      */
     public function testEmptyKey2() {
-        $c = $this->sharedFixture->phpunit->c;
+        $m = new Mongo();
+        $c = $m->phpunit->c;
         $c->save(array("x" => array("" => "foo")));
     }
 
@@ -192,13 +201,15 @@ class SerializationTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoException 
      */
     public function testEmptyKey3() {
-        $c = $this->sharedFixture->phpunit->c;
+        $m = new Mongo();
+        $c = $m->phpunit->c;
         $c->save(array("x" => array("" => "foo"), "y" => "z"));
     }
 
     public function testEmptyKey4() {
         ini_set("mongo.allow_empty_keys", true);
-        $c = $this->sharedFixture->phpunit->c;
+        $m = new Mongo();
+        $c = $m->phpunit->c;
         $c->save(array("x" => array("" => "foo"), "y" => "z"));
         ini_set("mongo.allow_empty_keys", false);
     }

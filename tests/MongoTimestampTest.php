@@ -8,11 +8,12 @@ class MongoTimestampTest extends PHPUnit_Framework_TestCase
     protected $object;
 
     public function setUp() {
-      $this->object = $this->sharedFixture->selectCollection("phpunit", "ts");
+        $m = new Mongo();
+        $this->object = $m->selectCollection("phpunit", "ts");
     }
 
     public function testBasic() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -31,7 +32,7 @@ class MongoTimestampTest extends PHPUnit_Framework_TestCase
     }
 
     public function testParam() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -49,7 +50,7 @@ class MongoTimestampTest extends PHPUnit_Framework_TestCase
     }
 
     public function testParam2() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }

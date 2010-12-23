@@ -4,7 +4,8 @@ require_once 'PHPUnit/Framework.php';
 class MongoMemTest extends PHPUnit_Framework_TestCase
 {
     public function testLastError2() {
-      $db = $this->sharedFixture->selectDB('db');
+      $m = new Mongo();
+      $db = $m->selectDB('db');
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
         $db->lastError();
@@ -13,7 +14,8 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
     }
     
     public function testPrevError2() {
-      $db = $this->sharedFixture->selectDB('db');
+      $m = new Mongo();
+      $db = $m->selectDB('db');
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
         $db->prevError();
@@ -22,7 +24,8 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
     }
 
     public function testResetError2() {
-      $db = $this->sharedFixture->selectDB('db');
+      $m = new Mongo();
+      $db = $m->selectDB('db');
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
         $db->resetError();
@@ -31,7 +34,8 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
     }
 
     public function testForceError2() {
-      $db = $this->sharedFixture->selectDB('db');
+      $m = new Mongo();
+      $db = $m->selectDB('db');
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
         $db->forceError();
@@ -40,36 +44,40 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
     }
 
     public function testSelectDB() {
+      $m = new Mongo();
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
-        $this->sharedFixture->selectDB("foo");
+        $m->selectDB("foo");
       }
       $this->assertEquals($mem, memory_get_usage(true));
     }
 
     public function testSelectCollection() {
+      $m = new Mongo();
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
-        $this->sharedFixture->selectCollection("foo", "bar");
+        $m->selectCollection("foo", "bar");
       }
       $this->assertEquals($mem, memory_get_usage(true));
     }
 
     public function testDropDB() {
+      $m = new Mongo();
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
-        $this->sharedFixture->dropDB("foo");
+        $m->dropDB("foo");
       }
       $this->assertEquals($mem, memory_get_usage(true));
 
-      $db = $this->sharedFixture->selectDB("foo");
+      $db = $m->selectDB("foo");
       for ($i=0;$i<10000;$i++) {
-        $this->sharedFixture->dropDB($db);
+        $m->dropDB($db);
       }
     }
 
     public function testGetDBRef() {
-      $db = $this->sharedFixture->selectDB("foo");
+      $m = new Mongo();
+      $db = $m->selectDB("foo");
       $c = $db->selectCollection("bar");
       $obj = array("uid" => 0);
       $c->insert($obj);
@@ -83,7 +91,8 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
     }
 
     public function testCreateDBRef() {
-      $c = $this->sharedFixture->selectCollection("foo", "bar");
+      $m = new Mongo();
+      $c = $m->selectCollection("foo", "bar");
       $obj = array("uid" => 0);
       $c->insert($obj);
 
@@ -95,7 +104,8 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
     }
 
     public function testEnsureIndex() {
-      $c = $this->sharedFixture->selectCollection("foo", "bar");
+      $m = new Mongo();
+      $c = $m->selectCollection("foo", "bar");
       $mem = memory_get_usage(true);
       for ($i=0; $i<10000; $i++) {
         $c->deleteIndexes();
@@ -104,7 +114,8 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
     }
 
     public function testCursorCount() {
-      $c = $this->sharedFixture->selectCollection("foo", "bar");
+      $m = new Mongo();
+      $c = $m->selectCollection("foo", "bar");
       $c->insert(array("foo" => "bar"));
       $c->insert(array("foo" => "bar"));
       $mem = memory_get_usage(true);

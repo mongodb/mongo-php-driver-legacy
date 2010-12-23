@@ -21,13 +21,14 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
      */
     protected function setUp()
     {
-        $db = new MongoDB($this->sharedFixture, "phpunit");
+        $m = new Mongo();
+        $db = new MongoDB($m, "phpunit");
         $this->object = $db->selectCollection('c');
         $this->object->drop();
     }
     
     public function test__toString() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -140,7 +141,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     }
 
     public function testInsertNonAssoc() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -160,7 +161,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoException
      */
     public function testBigInsert() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("bad file handling in 5.1");
             return;
         }

@@ -20,8 +20,9 @@ class SlowTests extends PHPUnit_Framework_TestCase
      * @access protected
      */
     protected function setUp()
-    {
-        $this->object = $this->sharedFixture->selectCollection('phpunit', 'c');
+    { 
+        $m = new Mongo();
+        $this->object = $m->selectCollection('phpunit', 'c');
         $this->object->drop();
     }
 

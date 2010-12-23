@@ -112,7 +112,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function test__toString() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -177,7 +177,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testSelectDB() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -201,7 +201,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testSelectCollection() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -233,14 +233,15 @@ class MongoTest extends PHPUnit_Framework_TestCase
      * @expectedException PHPUnit_Framework_Error
      */
     public function testLastError() {
-        $this->sharedFixture->resetError();
-        $err = $this->sharedFixture->lastError();
+        $m = new Mongo();
+        $m->resetError();
+        $err = $m->lastError();
         $this->assertEquals(null, $err['err'], json_encode($err));
         $this->assertEquals(0, $err['n'], json_encode($err));
         $this->assertEquals(true, (bool)$err['ok'], json_encode($err));
 
-        $this->sharedFixture->forceError();
-        $err = $this->sharedFixture->lastError();
+        $m->forceError();
+        $err = $m->lastError();
         $this->assertNotNull($err['err']);
         $this->assertEquals($err['n'], 0);
         $this->assertEquals((bool)$err['ok'], true);
@@ -250,15 +251,16 @@ class MongoTest extends PHPUnit_Framework_TestCase
      * @expectedException PHPUnit_Framework_Error 
      */
     public function testPrevError() {
-        $this->sharedFixture->resetError();
-        $err = $this->sharedFixture->prevError();
+        $m = new Mongo();
+        $m->resetError();
+        $err = $m->prevError();
         $this->assertEquals($err['err'], null);
         $this->assertEquals($err['n'], 0);
         $this->assertEquals($err['nPrev'], -1);
         $this->assertEquals((bool)$err['ok'], true);
         
-        $this->sharedFixture->forceError();
-        $err = $this->sharedFixture->prevError();
+        $m->forceError();
+        $err = $m->prevError();
         $this->assertNotNull($err['err']);
         $this->assertEquals($err['n'], 0);
         $this->assertEquals($err['nPrev'], 1);
@@ -269,8 +271,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
      * @expectedException PHPUnit_Framework_Error
      */
     public function testResetError() {
-        $this->sharedFixture->resetError();
-        $err = $this->sharedFixture->lastError();
+        $m = new Mongo();
+        $m->resetError();
+        $err = $m->lastError();
         $this->assertEquals($err['err'], null);
         $this->assertEquals($err['n'], 0);
         $this->assertEquals((bool)$err['ok'], true);
@@ -280,8 +283,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
      * @expectedException PHPUnit_Framework_Error
      */
     public function testForceError() {
-        $this->sharedFixture->forceError();
-        $err = $this->sharedFixture->lastError();
+        $m = new Mongo();
+        $m->forceError();
+        $err = $m->lastError();
         $this->assertNotNull($err['err']);
         $this->assertEquals($err['n'], 0);
         $this->assertEquals((bool)$err['ok'], true);
@@ -386,12 +390,13 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testGetters() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
 
-        $db = $this->sharedFixture->foo;
+        $m = new Mongo();
+        $db = $m->foo;
         $this->assertTrue($db instanceof MongoDB);
         $this->assertEquals("$db", "foo");
         
@@ -403,7 +408,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($c2 instanceof MongoCollection);
         $this->assertEquals("$c2", "foo.bar.baz");
 
-        $x = $this->sharedFixture->foo->bar->baz;
+        $x = $m->foo->bar->baz;
         $this->assertTrue($x instanceof MongoCollection);
         $this->assertEquals("$x", "foo.bar.baz");
     }
@@ -420,7 +425,8 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
 
     public function testListDBs() {
-        $dbs = $this->sharedFixture->listDBs();
+        $m = new Mongo();
+        $dbs = $m->listDBs();
         $this->assertEquals(true, (bool)$dbs['ok'], json_encode($dbs));
         $this->assertTrue(array_key_exists('databases', $dbs));
     }
@@ -466,7 +472,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
      * regression
      */
     public function testGetter() {
-      if (preg_match($this->sharedFixture->version_51, phpversion())) {
+      if (preg_match("/5\.1\../", phpversion())) {
         $this->markTestSkipped("No implicit __toString in 5.1");
         return;
       }
@@ -478,7 +484,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testGetter2() {
-      if (preg_match($this->sharedFixture->version_51, phpversion())) {
+      if (preg_match("/5\.1\../", phpversion())) {
         $this->markTestSkipped("No implicit __toString in 5.1");
         return;
       }

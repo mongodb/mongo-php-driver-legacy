@@ -11,7 +11,8 @@ class MongoBinDataTest extends PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $this->object = $this->sharedFixture->selectCollection("phpunit", "bindata");
+        $m = new Mongo();
+        $this->object = $m->selectCollection("phpunit", "bindata");
         $this->object->drop();
     }
 

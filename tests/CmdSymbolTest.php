@@ -20,7 +20,8 @@ class CmdSymbolTest extends PHPUnit_Framework_TestCase
      * @access protected
      */
     public function setUp() {
-        $this->object = $this->sharedFixture->selectCollection('foo', 'bar');
+        $m = new Mongo();
+        $this->object = $m->selectCollection('foo', 'bar');
         $this->object->drop();
     }
 
@@ -44,7 +45,8 @@ class CmdSymbolTest extends PHPUnit_Framework_TestCase
     public function testNS() {
         ini_set("mongo.cmd", "@");
 
-        $db = $this->sharedFixture->selectDB("admin");
+        $m=  new Mongo();
+        $db = $m->selectDB("admin");
         $cmd = $db->selectCollection('@cmd');
 
         $info = $cmd->findOne(array('buildinfo' => 1));

@@ -21,7 +21,8 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
      */
     protected function setUp()
     {
-        $this->object = new MongoDB($this->sharedFixture, "phpunit");
+        $m = new Mongo();
+        $this->object = new MongoDB($m, "phpunit");
         $this->object->start = memory_get_usage(true);
     }
 
@@ -33,25 +34,25 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
      * @expectedException Exception 
      */
     public function testDumbDBName3() {
-      $db = new MongoDB($this->sharedFixture, "\\");
+      $db = new MongoDB(new Mongo(), "\\");
     }
 
     /**
      * @expectedException Exception 
      */
     public function testDumbDBName4() {
-      $db = new MongoDB($this->sharedFixture, "\$");
+      $db = new MongoDB(new Mongo(), "\$");
     }
 
     /**
      * @expectedException Exception
      */
     public function testDumbDBName5() {
-      $db = new MongoDB($this->sharedFixture, "/");
+      $db = new MongoDB(new Mongo(), "/");
     }
 
     public function test__toString() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -60,7 +61,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     }
 
     public function testGetGridFS() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -119,7 +120,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     }
 
     public function testSelectCollection() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }

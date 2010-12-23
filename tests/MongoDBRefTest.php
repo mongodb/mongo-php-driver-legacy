@@ -7,7 +7,7 @@ class MongoDBRefTest extends PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $db = new MongoDB($this->sharedFixture, "phpunit");
+        $db = new MongoDB(new Mongo(), "phpunit");
         $this->object = $db->selectCollection('c');
         $this->object->drop();
     }
@@ -37,7 +37,8 @@ class MongoDBRefTest extends PHPUnit_Framework_TestCase
 
     public function testGet() {
       $this->object->db->d->insert(array("_id" => 123, "greeting" => "hi"));
-      $c = $this->sharedFixture->phpunit_temp->d;
+      $m = new Mongo();
+      $c = $m->phpunit_temp->d;
       $c->drop();
       $c->insert(array("_id" => 123, "greeting" => "bye"), true);
 

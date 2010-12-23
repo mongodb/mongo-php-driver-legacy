@@ -24,8 +24,8 @@ class MongoGridFSFileTest extends PHPUnit_Framework_TestCase
         if (file_exists('tests/anotherfile')) {
             unlink('tests/anotherfile');
         }
-
-        $db = $this->sharedFixture->selectDB('phpunit');
+        $m = new Mongo();
+        $db = $m->selectDB('phpunit');
         $grid = $db->getGridFS();
         $grid->drop();
         $grid->storeFile('tests/somefile');

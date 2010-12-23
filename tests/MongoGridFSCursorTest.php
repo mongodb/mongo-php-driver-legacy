@@ -21,7 +21,8 @@ class MongoGridFSCursorTest extends PHPUnit_Framework_TestCase
      */
     protected function setUp()
     {
-        $db = $this->sharedFixture->selectDB('phpunit');
+        $m = new Mongo();
+        $db = $m->selectDB('phpunit');
         $grid = $db->getGridFS();
         $grid->drop();
         $grid->storeFile('tests/somefile');

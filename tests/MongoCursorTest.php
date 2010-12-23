@@ -21,7 +21,8 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
      */
     protected function setUp()
     {
-        $this->object = $this->sharedFixture->selectCollection('phpunit', 'c');
+        $m = new Mongo();
+        $this->object = $m->selectCollection('phpunit', 'c');
         $this->object->drop();
         //        $this->object->start = memory_get_usage(true);
     }
@@ -55,7 +56,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
      * @expectedException PHPUnit_Framework_Error
      */
     public function test__construct3() {
-      $c = new MongoCursor($this->sharedFixture, "foo.bar", null);
+        $c = new MongoCursor(new Mongo(), "foo.bar", null);
     }
 
     /**
@@ -273,7 +274,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
     }
 
     public function testKey() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
             return;
         }
@@ -471,8 +472,9 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
      * BLOCKED BY: buildbot support for master/slave
      */
     public function testSlaveOkay() {
-        $this->sharedFixture->foo->drop();
-        $c = $this->sharedFixture->foo->createCollection("foo", true);
+        $m = new Mongo();
+        $m->foo->drop();
+        $c = $m->foo->createCollection("foo", true);
         $c->findOne();
 
         $cursor = $c->find()->slaveOkay()->tailable();
@@ -582,7 +584,8 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
 
       while($cursor->next()) {}
 
-      $this->sharedFixture->phpunit->kill->drop();
+      $m = new Mongo();
+      $m->phpunit->kill->drop();
     }
 
     public function testKillCursors() {
@@ -605,7 +608,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
     }
 
     public function testFatalForEach() {
-        if (preg_match($this->sharedFixture->version_51, phpversion())) {
+        if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("who knows what 5.1 does with fatal errors? probably something stupid.");
             return;
         }

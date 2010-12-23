@@ -54,7 +54,8 @@ class MongoRegexTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($rstupid->regex, $stupid_str);
         $this->assertEquals($rstupid->flags, "flagflagflagflagflag");
 
-        $c = $this->sharedFixture->selectCollection('phpunit', 'regex');
+        $m = new Mongo();
+        $c = $m->selectCollection('phpunit', 'regex');
         $c->drop();
         $c->insert(array('x' => 0, 'r1' => $r1));
         $c->insert(array('x' => 1, 'r2' => $r2));

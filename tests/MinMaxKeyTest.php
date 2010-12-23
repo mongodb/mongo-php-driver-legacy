@@ -10,8 +10,9 @@ class MinMaxKeyTest extends PHPUnit_Framework_TestCase
     protected $object;
 
     public function setUp() {
-      $this->object = $this->sharedFixture->selectCollection("phpunit", "minmax");
-      $this->object->drop();
+        $m = new Mongo();
+        $this->object = $m->selectCollection("phpunit", "minmax");
+        $this->object->drop();
     }
 
 
