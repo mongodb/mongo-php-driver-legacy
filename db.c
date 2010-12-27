@@ -306,7 +306,7 @@ PHP_METHOD(MongoDB, listCollections) {
   // populate list
   MAKE_STD_ZVAL(next);  
   MONGO_METHOD(MongoCursor, getNext, next, cursor);
-  while (Z_TYPE_P(next) != IS_NULL) {
+  while (!IS_SCALAR_P(next)) {
     zval *c, *zname;
     zval **collection;
     char *name, *first_dot, *system;
