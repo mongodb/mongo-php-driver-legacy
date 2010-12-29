@@ -855,7 +855,12 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
   // allocate the hosts hash
   if (link->rs) {
     link->server_set->hosts = (HashTable*)pemalloc(sizeof(HashTable), persist);
-    zend_hash_init(link->server_set->hosts, 20, NULL, ZVAL_PTR_DTOR, persist);
+    if (persist) {
+      zend_hash_init(link->server_set->hosts, 20, NULL, ZVAL_INTERNAL_DTOR, persist);
+    }
+    else {
+      zend_hash_init(link->server_set->hosts, 20, NULL, ZVAL_PTR_DTOR, persist);
+    }
   }
   else {
     link->server_set->hosts = 0;
@@ -1307,6 +1312,21 @@ static int set_a_slave(mongo_link *link, char **errmsg) {
   return FAILURE;
 }
 
+static zval* pcopy_member_status(zval** source TSRMLS_DC) {
+  HashTable *ht;
+  zval temp, *dest;
+  MAKE_STD_ZVAL(dest);
+
+  ht = (HashTable*)emalloc(sizeof(HashTable));
+  zend_hash_init(ht, 8, 0, ZVAL_INTERNAL_DTOR, 1);
+  zend_hash_copy(ht, Z_ARRVAL_PP(source), NULL, &temp, sizeof(zval*));
+  
+  Z_TYPE_P(dest) = IS_ARRAY;
+  Z_ARRVAL_P(dest) = ht;
+
+  return dest;
+}
+
 static int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC) {
   zval *db, *name, *data, *result, temp, **members, **ok, **member;
   HashTable *hash;
@@ -1409,14 +1429,19 @@ static int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC) {
       // TODO: maybe we haven't recorded this member yet?
       continue;
     }
-
-    if (zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name),
-                         Z_STRLEN_PP(name)+1, (void*)member, sizeof(zval*),
-                         NULL) == FAILURE) {
-      // TODO: ...I don't know what to do here
-      continue;
+    
+    if (link->persist) {
+      zval *dest = pcopy_member_status(member TSRMLS_CC);
+      zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name),
+                       Z_STRLEN_PP(name)+1, (void*)dest, sizeof(zval*),
+                       NULL);
+      zval_ptr_dtor(&dest);
     }
-    zval_add_ref(member);
+    else {
+      zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name),
+                       Z_STRLEN_PP(name)+1, (void*)member, sizeof(zval*),
+                       NULL);
+    }
   }
 
   zval_ptr_dtor(&result);
@@ -1974,12 +1999,12 @@ static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC)
  
   // add this to the hosts list
   if (link->rs && link->server_set->hosts) {
-    zval *null_p;
-    MAKE_STD_ZVAL(null_p);
-    ZVAL_NULL(null_p);
-  
+    zval n, *null_p;
+    Z_TYPE(n) = IS_NULL;
+    null_p = &n;
+    
     zend_hash_add(link->server_set->hosts, server->label, strlen(server->label)+1,
-                  &null_p, sizeof(zval), NULL);
+                  &null_p, sizeof(zval*), NULL);
   }
   
   return server;
@@ -2155,6 +2180,7 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       }
     
       // now that we've replaced the host list, start over
+      zval_ptr_dtor(&response);
       current = link->server_set->server;
       continue;
     }
