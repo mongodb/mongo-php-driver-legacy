@@ -108,6 +108,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
         unset($m1);
       
         $c = $m2->selectCollection("foo","bar");
+        $c->setSlaveOkay(true);
         $c->findOne();
     }
 
@@ -217,6 +218,12 @@ class MongoTest extends PHPUnit_Framework_TestCase
     public function testDropDB() {
         $this->object->connect();
         $c = $this->object->selectCollection("temp", "foo");
+        
+        $result = $c->db->command(array("ismaster" => 1));
+        if (!$result['ismaster']) {
+            $this->markTestSkipped("can't test writes on slave");
+            return;
+        }
         $c->insert(array('x' => 1));
 
         $this->object->dropDB("temp");
@@ -442,7 +449,14 @@ class MongoTest extends PHPUnit_Framework_TestCase
       $m = new Mongo("localhost", array("timeout" => "foo"));
       $m = new Mongo("localhost", array("timeout" => array("x" => 1)));
 
-      $c = $m->phpunit->c;
+      $db = $m->phpunit;
+      $result = $db->command(array("ismaster" => 1));
+      if (!$result['ismaster']) {
+        $this->markTestSkipped("can't test writes on slave");
+        return;
+      }
+      
+      $c = $db->c;
       $c->drop();
       $c->insert(array("x" => 1));
       $obj = $c->findOne();
