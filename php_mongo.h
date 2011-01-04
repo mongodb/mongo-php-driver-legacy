@@ -34,6 +34,31 @@
 #ifdef DEBUG
 #define DEBUG_CONN
 #define DEBUG_CURSOR
+
+#define log0(msg) _php_error_log(0, msg, NULL, NULL TSRMLS_CC);
+
+
+#define log1(msg, i1) {                         \
+  char *e;                                      \
+  spprintf(&e, 0, msg, i1);                     \
+  _php_error_log(0, e, NULL, NULL TSRMLS_CC);   \
+  efree(e);                                     \
+  }
+
+#define log2(msg, i1, i2) {                     \
+  char *e;                                      \
+  spprintf(&e, 0, msg, i1, i2);                 \
+  _php_error_log(0, e, NULL, NULL TSRMLS_CC);   \
+  efree(e);                                     \
+  }
+
+#define log3(msg, i1, i2, i3) {                 \
+  char *e;                                      \
+  spprintf(&e, 0, msg, i1, i2, i3);             \
+  _php_error_log(0, e, NULL, NULL TSRMLS_CC);   \
+  efree(e);                                     \
+  }
+
 #endif
 
 // db ops

@@ -772,7 +772,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
   mongo_server *current_server;
 
 #ifdef DEBUG_CONN
-  php_printf("parsing servers\n");
+  log0("parsing servers");
 #endif
 
   hosts_z = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
@@ -878,7 +878,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     char **current_ptr = &current;
 
 #ifdef DEBUG_CONN
-    php_printf("current: %s\n", current);
+    log1("current: %s", current);
 #endif
 
     // method throws exception
@@ -929,7 +929,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
   }
 
 #ifdef DEBUG_CONN
-  php_printf("done parsing\n", current);
+  log1("done parsing", current);
 #endif
 
   return SUCCESS;
@@ -1408,7 +1408,9 @@ static int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC) {
     
     if (zend_hash_find(link->server_set->hosts, Z_STRVAL_PP(name),
                        Z_STRLEN_PP(name)+1, (void**)&host) == FAILURE) {
-      // TODO: maybe we haven't recorded this member yet?
+#ifdef DEBUG_CONN
+      log1("no host named %s", Z_STRVAL_PP(name));
+#endif
       continue;
     }
     
@@ -1961,7 +1963,7 @@ static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC)
   }
 
 #ifdef DEBUG_CONN
-  php_printf("appending to list: %s\n", server->label);
+  log1("appending to list: %s", server->label);
 #endif
 
   // get to the end of the server list
@@ -2032,7 +2034,7 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
   mongo_server *current;
 
 #ifdef DEBUG_CONN
-  php_printf("[c:php_mongo_get_master] servers: %d, rs? %d\n", link->server_set->num, link->rs);
+  log2("[c:php_mongo_get_master] servers: %d, rs? %d", link->server_set->num, link->rs);
 #endif
 
   // for a single connection, return it
@@ -2075,7 +2077,7 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
     // skip anything we're not connected to
     if (!current->connected && FAILURE == php_mongo_connect_nonb(current, link->timeout, errmsg)) {
 #ifdef DEBUG_CONN
-      php_printf("[c:php_mongo_get_master] not connected to %s:%d\n", current->host, current->port);
+      log2("[c:php_mongo_get_master] not connected to %s:%d\n", current->host, current->port);
 #endif
       current = current->next;
       zval_ptr_dtor(&errmsg);
@@ -2134,7 +2136,7 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       link->server_set->num = 0;
       
 #ifdef DEBUG_CONN
-      php_printf("parsing replica set\n");
+      log0("parsing replica set\n");
 #endif
         
       // repopulate
@@ -2205,7 +2207,7 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
       zval_ptr_dtor(&errmsg);
 
 #ifdef DEBUG_CONN
-      php_printf("connected to %s:%d\n", server->host, server->port);
+      log2("connected to %s:%d\n", server->host, server->port);
 #endif
 
       // if successful, we're connected to the master
@@ -2370,7 +2372,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int sock;
   
 #ifdef DEBUG
-  php_printf("hearing something\n");
+  log0("hearing something");
 #endif
 
   LOCK;
@@ -2407,7 +2409,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   // check that this is actually the response we want
   while (cursor->send.request_id != cursor->recv.response_to) {
 #ifdef DEBUG
-    php_printf("request/cursor mismatch: %d vs %d\n", cursor->send.request_id, cursor->recv.response_to);
+    log2("request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
 #endif
 
     // if it's not... 
@@ -2543,7 +2545,7 @@ int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC) {
   int sent = 0, total = 0, status = 1;
 
 #ifdef DEBUG
-  php_printf("saying something\n");
+  log0("saying something");
 #endif
 
   total = buf->pos - buf->start;
@@ -2880,7 +2882,7 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
   ZVAL_NULL(errmsg_holder);
   
 #ifdef DEBUG_CONN
-  php_printf("connecting\n");
+  log0("connecting");
 #endif
 
   while (server) {
@@ -2892,7 +2894,7 @@ static int php_mongo_do_socket_connect(mongo_link *link, zval *errmsg TSRMLS_DC)
       connected |= (status+1);
 
 #ifdef DEBUG_CONN
-      php_printf("%s:%d connected? %s\n", server->host, server->port, status == 0 ? "true" : "false");
+      log3("%s:%d connected? %s\n", server->host, server->port, status == 0 ? "true" : "false");
 #endif
 
       if (Z_TYPE_P(errmsg_holder) == IS_STRING) {
