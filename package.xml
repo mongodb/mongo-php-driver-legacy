@@ -53,6 +53,8 @@
    <file role="src" name="cursor.h"/>
    <file role="src" name="gridfs.c"/>
    <file role="src" name="gridfs.h"/>
+   <file role="src" name="util/hash.c"/>
+   <file role="src" name="util/hash.h"/>
   </dir>
  </contents>
  <dependencies>
