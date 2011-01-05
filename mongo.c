@@ -1840,8 +1840,14 @@ PHP_METHOD(Mongo, getHosts) {
   }
   
   array_init(return_value);
-  zend_hash_copy(Z_ARRVAL_P(return_value), link->server_set->hosts,
-                 (copy_ctor_func_t)mongo_util_hash_copy_to_np, &temp, sizeof(zval*));
+  if (link->persist) {
+    zend_hash_copy(Z_ARRVAL_P(return_value), link->server_set->hosts,
+                   (copy_ctor_func_t)mongo_util_hash_copy_to_np, &temp, sizeof(zval*));
+  }
+  else {
+    zend_hash_copy(Z_ARRVAL_P(return_value), link->server_set->hosts,
+                   (copy_ctor_func_t)zval_add_ref, &temp, sizeof(zval*));
+  }
 }
 
 PHP_METHOD(Mongo, getSlave) {
