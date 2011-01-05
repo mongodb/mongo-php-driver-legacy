@@ -1990,8 +1990,13 @@ static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC)
   // add this to the hosts list
   if (link->rs && link->server_set->hosts) {
     zval *null_p;
-    null_p = (zval*)malloc(sizeof(zval));
-    INIT_PZVAL(null_p);
+    if (link->persist) {
+      null_p = (zval*)malloc(sizeof(zval));
+      INIT_PZVAL(null_p);
+    }
+    else {
+      MAKE_STD_ZVAL(null_p);
+    }
     Z_TYPE_P(null_p) = IS_NULL;
     
     zend_hash_add(link->server_set->hosts, server->label, strlen(server->label)+1,
