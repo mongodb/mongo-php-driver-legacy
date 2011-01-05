@@ -2620,6 +2620,7 @@ mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_D
     MAKE_STD_ZVAL(fake_zval);
     object_init_ex(fake_zval, mongo_ce_Mongo);
     fake_link = (mongo_link*)zend_object_store_get_object(fake_zval TSRMLS_CC);
+    fake_link->persist = link->persist;
     fake_link->server_set = link->server_set;
 
     get_heartbeats(fake_zval, &(Z_STRVAL_P(errmsg)) TSRMLS_CC);
@@ -2967,6 +2968,7 @@ static int php_mongo_do_authenticate(mongo_link *link, zval *errmsg TSRMLS_DC) {
   MAKE_STD_ZVAL(connection);
   object_init_ex(connection, mongo_ce_Mongo);
   temp_link = (mongo_link*)zend_object_store_get_object(connection TSRMLS_CC);
+  temp_link->persist = link->persist;
   temp_link->server_set = (mongo_server_set*)emalloc(sizeof(mongo_server_set));
   temp_link->server_set->num = 1;
   temp_link->server_set->slaves = 0;
