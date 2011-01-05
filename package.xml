@@ -13,7 +13,7 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2010-01-05</date>
+ <date>2011-01-05</date>
  <time>12:00:00</time>
  <version>
   <release>1.1.1</release>
@@ -75,7 +75,7 @@
     <release>1.1.1</release>
     <api>1.1.1</api>
    </version>
-   <date>2010-01-05</date>
+   <date>2011-01-05</date>
    <notes>
     Fixed replica set persistent connection bug (PHP-184).  
     Make logging build use PHP logs.
