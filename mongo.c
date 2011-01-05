@@ -1022,7 +1022,7 @@ PHP_METHOD(Mongo, __construct) {
   /* new format */
   if (options) {
     if (!IS_SCALAR_P(options)) {
-      zval **connect_z, **persist_z, **timeout_z, **replica_z, **slave_okay_z;
+      zval **connect_z, **persist_z, **timeout_z, **replica_z, **slave_okay_z, **username_z, **password_z;
 
       if (zend_hash_find(HASH_P(options), "connect", strlen("connect")+1, (void**)&connect_z) == SUCCESS) {
         connect = Z_BVAL_PP(connect_z);
@@ -1059,6 +1059,14 @@ PHP_METHOD(Mongo, __construct) {
 
       if (zend_hash_find(HASH_P(options), "slaveOkay", strlen("slaveOkay")+1, (void**)&slave_okay_z) == SUCCESS) {
         link->slave_okay = Z_BVAL_PP(slave_okay_z);
+      }
+      if (zend_hash_find(HASH_P(options), "username", sizeof("username"), (void**)&username_z) == SUCCESS) {
+        zval_add_ref(username_z);
+        link->username = *username_z;
+      }
+      if (zend_hash_find(HASH_P(options), "password", sizeof("password"), (void**)&password_z) == SUCCESS) {
+        zval_add_ref(password_z);
+        link->password = *password_z;
       }
     }
     else {
