@@ -1419,12 +1419,12 @@ static int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC) {
       if (mongo_util_hash_to_pzval(&dest, member TSRMLS_CC) == FAILURE) {
         return FAILURE;
       }
-      zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name), sizeof(name),
-                       (void*)&dest, sizeof(zval*), NULL);
+      zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name),
+                       Z_STRLEN_PP(name)+1, (void*)&dest, sizeof(zval*), NULL);
     }
     else {
-      zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name), sizeof(name),
-                       (void*)member, sizeof(zval*), NULL);
+      zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name),
+                       Z_STRLEN_PP(name)+1, (void*)member, sizeof(zval*), NULL);
       zval_add_ref(member);
     }
   }
