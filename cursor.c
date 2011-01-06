@@ -522,7 +522,7 @@ PHP_METHOD(MongoCursor, info)
     
   add_assoc_bool(return_value, "started_iterating", cursor->started_iterating);
   if (cursor->started_iterating) {
-    add_assoc_long(return_value, "id", cursor->cursor_id);
+    add_assoc_long(return_value, "id", (long)cursor->cursor_id);
     add_assoc_long(return_value, "at", cursor->at);
     add_assoc_long(return_value, "numReturned", cursor->num);
     add_assoc_string(return_value, "server", cursor->server->label, 1);
@@ -738,7 +738,7 @@ PHP_METHOD(MongoCursor, next) {
           code = Z_LVAL_PP(code_z);
         }
         else if (Z_TYPE_PP(code_z) == IS_DOUBLE) {
-          code = Z_DVAL_PP(code_z);
+          code = (int)Z_DVAL_PP(code_z);
         }
         // else code == 4
         

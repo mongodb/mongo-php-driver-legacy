@@ -482,10 +482,13 @@ PHP_METHOD(MongoDB, command) {
   // create cursor
   MAKE_STD_ZVAL(cursor);
   object_init_ex(cursor, mongo_ce_Cursor);
-  MONGO_METHOD3(MongoCursor, __construct, temp, cursor, db->link, ns, cmd); 
-
+  MAKE_STD_ZVAL(temp);
+  ZVAL_NULL(temp);
+  
+  MONGO_METHOD3(MongoCursor, __construct, temp, cursor, db->link, ns, cmd);
+  
   zval_ptr_dtor(&ns);
-
+  zval_ptr_dtor(&temp);
   MAKE_STD_ZVAL(temp);
   ZVAL_NULL(temp);
   

@@ -268,7 +268,6 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   char quickbuf[128];
   buffer buf;
   zval temp;
-  mongo_server *server;
 
   /* 
    * If the cursor_id is 0, the db is out of results anyway.
@@ -1607,8 +1606,6 @@ PHP_METHOD(Mongo, close) {
 /* }}} */
 
 static char* stringify_server(mongo_server *server, char *str, int *pos, int *len) {
-  char *port;
-
   // length: "[" + strlen(hostname) + ":" + strlen(port (maxint=12)) + "]"
   if (*len - *pos < (int)strlen(server->host)+15) {
     int new_len = *len + 256 + (2 * (strlen(server->host)+15));
@@ -1863,7 +1860,6 @@ PHP_METHOD(Mongo, getSlave) {
 
 PHP_METHOD(Mongo, switchSlave) {
   mongo_link *link;
-  int status;
   char *errmsg = 0;
 
   PHP_MONGO_GET_LINK(getThis());
