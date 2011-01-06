@@ -62,13 +62,13 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
         $c = $m->selectCollection("phpunit", "c");
 
         $a = array('_id' => 1);
-        $c->insert($a);
+        $c->insert($a, array("safe" => true));
         $this->assertArrayHasKey('_id', $a);
 
         $c->drop();
         $a = array('x' => 1, '_id' => new MongoId());
         $id = (string)$a['_id'];
-        $c->insert($a);
+        $c->insert($a, array("safe" => true));
         $x = $c->findOne();
 
         $this->assertArrayHasKey('_id', $x);

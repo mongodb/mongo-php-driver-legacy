@@ -73,7 +73,7 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
 
         for($i=0;$i<10;$i++) {
             $c = $this->object->selectCollection("x$i");
-            $c->insert((object)array("foo" => "bar"));
+            $c->insert((object)array("foo" => "bar"), array("safe" => true));
         }
 
         $list = $this->object->listCollections();
@@ -111,7 +111,7 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
         $c = $this->object->selectCollection('foo');
         $c->drop();
         for($i=0;$i<50;$i++) {
-            $c->insert((object)array('x' => rand()));
+            $c->insert((object)array('x' => rand()), array("safe" => true));
         }
         $obj = $c->findOne();
 
@@ -132,7 +132,7 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
         $this->object->command((object)array('profile' => 0));
         $x = $this->object->command((object)array('profile' => 1));
         $this->assertEquals($x['was'], 0, json_encode($x));
-        $this->assertEquals((bool)$x['ok'], true);
+        $this->assertEquals((bool)$x['ok'], true, json_encode($x));
     }
 
     public function testCreateRef() {

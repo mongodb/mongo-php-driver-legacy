@@ -68,10 +68,6 @@ class MongoTimestampTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(60, $n->sec);
         $this->assertEquals(30, $n->inc);
 
-        $n = new MongoTimestamp("foo", "bar");
-        $this->assertEquals(0, $n->sec);
-        $this->assertEquals(0, $n->inc);
-
         $n = new MongoTimestamp(60.123, "40");
         $this->assertEquals(60, $n->sec);
         $this->assertEquals(40, $n->inc);
