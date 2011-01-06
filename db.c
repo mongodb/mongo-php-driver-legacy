@@ -257,8 +257,10 @@ PHP_METHOD(MongoDB, createCollection) {
 
   zval_ptr_dtor(&data);
 
-  // get the collection we just created
-  MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), collection);
+  if (!EG(exception)) {
+    // get the collection we just created
+    MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), collection);
+  }
 }
 
 PHP_METHOD(MongoDB, dropCollection) {
