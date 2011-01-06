@@ -33,7 +33,8 @@ void mongo_util_hash_copy_to_p(void *pDest) {
 
   switch (Z_TYPE_PP(p)) {
   case IS_STRING: {
-    Z_STRVAL_PP(p) = strndup(Z_STRVAL_P(temp), Z_STRLEN_P(temp));
+    Z_STRVAL_PP(p) = (char*)malloc(Z_STRLEN_P(temp)+1);
+    memcpy(Z_STRVAL_PP(p), Z_STRVAL_P(temp), Z_STRLEN_P(temp)+1);
     break;
   }
   case IS_ARRAY: {
