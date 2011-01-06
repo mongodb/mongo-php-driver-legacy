@@ -4,7 +4,10 @@
 ARG_ENABLE("mongo", "MongoDB support", "no");
 
 if (PHP_MONGO != "no") {
-  EXTENSION('mongo', 'mongo.c mongo_types.c bson.c cursor.c collection.c db.c gridfs.c util/hash.c');
+  ADD_FLAG("CFLAGS", "/I $(BUILD_DIR)/util");
+  ADD_FLAG("LDFLAGS", "/libpath:$(BUILD_DIR)/util");
   
+  EXTENSION('mongo', 'mongo.c mongo_types.c bson.c cursor.c collection.c db.c gridfs.c util/hash.c'); 
+ 
   AC_DEFINE('HAVE_MONGO', 1);
 }
