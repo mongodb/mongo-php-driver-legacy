@@ -3,7 +3,14 @@ require_once 'PHPUnit/Framework.php';
 
 class MongoInt32Test extends PHPUnit_Framework_TestCase
 {
-	function setup()
+    
+        public function __call($method, $args) {
+                if ($method == 'assertInternalType') {
+                        $this->assertType($args[0], $args[1]);
+                }
+        }
+
+        function setup()
 	{
 		if (PHP_INT_SIZE != 4) {
 			$this->markTestSkipped("Only for 32 bit platforms");
