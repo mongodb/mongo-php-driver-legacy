@@ -16,7 +16,7 @@
  */
 
 #include <php.h>
-#include "util/hash.h"
+#include "hash.h"
 
 /**
  * Removes objects and arrays (called before copying hashes)
