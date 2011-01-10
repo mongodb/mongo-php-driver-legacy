@@ -58,6 +58,14 @@ class MongoCollectionTest2 extends PHPUnit_Framework_TestCase
     public function testIndexNameLen2() {
       $this->object->ensureIndex(array("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz" => 1));
     }
+
+    /**
+     * @expectedException Exception 
+     */
+    public function testCtor() {
+        $db = $this->object->db;
+        $c = new MongoCollection($db, "");
+    }
 }
 
 ?>
