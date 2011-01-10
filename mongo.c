@@ -49,6 +49,7 @@
 #include "mongo_types.h"
 #include "bson.h"
 #include "util/hash.h"
+#include "util/connect.h"
 
 extern zend_class_entry *mongo_ce_DB, 
   *mongo_ce_CursorException,
@@ -623,6 +624,9 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   mongo_globals->response_num = 0;
   mongo_globals->errmsg = 0;
 
+  mongo_globals->max_doc_size = 4 * 1024 * 1024;
+  mongo_globals->max_send_size = 64 * 1024 * 1024;
+  
   hostname = host_start;
   // from the gnu manual:
   //     gethostname stores the beginning of the host name in name even if the 
@@ -1111,6 +1115,10 @@ PHP_METHOD(Mongo, __construct) {
   // save_persistent_connection can throw (although it's unlikely)
   if (!EG(exception) && connect) {
     MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
+
+    if (!EG(exception)) {
+      mongo_util_conn_get_buildinfo(getThis() TSRMLS_CC);
+    }
   }
 } 
 /* }}} */
@@ -2317,12 +2325,11 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     zend_throw_exception(mongo_ce_CursorException, "no db response", 5 TSRMLS_CC);
     return FAILURE;
   }
-  else if (cursor->recv.length > MAX_RESPONSE_LEN ||
-           cursor->recv.length < REPLY_HEADER_SIZE) {
+  else if (cursor->recv.length < REPLY_HEADER_SIZE) {
     php_mongo_disconnect_link(cursor->link);
     zend_throw_exception_ex(mongo_ce_CursorException, 6 TSRMLS_CC, 
                             "bad response length: %d, max: %d, did the db assert?", 
-                            cursor->recv.length, MAX_RESPONSE_LEN);
+                            cursor->recv.length, PG(memory_limit));
     return FAILURE;
   }
 

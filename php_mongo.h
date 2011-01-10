@@ -79,11 +79,8 @@
 #define MSG_HEADER_SIZE 16
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
 #define INITIAL_BUF_SIZE 4096
-// should only be 4Mb
-#define MAX_RESPONSE_LEN 67108864
-#define MAX_OBJECT_LEN 4194304
 #define DEFAULT_CHUNK_SIZE (256*1024)
-#define INVALID_STRING_LEN(len) (len < 0 || len > MAX_RESPONSE_LEN)
+#define INVALID_STRING_LEN(len) (len < 0 || len > MonGlo(max_doc_size))
 
 #define PHP_MONGO_DEFAULT_TIMEOUT 10000
 
@@ -682,6 +679,8 @@ int inc, pid, machine;
 int ts_inc;
 char *errmsg;
 int response_num;
+int max_doc_size;
+int max_send_size;
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS
