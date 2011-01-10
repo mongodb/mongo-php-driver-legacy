@@ -3,7 +3,14 @@ require_once 'PHPUnit/Framework.php';
 
 class MongoInt32Test extends PHPUnit_Framework_TestCase
 {
-	function setup()
+    
+        public function __call($method, $args) {
+                if ($method == 'assertInternalType') {
+                        $this->assertType($args[0], $args[1]);
+                }
+        }
+
+        function setup()
 	{
 		if (PHP_INT_SIZE != 4) {
 			$this->markTestSkipped("Only for 32 bit platforms");
@@ -47,7 +54,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$c = $this->object;
 		$c->insert(array('int64' => 123456789012345));
 		$x = $c->findOne();
-		$this->assertType('float', $x['int64']);
+		$this->assertInternalType('float', $x['int64']);
 		$this->assertSame(123456789012345, $x['int64']);
 	}
 
@@ -58,7 +65,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$c = $this->object;
 		$c->insert(array('int64' => 123456789012345));
 		$x = $c->findOne();
-		$this->assertType('float', $x['int64']);
+		$this->assertInternalType('float', $x['int64']);
 		$this->assertSame(123456789012345, $x['int64']);
 	}
 
@@ -120,7 +127,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$c = $this->object;
 		$c->insert(array('int64' => new MongoInt64(1234567890)));
 		$x = $c->findOne();
-		$this->assertType('float', $x['int64']);
+		$this->assertInternalType('float', $x['int64']);
 		$this->assertSame(1234567890.0, $x['int64']);
 	}
 
@@ -129,7 +136,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$c = $this->object;
 		$c->insert(array('int64' => new MongoInt64(123456789012345)));
 		$x = $c->findOne();
-		$this->assertType('float', $x['int64']);
+		$this->assertInternalType('float', $x['int64']);
 		$this->assertSame(1.0, $x['int64']);
 	}
 
@@ -240,7 +247,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$c = $this->object;
 		$c->insert(array('int64' => new MongoInt64('1234567890')));
 		$x = $c->findOne();
-		$this->assertType('float', $x['int64']);
+		$this->assertInternalType('float', $x['int64']);
 		$this->assertSame(1234567890.0, $x['int64']);
 	}
 
@@ -249,7 +256,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$c = $this->object;
 		$c->insert(array('int64' => new MongoInt64('123456789012345')));
 		$x = $c->findOne();
-		$this->assertType('float', $x['int64']);
+		$this->assertInternalType('float', $x['int64']);
 		$this->assertSame(123456789012345.0, $x['int64']);
 	}
 
@@ -328,7 +335,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$c = $this->object;
 		$c->insert(array('int64' => new MongoInt64(123456789012345678901234567890)));
 		$x = $c->findOne();
-		$this->assertType('float', $x['int64']);
+		$this->assertInternalType('float', $x['int64']);
 		$this->assertSame((double) 1, $x['int64']);
 	}
 
@@ -337,7 +344,7 @@ class MongoInt32Test extends PHPUnit_Framework_TestCase
 		$c = $this->object;
 		$c->insert(array('int64' => new MongoInt64('123456789012345678901234567890')));
 		$x = $c->findOne();
-		$this->assertType('float', $x['int64']);
+		$this->assertInternalType('float', $x['int64']);
 		$this->assertSame(9223372036854775807, $x['int64']);
 	}
 }

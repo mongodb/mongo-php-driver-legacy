@@ -17,48 +17,48 @@ class MinMaxKeyTest extends PHPUnit_Framework_TestCase
 
 
     public function testMin() {
-      $this->object->insert(array("x" => new MongoMinKey));
-      $x = $this->object->findOne();
-      $this->assertTrue($x['x'] instanceof MongoMinKey);
+        $this->object->insert(array("x" => new MongoMinKey), array("safe" => true));
+        $x = $this->object->findOne();
+        $this->assertTrue($x['x'] instanceof MongoMinKey);
     }
 
     public function testMax() {
-      $this->object->insert(array("x" => new MongoMaxKey));
-      $x = $this->object->findOne();
-      $this->assertTrue($x['x'] instanceof MongoMaxKey);
+        $this->object->insert(array("x" => new MongoMaxKey), array("safe" => true));
+        $x = $this->object->findOne();
+        $this->assertTrue($x['x'] instanceof MongoMaxKey);
     }
 
     public function testMinMax() {
-      $this->object->insert(array("x" => 3));
-      $this->object->insert(array("x" => 2.9));
-      $this->object->insert(array("x" => new MongoDate()));
-      $this->object->insert(array("x" => true));
-      $this->object->insert(array("x" => null));
-      $this->object->insert(array("x" => new MongoMaxKey()));
-      $this->object->insert(array("x" => new MongoMinKey()));
+        $this->object->insert(array("x" => 3), array("safe" => true));
+        $this->object->insert(array("x" => 2.9), array("safe" => true));
+        $this->object->insert(array("x" => new MongoDate()), array("safe" => true));
+        $this->object->insert(array("x" => true), array("safe" => true));
+        $this->object->insert(array("x" => null), array("safe" => true));
+        $this->object->insert(array("x" => new MongoMaxKey()), array("safe" => true));
+        $this->object->insert(array("x" => new MongoMinKey()), array("safe" => true));
+        
+        $cursor = $this->object->find()->sort(array("x" => 1));
 
-      $cursor = $this->object->find()->sort(array("x" => 1));
+        $obj = $cursor->getNext();
+        $this->assertTrue($obj['x'] instanceof MongoMinKey, json_encode($obj));
 
-      $obj = $cursor->getNext();
-      $this->assertTrue($obj['x'] instanceof MongoMinKey, json_encode($obj));
+        $obj = $cursor->getNext();
+        $this->assertEquals(null, $obj['x'], json_encode($obj));
+        
+        $obj = $cursor->getNext();
+        $this->assertEquals(2.9, $obj['x'], json_encode($obj));
+        
+        $obj = $cursor->getNext();
+        $this->assertEquals(3, $obj['x'], json_encode($obj));
+        
+        $obj = $cursor->getNext();
+        $this->assertEquals(true, $obj['x'], json_encode($obj));
 
-      $obj = $cursor->getNext();
-      $this->assertEquals(null, $obj['x'], json_encode($obj));
+        $obj = $cursor->getNext();
+        $this->assertTrue($obj['x'] instanceof MongoDate, json_encode($obj));
 
-      $obj = $cursor->getNext();
-      $this->assertEquals(2.9, $obj['x'], json_encode($obj));
-
-      $obj = $cursor->getNext();
-      $this->assertEquals(3, $obj['x'], json_encode($obj));
-
-      $obj = $cursor->getNext();
-      $this->assertEquals(true, $obj['x'], json_encode($obj));
-
-      $obj = $cursor->getNext();
-      $this->assertTrue($obj['x'] instanceof MongoDate, json_encode($obj));
-
-      $obj = $cursor->getNext();
-      $this->assertTrue($obj['x'] instanceof MongoMaxKey, json_encode($obj));
+        $obj = $cursor->getNext();
+        $this->assertTrue($obj['x'] instanceof MongoMaxKey, json_encode($obj));
     }
 
 

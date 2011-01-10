@@ -257,8 +257,10 @@ PHP_METHOD(MongoDB, createCollection) {
 
   zval_ptr_dtor(&data);
 
-  // get the collection we just created
-  MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), collection);
+  if (!EG(exception)) {
+    // get the collection we just created
+    MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), collection);
+  }
 }
 
 PHP_METHOD(MongoDB, dropCollection) {
@@ -482,10 +484,13 @@ PHP_METHOD(MongoDB, command) {
   // create cursor
   MAKE_STD_ZVAL(cursor);
   object_init_ex(cursor, mongo_ce_Cursor);
-  MONGO_METHOD3(MongoCursor, __construct, temp, cursor, db->link, ns, cmd); 
-
+  MAKE_STD_ZVAL(temp);
+  ZVAL_NULL(temp);
+  
+  MONGO_METHOD3(MongoCursor, __construct, temp, cursor, db->link, ns, cmd);
+  
   zval_ptr_dtor(&ns);
-
+  zval_ptr_dtor(&temp);
   MAKE_STD_ZVAL(temp);
   ZVAL_NULL(temp);
   

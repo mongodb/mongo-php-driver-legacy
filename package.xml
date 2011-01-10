@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2011-01-05</date>
- <time>13:00:00</time>
+ <date>2011-01-06</date>
+ <time>12:00:00</time>
  <version>
-  <release>1.1.2</release>
-  <api>1.1.2</api>
+  <release>1.1.3</release>
+  <api>1.1.3</api>
  </version>
  <stability>
   <release>stable</release>
@@ -25,7 +25,7 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Fixed PECL packaging.
+  Fixed non-persistent connection regression.
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -63,6 +63,20 @@
  <providesextension>mongo</providesextension> 
  <extsrcrelease/>
  <changelog> 
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.1.3</release>
+    <api>1.1.3</api>
+   </version>
+   <date>2011-01-06</date>
+   <notes>
+    Fixed non-persistent connection regression.
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>

@@ -268,7 +268,6 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   char quickbuf[128];
   buffer buf;
   zval temp;
-  mongo_server *server;
 
   /* 
    * If the cursor_id is 0, the db is out of results anyway.
@@ -1427,12 +1426,12 @@ static int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC) {
       if (mongo_util_hash_to_pzval(&dest, member TSRMLS_CC) == FAILURE) {
         return FAILURE;
       }
-      zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name), sizeof(name),
-                       (void*)&dest, sizeof(zval*), NULL);
+      zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name),
+                       Z_STRLEN_PP(name)+1, (void*)&dest, sizeof(zval*), NULL);
     }
     else {
-      zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name), sizeof(name),
-                       (void*)member, sizeof(zval*), NULL);
+      zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name),
+                       Z_STRLEN_PP(name)+1, (void*)member, sizeof(zval*), NULL);
       zval_add_ref(member);
     }
   }
@@ -1615,8 +1614,6 @@ PHP_METHOD(Mongo, close) {
 /* }}} */
 
 static char* stringify_server(mongo_server *server, char *str, int *pos, int *len) {
-  char *port;
-
   // length: "[" + strlen(hostname) + ":" + strlen(port (maxint=12)) + "]"
   if (*len - *pos < (int)strlen(server->host)+15) {
     int new_len = *len + 256 + (2 * (strlen(server->host)+15));
@@ -1871,7 +1868,6 @@ PHP_METHOD(Mongo, getSlave) {
 
 PHP_METHOD(Mongo, switchSlave) {
   mongo_link *link;
-  int status;
   char *errmsg = 0;
 
   PHP_MONGO_GET_LINK(getThis());
