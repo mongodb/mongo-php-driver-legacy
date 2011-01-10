@@ -59,12 +59,22 @@ PHP_METHOD(MongoCollection, __construct) {
   zval *parent, *name, *zns, *w, *wtimeout, **slave_okay = 0;
   mongo_collection *c;
   mongo_db *db;
-  char *ns;
+  char *ns, *name_str;
+  int name_len;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &parent, mongo_ce_DB, &name) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &parent, mongo_ce_DB, &name_str, &name_len) == FAILURE) {
     return;
   }
-  convert_to_string(name);
+
+  // check for empty collection name
+  if (name_len == 0) {
+#if ZEND_MODULE_API_NO >= 20060613
+    zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name);
+#else
+    zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name);
+#endif /* ZEND_MODULE_API_NO >= 20060613 */
+    return;    
+  }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
@@ -76,8 +86,9 @@ PHP_METHOD(MongoCollection, __construct) {
   c->parent = parent;
   zval_add_ref(&parent);
 
+  MAKE_STD_ZVAL(name);
+  ZVAL_STRINGL(name, name_str, name_len, 1);
   c->name = name;
-  zval_add_ref(&name);
 
   spprintf(&ns, 0, "%s.%s", Z_STRVAL_P(db->name), Z_STRVAL_P(name));
 
