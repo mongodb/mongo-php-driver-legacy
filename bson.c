@@ -492,8 +492,8 @@ void php_mongo_serialize_ts(buffer *buf, zval *time TSRMLS_DC) {
   ts = zend_read_property(mongo_ce_Timestamp, time, "sec", strlen("sec"), NOISY TSRMLS_CC);
   inc = zend_read_property(mongo_ce_Timestamp, time, "inc", strlen("inc"), NOISY TSRMLS_CC);
 
-  php_mongo_serialize_int(buf, Z_LVAL_P(ts));
   php_mongo_serialize_int(buf, Z_LVAL_P(inc));
+  php_mongo_serialize_int(buf, Z_LVAL_P(ts));
 }
 
 void php_mongo_serialize_byte(buffer *buf, char b) {
@@ -1132,9 +1132,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
      */
     case BSON_TIMESTAMP: {
       object_init_ex(value, mongo_ce_Timestamp);
-      zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), MONGO_32(*(int*)buf) TSRMLS_CC);
-      buf += INT_32;
       zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), MONGO_32(*(int*)buf) TSRMLS_CC);
+      buf += INT_32;
+      zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), MONGO_32(*(int*)buf) TSRMLS_CC);
       buf += INT_32;
       break;
     }

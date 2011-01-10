@@ -10,6 +10,7 @@ class MongoTimestampTest extends PHPUnit_Framework_TestCase
     public function setUp() {
         $m = new Mongo();
         $this->object = $m->selectCollection("phpunit", "ts");
+        $this->object->drop();
     }
 
     public function testBasic() {
@@ -90,6 +91,14 @@ class MongoTimestampTest extends PHPUnit_Framework_TestCase
       $ts1 = new MongoTimestamp;
       $ts2 = new MongoTimestamp;
       $this->assertEquals($ts1->inc+1, $ts2->inc);
+    }
+
+    public function testToString() {
+        $ts = new MongoTimestamp();
+        $sec = $ts->sec;
+        $this->object->insert(array("ts" => $ts), array("safe" => true));
+        $doc = $this->object->findOne();
+        $this->assertEquals("$sec", $doc["ts"]."", json_encode($doc["ts"]));
     }
 }
 
