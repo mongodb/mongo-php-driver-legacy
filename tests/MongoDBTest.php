@@ -126,7 +126,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         }
 
         $this->assertEquals((string)$this->object->selectCollection('x'), 'phpunit.x');
-        $this->assertEquals((string)$this->object->selectCollection(''), 'phpunit.');
         $this->assertEquals((string)$this->object->selectCollection('..'), 'phpunit...');
         $this->assertEquals((string)$this->object->selectCollection('a b c'), 'phpunit.a b c');
     }
