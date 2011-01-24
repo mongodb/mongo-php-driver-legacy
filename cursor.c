@@ -558,8 +558,9 @@ PHP_METHOD(MongoCursor, explain) {
 
   MONGO_METHOD(MongoCursor, getNext, return_value, getThis());
 
-  // reset to original limit
+  // reset cursor to original state
   cursor->limit = temp_limit;
+  zend_hash_del(HASH_P(cursor->query), "$explain", strlen("$explain")+1);
 }
 /* }}} */
 
