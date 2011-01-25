@@ -791,11 +791,16 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
     }
 
     public function testExplainReset() {
+        $this->object->insert(array("x"=>"abc"), array('safe' => true));
+        
         $cursor = $this->object->find();
         $qp = $cursor->explain();
         $info = $cursor->info();
         $this->assertTrue(!array_key_exists('$explain', $info['query']));
         $this->assertTrue(array_key_exists('$query', $info['query']));
+        
+        $doc = $cursor->getNext();
+        $this->assertEquals('abc', $doc['x'], json_encode($doc));
     }
 }
 ?>
