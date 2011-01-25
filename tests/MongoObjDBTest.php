@@ -124,7 +124,7 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
 
     public function testDBCommand() {
         $x = $this->object->command((object)array());
-        $this->assertEquals($x['errmsg'], "no such cmd");
+        $this->assertEquals(0, strpos($x['errmsg'], "no such cmd"), json_encode($x));
         $this->assertEquals((bool)$x['ok'], false);
 
         $created = $this->object->createCollection("system.profile", true, 5000);
