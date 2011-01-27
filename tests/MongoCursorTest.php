@@ -802,5 +802,14 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $doc = $cursor->getNext();
         $this->assertEquals('abc', $doc['x'], json_encode($doc));
     }
+
+    public function testPartial() {
+        $cursor = $this->object->find();
+        $cursor->partial()->partial(true)->partial(false);
+        $cursor->hasNext();
+        $cursor->reset();
+        $cursor->partial(true);
+        $cursor->hasNext();
+    }
 }
 ?>
