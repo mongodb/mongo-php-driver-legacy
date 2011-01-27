@@ -22,15 +22,12 @@ class MongoCollectionTest2 extends PHPUnit_Framework_TestCase
     
     public function testFsyncOpt() {
         $result = $this->object->insert(array("x" => 1), array("fsync" => 1));
-        $this->assertArrayHasKey("fsyncFiles", $result);
+        $this->assertArrayHasKey("waited", $result, json_encode($result));
     }
 
-    /**
-     * @expectedException MongoCursorException 
-     */
     public function testSafeW() {
         $result = $this->object->insert(array("category" => "fruit", "name" => "apple"), array("safe" => 3));
-        $this->assertArrayHasKey("wtime", $result);
+        $this->assertArrayHasKey("wtime", $result, json_encode($result));
     }
 
     public function testFields() {

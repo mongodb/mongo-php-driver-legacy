@@ -534,7 +534,7 @@ PHP_METHOD(MongoCursor, info)
  */
 PHP_METHOD(MongoCursor, explain) {
   int temp_limit;
-  zval *explain, *yes;
+  zval *explain, *yes, *temp = 0;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
@@ -558,8 +558,14 @@ PHP_METHOD(MongoCursor, explain) {
 
   MONGO_METHOD(MongoCursor, getNext, return_value, getThis());
 
-  // reset to original limit
+  // reset cursor to original state
   cursor->limit = temp_limit;
+  zend_hash_del(HASH_P(cursor->query), "$explain", strlen("$explain")+1);
+
+  MAKE_STD_ZVAL(temp);
+  ZVAL_NULL(temp);
+  MONGO_METHOD(MongoCursor, reset, temp, getThis());
+  zval_ptr_dtor(&temp);
 }
 /* }}} */
 
