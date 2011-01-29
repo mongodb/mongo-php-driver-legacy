@@ -2292,7 +2292,7 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     }
   }
 
-  if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) == FAILURE) {
+  if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) < INT_32) {
 
     php_mongo_disconnect_link(cursor->link);
 
@@ -2318,9 +2318,9 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     return FAILURE;
   }
 
-  if (recv(sock, (char*)&cursor->recv.request_id, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->recv.response_to, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->recv.op, INT_32, FLAGS) == FAILURE) {
+  if (recv(sock, (char*)&cursor->recv.request_id, INT_32, FLAGS) < INT_32 ||
+      recv(sock, (char*)&cursor->recv.response_to, INT_32, FLAGS) < INT_32 ||
+      recv(sock, (char*)&cursor->recv.op, INT_32, FLAGS) < INT_32) {
     zend_throw_exception(mongo_ce_CursorException, "incomplete header", 7 TSRMLS_CC);
     return FAILURE;
   }
@@ -2339,10 +2339,10 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
   int num_returned = 0;
 
-  if (recv(sock, (char*)&cursor->flag, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
+  if (recv(sock, (char*)&cursor->flag, INT_32, FLAGS) < INT_32 ||
+      recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) < INT_64 ||
+      recv(sock, (char*)&cursor->start, INT_32, FLAGS) < INT_32 ||
+      recv(sock, (char*)&num_returned, INT_32, FLAGS) < INT_32) {
     zend_throw_exception(mongo_ce_CursorException, "incomplete response", 8 TSRMLS_CC);
     return FAILURE;
   }
