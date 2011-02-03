@@ -2026,16 +2026,10 @@ static zval* create_fake_cursor(mongo_link *link TSRMLS_DC) {
   MAKE_STD_ZVAL(cursor_zval);
   object_init_ex(cursor_zval, mongo_ce_Cursor);
 
-  // query = { query : { ismaster : 1 } }
+  // query = { ismaster : 1 }
   MAKE_STD_ZVAL(query);
   array_init(query);
-
-  // is_master = { ismaster : 1 }
-  MAKE_STD_ZVAL(is_master);
-  array_init(is_master);
-
-  add_assoc_long(is_master, "ismaster", 1);
-  add_assoc_zval(query, "query", is_master);
+  add_assoc_long(query, "ismaster", 1);
 
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
 
@@ -2308,7 +2302,7 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     }
   }
 
-  if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) == FAILURE) {
+  if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) < INT_32) {
 
     php_mongo_disconnect_link(cursor->link);
 
@@ -2333,9 +2327,9 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     return FAILURE;
   }
 
-  if (recv(sock, (char*)&cursor->recv.request_id, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->recv.response_to, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->recv.op, INT_32, FLAGS) == FAILURE) {
+  if (recv(sock, (char*)&cursor->recv.request_id, INT_32, FLAGS) < INT_32 ||
+      recv(sock, (char*)&cursor->recv.response_to, INT_32, FLAGS) < INT_32 ||
+      recv(sock, (char*)&cursor->recv.op, INT_32, FLAGS) < INT_32) {
     zend_throw_exception(mongo_ce_CursorException, "incomplete header", 7 TSRMLS_CC);
     return FAILURE;
   }
@@ -2354,10 +2348,10 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
   int num_returned = 0;
 
-  if (recv(sock, (char*)&cursor->flag, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) == FAILURE ||
-      recv(sock, (char*)&cursor->start, INT_32, FLAGS) == FAILURE ||
-      recv(sock, (char*)&num_returned, INT_32, FLAGS) == FAILURE) {
+  if (recv(sock, (char*)&cursor->flag, INT_32, FLAGS) < INT_32 ||
+      recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) < INT_64 ||
+      recv(sock, (char*)&cursor->start, INT_32, FLAGS) < INT_32 ||
+      recv(sock, (char*)&num_returned, INT_32, FLAGS) < INT_32) {
     zend_throw_exception(mongo_ce_CursorException, "incomplete response", 8 TSRMLS_CC);
     return FAILURE;
   }
