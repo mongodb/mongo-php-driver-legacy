@@ -2010,16 +2010,10 @@ static zval* create_fake_cursor(mongo_link *link TSRMLS_DC) {
   MAKE_STD_ZVAL(cursor_zval);
   object_init_ex(cursor_zval, mongo_ce_Cursor);
 
-  // query = { query : { ismaster : 1 } }
+  // query = { ismaster : 1 }
   MAKE_STD_ZVAL(query);
   array_init(query);
-
-  // is_master = { ismaster : 1 }
-  MAKE_STD_ZVAL(is_master);
-  array_init(is_master);
-
-  add_assoc_long(is_master, "ismaster", 1);
-  add_assoc_zval(query, "query", is_master);
+  add_assoc_long(query, "ismaster", 1);
 
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
 
