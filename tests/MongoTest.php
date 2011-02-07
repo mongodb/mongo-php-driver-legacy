@@ -8,7 +8,7 @@ require_once 'PHPUnit/Framework.php';
 class MongoTest extends PHPUnit_Framework_TestCase
 {
     public function testVersion() {
-        $this->assertEquals("1.1.3", Mongo::VERSION);
+        $this->assertEquals("1.1.4", Mongo::VERSION);
     }
 
     /**
