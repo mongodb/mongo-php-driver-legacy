@@ -2129,7 +2129,14 @@ static mongo_server* php_mongo_get_master(mongo_link *link TSRMLS_DC) {
     }
 
     if (zend_hash_find(HASH_P(response), "ismaster", 9, (void**)&ans) == SUCCESS) {
-      ismaster = Z_BVAL_PP(ans);
+      // in 1.6.*, this was a float
+      if (Z_TYPE_PP(ans) == IS_DOUBLE) {
+        ismaster = (Z_DVAL_PP(ans) == 1.0);
+      }
+      // in 1.7, it became a boolean
+      else {
+        ismaster = Z_BVAL_PP(ans);
+      }
     }
 
     // check if this is a replica set

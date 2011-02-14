@@ -98,6 +98,12 @@ class MongoTimestampTest extends PHPUnit_Framework_TestCase
         $sec = $ts->sec;
         $this->object->insert(array("ts" => $ts), array("safe" => true));
         $doc = $this->object->findOne();
+        $this->assertEquals($sec, $doc["ts"]->sec, json_encode($doc["ts"]));
+
+        if (preg_match("/5\.1\../", phpversion())) {
+            return;
+        }
+
         $this->assertEquals("$sec", $doc["ts"]."", json_encode($doc["ts"]));
     }
 }
