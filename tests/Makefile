@@ -1,7 +1,8 @@
 CC = gcc
-INCLUDES = -I./ -I../ -I~/php/php-5.3.3/install/include/php -I~/php/php-5.3.3/install/include/php/main -I~/php/php-5.3.3/install/include/php/TSRM -I~/php/php-5.3.3/install/include/php/Zend 
-TEST_OBJS = unit.o mongo.o bson.o db.o collection.o cursor.o gridfs.o mongo_types.o util/hash.o
-LIB_PATH = -L~/php/php-5.3.3/install/lib 
+PHP_PATH = $(HOME)/php/php-5.3.3/install
+INCLUDES = -I./ -I../ -I$(PHP_PATH)/include/php -I$(PHP_PATH)/include/php/main -I$(PHP_PATH)/include/php/TSRM -I$(PHP_PATH)/include/php/Zend 
+TEST_OBJS = unit.o mongo.o bson.o db.o collection.o cursor.o gridfs.o mongo_types.o util/hash.o lib/test_mongo.o
+LIB_PATH = -L$(PHP_PATH)/lib 
 LIBS = -lphp5
 BINARY = unit
 
@@ -10,6 +11,8 @@ all: $(TEST_OBJS)
 
 unit.o: unit.c unit.h ../php_mongo.h
 	$(CC) -c $(INCLUDES) -o $@ unit.c
+lib/test_mongo.o: lib/test_mongo.c lib/test_mongo.h
+	$(CC) -c $(INCLUDES) -o $@ lib/test_mongo.c
 mongo.o: ../mongo.c ../php_mongo.h ../db.h ../cursor.h ../mongo_types.h ../bson.h ../util/hash.h
 	$(CC) -c $(INCLUDES) -o $@ ../mongo.c
 bson.o: ../bson.c ../php_mongo.h ../bson.h ../mongo_types.h
