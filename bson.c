@@ -650,7 +650,7 @@ static int insert_helper(buffer *buf, zval *doc TSRMLS_DC) {
   }
 
   // throw an exception if the doc was too big
-  if(buf->pos - (buf->start + start) > MAX_OBJECT_LEN) {
+  if(buf->pos - (buf->start + start) > MonGlo(max_doc_size)) {
     zend_throw_exception_ex(mongo_ce_Exception, 5 TSRMLS_CC, "size of BSON doc is %d bytes, max 4MB", buf->pos - (buf->start + start));
     return FAILURE;
   }
@@ -683,11 +683,12 @@ int php_mongo_write_batch_insert(buffer *buf, char *ns, zval *docs TSRMLS_DC) {
       zend_hash_get_current_data_ex(HASH_P(docs), (void**)&doc, &pointer) == SUCCESS; 
       zend_hash_move_forward_ex(HASH_P(docs), &pointer)) {
 
-    if(IS_SCALAR_PP(doc)) {
+    if (IS_SCALAR_PP(doc)) {
       continue;
     }
 
-    if (FAILURE == insert_helper(buf, *doc TSRMLS_CC)) {
+    if (FAILURE == insert_helper(buf, *doc TSRMLS_CC) ||
+        buf->pos - buf->start >= MonGlo(max_send_size)) {
       return FAILURE;
     }
 
@@ -987,7 +988,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       if (MonGlo(long_as_object)) {
         char *buffer;
 
-        spprintf(&buffer, 0, "%lld", (int64_t)MONGO_64(*((int64_t*)buf)));
+        spprintf(&buffer, 0, "%lld", (long long int)MONGO_64(*((int64_t*)buf)));
         object_init_ex(value, mongo_ce_Int64);
 
         zend_update_property_string(mongo_ce_Int64, value, "value", strlen("value"), buffer TSRMLS_CC);

@@ -336,5 +336,9 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(4, $this->object->w);
       $this->assertEquals(60, $this->object->wtimeout);
    }
+
+    public function testCommandTimeout() {
+        $this->object->command(array('serverStatus' => 1), array('timeout' => -1));
+    }
 }
 ?>

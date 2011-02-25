@@ -380,6 +380,16 @@ PHP_METHOD(MongoCursor, immortal) {
 }
 /* }}} */
 
+/* {{{ MongoCursor::partial
+ */
+PHP_METHOD(MongoCursor, partial) {
+  zend_bool z = 1;
+  preiteration_setup;
+  default_to_true(7);
+  RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
 
 /* {{{ MongoCursor::timeout
  */
@@ -893,18 +903,25 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, batchSize, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, fields, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, immortal, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, dead, NULL, ZEND_ACC_PUBLIC)
+
+  /* meta options */
+  PHP_ME(MongoCursor, addOption, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, snapshot, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC) 
-  PHP_ME(MongoCursor, addOption, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
+
+  /* flags */
+  PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, immortal, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, partial, NULL, ZEND_ACC_PUBLIC)  
 
   /* query */
+  PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, doQuery, NULL, ZEND_ACC_PROTECTED)
+  PHP_ME(MongoCursor, info, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, dead, NULL, ZEND_ACC_PUBLIC)
 
   /* iterator funcs */
   PHP_ME(MongoCursor, current, NULL, ZEND_ACC_PUBLIC)
@@ -915,9 +932,7 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, reset, NULL, ZEND_ACC_PUBLIC)
 
   /* stand-alones */
-  PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, count, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, info, NULL, ZEND_ACC_PUBLIC)
 
   {NULL, NULL, NULL}
 };

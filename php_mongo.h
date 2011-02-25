@@ -79,11 +79,8 @@
 #define MSG_HEADER_SIZE 16
 #define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
 #define INITIAL_BUF_SIZE 4096
-// should only be 4Mb
-#define MAX_RESPONSE_LEN 67108864
-#define MAX_OBJECT_LEN 4194304
 #define DEFAULT_CHUNK_SIZE (256*1024)
-#define INVALID_STRING_LEN(len) (len < 0 || len > MAX_RESPONSE_LEN)
+#define INVALID_STRING_LEN(len) (len < 0 || len > MonGlo(max_doc_size))
 
 #define PHP_MONGO_DEFAULT_TIMEOUT 10000
 
@@ -365,9 +362,13 @@ typedef struct {
 
 #define SEND_MSG                                                \
   PHP_MONGO_GET_LINK(c->link);                                  \
-  if (safe) {                                                   \
+  if (options &&                                                \
+    ((zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS && \
+     Z_LVAL_PP(safe_pp) >= 1) ||                                \
+    (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS && \
+     Z_BVAL_PP(fsync_pp) == 1))) {                              \
     zval *cursor;                                               \
-    if (0 == (cursor = append_getlasterror(getThis(), &buf, safe, fsync TSRMLS_CC))) { \
+    if (0 == (cursor = append_getlasterror(getThis(), &buf, options TSRMLS_CC))) { \
       zval_ptr_dtor(&cursor);                                   \
       RETVAL_FALSE;                                             \
     }                                                           \
@@ -392,18 +393,24 @@ typedef struct {
     zval_ptr_dtor(&temp);                                       \
   }
 
-#define GET_SAFE_OPTION                                                 \
+#define GET_OPTIONS                                                     \
+  timeout_p = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC); \
+  timeout = Z_LVAL_P(timeout_p);                                        \
+                                                                        \
   if (options && !IS_SCALAR_P(options)) {                               \
-    zval **safe_pp, **fsync_pp;                                         \
+    zval **safe_pp, **fsync_pp, **timeout_pp;                           \
                                                                         \
     if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp)) { \
-      safe = Z_BVAL_PP(safe_pp);                                        \
+      safe = Z_LVAL_PP(safe_pp);                                        \
     }                                                                   \
-    if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fysnc")+1, (void**)&fsync_pp)) { \
+    if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp)) { \
       fsync = Z_BVAL_PP(fsync_pp);                                      \
       if (fsync && !safe) {                                             \
         safe = 1;                                                       \
       }                                                                 \
+    }                                                                   \
+    if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_pp)) {\
+      timeout = Z_LVAL_PP(timeout_pp);                                  \
     }                                                                   \
   }
 
@@ -672,6 +679,8 @@ int inc, pid, machine;
 int ts_inc;
 char *errmsg;
 int response_num;
+int max_doc_size;
+int max_send_size;
 ZEND_END_MODULE_GLOBALS(mongo) 
 
 #ifdef ZTS

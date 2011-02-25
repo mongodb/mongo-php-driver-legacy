@@ -56,6 +56,12 @@ class MongoCollectionTest2 extends PHPUnit_Framework_TestCase
       $this->object->ensureIndex(array("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz" => 1));
     }
 
+    public function testTimeout() {
+        $this->object->insert(array("x" => 1), array("safe" => true, "timeout" => -1));
+        $this->object->insert(array("x" => 1), array("safe" => true, "timeout" => 30));
+        $this->object->insert(array("x" => 1), array("safe" => true, "timeout" => 1000));
+    }
+    
     /**
      * @expectedException Exception 
      */

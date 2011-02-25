@@ -343,7 +343,7 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
 PHP_METHOD(MongoGridFS, storeBytes) {
   char *bytes = 0;
   int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0, 
-    pos = 0, safe = 0, fsync = 0;
+    pos = 0;
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
@@ -358,8 +358,13 @@ PHP_METHOD(MongoGridFS, storeBytes) {
     return;
   }
 
-  GET_SAFE_OPTION;
-
+  if (!options) {
+    zval *opts;
+    MAKE_STD_ZVAL(opts);
+    array_init(opts);
+    options = opts;
+  }
+  
   // file array object
   MAKE_STD_ZVAL(zfile);
 
@@ -378,7 +383,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
     chunk_size = bytes_len-pos >= global_chunk_size ? global_chunk_size : bytes_len-pos;
 
     insert_chunk(chunks, zid, chunk_num, bytes+pos, chunk_size, options TSRMLS_CC);
-    if (safe && EG(exception)) {
+    if (EG(exception)) {
       return;
     }
 
@@ -391,7 +396,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   add_md5(zfile, zid, c TSRMLS_CC);
 
   // insert file
-  MONGO_METHOD1(MongoCollection, insert, &temp, getThis(), zfile);
+  MONGO_METHOD2(MongoCollection, insert, &temp, getThis(), zfile, options);
 
   zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
@@ -496,8 +501,13 @@ PHP_METHOD(MongoGridFS, storeFile) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|az", &fh, &extra, &options) == FAILURE) {
     return;
   }
-
-  GET_SAFE_OPTION;
+  
+  if (!options) {
+    zval *opts;
+    MAKE_STD_ZVAL(opts);
+    array_init(opts);
+    options = opts;
+  }
 
   if (Z_TYPE_P(fh) == IS_RESOURCE) {
     zend_rsrc_list_entry *le;
@@ -608,7 +618,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   add_md5(zfile, zid, c TSRMLS_CC);
 
   // insert file
-  MONGO_METHOD1(MongoCollection, insert, &temp, getThis(), zfile);
+  MONGO_METHOD2(MongoCollection, insert, &temp, getThis(), zfile, options);
 
   // cleanup
   zval_add_ref(&zid);

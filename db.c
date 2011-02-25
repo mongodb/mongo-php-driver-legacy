@@ -461,12 +461,12 @@ static char *get_cmd_ns(char *db, int db_len) {
 }
 
 PHP_METHOD(MongoDB, command) {
-  zval limit, *temp, *cmd, *cursor, *ns;
+  zval limit, *temp, *cmd, *cursor, *ns, *options = 0;
   mongo_db *db;
   mongo_link *link;
   char *cmd_ns;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &cmd) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {
     return;
   }
   if (IS_SCALAR_P(cmd)) {
@@ -500,7 +500,17 @@ PHP_METHOD(MongoDB, command) {
   MONGO_METHOD1(MongoCursor, limit, temp, cursor, &limit); 
 
   zval_ptr_dtor(&temp);
-  
+
+  if (options) {
+    zval **timeout;
+    if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout) == SUCCESS) {
+      MAKE_STD_ZVAL(temp);
+      ZVAL_NULL(temp);
+      MONGO_METHOD1(MongoCursor, timeout, temp, cursor, *timeout);
+      zval_ptr_dtor(&temp);
+    }
+  }
+    
   // make sure commands aren't be sent to slaves
   PHP_MONGO_GET_LINK(db->link);
   if (link->rs) {
