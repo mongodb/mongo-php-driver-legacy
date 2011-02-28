@@ -21,7 +21,8 @@
 #include "link.h"
 #include "rs.h"
 
-extern zend_class_entry *mongo_ce_Mongo;
+extern zend_class_entry *mongo_ce_Mongo,
+  mongo_ce_ConnectionException;
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 
@@ -67,28 +68,9 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
       return link->slave;
     }
 
-    MAKE_STD_ZVAL(fake_zval);
-    object_init_ex(fake_zval, mongo_ce_Mongo);
-    fake_link = (mongo_link*)zend_object_store_get_object(fake_zval TSRMLS_CC);
-    fake_link->server_set = &fake_set;
-    fake_link->rs = 0;
-    
-    temp = link->slave->next;
-    link->slave->next = 0;
-    fake_set.server = link->slave;
-    fake_set.master = link->slave;
-    fake_set.num = 1;
-    fake_set.ts = time(0);
-    
-    if (php_mongo_do_socket_connect(fake_link, errmsg TSRMLS_CC) == SUCCESS) {
-      link->slave->next = temp;
-      fake_link->server_set = 0;
-      zval_ptr_dtor(&fake_zval);
+    if (mongo_util_pool_get(link->slave, link->timeout, errmsg TSRMLS_CC) == SUCCESS) {
       return link->slave;
     }
-    link->slave->next = temp; 
-    fake_link->server_set = 0;
-    zval_ptr_dtor(&fake_zval);
 
     // TODO: what if we can't reconnect?  close cursors? grab another slave?
   }
@@ -130,7 +112,7 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
   // close connection
   mongo_util_link_disconnect(link);
 
-  if (SUCCESS == php_mongo_do_socket_connect(link, errmsg TSRMLS_CC)) {
+  if (SUCCESS == mongo_util_link_try_connecting(link, errmsg TSRMLS_CC)) {
     mongo_server *server = mongo_util_rs_get_master(link TSRMLS_CC);
     if (!server) {
       ZVAL_STRING(errmsg, "Couldn't determine master", 1);
@@ -140,6 +122,75 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
 
   // errmsg set in do_socket_connect
   return 0;
+}
+
+
+/**
+ * Tries fetching db connections.  Returns FAILURE and throws exception on
+ * failure.
+ */
+int mongo_util_link_try_connecting(mongo_link *link TSRMLS_DC) {
+  zval *errmsg = 0, *errmsg_holder = 0;
+  mongo_server *current = 0;
+  int connected = 0;
+  
+  // initialize and clear the error message
+  MAKE_STD_ZVAL(errmsg);
+  ZVAL_NULL(errmsg);
+  MAKE_STD_ZVAL(errmsg_holder);
+  ZVAL_NULL(errmsg_holder);
+
+  current = link->server_set->server;
+  connected = 0;
+  
+#ifdef DEBUG_CONN
+  log0("connecting");
+#endif
+  
+  while (current) {
+    connected |= (mongo_util_pool_get(current, link->timeout, errmsg TSRMLS_CC) == SUCCESS);
+    
+#ifdef DEBUG_CONN
+    log3("%s:%d connected? %s\n", current->host, current->port, connected == 0 ? "true" : "false");
+#endif
+
+    if (Z_TYPE_P(errmsg_holder) == IS_STRING) {
+      if (Z_TYPE_P(errmsg) == IS_NULL) {
+        ZVAL_STRING(errmsg, Z_STRVAL_P(errmsg_holder), 1);
+      }
+      zval_ptr_dtor(&errmsg_holder);
+      MAKE_STD_ZVAL(errmsg_holder);
+      ZVAL_NULL(errmsg_holder);
+    }
+    
+    current = current->next;
+  }
+
+  zval_ptr_dtor(&errmsg_holder);
+  
+  if (!connected) {
+    if (Z_TYPE_P(errmsg) == IS_STRING) {    
+      zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
+                              "connecting failed: %s", Z_STRVAL_P(errmsg));
+    }
+    // there should always be an error message, we should never get here
+    else {
+      zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
+                              "connection failed");
+    }
+
+    zval_ptr_dtor(&errmsg);
+    return FAILURE;
+  }
+
+  /*
+   * cases where we have an error message and don't care because there's a
+   * connection we can use:
+   *  - if a connections fails after we have at least one working
+   *  - if the first connection fails but a subsequent ones succeeds
+   */
+  zval_ptr_dtor(&errmsg);
+  return SUCCESS;
 }
 
 

@@ -60,17 +60,19 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
   stack_node *node;
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
-    // TODO: if we couldn't push this, close the connection
-    
+    // if we couldn't push this, close the connection
+    mongo_util_disconnect(server);
     return;
   }
 
-  // TODO: remove from monitor->servers
-  
+  // add to stack
   node = (stack_node*)malloc(sizeof(stack_node));
   node->socket = server->socket;
   node->next = monitor->top;
   monitor->top = node;
+
+  // clean up reference to server (nothing needs to be freed)
+  mongo_util_pool__rm_server_ptr(monitor, server);
 }
 
 void mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
@@ -79,22 +81,13 @@ void mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC) == 0)) {
     return;
   }
-  
-  //  if (monitor->strike++ == 1) {
-  mongo_util_pool__close_connections(monitor);
-    /*  monitor->strike = 0;
+
+  // some routers cut off connections after x time, so we don't want to drop all
+  // of the connections unless we can't reconnect
+  mongo_util_disconnect(server);
+  if (mongo_util_pool__connect(server, 20, errmsg TSRMLS_CC) == FAILURE) {
+    mongo_util_pool__close_connections(monitor);
   }
-  else {
-    zval *errmsg;
-    
-    // close the current connection and get a new one, but don't immediately
-    // clean out the list
-    mongo_util_disconnect(server);
-    
-    MAKE_STD_ZVAL(errmsg);
-    ZVAL_NULL(errmsg);
-    mongo_util_pool_get(server, 20, errmsg);
-    }*/
 }
 
 void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
@@ -108,6 +101,32 @@ void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
        zend_hash_get_current_data_ex(hash, (void**) &monitor, &pointer) == SUCCESS; 
        zend_hash_move_forward_ex(hash, &pointer)) {
     mongo_util_pool__close_connections(monitor);
+  }
+}
+
+void mongo_util_pool__rm_server_ptr(stack_monitor *monitor, mongo_server *server) {
+  mongo_server *prev, *current;
+  
+  if (monitor->servers == 0) {
+    return;
+  }
+  
+  if (monitor->servers == server) {
+    monitor->servers = server->next_in_pool;
+    return;
+  }
+  
+  prev = monitor->servers;
+  current = monitor->servers->next_in_pool;
+  while (current && current != server) {
+    prev = current;
+    if (prev != 0) {
+      current = current->next_in_pool;
+    }
+  }
+  
+  if (current == server) {
+    prev->next_in_pool = current->next_in_pool;
   }
 }
 
@@ -163,14 +182,15 @@ HashTable *mongo_util_pool__get_connection_pools() {
 
 stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
   HashTable *pools;
-  stack_monitor *monitor;
+  stack_monitor *mptr;
   char *id = mongo_util_pool__get_id(server TSRMLS_CC);
 
   if ((pools = mongo_util_pool__get_connection_pools()) == 0) {
     return 0;
   }
   
-  if (zend_hash_find(pools, id, sizeof(id), (void**)&monitor) == FAILURE) {    
+  if (zend_hash_find(pools, id, sizeof(id), (void**)&mptr) == FAILURE) {
+    stack_monitor *monitor;
     monitor = (stack_monitor*)malloc(sizeof(stack_monitor));
     if (!monitor) {
       return 0;
@@ -179,13 +199,15 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
     monitor->top = 0;
     monitor->servers = 0;
     
-    if (zend_hash_add(pools, id, sizeof(id), &monitor, sizeof(monitor), NULL) == FAILURE) {
+    if (zend_hash_add(pools, id, sizeof(id), monitor, sizeof(stack_monitor), NULL) == FAILURE) {
       free(monitor);
       return 0;
     }
+
+    return monitor;
   }
   
-  return monitor;
+  return mptr;
 }
 
 char* mongo_util_pool__get_id(mongo_server *server TSRMLS_DC) {

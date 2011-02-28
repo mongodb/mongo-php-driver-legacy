@@ -69,7 +69,9 @@ int mongo_util_pool_get(mongo_server *server, time_t timeout, zval *errmsg TSRML
 void mongo_util_pool_done(mongo_server *server TSRMLS_DC);
 
 /**
- * Clears and disconnects the stack.
+ * Attempts to reconnect to the database after an operation has failed.  If it
+ * is unable to reconnect, it assumes something is *really* wrong and clears and
+ * disconnects the connection stack.
  */
 void mongo_util_pool_failed(mongo_server *server TSRMLS_DC);
 
@@ -85,6 +87,11 @@ void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
  * Close all connections for a given monitor.
  */
 void mongo_util_pool__close_connections(stack_monitor *monitor);
+
+/**
+ * Remove a server reference from this monitor.
+ */
+void mongo_util_pool__rm_server_ptr(stack_monitor *monitor, mongo_server *server);
 
 /**
  * Creates the identifying string for this server's hash table entry.

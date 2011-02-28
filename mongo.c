@@ -199,15 +199,8 @@ PHP_INI_END()
 
 
 static void php_mongo_server_free(mongo_server *server TSRMLS_DC) {
-  if (server->connected) {
-#ifdef WIN32
-    shutdown(server->socket, 2);
-    closesocket(server->socket);
-    WSACleanup();
-#else
-    close(server->socket);
-#endif
-  }
+  // return this connection to the pool
+  mongo_util_pool_done(server TSRMLS_CC);
 
   if (server->host) {
     efree(server->host);
@@ -450,7 +443,7 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
 
   php_mongo_free_cursor_le(link, MONGO_LINK TSRMLS_CC);
   php_mongo_server_set_free(link->server_set TSRMLS_CC);
-
+  
   if (link->username) efree(link->username);
   if (link->password) efree(link->password);
   if (link->db) efree(link->db);
@@ -1108,81 +1101,6 @@ PHP_METHOD(Mongo, pairPersistConnect) {
   MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
-/**
- * Tries fetching db connections.  Returns FAILURE and throws exception on
- * failure.
- */
-int php_mongo_try_connecting(zval *this_ptr TSRMLS_DC) {
-  zval *errmsg = 0, *errmsg_holder = 0;
-  mongo_server *current = 0;
-  int connected = 0;
-  mongo_link *link = 0;
-  
-  // initialize and clear the error message
-  MAKE_STD_ZVAL(errmsg);
-  ZVAL_NULL(errmsg);
-  MAKE_STD_ZVAL(errmsg_holder);
-  ZVAL_NULL(errmsg_holder);
-
-  link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
-  current = link->server_set->server;
-  connected = 0;
-  
-#ifdef DEBUG_CONN
-  log0("connecting");
-#endif
-  
-  while (current) {
-    connected |= (mongo_util_pool_get(current, link->timeout, errmsg TSRMLS_CC) == SUCCESS);
-    
-#ifdef DEBUG_CONN
-    log3("%s:%d connected? %s\n", current->host, current->port, connected == 0 ? "true" : "false");
-#endif
-
-    if (Z_TYPE_P(errmsg_holder) == IS_STRING) {
-      if (Z_TYPE_P(errmsg) == IS_NULL) {
-        ZVAL_STRING(errmsg, Z_STRVAL_P(errmsg_holder), 1);
-      }
-      zval_ptr_dtor(&errmsg_holder);
-      MAKE_STD_ZVAL(errmsg_holder);
-      ZVAL_NULL(errmsg_holder);
-    }
-    
-    current = current->next;
-  }
-
-  zval_ptr_dtor(&errmsg_holder);
-  
-  if (!connected) {
-    zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server",
-                                      strlen("server"), NOISY TSRMLS_CC);
-
-    if (Z_TYPE_P(errmsg) == IS_STRING) {    
-      zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
-                              "connecting to %s failed: %s", Z_STRVAL_P(server),
-                              Z_STRVAL_P(errmsg));
-    }
-    // there should always be an error message, we should never get here
-    else {
-      zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
-                              "connection to %s failed", Z_STRVAL_P(server));
-    }      
-
-    zval_ptr_dtor(&errmsg);
-    return FAILURE;
-  }
-
-  /*
-   * cases where we have an error message and don't care because there's a
-   * connection we can use:
-   *  - if a connections fails after we have at least one working
-   *  - if the first connection fails but a subsequent ones succeeds
-   */
-  zval_ptr_dtor(&errmsg);
-  return SUCCESS;
-}
-
 
 PHP_METHOD(Mongo, connectUtil) {
   mongo_link *link;
@@ -1191,7 +1109,9 @@ PHP_METHOD(Mongo, connectUtil) {
   // if we're already connected, disconnect
   disconnect_if_connected(getThis() TSRMLS_CC);
 
-  if (FAILURE == php_mongo_try_connecting(this_ptr TSRMLS_CC)) {
+  link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  
+  if (FAILURE == mongo_util_link_try_connecting(link TSRMLS_CC)) {
     return;
   }
     
@@ -1203,7 +1123,6 @@ PHP_METHOD(Mongo, connectUtil) {
   // we don't actually need a master until we try to do something on the master
   // so we won't call get_master yet
   
-  link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
   if (link->rs) {
     char *errmsg = 0;
 
