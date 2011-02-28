@@ -15,11 +15,44 @@
  *  limitations under the License.
  */
 
-#include <php.h>
-
 #ifndef MONGO_UTIL_CONN_H
 #define MONGO_UTIL_CONN_H
 
-void mongo_util_conn_get_buildinfo(zval *this_ptr TSRMLS_DC);
+/**
+ * Individual socket connections.  Mostly helper functions for pool functions.
+ */
+
+/**
+ * Find the max BSON size for this connection.
+ */
+void mongo_util_connect_buildinfo(zval *this_ptr TSRMLS_DC);
+
+/**
+ * Actually make the network connection.  Returns SUCCESS/FAILURE and sets
+ * errmsg, never throws exceptions.
+ */
+int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg);
+
+/**
+ * If this connection should be authenticated, try to authenticate.  Returns
+ * SUCCESS/FAILURE and sets errmsg, never throws exceptions.
+ */
+int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC);
+
+/**
+ * Disconnect from a socket.
+ */
+int mongo_util_disconnect(mongo_server *server);
+
+/**
+ * Find the master connection.
+ */
+mongo_server* mongo_util_connect_get_master(mongo_link *link TSRMLS_DC);
+
+
+/**
+ * Get the address of a socket (internal).
+ */
+int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *host, int port, zval *errmsg);
 
 #endif

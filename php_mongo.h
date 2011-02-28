@@ -31,6 +31,11 @@
 #  endif
 #endif
 
+#define INT_32 4
+#define INT_64 8
+#define DOUBLE_64 8
+#define BYTE_8 1
+
 #ifdef DEBUG
 #define DEBUG_CONN
 #define DEBUG_CURSOR
@@ -199,14 +204,20 @@
 #define RS_SECONDARY 2
 
 typedef struct _mongo_server {
-  char *host;
-  int port;
   int socket;
   int connected;
   int readable;
+  int port;
+  char *host;
   char *label;
+
+  char *username;
+  char *password;
+  char *db;
   
   struct _mongo_server *next;
+  // list of handed-out sockets for this address
+  struct _mongo_server *next_in_pool;
 } mongo_server;
 
 typedef struct _mongo_server_set {
@@ -231,20 +242,16 @@ typedef struct {
   zend_object std;
 
   int timeout;
-
-  int persist;
-
-  mongo_server_set *server_set;
   // if this is a replica set
   int rs;
-  // if this connection should distribute reads to slaves
-  zend_bool slave_okay;
+
+  mongo_server_set *server_set;
+  
   // slave to send reads to
   mongo_server *slave;
 
-  zval *db;
-  zval *username;
-  zval *password;
+  // if this connection should distribute reads to slaves
+  zend_bool slave_okay;
 
 } mongo_link;
 
@@ -383,7 +390,7 @@ typedef struct {
     MAKE_STD_ZVAL(temp);                                        \
     ZVAL_NULL(temp);                                            \
                                                                 \
-    if ((server = php_mongo_get_socket(link, temp TSRMLS_CC)) == 0 ||   \
+    if ((server = mongo_util_link_get_socket(link, temp TSRMLS_CC)) == 0 ||   \
         mongo_say(server->socket, &buf, temp TSRMLS_CC) == FAILURE) {   \
       RETVAL_FALSE;                                             \
     }                                                           \
@@ -626,15 +633,10 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 /*
  * Internal functions
  */
-void mongo_do_up_connect_caller(INTERNAL_FUNCTION_PARAMETERS);
-void mongo_do_connect_caller(INTERNAL_FUNCTION_PARAMETERS, zval *username, zval *password);
 int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
 int mongo_hear(int sock, void*, int TSRMLS_DC);
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
-mongo_server* php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
-mongo_server* php_mongo_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
-void php_mongo_disconnect_link(mongo_link *link);
-int php_mongo_disconnect_server(mongo_server *server);
+mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link TSRMLS_DC);
 
 void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);

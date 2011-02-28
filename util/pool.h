@@ -35,16 +35,33 @@
  *
  * TODO: modify MongoDB::authenticate to remove the server from the pool
  * TODO: heuristic pool cleanup (in the far-off future)
+ * TODO: only disconnect on two failures in a row (to prevent spurious disconnects)
  */
 
 #ifndef MONGO_UTIL_POOL_H
 #define MONGO_UTIL_POOL_H
 
+// ------- Pool Structs -----------
+
+typedef struct _stack_node {
+  int socket;
+  struct _stack_node *next;
+} stack_node;
+
+typedef struct {
+  stack_node *top;
+  // a pointer to each of the server structs using a connection from this pool,
+  // so we can disconnect them all if something goes wrong.
+  mongo_server *servers;
+} stack_monitor;
+
+// ------- Pool Interface -----------
+
 /**
  * Fetch a connection from the pool, based on the criteria given.
  * @return the connection, 0 on failure
  */
-server_set* mongo_util_pool_get(mongo_server *server, time_t timeout, zval *errmsg TSRMLS_DC);
+int mongo_util_pool_get(mongo_server *server, time_t timeout, zval *errmsg TSRMLS_DC);
 
 /**
  * Return a connection to its pool.
@@ -68,34 +85,17 @@ char* mongo_util_pool__get_id(mongo_server *server TSRMLS_DC);
  * Create a new connection.  Returns SUCCESS/FAILURE and sets errmsg, never
  * throws exceptions.
  */
-int mongo_util_pool__create_connection(mongo_server *server, time_t timeout, zval *errmsg TSRMLS_DC);
+int mongo_util_pool__connect(mongo_server *server, time_t timeout, zval *errmsg TSRMLS_DC);
 
 /**
- * Actually make the network connection.  Returns SUCCESS/FAILURE and sets
- * errmsg, never throws exceptions.
+ * Get this monitor for this server.
  */
-int mongo_util_pool__connect_nonb(mongo_server *server, int timeout, zval *errmsg);
+stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC);
 
 /**
- * If this connection should be authenticated, try to authenticate.  Returns
- * SUCCESS/FAILURE and sets errmsg, never throws exceptions.
+ * Get all connection pools for this instance.
  */
-int mongo_util_pool__do_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC);
+HashTable *mongo_util_pool__get_connection_pools();
 
-int mongo_util_pool__get_sockaddr(struct sockaddr *sa, int family, char *host, int port, zval *errmsg);
-
-int mongo_util_pool__disconnect_server(mongo_server *server);
-
-typedef struct {
-  int conn;
-  stack_node *next;
-} stack_node;
-
-typedef struct {
-  stack_node *top;
-  // a pointer to each of the server structs using a connection from this pool,
-  // so we can disconnect them all if something goes wrong.
-  mongo_server *servers;
-} stack_container;
 
 #endif

@@ -24,6 +24,7 @@
 #include "bson.h"
 #include "mongo_types.h"
 #include "db.h"
+#include "link.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
@@ -255,7 +256,7 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
 
   // send everything
-  if ((cursor->server = php_mongo_get_socket(link, errmsg TSRMLS_CC)) == 0) {
+  if ((cursor->server = mongo_util_link_get_socket(link, errmsg TSRMLS_CC)) == 0) {
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 15 TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
     zval_ptr_dtor(&cursor_z);
