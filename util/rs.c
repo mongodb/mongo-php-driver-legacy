@@ -67,13 +67,9 @@ static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC)
   // add this to the hosts list
   if (link->rs && link->server_set->hosts) {
     zval *null_p;
-    if (link->persist) {
-      null_p = (zval*)malloc(sizeof(zval));
-      INIT_PZVAL(null_p);
-    }
-    else {
-      MAKE_STD_ZVAL(null_p);
-    }
+    
+    null_p = (zval*)malloc(sizeof(zval));
+    INIT_PZVAL(null_p);
     Z_TYPE_P(null_p) = IS_NULL;
     
     zend_hash_add(link->server_set->hosts, server->label, strlen(server->label)+1,
@@ -82,6 +78,7 @@ static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC)
   
   return server;
 }
+
 
 static zval* create_fake_cursor(mongo_link *link TSRMLS_DC) {
   zval *cursor_zval, *query, *is_master;
@@ -110,7 +107,7 @@ static zval* create_fake_cursor(mongo_link *link TSRMLS_DC) {
   return cursor_zval;
 }
 
-mongo_server* mongo_util_link_get_master(mongo_link *link TSRMLS_DC) {
+mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
   zval *cursor_zval;
   mongo_cursor *cursor;
   mongo_server *current;
@@ -219,7 +216,7 @@ mongo_server* mongo_util_link_get_master(mongo_link *link TSRMLS_DC) {
       while(cur) {
         mongo_server *prev = cur;
         cur = cur->next;
-        php_mongo_server_free(prev, link->persist TSRMLS_CC);
+        php_mongo_server_free(prev TSRMLS_CC);
       }
       link->server_set->server = 0;
       link->server_set->num = 0;
@@ -322,133 +319,4 @@ mongo_server* mongo_util_link_get_master(mongo_link *link TSRMLS_DC) {
   return 0;
 }
 
-/** Attempts to find a slave to read from.
- * Returns 0 and sets errmsg on failure.
- */
-mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
-  int now, status;
-  
-  // sanity check
-  if (!link->rs) {
-    ZVAL_STRING(errmsg, "Connection is not a replica set", 1);
-    return 0;
-  }
-
-  // every 5 seconds, try to update hosts
-  now = time(0);
-  if (link->server_set && link->server_set->ts + 5 < now) {
-    zval *fake_zval;
-    mongo_link *fake_link;
-    
-    link->server_set->ts = now;
-    
-    MAKE_STD_ZVAL(fake_zval);
-    object_init_ex(fake_zval, mongo_ce_Mongo);
-    fake_link = (mongo_link*)zend_object_store_get_object(fake_zval TSRMLS_CC);
-    fake_link->persist = link->persist;
-    fake_link->server_set = link->server_set;
-
-    get_heartbeats(fake_zval, &(Z_STRVAL_P(errmsg)) TSRMLS_CC);
-    
-    // if get_heartbeats fails, ignore
-    fake_link->server_set = 0;
-    zval_ptr_dtor(&fake_zval);
-  }
-
-  if (link->slave) {
-    zval *fake_zval;
-    mongo_link *fake_link;
-    mongo_server_set fake_set;
-    mongo_server *temp;
-
-    if (link->slave->connected) {
-      return link->slave;
-    }
-
-    MAKE_STD_ZVAL(fake_zval);
-    object_init_ex(fake_zval, mongo_ce_Mongo);
-    fake_link = (mongo_link*)zend_object_store_get_object(fake_zval TSRMLS_CC);
-    fake_link->server_set = &fake_set;
-    fake_link->rs = 0;
-    
-    temp = link->slave->next;
-    link->slave->next = 0;
-    fake_set.server = link->slave;
-    fake_set.master = link->slave;
-    fake_set.num = 1;
-    fake_set.ts = time(0);
-    
-    if (php_mongo_do_socket_connect(fake_link, errmsg TSRMLS_CC) == SUCCESS) {
-      link->slave->next = temp;
-      fake_link->server_set = 0;
-      zval_ptr_dtor(&fake_zval);
-      return link->slave;
-    }
-    link->slave->next = temp; 
-    fake_link->server_set = 0;
-    zval_ptr_dtor(&fake_zval);
-
-    // TODO: what if we can't reconnect?  close cursors? grab another slave?
-  }
-  
-  status = set_a_slave(link, &(Z_STRVAL_P(errmsg)));
-  if (status == FAILURE) {
-    ZVAL_STRING(errmsg, "Could not find any server to read from", 1);
-    return 0;
-  }
-
-  return link->slave;
-}
-
-/*
- * If the socket is connected, returns the master.  If the socket is
- * disconnected, it attempts to reconnect and return the master.
- *
- * sets errmsg and returns 0 on failure
- */
-mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
-  int now = time(0), connected = 0;
-  
-  if ((link->server_set->num == 1 && !link->rs && link->server_set->server->connected) ||
-      (link->server_set->master && link->server_set->master->connected)) {
-    connected = 1;
-  }
-
-  // if we're already connected or autoreconnect isn't set, we're all done 
-  if (!MonGlo(auto_reconnect) || connected) {
-    mongo_server *server = mongo_util_link_get_master(link TSRMLS_CC);
-    if (!server) {
-      ZVAL_STRING(errmsg, "Couldn't determine master", 1);
-    }
-    return server;
-  }
-
-  // close connection
-  mongo_util_link_disconnect(link);
-
-  if (SUCCESS == php_mongo_do_socket_connect(link, errmsg TSRMLS_CC)) {
-    mongo_server *server = mongo_util_link_get_master(link TSRMLS_CC);
-    if (!server) {
-      ZVAL_STRING(errmsg, "Couldn't determine master", 1);
-    }
-    return server;
-  }
-
-  // errmsg set in do_socket_connect
-  return 0;
-}
-
-
-// TODO: this should disconnect from all members of the RS
-void mongo_util_link_disconnect(mongo_link *link) {
-  // already disconnected
-  if (!link->server_set->master ||
-      !link->server_set->master->connected) {
-    return;
-  }
-
-  // sever it
-  php_mongo_disconnect_server(link->server_set->master);
-  link->server_set->master = 0;
-}
 

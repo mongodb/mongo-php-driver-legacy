@@ -75,19 +75,53 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
 
 void mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
-  mongo_server *temp;
-  stack_node *top;
   
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC) == 0)) {
     return;
   }
+  
+  //  if (monitor->strike++ == 1) {
+  mongo_util_pool__close_connections(monitor);
+    /*  monitor->strike = 0;
+  }
+  else {
+    zval *errmsg;
+    
+    // close the current connection and get a new one, but don't immediately
+    // clean out the list
+    mongo_util_disconnect(server);
+    
+    MAKE_STD_ZVAL(errmsg);
+    ZVAL_NULL(errmsg);
+    mongo_util_pool_get(server, 20, errmsg);
+    }*/
+}
+
+void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
+  HashTable *hash;
+  HashPosition pointer;
+  stack_monitor *monitor;
+
+  hash = (HashTable*)rsrc->ptr;
+  
+  for (zend_hash_internal_pointer_reset_ex(hash, &pointer); 
+       zend_hash_get_current_data_ex(hash, (void**) &monitor, &pointer) == SUCCESS; 
+       zend_hash_move_forward_ex(hash, &pointer)) {
+    mongo_util_pool__close_connections(monitor);
+  }
+}
+
+void mongo_util_pool__close_connections(stack_monitor *monitor) {
+  mongo_server *current;
+  stack_node *top;
 
   // close all open connections
-  temp = monitor->servers;
-  while (temp) {
-    mongo_util_disconnect(temp);
-    temp = temp->next;
+  current = monitor->servers;
+  while (current) {
+    mongo_util_disconnect(current);
+    current = current->next;
   }
+  monitor->servers = 0;
 
   // remove any connections from the stack
   top = monitor->top;
@@ -97,6 +131,7 @@ void mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
 
     free(current);
   }
+  monitor->top = 0;
 }
 
 HashTable *mongo_util_pool__get_connection_pools() {

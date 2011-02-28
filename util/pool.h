@@ -73,8 +73,18 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC);
  */
 void mongo_util_pool_failed(mongo_server *server TSRMLS_DC);
 
+/**
+ * Clean up all pools on shutdown, disconnect all connections.
+ */
+void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
+
 
 // ------- Internal Functions -----------
+
+/**
+ * Close all connections for a given monitor.
+ */
+void mongo_util_pool__close_connections(stack_monitor *monitor);
 
 /**
  * Creates the identifying string for this server's hash table entry.

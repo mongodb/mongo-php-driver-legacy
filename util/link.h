@@ -15,13 +15,26 @@
  *  limitations under the License.
  */
 
-#ifndef MONGO_UTIL_RS_H
-#define MONGO_UTIL_RS_H
-
+#ifndef MONGO_UTIL_LINK_H
+#define MONGO_UTIL_LINK_H
 
 /**
- * Get a master from this master's sockets.
+ * Handles link-level operations.
  */
-mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC);
+
+/**
+ * Get a slave socket.
+ */
+mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
+
+/**
+ * Get a master socket.
+ */
+mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
+
+/**
+ * Disconnect all connections used by this link.
+ */
+void mongo_util_link_disconnect(mongo_link *link);
 
 #endif

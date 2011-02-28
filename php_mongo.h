@@ -252,7 +252,9 @@ typedef struct {
 
   // if this connection should distribute reads to slaves
   zend_bool slave_okay;
-
+  char *username;
+  char *password;
+  char *db;
 } mongo_link;
 
 #define MONGO_LINK 0
