@@ -18,6 +18,15 @@
 #ifndef MONGO_UTIL_CONN_H
 #define MONGO_UTIL_CONN_H
 
+#ifdef WIN32
+#define MONGO_UTIL_DISCONNECT(socket)                           \
+  shutdown((socket), 2);                                        \
+  closesocket(socket);                                          \
+  WSACleanup();
+#else
+#define MONGO_UTIL_DISCONNECT(socket) close(socket);
+#endif
+
 /**
  * Individual socket connections.  Mostly helper functions for pool functions.
  */

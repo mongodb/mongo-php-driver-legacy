@@ -154,7 +154,7 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
     temp.rs = 0;
 
     // skip anything we're not connected to
-    if (!current->connected && FAILURE == php_mongo_connect_nonb(current, link->timeout, errmsg)) {
+    if (!current->connected && FAILURE == mongo_util_connect(current, link->timeout, errmsg)) {
 #ifdef DEBUG_CONN
       log2("[c:php_mongo_get_master] not connected to %s:%d\n", current->host, current->port);
 #endif
@@ -286,7 +286,7 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
       ZVAL_NULL(errmsg);
         
       // TODO: auth, but it won't work in 1.6 anyway
-      if (!server->connected && php_mongo_connect_nonb(server, link->timeout, errmsg) == FAILURE) {
+      if (!server->connected && mongo_util_connect(server, link->timeout, errmsg) == FAILURE) {
         zval_ptr_dtor(&errmsg);
         return 0;
       }

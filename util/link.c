@@ -68,7 +68,7 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
       return link->slave;
     }
 
-    if (mongo_util_pool_get(link->slave, link->timeout, errmsg TSRMLS_CC) == SUCCESS) {
+    if (mongo_util_pool_get(link->slave, errmsg TSRMLS_CC) == SUCCESS) {
       return link->slave;
     }
 
@@ -148,7 +148,7 @@ int mongo_util_link_try_connecting(mongo_link *link TSRMLS_DC) {
 #endif
   
   while (current) {
-    connected |= (mongo_util_pool_get(current, link->timeout, errmsg TSRMLS_CC) == SUCCESS);
+    connected |= (mongo_util_pool_get(current, errmsg TSRMLS_CC) == SUCCESS);
     
 #ifdef DEBUG_CONN
     log3("%s:%d connected? %s\n", current->host, current->port, connected == 0 ? "true" : "false");

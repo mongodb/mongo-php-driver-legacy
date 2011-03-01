@@ -343,15 +343,8 @@ int mongo_util_disconnect(mongo_server *server) {
   }
   
   server->connected = 0;
-#ifdef WIN32
-  shutdown(server->socket, 2);
-  closesocket(server->socket);
-  WSACleanup();
-#else
-  close(server->socket);
-#endif /* WIN32 */
-
+  MONGO_UTIL_DISCONNECT(server->socket);
+  
   return 1;
 }
-
 

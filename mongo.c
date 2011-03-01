@@ -947,7 +947,8 @@ mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link 
       
   server->host = host;
   server->port = port;
-
+  spprintf(&server->label, 0, "%s:%d", host, port);
+  
   return server;
 }
 
@@ -959,6 +960,7 @@ PHP_METHOD(Mongo, __construct) {
   zend_bool connect = 1, persist = 0, garbage = 0;
   zval *options = 0, *slave_okay = 0;
   mongo_link *link;
+  mongo_server *current;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|szbb", &server, &server_len, &options, &persist, &garbage) == FAILURE) {
     return;
@@ -1021,6 +1023,13 @@ PHP_METHOD(Mongo, __construct) {
   if (!link->server_set && php_mongo_parse_server(getThis() TSRMLS_CC) == FAILURE) {
     // exception thrown in parse_server
     return;
+  }
+
+  // initialize any connection pools needed (doesn't actually connect)
+  current = link->server_set->server;
+  while (current) {
+    mongo_util_pool_init(current, (time_t)link->timeout TSRMLS_DC);
+    current = current->next;
   }
 
   if (connect) {

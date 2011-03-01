@@ -34,7 +34,6 @@
  * connection from the pool.
  *
  * TODO: modify MongoDB::authenticate to remove the server from the pool
- * TODO: heuristic pool cleanup (in the far-off future)
  * TODO: only disconnect on two failures in a row (to prevent spurious disconnects)
  */
 
@@ -49,19 +48,37 @@ typedef struct _stack_node {
 } stack_node;
 
 typedef struct {
+  // timeout for connections
+  time_t timeout;
+  
+  // number of servers in the pool
+  struct {
+    int in_pool;
+    int in_use;
+  } num;
+  
   stack_node *top;
   // a pointer to each of the server structs using a connection from this pool,
   // so we can disconnect them all if something goes wrong.
   mongo_server *servers;
 } stack_monitor;
 
+// TODO: make this heurisitic
+#define INITIAL_POOL_SIZE 10
+
 // ------- Pool Interface -----------
+
+/**
+ * Initialize the pool for a given server.  Only sets connection timeout if it
+ * is non-zero (-1 for wait forever).
+ */
+int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC);
 
 /**
  * Fetch a connection from the pool, based on the criteria given.
  * @return the connection, 0 on failure
  */
-int mongo_util_pool_get(mongo_server *server, time_t timeout, zval *errmsg TSRMLS_DC);
+int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC);
 
 /**
  * Return a connection to its pool.
@@ -82,6 +99,9 @@ void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
 
 // ------- Internal Functions -----------
+
+stack_node* mongo_util_pool__stack_pop(stack_monitor *monitor);
+void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server);
 
 /**
  * Close all connections for a given monitor.
@@ -114,5 +134,8 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC);
  */
 HashTable *mongo_util_pool__get_connection_pools();
 
+// ------- External (debug) Functions -----------
+
+//PHP_FUNCTION(mongoPoolDebug);
 
 #endif
