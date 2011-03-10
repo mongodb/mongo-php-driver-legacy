@@ -14,7 +14,23 @@
  *  limitations under the License.
  */
 
-int test_pool() {
-  printf("running pool tests: ");
-  printf("done\n");
-}
+#ifndef TEST_POOL
+#define TEST_POOL
+
+int test_mongo_util_pool();
+
+int test_mongo_util_pool_get_pool();
+int test_mongo_util_pool_init();
+int test_mongo_util_pool_get();
+int test_mongo_util_pool_done();
+int test_mongo_util_pool_failed();
+int test_mongo_util_pool_shutdown();
+int test_mongo_util_pool_stack_pop();
+int test_mongo_util_pool_stack_push();
+int test_mongo_util_pool_close();
+int test_mongo_util_pool_rm();
+int test_mongo_util_pool_get_id();
+int test_mongo_util_pool_connect();
+int test_mongo_util_pool_get_monitor();
+
+#endif

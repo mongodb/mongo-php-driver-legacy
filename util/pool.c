@@ -20,6 +20,7 @@
 #include "php_mongo.h"
 #include "hash.h"
 #include "pool.h"
+#include "connect.h"
 
 
 int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
@@ -116,7 +117,9 @@ void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
   for (zend_hash_internal_pointer_reset_ex(hash, &pointer); 
        zend_hash_get_current_data_ex(hash, (void**) &monitor, &pointer) == SUCCESS; 
        zend_hash_move_forward_ex(hash, &pointer)) {
+    // TODO: delete monitor
     mongo_util_pool__close_connections(monitor);
+    
   }
 }
 
@@ -209,23 +212,23 @@ void mongo_util_pool__close_connections(stack_monitor *monitor) {
     stack_node *current;
 
     current = mongo_util_pool__stack_pop(monitor);
-    MONGO_UTIL(current->socket);
+    MONGO_UTIL_DISCONNECT(current->socket);
 
     free(current);
   }
   monitor->top = 0;
 }
 
-HashTable *mongo_util_pool__get_connection_pools() {
+HashTable *mongo_util_pool__get_connection_pools(TSRMLS_D) {
   zend_rsrc_list_entry *le = 0, le_struct;
   
   // get persistent connection hash
-  if (zend_hash_find(&EG(persistent_list), "mongoConnectionPool",
-                     sizeof("mongoConnectionPool"), (void**)&le) == FAILURE) {
+  if (zend_hash_find(&EG(persistent_list), CONNECTION_POOLS,
+                     sizeof(CONNECTION_POOLS), (void**)&le) == FAILURE) {
     le = &le_struct;
     le->ptr = 0;
 
-    if (zend_hash_update(&EG(persistent_list), "mongoConnectionPool", sizeof("mongoConnectionPool"),
+    if (zend_hash_update(&EG(persistent_list), CONNECTION_POOLS, sizeof(CONNECTION_POOLS),
                          (void*)le, sizeof(zend_rsrc_list_entry), NULL) == FAILURE) {
       return 0;
     }
@@ -248,7 +251,7 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
   stack_monitor *mptr;
   char *id = mongo_util_pool__get_id(server TSRMLS_CC);
 
-  if ((pools = mongo_util_pool__get_connection_pools()) == 0) {
+  if ((pools = mongo_util_pool__get_connection_pools(TSRMLS_C)) == 0) {
     return 0;
   }
   
@@ -290,4 +293,32 @@ int mongo_util_pool__connect(mongo_server *server, time_t timeout, zval *errmsg 
     return SUCCESS;
   }
   return FAILURE;
+}
+
+PHP_FUNCTION(mongoPoolDebug) {
+  HashTable *hash;
+  HashPosition pointer;
+  stack_monitor *monitor;
+
+  array_init(return_value);
+
+  hash = mongo_util_pool__get_connection_pools(TSRMLS_C);
+  
+  for (zend_hash_internal_pointer_reset_ex(hash, &pointer); 
+       zend_hash_get_current_data_ex(hash, (void**) &monitor, &pointer) == SUCCESS; 
+       zend_hash_move_forward_ex(hash, &pointer)) {
+    if (monitor->servers) {
+    }
+    zval *m;
+    
+    MAKE_STD_ZVAL(m);
+    array_init(m);
+
+    add_assoc_long(m, "in use", monitor->num.in_use);
+    add_assoc_long(m, "in pool", monitor->num.in_pool);
+    add_assoc_long(m, "timeout", monitor->timeout);
+                     
+  }
+
+  
 }

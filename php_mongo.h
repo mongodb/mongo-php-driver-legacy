@@ -639,6 +639,7 @@ int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
 int mongo_hear(int sock, void*, int TSRMLS_DC);
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
 mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link TSRMLS_DC);
+void php_mongo_server_free(mongo_server *server TSRMLS_DC);
 
 void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);

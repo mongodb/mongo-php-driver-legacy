@@ -203,7 +203,7 @@ void mongo_util_link_disconnect(mongo_link *link) {
   }
 
   // sever it
-  php_mongo_disconnect_server(link->server_set->master);
+  mongo_util_disconnect(link->server_set->master);
   link->server_set->master = 0;
 }
 

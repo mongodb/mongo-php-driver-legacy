@@ -19,6 +19,8 @@
 #include <sapi/embed/php_embed.h>
 
 #include "unit.h"
+#include "lib/test_mongo.h"
+#include "lib/test_pool.h"
 
 int main() {
   printf("Running tests...\n");
@@ -26,6 +28,7 @@ int main() {
   PHP_EMBED_START_BLOCK(0, 0);
 
   test_mongo();
+  test_mongo_util_pool(TSRMLS_C);
   
   PHP_EMBED_END_BLOCK();
   

@@ -63,6 +63,7 @@ typedef struct {
   mongo_server *servers;
 } stack_monitor;
 
+#define CONNECTION_POOLS "mongoConnectionPool"
 // TODO: make this heurisitic
 #define INITIAL_POOL_SIZE 10
 
@@ -114,6 +115,11 @@ void mongo_util_pool__close_connections(stack_monitor *monitor);
 void mongo_util_pool__rm_server_ptr(stack_monitor *monitor, mongo_server *server);
 
 /**
+ * Add a server reference for this pointer.
+ */
+void mongo_util_pool__add_server_ptr(stack_monitor *monitor, mongo_server *server);
+
+/**
  * Creates the identifying string for this server's hash table entry.
  */
 char* mongo_util_pool__get_id(mongo_server *server TSRMLS_DC);
@@ -132,7 +138,7 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC);
 /**
  * Get all connection pools for this instance.
  */
-HashTable *mongo_util_pool__get_connection_pools();
+HashTable *mongo_util_pool__get_connection_pools(TSRMLS_D);
 
 // ------- External (debug) Functions -----------
 

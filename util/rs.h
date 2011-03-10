@@ -24,4 +24,16 @@
  */
 mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC);
 
+/**
+ * This finds the next slave on the list to use for reads. If it cannot find a
+ * secondary and the primary is down, it will return FAILURE.  Otherwise, it
+ * returns RS_SECONDARY if it is connected to a slave and RS_PRIMARY if it is
+ * connected to the master.
+ *
+ * It choses a random slave between 0 & (number of secondaries-1).
+ */
+int set_a_slave(mongo_link *link, char **errmsg);
+
+int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC);
+
 #endif

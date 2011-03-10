@@ -67,8 +67,6 @@ static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC);
 static void disconnect_if_connected(zval *this_ptr TSRMLS_DC);
 static mongo_cursor* make_persistent_cursor(mongo_cursor *cursor);
 static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor);
-static int set_a_slave(mongo_link *link, char **errmsg);
-static int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC);
 
 #if WIN32
 static HANDLE cursor_mutex;
@@ -198,7 +196,7 @@ PHP_INI_END()
 /* }}} */
 
 
-static void php_mongo_server_free(mongo_server *server TSRMLS_DC) {
+void php_mongo_server_free(mongo_server *server TSRMLS_DC) {
   // return this connection to the pool
   mongo_util_pool_done(server TSRMLS_CC);
 
@@ -1028,7 +1026,7 @@ PHP_METHOD(Mongo, __construct) {
   // initialize any connection pools needed (doesn't actually connect)
   current = link->server_set->server;
   while (current) {
-    mongo_util_pool_init(current, (time_t)link->timeout TSRMLS_DC);
+    mongo_util_pool_init(current, (time_t)link->timeout TSRMLS_CC);
     current = current->next;
   }
 
@@ -1147,193 +1145,6 @@ PHP_METHOD(Mongo, connectUtil) {
   }
 }
 
-/**
- * This finds the next slave on the list to use for reads. If it cannot find a
- * secondary and the primary is down, it will return FAILURE.  Otherwise, it
- * returns RS_SECONDARY if it is connected to a slave and RS_PRIMARY if it is
- * connected to the master.
- *
- * It choses a random slave between 0 & (number of secondaries-1).
- */
-static int set_a_slave(mongo_link *link, char **errmsg) {
-  mongo_server *possible_slave;
-  int skip;
-  zval **master = 0, **health = 0;
-  
-  if (!link->rs || !link->server_set) {
-    *(errmsg) = estrdup("Connection is not initialized or not a replica set");
-    return FAILURE;
-  }
-
-  // pick a secondary S such that S is in [0, num slaves-1)
-  skip = (int)rand();
-  if (skip < 0) {
-    skip *= -1;
-  }
-
-  if (link->server_set->slaves) {
-    skip %= link->server_set->slaves;
-    possible_slave = link->server_set->server;
-  }
-  // if there are no slaves, don't check for them
-  else {
-    possible_slave = 0;
-  }
-  
-  // skip to the Sth server
-  link->slave = 0;
-  while (possible_slave) {      
-   
-    if (!possible_slave->readable) {
-      possible_slave = possible_slave->next;
-      continue;
-    }
-          
-    if (skip) {
-      skip--;
-      possible_slave = possible_slave->next;
-      continue;
-    }
-
-    // get_heartbeats checks the status of the slave, so we can assume it's okay
-    link->slave = possible_slave;
-    return RS_SECONDARY;
-  }
-
-  // if we've run out of possibilities, use the master
-  if (link->server_set->master &&
-      zend_hash_find(link->server_set->hosts,
-                     link->server_set->master->label,
-                     strlen(link->server_set->master->label)+1,
-                     (void**)&master) == SUCCESS &&
-      Z_TYPE_PP(master) == IS_ARRAY &&
-      zend_hash_find(Z_ARRVAL_PP(master), "health", strlen("health")+1,
-                     (void**)&health) == SUCCESS &&
-      Z_NUMVAL_PP(health, 1)) {
-
-    link->slave = link->server_set->master;
-    return RS_PRIMARY;
-  }
-  
-  *errmsg = estrdup("No secondary found");
-  return FAILURE;
-}
-
-static int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC) {
-  zval *db, *name, *data, *result, temp, **members, **ok, **member;
-  HashTable *hash;
-  HashPosition pointer;
-  mongo_link *link;
-  mongo_server *ptr;
-  
-  Z_TYPE(temp) = IS_NULL;
-
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
-  
-  MAKE_STD_ZVAL(db);
-  object_init_ex(db, mongo_ce_DB);
-  MONGO_METHOD2(MongoDB, __construct, &temp, db, getThis(), name);
-
-  // not sure if this is even possible
-  if (EG(exception)) {
-    zval_ptr_dtor(&name);
-    zval_ptr_dtor(&db);
-    
-    // but better safe than sorry
-    return FAILURE;
-  }
-  
-  MAKE_STD_ZVAL(result);
-
-  MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "replSetGetStatus", 1);
-
-  MONGO_CMD(result, db);
-
-  zval_ptr_dtor(&name);
-  zval_ptr_dtor(&db);
-  zval_ptr_dtor(&data);
-
-  if (EG(exception)) {
-    return FAILURE;
-  }
-
-  // check results for errors
-  if (zend_hash_find(Z_ARRVAL_P(result), "members", strlen("members")+1, (void**)&members) == FAILURE ||
-      !(zend_hash_find(Z_ARRVAL_P(result), "ok", strlen("ok")+1, (void**)&ok) == SUCCESS &&
-        Z_NUMVAL_PP(ok, 1))) {
-    zval_ptr_dtor(&result);
-    *(errmsg) = estrdup("status msg wasn't valid");
-    return FAILURE;
-  }
-
-
-  link = (mongo_link*)zend_object_store_get_object((getThis()) TSRMLS_CC);
-  if (!link) {
-    zval_ptr_dtor(&result);
-    *(errmsg) = estrdup("connection not properly initialized");
-    return FAILURE;
-  }
-  
-  link->server_set->slaves = 0;
-  // clear readable bit
-  ptr = link->server_set->server;
-  while (ptr) {
-    ptr->readable = 0;
-    ptr = ptr->next;
-  }
-
-  hash = Z_ARRVAL_PP(members);
-  for (zend_hash_internal_pointer_reset_ex(hash, &pointer); 
-       zend_hash_get_current_data_ex(hash, (void**) &member, &pointer) == SUCCESS; 
-       zend_hash_move_forward_ex(hash, &pointer)) {
-    // host is never really used, it's just a temp var
-    zval **name = 0, **host = 0, **state = 0, **health = 0, *dest;
-    
-    if (zend_hash_find(Z_ARRVAL_PP(member), "name", strlen("name")+1,
-                       (void**)&name) == FAILURE) {
-      // TODO: well, that's weird
-      continue;
-    }
-
-    // mark servers in state 2 readable
-    if (zend_hash_find(Z_ARRVAL_PP(member), "state", strlen("state")+1,
-                       (void**)&state) == SUCCESS &&
-        zend_hash_find(Z_ARRVAL_PP(member), "health", strlen("health")+1,
-                       (void**)&health) == SUCCESS &&
-        Z_NUMVAL_PP(state, 2) && Z_NUMVAL_PP(health, 1)) {
-
-      mongo_server *server = link->server_set->server;
-      while (server) {
-        if (strncmp(server->label, Z_STRVAL_PP(name), strlen(server->label)) == 0) {
-          server->readable = 1;
-          link->server_set->slaves++;
-          break;
-        }
-        server = server->next;
-      }
-    }
-    
-    if (zend_hash_find(link->server_set->hosts, Z_STRVAL_PP(name),
-                       Z_STRLEN_PP(name)+1, (void**)&host) == FAILURE) {
-#ifdef DEBUG_CONN
-      log1("no host named %s", Z_STRVAL_PP(name));
-#endif
-      continue;
-    }
-    
-    if (mongo_util_hash_to_pzval(&dest, member TSRMLS_CC) == FAILURE) {
-      return FAILURE;
-    }
-    zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name),
-                     Z_STRLEN_PP(name)+1, (void*)&dest, sizeof(zval*), NULL);
-  }
-  
-  zval_ptr_dtor(&result);
-  return SUCCESS;
-}
 
 static void disconnect_if_connected(zval *this_ptr TSRMLS_DC) {
   zval *connected;

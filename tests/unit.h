@@ -14,5 +14,3 @@
  *  limitations under the License.
  */
 
-int test_mongo();
-int test_pool();
