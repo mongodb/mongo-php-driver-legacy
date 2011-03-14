@@ -2295,7 +2295,7 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
   if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) < INT_32) {
 
-    php_mongo_disconnect_link(cursor->link);
+    php_mongo_disconnect_server(cursor->server);
 
     zend_throw_exception(mongo_ce_CursorException, "couldn't get response header", 4 TSRMLS_CC);
     return FAILURE;
@@ -2306,13 +2306,13 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
   // make sure we're not getting crazy data
   if (cursor->recv.length == 0) {
-    php_mongo_disconnect_link(cursor->link);
+    php_mongo_disconnect_server(cursor->server);
     zend_throw_exception(mongo_ce_CursorException, "no db response", 5 TSRMLS_CC);
     return FAILURE;
   }
   else if (cursor->recv.length > MAX_RESPONSE_LEN ||
            cursor->recv.length < REPLY_HEADER_SIZE) {
-    php_mongo_disconnect_link(cursor->link);
+    php_mongo_disconnect_server(cursor->server);
     zend_throw_exception_ex(mongo_ce_CursorException, 6 TSRMLS_CC, 
                             "bad response length: %d, max: %d, did the db assert?", 
                             cursor->recv.length, MAX_RESPONSE_LEN);
@@ -2711,14 +2711,13 @@ mongo_server* php_mongo_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
 }
 
 void php_mongo_disconnect_link(mongo_link *link) {
-  // already disconnected
-  if (!link->server_set->master ||
-      !link->server_set->master->connected) {
-    return;
+  mongo_server *current = link->server_set->server;
+  
+  while (current) {
+    php_mongo_disconnect_server(current);
+    current = current->next;
   }
-
-  // sever it
-  php_mongo_disconnect_server(link->server_set->master);
+  
   link->server_set->master = 0;
 }
 
