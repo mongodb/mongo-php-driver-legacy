@@ -22,7 +22,7 @@
 #include "rs.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
-  mongo_ce_ConnectionException;
+  *mongo_ce_ConnectionException;
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 
@@ -196,14 +196,13 @@ int mongo_util_link_try_connecting(mongo_link *link TSRMLS_DC) {
 
 // TODO: this should disconnect from all members of the RS
 void mongo_util_link_disconnect(mongo_link *link) {
-  // already disconnected
-  if (!link->server_set->master ||
-      !link->server_set->master->connected) {
-    return;
-  }
+  mongo_server *current = link->server_set->server;
 
-  // sever it
-  mongo_util_disconnect(link->server_set->master);
+  while (current) {
+    mongo_util_disconnect(current);
+    current = current->next;
+  }
+  
   link->server_set->master = 0;
 }
 

@@ -56,6 +56,7 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
     monitor->num.in_use++;
     
     server->socket = target->socket;
+    server->connected = 1;
     free(target);
     
     return SUCCESS;
@@ -63,10 +64,12 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
   // create a new connection, no point in adding to stack
   else if (mongo_util_pool__connect(server, monitor->timeout, errmsg TSRMLS_CC) == SUCCESS) {
     // add this server to the list of monitored servers for this pool
-    mongo_util_pool__add_server_ptr(monitor, server);    
+    mongo_util_pool__add_server_ptr(monitor, server);
+    server->connected = 1;
     return SUCCESS;
   }
-  
+
+  server->connected = 0;
   return FAILURE;
 }
 
@@ -82,9 +85,11 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
 
   // clean up reference to server (nothing needs to be freed)
   mongo_util_pool__rm_server_ptr(monitor, server);
-  
-  // move to stack
-  mongo_util_pool__stack_push(monitor, server);
+
+  // if this is disconnected, do not add it to the pool
+  if (server->connected) {
+    mongo_util_pool__stack_push(monitor, server);
+  }
 }
 
 void mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
@@ -138,14 +143,43 @@ stack_node* mongo_util_pool__stack_pop(stack_monitor *monitor) {
 
 void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
   stack_node *node;
-  
-  node = (stack_node*)malloc(sizeof(stack_node));
-  
-  node->socket = server->socket;
-  node->next = monitor->top;
-  monitor->top = node;
 
-  monitor->num.in_pool++;
+  if (server->connected) {    
+    node = (stack_node*)malloc(sizeof(stack_node));
+  
+    node->socket = server->socket;
+    node->next = monitor->top;
+    monitor->top = node;
+
+    monitor->num.in_pool++;
+  }
+
+  // don't keep more than 50 connections around
+  node = monitor->top;
+  if (monitor->num.in_pool > 50) {
+    int count = 0;
+    stack_node *next;
+    
+    while (node && count < 50) {
+      node = node->next;
+      count++;
+    }
+
+    next = node->next;
+    node->next = 0;
+    node = next;
+    
+    // get rid of old connections
+    while (node) {      
+      next = node->next;
+      
+      MONGO_UTIL_DISCONNECT(node->socket);
+      free(node);
+      
+      node = next;
+      monitor->num.in_pool--;
+    }
+  }
 }
 
 void mongo_util_pool__add_server_ptr(stack_monitor *monitor, mongo_server *server) {
@@ -249,13 +283,14 @@ HashTable *mongo_util_pool__get_connection_pools(TSRMLS_D) {
 stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
   HashTable *pools;
   stack_monitor *mptr;
-  char *id = mongo_util_pool__get_id(server TSRMLS_CC);
+  char *id;
+  size_t len = mongo_util_pool__get_id(server, &id TSRMLS_CC);
 
   if ((pools = mongo_util_pool__get_connection_pools(TSRMLS_C)) == 0) {
     return 0;
   }
   
-  if (zend_hash_find(pools, id, sizeof(id), (void**)&mptr) == FAILURE) {
+  if (zend_hash_find(pools, id, len, (void**)&mptr) == FAILURE) {
     stack_monitor *monitor;
     monitor = (stack_monitor*)malloc(sizeof(stack_monitor));
     if (!monitor) {
@@ -264,7 +299,7 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
 
     memset(monitor, 0, sizeof(stack_monitor));
     
-    if (zend_hash_add(pools, id, sizeof(id), monitor, sizeof(stack_monitor), NULL) == FAILURE) {
+    if (zend_hash_add(pools, id, len, monitor, sizeof(stack_monitor), NULL) == FAILURE) {
       free(monitor);
       return 0;
     }
@@ -275,15 +310,15 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
   return mptr;
 }
 
-char* mongo_util_pool__get_id(mongo_server *server TSRMLS_DC) {
-  char *id;
-
-  spprintf(&id, 0, "%s:%d.%s.%s.%s", server->host, server->port,
-           server->db ? server->db : "",
-           server->username ? server->username : "",
-           server->password ? server->password : "");
+size_t mongo_util_pool__get_id(mongo_server *server, char **id TSRMLS_DC) {
+  size_t len;
   
-  return id;
+  len = spprintf(id, 0, "%s:%d.%s.%s.%s", server->host, server->port,
+                 server->db ? server->db : "",
+                 server->username ? server->username : "",
+                 server->password ? server->password : "");
+  
+  return len;
 }
 
 int mongo_util_pool__connect(mongo_server *server, time_t timeout, zval *errmsg TSRMLS_DC) {
@@ -307,9 +342,10 @@ PHP_FUNCTION(mongoPoolDebug) {
   for (zend_hash_internal_pointer_reset_ex(hash, &pointer); 
        zend_hash_get_current_data_ex(hash, (void**) &monitor, &pointer) == SUCCESS; 
        zend_hash_move_forward_ex(hash, &pointer)) {
-    if (monitor->servers) {
-    }
     zval *m;
+    char *key;
+    int key_len;
+    long index;
     
     MAKE_STD_ZVAL(m);
     array_init(m);
@@ -317,8 +353,14 @@ PHP_FUNCTION(mongoPoolDebug) {
     add_assoc_long(m, "in use", monitor->num.in_use);
     add_assoc_long(m, "in pool", monitor->num.in_pool);
     add_assoc_long(m, "timeout", monitor->timeout);
-                     
-  }
 
+    if (zend_hash_get_current_key_ex(hash, &key, &key_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
+      add_assoc_zval(return_value, key, m);
+    }
+    else {
+      add_index_zval(return_value, index, m);
+    }
+  }
   
+  // return_value is returned
 }

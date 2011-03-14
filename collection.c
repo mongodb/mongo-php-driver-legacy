@@ -306,7 +306,7 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
 
     // not master
     if (code == 10058) {
-      php_mongo_disconnect_server(cursor->server);
+      mongo_util_disconnect(cursor->server);
     }
 
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), code TSRMLS_CC);

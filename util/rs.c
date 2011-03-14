@@ -21,6 +21,7 @@
 #include "rs.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
+  *mongo_ce_DB,
   *mongo_ce_Cursor;
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -107,6 +108,7 @@ static zval* create_fake_cursor(mongo_link *link TSRMLS_DC) {
   return cursor_zval;
 }
 
+// TODO: we don't actually need to find master on initial connection
 mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
   zval *cursor_zval;
   mongo_cursor *cursor;

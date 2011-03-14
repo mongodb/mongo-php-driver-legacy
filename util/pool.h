@@ -27,6 +27,9 @@
  * connection from an empty pool, a new one is created and immediately given
  * out.  When a connection is released, it is pushed onto the stack.
  *
+ * When a mongo_server gets a connection, its socket and connected fields must
+ * be set.  This is done in get().
+ *
  * The pool has a list of all of its connections, both on the stack and "in the
  * wild."  If failed() is called, every connection associated with that pool is
  * closed and every connection on the stack is freed.  When clients use a
@@ -122,7 +125,7 @@ void mongo_util_pool__add_server_ptr(stack_monitor *monitor, mongo_server *serve
 /**
  * Creates the identifying string for this server's hash table entry.
  */
-char* mongo_util_pool__get_id(mongo_server *server TSRMLS_DC);
+size_t mongo_util_pool__get_id(mongo_server *server, char **id TSRMLS_DC);
 
 /**
  * Create a new connection.  Returns SUCCESS/FAILURE and sets errmsg, never
@@ -142,6 +145,6 @@ HashTable *mongo_util_pool__get_connection_pools(TSRMLS_D);
 
 // ------- External (debug) Functions -----------
 
-//PHP_FUNCTION(mongoPoolDebug);
+PHP_FUNCTION(mongoPoolDebug);
 
 #endif
