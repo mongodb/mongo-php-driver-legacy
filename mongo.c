@@ -422,6 +422,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC) {
     list_entry new_le;
     new_le.ptr = new_node;
     new_le.type = le_cursor_list;
+    new_le.refcount = 1;
     zend_hash_add(&EG(persistent_list), name, strlen(name)+1, &new_le, sizeof(list_entry), NULL);
   }
 
@@ -468,8 +469,13 @@ static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
     while (node->next) {
       cursor_node *temp = node;
       node = node->next;
+
+      pefree(temp->cursor->buf.start, 1);
+      pefree(temp->cursor, 1);
       pefree(temp, 1);
     }
+    pefree(node->cursor->buf.start, 1);
+    pefree(node->cursor, 1);
     pefree(node, 1);
   }
 
