@@ -22,6 +22,7 @@
 #include "pool.h"
 #include "connect.h"
 
+extern int le_pconnection;
 
 int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
   stack_monitor *monitor;
@@ -53,10 +54,11 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
     stack_node *target;
 
     target = mongo_util_pool__stack_pop(monitor);
-    monitor->num.in_use++;
     
+    monitor->num.in_use++;
     server->socket = target->socket;
     server->connected = 1;
+    
     free(target);
     
     return SUCCESS;
@@ -92,40 +94,69 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
   }
 }
 
-void mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
+void mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {
   stack_monitor *monitor;
   zval *errmsg;
+  
+  // some routers cut off connections after x time, so we don't want to drop all
+  // of the connections unless we can't reconnect
+  mongo_util_disconnect(server);
   
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     return;
   }
 
-  // some routers cut off connections after x time, so we don't want to drop all
-  // of the connections unless we can't reconnect
-  mongo_util_disconnect(server);
-
+  // if we cannot reconnect, we'll assume that this server is down and
+  // disconnect everyone
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
   if (mongo_util_pool__connect(server, monitor->timeout, errmsg TSRMLS_CC) == FAILURE) {
     mongo_util_pool__close_connections(monitor);
+    zval_ptr_dtor(&errmsg);
+    return;
   }
+
+  // on replica set disconnection, reconnect all members
+  if (code == EVERYONE_DISCONNECTED) {
+    mongo_server *current;
+  
+    current = monitor->servers;
+    while (current) {
+      
+      // skip the one we did above
+      if (current == server) {
+        current = current->next_in_pool;
+        continue;
+      }
+      
+      mongo_util_disconnect(current);
+
+      // once one connection fails, don't try to reconnect the rest
+      if (Z_TYPE_P(errmsg) == IS_NULL) {
+        mongo_util_pool__connect(current, monitor->timeout, errmsg TSRMLS_CC);
+      }
+
+      current = current->next_in_pool;
+    }
+
+    // clear the stack, no point in reconnecting unused connections
+    mongo_util_pool__stack_clear(monitor);
+  }
+
   zval_ptr_dtor(&errmsg);
 }
 
 void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
-  HashTable *hash;
-  HashPosition pointer;
-  stack_monitor *monitor;
+  stack_monitor *monitor = 0;
 
-  hash = (HashTable*)rsrc->ptr;
-  
-  for (zend_hash_internal_pointer_reset_ex(hash, &pointer); 
-       zend_hash_get_current_data_ex(hash, (void**) &monitor, &pointer) == SUCCESS; 
-       zend_hash_move_forward_ex(hash, &pointer)) {
-    // TODO: delete monitor
-    mongo_util_pool__close_connections(monitor);
-    
+  if (!rsrc || !rsrc->ptr) {
+    return;
   }
+
+  monitor = (stack_monitor*)rsrc->ptr;
+  mongo_util_pool__close_connections(monitor);
+  free(monitor);
+  rsrc->ptr = 0;
 }
 
 stack_node* mongo_util_pool__stack_pop(stack_monitor *monitor) {
@@ -133,10 +164,12 @@ stack_node* mongo_util_pool__stack_pop(stack_monitor *monitor) {
 
   node = monitor->top;
     
-  // pop stack
-  monitor->top = node->next;
+  // check that monitor->pop != NULL and pop stack
+  if (node) {
+    monitor->top = node->next;
   
-  monitor->num.in_pool--;
+    monitor->num.in_pool--;
+  }
   
   return node;
 }
@@ -182,6 +215,20 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
   }
 }
 
+void mongo_util_pool__stack_clean(stack_monitor *monitor) {
+  stack_node *top;
+  
+  top = mongo_util_pool__stack_pop(monitor);
+  while (top) {
+    MONGO_UTIL_DISCONNECT(top->socket);
+    free(top);
+
+    top = mongo_util_pool__stack_pop(monitor);    
+  }
+  monitor->top = 0;
+}
+
+
 void mongo_util_pool__add_server_ptr(stack_monitor *monitor, mongo_server *server) {
   mongo_server *list, *current;
 
@@ -203,14 +250,17 @@ void mongo_util_pool__add_server_ptr(stack_monitor *monitor, mongo_server *serve
 }
 
 void mongo_util_pool__rm_server_ptr(stack_monitor *monitor, mongo_server *server) {
-  mongo_server *prev, *current;
+  mongo_server *next, *prev, *current;
+
+  next = server->next_in_pool;
+  server->next_in_pool = 0;
   
   if (monitor->servers == 0) {
     return;
   }
   
   if (monitor->servers == server) {
-    monitor->servers = server->next_in_pool;
+    monitor->servers = next;
     return;
   }
   
@@ -229,7 +279,6 @@ void mongo_util_pool__rm_server_ptr(stack_monitor *monitor, mongo_server *server
 
 void mongo_util_pool__close_connections(stack_monitor *monitor) {
   mongo_server *current;
-  stack_node *top;
 
   // close all open connections
   current = monitor->servers;
@@ -241,73 +290,39 @@ void mongo_util_pool__close_connections(stack_monitor *monitor) {
   monitor->servers = 0;
 
   // remove any connections from the stack
-  top = monitor->top;
-  while (top) {
-    stack_node *current;
-
-    current = mongo_util_pool__stack_pop(monitor);
-    MONGO_UTIL_DISCONNECT(current->socket);
-
-    free(current);
-  }
-  monitor->top = 0;
-}
-
-HashTable *mongo_util_pool__get_connection_pools(TSRMLS_D) {
-  zend_rsrc_list_entry *le = 0, le_struct;
-  
-  // get persistent connection hash
-  if (zend_hash_find(&EG(persistent_list), CONNECTION_POOLS,
-                     sizeof(CONNECTION_POOLS), (void**)&le) == FAILURE) {
-    le = &le_struct;
-    le->ptr = 0;
-
-    if (zend_hash_update(&EG(persistent_list), CONNECTION_POOLS, sizeof(CONNECTION_POOLS),
-                         (void*)le, sizeof(zend_rsrc_list_entry), NULL) == FAILURE) {
-      return 0;
-    }
-  }
-  
-  if (!le->ptr) {
-    le->ptr = (HashTable*)malloc(sizeof(HashTable));
-    if (!le->ptr) {
-      return 0;
-    }
-
-    zend_hash_init(le->ptr, 8, 0, mongo_util_hash_dtor, 1);
-  }
-
-  return le->ptr;
+  mongo_util_pool__stack_clean(monitor);
 }
 
 stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
-  HashTable *pools;
-  stack_monitor *mptr;
+  zend_rsrc_list_entry *le = 0;
   char *id;
   size_t len = mongo_util_pool__get_id(server, &id TSRMLS_CC);
 
-  if ((pools = mongo_util_pool__get_connection_pools(TSRMLS_C)) == 0) {
-    return 0;
-  }
-  
-  if (zend_hash_find(pools, id, len, (void**)&mptr) == FAILURE) {
+  if (zend_hash_find(&EG(persistent_list), id, len+1, (void**)&le) == FAILURE) {
+    zend_rsrc_list_entry nle;
     stack_monitor *monitor;
+    
     monitor = (stack_monitor*)malloc(sizeof(stack_monitor));
     if (!monitor) {
+      efree(id);
       return 0;
     }
 
     memset(monitor, 0, sizeof(stack_monitor));
     
-    if (zend_hash_add(pools, id, len, monitor, sizeof(stack_monitor), NULL) == FAILURE) {
-      free(monitor);
-      return 0;
-    }
-
+    // registering this links it to the dtor (mongo_util_pool_shutdown) so that
+    // it can be auto-cleaned-up on shutdown
+    nle.ptr = monitor;
+    nle.type = le_pconnection;
+    nle.refcount = 1;
+    zend_hash_add(&EG(persistent_list), id, len+1, &nle, sizeof(zend_rsrc_list_entry), NULL);
+    
+    efree(id);
     return monitor;
   }
   
-  return mptr;
+  efree(id);
+  return le->ptr;
 }
 
 size_t mongo_util_pool__get_id(mongo_server *server, char **id TSRMLS_DC) {
@@ -331,21 +346,25 @@ int mongo_util_pool__connect(mongo_server *server, time_t timeout, zval *errmsg 
 }
 
 PHP_FUNCTION(mongoPoolDebug) {
-  HashTable *hash;
   HashPosition pointer;
-  stack_monitor *monitor;
+  zend_rsrc_list_entry *le;
 
   array_init(return_value);
-
-  hash = mongo_util_pool__get_connection_pools(TSRMLS_C);
   
-  for (zend_hash_internal_pointer_reset_ex(hash, &pointer); 
-       zend_hash_get_current_data_ex(hash, (void**) &monitor, &pointer) == SUCCESS; 
-       zend_hash_move_forward_ex(hash, &pointer)) {
+  for (zend_hash_internal_pointer_reset_ex(&EG(persistent_list), &pointer); 
+       zend_hash_get_current_data_ex(&EG(persistent_list), (void**) &le, &pointer) == SUCCESS; 
+       zend_hash_move_forward_ex(&EG(persistent_list), &pointer)) {
     zval *m;
     char *key;
     int key_len;
     long index;
+    stack_monitor *monitor;
+
+    if (!le || le->type != le_pconnection) {
+      continue;
+    }
+
+    monitor = (stack_monitor*)le->ptr;
     
     MAKE_STD_ZVAL(m);
     array_init(m);
@@ -354,7 +373,7 @@ PHP_FUNCTION(mongoPoolDebug) {
     add_assoc_long(m, "in pool", monitor->num.in_pool);
     add_assoc_long(m, "timeout", monitor->timeout);
 
-    if (zend_hash_get_current_key_ex(hash, &key, &key_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
+    if (zend_hash_get_current_key_ex(&EG(persistent_list), &key, &key_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
       add_assoc_zval(return_value, key, m);
     }
     else {

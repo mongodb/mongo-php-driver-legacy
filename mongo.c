@@ -970,7 +970,7 @@ PHP_METHOD(Mongo, __construct) {
   slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
   link->slave_okay = Z_BVAL_P(slave_okay);
   
-  /* new format */
+  // new format 
   if (options) {
     if (!IS_SCALAR_P(options)) {
       zval **connect_z, **timeout_z, **replica_z, **slave_okay_z, **username_z,
@@ -1003,7 +1003,7 @@ PHP_METHOD(Mongo, __construct) {
       }
     }
     else {
-      /* backwards compatibility */
+      // backwards compatibility 
       connect = Z_BVAL_P(options);
       if (MonGlo(allow_persistent) && persist) {
         zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
@@ -1635,7 +1635,7 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
   }
 
   if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) < INT_32) {
-    mongo_util_disconnect(cursor->server);
+    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
 
     zend_throw_exception(mongo_ce_CursorException, "couldn't get response header", 4 TSRMLS_CC);
     return FAILURE;
@@ -1646,12 +1646,12 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
   // make sure we're not getting crazy data
   if (cursor->recv.length == 0) {
-    mongo_util_disconnect(cursor->server);
+    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
     zend_throw_exception(mongo_ce_CursorException, "no db response", 5 TSRMLS_CC);
     return FAILURE;
   }
   else if (cursor->recv.length < REPLY_HEADER_SIZE) {
-    mongo_util_disconnect(cursor->server);
+    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
     zend_throw_exception_ex(mongo_ce_CursorException, 6 TSRMLS_CC, 
                             "bad response length: %d, did the db assert?", 
                             cursor->recv.length);

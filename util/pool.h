@@ -17,27 +17,29 @@
 
 
 /**
- * The server pool is actually a hashtable of pools, uniquely identified by:
+ * Each pool is uniquely identified by:
  *
  * serverAddr:port.db.user.password
  *
- * The hashtable is stored in the persistent list.
+ * So the default pool name is "localhost:27017...".  Each pool is stored in the
+ * persistent list.
  *
  * Each "pool" is actually a stack of connections.  If someone requests a
  * connection from an empty pool, a new one is created and immediately given
  * out.  When a connection is released, it is pushed onto the stack.
+ * Connections correspond to threads in the database, so it is more likely that
+ * a recently used connection's thread is active.
  *
  * When a mongo_server gets a connection, its socket and connected fields must
  * be set.  This is done in get().
  *
  * The pool has a list of all of its connections, both on the stack and "in the
- * wild."  If failed() is called, every connection associated with that pool is
- * closed and every connection on the stack is freed.  When clients use a
- * connection for the first time after a failure, they must fetch a new
- * connection from the pool.
+ * wild."  If failed() is called and the server seems to be down, every
+ * connection associated with that pool is closed and every connection on the
+ * stack is freed.  When clients use a connection for the first time after a
+ * failure, they must fetch a new connection from the pool.
  *
  * TODO: modify MongoDB::authenticate to remove the server from the pool
- * TODO: only disconnect on two failures in a row (to prevent spurious disconnects)
  */
 
 #ifndef MONGO_UTIL_POOL_H
@@ -66,7 +68,7 @@ typedef struct {
   mongo_server *servers;
 } stack_monitor;
 
-#define CONNECTION_POOLS "mongoConnectionPool"
+#define EVERYONE_DISCONNECTED 1
 // TODO: make this heurisitic
 #define INITIAL_POOL_SIZE 10
 
@@ -93,8 +95,17 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC);
  * Attempts to reconnect to the database after an operation has failed.  If it
  * is unable to reconnect, it assumes something is *really* wrong and clears and
  * disconnects the connection stack.
+ *
+ * On certain errrors (e.g., replica set failover) we want to disconnect and
+ * reconnect everyone.  This function only reconnects sockets that are currently
+ * in use (in the servers list) and closes and cleans up all of the dormant
+ * servers in the pool.
+ *
+ * If this fails to reconnect a socket, it will simply close (not reconnect) the
+ * rest of the sockets to this server (on the assumption that something went
+ * wrong with the server itself).
  */
-void mongo_util_pool_failed(mongo_server *server TSRMLS_DC);
+void mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC);
 
 /**
  * Clean up all pools on shutdown, disconnect all connections.
@@ -104,8 +115,20 @@ void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
 // ------- Internal Functions -----------
 
+/**
+ * Pop a connection off of the stack.
+ */
 stack_node* mongo_util_pool__stack_pop(stack_monitor *monitor);
+
+/**
+ * Push a connection onto the stack.
+ */
 void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server);
+
+/**
+ * Close and remove all connections from the stack.
+ */
+void mongo_util_pool__stack_clear(stack_monitor *monitor);
 
 /**
  * Close all connections for a given monitor.
@@ -138,10 +161,6 @@ int mongo_util_pool__connect(mongo_server *server, time_t timeout, zval *errmsg 
  */
 stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC);
 
-/**
- * Get all connection pools for this instance.
- */
-HashTable *mongo_util_pool__get_connection_pools(TSRMLS_D);
 
 // ------- External (debug) Functions -----------
 

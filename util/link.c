@@ -194,7 +194,6 @@ int mongo_util_link_try_connecting(mongo_link *link TSRMLS_DC) {
 }
 
 
-// TODO: this should disconnect from all members of the RS
 void mongo_util_link_disconnect(mongo_link *link) {
   mongo_server *current = link->server_set->server;
 
