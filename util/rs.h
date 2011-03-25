@@ -36,4 +36,20 @@ int set_a_slave(mongo_link *link, char **errmsg);
 
 int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC);
 
+int mongo_util_rs__refresh_members(zval *response, mongo_link *link);
+
+int mongo_util_rs__get_ismaster(zval *response TSRMLS_DC);
+
+int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC);
+
+void mongo_util_rs__refresh_list(mongo_link *link, zval *response TSRMLS_DC);
+
+void mongo_util_rs__repopulate_hosts(zval **hosts, mongo_link *link TSRMLS_DC);
+
+zval* mongo_util_rs__call_ismaster(mongo_server *current, zval *cursor_zval TSRMLS_DC);
+
+zval* mongo_util_rs__create_fake_cursor(mongo_link *link TSRMLS_DC);
+
+mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TSRMLS_DC);
+
 #endif
