@@ -26,37 +26,18 @@ extern zend_class_entry *mongo_ce_Mongo,
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 
-/** Attempts to find a slave to read from.
- * Returns 0 and sets errmsg on failure.
- */
 mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
-  int now, status;
+  int status;
   
   // sanity check
   if (!link->rs) {
     ZVAL_STRING(errmsg, "Connection is not a replica set", 1);
     return 0;
   }
-
-  // every 5 seconds, try to update hosts
-  now = time(0);
-  if (link->server_set && link->server_set->ts + 5 < now) {
-    zval *fake_zval;
-    mongo_link *fake_link;
-    
-    link->server_set->ts = now;
-    
-    MAKE_STD_ZVAL(fake_zval);
-    object_init_ex(fake_zval, mongo_ce_Mongo);
-    fake_link = (mongo_link*)zend_object_store_get_object(fake_zval TSRMLS_CC);
-    fake_link->server_set = link->server_set;
-
-    get_heartbeats(fake_zval, &(Z_STRVAL_P(errmsg)) TSRMLS_CC);
-    
-    // if get_heartbeats fails, ignore
-    fake_link->server_set = 0;
-    zval_ptr_dtor(&fake_zval);
-  }
+  
+  // see if we need to update hosts or ping them
+  mongo_util_rs_refresh(link TSRMLS_CC);
+  mongo_util_rs_ping(link TSRMLS_CC);
 
   if (link->slave) {
     zval *fake_zval;

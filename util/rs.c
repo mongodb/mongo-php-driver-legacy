@@ -108,8 +108,8 @@ zval* mongo_util_rs__create_fake_cursor(mongo_link *link TSRMLS_DC) {
   return cursor_zval;
 }
 
-zval* mongo_util_rs__call_ismaster(mongo_server *current, zval *cursor_zval TSRMLS_DC) {
-  zval temp_ret, *errmsg, *response;
+zval* mongo_util_rs_ismaster(mongo_server *current TSRMLS_DC) {
+  zval temp_ret, *errmsg, *response, *cursor_zval;
   mongo_link temp;
   mongo_server *temp_next = 0;
   mongo_server_set temp_server_set;
@@ -126,12 +126,19 @@ zval* mongo_util_rs__call_ismaster(mongo_server *current, zval *cursor_zval TSRM
   temp.server_set->master = current;
   temp.rs = 0;
 
+  // create a cursor
+  cursor_zval = mongo_util_rs__create_fake_cursor(&temp TSRMLS_CC);
+  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
+  
   // skip anything we're not connected to
   if (!current->connected && FAILURE == mongo_util_pool_get(current, errmsg)) {
 #ifdef DEBUG_CONN
     log2("[c:php_mongo_get_master] not connected to %s:%d\n", current->host, current->port);
 #endif
     zval_ptr_dtor(&errmsg);
+    
+    cursor->link = 0;
+    zval_ptr_dtor(&cursor_zval);
     return 0;
   }
   zval_ptr_dtor(&errmsg);
@@ -155,6 +162,8 @@ zval* mongo_util_rs__call_ismaster(mongo_server *current, zval *cursor_zval TSRM
   } zend_end_try();
 
   current->next = temp_next;
+  cursor->link = 0;
+  zval_ptr_dtor(&cursor_zval);
 
   if (exception || IS_SCALAR_P(response)) {
     return 0;
@@ -209,8 +218,6 @@ void mongo_util_rs__refresh_list(mongo_link *link, zval *response TSRMLS_DC) {
 
 // TODO: we don't actually need to find master on initial connection
 mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
-  zval *cursor_zval;
-  mongo_cursor *cursor;
   mongo_server *current;
 
 #ifdef DEBUG_CONN
@@ -230,32 +237,24 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
     return link->server_set->master;
   }
 
+  // if this is a replica set, check the members occasionally and start the
+  // iteration over again
+  mongo_util_rs_refresh(link TSRMLS_CC);
+  
   // redetermine master
-
-  // create a cursor
-  cursor_zval = mongo_util_rs__create_fake_cursor(link TSRMLS_CC);
-  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
 
   current = link->server_set->server;
   while (current) {
     zval *response;
     int ismaster = 0;
 
-    response = mongo_util_rs__call_ismaster(current, cursor_zval TSRMLS_CC);
+    response = mongo_util_rs_ismaster(current TSRMLS_CC);
     if (!response) {
       zval_ptr_dtor(&response);
       current = current->next;
       continue;
     }
     ismaster = mongo_util_rs__get_ismaster(response);
-
-    // if this is a replica set, check the members occasionally and start the
-    // iteration over again
-    if (mongo_util_rs__refresh_members(response, link) == SUCCESS) {
-      zval_ptr_dtor(&response);
-      current = link->server_set->server;
-      continue;
-    }
         
     if (ismaster) {
       link->server_set->master = current;
@@ -263,8 +262,6 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
 
     if (ismaster || mongo_util_rs__another_master(response, link TSRMLS_CC) == SUCCESS) {
       zval_ptr_dtor(&response);
-      cursor->link = 0;
-      zval_ptr_dtor(&cursor_zval);
       return link->server_set->master;
     }
 
@@ -273,25 +270,73 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
     current = current->next;
   }
 
-  cursor->link = 0;
-  zval_ptr_dtor(&cursor_zval);
   return 0;
 }
 
-int mongo_util_rs__refresh_members(zval *response, mongo_link *link) {
+void mongo_util_rs_refresh(mongo_link *link TSRMLS_DC) {
   int now;
-  zval **hosts;
+  zval *response;
+  mongo_server *current;
   
   now = time(0);
-  if (link->rs && link->server_set->server_ts + 5 < now &&
-      zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1,
-                     (void**)&hosts) == SUCCESS) {
-    link->server_set->server_ts = now;
-      
-    mongo_util_rs__refresh_list(link, response TSRMLS_CC);
-    return SUCCESS;
+  if (!link->rs || link->server_set->server_ts + 5 >= now) {
+    return;
   }
-  return FAILURE;
+
+  // find a server with a hosts list
+  current = link->server_set->server;
+  while (current) {
+    response = mongo_util_rs_ismaster(current TSRMLS_CC);
+    
+    if (response) {
+      zval **hosts;
+      if (zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1, (void**)&hosts) == SUCCESS ||
+          zend_hash_find(HASH_P(response), "passives", strlen("passives")+1, (void**)&hosts) == SUCCESS) {
+        break;
+      }
+      zval_ptr_dtor(&response);
+    }
+
+    current = current->next;
+  }
+
+  // if no one had a list of hosts, we can't do anything
+  if (!current) {
+    zval_ptr_dtor(&response);
+    return;
+  }
+
+  // if someone did, refresh the list
+  link->server_set->server_ts = now;
+  mongo_util_rs__refresh_list(link, response TSRMLS_CC);
+  zval_ptr_dtor(&response);  
+}
+
+void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
+  int now;
+  
+  now = time(0);
+  
+  if (link->server_set && link->server_set->ts + 5 < now) {
+    zval *fake_zval;
+    mongo_link *fake_link;
+    char *errmsg, **errmsg_ptr;
+    
+    link->server_set->ts = now;
+    
+    MAKE_STD_ZVAL(fake_zval);
+    object_init_ex(fake_zval, mongo_ce_Mongo);
+    fake_link = (mongo_link*)zend_object_store_get_object(fake_zval TSRMLS_CC);
+    fake_link->server_set = link->server_set;
+
+    errmsg_ptr = &errmsg;
+    get_heartbeats(fake_zval, errmsg_ptr TSRMLS_CC);
+    
+    // if get_heartbeats fails, ignore
+    fake_link->server_set = 0;
+    zval_ptr_dtor(&fake_zval);
+    efree(errmsg);
+  }
 }
 
 

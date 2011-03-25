@@ -23,7 +23,7 @@
  */
 
 /**
- * Get a slave socket.
+ * Get a slave socket.  Returns 0 and sets errmsg on failure.
  */
 mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
 

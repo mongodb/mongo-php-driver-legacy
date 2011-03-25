@@ -36,7 +36,22 @@ int set_a_slave(mongo_link *link, char **errmsg);
 
 int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC);
 
-int mongo_util_rs__refresh_members(zval *response, mongo_link *link);
+/**
+ * Refresh the list of servers in the set.  Only will run on a given link once
+ * every 5 seconds. 
+ *
+ * Calls ismaster on each member of the set until it finds someone with a hosts
+ * and/or passives field.  Uses the first it finds to repopulate the list,
+ * returning all old connections to their pools and creating new servers for
+ * each host.  New servers do not yet fetch connections from their pools.
+ */
+void mongo_util_rs_refresh(mongo_link *link TSRMLS_DC);
+
+/**
+ * Ping servers to see who is readable.  Only will run on a given link once
+ * every 5 seconds (separate counter from that used for mongo_util_rs_refresh).
+ */
+void mongo_util_rs_ping(mongo_link *link TSRMLS_DC);
 
 int mongo_util_rs__get_ismaster(zval *response TSRMLS_DC);
 
@@ -46,7 +61,7 @@ void mongo_util_rs__refresh_list(mongo_link *link, zval *response TSRMLS_DC);
 
 void mongo_util_rs__repopulate_hosts(zval **hosts, mongo_link *link TSRMLS_DC);
 
-zval* mongo_util_rs__call_ismaster(mongo_server *current, zval *cursor_zval TSRMLS_DC);
+zval* mongo_util_rs_ismaster(mongo_server *current TSRMLS_DC);
 
 zval* mongo_util_rs__create_fake_cursor(mongo_link *link TSRMLS_DC);
 
