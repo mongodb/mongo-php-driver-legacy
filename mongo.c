@@ -962,7 +962,7 @@ mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link 
 PHP_METHOD(Mongo, __construct) {
   char *server = 0;
   int server_len = 0;
-  zend_bool connect = 1, persist = 0, garbage = 0;
+  zend_bool persist = 0, garbage = 0;
   zval *options = 0, *slave_okay = 0;
   mongo_link *link;
   mongo_server *current;
@@ -979,12 +979,9 @@ PHP_METHOD(Mongo, __construct) {
   // new format 
   if (options) {
     if (!IS_SCALAR_P(options)) {
-      zval **connect_z, **timeout_z, **replica_z, **slave_okay_z, **username_z,
-        **password_z, **db_z;
+      zval **timeout_z, **replica_z, **slave_okay_z, **username_z, **password_z,
+        **db_z;
 
-      if (zend_hash_find(HASH_P(options), "connect", strlen("connect")+1, (void**)&connect_z) == SUCCESS) {
-        connect = Z_BVAL_PP(connect_z);
-      }
       if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_z) == SUCCESS) {
         link->timeout = Z_LVAL_PP(timeout_z);
       }
@@ -1010,7 +1007,6 @@ PHP_METHOD(Mongo, __construct) {
     }
     else {
       // backwards compatibility 
-      connect = Z_BVAL_P(options);
       if (MonGlo(allow_persistent) && persist) {
         zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
       }
@@ -1035,10 +1031,6 @@ PHP_METHOD(Mongo, __construct) {
   while (current) {
     mongo_util_pool_init(current, (time_t)link->timeout TSRMLS_CC);
     current = current->next;
-  }
-
-  if (connect) {
-    MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
   }
 } 
 /* }}} */
