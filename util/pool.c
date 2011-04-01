@@ -77,7 +77,6 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
 
 void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
-  stack_node *node;
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     // if we couldn't push this, close the connection
@@ -92,6 +91,19 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
   if (server->connected) {
     mongo_util_pool__stack_push(monitor, server);
   }
+}
+
+void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
+  stack_monitor *monitor;
+  
+  if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
+    // if we couldn't push this, close the connection
+    mongo_util_disconnect(server);
+    return;
+  }
+
+  // clean up reference to server (nothing needs to be freed)
+  mongo_util_pool__rm_server_ptr(monitor, server);
 }
 
 void mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {

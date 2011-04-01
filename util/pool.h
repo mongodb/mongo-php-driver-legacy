@@ -112,6 +112,11 @@ void mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC);
  */
 void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
+/**
+ * Remove a connection from a pool.  This is done when a connection is manually
+ * authenticated, to prevent polluting the pool.
+ */
+void mongo_util_pool_remove(mongo_server *server TSRMLS_DC);
 
 // ------- Internal Functions -----------
 
