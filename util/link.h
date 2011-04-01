@@ -37,4 +37,10 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
  */
 void mongo_util_link_disconnect(mongo_link *link);
 
+/**
+ * Connect to the list of seeds.
+ */
+int mongo_util_link_try_connecting(mongo_link *link, zval *errmsg TSRMLS_DC);
+
+
 #endif

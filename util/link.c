@@ -101,23 +101,17 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
     return server;
   }
 
-  // errmsg set in do_socket_connect
+  // errmsg set in try_connecting
   return 0;
 }
 
 
-/**
- * Tries fetching db connections.  Returns FAILURE and throws exception on
- * failure.
- */
-int mongo_util_link_try_connecting(mongo_link *link TSRMLS_DC) {
-  zval *errmsg = 0, *errmsg_holder = 0;
+int mongo_util_link_try_connecting(mongo_link *link, zval *errmsg TSRMLS_DC) {
+  zval *errmsg_holder = 0;
   mongo_server *current = 0;
   int connected = 0;
   
   // initialize and clear the error message
-  MAKE_STD_ZVAL(errmsg);
-  ZVAL_NULL(errmsg);
   MAKE_STD_ZVAL(errmsg_holder);
   ZVAL_NULL(errmsg_holder);
 
@@ -150,17 +144,11 @@ int mongo_util_link_try_connecting(mongo_link *link TSRMLS_DC) {
   zval_ptr_dtor(&errmsg_holder);
   
   if (!connected) {
-    if (Z_TYPE_P(errmsg) == IS_STRING) {    
-      zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
-                              "connecting failed: %s", Z_STRVAL_P(errmsg));
-    }
-    // there should always be an error message, we should never get here
-    else {
-      zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, 
-                              "connection failed");
+    if (Z_TYPE_P(errmsg) != IS_STRING) {
+      // there should always be an error message, we should never get here
+      ZVAL_STRING(errmsg, "connecting failed", 1);
     }
 
-    zval_ptr_dtor(&errmsg);
     return FAILURE;
   }
 
@@ -170,7 +158,10 @@ int mongo_util_link_try_connecting(mongo_link *link TSRMLS_DC) {
    *  - if a connections fails after we have at least one working
    *  - if the first connection fails but a subsequent ones succeeds
    */
-  zval_ptr_dtor(&errmsg);
+  if (Z_TYPE_P(errmsg) == IS_STRING) {
+    efree(Z_STRVAL_P(errmsg));
+    ZVAL_NULL(errmsg);
+  }
   return SUCCESS;
 }
 

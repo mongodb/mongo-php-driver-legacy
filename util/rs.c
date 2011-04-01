@@ -19,6 +19,7 @@
 
 #include "php_mongo.h"
 #include "rs.h"
+#include "hash.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
@@ -250,7 +251,6 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
 
     response = mongo_util_rs_ismaster(current TSRMLS_CC);
     if (!response) {
-      zval_ptr_dtor(&response);
       current = current->next;
       continue;
     }
