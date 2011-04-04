@@ -52,6 +52,14 @@
    <file role="src" name="gridfs.h"/>
    <file role="src" name="util/hash.c"/>
    <file role="src" name="util/hash.h"/>
+   <file role="src" name="util/connect.c"/>
+   <file role="src" name="util/connect.h"/>
+   <file role="src" name="util/link.c"/>
+   <file role="src" name="util/link.h"/>
+   <file role="src" name="util/pool.c"/>
+   <file role="src" name="util/pool.h"/>
+   <file role="src" name="util/rs.c"/>
+   <file role="src" name="util/rs.h"/>
   </dir>
  </contents>
  <dependencies>

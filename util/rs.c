@@ -270,7 +270,7 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
 
 void mongo_util_rs_refresh(mongo_link *link TSRMLS_DC) {
   int now;
-  zval *response;
+  zval *response = 0;
   mongo_server *current;
   
   now = time(0);
@@ -292,6 +292,7 @@ void mongo_util_rs_refresh(mongo_link *link TSRMLS_DC) {
         break;
       }
       zval_ptr_dtor(&response);
+      response = 0;
     }
 
     current = current->next;
@@ -299,14 +300,18 @@ void mongo_util_rs_refresh(mongo_link *link TSRMLS_DC) {
 
   // if no one had a list of hosts, we can't do anything
   if (!current) {
-    zval_ptr_dtor(&response);
+    if (response) {
+      zval_ptr_dtor(&response);
+    }
     return;
   }
 
   // if someone did, refresh the list
   link->server_set->server_ts = now;
   mongo_util_rs__refresh_list(link, response TSRMLS_CC);
-  zval_ptr_dtor(&response);  
+  if (response) {
+    zval_ptr_dtor(&response);
+  }
 }
 
 void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {

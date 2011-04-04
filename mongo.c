@@ -1052,24 +1052,6 @@ PHP_METHOD(Mongo, pairPersistConnect) {
 PHP_METHOD(Mongo, connectUtil) {
 }
 
-static void disconnect_if_connected(zval *this_ptr TSRMLS_DC) {
-  zval *connected;
-  
-  connected = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
-  
-  if (Z_BVAL_P(connected)) {
-    zval temp;
-    ZVAL_NULL(&temp);
-    
-    // Mongo->close()
-    MONGO_METHOD(Mongo, close, &temp, getThis());
-
-    // Mongo->connected = false
-    zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 0 TSRMLS_CC);
-  }
-}
-
-
 // get the next host from the server string
 static char* php_mongo_get_host(char **ip, int domain_socket) {
   char *end = *ip, *retval;

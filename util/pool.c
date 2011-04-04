@@ -216,7 +216,7 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
   }
 }
 
-void mongo_util_pool__stack_clean(stack_monitor *monitor) {
+void mongo_util_pool__stack_clear(stack_monitor *monitor) {
   // holder for popping sockets
   mongo_server temp;
   
@@ -288,7 +288,7 @@ void mongo_util_pool__close_connections(stack_monitor *monitor) {
   monitor->servers = 0;
 
   // remove any connections from the stack
-  mongo_util_pool__stack_clean(monitor);
+  mongo_util_pool__stack_clear(monitor);
 }
 
 stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
