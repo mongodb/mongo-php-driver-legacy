@@ -132,7 +132,7 @@ zval* mongo_util_rs__ismaster(mongo_server *current TSRMLS_DC) {
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
   
   // skip anything we're not connected to
-  if (!current->connected && FAILURE == mongo_util_pool_get(current, errmsg)) {
+  if (!current->connected && FAILURE == mongo_util_pool_get(current, errmsg TSRMLS_CC)) {
     log2("[c:php_mongo_get_master] not connected to %s:%d\n", current->host, current->port);
 
     zval_ptr_dtor(&errmsg);
@@ -249,7 +249,7 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
       current = current->next;
       continue;
     }
-    ismaster = mongo_util_rs__get_ismaster(response);
+    ismaster = mongo_util_rs__get_ismaster(response TSRMLS_CC);
         
     if (ismaster) {
       link->server_set->master = current;
@@ -379,7 +379,7 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
         
-  if (!server->connected && mongo_util_pool_get(server, errmsg) == FAILURE) {
+  if (!server->connected && mongo_util_pool_get(server, errmsg TSRMLS_CC) == FAILURE) {
     zval_ptr_dtor(&errmsg);
     return FAILURE;
   }
