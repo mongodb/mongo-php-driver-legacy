@@ -26,9 +26,6 @@ extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Cursor;
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
-static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC);
-static zval* create_fake_cursor(mongo_link *link TSRMLS_DC);
-
 mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TSRMLS_DC) {
   mongo_server *target_server, *eo_list = 0, *server;
 
@@ -197,6 +194,7 @@ void mongo_util_rs__refresh_list(mongo_link *link, zval *response TSRMLS_DC) {
     mongo_server *prev = cur;
     cur = cur->next;
     mongo_util_pool_done(prev TSRMLS_CC);
+    efree(prev);
   }
   link->server_set->server = 0;
   link->server_set->num = 0;

@@ -34,44 +34,24 @@ int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
     monitor->timeout = timeout;
   }
   
-  // maybe initialize pool to a certain size?
+  // TODO: initialize pool to a certain size?
   return SUCCESS;
 }
 
 int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
   stack_monitor *monitor;
-  stack_node *node;
   
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     return FAILURE;
   }
   
-  node = monitor->top;
-  
-  // null <- [conn1]
-  //          ^node
-  if (node) {
-    stack_node *target;
-
-    target = mongo_util_pool__stack_pop(monitor);
-    
-    monitor->num.in_use++;
-    server->socket = target->socket;
-    server->connected = 1;
-    
-    free(target);
-    
-    return SUCCESS;
-  }
-  // create a new connection, no point in adding to stack
-  else if (mongo_util_pool__connect(server, monitor->timeout, errmsg TSRMLS_CC) == SUCCESS) {
-    // add this server to the list of monitored servers for this pool
+  // get connection from pool or create new
+  if (mongo_util_pool__stack_pop(monitor, server) == SUCCESS ||
+      mongo_util_pool__connect(server, monitor->timeout, errmsg TSRMLS_CC) == SUCCESS) {
     mongo_util_pool__add_server_ptr(monitor, server);
-    server->connected = 1;
     return SUCCESS;
   }
 
-  server->connected = 0;
   return FAILURE;
 }
 
@@ -171,19 +151,27 @@ void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
   rsrc->ptr = 0;
 }
 
-stack_node* mongo_util_pool__stack_pop(stack_monitor *monitor) {
+int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server) {
   stack_node *node;
 
   node = monitor->top;
     
   // check that monitor->pop != NULL and pop stack
-  if (node) {
-    monitor->top = node->next;
-  
-    monitor->num.in_pool--;
+  if (!node) {
+    server->connected = 0;
+    return FAILURE;
   }
   
-  return node;
+  monitor->top = node->next;
+  monitor->num.in_pool--;
+  
+  // theoretically, all servers in the pool should be connected
+  server->connected = 1;
+  server->socket = node->socket;
+  
+  free(node);
+
+  return SUCCESS;
 }
 
 void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
@@ -197,6 +185,7 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
     monitor->top = node;
 
     monitor->num.in_pool++;
+    server->connected = 0;
   }
 
   // don't keep more than 50 connections around
@@ -228,14 +217,12 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
 }
 
 void mongo_util_pool__stack_clean(stack_monitor *monitor) {
+  // holder for popping sockets
+  mongo_server temp;
   stack_node *top;
   
-  top = mongo_util_pool__stack_pop(monitor);
-  while (top) {
-    MONGO_UTIL_DISCONNECT(top->socket);
-    free(top);
-
-    top = mongo_util_pool__stack_pop(monitor);    
+  while (mongo_util_pool__stack_pop(monitor, &temp) == SUCCESS) {
+    mongo_util_disconnect(&temp);
   }
   monitor->top = 0;
 }
@@ -352,8 +339,10 @@ int mongo_util_pool__connect(mongo_server *server, time_t timeout, zval *errmsg 
   if (mongo_util_connect(server, timeout, errmsg) == SUCCESS &&
       // authenticate, if necessary
       mongo_util_connect_authenticate(server, errmsg TSRMLS_CC) == SUCCESS) {
+    server->connected = 1;
     return SUCCESS;
   }
+  server->connected = 0;
   return FAILURE;
 }
 

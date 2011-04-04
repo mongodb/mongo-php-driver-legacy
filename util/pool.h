@@ -38,8 +38,6 @@
  * connection associated with that pool is closed and every connection on the
  * stack is freed.  When clients use a connection for the first time after a
  * failure, they must fetch a new connection from the pool.
- *
- * TODO: modify MongoDB::authenticate to remove the server from the pool
  */
 
 #ifndef MONGO_UTIL_POOL_H
@@ -122,11 +120,16 @@ void mongo_util_pool_remove(mongo_server *server TSRMLS_DC);
 
 /**
  * Pop a connection off of the stack.
+ *
+ * Sets server->connected, server->socket, and monitor->num.in_pool.
  */
-stack_node* mongo_util_pool__stack_pop(stack_monitor *monitor);
+int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server);
 
 /**
- * Push a connection onto the stack.
+ * Push a connection onto the stack.  Will start emptying pool (from the bottom)
+ * if there are more than 50 (idle) connections.
+ *
+ * Sets server->connected and monitor->num.in_pool.
  */
 void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server);
 
