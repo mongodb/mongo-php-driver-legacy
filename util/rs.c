@@ -61,8 +61,9 @@ mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TS
   } 
   link->server_set->num++;
  
-  // add this to the hosts list
-  if (link->rs && link->server_set->hosts) {
+  // add this to the hosts list if it isn't already there
+  if (link->rs && link->server_set->hosts &&
+      !zend_hash_exists(link->server_set->hosts, server->label, strlen(server->label)+1)) {
     zval *null_p;
     
     null_p = (zval*)malloc(sizeof(zval));
@@ -312,7 +313,7 @@ void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
   if (link->server_set && link->server_set->ts + 5 < now) {
     zval *fake_zval;
     mongo_link *fake_link;
-    char *errmsg, **errmsg_ptr;
+    char *errmsg = 0, **errmsg_ptr;
     
     link->server_set->ts = now;
     
@@ -327,7 +328,8 @@ void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
     // if get_heartbeats fails, ignore
     fake_link->server_set = 0;
     zval_ptr_dtor(&fake_zval);
-    efree(errmsg);
+    if (errmsg)
+      efree(errmsg);
   }
 }
 

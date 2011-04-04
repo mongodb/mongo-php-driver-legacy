@@ -228,7 +228,7 @@ void php_mongo_server_free(mongo_server *server TSRMLS_DC) {
 static void php_mongo_server_set_free(mongo_server_set *server_set TSRMLS_DC) {
   mongo_server *current;
 
-  if (!server_set || !server_set->server) {
+  if (!server_set) {
     return;
   }
 
