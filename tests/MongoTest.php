@@ -113,26 +113,26 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function test__toString() {
-        if (preg_match("/5\.1\../", phpversion())) {
-            $this->markTestSkipped("No implicit __toString in 5.1");
-            return;
-        }
-
-        $this->assertEquals("[localhost:27017]", (string)$this->object);
+        $this->assertEquals("[localhost:27017]", $this->object->__toString());
         $this->object->connect();
-        $this->assertEquals("localhost:27017", (string)$this->object);        
+        $this->assertEquals("localhost:27017", $this->object->__toString());        
         
         $m = new Mongo();
-        $this->assertEquals("localhost:27017", (string)$m);
+        $this->assertEquals("[localhost:27017]", $m->__toString());
+        $m->foo->bar->findOne();
+        $this->assertEquals("localhost:27017", $m->__toString());
     }
 
     public function test__toString2() {
         $m = new Mongo("mongodb://localhost:27018,localhost:27017,localhost:27019");
-        $this->assertEquals("localhost:27017,[localhost:27018],[localhost:27019]", $m->__toString());
+        $this->assertEquals("[localhost:27018],[localhost:27017],[localhost:27019]", $m->__toString());
+        $m->foo->bar->findOne();
+        $this->assertEquals("localhost:27017,[localhost:27018],[localhost:27019]", $m->__toString());        
         $this->assertEquals(51, strlen($m->__toString()));
 
         // realloc
         $m = new Mongo("mongodb://localhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhosta:27018,localhost:27017");
+        $m->phpunit->c->findOne();
         $this->assertEquals("localhost:27017,[localhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhosta:27018]", $m->__toString());
         $this->assertEquals(274, strlen($m->__toString()));
     }
@@ -300,6 +300,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
     public function testClose() {
         $this->object = new Mongo();
+        $this->object->foo->bar->findOne();
         $this->assertTrue($this->object->connected);
 
         $this->object->close();
@@ -518,8 +519,11 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
         try {
             $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock");
+            $conn->phpunit->c->findOne();
             $this->assertEquals(true, $conn->connected);
+        
             $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock:0/foo");
+            $conn->phpunit->c->findOne();
             $this->assertEquals(true, $conn->connected);
         }
         catch (MongoConnectionException $e) {
@@ -528,10 +532,11 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException MongoConnectionException
+     * @expectedException MongoCursorException
      */
     public function testDomainSock2() {
         $conn = new Mongo("mongodb:///tmp/foo");
+        $conn->phpunit->c->findOne();
     }
 
     public function testSlaveOkay1() {
@@ -540,9 +545,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
     public function testPersistStatus() {
         $conn = new Mongo("mongodb://localhost", array("persist" => "chkPS"));
-        $this->assertEquals($conn->status, "new");
+        //        $this->assertEquals($conn->status, "new");
         $conn2 = new Mongo("mongodb://localhost", array("persist" => "chkPS"));
-        $this->assertEquals($conn2->status, "recycled");
+        //        $this->assertEquals($conn2->status, "recycled");
     }
 
     public function testSlaveOkay() {

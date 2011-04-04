@@ -6,10 +6,11 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
 
     /**
      * Bug PHP-7
-     * @expectedException MongoConnectionException
+     * @expectedException MongoCursorException
      */
     public function testConnectException1() {
         $x = new Mongo("localhost:9923");
+        $x->phpunit->c->findOne();
     }
 
     /**
@@ -199,6 +200,7 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
      */
     public function testMongoToString() {
         $m = new Mongo();
+        $m->phpunit->c->findOne();
         $str1 = $m->__toString();
         $str2 = $m->__toString();
         $this->assertEquals("localhost:27017", $str2);
@@ -356,38 +358,43 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException MongoConnectionException
+     * @expectedException MongoCursorException
      */
     public function testNoPassword1() {
-      new Mongo("mongodb://admin@anyhost-and-nonexistent");
+      $m = new Mongo("mongodb://admin@anyhost-and-nonexistent");
+      $m->phpunit->c->findOne();
     }
 
     /**
      * @expectedException MongoConnectionException
      */
     public function testNoPassword2() {
-      new Mongo("mongodb://admin@anyhost-and-nonexistent:foo");
+      $m = new Mongo("mongodb://admin@anyhost-and-nonexistent:foo");
+      $m->phpunit->c->findOne();
     }
 
     /**
-     * @expectedException MongoConnectionException
+     * @expectedException MongoCursorException
      */
     public function testNoPassword3() {
-      new Mongo("mongodb://admin@anyhost-and-nonexistent:27017");
+      $m = new Mongo("mongodb://admin@anyhost-and-nonexistent:27017");
+      $m->phpunit->c->findOne();
     }
 
     /**
-     * @expectedException MongoConnectionException
+     * @expectedException MongoCursorException
      */
     public function testNoPassword4() {
-      new Mongo("mongodb://@anyhost-and-nonexistent:27017");
+      $m = new Mongo("mongodb://@anyhost-and-nonexistent:27017");
+      $m->phpunit->c->findOne();
     }
 
     /**
-     * @expectedException MongoConnectionException
+     * @expectedException MongoCursorException
      */
     public function testNoPassword5() {
-      new Mongo("mongodb://:@anyhost-and-nonexistent");
+      $m = new Mongo("mongodb://:@anyhost-and-nonexistent");
+      $m->phpunit->c->findOne();
     }
 
     public function testFatalRecursion() {
@@ -433,10 +440,11 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException MongoConnectionException
+     * @expectedException MongoCursorException
      */
     public function testInvalidConnectionSyntax() {
       $m = new Mongo("mongodb://name:password@localhost/");
+      $m->phpunit->c->findOne();
     }
 
     /**
