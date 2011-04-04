@@ -32,8 +32,8 @@
 #include "cursor.h"
 #include "collection.h"
 #include "mongo_types.h"
-#include "link.h"
-#include "pool.h"
+#include "util/link.h"
+#include "util/pool.h"
 
 // externs
 extern zend_class_entry *mongo_ce_Id,
