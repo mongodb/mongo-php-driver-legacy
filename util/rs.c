@@ -107,7 +107,7 @@ zval* mongo_util_rs__create_fake_cursor(mongo_link *link TSRMLS_DC) {
   return cursor_zval;
 }
 
-zval* mongo_util_rs_ismaster(mongo_server *current TSRMLS_DC) {
+zval* mongo_util_rs__ismaster(mongo_server *current TSRMLS_DC) {
   zval temp_ret, *errmsg, *response, *cursor_zval;
   mongo_link temp;
   mongo_server *temp_next = 0;
@@ -212,11 +212,10 @@ void mongo_util_rs__refresh_list(mongo_link *link, zval *response TSRMLS_DC) {
   }    
 }
 
-// TODO: we don't actually need to find master on initial connection
 mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
   mongo_server *current;
 
-  log2("[c:php_mongo_get_master] servers: %d, rs? %d", link->server_set->num, link->rs);
+  log2("[get_master] servers: %d, rs? %d", link->server_set->num, link->rs);
 
   // for a single connection, return it
   if (!link->rs && link->server_set->num == 1) {
@@ -242,7 +241,7 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
     zval *response;
     int ismaster = 0;
 
-    response = mongo_util_rs_ismaster(current TSRMLS_CC);
+    response = mongo_util_rs__ismaster(current TSRMLS_CC);
     if (!response) {
       current = current->next;
       continue;
@@ -279,12 +278,14 @@ void mongo_util_rs_refresh(mongo_link *link TSRMLS_DC) {
   // find a server with a hosts list
   current = link->server_set->server;
   while (current) {
-    response = mongo_util_rs_ismaster(current TSRMLS_CC);
+    response = mongo_util_rs__ismaster(current TSRMLS_CC);
     
     if (response) {
       zval **hosts;
+      // TOOD: this should probably check arbiters, too
       if (zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1, (void**)&hosts) == SUCCESS ||
           zend_hash_find(HASH_P(response), "passives", strlen("passives")+1, (void**)&hosts) == SUCCESS) {
+        // fallthrough if there are any possible servers
         break;
       }
       zval_ptr_dtor(&response);
@@ -346,6 +347,8 @@ int mongo_util_rs__get_ismaster(zval *response TSRMLS_DC) {
       return Z_BVAL_PP(ans);
     }
   }
+
+  return 0;
 }
 
 int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
@@ -359,10 +362,6 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
     return FAILURE;
   }
 
-  // we're definitely going home
-  
-  // can't free response until we're done with primary
-      
   host = Z_STRVAL_PP(primary);
   if (!(server = mongo_util_rs__find_or_make_server(host, link TSRMLS_CC))) {
     return FAILURE;

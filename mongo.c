@@ -835,6 +835,8 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
 
     // method throws exception
     if (!(server = create_mongo_server(current_ptr, hosts, link TSRMLS_CC))) {
+      zend_throw_exception_ex(mongo_ce_ConnectionException, 10 TSRMLS_CC,
+                              "Couldn't parse %p (original: %p)", current, hosts);
       return FAILURE;
     }
     current = *current_ptr;
@@ -898,9 +900,6 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
   return SUCCESS;
 }
 
-/*
- * throws exception
- */
 mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link TSRMLS_DC) {
   char *host;
   int port;
@@ -917,8 +916,6 @@ mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link 
   }
 
   if ((host = php_mongo_get_host(current, domain_socket)) == 0) {
-    zend_throw_exception_ex(mongo_ce_ConnectionException, 10 TSRMLS_CC,
-                            "failed to get host from %s of %s", *current, hosts);
     return 0;
   } 
 
@@ -934,8 +931,6 @@ mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link 
     }
   }
   else if ((port = php_mongo_get_port(current)) < 0) {
-    zend_throw_exception_ex(mongo_ce_ConnectionException, 11 TSRMLS_CC,
-                            "failed to get port from %s of %s", *current, hosts);
     efree(host);
     return 0;
   }
