@@ -26,6 +26,7 @@
 #include "cursor.h"
 #include "gridfs.h"
 #include "mongo_types.h"
+#include "util/pool.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Collection,
@@ -57,7 +58,7 @@ ZEND_END_ARG_INFO()
 /* {{{ MongoDB::__construct
  */
 PHP_METHOD(MongoDB, __construct) {
-  zval *zlink, **slave_okay = 0;
+  zval *zlink;
   char *name;
   int name_len;
   mongo_db *db;

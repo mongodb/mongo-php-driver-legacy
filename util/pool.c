@@ -219,7 +219,6 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
 void mongo_util_pool__stack_clean(stack_monitor *monitor) {
   // holder for popping sockets
   mongo_server temp;
-  stack_node *top;
   
   while (mongo_util_pool__stack_pop(monitor, &temp) == SUCCESS) {
     mongo_util_disconnect(&temp);

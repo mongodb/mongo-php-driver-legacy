@@ -24,8 +24,8 @@
 #include "bson.h"
 #include "mongo_types.h"
 #include "db.h"
-#include "link.h"
-#include "pool.h"
+#include "util/link.h"
+#include "util/pool.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
@@ -58,7 +58,7 @@ ZEND_END_ARG_INFO()
 
 
 PHP_METHOD(MongoCollection, __construct) {
-  zval *parent, *name, *zns, *w, *wtimeout, **slave_okay = 0;
+  zval *parent, *name, *zns, *w, *wtimeout;
   mongo_collection *c;
   mongo_db *db;
   char *ns, *name_str;
@@ -574,7 +574,7 @@ PHP_METHOD(MongoCollection, remove) {
 }
 
 PHP_METHOD(MongoCollection, ensureIndex) {
-  zval *keys, *options = 0, *db, *system_indexes, *collection, *data, *key_str, *safe_insert = 0;
+  zval *keys, *options = 0, *db, *system_indexes, *collection, *data, *key_str;
   mongo_collection *c;
   zend_bool done_name = 0;
 

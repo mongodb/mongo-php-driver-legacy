@@ -30,13 +30,11 @@
 #endif
 
 #include "php_mongo.h"
+#include "db.h"
 #include "connect.h"
 
 extern zend_class_entry *mongo_ce_Mongo;
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
-
-static mongo_server* find_or_make_server(char *host, mongo_link *link TSRMLS_DC);
-static zval* create_fake_cursor(mongo_link *link TSRMLS_DC);
 
 void mongo_util_connect_buildinfo(zval *this_ptr TSRMLS_DC) {
   zval *result, *data, *admin, *db, **max = 0;
@@ -216,7 +214,6 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
   zval *connection, *db, *db_name, *username, *password, *ok;
   int logged_in = 0;
   mongo_link *temp_link;
-  mongo_server *temp_server;
 
   // if we're not using authentication, we're always logged in
   if (!server->username || !server->password) {

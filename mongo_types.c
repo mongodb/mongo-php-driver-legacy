@@ -810,7 +810,6 @@ PHP_METHOD(MongoTimestamp, __toString) {
 PHP_METHOD(MongoInt32, __construct) {
   char *value;
   int value_len;
-  zval *zcope = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &value, &value_len) == FAILURE) {
     return;
@@ -851,7 +850,6 @@ void mongo_init_MongoInt32(TSRMLS_D) {
 PHP_METHOD(MongoInt64, __construct) {
   char *value;
   int value_len;
-  zval *zcope = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &value, &value_len) == FAILURE) {
     return;

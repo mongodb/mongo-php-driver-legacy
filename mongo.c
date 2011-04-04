@@ -41,6 +41,8 @@
 #include "util/hash.h"
 #include "util/connect.h"
 #include "util/pool.h"
+#include "util/link.h"
+#include "util/rs.h"
 
 extern zend_class_entry *mongo_ce_DB, 
   *mongo_ce_CursorException,
@@ -64,7 +66,6 @@ static void run_err(int, zval*, zval* TSRMLS_DC);
 static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC);
 static char* stringify_server(mongo_server*, char*, int*, int*);
 static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC);
-static void disconnect_if_connected(zval *this_ptr TSRMLS_DC);
 static mongo_cursor* make_persistent_cursor(mongo_cursor *cursor);
 static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor);
 

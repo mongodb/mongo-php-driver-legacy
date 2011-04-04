@@ -20,6 +20,8 @@
 #include "php_mongo.h"
 #include "link.h"
 #include "rs.h"
+#include "pool.h"
+#include "connect.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_ConnectionException;
@@ -40,11 +42,6 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
   mongo_util_rs_ping(link TSRMLS_CC);
 
   if (link->slave) {
-    zval *fake_zval;
-    mongo_link *fake_link;
-    mongo_server_set fake_set;
-    mongo_server *temp;
-
     if (link->slave->connected) {
       return link->slave;
     }
@@ -74,7 +71,7 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
  * sets errmsg and returns 0 on failure
  */
 mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
-  int now = time(0), connected = 0;
+  int connected = 0;
   
   if ((link->server_set->num == 1 && !link->rs && link->server_set->server->connected) ||
       (link->server_set->master && link->server_set->master->connected)) {

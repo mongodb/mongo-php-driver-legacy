@@ -18,8 +18,11 @@
 #include <php.h>
 
 #include "php_mongo.h"
+#include "cursor.h"
+#include "db.h"
 #include "rs.h"
 #include "hash.h"
+#include "pool.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
@@ -79,20 +82,21 @@ mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TS
 
 
 zval* mongo_util_rs__create_fake_cursor(mongo_link *link TSRMLS_DC) {
-  zval *cursor_zval, *query, *is_master;
+  zval *cursor_zval, *query;
   mongo_cursor *cursor;
   
   MAKE_STD_ZVAL(cursor_zval);
   object_init_ex(cursor_zval, mongo_ce_Cursor);
 
   // query = { ismaster : 1 }
+  // we cannot nest this list {query : {ismaster : 1}} because mongos is stupid
   MAKE_STD_ZVAL(query);
   array_init(query);
   add_assoc_long(query, "ismaster", 1);
 
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
 
-  // admin.$cmd.findOne({ query : { ismaster : 1 } })
+  // admin.$cmd.findOne({ ismaster : 1 })
   cursor->ns = estrdup("admin.$cmd");
   cursor->query = query;
   cursor->fields = 0;
