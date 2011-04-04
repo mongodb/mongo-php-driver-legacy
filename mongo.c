@@ -1028,111 +1028,28 @@ PHP_METHOD(Mongo, __construct) {
 /* {{{ Mongo->connect
  */
 PHP_METHOD(Mongo, connect) {
-  MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
 }
 
 /* {{{ Mongo->pairConnect
- *
- * [DEPRECATED - use mongodb://host1,host2 syntax]
  */
 PHP_METHOD(Mongo, pairConnect) {
-
-  zend_error(E_WARNING, "Deprecated, use constructor and connect() instead");
-
-  MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
+  zend_error(E_WARNING, "Deprecated, use constructor instead");
 }
 
 /* {{{ Mongo->persistConnect
  */
 PHP_METHOD(Mongo, persistConnect) {
-  zval *id = 0, *garbage = 0;
-
-  zend_error(E_WARNING, "Deprecated, use constructor and connect() instead");
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &id, &garbage) == FAILURE) {
-    return;
-  }
-
-  if (id) {
-    zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), id TSRMLS_CC);
-  }
-  else {
-    zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
-  }
-
-  /* 
-   * pass through any parameters Mongo::persistConnect got 
-   * we can't use MONGO_METHOD because we don't want
-   * to pop the parameters, yet.
-   */
-  MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  zend_error(E_WARNING, "Deprecated, use constructor instead");
 }
 
 /* {{{ Mongo->pairPersistConnect
- *
- * [DEPRECATED - use mongodb://host1,host2 syntax]
  */
 PHP_METHOD(Mongo, pairPersistConnect) {
-  zval *id = 0, *garbage = 0;
-
-  zend_error(E_WARNING, "Deprecated, use constructor and connect() instead");
-
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &id, &garbage) == FAILURE) {
-    return;
-  }
-
-  if (id) {
-    zend_update_property(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), id TSRMLS_CC);
-  }
-  else {
-    zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
-  }
-
-  /* 
-   * pass through any parameters Mongo::pairPersistConnect got 
-   * we can't use MONGO_METHOD because we don't want
-   * to pop the parameters, yet.
-   */
-  MONGO_METHOD_BASE(Mongo, connectUtil)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  zend_error(E_WARNING, "Deprecated, use constructor instead");
 }
-
 
 PHP_METHOD(Mongo, connectUtil) {
-  mongo_link *link;
-  int connected = 0;
-  
-  // if we're already connected, disconnect
-  disconnect_if_connected(getThis() TSRMLS_CC);
-
-  link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  
-  if (FAILURE == mongo_util_link_try_connecting(link TSRMLS_CC)) {
-    return;
-  }
-    
-  // Mongo::connected = true
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
-                            strlen("connected"), 1 TSRMLS_CC);
-  ZVAL_BOOL(return_value, 1);
-
-  // we don't actually need a master until we try to do something on the master
-  // so we won't call get_master yet
-  
-  if (link->rs) {
-    char *errmsg = 0;
-
-    // We don't want to throw anything if this doesn't succeed.  We can always
-    // get a slave later.
-    if (get_heartbeats(getThis(), &errmsg TSRMLS_CC) != FAILURE) {
-      set_a_slave(link, &errmsg);
-    }
-    
-    if (errmsg) {
-      efree(errmsg);
-    }
-  }
 }
-
 
 static void disconnect_if_connected(zval *this_ptr TSRMLS_DC) {
   zval *connected;
