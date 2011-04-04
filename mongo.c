@@ -736,9 +736,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
   mongo_link *link;
   mongo_server *current_server;
 
-#ifdef DEBUG_CONN
   log0("parsing servers");
-#endif
 
   hosts_z = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
   hosts = Z_STRLEN_P(hosts_z) ? Z_STRVAL_P(hosts_z) : 0;
@@ -833,9 +831,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     mongo_server *server;
     char **current_ptr = &current;
 
-#ifdef DEBUG_CONN
     log1("current: %s", current);
-#endif
 
     // method throws exception
     if (!(server = create_mongo_server(current_ptr, hosts, link TSRMLS_CC))) {
@@ -897,9 +893,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     }
   }
   
-#ifdef DEBUG_CONN
   log1("done parsing", current);
-#endif
 
   return SUCCESS;
 }
@@ -1717,9 +1711,7 @@ static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int sock;
   
-#ifdef DEBUG
   log0("hearing something");
-#endif
 
   LOCK;
   
@@ -1754,9 +1746,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   // check that this is actually the response we want
   while (cursor->send.request_id != cursor->recv.response_to) {
-#ifdef DEBUG
     log2("request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
-#endif
 
     // if it's not... 
 
@@ -1890,9 +1880,7 @@ static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor
 int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC) {
   int sent = 0, total = 0, status = 1;
 
-#ifdef DEBUG
   log0("saying something");
-#endif
 
   total = buf->pos - buf->start;
 

@@ -47,9 +47,7 @@ mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TS
     return 0;
   }
 
-#ifdef DEBUG_CONN
   log1("appending to list: %s", server->label);
-#endif
 
   // get to the end of the server list
   if (!link->server_set->server) {
@@ -133,9 +131,8 @@ zval* mongo_util_rs_ismaster(mongo_server *current TSRMLS_DC) {
   
   // skip anything we're not connected to
   if (!current->connected && FAILURE == mongo_util_pool_get(current, errmsg)) {
-#ifdef DEBUG_CONN
     log2("[c:php_mongo_get_master] not connected to %s:%d\n", current->host, current->port);
-#endif
+
     zval_ptr_dtor(&errmsg);
     
     cursor->link = 0;
@@ -204,10 +201,8 @@ void mongo_util_rs__refresh_list(mongo_link *link, zval *response TSRMLS_DC) {
   link->server_set->server = 0;
   link->server_set->num = 0;
       
-#ifdef DEBUG_CONN
   log0("parsing replica set\n");
-#endif
-        
+  
   // repopulate
   if (zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1, (void**)&hosts) == SUCCESS) {
     mongo_util_rs__repopulate_hosts(hosts, link TSRMLS_CC);
@@ -221,9 +216,7 @@ void mongo_util_rs__refresh_list(mongo_link *link, zval *response TSRMLS_DC) {
 mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
   mongo_server *current;
 
-#ifdef DEBUG_CONN
   log2("[c:php_mongo_get_master] servers: %d, rs? %d", link->server_set->num, link->rs);
-#endif
 
   // for a single connection, return it
   if (!link->rs && link->server_set->num == 1) {
@@ -384,9 +377,7 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
   }
   zval_ptr_dtor(&errmsg);
 
-#ifdef DEBUG_CONN
   log2("connected to %s:%d\n", server->host, server->port);
-#endif
 
   // if successful, we're connected to the master
   link->server_set->master = server;
@@ -556,9 +547,7 @@ int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC) {
     
     if (zend_hash_find(link->server_set->hosts, Z_STRVAL_PP(name),
                        Z_STRLEN_PP(name)+1, (void**)&host) == FAILURE) {
-#ifdef DEBUG_CONN
       log1("no host named %s", Z_STRVAL_PP(name));
-#endif
       continue;
     }
     

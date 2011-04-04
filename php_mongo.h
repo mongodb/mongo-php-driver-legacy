@@ -63,7 +63,11 @@
   _php_error_log(0, e, NULL, NULL TSRMLS_CC);   \
   efree(e);                                     \
   }
-
+#else
+#define log0(msg)
+#define log1(msg, i1)
+#define log2(msg, i1, i2)
+#define log3(msg, i1, i2, i3)
 #endif
 
 // db ops

@@ -118,16 +118,12 @@ int mongo_util_link_try_connecting(mongo_link *link, zval *errmsg TSRMLS_DC) {
   current = link->server_set->server;
   connected = 0;
   
-#ifdef DEBUG_CONN
   log0("connecting");
-#endif
   
   while (current) {
     connected |= (mongo_util_pool_get(current, errmsg TSRMLS_CC) == SUCCESS);
     
-#ifdef DEBUG_CONN
     log3("%s:%d connected? %s\n", current->host, current->port, connected == 0 ? "true" : "false");
-#endif
 
     if (Z_TYPE_P(errmsg_holder) == IS_STRING) {
       if (Z_TYPE_P(errmsg) == IS_NULL) {
