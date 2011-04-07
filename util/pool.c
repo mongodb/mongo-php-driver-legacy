@@ -17,7 +17,7 @@
 
 #include <php.h>
 
-#include "php_mongo.h"
+#include "../php_mongo.h"
 #include "hash.h"
 #include "pool.h"
 #include "connect.h"

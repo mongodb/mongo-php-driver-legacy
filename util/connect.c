@@ -29,8 +29,8 @@
 #include <sys/un.h>
 #endif
 
-#include "php_mongo.h"
-#include "db.h"
+#include "../php_mongo.h"
+#include "../db.h"
 #include "connect.h"
 
 extern zend_class_entry *mongo_ce_Mongo;
