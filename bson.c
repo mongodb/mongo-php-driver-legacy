@@ -988,7 +988,11 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       if (MonGlo(long_as_object)) {
         char *buffer;
 
+#ifdef WIN32
+        spprintf(&buffer, 0, "%I64d", (int64_t)MONGO_64(*((int64_t*)buf)));
+#else
         spprintf(&buffer, 0, "%lld", (long long int)MONGO_64(*((int64_t*)buf)));
+#endif
         object_init_ex(value, mongo_ce_Int64);
 
         zend_update_property_string(mongo_ce_Int64, value, "value", strlen("value"), buffer TSRMLS_CC);
