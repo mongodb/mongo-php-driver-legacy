@@ -952,7 +952,7 @@ mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link 
 PHP_METHOD(Mongo, __construct) {
   char *server = 0;
   int server_len = 0;
-  zend_bool persist = 0, garbage = 0;
+  zend_bool persist = 0, garbage = 0, connect = 1;
   zval *options = 0, *slave_okay = 0;
   mongo_link *link;
   mongo_server *current;
@@ -970,7 +970,7 @@ PHP_METHOD(Mongo, __construct) {
   if (options) {
     if (!IS_SCALAR_P(options)) {
       zval **timeout_z, **replica_z, **slave_okay_z, **username_z, **password_z,
-        **db_z;
+        **db_z, **connect_z;
 
       if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_z) == SUCCESS) {
         link->timeout = Z_LVAL_PP(timeout_z);
@@ -993,6 +993,9 @@ PHP_METHOD(Mongo, __construct) {
       }
       if (zend_hash_find(HASH_P(options), "db", sizeof("db"), (void**)&db_z) == SUCCESS) {
         link->db = estrdup(Z_STRVAL_PP(db_z));
+      }
+      if (zend_hash_find(HASH_P(options), "connect", sizeof("connect"), (void**)&connect_z) == SUCCESS) {
+        connect = Z_BVAL_PP(connect_z);
       }
     }
     else {
@@ -1022,6 +1025,10 @@ PHP_METHOD(Mongo, __construct) {
     mongo_util_pool_init(current, (time_t)link->timeout TSRMLS_CC);
     current = current->next;
   }
+
+  if (connect) {
+    MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
+  }
 } 
 /* }}} */
 
@@ -1029,6 +1036,7 @@ PHP_METHOD(Mongo, __construct) {
 /* {{{ Mongo->connect
  */
 PHP_METHOD(Mongo, connect) {
+  MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
 }
 
 /* {{{ Mongo->pairConnect
@@ -1050,6 +1058,35 @@ PHP_METHOD(Mongo, pairPersistConnect) {
 }
 
 PHP_METHOD(Mongo, connectUtil) {
+  int connected = 0;
+  mongo_link *link;
+  mongo_server *current;
+  char *msg = 0;
+  
+  link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+  current = link->server_set->server;
+  while (current) {
+    zval *errmsg;
+    MAKE_STD_ZVAL(errmsg);
+    ZVAL_NULL(errmsg);
+    
+    connected |= (mongo_util_pool_get(current, errmsg TSRMLS_CC) == SUCCESS);
+
+    if (!msg && Z_TYPE_P(errmsg) == IS_STRING) {
+      msg = estrndup(Z_STRVAL_P(errmsg), Z_STRLEN_P(errmsg));
+    }
+    zval_ptr_dtor(&errmsg);
+    current = current->next;
+  }
+
+  if (!connected) {
+    zend_throw_exception(mongo_ce_ConnectionException, msg, 0 TSRMLS_CC);
+  }
+  
+  if (msg) {
+    efree(msg);
+  }    
 }
 
 // get the next host from the server string

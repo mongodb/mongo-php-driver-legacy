@@ -80,7 +80,7 @@ int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC);
 
 /**
  * Fetch a connection from the pool, based on the criteria given.
- * @return the connection, 0 on failure
+ * @return SUCCESS or FAILURE
  */
 int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC);
 
