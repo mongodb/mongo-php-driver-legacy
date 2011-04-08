@@ -17,9 +17,9 @@
 
 #include <php.h>
 
-#include "php_mongo.h"
-#include "cursor.h"
-#include "db.h"
+#include "../php_mongo.h"
+#include "../cursor.h"
+#include "../db.h"
 #include "rs.h"
 #include "hash.h"
 #include "pool.h"
