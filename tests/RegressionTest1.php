@@ -6,11 +6,10 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
 
     /**
      * Bug PHP-7
-     * @expectedException MongoCursorException
+     * @expectedException MongoConnectionException
      */
     public function testConnectException1() {
         $x = new Mongo("localhost:9923");
-        $x->phpunit->c->findOne();
     }
 
     /**
@@ -358,11 +357,10 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException MongoCursorException
+     * @expectedException MongoConnectionException
      */
     public function testNoPassword1() {
       $m = new Mongo("mongodb://admin@anyhost-and-nonexistent");
-      $m->phpunit->c->findOne();
     }
 
     /**
@@ -370,31 +368,27 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
      */
     public function testNoPassword2() {
       $m = new Mongo("mongodb://admin@anyhost-and-nonexistent:foo");
-      $m->phpunit->c->findOne();
     }
 
     /**
-     * @expectedException MongoCursorException
+     * @expectedException MongoConnectionException
      */
     public function testNoPassword3() {
       $m = new Mongo("mongodb://admin@anyhost-and-nonexistent:27017");
-      $m->phpunit->c->findOne();
     }
 
     /**
-     * @expectedException MongoCursorException
+     * @expectedException MongoConnectionException
      */
     public function testNoPassword4() {
       $m = new Mongo("mongodb://@anyhost-and-nonexistent:27017");
-      $m->phpunit->c->findOne();
     }
 
     /**
-     * @expectedException MongoCursorException
+     * @expectedException MongoConnectionException
      */
     public function testNoPassword5() {
       $m = new Mongo("mongodb://:@anyhost-and-nonexistent");
-      $m->phpunit->c->findOne();
     }
 
     public function testFatalRecursion() {
@@ -440,11 +434,10 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException MongoCursorException
+     * @expectedException MongoConnectionException
      */
     public function testInvalidConnectionSyntax() {
       $m = new Mongo("mongodb://name:password@localhost/");
-      $m->phpunit->c->findOne();
     }
 
     /**

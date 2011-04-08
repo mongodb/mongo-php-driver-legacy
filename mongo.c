@@ -999,7 +999,8 @@ PHP_METHOD(Mongo, __construct) {
       }
     }
     else {
-      // backwards compatibility 
+      // backwards compatibility
+      connect = Z_BVAL_P(options);
       if (MonGlo(allow_persistent) && persist) {
         zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
       }
@@ -1082,6 +1083,11 @@ PHP_METHOD(Mongo, connectUtil) {
 
   if (!connected) {
     zend_throw_exception(mongo_ce_ConnectionException, msg, 0 TSRMLS_CC);
+  }
+  else {
+    zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
+                              strlen("connected"), 1 TSRMLS_CC);
+    ZVAL_BOOL(return_value, 1);
   }
   
   if (msg) {
@@ -1168,7 +1174,8 @@ PHP_METHOD(Mongo, close) {
 
   mongo_util_link_disconnect(link);
 
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 0 TSRMLS_CC);
+  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
+                            strlen("connected"), 0 TSRMLS_CC);
   RETURN_TRUE;
 }
 /* }}} */

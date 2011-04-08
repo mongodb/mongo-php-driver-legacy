@@ -118,14 +118,12 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals("localhost:27017", $this->object->__toString());        
         
         $m = new Mongo();
-        $this->assertEquals("[localhost:27017]", $m->__toString());
-        $m->foo->bar->findOne();
         $this->assertEquals("localhost:27017", $m->__toString());
     }
 
     public function test__toString2() {
         $m = new Mongo("mongodb://localhost:27018,localhost:27017,localhost:27019");
-        $this->assertEquals("[localhost:27018],[localhost:27017],[localhost:27019]", $m->__toString());
+        $this->assertEquals("[localhost:27018],localhost:27017,[localhost:27019]", $m->__toString());
         $m->foo->bar->findOne();
         $this->assertEquals("localhost:27017,[localhost:27018],[localhost:27019]", $m->__toString());        
         $this->assertEquals(51, strlen($m->__toString()));
@@ -300,7 +298,6 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
     public function testClose() {
         $this->object = new Mongo();
-        $this->object->foo->bar->findOne();
         $this->assertTrue($this->object->connected);
 
         $this->object->close();
@@ -519,11 +516,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
         try {
             $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock");
-            $conn->phpunit->c->findOne();
             $this->assertEquals(true, $conn->connected);
         
             $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock:0/foo");
-            $conn->phpunit->c->findOne();
             $this->assertEquals(true, $conn->connected);
         }
         catch (MongoConnectionException $e) {
@@ -532,11 +527,10 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException MongoCursorException
+     * @expectedException MongoConnectionException
      */
     public function testDomainSock2() {
         $conn = new Mongo("mongodb:///tmp/foo");
-        $conn->phpunit->c->findOne();
     }
 
     public function testSlaveOkay1() {
