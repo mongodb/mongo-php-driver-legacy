@@ -1063,6 +1063,12 @@ PHP_METHOD(Mongo, connectUtil) {
   mongo_link *link;
   mongo_server *current;
   char *msg = 0;
+  zval *connected_z = 0;
+  
+  connected_z = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
+  if (Z_BVAL_P(connected_z)) {
+    RETURN_TRUE;
+  }
   
   link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 

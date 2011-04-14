@@ -571,6 +571,20 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $conn->setSlaveOkay(true);
         $this->assertTrue($conn->getSlaveOkay());
     }
+
+    public function testPoolConnect() {
+        $conn = new Mongo();
+        
+        $pool1 = mongoPoolDebug();
+
+        $conn->connect();
+        $conn->connect();
+        $conn->connect();
+
+        $pool2 = mongoPoolDebug();
+        
+        $this->assertEquals($pool1['localhost:27017...']['in use'], $pool2['localhost:27017...']['in use']);
+    }
 }
 
 class StaticFunctionTest {
