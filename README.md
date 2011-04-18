@@ -2,10 +2,10 @@
 
 To install:
 
-   $ phpize
-   $ ./configure
-   $ make
-   $ sudo make install
+    phpize
+    ./configure
+    make
+    sudo make install
 
 Then add
 
