@@ -36,7 +36,7 @@ The tests will also attempt to create an admin user using the shell.  If
 _mongo_ is not on your path, you will get some output complaining about it but
 those tests will just be skipped.
 
-### Credits
+## Credits
 
 Jon Moss
 
