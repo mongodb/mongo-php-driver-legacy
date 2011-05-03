@@ -15,10 +15,12 @@ class MongoDateTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($d1->usec, $d2->usec);
         $this->assertEquals($t, $d1->sec);
 
+        $tz = date_default_timezone_get();
         date_default_timezone_set('America/New_York');
         $d3 = new MongoDate(strtotime('2009-05-01 00:00:00'));
         $this->assertEquals(1241150400, $d3->sec);
         $this->assertEquals(0, $d3->usec);
+        date_default_timezone_set($tz);
     }
 
     public function testMilliseconds() {
