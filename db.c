@@ -341,6 +341,15 @@ PHP_METHOD(MongoDB, listCollections) {
     // take a substring after the first "."
     name++;
 
+    // "foo." was allowed in earlier versions
+    if (name == '\0') {
+      zval_ptr_dtor(&next);
+      MAKE_STD_ZVAL(next);
+      
+      MONGO_METHOD(MongoCursor, getNext, next, cursor);
+      continue;
+    }
+
     MAKE_STD_ZVAL(c);
 
     MAKE_STD_ZVAL(zname);
