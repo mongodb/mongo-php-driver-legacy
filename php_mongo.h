@@ -397,7 +397,7 @@ typedef struct {
     ZVAL_NULL(temp);                                            \
                                                                 \
     if ((server = mongo_util_link_get_socket(link, temp TSRMLS_CC)) == 0 ||   \
-        mongo_say(server->socket, &buf, temp TSRMLS_CC) == FAILURE) {   \
+        mongo_say(server, &buf, temp TSRMLS_CC) == FAILURE) {   \
       RETVAL_FALSE;                                             \
     }                                                           \
     else {                                                      \
@@ -639,7 +639,8 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 /*
  * Internal functions
  */
-int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
+int mongo_say(mongo_server *server, buffer *buf, zval *errmsg TSRMLS_DC);
+int _mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
 int mongo_hear(int sock, void*, int TSRMLS_DC);
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
 /**
@@ -738,6 +739,7 @@ extern zend_module_entry mongo_module_entry;
  * 5: failed to get primary or secondary
  * 10: failed to get host from <substr> of <str>
  * 11: failed to get port from <substr> of <str>
+ * 12: lost db connection
  *
  * MongoCursorException:
  * 0: cannot modify cursor after beginning iteration

@@ -103,7 +103,7 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC);
  * rest of the sockets to this server (on the assumption that something went
  * wrong with the server itself).
  */
-void mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC);
+int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC);
 
 /**
  * Clean up all pools on shutdown, disconnect all connections.

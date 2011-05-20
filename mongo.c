@@ -274,7 +274,7 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
     return;
   }
   Z_TYPE(temp) = IS_NULL;
-  mongo_say(cursor->server->socket, &buf, &temp TSRMLS_CC); 
+  _mongo_say(cursor->server->socket, &buf, &temp TSRMLS_CC);
   if (Z_TYPE(temp) == IS_STRING) {
     efree(Z_STRVAL(temp));
     Z_TYPE(temp) = IS_NULL;
@@ -1705,9 +1705,16 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
         php_mongo_create_le(pcursor, "response_list" TSRMLS_CC);
         LOCK;
       }
-
-      // else if we've failed, just don't add to queue and continue
-
+      else {
+        // else if we've failed, just don't add to queue
+        // if we can reconnect, continue
+        if (mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC) == FAILURE) {
+          zend_throw_exception(mongo_ce_CursorException, "lost db connection", 9 TSRMLS_CC);
+          UNLOCK;
+          return FAILURE;
+        }
+        sock = cursor->server->socket;
+      }
     }
     // otherwise, check if the response is on the queue
     else {
@@ -1821,8 +1828,10 @@ static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor
  * On failure, sets errmsg to errno string.
  * On success, returns number of bytes sent.
  * Does not attempt to reconnect nor throw any exceptions.
+ *
+ * On failure, the calling function is responsible for disconnecting
  */
-int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC) {
+int _mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC) {
   int sent = 0, total = 0, status = 1;
 
   log0("saying something");
@@ -1842,6 +1851,20 @@ int mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC) {
   }
 
   return sent;
+}
+
+int mongo_say(mongo_server *server, buffer *buf, zval *errmsg TSRMLS_CC) {
+  if(!server->connected &&
+     mongo_util_pool_get(server, errmsg TSRMLS_CC) == FAILURE) {
+    return FAILURE;
+  }
+
+  if (_mongo_say(server->socket, buf, errmsg TSRMLS_CC) == FAILURE) {
+    // try to reconnect, but we can't retry the send regardless
+    mongo_util_pool_failed(server, 0 TSRMLS_CC);
+    return FAILURE;
+  }
+  return SUCCESS;
 }
 
 int mongo_hear(int sock, void *dest, int total_len TSRMLS_DC) {
