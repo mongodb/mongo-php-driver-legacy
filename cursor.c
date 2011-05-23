@@ -522,6 +522,7 @@ PHP_METHOD(MongoCursor, info)
   add_assoc_long(return_value, "limit", cursor->limit);
   add_assoc_long(return_value, "batchSize", cursor->batch_size);
   add_assoc_long(return_value, "skip", cursor->skip);
+  add_assoc_long(return_value, "flags", cursor->opts);
   if (cursor->query) {
     add_assoc_zval(return_value, "query", cursor->query);
     zval_add_ref(&cursor->query);

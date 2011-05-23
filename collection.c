@@ -125,7 +125,7 @@ PHP_METHOD(MongoCollection, getSlaveOkay) {
 }
 
 PHP_METHOD(MongoCollection, setSlaveOkay) {
-  zend_bool slave_okay;
+  zend_bool slave_okay = 1;
   mongo_collection *c;
   
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
