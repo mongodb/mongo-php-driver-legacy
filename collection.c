@@ -26,6 +26,7 @@
 #include "db.h"
 #include "util/link.h"
 #include "util/pool.h"
+#include "util/rs.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
@@ -266,6 +267,7 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
 
   if (FAILURE == mongo_say(cursor->server, buf, errmsg TSRMLS_CC)) {
     mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
+    mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 16 TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
     zval_ptr_dtor(&cursor_z);
@@ -275,6 +277,7 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
   // get reply
   if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
     mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
+    mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
@@ -309,6 +312,7 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
     // not master
     if (code == 10058) {
       mongo_util_pool_failed(cursor->server, EVERYONE_DISCONNECTED TSRMLS_CC);
+      mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
     }
 
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), code TSRMLS_CC);

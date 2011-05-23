@@ -38,7 +38,6 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
   }
   
   // see if we need to update hosts or ping them
-  mongo_util_rs_refresh(link TSRMLS_CC);
   mongo_util_rs_ping(link TSRMLS_CC);
 
   if (link->slave) {
@@ -83,6 +82,7 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
     mongo_server *server = mongo_util_rs_get_master(link TSRMLS_CC);
     if (!server) {
       ZVAL_STRING(errmsg, "Couldn't determine master", 1);
+      link->server_set->master = 0;
     }
     return server;
   }
@@ -94,6 +94,7 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
     mongo_server *server = mongo_util_rs_get_master(link TSRMLS_CC);
     if (!server) {
       ZVAL_STRING(errmsg, "Couldn't determine master", 1);
+      link->server_set->master = 0;
     }
     return server;
   }

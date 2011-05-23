@@ -241,11 +241,6 @@ static void php_mongo_server_set_free(mongo_server_set *server_set TSRMLS_DC) {
     current = temp;
   }
 
-  if (server_set->hosts) {
-    zend_hash_destroy(server_set->hosts);
-    efree(server_set->hosts);
-  }
-
   efree(server_set);
 }
 
@@ -751,8 +746,6 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     // set the top-level server set fields
     link->server_set = (mongo_server_set*)emalloc(sizeof(mongo_server_set));
     link->server_set->num = 1;
-    link->server_set->hosts = 0;
-    link->server_set->slaves = 0;
     link->server_set->ts = 0;
     link->server_set->server_ts = 0;
 
@@ -805,19 +798,9 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
 
   // allocate the server ptr
   link->server_set = (mongo_server_set*)emalloc(sizeof(mongo_server_set));
-  link->server_set->slaves = 0;
   link->server_set->ts = 0;
   link->server_set->server_ts = 0;
   
-  // allocate the hosts hash
-  if (link->rs) {
-    link->server_set->hosts = (HashTable*)emalloc(sizeof(HashTable));
-    zend_hash_init(link->server_set->hosts, 7, NULL, mongo_util_hash_dtor, 1);
-  }
-  else {
-    link->server_set->hosts = 0;
-  }
-
   // allocate the top-level server set fields
   link->server_set->num = 0;
   link->server_set->master = 0;
@@ -1091,6 +1074,7 @@ PHP_METHOD(Mongo, connectUtil) {
     zend_throw_exception(mongo_ce_ConnectionException, msg, 0 TSRMLS_CC);
   }
   else {
+    mongo_util_rs_get_hosts(link TSRMLS_CC);
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
                               strlen("connected"), 1 TSRMLS_CC);
     ZVAL_BOOL(return_value, 1);
@@ -1409,18 +1393,7 @@ PHP_METHOD(Mongo, listDBs) {
 /* }}} */
 
 PHP_METHOD(Mongo, getHosts) {
-  mongo_link *link;
-  zval temp;
-
-  PHP_MONGO_GET_LINK(getThis());
-
-  if (!link->server_set || !link->server_set->hosts) {
-    return;
-  }
-  
-  array_init(return_value);
-  zend_hash_copy(Z_ARRVAL_P(return_value), link->server_set->hosts,
-                 (copy_ctor_func_t)mongo_util_hash_copy_to_np, &temp, sizeof(zval*));
+  return;
 }
 
 PHP_METHOD(Mongo, getSlave) {
@@ -1572,8 +1545,6 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
   }
 
   if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) < INT_32) {
-    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
-
     zend_throw_exception(mongo_ce_CursorException, "couldn't get response header", 4 TSRMLS_CC);
     return FAILURE;
   }
@@ -1583,12 +1554,10 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
   // make sure we're not getting crazy data
   if (cursor->recv.length == 0) {
-    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
     zend_throw_exception(mongo_ce_CursorException, "no db response", 5 TSRMLS_CC);
     return FAILURE;
   }
   else if (cursor->recv.length < REPLY_HEADER_SIZE) {
-    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
     zend_throw_exception_ex(mongo_ce_CursorException, 6 TSRMLS_CC, 
                             "bad response length: %d, did the db assert?", 
                             cursor->recv.length);
@@ -1710,6 +1679,12 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
         // if we can reconnect, continue
         if (mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC) == FAILURE) {
           zend_throw_exception(mongo_ce_CursorException, "lost db connection", 9 TSRMLS_CC);
+          UNLOCK;
+          return FAILURE;
+        }
+        mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
+        if (!cursor->server->connected) {
+          zend_throw_exception(mongo_ce_CursorException, "lost db connection (2)", 9 TSRMLS_CC);
           UNLOCK;
           return FAILURE;
         }

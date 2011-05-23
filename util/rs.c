@@ -30,6 +30,7 @@ extern zend_class_entry *mongo_ce_Mongo,
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TSRMLS_DC) {
+  zval *errmsg = 0;
   mongo_server *target_server, *eo_list = 0, *server;
 
   target_server = link->server_set->server;
@@ -47,6 +48,12 @@ mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TS
     return 0;
   }
 
+  // try to connect
+  MAKE_STD_ZVAL(errmsg);
+  ZVAL_NULL(errmsg);
+  mongo_util_pool_get(server, errmsg TSRMLS_CC);
+  zval_ptr_dtor(&errmsg);
+
   log1("appending to list: %s", server->label);
 
   // get to the end of the server list
@@ -63,20 +70,6 @@ mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TS
     eo_list->next = server;
   } 
   link->server_set->num++;
- 
-  // add this to the hosts list if it isn't already there
-  if (link->rs && link->server_set->hosts &&
-      !zend_hash_exists(link->server_set->hosts, server->label, strlen(server->label)+1)) {
-    zval *null_p;
-    
-    null_p = (zval*)malloc(sizeof(zval));
-    INIT_PZVAL(null_p);
-    Z_TYPE_P(null_p) = IS_NULL;
-    
-    zend_hash_add(link->server_set->hosts, server->label, strlen(server->label)+1,
-                  &null_p, sizeof(zval*), NULL);
-  }
-  
   return server;
 }
 
@@ -178,8 +171,8 @@ void mongo_util_rs__repopulate_hosts(zval **hosts, mongo_link *link TSRMLS_DC) {
   HashPosition pointer;
   
   hash = Z_ARRVAL_PP(hosts);
-  for (zend_hash_internal_pointer_reset_ex(hash, &pointer); 
-       zend_hash_get_current_data_ex(hash, (void**) &data, &pointer) == SUCCESS; 
+  for (zend_hash_internal_pointer_reset_ex(hash, &pointer);
+       zend_hash_get_current_data_ex(hash, (void**) &data, &pointer) == SUCCESS;
        zend_hash_move_forward_ex(hash, &pointer)) {
         
     char *host = Z_STRVAL_PP(data);
@@ -189,15 +182,42 @@ void mongo_util_rs__repopulate_hosts(zval **hosts, mongo_link *link TSRMLS_DC) {
   }
 }
 
-void mongo_util_rs__refresh_list(mongo_link *link, zval *response TSRMLS_DC) {
-  mongo_server *cur;
-  zval **hosts;
-  
+void mongo_util_rs_get_hosts(mongo_link *link TSRMLS_DC) {
+  mongo_server *current;
+  zval **hosts, *good_response = 0;
+
+  if (!link->rs) {
+    return;
+  }
+
   // we are going clear the hosts list and repopulate
-  cur = link->server_set->server;
-  while(cur) {
-    mongo_server *prev = cur;
-    cur = cur->next;
+  current = link->server_set->server;
+  while(current && !good_response) {
+    zval *response = mongo_util_rs__ismaster(current TSRMLS_CC);
+    if (response) {
+      zval **h = 0;
+      if (zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1, (void**)&h) == SUCCESS ||
+          zend_hash_find(HASH_P(response), "passives", strlen("passives")+1, (void**)&h) == SUCCESS ||
+          zend_hash_find(HASH_P(response), "arbiters", strlen("arbiters")+1, (void**)&h) == SUCCESS) {
+        good_response = response;
+        break;
+      }
+      else {
+        zval_ptr_dtor(&response);
+      }
+    }
+    current = current->next;
+  }
+
+  if (!good_response) {
+    // we'll have to try again later
+    return;
+  }
+
+  current = link->server_set->server;
+  while (current) {
+    mongo_server *prev = current;
+    current = current->next;
     mongo_util_pool_done(prev TSRMLS_CC);
     efree(prev);
   }
@@ -205,14 +225,19 @@ void mongo_util_rs__refresh_list(mongo_link *link, zval *response TSRMLS_DC) {
   link->server_set->num = 0;
       
   log0("parsing replica set\n");
-  
-  // repopulate
-  if (zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1, (void**)&hosts) == SUCCESS) {
-    mongo_util_rs__repopulate_hosts(hosts, link TSRMLS_CC);
+
+  if (good_response) {
+    // repopulate
+    if (zend_hash_find(HASH_P(good_response), "hosts", strlen("hosts")+1, (void**)&hosts) == SUCCESS) {
+      mongo_util_rs__repopulate_hosts(hosts, link TSRMLS_CC);
+    }
+    if (zend_hash_find(HASH_P(good_response), "passives", strlen("passives")+1, (void**)&hosts) == SUCCESS) {
+      mongo_util_rs__repopulate_hosts(hosts, link TSRMLS_CC);
+    }
+    if (zend_hash_find(HASH_P(good_response), "arbiters", strlen("arbiters")+1, (void**)&hosts) == SUCCESS) {
+      mongo_util_rs__repopulate_hosts(hosts, link TSRMLS_CC);
+    }
   }
-  if (zend_hash_find(HASH_P(response), "passives", strlen("passives")+1, (void**)&hosts) == SUCCESS) {
-    mongo_util_rs__repopulate_hosts(hosts, link TSRMLS_CC);
-  }    
 }
 
 mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
@@ -235,8 +260,8 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
 
   // if this is a replica set, check the members occasionally and start the
   // iteration over again
-  mongo_util_rs_refresh(link TSRMLS_CC);
-  
+  mongo_util_rs_ping(link TSRMLS_CC);
+
   // redetermine master
 
   current = link->server_set->server;
@@ -268,77 +293,46 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
   return 0;
 }
 
-void mongo_util_rs_refresh(mongo_link *link TSRMLS_DC) {
+void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
   int now;
-  zval *response = 0;
   mongo_server *current;
   
   now = time(0);
-  if (!link->rs || link->server_set->server_ts + 5 >= now) {
+  if (!link->rs) {
     return;
   }
 
   // find a server with a hosts list
   current = link->server_set->server;
   while (current) {
-    response = mongo_util_rs__ismaster(current TSRMLS_CC);
-    
-    if (response) {
-      zval **hosts;
-      // TOOD: this should probably check arbiters, too
-      if (zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1, (void**)&hosts) == SUCCESS ||
-          zend_hash_find(HASH_P(response), "passives", strlen("passives")+1, (void**)&hosts) == SUCCESS) {
-        // fallthrough if there are any possible servers
-        break;
-      }
-      zval_ptr_dtor(&response);
-      response = 0;
+    zval *response = 0, **hosts = 0, **ismaster = 0, **secondary = 0;
+
+    if (mongo_util_pool_ping(current, now TSRMLS_CC) == FAILURE) {
+      current = current->next;
+      continue;
     }
+
+    response = mongo_util_rs__ismaster(current TSRMLS_CC);
+
+    if (!response) {
+      current = current->next;
+      continue;
+    }
+
+    if (mongo_util_rs__get_ismaster(response TSRMLS_CC)) {
+      link->server_set->master = current;
+    }
+
+    zend_hash_find(HASH_P(response), "secondary", strlen("secondary")+1, (void**)&secondary);
+    if (secondary && Z_BVAL_PP(secondary)) {
+      mongo_util_pool_set_readable(current, 1 TSRMLS_CC);
+    }
+    else {
+      mongo_util_pool_set_readable(current, 0 TSRMLS_CC);
+    }
+    zval_ptr_dtor(&response);
 
     current = current->next;
-  }
-
-  // if no one had a list of hosts, we can't do anything
-  if (!current) {
-    if (response) {
-      zval_ptr_dtor(&response);
-    }
-    return;
-  }
-
-  // if someone did, refresh the list
-  link->server_set->server_ts = now;
-  mongo_util_rs__refresh_list(link, response TSRMLS_CC);
-  if (response) {
-    zval_ptr_dtor(&response);
-  }
-}
-
-void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
-  int now;
-  
-  now = time(0);
-  
-  if (link->server_set && link->server_set->ts + 5 < now) {
-    zval *fake_zval;
-    mongo_link *fake_link;
-    char *errmsg = 0, **errmsg_ptr;
-    
-    link->server_set->ts = now;
-    
-    MAKE_STD_ZVAL(fake_zval);
-    object_init_ex(fake_zval, mongo_ce_Mongo);
-    fake_link = (mongo_link*)zend_object_store_get_object(fake_zval TSRMLS_CC);
-    fake_link->server_set = link->server_set;
-
-    errmsg_ptr = &errmsg;
-    get_heartbeats(fake_zval, errmsg_ptr TSRMLS_CC);
-    
-    // if get_heartbeats fails, ignore
-    fake_link->server_set = 0;
-    zval_ptr_dtor(&fake_zval);
-    if (errmsg)
-      efree(errmsg);
   }
 }
 
@@ -393,8 +387,8 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
 }
 
 int set_a_slave(mongo_link *link, char **errmsg) {
-  mongo_server *possible_slave;
-  int skip;
+  mongo_server *possible_slave, *current = 0;
+  int skip, slaves = 0;
   zval **master = 0, **health = 0;
   
   if (!link->rs || !link->server_set) {
@@ -408,8 +402,17 @@ int set_a_slave(mongo_link *link, char **errmsg) {
     skip *= -1;
   }
 
-  if (link->server_set->slaves) {
-    skip %= link->server_set->slaves;
+  // figure out how many slaves there are
+  current = link->server_set->server;
+  while (current) {
+    if (current->readable) {
+      slaves++;
+    }
+    current = current->next;
+  }
+
+  if (slaves) {
+    skip %= slaves;
     possible_slave = link->server_set->server;
   }
   // if there are no slaves, don't check for them
@@ -419,8 +422,8 @@ int set_a_slave(mongo_link *link, char **errmsg) {
   
   // skip to the Sth server
   link->slave = 0;
-  while (possible_slave) {      
-   
+  while (possible_slave) {
+
     if (!possible_slave->readable) {
       possible_slave = possible_slave->next;
       continue;
@@ -432,22 +435,13 @@ int set_a_slave(mongo_link *link, char **errmsg) {
       continue;
     }
 
-    // get_heartbeats checks the status of the slave, so we can assume it's okay
+    // rs_ping checks the status of the slave, so we can assume it's okay
     link->slave = possible_slave;
     return RS_SECONDARY;
   }
 
   // if we've run out of possibilities, use the master
-  if (link->server_set->master &&
-      zend_hash_find(link->server_set->hosts,
-                     link->server_set->master->label,
-                     strlen(link->server_set->master->label)+1,
-                     (void**)&master) == SUCCESS &&
-      Z_TYPE_PP(master) == IS_ARRAY &&
-      zend_hash_find(Z_ARRVAL_PP(master), "health", strlen("health")+1,
-                     (void**)&health) == SUCCESS &&
-      Z_NUMVAL_PP(health, 1)) {
-
+  if (link->server_set->master && link->server_set->master->connected) {
     link->slave = link->server_set->master;
     return RS_PRIMARY;
   }
@@ -456,116 +450,3 @@ int set_a_slave(mongo_link *link, char **errmsg) {
   return FAILURE;
 }
 
-int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC) {
-  zval *db, *name, *data, *result, temp, **members, **ok, **member;
-  HashTable *hash;
-  HashPosition pointer;
-  mongo_link *link;
-  mongo_server *ptr;
-  
-  Z_TYPE(temp) = IS_NULL;
-
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, "admin", 1);
-  
-  MAKE_STD_ZVAL(db);
-  object_init_ex(db, mongo_ce_DB);
-  MONGO_METHOD2(MongoDB, __construct, &temp, db, getThis(), name);
-
-  // not sure if this is even possible
-  if (EG(exception)) {
-    zval_ptr_dtor(&name);
-    zval_ptr_dtor(&db);
-    
-    // but better safe than sorry
-    return FAILURE;
-  }
-  
-  MAKE_STD_ZVAL(result);
-
-  MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "replSetGetStatus", 1);
-
-  MONGO_CMD(result, db);
-
-  zval_ptr_dtor(&name);
-  zval_ptr_dtor(&db);
-  zval_ptr_dtor(&data);
-
-  if (EG(exception)) {
-    return FAILURE;
-  }
-
-  // check results for errors
-  if (zend_hash_find(Z_ARRVAL_P(result), "members", strlen("members")+1, (void**)&members) == FAILURE ||
-      !(zend_hash_find(Z_ARRVAL_P(result), "ok", strlen("ok")+1, (void**)&ok) == SUCCESS &&
-        Z_NUMVAL_PP(ok, 1))) {
-    zval_ptr_dtor(&result);
-    *(errmsg) = estrdup("status msg wasn't valid");
-    return FAILURE;
-  }
-
-
-  link = (mongo_link*)zend_object_store_get_object((getThis()) TSRMLS_CC);
-  if (!link) {
-    zval_ptr_dtor(&result);
-    *(errmsg) = estrdup("connection not properly initialized");
-    return FAILURE;
-  }
-  
-  link->server_set->slaves = 0;
-  // clear readable bit
-  ptr = link->server_set->server;
-  while (ptr) {
-    ptr->readable = 0;
-    ptr = ptr->next;
-  }
-
-  hash = Z_ARRVAL_PP(members);
-  for (zend_hash_internal_pointer_reset_ex(hash, &pointer); 
-       zend_hash_get_current_data_ex(hash, (void**) &member, &pointer) == SUCCESS; 
-       zend_hash_move_forward_ex(hash, &pointer)) {
-    // host is never really used, it's just a temp var
-    zval **name = 0, **host = 0, **state = 0, **health = 0, *dest;
-    
-    if (zend_hash_find(Z_ARRVAL_PP(member), "name", strlen("name")+1,
-                       (void**)&name) == FAILURE) {
-      // TODO: well, that's weird
-      continue;
-    }
-
-    // mark servers in state 2 readable
-    if (zend_hash_find(Z_ARRVAL_PP(member), "state", strlen("state")+1,
-                       (void**)&state) == SUCCESS &&
-        zend_hash_find(Z_ARRVAL_PP(member), "health", strlen("health")+1,
-                       (void**)&health) == SUCCESS &&
-        Z_NUMVAL_PP(state, 2) && Z_NUMVAL_PP(health, 1)) {
-
-      mongo_server *server = link->server_set->server;
-      while (server) {
-        if (strncmp(server->label, Z_STRVAL_PP(name), strlen(server->label)) == 0) {
-          server->readable = 1;
-          link->server_set->slaves++;
-          break;
-        }
-        server = server->next;
-      }
-    }
-    
-    if (zend_hash_find(link->server_set->hosts, Z_STRVAL_PP(name),
-                       Z_STRLEN_PP(name)+1, (void**)&host) == FAILURE) {
-      log1("no host named %s", Z_STRVAL_PP(name));
-      continue;
-    }
-    
-    if (mongo_util_hash_to_pzval(&dest, member TSRMLS_CC) == FAILURE) {
-      return FAILURE;
-    }
-    zend_hash_update(link->server_set->hosts, Z_STRVAL_PP(name),
-                     Z_STRLEN_PP(name)+1, (void*)&dest, sizeof(zval*), NULL);
-  }
-  
-  zval_ptr_dtor(&result);
-  return SUCCESS;
-}

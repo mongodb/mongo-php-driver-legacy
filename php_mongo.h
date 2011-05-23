@@ -230,16 +230,12 @@ typedef struct _mongo_server_set {
   int server_ts;
   // the last time we updated the hosts hash
   int ts;
-  // this is the number of readable, non-primary members
-  size_t slaves;
 
   mongo_server *server;
 
   // if num is greater than -1, master keeps track of the master connection,
   // otherwise it points to "server"
   mongo_server *master;
-    
-  HashTable *hosts;
 } mongo_server_set;
 
 typedef struct {

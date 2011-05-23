@@ -226,7 +226,6 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
   temp_link = (mongo_link*)zend_object_store_get_object(connection TSRMLS_CC);
   temp_link->server_set = (mongo_server_set*)emalloc(sizeof(mongo_server_set));
   temp_link->server_set->num = 1;
-  temp_link->server_set->slaves = 0;
   temp_link->server_set->ts = 0;
   temp_link->server_set->server_ts = 0;
   temp_link->server_set->server = server;

@@ -46,30 +46,22 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC);
 int set_a_slave(mongo_link *link, char **errmsg);
 
 /**
- * This uses the master connection to find the replSetStatus of the replica set.
- * The information is stored in a persistent hash (see util/hash.h) and used to
- * determine slave eligibility.
- *
- * TODO: this should be a per-member call that calls ismaster
- */
-int get_heartbeats(zval *this_ptr, char **errmsg  TSRMLS_DC);
-
-/**
- * Refresh the list of servers in the set.  Only will run on a given link once
- * every 5 seconds. 
+ * Ping the servers in the set.  Refresh the servers if it's been a while or
+ * force_refresh is set.
  *
  * Calls ismaster on each member of the set until it finds someone with a hosts
  * and/or passives field.  Uses the first it finds to repopulate the list,
  * returning all old connections to their pools and creating new servers for
  * each host.  New servers do not yet fetch connections from their pools.
  */
-void mongo_util_rs_refresh(mongo_link *link TSRMLS_DC);
+void mongo_util_rs_ping(mongo_link *link TSRMLS_DC);
 
 /**
- * Ping servers to see who is readable.  Only will run on a given link once
- * every 5 seconds (separate counter from that used for mongo_util_rs_refresh).
+ * Clears the hosts, returning each host to the pool. Takes the output of
+ * rs__ismaster and looks through the hosts and passives fields to build a new
+ * list of hosts.
  */
-void mongo_util_rs_ping(mongo_link *link TSRMLS_DC);
+void mongo_util_rs_get_hosts(mongo_link *link TSRMLS_DC);
 
 // -------- Internal functions ----------
 
@@ -98,13 +90,6 @@ int mongo_util_rs__get_ismaster(zval *response TSRMLS_DC);
  * the master was successfully fetched (FAILURE otherwise).
  */
 int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC);
-
-/**
- * Helper for rs_refresh. Clears the hosts, returning each host to the pool.
- * Takes the output of rs__ismaster and looks through the hosts and passives
- * fields (TODO: arbiter field) to build a new list of hosts.
- */
-void mongo_util_rs__refresh_list(mongo_link *link, zval *response TSRMLS_DC);
 
 /**
  * Helper for __refresh_list.  For each host in the given list, creates a new
