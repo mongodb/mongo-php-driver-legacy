@@ -61,8 +61,6 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
   return link->slave;
 }
 
-
-
 /*
  * If the socket is connected, returns the master.  If the socket is
  * disconnected, it attempts to reconnect and return the master.
@@ -102,7 +100,6 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
   // errmsg set in try_connecting
   return 0;
 }
-
 
 int mongo_util_link_try_connecting(mongo_link *link, zval *errmsg TSRMLS_DC) {
   zval *errmsg_holder = 0;

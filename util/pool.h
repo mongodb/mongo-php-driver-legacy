@@ -55,13 +55,13 @@ typedef struct {
   time_t timeout;
   time_t ping;
   zend_bool readable;
-  
+
   // number of servers in the pool
   struct {
     int in_pool;
     int in_use;
   } num;
-  
+
   stack_node *top;
   // a pointer to each of the server structs using a connection from this pool,
   // so we can disconnect them all if something goes wrong.

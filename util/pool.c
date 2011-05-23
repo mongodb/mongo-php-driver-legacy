@@ -26,25 +26,25 @@ extern int le_pconnection;
 
 int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
   stack_monitor *monitor;
-  
+
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     return FAILURE;
   }
   if (timeout) {
     monitor->timeout = timeout;
   }
-  
+
   // TODO: initialize pool to a certain size?
   return SUCCESS;
 }
 
 int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
   stack_monitor *monitor;
-  
+
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     return FAILURE;
   }
-  
+
   // get connection from pool or create new
   if (mongo_util_pool__stack_pop(monitor, server) == SUCCESS ||
       mongo_util_pool__connect(server, monitor->timeout, errmsg TSRMLS_CC) == SUCCESS) {
@@ -76,7 +76,7 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
 
 void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
-  
+
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     // if we couldn't push this, close the connection
     mongo_util_disconnect(server);
@@ -128,11 +128,11 @@ int mongo_util_pool_ping(mongo_server *server, time_t now TSRMLS_CC) {
 int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {
   stack_monitor *monitor;
   zval *errmsg;
-  
+
   // some routers cut off connections after x time, so we don't want to drop all
   // of the connections unless we can't reconnect
   mongo_util_disconnect(server);
-  
+
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     return FAILURE;
   }
@@ -150,16 +150,16 @@ int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {
   // on replica set disconnection, reconnect all members
   if (code == EVERYONE_DISCONNECTED) {
     mongo_server *current;
-  
+
     current = monitor->servers;
     while (current) {
-      
+
       // skip the one we did above
       if (current == server) {
         current = current->next_in_pool;
         continue;
       }
-      
+
       mongo_util_disconnect(current);
 
       // once one connection fails, don't try to reconnect the rest
@@ -195,20 +195,20 @@ int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server) {
   stack_node *node;
 
   node = monitor->top;
-    
+
   // check that monitor->pop != NULL and pop stack
   if (!node) {
     server->connected = 0;
     return FAILURE;
   }
-  
+
   monitor->top = node->next;
   monitor->num.in_pool--;
-  
+
   // theoretically, all servers in the pool should be connected
   server->connected = 1;
   server->socket = node->socket;
-  
+
   free(node);
 
   return SUCCESS;
@@ -217,9 +217,9 @@ int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server) {
 void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
   stack_node *node;
 
-  if (server->connected) {    
+  if (server->connected) {
     node = (stack_node*)malloc(sizeof(stack_node));
-  
+
     node->socket = server->socket;
     node->next = monitor->top;
     monitor->top = node;
@@ -233,7 +233,7 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
   if (monitor->num.in_pool > 50) {
     int count = 0;
     stack_node *next;
-    
+
     while (node && count < 50) {
       node = node->next;
       count++;
@@ -242,14 +242,14 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
     next = node->next;
     node->next = 0;
     node = next;
-    
+
     // get rid of old connections
-    while (node) {      
+    while (node) {
       next = node->next;
-      
+
       MONGO_UTIL_DISCONNECT(node->socket);
       free(node);
-      
+
       node = next;
       monitor->num.in_pool--;
     }
@@ -259,7 +259,7 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
 void mongo_util_pool__stack_clear(stack_monitor *monitor) {
   // holder for popping sockets
   mongo_server temp;
-  
+
   while (mongo_util_pool__stack_pop(monitor, &temp) == SUCCESS) {
     mongo_util_disconnect(&temp);
   }
@@ -279,10 +279,10 @@ void mongo_util_pool__add_server_ptr(stack_monitor *monitor, mongo_server *serve
     }
     current = current->next_in_pool;
   }
-    
+
   list = monitor->servers;
   server->next_in_pool = list;
-    
+
   monitor->servers = server;
   monitor->num.in_use++;
 }
@@ -292,23 +292,23 @@ void mongo_util_pool__rm_server_ptr(stack_monitor *monitor, mongo_server *server
 
   next = server->next_in_pool;
   server->next_in_pool = 0;
-  
+
   if (monitor->servers == 0) {
     return;
   }
-  
+
   if (monitor->servers == server) {
     monitor->servers = next;
     return;
   }
-  
+
   prev = monitor->servers;
   current = monitor->servers->next_in_pool;
   while (current && current != server) {
     prev = current;
     current = current->next_in_pool;
   }
-  
+
   if (current == server) {
     prev->next_in_pool = current->next_in_pool;
     monitor->num.in_use--;
@@ -339,7 +339,7 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
   if (zend_hash_find(&EG(persistent_list), id, len+1, (void**)&le) == FAILURE) {
     zend_rsrc_list_entry nle;
     stack_monitor *monitor;
-    
+
     monitor = (stack_monitor*)malloc(sizeof(stack_monitor));
     if (!monitor) {
       efree(id);
@@ -347,30 +347,30 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
     }
 
     memset(monitor, 0, sizeof(stack_monitor));
-    
+
     // registering this links it to the dtor (mongo_util_pool_shutdown) so that
     // it can be auto-cleaned-up on shutdown
     nle.ptr = monitor;
     nle.type = le_pconnection;
     nle.refcount = 1;
     zend_hash_add(&EG(persistent_list), id, len+1, &nle, sizeof(zend_rsrc_list_entry), NULL);
-    
+
     efree(id);
     return monitor;
   }
-  
+
   efree(id);
   return le->ptr;
 }
 
 size_t mongo_util_pool__get_id(mongo_server *server, char **id TSRMLS_DC) {
   size_t len;
-  
+
   len = spprintf(id, 0, "%s:%d.%s.%s.%s", server->host, server->port,
                  server->db ? server->db : "",
                  server->username ? server->username : "",
                  server->password ? server->password : "");
-  
+
   return len;
 }
 
@@ -390,9 +390,9 @@ PHP_FUNCTION(mongoPoolDebug) {
   zend_rsrc_list_entry *le;
 
   array_init(return_value);
-  
-  for (zend_hash_internal_pointer_reset_ex(&EG(persistent_list), &pointer); 
-       zend_hash_get_current_data_ex(&EG(persistent_list), (void**) &le, &pointer) == SUCCESS; 
+
+  for (zend_hash_internal_pointer_reset_ex(&EG(persistent_list), &pointer);
+       zend_hash_get_current_data_ex(&EG(persistent_list), (void**) &le, &pointer) == SUCCESS;
        zend_hash_move_forward_ex(&EG(persistent_list), &pointer)) {
     zval *m;
     char *key;
@@ -405,7 +405,7 @@ PHP_FUNCTION(mongoPoolDebug) {
     }
 
     monitor = (stack_monitor*)le->ptr;
-    
+
     MAKE_STD_ZVAL(m);
     array_init(m);
 
@@ -420,6 +420,6 @@ PHP_FUNCTION(mongoPoolDebug) {
       add_index_zval(return_value, index, m);
     }
   }
-  
+
   // return_value is returned
 }
