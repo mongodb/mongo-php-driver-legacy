@@ -1,12 +1,12 @@
 /**
  *  Copyright 2009-2010 10gen, Inc.
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,9 +77,9 @@
 #define OP_INSERT 2002
 #define OP_GET_BY_OID 2003
 #define OP_QUERY 2004
-#define OP_GET_MORE 2005 
+#define OP_GET_MORE 2005
 #define OP_DELETE 2006
-#define OP_KILL_CURSORS 2007 
+#define OP_KILL_CURSORS 2007
 
 // cursor flags
 #define CURSOR_NOT_FOUND 1
@@ -218,7 +218,7 @@ typedef struct _mongo_server {
   char *username;
   char *password;
   char *db;
-  
+
   struct _mongo_server *next;
   // list of handed-out sockets for this address
   struct _mongo_server *next_in_pool;
@@ -246,7 +246,7 @@ typedef struct {
   int rs;
 
   mongo_server_set *server_set;
-  
+
   // slave to send reads to
   mongo_server *slave;
 
@@ -291,14 +291,14 @@ typedef struct {
   APPEND_HEADER_NS(buf, ns, opts);
 
 #define CREATE_HEADER(buf, ns, opcode)          \
-  CREATE_RESPONSE_HEADER(buf, ns, 0, opcode);                    
+  CREATE_RESPONSE_HEADER(buf, ns, 0, opcode);
 
 
 #define APPEND_HEADER(buf, opts) buf->pos += INT_32;     \
   php_mongo_serialize_int(buf, header.request_id);     \
   php_mongo_serialize_int(buf, header.response_to);    \
   php_mongo_serialize_int(buf, header.op);             \
-  php_mongo_serialize_int(buf, opts);                                
+  php_mongo_serialize_int(buf, opts);
 
 
 #define APPEND_HEADER_NS(buf, ns, opts)                         \
@@ -476,13 +476,13 @@ typedef struct {
 } mongo_cursor;
 
 /*
- * unfortunately, cursors can be freed before or after link is destroyed, so 
- * we can't actually depend on having a link to the database.  So, we're 
+ * unfortunately, cursors can be freed before or after link is destroyed, so
+ * we can't actually depend on having a link to the database.  So, we're
  * going to keep a separate list of link ids associated with cursor ids.
  *
- * When a cursor is to be freed, we try to find this cursor in the list.  If 
+ * When a cursor is to be freed, we try to find this cursor in the list.  If
  * it's there, kill it.  If not, the db connection is probably already dead.
- * 
+ *
  * When a connection is killed, we sweep through the list and kill all the
  * cursors for that link.
  */
@@ -505,7 +505,7 @@ typedef struct {
   zend_object std;
   zval *link;
   zval *name;
-  
+
   zend_bool slave_okay;
 } mongo_db;
 
@@ -669,9 +669,9 @@ ZEND_BEGIN_MODULE_GLOBALS(mongo)
 // these must be IN THE SAME ORDER as mongo.c lists them
 int auto_reconnect;
 int allow_persistent;
-char *default_host; 
+char *default_host;
 int default_port;
-int request_id; 
+int request_id;
 int chunk_size;
 // $ alternative
 char *cmd_char;
@@ -690,14 +690,14 @@ char *errmsg;
 int response_num;
 int max_doc_size;
 int max_send_size;
-ZEND_END_MODULE_GLOBALS(mongo) 
+ZEND_END_MODULE_GLOBALS(mongo)
 
 #ifdef ZTS
 #include <TSRM.h>
 # define MonGlo(v) TSRMG(mongo_globals_id, zend_mongo_globals *, v)
 #else
 # define MonGlo(v) (mongo_globals.v)
-#endif 
+#endif
 
 extern zend_module_entry mongo_module_entry;
 #define phpext_mongo_ptr &mongo_module_entry

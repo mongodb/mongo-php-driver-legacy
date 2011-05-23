@@ -1,13 +1,13 @@
 //cursor.c
 /**
  *  Copyright 2009-2010 10gen, Inc.
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,7 +78,7 @@ PHP_METHOD(MongoCursor, __construct) {
   MAKE_STD_ZVAL(empty);
   object_init(empty);
 
-  // these are both initialized to the same zval, but that's okay because 
+  // these are both initialized to the same zval, but that's okay because
   // there's no way to change them without creating a new cursor
   if (!zquery || (Z_TYPE_P(zquery) == IS_ARRAY && zend_hash_num_elements(HASH_P(zquery)) == 0)) {
     zquery = empty;
@@ -88,7 +88,7 @@ PHP_METHOD(MongoCursor, __construct) {
   }
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
- 
+
   // db connection
   cursor->resource = zlink;
   zval_add_ref(&zlink);
@@ -106,13 +106,13 @@ PHP_METHOD(MongoCursor, __construct) {
     array_init(fields);
 
     // fields to return
-    for(zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(zfields), &pointer); 
-        zend_hash_get_current_data_ex(Z_ARRVAL_P(zfields), (void**) &data, &pointer) == SUCCESS; 
+    for(zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(zfields), &pointer);
+        zend_hash_get_current_data_ex(Z_ARRVAL_P(zfields), (void**) &data, &pointer) == SUCCESS;
         zend_hash_move_forward_ex(Z_ARRVAL_P(zfields), &pointer)) {
       int key_type, key_len;
       ulong index;
       char *key;
-      
+
       key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(zfields), &key, (uint*)&key_len, &index, NO_DUP, &pointer);
 
       if (key_type == HASH_KEY_IS_LONG) {
@@ -154,12 +154,12 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->num = 0;
   cursor->special = 0;
   cursor->persist = 0;
-  
+
   timeout = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
   cursor->timeout = Z_LVAL_P(timeout);
 
   cursor->opts = link->slave_okay ? (1 << 2) : 0;
-  
+
   // get rid of extra ref
   zval_ptr_dtor(&empty);
 }
@@ -195,7 +195,7 @@ PHP_METHOD(MongoCursor, hasNext) {
     cursor->started_iterating = 1;
   }
 
-  if ((cursor->limit > 0 && cursor->at >= cursor->limit) || 
+  if ((cursor->limit > 0 && cursor->at >= cursor->limit) ||
       cursor->num == 0) {
     RETURN_FALSE;
   }
@@ -218,7 +218,7 @@ PHP_METHOD(MongoCursor, hasNext) {
     efree(buf.start);
     return;
   }
-  
+
   MAKE_STD_ZVAL(temp);
   ZVAL_NULL(temp);
 
@@ -246,7 +246,7 @@ PHP_METHOD(MongoCursor, hasNext) {
     php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
   }
   // if cursor_id != 0, server should stay the same
-  
+
   if (cursor->flag & 1) {
     zend_throw_exception(mongo_ce_CursorException, "Cursor not found", 2 TSRMLS_CC);
     return;
@@ -455,7 +455,7 @@ PHP_METHOD(MongoCursor, snapshot) {
   MAKE_STD_ZVAL(snapshot);
   ZVAL_STRING(snapshot, "$snapshot", 1);
   MAKE_STD_ZVAL(yes);
-  ZVAL_TRUE(yes); 
+  ZVAL_TRUE(yes);
 
   MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), snapshot, yes);
 
@@ -535,7 +535,7 @@ PHP_METHOD(MongoCursor, info)
   } else {
     add_assoc_null(return_value, "fields");
   }
-    
+
   add_assoc_bool(return_value, "started_iterating", cursor->started_iterating);
   if (cursor->started_iterating) {
     add_assoc_long(return_value, "id", (long)cursor->cursor_id);
@@ -565,7 +565,7 @@ PHP_METHOD(MongoCursor, explain) {
   MAKE_STD_ZVAL(explain);
   ZVAL_STRING(explain, "$explain", 1);
   MAKE_STD_ZVAL(yes);
-  ZVAL_TRUE(yes); 
+  ZVAL_TRUE(yes);
 
   MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), explain, yes);
 
@@ -625,7 +625,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   if (mongo_say(cursor->server, &buf, errmsg TSRMLS_CC) == FAILURE) {
     mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
     mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
-    
+
     if (Z_TYPE_P(errmsg) == IS_STRING) {
       zend_throw_exception_ex(mongo_ce_CursorException, 14 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
     }
@@ -680,7 +680,7 @@ PHP_METHOD(MongoCursor, key) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
-  if (cursor->current && 
+  if (cursor->current &&
       Z_TYPE_P(cursor->current) == IS_ARRAY &&
       zend_hash_find(HASH_P(cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
 
@@ -756,7 +756,7 @@ PHP_METHOD(MongoCursor, next) {
       zval **code_z;
       // default error code
       int code = 4;
-      
+
       if (zend_hash_find(Z_ARRVAL_P(cursor->current), "code", strlen("code")+1, (void**)&code_z) == SUCCESS) {
         // check for not master
         if (Z_TYPE_PP(code_z) == IS_LONG) {
@@ -766,7 +766,7 @@ PHP_METHOD(MongoCursor, next) {
           code = (int)Z_DVAL_PP(code_z);
         }
         // else code == 4
-        
+
         // this shouldn't be necessary after 1.7.* is standard, it forces
         // failover in case the master steps down.
         // not master: 10107
@@ -918,14 +918,14 @@ static function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, addOption, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, snapshot, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC) 
+  PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
 
   /* flags */
   PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, immortal, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, partial, NULL, ZEND_ACC_PUBLIC)  
+  PHP_ME(MongoCursor, partial, NULL, ZEND_ACC_PUBLIC)
 
   /* query */
   PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)

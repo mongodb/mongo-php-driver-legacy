@@ -46,7 +46,7 @@ zend_class_entry *mongo_ce_Collection = NULL;
 
 static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
-/* 
+/*
  * arginfo needs to be set for __get because if PHP doesn't know it only takes
  * one arg, it will issue a warning.
  */
@@ -76,7 +76,7 @@ PHP_METHOD(MongoCollection, __construct) {
 #else
     zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
-    return;    
+    return;
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -99,7 +99,7 @@ PHP_METHOD(MongoCollection, __construct) {
   ZVAL_STRING(zns, ns, 0);
   c->ns = zns;
   c->slave_okay = db->slave_okay;
-  
+
   w = zend_read_property(mongo_ce_DB, parent, "w", strlen("w"), NOISY TSRMLS_CC);
   zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_LVAL_P(w) TSRMLS_CC);
   wtimeout = zend_read_property(mongo_ce_DB, parent, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
@@ -127,13 +127,13 @@ PHP_METHOD(MongoCollection, getSlaveOkay) {
 PHP_METHOD(MongoCollection, setSlaveOkay) {
   zend_bool slave_okay = 1;
   mongo_collection *c;
-  
+
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
     return;
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
-  
+
   RETVAL_BOOL(c->slave_okay);
   c->slave_okay = slave_okay;
 }
@@ -176,7 +176,7 @@ PHP_METHOD(MongoCollection, validate) {
 }
 
 /*
- * this should probably be split into two methods... right now appends the 
+ * this should probably be split into two methods... right now appends the
  * getlasterror query to the buffer and alloc & inits the cursor zval.
  */
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC) {
@@ -188,8 +188,8 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   int response, safe = 0, fsync = 0, timeout = -1;
 
   GET_OPTIONS;
-  
-  // get "db.$cmd" zval 
+
+  // get "db.$cmd" zval
   MAKE_STD_ZVAL(cmd_ns_z);
   spprintf(&cmd_ns, 0, "%s.$cmd", Z_STRVAL_P(db->name));
   ZVAL_STRING(cmd_ns_z, cmd_ns, 0);
@@ -207,7 +207,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   if (safe > 1) {
     zval *wtimeout;
 
-    add_assoc_long(cmd, "w", safe); 
+    add_assoc_long(cmd, "w", safe);
 
     wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
     add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
@@ -290,11 +290,11 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
 
   zval_ptr_dtor(&cursor_z);
 
-  if (EG(exception) || 
+  if (EG(exception) ||
       (Z_TYPE_P(return_value) ==IS_BOOL && Z_BVAL_P(return_value) == 0)) {
     return FAILURE;
   }
-  /* if getlasterror returned an error, throw an exception 
+  /* if getlasterror returned an error, throw an exception
    *
    * this isn't the same as checking for $err in cursor.c, as this isn't a query
    * error but just the status.
@@ -324,7 +324,7 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
     zval **code;
     int status = zend_hash_find(Z_ARRVAL_P(return_value), "n", strlen("n")+1, (void**)&code);
 
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), 
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err),
                          (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC);
     return FAILURE;
   }
@@ -347,7 +347,7 @@ PHP_METHOD(MongoCollection, insert) {
     zend_error(E_WARNING, "MongoCollection::insert() expects parameter 1 to be an array or object");
     return;
   }
- 
+
   // old boolean options
   if (options && !IS_SCALAR_P(options)) {
     zval_add_ref(&options);
@@ -356,9 +356,9 @@ PHP_METHOD(MongoCollection, insert) {
     zval *opts;
     MAKE_STD_ZVAL(opts);
     array_init(opts);
-    
+
     if (options && IS_SCALAR_P(options)) {
-      int safe = Z_BVAL_P(options);    
+      int safe = Z_BVAL_P(options);
       add_assoc_bool(opts, "safe", safe);
     }
 
@@ -423,7 +423,7 @@ PHP_METHOD(MongoCollection, find) {
   // save & replace slave_okay
   slave_okay = link->slave_okay;
   link->slave_okay = c->slave_okay;
-  
+
   if (!query) {
     MONGO_METHOD2(MongoCursor, __construct, &temp, return_value, c->link, c->ns);
   }
@@ -472,8 +472,8 @@ PHP_METHOD(MongoCollection, update) {
     zend_error(E_WARNING, "MongoCollection::update() expects parameters 1 and 2 to be arrays or objects");
     return;
   }
-  /* 
-   * options could be a boolean (old-style, where "true" means "upsert") or an 
+  /*
+   * options could be a boolean (old-style, where "true" means "upsert") or an
    * array of "named parameters": array("upsert" => true, "multiple" => true)
    */
 
@@ -485,22 +485,22 @@ PHP_METHOD(MongoCollection, update) {
 
     zend_hash_find(HASH_P(options), "multiple", strlen("multiple")+1, (void**)&multiple);
     bit_opts |= (multiple ? Z_BVAL_PP(multiple) : 0) << 1;
-    
+
     zval_add_ref(&options);
   }
   else {
     zval *opts;
-    
+
     if (options && IS_SCALAR_P(options)) {
       zend_bool upsert = options ? Z_BVAL_P(options) : 0;
       bit_opts = upsert << 0;
     }
-    
+
     MAKE_STD_ZVAL(opts);
     array_init(opts);
     options = opts;
   }
-  
+
   PHP_MONGO_GET_COLLECTION(getThis());
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
@@ -546,7 +546,7 @@ PHP_METHOD(MongoCollection, remove) {
     if (zend_hash_find(HASH_P(options), "justOne", strlen("justOne")+1, (void**)&just_one) == SUCCESS) {
       flags = Z_BVAL_PP(just_one);
     }
-    
+
     zval_add_ref(&options);
   }
   else {
@@ -660,7 +660,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
       if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_pp) == SUCCESS) {
         zend_hash_del(HASH_P(data), "timeout", strlen("timeout")+1);
       }
-      
+
       if (zend_hash_find(HASH_P(options), "name", strlen("name")+1, (void**)&name) == SUCCESS) {
         if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
           zval_ptr_dtor(&data);
@@ -681,7 +681,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   if (!done_name) {
     // turn keys into a string
     MAKE_STD_ZVAL(key_str);
-        
+
     // MongoCollection::toIndexString()
     MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
 
@@ -700,7 +700,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   MONGO_METHOD2(MongoCollection, insert, return_value, collection, data, options);
 
   zval_ptr_dtor(&options);
-  zval_ptr_dtor(&data); 
+  zval_ptr_dtor(&data);
   zval_ptr_dtor(&system_indexes);
   zval_ptr_dtor(&collection);
   zval_ptr_dtor(&keys);
@@ -728,7 +728,7 @@ PHP_METHOD(MongoCollection, deleteIndex) {
   add_assoc_zval(data, "deleteIndexes", c->name);
   zval_add_ref(&c->name);
   add_assoc_zval(data, "index", key_str);
- 
+
   MONGO_CMD(return_value, c->parent);
 
   zval_ptr_dtor(&data);
@@ -815,10 +815,10 @@ PHP_METHOD(MongoCollection, count) {
   if (skip) {
     add_assoc_long(data, "skip", skip);
   }
-  
+
   MAKE_STD_ZVAL(response);
   ZVAL_NULL(response);
-  
+
   MONGO_CMD(response, c->parent);
 
   zval_ptr_dtor(&data);
@@ -827,7 +827,7 @@ PHP_METHOD(MongoCollection, count) {
     zval_ptr_dtor(&response);
     return;
   }
-  
+
   if (zend_hash_find(HASH_P(response), "n", 2, (void**)&n) == SUCCESS) {
     convert_to_long(*n);
     RETVAL_ZVAL(*n, 1, 0);
@@ -874,7 +874,7 @@ PHP_METHOD(MongoCollection, save) {
     zval_ptr_dtor(&options);
     return;
   }
-  
+
   MONGO_METHOD2(MongoCollection, insert, return_value, getThis(), a, options);
   zval_ptr_dtor(&options);
 }
@@ -926,7 +926,7 @@ PHP_METHOD(MongoCollection, toIndexString) {
     return;
   }
 
-  if (Z_TYPE_P(zkeys) == IS_ARRAY || 
+  if (Z_TYPE_P(zkeys) == IS_ARRAY ||
       Z_TYPE_P(zkeys) == IS_OBJECT) {
     HashTable *hindex = HASH_P(zkeys);
     HashPosition pointer;
@@ -935,8 +935,8 @@ PHP_METHOD(MongoCollection, toIndexString) {
     uint key_len, first = 1, key_type;
     ulong index;
 
-    for(zend_hash_internal_pointer_reset_ex(hindex, &pointer); 
-        zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS; 
+    for(zend_hash_internal_pointer_reset_ex(hindex, &pointer);
+        zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
         zend_hash_move_forward_ex(hindex, &pointer)) {
 
       key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
@@ -967,8 +967,8 @@ PHP_METHOD(MongoCollection, toIndexString) {
     name = (char*)emalloc(len+1);
     position = name;
 
-    for(zend_hash_internal_pointer_reset_ex(hindex, &pointer); 
-        zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS; 
+    for(zend_hash_internal_pointer_reset_ex(hindex, &pointer);
+        zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
         zend_hash_move_forward_ex(hindex, &pointer)) {
 
       if (!first) {
@@ -985,9 +985,9 @@ PHP_METHOD(MongoCollection, toIndexString) {
 
       // copy str, replacing '.' with '_'
       position = replace_dots(key, key_len-1, position);
-      
+
       *(position)++ = '_';
-      
+
       if (Z_TYPE_PP(data) == IS_STRING) {
         memcpy(position, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
         position += Z_STRLEN_PP(data);
@@ -1013,7 +1013,7 @@ PHP_METHOD(MongoCollection, toIndexString) {
 
     name = (char*)emalloc(len + 3);
     position = name;
- 
+
     // copy str, replacing '.' with '_'
     position = replace_dots(Z_STRVAL_P(zkeys), Z_STRLEN_P(zkeys), position);
 
@@ -1066,7 +1066,7 @@ PHP_METHOD(MongoCollection, group) {
     zval_ptr_dtor(&group);
     zval_ptr_dtor(&reduce);
     zend_throw_exception(mongo_ce_Exception, "MongoCollection::group takes an array, object, or MongoCode key", 0 TSRMLS_CC);
-    return;  
+    return;
   }
   zval_add_ref(&key);
 
@@ -1110,7 +1110,7 @@ PHP_METHOD(MongoCollection, group) {
 PHP_METHOD(MongoCollection, __get) {
   /*
    * this is a little trickier than the getters in Mongo and MongoDB... we need
-   * to combine the current collection name with the parameter passed in, get 
+   * to combine the current collection name with the parameter passed in, get
    * the parent db, then select the new collection from it.
    */
   zval *name, *full_name;
@@ -1122,7 +1122,7 @@ PHP_METHOD(MongoCollection, __get) {
     return;
   }
 
-  /* 
+  /*
    * If this is "db", return the parent database.  This can't actually be a
    * property of the obj because apache does weird things on object destruction
    * that will cause the link to be destroyed twice.
