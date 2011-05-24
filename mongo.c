@@ -1419,8 +1419,8 @@ PHP_METHOD(Mongo, switchSlave) {
     return;
   }
 
-  if (get_heartbeats(getThis(), &errmsg TSRMLS_CC) == FAILURE ||
-      set_a_slave(link, &errmsg) == FAILURE) {
+  mongo_util_rs_get_ping(link TSRMLS_CC);
+  if (set_a_slave(link, &errmsg) == FAILURE) {
     if (!EG(exception)) {
       if (errmsg) {
         zend_throw_exception(mongo_ce_Exception, errmsg, 16 TSRMLS_CC);
