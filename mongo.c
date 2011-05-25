@@ -1419,7 +1419,7 @@ PHP_METHOD(Mongo, switchSlave) {
     return;
   }
 
-  mongo_util_rs_get_ping(link TSRMLS_CC);
+  mongo_util_rs_ping(link TSRMLS_CC);
   if (set_a_slave(link, &errmsg) == FAILURE) {
     if (!EG(exception)) {
       if (errmsg) {
