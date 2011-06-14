@@ -1828,7 +1828,7 @@ int _mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC) {
   return sent;
 }
 
-int mongo_say(mongo_server *server, buffer *buf, zval *errmsg TSRMLS_CC) {
+int mongo_say(mongo_server *server, buffer *buf, zval *errmsg TSRMLS_DC) {
   if(!server->connected &&
      mongo_util_pool_get(server, errmsg TSRMLS_CC) == FAILURE) {
     return FAILURE;
