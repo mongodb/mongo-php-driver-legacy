@@ -35,6 +35,7 @@ PHP_METHOD(MongoGridFSFile, getFilename);
 PHP_METHOD(MongoGridFSFile, getSize);
 PHP_METHOD(MongoGridFSFile, write);
 PHP_METHOD(MongoGridFSFile, getBytes);
+PHP_METHOD(MongoGridFSFile, readFile);
 
 PHP_METHOD(MongoGridFSCursor, __construct);
 PHP_METHOD(MongoGridFSCursor, getNext);
