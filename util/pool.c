@@ -109,7 +109,7 @@ void mongo_util_pool_set_readable(mongo_server *server, zend_bool readable TSRML
   // sockets in the pool will be marked readable/unreadable as they are popped
 }
 
-int mongo_util_pool_ping(mongo_server *server, time_t now TSRMLS_CC) {
+int mongo_util_pool_ping(mongo_server *server, time_t now TSRMLS_DC) {
   stack_monitor *monitor;
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
