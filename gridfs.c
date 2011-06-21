@@ -1078,12 +1078,64 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
   return total;
 }
 
+// A hack, based largely on apply_to_cursor, to echo the file out instead of storing it in a string.
+// Ideally, this will be useful for large objects.
+PHP_METHOD(MongoGridFSFile, readFile) {
+  zval *file, *gridfs, *chunks, *query, *cursor, *sort, *temp;
+  zval **id, **size;
+  int len;
+
+  file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
+  zend_hash_find(HASH_P(file), "_id", strlen("_id")+1, (void**)&id);
+
+  // this is copied from apply_to_cursor, but I am not sure it's needed in this context?
+  if (zend_hash_find(HASH_P(file), "length", strlen("length")+1, (void**)&size) == FAILURE) {
+    zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size", 0 TSRMLS_CC);
+    return;
+  }
+
+  // make sure that there's an index on chunks so we can sort by chunk num
+  gridfs = zend_read_property(mongo_ce_GridFSFile, getThis(), "gridfs", strlen("gridfs"), NOISY TSRMLS_CC);
+  chunks = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
+
+  MAKE_STD_ZVAL(temp);
+  ensure_gridfs_index(temp, chunks TSRMLS_CC);
+
+  // query for chunks
+  MAKE_STD_ZVAL(query);
+  array_init(query);
+  zval_add_ref(id);
+  add_assoc_zval(query, "files_id", *id);
+
+  MAKE_STD_ZVAL(cursor);
+  MONGO_METHOD1(MongoCollection, find, cursor, chunks, query);
+
+  MAKE_STD_ZVAL(sort);
+  array_init(sort);
+  add_assoc_long(sort, "n", 1);
+
+  MONGO_METHOD1(MongoCursor, sort, temp, cursor, sort);
+  zval_ptr_dtor(&temp);
+
+  zval_ptr_dtor(&query);
+  zval_ptr_dtor(&sort);
+
+  len = cursor_to_console(cursor);
+
+  zval_ptr_dtor(&cursor);
+
+  // return number of bytes echo'd
+  RETURN_LONG(len);
+}
+
+
 static function_entry MongoGridFSFile_methods[] = {
   PHP_ME(MongoGridFSFile, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSFile, getFilename, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSFile, getSize, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSFile, write, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSFile, getBytes, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFSFile, readFile, NULL, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
 
