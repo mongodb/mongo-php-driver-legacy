@@ -1,4 +1,6 @@
 <?php
+
+require_once 'Utils.php';
 require_once 'PHPUnit/Framework.php';
 
 class RegressionTest1 extends PHPUnit_Framework_TestCase
@@ -18,7 +20,7 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     public function testMem() {
         $m = new Mongo();
         $c = $m->selectCollection("phpunit", "c");
-        $arr = array("test" => "1, 2, 3"); 
+        $arr = array("test" => "1, 2, 3");
         $start = memory_get_usage(true);
 
         for($i = 1; $i < 2000; $i++) {
@@ -83,13 +85,13 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
         $unclonable = "Fatal error: Trying to clone an uncloneable object";
 
         if (count($output) > 0) {
-            $this->assertEquals($unclonable, substr($output[1], 0, strlen($unclonable)), json_encode($output)); 
+            $this->assertEquals($unclonable, substr($output[1], 0, strlen($unclonable)), json_encode($output));
         }
         $this->assertEquals(255, $exit_code);
 
         exec("php tests/fatal2.php", $output, $exit_code);
         if (count($output) > 0) {
-            $this->assertEquals($unclonable, substr($output[3], 0, strlen($unclonable)), json_encode($output)); 
+            $this->assertEquals($unclonable, substr($output[3], 0, strlen($unclonable)), json_encode($output));
         }
         $this->assertEquals(255, $exit_code);
       }
@@ -104,9 +106,9 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
         $m = new Mongo();
         $db = $m->selectDB('webgenius');
         $tbColl = $db->selectCollection('Text_Block');
-        
+
         $text = file_get_contents('tests/mongo-bug.txt');
-      
+
         $arr = array('text' => $text,);
         $tbColl->insert($arr);
     }
@@ -283,19 +285,23 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
       $mongoCursor = $mongoCollection->find(array('_id' => array('$in' => $values)));
       while ($mongoCursor->hasNext()) {
         $mongoCursor->getNext();
-      } 
+      }
     }
 
     public function testEnsureIndex() {
+      setTimezone();
+
       $mongoConnection = new Mongo('127.0.0.1:27017');
       $collection = $mongoConnection->selectCollection("debug", "col1");
       $data = array("field"=>"some data","date"=>date("Y-m-s"));
       $this->assertEquals(true, $collection->save($data));
-      
+
       $tmp = array("date" => 1);
       $this->assertEquals(1, $tmp['date']);
       $this->assertEquals(true, $collection->ensureIndex($tmp));
       $this->assertEquals(1, $tmp['date']);
+
+      unsetTimezone();
     }
 
     public function testGridFSProps() {
@@ -305,14 +311,14 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
 
       $x = new MongoGridFSFile($grid, array());
       $this->assertNull($x->getFilename());
-      
+
       $this->assertNull($x->getSize());
     }
 
     public function testCryllic() {
       $m = new Mongo();
       $c = $m->phpunit->c;
-      try { 
+      try {
         $c->insert(array("x" => "\xC3\x84"));
       }
       catch (MongoException $e) {
@@ -328,7 +334,7 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
       for ($i=0; $i<10; $i++) {
         $c->insert(array("x" => $i));
       }
-      
+
       $cursor = $c->find(array(), array("x" => 1))->sort(array("x" => 1));
 
       $count = 0;
@@ -403,7 +409,7 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
         $msg = "Fatal error: Nesting level too deep";
 
         if (count($output) > 0) {
-            $this->assertEquals($msg, substr($output[1], 0, strlen($msg)), json_encode($output)); 
+            $this->assertEquals($msg, substr($output[1], 0, strlen($msg)), json_encode($output));
         }
     }
 
@@ -415,7 +421,7 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
     public function testGetMore() {
       $m = new Mongo();
       $c = $m->phpunit->c;
-      
+
       for($i=0; $i<500; $i++) {
         $c->insert(array("x" => new MongoDate(), "count" => $i, "my string" => "doo dee doo"));
       }

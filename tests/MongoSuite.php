@@ -1,5 +1,7 @@
 <?php
 
+require_once 'Utils.php';
+
 require_once 'MongoInt32Test.php';
 require_once 'MongoInt64Test.php';
 
@@ -34,13 +36,13 @@ require_once 'SlowTests.php';
 
 //include 'MongoAuthTest.php';
 //include 'MongoGridFSClassicTest.php';
- 
+
 class MongoSuite extends PHPUnit_Framework_TestSuite
 {
     public static function suite()
     {
         $suite = new MongoSuite('Mongo Tests');
-      
+
         $suite->addTestSuite('MongoInt32Test');
         $suite->addTestSuite('MongoInt64Test');
         $suite->addTestSuite('MongoTest');
@@ -48,7 +50,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         $suite->addTestSuite('MongoCollectionTest');
         $suite->addTestSuite('MongoCollectionTest2');
         $suite->addTestSuite('MongoCursorTest');
-        
+
         // */
         // 5.1 is just going to mess up the file stuff
         if (floatval(phpversion()) >= 5.2) {
@@ -57,7 +59,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
           $suite->addTestSuite('MongoGridFSCursorTest');
         }
         // */
-        
+
         $suite->addTestSuite('MongoIdTest');
         $suite->addTestSuite('MongoCodeTest');
         $suite->addTestSuite('MongoRegexTest');
@@ -68,7 +70,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         // */
         $suite->addTestSuite('MongoObjectsTest');
         $suite->addTestSuite('MongoObjDBTest');
-        
+
         $suite->addTestSuite('RegressionTest1');
         $suite->addTestSuite('CmdSymbolTest');
         $suite->addTestSuite('SerializationTest');
@@ -95,19 +97,7 @@ class MongoSuite extends PHPUnit_Framework_TestSuite
         // */
         return $suite;
     }
- 
-}
 
-if (!function_exists('memory_get_usage')) {
-  function memory_get_usage($arg=0) {
-    return 0;
-  }
-}
-
-if (!function_exists('json_encode')) {
-  function json_encode($str) {
-    return "$str";
-  }
 }
 
 ?>

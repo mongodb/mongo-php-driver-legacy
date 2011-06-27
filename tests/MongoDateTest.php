@@ -1,4 +1,6 @@
 <?php
+
+require_once 'Utils.php';
 require_once 'PHPUnit/Framework.php';
 
 /**
@@ -6,6 +8,15 @@ require_once 'PHPUnit/Framework.php';
  */
 class MongoDateTest extends PHPUnit_Framework_TestCase
 {
+
+    public function setUp() {
+        setTimezone();
+    }
+
+    public function tearDown() {
+        unsetTimezone();
+    }
+
     public function testBasic() {
         $t = time();
 
@@ -16,7 +27,6 @@ class MongoDateTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($t, $d1->sec);
 
         $tz = date_default_timezone_get();
-        date_default_timezone_set('America/New_York');
         $d3 = new MongoDate(strtotime('2009-05-01 00:00:00'));
         $this->assertEquals(1241150400, $d3->sec);
         $this->assertEquals(0, $d3->usec);
@@ -48,14 +58,14 @@ class MongoDateTest extends PHPUnit_Framework_TestCase
     }
 
     public function testInvalidParam1() {
-      $object = array( 'created' => '1008597415', ); 
+      $object = array( 'created' => '1008597415', );
       $object['created'] = new MongoDate($object['created']);
       $this->assertEquals(1008597415, $object['created']->sec);
     }
 
     public function testInvalidParam2() {
-      $object = array( 'created' => '1008597415', ); 
-      $object['created'] = new MongoDate(0, $object['created']); 
+      $object = array( 'created' => '1008597415', );
+      $object['created'] = new MongoDate(0, $object['created']);
       $this->assertEquals(1008597415, $object['created']->usec);
     }
 }
