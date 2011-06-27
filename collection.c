@@ -627,11 +627,9 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   add_assoc_zval(data, "key", keys);
   zval_add_ref(&keys);
 
-  /*
-   * in ye olden days, "options" only had one options: unique
-   * so, if we're parsing old-school code, "unique" is a boolean
-   * in ye new days, "options is an array.
-   */
+  // in ye olden days, "options" only had one option: unique
+  // so, if we're parsing old-school code, "unique" is a boolean
+  // in ye new days, "options" is an array.
   if (options) {
 
     // old-style
@@ -639,7 +637,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
       zval *opts;
       // assumes the person correctly passed in a boolean.  if they passed in a
       // string or something, it won't work and maybe they'll read the docs
-      add_assoc_zval(data, "unique", options);
+      add_assoc_bool(data, "unique", Z_BVAL_P(options));
 
       MAKE_STD_ZVAL(opts);
       array_init(opts);
@@ -650,7 +648,6 @@ PHP_METHOD(MongoCollection, ensureIndex) {
       zval temp, **safe_pp, **fsync_pp, **timeout_pp, **name;
       zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 
-      // TODO: what if someone is indexing the "fsync" field?
       if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS) {
         zend_hash_del(HASH_P(data), "safe", strlen("safe")+1);
       }
@@ -669,6 +666,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
         }
         done_name = 1;
       }
+      zval_add_ref(&options);
     }
   }
   else {
