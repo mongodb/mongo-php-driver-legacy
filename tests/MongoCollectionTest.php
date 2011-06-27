@@ -26,7 +26,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->object = $db->selectCollection('c');
         $this->object->drop();
     }
-    
+
     public function test__toString() {
         if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
@@ -64,7 +64,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $v = $this->object->validate();
       $this->assertEquals((bool)$v['ok'], true);
       $this->assertEquals($v['ns'], 'phpunit.c');
-      $this->assertNotNull($v['result']);
+      $this->assertTrue($v['valid']);
     }
 
     public function testInsert() {
@@ -79,7 +79,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
                  "regex" => new MongoRegex("/xtz/g"),
                  "_id" => new MongoId("49b6d9fb17330414a0c63101"),
                  "string" => "string");
-      
+
       $this->assertTrue($this->object->insert($a));
       $obj = $this->object->findOne();
 
@@ -111,7 +111,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     public function testInsert2() {
       $this->assertTrue($this->object->insert(array(0)));
       $this->assertTrue($this->object->insert(array(0=>"1")));
-      
+
       $this->assertEquals($this->object->count(), 2);
       $cursor = $this->object->find();
 
@@ -155,7 +155,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertEquals("z", $x['2']);
         $this->assertEquals((string)$nonassoc['_id'], (string)$x['_id']);
     }
-    
+
 
     /**
      * @expectedException MongoException
@@ -241,7 +241,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(false, array_key_exists('foo', $obj));
     }
 
-    
+
     public function testFindWhere() {
         for($i=0;$i<50; $i++) {
             $this->object->insert(array( "foo$i" => pow(2, $i)));
@@ -251,7 +251,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('foo23', $x, json_encode($x));
         $this->assertEquals(8388608, $x['foo23'], json_encode($x));
     }
-    
+
 
     public function testFindOne() {
       $this->assertEquals(null, $this->object->findOne());
@@ -291,15 +291,15 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     public function testUpdate() {
       $old = array("foo"=>"bar", "x"=>"y");
       $new = array("foo"=>"baz");
-      
+
       $this->object->update(array("foo"=>"bar"), $old, true);
       $obj = $this->object->findOne();
-      $this->assertEquals($obj['foo'], 'bar');      
-      $this->assertEquals($obj['x'], 'y');      
+      $this->assertEquals($obj['foo'], 'bar');
+      $this->assertEquals($obj['x'], 'y');
 
       $this->object->update($old, $new);
       $obj = $this->object->findOne();
-      $this->assertEquals($obj['foo'], 'baz');      
+      $this->assertEquals($obj['foo'], 'baz');
     }
 
     /**
@@ -348,7 +348,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(4, $obj['y']);
 
       // check with upsert if there are matches
-      $this->object->update(array("x" => 4), array('$set' => array("x" => 3)), array("upsert" => true, "multiple" => true)); 
+      $this->object->update(array("x" => 4), array('$set' => array("x" => 3)), array("upsert" => true, "multiple" => true));
       $this->assertEquals(2, $this->object->count(array("x" => 3)));
 
       $cursor = $this->object->find(array("x" => 3))->sort(array("y" => 1));
@@ -369,7 +369,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       for($i=0;$i<15;$i++) {
         $this->object->insert(array("i"=>$i));
       }
-      
+
       $this->assertEquals($this->object->count(), 15);
       $this->object->remove(array(), true);
       $this->assertEquals($this->object->count(), 14);
@@ -382,7 +382,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       }
 
       $this->assertEquals($this->object->count(), 15);
-      $this->object->remove();      
+      $this->object->remove();
       $this->assertEquals($this->object->count(), 0);
     }
 
@@ -500,7 +500,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $num = iterator_count($idx->find(array('ns' => 'phpunit.c')));
       $this->assertEquals(3, $num);
 
-      $this->object->deleteIndex(array('foo' => 1)); 
+      $this->object->deleteIndex(array('foo' => 1));
       $num = iterator_count($idx->find(array('ns' => 'phpunit.c')));
       $this->assertEquals(2, $num);
 
@@ -546,7 +546,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($info[3]['key']['baz'], -1);
       $this->assertEquals($info[3]['name'], 'bar_1_baz_-1');
     }
-    
+
     public function testCount() {
       $this->assertEquals($this->object->count(), 0);
 
@@ -557,7 +557,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(0, $this->object->count(array('z'=>1)));
       $this->assertEquals(1, $this->object->count(array('0'=>6)));
     }
-    
+
 
     public function testSave() {
       $this->object->save(array('x' => 1));
@@ -645,13 +645,13 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->object->save(array("a" => 2));
         $this->object->save(array("b" => 5));
         $this->object->save(array("a" => 1));
- 
+
         $g = $this->object->group(array(), array("count" => 0), "function (obj, prev) { prev.count++; }", array());
         $this->assertEquals(1, count($g['retval']));
         $this->assertEquals(3, $g['retval'][0]['count']);
-      
+
         $g = $this->object->group(array(), array("count" => 0), "function (obj, prev) { prev.count++; }", array("a" => array( '$gt' => 1)));
-        $this->assertEquals(1, count($g['retval'])); 
+        $this->assertEquals(1, count($g['retval']));
         $this->assertEquals(1, $g['retval'][0]['count']);
    }
 
@@ -662,7 +662,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $keys = array();
         $initial = array("count" => 0);
         $reduce = "function (obj, prev) { prev.count++; }";
-        
+
         $g = $this->object->group($keys, $initial, $reduce);
         $this->assertEquals(3, $g['count']);
     }
@@ -678,7 +678,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException MongoCursorException 
+     * @expectedException MongoCursorException
      */
     public function testSafeInsert2() {
       $c = $this->object;
@@ -701,13 +701,13 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
       $this->assertEquals(100, $result['count']);
       $this->assertEquals(14, $result['retval'][6]['count']);
-      $this->assertEquals(6, $result['retval'][6]['mod']);  
+      $this->assertEquals(6, $result['retval'][6]['mod']);
       $this->assertEquals(15, $result['retval'][1]['count']);
-      $this->assertEquals(1, $result['retval'][1]['mod']); 
+      $this->assertEquals(1, $result['retval'][1]['mod']);
     }
 
     /**
-     * @expectedException MongoException 
+     * @expectedException MongoException
      */
     public function testInvalidKey() {
       $this->object->group("key", array("count" => 0), "reduce");
@@ -735,8 +735,8 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->insert(array("i" => 1, "j" => 3));
       $this->object->insert(array("i" => 2, "j" => 4));
 
-      $group = $this->object->group(array("i" => 1), 
-                           array("count" => 0), 
+      $group = $this->object->group(array("i" => 1),
+                           array("count" => 0),
                            new MongoCode("function(obj, prev) { prev.count += obj.j; }"),
                            array("finalize" => new MongoCode("function(obj) { return 'total: '+obj.count; }")));
 
@@ -755,8 +755,8 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->insert(array("i" => 1, "j" => 2, "k" => 4));
       $this->object->insert(array("i" => 3, "j" => 1, "k" => 1));
 
-      $group = $this->object->group(array("k" => 1), 
-                                    array("count" => 0), 
+      $group = $this->object->group(array("k" => 1),
+                                    array("count" => 0),
                                     new MongoCode("function(obj, prev) { prev.count++; }"),
                                     array("finalize" => new MongoCode("function(obj) { return obj.count; }"),
                                           "condition" => array("i" => 1)));
@@ -776,8 +776,8 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->object->insert(array("i" => 1, "j" => 2, "k" => 4));
       $this->object->insert(array("i" => 3, "j" => 1, "k" => 1));
 
-      $group = $this->object->group(array("k" => 1), 
-                                    array("count" => 0), 
+      $group = $this->object->group(array("k" => 1),
+                                    array("count" => 0),
                                     new MongoCode("function(obj, prev) { prev.count++; }"),
                                     array());
 
@@ -796,7 +796,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
       $this->object->w = 4;
       $this->object->wtimeout = 60;
- 
+
       $this->assertEquals(4, $this->object->w);
       $this->assertEquals(60, $this->object->wtimeout);
     }
@@ -818,7 +818,7 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
         $this->object->insert(array("x" => $i, "y" => $i%7, "z" => "foo$i"));
       }
 
-      $result = $this->object->group(array("y" => 1), array("count" => 0), 
+      $result = $this->object->group(array("y" => 1), array("count" => 0),
                                      "function(cur, prev) { prev.count++; }",
                                      array("finalize" => "function(out) { return 1; }"));
 

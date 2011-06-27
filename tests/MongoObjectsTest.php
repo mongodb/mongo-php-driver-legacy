@@ -113,12 +113,12 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         $v = $this->object->validate();
         $this->assertEquals((bool)$v['ok'], false);
         $this->assertEquals('ns not found', $v['errmsg']);
-        
+
         $this->object->insert((object)array('a' => 'foo'));
         $v = $this->object->validate();
         $this->assertEquals((bool)$v['ok'], true);
         $this->assertEquals($v['ns'], 'phpunit.c');
-        $this->assertNotNull($v['result']);
+        $this->assertTrue($v['valid']);
     }
 
     public function testInsert() {
@@ -133,7 +133,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
                  "regex" => new MongoRegex("/xtz/g"),
                  "_id" => new MongoId("49b6d9fb17330414a0c63101"),
                  "string" => "string");
-      
+
       $this->assertTrue($this->object->insert($a));
       $obj = $this->object->findOne();
 
@@ -167,7 +167,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         $this->assertEquals("z", $x['x'][2]);
         $this->assertEquals((string)$nonassoc->_id, (string)$x['_id']);
     }
-    
+
     public function testBatchInsert() {
       $this->assertTrue($this->object->batchInsert(array('z'=>(object)array('foo'=>'bar'))));
 
@@ -207,7 +207,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(false, array_key_exists('foo', $obj));
     }
 
-    
+
     public function testFindOne() {
         $this->assertEquals(null, $this->object->findOne());
         $this->assertEquals(null, $this->object->findOne((object)array()));
@@ -246,22 +246,22 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
     public function testUpdate() {
         $old = (object)array("foo"=>"bar", "x"=>"y");
         $new = (object)array("foo"=>"baz");
-      
+
         $this->object->update((object)array("foo"=>"bar"), $old, true);
         $obj = $this->object->findOne();
-        $this->assertEquals($obj['foo'], 'bar');      
-        $this->assertEquals($obj['x'], 'y');      
+        $this->assertEquals($obj['foo'], 'bar');
+        $this->assertEquals($obj['x'], 'y');
 
         $this->object->update($old, $new);
         $obj = $this->object->findOne();
-        $this->assertEquals($obj['foo'], 'baz');      
+        $this->assertEquals($obj['foo'], 'baz');
     }
 
     public function testRemove() {
         for($i=0;$i<15;$i++) {
             $this->object->insert((object)array("i"=>$i));
         }
-        
+
         $this->assertEquals($this->object->count(), 15);
         $this->object->remove(array(), true);
         $this->assertEquals($this->object->count(), 14);
@@ -272,9 +272,9 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         for($i=0;$i<15;$i++) {
             $this->object->insert((object)array("i"=>$i));
         }
-        
+
         $this->assertEquals($this->object->count(), 15);
-        $this->object->remove();      
+        $this->object->remove();
         $this->assertEquals($this->object->count(), 0);
     }
 
@@ -326,7 +326,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $num = iterator_count($idx->find((object)array('ns' => 'phpunit.c')));
       $this->assertEquals($num, 3);
 
-      $this->object->deleteIndex((object)array('foo' => 1)); 
+      $this->object->deleteIndex((object)array('foo' => 1));
       $num = iterator_count($idx->find((object)array('ns' => 'phpunit.c')));
       $this->assertEquals($num, 2);
 
@@ -372,7 +372,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $this->assertEquals($info[3]['key']['baz'], -1);
       $this->assertEquals($info[3]['name'], 'bar_1_baz_-1');
     }
-    
+
     public function testCount() {
       $this->assertEquals($this->object->count(), 0);
 
@@ -383,7 +383,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(0, $this->object->count((object)array('z'=>1)));
       $this->assertEquals(1, $this->object->count((object)array('0'=>6)));
     }
-    
+
 
     public function testSave() {
       $this->object->save((object)array('x' => 1));

@@ -53,10 +53,10 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
         $obj = $ns->findOne((object)array('name' => 'phpunit.zz'));
         $this->assertNotNull($obj);
 
-        for($i=0;$i<10;$i++) {
+        for($i=0;$i<100;$i++) {
             $c->insert((object)array('x' => $i));
         }
-        $this->assertLessThan(10, $c->count());
+        $this->assertLessThan(100, $c->count());
 
         $c = $this->object->createCollection('zzz', true, 1000, 5);
         $obj = $ns->findOne((object)array('name' => 'phpunit.zzz'));
@@ -67,7 +67,7 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
         }
         $this->assertEquals(5, $c->count());
     }
-    
+
     public function testListCollections() {
         $ns = $this->object->selectCollection('system.namespaces');
 
@@ -84,7 +84,7 @@ class MongoObjDBTest extends PHPUnit_Framework_TestCase
             }
         }
     }
-    
+
 
     public function testCreateDBRef() {
         $arr = (object)array('_id' => new MongoId());

@@ -31,14 +31,14 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Exception 
+     * @expectedException Exception
      */
     public function testDumbDBName3() {
       $db = new MongoDB(new Mongo(), "\\");
     }
 
     /**
-     * @expectedException Exception 
+     * @expectedException Exception
      */
     public function testDumbDBName4() {
       $db = new MongoDB(new Mongo(), "\$");
@@ -140,14 +140,16 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $obj = $ns->findOne(array('name' => 'phpunit.z'));
         $this->assertNotNull($obj);
 
+        // even though we're only setting this to 100, it allocates 1 extent,
+        // so we can fit 4096, not 100, bytes of data in the collection.
         $c = $this->object->createCollection('zz', true, 100);
         $obj = $ns->findOne(array('name' => 'phpunit.zz'));
         $this->assertNotNull($obj);
 
-        for($i=0;$i<10;$i++) {
+        for($i=0;$i<100;$i++) {
             $c->insert(array('x' => $i));
         }
-        $this->assertLessThan(10, $c->count());
+        $this->assertLessThan(100, $c->count());
 
         $c = $this->object->createCollection('zzz', true, 1000, 5);
         $obj = $ns->findOne(array('name' => 'phpunit.zzz'));
@@ -158,7 +160,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         }
         $this->assertEquals(5, $c->count());
     }
-    
+
     public function testDropCollection() {
         $ns = $this->object->selectCollection('system.namespaces');
 
@@ -216,7 +218,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
             }
         }
     }
-    
+
     public function testCreateDBRef() {
         $ref = $this->object->createDBRef('foo.bar', array('foo' => 'bar'));
         $this->assertEquals($ref, NULL);
@@ -332,7 +334,7 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
 
       $this->object->w = 4;
       $this->object->wtimeout = 60;
- 
+
       $this->assertEquals(4, $this->object->w);
       $this->assertEquals(60, $this->object->wtimeout);
    }

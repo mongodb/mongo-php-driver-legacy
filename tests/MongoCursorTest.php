@@ -404,14 +404,14 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $this->object->insert(array('x'=>1));
         $this->object->insert(array('x'=>2));
         $this->object->insert(array('x'=>3, 'y'=>1));
-        
+
         $cursor = $this->object->find();
         $this->assertEquals(3, $cursor->count());
-        
+
         $cursor = $this->object->find(array('x'=>1));
-        $count = $cursor->count(); 
+        $count = $cursor->count();
         $str = json_encode(iterator_to_array($cursor));
-        $this->assertEquals(1, $count, $str);         
+        $this->assertEquals(1, $count, $str);
     }
 
     public function testExplain() {
@@ -466,15 +466,15 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
             $this->assertNotNull($cursor->getNext());
         }
     }
-    
-    /* 
-     * TODO: add actual functionality testing 
+
+    /*
+     * TODO: add actual functionality testing
      * BLOCKED BY: buildbot support for master/slave
      */
     public function testSlaveOkay() {
         $m = new Mongo();
         $m->foo->drop();
-        $c = $m->foo->createCollection("foo", true);
+        $c = $m->foo->createCollection("foo", true, 20);
         $c->findOne();
 
         $cursor = $c->find()->slaveOkay()->tailable();
@@ -594,7 +594,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       for ($i=0; $i<100; $i++) {
         $c->insert(array("x" => $i));
       }
-      
+
       $carr = array();
       $carr[] = $c->find(array("x" => array('$gt' => 80)));
       $carr[] = $c->find(array("x" => array('$lt' => 40)));
@@ -619,7 +619,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $uncallable = "Fatal error: Call to a member function foo() on a non-object";
 
         if (count($output) > 0) {
-            $this->assertEquals($uncallable, substr($output[1], 0, strlen($uncallable)), json_encode($output)); 
+            $this->assertEquals($uncallable, substr($output[1], 0, strlen($uncallable)), json_encode($output));
         }
     }
 
@@ -647,10 +647,10 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         for ($i=0; $i<20; $i++) {
             $this->object->insert(array("x" => $i));
         }
-        
+
         $cursor = $this->object->find()->addOption('$min', array("x" => 15));
         $this->assertTrue($cursor instanceof MongoCursor, get_class($cursor));
-        
+
         foreach($cursor as $v) {
             $this->assertGreaterThanOrEqual(15, $v['x']);
         }
@@ -678,7 +678,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         }
       }
     }
-      
+
     public function testFields() {
       $this->object->insert(array("x" => 1, "y" => 1));
 
@@ -693,13 +693,13 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
       $this->assertTrue(array_key_exists('x', $x));
       $this->assertTrue(array_key_exists('_id', $x));
       $this->assertFalse(array_key_exists('y', $x));
-      
+
       $cursor = $this->object->find(array(), array("y" => 1))->fields(array("x"=>1))->fields(array("y"=>1));
       $x = $cursor->getNext();
       $this->assertTrue(array_key_exists('y', $x));
       $this->assertTrue(array_key_exists('_id', $x));
       $this->assertFalse(array_key_exists('x', $x));
-      
+
       $fields = array("y" => 1);
       $cursor = $this->object->find(array(), $fields)->fields($fields)->fields($fields);
       $x = $cursor->getNext();
@@ -748,7 +748,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
             }
         }
         $this->assertEquals(20, $count);
-        
+
         // b: 20  l: 7
         $count = 0;
         $cursor->reset();
@@ -760,7 +760,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
             $count++;
         }
         $this->assertEquals(7, $count);
-        
+
         // b: 0   l: 20
         $count = 0;
         $cursor->reset();
@@ -773,7 +773,7 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         }
         $this->assertEquals(20, $count);
 
-        
+
         // b: 20  l: 0
         $count = 0;
         $cursor->reset();
@@ -792,13 +792,13 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
 
     public function testExplainReset() {
         $this->object->insert(array("x"=>"abc"), array('safe' => true));
-        
+
         $cursor = $this->object->find();
         $qp = $cursor->explain();
         $info = $cursor->info();
         $this->assertTrue(!array_key_exists('$explain', $info['query']));
         $this->assertTrue(array_key_exists('$query', $info['query']));
-        
+
         $doc = $cursor->getNext();
         $this->assertEquals('abc', $doc['x'], json_encode($doc));
     }
