@@ -690,6 +690,7 @@ char *errmsg;
 int response_num;
 int max_doc_size;
 int max_send_size;
+int pool_size;
 ZEND_END_MODULE_GLOBALS(mongo)
 
 #ifdef ZTS

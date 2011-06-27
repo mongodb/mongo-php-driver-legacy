@@ -60,6 +60,7 @@ typedef struct {
   struct {
     int in_pool;
     int in_use;
+    int remaining;
   } num;
 
   stack_node *top;
@@ -77,7 +78,8 @@ typedef struct {
 
 /**
  * Initialize the pool for a given server.  Only sets connection timeout if it
- * is non-zero (-1 for wait forever).
+ * is non-zero (-1 for wait forever). This is called every time a new Mongo
+ * instance is created, but it only creates a pool monitor the first time.
  */
 int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC);
 
@@ -178,7 +180,12 @@ size_t mongo_util_pool__get_id(mongo_server *server, char **id TSRMLS_DC);
  * Create a new connection.  Returns SUCCESS/FAILURE and sets errmsg, never
  * throws exceptions.
  */
-int mongo_util_pool__connect(mongo_server *server, time_t timeout, zval *errmsg TSRMLS_DC);
+int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval *errmsg TSRMLS_DC);
+
+/**
+ * Close a connection. Increments monitor's num.remaining
+ */
+void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server);
 
 /**
  * Get this monitor for this server.
@@ -186,8 +193,12 @@ int mongo_util_pool__connect(mongo_server *server, time_t timeout, zval *errmsg 
 stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC);
 
 
-// ------- External (debug) Functions -----------
+// ------- External Functions -----------
 
-PHP_FUNCTION(mongoPoolDebug);
+PHP_METHOD(Mongo, setPoolSize);
+PHP_METHOD(Mongo, getPoolSize);
+
+// dump pool info
+PHP_METHOD(Mongo, poolDebug);
 
 #endif

@@ -118,7 +118,6 @@ ZEND_END_ARG_INFO()
 function_entry mongo_functions[] = {
   PHP_FE(bson_encode, NULL)
   PHP_FE(bson_decode, NULL)
-  PHP_FE(mongoPoolDebug, NULL)
   { NULL, NULL, NULL }
 };
 
@@ -145,6 +144,9 @@ static function_entry mongo_methods[] = {
   PHP_ME(Mongo, getSlave, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, switchSlave, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, close, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, setPoolSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(Mongo, getPoolSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(Mongo, poolDebug, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   { NULL, NULL, NULL }
 };
 
@@ -585,6 +587,7 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
 
   mongo_globals->max_doc_size = 4 * 1024 * 1024;
   mongo_globals->max_send_size = 64 * 1024 * 1024;
+  mongo_globals->pool_size = -1;
 
   hostname = host_start;
   // from the gnu manual:

@@ -22,6 +22,8 @@
 #include "pool.h"
 #include "connect.h"
 
+ZEND_EXTERN_MODULE_GLOBALS(mongo);
+
 extern int le_pconnection;
 
 int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
@@ -33,6 +35,8 @@ int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
   if (timeout) {
     monitor->timeout = timeout;
   }
+
+  // TODO: do something to num.remaining
 
   // TODO: initialize pool to a certain size?
   return SUCCESS;
@@ -47,7 +51,7 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
 
   // get connection from pool or create new
   if (mongo_util_pool__stack_pop(monitor, server) == SUCCESS ||
-      mongo_util_pool__connect(server, monitor->timeout, errmsg TSRMLS_CC) == SUCCESS) {
+      mongo_util_pool__connect(monitor, server, errmsg TSRMLS_CC) == SUCCESS) {
     mongo_util_pool__add_server_ptr(monitor, server);
     server->readable = monitor->readable;
     return SUCCESS;
@@ -141,7 +145,7 @@ int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {
   // disconnect everyone
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
-  if (mongo_util_pool__connect(server, monitor->timeout, errmsg TSRMLS_CC) == FAILURE) {
+  if (mongo_util_pool__connect(monitor, server, errmsg TSRMLS_CC) == FAILURE) {
     mongo_util_pool__close_connections(monitor);
     zval_ptr_dtor(&errmsg);
     return FAILURE;
@@ -160,11 +164,11 @@ int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {
         continue;
       }
 
-      mongo_util_disconnect(current);
+      mongo_util_pool__disconnect(monitor, current);
 
       // once one connection fails, don't try to reconnect the rest
       if (Z_TYPE_P(errmsg) == IS_NULL) {
-        mongo_util_pool__connect(current, monitor->timeout, errmsg TSRMLS_CC);
+        mongo_util_pool__connect(monitor, current, errmsg TSRMLS_CC);
       }
 
       current = current->next_in_pool;
@@ -248,6 +252,7 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
       next = node->next;
 
       MONGO_UTIL_DISCONNECT(node->socket);
+      monitor->num.remaining++;
       free(node);
 
       node = next;
@@ -261,7 +266,7 @@ void mongo_util_pool__stack_clear(stack_monitor *monitor) {
   mongo_server temp;
 
   while (mongo_util_pool__stack_pop(monitor, &temp) == SUCCESS) {
-    mongo_util_disconnect(&temp);
+    mongo_util_pool__disconnect(monitor, &temp);
   }
   monitor->top = 0;
 }
@@ -321,7 +326,7 @@ void mongo_util_pool__close_connections(stack_monitor *monitor) {
   // close all open connections
   current = monitor->servers;
   while (current) {
-    mongo_util_disconnect(current);
+    mongo_util_pool__disconnect(monitor, current);
     monitor->num.in_use--;
     current = current->next_in_pool;
   }
@@ -329,6 +334,11 @@ void mongo_util_pool__close_connections(stack_monitor *monitor) {
 
   // remove any connections from the stack
   mongo_util_pool__stack_clear(monitor);
+}
+
+void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server) {
+  mongo_util_disconnect(server);
+  monitor->num.remaining++;
 }
 
 stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
@@ -347,6 +357,9 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
     }
 
     memset(monitor, 0, sizeof(stack_monitor));
+
+    // set pool size
+    monitor->num.remaining = MonGlo(pool_size);
 
     // registering this links it to the dtor (mongo_util_pool_shutdown) so that
     // it can be auto-cleaned-up on shutdown
@@ -374,10 +387,16 @@ size_t mongo_util_pool__get_id(mongo_server *server, char **id TSRMLS_DC) {
   return len;
 }
 
-int mongo_util_pool__connect(mongo_server *server, time_t timeout, zval *errmsg TSRMLS_DC) {
-  if (mongo_util_connect(server, timeout, errmsg) == SUCCESS &&
+int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval *errmsg TSRMLS_DC) {
+  if (monitor->num.remaining == 0) {
+    ZVAL_STRING(errmsg, "no more connections in pool", 1);
+    return FAILURE;
+  }
+
+  if (mongo_util_connect(server, monitor->timeout, errmsg) == SUCCESS &&
       // authenticate, if necessary
       mongo_util_connect_authenticate(server, errmsg TSRMLS_CC) == SUCCESS) {
+    monitor->num.remaining--;
     server->connected = 1;
     return SUCCESS;
   }
@@ -385,7 +404,23 @@ int mongo_util_pool__connect(mongo_server *server, time_t timeout, zval *errmsg 
   return FAILURE;
 }
 
-PHP_FUNCTION(mongoPoolDebug) {
+PHP_METHOD(Mongo, setPoolSize) {
+  long size = -1, old = -1;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &size) == FAILURE) {
+    RETURN_FALSE;
+  }
+
+  old = MonGlo(pool_size);
+  MonGlo(pool_size) = size;
+  RETURN_LONG(old);
+}
+
+PHP_METHOD(Mongo, getPoolSize) {
+  RETURN_LONG(MonGlo(pool_size));
+}
+
+PHP_METHOD(Mongo, poolDebug) {
   HashPosition pointer;
   zend_rsrc_list_entry *le;
 
@@ -411,6 +446,7 @@ PHP_FUNCTION(mongoPoolDebug) {
 
     add_assoc_long(m, "in use", monitor->num.in_use);
     add_assoc_long(m, "in pool", monitor->num.in_pool);
+    add_assoc_long(m, "remaining", monitor->num.remaining);
     add_assoc_long(m, "timeout", monitor->timeout);
 
     if (zend_hash_get_current_key_ex(&EG(persistent_list), &key, &key_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
