@@ -53,8 +53,6 @@ typedef struct _stack_node {
 typedef struct {
   // timeout for connections
   time_t timeout;
-  time_t ping;
-  zend_bool readable;
 
   // number of servers in the pool
   struct {
@@ -72,7 +70,6 @@ typedef struct {
 #define EVERYONE_DISCONNECTED 1
 // TODO: make this heurisitic
 #define INITIAL_POOL_SIZE 10
-#define PING_INTERVAL 5
 
 // ------- Pool Interface -----------
 
@@ -120,19 +117,6 @@ void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
  * authenticated, to prevent polluting the pool.
  */
 void mongo_util_pool_remove(mongo_server *server TSRMLS_DC);
-
-/**
- * Sets if this server is readable.
- */
-void mongo_util_pool_set_readable(mongo_server *server, zend_bool readable TSRMLS_DC);
-
-/**
- * Checks if this server has been pinged in the last PING_INTERVAL seconds. If
- * it has not, sets the monitor's last ping time to "now" and returns SUCCESS,
- * otherwise it returns failure.
- */
-int mongo_util_pool_ping(mongo_server *server, time_t now TSRMLS_DC);
-
 
 // ------- Internal Functions -----------
 

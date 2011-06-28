@@ -43,7 +43,7 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC);
  *
  * It choses a random slave between 0 & (number of secondaries-1).
  */
-int set_a_slave(mongo_link *link, char **errmsg);
+int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC);
 
 /**
  * Ping the servers in the set.  Refresh the servers if it's been a while or

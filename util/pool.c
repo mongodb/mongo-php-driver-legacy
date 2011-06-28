@@ -53,7 +53,6 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
   if (mongo_util_pool__stack_pop(monitor, server) == SUCCESS ||
       mongo_util_pool__connect(monitor, server, errmsg TSRMLS_CC) == SUCCESS) {
     mongo_util_pool__add_server_ptr(monitor, server);
-    server->readable = monitor->readable;
     return SUCCESS;
   }
 
@@ -91,44 +90,6 @@ void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
   mongo_util_pool__rm_server_ptr(monitor, server);
 }
 
-void mongo_util_pool_set_readable(mongo_server *server, zend_bool readable TSRMLS_DC) {
-  stack_monitor *monitor;
-  mongo_server *current;
-
-  if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
-    // if we couldn't push this, close the connection
-    mongo_util_disconnect(server);
-    return;
-  }
-
-  monitor->readable = readable;
-
-  // now set the readable flag on all servers in the wild
-  current = monitor->servers->next_in_pool;
-  while (current) {
-    current->readable = monitor->readable;
-    current = current->next_in_pool;
-  }
-
-  // sockets in the pool will be marked readable/unreadable as they are popped
-}
-
-int mongo_util_pool_ping(mongo_server *server, time_t now TSRMLS_DC) {
-  stack_monitor *monitor;
-
-  if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
-    // if we couldn't push this, close the connection
-    mongo_util_disconnect(server);
-    return FAILURE;
-  }
-
-  if (monitor->ping + PING_INTERVAL > now) {
-    return FAILURE;
-  }
-  monitor->ping = now;
-  return SUCCESS;
-}
-
 int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {
   stack_monitor *monitor;
   zval *errmsg;
@@ -146,6 +107,7 @@ int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
   if (mongo_util_pool__connect(monitor, server, errmsg TSRMLS_CC) == FAILURE) {
+    mongo_util_server_down(server TSRMLS_CC);
     mongo_util_pool__close_connections(monitor);
     zval_ptr_dtor(&errmsg);
     return FAILURE;

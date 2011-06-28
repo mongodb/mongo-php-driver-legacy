@@ -23,6 +23,7 @@
 #include "rs.h"
 #include "hash.h"
 #include "pool.h"
+#include "server.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
@@ -297,40 +298,18 @@ void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
   int now;
   mongo_server *current;
 
-  now = time(0);
   if (!link->rs) {
     return;
   }
 
+  now = time(0);
+
   // find a server with a hosts list
   current = link->server_set->server;
   while (current) {
-    zval *response = 0, **hosts = 0, **ismaster = 0, **secondary = 0;
-
-    if (mongo_util_pool_ping(current, now TSRMLS_CC) == FAILURE) {
-      current = current->next;
-      continue;
-    }
-
-    response = mongo_util_rs__ismaster(current TSRMLS_CC);
-
-    if (!response) {
-      current = current->next;
-      continue;
-    }
-
-    if (mongo_util_rs__get_ismaster(response TSRMLS_CC)) {
+    if (mongo_util_server_ping(current, now TSRMLS_CC) == SUCCESS) {
       link->server_set->master = current;
     }
-
-    zend_hash_find(HASH_P(response), "secondary", strlen("secondary")+1, (void**)&secondary);
-    if (secondary && Z_BVAL_PP(secondary)) {
-      mongo_util_pool_set_readable(current, 1 TSRMLS_CC);
-    }
-    else {
-      mongo_util_pool_set_readable(current, 0 TSRMLS_CC);
-    }
-    zval_ptr_dtor(&response);
 
     current = current->next;
   }
@@ -385,9 +364,9 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
   return SUCCESS;
 }
 
-int set_a_slave(mongo_link *link, char **errmsg) {
-  mongo_server *possible_slave, *current = 0;
-  int skip, slaves = 0;
+int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC) {
+  mongo_server *possible_slave;
+  int slaves = 0, min_ping = INT_MAX;
   zval **master = 0, **health = 0;
 
   if (!link->rs || !link->server_set) {
@@ -395,52 +374,32 @@ int set_a_slave(mongo_link *link, char **errmsg) {
     return FAILURE;
   }
 
-  // pick a secondary S such that S is in [0, num slaves-1)
-  skip = (int)rand();
-  if (skip < 0) {
-    skip *= -1;
-  }
+  possible_slave = link->server_set->server;
 
-  // figure out how many slaves there are
-  current = link->server_set->server;
-  while (current) {
-    if (current->readable) {
-      slaves++;
-    }
-    current = current->next;
-  }
-
-  if (slaves) {
-    skip %= slaves;
-    possible_slave = link->server_set->server;
-  }
-  // if there are no slaves, don't check for them
-  else {
-    possible_slave = 0;
-  }
-
-  // skip to the Sth server
   link->slave = 0;
   while (possible_slave) {
+    int ping;
 
-    if (!possible_slave->readable) {
+    if (!mongo_util_server_get_readable(possible_slave TSRMLS_CC)) {
       possible_slave = possible_slave->next;
       continue;
     }
 
-    if (skip) {
-      skip--;
-      possible_slave = possible_slave->next;
-      continue;
+    ping = mongo_util_server_get_ping_time(possible_slave TSRMLS_CC);
+    if (ping < min_ping && possible_slave != link->server_set->master) {
+      link->slave = possible_slave;
+      min_ping = ping;
     }
 
-    // rs_ping checks the status of the slave, so we can assume it's okay
-    link->slave = possible_slave;
-    return RS_SECONDARY;
+    possible_slave = possible_slave->next;
   }
 
+  if (link->slave) {
+    return RS_SECONDARY;
+  }
   // if we've run out of possibilities, use the master
-  if (link->server_set->master && link->server_set->master->connected) {
+  else if (!link->slave &&
+      link->server_set->master && link->server_set->master->connected) {
     link->slave = link->server_set->master;
     return RS_PRIMARY;
   }

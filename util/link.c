@@ -51,8 +51,8 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
 
     // TODO: what if we can't reconnect?  close cursors? grab another slave?
   }
-  
-  status = set_a_slave(link, &(Z_STRVAL_P(errmsg)));
+
+  status = mongo_util_rs__set_slave(link, &(Z_STRVAL_P(errmsg)) TSRMLS_CC);
   if (status == FAILURE) {
     ZVAL_STRING(errmsg, "Could not find any server to read from", 1);
     return 0;

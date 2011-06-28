@@ -23,6 +23,7 @@
 
 // resource names
 #define PHP_CONNECTION_RES_NAME "mongo connection"
+#define PHP_SERVER_RES_NAME "mongo server info"
 #define PHP_CURSOR_LIST_RES_NAME "cursor list"
 
 #ifdef WIN32
@@ -210,7 +211,6 @@
 typedef struct _mongo_server {
   int socket;
   int connected;
-  int readable;
   int port;
   char *host;
   char *label;
