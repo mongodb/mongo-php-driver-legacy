@@ -1399,7 +1399,29 @@ PHP_METHOD(Mongo, listDBs) {
 /* }}} */
 
 PHP_METHOD(Mongo, getHosts) {
-  return;
+  mongo_link *link;
+  mongo_server *current;
+
+  array_init(return_value);
+  PHP_MONGO_GET_LINK(getThis());
+
+  current = link->server_set->server;
+  while (current) {
+    zval *infoz;
+    server_info *info;
+
+    MAKE_STD_ZVAL(infoz);
+    array_init(infoz);
+
+    info = mongo_util_server__get_info(current TSRMLS_CC);
+    add_assoc_long(infoz, "health", info->readable);
+    add_assoc_long(infoz, "state", info->master ? 1 : info->readable ? 2 : 0);
+    add_assoc_long(infoz, "ping", info->ping);
+    add_assoc_long(infoz, "lastPing", info->last_ping);
+
+    add_assoc_zval(return_value, current->label, infoz);
+    current = current->next;
+  }
 }
 
 PHP_METHOD(Mongo, getSlave) {
@@ -1426,7 +1448,7 @@ PHP_METHOD(Mongo, switchSlave) {
   }
 
   mongo_util_rs_ping(link TSRMLS_CC);
-  if (set_a_slave(link, &errmsg) == FAILURE) {
+  if (mongo_util_rs__set_slave(link, &errmsg TSRMLS_CC) == FAILURE) {
     if (!EG(exception)) {
       if (errmsg) {
         zend_throw_exception(mongo_ce_Exception, errmsg, 16 TSRMLS_CC);
