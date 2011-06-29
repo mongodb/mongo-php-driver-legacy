@@ -21,6 +21,7 @@
 #include "hash.h"
 #include "pool.h"
 #include "connect.h"
+#include "server.h"
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -393,8 +394,8 @@ PHP_METHOD(Mongo, poolDebug) {
        zend_hash_move_forward_ex(&EG(persistent_list), &pointer)) {
     zval *m;
     char *key;
-    int key_len;
-    long index;
+    unsigned int key_len;
+    unsigned long index;
     stack_monitor *monitor;
 
     if (!le || le->type != le_pconnection) {

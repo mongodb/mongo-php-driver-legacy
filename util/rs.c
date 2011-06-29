@@ -366,8 +366,7 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
 
 int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC) {
   mongo_server *possible_slave;
-  int slaves = 0, min_ping = INT_MAX;
-  zval **master = 0, **health = 0;
+  int min_ping = INT_MAX;
 
   if (!link->rs || !link->server_set) {
     *(errmsg) = estrdup("Connection is not initialized or not a replica set");

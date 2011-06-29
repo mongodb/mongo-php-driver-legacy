@@ -515,7 +515,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   if (Z_TYPE_P(fh) == IS_RESOURCE) {
     zend_rsrc_list_entry *le;
-    php_stdio_stream_data *stdio_fptr;
+    php_stdio_stream_data *stdio_fptr = 0;
 
     if (zend_hash_index_find(&EG(regular_list), Z_LVAL_P(fh), (void **) &le)==SUCCESS) {
       php_stream *stream = (php_stream*)le->ptr;
