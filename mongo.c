@@ -588,7 +588,6 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   mongo_globals->response_num = 0;
   mongo_globals->errmsg = 0;
 
-  mongo_globals->max_doc_size = 4 * 1024 * 1024;
   mongo_globals->max_send_size = 64 * 1024 * 1024;
   mongo_globals->pool_size = -1;
 

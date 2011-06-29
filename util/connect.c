@@ -36,39 +36,6 @@
 extern zend_class_entry *mongo_ce_Mongo;
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
-void mongo_util_connect_buildinfo(zval *this_ptr TSRMLS_DC) {
-  zval *result, *data, *admin, *db, **max = 0;
-
-  // "admin"
-  MAKE_STD_ZVAL(admin);
-  ZVAL_STRING(admin, "admin", 1);
-  
-  MAKE_STD_ZVAL(db);
-  ZVAL_NULL(db);
-  MONGO_METHOD1(Mongo, selectDB, db, getThis(), admin);
-  
-  zval_ptr_dtor(&admin);
-      
-  MAKE_STD_ZVAL(result);
-  ZVAL_NULL(result);
-  
-  MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "buildinfo", 1);
-  
-  MONGO_CMD(result, db); 
-
-  zval_ptr_dtor(&data);
-  zval_ptr_dtor(&db);
-
-  if (zend_hash_find(HASH_P(result), "maxBsonObjectSize",
-                     sizeof("maxBsonObjectSize"), (void**)&max) == SUCCESS){
-    MonGlo(max_doc_size) = Z_LVAL_PP(max);
-  }
-  
-  zval_ptr_dtor(&result); 
-}
-
 int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
   struct sockaddr* sa;
   struct sockaddr_in si;
