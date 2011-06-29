@@ -118,7 +118,6 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         $v = $this->object->validate();
         $this->assertEquals((bool)$v['ok'], true);
         $this->assertEquals($v['ns'], 'phpunit.c');
-        $this->assertTrue($v['valid']);
     }
 
     public function testInsert() {
