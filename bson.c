@@ -1,13 +1,13 @@
 // bson.c
 /**
  *  Copyright 2009-2010 10gen, Inc.
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -103,7 +103,7 @@ int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC) {
       prep_obj_for_db(buf, hash TSRMLS_CC);
       num++;
     }
-  
+
 #if ZEND_MODULE_API_NO >= 20090115
     zend_hash_apply_with_arguments(hash TSRMLS_CC, (apply_func_args_t)apply_func_args_wrapper, 3, buf, prep, &num);
 #else
@@ -311,7 +311,7 @@ int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep T
       if (EG(exception)) {
         return ZEND_HASH_APPLY_STOP;
       }
-    } 
+    }
     break;
   }
   }
@@ -344,7 +344,7 @@ void php_mongo_serialize_date(buffer *buf, zval *date TSRMLS_DC) {
   int64_t ms;
   zval *sec = zend_read_property(mongo_ce_Date, date, "sec", 3, 0 TSRMLS_CC);
   zval *usec = zend_read_property(mongo_ce_Date, date, "usec", 4, 0 TSRMLS_CC);
-  
+
   ms = ((int64_t)Z_LVAL_P(sec) * 1000) + ((int64_t)Z_LVAL_P(usec) / 1000);
   php_mongo_serialize_long(buf, ms);
 }
@@ -367,7 +367,7 @@ void php_mongo_serialize_int32(buffer *buf, zval *data TSRMLS_DC) {
   int value;
   zval *zvalue = zend_read_property(mongo_ce_Int32, data, "value", 5, 0 TSRMLS_CC);
   value = strtol(Z_STRVAL_P(zvalue), NULL, 10);
-  
+
   php_mongo_serialize_int(buf, value);
 }
 
@@ -378,7 +378,7 @@ void php_mongo_serialize_int64(buffer *buf, zval *data TSRMLS_DC) {
   int64_t value;
   zval *zvalue = zend_read_property(mongo_ce_Int64, data, "value", 5, 0 TSRMLS_CC);
   value = strtoll(Z_STRVAL_P(zvalue), NULL, 10);
-  
+
   php_mongo_serialize_long(buf, value);
 }
 
@@ -443,7 +443,7 @@ void php_mongo_serialize_bin_data(buffer *buf, zval *bin TSRMLS_DC) {
   zbin = zend_read_property(mongo_ce_BinData, bin, "bin", 3, 0 TSRMLS_CC);
   ztype = zend_read_property(mongo_ce_BinData, bin, "type", 4, 0 TSRMLS_CC);
 
-  /* 
+  /*
    * type 2 has the redundant structure:
    *
    * |------|--|-------==========|
@@ -560,7 +560,7 @@ void php_mongo_serialize_double(buffer *buf, double num) {
   buf->pos += DOUBLE_64;
 }
 
-/* 
+/*
  * prep == true
  *    we are inserting, so keys can't have .s in them
  */
@@ -747,7 +747,7 @@ int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria TSRM
 }
 
 /*
- * Creates a query string in buf. 
+ * Creates a query string in buf.
  *
  * The following fields of cursor are used:
  *  - ns
@@ -821,14 +821,14 @@ int php_mongo_write_get_more(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
 
 static int get_limit(mongo_cursor *cursor) {
   int lim_at;
-  
+
   if (cursor->limit < 0) {
     return cursor->limit;
   }
   else if (cursor->batch_size < 0) {
     return cursor->batch_size;
   }
-  
+
   lim_at = cursor->limit > cursor->batch_size ? cursor->limit - cursor->at : cursor->limit;
   if (cursor->batch_size && (!lim_at || cursor->batch_size <= lim_at)) {
     return cursor->batch_size;
@@ -836,20 +836,20 @@ static int get_limit(mongo_cursor *cursor) {
   else if (lim_at && (!cursor->batch_size || lim_at < cursor->batch_size)) {
     return lim_at;
   }
-  
+
   return 0;
 }
 
 
 char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
-  /* 
+  /*
    * buf_start is used for debugging
    *
    * if the deserializer runs into bson it can't
    * parse, it will dump the bytes to that point.
    *
    * we lose buf's position as we iterate, so we
-   * need buf_start to save it. 
+   * need buf_start to save it.
    */
   char *buf_start = buf;
   char type;
@@ -860,23 +860,23 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
 
   // for size
   buf += INT_32;
-  
+
   while ((type = *buf++) != 0) {
     char *name;
     zval *value;
-    
+
     name = buf;
     // get past field name
     buf += strlen(buf) + 1;
 
     MAKE_STD_ZVAL(value);
-    
+
     // get value
     switch(type) {
     case BSON_OID: {
       mongo_id *this_id;
       zval *str = 0;
-      
+
       object_init_ex(value, mongo_ce_Id);
 
       this_id = (mongo_id*)zend_object_store_get_object(value TSRMLS_CC);
@@ -920,7 +920,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       buf += len;
       break;
     }
-    case BSON_OBJECT: 
+    case BSON_OBJECT:
     case BSON_ARRAY: {
       array_init(value);
       buf = bson_to_zval(buf, Z_ARRVAL_P(value) TSRMLS_CC);
@@ -945,7 +945,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
 
       /* If the type is 2, check if the binary data
        * is prefixed by its length.
-       * 
+       *
        * There is an infinitesimally small chance that
        * the first four bytes will happen to be the
        * length of the rest of the string.  In this
@@ -1022,7 +1022,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     case BSON_DATE: {
       int64_t d = MONGO_64(*((int64_t*)buf));
       buf += INT_64;
-      
+
       object_init_ex(value, mongo_ce_Date);
 
       zend_update_property_long(mongo_ce_Date, value, "sec", strlen("sec"), (long)(d/1000) TSRMLS_CC);
@@ -1049,7 +1049,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
 
       break;
     }
-    case BSON_CODE: 
+    case BSON_CODE:
     case BSON_CODE__D: {
       zval *zcope;
       int code_len;
@@ -1097,7 +1097,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
      *   - 4 bytes ns length (includes trailing \0)
      *   - ns + \0
      *   - 12 bytes MongoId
-     * This converts the deprecated, old-style db ref type 
+     * This converts the deprecated, old-style db ref type
      * into the new type (array('$ref' => ..., $id => ...)).
      */
     case BSON_DBREF: {
@@ -1146,7 +1146,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     /* max key (127)
-     * max and min keys are used only for sharding, and 
+     * max and min keys are used only for sharding, and
      * cannot be resaved to the database at the moment
      */
     case BSON_MINKEY: {
@@ -1163,8 +1163,8 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       /* if we run into a type we don't recognize, there's
        * either been some corruption or we've messed up on
        * the parsing.  Either way, it's helpful to know the
-       * situation that led us here, so this dumps the 
-       * buffer up to this point to stdout and returns.  
+       * situation that led us here, so this dumps the
+       * buffer up to this point to stdout and returns.
        *
        * We can't dump any more of the buffer, unfortunately,
        * because we don't keep track of the size.  Besides,
@@ -1175,7 +1175,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       unsigned char t = type;
 
       template = "type 0x00 not supported:";
-      
+
       // each byte is " xx" (3 chars)
       width = 3;
       len = (buf - buf_start) * width;
@@ -1197,7 +1197,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
         pos += width;
       }
       // sprintf 0-terminates the string
-      
+
       zend_throw_exception(mongo_ce_Exception, msg, 17 TSRMLS_CC);
       efree(msg);
       return 0;
@@ -1221,7 +1221,7 @@ static int is_utf8(const char *s, int len) {
         (s[i+3] & 192) == 128) {
       i += 3;
     }
-    else if (i+2 < len && 
+    else if (i+2 < len &&
              (s[i] & 240) == 224 &&
              (s[i+1] & 192) == 128 &&
              (s[i+2] & 192) == 128) {
