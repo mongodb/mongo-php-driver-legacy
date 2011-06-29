@@ -373,7 +373,7 @@ typedef struct {
   MAKE_STD_ZVAL(errmsg);                                        \
   ZVAL_NULL(errmsg);                                            \
                                                                 \
-  if (is_safe_op(options)) {                                    \
+  if (is_safe_op(options TSRMLS_CC)) {                          \
     zval *cursor = append_getlasterror(getThis(), &buf, options TSRMLS_CC); \
     if (cursor) {                                               \
       safe_op(server, cursor, &buf, return_value TSRMLS_CC);    \

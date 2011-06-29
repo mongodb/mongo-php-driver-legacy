@@ -77,4 +77,8 @@ int mongo_util_server_get_readable(mongo_server *server TSRMLS_DC);
 
 int mongo_util_server_get_bson_size(mongo_server *server TSRMLS_DC);
 
+#ifdef WIN32
+void gettimeofday(struct timeval *t, void* tz);
+#endif
+
 #endif

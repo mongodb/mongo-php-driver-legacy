@@ -28,7 +28,7 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
   zval *response = 0, **secondary = 0, **bson = 0;
   struct timeval start, end;
 
-  if ((info = mongo_util_server__get_info(server)) == 0) {
+  if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
     return FAILURE;
   }
 
@@ -81,7 +81,7 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
 int mongo_util_server_get_ping_time(mongo_server *server TSRMLS_DC) {
   server_info* info;
 
-  if ((info = mongo_util_server__get_info(server)) == 0) {
+  if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
     return FAILURE;
   }
 
@@ -109,7 +109,7 @@ int mongo_util_server__set_ping(server_info *info, struct timeval start, struct 
 int mongo_util_server_get_bson_size(mongo_server *server TSRMLS_DC) {
   server_info* info;
 
-  if ((info = mongo_util_server__get_info(server)) == 0) {
+  if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
     return MONGO_SERVER_BSON;
   }
 
@@ -123,7 +123,7 @@ int mongo_util_server_get_bson_size(mongo_server *server TSRMLS_DC) {
 int mongo_util_server_set_readable(mongo_server *server, zend_bool readable TSRMLS_DC) {
   server_info* info;
 
-  if ((info = mongo_util_server__get_info(server)) == 0) {
+  if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
     return FAILURE;
   }
 
@@ -134,7 +134,7 @@ int mongo_util_server_set_readable(mongo_server *server, zend_bool readable TSRM
 int mongo_util_server_get_readable(mongo_server *server TSRMLS_DC) {
   server_info* info;
 
-  if ((info = mongo_util_server__get_info(server)) == 0) {
+  if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
     return 0;
   }
 
@@ -148,7 +148,7 @@ int mongo_util_server_get_readable(mongo_server *server TSRMLS_DC) {
 void mongo_util_server_down(mongo_server* server TSRMLS_DC) {
   server_info* info;
 
-  if ((info = mongo_util_server__get_info(server)) == 0) {
+  if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
     return;
   }
 
@@ -194,6 +194,19 @@ server_info* mongo_util_server__get_info(mongo_server *server TSRMLS_DC) {
   efree(id);
   return le->ptr;
 }
+
+#ifdef WIN32
+void gettimeofday(struct timeval *t, void* tz) {
+  SYSTEMTIME ft;
+
+  if (t != 0) {
+    GetSystemTime(&ft);
+
+    t->tv_sec = ft.wSecond;
+    t->tv_usec = fs.wMilliseconds*1000;
+  }
+}
+#endif
 
 void mongo_util_server_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
   if (!rsrc) {
