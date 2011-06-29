@@ -203,7 +203,7 @@ void gettimeofday(struct timeval *t, void* tz) {
     GetSystemTime(&ft);
 
     t->tv_sec = ft.wSecond;
-    t->tv_usec = fs.wMilliseconds*1000;
+    t->tv_usec = ft.wMilliseconds*1000;
   }
 }
 #endif
