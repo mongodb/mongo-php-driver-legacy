@@ -27,6 +27,7 @@
 #include "util/link.h"
 #include "util/pool.h"
 #include "util/rs.h"
+#include "util/server.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
@@ -44,7 +45,9 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_Collection = NULL;
 
-static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
+static mongo_server* get_server(mongo_collection *c TSRMLS_DC);
+static int is_safe_op(zval *options TSRMLS_DC);
+static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
 /*
  * arginfo needs to be set for __get because if PHP doesn't know it only takes
@@ -248,7 +251,42 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   return cursor_z;
 }
 
-static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC) {
+static mongo_server* get_server(mongo_collection *c TSRMLS_DC) {
+  zval *errmsg;
+  mongo_link *link;
+  mongo_server *server;
+
+  link = (mongo_link*)zend_object_store_get_object((c->link) TSRMLS_CC);
+  if (!link) {
+    zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
+    return 0;
+  }
+
+  MAKE_STD_ZVAL(errmsg);
+  ZVAL_NULL(errmsg);
+
+  if ((server = mongo_util_link_get_socket(link, errmsg TSRMLS_CC)) == 0) {
+    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 16 TSRMLS_CC);
+    zval_ptr_dtor(&errmsg);
+    return 0;
+  }
+
+  zval_ptr_dtor(&errmsg);
+  return server;
+}
+
+static int is_safe_op(zval *options TSRMLS_DC) {
+  zval **safe_pp = 0, **fsync_pp = 0;
+
+  return options &&
+    ((zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS &&
+      (Z_TYPE_PP(safe_pp) == IS_STRING ||
+       ((Z_TYPE_PP(safe_pp) == IS_LONG || Z_TYPE_PP(safe_pp) == IS_BOOL) && Z_LVAL_PP(safe_pp) >= 1))) ||
+     (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS &&
+      Z_BVAL_PP(fsync_pp) == 1));
+}
+
+static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC) {
   zval *errmsg, **err;
   mongo_cursor *cursor;
 
@@ -257,28 +295,27 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
 
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
 
-  // send everything
-  if ((cursor->server = mongo_util_link_get_socket(link, errmsg TSRMLS_CC)) == 0) {
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 15 TSRMLS_CC);
-    zval_ptr_dtor(&errmsg);
-    zval_ptr_dtor(&cursor_z);
-    return FAILURE;
-  }
+  cursor->server = server;
 
-  if (FAILURE == mongo_say(cursor->server, buf, errmsg TSRMLS_CC)) {
-    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
+  if (FAILURE == mongo_say(server, buf, errmsg TSRMLS_CC)) {
+    mongo_util_pool_failed(server, 0 TSRMLS_CC);
     mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
+
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 16 TSRMLS_CC);
+
     zval_ptr_dtor(&errmsg);
+    cursor->link = 0;
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
 
   // get reply
   if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
-    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
+    mongo_util_pool_failed(server, 0 TSRMLS_CC);
     mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
+
     zval_ptr_dtor(&errmsg);
+    cursor->link = 0;
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
@@ -311,7 +348,7 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
 
     // not master
     if (code == 10058) {
-      mongo_util_pool_failed(cursor->server, EVERYONE_DISCONNECTED TSRMLS_CC);
+      mongo_util_pool_failed(server, EVERYONE_DISCONNECTED TSRMLS_CC);
       mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
     }
 
@@ -334,9 +371,9 @@ static int safe_op(mongo_link *link, zval *cursor_z, buffer *buf, zval *return_v
 
 
 PHP_METHOD(MongoCollection, insert) {
-  zval *a, *options = 0, **safe_pp = 0, **fsync_pp;
+  zval *a, *options = 0, *errmsg = 0;
   mongo_collection *c;
-  mongo_link *link;
+  mongo_server *server;
   buffer buf;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE) {
@@ -367,8 +404,13 @@ PHP_METHOD(MongoCollection, insert) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
+  if ((server = get_server(c TSRMLS_CC)) == 0) {
+    RETURN_FALSE;
+  }
+
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
-  if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a TSRMLS_CC)) {
+  if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a,
+                                        mongo_util_server_get_bson_size(server) TSRMLS_CC)) {
     efree(buf.start);
     zval_ptr_dtor(&options);
     RETURN_FALSE;
@@ -381,9 +423,9 @@ PHP_METHOD(MongoCollection, insert) {
 }
 
 PHP_METHOD(MongoCollection, batchInsert) {
-  zval *docs, *options = 0, **safe_pp = 0, **fsync_pp = 0;
+  zval *docs, *options = 0, *errmsg = 0;
   mongo_collection *c;
-  mongo_link *link;
+  mongo_server *server;
   buffer buf;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|z", &docs, &options) == FAILURE) {
@@ -392,9 +434,14 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
+  if ((server = get_server(c TSRMLS_CC)) == 0) {
+    RETURN_FALSE;
+  }
+
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
-  if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), docs TSRMLS_CC) == FAILURE) {
+  if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), docs,
+                                   mongo_util_server_get_bson_size(server) TSRMLS_CC) == FAILURE) {
     efree(buf.start);
     return;
   }
@@ -459,9 +506,9 @@ PHP_METHOD(MongoCollection, findOne) {
 }
 
 PHP_METHOD(MongoCollection, update) {
-  zval *criteria, *newobj, *options = 0, **safe_pp = 0, **fsync_pp = 0;
+  zval *criteria, *newobj, *options = 0, *errmsg = 0;
   mongo_collection *c;
-  mongo_link *link;
+  mongo_server *server;
   buffer buf;
   int bit_opts = 0;
 
@@ -503,6 +550,10 @@ PHP_METHOD(MongoCollection, update) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
+  if ((server = get_server(c TSRMLS_CC)) == 0) {
+    RETURN_FALSE;
+  }
+
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, newobj TSRMLS_CC)) {
     efree(buf.start);
@@ -517,10 +568,10 @@ PHP_METHOD(MongoCollection, update) {
 }
 
 PHP_METHOD(MongoCollection, remove) {
-  zval *criteria = 0, *options = 0, **safe_pp = 0, **fsync_pp = 0;
+  zval *criteria = 0, *options = 0, *errmsg = 0;
   int flags = 0;
   mongo_collection *c;
-  mongo_link *link;
+  mongo_server *server;
   buffer buf;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &criteria, &options) == FAILURE) {
@@ -562,6 +613,10 @@ PHP_METHOD(MongoCollection, remove) {
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
+
+  if ((server = get_server(c TSRMLS_CC)) == 0) {
+    RETURN_FALSE;
+  }
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (FAILURE == php_mongo_write_delete(&buf, Z_STRVAL_P(c->ns), flags, criteria TSRMLS_CC)) {

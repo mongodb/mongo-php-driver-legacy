@@ -370,37 +370,26 @@ typedef struct {
   }
 
 #define SEND_MSG                                                \
-  PHP_MONGO_GET_LINK(c->link);                                  \
-  if (options &&                                                \
-    ((zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS && \
-     Z_LVAL_PP(safe_pp) >= 1) ||                                \
-    (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS && \
-     Z_BVAL_PP(fsync_pp) == 1))) {                              \
-    zval *cursor;                                               \
-    if (0 == (cursor = append_getlasterror(getThis(), &buf, options TSRMLS_CC))) { \
-      zval_ptr_dtor(&cursor);                                   \
-      RETVAL_FALSE;                                             \
+  MAKE_STD_ZVAL(errmsg);                                        \
+  ZVAL_NULL(errmsg);                                            \
+                                                                \
+  if (is_safe_op(options)) {                                    \
+    zval *cursor = append_getlasterror(getThis(), &buf, options TSRMLS_CC); \
+    if (cursor) {                                               \
+      safe_op(server, cursor, &buf, return_value TSRMLS_CC);    \
     }                                                           \
     else {                                                      \
-      safe_op(link, cursor, &buf, return_value TSRMLS_CC);      \
+      RETVAL_FALSE;                                             \
     }                                                           \
   }                                                             \
+  else if (mongo_say(server, &buf, errmsg TSRMLS_CC) == FAILURE) {\
+    RETVAL_FALSE;                                               \
+  }                                                             \
   else {                                                        \
-    zval *temp;                                                 \
-    mongo_server *server;                                       \
-                                                                \
-    MAKE_STD_ZVAL(temp);                                        \
-    ZVAL_NULL(temp);                                            \
-                                                                \
-    if ((server = mongo_util_link_get_socket(link, temp TSRMLS_CC)) == 0 ||   \
-        mongo_say(server, &buf, temp TSRMLS_CC) == FAILURE) {   \
-      RETVAL_FALSE;                                             \
-    }                                                           \
-    else {                                                      \
-      RETVAL_TRUE;                                              \
-    }                                                           \
-    zval_ptr_dtor(&temp);                                       \
-  }
+    RETVAL_TRUE;                                                \
+  }                                                             \
+  zval_ptr_dtor(&errmsg);
+
 
 #define GET_OPTIONS                                                     \
   timeout_p = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC); \
@@ -726,6 +715,7 @@ extern zend_module_entry mongo_module_entry;
  * 14: index name too long: <len>, max <max> characters
  * 15: Reading from slaves won't work without using the replicaSet option on connect
  * 16: No server found for reads
+ * 17: The MongoCollection object has not been correctly initialized by its constructor
  *
  * MongoConnectionException:
  * 0: connection to <host> failed: <errmsg>

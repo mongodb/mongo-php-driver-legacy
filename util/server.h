@@ -23,6 +23,9 @@
  */
 
 typedef struct _server_info {
+  // if this has been pinged at least once
+  int pinged;
+
   int max_bson_size;
   int readable;
   int master;
@@ -34,7 +37,7 @@ typedef struct _server_info {
 
 #define MONGO_SERVER_INFO "server_info"
 #define MONGO_SERVER_PING INT_MAX
-#define MONGO_SERVER_BSON 4096
+#define MONGO_SERVER_BSON (4*1024*1024)
 
 #define MONGO_PING_INTERVAL 5
 
@@ -62,6 +65,8 @@ int mongo_util_server__set_ping(server_info *info, struct timeval start, struct 
  */
 server_info* mongo_util_server__get_info(mongo_server *server TSRMLS_DC);
 
+void mongo_util_server_down(mongo_server *server TSRMLS_DC);
+
 void mongo_util_server_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
 /**
@@ -69,5 +74,7 @@ void mongo_util_server_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
  */
 int mongo_util_server_set_readable(mongo_server *server, zend_bool readable TSRMLS_DC);
 int mongo_util_server_get_readable(mongo_server *server TSRMLS_DC);
+
+int mongo_util_server_get_bson_size(mongo_server *server TSRMLS_DC);
 
 #endif

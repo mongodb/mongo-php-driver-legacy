@@ -25,13 +25,14 @@ extern int le_pserver;
 
 int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
   server_info* info;
-  zval *response = 0, **hosts = 0, **ismaster = 0, **secondary = 0;
+  zval *response = 0, **secondary = 0, **bson = 0;
   struct timeval start, end;
-  int retval = FAILURE;
 
   if ((info = mongo_util_server__get_info(server)) == 0) {
     return FAILURE;
   }
+
+  info->pinged = 1;
 
   if (info->last_ping + MONGO_PING_INTERVAL > now) {
     return FAILURE;
@@ -55,6 +56,17 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
     info->readable = 0;
   }
 
+  zend_hash_find(HASH_P(response), "maxBsonObjectSize", strlen("maxBsonObjectSize")+1, (void**)&bson);
+  if (bson) {
+    if (Z_TYPE_PP(bson) == IS_LONG) {
+      info->max_bson_size = Z_LVAL_PP(bson);
+    }
+    else if (Z_TYPE_PP(bson) == IS_DOUBLE) {
+      info->max_bson_size = (int)Z_DVAL_PP(bson);
+    }
+    // otherwise, leave as the default
+  }
+
   if (mongo_util_rs__get_ismaster(response TSRMLS_CC)) {
     info->master = 1;
     info->readable = 1;
@@ -73,6 +85,10 @@ int mongo_util_server_get_ping_time(mongo_server *server TSRMLS_DC) {
     return FAILURE;
   }
 
+  if (!info->pinged) {
+    mongo_util_server_ping(server, MONGO_SERVER_PING TSRMLS_CC);
+  }
+
   return info->ping;
 }
 
@@ -88,6 +104,20 @@ int mongo_util_server__set_ping(server_info *info, struct timeval start, struct 
   }
 
   return info->ping;
+}
+
+int mongo_util_server_get_bson_size(mongo_server *server TSRMLS_DC) {
+  server_info* info;
+
+  if ((info = mongo_util_server__get_info(server)) == 0) {
+    return MONGO_SERVER_BSON;
+  }
+
+  if (!info->pinged) {
+    mongo_util_server_ping(server, MONGO_SERVER_PING TSRMLS_CC);
+  }
+
+  return info->max_bson_size;
 }
 
 int mongo_util_server_set_readable(mongo_server *server, zend_bool readable TSRMLS_DC) {
@@ -108,6 +138,10 @@ int mongo_util_server_get_readable(mongo_server *server TSRMLS_DC) {
     return 0;
   }
 
+  if (!info->pinged) {
+    mongo_util_server_ping(server, MONGO_SERVER_PING TSRMLS_CC);
+  }
+
   return info->readable;
 }
 
@@ -115,7 +149,7 @@ void mongo_util_server_down(mongo_server* server TSRMLS_DC) {
   server_info* info;
 
   if ((info = mongo_util_server__get_info(server)) == 0) {
-    return 0;
+    return;
   }
 
   info->readable = 0;
@@ -142,8 +176,7 @@ server_info* mongo_util_server__get_info(mongo_server *server TSRMLS_DC) {
       return 0;
     }
 
-    info->last_ping = 0;
-    info->readable = 0;
+    memset(info, 0, sizeof(server_info));
     info->ping = MONGO_SERVER_PING;
     info->max_bson_size = MONGO_SERVER_BSON;
 
