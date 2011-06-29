@@ -310,12 +310,14 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
     add_assoc_stringl(data, "root", prefix, prefix_len, 0);
 
     MAKE_STD_ZVAL(response);
+    ZVAL_NULL(response);
 
     // run command
-    MONGO_CMD(response, c->parent); 
+    MONGO_CMD(response, c->parent);
 
     // make sure there wasn't an error
-    if (zend_hash_find(HASH_P(response), "md5", strlen("md5")+1, (void**)&md5) == SUCCESS) {
+    if (!EG(exception) &&
+        zend_hash_find(HASH_P(response), "md5", strlen("md5")+1, (void**)&md5) == SUCCESS) {
       // add it to zfile
       add_assoc_zval(zfile, "md5", *md5);
       /* 
@@ -326,7 +328,9 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
     }
 
     // cleanup
-    zval_ptr_dtor(&response);
+    if (!EG(exception)) {
+      zval_ptr_dtor(&response);
+    }
     zval_ptr_dtor(&data);
   }
 }
