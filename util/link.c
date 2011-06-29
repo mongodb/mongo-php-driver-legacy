@@ -86,7 +86,7 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
   }
 
   // close connection
-  mongo_util_link_disconnect(link);
+  mongo_util_link_disconnect(link TSRMLS_CC);
 
   if (SUCCESS == mongo_util_link_try_connecting(link, errmsg TSRMLS_CC)) {
     mongo_server *server = mongo_util_rs_get_master(link TSRMLS_CC);
@@ -157,11 +157,11 @@ int mongo_util_link_try_connecting(mongo_link *link, zval *errmsg TSRMLS_DC) {
 }
 
 
-void mongo_util_link_disconnect(mongo_link *link) {
+void mongo_util_link_disconnect(mongo_link *link TSRMLS_DC) {
   mongo_server *current = link->server_set->server;
 
   while (current) {
-    mongo_util_disconnect(current);
+    mongo_util_pool_close(current TSRMLS_CC);
     current = current->next;
   }
   

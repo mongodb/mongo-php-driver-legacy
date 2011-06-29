@@ -91,6 +91,20 @@ void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
   mongo_util_pool__rm_server_ptr(monitor, server);
 }
 
+void mongo_util_pool_close(mongo_server *server TSRMLS_DC) {
+  stack_monitor *monitor;
+
+  if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
+    mongo_util_disconnect(server);
+    return;
+  }
+
+  mongo_util_pool__disconnect(monitor, server);
+
+  // clean up reference to server (nothing needs to be freed)
+  mongo_util_pool__rm_server_ptr(monitor, server);
+}
+
 int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {
   stack_monitor *monitor;
   zval *errmsg;
@@ -267,6 +281,7 @@ void mongo_util_pool__rm_server_ptr(stack_monitor *monitor, mongo_server *server
 
   if (monitor->servers == server) {
     monitor->servers = next;
+    monitor->num.in_use--;
     return;
   }
 
@@ -301,7 +316,9 @@ void mongo_util_pool__close_connections(stack_monitor *monitor) {
 
 void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server) {
   mongo_util_disconnect(server);
-  monitor->num.remaining++;
+  if (monitor->num.remaining < -1 || monitor->num.remaining > 0) {
+    monitor->num.remaining++;
+  }
 }
 
 stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {

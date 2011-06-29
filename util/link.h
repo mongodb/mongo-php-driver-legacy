@@ -35,7 +35,7 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
 /**
  * Disconnect all connections used by this link.
  */
-void mongo_util_link_disconnect(mongo_link *link);
+void mongo_util_link_disconnect(mongo_link *link TSRMLS_DC);
 
 /**
  * Connect to the list of seeds.

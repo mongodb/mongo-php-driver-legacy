@@ -118,6 +118,11 @@ void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
  */
 void mongo_util_pool_remove(mongo_server *server TSRMLS_DC);
 
+/**
+ * Closes a connection and removes it from the pool.
+ */
+void mongo_util_pool_close(mongo_server *server TSRMLS_DC);
+
 // ------- Internal Functions -----------
 
 /**
