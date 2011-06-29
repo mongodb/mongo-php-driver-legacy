@@ -30,13 +30,13 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int status;
-  
+
   // sanity check
   if (!link->rs) {
     ZVAL_STRING(errmsg, "Connection is not a replica set", 1);
     return 0;
   }
-  
+
   // see if we need to update hosts or ping them
   mongo_util_rs_ping(link TSRMLS_CC);
 
@@ -69,13 +69,13 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
  */
 mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int connected = 0;
-  
+
   if ((link->server_set->num == 1 && !link->rs && link->server_set->server->connected) ||
       (link->server_set->master && link->server_set->master->connected)) {
     connected = 1;
   }
 
-  // if we're already connected or autoreconnect isn't set, we're all done 
+  // if we're already connected or autoreconnect isn't set, we're all done
   if (!MonGlo(auto_reconnect) || connected) {
     mongo_server *server = mongo_util_rs_get_master(link TSRMLS_CC);
     if (!server) {
@@ -105,19 +105,19 @@ int mongo_util_link_try_connecting(mongo_link *link, zval *errmsg TSRMLS_DC) {
   zval *errmsg_holder = 0;
   mongo_server *current = 0;
   int connected = 0;
-  
+
   // initialize and clear the error message
   MAKE_STD_ZVAL(errmsg_holder);
   ZVAL_NULL(errmsg_holder);
 
   current = link->server_set->server;
   connected = 0;
-  
+
   log0("connecting");
-  
+
   while (current) {
     connected |= (mongo_util_pool_get(current, errmsg TSRMLS_CC) == SUCCESS);
-    
+
     log3("%s:%d connected? %s\n", current->host, current->port, connected == 0 ? "true" : "false");
 
     if (Z_TYPE_P(errmsg_holder) == IS_STRING) {
@@ -128,12 +128,12 @@ int mongo_util_link_try_connecting(mongo_link *link, zval *errmsg TSRMLS_DC) {
       MAKE_STD_ZVAL(errmsg_holder);
       ZVAL_NULL(errmsg_holder);
     }
-    
+
     current = current->next;
   }
 
   zval_ptr_dtor(&errmsg_holder);
-  
+
   if (!connected) {
     if (Z_TYPE_P(errmsg) != IS_STRING) {
       // there should always be an error message, we should never get here
@@ -164,7 +164,7 @@ void mongo_util_link_disconnect(mongo_link *link TSRMLS_DC) {
     mongo_util_pool_close(current TSRMLS_CC);
     current = current->next;
   }
-  
+
   link->server_set->master = 0;
 }
 

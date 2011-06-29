@@ -121,7 +121,7 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
     if (errno != EINPROGRESS)
 #endif
     {
-      ZVAL_STRING(errmsg, strerror(errno), 1);      
+      ZVAL_STRING(errmsg, strerror(errno), 1);
       return FAILURE;
     }
 
@@ -136,13 +136,13 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
       FD_SET(server->socket, &eset);
 
       if (select(server->socket+1, &rset, &wset, &eset, &tval) == 0) {
-        ZVAL_STRING(errmsg, strerror(errno), 1);      
+        ZVAL_STRING(errmsg, strerror(errno), 1);
         return FAILURE;
       }
 
       // if our descriptor has an error
       if (FD_ISSET(server->socket, &eset)) {
-        ZVAL_STRING(errmsg, strerror(errno), 1);      
+        ZVAL_STRING(errmsg, strerror(errno), 1);
         return FAILURE;
       }
 
@@ -210,7 +210,7 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
     // get admin db
     MAKE_STD_ZVAL(db);
     MONGO_METHOD1(Mongo, selectDB, db, connection, db_name);
-  
+
     // log in
     MAKE_STD_ZVAL(ok);
     MONGO_METHOD2(MongoDB, authenticate, ok, db, username, password);
@@ -224,7 +224,7 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
     ZVAL_STRING(errmsg, "failed running authenticate", 1);
     return FAILURE;
   } zend_end_try();
-    
+
   zval_ptr_dtor(&db_name);
   zval_ptr_dtor(&db);
   zval_ptr_dtor(&username);
@@ -234,23 +234,23 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
   temp_link->server_set->server = 0;
   efree(temp_link->server_set);
   temp_link->server_set = 0;
-  zval_ptr_dtor(&connection);  
+  zval_ptr_dtor(&connection);
 
   if (EG(exception)) {
     zval_ptr_dtor(&ok);
     return FAILURE;
   }
-  
+
   if (Z_TYPE_P(ok) == IS_ARRAY) {
     zval **status;
     if (zend_hash_find(HASH_P(ok), "ok", strlen("ok")+1, (void**)&status) == SUCCESS) {
       logged_in = (Z_TYPE_PP(status) == IS_BOOL && Z_BVAL_PP(status)) || Z_DVAL_PP(status) == 1;
     }
-  } 
+  }
   else {
     logged_in = Z_BVAL_P(ok);
   }
-  
+
   // check if we've logged in successfully
   if (!logged_in) {
     char *full_error;
@@ -284,7 +284,7 @@ int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *host, in
 
     if (hostinfo == NULL) {
       char *errstr;
-      spprintf(&errstr, 0, "couldn't get host info for %s", host); 
+      spprintf(&errstr, 0, "couldn't get host info for %s", host);
       ZVAL_STRING(errmsg, errstr, 0);
       return FAILURE;
     }
@@ -304,10 +304,10 @@ int mongo_util_disconnect(mongo_server *server) {
   if (!server || !server->connected) {
     return 0;
   }
-  
+
   server->connected = 0;
   MONGO_UTIL_DISCONNECT(server->socket);
-  
+
   return 1;
 }
 
