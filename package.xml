@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package packagerversion="1.4.11" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 
-  http://pear.php.net/dtd/tasks-1.0.xsd 
-  http://pear.php.net/dtd/package-2.0 
-  http://pear.php.net/dtd/package-2.0.xsd"> 
+<package packagerversion="1.4.11" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
+  http://pear.php.net/dtd/tasks-1.0.xsd
+  http://pear.php.net/dtd/package-2.0
+  http://pear.php.net/dtd/package-2.0.xsd">
  <name>mongo</name>
- <channel>pecl.php.net</channel> 
+ <channel>pecl.php.net</channel>
  <summary>MongoDB database driver</summary>
  <description>This package provides an interface for communicating with the MongoDB database in PHP.</description>
  <lead>
@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2011-02-07</date>
+ <date>2011-06-29</date>
  <time>12:00:00</time>
  <version>
-  <release>1.1.4</release>
-  <api>1.1.4</api>
+  <release>1.2.0</release>
+  <api>1.2.0</api>
  </version>
  <stability>
   <release>stable</release>
@@ -25,11 +25,9 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Fix MongoTimestamp serialization
-  Throw exception when an empty collection name is given
-  Be more paranoid about recv errors
-  Automatically reset query state after running explain()
-  Hack around some mongos command oddities
+  Uses nearest slave for reads with replica set connections.
+  Connection pooling
+  Autodetection of max BSON object size
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -60,6 +58,8 @@
    <file role="src" name="util/pool.h"/>
    <file role="src" name="util/rs.c"/>
    <file role="src" name="util/rs.h"/>
+   <file role="src" name="util/server.c"/>
+   <file role="src" name="util/server.h"/>
   </dir>
  </contents>
  <dependencies>
@@ -69,12 +69,28 @@
    </php>
    <pearinstaller>
     <min>1.4.3</min>
-   </pearinstaller> 
+   </pearinstaller>
   </required>
  </dependencies>
- <providesextension>mongo</providesextension> 
+ <providesextension>mongo</providesextension>
  <extsrcrelease/>
- <changelog> 
+ <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.0</release>
+    <api>1.2.0</api>
+   </version>
+   <date>2011-06-29</date>
+   <notes>
+    Uses nearest slave for reads with replica set connections.
+    Connection pooling
+    Autodetection of max BSON object size
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>
@@ -132,7 +148,7 @@
    </version>
    <date>2011-01-05</date>
    <notes>
-    Fixed replica set persistent connection bug (PHP-184).  
+    Fixed replica set persistent connection bug (PHP-184).
     Make logging build use PHP logs.
     Eliminate sharedFixture from test suite (PHP-180).
     Made MongoTimestamp handle 64-bit integers correctly (PHP-179).
@@ -150,11 +166,11 @@
    <date>2010-12-08</date>
    <notes>
     Replica set reads can be distributed to slaves.  This can be done by calling
-    setSlaveOkay on a connection, database, or collection.  You can see the slave 
-    that will be used with Mongo::getSlave and see/refresh the set status with 
-    Mongo::getHosts.You can now see the server used for a query with 
+    setSlaveOkay on a connection, database, or collection.  You can see the slave
+    that will be used with Mongo::getSlave and see/refresh the set status with
+    Mongo::getHosts.You can now see the server used for a query with
     MongoCursor::info.
-    Added mongo.no_id php.ini option.  
+    Added mongo.no_id php.ini option.
     Better exception is thrown when the database is corrupt.
     Fixed MongoDB::createCollection parameter parsing on 64-bit machines.
    </notes>
@@ -227,11 +243,11 @@
    </version>
    <date>2010-06-28</date>
    <notes>
-    Added w and wtimeout.  GridFS: added get, put, and delete methods, index 
-    checks on all methods, added fields param to GridFS::findOne.  Fixed some 
-    error messages (authentication and BSON deserialization) and handling (for 
-    large messages and field names passed as integers).  Fixed a couple of double 
-    frees and an incorrect cursor boundry condition.  Added MongoId::__set_state 
+    Added w and wtimeout.  GridFS: added get, put, and delete methods, index
+    checks on all methods, added fields param to GridFS::findOne.  Fixed some
+    error messages (authentication and BSON deserialization) and handling (for
+    large messages and field names passed as integers).  Fixed a couple of double
+    frees and an incorrect cursor boundry condition.  Added MongoId::__set_state
     and MongoId::getHostname (to see the hostname hashed for unique ids).
    </notes>
   </release>
@@ -246,11 +262,11 @@
    </version>
    <date>2010-04-28</date>
    <notes>
-    The bug fix release!  A zillion bugfixes and the new static 
+    The bug fix release!  A zillion bugfixes and the new static
     MongoCursor::$timeout property for setting a default timeout for requests.
     Bug fixes include count error handling, fixing double frees with BSON errors
-    and ensureIndex, a mutex fix for FreeBSD, catching socket connection errors 
-    (William Volkman), database commands propagate exceptions, and cursor killing 
+    and ensureIndex, a mutex fix for FreeBSD, catching socket connection errors
+    (William Volkman), database commands propagate exceptions, and cursor killing
     is more efficient.
    </notes>
   </release>
@@ -286,7 +302,7 @@
     New Cursor::info() function, which gives the query, fields, namespace, limit, and
     skip (by Cesar Rodas)
     Added safe option for remove, update, batch, and gridfs insert methods.
-    Added keyf option for MongoCollection::group: pass a MongoCode instance as the 
+    Added keyf option for MongoCollection::group: pass a MongoCode instance as the
     grouping key to use keyf.
     Added comparison handlers for MongoId, allowing you to use, for example, in_array
     with MongoIds.
@@ -556,9 +572,9 @@
      </stability>
      <date>2009-02-24</date>
      <license>Apache License</license>
-     <notes>Initial release.  
+     <notes>Initial release.
        Basic connection and interaction capabilities.</notes>
-   </release> 
+   </release>
  </changelog>
 </package>
 <!--
