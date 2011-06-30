@@ -835,10 +835,8 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(-1, MongoCollection::DESCENDING);
     }
 
-    /**
-     * @expectedException MongoCursorException
-     */
     public function testTags() {
+        // does not throw in 1.8
         $this->object->insert(array("x"=>1), array("safe" => "foo", "wtimeout" => 1000));
     }
 }
