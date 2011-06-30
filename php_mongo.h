@@ -399,7 +399,12 @@ typedef struct {
     zval **safe_pp, **fsync_pp, **timeout_pp;                           \
                                                                         \
     if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp)) { \
-      safe = Z_LVAL_PP(safe_pp);                                        \
+      if (Z_TYPE_PP(safe_pp) == IS_STRING) {                            \
+        safe_str = Z_STRVAL_PP(safe_pp);                                \
+      }                                                                 \
+      else {                                                            \
+        safe = Z_LVAL_PP(safe_pp);                                      \
+      }                                                                 \
     }                                                                   \
     if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp)) { \
       fsync = Z_BVAL_PP(fsync_pp);                                      \

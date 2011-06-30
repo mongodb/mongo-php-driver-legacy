@@ -184,7 +184,7 @@ PHP_METHOD(MongoCollection, validate) {
  */
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC) {
   zval *cmd_ns_z, *cmd, *cursor_z, *temp, *timeout_p;
-  char *cmd_ns;
+  char *cmd_ns, *safe_str = 0;
   mongo_cursor *cursor;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
   mongo_db *db = (mongo_db*)zend_object_store_get_object(c->parent TSRMLS_CC);
@@ -207,10 +207,15 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
     safe = Z_LVAL_P(w);
   }
 
-  if (safe > 1) {
+  if (safe_str || safe > 1) {
     zval *wtimeout;
 
-    add_assoc_long(cmd, "w", safe);
+    if (safe_str) {
+      add_assoc_string(cmd, "w", safe_str, 1);
+    }
+    else {
+      add_assoc_long(cmd, "w", safe);
+    }
 
     wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
     add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
