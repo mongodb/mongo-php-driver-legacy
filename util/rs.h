@@ -25,6 +25,7 @@
  * controls pinging all servers in the set.
  */
 
+#define MONGO_RS "replicaSet"
 
 // ------------ Replica set interface ---------
 
@@ -61,7 +62,7 @@ void mongo_util_rs_ping(mongo_link *link TSRMLS_DC);
  * rs__ismaster and looks through the hosts and passives fields to build a new
  * list of hosts.
  */
-void mongo_util_rs_get_hosts(mongo_link *link TSRMLS_DC);
+void mongo_util_rs_refresh(mongo_link *link, time_t now TSRMLS_DC);
 
 // -------- Internal functions ----------
 
@@ -106,5 +107,7 @@ void mongo_util_rs__repopulate_hosts(zval **hosts, mongo_link *link TSRMLS_DC);
  * Returns the mongo_server on success, 0 on failure.
  */
 mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TSRMLS_DC);
+
+time_t* mongo_util_rs__get_ping(mongo_link *link TSRMLS_DC);
 
 #endif

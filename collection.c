@@ -304,7 +304,7 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
 
   if (FAILURE == mongo_say(server, buf, errmsg TSRMLS_CC)) {
     mongo_util_pool_failed(server, 0 TSRMLS_CC);
-    mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
+    mongo_util_rs_ping(cursor->link TSRMLS_CC);
 
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 16 TSRMLS_CC);
 
@@ -317,7 +317,7 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
   // get reply
   if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
     mongo_util_pool_failed(server, 0 TSRMLS_CC);
-    mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
+    mongo_util_rs_ping(cursor->link TSRMLS_CC);
 
     zval_ptr_dtor(&errmsg);
     cursor->link = 0;
@@ -353,8 +353,7 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
 
     // not master
     if (code == 10058) {
-      mongo_util_pool_failed(server, EVERYONE_DISCONNECTED TSRMLS_CC);
-      mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
+      mongo_util_link_master_failed(cursor->link TSRMLS_CC);
     }
 
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), code TSRMLS_CC);

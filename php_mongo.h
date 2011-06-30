@@ -243,7 +243,6 @@ typedef struct {
 
   int timeout;
   // if this is a replica set
-  int rs;
 
   mongo_server_set *server_set;
 
@@ -255,6 +254,7 @@ typedef struct {
   char *username;
   char *password;
   char *db;
+  char *rs;
 } mongo_link;
 
 #define MONGO_LINK 0

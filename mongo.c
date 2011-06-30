@@ -447,6 +447,7 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
   if (link->username) efree(link->username);
   if (link->password) efree(link->password);
   if (link->db) efree(link->db);
+  if (link->rs) efree(link->rs);
 
   zend_object_std_dtor(&link->std TSRMLS_CC);
 
@@ -964,10 +965,12 @@ PHP_METHOD(Mongo, __construct) {
         link->timeout = Z_LVAL_PP(timeout_z);
       }
       if (zend_hash_find(HASH_P(options), "replicaSet", strlen("replicaSet")+1, (void**)&replica_z) == SUCCESS) {
-        link->rs = Z_BVAL_PP(replica_z);
-      }
-      else {
-        link->rs = 0;
+        if (Z_TYPE_PP(replica_z) == IS_STRING) {
+          link->rs = estrdup(Z_STRVAL_PP(replica_z));
+        }
+        else {
+          link->rs = estrdup("replicaSet");
+        }
       }
 
       if (zend_hash_find(HASH_P(options), "slaveOkay", strlen("slaveOkay")+1, (void**)&slave_okay_z) == SUCCESS) {
@@ -1079,7 +1082,7 @@ PHP_METHOD(Mongo, connectUtil) {
     zend_throw_exception(mongo_ce_ConnectionException, msg, 0 TSRMLS_CC);
   }
   else {
-    mongo_util_rs_get_hosts(link TSRMLS_CC);
+    mongo_util_rs_ping(link TSRMLS_CC);
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
                               strlen("connected"), 1 TSRMLS_CC);
     ZVAL_BOOL(return_value, 1);
@@ -1709,7 +1712,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
           UNLOCK;
           return FAILURE;
         }
-        mongo_util_rs_get_hosts(cursor->link TSRMLS_CC);
+        mongo_util_rs_ping(cursor->link TSRMLS_CC);
         if (!cursor->server->connected) {
           zend_throw_exception(mongo_ce_CursorException, "lost db connection (2)", 9 TSRMLS_CC);
           UNLOCK;

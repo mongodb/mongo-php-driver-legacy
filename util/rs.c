@@ -28,6 +28,9 @@
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
   *mongo_ce_Cursor;
+
+extern int le_pserver;
+
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TSRMLS_DC) {
@@ -182,13 +185,20 @@ void mongo_util_rs__repopulate_hosts(zval **hosts, mongo_link *link TSRMLS_DC) {
   }
 }
 
-void mongo_util_rs_get_hosts(mongo_link *link TSRMLS_DC) {
+void mongo_util_rs_refresh(mongo_link *link, time_t now TSRMLS_DC) {
   mongo_server *current;
   zval **hosts, *good_response = 0;
+  time_t *last_ping = 0;
 
   if (!link->rs) {
     return;
   }
+
+  last_ping = mongo_util_rs__get_ping(link TSRMLS_CC);
+  if (*last_ping + MONGO_PING_INTERVAL > now) {
+    return;
+  }
+  (*last_ping) = now;
 
   // we are going clear the hosts list and repopulate
   current = link->server_set->server;
@@ -222,8 +232,10 @@ void mongo_util_rs_get_hosts(mongo_link *link TSRMLS_DC) {
     efree(prev);
   }
 
-  link->server_set->server = 0;
   link->server_set->num = 0;
+  link->server_set->server = 0;
+  link->server_set->master = 0;
+  link->slave = 0;
 
   log0("parsing replica set\n");
 
@@ -244,7 +256,7 @@ void mongo_util_rs_get_hosts(mongo_link *link TSRMLS_DC) {
 mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
   mongo_server *current;
 
-  log2("[get_master] servers: %d, rs? %d", link->server_set->num, link->rs);
+  log2("[get_master] servers: %d, rs? %s", link->server_set->num, link->rs);
 
   // for a single connection, return it
   if (!link->rs && link->server_set->num == 1) {
@@ -294,6 +306,44 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
   return 0;
 }
 
+time_t* mongo_util_rs__get_ping(mongo_link *link TSRMLS_DC) {
+  zend_rsrc_list_entry *le = 0;
+  char *id;
+
+  id = (char*)emalloc(strlen(link->rs)+strlen(MONGO_RS)+2);
+  memcpy(id, MONGO_RS, strlen(MONGO_RS));
+  memcpy(id+strlen(MONGO_RS), ":", 1);
+  memcpy(id+strlen(MONGO_RS)+1, link->rs, strlen(link->rs));
+  id[strlen(MONGO_RS)+strlen(link->rs)+1] = 0;
+
+  if (zend_hash_find(&EG(persistent_list), id, strlen(id)+1, (void**)&le) == FAILURE) {
+    zend_rsrc_list_entry nle;
+    time_t *t;
+
+    t = (time_t*)malloc(sizeof(time_t));
+    if (!t) {
+      efree(id);
+      return 0;
+    }
+
+    memset(t, 0, sizeof(time_t));
+
+    // registering this links it to the dtor (mongo_util_pool_shutdown) so that
+    // it can be auto-cleaned-up on shutdown
+    nle.ptr = t;
+    nle.type = le_pserver;
+    nle.refcount = 1;
+    zend_hash_add(&EG(persistent_list), id, strlen(id)+1, &nle, sizeof(zend_rsrc_list_entry), NULL);
+
+    efree(id);
+    return t;
+  }
+
+  efree(id);
+  return le->ptr;
+}
+
+
 void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
   int now;
   mongo_server *current;
@@ -303,6 +353,12 @@ void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
   }
 
   now = time(0);
+
+  mongo_util_rs_refresh(link, now TSRMLS_CC);
+
+  if (link->server_set->master == link->slave) {
+    link->slave = 0;
+  }
 
   // find a server with a hosts list
   current = link->server_set->server;

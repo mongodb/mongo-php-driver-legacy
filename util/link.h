@@ -42,5 +42,6 @@ void mongo_util_link_disconnect(mongo_link *link TSRMLS_DC);
  */
 int mongo_util_link_try_connecting(mongo_link *link, zval *errmsg TSRMLS_DC);
 
+void mongo_util_link_master_failed(mongo_link *link TSRMLS_DC);
 
 #endif

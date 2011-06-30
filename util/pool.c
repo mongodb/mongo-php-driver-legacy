@@ -111,11 +111,13 @@ int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {
 
   // some routers cut off connections after x time, so we don't want to drop all
   // of the connections unless we can't reconnect
-  mongo_util_disconnect(server);
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
+    mongo_util_disconnect(server);
     return FAILURE;
   }
+
+  mongo_util_pool__disconnect(monitor, server);
 
   // if we cannot reconnect, we'll assume that this server is down and
   // disconnect everyone

@@ -209,9 +209,10 @@ void gettimeofday(struct timeval *t, void* tz) {
 #endif
 
 void mongo_util_server_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
-  if (!rsrc) {
+  if (!rsrc || !rsrc->ptr) {
     return;
   }
 
+  free(rsrc->ptr);
   rsrc->ptr = 0;
 }
