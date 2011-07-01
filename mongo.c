@@ -968,7 +968,7 @@ PHP_METHOD(Mongo, __construct) {
         if (Z_TYPE_PP(replica_z) == IS_STRING) {
           link->rs = estrdup(Z_STRVAL_PP(replica_z));
         }
-        else {
+        else if (Z_BVAL_PP(replica_z)) {
           link->rs = estrdup("replicaSet");
         }
       }
