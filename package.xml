@@ -13,7 +13,7 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2011-06-29</date>
+ <date>2011-06-30</date>
  <time>12:00:00</time>
  <version>
   <release>1.2.0</release>
@@ -84,7 +84,7 @@
     <release>1.2.0</release>
     <api>1.2.0</api>
    </version>
-   <date>2011-06-29</date>
+   <date>2011-06-30</date>
    <notes>
     Uses nearest slave for reads with replica set connections.
     Connection pooling
