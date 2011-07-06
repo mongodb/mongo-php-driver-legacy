@@ -1684,6 +1684,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   sock = cursor->server->socket;
 
   if (get_header(sock, cursor TSRMLS_CC) == FAILURE) {
+    mongo_util_pool_failed(cursor->server TSRMLS_CC);
     UNLOCK;
     return FAILURE;
   }
@@ -1707,7 +1708,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       else {
         // else if we've failed, just don't add to queue
         // if we can reconnect, continue
-        if (mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC) == FAILURE) {
+        if (mongo_util_pool_failed(cursor->server TSRMLS_CC) == FAILURE) {
           zend_throw_exception(mongo_ce_CursorException, "lost db connection", 9 TSRMLS_CC);
           UNLOCK;
           return FAILURE;
@@ -1742,6 +1743,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       }
 
       if (!response) {
+        mongo_util_pool_failed(cursor->server TSRMLS_CC);
         UNLOCK;
         zend_throw_exception(mongo_ce_CursorException, "couldn't find a response", 9 TSRMLS_CC);
         return FAILURE;
@@ -1750,12 +1752,14 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
     // get the next db response
     if (get_header(sock, cursor TSRMLS_CC) == FAILURE) {
+      mongo_util_pool_failed(cursor->server TSRMLS_CC);
       UNLOCK;
       return FAILURE;
     }
   }
 
   if (FAILURE == get_cursor_body(sock, cursor TSRMLS_CC)) {
+    mongo_util_pool_failed(cursor->server TSRMLS_CC);
     UNLOCK;
 #ifdef WIN32
     zend_throw_exception_ex(mongo_ce_CursorException, 12 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
@@ -1866,7 +1870,7 @@ int mongo_say(mongo_server *server, buffer *buf, zval *errmsg TSRMLS_DC) {
 
   if (_mongo_say(server->socket, buf, errmsg TSRMLS_CC) == FAILURE) {
     // try to reconnect, but we can't retry the send regardless
-    mongo_util_pool_failed(server, 0 TSRMLS_CC);
+    mongo_util_pool_failed(server TSRMLS_CC);
     return FAILURE;
   }
   return SUCCESS;

@@ -223,7 +223,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   ZVAL_NULL(temp);
 
   if(mongo_say(cursor->server, &buf, temp TSRMLS_CC) == FAILURE) {
-    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
+    mongo_util_pool_failed(cursor->server TSRMLS_CC);
     mongo_util_rs_ping(cursor->link TSRMLS_CC);
     efree(buf.start);
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 1 TSRMLS_CC);
@@ -234,7 +234,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   efree(buf.start);
 
   if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
-    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
+    mongo_util_pool_failed(cursor->server TSRMLS_CC);
     mongo_util_rs_ping(cursor->link TSRMLS_CC);
     zval_ptr_dtor(&temp);
     return;
@@ -623,7 +623,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   }
 
   if (mongo_say(cursor->server, &buf, errmsg TSRMLS_CC) == FAILURE) {
-    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
+    mongo_util_pool_failed(cursor->server TSRMLS_CC);
     mongo_util_rs_ping(cursor->link TSRMLS_CC);
 
     if (Z_TYPE_P(errmsg) == IS_STRING) {
@@ -640,7 +640,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   efree(buf.start);
 
   if (php_mongo_get_reply(cursor, errmsg TSRMLS_CC) == FAILURE) {
-    mongo_util_pool_failed(cursor->server, 0 TSRMLS_CC);
+    mongo_util_pool_failed(cursor->server TSRMLS_CC);
     mongo_util_rs_ping(cursor->link TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
     return;

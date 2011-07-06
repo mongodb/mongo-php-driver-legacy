@@ -157,7 +157,7 @@ int mongo_util_link_try_connecting(mongo_link *link, zval *errmsg TSRMLS_DC) {
 }
 
 void mongo_util_link_master_failed(mongo_link *link TSRMLS_DC) {
-  mongo_util_pool_failed(link->server_set->master, EVERYONE_DISCONNECTED TSRMLS_CC);
+  mongo_util_pool_failed(link->server_set->master TSRMLS_CC);
   mongo_util_server_down(link->server_set->master TSRMLS_CC);
 
   link->server_set->master = 0;

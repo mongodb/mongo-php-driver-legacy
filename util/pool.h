@@ -92,20 +92,17 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC);
 void mongo_util_pool_done(mongo_server *server TSRMLS_DC);
 
 /**
- * Attempts to reconnect to the database after an operation has failed.  If it
- * is unable to reconnect, it assumes something is *really* wrong and clears and
- * disconnects the connection stack.
+ * Cleans out connection pool and attempts to reconnect this connection after an
+ * operation has failed.
  *
- * On certain errrors (e.g., replica set failover) we want to disconnect and
- * reconnect everyone.  This function only reconnects sockets that are currently
- * in use (in the servers list) and closes and cleans up all of the dormant
- * servers in the pool.
+ * This was originally less aggressive about closing connections, but it's too
+ * difficult to tell what's a network blip vs. all connections are bad, so this
+ * now cleans out the full pool.
  *
- * If this fails to reconnect a socket, it will simply close (not reconnect) the
- * rest of the sockets to this server (on the assumption that something went
- * wrong with the server itself).
+ * If this fails to reconnect the socket, it will change the server's state to
+ * "down" (see server.h).
  */
-int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC);
+int mongo_util_pool_failed(mongo_server *server TSRMLS_DC);
 
 /**
  * Clean up all pools on shutdown, disconnect all connections.

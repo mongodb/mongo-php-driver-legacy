@@ -105,56 +105,27 @@ void mongo_util_pool_close(mongo_server *server TSRMLS_DC) {
   mongo_util_pool__rm_server_ptr(monitor, server);
 }
 
-int mongo_util_pool_failed(mongo_server *server, int code TSRMLS_DC) {
+int mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
   zval *errmsg;
-
-  // some routers cut off connections after x time, so we don't want to drop all
-  // of the connections unless we can't reconnect
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     mongo_util_disconnect(server);
     return FAILURE;
   }
 
+  mongo_util_pool__close_connections(monitor);
+  // just to be sure
   mongo_util_pool__disconnect(monitor, server);
 
-  // if we cannot reconnect, we'll assume that this server is down and
-  // disconnect everyone
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
+
+  // if we cannot reconnect, we'll assume that this server is down
   if (mongo_util_pool__connect(monitor, server, errmsg TSRMLS_CC) == FAILURE) {
     mongo_util_server_down(server TSRMLS_CC);
-    mongo_util_pool__close_connections(monitor);
     zval_ptr_dtor(&errmsg);
     return FAILURE;
-  }
-
-  // on replica set disconnection, reconnect all members
-  if (code == EVERYONE_DISCONNECTED) {
-    mongo_server *current;
-
-    current = monitor->servers;
-    while (current) {
-
-      // skip the one we did above
-      if (current == server) {
-        current = current->next_in_pool;
-        continue;
-      }
-
-      mongo_util_pool__disconnect(monitor, current);
-
-      // once one connection fails, don't try to reconnect the rest
-      if (Z_TYPE_P(errmsg) == IS_NULL) {
-        mongo_util_pool__connect(monitor, current, errmsg TSRMLS_CC);
-      }
-
-      current = current->next_in_pool;
-    }
-
-    // clear the stack, no point in reconnecting unused connections
-    mongo_util_pool__stack_clear(monitor);
   }
 
   zval_ptr_dtor(&errmsg);
@@ -317,8 +288,10 @@ void mongo_util_pool__close_connections(stack_monitor *monitor) {
 }
 
 void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server) {
+  int was_connected = server->connected;
   mongo_util_disconnect(server);
-  if (monitor->num.remaining < -1 || monitor->num.remaining > 0) {
+  if (was_connected &&
+      (monitor->num.remaining < -1 || monitor->num.remaining > 0)) {
     monitor->num.remaining++;
   }
 }
