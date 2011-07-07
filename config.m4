@@ -19,7 +19,7 @@ if test "$PHP_MONGO" != "no"; then
   dnl default to little-endian
 
   case $build_os in
-  darwin10.*.*)
+  darwin1*.*.*)
     AC_MSG_CHECKING([whether to compile for recent osx architectures])
     CFLAGS="$CFLAGS -arch i386 -arch x86_64 -mmacosx-version-min=10.5"
     AC_MSG_RESULT([yes])
