@@ -21,7 +21,10 @@
 #  ifndef int64_t
      typedef __int64 int64_t;
 #  endif
+#else
+#include <unistd.h>
 #endif
+#include <math.h>
 
 #include <zend_interfaces.h>
 #include <zend_exceptions.h>
@@ -590,15 +593,39 @@ PHP_METHOD(MongoCursor, explain) {
  */
 PHP_METHOD(MongoCursor, doQuery) {
   mongo_cursor *cursor;
+
+  PHP_MONGO_GET_CURSOR(getThis());
+
+  while (mongo_cursor__should_retry(cursor)) {
+    MONGO_METHOD(MongoCursor, reset, return_value, getThis());
+    if (mongo_cursor__do_query(getThis(), return_value TSRMLS_CC) == SUCCESS ||
+        EG(exception)) {
+      return;
+    }
+  }
+
+  zend_throw_exception(mongo_ce_CursorException,
+                       "max number of retries exhausted, couldn't send query",
+                       19 TSRMLS_CC);
+}
+
+int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
+  mongo_cursor *cursor;
   buffer buf;
   zval *errmsg;
 
-  PHP_MONGO_GET_CURSOR(getThis());
+  cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  if (!cursor) {
+    zend_throw_exception(mongo_ce_Exception,
+                         "The MongoCursor object has not been correctly initialized by its constructor",
+                         0 TSRMLS_CC);
+    return FAILURE;
+  }
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (php_mongo_write_query(&buf, cursor TSRMLS_CC) == FAILURE) {
     efree(buf.start);
-    return;
+    return FAILURE;
   }
 
   MAKE_STD_ZVAL(errmsg);
@@ -619,7 +646,7 @@ PHP_METHOD(MongoCursor, doQuery) {
     efree(buf.start);
     zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 14 TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
-    return;
+    return FAILURE;
   }
 
   if (mongo_say(cursor->server, &buf, errmsg TSRMLS_CC) == FAILURE) {
@@ -634,7 +661,7 @@ PHP_METHOD(MongoCursor, doQuery) {
     }
     efree(buf.start);
     zval_ptr_dtor(&errmsg);
-    return;
+    return FAILURE;
   }
 
   efree(buf.start);
@@ -643,7 +670,7 @@ PHP_METHOD(MongoCursor, doQuery) {
     mongo_util_pool_failed(cursor->server TSRMLS_CC);
     mongo_util_rs_ping(cursor->link TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
-    return;
+    return FAILURE;
   }
 
   zval_ptr_dtor(&errmsg);
@@ -652,6 +679,8 @@ PHP_METHOD(MongoCursor, doQuery) {
   if (cursor->cursor_id != 0) {
     php_mongo_create_le(cursor, "cursor_list" TSRMLS_CC);
   }
+
+  return SUCCESS;
 }
 /* }}} */
 
@@ -701,6 +730,37 @@ PHP_METHOD(MongoCursor, key) {
   }
 }
 /* }}} */
+
+int mongo_cursor__should_retry(mongo_cursor *cursor) {
+  int microseconds = 50000, slots = 0, wait_us = 0;
+
+  // never retry commands
+  if (cursor->retry >= 5 ||
+      // allow commands to run once
+      (cursor->retry > 0 && strcmp(".$cmd", cursor->ns+(strlen(cursor->ns)-5)) == 0)) {
+    return 0;
+  }
+
+  slots = (int)pow(2.0, cursor->retry++);
+  wait_us = (rand() % slots) * microseconds;
+
+#ifdef WIN32
+  // windows sleep takes milliseconds
+  Sleep(wait_us*1000);
+#else
+  {
+    // usleep is deprecated
+    struct timespec wait;
+
+    wait.tv_sec = wait_us / 1000000;
+    wait.tv_nsec = (wait_us % 1000000) * 1000;
+
+    nanosleep(&wait, 0);
+  }
+#endif
+
+  return 1;
+}
 
 /* {{{ MongoCursor->next
  */

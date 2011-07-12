@@ -465,6 +465,7 @@ typedef struct {
   zend_bool persist;
 
   zval *current;
+  int retry;
 
 } mongo_cursor;
 
@@ -630,6 +631,10 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
  */
 int mongo_say(mongo_server *server, buffer *buf, zval *errmsg TSRMLS_DC);
 int _mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
+/**
+ * If there was an error, set EG(exception) and return FAILURE. If the socket
+ * was closed, return FAILURE (without setting the exception).
+ */
 int mongo_hear(int sock, void*, int TSRMLS_DC);
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
 /**
@@ -751,6 +756,7 @@ extern zend_module_entry mongo_module_entry;
  * 16: couldn't send safe op
  * 17: exceptional condition on socket
  * 18: Trying to get more, but cannot find server
+ * 19: max number of retries exhausted, couldn't send query
  * various: database error
  */
 

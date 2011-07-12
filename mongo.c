@@ -1529,6 +1529,8 @@ PHP_METHOD(Mongo, forceError) {
  * It returns failure or success and throws an exception on failure.
  */
 static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
+  int status = 0;
+
   // set a timeout
   if (cursor->timeout && cursor->timeout > 0) {
     struct timeval timeout;
@@ -1574,7 +1576,12 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     }
   }
 
-  if (recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS) < INT_32) {
+  status = recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS);
+  // socket has been closed, retry
+  if (status == 0) {
+    return FAILURE;
+  }
+  else if (status < INT_32) {
     zend_throw_exception(mongo_ce_CursorException, "couldn't get response header", 4 TSRMLS_CC);
     return FAILURE;
   }

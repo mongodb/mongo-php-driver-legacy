@@ -24,10 +24,10 @@
 
 #include <zend_exceptions.h>
 
+#include "php_mongo.h"
 #include "gridfs.h"
 #include "collection.h"
 #include "cursor.h"
-#include "php_mongo.h"
 #include "mongo_types.h"
 #include "db.h"
 

@@ -1,13 +1,13 @@
 //cursor.h
 /**
  *  Copyright 2009-2010 10gen, Inc.
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,27 @@
 
 // Cursor flags
 #define TAILABLE 2
-#define SLAVE_OKAY 4 
+#define SLAVE_OKAY 4
 #define OPLOG_REPLAY 8
 #define NO_CURSOR_TO 16
 #define AWAIT_DATA 32
 #define EXHAUST 64
 
 void php_mongo_cursor_free(void *object TSRMLS_DC);
+
+/**
+ * Queries the database. Returns SUCCESS or FAILURE.
+ */
+int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC);
+
+/**
+ * If the query should be send to the db or not.  The rules are:
+ * - db commands should only be sent onces (no retries)
+ * - normal queries should be sent up to 5 times
+ * This uses exponential backoff with a random seed to avoid flooding a
+ * struggling db with retries.
+ */
+int mongo_cursor__should_retry(mongo_cursor *cursor);
 
 PHP_METHOD(MongoCursor, __construct);
 PHP_METHOD(MongoCursor, getNext);
