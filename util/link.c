@@ -22,6 +22,7 @@
 #include "rs.h"
 #include "pool.h"
 #include "connect.h"
+#include "server.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_ConnectionException;
