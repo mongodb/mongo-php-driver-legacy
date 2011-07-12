@@ -20,9 +20,9 @@ class MongoBinDataTest extends PHPUnit_Framework_TestCase
         $bin = new MongoBinData("abcdefg");
         $this->assertEquals($bin->bin, 'abcdefg');
         $this->assertEquals($bin->type, 2);
-        
+
         $this->object->insert( array("bin"=>$bin) );
-      
+
         $obj = $this->object->findOne();
         $this->assertEquals($obj['bin']->bin, 'abcdefg');
         $this->assertEquals($obj['bin']->type, 2);
@@ -93,5 +93,32 @@ class MongoBinDataTest extends PHPUnit_Framework_TestCase
       $this->object->insert(array("bin" => $b));
       $x = $this->object->findOne();
       $this->assertEquals(2, $x['bin']->type);
+    }
+
+    public function testBigData() {
+        $this->object->drop();
+
+        $it = 0;
+        while($it < 45){
+            $datain = '';
+            $counter = 0;
+            while(strlen($datain) < 100000){
+                $datain = $datain.chr($counter);
+                $counter = $counter + 1;
+                if($counter == 255){
+                    $counter = 0;
+                }
+            }
+            $str[$it] = $datain;
+            $it = $it + 1;
+        }
+
+        $dataout = '';
+        foreach($str as $blah){
+            $dataout = $dataout.$blah;
+        }
+
+        $this->object->insert(array("bindata" => new MongoBinData($dataout)));
+        $this->object->findOne();
     }
 }

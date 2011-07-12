@@ -870,6 +870,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
     buf += strlen(buf) + 1;
 
     MAKE_STD_ZVAL(value);
+    ZVAL_NULL(value);
 
     // get value
     switch(type) {

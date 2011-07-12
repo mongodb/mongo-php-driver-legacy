@@ -41,6 +41,7 @@
 #define BSON_MAXKEY 127
 
 #define GROW_SLOWLY 1048576
+#define INVALID_STRING_LEN(len) (len < 0 || len > (64*1024*1024))
 
 #define CREATE_BUF_STATIC(n) char b[n];         \
   buf.start = buf.pos = b;                      \
