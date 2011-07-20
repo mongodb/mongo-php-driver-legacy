@@ -299,7 +299,11 @@ void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server) {
 stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
   zend_rsrc_list_entry *le = 0;
   char *id;
-  size_t len = mongo_util_pool__get_id(server, &id TSRMLS_CC);
+  size_t len;
+
+  if ((len = mongo_util_pool__get_id(server, &id TSRMLS_CC)) == FAILURE) {
+    return 0;
+  }
 
   if (zend_hash_find(&EG(persistent_list), id, len+1, (void**)&le) == FAILURE) {
     zend_rsrc_list_entry nle;
@@ -333,6 +337,10 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
 
 size_t mongo_util_pool__get_id(mongo_server *server, char **id TSRMLS_DC) {
   size_t len;
+
+  if (!server) {
+    return FAILURE;
+  }
 
   len = spprintf(id, 0, "%s:%d.%s.%s.%s", server->host, server->port,
                  server->db ? server->db : "",
