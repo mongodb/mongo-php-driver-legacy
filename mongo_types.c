@@ -705,6 +705,7 @@ PHP_METHOD(MongoDBRef, get) {
     if (strcmp(Z_STRVAL_PP(dbname), Z_STRVAL_P(temp_db->name)) != 0) {
       zval *new_db_z;
       MAKE_STD_ZVAL(new_db_z);
+      ZVAL_NULL(new_db_z);
 
       MONGO_METHOD1(Mongo, selectDB, new_db_z, temp_db->link, *dbname);
 

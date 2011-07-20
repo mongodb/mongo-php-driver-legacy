@@ -1361,6 +1361,7 @@ PHP_METHOD(Mongo, dropDB) {
   if (Z_TYPE_P(db) != IS_OBJECT ||
       Z_OBJCE_P(db) != mongo_ce_DB) {
     MAKE_STD_ZVAL(temp_db);
+    ZVAL_NULL(temp_db);
 
     // reusing db param from Mongo::drop call
     MONGO_METHOD_BASE(Mongo, selectDB)(1, temp_db, NULL, getThis(), 0 TSRMLS_CC);

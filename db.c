@@ -320,6 +320,7 @@ PHP_METHOD(MongoDB, listCollections) {
 
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
+      ZVAL_NULL(next);
 
       MONGO_METHOD(MongoCursor, getNext, next, cursor);
       continue;
@@ -333,6 +334,7 @@ PHP_METHOD(MongoDB, listCollections) {
 
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
+      ZVAL_NULL(next);
 
       MONGO_METHOD(MongoCursor, getNext, next, cursor);
       continue;
@@ -345,14 +347,18 @@ PHP_METHOD(MongoDB, listCollections) {
     if (name == '\0') {
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
+      ZVAL_NULL(next);
 
       MONGO_METHOD(MongoCursor, getNext, next, cursor);
       continue;
     }
 
     MAKE_STD_ZVAL(c);
+    ZVAL_NULL(c);
 
     MAKE_STD_ZVAL(zname);
+    ZVAL_NULL(zname);
+
     // name must be copied because it is a substring of
     // a string that will be garbage collected in a sec
     ZVAL_STRING(zname, name, 1);

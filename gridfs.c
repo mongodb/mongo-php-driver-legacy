@@ -371,6 +371,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   // file array object
   MAKE_STD_ZVAL(zfile);
+  ZVAL_NULL(zfile);
 
   // merge extra & zfile and add _id if needed
   zid = setup_extra(zfile, extra TSRMLS_CC);

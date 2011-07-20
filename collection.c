@@ -738,6 +738,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   if (!done_name) {
     // turn keys into a string
     MAKE_STD_ZVAL(key_str);
+    ZVAL_NULL(key_str);
 
     // MongoCollection::toIndexString()
     MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
