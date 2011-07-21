@@ -53,11 +53,14 @@ typedef struct _stack_node {
 typedef struct {
   // timeout for connections
   time_t timeout;
+  // total time this pool has spent waiting for connections to be recycled
+  int waiting;
 
   // number of servers in the pool
   struct {
     int in_pool;
     int in_use;
+    int total;
     int remaining;
   } num;
 
@@ -161,6 +164,12 @@ void mongo_util_pool__add_server_ptr(stack_monitor *monitor, mongo_server *serve
  * Creates the identifying string for this server's hash table entry.
  */
 size_t mongo_util_pool__get_id(mongo_server *server, char **id TSRMLS_DC);
+
+/**
+ * If there aren't any more connections in the pool, this function will wait
+ * up to monitor->timeout milliseconds.
+ */
+int mongo_util_pool__timeout(stack_monitor *monitor);
 
 /**
  * Create a new connection.  Returns SUCCESS/FAILURE and sets errmsg, never

@@ -318,7 +318,7 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
     memset(monitor, 0, sizeof(stack_monitor));
 
     // set pool size
-    monitor->num.remaining = MonGlo(pool_size);
+    monitor->num.total = monitor->num.remaining = MonGlo(pool_size);
 
     // registering this links it to the dtor (mongo_util_pool_shutdown) so that
     // it can be auto-cleaned-up on shutdown
@@ -350,8 +350,36 @@ size_t mongo_util_pool__get_id(mongo_server *server, char **id TSRMLS_DC) {
   return len;
 }
 
+int mongo_util_pool__timeout(stack_monitor *monitor) {
+  int timeout = monitor->timeout;
+
+  // timeout = -1 returns immediately, so we don't sleep forever if no pool
+  // connections become available
+
+  while (timeout > 0 && monitor->num.remaining == 0) {
+#ifdef WIN32
+    // windows sleep takes milliseconds
+    Sleep(10);
+#else
+    {
+      // usleep is deprecated
+      struct timespec wait;
+
+      wait.tv_sec = 0;
+      wait.tv_nsec = 10000000;
+
+      nanosleep(&wait, 0);
+    }
+#endif
+    timeout -= 10;
+    monitor->waiting += 10;
+  }
+
+  return monitor->num.remaining > 0 ? SUCCESS : FAILURE;
+}
+
 int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval *errmsg TSRMLS_DC) {
-  if (monitor->num.remaining == 0) {
+  if (mongo_util_pool__timeout(monitor) == FAILURE) {
     ZVAL_STRING(errmsg, "no more connections in pool", 1);
     return FAILURE;
   }
@@ -360,6 +388,9 @@ int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval 
       // authenticate, if necessary
       mongo_util_connect_authenticate(server, errmsg TSRMLS_CC) == SUCCESS) {
     monitor->num.remaining--;
+    if (monitor->num.total > 0 && monitor->num.remaining < 0) {
+      monitor->num.remaining = 0;
+    }
     server->connected = 1;
     return SUCCESS;
   }
@@ -411,6 +442,7 @@ PHP_METHOD(Mongo, poolDebug) {
     add_assoc_long(m, "in pool", monitor->num.in_pool);
     add_assoc_long(m, "remaining", monitor->num.remaining);
     add_assoc_long(m, "timeout", monitor->timeout);
+    add_assoc_long(m, "waiting", monitor->waiting);
 
     if (zend_hash_get_current_key_ex(&EG(persistent_list), &key, &key_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
       add_assoc_zval(return_value, key, m);
