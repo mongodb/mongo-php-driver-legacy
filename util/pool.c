@@ -375,7 +375,7 @@ int mongo_util_pool__timeout(stack_monitor *monitor) {
     monitor->waiting += 10;
   }
 
-  return monitor->num.remaining > 0 ? SUCCESS : FAILURE;
+  return monitor->num.remaining != 0 ? SUCCESS : FAILURE;
 }
 
 int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval *errmsg TSRMLS_DC) {
