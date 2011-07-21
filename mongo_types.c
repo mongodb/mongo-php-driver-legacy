@@ -1,13 +1,13 @@
 //mongo_types.c
 /**
  *  Copyright 2009-2010 10gen, Inc.
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,9 +62,9 @@ void generate_id(char *data TSRMLS_DC) {
 #endif
 
   unsigned t = (unsigned) time(0);
-  char *T = (char*)&t, 
-    *M = (char*)&MonGlo(machine), 
-    *P = (char*)&pid, 
+  char *T = (char*)&t,
+    *M = (char*)&MonGlo(machine),
+    *P = (char*)&pid,
     *I = (char*)&inc;
 
   // inc
@@ -201,14 +201,14 @@ static function_entry MongoId_methods[] = {
 };
 
 void mongo_init_MongoId(TSRMLS_D) {
-  zend_class_entry id; 
-  INIT_CLASS_ENTRY(id, "MongoId", MongoId_methods); 
+  zend_class_entry id;
+  INIT_CLASS_ENTRY(id, "MongoId", MongoId_methods);
 
   id.create_object = php_mongo_id_new;
   id.serialize = php_mongo_id_serialize;
   id.unserialize = php_mongo_id_unserialize;
 
-  mongo_ce_Id = zend_register_internal_class(&id TSRMLS_CC); 
+  mongo_ce_Id = zend_register_internal_class(&id TSRMLS_CC);
 
   if (!MonGlo(no_id)) {
     zend_declare_property_null(mongo_ce_Id, "$id", strlen("$id"), ZEND_ACC_PUBLIC TSRMLS_CC);
@@ -226,9 +226,9 @@ PHP_METHOD(MongoId, __construct) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &id) == FAILURE) {
     return;
   }
-  
-  if (id && 
-      Z_TYPE_P(id) == IS_STRING && 
+
+  if (id &&
+      Z_TYPE_P(id) == IS_STRING &&
       Z_STRLEN_P(id) == 24) {
     int i;
     for(i=0;i<12;i++) {
@@ -236,15 +236,15 @@ PHP_METHOD(MongoId, __construct) {
       digit1 = digit1 >= 'a' && digit1 <= 'f' ? digit1 - 87 : digit1;
       digit1 = digit1 >= 'A' && digit1 <= 'F' ? digit1 - 55 : digit1;
       digit1 = digit1 >= '0' && digit1 <= '9' ? digit1 - 48 : digit1;
-      
+
       digit2 = digit2 >= 'a' && digit2 <= 'f' ? digit2 - 87 : digit2;
       digit2 = digit2 >= 'A' && digit2 <= 'F' ? digit2 - 55 : digit2;
       digit2 = digit2 >= '0' && digit2 <= '9' ? digit2 - 48 : digit2;
-      
+
       this_id->id[i] = digit1*16+digit2;
     }
   }
-  else if (id && 
+  else if (id &&
            Z_TYPE_P(id) == IS_OBJECT &&
            Z_OBJCE_P(id) == mongo_ce_Id) {
     mongo_id *that_id = (mongo_id*)zend_object_store_get_object(id TSRMLS_CC);
@@ -257,7 +257,7 @@ PHP_METHOD(MongoId, __construct) {
   if (!MonGlo(no_id)) {
     MAKE_STD_ZVAL(str);
     ZVAL_NULL(str);
-    
+
     MONGO_METHOD(MongoId, __toString, str, getThis());
     zend_update_property(mongo_ce_Id, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
     zval_ptr_dtor(&str);
@@ -266,7 +266,7 @@ PHP_METHOD(MongoId, __construct) {
 /* }}} */
 
 
-/* {{{ MongoId::__toString() 
+/* {{{ MongoId::__toString()
  */
 PHP_METHOD(MongoId, __toString) {
   int i;
@@ -297,7 +297,7 @@ PHP_METHOD(MongoId, __toString) {
 }
 /* }}} */
 
-/* {{{ MongoId::__set_state() 
+/* {{{ MongoId::__set_state()
  */
 PHP_METHOD(MongoId, __set_state) {
   zval temp, *dummy;
@@ -318,7 +318,7 @@ PHP_METHOD(MongoId, getTimestamp) {
   int ts = 0, i;
   mongo_id *id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED_STRING(id->id, MongoId);
-  
+
   for (i=0; i<4; i++) {
     int x = ((int)id->id[i] < 0) ? 256+id->id[i] : id->id[i];
     ts = (ts*256) + x;
@@ -332,7 +332,7 @@ PHP_METHOD(MongoId, getTimestamp) {
  */
 PHP_METHOD(MongoId, getPID) {
   int pid;
-  
+
 #ifdef WIN32
   pid = GetCurrentThreadId();
 #else
@@ -435,7 +435,7 @@ void mongo_init_MongoDate(TSRMLS_D) {
   zend_declare_property_long(mongo_ce_Date, "usec", strlen("usec"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 }
 
-/* {{{ MongoBinData::__construct() 
+/* {{{ MongoBinData::__construct()
  */
 PHP_METHOD(MongoBinData, __construct) {
   char *bin;
@@ -444,14 +444,14 @@ PHP_METHOD(MongoBinData, __construct) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &bin, &bin_len, &type) == FAILURE) {
     return;
   }
-  
+
   zend_update_property_stringl(mongo_ce_BinData, getThis(), "bin", strlen("bin"), bin, bin_len TSRMLS_CC);
   zend_update_property_long(mongo_ce_BinData, getThis(), "type", strlen("type"), type TSRMLS_CC);
 }
 /* }}} */
 
 
-/* {{{ MongoBinData::__toString() 
+/* {{{ MongoBinData::__toString()
  */
 PHP_METHOD(MongoBinData, __toString) {
   RETURN_STRING( "<Mongo Binary Data>", 1 );
@@ -474,7 +474,7 @@ void mongo_init_MongoBinData(TSRMLS_D) {
   // fields
   zend_declare_property_string(mongo_ce_BinData, "bin", strlen("bin"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
   zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
- 
+
   // constants
   // can't use FUNCTION because it's a reserved word
   zend_declare_class_constant_long(mongo_ce_BinData, "FUNC", strlen("FUNC"), 0x01 TSRMLS_CC);
@@ -485,7 +485,7 @@ void mongo_init_MongoBinData(TSRMLS_D) {
   zend_declare_class_constant_long(mongo_ce_BinData, "CUSTOM", strlen("CUSTOM"), 0x80 TSRMLS_CC);
 }
 
-/* {{{ MongoRegex::__construct() 
+/* {{{ MongoRegex::__construct()
  */
 PHP_METHOD(MongoRegex, __construct) {
   zval *regex;
@@ -564,7 +564,7 @@ void mongo_init_MongoRegex(TSRMLS_D) {
 
 
 
-/* {{{ MongoCode::__construct(string) 
+/* {{{ MongoCode::__construct(string)
  */
 PHP_METHOD(MongoCode, __construct) {
   char *code;
@@ -593,7 +593,7 @@ PHP_METHOD(MongoCode, __construct) {
 /* }}} */
 
 
-/* {{{ MongoCode::__toString() 
+/* {{{ MongoCode::__toString()
  */
 PHP_METHOD(MongoCode, __toString ) {
   zval *zode = zend_read_property(mongo_ce_Code, getThis(), "code", strlen("code"), NOISY TSRMLS_CC);
@@ -609,9 +609,9 @@ static function_entry MongoCode_methods[] = {
 };
 
 void mongo_init_MongoCode(TSRMLS_D) {
-  zend_class_entry ce; 
-  INIT_CLASS_ENTRY(ce, "MongoCode", MongoCode_methods); 
-  mongo_ce_Code = zend_register_internal_class(&ce TSRMLS_CC); 
+  zend_class_entry ce;
+  INIT_CLASS_ENTRY(ce, "MongoCode", MongoCode_methods);
+  mongo_ce_Code = zend_register_internal_class(&ce TSRMLS_CC);
 
   zend_declare_property_string(mongo_ce_Code, "code", strlen("code"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
   zend_declare_property_null(mongo_ce_Code, "scope", strlen("scope"), ZEND_ACC_PUBLIC TSRMLS_CC);
@@ -633,11 +633,11 @@ PHP_METHOD(MongoDBRef, create) {
 
   // add collection name
   convert_to_string(zns);
-  add_assoc_zval(return_value, "$ref", zns); 
+  add_assoc_zval(return_value, "$ref", zns);
   zval_add_ref(&zns);
 
   // add id field
-  add_assoc_zval(return_value, "$id", zid); 
+  add_assoc_zval(return_value, "$id", zid);
   zval_add_ref(&zid);
 
   // if we got a database name, add that, too
@@ -679,7 +679,7 @@ PHP_METHOD(MongoDBRef, get) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &db, mongo_ce_DB, &ref) == FAILURE) {
     return;
   }
-  
+
   if (IS_SCALAR_P(ref) ||
       zend_hash_find(HASH_P(ref), "$ref", strlen("$ref")+1, (void**)&ns) == FAILURE ||
       zend_hash_find(HASH_P(ref), "$id", strlen("$id")+1, (void**)&id) == FAILURE) {
@@ -720,13 +720,13 @@ PHP_METHOD(MongoDBRef, get) {
   // get the collection
   MAKE_STD_ZVAL(collection);
   MONGO_METHOD1(MongoDB, selectCollection, collection, db, *ns);
-  
+
   // query for the $id
   MAKE_STD_ZVAL(query);
   array_init(query);
   add_assoc_zval(query, "_id", *id);
   zval_add_ref(id);
-  
+
   // return whatever's there
   MONGO_METHOD1(MongoCollection, findOne, return_value, collection, query);
 
@@ -789,7 +789,7 @@ PHP_METHOD(MongoTimestamp, __construct) {
   if (ZEND_NUM_ARGS() <= 1 && !inc) {
     inc = MonGlo(ts_inc)++;
   }
-  
+
   zend_update_property_long(mongo_ce_Timestamp, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
   zend_update_property_long(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), inc TSRMLS_CC);
 }
@@ -806,7 +806,7 @@ PHP_METHOD(MongoTimestamp, __toString) {
 
 
 
-/* {{{ MongoInt32::__construct(string) 
+/* {{{ MongoInt32::__construct(string)
  */
 PHP_METHOD(MongoInt32, __construct) {
   char *value;
@@ -821,7 +821,7 @@ PHP_METHOD(MongoInt32, __construct) {
 /* }}} */
 
 
-/* {{{ MongoInt32::__toString() 
+/* {{{ MongoInt32::__toString()
  */
 PHP_METHOD(MongoInt32, __toString ) {
   zval *zode = zend_read_property(mongo_ce_Int32, getThis(), "value", strlen("value"), NOISY TSRMLS_CC);
@@ -837,16 +837,16 @@ static function_entry MongoInt32_methods[] = {
 };
 
 void mongo_init_MongoInt32(TSRMLS_D) {
-  zend_class_entry ce; 
-  INIT_CLASS_ENTRY(ce, "MongoInt32", MongoInt32_methods); 
-  mongo_ce_Int32 = zend_register_internal_class(&ce TSRMLS_CC); 
+  zend_class_entry ce;
+  INIT_CLASS_ENTRY(ce, "MongoInt32", MongoInt32_methods);
+  mongo_ce_Int32 = zend_register_internal_class(&ce TSRMLS_CC);
 
   zend_declare_property_string(mongo_ce_Int32, "value", strlen("value"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
 }
 
 
 
-/* {{{ MongoInt64::__construct(string) 
+/* {{{ MongoInt64::__construct(string)
  */
 PHP_METHOD(MongoInt64, __construct) {
   char *value;
@@ -861,7 +861,7 @@ PHP_METHOD(MongoInt64, __construct) {
 /* }}} */
 
 
-/* {{{ MongoInt64::__toString() 
+/* {{{ MongoInt64::__toString()
  */
 PHP_METHOD(MongoInt64, __toString ) {
   zval *zode = zend_read_property(mongo_ce_Int64, getThis(), "value", strlen("value"), NOISY TSRMLS_CC);
@@ -877,9 +877,9 @@ static function_entry MongoInt64_methods[] = {
 };
 
 void mongo_init_MongoInt64(TSRMLS_D) {
-  zend_class_entry ce; 
-  INIT_CLASS_ENTRY(ce, "MongoInt64", MongoInt64_methods); 
-  mongo_ce_Int64 = zend_register_internal_class(&ce TSRMLS_CC); 
+  zend_class_entry ce;
+  INIT_CLASS_ENTRY(ce, "MongoInt64", MongoInt64_methods);
+  mongo_ce_Int64 = zend_register_internal_class(&ce TSRMLS_CC);
 
   zend_declare_property_string(mongo_ce_Int64, "value", strlen("value"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
 }
