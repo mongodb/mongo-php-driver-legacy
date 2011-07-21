@@ -746,7 +746,7 @@ int mongo_cursor__should_retry(mongo_cursor *cursor) {
 
 #ifdef WIN32
   // windows sleep takes milliseconds
-  Sleep(wait_us*1000);
+  Sleep(wait_us/1000);
 #else
   {
     // usleep is deprecated
