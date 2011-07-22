@@ -933,6 +933,16 @@ mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link 
   server->port = port;
   spprintf(&server->label, 0, "%s:%d", host, port);
 
+  if (link->username) {
+    server->username = estrdup(link->username);
+  }
+  if (link->password) {
+    server->password = estrdup(link->password);
+  }
+  if (link->db) {
+    server->db = estrdup(link->db);
+  }
+
   return server;
 }
 
