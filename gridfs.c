@@ -564,6 +564,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   // file array object
   MAKE_STD_ZVAL(zfile);
+  ZVAL_NULL(zfile);
 
   // merge extra & zfile and add _id if needed
   zid = setup_extra(zfile, extra TSRMLS_CC);
@@ -740,6 +741,7 @@ PHP_METHOD(MongoGridFS, remove) {
     add_assoc_zval(temp, "files_id", *id);
 
     MAKE_STD_ZVAL(temp_return);
+    ZVAL_NULL(temp_return);
 
     MONGO_METHOD2(MongoCollection, remove, temp_return, chunks, temp, options);
     zval_ptr_dtor(&temp);
