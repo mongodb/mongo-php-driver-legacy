@@ -1201,7 +1201,7 @@ PHP_METHOD(MongoCollection, __get) {
 /* }}} */
 
 
-static function_entry MongoCollection_methods[] = {
+static zend_function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, __toString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, __get, arginfo___get, ZEND_ACC_PUBLIC)

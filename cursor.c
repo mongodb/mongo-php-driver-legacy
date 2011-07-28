@@ -962,7 +962,7 @@ PHP_METHOD(MongoCursor, count) {
   zval_ptr_dtor(&db_z);
 }
 
-static function_entry MongoCursor_methods[] = {
+static zend_function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, __construct, NULL, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hasNext, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, getNext, NULL, ZEND_ACC_PUBLIC)

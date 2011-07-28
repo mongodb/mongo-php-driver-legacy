@@ -685,7 +685,7 @@ PHP_METHOD(MongoDB, __get) {
 
 
 
-static function_entry MongoDB_methods[] = {
+static zend_function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, __toString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, __get, arginfo___get, ZEND_ACC_PUBLIC)

@@ -117,13 +117,13 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
 ZEND_END_ARG_INFO()
 
 
-function_entry mongo_functions[] = {
+zend_function_entry mongo_functions[] = {
   PHP_FE(bson_encode, NULL)
   PHP_FE(bson_decode, NULL)
   { NULL, NULL, NULL }
 };
 
-static function_entry mongo_methods[] = {
+static zend_function_entry mongo_methods[] = {
   PHP_ME(Mongo, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, connect, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, pairConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
@@ -249,7 +249,7 @@ static void php_mongo_server_set_free(mongo_server_set *server_set TSRMLS_DC) {
 }
 
 // tell db to destroy its cursor
-static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
+static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
   mongo_cursor *cursor = node->cursor;
   char quickbuf[128];
   buffer buf;
@@ -295,7 +295,7 @@ static void kill_cursor(cursor_node *node, list_entry *le TSRMLS_DC) {
   php_mongo_free_cursor_node(node, le);
 }
 
-void php_mongo_free_cursor_node(cursor_node *node, list_entry *le) {
+void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le) {
 
   /*
    * [node1][<->][NODE2][<->][node3]
@@ -330,7 +330,7 @@ void php_mongo_free_cursor_node(cursor_node *node, list_entry *le) {
 }
 
 int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
-  list_entry *le;
+  zend_rsrc_list_entry *le;
 
   LOCK;
 
@@ -368,7 +368,7 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
 }
 
 int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC) {
-  list_entry *le;
+  zend_rsrc_list_entry *le;
   cursor_node *new_node;
 
   LOCK;
@@ -419,11 +419,11 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC) {
     new_node->prev = prev;
   }
   else {
-    list_entry new_le;
+    zend_rsrc_list_entry new_le;
     new_le.ptr = new_node;
     new_le.type = le_cursor_list;
     new_le.refcount = 1;
-    zend_hash_add(&EG(persistent_list), name, strlen(name)+1, &new_le, sizeof(list_entry), NULL);
+    zend_hash_add(&EG(persistent_list), name, strlen(name)+1, &new_le, sizeof(zend_rsrc_list_entry), NULL);
   }
 
   UNLOCK;
@@ -1680,7 +1680,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   // this cursor has already been processed
   if (cursor->send.request_id < MonGlo(response_num)) {
     cursor_node *response = 0;
-    list_entry *le;
+    zend_rsrc_list_entry *le;
 
     if (zend_hash_find(&EG(persistent_list), "response_list", strlen("response_list") + 1, (void**)&le) == SUCCESS) {
       response = le->ptr;
@@ -1743,7 +1743,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     // otherwise, check if the response is on the queue
     else {
       cursor_node *response = 0;
-      list_entry *le;
+      zend_rsrc_list_entry *le;
 
       if (zend_hash_find(&EG(persistent_list), "response_list", strlen("response_list") + 1, (void**)&le) == SUCCESS) {
         response = le->ptr;

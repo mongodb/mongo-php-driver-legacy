@@ -487,7 +487,7 @@ typedef struct _cursor_node {
   struct _cursor_node *prev;
 } cursor_node;
 
-void php_mongo_free_cursor_node(cursor_node*, list_entry*);
+void php_mongo_free_cursor_node(cursor_node*, zend_rsrc_list_entry*);
 
 typedef struct {
   zend_object std;

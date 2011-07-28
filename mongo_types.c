@@ -189,7 +189,7 @@ static zend_object_value php_mongo_id_new(zend_class_entry *class_type TSRMLS_DC
   return retval;
 }
 
-static function_entry MongoId_methods[] = {
+static zend_function_entry MongoId_methods[] = {
   PHP_ME(MongoId, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoId, __toString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoId, __set_state, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
@@ -419,7 +419,7 @@ PHP_METHOD(MongoDate, __toString) {
 
 
 
-static function_entry MongoDate_methods[] = {
+static zend_function_entry MongoDate_methods[] = {
   PHP_ME(MongoDate, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDate, __toString, NULL, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
@@ -459,7 +459,7 @@ PHP_METHOD(MongoBinData, __toString) {
 /* }}} */
 
 
-static function_entry MongoBinData_methods[] = {
+static zend_function_entry MongoBinData_methods[] = {
   PHP_ME(MongoBinData, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoBinData, __toString, NULL, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
@@ -546,7 +546,7 @@ PHP_METHOD(MongoRegex, __toString) {
 /* }}} */
 
 
-static function_entry MongoRegex_methods[] = {
+static zend_function_entry MongoRegex_methods[] = {
   PHP_ME(MongoRegex, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoRegex, __toString, NULL, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
@@ -602,7 +602,7 @@ PHP_METHOD(MongoCode, __toString ) {
 /* }}} */
 
 
-static function_entry MongoCode_methods[] = {
+static zend_function_entry MongoCode_methods[] = {
   PHP_ME(MongoCode, __construct, NULL, ZEND_ACC_PUBLIC )
   PHP_ME(MongoCode, __toString, NULL, ZEND_ACC_PUBLIC )
   { NULL, NULL, NULL }
@@ -739,7 +739,7 @@ PHP_METHOD(MongoDBRef, get) {
 }
 /* }}} */
 
-static function_entry MongoDBRef_methods[] = {
+static zend_function_entry MongoDBRef_methods[] = {
   PHP_ME(MongoDBRef, create, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(MongoDBRef, isRef, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(MongoDBRef, get, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
@@ -757,7 +757,7 @@ void mongo_init_MongoDBRef(TSRMLS_D) {
   zend_declare_property_string(mongo_ce_DBRef, "idKey", strlen("idKey"), "$id", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
-static function_entry MongoTimestamp_methods[] = {
+static zend_function_entry MongoTimestamp_methods[] = {
   PHP_ME(MongoTimestamp, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoTimestamp, __toString, NULL, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
@@ -830,7 +830,7 @@ PHP_METHOD(MongoInt32, __toString ) {
 /* }}} */
 
 
-static function_entry MongoInt32_methods[] = {
+static zend_function_entry MongoInt32_methods[] = {
   PHP_ME(MongoInt32, __construct, NULL, ZEND_ACC_PUBLIC )
   PHP_ME(MongoInt32, __toString, NULL, ZEND_ACC_PUBLIC )
   { NULL, NULL, NULL }
@@ -870,7 +870,7 @@ PHP_METHOD(MongoInt64, __toString ) {
 /* }}} */
 
 
-static function_entry MongoInt64_methods[] = {
+static zend_function_entry MongoInt64_methods[] = {
   PHP_ME(MongoInt64, __construct, NULL, ZEND_ACC_PUBLIC )
   PHP_ME(MongoInt64, __toString, NULL, ZEND_ACC_PUBLIC )
   { NULL, NULL, NULL }

@@ -836,7 +836,7 @@ PHP_METHOD(MongoGridFS, put) {
   MONGO_METHOD_BASE(MongoGridFS, storeFile)(ZEND_NUM_ARGS(), return_value, NULL, getThis(), 0 TSRMLS_CC);
 }
 
-static function_entry MongoGridFS_methods[] = {
+static zend_function_entry MongoGridFS_methods[] = {
   PHP_ME(MongoGridFS, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, drop, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, find, NULL, ZEND_ACC_PUBLIC)
@@ -1083,7 +1083,7 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
   return total;
 }
 
-static function_entry MongoGridFSFile_methods[] = {
+static zend_function_entry MongoGridFSFile_methods[] = {
   PHP_ME(MongoGridFSFile, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSFile, getFilename, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSFile, getSize, NULL, ZEND_ACC_PUBLIC)
@@ -1155,7 +1155,7 @@ PHP_METHOD(MongoGridFSCursor, key) {
 }
 
 
-static function_entry MongoGridFSCursor_methods[] = {
+static zend_function_entry MongoGridFSCursor_methods[] = {
   PHP_ME(MongoGridFSCursor, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSCursor, getNext, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSCursor, current, NULL, ZEND_ACC_PUBLIC)
