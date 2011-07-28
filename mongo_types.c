@@ -243,24 +243,33 @@ PHP_METHOD(MongoId, __construct) {
 
       this_id->id[i] = digit1*16+digit2;
     }
+
+    if (!MonGlo(no_id)) {
+      zend_update_property(mongo_ce_Id, getThis(), "$id", strlen("$id"), id TSRMLS_CC);
+    }
   }
   else if (id &&
            Z_TYPE_P(id) == IS_OBJECT &&
            Z_OBJCE_P(id) == mongo_ce_Id) {
     mongo_id *that_id = (mongo_id*)zend_object_store_get_object(id TSRMLS_CC);
     memcpy(this_id->id, that_id->id, OID_SIZE);
+
+    if (!MonGlo(no_id)) {
+      zval *str = zend_read_property(mongo_ce_Id, id, "$id", strlen("$id"), NOISY TSRMLS_CC);
+      zend_update_property(mongo_ce_Id, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
+    }
   }
   else {
     generate_id(this_id->id TSRMLS_CC);
-  }
 
-  if (!MonGlo(no_id)) {
-    MAKE_STD_ZVAL(str);
-    ZVAL_NULL(str);
+    if (!MonGlo(no_id)) {
+      MAKE_STD_ZVAL(str);
+      ZVAL_NULL(str);
 
-    MONGO_METHOD(MongoId, __toString, str, getThis());
-    zend_update_property(mongo_ce_Id, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
-    zval_ptr_dtor(&str);
+      MONGO_METHOD(MongoId, __toString, str, getThis());
+      zend_update_property(mongo_ce_Id, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
+      zval_ptr_dtor(&str);
+    }
   }
 }
 /* }}} */
@@ -283,11 +292,18 @@ PHP_METHOD(MongoId, __toString) {
   movable = id;
   for(i=0; i<12; i++) {
     int x = *id_str;
+    char digit1, digit2;
+
     if (*id_str < 0) {
       x = 256 + *id_str;
     }
-    sprintf(movable, "%02x", x);
-    movable += 2;
+
+    digit1 = x / 16;
+    digit2 = x % 16;
+
+    id[2*i]   = (digit1 < 10) ? '0' + digit1 : digit1 - 10 + 'a';
+    id[2*i+1] = (digit2 < 10) ? '0' + digit2 : digit2 - 10 + 'a';
+
     id_str++;
   }
 
