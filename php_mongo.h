@@ -570,59 +570,26 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
  */
 
 #ifdef WIN32
-#define LOCK {                                  \
+#define LOCK(lk) {                              \
     int ret = -1;                               \
     int tries = 0;                              \
                                                 \
     while (tries++ < 3 && ret != 0) {                 \
-      ret = WaitForSingleObject(cursor_mutex, 5000);  \
+      ret = WaitForSingleObject(lk##_mutex, 5000);    \
       if (ret != 0) {                                 \
         if (ret == WAIT_TIMEOUT) {                    \
           continue;                                   \
         }                                             \
         else {                                                          \
-          zend_throw_exception_ex(mongo_ce_Exception, 13 TSRMLS_CC, "mutex error: %s", strerror(GetLastError())); \
-          return ret;                                                   \
+          break;                                                        \
         }                                                               \
       }                                                                 \
     }                                                                   \
   }
-#define UNLOCK {                                       \
-    int ret = ReleaseMutex(cursor_mutex);              \
-    if (ret == 0) {                                                     \
-      zend_throw_exception_ex(mongo_ce_Exception, 13 TSRMLS_CC, "mutex error: %s", strerror(GetLastError())); \
-      return ret;                                                       \
-    }                                                                   \
-  }
+#define UNLOCK(lk) ReleaseMutex(lk##_mutex);
 #else
-#define CHECK_LOCK_ERR                          \
-  if (ret == -1) {                              \
-    if (errno == EAGAIN || errno == EBUSY) {    \
-      continue;                                 \
-    }                                           \
-    else {                                      \
-      zend_throw_exception_ex(mongo_ce_Exception, 13 TSRMLS_CC, "mutex error: %d", strerror(errno)); \
-      return ret;                               \
-    }                                           \
-  }
-#define LOCK {                                  \
-    int ret = -1;                               \
-    int tries = 0;                              \
-                                                \
-    while (tries++ < 3 && ret != 0) {                     \
-      ret = pthread_mutex_lock(&cursor_mutex);            \
-      CHECK_LOCK_ERR;                                     \
-    }                                                     \
-  }
-#define UNLOCK {                                    \
-    int ret = -1;                                   \
-    int tries = 0;                                  \
-                                                    \
-    while (tries++ < 3 && ret != 0) {               \
-      ret = pthread_mutex_unlock(&cursor_mutex);    \
-      CHECK_LOCK_ERR;                               \
-    }                                               \
-  }
+#define LOCK(lk) pthread_mutex_lock(&lk##_mutex);
+#define UNLOCK(lk) pthread_mutex_unlock(&lk##_mutex);
 #endif
 
 
