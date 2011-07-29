@@ -64,7 +64,9 @@ typedef struct {
     int remaining;
   } num;
 
+  // the actual pool
   stack_node *top;
+
   // a pointer to each of the server structs using a connection from this pool,
   // so we can disconnect them all if something goes wrong.
   mongo_server *servers;

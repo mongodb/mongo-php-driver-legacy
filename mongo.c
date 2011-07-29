@@ -72,6 +72,7 @@ static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor
 
 #if WIN32
 static HANDLE cursor_mutex;
+extern HANDLE pool_mutex;
 #else
 static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
@@ -549,7 +550,8 @@ PHP_MINIT_FUNCTION(mongo) {
 
 #ifdef WIN32
   cursor_mutex = CreateMutex(NULL, FALSE, NULL);
-  if (cursor_mutex == NULL) {
+  pool_mutex = CreateMutex(NULL, FALSE, NULL);
+  if (cursor_mutex == NULL || pool_mutex == NULL) {
     php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
     return FAILURE;
   }
@@ -642,7 +644,7 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
 
 #if WIN32
   // 0 is failure
-  if (CloseHandle(cursor_mutex) == 0) {
+  if (CloseHandle(cursor_mutex) == 0 || CloseHandle(pool_mutex) == 0) {
     php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
     return FAILURE;
   }
