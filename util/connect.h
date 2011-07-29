@@ -24,7 +24,7 @@
   closesocket(socket);                                          \
   WSACleanup();
 #else
-#define MONGO_UTIL_DISCONNECT(socket) close(socket);
+#define MONGO_UTIL_DISCONNECT(socket) shutdown((socket), 2);
 #endif
 
 /**

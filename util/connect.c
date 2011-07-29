@@ -98,6 +98,7 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
 
   // get addresses
   if (mongo_util_connect__sockaddr(sa, family, server->host, server->port, errmsg) == FAILURE) {
+    mongo_util_disconnect(server);
     // errmsg set in mongo_get_sockaddr
     return FAILURE;
   }
@@ -122,6 +123,7 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
 #endif
     {
       ZVAL_STRING(errmsg, strerror(errno), 1);
+      mongo_util_disconnect(server);
       return FAILURE;
     }
 
@@ -137,12 +139,14 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
 
       if (select(server->socket+1, &rset, &wset, &eset, &tval) == 0) {
         ZVAL_STRING(errmsg, strerror(errno), 1);
+        mongo_util_disconnect(server);
         return FAILURE;
       }
 
       // if our descriptor has an error
       if (FD_ISSET(server->socket, &eset)) {
         ZVAL_STRING(errmsg, strerror(errno), 1);
+        mongo_util_disconnect(server);
         return FAILURE;
       }
 
@@ -157,6 +161,7 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
     connected = getpeername(server->socket, sa, &size);
     if (connected == FAILURE) {
       ZVAL_STRING(errmsg, strerror(errno), 1);
+      mongo_util_disconnect(server);
       return FAILURE;
     }
 
@@ -301,12 +306,13 @@ int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *host, in
 
 
 int mongo_util_disconnect(mongo_server *server) {
-  if (!server || !server->connected) {
+  if (!server || !server->socket) {
     return 0;
   }
 
-  server->connected = 0;
   MONGO_UTIL_DISCONNECT(server->socket);
+  server->connected = 0;
+  server->socket = 0;
 
   return 1;
 }
