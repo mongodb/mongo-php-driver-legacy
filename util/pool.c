@@ -471,6 +471,7 @@ PHP_METHOD(Mongo, poolDebug) {
     add_assoc_long(m, "in use", monitor->num.in_use);
     add_assoc_long(m, "in pool", monitor->num.in_pool);
     add_assoc_long(m, "remaining", monitor->num.remaining);
+    add_assoc_long(m, "total", monitor->num.total);
     add_assoc_long(m, "timeout", monitor->timeout);
     add_assoc_long(m, "waiting", monitor->waiting);
 
