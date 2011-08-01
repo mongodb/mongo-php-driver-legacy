@@ -116,17 +116,15 @@ int php_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_ui
 }
 
 int php_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned char* p, zend_uint datalen, zend_unserialize_data* var_hash TSRMLS_DC) {
-  zval temp;
-  zval str;
+  zval temp, *str;
 
-  Z_TYPE(str) = IS_STRING;
-  Z_STRLEN(str) = 24;
-  Z_STRVAL(str) = estrndup((char*)p, 24);
+  MAKE_STD_ZVAL(str);
+  ZVAL_STRINGL(str, (const char*)p, 24, 1);
 
   object_init_ex(*rval, mongo_ce_Id);
 
-  MONGO_METHOD1(MongoId, __construct, &temp, *rval, &str);
-  efree(Z_STRVAL(str));
+  MONGO_METHOD1(MongoId, __construct, &temp, *rval, str);
+  zval_ptr_dtor(&str);
 
   return SUCCESS;
 }
