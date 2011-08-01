@@ -1566,6 +1566,11 @@ static int get_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
       status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
 
       if (status == -1) {
+        // on EINTR, retry
+        if (errno != EINTR) {
+          continue;
+        }
+
         zend_throw_exception(mongo_ce_CursorException, strerror(errno), 13
                              TSRMLS_CC);
         return FAILURE;
