@@ -72,9 +72,11 @@ static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor
 
 #if WIN32
 static HANDLE cursor_mutex;
+static HANDLE io_mutex;
 extern HANDLE pool_mutex;
 #else
 static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t io_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 zend_object_handlers mongo_default_handlers,
@@ -551,7 +553,8 @@ PHP_MINIT_FUNCTION(mongo) {
 #ifdef WIN32
   cursor_mutex = CreateMutex(NULL, FALSE, NULL);
   pool_mutex = CreateMutex(NULL, FALSE, NULL);
-  if (cursor_mutex == NULL || pool_mutex == NULL) {
+  io_mutex = CreateMutex(NULL, FALSE, NULL);
+  if (cursor_mutex == NULL || pool_mutex == NULL || io_mutex == NULL) {
     php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
     return FAILURE;
   }
@@ -644,7 +647,7 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
 
 #if WIN32
   // 0 is failure
-  if (CloseHandle(cursor_mutex) == 0 || CloseHandle(pool_mutex) == 0) {
+  if (CloseHandle(cursor_mutex) == 0 || CloseHandle(pool_mutex) == 0 || CloseHandle(io_mutex) == 0) {
     php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
     return FAILURE;
   }
@@ -1673,11 +1676,21 @@ static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
  * throws exception on FAILURE
  */
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
+  int retval = 0;
+
+  LOCK(io);
+
+  retval = php_mongo__get_reply(cursor, errmsg TSRMLS_CC);
+
+  UNLOCK(io);
+
+  return retval;
+}
+
+int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int sock;
 
   log0("hearing something");
-
-  LOCK(cursor);
 
   // this cursor has already been processed
   if (cursor->send.request_id < MonGlo(response_num)) {
@@ -1691,7 +1704,6 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     while (response) {
       if (response->cursor->recv.response_to == cursor->send.request_id) {
         make_unpersistent_cursor(response->cursor, cursor);
-        UNLOCK(cursor);
         php_mongo_free_cursor_node(response, le);
         return SUCCESS;
       }
@@ -1705,7 +1717,6 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   if (get_header(sock, cursor TSRMLS_CC) == FAILURE) {
     mongo_util_pool_failed(cursor->server TSRMLS_CC);
-    UNLOCK(cursor);
     return FAILURE;
   }
 
@@ -1721,22 +1732,18 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       if (FAILURE != get_cursor_body(sock, cursor TSRMLS_CC)) {
         mongo_cursor *pcursor = make_persistent_cursor(cursor);
         // add to list
-        UNLOCK(cursor);
         php_mongo_create_le(pcursor, "response_list" TSRMLS_CC);
-        LOCK(cursor);
       }
       else {
         // else if we've failed, just don't add to queue
         // if we can reconnect, continue
         if (mongo_util_pool_failed(cursor->server TSRMLS_CC) == FAILURE) {
           zend_throw_exception(mongo_ce_CursorException, "lost db connection", 9 TSRMLS_CC);
-          UNLOCK(cursor);
           return FAILURE;
         }
         mongo_util_rs_ping(cursor->link TSRMLS_CC);
         if (!cursor->server->connected) {
           zend_throw_exception(mongo_ce_CursorException, "lost db connection (2)", 9 TSRMLS_CC);
-          UNLOCK(cursor);
           return FAILURE;
         }
         sock = cursor->server->socket;
@@ -1755,7 +1762,6 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
         // if it is, then pull it off & use it
         if (response->cursor->send.request_id == cursor->recv.response_to) {
           memcpy(cursor, response->cursor, sizeof(mongo_cursor));
-          UNLOCK(cursor);
           php_mongo_free_cursor_node(response, le);
           return SUCCESS;
         }
@@ -1764,7 +1770,6 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
       if (!response) {
         mongo_util_pool_failed(cursor->server TSRMLS_CC);
-        UNLOCK(cursor);
         zend_throw_exception(mongo_ce_CursorException, "couldn't find a response", 9 TSRMLS_CC);
         return FAILURE;
       }
@@ -1773,14 +1778,12 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
     // get the next db response
     if (get_header(sock, cursor TSRMLS_CC) == FAILURE) {
       mongo_util_pool_failed(cursor->server TSRMLS_CC);
-      UNLOCK(cursor);
       return FAILURE;
     }
   }
 
   if (FAILURE == get_cursor_body(sock, cursor TSRMLS_CC)) {
     mongo_util_pool_failed(cursor->server TSRMLS_CC);
-    UNLOCK(cursor);
 #ifdef WIN32
     zend_throw_exception_ex(mongo_ce_CursorException, 12 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
 #else
@@ -1788,8 +1791,6 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 #endif
     return FAILURE;
   }
-
-  UNLOCK(cursor);
 
   /* if no catastrophic error has happened yet, we're fine, set errmsg to null */
   ZVAL_NULL(errmsg);

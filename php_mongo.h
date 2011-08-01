@@ -604,6 +604,8 @@ int _mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
  */
 int mongo_hear(int sock, void*, int TSRMLS_DC);
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
+int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
+
 /**
  * This cannot throw.  Returns 0 on failure.
  */
