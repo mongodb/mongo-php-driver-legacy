@@ -55,7 +55,11 @@ mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TS
   // try to connect
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
+
+  // we need to call init here in case this is a new server name (without a timeout set)
+  mongo_util_pool_init(server, link->timeout TSRMLS_CC);
   mongo_util_pool_get(server, errmsg TSRMLS_CC);
+
   zval_ptr_dtor(&errmsg);
 
   log1("appending to list: %s", server->label);
