@@ -186,19 +186,21 @@ int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server) {
 void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
   stack_node *node;
 
+  if (!server->connected) {
+    return;
+  }
+
   LOCK(pool);
 
-  if (server->connected) {
-    node = (stack_node*)malloc(sizeof(stack_node));
+  node = (stack_node*)malloc(sizeof(stack_node));
 
-    node->socket = server->socket;
+  node->socket = server->socket;
 
-    node->next = monitor->top;
-    monitor->top = node;
+  node->next = monitor->top;
+  monitor->top = node;
 
-    monitor->num.in_pool++;
-    server->connected = 0;
-  }
+  monitor->num.in_pool++;
+  server->connected = 0;
 
   UNLOCK(pool);
 }
