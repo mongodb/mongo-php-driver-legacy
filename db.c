@@ -20,13 +20,14 @@
 #include <zend_exceptions.h>
 #include <ext/standard/md5.h>
 
-#include "db.h"
 #include "php_mongo.h"
+#include "util/pool.h"
+
+#include "db.h"
 #include "collection.h"
 #include "cursor.h"
 #include "gridfs.h"
 #include "mongo_types.h"
-#include "util/pool.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Collection,
@@ -546,6 +547,102 @@ PHP_METHOD(MongoDB, command) {
   zend_objects_store_del_ref(cursor TSRMLS_CC);
   zval_ptr_dtor(&cursor);
 }
+
+zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC) {
+  zval *cursor_zval;
+  mongo_cursor *cursor;
+
+  MAKE_STD_ZVAL(cursor_zval);
+  object_init_ex(cursor_zval, mongo_ce_Cursor);
+
+  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
+
+  cursor->query = cmd;
+  zval_add_ref(&cmd);
+
+  if (current->db) {
+    cursor->ns = (char*)emalloc(strlen(current->db)+6);
+    memcpy(current->db, cursor->ns, strlen(current->db));
+    memcpy(".$cmd", cursor->ns+strlen(current->db), 5);
+    cursor->ns[strlen(current->db)+6] = 0;
+  }
+  else {
+    cursor->ns = estrdup("admin.$cmd");
+  }
+
+  cursor->fields = 0;
+  cursor->limit = -1;
+  cursor->skip = 0;
+  cursor->opts = 0;
+  cursor->current = 0;
+  cursor->timeout = 0;
+
+  return cursor_zval;
+}
+
+zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
+  zval temp_ret, *errmsg, *response, *cursor_zval;
+  mongo_link temp;
+  mongo_server *temp_next = 0;
+  mongo_server_set temp_server_set;
+  mongo_cursor *cursor = 0;
+  int exception = 0;
+
+  MAKE_STD_ZVAL(errmsg);
+  ZVAL_NULL(errmsg);
+
+  // make a fake link
+  temp.server_set = &temp_server_set;
+  temp.server_set->num = 1;
+  temp.server_set->server = current;
+  temp.server_set->master = current;
+  temp.rs = 0;
+
+  // create a cursor
+  cursor_zval = mongo_db__create_fake_cursor(current, cmd TSRMLS_CC);
+  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
+
+  // skip anything we're not connected to
+  if (!current->connected && FAILURE == mongo_util_pool_get(current, errmsg TSRMLS_CC)) {
+    log2("[c:php_mongo_get_master] not connected to %s:%d\n", current->host, current->port);
+
+    zval_ptr_dtor(&errmsg);
+
+    cursor->link = 0;
+    zval_ptr_dtor(&cursor_zval);
+    return 0;
+  }
+  zval_ptr_dtor(&errmsg);
+
+  temp_next = current->next;
+  current->next = 0;
+  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
+  cursor->link = &temp;
+
+  // need to call this after setting cursor->link
+  // reset checks that cursor->link != 0
+  MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval);
+
+  MAKE_STD_ZVAL(response);
+  ZVAL_NULL(response);
+
+  zend_try {
+    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
+  } zend_catch {
+    exception = 1;
+  } zend_end_try();
+
+  current->next = temp_next;
+  cursor->link = 0;
+  zval_ptr_dtor(&cursor_zval);
+
+  if (exception || IS_SCALAR_P(response)) {
+    return 0;
+  }
+
+  return response;
+}
+
 
 static void md5_hash(char *md5str, char *arg) {
   PHP_MD5_CTX context;

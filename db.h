@@ -21,6 +21,17 @@
 
 zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
 
+/**
+ * Create a fake cursor that can be used to query the db from C.
+ */
+zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC);
+
+/**
+ * Run the given database command on the given server.
+ */
+zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC);
+
+
 PHP_METHOD(MongoDB, __construct);
 PHP_METHOD(MongoDB, __toString);
 PHP_METHOD(MongoDB, __get);
