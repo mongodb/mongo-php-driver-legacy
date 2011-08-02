@@ -1,4 +1,4 @@
-// link.c
+// rs.c
 /**
  *  Copyright 2009-2010 10gen, Inc.
  *
@@ -29,7 +29,7 @@ extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
   *mongo_ce_Cursor;
 
-extern int le_pserver;
+extern int le_prs;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -335,7 +335,7 @@ time_t* mongo_util_rs__get_ping(mongo_link *link TSRMLS_DC) {
     // registering this links it to the dtor (mongo_util_pool_shutdown) so that
     // it can be auto-cleaned-up on shutdown
     nle.ptr = t;
-    nle.type = le_pserver;
+    nle.type = le_prs;
     nle.refcount = 1;
     zend_hash_add(&EG(persistent_list), id, strlen(id)+1, &nle, sizeof(zend_rsrc_list_entry), NULL);
 
@@ -347,6 +347,14 @@ time_t* mongo_util_rs__get_ping(mongo_link *link TSRMLS_DC) {
   return le->ptr;
 }
 
+void mongo_util_rs_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
+  if (!rsrc || !rsrc->ptr) {
+    return;
+  }
+
+  free(rsrc->ptr);
+  rsrc->ptr = 0;
+}
 
 void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
   int now;

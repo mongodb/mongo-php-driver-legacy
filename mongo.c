@@ -95,6 +95,7 @@ zend_class_entry *mongo_ce_Mongo,
 /** Resources */
 int le_pconnection,
   le_pserver,
+  le_prs,
   le_cursor_list;
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
@@ -505,6 +506,7 @@ PHP_MINIT_FUNCTION(mongo) {
 
   le_pconnection = zend_register_list_destructors_ex(NULL, mongo_util_pool_shutdown, PHP_CONNECTION_RES_NAME, module_number);
   le_pserver = zend_register_list_destructors_ex(NULL, mongo_util_server_shutdown, PHP_SERVER_RES_NAME, module_number);
+  le_prs = zend_register_list_destructors_ex(NULL, mongo_util_rs_shutdown, PHP_RS_RES_NAME, module_number);
   le_cursor_list = zend_register_list_destructors_ex(NULL, php_mongo_cursor_list_pfree, PHP_CURSOR_LIST_RES_NAME, module_number);
 
   mongo_init_Mongo(TSRMLS_C);

@@ -26,6 +26,7 @@
  */
 
 #define MONGO_RS "replicaSet"
+#define PHP_RS_RES_NAME "replica set ts"
 
 // ------------ Replica set interface ---------
 
@@ -63,6 +64,11 @@ void mongo_util_rs_ping(mongo_link *link TSRMLS_DC);
  * list of hosts.
  */
 void mongo_util_rs_refresh(mongo_link *link, time_t now TSRMLS_DC);
+
+/**
+ * Free ping time.
+ */
+void mongo_util_rs_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
 // -------- Internal functions ----------
 
