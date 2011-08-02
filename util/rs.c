@@ -81,98 +81,6 @@ mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TS
   return server;
 }
 
-
-zval* mongo_util_rs__create_fake_cursor(mongo_link *link TSRMLS_DC) {
-  zval *cursor_zval, *query;
-  mongo_cursor *cursor;
-
-  MAKE_STD_ZVAL(cursor_zval);
-  object_init_ex(cursor_zval, mongo_ce_Cursor);
-
-  // query = { ismaster : 1 }
-  // we cannot nest this list {query : {ismaster : 1}} because mongos is stupid
-  MAKE_STD_ZVAL(query);
-  array_init(query);
-  add_assoc_long(query, "ismaster", 1);
-
-  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
-
-  // admin.$cmd.findOne({ ismaster : 1 })
-  cursor->ns = estrdup("admin.$cmd");
-  cursor->query = query;
-  cursor->fields = 0;
-  cursor->limit = -1;
-  cursor->skip = 0;
-  cursor->opts = 0;
-  cursor->current = 0;
-  cursor->timeout = 0;
-
-  return cursor_zval;
-}
-
-zval* mongo_util_rs__ismaster(mongo_server *current TSRMLS_DC) {
-  zval temp_ret, *errmsg, *response, *cursor_zval;
-  mongo_link temp;
-  mongo_server *temp_next = 0;
-  mongo_server_set temp_server_set;
-  mongo_cursor *cursor = 0;
-  int exception = 0;
-
-  MAKE_STD_ZVAL(errmsg);
-  ZVAL_NULL(errmsg);
-
-  // make a fake link
-  temp.server_set = &temp_server_set;
-  temp.server_set->num = 1;
-  temp.server_set->server = current;
-  temp.server_set->master = current;
-  temp.rs = 0;
-
-  // create a cursor
-  cursor_zval = mongo_util_rs__create_fake_cursor(&temp TSRMLS_CC);
-  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
-
-  // skip anything we're not connected to
-  if (!current->connected && FAILURE == mongo_util_pool_get(current, errmsg TSRMLS_CC)) {
-    log2("[c:php_mongo_get_master] not connected to %s:%d\n", current->host, current->port);
-
-    zval_ptr_dtor(&errmsg);
-
-    cursor->link = 0;
-    zval_ptr_dtor(&cursor_zval);
-    return 0;
-  }
-  zval_ptr_dtor(&errmsg);
-
-  temp_next = current->next;
-  current->next = 0;
-  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
-  cursor->link = &temp;
-
-  // need to call this after setting cursor->link
-  // reset checks that cursor->link != 0
-  MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval);
-
-  MAKE_STD_ZVAL(response);
-  ZVAL_NULL(response);
-
-  zend_try {
-    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
-  } zend_catch {
-    exception = 1;
-  } zend_end_try();
-
-  current->next = temp_next;
-  cursor->link = 0;
-  zval_ptr_dtor(&cursor_zval);
-
-  if (exception || IS_SCALAR_P(response)) {
-    return 0;
-  }
-
-  return response;
-}
-
 void mongo_util_rs__repopulate_hosts(zval **hosts, mongo_link *link TSRMLS_DC) {
   zval **data;
   HashTable *hash;
@@ -187,6 +95,22 @@ void mongo_util_rs__repopulate_hosts(zval **hosts, mongo_link *link TSRMLS_DC) {
     // this could fail if host is invalid, but it's okay if it does
     mongo_util_rs__find_or_make_server(host, link TSRMLS_CC);
   }
+}
+
+zval* mongo_util_rs__ismaster(mongo_server *current TSRMLS_DC) {
+  zval *ismaster = 0, *result = 0;
+
+  // query = { ismaster : 1 }
+  // we cannot nest this list {query : {ismaster : 1}} because mongos is stupid
+  MAKE_STD_ZVAL(ismaster);
+  array_init(ismaster);
+  add_assoc_long(ismaster, "ismaster", 1);
+
+  result = mongo_db_cmd(current, ismaster TSRMLS_CC);
+
+  zval_ptr_dtor(&ismaster);
+
+  return result;
 }
 
 void mongo_util_rs_refresh(mongo_link *link, time_t now TSRMLS_DC) {
@@ -474,4 +398,11 @@ int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC) {
   *errmsg = estrdup("No secondary found");
   return FAILURE;
 }
+/*
+int mongo_util_rs__get(char *id, mongo_link *link TSRMLS_DC) {
+  rs_monitor *rs = get_rs_by_name(id);
 
+  link->master = rs->primary;
+  link->slave = get_slave(rs);
+}
+*/

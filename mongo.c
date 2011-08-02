@@ -153,6 +153,7 @@ static zend_function_entry mongo_methods[] = {
   PHP_ME(Mongo, setPoolSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(Mongo, getPoolSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(Mongo, poolDebug, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(Mongo, serverInfo, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   { NULL, NULL, NULL }
 };
 
@@ -1434,10 +1435,10 @@ PHP_METHOD(Mongo, getHosts) {
     array_init(infoz);
 
     info = mongo_util_server__get_info(current TSRMLS_CC);
-    add_assoc_long(infoz, "health", info->readable);
-    add_assoc_long(infoz, "state", info->master ? 1 : info->readable ? 2 : 0);
-    add_assoc_long(infoz, "ping", info->ping);
-    add_assoc_long(infoz, "lastPing", info->last_ping);
+    add_assoc_long(infoz, "health", info->guts->readable);
+    add_assoc_long(infoz, "state", info->guts->master ? 1 : info->guts->readable ? 2 : 0);
+    add_assoc_long(infoz, "ping", info->guts->ping);
+    add_assoc_long(infoz, "lastPing", info->guts->last_ping);
 
     add_assoc_zval(return_value, current->label, infoz);
     current = current->next;

@@ -78,11 +78,6 @@ void mongo_util_rs_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 zval* mongo_util_rs__ismaster(mongo_server *current TSRMLS_DC);
 
 /**
- * Helper for __ismaster. Creates a cursor to be used for the command.
- */
-zval* mongo_util_rs__create_fake_cursor(mongo_link *link TSRMLS_DC);
-
-/**
  * Helper function for __ismaster response.
  *
  * Returns if the server is master (1 if master, 0 if not).
