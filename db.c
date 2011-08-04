@@ -713,13 +713,6 @@ PHP_METHOD(MongoDB, authenticate) {
     RETVAL_FALSE;
   }
 
-  // regardless, remove this server from the pool
-  PHP_MONGO_GET_DB(getThis());
-  PHP_MONGO_GET_LINK(db->link);
-  if (link->server_set->master) {
-    mongo_util_pool_remove(link->server_set->master TSRMLS_CC);
-  }
-
   zval_ptr_dtor(&result);
 }
 
