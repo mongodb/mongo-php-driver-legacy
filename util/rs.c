@@ -248,12 +248,7 @@ time_t* mongo_util_rs__get_ping(mongo_link *link TSRMLS_DC) {
     zend_rsrc_list_entry nle;
     time_t *t;
 
-    t = (time_t*)malloc(sizeof(time_t));
-    if (!t) {
-      efree(id);
-      return 0;
-    }
-
+    t = (time_t*)pemalloc(sizeof(time_t), 1);
     memset(t, 0, sizeof(time_t));
 
     // registering this links it to the dtor (mongo_util_pool_shutdown) so that
@@ -276,7 +271,7 @@ void mongo_util_rs_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
     return;
   }
 
-  free(rsrc->ptr);
+  pefree(rsrc->ptr, 1);
   rsrc->ptr = 0;
 }
 

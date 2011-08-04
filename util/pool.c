@@ -151,7 +151,7 @@ void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
 
   monitor = (stack_monitor*)rsrc->ptr;
   mongo_util_pool__close_connections(monitor);
-  free(monitor);
+  pefree(monitor, 1);
   rsrc->ptr = 0;
 }
 
@@ -177,7 +177,7 @@ int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server) {
   server->connected = 1;
   server->socket = node->socket;
 
-  free(node);
+  pefree(node, 1);
 
   UNLOCK(pool);
   return SUCCESS;
@@ -192,7 +192,7 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
 
   LOCK(pool);
 
-  node = (stack_node*)malloc(sizeof(stack_node));
+  node = (stack_node*)pemalloc(sizeof(stack_node), 1);
 
   node->socket = server->socket;
 
@@ -321,14 +321,7 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC) {
     zend_rsrc_list_entry nle;
     stack_monitor *monitor;
 
-    monitor = (stack_monitor*)malloc(sizeof(stack_monitor));
-    if (!monitor) {
-      UNLOCK(pool);
-
-      efree(id);
-      return 0;
-    }
-
+    monitor = (stack_monitor*)pemalloc(sizeof(stack_monitor), 1);
     memset(monitor, 0, sizeof(stack_monitor));
 
     // set pool size

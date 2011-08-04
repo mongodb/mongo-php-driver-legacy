@@ -272,11 +272,7 @@ server_info* mongo_util_server__get_info(mongo_server *server TSRMLS_DC) {
 static server_info* wrap_other_le_guts(zend_rsrc_list_entry *le) {
   server_info *info;
 
-  info = (server_info*)malloc(sizeof(server_info));
-  if (!info) {
-    return 0;
-  }
-
+  info = (server_info*)pemalloc(sizeof(server_info), 1);
   info->owner = 0;
   info->guts = ((server_info*)le->ptr)->guts;
 
@@ -287,11 +283,8 @@ static server_info* create_info() {
   server_info *info;
   server_guts *guts;
 
-  info = (server_info*)malloc(sizeof(server_info));
-  guts = (server_guts*)malloc(sizeof(server_guts));
-  if (!info || !guts) {
-    return 0;
-  }
+  info = (server_info*)pemalloc(sizeof(server_info), 1);
+  guts = (server_guts*)pemalloc(sizeof(server_guts), 1);
 
   memset(guts, 0, sizeof(server_guts));
   guts->ping = MONGO_SERVER_PING;
@@ -339,11 +332,11 @@ void mongo_util_server_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
 
   info = (server_info*)rsrc->ptr;
   if (info->owner) {
-    free(info->guts);
+    pefree(info->guts, 1);
     info->guts = 0;
   }
 
-  free(info);
+  pefree(info, 1);
   rsrc->ptr = 0;
 }
 
