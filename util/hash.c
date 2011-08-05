@@ -1,6 +1,6 @@
 // hash.c
 /**
- *  Copyright 2009-2010 10gen, Inc.
+ *  Copyright 2009-2011 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ static int remove_objects(void *pDest TSRMLS_DC);
 void mongo_util_hash_copy_to_p(void *pDest) {
   zval **p = (zval**)pDest;
   zval *temp = *p;
-  
+
   *p = (zval*)malloc(sizeof(zval));
   memcpy(*p, temp, sizeof(zval));
   INIT_PZVAL(*p);
@@ -41,14 +41,14 @@ void mongo_util_hash_copy_to_p(void *pDest) {
     TSRMLS_FETCH();
     mongo_util_hash_to_pzval(p, &temp TSRMLS_CC);
     break;
-  }    
-  }  
+  }
+  }
 }
 
 void mongo_util_hash_copy_to_np(void *pDest) {
   zval **p = (zval**)pDest;
   zval *temp = *p;
-  
+
   ALLOC_ZVAL(*p);
   memcpy(*p, temp, sizeof(zval));
   INIT_PZVAL(*p);
@@ -69,7 +69,7 @@ void mongo_util_hash_copy_to_np(void *pDest) {
 int mongo_util_hash_to_pzval(zval** destination, zval** source TSRMLS_DC) {
   HashTable *ht;
   zval temp, *dest;
-  
+
   dest = (zval*)malloc(sizeof(zval));
   ht = (HashTable*)malloc(sizeof(HashTable));
   if (!dest || !ht) {
@@ -81,7 +81,7 @@ int mongo_util_hash_to_pzval(zval** destination, zval** source TSRMLS_DC) {
 
   zend_hash_init(ht, 8, 0, mongo_util_hash_dtor, 1);
   zend_hash_copy(ht, Z_ARRVAL_PP(source), (copy_ctor_func_t)mongo_util_hash_copy_to_p, &temp, sizeof(zval*));
-  
+
   INIT_PZVAL(dest);
   Z_TYPE_P(dest) = IS_ARRAY;
   Z_ARRVAL_P(dest) = ht;
@@ -99,7 +99,7 @@ int mongo_util_hash_to_zval(zval** destination, zval** source TSRMLS_DC) {
 
   zend_hash_init(ht, 8, 0, ZVAL_PTR_DTOR, 0);
   zend_hash_copy(ht, Z_ARRVAL_PP(source), (copy_ctor_func_t)mongo_util_hash_copy_to_np, &temp, sizeof(zval*));
-  
+
   INIT_PZVAL(dest);
   Z_TYPE_P(dest) = IS_ARRAY;
   Z_ARRVAL_P(dest) = ht;
