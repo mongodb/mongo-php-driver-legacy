@@ -225,8 +225,6 @@ typedef struct {
 #define MONGO_LINK 0
 #define MONGO_CURSOR 1
 
-int php_mongo_free_cursor_le(void*, int TSRMLS_DC);
-
 
 typedef struct {
   int length;
@@ -453,8 +451,6 @@ typedef struct _cursor_node {
   struct _cursor_node *prev;
 } cursor_node;
 
-void php_mongo_free_cursor_node(cursor_node*, zend_rsrc_list_entry*);
-
 typedef struct {
   zend_object std;
   char *id;
@@ -503,33 +499,6 @@ PHP_MINFO_FUNCTION(mongo);
 PHP_FUNCTION(bson_encode);
 PHP_FUNCTION(bson_decode);
 
-/*
- * Mongo class
- */
-PHP_METHOD(Mongo, __construct);
-PHP_METHOD(Mongo, connect);
-PHP_METHOD(Mongo, pairConnect);
-PHP_METHOD(Mongo, persistConnect);
-PHP_METHOD(Mongo, pairPersistConnect);
-PHP_METHOD(Mongo, connectUtil);
-PHP_METHOD(Mongo, __toString);
-PHP_METHOD(Mongo, __get);
-PHP_METHOD(Mongo, selectDB);
-PHP_METHOD(Mongo, selectCollection);
-PHP_METHOD(Mongo, getSlaveOkay);
-PHP_METHOD(Mongo, setSlaveOkay);
-PHP_METHOD(Mongo, dropDB);
-PHP_METHOD(Mongo, lastError);
-PHP_METHOD(Mongo, prevError);
-PHP_METHOD(Mongo, resetError);
-PHP_METHOD(Mongo, forceError);
-PHP_METHOD(Mongo, close);
-PHP_METHOD(Mongo, listDBs);
-PHP_METHOD(Mongo, getHosts);
-PHP_METHOD(Mongo, getSlave);
-PHP_METHOD(Mongo, switchSlave);
-
-int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 
 /*
  * Mutex macros
@@ -559,26 +528,8 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 #endif
 
 
-/*
- * Internal functions
- */
-int mongo_say(mongo_server *server, buffer *buf, zval *errmsg TSRMLS_DC);
-int _mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC);
-/**
- * If there was an error, set EG(exception) and return FAILURE. If the socket
- * was closed, return FAILURE (without setting the exception).
- */
-int mongo_hear(int sock, void*, int TSRMLS_DC);
-int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
-int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
 
-/**
- * This cannot throw.  Returns 0 on failure.
- */
-mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link TSRMLS_DC);
-void php_mongo_server_free(mongo_server *server TSRMLS_DC);
 
-void mongo_init_Mongo(TSRMLS_D);
 void mongo_init_MongoDB(TSRMLS_D);
 void mongo_init_MongoCollection(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);

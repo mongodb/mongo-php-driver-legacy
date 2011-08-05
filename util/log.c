@@ -61,7 +61,7 @@ static long set_value(char *setting, zval *return_value) {
   long value;
 
   if (zend_parse_parameters(1 TSRMLS_CC, "l", &value) == FAILURE) {
-    return;
+    return 0;
   }
 
   zend_update_static_property_long(mongo_ce_Log, setting, strlen(setting), value TSRMLS_CC);

@@ -30,6 +30,7 @@
 #endif
 
 #include "../php_mongo.h"
+#include "../mongo.h"
 #include "../db.h"
 #include "connect.h"
 

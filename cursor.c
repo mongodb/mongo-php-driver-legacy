@@ -16,6 +16,8 @@
  */
 
 #include <php.h>
+#include <zend_interfaces.h>
+#include <zend_exceptions.h>
 
 #ifdef WIN32
 #  ifndef int64_t
@@ -23,11 +25,9 @@
 #  endif
 #else
 #include <unistd.h>
+#include <pthread.h>
 #endif
 #include <math.h>
-
-#include <zend_interfaces.h>
-#include <zend_exceptions.h>
 
 #include "php_mongo.h"
 #include "bson.h"
@@ -38,6 +38,13 @@
 #include "util/link.h"
 #include "util/pool.h"
 #include "util/rs.h"
+#include "util/io.h"
+
+#if WIN32
+HANDLE cursor_mutex;
+#else
+static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 // externs
 extern zend_class_entry *mongo_ce_Id,
@@ -57,6 +64,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
 static void make_special(mongo_cursor *);
+static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
 
@@ -1005,6 +1013,221 @@ static zend_function_entry MongoCursor_methods[] = {
 
   {NULL, NULL, NULL}
 };
+
+int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
+  zend_rsrc_list_entry *le;
+
+  LOCK(cursor);
+
+  /*
+   * This should work if le->ptr is null or non-null
+   */
+  if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
+    cursor_node *current;
+
+    current = le->ptr;
+
+    while (current) {
+      cursor_node *next = current->next;
+
+      if (type == MONGO_LINK) {
+        if (current->cursor->link == (mongo_link*)val) {
+          kill_cursor(current, le TSRMLS_CC);
+          // keep going, free all cursor for this connection
+        }
+      }
+      else if (type == MONGO_CURSOR) {
+        if (current->cursor == (mongo_cursor*)val) {
+          kill_cursor(current, le TSRMLS_CC);
+          // only one cursor to be freed
+          break;
+        }
+      }
+
+      current = next;
+    }
+  }
+
+  UNLOCK(cursor);
+  return 0;
+}
+
+
+int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC) {
+  zend_rsrc_list_entry *le;
+  cursor_node *new_node;
+
+  LOCK(cursor);
+
+  new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
+  new_node->cursor = cursor;
+  new_node->next = new_node->prev = 0;
+
+  /*
+   * 3 options:
+   *   - le doesn't exist
+   *   - le exists and is null
+   *   - le exists and has elements
+   * In case 1 & 2, we want to create a new le ptr, otherwise we want to append
+   * to the existing ptr.
+   */
+  if (zend_hash_find(&EG(persistent_list), name, strlen(name)+1, (void**)&le) == SUCCESS) {
+    cursor_node *current = le->ptr;
+    cursor_node *prev = 0;
+
+    if (current == 0) {
+      le->ptr = new_node;
+      UNLOCK(cursor);
+      return 0;
+    }
+
+    do {
+      /*
+       * if we find the current cursor in the cursor list, we don't need another
+       * dtor for it so unlock the mutex & return.
+       */
+      if (current->cursor == cursor) {
+        pefree(new_node, 1);
+        UNLOCK(cursor);
+        return 0;
+      }
+
+      prev = current;
+      current = current->next;
+    }
+    while (current);
+
+    /*
+     * we didn't find the cursor.  add it to the list. (prev is pointing to the
+     * tail of the list, current is pointing to null.
+     */
+    prev->next = new_node;
+    new_node->prev = prev;
+  }
+  else {
+    zend_rsrc_list_entry new_le;
+    new_le.ptr = new_node;
+    new_le.type = le_cursor_list;
+    new_le.refcount = 1;
+    zend_hash_add(&EG(persistent_list), name, strlen(name)+1, &new_le, sizeof(zend_rsrc_list_entry), NULL);
+  }
+
+  UNLOCK(cursor);
+  return 0;
+}
+
+static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
+  LOCK(cursor);
+
+  {
+    cursor_node *node = (cursor_node*)rsrc->ptr;
+
+    if (!node) {
+      UNLOCK(cursor);
+      return 0;
+    }
+
+    while (node->next) {
+      cursor_node *temp = node;
+      node = node->next;
+
+      pefree(temp->cursor->buf.start, 1);
+      pefree(temp->cursor, 1);
+      pefree(temp, 1);
+    }
+    pefree(node->cursor->buf.start, 1);
+    pefree(node->cursor, 1);
+    pefree(node, 1);
+  }
+
+  UNLOCK(cursor);
+  return 0;
+}
+
+void php_mongo_cursor_list_pfree(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
+  cursor_list_pfree_helper(rsrc TSRMLS_CC);
+}
+
+void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le) {
+
+  /*
+   * [node1][<->][NODE2][<->][node3]
+   *   [node1][->][node3]
+   *   [node1][<->][node3]
+   *
+   * [node1][<->][NODE2]
+   *   [node1]
+   */
+  if (node->prev) {
+    node->prev->next = node->next;
+    if (node->next) {
+      node->next->prev = node->prev;
+    }
+  }
+  /*
+   * [NODE2][<->][node3]
+   *   le->ptr = node3
+   *   [node3]
+   *
+   * [NODE2]
+   *   le->ptr = 0
+   */
+  else {
+    le->ptr = node->next;
+    if (node->next) {
+      node->next->prev = 0;
+    }
+  }
+
+  pefree(node, 1);
+}
+
+// tell db to destroy its cursor
+static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
+  mongo_cursor *cursor = node->cursor;
+  char quickbuf[128];
+  buffer buf;
+  zval temp;
+
+  /*
+   * If the cursor_id is 0, the db is out of results anyway.
+   */
+  if (cursor->cursor_id == 0) {
+    php_mongo_free_cursor_node(node, le);
+    return;
+  }
+
+  buf.pos = quickbuf;
+  buf.start = buf.pos;
+  buf.end = buf.start + 128;
+
+  php_mongo_write_kill_cursors(&buf, cursor TSRMLS_CC);
+
+  if (!cursor->server) {
+    return;
+  }
+  Z_TYPE(temp) = IS_NULL;
+  _mongo_say(cursor->server->socket, &buf, &temp TSRMLS_CC);
+  if (Z_TYPE(temp) == IS_STRING) {
+    efree(Z_STRVAL(temp));
+    Z_TYPE(temp) = IS_NULL;
+  }
+
+  /*
+   * if the connection is closed before the cursor is destroyed, the cursor
+   * might try to fetch more results with disasterous consequences.  Thus, the
+   * cursor_id is set to 0, so no more results will be fetched.
+   *
+   * this might not be the most elegant solution, since you could fetch 100
+   * results, get the first one, close the connection, get 99 more, and suddenly
+   * not be able to get any more.  Not sure if there's a better one, though. I
+   * guess the user can call dead() on the cursor.
+   */
+  cursor->cursor_id = 0;
+
+  // free this cursor/link pair
+  php_mongo_free_cursor_node(node, le);
+}
 
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC) {

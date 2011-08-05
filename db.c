@@ -659,8 +659,6 @@ PHP_METHOD(MongoDB, authenticate) {
   char *username, *password;
   int ulen, plen;
   zval *data, *result, **nonce;
-  mongo_db *db;
-  mongo_link *link;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &username, &ulen, &password, &plen) == FAILURE) {
     return;

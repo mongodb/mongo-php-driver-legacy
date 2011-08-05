@@ -26,6 +26,7 @@
 #include "hash.h"
 #include "pool.h"
 #include "server.h"
+#include "parse.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,

@@ -28,6 +28,8 @@
 #include <zend_exceptions.h>
 #include <ext/standard/php_rand.h>
 
+#include "php_mongo.h"
+#include "mongo.h"
 #include "mongo_types.h"
 #include "php_mongo.h"
 #include "db.h"

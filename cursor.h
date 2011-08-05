@@ -91,4 +91,9 @@ PHP_METHOD(MongoCursor, info);
   }
 
 
+int php_mongo_free_cursor_le(void*, int TSRMLS_DC);
+void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
+int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
+void php_mongo_free_cursor_node(cursor_node*, zend_rsrc_list_entry*);
+
 #endif
