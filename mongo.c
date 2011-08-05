@@ -38,12 +38,14 @@
 #include "cursor.h"
 #include "mongo_types.h"
 #include "bson.h"
+
 #include "util/hash.h"
 #include "util/connect.h"
 #include "util/pool.h"
 #include "util/link.h"
 #include "util/rs.h"
 #include "util/server.h"
+#include "util/log.h"
 
 extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_CursorException,
@@ -532,6 +534,8 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoInt32(TSRMLS_C);
   mongo_init_MongoInt64(TSRMLS_C);
 
+  mongo_init_MongoLog(TSRMLS_C);
+
   /*
    * MongoMaxKey and MongoMinKey are completely non-interactive: they have no
    * method, fields, or constants.
@@ -746,7 +750,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
   mongo_link *link;
   mongo_server *current_server;
 
-  log0("parsing servers");
+  mongo_log(MONGO_LOG_PARSE, MONGO_LOG_FINE TSRMLS_CC, "parsing servers");
 
   hosts_z = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
   hosts = Z_STRLEN_P(hosts_z) ? Z_STRVAL_P(hosts_z) : 0;
@@ -829,7 +833,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     mongo_server *server;
     char **current_ptr = &current;
 
-    log1("current: %s", current);
+    mongo_log(MONGO_LOG_PARSE, MONGO_LOG_FINE TSRMLS_CC, "current: %s", current);
 
     // method throws exception
     if (!(server = create_mongo_server(current_ptr, hosts, link TSRMLS_CC))) {
@@ -893,7 +897,7 @@ static int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     }
   }
 
-  log1("done parsing", current);
+  mongo_log(MONGO_LOG_PARSE, MONGO_LOG_FINE TSRMLS_CC, "done parsing");
 
   return SUCCESS;
 }
@@ -1698,7 +1702,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int sock;
 
-  log0("hearing something");
+  mongo_log(MONGO_LOG_IO, MONGO_LOG_FINE TSRMLS_CC, "hearing something");
 
   // this cursor has already been processed
   if (cursor->send.request_id < MonGlo(response_num)) {
@@ -1730,7 +1734,7 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
   // check that this is actually the response we want
   while (cursor->send.request_id != cursor->recv.response_to) {
-    log2("request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
+    mongo_log(MONGO_LOG_IO, MONGO_LOG_FINE TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
 
     // if it's not...
 
@@ -1872,7 +1876,7 @@ static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor
 int _mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC) {
   int sent = 0, total = 0, status = 1;
 
-  log0("saying something");
+  mongo_log(MONGO_LOG_IO, MONGO_LOG_FINE TSRMLS_CC, "saying something");
 
   total = buf->pos - buf->start;
 

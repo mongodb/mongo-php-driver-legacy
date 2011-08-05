@@ -29,6 +29,7 @@
 #include "gridfs.h"
 #include "mongo_types.h"
 
+
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Collection,
   *mongo_ce_Cursor,
@@ -604,8 +605,6 @@ zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
 
   // skip anything we're not connected to
   if (!current->connected && FAILURE == mongo_util_pool_get(current, errmsg TSRMLS_CC)) {
-    log2("[c:php_mongo_get_master] not connected to %s:%d\n", current->host, current->port);
-
     zval_ptr_dtor(&errmsg);
 
     cursor->link = 0;

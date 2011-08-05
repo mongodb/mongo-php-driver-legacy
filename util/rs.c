@@ -20,6 +20,8 @@
 #include "../php_mongo.h"
 #include "../cursor.h"
 #include "../db.h"
+
+#include "log.h"
 #include "rs.h"
 #include "hash.h"
 #include "pool.h"
@@ -62,7 +64,7 @@ mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TS
 
   zval_ptr_dtor(&errmsg);
 
-  log1("appending to list: %s", server->label);
+  mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "appending to list: %s", server->label);
 
   // get to the end of the server list
   if (!link->server_set->server) {
@@ -165,7 +167,7 @@ void mongo_util_rs_refresh(mongo_link *link, time_t now TSRMLS_DC) {
   link->server_set->master = 0;
   link->slave = 0;
 
-  log0("parsing replica set\n");
+  mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "parsing replica set\n");
 
   if (good_response) {
     // repopulate
@@ -184,7 +186,7 @@ void mongo_util_rs_refresh(mongo_link *link, time_t now TSRMLS_DC) {
 mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
   mongo_server *current;
 
-  log2("[get_master] servers: %d, rs? %s", link->server_set->num, link->rs);
+  mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "[get_master] servers: %d, rs? %s", link->server_set->num, link->rs);
 
   // for a single connection, return it
   if (!link->rs && link->server_set->num == 1) {
@@ -344,7 +346,7 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
   }
   zval_ptr_dtor(&errmsg);
 
-  log2("connected to %s:%d\n", server->host, server->port);
+  mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "connected to %s:%d\n", server->host, server->port);
 
   // if successful, we're connected to the master
   link->server_set->master = server;
