@@ -26,6 +26,7 @@
 #include "pool.h"
 #include "connect.h"
 #include "server.h"
+#include "log.h"
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -56,6 +57,8 @@ int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
 int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
   stack_monitor *monitor;
 
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool get", server->label);
+
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     return FAILURE;
   }
@@ -72,6 +75,8 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
 
 void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
+
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool done", server->label);
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     // if we couldn't push this, close the connection
@@ -91,6 +96,8 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
 void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
 
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool remove", server->label);
+
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     // if we couldn't push this, close the connection
     mongo_util_disconnect(server);
@@ -103,6 +110,8 @@ void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
 
 void mongo_util_pool_close(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
+
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool close", server->label);
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     mongo_util_disconnect(server);
@@ -118,6 +127,8 @@ void mongo_util_pool_close(mongo_server *server TSRMLS_DC) {
 int mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
   zval *errmsg;
+
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool fail", server->label);
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     mongo_util_disconnect(server);
@@ -398,6 +409,8 @@ int mongo_util_pool__timeout(stack_monitor *monitor) {
 }
 
 int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval *errmsg TSRMLS_DC) {
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool connect", server->label);
+
   if (mongo_util_pool__timeout(monitor) == FAILURE) {
     ZVAL_STRING(errmsg, "no more connections in pool", 1);
     return FAILURE;
