@@ -18,7 +18,7 @@
 #include <php.h>
 #include <zend_exceptions.h>
 
-#include "php_mongo.h"
+#include "../php_mongo.h"
 #include "parse.h"
 #include "log.h"
 

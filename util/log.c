@@ -17,7 +17,7 @@
 
 #include <php.h>
 
-#include "php_mongo.h"
+#include "../php_mongo.h"
 #include "log.h"
 
 zend_class_entry *mongo_ce_Log;
