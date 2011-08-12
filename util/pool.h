@@ -192,6 +192,8 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC);
 
 // ------- External Functions -----------
 
+void mongo_init_MongoPool(TSRMLS_D);
+
 PHP_METHOD(MongoPool, setSize);
 PHP_METHOD(MongoPool, getSize);
 PHP_METHOD(MongoPool, info);

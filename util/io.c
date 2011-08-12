@@ -22,13 +22,13 @@
 #include <php.h>
 #include <zend_exceptions.h>
 
-#include "php_mongo.h"
+#include "../php_mongo.h"
 #include "io.h"
 #include "log.h"
 #include "bson.h"
 #include "cursor.h"
-#include "util/pool.h"
-#include "util/rs.h"
+#include "pool.h"
+#include "rs.h"
 
 #if WIN32
 HANDLE io_mutex;
