@@ -23,10 +23,10 @@
 #include <zend_exceptions.h>
 
 #include "../php_mongo.h"
+#include "../bson.h"
+#include "../cursor.h"
 #include "io.h"
 #include "log.h"
-#include "bson.h"
-#include "cursor.h"
 #include "pool.h"
 #include "rs.h"
 
