@@ -147,6 +147,13 @@
   ((Z_TYPE_PP(variable) == IS_LONG && Z_LVAL_PP(variable) == value) ||  \
    (Z_TYPE_PP(variable) == IS_DOUBLE && Z_DVAL_PP(variable) == value))
 
+#if ZEND_MODULE_API_NO >= 20100525
+#define init_properties(intern) object_properties_init(&intern->std, class_type)
+#else
+#define init_properties(intern) zend_hash_copy(intern->std.properties, \
+    &class_type->default_properties, (copy_ctor_func_t) zval_add_ref,  \
+    (void *) &tmp, sizeof(zval *))
+#endif
 
 #define php_mongo_obj_new(mongo_obj)                    \
   zend_object_value retval;                             \
@@ -157,11 +164,7 @@
   memset(intern, 0, sizeof(mongo_obj));                          \
                                                                  \
   zend_object_std_init(&intern->std, class_type TSRMLS_CC);      \
-  zend_hash_copy(intern->std.properties,                         \
-     &class_type->default_properties,                            \
-     (copy_ctor_func_t) zval_add_ref,                            \
-     (void *) &tmp,                                              \
-     sizeof(zval *));                                            \
+  init_properties(intern);                                       \
                                                                  \
   retval.handle = zend_objects_store_put(intern,                 \
      (zend_objects_store_dtor_t) zend_objects_destroy_object,    \
