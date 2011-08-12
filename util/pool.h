@@ -192,10 +192,12 @@ stack_monitor *mongo_util_pool__get_monitor(mongo_server *server TSRMLS_DC);
 
 // ------- External Functions -----------
 
+PHP_METHOD(MongoPool, setSize);
+PHP_METHOD(MongoPool, getSize);
+PHP_METHOD(MongoPool, info);
+
 PHP_METHOD(Mongo, setPoolSize);
 PHP_METHOD(Mongo, getPoolSize);
-
-// dump pool info
 PHP_METHOD(Mongo, poolDebug);
 
 #endif

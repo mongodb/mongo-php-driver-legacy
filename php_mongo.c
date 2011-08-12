@@ -167,6 +167,7 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoInt64(TSRMLS_C);
 
   mongo_init_MongoLog(TSRMLS_C);
+  mongo_init_MongoPool(TSRMLS_C);
 
   /*
    * MongoMaxKey and MongoMinKey are completely non-interactive: they have no

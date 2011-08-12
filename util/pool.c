@@ -30,6 +30,8 @@
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
+zend_class_entry *mongo_ce_Pool;
+
 extern int le_pconnection;
 
 #if WIN32
@@ -436,7 +438,21 @@ int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval 
   return SUCCESS;
 }
 
-PHP_METHOD(Mongo, setPoolSize) {
+static zend_function_entry MongoPool_methods[] = {
+  PHP_ME(MongoPool, info, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(MongoPool, setSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(MongoPool, getSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  {NULL, NULL, NULL}
+};
+
+void mongo_init_MongoPool(TSRMLS_D) {
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "MongoPool", MongoPool_methods);
+  mongo_ce_Pool = zend_register_internal_class(&ce TSRMLS_CC);
+}
+
+PHP_METHOD(MongoPool, setSize) {
   long size = -1, old = -1;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &size) == FAILURE) {
@@ -448,11 +464,11 @@ PHP_METHOD(Mongo, setPoolSize) {
   RETURN_LONG(old);
 }
 
-PHP_METHOD(Mongo, getPoolSize) {
+PHP_METHOD(MongoPool, getSize) {
   RETURN_LONG(MonGlo(pool_size));
 }
 
-PHP_METHOD(Mongo, poolDebug) {
+PHP_METHOD(MongoPool, info) {
   HashPosition pointer;
   zend_rsrc_list_entry *le;
 
@@ -492,4 +508,16 @@ PHP_METHOD(Mongo, poolDebug) {
   }
 
   // return_value is returned
+}
+
+PHP_METHOD(Mongo, setPoolSize) {
+  MONGO_METHOD_BASE(MongoPool, setSize)(1, return_value, NULL, 0, 0 TSRMLS_CC);
+}
+
+PHP_METHOD(Mongo, getPoolSize) {
+  MONGO_METHOD_BASE(MongoPool, getSize)(1, return_value, NULL, 0, 0 TSRMLS_CC);
+}
+
+PHP_METHOD(Mongo, poolDebug) {
+  MONGO_METHOD_BASE(MongoPool, info)(1, return_value, NULL, 0, 0 TSRMLS_CC);
 }

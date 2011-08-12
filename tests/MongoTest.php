@@ -585,6 +585,20 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($pool1['localhost:27017...']['in use'], $pool2['localhost:27017...']['in use']);
     }
 
+    public function testPoolConnect1() {
+        $conn = new Mongo();
+
+        $pool1 = MongoPool::info();
+
+        $conn->connect();
+        $conn->connect();
+        $conn->connect();
+
+        $pool2 = MongoPool::info();
+
+        $this->assertEquals($pool1['localhost:27017...']['in use'], $pool2['localhost:27017...']['in use']);
+    }
+
     public function testPoolSize() {
         $this->assertEquals(Mongo::getPoolSize(), -1);
         Mongo::setPoolSize(4.1);
@@ -602,6 +616,25 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($thrown);
 
         Mongo::setPoolSize(-1);
+    }
+
+    public function testPoolSize2() {
+        $this->assertEquals(MongoPool::getSize(), -1);
+        MongoPool::setSize(4.1);
+        $this->assertEquals(MongoPool::getSize(), 4);
+        MongoPool::setSize(0);
+
+        $thrown = false;
+        try {
+            $m = new Mongo("mongodb://localhost:20000");
+        }
+        catch (MongoException $e) {
+            $this->assertStringEndsWith("pool", $e->getMessage());
+            $thrown = true;
+        }
+        $this->assertTrue($thrown);
+
+        MongoPool::setSize(-1);
     }
 }
 
