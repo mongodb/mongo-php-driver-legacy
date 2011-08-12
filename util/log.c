@@ -25,8 +25,8 @@ zend_class_entry *mongo_ce_Log;
 long log_level;
 long log_module;
 
-static long set_value(char *setting, zval *return_value);
-static void get_value(char *setting, zval *return_value);
+static long set_value(char *setting, zval *return_value TSRMLS_DC);
+static void get_value(char *setting, zval *return_value TSRMLS_DC);
 
 static zend_function_entry mongo_log_methods[] = {
   PHP_ME(MongoLog, setLevel, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
@@ -57,7 +57,7 @@ void mongo_init_MongoLog(TSRMLS_D) {
   zend_declare_property_long(mongo_ce_Log, "module", strlen("module"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
-static long set_value(char *setting, zval *return_value) {
+static long set_value(char *setting, zval *return_value TSRMLS_DC) {
   long value;
 
   if (zend_parse_parameters(1 TSRMLS_CC, "l", &value) == FAILURE) {
@@ -69,7 +69,7 @@ static long set_value(char *setting, zval *return_value) {
   return value;
 }
 
-static void get_value(char *setting, zval *return_value) {
+static void get_value(char *setting, zval *return_value TSRMLS_DC) {
   zval *value;
 
   value = zend_read_static_property(mongo_ce_Log, setting, strlen(setting), NOISY TSRMLS_CC);
@@ -78,19 +78,19 @@ static void get_value(char *setting, zval *return_value) {
 }
 
 PHP_METHOD(MongoLog, setLevel) {
-  log_level = set_value("level", return_value);
+  log_level = set_value("level", return_value TSRMLS_CC);
 }
 
 PHP_METHOD(MongoLog, getLevel) {
-  get_value("level", return_value);
+  get_value("level", return_value TSRMLS_CC);
 }
 
 PHP_METHOD(MongoLog, setModule) {
-  log_module = set_value("module", return_value);
+  log_module = set_value("module", return_value TSRMLS_CC);
 }
 
 PHP_METHOD(MongoLog, getModule) {
-  get_value("module", return_value);
+  get_value("module", return_value TSRMLS_CC);
 }
 
 void mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...) {

@@ -131,6 +131,8 @@ void mongo_util_rs_refresh(mongo_link *link, time_t now TSRMLS_DC) {
   }
   (*last_ping) = now;
 
+  mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "%s: pinging at %d", link->rs, now);
+
   // we are going clear the hosts list and repopulate
   current = link->server_set->server;
   while(current && !good_response) {
@@ -187,8 +189,6 @@ void mongo_util_rs_refresh(mongo_link *link, time_t now TSRMLS_DC) {
 mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
   mongo_server *current;
 
-  mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "[get_master] servers: %d, rs? %s", link->server_set->num, link->rs);
-
   // for a single connection, return it
   if (!link->rs && link->server_set->num == 1) {
     if (link->server_set->server->connected) {
@@ -201,6 +201,8 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
   if (link->server_set->master && link->server_set->master->connected) {
     return link->server_set->master;
   }
+
+  mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "%s: getting master", link->rs);
 
   // if this is a replica set, check the members occasionally and start the
   // iteration over again
