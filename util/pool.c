@@ -313,8 +313,6 @@ void mongo_util_pool__close_connections(stack_monitor *monitor) {
 void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server) {
   int was_connected = server->connected;
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool disconnect", server->label);
-
   mongo_util_disconnect(server);
 
   if (was_connected &&
