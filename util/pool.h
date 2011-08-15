@@ -38,6 +38,9 @@
  * connection associated with that pool is closed and every connection on the
  * stack is freed.  When clients use a connection for the first time after a
  * failure, they must fetch a new connection from the pool.
+ *
+ * Logging shouldn't be used until a monitor has been acquired, as that checks
+ * that "server" is correctly initialized.
  */
 
 #ifndef MONGO_UTIL_POOL_H

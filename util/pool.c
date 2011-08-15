@@ -59,11 +59,11 @@ int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
 int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
   stack_monitor *monitor;
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool get", server->label);
-
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     return FAILURE;
   }
+
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool get", server->label);
 
   // get connection from pool or create new
   if (mongo_util_pool__stack_pop(monitor, server) == SUCCESS ||
@@ -78,13 +78,13 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
 void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool done", server->label);
-
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     // if we couldn't push this, close the connection
     mongo_util_disconnect(server);
     return;
   }
+
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool done", server->label);
 
   // clean up reference to server (nothing needs to be freed)
   mongo_util_pool__rm_server_ptr(monitor, server);
@@ -98,13 +98,13 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
 void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool remove", server->label);
-
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     // if we couldn't push this, close the connection
     mongo_util_disconnect(server);
     return;
   }
+
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool remove", server->label);
 
   // clean up reference to server (nothing needs to be freed)
   mongo_util_pool__rm_server_ptr(monitor, server);
@@ -113,12 +113,12 @@ void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
 void mongo_util_pool_close(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool close", server->label);
-
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     mongo_util_disconnect(server);
     return;
   }
+
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool close", server->label);
 
   mongo_util_pool__disconnect(monitor, server);
 
@@ -130,12 +130,12 @@ int mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
   zval *errmsg;
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool fail", server->label);
-
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     mongo_util_disconnect(server);
     return FAILURE;
   }
+
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool fail", server->label);
 
   mongo_util_pool__close_connections(monitor);
   // just to be sure
@@ -312,7 +312,11 @@ void mongo_util_pool__close_connections(stack_monitor *monitor) {
 
 void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server) {
   int was_connected = server->connected;
+
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool disconnect", server->label);
+
   mongo_util_disconnect(server);
+
   if (was_connected &&
       (monitor->num.remaining < -1 || monitor->num.remaining > 0)) {
     monitor->num.remaining++;
