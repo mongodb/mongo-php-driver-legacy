@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2011-07-21</date>
+ <date>2011-08-15</date>
  <time>12:00:00</time>
  <version>
-  <release>1.2.2</release>
-  <api>1.2.2</api>
+  <release>1.2.3</release>
+  <api>1.2.3</api>
  </version>
  <stability>
   <release>stable</release>
@@ -25,18 +25,38 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-  Retry queries when safe to do so (minimizing exceptions on failover).
-  Block for "timeout" milliseconds when a connection pool is empty.
-  Fix a segfault affecting authentication to a single server.
-  Fix a segfault affecting deserialization of data larger than 4MB.
+   ENHANCEMENTS
+
+   * Now compatible with PHP 5.4.
+
+   * Added MongoPool class for pool-related functionality:
+     - MongoPool::info() for pool information (equivalent to Mongo::poolDebug())
+     - MongoPool::setSize() to set max pool size (equivalent to Mongo::setPoolSize())
+     - MongoPool::getSize() to get max pool size (equivalent to Mongo::getPoolSize())
+
+   * Added MongoLog class for logging. Logging defaults to off, but log level
+     and what should be logged (e.g., io activity or replica set status) can be
+     tuned.
+
+   * Creating new instances of MongoId is faster.
+
+   BUG FIXES
+
+   * New connections created for replica sets now propegate custom timeouts set
+     on the original connection.
+
+   * Fix for replica set authentication. Connecting to a replica set with
+     "mongodb://user:pass@host" syntax would lose authentication info.
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
    <file role="src" name="config.m4" />
    <file role="src" name="config.w32" />
    <file role="doc" name="README.md"/>
-   <file role="src" name="mongo.c"/>
+   <file role="src" name="php_mongo.c"/>
    <file role="src" name="php_mongo.h"/>
+   <file role="src" name="mongo.c"/>
+   <file role="src" name="mongo.h"/>
    <file role="src" name="mongo_types.c"/>
    <file role="src" name="mongo_types.h"/>
    <file role="src" name="bson.c"/>
@@ -61,6 +81,12 @@
    <file role="src" name="util/rs.h"/>
    <file role="src" name="util/server.c"/>
    <file role="src" name="util/server.h"/>
+   <file role="src" name="util/log.c"/>
+   <file role="src" name="util/log.h"/>
+   <file role="src" name="util/io.c"/>
+   <file role="src" name="util/io.h"/>
+   <file role="src" name="util/parse.c"/>
+   <file role="src" name="util/parse.h"/>
   </dir>
  </contents>
  <dependencies>
@@ -76,6 +102,41 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.3</release>
+    <api>1.2.3</api>
+   </version>
+   <date>2011-08-15</date>
+   <notes>
+     ENHANCEMENTS
+
+     * Now compatible with PHP 5.4.
+
+     * Added MongoPool class for pool-related functionality:
+     - MongoPool::info() for pool information (equivalent to Mongo::poolDebug())
+     - MongoPool::setSize() to set max pool size (equivalent to Mongo::setPoolSize())
+     - MongoPool::getSize() to get max pool size (equivalent to Mongo::getPoolSize())
+
+     * Added MongoLog class for logging. Logging defaults to off, but log level
+     and what should be logged (e.g., io activity or replica set status) can be
+     tuned.
+
+     * Creating new instances of MongoId is faster.
+
+     BUG FIXES
+
+     * New connections created for replica sets now propegate custom timeouts set
+     on the original connection.
+
+     * Fix for replica set authentication. Connecting to a replica set with
+     "mongodb://user:pass@host" syntax would lose authentication info.
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>
