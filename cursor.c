@@ -604,13 +604,13 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   PHP_MONGO_GET_CURSOR(getThis());
 
-  while (mongo_cursor__should_retry(cursor)) {
+  do { 
     MONGO_METHOD(MongoCursor, reset, return_value, getThis());
     if (mongo_cursor__do_query(getThis(), return_value TSRMLS_CC) == SUCCESS ||
         EG(exception)) {
       return;
     }
-  }
+  }while (mongo_cursor__should_retry(cursor));
 
   zend_throw_exception(mongo_ce_CursorException,
                        "max number of retries exhausted, couldn't send query",
