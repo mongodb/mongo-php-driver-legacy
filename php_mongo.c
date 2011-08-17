@@ -36,7 +36,7 @@
 #include "util/rs.h"
 #include "util/log.h"
 
-zend_object_handlers mongo_default_handlers,
+extern zend_object_handlers mongo_default_handlers,
   mongo_id_handlers;
 
 /** Classes */

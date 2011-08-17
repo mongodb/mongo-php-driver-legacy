@@ -39,8 +39,7 @@
 extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_Exception;
 
-extern zend_object_handlers mongo_default_handlers,
-  mongo_id_handlers;
+zend_object_handlers mongo_id_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 

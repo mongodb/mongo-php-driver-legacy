@@ -48,8 +48,7 @@ static void php_mongo_link_free(void* TSRMLS_DC);
 static void run_err(int, zval*, zval* TSRMLS_DC);
 static char* stringify_server(mongo_server*, char*, int*, int*);
 
-zend_object_handlers mongo_default_handlers,
-  mongo_id_handlers;
+zend_object_handlers mongo_default_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
