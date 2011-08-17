@@ -40,8 +40,7 @@ extern zend_object_handlers mongo_default_handlers,
   mongo_id_handlers;
 
 /** Classes */
-zend_class_entry *mongo_ce_Mongo,
-  *mongo_ce_CursorException,
+zend_class_entry *mongo_ce_CursorException,
   *mongo_ce_ConnectionException,
   *mongo_ce_CursorTOException,
   *mongo_ce_GridFSException,
