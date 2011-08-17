@@ -124,13 +124,13 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $m = new Mongo("mongodb://localhost:27018,localhost:27017,localhost:27019");
         $this->assertEquals("[localhost:27018],localhost:27017,[localhost:27019]", $m->__toString());
         $m->foo->bar->findOne();
-        $this->assertEquals("localhost:27017,[localhost:27018],[localhost:27019]", $m->__toString());
+        $this->assertEquals("[localhost:27018],localhost:27017,[localhost:27019]", $m->__toString());
         $this->assertEquals(51, strlen($m->__toString()));
 
         // realloc
         $m = new Mongo("mongodb://localhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhosta:27018,localhost:27017");
         $m->phpunit->c->findOne();
-        $this->assertEquals("localhost:27017,[localhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhosta:27018]", $m->__toString());
+        $this->assertEquals("[localhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhosta:27018],localhost:27017", $m->__toString());
         $this->assertEquals(274, strlen($m->__toString()));
     }
 
