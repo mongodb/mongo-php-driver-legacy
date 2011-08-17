@@ -563,8 +563,8 @@ zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC) {
 
   if (current->db) {
     cursor->ns = (char*)emalloc(strlen(current->db)+6);
-    memcpy(current->db, cursor->ns, strlen(current->db));
-    memcpy(".$cmd", cursor->ns+strlen(current->db), 5);
+    memcpy(cursor->ns, current->db, strlen(current->db));
+    memcpy(cursor->ns+strlen(current->db), ".$cmd", 5);
     cursor->ns[strlen(current->db)+6] = 0;
   }
   else {
