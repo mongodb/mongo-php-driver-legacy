@@ -77,13 +77,43 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
     connected = 1;
   }
 
-  server = mongo_util_rs_get_master(link TSRMLS_CC);
-  if (!server) {
-    ZVAL_STRING(errmsg, "Couldn't determine master", 1);
-    return 0;
+  // errmsg is set, if neccessary, in get_master
+  return mongo_util_link_get_master(link, errmsg TSRMLS_CC);
+}
+
+mongo_server* mongo_util_link_get_master(mongo_link *link, zval *errmsg TSRMLS_DC) {
+  mongo_server *potential_master;
+
+  if (link->rs) {
+    potential_master = mongo_util_rs_get_master(link TSRMLS_CC);
+
+    if (potential_master == 0) {
+      ZVAL_STRING(errmsg, "Couldn't determine master", 1);
+    }
+
+    return potential_master;
   }
 
-  return server;
+  // clear the error message
+  Z_STRVAL_P(errmsg) = 0;
+
+  // for a non-rs, go through the list of server until someone is connected
+  potential_master = link->server_set->server;
+  while (potential_master) {
+    if (potential_master->connected || mongo_util_pool_get(potential_master, errmsg TSRMLS_CC) == SUCCESS) {
+      return potential_master;
+    }
+
+    potential_master = potential_master->next;
+
+    // keep the errmsg the last time through the loop
+    if (potential_master && Z_STRVAL_P(errmsg)) {
+      efree(Z_STRVAL_P(errmsg));
+      Z_STRVAL_P(errmsg) = 0;
+    }
+  }
+
+  return 0;
 }
 
 void mongo_util_link_master_failed(mongo_link *link TSRMLS_DC) {
