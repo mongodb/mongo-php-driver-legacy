@@ -183,14 +183,24 @@ zend_rsrc_list_entry* mongo_util_server__other_le(mongo_server *server TSRMLS_DC
   array_init(query);
   add_assoc_long(query, "_isSelf", 1);
 
-  response = mongo_db_cmd(server, query TSRMLS_CC);
+  zend_try {
+    response = mongo_db_cmd(server, query TSRMLS_CC);
+  } zend_catch {
+    // no op
+  } zend_end_try();
 
   zval_ptr_dtor(&query);
 
-  if (!response ||
-      zend_hash_find(HASH_P(response), "id", strlen("id")+1, (void**)&self_id_z) == FAILURE) {
+  if (!response) {
     return 0;
   }
+
+  if (zend_hash_find(HASH_P(response), "id", strlen("id")+1, (void**)&self_id_z) == FAILURE) {
+    zval_ptr_dtor(&response);
+    return 0;
+  }
+
+  // we can't destroy response yet, because self_id_z is a field of it
 
   self_id = zend_read_property(mongo_ce_Id, *self_id_z, "$id", strlen("$id"), NOISY TSRMLS_CC);
 
@@ -209,10 +219,13 @@ zend_rsrc_list_entry* mongo_util_server__other_le(mongo_server *server TSRMLS_DC
 
       // check again
       if (zend_hash_find(&EG(persistent_list), Z_STRVAL_P(self_id), Z_STRLEN_P(self_id)+1, (void**)&le) == FAILURE) {
+        zval_ptr_dtor(&response);
         return 0;
       }
     }
   }
+
+  zval_ptr_dtor(&response);
 
   if (!le || le->type != le_pserver) {
     return 0;
