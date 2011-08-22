@@ -137,15 +137,26 @@ void mongo_util_rs_refresh(mongo_link *link, time_t now TSRMLS_DC) {
   current = link->server_set->server;
   while(current && !good_response) {
     zval *response = mongo_util_rs__ismaster(current TSRMLS_CC);
+
     if (response) {
-      zval **h = 0;
-      if (zend_hash_find(HASH_P(response), "hosts", strlen("hosts")+1, (void**)&h) == SUCCESS ||
-          zend_hash_find(HASH_P(response), "passives", strlen("passives")+1, (void**)&h) == SUCCESS ||
-          zend_hash_find(HASH_P(response), "arbiters", strlen("arbiters")+1, (void**)&h) == SUCCESS) {
+      zval **ok = 0;
+      if (zend_hash_find(HASH_P(response), "ok", strlen("ok")+1, (void**)&ok) == SUCCESS &&
+          Z_NUMVAL_PP(ok, 1)) {
+        zval **name = 0;
+
+        if (zend_hash_find(HASH_P(response), "setName", strlen("setName")+1, (void**)&name) == SUCCESS &&
+            Z_TYPE_PP(name) == IS_STRING && strncmp(link->rs, Z_STRVAL_PP(name), strlen(link->rs)) != 0) {
+          mongo_log(MONGO_LOG_RS, MONGO_LOG_WARNING TSRMLS_CC, "rs: given name %s does not match discovered name %s",
+                    link->rs, Z_STRVAL_PP(name));
+        }
+
         good_response = response;
         break;
       }
       else {
+        mongo_log(MONGO_LOG_RS, MONGO_LOG_INFO TSRMLS_CC, "rs: did not get a good isMaster response from %s",
+                  current->label);
+
         zval_ptr_dtor(&response);
       }
     }

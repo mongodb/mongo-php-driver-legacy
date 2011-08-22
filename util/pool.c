@@ -63,7 +63,7 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
     return FAILURE;
   }
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool get", server->label);
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool get (%p)", server->label, monitor);
 
   // get connection from pool or create new
   if (mongo_util_pool__stack_pop(monitor, server) == SUCCESS ||
@@ -84,7 +84,7 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
     return;
   }
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool done", server->label);
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool done (%p)", server->label, monitor);
 
   // clean up reference to server (nothing needs to be freed)
   mongo_util_pool__rm_server_ptr(monitor, server);
@@ -104,7 +104,7 @@ void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
     return;
   }
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool remove", server->label);
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool remove (%p)", server->label, monitor);
 
   // clean up reference to server (nothing needs to be freed)
   mongo_util_pool__rm_server_ptr(monitor, server);
@@ -118,7 +118,7 @@ void mongo_util_pool_close(mongo_server *server TSRMLS_DC) {
     return;
   }
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool close", server->label);
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool close (%p)", server->label, monitor);
 
   mongo_util_pool__disconnect(monitor, server);
 
@@ -135,7 +135,7 @@ int mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
     return FAILURE;
   }
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool fail", server->label);
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool fail (%p)", server->label, monitor);
 
   mongo_util_pool__close_connections(monitor);
   // just to be sure
@@ -193,6 +193,9 @@ int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server) {
   pefree(node, 1);
 
   UNLOCK(pool);
+
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: found in pool (%p)", server->label, monitor);
+
   return SUCCESS;
 }
 
@@ -214,6 +217,48 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
 
   monitor->num.in_pool++;
   server->connected = 0;
+
+  // don't keep more than 50 connections around
+  node = monitor->top;
+  if (monitor->num.in_pool > 50) {
+    int count = 0, removed = 0;
+    stack_node *next;
+
+    mongo_log(MONGO_LOG_POOL, MONGO_LOG_INFO TSRMLS_CC, "%s: trimming pool from %d to 50 (%p)",
+              server->label, monitor->num.in_pool, monitor);
+
+    while (node && count < 50) {
+      node = node->next;
+      count++;
+    }
+
+    if (count < 50 || !node) {
+      mongo_log(MONGO_LOG_POOL, MONGO_LOG_WARNING TSRMLS_CC, "%s: BAD POOL SIZE: %d, actually %d (%p)",
+                server->label, monitor->num.in_pool, count, monitor);
+      UNLOCK(pool);
+      return;
+    }
+
+    next = node->next;
+    node->next = 0;
+    node = next;
+
+    // get rid of old connections
+    while (node) {
+      next = node->next;
+
+      MONGO_UTIL_DISCONNECT(node->socket);
+      monitor->num.remaining++;
+      free(node);
+
+      node = next;
+      monitor->num.in_pool--;
+      removed++;
+    }
+
+    mongo_log(MONGO_LOG_POOL, MONGO_LOG_INFO TSRMLS_CC, "%s: trimmed pool by %d (%p)",
+              server->label, removed, monitor);
+  }
 
   UNLOCK(pool);
 }
@@ -413,7 +458,7 @@ int mongo_util_pool__timeout(stack_monitor *monitor) {
 }
 
 int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval *errmsg TSRMLS_DC) {
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool connect", server->label);
+  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool connect (%p)", server->label, monitor);
 
   if (mongo_util_pool__timeout(monitor) == FAILURE) {
     ZVAL_STRING(errmsg, "no more connections in pool", 1);
