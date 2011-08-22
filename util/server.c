@@ -21,13 +21,14 @@
 #include "../db.h"
 #include "rs.h"
 #include "server.h"
+#include "log.h"
 
 extern int le_pserver;
 extern zend_class_entry *mongo_ce_Id;
 
 static server_info* create_info();
 static void make_other_le(const char *id, server_info *info TSRMLS_DC);
-static server_info* wrap_other_le_guts(zend_rsrc_list_entry *le);
+static server_info* wrap_other_guts(server_info *source);
 
 int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
   server_info* info;
@@ -52,12 +53,37 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
     return FAILURE;
   }
 
+  zend_hash_find(HASH_P(response), "me", strlen("me")+1, (void**)&self);
+  if (!info->guts->pinged && self &&
+      strncmp(Z_STRVAL_PP(self), server->label, Z_STRLEN_PP(self)) != 0) {
+
+    // this server thinks its name is different than what we have recorded
+    mongo_log(MONGO_LOG_SERVER, MONGO_LOG_INFO TSRMLS_CC, "server: found another name for %s: %s",
+              server->label, Z_STRVAL_PP(self));
+
+    // make a new info entry for this name, pointing to our info
+    make_other_le(Z_STRVAL_PP(self), info TSRMLS_CC);
+  }
+
+  // now we have pinged it at least once
+  info->guts->pinged = 1;
+
   zend_hash_find(HASH_P(response), "secondary", strlen("secondary")+1, (void**)&secondary);
   if (secondary && Z_BVAL_PP(secondary)) {
+    if (!info->guts->readable) {
+      mongo_log(MONGO_LOG_SERVER, MONGO_LOG_INFO TSRMLS_CC, "server: %s is now a secondary", server->label);
+    }
+
     info->guts->readable = 1;
+    info->guts->master = 0;
   }
   else {
+    if (info->guts->readable) {
+      mongo_log(MONGO_LOG_SERVER, MONGO_LOG_INFO TSRMLS_CC, "server: %s is now not readable", server->label);
+    }
+
     info->guts->readable = 0;
+    info->guts->master = 0;
   }
 
   zend_hash_find(HASH_P(response), "maxBsonObjectSize", strlen("maxBsonObjectSize")+1, (void**)&bson);
@@ -69,20 +95,17 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
       info->guts->max_bson_size = (int)Z_DVAL_PP(bson);
     }
     // otherwise, leave as the default
+    else {
+      mongo_log(MONGO_LOG_SERVER, MONGO_LOG_WARNING TSRMLS_CC,
+                "server: could not find max bson size on %s, consider upgrading your server", server->label);
+    }
   }
-
-  zend_hash_find(HASH_P(response), "self", strlen("self")+1, (void**)&self);
-  if (!info->guts->pinged && self &&
-      strncmp(Z_STRVAL_PP(self), server->label, Z_STRLEN_PP(self)) != 0) {
-    // this server thinks its name is different than what we have recorded
-
-    // make a new info entry for this name, pointing to our info
-    make_other_le(Z_STRVAL_PP(self), info TSRMLS_CC);
-  }
-
-  info->guts->pinged = 1;
 
   if (mongo_util_rs__get_ismaster(response TSRMLS_CC)) {
+    if (!info->guts->master) {
+      mongo_log(MONGO_LOG_SERVER, MONGO_LOG_INFO TSRMLS_CC, "server: %s is now primary", server->label);
+    }
+
     info->guts->master = 1;
     info->guts->readable = 1;
     zval_ptr_dtor(&response);
@@ -173,67 +196,6 @@ void mongo_util_server_down(mongo_server* server TSRMLS_DC) {
   info->guts->master = 0;
 }
 
-zend_rsrc_list_entry* mongo_util_server__other_le(mongo_server *server TSRMLS_DC) {
-  zval *query = 0, *response = 0, **self_id_z = 0, *self_id = 0;
-  zend_rsrc_list_entry *le = 0;
-
-  // get "self"
-  // {"_isSelf" : 1}
-  MAKE_STD_ZVAL(query);
-  array_init(query);
-  add_assoc_long(query, "_isSelf", 1);
-
-  zend_try {
-    response = mongo_db_cmd(server, query TSRMLS_CC);
-  } zend_catch {
-    // no op
-  } zend_end_try();
-
-  zval_ptr_dtor(&query);
-
-  if (!response) {
-    return 0;
-  }
-
-  if (zend_hash_find(HASH_P(response), "id", strlen("id")+1, (void**)&self_id_z) == FAILURE) {
-    zval_ptr_dtor(&response);
-    return 0;
-  }
-
-  // we can't destroy response yet, because self_id_z is a field of it
-
-  self_id = zend_read_property(mongo_ce_Id, *self_id_z, "$id", strlen("$id"), NOISY TSRMLS_CC);
-
-  if (zend_hash_find(&EG(persistent_list), Z_STRVAL_P(self_id), Z_STRLEN_P(self_id)+1, (void**)&le) == FAILURE) {
-    zend_rsrc_list_entry nle;
-    server_info *info = create_info();
-
-    if (info) {
-      info->owner = 1;
-
-      nle.ptr = info;
-      nle.type = le_pserver;
-      nle.refcount = 1;
-
-      zend_hash_add(&EG(persistent_list), Z_STRVAL_P(self_id), Z_STRLEN_P(self_id)+1, &nle, sizeof(zend_rsrc_list_entry), NULL);
-
-      // check again
-      if (zend_hash_find(&EG(persistent_list), Z_STRVAL_P(self_id), Z_STRLEN_P(self_id)+1, (void**)&le) == FAILURE) {
-        zval_ptr_dtor(&response);
-        return 0;
-      }
-    }
-  }
-
-  zval_ptr_dtor(&response);
-
-  if (!le || le->type != le_pserver) {
-    return 0;
-  }
-
-  return le;
-}
-
 server_info* mongo_util_server__get_info(mongo_server *server TSRMLS_DC) {
   zend_rsrc_list_entry *le = 0;
   char *id;
@@ -248,26 +210,16 @@ server_info* mongo_util_server__get_info(mongo_server *server TSRMLS_DC) {
     zend_rsrc_list_entry nle, *other_le = 0;
     server_info *info = 0;
 
-    // get the "parent" server_info pointer
-    other_le = mongo_util_server__other_le(server TSRMLS_CC);
-
     // clear to start so that we can check it was set later
     nle.ptr = 0;
 
-    if (other_le) {
-      nle.ptr = wrap_other_le_guts(other_le);
-      nle.type = le_pserver;
-      nle.refcount = 1;
-    }
-    else {
-      info = create_info();
-      if (info != 0) {
-        info->owner = 1;
+    info = create_info();
+    if (info != 0) {
+      info->owner = 1;
 
-        nle.ptr = info;
-        nle.refcount = 1;
-        nle.type = le_pserver;
-      }
+      nle.ptr = info;
+      nle.refcount = 1;
+      nle.type = le_pserver;
     }
 
     if (nle.ptr) {
@@ -282,12 +234,12 @@ server_info* mongo_util_server__get_info(mongo_server *server TSRMLS_DC) {
   return le->ptr;
 }
 
-static server_info* wrap_other_le_guts(zend_rsrc_list_entry *le) {
+static server_info* wrap_other_guts(server_info *source) {
   server_info *info;
 
   info = (server_info*)pemalloc(sizeof(server_info), 1);
   info->owner = 0;
-  info->guts = ((server_info*)le->ptr)->guts;
+  info->guts = source->guts;
 
   return info;
 }
@@ -310,17 +262,17 @@ static server_info* create_info() {
 }
 
 static void make_other_le(const char *id, server_info *info TSRMLS_DC) {
-  zend_rsrc_list_entry *le = 0;
+  zend_rsrc_list_entry *le = 0, nle;
 
   if (zend_hash_find(&EG(persistent_list), id, strlen(id)+1, (void**)&le) == SUCCESS) {
     return;
   }
 
-  le->ptr = info;
-  le->type = le_pserver;
-  le->refcount = 1;
+  nle.ptr = wrap_other_guts(info);
+  nle.type = le_pserver;
+  nle.refcount = 1;
 
-  zend_hash_add(&EG(persistent_list), id, strlen(id)+1, le, sizeof(zend_rsrc_list_entry), NULL);
+  zend_hash_add(&EG(persistent_list), id, strlen(id)+1, &nle, sizeof(zend_rsrc_list_entry), NULL);
 }
 
 #ifdef WIN32
