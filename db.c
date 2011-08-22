@@ -582,15 +582,17 @@ zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC) {
 }
 
 zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
-  zval temp_ret, *errmsg, *response, *cursor_zval;
+  zval temp_ret, *response, *cursor_zval;
   mongo_link temp;
   mongo_server *temp_next = 0;
   mongo_server_set temp_server_set;
   mongo_cursor *cursor = 0;
   int exception = 0;
 
-  MAKE_STD_ZVAL(errmsg);
-  ZVAL_NULL(errmsg);
+  // skip if we're not connected
+  if (!current->connected) {
+    return 0;
+  }
 
   // make a fake link
   temp.server_set = &temp_server_set;
@@ -599,22 +601,11 @@ zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
   temp.server_set->master = current;
   temp.rs = 0;
 
-  // create a cursor
-  cursor_zval = mongo_db__create_fake_cursor(current, cmd TSRMLS_CC);
-  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
-
-  // skip anything we're not connected to
-  if (!current->connected && FAILURE == mongo_util_pool_get(current, errmsg TSRMLS_CC)) {
-    zval_ptr_dtor(&errmsg);
-
-    cursor->link = 0;
-    zval_ptr_dtor(&cursor_zval);
-    return 0;
-  }
-  zval_ptr_dtor(&errmsg);
-
   temp_next = current->next;
   current->next = 0;
+
+  // create a cursor
+  cursor_zval = mongo_db__create_fake_cursor(current, cmd TSRMLS_CC);
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
   cursor->link = &temp;
 
