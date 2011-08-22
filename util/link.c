@@ -42,15 +42,11 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
   mongo_util_rs_ping(link TSRMLS_CC);
 
   if (link->slave) {
-    if (link->slave->connected) {
+    if (mongo_util_pool_refresh(link->slave, link->timeout TSRMLS_CC) == SUCCESS) {
       return link->slave;
     }
 
-    if (mongo_util_pool_get(link->slave, errmsg TSRMLS_CC) == SUCCESS) {
-      return link->slave;
-    }
-
-    // TODO: what if we can't reconnect?  close cursors? grab another slave?
+    link->slave = 0;
   }
 
   status = mongo_util_rs__set_slave(link, &(Z_STRVAL_P(errmsg)) TSRMLS_CC);
@@ -88,31 +84,23 @@ mongo_server* mongo_util_link_get_master(mongo_link *link, zval *errmsg TSRMLS_D
     potential_master = mongo_util_rs_get_master(link TSRMLS_CC);
 
     if (potential_master == 0) {
-      ZVAL_STRING(errmsg, "Couldn't determine master", 1);
+      ZVAL_STRING(errmsg, "couldn't determine master", 1);
     }
 
     return potential_master;
   }
 
-  // clear the error message
-  Z_STRVAL_P(errmsg) = 0;
-
   // for a non-rs, go through the list of server until someone is connected
   potential_master = link->server_set->server;
   while (potential_master) {
-    if (potential_master->connected || mongo_util_pool_get(potential_master, errmsg TSRMLS_CC) == SUCCESS) {
+    if (mongo_util_pool_refresh(potential_master, link->timeout TSRMLS_CC) == SUCCESS) {
       return potential_master;
     }
 
     potential_master = potential_master->next;
-
-    // keep the errmsg the last time through the loop
-    if (potential_master && Z_STRVAL_P(errmsg)) {
-      efree(Z_STRVAL_P(errmsg));
-      Z_STRVAL_P(errmsg) = 0;
-    }
   }
 
+  ZVAL_STRING(errmsg, "couldn't connect to any servers in the list", 1);
   return 0;
 }
 

@@ -342,8 +342,8 @@ int _mongo_say(int sock, buffer *buf, zval *errmsg TSRMLS_DC) {
 }
 
 int mongo_say(mongo_server *server, buffer *buf, zval *errmsg TSRMLS_DC) {
-  if(!server->connected &&
-     mongo_util_pool_get(server, errmsg TSRMLS_CC) == FAILURE) {
+  if(mongo_util_pool_refresh(server, 0 TSRMLS_CC) == FAILURE) {
+    ZVAL_STRING(errmsg, "couldn't get socket to send on", 1);
     return FAILURE;
   }
 

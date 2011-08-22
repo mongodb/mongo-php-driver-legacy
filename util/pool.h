@@ -89,6 +89,12 @@ typedef struct {
 int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC);
 
 /**
+ * Close the bad connection and open a new one.  Does nothing if a healthy
+ * connection already exists.
+ */
+int mongo_util_pool_refresh(mongo_server *server, time_t timeout TSRMLS_DC);
+
+/**
  * Fetch a connection from the pool, based on the criteria given.
  * @return SUCCESS or FAILURE
  */

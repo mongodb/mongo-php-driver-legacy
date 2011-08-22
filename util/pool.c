@@ -56,6 +56,34 @@ int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
   return SUCCESS;
 }
 
+int mongo_util_pool_refresh(mongo_server *server, time_t timeout TSRMLS_DC) {
+  zval *errmsg = 0;
+
+  if (server->connected) {
+    return SUCCESS;
+  }
+
+  // make sure we're disconnected before reconnecting
+  mongo_util_pool_close(server TSRMLS_CC);
+
+  if (mongo_util_pool_init(server, timeout TSRMLS_CC) == FAILURE) {
+    return FAILURE;
+  }
+
+  MAKE_STD_ZVAL(errmsg);
+  ZVAL_NULL(errmsg);
+
+  if (mongo_util_pool_get(server, errmsg TSRMLS_CC) == FAILURE) {
+    zval_ptr_dtor(&errmsg);
+    return FAILURE;
+  }
+
+  zval_ptr_dtor(&errmsg);
+
+  // if we get here, we successfully reconnected
+  return SUCCESS;
+}
+
 int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
   stack_monitor *monitor;
 

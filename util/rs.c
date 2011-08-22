@@ -37,7 +37,6 @@ extern int le_prs;
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TSRMLS_DC) {
-  zval *errmsg = 0;
   mongo_server *target_server, *eo_list = 0, *server;
 
   target_server = link->server_set->server;
@@ -55,15 +54,8 @@ mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TS
     return 0;
   }
 
-  // try to connect
-  MAKE_STD_ZVAL(errmsg);
-  ZVAL_NULL(errmsg);
-
   // we need to call init here in case this is a new server name (without a timeout set)
-  mongo_util_pool_init(server, link->timeout TSRMLS_CC);
-  mongo_util_pool_get(server, errmsg TSRMLS_CC);
-
-  zval_ptr_dtor(&errmsg);
+  mongo_util_pool_refresh(server, link->timeout TSRMLS_CC);
 
   mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "appending to list: %s", server->label);
 
@@ -339,7 +331,6 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
   zval **primary;
   char *host;
   mongo_server *server;
-  zval *errmsg;
 
   if (zend_hash_find(HASH_P(response), "primary", strlen("primary")+1, (void**)&primary) == FAILURE) {
     // this node can't reach the master, try someone else
@@ -351,16 +342,11 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
     return FAILURE;
   }
 
-  MAKE_STD_ZVAL(errmsg);
-  ZVAL_NULL(errmsg);
-
-  if (!server->connected && mongo_util_pool_get(server, errmsg TSRMLS_CC) == FAILURE) {
-    zval_ptr_dtor(&errmsg);
+  if (mongo_util_pool_refresh(server, link->timeout TSRMLS_CC) == FAILURE) {
     return FAILURE;
   }
-  zval_ptr_dtor(&errmsg);
 
-  mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "connected to %s:%d\n", server->host, server->port);
+  mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "rs: connected to %s:%d\n", server->host, server->port);
 
   // if successful, we're connected to the master
   link->server_set->master = server;
