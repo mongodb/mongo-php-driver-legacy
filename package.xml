@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2011-08-15</date>
+ <date>2011-08-23</date>
  <time>12:00:00</time>
  <version>
-  <release>1.2.3</release>
-  <api>1.2.3</api>
+  <release>1.2.4</release>
+  <api>1.2.4</api>
  </version>
  <stability>
   <release>stable</release>
@@ -27,26 +27,19 @@
  <notes>
    ENHANCEMENTS
 
-   * Now compatible with PHP 5.4.
-
-   * Added MongoPool class for pool-related functionality:
-     - MongoPool::info() for pool information (equivalent to Mongo::poolDebug())
-     - MongoPool::setSize() to set max pool size (equivalent to Mongo::setPoolSize())
-     - MongoPool::getSize() to get max pool size (equivalent to Mongo::getPoolSize())
-
-   * Added MongoLog class for logging. Logging defaults to off, but log level
-     and what should be logged (e.g., io activity or replica set status) can be
-     tuned.
-
-   * Creating new instances of MongoId is faster.
+   * Added MongoLog::SERVER logging.
 
    BUG FIXES
 
-   * New connections created for replica sets now propegate custom timeouts set
-     on the original connection.
+   * Fixed compile for OS X.
 
-   * Fix for replica set authentication. Connecting to a replica set with
-     "mongodb://user:pass@host" syntax would lose authentication info.
+   * Fixed segfault with authentication on.
+
+   * Fixed "_isSelf not found" error.
+
+   * Allow non-replica-set connections to reconnect.
+
+   * Do not sleep for 0ms before initial query attempt (Hiroaki Kubota)
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -102,6 +95,34 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.4</release>
+    <api>1.2.4</api>
+   </version>
+   <date>2011-08-23</date>
+   <notes>
+     ENHANCEMENTS
+
+     * Added MongoLog::SERVER logging.
+
+     BUG FIXES
+
+     * Fixed compile for OS X.
+
+     * Fixed segfault with authentication on.
+
+     * Fixed "_isSelf not found" error.
+
+     * Allow non-replica-set connections to reconnect.
+
+     * Do not sleep for 0ms before initial query attempt (Hiroaki Kubota)
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>
