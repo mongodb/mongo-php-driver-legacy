@@ -66,7 +66,6 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
  */
 mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
   int connected = 0;
-  mongo_server *server;
 
   if ((link->server_set->num == 1 && !link->rs && link->server_set->server->connected) ||
       (link->server_set->master && link->server_set->master->connected)) {
