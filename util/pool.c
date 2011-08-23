@@ -94,7 +94,7 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
   mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool get (%p)", server->label, monitor);
 
   // get connection from pool or create new
-  if (mongo_util_pool__stack_pop(monitor, server) == SUCCESS ||
+  if (mongo_util_pool__stack_pop(monitor, server TSRMLS_CC) == SUCCESS ||
       mongo_util_pool__connect(monitor, server, errmsg TSRMLS_CC) == SUCCESS) {
     mongo_util_pool__add_server_ptr(monitor, server);
     return SUCCESS;
@@ -119,7 +119,7 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
 
   // if this is disconnected, do not add it to the pool
   if (server->connected) {
-    mongo_util_pool__stack_push(monitor, server);
+    mongo_util_pool__stack_push(monitor, server TSRMLS_CC);
   }
 }
 
@@ -165,7 +165,7 @@ int mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
 
   mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool fail (%p)", server->label, monitor);
 
-  mongo_util_pool__close_connections(monitor);
+  mongo_util_pool__close_connections(monitor TSRMLS_CC);
   // just to be sure
   mongo_util_pool__disconnect(monitor, server);
 
@@ -191,12 +191,12 @@ void mongo_util_pool_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
   }
 
   monitor = (stack_monitor*)rsrc->ptr;
-  mongo_util_pool__close_connections(monitor);
+  mongo_util_pool__close_connections(monitor TSRMLS_CC);
   pefree(monitor, 1);
   rsrc->ptr = 0;
 }
 
-int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server) {
+int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server TSRMLS_DC) {
   stack_node *node;
 
   LOCK(pool);
@@ -227,7 +227,7 @@ int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server) {
   return SUCCESS;
 }
 
-void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
+void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server TSRMLS_DC) {
   stack_node *node;
 
   if (!server->connected) {
@@ -291,11 +291,11 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server) {
   UNLOCK(pool);
 }
 
-void mongo_util_pool__stack_clear(stack_monitor *monitor) {
+void mongo_util_pool__stack_clear(stack_monitor *monitor TSRMLS_DC) {
   // holder for popping sockets
   mongo_server temp;
 
-  while (mongo_util_pool__stack_pop(monitor, &temp) == SUCCESS) {
+  while (mongo_util_pool__stack_pop(monitor, &temp TSRMLS_CC) == SUCCESS) {
     mongo_util_pool__disconnect(monitor, &temp);
   }
   monitor->top = 0;
@@ -363,7 +363,7 @@ void mongo_util_pool__rm_server_ptr(stack_monitor *monitor, mongo_server *server
   UNLOCK(pool);
 }
 
-void mongo_util_pool__close_connections(stack_monitor *monitor) {
+void mongo_util_pool__close_connections(stack_monitor *monitor TSRMLS_DC) {
   mongo_server *current;
 
   LOCK(pool);
@@ -380,7 +380,7 @@ void mongo_util_pool__close_connections(stack_monitor *monitor) {
   UNLOCK(pool);
 
   // remove any connections from the stack
-  mongo_util_pool__stack_clear(monitor);
+  mongo_util_pool__stack_clear(monitor TSRMLS_CC);
 }
 
 void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server) {

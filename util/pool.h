@@ -141,7 +141,7 @@ void mongo_util_pool_close(mongo_server *server TSRMLS_DC);
  *
  * Sets server->connected, server->socket, and monitor->num.in_pool.
  */
-int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server);
+int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server TSRMLS_DC);
 
 /**
  * Push a connection onto the stack.  Will start emptying pool (from the bottom)
@@ -149,17 +149,17 @@ int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server);
  *
  * Sets server->connected and monitor->num.in_pool.
  */
-void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server);
+void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server TSRMLS_DC);
 
 /**
  * Close and remove all connections from the stack.
  */
-void mongo_util_pool__stack_clear(stack_monitor *monitor);
+void mongo_util_pool__stack_clear(stack_monitor *monitor TSRMLS_DC);
 
 /**
  * Close all connections for a given monitor.
  */
-void mongo_util_pool__close_connections(stack_monitor *monitor);
+void mongo_util_pool__close_connections(stack_monitor *monitor TSRMLS_DC);
 
 /**
  * Remove a server reference from this monitor.
