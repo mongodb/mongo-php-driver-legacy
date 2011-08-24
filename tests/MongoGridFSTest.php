@@ -51,7 +51,7 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Exception 
+     * @expectedException Exception
      */
     public function test__construct2() {
         $m = new mongo();
@@ -114,7 +114,7 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException MongoGridFSException 
+     * @expectedException MongoGridFSException
      */
     public function testFindOneFields2() {
         $this->object->storeFile('tests/somefile', array("x" => 1, "y" => "foo", "z" => "bar"));
@@ -131,12 +131,12 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($this->object->chunks->findOne(), null);
     }
 
-    /* 
+    /*
     //temporarily out-of-order until I can post a file
     public function testStoreUpload() {
         $_FILES['x']['name'] = 'myfile';
         $_FILES['x']['tmp_name'] = 'tests/somefile';
-      
+
         $this->object->storeUpload('x');
 
         $file = $this->object->findOne();
@@ -271,7 +271,7 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
     public function testSafeRemove() {
       $grid = $this->object;
       $id = $grid->storeFile('tests/Formelsamling.pdf');
-      
+
       $x = $grid->remove(array("_id" => $id), array("safe" => true));
       $this->assertEquals(true, (bool)$x['ok']);
       $this->assertEquals(1, $x['n']);
@@ -306,6 +306,12 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
       $this->object->delete($id);
       $file = $this->object->get($id);
       $this->assertNull($file);
+    }
+
+    public function testEmpty() {
+        $this->object->storeFile('tests/empty');
+        $file = $this->object->findOne();
+        $this->assertEquals(0, $file->file['length']);
     }
 }
 

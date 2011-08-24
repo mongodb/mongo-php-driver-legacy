@@ -435,7 +435,7 @@ static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC) {
   }
 
   // size
-  if (size && !zend_hash_exists(HASH_P(zfile), "length", strlen("length")+1)) {
+  if (!zend_hash_exists(HASH_P(zfile), "length", strlen("length")+1)) {
     add_assoc_long(zfile, "length", size);
   }
 
