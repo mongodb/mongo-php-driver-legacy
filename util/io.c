@@ -41,6 +41,12 @@ static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC);
 static mongo_cursor* make_persistent_cursor(mongo_cursor *cursor);
 static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor);
 
+/**
+ * Blocks until socket is ready.  Returns FAILURE and throws an exception if
+ * something goes wrong, returns SUCCESS if the cursor is ready to be read from.
+ */
+static int do_timeout(int sock, int to TSRMLS_DC);
+
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 extern zend_class_entry *mongo_ce_CursorException,
@@ -172,6 +178,55 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   return SUCCESS;
 }
 
+static int do_timeout(int sock, int to TSRMLS_DC) {
+  struct timeval timeout;
+
+  timeout.tv_sec = to / 1000 ;
+  timeout.tv_usec = (to % 1000) * 1000;
+
+  while (1) {
+    int status;
+    fd_set readfds, exceptfds;
+
+    FD_ZERO(&readfds);
+    FD_SET(sock, &readfds);
+    FD_ZERO(&exceptfds);
+    FD_SET(sock, &exceptfds);
+
+    status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
+
+    if (status == -1) {
+      // on EINTR, retry
+      if (errno == EINTR) {
+        continue;
+      }
+
+      zend_throw_exception(mongo_ce_CursorException, strerror(errno), 13 TSRMLS_CC);
+      return FAILURE;
+    }
+
+    if (FD_ISSET(sock, &exceptfds)) {
+      zend_throw_exception(mongo_ce_CursorException,
+                           "Exceptional condition on socket", 17 TSRMLS_CC);
+      return FAILURE;
+    }
+
+    if (status == 0 && !FD_ISSET(sock, &readfds)) {
+      zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC,
+                              "cursor timed out (timeout: %d, time left: %d:%d, status: %d)",
+                              to, timeout.tv_sec, timeout.tv_usec, status);
+      return FAILURE;
+    }
+
+    // if our descriptor is ready break out
+    if (FD_ISSET(sock, &readfds)) {
+      break;
+    }
+  }
+
+  return SUCCESS;
+}
+
 /*
  * This method reads the message header for a database response
  * It returns failure or success and throws an exception on failure.
@@ -180,53 +235,9 @@ static int get_cursor_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
   int status = 0;
 
   // set a timeout
-  if (cursor->timeout && cursor->timeout > 0) {
-    struct timeval timeout;
-
-    timeout.tv_sec = cursor->timeout / 1000 ;
-    timeout.tv_usec = (cursor->timeout % 1000) * 1000;
-
-    while (1) {
-      int status;
-      fd_set readfds, exceptfds;
-
-      FD_ZERO(&readfds);
-      FD_SET(sock, &readfds);
-      FD_ZERO(&exceptfds);
-      FD_SET(sock, &exceptfds);
-
-      status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
-
-      if (status == -1) {
-        // on EINTR, retry
-        if (errno != EINTR) {
-          continue;
-        }
-
-        zend_throw_exception(mongo_ce_CursorException, strerror(errno), 13
-                             TSRMLS_CC);
-        return FAILURE;
-      }
-
-      if (FD_ISSET(sock, &exceptfds)) {
-        zend_throw_exception(mongo_ce_CursorException,
-                             "Exceptional condition on socket", 17 TSRMLS_CC);
-        return FAILURE;
-      }
-
-      if (status == 0 && !FD_ISSET(sock, &readfds)) {
-        zend_throw_exception_ex(mongo_ce_CursorTOException, 0 TSRMLS_CC,
-                                "cursor timed out (timeout: %d, time left: %d:%d, status: %d)",
-                                cursor->timeout, timeout.tv_sec, timeout.tv_usec,
-                                status);
-        return FAILURE;
-      }
-
-      // if our descriptor is ready break out
-      if (FD_ISSET(sock, &readfds)) {
-        break;
-      }
-    }
+  if (cursor->timeout && cursor->timeout > 0 &&
+      do_timeout(sock, cursor->timeout TSRMLS_CC) == FAILURE) {
+    return FAILURE;
   }
 
   status = recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS);
