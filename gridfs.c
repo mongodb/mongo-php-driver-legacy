@@ -763,37 +763,50 @@ PHP_METHOD(MongoGridFS, remove) {
 }
 
 PHP_METHOD(MongoGridFS, storeUpload) {
-  zval *filename, *h, *extra;
-  zval **file, **temp;
-  char *new_name = 0;
-  int new_len = 0;
+  zval *extra = 0, *h, **file, **temp, **name = 0, *extra_param = 0;
+  char *filename = 0;
+  int file_len = 0, found_name = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|s", &filename, &new_name, &new_len) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|z", &filename, &file_len, &extra) == FAILURE) {
     return;
   }
-  convert_to_string(filename);
 
   h = PG(http_globals)[TRACK_VARS_FILES];
-  if (zend_hash_find(Z_ARRVAL_P(h), Z_STRVAL_P(filename), Z_STRLEN_P(filename)+1, (void**)&file) == FAILURE) {
-    zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "could not find uploaded file %s", Z_STRVAL_P(filename));
+  if (zend_hash_find(Z_ARRVAL_P(h), filename, file_len+1, (void**)&file) == FAILURE) {
+    zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "could not find uploaded file %s", filename);
     return;
   }
 
   zend_hash_find(Z_ARRVAL_PP(file), "tmp_name", strlen("tmp_name")+1, (void**)&temp);
-  convert_to_string(*temp);
-
-  if (!new_name) {
-    zval **n;
-    zend_hash_find(Z_ARRVAL_PP(file), "name", strlen("name")+1, (void**)&n);
-    new_name = Z_STRVAL_PP(n);
+  if (!temp || Z_TYPE_PP(temp) != IS_STRING) {
+    zend_throw_exception(mongo_ce_GridFSException, "tmp_name was not a string", 0 TSRMLS_CC);
+    return;
   }
 
-  MAKE_STD_ZVAL(extra);
-  array_init(extra);
-  add_assoc_string(extra, "filename", new_name, 1);
+  if (extra && Z_TYPE_P(extra) == IS_ARRAY) {
+    zval_add_ref(&extra);
+    extra_param = extra;
+    if (zend_hash_exists(HASH_P(extra), "filename", strlen("filename")+1)) {
+      found_name = 1;
+    }
+  }
+  else {
+    MAKE_STD_ZVAL(extra_param);
+    array_init(extra_param);
+    if (extra && Z_TYPE_P(extra) == IS_STRING) {
+      add_assoc_string(extra_param, "filename", Z_STRVAL_P(extra), 1);
+      found_name = 1;
+    }
+  }
 
-  MONGO_METHOD2(MongoGridFS, storeFile, return_value, getThis(), *temp, extra);
-  zval_ptr_dtor(&extra);
+  if (!found_name &&
+      zend_hash_find(Z_ARRVAL_PP(file), "name", strlen("name")+1, (void**)&name) == SUCCESS &&
+      Z_TYPE_PP(name) == IS_STRING) {
+    add_assoc_string(extra_param, "filename", Z_STRVAL_PP(name), 1);
+  }
+
+  MONGO_METHOD2(MongoGridFS, storeFile, return_value, getThis(), *temp, extra_param);
+  zval_ptr_dtor(&extra_param);
 }
 
 /*
