@@ -45,12 +45,11 @@ static void make_unpersistent_cursor(mongo_cursor *pcursor, mongo_cursor *cursor
  * Blocks until socket is ready.  Returns FAILURE and throws an exception if
  * something goes wrong, returns SUCCESS if the cursor is ready to be read from.
  */
-static int do_timeout(int sock, int to TSRMLS_DC);
+static int do_timeout(mongo_server *server, int to TSRMLS_DC);
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
-extern zend_class_entry *mongo_ce_CursorException,
-  *mongo_ce_CursorTOException;
+extern zend_class_entry *mongo_ce_CursorTOException;
 
 /*
  * throws exception on FAILURE
@@ -118,12 +117,12 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
         // else if we've failed, just don't add to queue
         // if we can reconnect, continue
         if (mongo_util_pool_failed(cursor->server TSRMLS_CC) == FAILURE) {
-          zend_throw_exception(mongo_ce_CursorException, "lost db connection", 9 TSRMLS_CC);
+          mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "lost db connection");
           return FAILURE;
         }
         mongo_util_rs_ping(cursor->link TSRMLS_CC);
         if (!cursor->server->connected) {
-          zend_throw_exception(mongo_ce_CursorException, "lost db connection (2)", 9 TSRMLS_CC);
+          mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "lost db connection (2)");
           return FAILURE;
         }
         sock = cursor->server->socket;
@@ -150,7 +149,7 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
       if (!response) {
         mongo_util_pool_failed(cursor->server TSRMLS_CC);
-        zend_throw_exception(mongo_ce_CursorException, "couldn't find a response", 9 TSRMLS_CC);
+        mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "couldn't find a response");
         return FAILURE;
       }
     }
@@ -165,9 +164,9 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   if (FAILURE == get_cursor_body(sock, cursor TSRMLS_CC)) {
     mongo_util_pool_failed(cursor->server TSRMLS_CC);
 #ifdef WIN32
-    zend_throw_exception_ex(mongo_ce_CursorException, 12 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
+    mongo_cursor_throw(cursor->server, 12 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
 #else
-    zend_throw_exception_ex(mongo_ce_CursorException, 12 TSRMLS_CC, "error getting database response: %d", strerror(errno));
+    mongo_cursor_throw(cursor->server, 12 TSRMLS_CC, "error getting database response: %d", strerror(errno));
 #endif
     return FAILURE;
   }
@@ -178,8 +177,9 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   return SUCCESS;
 }
 
-static int do_timeout(int sock, int to TSRMLS_DC) {
+static int do_timeout(mongo_server *server, int to TSRMLS_DC) {
   struct timeval timeout;
+  int sock = server->socket;
 
   timeout.tv_sec = to / 1000 ;
   timeout.tv_usec = (to % 1000) * 1000;
@@ -201,13 +201,12 @@ static int do_timeout(int sock, int to TSRMLS_DC) {
         continue;
       }
 
-      zend_throw_exception(mongo_ce_CursorException, strerror(errno), 13 TSRMLS_CC);
+      mongo_cursor_throw(server, 13 TSRMLS_CC, strerror(errno));
       return FAILURE;
     }
 
     if (FD_ISSET(sock, &exceptfds)) {
-      zend_throw_exception(mongo_ce_CursorException,
-                           "Exceptional condition on socket", 17 TSRMLS_CC);
+      mongo_cursor_throw(server, 17 TSRMLS_CC, "Exceptional condition on socket");
       return FAILURE;
     }
 
@@ -236,7 +235,7 @@ static int get_cursor_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
   // set a timeout
   if (cursor->timeout && cursor->timeout > 0 &&
-      do_timeout(sock, cursor->timeout TSRMLS_CC) == FAILURE) {
+      do_timeout(cursor->server, cursor->timeout TSRMLS_CC) == FAILURE) {
     return FAILURE;
   }
 
@@ -246,7 +245,7 @@ static int get_cursor_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     return FAILURE;
   }
   else if (status < INT_32) {
-    zend_throw_exception(mongo_ce_CursorException, "couldn't get response header", 4 TSRMLS_CC);
+    mongo_cursor_throw(cursor->server, 4 TSRMLS_CC, "couldn't get response header");
     return FAILURE;
   }
 
@@ -255,20 +254,20 @@ static int get_cursor_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
 
   // make sure we're not getting crazy data
   if (cursor->recv.length == 0) {
-    zend_throw_exception(mongo_ce_CursorException, "no db response", 5 TSRMLS_CC);
+    mongo_cursor_throw(cursor->server, 5 TSRMLS_CC, "no db response");
     return FAILURE;
   }
   else if (cursor->recv.length < REPLY_HEADER_SIZE) {
-    zend_throw_exception_ex(mongo_ce_CursorException, 6 TSRMLS_CC,
-                            "bad response length: %d, did the db assert?",
-                            cursor->recv.length);
+    mongo_cursor_throw(cursor->server, 6 TSRMLS_CC,
+                       "bad response length: %d, did the db assert?",
+                       cursor->recv.length);
     return FAILURE;
   }
 
   if (recv(sock, (char*)&cursor->recv.request_id, INT_32, FLAGS) < INT_32 ||
       recv(sock, (char*)&cursor->recv.response_to, INT_32, FLAGS) < INT_32 ||
       recv(sock, (char*)&cursor->recv.op, INT_32, FLAGS) < INT_32) {
-    zend_throw_exception(mongo_ce_CursorException, "incomplete header", 7 TSRMLS_CC);
+    mongo_cursor_throw(cursor->server, 7 TSRMLS_CC, "incomplete header");
     return FAILURE;
   }
 
@@ -290,7 +289,7 @@ static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
       recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) < INT_64 ||
       recv(sock, (char*)&cursor->start, INT_32, FLAGS) < INT_32 ||
       recv(sock, (char*)&num_returned, INT_32, FLAGS) < INT_32) {
-    zend_throw_exception(mongo_ce_CursorException, "incomplete response", 8 TSRMLS_CC);
+    mongo_cursor_throw(cursor->server, 8 TSRMLS_CC, "incomplete response");
     return FAILURE;
   }
 

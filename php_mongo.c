@@ -40,8 +40,9 @@ extern zend_object_handlers mongo_default_handlers,
   mongo_id_handlers;
 
 /** Classes */
-zend_class_entry *mongo_ce_CursorException,
-  *mongo_ce_ConnectionException,
+extern zend_class_entry *mongo_ce_CursorException;
+
+zend_class_entry *mongo_ce_ConnectionException,
   *mongo_ce_CursorTOException,
   *mongo_ce_GridFSException,
   *mongo_ce_Exception,
@@ -320,7 +321,7 @@ PHP_MINFO_FUNCTION(mongo) {
 /* }}} */
 
 static void mongo_init_MongoExceptions(TSRMLS_D) {
-  zend_class_entry e, ce, conn, e2, ctoe;
+  zend_class_entry e, conn, e2, ctoe;
 
   INIT_CLASS_ENTRY(e, "MongoException", NULL);
 
@@ -330,8 +331,7 @@ static void mongo_init_MongoExceptions(TSRMLS_D) {
   mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(), NULL TSRMLS_CC);
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
 
-  INIT_CLASS_ENTRY(ce, "MongoCursorException", NULL);
-  mongo_ce_CursorException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
+  mongo_init_CursorExceptions(TSRMLS_C);
 
   INIT_CLASS_ENTRY(ctoe, "MongoCursorTimeoutException", NULL);
   mongo_ce_CursorTOException = zend_register_internal_class_ex(&ctoe, mongo_ce_CursorException, NULL TSRMLS_CC);

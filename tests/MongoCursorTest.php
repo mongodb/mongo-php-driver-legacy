@@ -811,5 +811,19 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
         $cursor->partial(true);
         $cursor->hasNext();
     }
+
+    public function testExceptionHost() {
+        $host = "";
+
+        $this->object->insert(array("_id"=>1), array("safe" => true));
+        try {
+            $this->object->insert(array("_id"=>1), array("safe" => true));
+        }
+        catch (MongoCursorException $e) {
+            $host = $e->getHost();
+        }
+
+        $this->assertEquals("localhost:27017", $host);
+    }
 }
 ?>

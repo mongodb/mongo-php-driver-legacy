@@ -34,8 +34,7 @@ extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
   *mongo_ce_Cursor,
   *mongo_ce_Code,
-  *mongo_ce_Exception,
-  *mongo_ce_CursorException;
+  *mongo_ce_Exception;
 
 extern int le_pconnection,
   le_connection;
@@ -272,7 +271,7 @@ static mongo_server* get_server(mongo_collection *c TSRMLS_DC) {
   ZVAL_NULL(errmsg);
 
   if ((server = mongo_util_link_get_socket(link, errmsg TSRMLS_CC)) == 0) {
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 16 TSRMLS_CC);
+    mongo_cursor_throw(0, 16 TSRMLS_CC, Z_STRVAL_P(errmsg));
     zval_ptr_dtor(&errmsg);
     return 0;
   }
@@ -307,7 +306,7 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
     mongo_util_pool_failed(server TSRMLS_CC);
     mongo_util_rs_ping(cursor->link TSRMLS_CC);
 
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 16 TSRMLS_CC);
+    mongo_cursor_throw(server, 16 TSRMLS_CC, Z_STRVAL_P(errmsg));
 
     zval_ptr_dtor(&errmsg);
     cursor->link = 0;
@@ -357,7 +356,7 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
       mongo_util_link_master_failed(cursor->link TSRMLS_CC);
     }
 
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), code TSRMLS_CC);
+    mongo_cursor_throw(cursor->server, code TSRMLS_CC, Z_STRVAL_PP(err));
     return FAILURE;
   }
   // w timeout
@@ -366,8 +365,7 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
     zval **code;
     int status = zend_hash_find(Z_ARRVAL_P(return_value), "n", strlen("n")+1, (void**)&code);
 
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err),
-                         (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC);
+    mongo_cursor_throw(cursor->server, (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC, Z_STRVAL_PP(err));
     return FAILURE;
   }
 

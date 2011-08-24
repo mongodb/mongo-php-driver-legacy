@@ -51,14 +51,14 @@ extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_Mongo,
   *mongo_ce_DB,
   *mongo_ce_Collection,
-  *mongo_ce_Exception,
-  *mongo_ce_CursorException;
+  *mongo_ce_Exception;
 
 extern int le_pconnection,
   le_cursor_list;
 
 extern zend_object_handlers mongo_default_handlers;
 
+zend_class_entry *mongo_ce_CursorException;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -218,7 +218,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   }
   // if we have a cursor_id, we should have a server
   else if (cursor->server == 0) {
-    zend_throw_exception(mongo_ce_CursorException, "Trying to get more, but cannot find server", 18 TSRMLS_CC);
+    mongo_cursor_throw(0, 18 TSRMLS_CC, "trying to get more, but cannot find server");
     return;
   }
 
@@ -236,8 +236,10 @@ PHP_METHOD(MongoCursor, hasNext) {
   if(mongo_say(cursor->server, &buf, temp TSRMLS_CC) == FAILURE) {
     mongo_util_pool_failed(cursor->server TSRMLS_CC);
     mongo_util_rs_ping(cursor->link TSRMLS_CC);
+
     efree(buf.start);
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(temp), 1 TSRMLS_CC);
+
+    mongo_cursor_throw(cursor->server, 1 TSRMLS_CC, Z_STRVAL_P(temp));
     zval_ptr_dtor(&temp);
     return;
   }
@@ -259,7 +261,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   // if cursor_id != 0, server should stay the same
 
   if (cursor->flag & 1) {
-    zend_throw_exception(mongo_ce_CursorException, "Cursor not found", 2 TSRMLS_CC);
+    mongo_cursor_throw(cursor->server, 2 TSRMLS_CC, "cursor not found");
     return;
   }
 
@@ -442,7 +444,7 @@ PHP_METHOD(MongoCursor, addOption) {
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
   if (cursor->started_iterating) {
-    zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC);
+    mongo_cursor_throw(cursor->server, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
     return;
   }
 
@@ -604,7 +606,7 @@ PHP_METHOD(MongoCursor, doQuery) {
 
   PHP_MONGO_GET_CURSOR(getThis());
 
-  do { 
+  do {
     MONGO_METHOD(MongoCursor, reset, return_value, getThis());
     if (mongo_cursor__do_query(getThis(), return_value TSRMLS_CC) == SUCCESS ||
         EG(exception)) {
@@ -612,9 +614,7 @@ PHP_METHOD(MongoCursor, doQuery) {
     }
   }while (mongo_cursor__should_retry(cursor));
 
-  zend_throw_exception(mongo_ce_CursorException,
-                       "max number of retries exhausted, couldn't send query",
-                       19 TSRMLS_CC);
+  mongo_cursor_throw(cursor->server, 19 TSRMLS_CC, "max number of retries exhausted, couldn't send query");
 }
 
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
@@ -652,7 +652,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   if (cursor->server == 0 &&
       (cursor->server = mongo_util_link_get_socket(cursor->link, errmsg TSRMLS_CC)) == 0) {
     efree(buf.start);
-    zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_P(errmsg), 14 TSRMLS_CC);
+    mongo_cursor_throw(0, 14 TSRMLS_CC, Z_STRVAL_P(errmsg));
     zval_ptr_dtor(&errmsg);
     return FAILURE;
   }
@@ -662,10 +662,10 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
     mongo_util_rs_ping(cursor->link TSRMLS_CC);
 
     if (Z_TYPE_P(errmsg) == IS_STRING) {
-      zend_throw_exception_ex(mongo_ce_CursorException, 14 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
+      mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
     }
     else {
-      zend_throw_exception(mongo_ce_CursorException, "couldn't send query", 14 TSRMLS_CC);
+      mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query");
     }
     efree(buf.start);
     zval_ptr_dtor(&errmsg);
@@ -845,7 +845,7 @@ PHP_METHOD(MongoCursor, next) {
         }
       }
 
-      zend_throw_exception(mongo_ce_CursorException, Z_STRVAL_PP(err), code TSRMLS_CC);
+      mongo_cursor_throw(cursor->server, code TSRMLS_CC, Z_STRVAL_PP(err));
       zval_ptr_dtor(&cursor->current);
       cursor->current = 0;
       RETURN_FALSE;
@@ -1013,6 +1013,52 @@ static zend_function_entry MongoCursor_methods[] = {
 
   {NULL, NULL, NULL}
 };
+
+
+PHP_METHOD(MongoCursorException, getHost) {
+  zval *h;
+
+  h = zend_read_property(mongo_ce_CursorException, getThis(), "host", strlen("host"), NOISY TSRMLS_CC);
+
+  RETURN_ZVAL(h, 1, 0);
+}
+
+static zend_function_entry cursor_exception_methods[] = {
+  PHP_ME(MongoCursorException, getHost, NULL, ZEND_ACC_PUBLIC)
+
+  {NULL, NULL, NULL}
+};
+
+void mongo_init_CursorExceptions(TSRMLS_D) {
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "MongoCursorException", cursor_exception_methods);
+  mongo_ce_CursorException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
+
+  zend_declare_property_null(mongo_ce_CursorException, "host", strlen("host"), ZEND_ACC_PRIVATE TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_CursorException, "fd", strlen("fd"), 0, ZEND_ACC_PRIVATE TSRMLS_CC);
+}
+
+
+
+void mongo_cursor_throw(mongo_server *server, int code TSRMLS_DC, char *format, ...) {
+  zval *e;
+  va_list arg;
+
+  if (EG(exception)) {
+    return;
+  }
+
+  va_start(arg, format);
+  e = zend_throw_exception_ex(mongo_ce_CursorException, code TSRMLS_CC, format, arg);
+  va_end(arg);
+
+  if (server) {
+    zend_update_property_string(mongo_ce_CursorException, e, "host", strlen("host"), server->label TSRMLS_CC);
+    zend_update_property_long(mongo_ce_CursorException, e, "fd", strlen("fd"), server->socket TSRMLS_CC);
+  }
+}
+
 
 int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
   zend_rsrc_list_entry *le;

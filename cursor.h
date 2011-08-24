@@ -90,6 +90,16 @@ PHP_METHOD(MongoCursor, info);
     cursor->opts &= !(1 << bit);                                        \
   }
 
+PHP_METHOD(MongoCursorException, getHost);
+
+void mongo_init_CursorExceptions(TSRMLS_D);
+
+/**
+ * Throw a MongoCursorException with the given code and message.
+ * Uses the server to fill in information about the connection that cause the
+ * exception. Does nothing if an exception has already been thrown.
+ */
+void mongo_cursor_throw(mongo_server *server, int code TSRMLS_DC, char *format, ...);
 
 int php_mongo_free_cursor_le(void*, int TSRMLS_DC);
 void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
