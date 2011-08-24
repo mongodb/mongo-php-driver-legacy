@@ -77,7 +77,7 @@ typedef struct {
 
 #define EVERYONE_DISCONNECTED 1
 // TODO: make this heurisitic
-#define INITIAL_POOL_SIZE 10
+#define MAX_POOL_SIZE 20
 
 // ------- Pool Interface -----------
 

@@ -246,21 +246,21 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server TS
   monitor->num.in_pool++;
   server->connected = 0;
 
-  // don't keep more than 50 connections around
+  // don't keep more than MAX_POOL_SIZE connections around
   node = monitor->top;
-  if (monitor->num.in_pool > 50) {
+  if (monitor->num.in_pool > MAX_POOL_SIZE) {
     int count = 0, removed = 0;
     stack_node *next;
 
-    mongo_log(MONGO_LOG_POOL, MONGO_LOG_INFO TSRMLS_CC, "%s: trimming pool from %d to 50 (%p)",
-              server->label, monitor->num.in_pool, monitor);
+    mongo_log(MONGO_LOG_POOL, MONGO_LOG_INFO TSRMLS_CC, "%s: trimming pool from %d to %d (%p)",
+              server->label, monitor->num.in_pool, MAX_POOL_SIZE, monitor);
 
-    while (node && count < 50) {
+    while (node && count < MAX_POOL_SIZE-1) {
       node = node->next;
       count++;
     }
 
-    if (count < 50 || !node) {
+    if (count < (MAX_POOL_SIZE-1) || !node) {
       mongo_log(MONGO_LOG_POOL, MONGO_LOG_WARNING TSRMLS_CC, "%s: BAD POOL SIZE: %d, actually %d (%p)",
                 server->label, monitor->num.in_pool, count, monitor);
       UNLOCK(pool);
