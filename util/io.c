@@ -232,6 +232,8 @@ static int do_timeout(mongo_server *server, int to TSRMLS_DC) {
  */
 static int get_cursor_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
   int status = 0;
+  int num_returned = 0;
+  char buf[REPLY_HEADER_LEN];
 
   // set a timeout
   if (cursor->timeout && cursor->timeout > 0 &&
@@ -239,18 +241,18 @@ static int get_cursor_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     return FAILURE;
   }
 
-  status = recv(sock, (char*)&cursor->recv.length, INT_32, FLAGS);
+  status = recv(sock, buf, REPLY_HEADER_LEN, FLAGS);
   // socket has been closed, retry
   if (status == 0) {
     return FAILURE;
   }
-  else if (status < INT_32) {
+  else if (status < INT_32*4) {
     mongo_cursor_throw(cursor->server, 4 TSRMLS_CC, "couldn't get response header");
     return FAILURE;
   }
 
   // switch the byte order, if necessary
-  cursor->recv.length = MONGO_32(cursor->recv.length);
+  cursor->recv.length = MONGO_32(*(int*)buf);
 
   // make sure we're not getting crazy data
   if (cursor->recv.length == 0) {
@@ -264,49 +266,29 @@ static int get_cursor_header(int sock, mongo_cursor *cursor TSRMLS_DC) {
     return FAILURE;
   }
 
-  if (recv(sock, (char*)&cursor->recv.request_id, INT_32, FLAGS) < INT_32 ||
-      recv(sock, (char*)&cursor->recv.response_to, INT_32, FLAGS) < INT_32 ||
-      recv(sock, (char*)&cursor->recv.op, INT_32, FLAGS) < INT_32) {
-    mongo_cursor_throw(cursor->server, 7 TSRMLS_CC, "incomplete header");
-    return FAILURE;
-  }
-
-  cursor->recv.request_id = MONGO_32(cursor->recv.request_id);
-  cursor->recv.response_to = MONGO_32(cursor->recv.response_to);
-  cursor->recv.op = MONGO_32(cursor->recv.op);
+  cursor->recv.request_id  = MONGO_32(*(int*)(buf+INT_32));
+  cursor->recv.response_to = MONGO_32(*(int*)(buf+INT_32*2));
+  cursor->recv.op          = MONGO_32(*(int*)(buf+INT_32*3));
+  cursor->flag             = MONGO_32(*(int*)(buf+INT_32*4));
+  cursor->cursor_id        = MONGO_64(*(int64_t*)(buf+INT_32*5));
+  cursor->start            = MONGO_32(*(int*)(buf+INT_32*5+INT_64));
+  num_returned             = MONGO_32(*(int*)(buf+INT_32*6+INT_64));
 
   if (cursor->recv.response_to > MonGlo(response_num)) {
     MonGlo(response_num) = cursor->recv.response_to;
   }
 
-  return SUCCESS;
-}
-
-static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
-  int num_returned = 0;
-
-  if (recv(sock, (char*)&cursor->flag, INT_32, FLAGS) < INT_32 ||
-      recv(sock, (char*)&cursor->cursor_id, INT_64, FLAGS) < INT_64 ||
-      recv(sock, (char*)&cursor->start, INT_32, FLAGS) < INT_32 ||
-      recv(sock, (char*)&num_returned, INT_32, FLAGS) < INT_32) {
-    mongo_cursor_throw(cursor->server, 8 TSRMLS_CC, "incomplete response");
-    return FAILURE;
-  }
-
-  cursor->cursor_id = MONGO_64(cursor->cursor_id);
-  cursor->flag = MONGO_32(cursor->flag);
-  cursor->start = MONGO_32(cursor->start);
-  num_returned = MONGO_32(num_returned);
-
-  /* cursor->num is the total of the elements we've retrieved
-   * (elements already iterated through + elements in db response
-   * but not yet iterated through)
-   */
+  // cursor->num is the total of the elements we've retrieved (elements already
+  // iterated through + elements in db response but not yet iterated through)
   cursor->num += num_returned;
 
   // create buf
   cursor->recv.length -= REPLY_HEADER_LEN;
 
+  return SUCCESS;
+}
+
+static int get_cursor_body(int sock, mongo_cursor *cursor TSRMLS_DC) {
   if (cursor->buf.start) {
     efree(cursor->buf.start);
   }
