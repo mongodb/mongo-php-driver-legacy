@@ -40,7 +40,7 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
   }
 
   if (info->guts->last_ping + MONGO_PING_INTERVAL > now) {
-    return FAILURE;
+    return info->guts->master ? SUCCESS : FAILURE;
   }
 
   gettimeofday(&start, 0);
