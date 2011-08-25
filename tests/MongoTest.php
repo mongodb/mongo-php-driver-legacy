@@ -636,6 +636,67 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
         MongoPool::setSize(-1);
     }
+
+    // make sure connection still works after forking
+    public function testFork() {
+        if (!extension_loaded("pcntl")) {
+            $this->markTestSkipped("No pcntl");
+            return;
+        }
+      
+        $forks = 7;
+        
+        $m = new Mongo();
+        $parent = $m->log->c;
+        
+        for ($i=0; $i<1000; $i++) {
+            $parent->insert(array("DONE" => 0), array("safe" => true));
+        }
+        
+        for($i = 1;$i <= $forks;$i++){
+            $pid = "pid".$i;
+
+            ${$pid} = pcntl_fork();
+            if(${$pid} == -1) {
+                // Something went wrong (handle errors here)
+                die("Could not fork!");
+            }
+            elseif(${$pid} == 0) {
+                // The child
+                
+                $conn = new Mongo();
+                $child = $conn->log->c;
+                
+                $get = $child->find(array("DONE"=>0))->limit(10);
+                foreach ($get as $row) {
+                    $child->update(array("_id" => $row['_id']), array('$set' => array('DONE' => 1)));
+                }
+    
+                exit(); // The child dies, becoming a zombie
+            }
+            else {
+                // This part is only executed in the parent
+                // Push the PID of the created child into $children
+                $children[] = ${$pid}; 
+            }
+        }
+
+        // Clean up after the kids!
+        while(count($children) > 0){
+            $myId = pcntl_waitpid(-1, $status, WNOHANG);
+            foreach($children as $key => $pid){
+                if($myId == $pid) unset($children[$key]);
+            }
+            usleep(100);
+        }
+
+        // Make sure parent works
+        $done = $parent->find(array("DONE"=>1))->count();
+        $notDone = $parent->find(array("DONE"=>0))->count();
+
+        $this->assertGreaterThan(0, $done);
+        $this->assertGreaterThan(0, $notDone);
+    }
 }
 
 class StaticFunctionTest {
