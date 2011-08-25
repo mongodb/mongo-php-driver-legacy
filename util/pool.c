@@ -19,6 +19,8 @@
 
 #ifndef WIN32
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/types.h>
 #endif
 
 #include "../php_mongo.h"
@@ -105,7 +107,8 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
 
 void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
   stack_monitor *monitor;
-
+  pid_t pid;
+  
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     // if we couldn't push this, close the connection
     mongo_util_disconnect(server);
@@ -114,6 +117,13 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
 
   mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool done (%p)", server->label, monitor);
 
+  pid = getpid();
+  if (server->owner && server->owner != pid) {
+    mongo_log(MONGO_LOG_POOL, MONGO_LOG_INFO TSRMLS_CC, "%s: connection %d belongs to pid %d, ignoring (%d)",
+              server->label, server->socket, server->owner, pid);
+    return;
+  }
+      
   // clean up reference to server (nothing needs to be freed)
   mongo_util_pool__rm_server_ptr(monitor, server);
 
@@ -222,8 +232,11 @@ int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server TSRM
 
   UNLOCK(pool);
 
-  mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: found in pool (%p)", server->label, monitor);
-
+  // label is not set when stack_clear calls this
+  if (server->label) {
+    mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: found in pool (%p)", server->label, monitor);
+  }
+  
   return SUCCESS;
 }
 
@@ -294,6 +307,7 @@ void mongo_util_pool__stack_push(stack_monitor *monitor, mongo_server *server TS
 void mongo_util_pool__stack_clear(stack_monitor *monitor TSRMLS_DC) {
   // holder for popping sockets
   mongo_server temp;
+  temp.label = 0;
 
   while (mongo_util_pool__stack_pop(monitor, &temp TSRMLS_CC) == SUCCESS) {
     mongo_util_pool__disconnect(monitor, &temp);
@@ -320,7 +334,8 @@ void mongo_util_pool__add_server_ptr(stack_monitor *monitor, mongo_server *serve
 
   list = monitor->servers;
   server->next_in_pool = list;
-
+  server->owner = getpid();
+    
   monitor->servers = server;
   monitor->num.in_use++;
 
