@@ -185,8 +185,7 @@ int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
 
     // method throws exception
     if (!(server = create_mongo_server(current_ptr, hosts, link TSRMLS_CC))) {
-      zend_throw_exception_ex(mongo_ce_ConnectionException, 10 TSRMLS_CC,
-                              "Couldn't parse %s (original: %s)", current, hosts);
+      zend_throw_exception(mongo_ce_ConnectionException, "couldn't parse connection string", 10 TSRMLS_CC);
       return FAILURE;
     }
     current = *current_ptr;
