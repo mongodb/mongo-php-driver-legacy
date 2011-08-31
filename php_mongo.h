@@ -30,10 +30,6 @@
 #  ifndef int64_t
      typedef __int64 int64_t;
 #  endif
-#  ifndef pid_t
-     typedef DWORD pid_t
-#  endif
-#  define getpid() GetCurrentProcessId()
 #endif
 
 #define INT_32 4
