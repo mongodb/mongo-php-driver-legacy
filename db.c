@@ -565,7 +565,7 @@ zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC) {
     cursor->ns = (char*)emalloc(strlen(current->db)+6);
     memcpy(cursor->ns, current->db, strlen(current->db));
     memcpy(cursor->ns+strlen(current->db), ".$cmd", 5);
-    cursor->ns[strlen(current->db)+6] = 0;
+    cursor->ns[strlen(current->db)+5] = 0;
   }
   else {
     cursor->ns = estrdup("admin.$cmd");
