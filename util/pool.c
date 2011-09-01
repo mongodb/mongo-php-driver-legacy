@@ -447,10 +447,11 @@ size_t mongo_util_pool__get_id(mongo_server *server, char **id TSRMLS_DC) {
     return FAILURE;
   }
 
-  len = spprintf(id, 0, "%s:%d.%s.%s.%s", server->host, server->port,
+  len = spprintf(id, 0, "%s:%d.%s.%s.%s.%d", server->host, server->port,
                  server->db ? server->db : "",
                  server->username ? server->username : "",
-                 server->password ? server->password : "");
+                 server->password ? server->password : "",
+                 getpid());
 
   return len;
 }

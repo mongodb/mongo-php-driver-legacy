@@ -576,13 +576,26 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
         $pool1 = Mongo::poolDebug();
 
+        $orig = null;
+        foreach ($pool1 as $host => $info) {
+            if (strpos($host, 'localhost:27017...') === 0) {
+                $orig = $info;
+            }
+        }
+
         $conn->connect();
         $conn->connect();
         $conn->connect();
 
         $pool2 = Mongo::poolDebug();
 
-        $this->assertEquals($pool1['localhost:27017...']['in use'], $pool2['localhost:27017...']['in use']);
+        $followup = null;
+        foreach ($pool2 as $host => $info) {
+            if (strpos($host, 'localhost:27017...') === 0) {
+                $followup = $info;
+            }
+        }
+        $this->assertEquals($orig['in use'], $followup['in use']);
     }
 
     public function testPoolConnect1() {
@@ -590,13 +603,27 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
         $pool1 = MongoPool::info();
 
+        $orig = null;
+        foreach ($pool1 as $host => $info) {
+            if (strpos($host, 'localhost:27017...') === 0) {
+                $orig = $info;
+            }
+        }
+
         $conn->connect();
         $conn->connect();
         $conn->connect();
 
         $pool2 = MongoPool::info();
 
-        $this->assertEquals($pool1['localhost:27017...']['in use'], $pool2['localhost:27017...']['in use']);
+        $followup = null;
+        foreach ($pool2 as $host => $info) {
+            if (strpos($host, 'localhost:27017...') === 0) {
+                $followup = $info;
+            }
+        }
+
+        $this->assertEquals($orig['in use'], $followup['in use']);
     }
 
     public function testPoolSize() {
@@ -643,16 +670,16 @@ class MongoTest extends PHPUnit_Framework_TestCase
             $this->markTestSkipped("No pcntl");
             return;
         }
-      
+
         $forks = 7;
-        
+
         $m = new Mongo();
         $parent = $m->log->c;
-        
+
         for ($i=0; $i<1000; $i++) {
             $parent->insert(array("DONE" => 0), array("safe" => true));
         }
-        
+
         for($i = 1;$i <= $forks;$i++){
             $pid = "pid".$i;
 
@@ -663,21 +690,21 @@ class MongoTest extends PHPUnit_Framework_TestCase
             }
             elseif(${$pid} == 0) {
                 // The child
-                
+
                 $conn = new Mongo();
                 $child = $conn->log->c;
-                
+
                 $get = $child->find(array("DONE"=>0))->limit(10);
                 foreach ($get as $row) {
                     $child->update(array("_id" => $row['_id']), array('$set' => array('DONE' => 1)));
                 }
-    
+
                 exit(); // The child dies, becoming a zombie
             }
             else {
                 // This part is only executed in the parent
                 // Push the PID of the created child into $children
-                $children[] = ${$pid}; 
+                $children[] = ${$pid};
             }
         }
 
