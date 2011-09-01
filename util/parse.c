@@ -30,7 +30,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_ConnectionException;
 
-mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link TSRMLS_DC) {
+mongo_server* create_mongo_server(char **current, mongo_link *link TSRMLS_DC) {
   char *host;
   int port;
   mongo_server *server;
@@ -184,7 +184,7 @@ int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
     mongo_log(MONGO_LOG_PARSE, MONGO_LOG_FINE TSRMLS_CC, "current: %s", current);
 
     // method throws exception
-    if (!(server = create_mongo_server(current_ptr, hosts, link TSRMLS_CC))) {
+    if (!(server = create_mongo_server(current_ptr, link TSRMLS_CC))) {
       zend_throw_exception(mongo_ce_ConnectionException, "couldn't parse connection string", 10 TSRMLS_CC);
       return FAILURE;
     }

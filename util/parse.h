@@ -19,5 +19,5 @@ int php_mongo_parse_server(zval *this_ptr TSRMLS_DC);
 /**
  * This cannot throw.  Returns 0 on failure.
  */
-mongo_server* create_mongo_server(char **current, char *hosts, mongo_link *link TSRMLS_DC);
+mongo_server* create_mongo_server(char **current, mongo_link *link TSRMLS_DC);
 

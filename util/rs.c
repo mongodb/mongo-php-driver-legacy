@@ -50,7 +50,7 @@ mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TS
   }
 
   // otherwise, create a new server from the host
-  if (!(server = create_mongo_server(&host, host, link TSRMLS_CC))) {
+  if (!(server = create_mongo_server(&host, link TSRMLS_CC))) {
     return 0;
   }
 
@@ -395,11 +395,3 @@ int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC) {
   *errmsg = estrdup("No secondary found");
   return FAILURE;
 }
-/*
-int mongo_util_rs__get(char *id, mongo_link *link TSRMLS_DC) {
-  rs_monitor *rs = get_rs_by_name(id);
-
-  link->master = rs->primary;
-  link->slave = get_slave(rs);
-}
-*/
