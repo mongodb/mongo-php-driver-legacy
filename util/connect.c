@@ -312,11 +312,17 @@ int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *host, in
 
 
 int mongo_util_disconnect(mongo_server *server) {
-  if (!server || !server->socket || server->owner != getpid() ) {
-    if (server->owner == 0) {
-      mongo_log(MONGO_LOG_WARNING, MONGO_LOG_POOL,
-                "tried to close a socket with owned pid of 0");
-    }
+  pid_t pid;
+
+  if (!server || !server->socket) {
+    return 0;
+  }
+
+  pid = getpid();
+  if (server->owner != pid) {
+    mongo_log(MONGO_LOG_FINE, MONGO_LOG_POOL TSRMLS_CC,
+              "%s: not closing socket %d, owned by %d, currently in process %d",
+              server->label, server->socket, server->owner, pid);
     return 0;
   }
 
