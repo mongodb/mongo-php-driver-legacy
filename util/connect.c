@@ -33,6 +33,7 @@
 #include "../mongo.h"
 #include "../db.h"
 #include "connect.h"
+#include "log.h"
 
 extern zend_class_entry *mongo_ce_Mongo;
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
@@ -51,7 +52,15 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
   int size, error;
   u_long no = 0;
   const char yes = 1;
+#else
+  struct sockaddr_un su;
+  uint size;
+  int yes = 1;
+#endif
 
+  server->owner = getpid();
+
+#ifdef WIN32
   family = AF_INET;
   sa = (struct sockaddr*)(&si);
   sn = sizeof(si);
@@ -71,10 +80,6 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
   }
 
 #else
-  struct sockaddr_un su;
-  uint size;
-  int yes = 1;
-
   // domain socket
   if (server->port==0) {
     family = AF_UNIX;
@@ -307,7 +312,11 @@ int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *host, in
 
 
 int mongo_util_disconnect(mongo_server *server) {
-  if (!server || !server->socket) {
+  if (!server || !server->socket || server->owner != getpid() ) {
+    if (server->owner == 0) {
+      mongo_log(MONGO_LOG_WARNING, MONGO_LOG_POOL,
+                "tried to close a socket with owned pid of 0");
+    }
     return 0;
   }
 
