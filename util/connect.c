@@ -320,9 +320,6 @@ int mongo_util_disconnect(mongo_server *server) {
 
   pid = getpid();
   if (server->owner != pid) {
-    mongo_log(MONGO_LOG_FINE, MONGO_LOG_POOL TSRMLS_CC,
-              "%s: not closing socket %d, owned by %d, currently in process %d",
-              server->label, server->socket, server->owner, pid);
     return 0;
   }
 
