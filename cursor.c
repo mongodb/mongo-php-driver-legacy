@@ -612,7 +612,12 @@ PHP_METHOD(MongoCursor, doQuery) {
         EG(exception)) {
       return;
     }
-  }while (mongo_cursor__should_retry(cursor));
+  } while (mongo_cursor__should_retry(cursor));
+
+  if (strcmp(".$cmd", cursor->ns+(strlen(cursor->ns)-5)) == 0) {
+    mongo_cursor_throw(cursor->server, 19 TSRMLS_CC, "couldn't send command");
+    return;
+  }
 
   mongo_cursor_throw(cursor->server, 19 TSRMLS_CC, "max number of retries exhausted, couldn't send query");
 }
@@ -744,8 +749,7 @@ int mongo_cursor__should_retry(mongo_cursor *cursor) {
 
   // never retry commands
   if (cursor->retry >= 5 ||
-      // allow commands to run once
-      (cursor->retry > 0 && strcmp(".$cmd", cursor->ns+(strlen(cursor->ns)-5)) == 0)) {
+      strcmp(".$cmd", cursor->ns+(strlen(cursor->ns)-5)) == 0) {
     return 0;
   }
 
