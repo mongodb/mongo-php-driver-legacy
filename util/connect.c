@@ -75,7 +75,9 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
   // create socket
   server->socket = socket(family, SOCK_STREAM, 0);
   if (server->socket == INVALID_SOCKET) {
-    ZVAL_STRING(errmsg, "Could not create socket", 1);
+    if (errmsg) {
+      ZVAL_STRING(errmsg, "Could not create socket", 1);
+    }
     return FAILURE;
   }
 
@@ -93,7 +95,9 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
 
   // create socket
   if ((server->socket = socket(family, SOCK_STREAM, 0)) == FAILURE) {
-    ZVAL_STRING(errmsg, strerror(errno), 1);
+    if (errmsg) {
+      ZVAL_STRING(errmsg, strerror(errno), 1);
+    }
     return FAILURE;
   }
 #endif
@@ -128,7 +132,9 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
     if (errno != EINPROGRESS)
 #endif
     {
-      ZVAL_STRING(errmsg, strerror(errno), 1);
+      if (errmsg) {
+        ZVAL_STRING(errmsg, strerror(errno), 1);
+      }
       mongo_util_disconnect(server);
       return FAILURE;
     }
@@ -144,14 +150,18 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
       FD_SET(server->socket, &eset);
 
       if (select(server->socket+1, &rset, &wset, &eset, &tval) == 0) {
-        ZVAL_STRING(errmsg, strerror(errno), 1);
+        if (errmsg) {
+          ZVAL_STRING(errmsg, strerror(errno), 1);
+        }
         mongo_util_disconnect(server);
         return FAILURE;
       }
 
       // if our descriptor has an error
       if (FD_ISSET(server->socket, &eset)) {
-        ZVAL_STRING(errmsg, strerror(errno), 1);
+        if (errmsg) {
+          ZVAL_STRING(errmsg, strerror(errno), 1);
+        }
         mongo_util_disconnect(server);
         return FAILURE;
       }
@@ -166,7 +176,9 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
 
     connected = getpeername(server->socket, sa, &size);
     if (connected == FAILURE) {
-      ZVAL_STRING(errmsg, strerror(errno), 1);
+      if (errmsg) {
+        ZVAL_STRING(errmsg, strerror(errno), 1);
+      }
       mongo_util_disconnect(server);
       return FAILURE;
     }
@@ -232,7 +244,9 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
     zval_ptr_dtor(&password);
 
     // TODO: pick up error message
-    ZVAL_STRING(errmsg, "failed running authenticate", 1);
+    if (errmsg) {
+      ZVAL_STRING(errmsg, "failed running authenticate", 1);
+    }
     return FAILURE;
   } zend_end_try();
 
@@ -266,7 +280,9 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
   if (!logged_in) {
     char *full_error;
     spprintf(&full_error, 0, "Couldn't authenticate with database %s: username [%s], password [%s]", server->db, server->username, server->password);
-    ZVAL_STRING(errmsg, full_error, 0);
+    if (errmsg) {
+      ZVAL_STRING(errmsg, full_error, 0);
+    }
     zval_ptr_dtor(&ok);
     return FAILURE;
   }
@@ -294,9 +310,11 @@ int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *host, in
     hostinfo = (struct hostent*)gethostbyname(host);
 
     if (hostinfo == NULL) {
-      char *errstr;
-      spprintf(&errstr, 0, "couldn't get host info for %s", host);
-      ZVAL_STRING(errmsg, errstr, 0);
+      if (errmsg) {
+        char *errstr;
+        spprintf(&errstr, 0, "couldn't get host info for %s", host);
+        ZVAL_STRING(errmsg, errstr, 0);
+      }
       return FAILURE;
     }
 

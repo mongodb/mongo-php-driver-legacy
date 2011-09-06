@@ -95,7 +95,8 @@ int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC);
 int mongo_util_pool_refresh(mongo_server *server, time_t timeout TSRMLS_DC);
 
 /**
- * Fetch a connection from the pool, based on the criteria given.
+ * Fetch a connection from the pool, based on the criteria given. You can pass
+ * in a NULL errmsg to not set the error message on failure.
  * @return SUCCESS or FAILURE
  */
 int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC);

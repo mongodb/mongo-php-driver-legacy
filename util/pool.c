@@ -59,8 +59,6 @@ int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
 }
 
 int mongo_util_pool_refresh(mongo_server *server, time_t timeout TSRMLS_DC) {
-  zval *errmsg = 0;
-
   if (server->connected) {
     return SUCCESS;
   }
@@ -72,15 +70,9 @@ int mongo_util_pool_refresh(mongo_server *server, time_t timeout TSRMLS_DC) {
     return FAILURE;
   }
 
-  MAKE_STD_ZVAL(errmsg);
-  ZVAL_NULL(errmsg);
-
-  if (mongo_util_pool_get(server, errmsg TSRMLS_CC) == FAILURE) {
-    zval_ptr_dtor(&errmsg);
+  if (mongo_util_pool_get(server, 0 TSRMLS_CC) == FAILURE) {
     return FAILURE;
   }
-
-  zval_ptr_dtor(&errmsg);
 
   // if we get here, we successfully reconnected
   return SUCCESS;
@@ -228,7 +220,7 @@ int mongo_util_pool__stack_pop(stack_monitor *monitor, mongo_server *server TSRM
   if (server->label) {
     mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: found in pool (%p)", server->label, monitor);
   }
-  
+
   return SUCCESS;
 }
 
@@ -496,7 +488,9 @@ int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval 
   mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool connect (%p)", server->label, monitor);
 
   if (mongo_util_pool__timeout(monitor) == FAILURE) {
-    ZVAL_STRING(errmsg, "no more connections in pool", 1);
+    if (errmsg) {
+      ZVAL_STRING(errmsg, "no more connections in pool", 1);
+    }
     return FAILURE;
   }
 
