@@ -88,6 +88,18 @@ int resize_buf(buffer*, int);
 int zval_to_bson(buffer*, HashTable*, int TSRMLS_DC);
 char* bson_to_zval(char*, HashTable* TSRMLS_DC);
 
+/**
+ * Initialize buffer to contain "\0", so mongo_buf_append will start appending
+ * at the beginning.
+ */
+void mongo_buf_init(char *dest);
+
+/**
+ * Takes a buffer and a string to add to the buffer.  The buffer must be large
+ * enough to append the string and the string must be null-terminated.
+ */
+void mongo_buf_append(char *dest, char *piece);
+
 #if PHP_C_BIGENDIAN
 // reverse the bytes in an int
 // wheeee stupid byte tricks

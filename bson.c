@@ -1366,3 +1366,12 @@ PHP_FUNCTION(bson_decode) {
   array_init(return_value);
   bson_to_zval(str, HASH_P(return_value) TSRMLS_CC);
 }
+
+void mongo_buf_init(char *dest) {
+  dest[0] = '\0';
+}
+
+void mongo_buf_append(char *dest, char *piece) {
+  int pos = strlen(dest);
+  memcpy(dest+pos, piece, strlen(piece)+1);
+}
