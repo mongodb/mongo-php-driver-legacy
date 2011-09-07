@@ -484,6 +484,10 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
   // increment counters
   zval_ptr_dtor(&zchunk); // zid->refcount = 1
 
+  if (EG(exception)) {
+    return FAILURE;
+  }
+
   return SUCCESS;
 }
 
@@ -587,7 +591,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
         return;
       }
       pos += chunk_size;
-      insert_chunk(chunks, zid, chunk_num, buf, chunk_size, options TSRMLS_CC);
+      if (insert_chunk(chunks, zid, chunk_num, buf, chunk_size, options TSRMLS_CC) == FAILURE) {
+        break;
+      }
     }
     else {
       result = read(fd, buf, chunk_size);
@@ -596,7 +602,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
         return;
       }
       pos += result;
-      insert_chunk(chunks, zid, chunk_num, buf, result, options TSRMLS_CC);
+      if (insert_chunk(chunks, zid, chunk_num, buf, result, options TSRMLS_CC) == FAILURE) {
+        break;
+      }
     }
 
     if (safe && EG(exception)) {
@@ -615,6 +623,11 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // close file ptr
   if (fp) {
     fclose(fp);
+  }
+
+  if (EG(exception)) {
+    zval_ptr_dtor(&zfile);
+    return;
   }
 
   if (!fp) {

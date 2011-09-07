@@ -89,6 +89,19 @@ class MongoGridFSTest extends PHPUnit_Framework_TestCase
         $this->assertNotNull($this->object->chunks->findOne());
     }
 
+    public function testStoreFileSafe() {
+        $throws = false;
+        $result = $this->object->storeFile('tests/somefile', array("_id" => 1), array("safe" => true));
+        try {
+            $result = $this->object->storeFile('tests/somefile', array("_id" => 1), array("safe" => true));
+        }
+        catch (MongoCursorException $e) {
+            $throws = true;
+        }
+        $this->assertTrue($throws);
+        $this->assertEquals(1, $result);
+    }
+
     public function testFindOne() {
         $this->assertEquals($this->object->findOne(), null);
         $this->object->storeFile('tests/somefile');
