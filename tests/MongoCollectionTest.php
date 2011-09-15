@@ -837,7 +837,10 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
 
     public function testTags() {
         // does not throw in 1.8
-        $this->object->insert(array("x"=>1), array("safe" => "foo", "wtimeout" => 1000));
+        try {
+            $this->object->insert(array("x"=>1), array("safe" => "foo", "wtimeout" => 1000));
+        }
+        catch (MongoCursorException $e) {}
     }
 }
 
