@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2011-08-23</date>
+ <date>2011-09-15</date>
  <time>12:00:00</time>
  <version>
-  <release>1.2.4</release>
-  <api>1.2.4</api>
+  <release>1.2.5</release>
+  <api>1.2.5</api>
  </version>
  <stability>
   <release>stable</release>
@@ -27,19 +27,21 @@
  <notes>
    ENHANCEMENTS
 
-   * Added MongoLog::SERVER logging.
+   * Add connection information to cursor exceptions, see
+     MongoCursorException::getHost.
+
+   * Allow metadata to be sent using MongoGridFS::storeUpload.
+
+   * Connections are now fork-safe.
+
+   * Removed username/password from connection URI parse exception message.
+
+   * Slight optimization of receiving database responses.
 
    BUG FIXES
 
-   * Fixed compile for OS X.
-
-   * Fixed segfault with authentication on.
-
-   * Fixed "_isSelf not found" error.
-
-   * Allow non-replica-set connections to reconnect.
-
-   * Do not sleep for 0ms before initial query attempt (Hiroaki Kubota)
+   * Fixed replica set master determination with authentication enabled (which
+     would cause "invalid command" errors and segmentation faults).
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -95,6 +97,36 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.5</release>
+    <api>1.2.5</api>
+   </version>
+   <date>2011-09-15</date>
+   <notes>
+     ENHANCEMENTS
+
+     * Add connection information to cursor exceptions, see
+     MongoCursorException::getHost.
+
+     * Allow metadata to be sent using MongoGridFS::storeUpload.
+
+     * Connections are now fork-safe.
+
+     * Removed username/password from connection URI parse exception message.
+
+     * Slight optimization of receiving database responses.
+
+     BUG FIXES
+
+     * Fixed replica set master determination with authentication enabled (which
+     would cause "invalid command" errors and segmentation faults).
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>
