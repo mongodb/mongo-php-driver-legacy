@@ -330,10 +330,10 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
 
   MONGO_METHOD(MongoCursor, getNext, return_value, cursor_z);
 
-  zval_ptr_dtor(&cursor_z);
-
   if (EG(exception) ||
       (Z_TYPE_P(return_value) ==IS_BOOL && Z_BVAL_P(return_value) == 0)) {
+    cursor->link = 0;
+    zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
   /* if getlasterror returned an error, throw an exception
@@ -357,6 +357,9 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
     }
 
     mongo_cursor_throw(cursor->server, code TSRMLS_CC, Z_STRVAL_PP(err));
+
+    cursor->link = 0;
+    zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
   // w timeout
@@ -366,9 +369,15 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
     int status = zend_hash_find(Z_ARRVAL_P(return_value), "n", strlen("n")+1, (void**)&code);
 
     mongo_cursor_throw(cursor->server, (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC, Z_STRVAL_PP(err));
+
+    cursor->link = 0;
+    zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
 
+
+  cursor->link = 0;
+  zval_ptr_dtor(&cursor_z);
   return SUCCESS;
 }
 
