@@ -13,11 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2011-09-15</date>
+ <date>2011-09-30</date>
  <time>12:00:00</time>
  <version>
-  <release>1.2.5</release>
-  <api>1.2.5</api>
+  <release>1.2.6</release>
+  <api>1.2.6</api>
  </version>
  <stability>
   <release>stable</release>
@@ -25,23 +25,9 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-   ENHANCEMENTS
-
-   * Add connection information to cursor exceptions, see
-     MongoCursorException::getHost.
-
-   * Allow metadata to be sent using MongoGridFS::storeUpload.
-
-   * Connections are now fork-safe.
-
-   * Removed username/password from connection URI parse exception message.
-
-   * Slight optimization of receiving database responses.
-
    BUG FIXES
 
-   * Fixed replica set master determination with authentication enabled (which
-     would cause "invalid command" errors and segmentation faults).
+   * Patched connection closing code (Carlos Rodriguez)
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -97,6 +83,22 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.6</release>
+    <api>1.2.6</api>
+   </version>
+   <date>2011-09-30</date>
+   <notes>
+    BUG FIXES
+
+    * Patched connection closing code (Carlos Rodriguez)
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>
