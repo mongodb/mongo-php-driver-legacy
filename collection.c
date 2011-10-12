@@ -336,32 +336,6 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
-  /* if getlasterror returned an error, throw an exception
-   *
-   * this isn't the same as checking for $err in cursor.c, as this isn't a query
-   * error but just the status.
-   */
-  else if (zend_hash_find(Z_ARRVAL_P(return_value), "err", strlen("err")+1, (void**)&err) == SUCCESS &&
-      Z_TYPE_PP(err) == IS_STRING) {
-    zval **code_z;
-    int code = 10;
-
-    // get error code
-    if (zend_hash_find(Z_ARRVAL_P(return_value), "code", strlen("code")+1, (void**)&code_z) == SUCCESS) {
-      code = Z_LVAL_PP(code_z);
-    }
-
-    // not master
-    if (code == 10058) {
-      mongo_util_link_master_failed(cursor->link TSRMLS_CC);
-    }
-
-    mongo_cursor_throw(cursor->server, code TSRMLS_CC, Z_STRVAL_PP(err));
-
-    cursor->link = 0;
-    zval_ptr_dtor(&cursor_z);
-    return FAILURE;
-  }
   // w timeout
   else if (zend_hash_find(Z_ARRVAL_P(return_value), "errmsg", strlen("errmsg")+1, (void**)&err) == SUCCESS &&
       Z_TYPE_PP(err) == IS_STRING) {

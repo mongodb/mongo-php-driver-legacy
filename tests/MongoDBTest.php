@@ -307,9 +307,9 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
 
         $this->object->forceError();
         $err = $this->object->lastError();
-        $this->assertNotNull($err['err']);
-        $this->assertEquals($err['n'], 0);
-        $this->assertEquals((bool)$err['ok'], true);
+        $this->assertNotNull($err['err'], json_encode($err));
+        $this->assertEquals($err['n'], 0, json_encode($err));
+        $this->assertEquals((bool)$err['ok'], true, json_encode($err));
     }
 
     public function testResetError() {

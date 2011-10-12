@@ -64,6 +64,7 @@
 #define NO_PREP 0
 
 #define NOISY 0
+#define QUIET 1
 
 // duplicate strings
 #define DUP 1

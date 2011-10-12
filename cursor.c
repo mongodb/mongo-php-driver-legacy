@@ -808,7 +808,8 @@ PHP_METHOD(MongoCursor, next) {
 
   // we got more results
   if (cursor->at < cursor->num) {
-    zval **err;
+    zval **err = 0, **ok = 0;
+
     MAKE_STD_ZVAL(cursor->current);
     array_init(cursor->current);
     cursor->buf.pos = bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
@@ -822,9 +823,12 @@ PHP_METHOD(MongoCursor, next) {
     // increment cursor position
     cursor->at++;
 
-    // check for err
-    if (zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err")+1, (void**)&err) == SUCCESS) {
-      zval **code_z;
+    // check for $err
+    if (zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err")+1, (void**)&err) == SUCCESS ||
+        // getLastError can return an error here
+        (zend_hash_find(Z_ARRVAL_P(cursor->current), "err", strlen("err")+1, (void**)&err) == SUCCESS &&
+         Z_TYPE_PP(err) == IS_STRING)) {
+      zval **code_z, *exception;
       // default error code
       int code = 4;
 
@@ -843,12 +847,13 @@ PHP_METHOD(MongoCursor, next) {
         // not master: 10107
         // not master and slaveok=false (more recent): 13435
         // not master or secondary: 13436
-        if (cursor->link->rs && (code == 10107 || code == 13435 || code == 13436)) {
+        if (cursor->link->rs && (code == 10107 || code == 13435 || code == 13436 || code == 10058)) {
           mongo_util_link_master_failed(cursor->link TSRMLS_CC);
         }
       }
 
-      mongo_cursor_throw(cursor->server, code TSRMLS_CC, Z_STRVAL_PP(err));
+      exception = mongo_cursor_throw(cursor->server, code TSRMLS_CC, Z_STRVAL_PP(err));
+      zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current);
       zval_ptr_dtor(&cursor->current);
       cursor->current = 0;
       RETURN_FALSE;
@@ -1044,7 +1049,7 @@ void mongo_init_CursorExceptions(TSRMLS_D) {
 
 
 
-void mongo_cursor_throw(mongo_server *server, int code TSRMLS_DC, char *format, ...) {
+zval* mongo_cursor_throw(mongo_server *server, int code TSRMLS_DC, char *format, ...) {
   zval *e;
   va_list arg;
 
@@ -1060,6 +1065,8 @@ void mongo_cursor_throw(mongo_server *server, int code TSRMLS_DC, char *format, 
     zend_update_property_string(mongo_ce_CursorException, e, "host", strlen("host"), server->label TSRMLS_CC);
     zend_update_property_long(mongo_ce_CursorException, e, "fd", strlen("fd"), server->socket TSRMLS_CC);
   }
+
+  return e;
 }
 
 

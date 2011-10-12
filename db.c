@@ -36,7 +36,8 @@ extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_GridFS,
   *mongo_ce_Id,
   *mongo_ce_Code,
-  *mongo_ce_Exception;
+  *mongo_ce_Exception,
+  *mongo_ce_CursorException;
 
 extern int le_pconnection,
   le_connection;
@@ -713,6 +714,17 @@ static void run_err(char *cmd, zval *return_value, zval *db TSRMLS_DC) {
   add_assoc_long(data, cmd, 1);
 
   MONGO_CMD(return_value, db);
+  if (EG(exception)) {
+    zval *e, *doc;
+
+    e = EG(exception);
+    doc = zend_read_property(mongo_ce_CursorException, e, "doc", strlen("doc"), QUIET TSRMLS_C);
+    if (doc && Z_TYPE_P(doc) == IS_ARRAY &&
+        !zend_hash_exists(Z_ARRVAL_P(doc), "$err", strlen("$err")+1)) {
+      RETVAL_ZVAL(doc, 1, 0);
+      zend_clear_exception(TSRMLS_C);
+    }
+  }
 
   zval_ptr_dtor(&data);
 }
