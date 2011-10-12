@@ -229,15 +229,17 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
   MAKE_STD_ZVAL(password);
   ZVAL_STRING(password, server->password, 1);
 
-  zend_try {
-    // get admin db
-    MAKE_STD_ZVAL(db);
-    MONGO_METHOD1(Mongo, selectDB, db, connection, db_name);
+  // get admin db
+  MAKE_STD_ZVAL(db);
+  MONGO_METHOD1(Mongo, selectDB, db, connection, db_name);
 
-    // log in
-    MAKE_STD_ZVAL(ok);
-    MONGO_METHOD2(MongoDB, authenticate, ok, db, username, password);
-  } zend_catch {
+  // log in
+  MAKE_STD_ZVAL(ok);
+  MONGO_METHOD2(MongoDB, authenticate, ok, db, username, password);
+
+  if (EG(exception)) {
+    zend_clear_exception(TSRMLS_C);
+
     zval_ptr_dtor(&db_name);
     zval_ptr_dtor(&db);
     zval_ptr_dtor(&username);
@@ -248,7 +250,7 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
       ZVAL_STRING(errmsg, "failed running authenticate", 1);
     }
     return FAILURE;
-  } zend_end_try();
+  }
 
   zval_ptr_dtor(&db_name);
   zval_ptr_dtor(&db);

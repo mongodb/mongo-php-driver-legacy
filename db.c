@@ -57,6 +57,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
 
+static void clear_exception(zval* return_value TSRMLS_DC);
 
 /* {{{ MongoDB::__construct
  */
@@ -545,6 +546,7 @@ PHP_METHOD(MongoDB, command) {
 
   // query
   MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
+  clear_exception(return_value TSRMLS_CC);
 
   zend_objects_store_del_ref(cursor TSRMLS_CC);
   zval_ptr_dtor(&cursor);
@@ -617,11 +619,11 @@ zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
   MAKE_STD_ZVAL(response);
   ZVAL_NULL(response);
 
-  zend_try {
-    MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
-  } zend_catch {
+  MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
+  if (EG(exception)) {
+    zend_clear_exception(TSRMLS_C);
     exception = 1;
-  } zend_end_try();
+  }
 
   current->next = temp_next;
   cursor->link = 0;
@@ -705,15 +707,7 @@ PHP_METHOD(MongoDB, authenticate) {
   zval_ptr_dtor(&result);
 }
 
-
-static void run_err(char *cmd, zval *return_value, zval *db TSRMLS_DC) {
-  zval *data;
-
-  MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, cmd, 1);
-
-  MONGO_CMD(return_value, db);
+static void clear_exception(zval* return_value TSRMLS_DC) {
   if (EG(exception)) {
     zval *e, *doc;
 
@@ -725,6 +719,18 @@ static void run_err(char *cmd, zval *return_value, zval *db TSRMLS_DC) {
       zend_clear_exception(TSRMLS_C);
     }
   }
+}
+
+
+static void run_err(char *cmd, zval *return_value, zval *db TSRMLS_DC) {
+  zval *data;
+
+  MAKE_STD_ZVAL(data);
+  array_init(data);
+  add_assoc_long(data, cmd, 1);
+
+  MONGO_CMD(return_value, db);
+  clear_exception(return_value TSRMLS_CC);
 
   zval_ptr_dtor(&data);
 }
