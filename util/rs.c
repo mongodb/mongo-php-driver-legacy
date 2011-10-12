@@ -355,7 +355,7 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
 
 int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC) {
   mongo_server *possible_slave;
-  int min_ping = INT_MAX;
+  int min_bucket = INT_MAX;
 
   if (!link->rs || !link->server_set) {
     *(errmsg) = estrdup("Connection is not initialized or not a replica set");
@@ -364,19 +364,22 @@ int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC) {
 
   possible_slave = link->server_set->server;
 
+  // TODO: this is not exactly fair: if our server list contains member1->member2
+  // and member1 & member2 are in the same bucket, member1 will always be chosen
+
   link->slave = 0;
   while (possible_slave) {
-    int ping;
+    int bucket;
 
     if (!mongo_util_server_get_readable(possible_slave TSRMLS_CC)) {
       possible_slave = possible_slave->next;
       continue;
     }
 
-    ping = mongo_util_server_get_ping_time(possible_slave TSRMLS_CC);
-    if (ping < min_ping && possible_slave != link->server_set->master) {
+    bucket = mongo_util_server_get_bucket(possible_slave TSRMLS_CC);
+    if (bucket < min_bucket && possible_slave != link->server_set->master) {
       link->slave = possible_slave;
-      min_ping = ping;
+      min_bucket = bucket;
     }
 
     possible_slave = possible_slave->next;

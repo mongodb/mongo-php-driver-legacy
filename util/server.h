@@ -38,6 +38,7 @@ typedef struct _server_guts {
 
   // for pinging rs slaves
   int ping;
+  int bucket;
   time_t last_ping;
 } server_guts;
 
@@ -89,6 +90,11 @@ int mongo_util_server_set_readable(mongo_server *server, zend_bool readable TSRM
 int mongo_util_server_get_readable(mongo_server *server TSRMLS_DC);
 
 int mongo_util_server_get_bson_size(mongo_server *server TSRMLS_DC);
+
+/**
+ * Gets the "bucket" this server is in based on ping time.
+ */
+int mongo_util_server_get_bucket(mongo_server *server TSRMLS_DC);
 
 // ------- Internal Functions -----------
 

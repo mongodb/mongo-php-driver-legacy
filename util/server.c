@@ -136,6 +136,18 @@ int mongo_util_server_get_ping_time(mongo_server *server TSRMLS_DC) {
   return info->guts->ping;
 }
 
+int mongo_util_server_get_bucket(mongo_server *server TSRMLS_DC) {
+  server_info* info;
+
+  if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
+    return FAILURE;
+  }
+
+  mongo_util_server__prime(info, server TSRMLS_CC);
+
+  return info->guts->bucket;
+}
+
 int mongo_util_server__set_ping(server_info *info, struct timeval start, struct timeval end) {
   info->guts->last_ping = start.tv_sec;
 
@@ -145,6 +157,18 @@ int mongo_util_server__set_ping(server_info *info, struct timeval start, struct 
   // clocks might return weird stuff
   if (info->guts->ping < 0) {
     info->guts->ping = 0;
+  }
+
+  // buckets for 0, 16, 256, etc.
+  if (!info->guts->ping) {
+    info->guts->bucket = 0;
+  }
+  else {
+    int temp_ping = info->guts->ping;
+    while (temp_ping) {
+      temp_ping /= 16;
+      info->guts->bucket++;
+    }
   }
 
   return info->guts->ping;
