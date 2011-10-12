@@ -823,8 +823,7 @@ PHP_METHOD(MongoCursor, next) {
     cursor->at++;
 
     // check for err
-    if (cursor->num == 1 &&
-        zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err")+1, (void**)&err) == SUCCESS) {
+    if (zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err")+1, (void**)&err) == SUCCESS) {
       zval **code_z;
       // default error code
       int code = 4;
