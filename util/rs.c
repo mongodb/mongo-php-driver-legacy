@@ -355,17 +355,18 @@ int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
 
 int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC) {
   mongo_server *possible_slave;
-  int min_bucket = INT_MAX;
+  int min_bucket = INT_MAX, slave_count = 0, random_num;
 
   if (!link->rs || !link->server_set) {
     *(errmsg) = estrdup("Connection is not initialized or not a replica set");
     return FAILURE;
   }
 
-  possible_slave = link->server_set->server;
+  // If we have M members total with N members in bucket B0, we want a 1/N
+  // chance of choosing any given member of B0.
+  random_num = rand();
 
-  // TODO: this is not exactly fair: if our server list contains member1->member2
-  // and member1 & member2 are in the same bucket, member1 will always be chosen
+  possible_slave = link->server_set->server;
 
   link->slave = 0;
   while (possible_slave) {
@@ -377,9 +378,24 @@ int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC) {
     }
 
     bucket = mongo_util_server_get_bucket(possible_slave TSRMLS_CC);
+
+    // first, handle if this member is in the same bucket as the currently chosen slave
+    if (bucket == min_bucket && possible_slave != link->server_set->master) {
+      slave_count++;
+
+      // 1/N chance of this slave being the chosen one
+      if (random_num % slave_count == 0) {
+        link->slave = possible_slave;
+      }
+    }
+
+    // if this server is in a smaller bucket than the current min, use it
     if (bucket < min_bucket && possible_slave != link->server_set->master) {
       link->slave = possible_slave;
       min_bucket = bucket;
+
+      // reset slave count - there's only one slave we've seen so far in this bucket
+      slave_count = 1;
     }
 
     possible_slave = possible_slave->next;
