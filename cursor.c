@@ -853,7 +853,7 @@ PHP_METHOD(MongoCursor, next) {
       }
 
       exception = mongo_cursor_throw(cursor->server, code TSRMLS_CC, Z_STRVAL_PP(err));
-      zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current);
+      zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current TSRMLS_CC);
       zval_ptr_dtor(&cursor->current);
       cursor->current = 0;
       RETURN_FALSE;
