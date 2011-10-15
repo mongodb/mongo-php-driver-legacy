@@ -712,7 +712,7 @@ static void clear_exception(zval* return_value TSRMLS_DC) {
     zval *e, *doc;
 
     e = EG(exception);
-    doc = zend_read_property(mongo_ce_CursorException, e, "doc", strlen("doc"), QUIET TSRMLS_C);
+    doc = zend_read_property(mongo_ce_CursorException, e, "doc", strlen("doc"), QUIET TSRMLS_CC);
     if (doc && Z_TYPE_P(doc) == IS_ARRAY &&
         !zend_hash_exists(Z_ARRVAL_P(doc), "$err", strlen("$err")+1)) {
       RETVAL_ZVAL(doc, 1, 0);
