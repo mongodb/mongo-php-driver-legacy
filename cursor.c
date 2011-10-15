@@ -893,6 +893,12 @@ PHP_METHOD(MongoCursor, reset) {
   if (cursor->current) {
     zval_ptr_dtor(&cursor->current);
   }
+
+  if (cursor->cursor_id != 0) {
+    php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
+    cursor->cursor_id = 0;
+  }
+
   cursor->started_iterating = 0;
   cursor->current = 0;
   cursor->at = 0;
