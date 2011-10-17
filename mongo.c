@@ -158,7 +158,7 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
     return;
   }
 
-  php_mongo_free_cursor_le(link, MONGO_LINK TSRMLS_CC);
+  mongo_cursor_free_le(link, MONGO_LINK TSRMLS_CC);
   php_mongo_server_set_free(link->server_set TSRMLS_CC);
 
   if (link->username) efree(link->username);

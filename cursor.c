@@ -256,7 +256,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   zval_ptr_dtor(&temp);
 
   if (cursor->cursor_id == 0) {
-    php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
+    mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
   }
   // if cursor_id != 0, server should stay the same
 
@@ -895,7 +895,7 @@ PHP_METHOD(MongoCursor, reset) {
   }
 
   if (cursor->cursor_id != 0) {
-    php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
+    mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
     cursor->cursor_id = 0;
   }
 
@@ -1076,7 +1076,7 @@ zval* mongo_cursor_throw(mongo_server *server, int code TSRMLS_DC, char *format,
 }
 
 
-int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
+void mongo_cursor_free_le(void *val, int type TSRMLS_DC) {
   zend_rsrc_list_entry *le;
 
   LOCK(cursor);
@@ -1111,7 +1111,6 @@ int php_mongo_free_cursor_le(void *val, int type TSRMLS_DC) {
   }
 
   UNLOCK(cursor);
-  return 0;
 }
 
 
@@ -1302,7 +1301,7 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
 
   if (cursor) {
     if (cursor->cursor_id != 0) {
-      php_mongo_free_cursor_le(cursor, MONGO_CURSOR TSRMLS_CC);
+      mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
     }
 
     if (cursor->current) zval_ptr_dtor(&cursor->current);
