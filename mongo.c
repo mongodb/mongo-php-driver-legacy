@@ -158,7 +158,7 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
     return;
   }
 
-  mongo_cursor_free_le(link, MONGO_LINK TSRMLS_CC);
+  php_mongo_free_cursor_le(link, MONGO_LINK TSRMLS_CC);
   php_mongo_server_set_free(link->server_set TSRMLS_CC);
 
   if (link->username) efree(link->username);
@@ -319,9 +319,8 @@ PHP_METHOD(Mongo, connectUtil) {
   char *msg = 0;
   zval *connected_z = 0;
 
-  connected_z = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"),
-                                   QUIET TSRMLS_CC);
-  if (Z_TYPE_P(connected_z) == IS_BOOL && Z_BVAL_P(connected_z)) {
+  connected_z = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
+  if (Z_BVAL_P(connected_z)) {
     RETURN_TRUE;
   }
 

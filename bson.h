@@ -96,7 +96,8 @@ void mongo_buf_init(char *dest);
 
 /**
  * Takes a buffer and a string to add to the buffer.  The buffer must be large
- * enough to append the string and the string must be null-terminated.
+ * enough to append the string and the string must be null-terminated. This will
+ * not work for strings containing null characters (e.g., BSON).
  */
 void mongo_buf_append(char *dest, char *piece);
 
