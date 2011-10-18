@@ -319,8 +319,9 @@ PHP_METHOD(Mongo, connectUtil) {
   char *msg = 0;
   zval *connected_z = 0;
 
-  connected_z = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), NOISY TSRMLS_CC);
-  if (Z_BVAL_P(connected_z)) {
+  connected_z = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"),
+                                   QUIET TSRMLS_CC);
+  if (Z_TYPE_P(connected_z) == IS_BOOL && Z_BVAL_P(connected_z)) {
     RETURN_TRUE;
   }
 
