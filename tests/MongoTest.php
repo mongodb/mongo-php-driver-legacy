@@ -455,9 +455,9 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
       $c = $db->c;
       $c->drop();
-      $c->insert(array("x" => 1));
+      $c->insert(array("x" => 1), array("safe"=>true));
       $obj = $c->findOne();
-      $this->assertEquals(1, $obj['x']);
+      $this->assertEquals(1, $obj['x'], json_encode($c));
     }
 
     /*
