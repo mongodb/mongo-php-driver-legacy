@@ -22,7 +22,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 
 void mongo_init_Mongo(TSRMLS_D);
 
-void php_mongo_server_free(mongo_server *server TSRMLS_DC);
+void php_mongo_server_free(mongo_server *server, int persist TSRMLS_DC);
 
 /*
  * Mongo class

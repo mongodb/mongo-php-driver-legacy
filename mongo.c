@@ -102,32 +102,32 @@ static zend_function_entry mongo_methods[] = {
 };
 
 
-void php_mongo_server_free(mongo_server *server TSRMLS_DC) {
+void php_mongo_server_free(mongo_server *server, int persist TSRMLS_DC) {
   // return this connection to the pool
   mongo_util_pool_done(server TSRMLS_CC);
 
   if (server->host) {
-    efree(server->host);
+    pefree(server->host, persist);
     server->host = 0;
   }
   if (server->label) {
-    efree(server->label);
+    pefree(server->label, persist);
     server->label = 0;
   }
   if (server->username) {
-    efree(server->username);
+    pefree(server->username, persist);
     server->username = 0;
   }
   if (server->password) {
-    efree(server->password);
+    pefree(server->password, persist);
     server->password = 0;
   }
   if (server->db) {
-    efree(server->db);
+    pefree(server->db, persist);
     server->db = 0;
   }
 
-  efree(server);
+  pefree(server, persist);
 }
 
 static void php_mongo_server_set_free(mongo_server_set *server_set TSRMLS_DC) {
@@ -141,7 +141,7 @@ static void php_mongo_server_set_free(mongo_server_set *server_set TSRMLS_DC) {
 
   while (current) {
     mongo_server *temp = current->next;
-    php_mongo_server_free(current TSRMLS_CC);
+    php_mongo_server_free(current, NO_PERSIST TSRMLS_CC);
     current = temp;
   }
 

@@ -70,6 +70,9 @@
 #define DUP 1
 #define NO_DUP 0
 
+#define PERSIST 1
+#define NO_PERSIST 0
+
 #define FLAGS 0
 
 #define LAST_ERROR 0
