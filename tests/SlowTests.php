@@ -20,7 +20,7 @@ class SlowTests extends PHPUnit_Framework_TestCase
      * @access protected
      */
     protected function setUp()
-    { 
+    {
         $m = new Mongo();
         $this->object = $m->selectCollection('phpunit', 'c');
         $this->object->drop();
@@ -43,24 +43,6 @@ class SlowTests extends PHPUnit_Framework_TestCase
       foreach ($rows as $row);
 
       MongoCursor::$timeout = 30000;
-    }
-
-    public function testTimeout2() {
-      $cmd = $this->object->db->selectCollection('$cmd');
-
-      for ($i=0; $i<10000; $i++) {
-        $this->object->insert(array("name" => "joe".$i, "interests" => array(rand(), rand(), rand())));
-      }
-
-      // shouldn't time out
-      $r = $this->object->find()->timeout(5000)->getNext();
-
-      // not testing functionality, just making sure it's testing the right data
-      $this->assertEquals("joe", substr($r['name'], 0, 3));
-
-      // shouldn't time out, does take a while
-      $query = 'r = 0; cursor = db.c.find(); while (cursor.hasNext()) { x = cursor.next(); for (i=0; i<200; i++) { if (x.name == "joe"+i) { r++; } } } return r;';
-      $r = $cmd->find(array('$eval'  => $query))->limit(-1)->getNext();
     }
 
     /**
@@ -90,7 +72,7 @@ class SlowTests extends PHPUnit_Framework_TestCase
       $count = 0;
       for ($i=0; $i<3; $i++) {
         $cursor = $cmd->find(array('$eval'  => $query))->limit(-1)->timeout(500);
-        
+
         try {
           $x = $cursor->getNext();
           $this->assertFalse(true, json_encode($x));
