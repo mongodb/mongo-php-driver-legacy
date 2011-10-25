@@ -65,18 +65,6 @@ mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TS
  * sets errmsg and returns 0 on failure
  */
 mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC) {
-  int connected = 0;
-
-  if ((link->server_set->num == 1 && !link->rs && link->server_set->server->connected) ||
-      (link->server_set->master && link->server_set->master->connected)) {
-    connected = 1;
-  }
-
-  // errmsg is set, if neccessary, in get_master
-  return mongo_util_link_get_master(link, errmsg TSRMLS_CC);
-}
-
-mongo_server* mongo_util_link_get_master(mongo_link *link, zval *errmsg TSRMLS_DC) {
   mongo_server *potential_master;
 
   if (link->rs) {

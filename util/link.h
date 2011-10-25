@@ -28,7 +28,8 @@
 mongo_server* mongo_util_link_get_slave_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
 
 /**
- * Get a master socket.
+ * Handle getting a connection from a single server, list of servers, or a replica
+ * set.  Sets errmsg if it could not find a connection and returns 0.
  */
 mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_DC);
 
@@ -38,11 +39,5 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
 void mongo_util_link_disconnect(mongo_link *link TSRMLS_DC);
 
 void mongo_util_link_master_failed(mongo_link *link TSRMLS_DC);
-
-/**
- * Handle getting a connection from a single server, list of servers, or a replica
- * set.  Sets errmsg if it could not find a connection and returns 0.
- */
-mongo_server* mongo_util_link_get_master(mongo_link *link, zval *errmsg TSRMLS_DC);
 
 #endif
