@@ -26,6 +26,17 @@
  * different name in the replica set, then there will be one "info guts" struct
  * holding information about this server.  Other info structs will point to this
  * structs guts.
+ *
+ * Server info is derived by two calls: once ever ISMASTER_INTERVAL, ismaster is
+ * called to determine if this is a primary or secondary, BSON object size, etc.
+ * Once every PING_INTERVAL seconds, ping is called to just determine if the
+ * server is up or down.  We assume it's in the same state it was on last
+ * ismaster check.
+ *
+ * TODO:
+ * If a primary gets a "not master" error, it should become unreadable and
+ * unwritable until the next ismaster call.  If a slave gets a "not secondary"
+ * error, it should become unreadable until the next ismaster.
  */
 
 typedef struct _server_guts {
@@ -39,7 +50,9 @@ typedef struct _server_guts {
   // for pinging rs slaves
   int ping;
   int bucket;
+
   time_t last_ping;
+  time_t last_ismaster;
 } server_guts;
 
 /**
@@ -57,15 +70,35 @@ typedef struct _server_info {
 #define MONGO_SERVER_BSON (4*1024*1024)
 
 #define MONGO_PING_INTERVAL 5
+#define MONGO_ISMASTER_INTERVAL 60
 
 // ------- Server Info Interface -----------
 
 /**
- * If it's been PING_INTERVAL since we last pinged this server, calls isMaster
- * on this server.
+ * This creates a non-persistent copy of source in dest and then returns dest
+ * (to safely handle the case where a null pointer is passed in). If dest was
+ * set, it will free the current dest (including returning its connection to the
+ * pool) and recreate it in source's image.  It will also attempt to fetch a new
+ * connection for from the pool.
  *
- * Return values are a little weird: returns SUCCESS if this is a master,
- * FAILURE if it is not.
+ * If persist is 1, this assumes that dest is persistent and creates a new
+ * persistent mongo_server.  If persist is 0, it creates a non-persistent
+ * mongo_server.
+ *
+ * Always returns a valid pointer, cannot return 0.
+ */
+mongo_server* mongo_util_server_copy(const mongo_server *source, mongo_server *dest, int persist TSRMLS_DC);
+
+/**
+ * Returns 0 if host1 is an alias of host2.  Returns non-zero otherwise.
+ */
+int mongo_util_server_cmp(char *host1, char *host2 TSRMLS_DC);
+
+/**
+ * If it's been PING_INTERVAL since we last pinged this server, calls ping
+ * on this server.  Sets the ping time.
+ *
+ * Returns SUCCESS if this server is readable, failure otherwise.
  */
 int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC);
 

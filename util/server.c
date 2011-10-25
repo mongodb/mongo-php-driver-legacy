@@ -18,10 +18,14 @@
 #include <php.h>
 
 #include "../php_mongo.h"
+#include "../bson.h"
+#include "../mongo.h"
 #include "../db.h"
+
 #include "rs.h"
 #include "server.h"
 #include "log.h"
+#include "pool.h"
 
 extern int le_pserver;
 extern zend_class_entry *mongo_ce_Id;
@@ -29,6 +33,70 @@ extern zend_class_entry *mongo_ce_Id;
 static server_info* create_info();
 static void make_other_le(const char *id, server_info *info TSRMLS_DC);
 static server_info* wrap_other_guts(server_info *source);
+static char* get_server_id(char *host);
+static void mongo_util_server__down(server_info *server);
+// we only want to call this every INTERVAL seconds
+static int mongo_util_server_reconnect(mongo_server *server);
+
+mongo_server* mongo_util_server_copy(const mongo_server *source, mongo_server *dest, int persist TSRMLS_DC) {
+  // we assume if def was persistent it will still be persistent and visa versa
+
+  if (dest) {
+    php_mongo_server_free(dest, persist TSRMLS_CC);
+  }
+
+  dest = (mongo_server*)pemalloc(sizeof(mongo_server), persist);
+  memset(dest, 0, sizeof(mongo_server));
+
+  dest->host = pestrdup(source->host, persist);
+  dest->port = source->port;
+  dest->label = pestrdup(source->label, persist);
+
+  if (source->username && source->password && source->db) {
+    dest->username = pestrdup(source->username, persist);
+    dest->password = pestrdup(source->password, persist);
+    dest->db = pestrdup(source->db, persist);
+  }
+
+  mongo_util_pool_get(dest, 0 TSRMLS_CC);
+
+  return dest;
+}
+
+int mongo_util_server_cmp(char *host1, char *host2 TSRMLS_DC) {
+  char *id1 = 0, *id2 = 0;
+  int result = 0;
+  zend_rsrc_list_entry *le1 = 0, *le2 = 0;
+
+  id1 = get_server_id(host1);
+  id2 = get_server_id(host2);
+
+  if (zend_hash_find(&EG(persistent_list), id1, strlen(id1)+1, (void**)&le1) == SUCCESS &&
+      zend_hash_find(&EG(persistent_list), id2, strlen(id2)+1, (void**)&le2) == SUCCESS &&
+      ((server_info*)le1->ptr)->guts == ((server_info*)le2->ptr)->guts) {
+    mongo_log(MONGO_LOG_SERVER, MONGO_LOG_INFO TSRMLS_CC, "server: detected that %s is the same server as %s",
+              host1, host2);
+    // result is initialized to 0
+  }
+  else {
+    result = strcmp(id1, id2);
+  }
+
+  efree(id1);
+  efree(id2);
+
+  return result;
+}
+
+static int mongo_util_server_reconnect(mongo_server *server) {
+  // if the server is down, try to reconnect
+  if (!server->connected &&
+      mongo_util_pool_refresh(server, MONGO_RS_TIMEOUT) == FAILURE) {
+    return FAILURE;
+  }
+
+  return SUCCESS;
+}
 
 int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
   server_info* info;
@@ -220,18 +288,24 @@ void mongo_util_server_down(mongo_server* server TSRMLS_DC) {
   info->guts->master = 0;
 }
 
-server_info* mongo_util_server__get_info(mongo_server *server TSRMLS_DC) {
-  zend_rsrc_list_entry *le = 0;
+static char* get_server_id(char *host) {
   char *id;
 
-  id = (char*)emalloc(strlen(server->label)+strlen(MONGO_SERVER_INFO)+2);
-  memcpy(id, MONGO_SERVER_INFO, strlen(MONGO_SERVER_INFO));
-  memcpy(id+strlen(MONGO_SERVER_INFO), ":", 1);
-  memcpy(id+strlen(MONGO_SERVER_INFO)+1, server->label, strlen(server->label));
-  id[strlen(MONGO_SERVER_INFO)+strlen(server->label)+1] = 0;
+  id = (char*)emalloc(strlen(host)+strlen(MONGO_SERVER_INFO)+2);
+  mongo_buf_init(id);
+  mongo_buf_append(id, MONGO_SERVER_INFO);
+  mongo_buf_append(id, ":");
+  mongo_buf_append(id, host);
+
+  return id;
+}
+
+server_info* mongo_util_server__get_info(mongo_server *server TSRMLS_DC) {
+  zend_rsrc_list_entry *le = 0;
+  char *id = get_server_id(server->label);
 
   if (zend_hash_find(&EG(persistent_list), id, strlen(id)+1, (void**)&le) == FAILURE) {
-    zend_rsrc_list_entry nle, *other_le = 0;
+    zend_rsrc_list_entry nle;
     server_info *info = 0;
 
     // clear to start so that we can check it was set later
