@@ -91,6 +91,8 @@ int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC);
 /**
  * Close the bad connection and open a new one.  Does nothing if a healthy
  * connection already exists.
+ *
+ * Returns SUCCESS or FAILURE.
  */
 int mongo_util_pool_refresh(mongo_server *server, time_t timeout TSRMLS_DC);
 
