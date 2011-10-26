@@ -657,7 +657,15 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   if (cursor->server == 0 &&
       (cursor->server = mongo_util_link_get_socket(cursor->link, errmsg TSRMLS_CC)) == 0) {
     efree(buf.start);
-    mongo_cursor_throw(0, 14 TSRMLS_CC, Z_STRVAL_P(errmsg));
+
+    // if we couldn't connect to the master or the slave
+    if (cursor->opts & SLAVE_OKAY) {
+      mongo_cursor_throw(0, 14 TSRMLS_CC, "couldn't get a connection to any server");
+    }
+    else {
+      mongo_cursor_throw(0, 14 TSRMLS_CC, Z_STRVAL_P(errmsg));
+    }
+
     zval_ptr_dtor(&errmsg);
     return FAILURE;
   }
