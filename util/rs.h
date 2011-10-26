@@ -27,6 +27,7 @@
 
 #define MONGO_RS "replicaSet"
 #define PHP_RS_RES_NAME "replica set ts"
+#define MONGO_RS_TIMEOUT 200
 
 // ------------ Replica set interface ---------
 
