@@ -103,18 +103,28 @@ int mongo_util_server_cmp(char *host1, char *host2 TSRMLS_DC);
 int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC);
 
 /**
- * Find the ping time for the given server.
+ * If it's been ISMASTER_INTERVAL since we last pinged this server, calls isMaster
+ * on this server.
+ *
+ * Return values are a little weird: returns SUCCESS if this is a master,
+ * FAILURE if it is not.
  */
-int mongo_util_server_get_ping_time(mongo_server *server TSRMLS_DC);
+int mongo_util_server_ismaster(server_info *info, mongo_server *server, time_t now TSRMLS_DC);
 
 /**
  * Store a new ping time for the given server.
  */
 int mongo_util_server__set_ping(server_info *info, struct timeval start, struct timeval end);
 
+/**
+ * Set this server to be in the "down" state: neither primary nor readable.
+ */
 void mongo_util_server_down(mongo_server *server TSRMLS_DC);
 
-void mongo_util_server_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
+/**
+ * Returns 1 if server is primary, 2 if secondary, 0 if neither.
+ */
+int mongo_util_server_get_state(mongo_server *server TSRMLS_DC);
 
 /**
  * Sets if this server is readable.
@@ -128,6 +138,8 @@ int mongo_util_server_get_bson_size(mongo_server *server TSRMLS_DC);
  * Gets the "bucket" this server is in based on ping time.
  */
 int mongo_util_server_get_bucket(mongo_server *server TSRMLS_DC);
+
+void mongo_util_server_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
 // ------- Internal Functions -----------
 

@@ -100,22 +100,58 @@ static int mongo_util_server_reconnect(mongo_server *server TSRMLS_DC) {
 
 int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
   server_info* info;
-  zval *response = 0, **secondary = 0, **bson = 0, **self = 0;
+  zval *response = 0, **ok = 0;
   struct timeval start, end;
 
   if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
     return FAILURE;
   }
 
+  // call ismaster every ISMASTER_INTERVAL seconds
+  if (info->guts->last_ismaster + MONGO_ISMASTER_INTERVAL <= now) {
+    if (mongo_util_server_reconnect(server TSRMLS_CC) == FAILURE) {
+      return FAILURE;
+    }
+
+    return mongo_util_server_ismaster(info, server, now TSRMLS_CC);
+  }
+
   if (info->guts->last_ping + MONGO_PING_INTERVAL > now) {
-    return info->guts->master ? SUCCESS : FAILURE;
+    return info->guts->readable ? SUCCESS : FAILURE;
+  }
+
+  if (mongo_util_server_reconnect(server TSRMLS_CC) == FAILURE) {
+    return FAILURE;
   }
 
   gettimeofday(&start, 0);
-  response = mongo_util_rs__ismaster(server TSRMLS_CC);
+  response = mongo_util_rs__cmd("ping", server TSRMLS_CC);
   gettimeofday(&end, 0);
 
   mongo_util_server__set_ping(info, start, end);
+
+  if (!response) {
+    mongo_util_server__down(info);
+    return FAILURE;
+  }
+
+  // TODO: clear exception?
+
+  zend_hash_find(HASH_P(response), "ok", strlen("ok")+1, (void**)&ok);
+  if (Z_NUMVAL_PP(ok, 1)) {
+    mongo_util_server_ismaster(info, server, now TSRMLS_CC);
+  }
+
+  return info->guts->readable ? SUCCESS : FAILURE;
+}
+
+int mongo_util_server_ismaster(server_info *info, mongo_server *server, time_t now TSRMLS_DC) {
+  zval *response = 0, **secondary = 0, **bson = 0, **self = 0;
+
+  response = mongo_util_rs__cmd("ismaster", server TSRMLS_CC);
+
+  // update last_ismaster
+  info->guts->last_ismaster = now;
 
   if (!response) {
     return FAILURE;
@@ -145,13 +181,20 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
     info->guts->readable = 1;
     info->guts->master = 0;
   }
+  else if (mongo_util_rs__get_ismaster(response TSRMLS_CC)) {
+    if (!info->guts->master) {
+      mongo_log(MONGO_LOG_SERVER, MONGO_LOG_INFO TSRMLS_CC, "server: %s is now primary", server->label);
+    }
+
+    info->guts->master = 1;
+    info->guts->readable = 1;
+  }
   else {
     if (info->guts->readable) {
       mongo_log(MONGO_LOG_SERVER, MONGO_LOG_INFO TSRMLS_CC, "server: %s is now not readable", server->label);
     }
 
-    info->guts->readable = 0;
-    info->guts->master = 0;
+    mongo_util_server__down(info);
   }
 
   zend_hash_find(HASH_P(response), "maxBsonObjectSize", strlen("maxBsonObjectSize")+1, (void**)&bson);
@@ -169,19 +212,8 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
     }
   }
 
-  if (mongo_util_rs__get_ismaster(response TSRMLS_CC)) {
-    if (!info->guts->master) {
-      mongo_log(MONGO_LOG_SERVER, MONGO_LOG_INFO TSRMLS_CC, "server: %s is now primary", server->label);
-    }
-
-    info->guts->master = 1;
-    info->guts->readable = 1;
-    zval_ptr_dtor(&response);
-    return SUCCESS;
-  }
-
   zval_ptr_dtor(&response);
-  return FAILURE;
+  return SUCCESS;
 }
 
 void mongo_util_server__prime(server_info *info, mongo_server *server TSRMLS_DC) {
@@ -190,18 +222,6 @@ void mongo_util_server__prime(server_info *info, mongo_server *server TSRMLS_DC)
   }
 
   mongo_util_server_ping(server, MONGO_SERVER_PING TSRMLS_CC);
-}
-
-int mongo_util_server_get_ping_time(mongo_server *server TSRMLS_DC) {
-  server_info* info;
-
-  if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
-    return FAILURE;
-  }
-
-  mongo_util_server__prime(info, server TSRMLS_CC);
-
-  return info->guts->ping;
 }
 
 int mongo_util_server_get_bucket(mongo_server *server TSRMLS_DC) {
@@ -214,6 +234,26 @@ int mongo_util_server_get_bucket(mongo_server *server TSRMLS_DC) {
   mongo_util_server__prime(info, server TSRMLS_CC);
 
   return info->guts->bucket;
+}
+
+int mongo_util_server_get_state(mongo_server *server TSRMLS_DC) {
+  server_info* info;
+
+  if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
+    return 0;
+  }
+
+  mongo_util_server__prime(info, server TSRMLS_CC);
+
+  if (info->guts->master) {
+    return 1;
+  }
+  else if (info->guts->readable) {
+    return 2;
+  }
+  else {
+    return 0;
+  }
 }
 
 int mongo_util_server__set_ping(server_info *info, struct timeval start, struct timeval end) {

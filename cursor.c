@@ -36,7 +36,6 @@
 #include "collection.h"
 #include "mongo_types.h"
 #include "util/link.h"
-#include "util/pool.h"
 #include "util/rs.h"
 #include "util/io.h"
 
@@ -234,8 +233,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   ZVAL_NULL(temp);
 
   if(mongo_say(cursor->server, &buf, temp TSRMLS_CC) == FAILURE) {
-    mongo_util_pool_failed(cursor->server TSRMLS_CC);
-    mongo_util_rs_ping(cursor->link TSRMLS_CC);
+    mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
 
     efree(buf.start);
 
@@ -247,8 +245,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   efree(buf.start);
 
   if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
-    mongo_util_pool_failed(cursor->server TSRMLS_CC);
-    mongo_util_rs_ping(cursor->link TSRMLS_CC);
+    mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
     zval_ptr_dtor(&temp);
     return;
   }
@@ -671,8 +668,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   }
 
   if (mongo_say(cursor->server, &buf, errmsg TSRMLS_CC) == FAILURE) {
-    mongo_util_pool_failed(cursor->server TSRMLS_CC);
-    mongo_util_rs_ping(cursor->link TSRMLS_CC);
+    mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
 
     if (Z_TYPE_P(errmsg) == IS_STRING) {
       mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
@@ -688,8 +684,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   efree(buf.start);
 
   if (php_mongo_get_reply(cursor, errmsg TSRMLS_CC) == FAILURE) {
-    mongo_util_pool_failed(cursor->server TSRMLS_CC);
-    mongo_util_rs_ping(cursor->link TSRMLS_CC);
+    mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
     return FAILURE;
   }

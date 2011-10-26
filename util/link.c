@@ -91,6 +91,24 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
   return 0;
 }
 
+int mongo_util_link_failed(mongo_link *link, mongo_server *server TSRMLS_DC) {
+  if (mongo_util_pool_failed(server TSRMLS_CC) == FAILURE) {
+    return FAILURE;
+  }
+
+  if (link->rs) {
+    rs_monitor *monitor;
+
+    if ((monitor = mongo_util_rs__get_monitor(link TSRMLS_CC)) == 0) {
+      return;
+    }
+
+    mongo_util_rs__ping(monitor TSRMLS_CC);
+  }
+
+  return SUCCESS;
+}
+
 void mongo_util_link_master_failed(mongo_link *link TSRMLS_DC) {
   mongo_util_pool_failed(link->server_set->master TSRMLS_CC);
   mongo_util_server_down(link->server_set->master TSRMLS_CC);

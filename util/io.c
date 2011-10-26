@@ -115,17 +115,9 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       }
       else {
         // else if we've failed, just don't add to queue
-        // if we can reconnect, continue
-        if (mongo_util_pool_failed(cursor->server TSRMLS_CC) == FAILURE) {
-          mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "lost db connection");
-          return FAILURE;
-        }
-        mongo_util_rs_ping(cursor->link TSRMLS_CC);
-        if (!cursor->server->connected) {
-          mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "lost db connection (2)");
-          return FAILURE;
-        }
-        sock = cursor->server->socket;
+        mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
+        mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "lost db connection");
+        return FAILURE;
       }
     }
     // otherwise, check if the response is on the queue

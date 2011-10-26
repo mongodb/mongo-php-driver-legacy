@@ -19,18 +19,63 @@
 #include <zend_exceptions.h>
 
 #include "../php_mongo.h"
+#include "rs.h"
 #include "parse.h"
 #include "log.h"
 
-static char* php_mongo_get_host(char** current, int domain_socket);
+static char* php_mongo_get_host(char** current, int domain_socket, int persist);
 static int php_mongo_get_port(char**);
+static mongo_server* create_mongo_server(char **current, mongo_link *link TSRMLS_DC);
+static mongo_server* _create_mongo_server(char **current, int persist TSRMLS_DC);
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_ConnectionException;
 
-mongo_server* create_mongo_server(char **current, mongo_link *link TSRMLS_DC) {
+static mongo_server* create_mongo_server(char **current, mongo_link *link TSRMLS_DC) {
+  mongo_server *server;
+  server = _create_mongo_server(current, NO_PERSIST TSRMLS_CC);
+
+  if (!server) {
+    return 0;
+  }
+
+  if (link->username) {
+    server->username = estrdup(link->username);
+  }
+  if (link->password) {
+    server->password = estrdup(link->password);
+  }
+  if (link->db) {
+    server->db = estrdup(link->db);
+  }
+
+  return server;
+}
+
+mongo_server* create_mongo_server_persist(char **current, rs_monitor *monitor TSRMLS_DC) {
+  mongo_server *server;
+  server = _create_mongo_server(current, PERSIST TSRMLS_CC);
+
+  if (!server) {
+    return 0;
+  }
+
+  if (monitor->username) {
+    server->username = estrdup(monitor->username);
+  }
+  if (monitor->password) {
+    server->password = estrdup(monitor->password);
+  }
+  if (monitor->db) {
+    server->db = estrdup(monitor->db);
+  }
+
+  return server;
+}
+
+static mongo_server* _create_mongo_server(char **current, int persist TSRMLS_DC) {
   char *host;
   int port;
   mongo_server *server;
@@ -45,7 +90,7 @@ mongo_server* create_mongo_server(char **current, mongo_link *link TSRMLS_DC) {
     domain_socket = 1;
   }
 
-  if ((host = php_mongo_get_host(current, domain_socket)) == 0) {
+  if ((host = php_mongo_get_host(current, domain_socket, persist)) == 0) {
     return 0;
   }
 
@@ -61,26 +106,23 @@ mongo_server* create_mongo_server(char **current, mongo_link *link TSRMLS_DC) {
     }
   }
   else if ((port = php_mongo_get_port(current)) < 0) {
-    efree(host);
+    pefree(host, persist);
     return 0;
   }
 
   // create a struct for this server
-  server = (mongo_server*)emalloc(sizeof(mongo_server));
+  server = (mongo_server*)pemalloc(sizeof(mongo_server), persist);
   memset(server, 0, sizeof(mongo_server));
 
   server->host = host;
   server->port = port;
   spprintf(&server->label, 0, "%s:%d", host, port);
 
-  if (link->username) {
-    server->username = estrdup(link->username);
-  }
-  if (link->password) {
-    server->password = estrdup(link->password);
-  }
-  if (link->db) {
-    server->db = estrdup(link->db);
+  if (persist) {
+    char *temp = server->label;
+    server->label = (char*)pemalloc(strlen(temp)+1, persist);
+    memcpy(server->label, temp, strlen(temp)+1);
+    efree(temp);
   }
 
   return server;
@@ -250,7 +292,7 @@ int php_mongo_parse_server(zval *this_ptr TSRMLS_DC) {
 }
 
 // get the next host from the server string
-static char* php_mongo_get_host(char **ip, int domain_socket) {
+static char* php_mongo_get_host(char **ip, int domain_socket, int persist) {
   char *end = *ip, *retval;
 
   // pick whichever exists and is sooner: ':', ',', '/', or '\0'
@@ -264,6 +306,11 @@ static char* php_mongo_get_host(char **ip, int domain_socket) {
 
     // return a copy
     retval = estrndup(*ip, len);
+    if (persist) {
+      char *temp = retval;
+      retval = pestrdup(temp, persist);
+      efree(temp);
+    }
 
     // move to the end of this section of string
     *(ip) = end;
@@ -276,7 +323,7 @@ static char* php_mongo_get_host(char **ip, int domain_socket) {
   }
 
   // otherwise, this is the last thing in the string
-  retval = estrdup(*ip);
+  retval = pestrdup(*ip, persist);
 
   // move to the end of this string
   *(ip) = *ip + strlen(*ip);

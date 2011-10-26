@@ -40,4 +40,9 @@ void mongo_util_link_disconnect(mongo_link *link TSRMLS_DC);
 
 void mongo_util_link_master_failed(mongo_link *link TSRMLS_DC);
 
+/**
+ * Indicate that a particular server that this link was using failed.
+ */
+int mongo_util_link_failed(mongo_link *link, mongo_server *server TSRMLS_DC);
+
 #endif
