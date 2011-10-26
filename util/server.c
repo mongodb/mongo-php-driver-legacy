@@ -220,7 +220,7 @@ int mongo_util_server__set_ping(server_info *info, struct timeval start, struct 
   info->guts->last_ping = start.tv_sec;
 
   // in microsecs
-  info->guts->ping = (end.tv_sec - start.tv_sec)*1000000+(end.tv_usec - start.tv_usec);
+  info->guts->ping = (end.tv_sec - start.tv_sec)*1000+(end.tv_usec - start.tv_usec)/1000;
 
   // clocks might return weird stuff
   if (info->guts->ping < 0) {
