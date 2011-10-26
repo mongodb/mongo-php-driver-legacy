@@ -292,6 +292,7 @@ void mongo_util_pool__stack_clear(stack_monitor *monitor TSRMLS_DC) {
   // holder for popping sockets
   mongo_server temp;
   temp.label = 0;
+  temp.owner = getpid();
 
   while (mongo_util_pool__stack_pop(monitor, &temp TSRMLS_CC) == SUCCESS) {
     mongo_util_pool__disconnect(monitor, &temp);
