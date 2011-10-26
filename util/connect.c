@@ -16,6 +16,8 @@
  */
 
 #include <php.h>
+#include <zend_exceptions.h>
+
 #ifdef WIN32
 #include <winsock2.h>
 #  ifndef int64_t

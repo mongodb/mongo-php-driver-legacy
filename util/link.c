@@ -100,7 +100,7 @@ int mongo_util_link_failed(mongo_link *link, mongo_server *server TSRMLS_DC) {
     rs_monitor *monitor;
 
     if ((monitor = mongo_util_rs__get_monitor(link TSRMLS_CC)) == 0) {
-      return;
+      return FAILURE;
     }
 
     mongo_util_rs__ping(monitor TSRMLS_CC);

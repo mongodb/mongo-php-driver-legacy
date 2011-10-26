@@ -29,6 +29,7 @@
 #include "log.h"
 #include "pool.h"
 #include "rs.h"
+#include "link.h"
 
 #if WIN32
 HANDLE io_mutex;

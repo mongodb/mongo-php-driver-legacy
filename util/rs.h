@@ -123,31 +123,4 @@ zval* mongo_util_rs__cmd(char *cmd, mongo_server *current TSRMLS_DC);
  */
 int mongo_util_rs__get_ismaster(zval *response TSRMLS_DC);
 
-/**
- * Helper function for __ismaster response.
- *
- * If the server knows who the master is, sets link->server_set->server to the
- * master server (fetching a connection from the pool) and returns SUCCESS if
- * the master was successfully fetched (FAILURE otherwise).
- */
-int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC);
-
-/**
- * Helper for __refresh_list.  For each host in the given list, creates a new
- * mongo_server* for it in the link and populates the hosts hash with a null
- * entry for it.
- */
-void mongo_util_rs__repopulate_hosts(zval **hosts, mongo_link *link TSRMLS_DC);
-
-/**
- * For a given hostname+port, checks the link's server list to see if it already
- * exists.  If it does, it is returned.  If not, a new mongo_server is created
- * for it in the list and an entry is added to the hosts hash for it.
- *
- * Returns the mongo_server on success, 0 on failure.
- */
-mongo_server* mongo_util_rs__find_or_make_server(char *host, mongo_link *link TSRMLS_DC);
-
-time_t* mongo_util_rs__get_ping(mongo_link *link TSRMLS_DC);
-
 #endif

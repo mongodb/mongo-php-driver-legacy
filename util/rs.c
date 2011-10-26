@@ -565,32 +565,6 @@ int mongo_util_rs__get_ismaster(zval *response TSRMLS_DC) {
   return 0;
 }
 
-int mongo_util_rs__another_master(zval *response, mongo_link *link TSRMLS_DC) {
-  zval **primary;
-  char *host;
-  mongo_server *server;
-
-  if (zend_hash_find(HASH_P(response), "primary", strlen("primary")+1, (void**)&primary) == FAILURE) {
-    // this node can't reach the master, try someone else
-    return FAILURE;
-  }
-
-  host = Z_STRVAL_PP(primary);
-  if (!(server = mongo_util_rs__find_or_make_server(host, link TSRMLS_CC))) {
-    return FAILURE;
-  }
-
-  if (mongo_util_pool_refresh(server, link->timeout TSRMLS_CC) == FAILURE) {
-    return FAILURE;
-  }
-
-  mongo_log(MONGO_LOG_RS, MONGO_LOG_FINE TSRMLS_CC, "rs: connected to %s:%d\n", server->host, server->port);
-
-  // if successful, we're connected to the master
-  link->server_set->master = server;
-  return SUCCESS;
-}
-
 int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC) {
   rs_monitor *monitor;
   rsm_server *possible_slave;

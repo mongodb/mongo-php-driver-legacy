@@ -1063,7 +1063,7 @@ zval* mongo_cursor_throw(mongo_server *server, int code TSRMLS_DC, char *format,
   va_list arg;
 
   if (EG(exception)) {
-    return;
+    return EG(exception);
   }
 
   va_start(arg, format);
