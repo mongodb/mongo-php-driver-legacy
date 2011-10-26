@@ -284,6 +284,10 @@ void mongo_util_server_down(mongo_server* server TSRMLS_DC) {
     return;
   }
 
+  mongo_util_server__down(info);
+}
+
+void mongo_util_server__down(server_info *info) {
   info->guts->readable = 0;
   info->guts->master = 0;
 }
