@@ -233,6 +233,8 @@ int mongo_util_server__set_ping(server_info *info, struct timeval start, struct 
   }
   else {
     int temp_ping = info->guts->ping;
+    info->guts->bucket = 0;
+
     while (temp_ping) {
       temp_ping /= 16;
       info->guts->bucket++;
