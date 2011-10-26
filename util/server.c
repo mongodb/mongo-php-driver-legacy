@@ -36,7 +36,7 @@ static server_info* wrap_other_guts(server_info *source);
 static char* get_server_id(char *host);
 static void mongo_util_server__down(server_info *server);
 // we only want to call this every INTERVAL seconds
-static int mongo_util_server_reconnect(mongo_server *server);
+static int mongo_util_server_reconnect(mongo_server *server TSRMLS_DC);
 
 mongo_server* mongo_util_server_copy(const mongo_server *source, mongo_server *dest, int persist TSRMLS_DC) {
   // we assume if def was persistent it will still be persistent and visa versa
@@ -88,10 +88,10 @@ int mongo_util_server_cmp(char *host1, char *host2 TSRMLS_DC) {
   return result;
 }
 
-static int mongo_util_server_reconnect(mongo_server *server) {
+static int mongo_util_server_reconnect(mongo_server *server TSRMLS_DC) {
   // if the server is down, try to reconnect
   if (!server->connected &&
-      mongo_util_pool_refresh(server, MONGO_RS_TIMEOUT) == FAILURE) {
+      mongo_util_pool_refresh(server, MONGO_RS_TIMEOUT TSRMLS_CC) == FAILURE) {
     return FAILURE;
   }
 
