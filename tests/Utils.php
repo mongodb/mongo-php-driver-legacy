@@ -15,14 +15,10 @@ if (!function_exists('json_encode')) {
 }
 
 function setTimezone() {
-    global $old;
-    $old = date_default_timezone_get();
     date_default_timezone_set("America/New_York");
 }
 
 function unsetTimezone() {
-    global $old;
-    date_default_timezone_set($old);
 }
 
 ?>
