@@ -19,10 +19,10 @@ class MongoCollectionTest2 extends PHPUnit_Framework_TestCase
         $this->object = $db->selectCollection('c');
         $this->object->drop();
     }
-    
+
     public function testFsyncOpt() {
         $result = $this->object->insert(array("x" => 1), array("fsync" => 1));
-        $this->assertArrayHasKey("fsyncFiles", $result, json_encode($result));
+        $this->assertArrayHasKey("waited", $result, json_encode($result));
     }
 
     public function testSafeW() {
@@ -43,14 +43,14 @@ class MongoCollectionTest2 extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException MongoException 
+     * @expectedException MongoException
      */
     public function testIndexNameLen1() {
       $this->object->ensureIndex(array("x" => 1), array("name" => "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"));
     }
 
     /**
-     * @expectedException MongoException 
+     * @expectedException MongoException
      */
     public function testIndexNameLen2() {
       $this->object->ensureIndex(array("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz" => 1));
@@ -61,9 +61,9 @@ class MongoCollectionTest2 extends PHPUnit_Framework_TestCase
         $this->object->insert(array("x" => 1), array("safe" => true, "timeout" => 30));
         $this->object->insert(array("x" => 1), array("safe" => true, "timeout" => 1000));
     }
-    
+
     /**
-     * @expectedException Exception 
+     * @expectedException Exception
      */
     public function testCtor() {
         $db = $this->object->db;
