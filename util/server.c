@@ -185,7 +185,7 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
 }
 
 void mongo_util_server__prime(server_info *info, mongo_server *server TSRMLS_DC) {
-  if (info->guts->ping) {
+  if (info->guts->pinged) {
     return;
   }
 
