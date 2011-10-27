@@ -825,5 +825,35 @@ class MongoCursorTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals("localhost:27017", $host);
     }
+
+    public function resetHelper($c) {
+        $cursor = $c->find();
+
+        for ($i=0; $i<50; $i++) {
+            $cursor->getNext();
+        }
+
+        // reset cursor that is still alive on db
+        $cursor->reset();
+
+        // requery db for a single batch of results
+        $cursor->limit(-1);
+        $cursor->getNext();
+        return $cursor;
+   }
+
+    public function testResetOnPartialResults() {
+        $m = new Mongo();
+        $c = $m->phpunit->c;
+
+        // insert more than 1 batch of results
+        for ($i=0; $i<200; $i++) {
+            $c->insert(array("x" => $i));
+        }
+
+        $cursor = $this->resetHelper($c);
+
+        // clean up cursor and connection
+    }
 }
 ?>
