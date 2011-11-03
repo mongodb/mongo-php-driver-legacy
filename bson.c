@@ -673,13 +673,15 @@ int php_mongo_write_insert(buffer *buf, char *ns, zval *doc, int max TSRMLS_DC) 
   return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
 }
 
-int php_mongo_write_batch_insert(buffer *buf, char *ns, zval *docs, int max TSRMLS_DC) {
+int php_mongo_write_batch_insert(buffer *buf, char *ns, int flags, zval *docs, int max TSRMLS_DC) {
   int start = buf->pos - buf->start, count = 0;
   HashPosition pointer;
   zval **doc;
   mongo_msg_header header;
 
   CREATE_HEADER(buf, ns, OP_INSERT);
+  
+//  php_mongo_serialize_int(buf, flags);
 
   for(zend_hash_internal_pointer_reset_ex(HASH_P(docs), &pointer);
       zend_hash_get_current_data_ex(HASH_P(docs), (void**)&doc, &pointer) == SUCCESS;

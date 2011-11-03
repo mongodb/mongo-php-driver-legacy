@@ -409,13 +409,25 @@ PHP_METHOD(MongoCollection, insert) {
 }
 
 PHP_METHOD(MongoCollection, batchInsert) {
-  zval *docs, *options = 0, *errmsg = 0;
+  zval *docs, *options = NULL, *errmsg = 0;
   mongo_collection *c;
   mongo_server *server;
   buffer buf;
+  int bit_opts = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|z", &docs, &options) == FAILURE) {
     return;
+  }
+
+  /*
+   * options are only supported in the new-style, ie: an array of "name parameters":
+   * array("ContinueOnError" => true);
+   */
+  if (options) {
+	  zval **continue_on_error = NULL;
+
+	  zend_hash_find(HASH_P(options), "ContinueOnError", strlen("ContinueOnError")+1, (void**)&continue_on_error);
+	  bit_opts = (continue_on_error ? Z_BVAL_PP(continue_on_error) : 0) << 0;
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
@@ -426,7 +438,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
-  if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), docs,
+  if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), bit_opts, docs,
                                    mongo_util_server_get_bson_size(server TSRMLS_CC) TSRMLS_CC) == FAILURE) {
     efree(buf.start);
     return;
