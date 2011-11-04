@@ -679,7 +679,7 @@ int php_mongo_write_batch_insert(buffer *buf, char *ns, int flags, zval *docs, i
   zval **doc;
   mongo_msg_header header;
 
-  CREATE_HEADER(buf, ns, OP_INSERT);
+  CREATE_HEADER_WITH_OPTS(buf, ns, OP_INSERT, flags);
   
 //  php_mongo_serialize_int(buf, flags);
 
