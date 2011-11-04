@@ -53,9 +53,6 @@ zend_class_entry *mongo_ce_DB = NULL;
 #if ZEND_MODULE_API_NO < 20090115
 static
 #endif
-ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, name)
-ZEND_END_ARG_INFO()
 
 static void clear_exception(zval* return_value TSRMLS_DC);
 
@@ -779,32 +776,99 @@ PHP_METHOD(MongoDB, __get) {
 }
 /* }}} */
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, Mongo_object)
+	ZEND_ARG_INFO(1, database_name)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, name)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getGridFS, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, prefix)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, slave_okay)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setProfilingLevel, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, level)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_repair, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, keep_cloned_files)
+	ZEND_ARG_INFO(1, backup_original_files)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_selectCollection, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, collection_name)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_createCollection, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, collection_name)
+	ZEND_ARG_INFO(1, capped)
+	ZEND_ARG_INFO(2, capped_size)
+	ZEND_ARG_INFO(3, max_elements)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_dropCollection, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, collection_name)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_createDBRef, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, collection_name)
+	ZEND_ARG_INFO(1, array_with_id_field_OR_id)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getDBRef, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, array_containing_reference_information)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, javascript_code)
+	ZEND_ARG_INFO(1, arguments)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_command, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, array_with_command)
+	ZEND_ARG_INFO(1, options)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_authenticate, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, username)
+	ZEND_ARG_INFO(1, password)
+ZEND_END_ARG_INFO()
 
 
 static zend_function_entry MongoDB_methods[] = {
-  PHP_ME(MongoDB, __construct, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, __toString, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, __get, arginfo___get, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, getGridFS, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, getSlaveOkay, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, setSlaveOkay, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, getProfilingLevel, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, setProfilingLevel, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, drop, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, repair, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, selectCollection, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, createCollection, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, dropCollection, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, listCollections, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, createDBRef, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, getDBRef, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, execute, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, command, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, getGridFS, arginfo_getGridFS, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, getProfilingLevel, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, setProfilingLevel, arginfo_setProfilingLevel, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, drop, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, repair, arginfo_repair, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, selectCollection, arginfo_selectCollection, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, createCollection, arginfo_createCollection, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, dropCollection, arginfo_dropCollection, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, listCollections, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, createDBRef, arginfo_createDBRef, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, getDBRef, arginfo_getDBRef, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, execute, arginfo_execute, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, command, arginfo_command, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, lastError, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, prevError, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, forceError, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, authenticate, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, authenticate, arginfo_authenticate, ZEND_ACC_PUBLIC)
   { NULL, NULL, NULL }
 };
 
