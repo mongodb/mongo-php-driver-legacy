@@ -778,7 +778,7 @@ PHP_METHOD(MongoDB, __get) {
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, Mongo_object)
-	ZEND_ARG_INFO(1, database_name)
+	ZEND_ARG_INFO(0, database_name)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
@@ -802,7 +802,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_repair, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, keep_cloned_files)
-	ZEND_ARG_INFO(1, backup_original_files)
+	ZEND_ARG_INFO(0, backup_original_files)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_selectCollection, 0, ZEND_RETURN_VALUE, 1)
@@ -811,9 +811,9 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_createCollection, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, collection_name)
-	ZEND_ARG_INFO(1, capped)
-	ZEND_ARG_INFO(2, capped_size)
-	ZEND_ARG_INFO(3, max_elements)
+	ZEND_ARG_INFO(0, capped)
+	ZEND_ARG_INFO(0, capped_size)
+	ZEND_ARG_INFO(0, max_elements)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_dropCollection, 0, ZEND_RETURN_VALUE, 1)
@@ -822,7 +822,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_createDBRef, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, collection_name)
-	ZEND_ARG_INFO(1, array_with_id_field_OR_id)
+	ZEND_ARG_INFO(0, array_with_id_field_OR_id)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_getDBRef, 0, ZEND_RETURN_VALUE, 1)
@@ -831,17 +831,17 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, javascript_code)
-	ZEND_ARG_INFO(1, arguments)
+	ZEND_ARG_INFO(0, arguments)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_command, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, array_with_command)
-	ZEND_ARG_INFO(1, options)
+	ZEND_ARG_INFO(0, options)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_authenticate, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, username)
-	ZEND_ARG_INFO(1, password)
+	ZEND_ARG_INFO(0, password)
 ZEND_END_ARG_INFO()
 
 

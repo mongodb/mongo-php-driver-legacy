@@ -68,10 +68,10 @@ static
 #endif
 ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, server)
-	ZEND_ARG_INFO(1, array_of_options)
+	ZEND_ARG_INFO(0, array_of_options)
 /* Those two used to be there, but no longer it seems
-	ZEND_ARG_INFO(2, persist)
-	ZEND_ARG_INFO(3, garbage)
+	ZEND_ARG_INFO(0, persist)
+	ZEND_ARG_INFO(0, garbage)
 */
 ZEND_END_ARG_INFO()
 
@@ -88,7 +88,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_selectCollection, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, database_name)
-	ZEND_ARG_INFO(1, collection_name)
+	ZEND_ARG_INFO(0, collection_name)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN_VALUE, 0)
