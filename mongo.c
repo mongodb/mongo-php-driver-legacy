@@ -66,13 +66,22 @@ extern zend_class_entry *mongo_ce_DB,
 #if ZEND_MODULE_API_NO < 20090115
 static
 #endif
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, server)
+	ZEND_ARG_INFO(1, array_of_options)
+/* Those two used to be there, but no longer it seems
+	ZEND_ARG_INFO(2, persist)
+	ZEND_ARG_INFO(3, garbage)
+*/
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
 
 
 static zend_function_entry mongo_methods[] = {
-  PHP_ME(Mongo, __construct, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, connect, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, pairConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, persistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
