@@ -68,7 +68,7 @@ static
 #endif
 ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, server)
-	ZEND_ARG_INFO(0, array_of_options)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
 /* Those two used to be there, but no longer it seems
 	ZEND_ARG_INFO(0, persist)
 	ZEND_ARG_INFO(0, garbage)

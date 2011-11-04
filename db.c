@@ -777,7 +777,7 @@ PHP_METHOD(MongoDB, __get) {
 /* }}} */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
-	ZEND_ARG_INFO(0, Mongo_object)
+	ZEND_ARG_OBJ_INFO(0, connection, Mongo, 0)
 	ZEND_ARG_INFO(0, database_name)
 ZEND_END_ARG_INFO()
 
@@ -826,17 +826,17 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_createDBRef, 0, ZEND_RETURN_VALUE, 2)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_getDBRef, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, array_containing_reference_information)
+	ZEND_ARG_ARRAY_INFO(0, reference_information, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, javascript_code)
-	ZEND_ARG_INFO(0, arguments)
+	ZEND_ARG_ARRAY_INFO(0, arguments, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_command, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, array_with_command)
-	ZEND_ARG_INFO(0, options)
+	ZEND_ARG_ARRAY_INFO(0, command, 0)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_authenticate, 0, ZEND_RETURN_VALUE, 2)
