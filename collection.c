@@ -55,14 +55,6 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 #if ZEND_MODULE_API_NO < 20090115
 static
 #endif
-ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, name)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_batchInsert, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, array_of_documents)
-	ZEND_ARG_INFO(0, array_of_options)
-ZEND_END_ARG_INFO()
 
 PHP_METHOD(MongoCollection, __construct) {
   zval *parent, *name, *zns, *w, *wtimeout;
@@ -1194,32 +1186,111 @@ PHP_METHOD(MongoCollection, __get) {
 }
 /* }}} */
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_OBJ_INFO(0, database, MongoDB, 0)
+	ZEND_ARG_INFO(0, collection_name)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, name)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, slave_okay)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_validate, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, validate)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_insert, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, document, 0)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_batchInsert, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, documents, 0)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_find, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_ARRAY_INFO(0, query, 0)
+	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_update, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_ARRAY_INFO(0, criteria, 0)
+	ZEND_ARG_ARRAY_INFO(0, new_document, 0)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_ARRAY_INFO(0, criteria, 0)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ensureIndex, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, keys, 0)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_deleteIndex, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, string_OR_array_of_keys)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_count, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_ARRAY_INFO(0, query, 0)
+	ZEND_ARG_INFO(0, limit)
+	ZEND_ARG_INFO(0, skip)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_createDBRef, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, object, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getDBRef, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, reference, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_toIndexString, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, string_OR_array_of_keys)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_group, 0, ZEND_RETURN_VALUE, 3)
+	ZEND_ARG_INFO(0, keys_or_MongoCode)
+	ZEND_ARG_INFO(0, initial_value)
+	ZEND_ARG_INFO(0, array_OR_MongoCode)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoCollection_methods[] = {
-  PHP_ME(MongoCollection, __construct, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, __toString, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, __get, arginfo___get, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, getName, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, getSlaveOkay, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, setSlaveOkay, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, drop, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, validate, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, insert, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, getName, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, drop, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, validate, arginfo_validate, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, insert, arginfo_insert, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, batchInsert, arginfo_batchInsert, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, update, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, remove, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, find, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, findOne, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, ensureIndex, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, deleteIndex, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, deleteIndexes, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, getIndexInfo, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, count, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, save, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, createDBRef, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, getDBRef, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, toIndexString, NULL, ZEND_ACC_PROTECTED|ZEND_ACC_STATIC)
-  PHP_ME(MongoCollection, group, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, update, arginfo_update, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, remove, arginfo_remove, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, find, arginfo_find, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, findOne, arginfo_find, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, ensureIndex, arginfo_ensureIndex, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, deleteIndex, arginfo_deleteIndex, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, deleteIndexes, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, getIndexInfo, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, count, arginfo_count, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, save, arginfo_insert, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, createDBRef, arginfo_createDBRef, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, getDBRef, arginfo_getDBRef, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, toIndexString, arginfo_toIndexString, ZEND_ACC_PROTECTED|ZEND_ACC_STATIC)
+  PHP_ME(MongoCollection, group, arginfo_group, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
 
