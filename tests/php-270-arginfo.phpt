@@ -7,6 +7,7 @@ $classes = array(
     'MongoDB',
     'MongoCollection',
     'MongoCursor',
+    'MongoPool',
 );
 foreach ($classes as $class) {
 	echo $class, "\n";
