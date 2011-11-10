@@ -626,17 +626,6 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase
     }
 
 
-    public function testToIndexString() {
-        $this->assertEquals(TestToIndexString::test(null), '_1');
-        $this->assertEquals(TestToIndexString::test(52), '52_1');
-        $this->assertEquals(TestToIndexString::test('x'), 'x_1');
-        $this->assertEquals(TestToIndexString::test('x.y.z'), 'x_y_z_1');
-        $this->assertEquals(TestToIndexString::test('x_y.z'), 'x_y_z_1');
-        $this->assertEquals(TestToIndexString::test(array('x' => 1)), 'x_1');
-        $this->assertEquals(TestToIndexString::test(array('x' => -1)), 'x_-1');
-        $this->assertEquals(TestToIndexString::test(array('x' => 1, 'y' => -1)), 'x_1_y_-1');
-    }
-
     public function testGroup() {
         $g = $this->object->group(array(), array("count"=> 0), "function (obj, prev) { prev.count++; }", array());
         $this->assertEquals(0, count($g['retval']));
