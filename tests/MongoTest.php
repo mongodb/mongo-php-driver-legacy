@@ -28,7 +28,11 @@ class MongoTest extends PHPUnit_Framework_TestCase
     }
 
     public function testBrokenConnect() {
-        $this->object = new Mongo("localhost", false);
+		try {
+			$this->object = new Mongo("localhost", false);
+		} catch (PHPUnit_Framework_Error $e) {
+			$this->assertEquals("Argument 2 passed to Mongo::__construct() must be an array, boolean given", $e->getMessage());
+		}
         $this->assertFalse($this->object->connected);
     }
 
