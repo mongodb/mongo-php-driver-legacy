@@ -325,7 +325,7 @@ PHP_METHOD(Mongo, __construct) {
   }
 
   if (connect) {
-    MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
+    MONGO_METHOD(Mongo, connectUtil, NULL, getThis());
   }
 }
 /* }}} */
@@ -411,7 +411,9 @@ PHP_METHOD(Mongo, connectUtil) {
   else {
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
                               strlen("connected"), 1 TSRMLS_CC);
-    ZVAL_BOOL(return_value, 1);
+    if (return_value) {
+      ZVAL_BOOL(return_value, 1);
+    }
   }
 
   if (msg) {
