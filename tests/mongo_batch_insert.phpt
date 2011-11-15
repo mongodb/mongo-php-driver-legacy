@@ -27,7 +27,7 @@ $doc4 = array(
 	'desc' => "FOUR",
 );
 
-$object->batchInsert(array($doc1, $doc2, $doc3, $doc4), array('ContinueOnError' => true));
+$object->batchInsert(array($doc1, $doc2, $doc3, $doc4), array('continueOnError' => true));
 
 $c = $object->find();
 foreach ($c as $item) {

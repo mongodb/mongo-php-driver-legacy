@@ -421,12 +421,12 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   /*
    * options are only supported in the new-style, ie: an array of "name parameters":
-   * array("ContinueOnError" => true);
+   * array("continueOnError" => true);
    */
   if (options) {
 	  zval **continue_on_error = NULL;
 
-	  zend_hash_find(HASH_P(options), "ContinueOnError", strlen("ContinueOnError")+1, (void**)&continue_on_error);
+	  zend_hash_find(HASH_P(options), "continueOnError", strlen("continueOnError")+1, (void**)&continue_on_error);
 	  bit_opts = (continue_on_error ? Z_BVAL_PP(continue_on_error) : 0) << 0;
   }
 
