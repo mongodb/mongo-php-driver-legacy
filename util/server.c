@@ -27,6 +27,8 @@
 #include "log.h"
 #include "pool.h"
 
+ZEND_EXTERN_MODULE_GLOBALS(mongo);
+
 extern int le_pserver;
 extern zend_class_entry *mongo_ce_Id;
 
@@ -107,7 +109,7 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
     return FAILURE;
   }
 
-  if (info->guts->last_ping + MONGO_PING_INTERVAL > now) {
+  if (info->guts->last_ping + MonGlo(ping_interval) > now) {
     return server->connected ? SUCCESS : FAILURE;
   }
 
@@ -144,8 +146,8 @@ int mongo_util_server_isreadable(mongo_server *server, time_t now TSRMLS_DC) {
     return FAILURE;
   }
 
-  // call ismaster every ISMASTER_INTERVAL seconds
-  if (info->guts->last_ismaster + MONGO_ISMASTER_INTERVAL <= now) {
+  // call ismaster every ismaster_interval seconds
+  if (info->guts->last_ismaster + MonGlo(ismaster_interval) <= now) {
     if (mongo_util_server_reconnect(server TSRMLS_CC) == FAILURE) {
       return FAILURE;
     }

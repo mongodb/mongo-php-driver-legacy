@@ -572,6 +572,8 @@ int native_long;
 int long_as_object;
 int allow_empty_keys;
 int no_id;
+int ping_interval;
+int ismaster_interval;
 
 // _id generation helpers
 int inc, pid, machine;

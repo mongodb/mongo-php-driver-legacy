@@ -124,6 +124,8 @@ STD_PHP_INI_ENTRY("mongo.native_long", "0", PHP_INI_ALL, OnUpdateLong, native_lo
 STD_PHP_INI_ENTRY("mongo.long_as_object", "0", PHP_INI_ALL, OnUpdateLong, long_as_object, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.allow_empty_keys", "0", PHP_INI_ALL, OnUpdateLong, allow_empty_keys, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.no_id", "0", PHP_INI_SYSTEM, OnUpdateLong, no_id, zend_mongo_globals, mongo_globals)
+STD_PHP_INI_ENTRY("mongo.ping_interval", "5", PHP_INI_ALL, OnUpdateLong, ping_interval, zend_mongo_globals, mongo_globals)
+STD_PHP_INI_ENTRY("mongo.ismaster_interval", "60", PHP_INI_ALL, OnUpdateLong, ismaster_interval, zend_mongo_globals, mongo_globals)
 PHP_INI_END()
 /* }}} */
 
@@ -229,6 +231,8 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
   mongo_globals->cmd_char = "$";
   mongo_globals->utf8 = 1;
+  mongo_globals->ping_interval = 5;
+  mongo_globals->ismaster_interval = 60;
 
   mongo_globals->inc = 0;
   mongo_globals->response_num = 0;

@@ -121,7 +121,7 @@ void mongo_util_rs_refresh(rs_monitor *monitor, time_t now TSRMLS_DC) {
   zval *good_response = 0;
 
   // refreshes host list
-  if (now - monitor->last_ismaster < MONGO_ISMASTER_INTERVAL) {
+  if (now - monitor->last_ismaster < MonGlo(ismaster_interval)) {
     return;
   }
 
@@ -517,7 +517,7 @@ void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
     return;
   }
 
-  if (time(0) - monitor->last_ismaster < MONGO_PING_INTERVAL) {
+  if (time(0) - monitor->last_ismaster < MonGlo(ping_interval)) {
     return;
   }
 
