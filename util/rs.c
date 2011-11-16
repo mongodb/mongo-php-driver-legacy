@@ -535,7 +535,7 @@ void mongo_util_rs__ping(rs_monitor *monitor TSRMLS_DC) {
   current = monitor->servers;
   while (current) {
     // this pings the server and, if up, checks if it's primary
-    if (mongo_util_server_ping(current->server, now TSRMLS_CC) == SUCCESS) {
+    if (mongo_util_server_isreadable(current->server, now TSRMLS_CC) == SUCCESS) {
       if (mongo_util_server_get_state(current->server TSRMLS_CC) == 1) {
         monitor->primary = current->server;
       }
