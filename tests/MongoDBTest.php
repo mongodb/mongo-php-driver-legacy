@@ -53,27 +53,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals((string)$grid->chunks, "phpunit.foo.chunks");
     }
 
-    public function testGetSetProfilingLevel() {
-        $created = $this->object->createCollection("system.profile", true, 5000);
-
-        $prev = $this->object->setProfilingLevel(MongoDB::PROFILING_ON);
-        $level = $this->object->getProfilingLevel();
-        $this->assertEquals($level, MongoDB::PROFILING_ON);
-
-        $prev = $this->object->setProfilingLevel(MongoDB::PROFILING_SLOW);
-        $level = $this->object->getProfilingLevel();
-        $this->assertEquals($level, MongoDB::PROFILING_SLOW);
-        $this->assertEquals($prev, MongoDB::PROFILING_ON);
-
-        $prev = $this->object->setProfilingLevel(MongoDB::PROFILING_OFF);
-        $level = $this->object->getProfilingLevel();
-        $this->assertEquals($level, MongoDB::PROFILING_OFF);
-        $this->assertEquals($prev, MongoDB::PROFILING_SLOW);
-
-        $prev = $this->object->setProfilingLevel(MongoDB::PROFILING_OFF);
-        $this->assertEquals($prev, MongoDB::PROFILING_OFF);
-    }
-
 
     public function testDrop() {
       $r = $this->object->drop();
