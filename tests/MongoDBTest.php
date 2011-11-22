@@ -30,36 +30,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
       //        $this->assertEquals($this->object->start, memory_get_usage(true));
     }
 
-    /**
-     * @expectedException Exception
-     */
-    public function testDumbDBName3() {
-      $db = new MongoDB(new Mongo(), "\\");
-    }
-
-    /**
-     * @expectedException Exception
-     */
-    public function testDumbDBName4() {
-      $db = new MongoDB(new Mongo(), "\$");
-    }
-
-    /**
-     * @expectedException Exception
-     */
-    public function testDumbDBName5() {
-      $db = new MongoDB(new Mongo(), "/");
-    }
-
-    public function test__toString() {
-        if (preg_match("/5\.1\../", phpversion())) {
-            $this->markTestSkipped("No implicit __toString in 5.1");
-            return;
-        }
-
-        $this->assertEquals((string)$this->object, "phpunit");
-    }
-
     public function testGetGridFS() {
         if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
@@ -130,37 +100,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals((string)$this->object->selectCollection('a b c'), 'phpunit.a b c');
     }
 
-    public function testCreateCollection() {
-        $ns = $this->object->selectCollection('system.namespaces');
-        $this->object->drop('z');
-        $this->object->drop('zz');
-        $this->object->drop('zzz');
-
-        $this->object->createCollection('z');
-        $obj = $ns->findOne(array('name' => 'phpunit.z'));
-        $this->assertNotNull($obj);
-
-        // even though we're only setting this to 100, it allocates 1 extent,
-        // so we can fit 4096, not 100, bytes of data in the collection.
-        $c = $this->object->createCollection('zz', true, 100);
-        $obj = $ns->findOne(array('name' => 'phpunit.zz'));
-        $this->assertNotNull($obj);
-
-        for($i=0;$i<100;$i++) {
-            $c->insert(array('x' => $i));
-        }
-        $this->assertLessThan(100, $c->count());
-
-        $c = $this->object->createCollection('zzz', true, 1000, 5);
-        $obj = $ns->findOne(array('name' => 'phpunit.zzz'));
-        $this->assertNotNull($obj);
-
-        for($i=0;$i<10;$i++) {
-            $c->insert(array('x' => $i));
-        }
-        $this->assertEquals(5, $c->count());
-    }
-
     public function testDropCollection() {
         $ns = $this->object->selectCollection('system.namespaces');
 
@@ -169,16 +108,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $c->ensureIndex('foo');
         $c->findOne();
 
-        $this->assertNotNull($ns->findOne(array('name'=> new MongoRegex('/droopy/'))));
-        $c->drop();
-        $this->assertEquals($ns->findOne(array('name'=> new MongoRegex('/droopy/'))), null);
-    }
-
-    public function testDropCollection2() {
-      $ns = $this->object->selectCollection('system.namespaces');
-
-      $this->object->x->insert(array("foo"=>"bar"));
-      $this->assertNotNull($ns->findOne(array('name'=> new MongoRegex('/.x$/'))));
 
       $this->object->dropCollection('x');
       $this->assertEquals($ns->findOne(array('name'=> new MongoRegex('/.x$/'))), null);

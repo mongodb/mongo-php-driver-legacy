@@ -110,7 +110,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $c->setSlaveOkay(true);
         $c->findOne();
     }
-
+/*
     public function test__toString() {
         $this->assertEquals("[localhost:27017]", $this->object->__toString());
         $this->object->connect();
@@ -133,7 +133,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->assertEquals("[localhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhosta:27018],localhost:27017", $m->__toString());
         $this->assertEquals(274, strlen($m->__toString()));
     }
-
+*/
     /**
      * @expectedException Exception
      */
@@ -367,7 +367,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
       $m8 = new Mongo();
     }
-
+/*
     public function testAuthenticate1() {
       exec("mongo tests/addUser.js", $output, $exit_code);
       if ($exit_code == 0) {
@@ -392,7 +392,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
 
       $this->assertFalse($ok);
     }
-
+*/
     public function testGetters() {
         if (preg_match("/5\.1\../", phpversion())) {
             $this->markTestSkipped("No implicit __toString in 5.1");
@@ -463,21 +463,24 @@ class MongoTest extends PHPUnit_Framework_TestCase
     /*
      * again, not really testing functionality.
      */
+	/*
     public function testDB() {
       $m = new Mongo("localhost/foo");
       $m = new Mongo("localhost/bar/baz");
       $m = new Mongo("localhost/");
     }
-
+*/
     /*
      * test with ports
      */
+	/*
     public function testDBPorts() {
       $m = new Mongo("localhost:27017/foo");
       $m = new Mongo("localhost:27017/bar/baz");
       $m = new Mongo("localhost:27017/");
       $m = new Mongo("localhost:27017,localhost:27019/");
     }
+	*/
 
     /*
      * regression

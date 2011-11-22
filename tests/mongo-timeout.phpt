@@ -18,7 +18,7 @@ sleep( 2 );
 --EXPECTF--
 object(MongoCursorTimeoutException)#%d (%d) {
   ["message":protected]=>
-  string(56) "cursor timed out (timeout: 20, time left: 0:0, status: 0)"
+  string(56) "cursor timed out (timeout: 1, time left: 0:0, status: 0)"
   ["string":"Exception":private]=>
   string(0) ""
   ["code":protected]=>
@@ -44,14 +44,16 @@ object(MongoCursorTimeoutException)#%d (%d) {
       ["args"]=>
       array(2) {
         [0]=>
-        array(1) {
+        array(2) {
           ["sleep"]=>
           bool(true)
+          ["secs"]=>
+          int(2)
         }
         [1]=>
         array(1) {
           ["timeout"]=>
-          int(20)
+          int(1)
         }
       }
     }
