@@ -6,6 +6,7 @@
 *.dylib
 *.la
 *.lai
+*.sw*
 Makefile*
 build
 config*
@@ -39,3 +40,10 @@ traces.0
 tests/anotherfile
 tests/MongoRunner.php
 tests/unit
+tests/*.diff
+tests/*.exp
+tests/*.log
+tests/*.out
+tests/*.php
+tests/*.sh
+tmp-php.ini
