@@ -146,19 +146,6 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($ret['retval'], 'byebye', json_encode($ret));
     }
 
-    public function testDBCommand() {
-        $x = $this->object->command(array());
-        $this->assertEquals(0, strpos($x['errmsg'], "no such cmd"), json_encode($x));
-        $this->assertEquals((bool)$x['ok'], false);
-
-        $created = $this->object->createCollection("system.profile", true, 5000);
-
-        $this->object->command(array('profile' => 0));
-        $x = $this->object->command(array('profile' => 1));
-        $this->assertEquals($x['was'], 0, json_encode($x));
-        $this->assertEquals((bool)$x['ok'], true, json_encode($x));
-    }
-
     public function testCreateRef() {
         $ref = MongoDBRef::create("x", "y");
         $this->assertEquals('x', $ref['$ref']);
@@ -215,9 +202,5 @@ class MongoDBTest extends PHPUnit_Framework_TestCase
       $this->assertEquals(4, $this->object->w);
       $this->assertEquals(60, $this->object->wtimeout);
    }
-
-    public function testCommandTimeout() {
-        $this->object->command(array('serverStatus' => 1), array('timeout' => -1));
-    }
 }
 ?>
