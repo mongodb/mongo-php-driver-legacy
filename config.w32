@@ -5,7 +5,7 @@ ARG_ENABLE("mongo", "MongoDB support", "no");
 
 if (PHP_MONGO != "no") {
   EXTENSION('mongo', 'php_mongo.c mongo.c mongo_types.c bson.c cursor.c collection.c db.c gridfs.c');
-  ADD_SOURCES("../pecl/mongo/util", "hash.c connect.c link.c pool.c rs.c server.c log.c io.c parse.c", "mongo");
+  ADD_SOURCES(configure_module_dirname + "/util", "hash.c connect.c link.c pool.c rs.c server.c log.c io.c parse.c", "mongo");
 
   AC_DEFINE('HAVE_MONGO', 1);
 }
