@@ -118,6 +118,9 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC);
  *
  * If this fails to reconnect the socket, it will change the server's state to
  * "down" (see server.h).
+ *
+ * DO NOT call this from within the IO lock, as it tries to reconnect to the
+ * server (which can cause it to try to re-acquire the IO lock).
  */
 int mongo_util_pool_failed(mongo_server *server TSRMLS_DC);
 

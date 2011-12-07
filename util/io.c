@@ -96,7 +96,6 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   sock = cursor->server->socket;
 
   if (get_cursor_header(sock, cursor TSRMLS_CC) == FAILURE) {
-    mongo_util_pool_failed(cursor->server TSRMLS_CC);
     return FAILURE;
   }
 
@@ -116,7 +115,6 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       }
       else {
         // else if we've failed, just don't add to queue
-        mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
         mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "lost db connection");
         return FAILURE;
       }
@@ -141,7 +139,6 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
       }
 
       if (!response) {
-        mongo_util_pool_failed(cursor->server TSRMLS_CC);
         mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "couldn't find a response");
         return FAILURE;
       }
@@ -149,13 +146,11 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
 
     // get the next db response
     if (get_cursor_header(sock, cursor TSRMLS_CC) == FAILURE) {
-      mongo_util_pool_failed(cursor->server TSRMLS_CC);
       return FAILURE;
     }
   }
 
   if (FAILURE == get_cursor_body(sock, cursor TSRMLS_CC)) {
-    mongo_util_pool_failed(cursor->server TSRMLS_CC);
 #ifdef WIN32
     mongo_cursor_throw(cursor->server, 12 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
 #else
