@@ -12,6 +12,7 @@ $grid->storeBytes($bytes, array("filename" => "demo.txt"));
 $file = $grid->findOne(array('filename' => 'demo.txt'));
 $fp = $file->getResource();
 var_dump($fp);
+var_dump($file);
 
 #fread($fp, 1024);
 

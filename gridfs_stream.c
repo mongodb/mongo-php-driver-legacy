@@ -41,9 +41,33 @@
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC);
 static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC);
 
+extern zend_class_entry *mongo_ce_DB,
+    *mongo_ce_Collection,
+    *mongo_ce_Cursor,
+    *mongo_ce_Exception,
+    *mongo_ce_GridFSException,
+    *mongo_ce_Id,
+    *mongo_ce_Date,
+    *mongo_ce_BinData,
+    *mongo_ce_GridFS,
+    *mongo_ce_GridFSFile,
+    *mongo_ce_GridFSCursor;
+
+ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 typedef struct _gridfs_stream_data {
    zval * file;
+   size_t offset;
+
+   /* file size */
+   int size; 
+
+   /* chunk size */
+   int chunkSize;
+
+   unsigned char * buffer;
+   int buffer_size;
+   size_t buffer_offset;
 } gridfs_stream_data;
 
 php_stream_ops gridfs_stream_ops = {
@@ -58,23 +82,50 @@ php_stream_ops gridfs_stream_ops = {
     NULL, /* set_option */
 };
 
+#define READ_PROPERTY(name, dest) \
+    if (zend_hash_find(HASH_P(file), name, strlen(name)+1, (void**)&dest) == FAILURE) { \
+        zend_throw_exception(mongo_ce_GridFSException, "couldn't find " name, 0 TSRMLS_CC); \
+        return; \
+    } \
+
+#define TO_INT(size, len) { \
+  if (Z_TYPE_PP(size) == IS_DOUBLE) { \
+    len = (int)Z_DVAL_PP(size); \
+  } else {  \
+    len = Z_LVAL_PP(size); \
+  } \
+} 
 
 php_stream * gridfs_stream_init(zval * file_object) 
 {
     gridfs_stream_data * self;
     php_stream * stream;
+    zval * file, **id, **size, **chunkSize;
 
+    file = zend_read_property(mongo_ce_GridFSFile, file_object, "file", strlen("file"), NOISY TSRMLS_CC);
+    READ_PROPERTY("_id", id);
+    READ_PROPERTY("length", size);
+    READ_PROPERTY("chunkSize", chunkSize);
+
+    /* allocate memory and init the stream resource */
     self = emalloc(sizeof(*self));
+    memset(self, 0, sizeof(*self));
     self->file = file_object;
+    TO_INT(size, self->size);
+    TO_INT(chunkSize, self->chunkSize);
+
+
     zval_add_ref(&file_object);
 
     stream = php_stream_alloc_rel(&gridfs_stream_ops, self, 0, "rb");
-
     return stream;
 }
 
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 {
+    gridfs_stream_data * self = stream->abstract;
+
+
     printf("I'm reading\n");fflush(stdout);
 }
 
