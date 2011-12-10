@@ -13,6 +13,7 @@ $file = $grid->findOne(array('filename' => 'demo.txt'));
 $fp = $file->getResource();
 var_dump($fp);
 
+var_dump($bytes, fread($fp, 1024));
 var_dump($bytes === fread($fp, 1024));
 
 --EXPECTF--
