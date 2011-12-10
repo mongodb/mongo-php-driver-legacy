@@ -969,9 +969,8 @@ PHP_METHOD(MongoGridFSFile, write) {
   add_assoc_long(sort, "n", 1);
 
   MONGO_METHOD1(MongoCursor, sort, cursor, cursor, sort);
-
   if ((total = apply_to_cursor(cursor, copy_file, fp TSRMLS_CC)) == FAILURE) {
-    zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_GridFSException, " reading chunk of file", 0 TSRMLS_CC);
   }
 
   fclose(fp);

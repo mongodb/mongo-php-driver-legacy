@@ -38,9 +38,6 @@
 #include "mongo_types.h"
 #include "db.h"
 
-static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC);
-static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC);
-
 extern zend_class_entry *mongo_ce_DB,
     *mongo_ce_Collection,
     *mongo_ce_Cursor,
@@ -55,19 +52,26 @@ extern zend_class_entry *mongo_ce_DB,
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
+static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC);
+static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC);
+
 typedef struct _gridfs_stream_data {
-   zval * file;
-   size_t offset;
+    zval * fileObj; /* MongoGridFSFile Object */
+    zval * chunkObj; /* Chunk collection object */
+    zval * id; /* File ID  */
+    zval * query; /* Query array */
 
-   /* file size */
-   int size; 
+    size_t offset;
 
-   /* chunk size */
-   int chunkSize;
+    /* file size */
+    int size; 
 
-   unsigned char * buffer;
-   int buffer_size;
-   size_t buffer_offset;
+    /* chunk size */
+    int chunkSize;
+
+    unsigned char * buffer;
+    int buffer_size;
+    size_t buffer_offset;
 } gridfs_stream_data;
 
 php_stream_ops gridfs_stream_ops = {
@@ -81,6 +85,7 @@ php_stream_ops gridfs_stream_ops = {
     NULL, /* stat */
     NULL, /* set_option */
 };
+
 
 #define READ_PROPERTY(name, dest) \
     if (zend_hash_find(HASH_P(file), name, strlen(name)+1, (void**)&dest) == FAILURE) { \
@@ -100,40 +105,81 @@ php_stream * gridfs_stream_init(zval * file_object)
 {
     gridfs_stream_data * self;
     php_stream * stream;
-    zval * file, **id, **size, **chunkSize;
+    zval * file, **id, **size, **chunkSize, *gridfs;
 
     file = zend_read_property(mongo_ce_GridFSFile, file_object, "file", strlen("file"), NOISY TSRMLS_CC);
     READ_PROPERTY("_id", id);
     READ_PROPERTY("length", size);
     READ_PROPERTY("chunkSize", chunkSize);
 
+    gridfs = zend_read_property(mongo_ce_GridFSFile, file_object, "gridfs", strlen("gridfs"), NOISY TSRMLS_CC);
+
     /* allocate memory and init the stream resource */
     self = emalloc(sizeof(*self));
     memset(self, 0, sizeof(*self));
-    self->file = file_object;
+    self->fileObj  = file_object;
+    self->chunkObj = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
+    self->id = *id;
     TO_INT(size, self->size);
     TO_INT(chunkSize, self->chunkSize);
 
+    zval_add_ref(&self->fileObj);
+    zval_add_ref(&self->chunkObj);
+    zval_add_ref(&self->id);
 
-    zval_add_ref(&file_object);
+
+    /* create base query object */
+    MAKE_STD_ZVAL(self->query);
+    array_init(self->query);
+    add_assoc_zval(self->query, "files_id", self->id);
+    zval_add_ref(&self->id);
 
     stream = php_stream_alloc_rel(&gridfs_stream_ops, self, 0, "rb");
     return stream;
+}
+
+static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
+{
+    zval * chunk = 0, *zfields;
+    if (chunk_id == -1) {
+        chunk_id = (int)(self->offset / self->chunkSize);
+    }
+
+    MAKE_STD_ZVAL(zfields);
+    array_init(zfields);
+
+    add_assoc_long(self->query, "n", chunk_id);
+
+    MAKE_STD_ZVAL(chunk);
+    MONGO_METHOD2(MongoCollection, findOne, chunk, self->chunkObj, self->query, zfields);
+
+    php_var_dump(&self->query, 2);
+    php_var_dump(&chunk, 2);
+
+    zval_ptr_dtor(&chunk);
+    printf("loading chunk %d\n", chunk_id);
 }
 
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 {
     gridfs_stream_data * self = stream->abstract;
 
+    if (!self->buffer) {
+        // read the needed buffer
+        gridfs_read_chunk(self, -1 TSRMLS_CC);
+    }
 
-    printf("I'm reading\n");fflush(stdout);
+    printf("read %d bytes on offset %d\n", count, self->offset);fflush(stdout);
 }
 
 static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC)
 {
     gridfs_stream_data * self = stream->abstract;
 
-    zval_ptr_dtor(&self->file);
+    zval_ptr_dtor(&self->fileObj);
+    zval_ptr_dtor(&self->chunkObj);
+    zval_ptr_dtor(&self->query);
+    zval_ptr_dtor(&self->id);
     efree(self);
 
     return 0;
