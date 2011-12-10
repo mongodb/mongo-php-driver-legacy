@@ -11,10 +11,9 @@ $grid->storeBytes($bytes, array("filename" => "demo.txt"));
 
 $file = $grid->findOne(array('filename' => 'demo.txt'));
 $fp = $file->getResource();
-fread($fp, 1024);
+var_dump($fp);
 
-var_dump($file->getResource());
-
+#fread($fp, 1024);
 
 --EXPECTF--
-das
+resource(%d) of type (stream)

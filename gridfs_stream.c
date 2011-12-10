@@ -39,15 +39,17 @@
 #include "db.h"
 
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC);
+static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC);
+
 
 typedef struct _gridfs_stream_data {
-   zval * this;
+   zval * file;
 } gridfs_stream_data;
 
 php_stream_ops gridfs_stream_ops = {
     NULL, /* write */
     gridfs_read, /* read */
-    NULL, /* close */
+    gridfs_close, /* close */
     NULL, /* flush */
     "gridfs-wrapper",
     NULL, /* seek */
@@ -63,17 +65,25 @@ php_stream * gridfs_stream_init(zval * file_object)
     php_stream * stream;
 
     self = emalloc(sizeof(*self));
-    self->this = file_object;
-
+    self->file = file_object;
     zval_add_ref(&file_object);
 
     stream = php_stream_alloc_rel(&gridfs_stream_ops, self, 0, "rb");
-    stream->wrapperdata = file_object;
 
     return stream;
 }
 
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 {
-    printf("I'm reading\n");
+    printf("I'm reading\n");fflush(stdout);
+}
+
+static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC)
+{
+    gridfs_stream_data * self = stream->abstract;
+
+    zval_ptr_dtor(&self->file);
+    efree(self);
+
+    return 0;
 }
