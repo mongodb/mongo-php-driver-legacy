@@ -29,6 +29,15 @@ var_dump(substr($bytes,20,1024) === fread($fp, 1024));
 fseek($fp, -5, SEEK_END);
 var_dump(substr($bytes,-5) === fread($fp, 1024));
 
+fseek($fp, 0, SEEK_SET);
+
+$tmp = "";
+while (!feof($fp)) {
+    $tmp = fread($fp, 1024);
+}
+var_dump($bytes === $tmp);
+
+
 --EXPECTF--
 resource(%d) of type (stream)
 array(26) {
@@ -85,6 +94,7 @@ array(26) {
   ["blocks"]=>
   int(0)
 }
+bool(true)
 bool(true)
 bool(true)
 bool(true)
