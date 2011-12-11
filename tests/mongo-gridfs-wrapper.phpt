@@ -10,7 +10,10 @@ $grid = $db->getGridFs('wrapper');
 $grid->drop();
 
 // dummy file
-$bytes = str_repeat(sha1(time()), 200*1024);
+$bytes = "";
+for ($i=0; $i < 200*1024; $i++) {
+    $bytes .= sha1(rand(1, 1000000000));
+}
 $grid->storeBytes($bytes, array("filename" => "demo.txt"), array('safe' => true));
 
 // fetch it
@@ -18,6 +21,7 @@ $file = $grid->findOne(array('filename' => 'demo.txt'));
 
 // get file descriptor
 $fp = $file->getResource();
+/**/
 var_dump($fp);
 var_dump(fstat($fp));
 var_dump(substr($bytes,0,1024) === fread($fp, 1024));
@@ -31,13 +35,15 @@ var_dump(substr($bytes,-5) === fread($fp, 1024));
 
 fseek($fp, 0, SEEK_SET);
 
+/**/
 $tmp = "";
+$i=0;
 while (!feof($fp)) {
-    $tmp = fread($fp, 1024);
+    $tmp .= ($t=fread($fp, rand(1024,8024)));
 }
 var_dump($bytes === $tmp);
 
-
+/**/
 --EXPECTF--
 resource(%d) of type (stream)
 array(26) {

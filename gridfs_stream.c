@@ -106,6 +106,12 @@ php_stream_ops gridfs_stream_ops = {
 // some handy macros {{{
 #define MIN(a, b) a > b ? b : a
 
+#if 0
+#   define DEBUG(x)  printf x;fflush(stdout);
+#else
+#   define DEBUG(x)
+#endif
+
 #define READ_ARRAY_PROP(dest, name, toVariable) \
     if (zend_hash_find(HASH_P(dest), name, strlen(name)+1, (void**)&toVariable) == FAILURE) { \
         zend_throw_exception(mongo_ce_GridFSException, "couldn't find " name, 0 TSRMLS_CC); \
@@ -201,6 +207,8 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
         return;
     }
 
+    DEBUG(("loading chunk %d\n", chunk_id));
+
     MAKE_STD_ZVAL(zfields);
     array_init(zfields);
 
@@ -236,6 +244,7 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
     }
 
     self->chunkId = chunk_id;
+    self->buffer_offset  = self->offset%self->chunkSize;
     zval_ptr_dtor(&chunk);
 
     return SUCCESS;
@@ -249,15 +258,16 @@ static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
     int size;
 
     // load the needed chunk from mongo
-    gridfs_read_chunk(self, -1 TSRMLS_CC);
+    gridfs_read_chunk(self, (int)((self->offset)/self->chunkSize) TSRMLS_CC);
 
-    
     size = MIN(count, self->buffer_size - self->buffer_offset);
-
     memcpy(buf, self->buffer  + self->buffer_offset, size);
 
     self->buffer_offset += size;
     self->offset += size;
+
+
+    DEBUG(("offset=%d (+%d)\n", self->offset, size));
 
     return size;
 }
