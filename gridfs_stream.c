@@ -54,6 +54,8 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC);
 static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC);
+static int gridfs_stat(php_stream *stream, php_stream_statbuf *ssb TSRMLS_DC);
+static int gridfs_option(php_stream *stream, int option, int value, void *ptrparam TSRMLS_DC);
 
 typedef struct _gridfs_stream_data {
     zval * fileObj; /* MongoGridFSFile Object */
@@ -67,8 +69,13 @@ typedef struct _gridfs_stream_data {
     /* file size */
     int size; 
 
+    // Chunk and Buffer {{{
     /* chunk size */
     int chunkSize;
+
+    /* which chunk is loaded? */
+    int chunkId;
+
 
     /* mongo current chunk is kept in memory */
     unsigned char * buffer;
@@ -78,6 +85,9 @@ typedef struct _gridfs_stream_data {
 
     /* where we are in the chunk? */
     size_t buffer_offset;
+
+    // }}} 
+
 } gridfs_stream_data;
 
 php_stream_ops gridfs_stream_ops = {
@@ -88,16 +98,19 @@ php_stream_ops gridfs_stream_ops = {
     "gridfs-wrapper",
     NULL, /* seek */
     NULL, /* cast */
-    NULL, /* stat */
-    NULL, /* set_option */
+    gridfs_stat, /* stat */
+    gridfs_option, /* set_option */
 };
 
-
-#define READ_PROPERTY(dest, name, toVariable) \
+// some handy macros {{{
+#define READ_ARRAY_PROP(dest, name, toVariable) \
     if (zend_hash_find(HASH_P(dest), name, strlen(name)+1, (void**)&toVariable) == FAILURE) { \
         zend_throw_exception(mongo_ce_GridFSException, "couldn't find " name, 0 TSRMLS_CC); \
         return; \
     } \
+
+#define READ_OBJ_PROP(type, obj, name)  \
+    zend_read_property(type, obj, name, strlen(name), NOISY TSRMLS_CC);
 
 #define TO_INT(size, len) { \
   if (Z_TYPE_PP(size) == IS_DOUBLE) { \
@@ -107,18 +120,28 @@ php_stream_ops gridfs_stream_ops = {
   } \
 } 
 
+#define ASSERT_SIZE(size) \
+    if (size > self->chunkSize) { \
+        char * err; \
+        spprintf(&err, 0, "chunk %d has wrong size (%d) when the max is %d", chunk_id, size, self->chunkSize); \
+        zend_throw_exception(mongo_ce_GridFSException, err, 1 TSRMLS_CC); \
+        return FAILURE; \
+    } \
+// }}}
+
+// {{{ php_stream * gridfs_stream_init(zval * file_object) 
 php_stream * gridfs_stream_init(zval * file_object) 
 {
     gridfs_stream_data * self;
     php_stream * stream;
     zval * file, **id, **size, **chunkSize, *gridfs;
 
-    file = zend_read_property(mongo_ce_GridFSFile, file_object, "file", strlen("file"), NOISY TSRMLS_CC);
-    READ_PROPERTY(file, "_id", id);
-    READ_PROPERTY(file, "length", size);
-    READ_PROPERTY(file, "chunkSize", chunkSize);
+    file = READ_OBJ_PROP(mongo_ce_GridFSFile, file_object, "file");
+    READ_ARRAY_PROP(file, "_id", id);
+    READ_ARRAY_PROP(file, "length", size);
+    READ_ARRAY_PROP(file, "chunkSize", chunkSize);
 
-    gridfs = zend_read_property(mongo_ce_GridFSFile, file_object, "gridfs", strlen("gridfs"), NOISY TSRMLS_CC);
+    gridfs = READ_OBJ_PROP(mongo_ce_GridFSFile, file_object, "gridfs");
 
     /* allocate memory and init the stream resource */
     self = emalloc(sizeof(*self));
@@ -127,9 +150,11 @@ php_stream * gridfs_stream_init(zval * file_object)
     TO_INT(chunkSize, self->chunkSize);
 
     self->fileObj  = file_object;
-    self->chunkObj = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
+
+    self->chunkObj = READ_OBJ_PROP(mongo_ce_GridFS, gridfs, "chunks");
     self->buffer   = emalloc(self->chunkSize +1);
     self->id = *id;
+    self->chunkId = -1;
 
     zval_add_ref(&self->fileObj);
     zval_add_ref(&self->chunkObj);
@@ -145,30 +170,32 @@ php_stream * gridfs_stream_init(zval * file_object)
     stream = php_stream_alloc_rel(&gridfs_stream_ops, self, 0, "rb");
     return stream;
 }
+// }}}
 
-static int copy_bytes(void *to, char *from, int len) {
-  char *winIsDumb = *(char**)to;
-  memcpy(winIsDumb, from, len);
-  winIsDumb += len;
-  *((char**)to) = (void*)winIsDumb;
+// array fstat($fp) {{{
+static int gridfs_stat(php_stream *stream, php_stream_statbuf *ssb TSRMLS_DC)
+{
+    gridfs_stream_data * self = stream->abstract;
 
-  return len;
+    ssb->sb.st_size = self->size;
+
+    return SUCCESS;
 }
+// }}}
 
-#define ASSERT_SIZE(size) \
-    if (size > self->chunkSize) { \
-        char * err; \
-        spprintf(&err, 0, "chunk %d has wrong size (%d) when the max is %d", chunk_id, size, self->chunkSize); \
-        zend_throw_exception(mongo_ce_GridFSException, err, 1 TSRMLS_CC); \
-        return FAILURE; \
-    } \
-
+// int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id) {{{
 static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 {
     zval * chunk = 0, *zfields, **data, *bin;
 
     if (chunk_id == -1) {
+        // we need to figure out which chunk to load
         chunk_id = (int)(self->offset / self->chunkSize);
+    }
+
+    if (chunk_id == self->chunkId) {
+        // nothing to load :-)
+        return;
     }
 
     MAKE_STD_ZVAL(zfields);
@@ -186,17 +213,17 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
         return FAILURE;
     }
 
-    READ_PROPERTY(chunk, "data", data);
+    READ_ARRAY_PROP(chunk, "data", data);
 
     if (Z_TYPE_PP(data) == IS_STRING) {
-        // old driver, not yet implemented
         ASSERT_SIZE(Z_STRLEN_PP(data))
         memcpy(self->buffer, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
         self->buffer_size = Z_STRLEN_PP(data);
     } else if (Z_TYPE_PP(data) == IS_OBJECT &&
              Z_OBJCE_PP(data) == mongo_ce_BinData) {
 
-        bin = zend_read_property(mongo_ce_BinData, *data, "bin", strlen("bin"), NOISY TSRMLS_CC);
+        bin = READ_OBJ_PROP(mongo_ce_BinData, *data, "bin");
+
         ASSERT_SIZE(Z_STRLEN_P(bin))
         memcpy(self->buffer, Z_STRVAL_P(bin), Z_STRLEN_P(bin));
         self->buffer_size = Z_STRLEN_P(bin);
@@ -205,28 +232,38 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
         return FAILURE;
     }
 
+    self->chunkId = chunk_id;
     zval_ptr_dtor(&chunk);
 
     return SUCCESS;
 }
+// }}}
 
+// fread($fp, $bytes) {{{
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 {
     gridfs_stream_data * self = stream->abstract;
     int size;
 
     if (self->buffer_size == 0) {
-        // read the needed buffer
+        // load the needed chunk from mongo
         gridfs_read_chunk(self, -1 TSRMLS_CC);
+
+        self->buffer_offset = self->offset%self->chunkSize;
+        memcpy(buf, self->buffer  + self->buffer_offset, self->buffer_size - self->buffer_offset);
+        size = self->buffer_size;
+    } else {
+        // load the needed chunk from mongo
+        size = 0;
     }
 
-    size = self->buffer_size;
-
-    memcpy(buf, self->buffer, size);
+    self->offset += size;
 
     return size;
 }
+// }}}
 
+// fclose($fp) {{{
 static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC)
 {
     gridfs_stream_data * self = stream->abstract;
@@ -240,3 +277,21 @@ static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC)
 
     return 0;
 }
+// }}}
+
+// feof {{{
+static int gridfs_option(php_stream *stream, int option, int value, void *ptrparam TSRMLS_DC) 
+{
+
+    gridfs_stream_data * self = stream->abstract;
+	int ret = -1;
+
+	switch (option) {
+	case PHP_STREAM_OPTION_CHECK_LIVENESS:
+		ret = self->size == self->offset ? PHP_STREAM_OPTION_RETURN_ERR : PHP_STREAM_OPTION_RETURN_OK;
+    break;
+    }
+
+    return ret;
+}
+// }}}
