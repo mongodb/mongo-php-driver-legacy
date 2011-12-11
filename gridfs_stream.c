@@ -195,6 +195,7 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
         self->buffer_size = Z_STRLEN_PP(data);
     } else if (Z_TYPE_PP(data) == IS_OBJECT &&
              Z_OBJCE_PP(data) == mongo_ce_BinData) {
+
         bin = zend_read_property(mongo_ce_BinData, *data, "bin", strlen("bin"), NOISY TSRMLS_CC);
         ASSERT_SIZE(Z_STRLEN_P(bin))
         memcpy(self->buffer, Z_STRVAL_P(bin), Z_STRLEN_P(bin));
@@ -212,15 +213,18 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 {
     gridfs_stream_data * self = stream->abstract;
+    int size;
 
     if (self->buffer_size == 0) {
         // read the needed buffer
         gridfs_read_chunk(self, -1 TSRMLS_CC);
     }
 
-    buf = self->buffer;
+    size = self->buffer_size;
 
-    return self->buffer_size;
+    memcpy(buf, self->buffer, size);
+
+    return size;
 }
 
 static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC)
