@@ -10,7 +10,7 @@ $grid = $db->getGridFs('wrapper');
 $grid->drop();
 
 // dummy file
-$bytes = sha1(time());
+$bytes = str_repeat(sha1(time()), 200*1024);
 $grid->storeBytes($bytes, array("filename" => "demo.txt"), array('safe' => true));
 
 // fetch it
@@ -20,9 +20,14 @@ $file = $grid->findOne(array('filename' => 'demo.txt'));
 $fp = $file->getResource();
 var_dump($fp);
 var_dump(fstat($fp));
-var_dump($bytes === fread($fp, 1024));
-var_dump(feof($fp));
-var_dump("" === fread($fp, 1024));
+var_dump(substr($bytes,0,1024) === fread($fp, 1024));
+var_dump(feof($fp) === false);
+fseek($fp, 20, SEEK_SET);
+
+var_dump(substr($bytes,20,1024) === fread($fp, 1024));
+
+fseek($fp, -5, SEEK_END);
+var_dump(substr($bytes,-5) === fread($fp, 1024));
 
 --EXPECTF--
 resource(%d) of type (stream)
@@ -80,6 +85,7 @@ array(26) {
   ["blocks"]=>
   int(0)
 }
+bool(true)
 bool(true)
 bool(true)
 bool(true)
