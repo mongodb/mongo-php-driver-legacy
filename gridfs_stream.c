@@ -64,9 +64,10 @@ typedef struct _gridfs_stream_data {
     /* file size */
     int size; 
 
-    /* Chunk and Buffer {{{ */
+    /* Chunk and Buffer {{{ */ 
     /* chunk size */
     int chunkSize;
+    int totalChunks;
 
     /* which chunk is loaded? */
     int chunkId;
@@ -81,7 +82,7 @@ typedef struct _gridfs_stream_data {
     /* where we are in the chunk? */
     size_t buffer_offset;
 
-    /* }}} */
+     /* }}} */
 
 } gridfs_stream_data;
 
@@ -158,6 +159,7 @@ php_stream * gridfs_stream_init(zval * file_object)
     self->buffer   = emalloc(self->chunkSize +1);
     self->id = *id;
     self->chunkId = -1;
+    self->totalChunks = ceil(self->size/self->chunkSize);
 
     zval_add_ref(&self->fileObj);
     zval_add_ref(&self->chunkObj);
@@ -249,13 +251,21 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 {
     gridfs_stream_data * self = (gridfs_stream_data *) stream->abstract;
-    int size;
+    int size, chunk_id;
 
     /* load the needed chunk from mongo */
-    gridfs_read_chunk(self, (int)((self->offset)/self->chunkSize) TSRMLS_CC);
+    chunk_id = (int)((self->offset)/self->chunkSize);
+    gridfs_read_chunk(self, chunk_id TSRMLS_CC);
 
     size = MIN(count, self->buffer_size - self->buffer_offset);
     memcpy(buf, self->buffer  + self->buffer_offset, size);
+
+    if (size < count && chunk_id < self->totalChunks) {
+        // load next chunk to return the exact requested bytes
+        gridfs_read_chunk(self, chunk_id+1 TSRMLS_CC);
+        memcpy(buf+size, self->buffer, count-size);
+        size = count;
+    }
 
     self->buffer_offset += size;
     self->offset += size;

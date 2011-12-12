@@ -26,16 +26,30 @@ var_dump($fp);
 var_dump(fstat($fp));
 var_dump(substr($bytes,0,1024) === fread($fp, 1024));
 var_dump(feof($fp) === false);
-fseek($fp, 20, SEEK_SET);
 
-var_dump(substr($bytes,20,1024) === fread($fp, 1024));
 
-fseek($fp, -5, SEEK_END);
-var_dump(substr($bytes,-5) === fread($fp, 1024));
+/* seek test */
+$result = true;
+$iter = 500;
+for ($i=0; $i < $iter && $result; $i++) {
+    $offset = rand(0, 2600*1024);
+    $base   = rand(0, 1024* 10);
 
-fseek($fp, 0, SEEK_SET);
+    fseek($fp, $base, SEEK_SET);
+    $result &= substr($bytes, $base, 1024) === fread($fp, 1024);
+
+    fseek($fp, $offset, SEEK_CUR);
+    $result &= substr($bytes, $base + 1024 + $offset, 1024) === ($kk=fread($fp, 1024));
+    
+    fseek($fp, -1*$base, SEEK_END);
+    $result &= substr($bytes,-1*$base, 1024) === fread($fp, 1024);
+}
+
+var_dump($result && $i === $iter);
+
 
 /**/
+fseek($fp, 0, SEEK_SET);
 $tmp = "";
 $i=0;
 while (!feof($fp)) {
@@ -100,7 +114,6 @@ array(26) {
   ["blocks"]=>
   int(0)
 }
-bool(true)
 bool(true)
 bool(true)
 bool(true)
