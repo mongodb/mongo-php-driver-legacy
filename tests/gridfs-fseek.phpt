@@ -14,6 +14,8 @@ $bytes = "";
 for ($i=0; $i < 200*1024; $i++) {
     $bytes .= sha1(rand(1, 1000000000));
 }
+$length = 200*1024 * 40;
+
 $grid->storeBytes($bytes, array("filename" => "demo.txt"), array('safe' => true));
 
 // fetch it
@@ -24,19 +26,31 @@ $fp = $file->getResource();
 
 /* seek test */
 $result = true;
-$iter = 500;
+$iter = 2000;
 for ($i=0; $i < $iter && $result; $i++) {
     $offset = rand(0, 2600*1024);
-    $base   = rand(0, 1024* 10);
+    $base   = rand(0, 8096* 10);
 
     fseek($fp, $base, SEEK_SET);
-    $result &= substr($bytes, $base, 1024) === fread($fp, 1024);
+    $result &= ((string)substr($bytes, $base, 1024)) === ($read=fread($fp, 1024));
+    if (!$result) {
+        var_dump($offset, $base, $read);
+        die("FAILED: SEEK_SET");
+    }
 
     fseek($fp, $offset, SEEK_CUR);
-    $result &= substr($bytes, $base + 1024 + $offset, 1024) === ($kk=fread($fp, 1024));
+    $result &= ((string)substr($bytes, $base + 1024 + $offset, 1024)) === ($read=fread($fp, 1024));
+    if (!$result) {
+        var_dump($offset, $base, $read);
+        die("FAILED: SEEK_CUR");
+    }
     
     fseek($fp, -1*$base, SEEK_END);
-    $result &= substr($bytes,-1*$base, 1024) === fread($fp, 1024);
+    $result &= ((string)substr($bytes, $length - $base, 1024)) === ($read=fread($fp, 1024));
+    if (!$result) {
+        var_dump($offset, $base, $read);
+        die("FAILED: SEEK_END");
+    }
 }
 
 var_dump($result && $i === $iter);
