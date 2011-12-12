@@ -278,7 +278,7 @@ static int gridfs_seek(php_stream *stream, off_t offset, int whence, off_t *newo
         newoffset = offset;
         break;
     case SEEK_CUR:
-        newoffset += offset; 
+        newoffset = self->offset + offset; 
         break;
     case SEEK_END:
         newoffset = self->size + offset; 
