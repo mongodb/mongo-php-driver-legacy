@@ -330,11 +330,11 @@ static int gridfs_option(php_stream *stream, int option, int value, void *ptrpar
 {
 
     gridfs_stream_data * self = (gridfs_stream_data *) stream->abstract;
-	int ret = -1;
+    int ret = -1;
 
-	switch (option) {
-	case PHP_STREAM_OPTION_CHECK_LIVENESS:
-		ret = self->size == self->offset ? PHP_STREAM_OPTION_RETURN_ERR : PHP_STREAM_OPTION_RETURN_OK;
+    switch (option) {
+    case PHP_STREAM_OPTION_CHECK_LIVENESS:
+        ret = self->size == self->offset ? PHP_STREAM_OPTION_RETURN_ERR : PHP_STREAM_OPTION_RETURN_OK;
     break;
     }
 
