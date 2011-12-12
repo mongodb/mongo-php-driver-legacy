@@ -1,4 +1,4 @@
-//gridfs.c
+//gridfs_stream.c
 /**
  *  Copyright 2009-2011 10gen, Inc.
  *
@@ -14,7 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-// Author: César Rodas <crodas@php.net>
+// Author: César D. Rodas <crodas@php.net>
 #include <php.h>
 #ifdef WIN32
 #  ifndef int64_t
@@ -219,7 +219,7 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 
     if (Z_TYPE_P(chunk) == IS_NULL) {
         char * err;
-        spprintf(&err, 0, "couldn't fink file chunk %d", chunk_id);
+        spprintf(&err, 0, "couldn't find file chunk %d", chunk_id);
         zend_throw_exception(mongo_ce_GridFSException, err, 1 TSRMLS_CC);
         return FAILURE;
     }
