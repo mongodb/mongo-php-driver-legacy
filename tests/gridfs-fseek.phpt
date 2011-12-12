@@ -20,16 +20,17 @@ $grid->storeBytes($bytes, array("filename" => "demo.txt"), array('safe' => true)
 
 // fetch it
 $file = $grid->findOne(array('filename' => 'demo.txt'));
+$chunkSize = $file->file['chunkSize'];
 
 // get file descriptor
 $fp = $file->getResource();
 
 /* seek test */
 $result = true;
-$iter = 2000;
+$iter   = 5000;
 for ($i=0; $i < $iter && $result; $i++) {
-    $offset = rand(0, 2600*1024);
-    $base   = rand(0, 8096* 10);
+    $offset = rand(0, $chunkSize/2);
+    $base   = rand(0, $chunkSize/2);
 
     fseek($fp, $base, SEEK_SET);
     $result &= ((string)substr($bytes, $base, 1024)) === ($read=fread($fp, 1024));
