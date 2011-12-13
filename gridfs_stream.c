@@ -259,7 +259,6 @@ static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
         return -1;
     }
         
-
     size = MIN(count, self->buffer_size - self->buffer_offset);
     memcpy(buf, self->buffer  + self->buffer_offset, size);
 
