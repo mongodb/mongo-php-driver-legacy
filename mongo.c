@@ -338,12 +338,21 @@ PHP_METHOD(Mongo, connectUtil) {
   link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
   if (link->rs) {
+    mongo_server *current = link->server_set->server;
+
     // connected will be 1 unless something goes very wrong. we might not
     // actually be connected
     connected = (mongo_util_rs_init(link TSRMLS_CC) == SUCCESS);
 
     if (!connected && !EG(exception)) {
       msg = estrdup("Could not create replica set connection");
+    }
+
+    // seeds are no longer needed
+    while (current) {
+      mongo_server *temp = current;
+      current = current->next;
+      php_mongo_server_free(temp, 0 TSRMLS_CC);
     }
   }
   else {
