@@ -110,7 +110,7 @@ php_stream_ops gridfs_stream_ops = {
 #define READ_ARRAY_PROP(dest, name, toVariable) \
     if (zend_hash_find(HASH_P(dest), name, strlen(name)+1, (void**)&toVariable) == FAILURE) { \
         zend_throw_exception(mongo_ce_GridFSException, "couldn't find " name, 0 TSRMLS_CC); \
-        return; \
+        return FAILURE; \
     } \
 
 #define READ_OBJ_PROP(type, obj, name)  \
@@ -255,14 +255,19 @@ static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 
     /* load the needed chunk from mongo */
     chunk_id = (int)((self->offset)/self->chunkSize);
-    gridfs_read_chunk(self, chunk_id TSRMLS_CC);
+    if (gridfs_read_chunk(self, chunk_id TSRMLS_CC) == FAILURE) {
+        return -1;
+    }
+        
 
     size = MIN(count, self->buffer_size - self->buffer_offset);
     memcpy(buf, self->buffer  + self->buffer_offset, size);
 
     if (size < count && chunk_id < self->totalChunks) {
         // load next chunk to return the exact requested bytes
-        gridfs_read_chunk(self, chunk_id+1 TSRMLS_CC);
+        if (gridfs_read_chunk(self, chunk_id+1 TSRMLS_CC) == FAILURE) {
+            return -1;
+        }
         int tmp_bytes = MIN(count-size, self->buffer_size);
         memcpy(buf+size, self->buffer, tmp_bytes);
         size += tmp_bytes;
