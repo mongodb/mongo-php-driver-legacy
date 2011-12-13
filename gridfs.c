@@ -987,7 +987,7 @@ PHP_METHOD(MongoGridFSFile, getResource) {
     php_stream * stream;
 
     stream = gridfs_stream_init(getThis());
-    if (!stream) {
+    if (!stream || stream == FAILURE) {
         zend_throw_exception(mongo_ce_GridFSException, "couldn't create a php_stream", 0 TSRMLS_CC);
         return;
     }
