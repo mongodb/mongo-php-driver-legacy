@@ -28,6 +28,7 @@ $fp = $file->getResource();
 /* seek test */
 $result = true;
 $iter   = 5000;
+$iter   = 50;
 for ($i=0; $i < $iter && $result; $i++) {
     $offset = rand(0, $chunkSize/2);
     $base   = rand(0, $chunkSize/2);
