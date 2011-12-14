@@ -160,12 +160,22 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
 
   mongo_cursor_free_le(link, MONGO_LINK TSRMLS_CC);
   if (link->rs) {
+    mongo_server *current = link->server_set->server;
+
     if (link->server_set->master) {
       php_mongo_server_free(link->server_set->master, NO_PERSIST TSRMLS_CC);
     }
     if (link->slave) {
       php_mongo_server_free(link->slave, NO_PERSIST TSRMLS_CC);
     }
+
+    // seeds are no longer needed
+    while (current) {
+      mongo_server *temp = current;
+      current = current->next;
+      php_mongo_server_free(temp, 0 TSRMLS_CC);
+    }
+
     efree(link->server_set);
   }
   else {
@@ -338,8 +348,6 @@ PHP_METHOD(Mongo, connectUtil) {
   link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
   if (link->rs) {
-    mongo_server *current = link->server_set->server;
-
     // connected will be 1 unless something goes very wrong. we might not
     // actually be connected
     connected = (mongo_util_rs_init(link TSRMLS_CC) == SUCCESS);
@@ -347,16 +355,6 @@ PHP_METHOD(Mongo, connectUtil) {
     if (!connected && !EG(exception)) {
       msg = estrdup("Could not create replica set connection");
     }
-
-    // seeds are no longer needed
-    while (current) {
-      mongo_server *temp = current;
-      current = current->next;
-      php_mongo_server_free(temp, 0 TSRMLS_CC);
-    }
-
-    // just in case someone refers to server list (which they shouldn't)
-    link->server_set->server = 0;
   }
   else {
     mongo_server *current;
