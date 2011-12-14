@@ -16,7 +16,7 @@ for ($i=0; $i < 200*1024; $i++) {
 }
 $length = 200*1024 * 40;
 
-$grid->storeBytes($bytes, array("filename" => "demo.txt"), array('safe' => true));
+$grid->storeBytes($bytes, array("filename" => "demo.txt"));
 
 // fetch it
 $file = $grid->findOne(array('filename' => 'demo.txt'));
