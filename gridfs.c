@@ -88,6 +88,8 @@ static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
 static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options TSRMLS_DC);
 static void ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC);
 
+php_stream * gridfs_stream_init(zval * file_object);
+
 PHP_METHOD(MongoGridFS, __construct) {
   zval *zdb, *files = 0, *chunks = 0, *zchunks;
 
@@ -367,6 +369,8 @@ PHP_METHOD(MongoGridFS, storeBytes) {
     MAKE_STD_ZVAL(opts);
     array_init(opts);
     options = opts;
+  } else {
+    zval_add_ref(&options);
   }
 
   // file array object
@@ -405,6 +409,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
+  zval_ptr_dtor(&options);
 
   RETURN_ZVAL(zid, 1, 1);
 }
@@ -981,6 +986,18 @@ PHP_METHOD(MongoGridFSFile, write) {
   RETURN_LONG(total);
 }
 
+PHP_METHOD(MongoGridFSFile, getResource) {
+    php_stream * stream;
+
+    stream = gridfs_stream_init(getThis());
+    if (!stream || stream == FAILURE) {
+        zend_throw_exception(mongo_ce_GridFSException, "couldn't create a php_stream", 0 TSRMLS_CC);
+        return;
+    }
+
+    php_stream_to_zval(stream, return_value);
+}
+
 PHP_METHOD(MongoGridFSFile, getBytes) {
   zval *file, *gridfs, *chunks, *query, *cursor, *sort, *temp;
   zval **id, **size;
@@ -1117,6 +1134,7 @@ static zend_function_entry MongoGridFSFile_methods[] = {
   PHP_ME(MongoGridFSFile, getSize, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSFile, write, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSFile, getBytes, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFSFile, getResource, NULL, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
 
