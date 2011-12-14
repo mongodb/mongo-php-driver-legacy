@@ -17,7 +17,7 @@
 /* Author: César D. Rodas <crodas@php.net> */
 #include <php.h>
 #ifdef WIN32
-#  ifndef int64_t
+#ifndef int64_t
      typedef __int64 int64_t;
 #  endif
 #endif
@@ -99,7 +99,9 @@ php_stream_ops gridfs_stream_ops = {
 };
 
 /* some handy macros {{{ */
-#define MIN(a, b) a > b ? b : a
+#ifndef MIN
+#   define MIN(a, b) a > b ? b : a
+#endif
 
 #if 0
 #   define DEBUG(x)  printf x;fflush(stdout);
@@ -129,6 +131,7 @@ php_stream_ops gridfs_stream_ops = {
         char * err; \
         spprintf(&err, 0, "chunk %d has wrong size (%d) when the max is %d", chunk_id, size, self->chunkSize); \
         zend_throw_exception(mongo_ce_GridFSException, err, 1 TSRMLS_CC); \
+        zval_ptr_dtor(&chunk); \
         return FAILURE; \
     } \
 /* }}} */
@@ -172,7 +175,7 @@ php_stream * gridfs_stream_init(zval * file_object)
     add_assoc_zval(self->query, "files_id", self->id);
     zval_add_ref(&self->id);
 
-    stream = php_stream_alloc_rel(&gridfs_stream_ops, self, 0, "rb");
+    stream = php_stream_alloc(&gridfs_stream_ops, self, 0, "rb");
     return stream;
 }
 /* }}} */
@@ -205,18 +208,16 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 
     DEBUG(("loading chunk %d\n", chunk_id));
 
-    MAKE_STD_ZVAL(zfields);
-    array_init(zfields);
-
     add_assoc_long(self->query, "n", chunk_id);
 
     MAKE_STD_ZVAL(chunk);
-    MONGO_METHOD2(MongoCollection, findOne, chunk, self->chunkObj, self->query, zfields);
+    MONGO_METHOD1(MongoCollection, findOne, chunk, self->chunkObj, self->query);
 
     if (Z_TYPE_P(chunk) == IS_NULL) {
         char * err;
         spprintf(&err, 0, "couldn't find file chunk %d", chunk_id);
         zend_throw_exception(mongo_ce_GridFSException, err, 1 TSRMLS_CC);
+        zval_ptr_dtor(&chunk);
         return FAILURE;
     }
 
@@ -236,13 +237,15 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
         self->buffer_size = Z_STRLEN_P(bin);
     } else {
         zend_throw_exception(mongo_ce_GridFSException, "chunk has wrong format", 0 TSRMLS_CC);
+        zval_ptr_dtor(&chunk);
+
         return FAILURE;
     }
 
     self->chunkId = chunk_id;
     self->buffer_offset  = self->offset%self->chunkSize;
-    zval_ptr_dtor(&chunk);
 
+    zval_ptr_dtor(&chunk);
     return SUCCESS;
 }
 /* }}} */
@@ -325,9 +328,10 @@ static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC)
 
     zval_ptr_dtor(&self->fileObj);
     zval_ptr_dtor(&self->chunkObj);
-    zval_ptr_dtor(&self->buffer);
     zval_ptr_dtor(&self->query);
     zval_ptr_dtor(&self->id);
+
+    efree(self->buffer);
     efree(self);
 
     return 0;
