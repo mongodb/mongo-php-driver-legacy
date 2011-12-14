@@ -372,7 +372,8 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC) {
     return 0;
   }
 
-  return mongo_util_server_copy(monitor->primary, 0, NO_PERSIST TSRMLS_CC);
+  link->server_set->master = mongo_util_server_copy(monitor->primary, 0, NO_PERSIST TSRMLS_CC);
+  return link->server_set->master;
 }
 
 rs_monitor* mongo_util_rs__get_monitor(mongo_link *link TSRMLS_DC) {
