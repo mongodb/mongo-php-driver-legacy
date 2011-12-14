@@ -354,6 +354,9 @@ PHP_METHOD(Mongo, connectUtil) {
       current = current->next;
       php_mongo_server_free(temp, 0 TSRMLS_CC);
     }
+
+    // just in case someone refers to server list (which they shouldn't)
+    link->server_set->server = 0;
   }
   else {
     mongo_server *current;
