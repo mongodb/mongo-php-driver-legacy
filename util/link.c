@@ -71,6 +71,7 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
     potential_master = mongo_util_rs_get_master(link TSRMLS_CC);
 
     if (potential_master == 0) {
+      mongo_util_rs_ping(link TSRMLS_CC);
       ZVAL_STRING(errmsg, "couldn't determine master", 1);
     }
 
@@ -92,8 +93,10 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
 }
 
 int mongo_util_link_failed(mongo_link *link, mongo_server *server TSRMLS_DC) {
+  int retval = SUCCESS;
+
   if (mongo_util_pool_failed(server TSRMLS_CC) == FAILURE) {
-    return FAILURE;
+    retval = FAILURE;
   }
 
   if (link->rs) {
@@ -106,12 +109,14 @@ int mongo_util_link_failed(mongo_link *link, mongo_server *server TSRMLS_DC) {
     mongo_util_rs__ping(monitor TSRMLS_CC);
   }
 
-  return SUCCESS;
+  return retval;
 }
 
 void mongo_util_link_master_failed(mongo_link *link TSRMLS_DC) {
-  mongo_util_pool_failed(link->server_set->master TSRMLS_CC);
-  mongo_util_server_down(link->server_set->master TSRMLS_CC);
+  if (link->server_set->master) {
+    mongo_util_pool_failed(link->server_set->master TSRMLS_CC);
+    mongo_util_server_down(link->server_set->master TSRMLS_CC);
+  }
 
   link->server_set->master = 0;
   link->slave = 0;
