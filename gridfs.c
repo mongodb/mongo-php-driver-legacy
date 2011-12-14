@@ -353,6 +353,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
+  int free_options = 0;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
@@ -369,6 +370,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
     MAKE_STD_ZVAL(opts);
     array_init(opts);
     options = opts;
+    free_options = 1;
   }
 
   // file array object
@@ -407,6 +409,10 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
+
+  if (free_options) {
+    zval_ptr_dtor(&options);
+  }
 
   RETURN_ZVAL(zid, 1, 1);
 }
