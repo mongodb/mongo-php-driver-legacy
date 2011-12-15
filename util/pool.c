@@ -29,6 +29,7 @@
 #include "connect.h"
 #include "server.h"
 #include "log.h"
+#include "rs.h"
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -41,6 +42,15 @@ HANDLE pool_mutex;
 #else
 static pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
+
+/**
+ * When there's a failure on a connection, we try pinging mongod on another
+ * connection. If that ping fails, we assume that the server bounced or similar
+ * and close all connections.  If we get a successful ping response, we assume
+ * just our socket went bad and leave the other connections open.
+ */
+static void test_other_conns(mongo_server *server, stack_monitor *monitor TSRMLS_DC);
+static void get_other_conn(mongo_server *server, mongo_server *other, stack_monitor *monitor);
 
 int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
   stack_monitor *monitor;
@@ -140,12 +150,81 @@ void mongo_util_pool_close(mongo_server *server TSRMLS_DC) {
     return;
   }
 
+  // try pinging a server to see if every connection is bad, or just ours
+  test_other_conns(server, monitor TSRMLS_CC);
+
   mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool close (%p)", server->label, monitor);
 
   mongo_util_pool__disconnect(monitor, server);
 
   // clean up reference to server (nothing needs to be freed)
   mongo_util_pool__rm_server_ptr(monitor, server);
+}
+
+static void test_other_conns(mongo_server *server, stack_monitor *monitor TSRMLS_DC) {
+  mongo_server other;
+  zval *response = 0;
+
+  // get another connection
+  get_other_conn(server, &other, monitor);
+
+  // if no other connections open, we don't have to worry about closing them
+  if (other.connected == 0) {
+    return;
+  }
+
+  response = mongo_util_rs__cmd("ping", &other TSRMLS_CC);
+
+  if (!response) {
+    mongo_util_pool__close_connections(monitor TSRMLS_CC);
+  }
+  else {
+    zval **ok = 0;
+
+    zend_hash_find(HASH_P(response), "ok", strlen("ok")+1, (void**)&ok);
+
+    if (Z_NUMVAL_PP(ok, 0)) {
+      mongo_util_pool__close_connections(monitor TSRMLS_CC);
+    }
+
+    zval_ptr_dtor(&response);
+  }
+}
+
+static void get_other_conn(mongo_server *server, mongo_server *other, stack_monitor *monitor) {
+  mongo_server *current = 0;
+  stack_node *node = 0;
+
+  LOCK(pool);
+
+  // look through pool conns
+  node = monitor->top;
+  if (node) {
+    other->connected = 1;
+    other->socket = node->socket;
+
+    UNLOCK(pool);
+    return;
+  }
+
+  // look through in-use conns
+  current = monitor->servers;
+  while (current) {
+    if (current != server) {
+      other->connected = 1;
+      other->socket = current->socket;
+
+      UNLOCK(pool);
+      return;
+    }
+
+    current = current->next_in_pool;
+  }
+
+  UNLOCK(pool);
+
+  other->connected = 0;
+  other->socket = 0;
 }
 
 int mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
