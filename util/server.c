@@ -141,6 +141,7 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
   if (Z_NUMVAL_PP(ok, 1)) {
     mongo_util_server_ismaster(info, server, now TSRMLS_CC);
   }
+  zval_ptr_dtor(&response);
 
   return info->guts->readable ? SUCCESS : FAILURE;
 }

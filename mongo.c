@@ -168,19 +168,9 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
     if (link->slave) {
       php_mongo_server_free(link->slave, NO_PERSIST TSRMLS_CC);
     }
-
-    // seeds are no longer needed
-    while (current) {
-      mongo_server *temp = current;
-      current = current->next;
-      php_mongo_server_free(temp, 0 TSRMLS_CC);
-    }
-
-    efree(link->server_set);
   }
-  else {
-    php_mongo_server_set_free(link->server_set TSRMLS_CC);
-  }
+
+  php_mongo_server_set_free(link->server_set TSRMLS_CC);
 
   if (link->username) efree(link->username);
   if (link->password) efree(link->password);
