@@ -987,6 +987,17 @@ PHP_METHOD(MongoCursor, count) {
   zval_ptr_dtor(&db_z);
 }
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_OBJ_INFO(0, connection, Mongo, 0)
+	ZEND_ARG_INFO(0, database_and_collection_name)
+	ZEND_ARG_ARRAY_INFO(0, query, 0)
+	ZEND_ARG_ARRAY_INFO(0, fields, 0);
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+
 static zend_function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, __construct, NULL, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hasNext, NULL, ZEND_ACC_PUBLIC)
