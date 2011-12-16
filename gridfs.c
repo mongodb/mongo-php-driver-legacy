@@ -367,6 +367,8 @@ PHP_METHOD(MongoGridFS, storeBytes) {
     MAKE_STD_ZVAL(opts);
     array_init(opts);
     options = opts;
+  } else {
+    zval_add_ref(&options);
   }
 
   // file array object
@@ -405,6 +407,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
+  zval_ptr_dtor(&options);
 
   RETURN_ZVAL(zid, 1, 1);
 }
