@@ -418,43 +418,46 @@ PHP_METHOD(MongoDB, getDBRef) {
 }
 
 PHP_METHOD(MongoDB, execute) {
-  zval *code = 0, *args = 0, *zdata;
+	zval *code = 0, *args = 0, *zdata;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &code, &args) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &code, &args) == FAILURE) {
+		return;
+	}
 
-  if (!args) {
-    MAKE_STD_ZVAL(args);
-    array_init(args);
-  }
-  else {
-    zval_add_ref(&args);
-  }
+	// turn the first argument into MongoCode
+	if (Z_TYPE_P(code) != IS_OBJECT ||
+		Z_OBJCE_P(code) != mongo_ce_Code) {
+		if (Z_TYPE_P(code) == IS_STRING) {
+			zval *obj;
 
-  // turn the first argument into MongoCode
-  if (Z_TYPE_P(code) != IS_OBJECT ||
-      Z_OBJCE_P(code) != mongo_ce_Code) {
-    zval *obj;
+			MAKE_STD_ZVAL(obj);
+			object_init_ex(obj, mongo_ce_Code);
+			MONGO_METHOD1(MongoCode, __construct, return_value, obj, code);
+			code = obj;
+		} else { /* This is broken code */
+			php_error_docref(NULL TSRMLS_CC, E_ERROR, "The argument is neither an object of MongoCode or a string");
+			return;
+		}
+	} else {
+		zval_add_ref(&code);
+	}
 
-    MAKE_STD_ZVAL(obj);
-    object_init_ex(obj, mongo_ce_Code);
-    MONGO_METHOD1(MongoCode, __construct, return_value, obj, code);
-    code = obj;
-  }
-  else {
-    zval_add_ref(&code);
-  }
+	if (!args) {
+		MAKE_STD_ZVAL(args);
+		array_init(args);
+	} else {
+		zval_add_ref(&args);
+	}
 
-  // create { $eval : code, args : [] }
-  MAKE_STD_ZVAL(zdata);
-  array_init(zdata);
-  add_assoc_zval(zdata, "$eval", code);
-  add_assoc_zval(zdata, "args", args);
+	// create { $eval : code, args : [] }
+	MAKE_STD_ZVAL(zdata);
+	array_init(zdata);
+	add_assoc_zval(zdata, "$eval", code);
+	add_assoc_zval(zdata, "args", args);
 
-  MONGO_METHOD1(MongoDB, command, return_value, getThis(), zdata);
+	MONGO_METHOD1(MongoDB, command, return_value, getThis(), zdata);
 
-  zval_ptr_dtor(&zdata);
+	zval_ptr_dtor(&zdata);
 }
 
 static char *get_cmd_ns(char *db, int db_len) {
