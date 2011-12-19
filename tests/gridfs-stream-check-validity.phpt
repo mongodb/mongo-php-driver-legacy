@@ -1,5 +1,7 @@
 --TEST--
-GridFS: Testing memory usage
+GridFS: Testing file validity
+--INI--
+memory_limit=1G
 --FILE--
 <?php
 $conn = new Mongo();
@@ -11,10 +13,12 @@ $grid->drop();
 
 // dummy file
 $bytes = "";
-for ($i=0; $i < 200*1024; $i++) {
+for ($i=0; $i < 5*1024*1024; $i++) {
     $bytes .= sha1(rand(1, 1000000000));
 }
+$sha = sha1($bytes);
 $grid->storeBytes($bytes, array("filename" => "demo.txt"), array('safe' => true));
+unset($bytes);
 
 // fetch it
 $file = $grid->findOne(array('filename' => 'demo.txt'));
@@ -23,21 +27,19 @@ $chunkSize = $file->file['chunkSize'];
 // get file descriptor
 $fp = $file->getResource();
 
-$memory = memory_get_usage();
-
 $tmp = "";
 $i=0;
 while (!feof($fp)) {
-    $tmp .= ($t=fread($fp, rand(1024,8024)));
+	$s = 500000;
+    $t = fread($fp, $s);
+	$tmp .= $t;
+	$i += strlen($t);
 }
-var_dump($bytes === $tmp);
-
-// memory leak checks
-var_dump((memory_get_usage() - $memory - strlen($tmp)) < $chunkSize * 1.5 );
 fclose($fp);
-
-var_dump((memory_get_usage() - $memory - strlen($tmp)) < $chunkSize *.5);
+echo $i, "\n";
+if (sha1($tmp) != $sha) {
+	echo "files didn't match\n";
+}
+?>
 --EXPECTF--
-bool(true)
-bool(true)
-bool(true)
+209715200

@@ -1,5 +1,5 @@
 --TEST--
-Testing minor memory issue
+GridFS: Testing minor memory issue
 --FILE--
 <?php
 $conn = new Mongo;

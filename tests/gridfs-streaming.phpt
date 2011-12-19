@@ -1,5 +1,5 @@
 --TEST--
-Testing reading the whole file
+GridFS: Testing reading the whole file
 --FILE--
 <?php
 $conn = new Mongo();
@@ -28,5 +28,6 @@ while (!feof($fp)) {
     $tmp .= ($t=fread($fp, rand(1024,8024)));
 }
 var_dump($bytes === $tmp);
+?>
 --EXPECTF--
 bool(true)

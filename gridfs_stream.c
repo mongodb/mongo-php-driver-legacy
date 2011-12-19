@@ -214,10 +214,6 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 	MONGO_METHOD1(MongoCollection, findOne, chunk, self->chunkObj, self->query);
 
 	if (Z_TYPE_P(chunk) == IS_NULL) {
-		char * err;
-		spprintf(&err, 0, "couldn't find file chunk %d", chunk_id);
-		zend_throw_exception(mongo_ce_GridFSException, err, 1 TSRMLS_CC);
-		zval_ptr_dtor(&chunk);
 		return FAILURE;
 	}
 
@@ -243,7 +239,7 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 	}
 
 	self->chunkId = chunk_id;
-	self->buffer_offset  = self->offset%self->chunkSize;
+	self->buffer_offset = self->offset % self->chunkSize;
 
 	zval_ptr_dtor(&chunk);
 	return SUCCESS;
@@ -265,19 +261,19 @@ static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 	size = MIN(count, self->buffer_size - self->buffer_offset);
 	memcpy(buf, self->buffer  + self->buffer_offset, size);
 
-	if (size < count && chunk_id < self->totalChunks) {
+	if (size < count && chunk_id + 1 < self->totalChunks) {
+		int tmp_bytes;
 		// load next chunk to return the exact requested bytes
-		if (gridfs_read_chunk(self, chunk_id+1 TSRMLS_CC) == FAILURE) {
+		if (gridfs_read_chunk(self, chunk_id + 1 TSRMLS_CC) == FAILURE) {
 			return -1;
 		}
-		int tmp_bytes = MIN(count-size, self->buffer_size);
+		tmp_bytes = MIN(count-size, self->buffer_size);
 		memcpy(buf+size, self->buffer, tmp_bytes);
 		size += tmp_bytes;
 	}
 
 	self->buffer_offset += size;
 	self->offset += size;
-
 
 	DEBUG(("offset=%d (+%d)\n", self->offset, size));
 
