@@ -1,5 +1,5 @@
 --TEST--
-Test for basic stream wrapper support
+GridFS: Test for basic stream wrapper support
 --FILE--
 <?php
 $conn = new Mongo();
