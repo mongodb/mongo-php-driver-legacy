@@ -406,6 +406,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   // insert file
   MONGO_METHOD2(MongoCollection, insert, &temp, getThis(), zfile, options);
+  zval_dtor(&temp);
 
   zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
@@ -485,6 +486,7 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
   else {
     MONGO_METHOD1(MongoCollection, insert, &temp, chunks, zchunk);
   }
+  zval_dtor(&temp);
 
   // increment counters
   zval_ptr_dtor(&zchunk); // zid->refcount = 1
