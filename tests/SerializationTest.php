@@ -1,6 +1,4 @@
 <?php
-require_once 'PHPUnit/Framework.php';
-
 class SerializationTest extends PHPUnit_Framework_TestCase
 {
     public function arrayEncode() {
