@@ -57,7 +57,7 @@ class SlowTests extends PHPUnit_Framework_TestCase
 
       // should time out
       $query = 'r = 0; cursor = db.c.find(); while (cursor.hasNext()) { x = cursor.next(); for (i=0; i<200; i++) { if (x.name == "joe"+i) { r++; } } } return r;';
-      $cursor = $cmd->find(array('$eval'  => $query))->limit(-1)->timeout(2000);
+      $cursor = $cmd->find(array('$eval'  => $query))->limit(-1)->timeout(200);
       $this->assertNull($cursor->getNext());
     }
 
