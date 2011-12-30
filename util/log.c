@@ -21,9 +21,7 @@
 #include "log.h"
 
 zend_class_entry *mongo_ce_Log;
-
-long log_level;
-long log_module;
+ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 static long set_value(char *setting, zval *return_value TSRMLS_DC);
 static void get_value(char *setting, zval *return_value TSRMLS_DC);
@@ -78,28 +76,33 @@ static void get_value(char *setting, zval *return_value TSRMLS_DC) {
   ZVAL_LONG(return_value, Z_LVAL_P(value));
 }
 
-PHP_METHOD(MongoLog, setLevel) {
-  log_level = set_value("level", return_value TSRMLS_CC);
+PHP_METHOD(MongoLog, setLevel)
+{
+	MonGlo(log_level) = set_value("level", return_value TSRMLS_CC);
 }
 
-PHP_METHOD(MongoLog, getLevel) {
-  get_value("level", return_value TSRMLS_CC);
+PHP_METHOD(MongoLog, getLevel)
+{
+	get_value("level", return_value TSRMLS_CC);
 }
 
-PHP_METHOD(MongoLog, setModule) {
-  log_module = set_value("module", return_value TSRMLS_CC);
+PHP_METHOD(MongoLog, setModule)
+{
+	MonGlo(log_module) = set_value("module", return_value TSRMLS_CC);
 }
 
-PHP_METHOD(MongoLog, getModule) {
-  get_value("module", return_value TSRMLS_CC);
+PHP_METHOD(MongoLog, getModule)
+{
+	get_value("module", return_value TSRMLS_CC);
 }
 
-void mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...) {
-  if ((module & log_module) && (level & log_level)) {
-    va_list args;
+void mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...)
+{
+	if ((module & MonGlo(log_module)) && (level & MonGlo(log_level))) {
+		va_list args;
 
-    va_start(args, format);
-    php_verror(NULL, "", E_NOTICE, format, args TSRMLS_CC);
-    va_end(args);
-  }
+		va_start(args, format);
+		php_verror(NULL, "", E_NOTICE, format, args TSRMLS_CC);
+		va_end(args);
+	}
 }
