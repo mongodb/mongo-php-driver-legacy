@@ -191,7 +191,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   mongo_cursor *cursor;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
   mongo_db *db = (mongo_db*)zend_object_store_get_object(c->parent TSRMLS_CC);
-  int response, safe = 0, fsync = 0, timeout = -1;
+  int response, safe = 0, fsync = 0, timeout = -1, sparse = 0;
 
   GET_OPTIONS;
 
@@ -225,6 +225,9 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   }
   if (fsync) {
     add_assoc_bool(cmd, "fsync", 1);
+  }
+  if (sparse) {
+    add_assoc_bool(cmd, "sparse", 1);
   }
 
   // get cursor
@@ -698,7 +701,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
     }
     // new style
     else {
-      zval temp, **safe_pp, **fsync_pp, **timeout_pp, **name;
+      zval temp, **safe_pp, **fsync_pp, **timeout_pp, **sparse_pp, **name;
       zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 
       if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS) {
