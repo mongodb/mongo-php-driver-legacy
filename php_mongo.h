@@ -582,6 +582,9 @@ char *errmsg;
 int response_num;
 int max_send_size;
 int pool_size;
+
+	long log_level;
+	long log_module;
 ZEND_END_MODULE_GLOBALS(mongo)
 
 #ifdef ZTS
