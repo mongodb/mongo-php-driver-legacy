@@ -140,7 +140,7 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
 
         $text = file_get_contents('tests/id-alloc.txt');
         $arr = array('text' => $text);
-        $x = $tbColl->insert($arr, true);
+        $x = $tbColl->insert($arr, array('safe' => true));
         $this->assertEquals($x['err'], null);
     }
 

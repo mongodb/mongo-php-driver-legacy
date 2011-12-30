@@ -475,7 +475,7 @@ PHP_METHOD(MongoCursor, snapshot) {
 /* }}} */
 
 
-/* {{{ MongoCursor->sort
+/* {{{ MongoCursor->sort(array fields)
  */
 PHP_METHOD(MongoCursor, sort) {
   zval *orderby, *fields;
@@ -484,7 +484,7 @@ PHP_METHOD(MongoCursor, sort) {
     return;
   }
   if (IS_SCALAR_P(fields)) {
-    zend_error(E_WARNING, "MongoCursor::sort() expects parameter 1 to be an array or object");
+    zend_error(E_WARNING, "MongoCursor::sort() expects parameter 1 to be an array");
     return;
   }
 
@@ -991,7 +991,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, connection, Mongo, 0)
 	ZEND_ARG_INFO(0, database_and_collection_name)
 	ZEND_ARG_ARRAY_INFO(0, query, 0)
-	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+	ZEND_ARG_INFO(0, array_of_fields_OR_object)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
