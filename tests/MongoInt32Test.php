@@ -1,6 +1,4 @@
 <?php
-require_once 'PHPUnit/Framework.php';
-
 class MongoInt32Test extends PHPUnit_Framework_TestCase
 {
     

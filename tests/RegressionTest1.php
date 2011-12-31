@@ -1,7 +1,5 @@
 <?php
-
 require_once 'Utils.php';
-require_once 'PHPUnit/Framework.php';
 
 class RegressionTest1 extends PHPUnit_Framework_TestCase
 {

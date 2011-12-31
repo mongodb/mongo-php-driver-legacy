@@ -1,5 +1,4 @@
 <?php
-require_once 'PHPUnit/Framework.php';
 include 'Mongo/Auth.php';
 include 'Mongo/Admin.php';
 
