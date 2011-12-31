@@ -45,7 +45,7 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
       $m = new Mongo();
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
-        $m->selectDB("foo");
+        $m->selectDB("phpunit");
       }
       $this->assertEquals($mem, memory_get_usage(true));
     }
@@ -54,7 +54,7 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
       $m = new Mongo();
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
-        $m->selectCollection("foo", "bar");
+        $m->selectCollection("phpunit", "bar");
       }
       $this->assertEquals($mem, memory_get_usage(true));
     }
@@ -63,11 +63,11 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
       $m = new Mongo();
       $mem = memory_get_usage(true);
       for ($i=0;$i<10000;$i++) {
-        $m->dropDB("foo");
+        $m->dropDB("phpunit");
       }
       $this->assertEquals($mem, memory_get_usage(true));
 
-      $db = $m->selectDB("foo");
+      $db = $m->selectDB("phpunit");
       for ($i=0;$i<10000;$i++) {
         $m->dropDB($db);
       }
@@ -75,7 +75,7 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
 
     public function testGetDBRef() {
       $m = new Mongo();
-      $db = $m->selectDB("foo");
+      $db = $m->selectDB("phpunit");
       $c = $db->selectCollection("bar");
       $obj = array("uid" => 0);
       $c->insert($obj);
@@ -90,7 +90,7 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
 
     public function testCreateDBRef() {
       $m = new Mongo();
-      $c = $m->selectCollection("foo", "bar");
+      $c = $m->selectCollection("phpunit", "bar");
       $obj = array("uid" => 0);
       $c->insert($obj);
 
@@ -103,7 +103,7 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
 
     public function testEnsureIndex() {
       $m = new Mongo();
-      $c = $m->selectCollection("foo", "bar");
+      $c = $m->selectCollection("phpunit", "bar");
       $mem = memory_get_usage(true);
       for ($i=0; $i<10000; $i++) {
         $c->deleteIndexes();
@@ -113,7 +113,7 @@ class MongoMemTest extends PHPUnit_Framework_TestCase
 
     public function testCursorCount() {
       $m = new Mongo();
-      $c = $m->selectCollection("foo", "bar");
+      $c = $m->selectCollection("phpunit", "bar");
       $c->insert(array("foo" => "bar"));
       $c->insert(array("foo" => "bar"));
       $mem = memory_get_usage(true);

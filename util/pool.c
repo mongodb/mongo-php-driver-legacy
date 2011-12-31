@@ -594,9 +594,14 @@ int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval 
   return SUCCESS;
 }
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setPoolSize, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, maximum_pool_size)
+ZEND_END_ARG_INFO()
+
+
 static zend_function_entry MongoPool_methods[] = {
   PHP_ME(MongoPool, info, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(MongoPool, setSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(MongoPool, setSize, arginfo_setPoolSize, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(MongoPool, getSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   {NULL, NULL, NULL}
 };
