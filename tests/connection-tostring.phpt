@@ -2,15 +2,18 @@
 Connection strings: toString.
 --FILE--
 <?php
-$a = new Mongo("localhost,127.0.0.2", false);
-echo $a, "\n";
+function errorHandler($nr, $str)
+{
+	throw new Exception($str, $nr);
+	return true;
+}
+set_error_handler('errorHandler');
+
 $a = new Mongo("localhost,127.0.0.2");
 echo $a, "\n";
 $a = new Mongo("localhost:27017,127.0.0.2:27017");
 echo $a, "\n\n";
 
-$a = new Mongo("localhost,127.0.0.2", false);
-echo $a->__toString(), "\n";
 $a = new Mongo("localhost,127.0.0.2");
 echo $a->__toString(), "\n";
 $a = new Mongo("localhost:27017,127.0.0.2:27017");
@@ -23,11 +26,9 @@ $a = new Mongo("mongodb://localhostalocalhostalocalhostalocalhostalocalhostaloca
 var_dump($a->__toString());
 
 --EXPECT--
-[localhost:27017],[127.0.0.2:27017]
 localhost:27017,[127.0.0.2:27017]
 localhost:27017,[127.0.0.2:27017]
 
-[localhost:27017],[127.0.0.2:27017]
 localhost:27017,[127.0.0.2:27017]
 localhost:27017,[127.0.0.2:27017]
 

@@ -25,10 +25,16 @@ class MongoTest extends PHPUnit_Framework_TestCase
         $this->object = new Mongo("localhost", array("connect" => false));
     }
 
-    public function testConnect() {
-        $this->object = new Mongo("localhost", false);
+    public function testBrokenConnect() {
+		try {
+			$this->object = new Mongo("localhost", false);
+		} catch (PHPUnit_Framework_Error $e) {
+			$this->assertEquals("Argument 2 passed to Mongo::__construct() must be an array, boolean given", $e->getMessage());
+		}
         $this->assertFalse($this->object->connected);
+    }
 
+    public function testConnect() {
         $this->object->connect();
         $this->assertTrue($this->object->connected);
 
@@ -93,7 +99,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
         // make sure this doesn't disconnect $m2
         unset($m1);
 
-        $c = $m2->selectCollection("foo","bar");
+        $c = $m2->selectCollection("phpunit","bar");
         $c->findOne();
     }
 
@@ -104,7 +110,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
         // make sure this doesn't disconnect $m2
         unset($m1);
 
-        $c = $m2->selectCollection("foo","bar");
+        $c = $m2->selectCollection("phpunit","bar");
         $c->setSlaveOkay(true);
         $c->findOne();
     }
@@ -121,7 +127,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
     public function test__toString2() {
         $m = new Mongo("mongodb://localhost:27018,localhost:27017,localhost:27019");
         $this->assertEquals("[localhost:27018],localhost:27017,[localhost:27019]", $m->__toString());
-        $m->foo->bar->findOne();
+        $m->phpunit->bar->findOne();
         $this->assertEquals("[localhost:27018],localhost:27017,[localhost:27019]", $m->__toString());
         $this->assertEquals(51, strlen($m->__toString()));
 
@@ -178,8 +184,8 @@ class MongoTest extends PHPUnit_Framework_TestCase
             return;
         }
 
-        $db = $this->object->selectDB("foo");
-        $this->assertEquals((string)$db, "foo");
+        $db = $this->object->selectDB("phpunit");
+        $this->assertEquals((string)$db, "phpunit");
         $db = $this->object->selectDB("line\nline");
         $this->assertEquals((string)$db, "line\nline");
         $db = $this->object->selectDB("[x,y]");
@@ -202,12 +208,12 @@ class MongoTest extends PHPUnit_Framework_TestCase
             return;
         }
 
-        $c = $this->object->selectCollection("foo", "bar.baz");
-        $this->assertEquals((string)$c, "foo.bar.baz");
+        $c = $this->object->selectCollection("phpunit", "bar.baz");
+        $this->assertEquals((string)$c, "phpunit.bar.baz");
         $c = $this->object->selectCollection("1", "6");
         $this->assertEquals((string)$c, "1.6");
-        $c = $this->object->selectCollection("foo", '$cmd');
-        $this->assertEquals((string)$c, 'foo.$cmd');
+        $c = $this->object->selectCollection("phpunit", '$cmd');
+        $this->assertEquals((string)$c, 'phpunit.$cmd');
     }
 
     public function testDropDB() {
@@ -398,21 +404,21 @@ class MongoTest extends PHPUnit_Framework_TestCase
         }
 
         $m = new Mongo();
-        $db = $m->foo;
+        $db = $m->phpunit;
         $this->assertTrue($db instanceof MongoDB);
-        $this->assertEquals("$db", "foo");
+        $this->assertEquals("$db", "phpunit");
 
         $c = $db->bar;
         $this->assertTrue($c instanceof MongoCollection);
-        $this->assertEquals("$c", "foo.bar");
+        $this->assertEquals("$c", "phpunit.bar");
 
         $c2 = $c->baz;
         $this->assertTrue($c2 instanceof MongoCollection);
-        $this->assertEquals("$c2", "foo.bar.baz");
+        $this->assertEquals("$c2", "phpunit.bar.baz");
 
-        $x = $m->foo->bar->baz;
+        $x = $m->phpunit->bar->baz;
         $this->assertTrue($x instanceof MongoCollection);
-        $this->assertEquals("$x", "foo.bar.baz");
+        $this->assertEquals("$x", "phpunit.bar.baz");
     }
 
 
@@ -463,7 +469,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
      */
 	/*
     public function testDB() {
-      $m = new Mongo("localhost/foo");
+      $m = new Mongo("localhost/phpunit");
       $m = new Mongo("localhost/bar/baz");
       $m = new Mongo("localhost/");
     }
@@ -473,7 +479,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
      */
 	/*
     public function testDBPorts() {
-      $m = new Mongo("localhost:27017/foo");
+      $m = new Mongo("localhost:27017/phpunit");
       $m = new Mongo("localhost:27017/bar/baz");
       $m = new Mongo("localhost:27017/");
       $m = new Mongo("localhost:27017,localhost:27019/");
@@ -518,7 +524,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
             $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock");
             $this->assertEquals(true, $conn->connected);
 
-            $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock:0/foo");
+            $conn = new Mongo("mongodb:///tmp/mongodb-27017.sock:0/phpunit");
             $this->assertEquals(true, $conn->connected);
         }
         catch (MongoConnectionException $e) {
@@ -530,7 +536,7 @@ class MongoTest extends PHPUnit_Framework_TestCase
      * @expectedException MongoConnectionException
      */
     public function testDomainSock2() {
-        $conn = new Mongo("mongodb:///tmp/foo");
+        $conn = new Mongo("mongodb:///tmp/phpunit");
     }
 
     public function testSlaveOkay1() {

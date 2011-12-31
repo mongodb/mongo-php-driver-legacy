@@ -172,7 +172,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $this->object->batchInsert($a);
       $this->assertEquals(4, $this->object->count());
 
-      $cursor = $this->object->find(array("x"=>array('$exists' => 1)))->sort((object)array("x" => -1));
+      $cursor = $this->object->find(array("x"=>array('$exists' => 1)))->sort(array("x" => -1));
       $x = $cursor->getNext();
       $this->assertEquals('z', $x['x']);
       $x = $cursor->getNext();
@@ -195,7 +195,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
                                             "a" => "b",
                                             "b" => "c"));
 
-        $c = $this->object->find((object)array('foo' => 'bar'), (object)array('a'=>1, 'b'=>1));
+        $c = $this->object->find((object)array('foo' => 'bar'), array('a'=>1, 'b'=>1));
 
         $this->assertTrue($c instanceof MongoCursor);
         $obj = $c->getNext();
@@ -227,7 +227,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
             $this->object->insert((object)array('x' => $i, 'y' => 4, 'z' => 6));
         }
 
-        $obj = $this->object->findOne((object)array(), (object)array('y'=>1));
+        $obj = $this->object->findOne(array(), array('y'=>1));
         $this->assertArrayHasKey('y', $obj, json_encode($obj));
         $this->assertArrayHasKey('_id', $obj, json_encode($obj));
         $this->assertArrayNotHasKey('x', $obj, json_encode($obj));
@@ -244,7 +244,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         $old = (object)array("foo"=>"bar", "x"=>"y");
         $new = (object)array("foo"=>"baz");
 
-        $this->object->update((object)array("foo"=>"bar"), $old, true);
+        $this->object->update((object)array("foo"=>"bar"), $old, array('upsert' => true));
         $obj = $this->object->findOne();
         $this->assertEquals($obj['foo'], 'bar');
         $this->assertEquals($obj['x'], 'y');
@@ -260,7 +260,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
         }
 
         $this->assertEquals($this->object->count(), 15);
-        $this->object->remove(array(), true);
+        $this->object->remove(array(), array('justOne' => true));
         $this->assertEquals($this->object->count(), 14);
 
         $this->object->remove((object)array());
@@ -298,12 +298,12 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
     public function testEnsureUniqueIndex() {
       $unique = true;
 
-      $this->object->ensureIndex((object)array('x'=>1), !$unique);
+      $this->object->ensureIndex((object)array('x'=>1), array('unique' => !$unique));
       $this->object->insert((object)array('x'=>0, 'z'=>1));
       $this->object->insert((object)array('x'=>0, 'z'=>2));
       $this->assertEquals($this->object->count(), 2);
 
-      $this->object->ensureIndex((object)array('z'=>1), $unique);
+      $this->object->ensureIndex((object)array('z'=>1), array('unique' => $unique));
       $this->object->insert((object)array('z'=>0));
       $this->object->insert((object)array('z'=>0));
       $err = $this->object->db->lastError();
@@ -319,11 +319,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $num = iterator_count($idx->find((object)array('ns' => 'phpunit.c')));
       $this->assertEquals($num, 3);
 
-      $this->object->deleteIndex(null);
-      $num = iterator_count($idx->find((object)array('ns' => 'phpunit.c')));
-      $this->assertEquals($num, 3);
-
-      $this->object->deleteIndex((object)array('foo' => 1));
+      $this->object->deleteIndex(array('foo' => 1));
       $num = iterator_count($idx->find((object)array('ns' => 'phpunit.c')));
       $this->assertEquals($num, 2);
 
@@ -331,7 +327,7 @@ class MongoObjectsTest extends PHPUnit_Framework_TestCase
       $num = iterator_count($idx->find((object)array('ns' => 'phpunit.c')));
       $this->assertEquals($num, 2);
 
-      $this->object->deleteIndex((object)array('foo' => -1));
+      $this->object->deleteIndex(array('foo' => -1));
       $num = iterator_count($idx->find((object)array('ns' => 'phpunit.c')));
       $this->assertEquals($num, 1);
     }

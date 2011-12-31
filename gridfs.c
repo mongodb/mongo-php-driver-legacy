@@ -871,14 +871,30 @@ PHP_METHOD(MongoGridFS, put) {
   MONGO_METHOD_BASE(MongoGridFS, storeFile)(ZEND_NUM_ARGS(), return_value, NULL, getThis(), 0 TSRMLS_CC);
 }
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_find, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, query)
+	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, query)
+	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, filename_OR_fields_OR_object)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
+
 static zend_function_entry MongoGridFS_methods[] = {
   PHP_ME(MongoGridFS, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, drop, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoGridFS, find, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFS, find, arginfo_find, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, storeFile, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, storeBytes, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoGridFS, findOne, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoGridFS, remove, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFS, findOne, arginfo_find_one, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFS, remove, arginfo_remove, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, storeUpload, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, delete, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, get, NULL, ZEND_ACC_PUBLIC)
