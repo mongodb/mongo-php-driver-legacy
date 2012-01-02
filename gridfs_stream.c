@@ -214,6 +214,8 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 	MONGO_METHOD1(MongoCollection, findOne, chunk, self->chunkObj, self->query);
 
 	if (Z_TYPE_P(chunk) == IS_NULL) {
+		zval_ptr_dtor(&chunk);
+
 		return FAILURE;
 	}
 
