@@ -258,8 +258,8 @@ static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 		return -1;
 	}
 
-	size = MIN(count, self->buffer_size - self->buffer_offset);
-	memcpy(buf, self->buffer  + self->buffer_offset, size);
+	size = MIN(count, self->buffer_size - self->buffer_offset % self->chunkSize);
+	memcpy(buf, self->buffer + self->buffer_offset % self->chunkSize, size);
 
 	if (size < count && chunk_id + 1 < self->totalChunks) {
 		int tmp_bytes;
