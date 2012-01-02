@@ -502,6 +502,7 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
 PHP_METHOD(MongoGridFS, storeFile) {
   zval *fh, *extra = 0, *options = 0;
   char *filename = 0;
+  int free_options = 0;
   int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1, safe = 0;
   FILE *fp = 0;
 
@@ -523,6 +524,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
     MAKE_STD_ZVAL(opts);
     array_init(opts);
     options = opts;
+	free_options = 1;
   }
 
   if (Z_TYPE_P(fh) == IS_RESOURCE) {
@@ -649,6 +651,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // cleanup
   zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
+  if (free_options) {
+	  zval_ptr_dtor(&options);
+  }
 
   RETURN_ZVAL(zid, 1, 1);
 }
