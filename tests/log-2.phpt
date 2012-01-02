@@ -16,3 +16,4 @@ $m = new Mongo("mongodb://localhost");
 --EXPECTF--
 Mongo::__construct(): localhost:27017: pool get (%s)
 Mongo::__construct(): localhost:27017: pool connect (%s)
+Unknown: localhost:27017: pool done (%s)
