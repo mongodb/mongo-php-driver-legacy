@@ -214,6 +214,8 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 	MONGO_METHOD1(MongoCollection, findOne, chunk, self->chunkObj, self->query);
 
 	if (Z_TYPE_P(chunk) == IS_NULL) {
+		zval_ptr_dtor(&chunk);
+
 		return FAILURE;
 	}
 
@@ -258,8 +260,8 @@ static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 		return -1;
 	}
 
-	size = MIN(count, self->buffer_size - self->buffer_offset);
-	memcpy(buf, self->buffer  + self->buffer_offset, size);
+	size = MIN(count, self->buffer_size - self->buffer_offset % self->chunkSize);
+	memcpy(buf, self->buffer + self->buffer_offset % self->chunkSize, size);
 
 	if (size < count && chunk_id + 1 < self->totalChunks) {
 		int tmp_bytes;
