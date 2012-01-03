@@ -88,7 +88,7 @@ static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
 static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options TSRMLS_DC);
 static void ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC);
 
-php_stream * gridfs_stream_init(zval * file_object);
+php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC);
 
 PHP_METHOD(MongoGridFS, __construct) {
   zval *zdb, *files = 0, *chunks = 0, *zchunks;
@@ -1012,7 +1012,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 PHP_METHOD(MongoGridFSFile, getResource) {
     php_stream * stream;
 
-    stream = gridfs_stream_init(getThis());
+    stream = gridfs_stream_init(getThis() TSRMLS_CC);
     if (!stream || stream == FAILURE) {
         zend_throw_exception(mongo_ce_GridFSException, "couldn't create a php_stream", 0 TSRMLS_CC);
         return;
