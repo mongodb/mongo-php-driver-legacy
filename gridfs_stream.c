@@ -108,7 +108,14 @@ php_stream_ops gridfs_stream_ops = {
 #else
 #   define DEBUG(x)
 #endif
+// returns 0 on failure
+#define READ_ARRAY_PROP_PTR(dest, name, toVariable) \
+	if (zend_hash_find(HASH_P(dest), name, strlen(name)+1, (void**)&toVariable) == FAILURE) { \
+		zend_throw_exception(mongo_ce_GridFSException, "couldn't find " name, 0 TSRMLS_CC); \
+		return 0; \
+	} \
 
+// returns FAILURE on failure
 #define READ_ARRAY_PROP(dest, name, toVariable) \
 	if (zend_hash_find(HASH_P(dest), name, strlen(name)+1, (void**)&toVariable) == FAILURE) { \
 		zend_throw_exception(mongo_ce_GridFSException, "couldn't find " name, 0 TSRMLS_CC); \
@@ -144,9 +151,9 @@ php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC)
 	zval * file, **id, **size, **chunkSize, *gridfs;
 
 	file = READ_OBJ_PROP(GridFSFile, file_object, "file");
-	READ_ARRAY_PROP(file, "_id", id);
-	READ_ARRAY_PROP(file, "length", size);
-	READ_ARRAY_PROP(file, "chunkSize", chunkSize);
+	READ_ARRAY_PROP_PTR(file, "_id", id);
+	READ_ARRAY_PROP_PTR(file, "length", size);
+	READ_ARRAY_PROP_PTR(file, "chunkSize", chunkSize);
 
 	gridfs = READ_OBJ_PROP(GridFSFile, file_object, "gridfs");
 
