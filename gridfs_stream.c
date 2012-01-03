@@ -136,8 +136,8 @@ php_stream_ops gridfs_stream_ops = {
 	} \
 /* }}} */
 
-/* {{{ php_stream * gridfs_stream_init(zval * file_object)  */
-php_stream * gridfs_stream_init(zval * file_object)
+/* {{{ php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC)  */
+php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC)
 {
 	gridfs_stream_data * self;
 	php_stream * stream;
