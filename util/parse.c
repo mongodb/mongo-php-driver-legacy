@@ -34,24 +34,8 @@ extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_ConnectionException;
 
 static mongo_server* create_mongo_server(char **current, mongo_link *link TSRMLS_DC) {
-  mongo_server *server;
-  server = _create_mongo_server(current, NO_PERSIST TSRMLS_CC);
-
-  if (!server) {
-    return 0;
-  }
-
-  if (link->username) {
-    server->username = estrdup(link->username);
-  }
-  if (link->password) {
-    server->password = estrdup(link->password);
-  }
-  if (link->db) {
-    server->db = estrdup(link->db);
-  }
-
-  return server;
+  return _create_mongo_server(current, NO_PERSIST TSRMLS_CC);
+  // auth info is copied in php_mongo_parse_server
 }
 
 mongo_server* create_mongo_server_persist(char **current, rs_monitor *monitor TSRMLS_DC) {
