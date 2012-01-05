@@ -1,16 +1,13 @@
 <?php
-require_once 'PHPUnit/Framework.php';
-
 class MongoInt64Test extends PHPUnit_Framework_TestCase
 {
+	public function __call($method, $args) {
+		if ($method == 'assertInternalType') {
+			$this->assertType($args[0], $args[1]);
+		}
+	}
 
-        public function __call($method, $args) {
-                if ($method == 'assertInternalType') {
-                        $this->assertType($args[0], $args[1]);
-                }
-        }
-    
-        function setup()
+	function setup()
 	{
 		if (PHP_INT_SIZE != 8) {
 			$this->markTestSkipped("Only for 64 bit platforms");
@@ -18,7 +15,7 @@ class MongoInt64Test extends PHPUnit_Framework_TestCase
 		ini_set('mongo.native_long', 0);
 		ini_set('mongo.long_as_object', 0);
 
-                $m = new Mongo();
+		$m = new Mongo();
 		$this->object = $m->selectCollection("phpunit", "ints");
 		$this->object->drop();
 	}

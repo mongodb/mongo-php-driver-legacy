@@ -1,7 +1,5 @@
 <?php
-
 require_once 'Utils.php';
-require_once 'PHPUnit/Framework.php';
 
 class RegressionTest1 extends PHPUnit_Framework_TestCase
 {
@@ -104,7 +102,7 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
         }
 
         $m = new Mongo();
-        $db = $m->selectDB('webgenius');
+        $db = $m->selectDB('phpunit');
         $tbColl = $db->selectCollection('Text_Block');
 
         $text = file_get_contents('tests/mongo-bug.txt');
@@ -120,7 +118,7 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
         }
 
         $m = new Mongo();
-        $db = $m->selectDB('webgenius');
+        $db = $m->selectDB('phpunit');
         $tbColl = $db->selectCollection('Text_Block');
 
         $text = file_get_contents('tests/id-alloc.txt');
@@ -135,12 +133,12 @@ class RegressionTest1 extends PHPUnit_Framework_TestCase
         }
 
         $m = new Mongo();
-        $db = $m->selectDB('webgenius');
+        $db = $m->selectDB('phpunit');
         $tbColl = $db->selectCollection('Text_Block');
 
         $text = file_get_contents('tests/id-alloc.txt');
         $arr = array('text' => $text);
-        $x = $tbColl->insert($arr, true);
+        $x = $tbColl->insert($arr, array('safe' => true));
         $this->assertEquals($x['err'], null);
     }
 

@@ -88,6 +88,8 @@ static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
 static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options TSRMLS_DC);
 static void ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC);
 
+php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC);
+
 PHP_METHOD(MongoGridFS, __construct) {
   zval *zdb, *files = 0, *chunks = 0, *zchunks;
 
@@ -367,6 +369,8 @@ PHP_METHOD(MongoGridFS, storeBytes) {
     MAKE_STD_ZVAL(opts);
     array_init(opts);
     options = opts;
+  } else {
+    zval_add_ref(&options);
   }
 
   // file array object
@@ -402,9 +406,11 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   // insert file
   MONGO_METHOD2(MongoCollection, insert, &temp, getThis(), zfile, options);
+  zval_dtor(&temp);
 
   zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
+  zval_ptr_dtor(&options);
 
   RETURN_ZVAL(zid, 1, 1);
 }
@@ -480,6 +486,7 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
   else {
     MONGO_METHOD1(MongoCollection, insert, &temp, chunks, zchunk);
   }
+  zval_dtor(&temp);
 
   // increment counters
   zval_ptr_dtor(&zchunk); // zid->refcount = 1
@@ -495,6 +502,7 @@ static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int c
 PHP_METHOD(MongoGridFS, storeFile) {
   zval *fh, *extra = 0, *options = 0;
   char *filename = 0;
+  int free_options = 0;
   int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1, safe = 0;
   FILE *fp = 0;
 
@@ -516,6 +524,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
     MAKE_STD_ZVAL(opts);
     array_init(opts);
     options = opts;
+	free_options = 1;
   }
 
   if (Z_TYPE_P(fh) == IS_RESOURCE) {
@@ -642,6 +651,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // cleanup
   zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
+  if (free_options) {
+	  zval_ptr_dtor(&options);
+  }
 
   RETURN_ZVAL(zid, 1, 1);
 }
@@ -864,14 +876,30 @@ PHP_METHOD(MongoGridFS, put) {
   MONGO_METHOD_BASE(MongoGridFS, storeFile)(ZEND_NUM_ARGS(), return_value, NULL, getThis(), 0 TSRMLS_CC);
 }
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_find, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, query)
+	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, query)
+	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, filename_OR_fields_OR_object)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
+
 static zend_function_entry MongoGridFS_methods[] = {
   PHP_ME(MongoGridFS, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, drop, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoGridFS, find, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFS, find, arginfo_find, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, storeFile, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, storeBytes, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoGridFS, findOne, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoGridFS, remove, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFS, findOne, arginfo_find_one, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFS, remove, arginfo_remove, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, storeUpload, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, delete, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFS, get, NULL, ZEND_ACC_PUBLIC)
@@ -979,6 +1007,18 @@ PHP_METHOD(MongoGridFSFile, write) {
   zval_ptr_dtor(&query);
 
   RETURN_LONG(total);
+}
+
+PHP_METHOD(MongoGridFSFile, getResource) {
+    php_stream * stream;
+
+    stream = gridfs_stream_init(getThis() TSRMLS_CC);
+    if (!stream || stream == FAILURE) {
+        zend_throw_exception(mongo_ce_GridFSException, "couldn't create a php_stream", 0 TSRMLS_CC);
+        return;
+    }
+
+    php_stream_to_zval(stream, return_value);
 }
 
 PHP_METHOD(MongoGridFSFile, getBytes) {
@@ -1117,6 +1157,7 @@ static zend_function_entry MongoGridFSFile_methods[] = {
   PHP_ME(MongoGridFSFile, getSize, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSFile, write, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSFile, getBytes, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoGridFSFile, getResource, NULL, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
 

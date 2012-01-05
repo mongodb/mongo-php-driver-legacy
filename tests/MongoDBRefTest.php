@@ -1,6 +1,4 @@
 <?php
-require_once 'PHPUnit/Framework.php';
-
 class MongoDBRefTest extends PHPUnit_Framework_TestCase
 {
     protected $object;
@@ -40,7 +38,7 @@ class MongoDBRefTest extends PHPUnit_Framework_TestCase
       $m = new Mongo();
       $c = $m->phpunit_temp->d;
       $c->drop();
-      $c->insert(array("_id" => 123, "greeting" => "bye"), true);
+      $c->insert(array("_id" => 123, "greeting" => "bye"), array('safe' => true));
 
       $x = MongoDBRef::get($this->object->db, array('$ref' => "d", '$id' => 123));
       $this->assertNotNull($x);
