@@ -367,7 +367,7 @@ typedef struct {
   timeout = Z_LVAL_P(timeout_p);                                        \
                                                                         \
   if (options && !IS_SCALAR_P(options)) {                               \
-    zval **safe_pp, **fsync_pp, **timeout_pp, **sparse_pp;              \
+    zval **safe_pp, **fsync_pp, **timeout_pp;                           \
                                                                         \
     if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp)) { \
       if (Z_TYPE_PP(safe_pp) == IS_STRING) {                            \
@@ -385,9 +385,6 @@ typedef struct {
     }                                                                   \
     if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_pp)) {\
       timeout = Z_LVAL_PP(timeout_pp);                                  \
-    }                                                                   \
-    if (SUCCESS == zend_hash_find(HASH_P(options), "sparse", strlen("sparse")+1, (void**)&sparse_pp)) {\
-      sparse = Z_BVAL_PP(sparse_pp);                                    \
     }                                                                   \
   }
 
