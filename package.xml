@@ -13,11 +13,17 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <date>2011-09-30</date>
- <time>12:00:00</time>
+ <lead>
+  <name>Derick Rethans</name>
+  <user>derick</user>
+  <email>derick@php.net</email>
+  <active>yes</active>
+ </lead>
+ <date>2012-01-05</date>
+ <time>15:31:50</time>
  <version>
-  <release>1.2.6</release>
-  <api>1.2.6</api>
+  <release>1.2.7</release>
+  <api>1.2.7</api>
  </version>
  <stability>
   <release>stable</release>
@@ -27,7 +33,21 @@
  <notes>
    BUG FIXES
 
-   * Patched connection closing code (Carlos Rodriguez)
+   * PHP-204: ClusteredCursor::query not throwing an Exception
+   * PHP-262: Added persistent replicaSet container
+   * PHP-277: Remove cursor from list on cursor reset
+   * PHP-279: Make accessing connected property quiet
+   * PHP-286: Try ping on another connection when one fails
+   * PHP-300: Fixed segfault when execute() is given array() as argument.
+   * Make mongoLog settings thread safe.
+   * Fixed memory leaks
+   * Fixed issues with connection pooling
+
+   NEW FEATURES
+
+   * PHP-233: Added the continueOnError flag to batch_insert().
+   * PHP-268: Add slave buckets
+   * PHP-272: Randomly choose slaves from a given bucket
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -83,6 +103,37 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.7</release>
+    <api>1.2.7</api>
+   </version>
+   <date>2012-01-05</date>
+   <notes>
+   BUG FIXES
+
+   * PHP-204: ClusteredCursor::query not throwing an Exception
+   * PHP-262: Added persistent replicaSet container
+   * PHP-277: Remove cursor from list on cursor reset
+   * PHP-279: Make accessing connected property quiet
+   * PHP-286: Try ping on another connection when one fails
+   * PHP-300: Fixed segfault when execute() is given array() as argument.
+   * Make mongoLog settings thread safe.
+   * Fixed memory leaks
+   * Fixed issues with connection pooling
+
+   NEW FEATURES
+
+   * PHP-233: Added the continueOnError flag to batch_insert().
+   * PHP-268: Add slave buckets
+   * PHP-272: Randomly choose slaves from a given bucket
+   </notes>
+  </release>
+
   <release>
    <stability>
     <release>stable</release>
