@@ -47,13 +47,13 @@ mongo_server* create_mongo_server_persist(char **current, rs_monitor *monitor TS
   }
 
   if (monitor->username) {
-    server->username = estrdup(monitor->username);
+    server->username = pestrdup(monitor->username, PERSIST);
   }
   if (monitor->password) {
-    server->password = estrdup(monitor->password);
+    server->password = pestrdup(monitor->password, PERSIST);
   }
   if (monitor->db) {
-    server->db = estrdup(monitor->db);
+    server->db = pestrdup(monitor->db, PERSIST);
   }
 
   return server;
