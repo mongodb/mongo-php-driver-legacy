@@ -311,15 +311,18 @@ PHP_METHOD(MongoId, __toString) {
 /* {{{ MongoId::__set_state()
  */
 PHP_METHOD(MongoId, __set_state) {
-  zval temp, *dummy;
+	zval temp, *state, **id;
 
-  MAKE_STD_ZVAL(dummy);
-  ZVAL_STRING(dummy, "000000000000000000000000", 1);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &state) == FAILURE) {
+		return;
+	}
 
-  object_init_ex(return_value, mongo_ce_Id);
-  MONGO_METHOD1(MongoId, __construct, &temp, return_value, dummy);
+	if (zend_hash_find(HASH_P(state), "$id", strlen("$id")+1, (void**) &id) == FAILURE) {
+		return;
+	}
 
-  zval_ptr_dtor(&dummy);
+	object_init_ex(return_value, mongo_ce_Id);
+	MONGO_METHOD1(MongoId, __construct, &temp, return_value, *id);
 }
 /* }}} */
 
