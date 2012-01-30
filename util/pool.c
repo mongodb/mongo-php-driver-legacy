@@ -74,7 +74,7 @@ int mongo_util_pool_refresh(mongo_server *server, time_t timeout TSRMLS_DC) {
   }
 
   // make sure we're disconnected before reconnecting
-  mongo_util_pool_close(server TSRMLS_CC);
+  mongo_util_pool_close(server, CHECK_CONNS TSRMLS_CC);
 
   if (mongo_util_pool_init(server, timeout TSRMLS_CC) == FAILURE) {
     return FAILURE;
@@ -142,7 +142,7 @@ void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
   mongo_util_pool__rm_server_ptr(monitor, server);
 }
 
-void mongo_util_pool_close(mongo_server *server TSRMLS_DC) {
+void mongo_util_pool_close(mongo_server *server, int check_conns TSRMLS_DC) {
   stack_monitor *monitor;
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
@@ -151,7 +151,9 @@ void mongo_util_pool_close(mongo_server *server TSRMLS_DC) {
   }
 
   // try pinging a server to see if every connection is bad, or just ours
-  test_other_conns(server, monitor TSRMLS_CC);
+  if (check_conns) {
+    test_other_conns(server, monitor TSRMLS_CC);
+  }
 
   mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool close (%p)", server->label, monitor);
 
