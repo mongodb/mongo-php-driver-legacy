@@ -233,20 +233,19 @@ PHP_METHOD(MongoCursor, hasNext) {
   ZVAL_NULL(temp);
 
   if(mongo_say(cursor->server, &buf, temp TSRMLS_CC) == FAILURE) {
-    mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
-
     efree(buf.start);
 
     mongo_cursor_throw(cursor->server, 1 TSRMLS_CC, Z_STRVAL_P(temp));
     zval_ptr_dtor(&temp);
+    mongo_util_cursor_failed(cursor TSRMLS_CC);
     return;
   }
 
   efree(buf.start);
 
   if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
-    mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
     zval_ptr_dtor(&temp);
+    mongo_util_cursor_failed(cursor TSRMLS_CC);
     return;
   }
 
@@ -668,8 +667,6 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   }
 
   if (mongo_say(cursor->server, &buf, errmsg TSRMLS_CC) == FAILURE) {
-    mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
-
     if (Z_TYPE_P(errmsg) == IS_STRING) {
       mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
     }
@@ -678,15 +675,14 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
     }
     efree(buf.start);
     zval_ptr_dtor(&errmsg);
-    return FAILURE;
+    return mongo_util_cursor_failed(cursor TSRMLS_CC);
   }
 
   efree(buf.start);
 
   if (php_mongo_get_reply(cursor, errmsg TSRMLS_CC) == FAILURE) {
-    mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
     zval_ptr_dtor(&errmsg);
-    return FAILURE;
+    return mongo_util_cursor_failed(cursor TSRMLS_CC);
   }
 
   zval_ptr_dtor(&errmsg);
@@ -699,6 +695,16 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   return SUCCESS;
 }
 /* }}} */
+
+int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC) {
+  // kill cursor so that the server stops and the new connection doesn't try
+  // to kill something it doesn't own
+  mongo_util_cursor_reset(cursor TSRMLS_CC);
+
+  mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
+
+  return FAILURE;
+}
 
 
 // ITERATOR FUNCTIONS
@@ -891,6 +897,10 @@ PHP_METHOD(MongoCursor, reset) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
+  mongo_util_cursor_reset(cursor TSRMLS_CC);
+}
+
+void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC) {
   cursor->buf.pos = cursor->buf.start;
 
   if (cursor->current) {
