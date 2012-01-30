@@ -46,6 +46,13 @@
 #ifndef MONGO_UTIL_POOL_H
 #define MONGO_UTIL_POOL_H
 
+/**
+ * Sometimes when we close a connection, we want to check all connections for
+ * validity.  Sometimes we just want to close a single connection.
+ */
+#define DONT_CHECK_CONNS 0
+#define CHECK_CONNS 1
+
 // ------- Pool Structs -----------
 
 typedef struct _stack_node {
@@ -138,7 +145,7 @@ void mongo_util_pool_remove(mongo_server *server TSRMLS_DC);
 /**
  * Closes a connection and removes it from the pool.
  */
-void mongo_util_pool_close(mongo_server *server TSRMLS_DC);
+void mongo_util_pool_close(mongo_server *server, int check_conns TSRMLS_DC);
 
 // ------- Internal Functions -----------
 

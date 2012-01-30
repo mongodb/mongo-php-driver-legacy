@@ -127,8 +127,15 @@ void mongo_util_link_master_failed(mongo_link *link TSRMLS_DC) {
 void mongo_util_link_disconnect(mongo_link *link TSRMLS_DC) {
   mongo_server *current = link->server_set->server;
 
+  if (link->server_set->master) {
+    mongo_util_pool_close(link->server_set->master, DONT_CHECK_CONNS TSRMLS_CC);
+  }
+  if (link->slave) {
+    mongo_util_pool_close(link->slave, DONT_CHECK_CONNS TSRMLS_CC);
+  }
+
   while (current) {
-    mongo_util_pool_close(current TSRMLS_CC);
+    mongo_util_pool_close(current, DONT_CHECK_CONNS TSRMLS_CC);
     current = current->next;
   }
 
