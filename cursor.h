@@ -34,6 +34,18 @@ void php_mongo_cursor_free(void *object TSRMLS_DC);
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC);
 
 /**
+ * Reset the cursor to clean up or prepare for another query.  Removes cursor
+ * from cursor list (and kills it, if necessary).
+ */
+void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC);
+
+/**
+ * Resets cursor and disconnects connection.  Always returns FAILURE (so it can
+ * be used by functions returning FAILURE).
+ */
+int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC);
+
+/**
  * If the query should be send to the db or not.  The rules are:
  * - db commands should only be sent onces (no retries)
  * - normal queries should be sent up to 5 times
