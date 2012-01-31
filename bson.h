@@ -77,7 +77,7 @@ int php_mongo_write_query(buffer*, mongo_cursor* TSRMLS_DC);
 int php_mongo_write_get_more(buffer*, mongo_cursor* TSRMLS_DC);
 int php_mongo_write_delete(buffer*, char*, int, zval* TSRMLS_DC);
 int php_mongo_write_update(buffer*, char*, int, zval*, zval* TSRMLS_DC);
-int php_mongo_write_kill_cursors(buffer*, mongo_cursor* TSRMLS_DC);
+int php_mongo_write_kill_cursors(buffer*, int64_t TSRMLS_DC);
 
 #define php_mongo_set_type(buf, type) php_mongo_serialize_byte(buf, (char)type)
 #define php_mongo_serialize_null(buf) php_mongo_serialize_byte(buf, (char)0)
