@@ -230,7 +230,7 @@ typedef struct {
   char *rs;
 } mongo_link;
 
-#define MONGO_LINK 0
+#define MONGO_SERVER 0
 #define MONGO_CURSOR 1
 
 
@@ -453,7 +453,8 @@ typedef struct {
  * cursors for that link.
  */
 typedef struct _cursor_node {
-  mongo_cursor *cursor;
+  int64_t cursor_id;
+  int socket;
 
   struct _cursor_node *next;
   struct _cursor_node *prev;
