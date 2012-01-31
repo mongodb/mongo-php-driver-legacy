@@ -784,17 +784,16 @@ int php_mongo_write_query(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
   return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
 }
 
-int php_mongo_write_kill_cursors(buffer *buf, mongo_cursor *cursor TSRMLS_DC) {
+int php_mongo_write_kill_cursors(buffer *buf, int64_t cursor_id TSRMLS_DC) {
   mongo_msg_header header;
 
   CREATE_MSG_HEADER(MonGlo(request_id)++, 0, OP_KILL_CURSORS);
   APPEND_HEADER(buf, 0);
-  cursor->send.request_id = header.request_id;
 
   // # of cursors
   php_mongo_serialize_int(buf, 1);
   // cursor ids
-  php_mongo_serialize_long(buf, cursor->cursor_id);
+  php_mongo_serialize_long(buf, cursor_id);
   return php_mongo_serialize_size(buf->start, buf TSRMLS_CC);
 }
 

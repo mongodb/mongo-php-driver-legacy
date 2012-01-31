@@ -697,11 +697,14 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 /* }}} */
 
 int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC) {
+  mongo_server *old = cursor->server;
+
   // kill cursor so that the server stops and the new connection doesn't try
   // to kill something it doesn't own
   mongo_util_cursor_reset(cursor TSRMLS_CC);
 
-  mongo_util_link_failed(cursor->link, cursor->server TSRMLS_CC);
+  // reset sets cursor->server to 0, so we use "old" here
+  mongo_util_link_failed(cursor->link, old TSRMLS_CC);
 
   return FAILURE;
 }
@@ -1169,15 +1172,44 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC) {
     while (current) {
       cursor_node *next = current->next;
 
-      if (type == MONGO_LINK) {
-        if (current->cursor->link == (mongo_link*)val) {
-          kill_cursor(current, le TSRMLS_CC);
+      if (type == MONGO_SERVER) {
+        mongo_server *server = (mongo_server*)val;
+        if (server != 0 && current->socket == server->socket) {
+          if (!server->connected) {
+            php_mongo_free_cursor_node(current, le);
+          }
+          else {
+            kill_cursor(current, le TSRMLS_CC);
+          }
           // keep going, free all cursor for this connection
         }
       }
       else if (type == MONGO_CURSOR) {
-        if (current->cursor == (mongo_cursor*)val) {
-          kill_cursor(current, le TSRMLS_CC);
+        mongo_cursor *cursor = (mongo_cursor*)val;
+        if (current->cursor_id == cursor->cursor_id &&
+            cursor->server != 0 &&
+            current->socket == cursor->server->socket) {
+
+          // If the cursor_id is 0, the db is out of results anyway
+          // If the connection is not connected, just return
+          if (current->cursor_id == 0 || !cursor->server->connected) {
+            php_mongo_free_cursor_node(current, le);
+          }
+          else {
+            kill_cursor(current, le TSRMLS_CC);
+
+            /*
+             * if the connection is closed before the cursor is destroyed, the cursor
+             * might try to fetch more results with disasterous consequences.  Thus, the
+             * cursor_id is set to 0, so no more results will be fetched.
+             *
+             * this might not be the most elegant solution, since you could fetch 100
+             * results, get the first one, close the connection, get 99 more, and suddenly
+             * not be able to get any more.  Not sure if there's a better one, though. I
+             * guess the user can call dead() on the cursor.
+             */
+            cursor->cursor_id = 0;
+          }
           // only one cursor to be freed
           break;
         }
@@ -1198,7 +1230,13 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC) {
   LOCK(cursor);
 
   new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
-  new_node->cursor = cursor;
+  new_node->cursor_id = cursor->cursor_id;
+  if (cursor->server) {
+    new_node->socket = cursor->server->socket;
+  }
+  else {
+    new_node->socket = 0;
+  }
   new_node->next = new_node->prev = 0;
 
   /*
@@ -1224,7 +1262,8 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC) {
        * if we find the current cursor in the cursor list, we don't need another
        * dtor for it so unlock the mutex & return.
        */
-      if (current->cursor == cursor) {
+      if (current->cursor_id == cursor->cursor_id &&
+          current->socket == cursor->server->socket) {
         pefree(new_node, 1);
         UNLOCK(cursor);
         return 0;
@@ -1268,13 +1307,8 @@ static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
     while (node->next) {
       cursor_node *temp = node;
       node = node->next;
-
-      pefree(temp->cursor->buf.start, 1);
-      pefree(temp->cursor, 1);
       pefree(temp, 1);
     }
-    pefree(node->cursor->buf.start, 1);
-    pefree(node->cursor, 1);
     pefree(node, 1);
   }
 
@@ -1322,7 +1356,6 @@ void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le) {
 
 // tell db to destroy its cursor
 static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
-  mongo_cursor *cursor = node->cursor;
   char quickbuf[128];
   buffer buf;
   zval temp;
@@ -1330,7 +1363,7 @@ static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
   /*
    * If the cursor_id is 0, the db is out of results anyway.
    */
-  if (cursor->cursor_id == 0) {
+  if (node->cursor_id == 0) {
     php_mongo_free_cursor_node(node, le);
     return;
   }
@@ -1339,29 +1372,14 @@ static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
   buf.start = buf.pos;
   buf.end = buf.start + 128;
 
-  php_mongo_write_kill_cursors(&buf, cursor TSRMLS_CC);
+  php_mongo_write_kill_cursors(&buf, node->cursor_id TSRMLS_CC);
 
-  if (!cursor->server) {
-    return;
-  }
   Z_TYPE(temp) = IS_NULL;
-  _mongo_say(cursor->server->socket, &buf, &temp TSRMLS_CC);
+  _mongo_say(node->socket, &buf, &temp TSRMLS_CC);
   if (Z_TYPE(temp) == IS_STRING) {
     efree(Z_STRVAL(temp));
     Z_TYPE(temp) = IS_NULL;
   }
-
-  /*
-   * if the connection is closed before the cursor is destroyed, the cursor
-   * might try to fetch more results with disasterous consequences.  Thus, the
-   * cursor_id is set to 0, so no more results will be fetched.
-   *
-   * this might not be the most elegant solution, since you could fetch 100
-   * results, get the first one, close the connection, get 99 more, and suddenly
-   * not be able to get any more.  Not sure if there's a better one, though. I
-   * guess the user can call dead() on the cursor.
-   */
-  cursor->cursor_id = 0;
 
   // free this cursor/link pair
   php_mongo_free_cursor_node(node, le);

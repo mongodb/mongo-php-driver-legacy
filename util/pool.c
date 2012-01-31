@@ -466,6 +466,9 @@ void mongo_util_pool__close_connections(stack_monitor *monitor TSRMLS_DC) {
 void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server) {
   int was_connected = server->connected;
 
+  // kill any cursor associated with this connection before deleting it
+  mongo_cursor_free_le(server, MONGO_SERVER TSRMLS_CC);
+
   mongo_util_disconnect(server);
 
   if (was_connected &&

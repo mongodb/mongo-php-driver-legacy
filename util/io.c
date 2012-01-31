@@ -71,28 +71,6 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   int sock;
 
   mongo_log(MONGO_LOG_IO, MONGO_LOG_FINE TSRMLS_CC, "hearing something");
-
-  // this cursor has already been processed
-  if (cursor->send.request_id < MonGlo(response_num)) {
-    cursor_node *response = 0;
-    zend_rsrc_list_entry *le;
-
-    if (zend_hash_find(&EG(persistent_list), "response_list", strlen("response_list") + 1, (void**)&le) == SUCCESS) {
-      response = le->ptr;
-    }
-
-    while (response) {
-      if (response->cursor->recv.response_to == cursor->send.request_id) {
-        make_unpersistent_cursor(response->cursor, cursor);
-        php_mongo_free_cursor_node(response, le);
-        return SUCCESS;
-      }
-      response = response->next;
-    }
-
-    // if we didn't find it, it might have been send out of order so keep going
-  }
-
   sock = cursor->server->socket;
 
   if (get_cursor_header(sock, cursor TSRMLS_CC) == FAILURE) {
@@ -100,54 +78,11 @@ int php_mongo__get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC) {
   }
 
   // check that this is actually the response we want
-  while (cursor->send.request_id != cursor->recv.response_to) {
+  if (cursor->send.request_id != cursor->recv.response_to) {
     mongo_log(MONGO_LOG_IO, MONGO_LOG_FINE TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
 
-    // if it's not...
-
-    // if we're getting the response to an earlier request, put the response on
-    // the queue
-    if (cursor->send.request_id > cursor->recv.response_to) {
-      if (FAILURE != get_cursor_body(sock, cursor TSRMLS_CC)) {
-        mongo_cursor *pcursor = make_persistent_cursor(cursor);
-        // add to list
-        php_mongo_create_le(pcursor, "response_list" TSRMLS_CC);
-      }
-      else {
-        // else if we've failed, just don't add to queue
-        mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "lost db connection");
-        return FAILURE;
-      }
-    }
-    // otherwise, check if the response is on the queue
-    else {
-      cursor_node *response = 0;
-      zend_rsrc_list_entry *le;
-
-      if (zend_hash_find(&EG(persistent_list), "response_list", strlen("response_list") + 1, (void**)&le) == SUCCESS) {
-        response = le->ptr;
-      }
-
-      while (response) {
-        // if it is, then pull it off & use it
-        if (response->cursor->send.request_id == cursor->recv.response_to) {
-          memcpy(cursor, response->cursor, sizeof(mongo_cursor));
-          php_mongo_free_cursor_node(response, le);
-          return SUCCESS;
-        }
-        response = response->next;
-      }
-
-      if (!response) {
-        mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "couldn't find a response");
-        return FAILURE;
-      }
-    }
-
-    // get the next db response
-    if (get_cursor_header(sock, cursor TSRMLS_CC) == FAILURE) {
-      return FAILURE;
-    }
+    mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
+    return FAILURE;
   }
 
   if (FAILURE == get_cursor_body(sock, cursor TSRMLS_CC)) {
