@@ -159,8 +159,6 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
   }
 
   if (link->rs) {
-    mongo_server *current = link->server_set->server;
-
     if (link->server_set->master) {
       php_mongo_server_free(link->server_set->master, NO_PERSIST TSRMLS_CC);
     }
