@@ -80,6 +80,12 @@
 #define RESET_ERROR 2
 #define FORCE_ERROR 3
 
+#if PHP_VERSIONID > 50300
+# define MONGO_ARGINFO_STATIC
+#else
+# define MONGO_ARGINFO_STATIC static
+#endif
+
 #if ZEND_MODULE_API_NO >= 20090115
 # define PUSH_PARAM(arg) zend_vm_stack_push(arg TSRMLS_CC)
 # define POP_PARAM() (void)zend_vm_stack_pop(TSRMLS_C)
