@@ -138,7 +138,8 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
   // TODO: clear exception?
 
   zend_hash_find(HASH_P(response), "ok", strlen("ok")+1, (void**)&ok);
-  if (Z_NUMVAL_PP(ok, 1)) {
+  if (Z_NUMVAL_PP(ok, 1) &&
+      info->guts->last_ismaster + MONGO_ISMASTER_INTERVAL <= now) {
     mongo_util_server_ismaster(info, server, now TSRMLS_CC);
   }
   zval_ptr_dtor(&response);
