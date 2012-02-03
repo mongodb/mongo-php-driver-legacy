@@ -1039,7 +1039,7 @@ PHP_METHOD(MongoCollection, toIndexString) {
     *(position) = '\0';
   }
   else {
-	  php_error_docref(NULL TSRMLS_CC, E_RECOVERABLE_ERROR, "The key needs to be either a string or an array");
+	  php_error_docref(NULL TSRMLS_CC, E_WARNING, "The key needs to be either a string or an array");
 	  return;
   }
   RETURN_STRING(name, 0)
