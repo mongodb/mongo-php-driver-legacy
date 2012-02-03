@@ -289,7 +289,14 @@ PHP_METHOD(MongoDB, dropCollection) {
   zval_ptr_dtor(&collection);
 }
 
-PHP_METHOD(MongoDB, listCollections) {
+static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int full_collection)
+{
+	zend_bool system_col = 0;
+  
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &system_col) == FAILURE) {
+		return;
+	}
+
   // select db.system.namespaces collection
   zval *nss, *collection, *cursor, *list, *next;
 
@@ -330,8 +337,8 @@ PHP_METHOD(MongoDB, listCollections) {
     first_dot = strchr(Z_STRVAL_PP(collection), '.');
     system = strstr(Z_STRVAL_PP(collection), ".system.");
     // check that this isn't a system ns
-    if ((system && first_dot == system) ||
-	(name = strchr(Z_STRVAL_PP(collection), '.')) == 0) {
+    if (!system_col && (system && first_dot == system) ||
+      (name = strchr(Z_STRVAL_PP(collection), '.')) == 0) {
 
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
@@ -354,20 +361,24 @@ PHP_METHOD(MongoDB, listCollections) {
       continue;
     }
 
-    MAKE_STD_ZVAL(c);
-    ZVAL_NULL(c);
+	if (full_collection) {
+		MAKE_STD_ZVAL(c);
+		ZVAL_NULL(c);
 
-    MAKE_STD_ZVAL(zname);
-    ZVAL_NULL(zname);
+		MAKE_STD_ZVAL(zname);
+		ZVAL_NULL(zname);
 
-    // name must be copied because it is a substring of
-    // a string that will be garbage collected in a sec
-    ZVAL_STRING(zname, name, 1);
-    MONGO_METHOD1(MongoDB, selectCollection, c, getThis(), zname);
+		// name must be copied because it is a substring of
+		// a string that will be garbage collected in a sec
+		ZVAL_STRING(zname, name, 1);
+		MONGO_METHOD1(MongoDB, selectCollection, c, getThis(), zname);
 
-    add_next_index_zval(list, c);
+		add_next_index_zval(list, c);
 
-    zval_ptr_dtor(&zname);
+		zval_ptr_dtor(&zname);
+	} else {
+		add_next_index_string(list, name, 1);
+	}
     zval_ptr_dtor(&next);
     MAKE_STD_ZVAL(next);
 
@@ -380,6 +391,16 @@ PHP_METHOD(MongoDB, listCollections) {
   zval_ptr_dtor(&collection);
 
   RETURN_ZVAL(list, 0, 1);
+}
+
+PHP_METHOD(MongoDB, listCollections)
+{
+	php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
+}
+
+PHP_METHOD(MongoDB, getCollectionNames)
+{
+	php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
 }
 
 PHP_METHOD(MongoDB, createDBRef) {
@@ -847,6 +868,10 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_authenticate, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, password)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_systemCollections, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, includeSystemCollections)
+ZEND_END_ARG_INFO()
+
 
 static zend_function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
@@ -862,7 +887,8 @@ static zend_function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, selectCollection, arginfo_selectCollection, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, createCollection, arginfo_createCollection, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, dropCollection, arginfo_dropCollection, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, listCollections, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, listCollections, arginfo_systemCollections, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, getCollectionNames, arginfo_systemCollections, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, createDBRef, arginfo_createDBRef, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, getDBRef, arginfo_getDBRef, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, execute, arginfo_execute, ZEND_ACC_PUBLIC)
