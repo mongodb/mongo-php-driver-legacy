@@ -27,6 +27,8 @@
 #include "log.h"
 #include "pool.h"
 
+ZEND_EXTERN_MODULE_GLOBALS(mongo);
+
 extern int le_pserver;
 extern zend_class_entry *mongo_ce_Id;
 
@@ -107,8 +109,45 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
     return FAILURE;
   }
 
-  // call ismaster every ISMASTER_INTERVAL seconds
-  if (info->guts->last_ismaster + MONGO_ISMASTER_INTERVAL <= now) {
+  if (info->guts->last_ping + MonGlo(ping_interval) > now) {
+    return server->connected ? SUCCESS : FAILURE;
+  }
+
+  FILE *f = fopen("/tmp/mongo-ping", "a+"); fprintf(f, "ping"); fclose(f); f = NULL;
+  gettimeofday(&start, 0);
+  response = mongo_util_rs__cmd("ping", server TSRMLS_CC);
+  gettimeofday(&end, 0);
+
+  mongo_util_server__set_ping(info, start, end);
+
+  if (response) {
+    zend_hash_find(HASH_P(response), "ok", strlen("ok")+1, (void**)&ok);
+    if (Z_NUMVAL_PP(ok, 1)) {
+      server->connected = 1;
+      return SUCCESS;
+    }
+  }
+
+  server->connected = 0;
+  if (mongo_util_server_reconnect(server) == SUCCESS) {
+    return SUCCESS;
+  }
+
+  mongo_util_server__down(info);
+  return FAILURE;
+}
+
+int mongo_util_server_isreadable(mongo_server *server, time_t now TSRMLS_DC) {
+  server_info* info;
+  zval *response = 0, **ok = 0;
+  struct timeval start, end;
+
+  if ((info = mongo_util_server__get_info(server TSRMLS_CC)) == 0) {
+    return FAILURE;
+  }
+
+  // call ismaster every ismaster_interval seconds
+  if (info->guts->last_ismaster + MonGlo(ismaster_interval) <= now) {
     if (mongo_util_server_reconnect(server TSRMLS_CC) == FAILURE) {
       return FAILURE;
     }
@@ -116,32 +155,12 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
     return mongo_util_server_ismaster(info, server, now TSRMLS_CC);
   }
 
-  if (info->guts->last_ping + MONGO_PING_INTERVAL > now) {
-    return info->guts->readable ? SUCCESS : FAILURE;
-  }
-
-  if (mongo_util_server_reconnect(server TSRMLS_CC) == FAILURE) {
+  if (mongo_util_server_ping(server, now TSRMLS_CC) == FAILURE) {
     return FAILURE;
-  }
-
-  gettimeofday(&start, 0);
-  response = mongo_util_rs__cmd("ping", server TSRMLS_CC);
-  gettimeofday(&end, 0);
-
-  mongo_util_server__set_ping(info, start, end);
-
-  if (!response) {
-    mongo_util_server__down(info);
-    return FAILURE;
-  }
-
-  // TODO: clear exception?
-
-  zend_hash_find(HASH_P(response), "ok", strlen("ok")+1, (void**)&ok);
-  if (Z_NUMVAL_PP(ok, 1)) {
-    mongo_util_server_ismaster(info, server, now TSRMLS_CC);
   }
   zval_ptr_dtor(&response);
+
+  mongo_util_server_ismaster(info, server, now TSRMLS_CC);
 
   return info->guts->readable ? SUCCESS : FAILURE;
 }
@@ -222,7 +241,7 @@ void mongo_util_server__prime(server_info *info, mongo_server *server TSRMLS_DC)
     return;
   }
 
-  mongo_util_server_ping(server, MONGO_SERVER_PING TSRMLS_CC);
+  mongo_util_server_isreadable(server, MONGO_SERVER_PING TSRMLS_CC);
 }
 
 int mongo_util_server_get_bucket(mongo_server *server TSRMLS_DC) {

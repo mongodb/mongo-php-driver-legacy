@@ -121,7 +121,7 @@ void mongo_util_rs_refresh(rs_monitor *monitor, time_t now TSRMLS_DC) {
   zval *good_response = 0;
 
   // refreshes host list
-  if (now - monitor->last_ismaster < MONGO_ISMASTER_INTERVAL) {
+  if (now - monitor->last_ismaster < MonGlo(ismaster_interval)) {
     return;
   }
 
@@ -518,7 +518,7 @@ void mongo_util_rs_ping(mongo_link *link TSRMLS_DC) {
     return;
   }
 
-  if (time(0) - monitor->last_ismaster < MONGO_PING_INTERVAL) {
+  if (time(0) - monitor->last_ismaster < MonGlo(ping_interval)) {
     return;
   }
 
@@ -536,7 +536,7 @@ void mongo_util_rs__ping(rs_monitor *monitor TSRMLS_DC) {
   current = monitor->servers;
   while (current) {
     // this pings the server and, if up, checks if it's primary
-    if (mongo_util_server_ping(current->server, now TSRMLS_CC) == SUCCESS) {
+    if (mongo_util_server_isreadable(current->server, now TSRMLS_CC) == SUCCESS) {
       if (mongo_util_server_get_state(current->server TSRMLS_CC) == 1) {
         monitor->primary = current->server;
       }

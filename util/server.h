@@ -69,9 +69,6 @@ typedef struct _server_info {
 #define MONGO_SERVER_PING INT_MAX
 #define MONGO_SERVER_BSON (4*1024*1024)
 
-#define MONGO_PING_INTERVAL 5
-#define MONGO_ISMASTER_INTERVAL 60
-
 // ------- Server Info Interface -----------
 
 /**
@@ -98,9 +95,16 @@ int mongo_util_server_cmp(char *host1, char *host2 TSRMLS_DC);
  * If it's been PING_INTERVAL since we last pinged this server, calls ping
  * on this server.  Sets the ping time.
  *
- * Returns SUCCESS if this server is readable, failure otherwise.
+ * Returns SUCCESS if this server responded, failure otherwise.
  */
 int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC);
+
+/**
+ * Check to see if the server is readable.
+ *
+ * Returns SUCCESS if this server is readable, failure otherwise.
+ */
+int mongo_util_server_isreadable(mongo_server *server, time_t now TSRMLS_DC);
 
 /**
  * If it's been ISMASTER_INTERVAL since we last pinged this server, calls isMaster

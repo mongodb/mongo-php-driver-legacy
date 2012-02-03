@@ -97,9 +97,18 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
 
   mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool get (%p)", server->label, monitor);
 
-  // get connection from pool or create new
-  if (mongo_util_pool__stack_pop(monitor, server TSRMLS_CC) == SUCCESS ||
-      mongo_util_pool__connect(monitor, server, errmsg TSRMLS_CC) == SUCCESS) {
+  int now = time(0);
+  while (mongo_util_pool__stack_pop(monitor, server TSRMLS_CC) == SUCCESS) {
+    if (mongo_util_server_ping(server, now TSRMLS_CC) == FAILURE) {
+      mongo_util_pool__rm_server_ptr(monitor, server TSRMLS_CC);
+      continue;
+    }
+
+    mongo_util_pool__add_server_ptr(monitor, server);
+    return SUCCESS;
+  }
+
+  if (mongo_util_pool__connect(monitor, server, errmsg TSRMLS_CC) == SUCCESS) {
     mongo_util_pool__add_server_ptr(monitor, server);
     return SUCCESS;
   }
