@@ -80,7 +80,7 @@
 #define RESET_ERROR 2
 #define FORCE_ERROR 3
 
-#if PHP_VERSIONID > 50300
+#if PHP_VERSION_ID > 50300
 # define MONGO_ARGINFO_STATIC
 #else
 # define MONGO_ARGINFO_STATIC static
