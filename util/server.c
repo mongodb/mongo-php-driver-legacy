@@ -113,7 +113,9 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
       return FAILURE;
     }
 
-    return mongo_util_server_ismaster(info, server, now TSRMLS_CC);
+	// we don't return here, because ismaster doesn't actually do the
+	// ping
+	mongo_util_server_ismaster(info, server, now TSRMLS_CC);
   }
 
   if (info->guts->last_ping + MONGO_PING_INTERVAL > now) {
@@ -138,7 +140,8 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
   // TODO: clear exception?
 
   zend_hash_find(HASH_P(response), "ok", strlen("ok")+1, (void**)&ok);
-  if (Z_NUMVAL_PP(ok, 1)) {
+  if (Z_NUMVAL_PP(ok, 1) &&
+      info->guts->last_ismaster + MONGO_ISMASTER_INTERVAL <= now) {
     mongo_util_server_ismaster(info, server, now TSRMLS_CC);
   }
   zval_ptr_dtor(&response);
