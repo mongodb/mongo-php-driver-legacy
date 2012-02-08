@@ -113,7 +113,9 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
       return FAILURE;
     }
 
-    return mongo_util_server_ismaster(info, server, now TSRMLS_CC);
+	// we don't return here, because ismaster doesn't actually do the
+	// ping
+	mongo_util_server_ismaster(info, server, now TSRMLS_CC);
   }
 
   if (info->guts->last_ping + MONGO_PING_INTERVAL > now) {
