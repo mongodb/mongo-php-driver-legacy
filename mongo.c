@@ -642,30 +642,36 @@ PHP_METHOD(Mongo, listDBs) {
 }
 /* }}} */
 
-PHP_METHOD(Mongo, getHosts) {
-  mongo_link *link;
-  mongo_server *current;
+PHP_METHOD(Mongo, getHosts)
+{
+	mongo_link  *link;
+	rsm_server  *current;
+	rs_monitor  *monitor;
 
-  array_init(return_value);
-  PHP_MONGO_GET_LINK(getThis());
+	array_init(return_value);
+	PHP_MONGO_GET_LINK(getThis());
 
-  current = link->server_set->server;
-  while (current) {
-    zval *infoz;
-    server_info *info;
+	monitor = mongo_util_rs__get_monitor(link TSRMLS_CC);
 
-    MAKE_STD_ZVAL(infoz);
-    array_init(infoz);
+	current = monitor->servers;
+	while (current) {
+		zval *infoz;
+		server_info *info;
 
-    info = mongo_util_server__get_info(current TSRMLS_CC);
-    add_assoc_long(infoz, "health", info->guts->readable);
-    add_assoc_long(infoz, "state", info->guts->master ? 1 : info->guts->readable ? 2 : 0);
-    add_assoc_long(infoz, "ping", info->guts->ping);
-    add_assoc_long(infoz, "lastPing", info->guts->last_ping);
+		MAKE_STD_ZVAL(infoz);
+		array_init(infoz);
 
-    add_assoc_zval(return_value, current->label, infoz);
-    current = current->next;
-  }
+		info = mongo_util_server__get_info(current->server TSRMLS_CC);
+		add_assoc_long(infoz, "health", info->guts->readable);
+		add_assoc_long(infoz, "state", info->guts->master ? 1 : info->guts->readable ? 2 : 0);
+		if (info->guts->pinged) {
+			add_assoc_long(infoz, "ping", info->guts->ping);
+			add_assoc_long(infoz, "lastPing", info->guts->last_ping);
+		}
+
+		add_assoc_zval(return_value, current->server->label, infoz);
+		current = current->next;
+	}
 }
 
 PHP_METHOD(Mongo, getSlave) {
