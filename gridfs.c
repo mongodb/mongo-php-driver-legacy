@@ -496,6 +496,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   zval *fh, *extra = 0, *options = 0;
   char *filename = 0;
   int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1, safe = 0;
+	int free_options = 0;
   FILE *fp = 0;
 
   zval temp;
@@ -509,13 +510,6 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|az", &fh, &extra, &options) == FAILURE) {
     return;
-  }
-
-  if (!options) {
-    zval *opts;
-    MAKE_STD_ZVAL(opts);
-    array_init(opts);
-    options = opts;
   }
 
   if (Z_TYPE_P(fh) == IS_RESOURCE) {
@@ -577,6 +571,15 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // chunkSize
   global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
 
+	// options
+	if (!options) {
+		zval *opts;
+		MAKE_STD_ZVAL(opts);
+		array_init(opts);
+		options = opts;
+		free_options = 1;
+	}
+
   // insert chunks
   while (pos < size || fp == 0) {
     int result = 0;
@@ -607,13 +610,16 @@ PHP_METHOD(MongoGridFS, storeFile) {
       }
     }
 
-    if (safe && EG(exception)) {
-      return;
-    }
+    efree(buf);
+
+		if (safe && EG(exception)) {
+			if (free_options) {
+				zval_ptr_dtor(&options);
+			}
+			return;
+		}
 
     chunk_num++;
-
-    efree(buf);
 
     if (fp == 0 && result < chunk_size) {
       break;
@@ -627,6 +633,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   if (EG(exception)) {
     zval_ptr_dtor(&zfile);
+		if (free_options) {
+			zval_ptr_dtor(&options);
+		}
     return;
   }
 
@@ -642,6 +651,10 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // cleanup
   zval_add_ref(&zid);
   zval_ptr_dtor(&zfile);
+
+	if (free_options) {
+		zval_ptr_dtor(&options);
+	}
 
   RETURN_ZVAL(zid, 1, 1);
 }
