@@ -617,6 +617,9 @@ zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
   temp.server_set->master = current;
   temp.rs = 0;
 
+  temp.slave = 0;
+  temp.db    = 0;
+
   temp_next = current->next;
   current->next = 0;
 
