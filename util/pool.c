@@ -173,9 +173,6 @@ static void test_other_conns(mongo_server *server, stack_monitor *monitor TSRMLS
   // get another connection
   get_other_conn(server, other, monitor);
 
-  // destroy temp
-  php_mongo_server_free(other, NO_PERSIST TSRMLS_CC);
-
   // if no other connections open, we don't have to worry about closing them
   if (other->connected == 0) {
     return;
@@ -197,6 +194,10 @@ static void test_other_conns(mongo_server *server, stack_monitor *monitor TSRMLS
 
     zval_ptr_dtor(&response);
   }
+
+  // destroy temp
+  php_mongo_server_free(other, NO_PERSIST TSRMLS_CC);
+
 }
 
 static void get_other_conn(mongo_server *server, mongo_server *other, stack_monitor *monitor) {
