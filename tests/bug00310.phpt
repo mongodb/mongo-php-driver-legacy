@@ -7,6 +7,8 @@ Test for bug PHP-310: GridFS transaction issues
 	$db_name = 'phpunit';
 	$m = new Mongo('mongodb://'.$ip.':'.$port.'/'.$db_name);
 	$mdb = $m->selectDB($db_name);
+	$mdb->dropCollection("fs.files");
+	$mdb->dropCollection("fs.chunks");
 
 	$GridFS = $mdb->getGridFS();
 
@@ -21,14 +23,14 @@ Test for bug PHP-310: GridFS transaction issues
 	echo "######################################\n";
 	for ($i = 0; $i < 3; $i++) {
 		try {
-			$new_saved_file_object_id = $GridFS->storeFile($temporary_file_name, array( '_id' => "file{$i}"), array('options' => 'safe'));
+			$new_saved_file_object_id = $GridFS->storeFile($temporary_file_name, array( '_id' => "file{$i}"), array('safe' => true));
+			echo "[Saved file] New file id:".$new_saved_file_object_id."\n";
 		}
-		catch (MongoCursorException $e) {
+		catch (MongoException $e) {
 			echo "error message: ".$e->getMessage()."\n";
-			echo "\nerror code: ".$e->getCode()."\n";
+			echo "error code: ".$e->getCode()."\n";
 		}
 
-		echo "[Saved file] New file id:".$new_saved_file_object_id."\n";
 	}
 
 	echo "\n";
@@ -49,19 +51,3 @@ Test for bug PHP-310: GridFS transaction issues
 	}
 ?>
 --EXPECTF--
-######################################
-# Saving files to GridFS
-######################################
-[Saved file] New file id:file0
-[Saved file] New file id:file1
-[Saved file] New file id:file2
-
-######################################
-# Current documents in fs.files
-######################################
-[file] [_id:file0] [filename:/tmp/GridFS_test.txt] [length:10] [chunkSize:262144]
-
-######################################
-# Current documents in fs.chunks
-######################################
-[chunk] [_id:%s] [n:0] [files_id:file0]
