@@ -839,21 +839,25 @@ PHP_METHOD(MongoGridFS, storeUpload) {
  * New GridFS API
  */
 
-PHP_METHOD(MongoGridFS, delete) {
-  zval *id, *criteria;
+PHP_METHOD(MongoGridFS, delete)
+{
+	zval *id, *criteria;
+	char *str_id;
+	size_t str_len;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O", &id, mongo_ce_Id) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &id) == FAILURE) {
+		return;
+	}
 
-  MAKE_STD_ZVAL(criteria);
-  array_init(criteria);
-  add_assoc_zval(criteria, "_id", id);
-  zval_add_ref(&id);
+	// Set up criteria array
+	MAKE_STD_ZVAL(criteria);
+	array_init(criteria);
+	add_assoc_zval(criteria, "_id", id);
+	zval_add_ref(&id);
 
-  MONGO_METHOD1(MongoGridFS, remove, return_value, getThis(), criteria);
+	MONGO_METHOD1(MongoGridFS, remove, return_value, getThis(), criteria);
 
-  zval_ptr_dtor(&criteria);
+	zval_ptr_dtor(&criteria);
 }
 
 PHP_METHOD(MongoGridFS, get) {
