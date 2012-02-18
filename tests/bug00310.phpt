@@ -23,7 +23,7 @@ Test for bug PHP-310: GridFS transaction issues
 	echo "######################################\n";
 	for ($i = 0; $i < 3; $i++) {
 		try {
-			$new_saved_file_object_id = $GridFS->storeFile($temporary_file_name, array( '_id' => "file{$i}"), array('safe' => true));
+			$new_saved_file_object_id = $GridFS->storeFile($temporary_file_name, array( '_id' => "file{$i}"));
 			echo "[Saved file] New file id:".$new_saved_file_object_id."\n";
 		}
 		catch (MongoException $e) {

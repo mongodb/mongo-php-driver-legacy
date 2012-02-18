@@ -582,6 +582,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
 		free_options = 1;
 	}
 
+	// force safe mode
+	add_assoc_long(options, "safe", 1);
+
   // insert chunks
   while (pos < size || fp == 0) {
     int result = 0;
