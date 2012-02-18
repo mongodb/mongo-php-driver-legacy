@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-310: GridFS transaction issues
+Test for bug PHP-320: GridFS transaction issues
 --FILE--
 <?php
 	$ip = '127.0.0.1';
