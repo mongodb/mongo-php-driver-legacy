@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-320: GridFS transaction issues with storeFile().
+Test for bug PHP-320: GridFS transaction issues with storeBytes().
 --FILE--
 <?php
 	$ip = '127.0.0.1';
@@ -14,16 +14,14 @@ Test for bug PHP-320: GridFS transaction issues with storeFile().
 
 	$GridFS->ensureIndex(array('filename' => 1), array("unique" => true));
 
-	$temporary_file_name = '/tmp/GridFS_test.txt';
 	$temporary_file_data = '1234567890';
-	file_put_contents($temporary_file_name, $temporary_file_data);
 
 	echo "######################################\n";
 	echo "# Saving files to GridFS\n";
 	echo "######################################\n";
 	for ($i = 0; $i < 3; $i++) {
 		try {
-			$new_saved_file_object_id = $GridFS->storeFile($temporary_file_name, array( '_id' => "file{$i}"));
+			$new_saved_file_object_id = $GridFS->storeBytes($temporary_file_data, array( '_id' => "file{$i}", 'filename' => '/tmp/GridFS_test.txt'));
 			echo "[Saved file] New file id:".$new_saved_file_object_id."\n";
 		}
 		catch (MongoException $e) {
