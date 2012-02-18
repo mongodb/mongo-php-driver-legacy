@@ -51,3 +51,20 @@ Test for bug PHP-320: GridFS transaction issues
 	}
 ?>
 --EXPECTF--
+######################################
+# Saving files to GridFS
+######################################
+[Saved file] New file id:file0
+error message: Could not store file: E11000 duplicate key error index: phpunit.fs.files.$filename_1  dup key: { : "/tmp/GridFS_test.txt" }
+error code: 0
+error message: Could not store file: E11000 duplicate key error index: phpunit.fs.files.$filename_1  dup key: { : "/tmp/GridFS_test.txt" }
+error code: 0
+######################################
+# Current documents in fs.files
+######################################
+[file] [_id:file0] [filename:/tmp/GridFS_test.txt] [length:10] [chunkSize:262144]
+
+######################################
+# Current documents in fs.chunks
+######################################
+[chunk] [_id:%s] [n:0] [files_id:file0]

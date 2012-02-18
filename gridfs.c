@@ -656,12 +656,12 @@ PHP_METHOD(MongoGridFS, storeFile) {
 	if (!revert) {
 		zval *temp_return;
 
-		zval_add_ref(&options);
-		free_options = 1;
+		Z_ADDREF_P(options);
 		MAKE_STD_ZVAL(temp_return);
 		ZVAL_NULL(temp_return);
 		MONGO_METHOD2(MongoCollection, insert, temp_return, getThis(), zfile, options);
 		zval_ptr_dtor(&temp_return);
+		Z_DELREF_P(options);
 		if (EG(exception)) {
 			revert = 1;
 		}
