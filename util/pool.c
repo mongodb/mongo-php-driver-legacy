@@ -165,15 +165,44 @@ static void test_other_conns(mongo_server *server, stack_monitor *monitor TSRMLS
   mongo_server other;
   zval *response = 0;
 
+  // initialize temp
+  memset(&other,0,sizeof(mongo_server));
+  other.owner    = server->owner;
+  other.port     = server->port;
+  if ( server->host ) 
+    other.host     = pestrdup(server->host, NO_PERSIST);  
+  if ( server->label ) 
+    other.label    = pestrdup(server->label, NO_PERSIST);  
+  if ( server->username ) 
+    other.username = pestrdup(server->username, NO_PERSIST);  
+  if ( server->password ) 
+    other.password = pestrdup(server->password, NO_PERSIST);  
+  if ( server->db ) 
+    other.db       = pestrdup(server->db, NO_PERSIST);  
+
   // get another connection
   get_other_conn(server, &other, monitor);
 
   // if no other connections open, we don't have to worry about closing them
   if (other.connected == 0) {
+    // destroy
+    pefree(other.host,NO_PERSIST);
+    pefree(other.label,NO_PERSIST);
+    pefree(other.username,NO_PERSIST);
+    pefree(other.password,NO_PERSIST);
+    pefree(other.db,NO_PERSIST);
     return;
   }
 
   response = mongo_util_rs__cmd("ping", &other TSRMLS_CC);
+
+  // destroy
+  //  Some "mem-leak" have been remaining. The case of some node down.
+  pefree(other.host,NO_PERSIST);
+  pefree(other.label,NO_PERSIST);
+  pefree(other.username,NO_PERSIST);
+  pefree(other.password,NO_PERSIST);
+  pefree(other.db,NO_PERSIST);
 
   if (!response) {
     mongo_util_pool__close_connections(monitor TSRMLS_CC);
