@@ -38,3 +38,30 @@ GridFS: deleting files by ID
 	}
 ?>
 --EXPECTF--
+Using ID:string(5) "file0"
+Items in DB: 1
+Items in DB: 0
+
+Using ID:int(452)
+Items in DB: 1
+Items in DB: 0
+
+Using ID:bool(true)
+Items in DB: 1
+Items in DB: 0
+
+Using ID:object(MongoId)#5 (1) {
+  ["$id"]=>
+  string(24) "%s"
+}
+Items in DB: 1
+Items in DB: 0
+
+Using ID:array(2) {
+  [0]=>
+  string(1) "a"
+  ["b"]=>
+  int(5)
+}
+Items in DB: 1
+Items in DB: 0
