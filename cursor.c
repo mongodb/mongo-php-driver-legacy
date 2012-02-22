@@ -820,7 +820,7 @@ PHP_METHOD(MongoCursor, next) {
 
   // we got more results
   if (cursor->at < cursor->num) {
-    zval **err = 0, **ok = 0;
+    zval **err = 0;
 
     MAKE_STD_ZVAL(cursor->current);
     array_init(cursor->current);

@@ -168,7 +168,6 @@
 #define php_mongo_obj_new(mongo_obj)                    \
   zend_object_value retval;                             \
   mongo_obj *intern;                                    \
-  zval *tmp;                                            \
                                                         \
   intern = (mongo_obj*)emalloc(sizeof(mongo_obj));               \
   memset(intern, 0, sizeof(mongo_obj));                          \
