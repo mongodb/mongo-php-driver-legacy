@@ -284,14 +284,13 @@ PHP_METHOD(MongoDB, dropCollection) {
 static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int full_collection)
 {
 	zend_bool system_col = 0;
-  
+	zval *nss, *collection, *cursor, *list, *next;
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &system_col) == FAILURE) {
 		return;
 	}
 
   // select db.system.namespaces collection
-  zval *nss, *collection, *cursor, *list, *next;
-
   MAKE_STD_ZVAL(nss);
   ZVAL_STRING(nss, "system.namespaces", 1);
 
