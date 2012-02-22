@@ -412,9 +412,9 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   ensure_gridfs_index(&temp, chunks TSRMLS_CC);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|az", &bytes, &bytes_len, &extra, &options) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|aa/", &bytes, &bytes_len, &extra, &options) == FAILURE) {
+		return;
+	}
 
   // file array object
   MAKE_STD_ZVAL(zfile);
@@ -586,9 +586,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   ensure_gridfs_index(&temp, chunks TSRMLS_CC);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|az", &fh, &extra, &options) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|aa/", &fh, &extra, &options) == FAILURE) {
+		return;
+	}
 
   if (Z_TYPE_P(fh) == IS_RESOURCE) {
     zend_rsrc_list_entry *le;

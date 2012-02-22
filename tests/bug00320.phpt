@@ -21,9 +21,10 @@ Test for bug PHP-320: GridFS transaction issues with storeFile().
 	echo "######################################\n";
 	echo "# Saving files to GridFS\n";
 	echo "######################################\n";
+	$options = array( 'safe' => false );
 	for ($i = 0; $i < 3; $i++) {
 		try {
-			$new_saved_file_object_id = $GridFS->storeFile($temporary_file_name, array( '_id' => "file{$i}"));
+			$new_saved_file_object_id = $GridFS->storeFile($temporary_file_name, array( '_id' => "file{$i}"), $options);
 			echo "[Saved file] New file id:".$new_saved_file_object_id."\n";
 		}
 		catch (MongoException $e) {
@@ -32,6 +33,7 @@ Test for bug PHP-320: GridFS transaction issues with storeFile().
 		}
 
 	}
+	var_dump( $options );
 
 	echo "\n";
 	echo "######################################\n";
@@ -59,6 +61,10 @@ error message: Could not store file: E11000 duplicate key error index: phpunit.f
 error code: 0
 error message: Could not store file: E11000 duplicate key error index: phpunit.fs.files.$filename_1  dup key: { : "/tmp/GridFS_test.txt" }
 error code: 0
+array(1) {
+  ["safe"]=>
+  bool(false)
+}
 ######################################
 # Current documents in fs.files
 ######################################
