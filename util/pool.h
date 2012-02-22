@@ -204,7 +204,7 @@ int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval 
 /**
  * Close a connection. Increments monitor's num.remaining
  */
-void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server);
+void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server TSRMLS_DC);
 
 /**
  * Get this monitor for this server.

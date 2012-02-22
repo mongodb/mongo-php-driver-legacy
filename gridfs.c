@@ -339,7 +339,7 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
   }
 }
 
-static cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid TSRMLS_CC)
+static cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid)
 {
 	zval *chunks, *files, *criteria_chunks, *criteria_files;
 	char *message = NULL;
@@ -477,7 +477,7 @@ cleanup_on_failure:
 	if (!revert) {
 		RETVAL_ZVAL(zid, 1, 1);
 	} else {
-		cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid TSRMLS_CC);
+		cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
 		RETVAL_FALSE;
 	}
 
@@ -751,7 +751,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 cleanup_on_failure:
 	// remove all inserted chunks and main file document
 	if (revert) {
-		cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid TSRMLS_DC);
+		cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
 		RETVAL_FALSE;
 	}
 

@@ -151,7 +151,7 @@ void mongo_util_pool_close(mongo_server *server, int check_conns TSRMLS_DC) {
 
   mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool close (%p)", server->label, monitor);
 
-  mongo_util_pool__disconnect(monitor, server);
+  mongo_util_pool__disconnect(monitor, server TSRMLS_CC);
 
   // clean up reference to server (nothing needs to be freed)
   mongo_util_pool__rm_server_ptr(monitor, server);
@@ -206,7 +206,7 @@ int mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
 
   mongo_util_pool__close_connections(monitor TSRMLS_CC);
   // just to be sure
-  mongo_util_pool__disconnect(monitor, server);
+  mongo_util_pool__disconnect(monitor, server TSRMLS_CC);
 
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
@@ -340,7 +340,7 @@ void mongo_util_pool__stack_clear(stack_monitor *monitor TSRMLS_DC) {
   temp.owner = getpid();
 
   while (mongo_util_pool__stack_pop(monitor, &temp TSRMLS_CC) == SUCCESS) {
-    mongo_util_pool__disconnect(monitor, &temp);
+    mongo_util_pool__disconnect(monitor, &temp TSRMLS_CC);
   }
   monitor->top = 0;
 }
@@ -415,7 +415,7 @@ void mongo_util_pool__close_connections(stack_monitor *monitor TSRMLS_DC) {
   // close all open connections
   current = monitor->servers;
   while (current) {
-    mongo_util_pool__disconnect(monitor, current);
+    mongo_util_pool__disconnect(monitor, current TSRMLS_CC);
     monitor->num.in_use--;
     current = current->next_in_pool;
   }
@@ -427,7 +427,7 @@ void mongo_util_pool__close_connections(stack_monitor *monitor TSRMLS_DC) {
   mongo_util_pool__stack_clear(monitor TSRMLS_CC);
 }
 
-void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server) {
+void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server TSRMLS_DC) {
   int was_connected = server->connected;
 
   // kill any cursor associated with this connection before deleting it
