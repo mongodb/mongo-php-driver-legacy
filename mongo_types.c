@@ -168,7 +168,6 @@ static void php_mongo_id_free(void *object TSRMLS_DC) {
 static zend_object_value php_mongo_id_new(zend_class_entry *class_type TSRMLS_DC) {
   zend_object_value retval;
   mongo_id *intern;
-  zval *tmp;
 
   intern = (mongo_id*)emalloc(sizeof(mongo_id));
   memset(intern, 0, sizeof(mongo_id));
@@ -275,7 +274,7 @@ PHP_METHOD(MongoId, __construct) {
 PHP_METHOD(MongoId, __toString) {
   int i;
   mongo_id *this_id;
-  char *id_str, *movable;
+  char *id_str;
   char *id;
 
   this_id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -284,7 +283,6 @@ PHP_METHOD(MongoId, __toString) {
   id = (char*)emalloc(25);
   id_str = this_id->id;
 
-  movable = id;
   for(i=0; i<12; i++) {
     int x = *id_str;
     char digit1, digit2;
