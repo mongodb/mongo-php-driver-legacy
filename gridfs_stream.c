@@ -33,6 +33,7 @@
 
 #include "php_mongo.h"
 #include "gridfs.h"
+#include "gridfs_stream.h"
 #include "collection.h"
 #include "cursor.h"
 #include "mongo_types.h"

@@ -26,6 +26,7 @@
 
 #include "php_mongo.h"
 #include "gridfs.h"
+#include "gridfs_stream.h"
 #include "collection.h"
 #include "cursor.h"
 #include "mongo_types.h"
@@ -89,8 +90,6 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC);
 static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
 static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options TSRMLS_DC);
 static void ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC);
-
-php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC);
 
 PHP_METHOD(MongoGridFS, __construct) {
   zval *zdb, *files = 0, *chunks = 0, *zchunks;
