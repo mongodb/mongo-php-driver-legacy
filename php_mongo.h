@@ -32,6 +32,15 @@
 #  endif
 #endif
 
+#ifndef Z_ADDREF_P
+#  define Z_ADDREF_P(pz)                (pz)->refcount++
+#endif
+
+#ifndef Z_DELREF_P
+#  define Z_DELREF_P(pz)                (pz)->refcount--
+#endif
+
+
 #define INT_32 4
 #define INT_64 8
 #define DOUBLE_64 8
