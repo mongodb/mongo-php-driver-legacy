@@ -26,10 +26,13 @@
 
 #include "php_mongo.h"
 #include "gridfs.h"
+#include "gridfs_stream.h"
 #include "collection.h"
 #include "cursor.h"
 #include "mongo_types.h"
 #include "db.h"
+
+#include "ext/standard/php_smart_str.h"
 
 typedef struct {
   FILE *file;
@@ -87,8 +90,6 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC);
 static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
 static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options TSRMLS_DC);
 static void ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC);
-
-php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC);
 
 PHP_METHOD(MongoGridFS, __construct) {
   zval *zdb, *files = 0, *chunks = 0, *zchunks;
@@ -337,6 +338,57 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
   }
 }
 
+static cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid)
+{
+	zval *chunks, *files, *criteria_chunks, *criteria_files;
+	char *message = NULL;
+	smart_str tmp_message = { 0 };
+	zval *temp_return;
+
+	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
+	if (EG(exception)) {
+		message = estrdup(Z_STRVAL_P(zend_read_property(mongo_ce_GridFSException, EG(exception), "message", strlen("message"), NOISY TSRMLS_CC)));
+		zend_clear_exception(TSRMLS_C);
+	}
+
+	MAKE_STD_ZVAL(criteria_files);
+	array_init(criteria_files);
+	zval_add_ref(&zid);
+	add_assoc_zval(criteria_files, "_id", zid);
+
+	MAKE_STD_ZVAL(criteria_chunks);
+	array_init(criteria_chunks);
+	zval_add_ref(&zid);
+	add_assoc_zval(criteria_chunks, "files_id", zid);
+
+	MAKE_STD_ZVAL(temp_return);
+	ZVAL_NULL(temp_return);
+	MONGO_METHOD1(MongoCollection, remove, temp_return, chunks, criteria_chunks);
+	zval_ptr_dtor(&temp_return);
+
+	MAKE_STD_ZVAL(temp_return);
+	ZVAL_NULL(temp_return);
+	MONGO_METHOD1(MongoCollection, remove, temp_return, getThis(),  criteria_files);
+	zval_ptr_dtor(&temp_return);
+
+	zval_ptr_dtor(&criteria_files);
+	zval_ptr_dtor(&criteria_chunks);
+
+	// create the message for the exception
+	if (message) {
+		smart_str_appends(&tmp_message, "Could not store file: ");
+		smart_str_appends(&tmp_message, message);
+		smart_str_0(&tmp_message);
+		efree(message);
+	} else {
+		smart_str_appends(&tmp_message, "Could not store file for unknown reasons");
+		smart_str_0(&tmp_message);
+	}
+	zend_throw_exception(mongo_ce_GridFSException, tmp_message.c, 0 TSRMLS_CC);
+	smart_str_free(&tmp_message);
+	RETVAL_FALSE;
+}
+
 /*
  * Stores an array of bytes that may not have a filename,
  * such as data from a socket or stream.
@@ -350,6 +402,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   char *bytes = 0;
   int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0,
     pos = 0;
+	int free_options = 0, revert = 0;
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
@@ -360,18 +413,9 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   ensure_gridfs_index(&temp, chunks TSRMLS_CC);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|az", &bytes, &bytes_len, &extra, &options) == FAILURE) {
-    return;
-  }
-
-  if (!options) {
-    zval *opts;
-    MAKE_STD_ZVAL(opts);
-    array_init(opts);
-    options = opts;
-  } else {
-    zval_add_ref(&options);
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|aa/", &bytes, &bytes_len, &extra, &options) == FAILURE) {
+		return;
+	}
 
   // file array object
   MAKE_STD_ZVAL(zfile);
@@ -387,14 +431,31 @@ PHP_METHOD(MongoGridFS, storeBytes) {
     add_assoc_long(zfile, "length", bytes_len);
   }
 
+	// options
+	if (!options) {
+		zval *opts;
+		MAKE_STD_ZVAL(opts);
+		array_init(opts);
+		options = opts;
+	} else {
+		zval_add_ref(&options);
+	}
+
+	// force safe mode
+	add_assoc_long(options, "safe", 1);
+
   // insert chunks
   while (pos < bytes_len) {
     chunk_size = bytes_len-pos >= global_chunk_size ? global_chunk_size : bytes_len-pos;
 
-    insert_chunk(chunks, zid, chunk_num, bytes+pos, chunk_size, options TSRMLS_CC);
-    if (EG(exception)) {
-      return;
-    }
+		if (insert_chunk(chunks, zid, chunk_num, bytes+pos, chunk_size, options TSRMLS_CC) == FAILURE) {
+			revert = 1;
+			goto cleanup_on_failure;
+		}
+		if (EG(exception)) {
+			revert = 1;
+			goto cleanup_on_failure;
+		}
 
     // increment counters
     pos += chunk_size;
@@ -407,12 +468,21 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   // insert file
   MONGO_METHOD2(MongoCollection, insert, &temp, getThis(), zfile, options);
   zval_dtor(&temp);
+	if (EG(exception)) {
+		revert = 1;
+	}
 
-  zval_add_ref(&zid);
-  zval_ptr_dtor(&zfile);
-  zval_ptr_dtor(&options);
+cleanup_on_failure:
+	if (!revert) {
+		RETVAL_ZVAL(zid, 1, 1);
+	} else {
+		cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
+		RETVAL_FALSE;
+	}
 
-  RETURN_ZVAL(zid, 1, 1);
+	zval_add_ref(&zid);
+	zval_ptr_dtor(&zfile);
+	zval_ptr_dtor(&options);
 }
 
 /* add extra fields required for files:
@@ -460,7 +530,7 @@ static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC) {
  * - buf
  */
 static int insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options  TSRMLS_DC) {
-  zval temp;
+	zval temp;
   zval *zchunk, *zbin;
 
   // create chunk
@@ -504,6 +574,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   char *filename = 0;
   int free_options = 0;
   int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1, safe = 0;
+	int revert = 0;
   FILE *fp = 0;
 
   zval temp;
@@ -515,17 +586,9 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   ensure_gridfs_index(&temp, chunks TSRMLS_CC);
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|az", &fh, &extra, &options) == FAILURE) {
-    return;
-  }
-
-  if (!options) {
-    zval *opts;
-    MAKE_STD_ZVAL(opts);
-    array_init(opts);
-    options = opts;
-	free_options = 1;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|aa/", &fh, &extra, &options) == FAILURE) {
+		return;
+	}
 
   if (Z_TYPE_P(fh) == IS_RESOURCE) {
     zend_rsrc_list_entry *le;
@@ -586,6 +649,18 @@ PHP_METHOD(MongoGridFS, storeFile) {
   // chunkSize
   global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
 
+	// options
+	if (!options) {
+		zval *opts;
+		MAKE_STD_ZVAL(opts);
+		array_init(opts);
+		options = opts;
+		free_options = 1;
+	}
+
+	// force safe mode
+	add_assoc_long(options, "safe", 1);
+
   // insert chunks
   while (pos < size || fp == 0) {
     int result = 0;
@@ -597,32 +672,41 @@ PHP_METHOD(MongoGridFS, storeFile) {
     if (fp) {
       if ((int)fread(buf, 1, chunk_size, fp) < chunk_size) {
         zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error reading file %s", filename);
-        return;
+				revert = 1;
+				efree(buf);
+				goto cleanup_on_failure;
       }
       pos += chunk_size;
       if (insert_chunk(chunks, zid, chunk_num, buf, chunk_size, options TSRMLS_CC) == FAILURE) {
-        break;
+				revert = 1;
+				efree(buf);
+				goto cleanup_on_failure;
       }
     }
     else {
       result = read(fd, buf, chunk_size);
       if (result == -1) {
         zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error reading filehandle");
-        return;
+				revert = 1;
+				efree(buf);
+				goto cleanup_on_failure;
       }
       pos += result;
       if (insert_chunk(chunks, zid, chunk_num, buf, result, options TSRMLS_CC) == FAILURE) {
-        break;
+				revert = 1;
+				efree(buf);
+				goto cleanup_on_failure;
       }
     }
 
-    if (safe && EG(exception)) {
-      return;
-    }
+    efree(buf);
+
+		if (safe && EG(exception)) {
+			revert = 1;
+			goto cleanup_on_failure;
+		}
 
     chunk_num++;
-
-    efree(buf);
 
     if (fp == 0 && result < chunk_size) {
       break;
@@ -635,8 +719,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   }
 
   if (EG(exception)) {
-    zval_ptr_dtor(&zfile);
-    return;
+		goto cleanup_on_failure;
   }
 
   if (!fp) {
@@ -645,17 +728,39 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   add_md5(zfile, zid, c TSRMLS_CC);
 
-  // insert file
-  MONGO_METHOD2(MongoCollection, insert, &temp, getThis(), zfile, options);
+	// insert file
+	if (!revert) {
+		zval *temp_return;
 
-  // cleanup
-  zval_add_ref(&zid);
-  zval_ptr_dtor(&zfile);
-  if (free_options) {
-	  zval_ptr_dtor(&options);
-  }
+		Z_ADDREF_P(options);
+		MAKE_STD_ZVAL(temp_return);
+		ZVAL_NULL(temp_return);
+		MONGO_METHOD2(MongoCollection, insert, temp_return, getThis(), zfile, options);
+		zval_ptr_dtor(&temp_return);
+		Z_DELREF_P(options);
+		if (EG(exception)) {
+			revert = 1;
+		}
+	}
 
-  RETURN_ZVAL(zid, 1, 1);
+	if (!revert) {
+		RETVAL_ZVAL(zid, 1, 1);
+	}
+
+cleanup_on_failure:
+	// remove all inserted chunks and main file document
+	if (revert) {
+		cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
+		RETVAL_FALSE;
+	}
+
+	// cleanup
+	zval_add_ref(&zid);
+	zval_ptr_dtor(&zfile);
+
+	if (free_options) {
+		zval_ptr_dtor(&options);
+	}
 }
 
 PHP_METHOD(MongoGridFS, findOne) {
@@ -838,21 +943,25 @@ PHP_METHOD(MongoGridFS, storeUpload) {
  * New GridFS API
  */
 
-PHP_METHOD(MongoGridFS, delete) {
-  zval *id, *criteria;
+PHP_METHOD(MongoGridFS, delete)
+{
+	zval *id, *criteria;
+	char *str_id;
+	size_t str_len;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O", &id, mongo_ce_Id) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &id) == FAILURE) {
+		return;
+	}
 
-  MAKE_STD_ZVAL(criteria);
-  array_init(criteria);
-  add_assoc_zval(criteria, "_id", id);
-  zval_add_ref(&id);
+	// Set up criteria array
+	MAKE_STD_ZVAL(criteria);
+	array_init(criteria);
+	add_assoc_zval(criteria, "_id", id);
+	zval_add_ref(&id);
 
-  MONGO_METHOD1(MongoGridFS, remove, return_value, getThis(), criteria);
+	MONGO_METHOD1(MongoGridFS, remove, return_value, getThis(), criteria);
 
-  zval_ptr_dtor(&criteria);
+	zval_ptr_dtor(&criteria);
 }
 
 PHP_METHOD(MongoGridFS, get) {

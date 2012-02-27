@@ -49,7 +49,6 @@ static pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
  * and close all connections.  If we get a successful ping response, we assume
  * just our socket went bad and leave the other connections open.
  */
-static void test_other_conns(mongo_server *server, stack_monitor *monitor TSRMLS_DC);
 static void get_other_conn(mongo_server *server, mongo_server *other, stack_monitor *monitor);
 
 int mongo_util_pool_init(mongo_server *server, time_t timeout TSRMLS_DC) {
@@ -150,47 +149,12 @@ void mongo_util_pool_close(mongo_server *server, int check_conns TSRMLS_DC) {
     return;
   }
 
-  // try pinging a server to see if every connection is bad, or just ours
-  if (check_conns) {
-    test_other_conns(server, monitor TSRMLS_CC);
-  }
-
   mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool close (%p)", server->label, monitor);
 
-  mongo_util_pool__disconnect(monitor, server);
+  mongo_util_pool__disconnect(monitor, server TSRMLS_CC);
 
   // clean up reference to server (nothing needs to be freed)
   mongo_util_pool__rm_server_ptr(monitor, server);
-}
-
-static void test_other_conns(mongo_server *server, stack_monitor *monitor TSRMLS_DC) {
-  mongo_server other;
-  zval *response = 0;
-
-  // get another connection
-  get_other_conn(server, &other, monitor);
-
-  // if no other connections open, we don't have to worry about closing them
-  if (other.connected == 0) {
-    return;
-  }
-
-  response = mongo_util_rs__cmd("ping", &other TSRMLS_CC);
-
-  if (!response) {
-    mongo_util_pool__close_connections(monitor TSRMLS_CC);
-  }
-  else {
-    zval **ok = 0;
-
-    zend_hash_find(HASH_P(response), "ok", strlen("ok")+1, (void**)&ok);
-
-    if (Z_NUMVAL_PP(ok, 0)) {
-      mongo_util_pool__close_connections(monitor TSRMLS_CC);
-    }
-
-    zval_ptr_dtor(&response);
-  }
 }
 
 static void get_other_conn(mongo_server *server, mongo_server *other, stack_monitor *monitor) {
@@ -242,7 +206,7 @@ int mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
 
   mongo_util_pool__close_connections(monitor TSRMLS_CC);
   // just to be sure
-  mongo_util_pool__disconnect(monitor, server);
+  mongo_util_pool__disconnect(monitor, server TSRMLS_CC);
 
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
@@ -376,7 +340,7 @@ void mongo_util_pool__stack_clear(stack_monitor *monitor TSRMLS_DC) {
   temp.owner = getpid();
 
   while (mongo_util_pool__stack_pop(monitor, &temp TSRMLS_CC) == SUCCESS) {
-    mongo_util_pool__disconnect(monitor, &temp);
+    mongo_util_pool__disconnect(monitor, &temp TSRMLS_CC);
   }
   monitor->top = 0;
 }
@@ -451,7 +415,7 @@ void mongo_util_pool__close_connections(stack_monitor *monitor TSRMLS_DC) {
   // close all open connections
   current = monitor->servers;
   while (current) {
-    mongo_util_pool__disconnect(monitor, current);
+    mongo_util_pool__disconnect(monitor, current TSRMLS_CC);
     monitor->num.in_use--;
     current = current->next_in_pool;
   }
@@ -463,7 +427,7 @@ void mongo_util_pool__close_connections(stack_monitor *monitor TSRMLS_DC) {
   mongo_util_pool__stack_clear(monitor TSRMLS_CC);
 }
 
-void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server) {
+void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server TSRMLS_DC) {
   int was_connected = server->connected;
 
   // kill any cursor associated with this connection before deleting it
