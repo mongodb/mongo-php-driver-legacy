@@ -285,6 +285,7 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC) {
   }
   else {
     zid = *zzid;
+	Z_ADDREF_P(zid);
   }
   return zid;
 }
@@ -474,13 +475,12 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
 cleanup_on_failure:
 	if (!revert) {
-		RETVAL_ZVAL(zid, 1, 1);
+		RETVAL_ZVAL(zid, 1, 0);
 	} else {
 		cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
 		RETVAL_FALSE;
 	}
 
-	zval_add_ref(&zid);
 	zval_ptr_dtor(&zfile);
 	zval_ptr_dtor(&options);
 }
@@ -744,7 +744,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 	}
 
 	if (!revert) {
-		RETVAL_ZVAL(zid, 1, 1);
+		RETVAL_ZVAL(zid, 1, 0);
 	}
 
 cleanup_on_failure:
@@ -755,7 +755,6 @@ cleanup_on_failure:
 	}
 
 	// cleanup
-	zval_add_ref(&zid);
 	zval_ptr_dtor(&zfile);
 
 	if (free_options) {
@@ -1324,7 +1323,7 @@ PHP_METHOD(MongoGridFSCursor, key) {
   if (!cursor->current) {
     RETURN_NULL();
   }
-  zend_hash_find(HASH_P(cursor->current), "filename", strlen("filename")+1, (void**)&return_value_ptr);
+  zend_hash_find(HASH_P(cursor->current), "_id", strlen("_id")+1, (void**)&return_value_ptr);
   if (!return_value_ptr) {
     RETURN_NULL();
   }
