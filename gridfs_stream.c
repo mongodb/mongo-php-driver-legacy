@@ -211,7 +211,7 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 
 	if (chunk_id == self->chunkId) {
 		/* nothing to load :-) */
-		return;
+		return SUCCESS;
 	}
 
 	DEBUG(("loading chunk %d\n", chunk_id));
