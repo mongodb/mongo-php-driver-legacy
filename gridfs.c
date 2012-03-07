@@ -1323,7 +1323,7 @@ PHP_METHOD(MongoGridFSCursor, key) {
   if (!cursor->current) {
     RETURN_NULL();
   }
-  zend_hash_find(HASH_P(cursor->current), "filename", strlen("filename")+1, (void**)&return_value_ptr);
+  zend_hash_find(HASH_P(cursor->current), "_id", strlen("_id")+1, (void**)&return_value_ptr);
   if (!return_value_ptr) {
     RETURN_NULL();
   }
