@@ -29,6 +29,7 @@
 
 extern int le_pserver;
 extern zend_class_entry *mongo_ce_Id;
+ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 static server_info* create_info();
 static void make_other_le(const char *id, server_info *info TSRMLS_DC);
