@@ -69,8 +69,8 @@ typedef struct _server_info {
 #define MONGO_SERVER_PING INT_MAX
 #define MONGO_SERVER_BSON (4*1024*1024)
 
-#define MONGO_PING_INTERVAL 5
-#define MONGO_ISMASTER_INTERVAL 60
+#define MONGO_PING_INTERVAL (MonGlo(ping_interval))
+#define MONGO_ISMASTER_INTERVAL (MonGlo(is_master_interval))
 
 // ------- Server Info Interface -----------
 
