@@ -94,6 +94,9 @@ int mongo_util_pool_get(mongo_server *server, zval *errmsg TSRMLS_DC) {
     return FAILURE;
   }
 
+  // store the owner of the link
+  server->owner = getpid();
+
   mongo_log(MONGO_LOG_POOL, MONGO_LOG_FINE TSRMLS_CC, "%s: pool get (%p)", server->label, monitor);
 
   // get connection from pool or create new
