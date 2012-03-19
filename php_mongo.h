@@ -601,6 +601,9 @@ int pool_size;
 
 	long log_level;
 	long log_module;
+
+	long ping_interval;
+	long is_master_interval;
 ZEND_END_MODULE_GLOBALS(mongo)
 
 #ifdef ZTS
