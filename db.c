@@ -633,6 +633,7 @@ zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
   zval_ptr_dtor(&cursor_zval);
 
   if (exception || IS_SCALAR_P(response)) {
+	  zval_ptr_dtor(&response);
     return 0;
   }
 
