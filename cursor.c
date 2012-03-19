@@ -734,6 +734,9 @@ PHP_METHOD(MongoCursor, key) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
+  if (!cursor->current) {
+    RETURN_NULL();
+  }
   if (cursor->current &&
       Z_TYPE_P(cursor->current) == IS_ARRAY &&
       zend_hash_find(HASH_P(cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
@@ -751,7 +754,7 @@ PHP_METHOD(MongoCursor, key) {
     }
   }
   else {
-    RETURN_STRING("", 1);
+    RETURN_LONG(cursor->at - 1);
   }
 }
 /* }}} */
