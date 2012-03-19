@@ -751,7 +751,7 @@ PHP_METHOD(MongoCursor, key) {
     }
   }
   else {
-    RETURN_STRING("", 1);
+    RETURN_LONG(cursor->at);
   }
 }
 /* }}} */
