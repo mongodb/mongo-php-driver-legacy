@@ -60,8 +60,6 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
   int yes = 1;
 #endif
 
-  server->owner = getpid();
-
 #ifdef WIN32
   family = AF_INET;
   sa = (struct sockaddr*)(&si);
@@ -342,6 +340,7 @@ int mongo_util_disconnect(mongo_server *server) {
 
   pid = getpid();
   if (server->owner != pid) {
+		mongo_log(MONGO_LOG_SERVER, MONGO_LOG_WARNING TSRMLS_CC, "link (%s) owner PID (%d) doesn't match process PID (%d)", server->label, server->owner, pid);
     return 0;
   }
 
