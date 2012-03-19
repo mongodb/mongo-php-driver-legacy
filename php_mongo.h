@@ -18,7 +18,7 @@
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1
 
-#define PHP_MONGO_VERSION "1.2.10dev"
+#define PHP_MONGO_VERSION "1.3.0dev"
 #define PHP_MONGO_EXTNAME "mongo"
 
 // resource names
@@ -88,6 +88,12 @@
 #define PREV_ERROR 1
 #define RESET_ERROR 2
 #define FORCE_ERROR 3
+
+#if PHP_VERSION_ID > 50300
+# define MONGO_ARGINFO_STATIC
+#else
+# define MONGO_ARGINFO_STATIC static
+#endif
 
 #if ZEND_MODULE_API_NO >= 20090115
 # define PUSH_PARAM(arg) zend_vm_stack_push(arg TSRMLS_CC)

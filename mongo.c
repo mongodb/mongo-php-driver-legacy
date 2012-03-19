@@ -59,45 +59,70 @@ extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_Exception,
   *mongo_ce_ConnectionException;
 
-/*
- * arginfo needs to be set for __get because if PHP doesn't know it only takes
- * one arg, it will issue a warning.
- */
-#if ZEND_MODULE_API_NO < 20090115
-static
-#endif
-ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, server)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+/* Those two used to be there, but no longer it seems
+	ZEND_ARG_INFO(0, persist)
+	ZEND_ARG_INFO(0, garbage)
+*/
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_selectDB, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, database_name)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_selectCollection, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, database_name)
+	ZEND_ARG_INFO(0, collection_name)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, slave_okay)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_dropDB, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, MongoDB_object_OR_database_name)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setPoolSize, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, maximum_pool_size)
+ZEND_END_ARG_INFO()
 
 static zend_function_entry mongo_methods[] = {
-  PHP_ME(Mongo, __construct, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, connect, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, connect, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, pairConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, persistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, pairPersistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(Mongo, connectUtil, NULL, ZEND_ACC_PROTECTED)
-  PHP_ME(Mongo, __toString, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, connectUtil, arginfo_no_parameters, ZEND_ACC_PROTECTED)
+  PHP_ME(Mongo, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, __get, arginfo___get, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, selectDB, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, selectCollection, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, getSlaveOkay, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, setSlaveOkay, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, dropDB, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, lastError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(Mongo, prevError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(Mongo, resetError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(Mongo, forceError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(Mongo, listDBs, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, getHosts, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, getSlave, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, switchSlave, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, close, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, setPoolSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(Mongo, getPoolSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(Mongo, poolDebug, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(Mongo, serverInfo, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(Mongo, selectDB, arginfo_selectDB, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, selectCollection, arginfo_selectCollection, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, dropDB, arginfo_dropDB, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, lastError, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(Mongo, prevError, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(Mongo, resetError, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(Mongo, forceError, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(Mongo, listDBs, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, getHosts, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, getSlave, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, switchSlave, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, setPoolSize, arginfo_setPoolSize, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(Mongo, getPoolSize, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(Mongo, poolDebug, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(Mongo, serverInfo, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   { NULL, NULL, NULL }
 };
 
@@ -292,7 +317,7 @@ PHP_METHOD(Mongo, __construct) {
   }
 
   if (connect) {
-    MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
+    MONGO_METHOD(Mongo, connectUtil, NULL, getThis());
   }
 }
 /* }}} */
@@ -369,7 +394,9 @@ PHP_METHOD(Mongo, connectUtil) {
   else {
     zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
                               strlen("connected"), 1 TSRMLS_CC);
-    ZVAL_BOOL(return_value, 1);
+    if (return_value) {
+      ZVAL_BOOL(return_value, 1);
+    }
   }
 
   if (msg) {

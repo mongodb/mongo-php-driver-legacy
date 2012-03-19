@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package packagerversion="1.4.11" version="2.0"
-  xmlns="http://pear.php.net/dtd/package-2.0"
-  xmlns:tasks="http://pear.php.net/dtd/tasks-1.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
+<package packagerversion="1.4.11" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
   http://pear.php.net/dtd/tasks-1.0.xsd
   http://pear.php.net/dtd/package-2.0
   http://pear.php.net/dtd/package-2.0.xsd">
@@ -17,17 +13,11 @@
   <email>kristina@10gen.com</email>
   <active>yes</active>
  </lead>
- <lead>
-  <name>Derick Rethans</name>
-  <user>derick</user>
-  <email>derick@php.net</email>
-  <active>yes</active>
- </lead>
- <date>2012-02-23</date>
- <time>11:41:00</time>
+ <date>2011-09-30</date>
+ <time>12:00:00</time>
  <version>
-  <release>1.2.9</release>
-  <api>1.2.9</api>
+  <release>1.2.6</release>
+  <api>1.2.6</api>
  </version>
  <stability>
   <release>stable</release>
@@ -37,8 +27,7 @@
  <notes>
    BUG FIXES
 
-   * ZTS compile fixes
-   * Re-package due to bug in PEAR/PECL packaging system
+   * Patched connection closing code (Carlos Rodriguez)
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -94,79 +83,6 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.9</release>
-    <api>1.2.9</api>
-   </version>
-   <date>2012-02-23</date>
-   <notes>
-   BUG FIXES
-
-   * ZTS compile fixes
-   * Re-package due to bug in PEAR/PECL packaging system
-   </notes>
-  </release>
-
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.8</release>
-    <api>1.2.8</api>
-   </version>
-   <date>2012-02-22</date>
-   <notes>
-   BUG FIXES
-
-   * PHP-306 - MongoID::__set_state does not work
-   * PHP-307 - getHosts() not working with 1.2.7
-   * PHP-311 - Apache httpd segfault with PHP mongo 1.2.7
-   * PHP-312 - Seg fault with curl POST + mongo replicaset close
-   * PHP-313 - Kill cursor can be called on a different connection than the one the cursor was created on
-   * PHP-319 - Issues when the the driver tests for other connections to close if it find a "bad connection".
-   * PHP-320 - GridFS doesn't check for correct insertion of file-meta-document
-   * PHP-325 - mongo-php-driver abort with SEGV
-   </notes>
-  </release>
-
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.7</release>
-    <api>1.2.7</api>
-   </version>
-   <date>2012-01-05</date>
-   <notes>
-   BUG FIXES
-
-   * PHP-204: ClusteredCursor::query not throwing an Exception
-   * PHP-262: Added persistent replicaSet container
-   * PHP-277: Remove cursor from list on cursor reset
-   * PHP-279: Make accessing connected property quiet
-   * PHP-286: Try ping on another connection when one fails
-   * PHP-300: Fixed segfault when execute() is given array() as argument.
-   * Make mongoLog settings thread safe.
-   * Fixed memory leaks
-   * Fixed issues with connection pooling
-
-   NEW FEATURES
-
-   * PHP-233: Added the continueOnError flag to batch_insert().
-   * PHP-268: Add slave buckets
-   * PHP-272: Randomly choose slaves from a given bucket
-   </notes>
-  </release>
-
   <release>
    <stability>
     <release>stable</release>

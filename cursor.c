@@ -474,7 +474,7 @@ PHP_METHOD(MongoCursor, snapshot) {
 /* }}} */
 
 
-/* {{{ MongoCursor->sort
+/* {{{ MongoCursor->sort(array fields)
  */
 PHP_METHOD(MongoCursor, sort) {
   zval *orderby, *fields;
@@ -483,7 +483,7 @@ PHP_METHOD(MongoCursor, sort) {
     return;
   }
   if (IS_SCALAR_P(fields)) {
-    zend_error(E_WARNING, "MongoCursor::sort() expects parameter 1 to be an array or object");
+    zend_error(E_WARNING, "MongoCursor::sort() expects parameter 1 to be an array");
     return;
   }
 
@@ -734,6 +734,9 @@ PHP_METHOD(MongoCursor, key) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
 
+  if (!cursor->current) {
+    RETURN_NULL();
+  }
   if (cursor->current &&
       Z_TYPE_P(cursor->current) == IS_ARRAY &&
       zend_hash_find(HASH_P(cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
@@ -751,7 +754,7 @@ PHP_METHOD(MongoCursor, key) {
     }
   }
   else {
-    RETURN_STRING("", 1);
+    RETURN_LONG(cursor->at - 1);
   }
 }
 /* }}} */
@@ -1000,46 +1003,110 @@ PHP_METHOD(MongoCursor, count) {
   zval_ptr_dtor(&db_z);
 }
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_OBJ_INFO(0, connection, Mongo, 0)
+	ZEND_ARG_INFO(0, database_and_collection_name)
+	ZEND_ARG_ARRAY_INFO(0, query, 0)
+	ZEND_ARG_INFO(0, array_of_fields_OR_object)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_limit, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, number)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, number)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_skip, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, number)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_fields, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_add_option, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, key)
+	ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_sort, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_hint, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, keyPattern, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_slave_okay, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, okay)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tailable, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, tail)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_immortal, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, liveForever)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_partial, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, okay)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timeout, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, milliseconds)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_count, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, foundOnly)
+ZEND_END_ARG_INFO()
+
+
 static zend_function_entry MongoCursor_methods[] = {
-  PHP_ME(MongoCursor, __construct, NULL, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, hasNext, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, getNext, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, hasNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, getNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
   /* options */
-  PHP_ME(MongoCursor, limit, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, batchSize, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, fields, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, limit, arginfo_limit, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, batchSize, arginfo_batchsize, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, skip, arginfo_skip, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, fields, arginfo_fields, ZEND_ACC_PUBLIC)
 
   /* meta options */
-  PHP_ME(MongoCursor, addOption, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, snapshot, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, addOption, arginfo_add_option, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, snapshot, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, sort, arginfo_sort, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, hint, arginfo_hint, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, explain, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
   /* flags */
-  PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, immortal, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, partial, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, slaveOkay, arginfo_slave_okay, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, tailable, arginfo_tailable, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, immortal, arginfo_immortal, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, partial, arginfo_partial, ZEND_ACC_PUBLIC)
 
   /* query */
   PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, doQuery, NULL, ZEND_ACC_PROTECTED)
-  PHP_ME(MongoCursor, info, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, dead, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, doQuery, arginfo_no_parameters, ZEND_ACC_PROTECTED)
+  PHP_ME(MongoCursor, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
   /* iterator funcs */
-  PHP_ME(MongoCursor, current, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, key, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, next, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, rewind, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, valid, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, reset, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, current, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, key, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, next, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, rewind, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, valid, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, reset, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
   /* stand-alones */
-  PHP_ME(MongoCursor, count, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, count, arginfo_count, ZEND_ACC_PUBLIC)
 
   {NULL, NULL, NULL}
 };
