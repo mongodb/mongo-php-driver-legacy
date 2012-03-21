@@ -1316,19 +1316,31 @@ PHP_METHOD(MongoGridFSCursor, current) {
   MONGO_METHOD2(MongoGridFSFile, __construct, &temp, return_value, gridfs, cursor->current);
 }
 
-PHP_METHOD(MongoGridFSCursor, key) {
-  mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoGridFSCursor);
+PHP_METHOD(MongoGridFSCursor, key)
+{
+	zval **id;
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(cursor->link, MongoGridFSCursor);
 
-  if (!cursor->current) {
-    RETURN_NULL();
-  }
-  zend_hash_find(HASH_P(cursor->current), "_id", strlen("_id")+1, (void**)&return_value_ptr);
-  if (!return_value_ptr) {
-    RETURN_NULL();
-  }
-  convert_to_string(*return_value_ptr);
-  RETURN_STRING(Z_STRVAL_PP(return_value_ptr), 1);
+	if (!cursor->current) {
+		RETURN_NULL();
+	}
+	if (zend_hash_find(HASH_P(cursor->current), "_id", strlen("_id")+1, (void**)&id) == SUCCESS) {
+		if (Z_TYPE_PP(id) == IS_OBJECT) {
+#if ZEND_MODULE_API_NO >= 20060613
+			zend_std_cast_object_tostring(*id, return_value, IS_STRING TSRMLS_CC);
+#else
+			zend_std_cast_object_tostring(*id, return_value, IS_STRING, 0 TSRMLS_CC);
+#endif /* ZEND_MODULE_API_NO >= 20060613 */
+		} else {
+			RETVAL_ZVAL(*id, 1, 0);
+			convert_to_string(return_value);
+		}
+		convert_to_string(*return_value_ptr);
+		RETURN_STRING(Z_STRVAL_PP(return_value_ptr), 1);
+	} else {
+		RETURN_LONG(cursor->at - 1);
+	}
 }
 
 
