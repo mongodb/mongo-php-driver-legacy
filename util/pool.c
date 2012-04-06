@@ -114,7 +114,7 @@ void mongo_util_pool_done(mongo_server *server TSRMLS_DC) {
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     // if we couldn't push this, close the connection
-    mongo_util_disconnect(server);
+    mongo_util_disconnect(server TSRMLS_CC);
     return;
   }
 
@@ -134,7 +134,7 @@ void mongo_util_pool_remove(mongo_server *server TSRMLS_DC) {
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
     // if we couldn't push this, close the connection
-    mongo_util_disconnect(server);
+    mongo_util_disconnect(server TSRMLS_CC);
     return;
   }
 
@@ -148,7 +148,7 @@ void mongo_util_pool_close(mongo_server *server, int check_conns TSRMLS_DC) {
   stack_monitor *monitor;
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
-    mongo_util_disconnect(server);
+    mongo_util_disconnect(server TSRMLS_CC);
     return;
   }
 
@@ -201,7 +201,7 @@ int mongo_util_pool_failed(mongo_server *server TSRMLS_DC) {
   zval *errmsg;
 
   if ((monitor = mongo_util_pool__get_monitor(server TSRMLS_CC)) == 0) {
-    mongo_util_disconnect(server);
+    mongo_util_disconnect(server TSRMLS_CC);
     return FAILURE;
   }
 
@@ -436,7 +436,7 @@ void mongo_util_pool__disconnect(stack_monitor *monitor, mongo_server *server TS
   // kill any cursor associated with this connection before deleting it
   mongo_cursor_free_le(server, MONGO_SERVER TSRMLS_CC);
 
-  mongo_util_disconnect(server);
+  mongo_util_disconnect(server TSRMLS_CC);
 
   if (was_connected &&
       (monitor->num.remaining < -1 || monitor->num.remaining > 0)) {
@@ -546,14 +546,14 @@ int mongo_util_pool__connect(stack_monitor *monitor, mongo_server *server, zval 
     return FAILURE;
   }
 
-  if (mongo_util_connect(server, monitor->timeout, errmsg) == FAILURE) {
+  if (mongo_util_connect(server, monitor->timeout, errmsg TSRMLS_CC) == FAILURE) {
     server->connected = 0;
     return FAILURE;
   }
 
   // authenticate, if necessary
   if (mongo_util_connect_authenticate(server, errmsg TSRMLS_CC) == FAILURE) {
-    mongo_util_disconnect(server);
+    mongo_util_disconnect(server TSRMLS_CC);
     return FAILURE;
   }
 
