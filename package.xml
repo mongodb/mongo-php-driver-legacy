@@ -23,11 +23,11 @@
   <email>derick@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-02-23</date>
- <time>11:41:00</time>
+ <date>2012-04-06</date>
+ <time>14:43:00</time>
  <version>
-  <release>1.2.9</release>
-  <api>1.2.9</api>
+  <release>1.2.10</release>
+  <api>1.2.10</api>
  </version>
  <stability>
   <release>stable</release>
@@ -35,10 +35,21 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-   BUG FIXES
+** Bug
+    * [PHP-329] - MongoCursorException with Apache while master steps down
+    * [PHP-335] - 1.2.8/1.2.9 don't compile with PHP &lt; 5.3
+    * [PHP-337] - failover with replicaset
+    * [PHP-340] - MongoCursorException - could not determine master
+    * [PHP-343] - PHP segfaults when adding a file to GridFS after upgrade to 1.2.9
+    * [PHP-344] - Segmentation Fault on $grid->storeFile('foo', $bar)
+    * [PHP-346] - getGridFS followed by storeBytes hangs request indefinitely
+    * [PHP-349] - MongoCursorTimeoutException causes connections not to close
+    * [PHP-351] - php driver doest close connection , when catch cursor timed out exception.
+    * [PHP-353] - Iterator key not set when _id field is not requested
+    * [PHP-361] - Mongo::getHosts() segfaults (at least when not connecting to a replica set)
 
-   * ZTS compile fixes
-   * Re-package due to bug in PEAR/PECL packaging system
+** Improvement
+    * [PHP-352] - Return only one element after "iterator_to_array()" if exclude "_id" from field list
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -94,6 +105,35 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.10</release>
+    <api>1.2.10</api>
+   </version>
+   <date>2012-04-06</date>
+   <notes>
+** Bug
+    * [PHP-329] - MongoCursorException with Apache while master steps down
+    * [PHP-335] - 1.2.8/1.2.9 don't compile with PHP &lt; 5.3
+    * [PHP-337] - failover with replicaset
+    * [PHP-340] - MongoCursorException - could not determine master
+    * [PHP-343] - PHP segfaults when adding a file to GridFS after upgrade to 1.2.9
+    * [PHP-344] - Segmentation Fault on $grid->storeFile('foo', $bar)
+    * [PHP-346] - getGridFS followed by storeBytes hangs request indefinitely
+    * [PHP-349] - MongoCursorTimeoutException causes connections not to close
+    * [PHP-351] - php driver doest close connection , when catch cursor timed out exception.
+    * [PHP-353] - Iterator key not set when _id field is not requested
+    * [PHP-361] - Mongo::getHosts() segfaults (at least when not connecting to a replica set)
+
+** Improvement
+    * [PHP-352] - Return only one element after "iterator_to_array()" if exclude "_id" from field list
+   </notes>
+  </release>
+
   <release>
    <stability>
     <release>stable</release>
