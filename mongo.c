@@ -636,6 +636,9 @@ PHP_METHOD(Mongo, getHosts)
 			MAKE_STD_ZVAL(infoz);
 			array_init(infoz);
 
+			add_assoc_string(infoz, "host", current->server->host, 1);
+			add_assoc_long(infoz, "port", current->server->port);
+
 			info = mongo_util_server__get_info(current->server TSRMLS_CC);
 			add_assoc_long(infoz, "health", info->guts->readable);
 			add_assoc_long(infoz, "state", info->guts->master ? 1 : info->guts->readable ? 2 : 0);
