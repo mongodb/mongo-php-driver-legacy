@@ -424,6 +424,8 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   // merge extra & zfile and add _id if needed
   zid = setup_extra(zfile, extra TSRMLS_CC);
+  setup_file_fields(zfile, NULL, bytes_len TSRMLS_CC);
+
   // chunkSize
   global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
 
@@ -491,31 +493,31 @@ cleanup_on_failure:
  * - length
  * these fields are only added if the user hasn't defined them.
  */
-static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC) {
-  zval temp;
+static int setup_file_fields(zval *zfile, char *filename, int length TSRMLS_DC)
+{
+	zval temp;
 
-  // filename
-  if (filename && !zend_hash_exists(HASH_P(zfile), "filename", strlen("filename")+1)) {
-    add_assoc_stringl(zfile, "filename", filename, strlen(filename), DUP);
-  }
+	// filename
+	if (filename && !zend_hash_exists(HASH_P(zfile), "filename", strlen("filename")+1)) {
+		add_assoc_stringl(zfile, "filename", filename, strlen(filename), DUP);
+	}
 
-  // uploadDate
-  if (!zend_hash_exists(HASH_P(zfile), "uploadDate", strlen("uploadDate")+1)) {
-    // create an id for the file
-    zval *upload_date;
-    MAKE_STD_ZVAL(upload_date);
-    object_init_ex(upload_date, mongo_ce_Date);
-    MONGO_METHOD(MongoDate, __construct, &temp, upload_date);
+	// uploadDate
+	if (!zend_hash_exists(HASH_P(zfile), "uploadDate", strlen("uploadDate")+1)) {
+		zval *upload_date;
+		MAKE_STD_ZVAL(upload_date);
+		object_init_ex(upload_date, mongo_ce_Date);
+		MONGO_METHOD(MongoDate, __construct, &temp, upload_date);
 
-    add_assoc_zval(zfile, "uploadDate", upload_date);
-  }
+		add_assoc_zval(zfile, "uploadDate", upload_date);
+	}
 
-  // size
-  if (!zend_hash_exists(HASH_P(zfile), "length", strlen("length")+1)) {
-    add_assoc_long(zfile, "length", size);
-  }
+	// length
+	if (!zend_hash_exists(HASH_P(zfile), "length", strlen("length")+1)) {
+		add_assoc_long(zfile, "length", length);
+	}
 
-  return SUCCESS;
+	return SUCCESS;
 }
 
 /* Creates a chunk and adds it to the chunks collection as:
