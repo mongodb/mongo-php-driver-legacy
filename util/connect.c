@@ -40,7 +40,7 @@
 extern zend_class_entry *mongo_ce_Mongo;
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
-int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
+int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg TSRMLS_DC) {
   struct sockaddr* sa;
   struct sockaddr_in si;
   socklen_t sn;
@@ -108,7 +108,7 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
 
   // get addresses
   if (mongo_util_connect__sockaddr(sa, family, server->host, server->port, errmsg) == FAILURE) {
-    mongo_util_disconnect(server);
+    mongo_util_disconnect(server TSRMLS_CC);
     // errmsg set in mongo_get_sockaddr
     return FAILURE;
   }
@@ -135,7 +135,7 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
       if (errmsg) {
         ZVAL_STRING(errmsg, strerror(errno), 1);
       }
-      mongo_util_disconnect(server);
+      mongo_util_disconnect(server TSRMLS_CC);
       return FAILURE;
     }
 
@@ -153,7 +153,7 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
         if (errmsg) {
           ZVAL_STRING(errmsg, strerror(errno), 1);
         }
-        mongo_util_disconnect(server);
+        mongo_util_disconnect(server TSRMLS_CC);
         return FAILURE;
       }
 
@@ -162,7 +162,7 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
         if (errmsg) {
           ZVAL_STRING(errmsg, strerror(errno), 1);
         }
-        mongo_util_disconnect(server);
+        mongo_util_disconnect(server TSRMLS_CC);
         return FAILURE;
       }
 
@@ -179,7 +179,7 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
       if (errmsg) {
         ZVAL_STRING(errmsg, strerror(errno), 1);
       }
-      mongo_util_disconnect(server);
+      mongo_util_disconnect(server TSRMLS_CC);
       return FAILURE;
     }
 
@@ -331,7 +331,7 @@ int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *host, in
 }
 
 
-int mongo_util_disconnect(mongo_server *server) {
+int mongo_util_disconnect(mongo_server *server TSRMLS_DC) {
   pid_t pid;
 
   if (!server || !server->socket) {

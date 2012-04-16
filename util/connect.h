@@ -40,7 +40,7 @@ void mongo_util_connect_buildinfo(zval *this_ptr TSRMLS_DC);
  * Actually make the network connection.  Returns SUCCESS/FAILURE and sets
  * errmsg, never throws exceptions.
  */
-int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg);
+int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg TSRMLS_DC);
 
 /**
  * If this connection should be authenticated, try to authenticate.  Returns
@@ -51,7 +51,7 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
 /**
  * Disconnect from a socket.
  */
-int mongo_util_disconnect(mongo_server *server);
+int mongo_util_disconnect(mongo_server *server TSRMLS_DC);
 
 /**
  * Find the master connection.
