@@ -7,11 +7,12 @@ $m = new Mongo(); // i.e. a remote host
 $db = $m->phpunit;
 $db->dropCollection( 'phpunit' );
 $grid = $db->getGridFS();
+$grid->drop();
 $saved = $grid->storeBytes(
 	$bytes,
 	array(
 		'filename' => 'test_file-'.rand(0,10000),
-		'size' => 'm',
+		'thumbnail_size' => 'm',
 		'otherdata' => 'BIG'
 	),
 	array('safe' => true)
@@ -20,22 +21,29 @@ var_dump( $grid->findOne() );
 echo "OK\n";
 ?>
 --EXPECTF--
-object(MongoGridFSFile)#7 (2) {
+object(MongoGridFSFile)#%d (2) {
   ["file"]=>
-  array(6) {
+  array(8) {
     ["_id"]=>
-    string(5) "file0"
+    object(MongoId)#%d (1) {
+      ["$id"]=>
+      string(24) "%s"
+    }
     ["filename"]=>
-    string(9) "file0.txt"
+    string(%d) "test_file-%d"
+    ["thumbnail_size"]=>
+    string(1) "m"
+    ["otherdata"]=>
+    string(3) "BIG"
     ["uploadDate"]=>
-    object(MongoDate)#8 (2) {
+    object(MongoDate)#9 (2) {
       ["sec"]=>
-      int(%d)
+      int(1%d)
       ["usec"]=>
       int(%d)
     }
     ["length"]=>
-    int(10)
+    int(1%d)
     ["chunkSize"]=>
     int(262144)
     ["md5"]=>
