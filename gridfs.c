@@ -1307,8 +1307,6 @@ PHP_METHOD(MongoGridFSCursor, key)
 			RETVAL_ZVAL(*id, 1, 0);
 			convert_to_string(return_value);
 		}
-		convert_to_string(*return_value_ptr);
-		RETURN_STRING(Z_STRVAL_PP(return_value_ptr), 1);
 	} else {
 		RETURN_LONG(cursor->at - 1);
 	}
