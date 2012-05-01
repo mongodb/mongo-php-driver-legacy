@@ -18,6 +18,7 @@ typedef struct _mongo_servers
 	mongo_server_def *server[16];
 
 	/* flags and options */
+	int               con_type;
 	char             *repl_set_name;
 } mongo_servers;
 

@@ -125,8 +125,14 @@ mongo_servers* mongo_parse_server_spec(char *spec)
 		servers->server[i]->db       = db_start ? strndup(db_start, db_end-db_start) : NULL;
 	}
 
+	/* Update connection type */
+	if (servers->repl_set_name) {
+		servers->con_type = MONGO_CON_TYPE_REPLSET;
+	} else {
+		if (servers->count > 1) {
+			servers->con_type = MONGO_CON_TYPE_MULTIPLE;
 		} else {
-			servers->server[i]->db = NULL;
+			servers->con_type = MONGO_CON_TYPE_STANDALONE;
 		}
 	}
 
