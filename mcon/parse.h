@@ -14,8 +14,11 @@ typedef struct _mongo_server_def
 
 typedef struct _mongo_servers
 {
-	int count;
+	int               count;
 	mongo_server_def *server[16];
+
+	/* flags and options */
+	char             *repl_set_name;
 } mongo_servers;
 
 mongo_servers* mongo_parse_server_spec(char *spec);
