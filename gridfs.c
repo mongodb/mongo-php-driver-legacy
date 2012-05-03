@@ -68,7 +68,9 @@ extern zend_class_entry *mongo_ce_DB,
   *mongo_ce_GridFSException,
   *mongo_ce_Id,
   *mongo_ce_Date,
-  *mongo_ce_BinData;
+  *mongo_ce_BinData,
+  *mongo_ce_Int32,
+  *mongo_ce_Int64;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -1171,12 +1173,14 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   zval_ptr_dtor(&query);
   zval_ptr_dtor(&sort);
 
-  if (Z_TYPE_PP(size) == IS_DOUBLE) {
-    len = (int)Z_DVAL_PP(size);
-  }
-  else { // if Z_TYPE_PP(size) == IS_LONG
-    len = Z_LVAL_PP(size);
-  }
+	if (Z_TYPE_PP(size) == IS_DOUBLE) {
+		len = (int)Z_DVAL_PP(size);
+	} else if (Z_TYPE_PP(size) == IS_LONG) {
+		len = Z_LVAL_PP(size);
+	} else if (Z_TYPE_PP(size) == IS_OBJECT && (Z_OBJCE_PP(size) == mongo_ce_Int32 || Z_OBJCE_PP(size) == mongo_ce_Int64)) {
+		zval *sizet = zend_read_property(mongo_ce_Int64, *size, "value", strlen("value"), NOISY TSRMLS_CC);
+		len = atoi(Z_STRVAL_P(sizet));
+	}
 
   str = (char*)emalloc(len + 1);
   str_ptr = str;
