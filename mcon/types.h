@@ -1,8 +1,16 @@
 #ifndef __MCON_TYPES_H__
 #define __MCON_TYPES_H__
 
+#include <time.h>
+
+#define MONGO_CON_TYPE_STANDALONE 1
+#define MONGO_CON_TYPE_MULTIPLE   2
+#define MONGO_CON_TYPE_REPLSET    3
+
 typedef struct _mongo_connection
 {
+	time_t last_ping;
+	int    ping_ms;
 } mongo_connection;
 
 typedef struct _mongo_con_manager
