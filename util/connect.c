@@ -241,9 +241,16 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
     zend_clear_exception(TSRMLS_C);
 
     zval_ptr_dtor(&db_name);
+    zval_ptr_dtor(&ok);
     zval_ptr_dtor(&db);
     zval_ptr_dtor(&username);
     zval_ptr_dtor(&password);
+
+    // reset the socket so we don't close it when this is dtored
+    temp_link->server_set->server = 0;
+    efree(temp_link->server_set);
+    temp_link->server_set = 0;
+    zval_ptr_dtor(&connection);
 
     // TODO: pick up error message
     if (errmsg) {
@@ -280,10 +287,10 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
 
   // check if we've logged in successfully
   if (!logged_in) {
-    char *full_error;
-    spprintf(&full_error, 0, "Couldn't authenticate with database %s: username [%s], password [%s]", server->db, server->username, server->password);
     if (errmsg) {
-      ZVAL_STRING(errmsg, full_error, 0);
+        char *full_error;
+        spprintf(&full_error, 0, "Couldn't authenticate with database %s: username [%s], password [%s]", server->db, server->username, server->password);
+        ZVAL_STRING(errmsg, full_error, 0);
     }
     zval_ptr_dtor(&ok);
     return FAILURE;
