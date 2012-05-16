@@ -9,10 +9,20 @@ int main(void)
 
 	manager = mongo_init();
 
-	servers = mongo_parse_server_spec("mongodb://10.0.1.1:27000");
+	servers = mongo_parse_server_spec("mongodb://127.0.0.1:27017");
 	mongo_servers_dump(servers);
-
 	con = mongo_get_connection(manager, servers);
-
 	mongo_servers_dtor(servers);
+
+	servers = mongo_parse_server_spec("mongodb://127.0.0.2:27017");
+	mongo_servers_dump(servers);
+	con = mongo_get_connection(manager, servers);
+	mongo_servers_dtor(servers);
+
+	servers = mongo_parse_server_spec("mongodb://127.0.0.1:27017");
+	mongo_servers_dump(servers);
+	con = mongo_get_connection(manager, servers);
+	mongo_servers_dtor(servers);
+
+	mongo_deinit(manager);
 }

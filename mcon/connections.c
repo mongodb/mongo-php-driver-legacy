@@ -4,6 +4,9 @@
 #include "parse.h"
 #include "manager.h"
 #include "connections.h"
+#include "io.h"
+#include "str.h"
+#include "mini_bson.h"
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -27,6 +30,12 @@
 #define FLAGS   0
 
 /* Helper functions */
+inline int mongo_connection_get_reqid(mongo_connection *con)
+{
+	con->last_reqid++;
+	return con->last_reqid;
+}
+
 static int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *host, int port, char **errmsg)
 {
 #ifndef WIN32
@@ -215,14 +224,53 @@ mongo_connection *mongo_connection_create(mongo_server_def *server_def)
 {
 	mongo_connection *tmp;
 	char             *error_message = NULL;
-	int               socket_id;
 
 	/* Init struct */
 	tmp = malloc(sizeof(mongo_connection));
 	memset(tmp, 0, sizeof(mongo_connection));
+	tmp->last_reqid = rand();
 
-	socket_id = mongo_connection_connect(server_def->host, server_def->port, 1000, &error_message);
-	printf("ERROR: %s\n", error_message);
+	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, 1000, &error_message);
+	if (tmp->socket == -1) {
+		printf("ERROR: %s\n", error_message);
+		free(tmp);
+		return NULL;
+	}
 
-	return NULL;
+	return tmp;
+}
+
+void mongo_connection_destroy(mongo_connection *con)
+{
+	free(con);
+}
+
+#define MONGO_REPLY_HEADER_SIZE 36
+
+void mongo_connection_ping(mongo_connection *con)
+{
+	mcon_str      *packet;
+	char          *error_message = NULL;
+	int            len, read;
+	struct timeval start, end;
+	char           reply_buffer[MONGO_REPLY_HEADER_SIZE];
+
+	packet = bson_create_ping_packet(con);
+
+	gettimeofday(&start, NULL);
+
+	/* Send and wait for reply */
+	mongo_io_send(con->socket, packet->d, packet->l, &error_message);
+	mcon_str_ptr_dtor(packet);
+	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, &error_message);
+
+	gettimeofday(&end, NULL);
+
+
+	con->last_ping = end.tv_sec;
+	con->ping_ms = (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
+	if (con->ping_ms < 0) { /* some clocks do weird stuff */
+		con->ping_ms = 0;
+	}
+	printf("PING: TS: %d = %d\n", con->last_ping, con->ping_ms);
 }

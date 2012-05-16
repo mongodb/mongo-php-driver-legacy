@@ -11,11 +11,20 @@ typedef struct _mongo_connection
 {
 	time_t last_ping;
 	int    ping_ms;
+	int    last_reqid;
+	int    socket;
 } mongo_connection;
+
+typedef struct _mongo_con_manager_item
+{
+	char                           *hash;
+	mongo_connection               *connection;
+	struct _mongo_con_manager_item *next;
+} mongo_con_manager_item;
 
 typedef struct _mongo_con_manager
 {
-	int dummy;
+	mongo_con_manager_item *connections;
 } mongo_con_manager;
 
 typedef struct _mongo_server_def
