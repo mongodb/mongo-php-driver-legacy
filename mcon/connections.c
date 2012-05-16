@@ -6,6 +6,7 @@
 #include "connections.h"
 #include "io.h"
 #include "str.h"
+#include "bson_helpers.h"
 #include "mini_bson.h"
 
 #ifdef WIN32
@@ -28,6 +29,8 @@
 
 #define INT_32  4
 #define FLAGS   0
+
+#define MONGO_REPLY_FLAG_QUERY_FAILURE 0x02
 
 /* Helper functions */
 inline int mongo_connection_get_reqid(mongo_connection *con)
@@ -247,13 +250,19 @@ void mongo_connection_destroy(mongo_connection *con)
 
 #define MONGO_REPLY_HEADER_SIZE 36
 
-void mongo_connection_ping(mongo_connection *con)
+/**
+ * Sends a ping command to the server and stores the result.
+ *
+ * Returns 1 when it worked, and 0 when an error was encountered.
+ */
+int mongo_connection_ping(mongo_connection *con)
 {
 	mcon_str      *packet;
 	char          *error_message = NULL;
 	int            len, read;
 	struct timeval start, end;
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE];
+	uint32_t       flags; /* To check for query reply status */
 
 	packet = bson_create_ping_packet(con);
 
@@ -264,8 +273,17 @@ void mongo_connection_ping(mongo_connection *con)
 	mcon_str_ptr_dtor(packet);
 	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, &error_message);
 
-	gettimeofday(&end, NULL);
+	/* If the header too small? */
+	if (read < 5 * sizeof(int32_t)) {
+		return 0;
+	}
+	/* Check for a query error */
+	flags = MONGO_32(*(int*)(reply_buffer + sizeof(int32_t) * 4));
+	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
+		return 0;
+	}
 
+	gettimeofday(&end, NULL);
 
 	con->last_ping = end.tv_sec;
 	con->ping_ms = (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
@@ -273,4 +291,6 @@ void mongo_connection_ping(mongo_connection *con)
 		con->ping_ms = 0;
 	}
 	printf("PING: TS: %d = %d\n", con->last_ping, con->ping_ms);
+
+	return 1;
 }
