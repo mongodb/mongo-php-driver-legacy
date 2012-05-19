@@ -6,35 +6,60 @@
 #include "manager.h"
 #include "connections.h"
 
-/* Fetching connections */
-static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *manager, mongo_servers *servers)
+/* Helpers */
+static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_servers *servers, int server_id)
 {
 	char *hash;
 	mongo_connection *con;
 
-	hash = mongo_server_create_hash(servers->server[0]);
+	hash = mongo_server_create_hash(servers->server[server_id]);
 	con = mongo_manager_connection_find_by_hash(manager, hash);
 	if (!con) {
-		con = mongo_connection_create(servers->server[0]);
+		con = mongo_connection_create(servers->server[server_id]);
 		if (con) {
-			mongo_connection_ping(con);
-			mongo_manager_connection_register(manager, hash, con);
+			if (mongo_connection_ping(con)) {
+				mongo_manager_connection_register(manager, hash, con);
+			} else {
+				mongo_connection_destroy(con);
+				free(hash);
+				return NULL;
+			}
 		}
 	}
 	free(hash);
+
 	return con;
 }
 
+/* Fetching connections */
+static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *manager, mongo_servers *servers)
+{
+	return mongo_get_connection_single(manager, servers, 0);
+}
+
+static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers)
+{
+	mongo_connection *con;
+	int i;
+
+	/* Create a connection to every of the servers in the seed list */
+	for (i = 0; i < servers->count; i++) {
+		con = mongo_get_connection_single(manager, servers, i);
+	}
+	return con;
+}
+
+/* API interface to fetch a connection */
 mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers *servers)
 {
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
 			return mongo_get_connection_standalone(manager, servers);
-/*
-		case MONGO_CON_TYPE_REPLSET:
-			return mongo_get_connection_replset(manager, servers);
 
+		case MONGO_CON_TYPE_REPLSET:
+			return mongo_get_connection_replicaset(manager, servers);
+/*
 		case MONGO_CON_TYPE_MULTIPLE:
 			return mongo_get_connection_multiple(manager, servers);
 */

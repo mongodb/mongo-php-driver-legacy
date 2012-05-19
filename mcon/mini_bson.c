@@ -6,6 +6,8 @@
 #include "mini_bson.h"
 #include "types.h"
 
+#define MONGO_QUERY_FLAG_SLAVE_OK 0x04
+
 static mcon_str *create_simple_header(mongo_connection *con)
 {
 	struct mcon_str *str;
@@ -18,7 +20,7 @@ static mcon_str *create_simple_header(mongo_connection *con)
 	mcon_serialize_int(str, 0); /* Reponse to */
 	mcon_serialize_int(str, 2004); /* OP_QUERY */
 
-	mcon_serialize_int(str, 0); /* Flags */
+	mcon_serialize_int(str, MONGO_QUERY_FLAG_SLAVE_OK); /* Flags */
 	mcon_str_addl(str, "admin.$cmd", 11, 0);
 	mcon_serialize_int(str, 0); /* Number to skip */
 	mcon_serialize_int(str, 0); /* Number to return */
