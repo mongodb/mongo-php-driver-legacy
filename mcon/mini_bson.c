@@ -23,7 +23,7 @@ static mcon_str *create_simple_header(mongo_connection *con)
 	mcon_serialize_int(str, MONGO_QUERY_FLAG_SLAVE_OK); /* Flags */
 	mcon_str_addl(str, "admin.$cmd", 11, 0);
 	mcon_serialize_int(str, 0); /* Number to skip */
-	mcon_serialize_int(str, 0); /* Number to return */
+	mcon_serialize_int(str, -1); /* Number to return, has to be -1 for admin commands */
 
 	return str;
 }
