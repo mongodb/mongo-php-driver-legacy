@@ -205,10 +205,12 @@ PHP_METHOD(MongoCursor, hasNext) {
     cursor->started_iterating = 1;
   }
 
-  if ((cursor->limit > 0 && cursor->at >= cursor->limit) ||
-      cursor->num == 0) {
-    RETURN_FALSE;
-  }
+	if ((cursor->limit > 0 && cursor->at >= cursor->limit) || cursor->num == 0) {
+		if (cursor->cursor_id != 0) {
+			mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+		}
+		RETURN_FALSE;
+	}
   if (cursor->at < cursor->num) {
     RETURN_TRUE;
   }
