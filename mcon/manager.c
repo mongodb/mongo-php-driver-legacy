@@ -102,8 +102,8 @@ mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manag
 	mongo_con_manager_item *ptr = manager->connections;
 
 	while (ptr) {
-		printf("found connection %s (looking for %s)\n", ptr->hash, hash);
 		if (strcmp(ptr->hash, hash) == 0) {
+			printf("found connection %s (looking for %s)\n", ptr->hash, hash);
 			return ptr->connection;
 		}
 		ptr = ptr->next;
