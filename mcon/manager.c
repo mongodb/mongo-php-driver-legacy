@@ -31,6 +31,32 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	return con;
 }
 
+/* Topology discovery */
+
+/* - Helpers */
+static void mongo_discover_nodes(mongo_con_manager *manager, mongo_server_def *server)
+{
+	char *hash;
+	mongo_connection *con;
+
+	hash = mongo_server_create_hash(server);
+	con = mongo_manager_connection_find_by_hash(manager, hash);
+
+	if (mongo_connection_is_master(con)) {
+	}
+
+	free(hash);
+}
+
+static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *servers)
+{
+	int i;
+
+	for (i = 0; i < servers->count; i++) {
+		mongo_discover_nodes(manager, servers->server[i]);
+	}
+}
+
 /* Fetching connections */
 static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *manager, mongo_servers *servers)
 {
@@ -46,6 +72,8 @@ static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *mana
 	for (i = 0; i < servers->count; i++) {
 		con = mongo_get_connection_single(manager, servers, i);
 	}
+	/* Discover more nodes */
+	mongo_discover_topology(manager, servers);
 	return con;
 }
 

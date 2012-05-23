@@ -305,3 +305,65 @@ int mongo_connection_ping(mongo_connection *con)
 
 	return 1;
 }
+
+/**
+ * Sends an is_master command to the server and returns an array of new connectable nodes
+ *
+ * Returns 1 when it worked, and 0 when an error was encountered.
+ * TODO: Add and propagate error messages
+ */
+int mongo_connection_is_master(mongo_connection *con)
+{
+	mcon_str      *packet;
+	char          *error_message = NULL;
+	int            len, read;
+	uint32_t       data_size;
+	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
+	uint32_t       flags; /* To check for query reply status */
+	char          *set;      /* For replicaset in return */
+	unsigned char  is_master;
+	char          *hosts, *ptr, *string;
+
+	printf("IS MASTER ENTRY\n");
+	packet = bson_create_is_master_packet(con);
+
+	/* Send and wait for reply */
+	mongo_io_send(con->socket, packet->d, packet->l, &error_message);
+	mcon_str_ptr_dtor(packet);
+	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, &error_message);
+
+	/* If the header too small? */
+	printf("READ: %d\n", read);
+	if (read < MONGO_REPLY_HEADER_SIZE) {
+		return 0;
+	}
+	/* Check for a query error */
+	flags = MONGO_32(*(int*)(reply_buffer + sizeof(int32_t) * 4));
+	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
+		return 0;
+	}
+	/* Read the rest of the data */
+	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
+	printf("data_size: %d\n", data_size);
+	/* TODO: Check size limits */
+	data_buffer = malloc(data_size + 1);
+	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, &error_message)) {
+		free(data_buffer);
+		return 0;
+	}
+
+	/* Find data fields */
+	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+	bson_find_field_as_string(ptr, "setName", &set);
+	bson_find_field_as_bool(ptr, "ismaster", &is_master);
+	bson_find_field_as_array(ptr, "hosts", &hosts);
+	ptr = hosts;
+	while (bson_array_find_next_string(&ptr, &string)) {
+		printf("found: %s\n", string);
+	}
+
+	printf("IS MASTER\n");
+	free(data_buffer);
+
+	return 1;
+}
