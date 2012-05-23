@@ -261,7 +261,8 @@ int mongo_connection_ping(mongo_connection *con)
 	char          *error_message = NULL;
 	int            len, read;
 	struct timeval start, end;
-	char           reply_buffer[MONGO_REPLY_HEADER_SIZE];
+	uint32_t       data_size;
+	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
 	uint32_t       flags; /* To check for query reply status */
 
 	packet = bson_create_ping_packet(con);
@@ -282,8 +283,18 @@ int mongo_connection_ping(mongo_connection *con)
 	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
 		return 0;
 	}
-
 	gettimeofday(&end, NULL);
+
+	/* Read the rest of the data, which we'll ignore */
+	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
+	printf("data_size: %d\n", data_size);
+	/* TODO: Check size limits */
+	data_buffer = malloc(data_size + 1);
+	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, &error_message)) {
+		free(data_buffer);
+		return 0;
+	}
+	free(data_buffer);
 
 	con->last_ping = end.tv_sec;
 	con->ping_ms = (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;

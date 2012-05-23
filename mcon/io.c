@@ -54,3 +54,24 @@ int mongo_io_recv_header(int sock, char *reply_buffer, int size, char **error_me
 	}
 	return status;
 }
+
+int mongo_io_recv_data(int sock, void *dest, int size, char **error_message)
+{
+	int num = 1, received = 0;
+
+	// this can return FAILED if there is just no more data from db
+	while (received < size && num > 0) {
+		int len = 4096 < (size - received) ? 4096 : size - received;
+
+		// windows gives a WSAEFAULT if you try to get more bytes
+		num = recv(sock, (char*)dest, len, 0);
+
+		if (num < 0) {
+			return 0;
+		}
+
+		dest = (char*)dest + num;
+		received += num;
+	}
+	return received;
+}
