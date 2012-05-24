@@ -321,7 +321,7 @@ int mongo_connection_is_master(mongo_connection *con)
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
 	uint32_t       flags; /* To check for query reply status */
 	char          *set;      /* For replicaset in return */
-	unsigned char  is_master;
+	unsigned char  is_master, arbiter;
 	char          *hosts, *ptr, *string;
 
 	printf("IS MASTER ENTRY\n");
@@ -356,6 +356,7 @@ int mongo_connection_is_master(mongo_connection *con)
 	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
 	bson_find_field_as_string(ptr, "setName", &set);
 	bson_find_field_as_bool(ptr, "ismaster", &is_master);
+	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
 	bson_find_field_as_array(ptr, "hosts", &hosts);
 	ptr = hosts;
 	while (bson_array_find_next_string(&ptr, &string)) {
