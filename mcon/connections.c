@@ -358,12 +358,21 @@ int mongo_connection_is_master(mongo_connection *con)
 	bson_find_field_as_bool(ptr, "ismaster", &is_master);
 	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
 	bson_find_field_as_array(ptr, "hosts", &hosts);
+	printf("IS MASTER: %s/%d/%d\n", set, is_master, arbiter);
 	ptr = hosts;
 	while (bson_array_find_next_string(&ptr, &string)) {
 		printf("found: %s\n", string);
 	}
 
-	printf("IS MASTER\n");
+	/* Set connection type depending on flags */
+	if (is_master) {
+		con->connection_type = MONGO_NODE_PRIMARY;
+	} else if (arbiter) {
+		con->connection_type = MONGO_NODE_ARBITER;
+	} else {
+		con->connection_type = MONGO_NODE_SECONDARY;
+	} /* TODO: case for mongos */
+
 	free(data_buffer);
 
 	return 1;
