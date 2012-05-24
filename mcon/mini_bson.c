@@ -234,10 +234,10 @@ int bson_find_field_as_bool(char *buffer, char *field, unsigned char *data)
 
 int bson_find_field_as_string(char *buffer, char *field, char **data)
 {
-	char* tmp = bson_find_field(buffer, field, BSON_STRING) + 4; /* int32 for length */
+	char* tmp = bson_find_field(buffer, field, BSON_STRING);
 
 	if (tmp) {
-		*data = tmp;
+		*data = tmp + 4; /* int32 for length */
 		return 1;
 	}
 	return 0;
