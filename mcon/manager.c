@@ -34,26 +34,25 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 /* Topology discovery */
 
 /* - Helpers */
-static void mongo_discover_nodes(mongo_con_manager *manager, mongo_server_def *server)
-{
-	char *hash;
-	mongo_connection *con;
-
-	hash = mongo_server_create_hash(server);
-	con = mongo_manager_connection_find_by_hash(manager, hash);
-
-	if (mongo_connection_is_master(con)) {
-	}
-
-	free(hash);
-}
-
 static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *servers)
 {
 	int i;
+	char *hash;
+	mongo_connection *con;
+	char *error_message;
+	char *repl_set_name = servers->repl_set_name ? strdup(servers->repl_set_name) : NULL;
 
 	for (i = 0; i < servers->count; i++) {
-		mongo_discover_nodes(manager, servers->server[i]);
+		hash = mongo_server_create_hash(servers->server[i]);
+		con = mongo_manager_connection_find_by_hash(manager, hash);
+
+		if (mongo_connection_is_master(con, (char**) &repl_set_name/*, (char**) &error_message*/)) {
+		}
+
+		free(hash);
+	}
+	if (repl_set_name) {
+		free(repl_set_name);
 	}
 }
 

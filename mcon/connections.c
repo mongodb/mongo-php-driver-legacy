@@ -312,7 +312,7 @@ int mongo_connection_ping(mongo_connection *con)
  * Returns 1 when it worked, and 0 when an error was encountered.
  * TODO: Add and propagate error messages
  */
-int mongo_connection_is_master(mongo_connection *con)
+int mongo_connection_is_master(mongo_connection *con, char **repl_set_name/*, char **error_message*/)
 {
 	mcon_str      *packet;
 	char          *error_message = NULL;
@@ -354,9 +354,31 @@ int mongo_connection_is_master(mongo_connection *con)
 
 	/* Find data fields */
 	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	/* Do replica set name test */
 	bson_find_field_as_string(ptr, "setName", &set);
+	if (!set) {
+		printf("Not a replicaset member\n");
+		free(data_buffer);
+		return 0;
+	} else if (*repl_set_name) {
+		if (strcmp(set, *repl_set_name) != 0) {
+			printf("replset mis matches or is not set (%s vs %s)\n", set, *repl_set_name);
+			free(data_buffer);
+			return 0;
+		} else {
+			printf("replset matches (%s)\n", set);
+		}
+	} else if (*repl_set_name == NULL) {
+		printf("replset not set, so we're using %s\n", set);
+		*repl_set_name = strdup(set);
+	}
+
+	/* Check for flags */
 	bson_find_field_as_bool(ptr, "ismaster", &is_master);
 	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
+
+	/* Find all hosts */
 	bson_find_field_as_array(ptr, "hosts", &hosts);
 	printf("IS MASTER: %s/%d/%d\n", set, is_master, arbiter);
 	ptr = hosts;
