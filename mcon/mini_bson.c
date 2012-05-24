@@ -176,6 +176,10 @@ element 	::= 	"\x01" e_name double 	Floating point
 void *bson_get_current(char *data, char **field_name, int *type)
 {
 	*type = data[0];
+	if (*type == 0) { /* We have reached the end */
+		*field_name = NULL;
+		return NULL;
+	}
 	*field_name = data + 1; /* Skip 1, because of the type in data[0] */
 	data = bson_skip_field_name(data); /* Skip fieldname to get to data */
 	return data;
@@ -185,12 +189,12 @@ void *bson_find_field(char *data, char *field_name, int type)
 {
 	void *return_data;
 	char *ptr = data;
-	char *read_field;
+	char *read_field = NULL;
 	int   read_type;
 
 	return_data = bson_get_current(ptr, &read_field, &read_type);
 	printf("read_field: %s\n", read_field);
-	while (strcmp(read_field, field_name) != 0 || read_type != type) {
+	while (read_field && strcmp(read_field, field_name) != 0 || read_type != type) {
 		printf("read_field: %s\n", read_field);
 		ptr = bson_next(ptr);
 		if (ptr == NULL) {
@@ -202,6 +206,7 @@ void *bson_find_field(char *data, char *field_name, int type)
 	if (read_field && strcmp(read_field, field_name) == 0 && read_type == type) {
 		return return_data;
 	}
+	return NULL;
 }
 
 /* - Public API */

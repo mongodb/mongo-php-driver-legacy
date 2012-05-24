@@ -320,8 +320,8 @@ int mongo_connection_is_master(mongo_connection *con)
 	uint32_t       data_size;
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
 	uint32_t       flags; /* To check for query reply status */
-	char          *set;      /* For replicaset in return */
-	unsigned char  is_master, arbiter;
+	char          *set = NULL;      /* For replicaset in return */
+	unsigned char  is_master = 0, arbiter = 0;
 	char          *hosts, *ptr, *string;
 
 	printf("IS MASTER ENTRY\n");
