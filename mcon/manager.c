@@ -36,17 +36,30 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 /* - Helpers */
 static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *servers)
 {
-	int i;
+	int i, j;
 	char *hash;
 	mongo_connection *con;
 	char *error_message;
 	char *repl_set_name = servers->repl_set_name ? strdup(servers->repl_set_name) : NULL;
+	int nr_hosts;
+	char **found_hosts = NULL;
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
 		con = mongo_manager_connection_find_by_hash(manager, hash);
 
-		if (mongo_connection_is_master(con, (char**) &repl_set_name/*, (char**) &error_message*/)) {
+		if (mongo_connection_is_master(con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message)) {
+			printf("discover_topology: is_master worked\n");
+			for (j = 0; j < nr_hosts; j++) {
+				printf("- discovered %s\n", found_hosts[j]);
+				free(found_hosts[j]);
+			}
+			free(found_hosts);
+			found_hosts = NULL;
+		} else {
+			/* Something is wrong with the connection, we need to remove this from our list */
+			printf("discover_topology: is_master return with an error for %s:%d: [%s]\n", servers->server[i]->host, servers->server[i]->port, error_message);
+			free(error_message);
 		}
 
 		free(hash);

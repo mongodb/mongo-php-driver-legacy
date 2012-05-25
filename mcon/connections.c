@@ -312,10 +312,9 @@ int mongo_connection_ping(mongo_connection *con)
  * Returns 1 when it worked, and 0 when an error was encountered.
  * TODO: Add and propagate error messages
  */
-int mongo_connection_is_master(mongo_connection *con, char **repl_set_name/*, char **error_message*/)
+int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message)
 {
 	mcon_str      *packet;
-	char          *error_message = NULL;
 	int            len, read;
 	uint32_t       data_size;
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
@@ -328,9 +327,9 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name/*, ch
 	packet = bson_create_is_master_packet(con);
 
 	/* Send and wait for reply */
-	mongo_io_send(con->socket, packet->d, packet->l, &error_message);
+	mongo_io_send(con->socket, packet->d, packet->l, error_message);
 	mcon_str_ptr_dtor(packet);
-	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, &error_message);
+	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
 
 	/* If the header too small? */
 	printf("READ: %d\n", read);
@@ -347,7 +346,7 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name/*, ch
 	printf("data_size: %d\n", data_size);
 	/* TODO: Check size limits */
 	data_buffer = malloc(data_size + 1);
-	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, &error_message)) {
+	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, error_message)) {
 		free(data_buffer);
 		return 0;
 	}
@@ -358,12 +357,22 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name/*, ch
 	/* Do replica set name test */
 	bson_find_field_as_string(ptr, "setName", &set);
 	if (!set) {
-		printf("Not a replicaset member\n");
+		*error_message = strdup("Not a replicaset member");
 		free(data_buffer);
 		return 0;
 	} else if (*repl_set_name) {
 		if (strcmp(set, *repl_set_name) != 0) {
-			printf("replset mis matches or is not set (%s vs %s)\n", set, *repl_set_name);
+			struct mcon_str *tmp;
+
+			mcon_str_ptr_init(tmp);
+			mcon_str_add(tmp, "Host does not match replicaset name. Expected: ", 0);
+			mcon_str_add(tmp, *repl_set_name, 0);
+			mcon_str_add(tmp, "; Found: ", 0);
+			mcon_str_add(tmp, set, 0);
+
+			*error_message = strdup(tmp->d);
+			mcon_str_ptr_dtor(tmp);
+
 			free(data_buffer);
 			return 0;
 		} else {
@@ -383,7 +392,10 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name/*, ch
 	printf("IS MASTER: %s/%d/%d\n", set, is_master, arbiter);
 	ptr = hosts;
 	while (bson_array_find_next_string(&ptr, &string)) {
-		printf("found: %s\n", string);
+		(*nr_hosts)++;
+		*found_hosts = realloc(*found_hosts, (*nr_hosts) * sizeof(char*));
+		(*found_hosts)[*nr_hosts-1] = strdup(string);
+		printf("found host: %s\n", string);
 	}
 
 	/* Set connection type depending on flags */
