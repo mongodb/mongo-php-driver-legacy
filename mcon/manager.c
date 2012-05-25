@@ -7,15 +7,15 @@
 #include "connections.h"
 
 /* Helpers */
-static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_servers *servers, int server_id)
+static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server)
 {
 	char *hash;
 	mongo_connection *con;
 
-	hash = mongo_server_create_hash(servers->server[server_id]);
+	hash = mongo_server_create_hash(server);
 	con = mongo_manager_connection_find_by_hash(manager, hash);
 	if (!con) {
-		con = mongo_connection_create(servers->server[server_id]);
+		con = mongo_connection_create(server);
 		if (con) {
 			if (mongo_connection_ping(con)) {
 				mongo_manager_connection_register(manager, hash, con);
@@ -72,7 +72,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 /* Fetching connections */
 static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *manager, mongo_servers *servers)
 {
-	return mongo_get_connection_single(manager, servers, 0);
+	return mongo_get_connection_single(manager, servers->server[0]);
 }
 
 static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers)
@@ -82,7 +82,7 @@ static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *mana
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
-		con = mongo_get_connection_single(manager, servers, i);
+		con = mongo_get_connection_single(manager, servers->server[i]);
 	}
 	/* Discover more nodes */
 	mongo_discover_topology(manager, servers);
