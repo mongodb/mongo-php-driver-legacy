@@ -323,7 +323,7 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 	unsigned char  is_master = 0, arbiter = 0;
 	char          *hosts, *ptr, *string;
 
-	printf("IS MASTER ENTRY\n");
+	printf("is_master: start\n");
 	packet = bson_create_is_master_packet(con);
 
 	/* Send and wait for reply */
@@ -332,7 +332,7 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
 
 	/* If the header too small? */
-	printf("READ: %d\n", read);
+	printf("is_master: read from header: %d\n", read);
 	if (read < MONGO_REPLY_HEADER_SIZE) {
 		return 0;
 	}
@@ -343,7 +343,7 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 	}
 	/* Read the rest of the data */
 	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
-	printf("data_size: %d\n", data_size);
+	printf("is_master: data_size: %d\n", data_size);
 	/* TODO: Check size limits */
 	data_buffer = malloc(data_size + 1);
 	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, error_message)) {
@@ -376,10 +376,12 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 			free(data_buffer);
 			return 0;
 		} else {
-			printf("replset matches (%s)\n", set);
+			printf("is_master: the found replicaset name matches the expected one (%s).\n", set);
 		}
 	} else if (*repl_set_name == NULL) {
-		printf("replset not set, so we're using %s\n", set);
+		/* This can not happen, as for the REPLSET CON_TYPE to be active in the
+		 * first place, there needs to be a repl_set_name set. */
+		printf("is_master: the replicaset name is not set, so we're using %s.\n", set);
 		*repl_set_name = strdup(set);
 	}
 
@@ -389,7 +391,8 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 
 	/* Find all hosts */
 	bson_find_field_as_array(ptr, "hosts", &hosts);
-	printf("IS MASTER: %s/%d/%d\n", set, is_master, arbiter);
+	printf("is_master: set name: %s, is_master: %d, is_arbiter: %d\n", set, is_master, arbiter);
+	*nr_hosts = 0;
 	ptr = hosts;
 	while (bson_array_find_next_string(&ptr, &string)) {
 		(*nr_hosts)++;

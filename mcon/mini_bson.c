@@ -193,15 +193,15 @@ void *bson_find_field(char *data, char *field_name, int type)
 	int   read_type;
 
 	return_data = bson_get_current(ptr, &read_field, &read_type);
-	printf("read_field: %s\n", read_field);
+	printf("bson_find_field: read_field: %s\n", read_field);
 	while (read_field && strcmp(read_field, field_name) != 0 || read_type != type) {
-		printf("read_field: %s\n", read_field);
 		ptr = bson_next(ptr);
 		if (ptr == NULL) {
 			read_field = NULL;
 			break;
 		}
 		return_data = bson_get_current(ptr, &read_field, &read_type);
+		printf("bson_find_field: read_field: %s\n", read_field);
 	}
 	if (read_field && strcmp(read_field, field_name) == 0 && read_type == type) {
 		return return_data;
