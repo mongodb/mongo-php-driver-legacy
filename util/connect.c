@@ -100,6 +100,12 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg TSRMLS_DC
     }
     return FAILURE;
   }
+  if (server->socket > FD_SETSIZE) {
+    char *full_error;
+    spprintf(&full_error, 0, "You have too many open sockets (%d) to fit in the
+    ZVAL_STRING(errmsg, full_error, 0);
+    return FAILURE;
+  }
 #endif
 
   // timeout: set in ms or default of 20
