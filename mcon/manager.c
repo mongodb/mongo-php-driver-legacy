@@ -51,7 +51,23 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 		if (mongo_connection_is_master(con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message)) {
 			printf("discover_topology: is_master worked\n");
 			for (j = 0; j < nr_hosts; j++) {
+				mongo_server_def *tmp_def;
+				mongo_connection *new_con;
+
 				printf("- discovered %s\n", found_hosts[j]);
+
+				/* Create a temp server definition to create a new connection */
+				tmp_def = malloc(sizeof(mongo_server_def));
+				/* TODO: set from current server that ismaster is called on */
+				tmp_def->username = tmp_def->password = tmp_def->db = NULL;
+				tmp_def->host = strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
+				tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
+				printf("%s %d\n", tmp_def->host, tmp_def->port);
+
+				new_con = mongo_get_connection_single(manager, tmp_def);
+
+				mongo_server_def_dtor(tmp_def);
+
 				free(found_hosts[j]);
 			}
 			free(found_hosts);

@@ -231,7 +231,7 @@ void mongo_servers_dump(mongo_servers *servers)
 }
 
 /* Cleanup */
-void static mongo_server_def_dtor(mongo_server_def *server_def)
+void mongo_server_def_dtor(mongo_server_def *server_def)
 {
 	if (server_def->host) {
 		free(server_def->host);
