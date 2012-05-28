@@ -233,9 +233,11 @@ mongo_connection *mongo_connection_create(mongo_server_def *server_def)
 	memset(tmp, 0, sizeof(mongo_connection));
 	tmp->last_reqid = rand();
 
+	/* Connect */
+	printf("connection_create: creating new connection for %s:%d\n", server_def->host, server_def->port);
 	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, 1000, &error_message);
 	if (tmp->socket == -1) {
-		printf("ERROR: %s\n", error_message);
+		printf("connection_create: error: %s\n", error_message);
 		free(tmp);
 		return NULL;
 	}
@@ -273,6 +275,7 @@ int mongo_connection_ping(mongo_connection *con)
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
 	uint32_t       flags; /* To check for query reply status */
 
+	printf("is_ping: start\n");
 	packet = bson_create_ping_packet(con);
 
 	gettimeofday(&start, NULL);
@@ -295,7 +298,7 @@ int mongo_connection_ping(mongo_connection *con)
 
 	/* Read the rest of the data, which we'll ignore */
 	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
-	printf("data_size: %d\n", data_size);
+	printf("is_ping: data_size: %d\n", data_size);
 	/* TODO: Check size limits */
 	data_buffer = malloc(data_size + 1);
 	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, &error_message)) {
@@ -309,7 +312,7 @@ int mongo_connection_ping(mongo_connection *con)
 	if (con->ping_ms < 0) { /* some clocks do weird stuff */
 		con->ping_ms = 0;
 	}
-	printf("PING: TS: %d = %d\n", con->last_ping, con->ping_ms);
+	printf("is_ping: last pinged at %d; time: %dms\n", con->last_ping, con->ping_ms);
 
 	return 1;
 }

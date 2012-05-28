@@ -17,6 +17,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	if (!con) {
 		con = mongo_connection_create(server);
 		if (con) {
+			printf("get_connection_single: pinging %s\n", hash);
 			if (mongo_connection_ping(con)) {
 				mongo_manager_connection_register(manager, hash, con);
 			} else {
