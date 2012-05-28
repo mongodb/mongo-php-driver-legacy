@@ -73,9 +73,11 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 			free(found_hosts);
 			found_hosts = NULL;
 		} else {
-			/* Something is wrong with the connection, we need to remove this from our list */
+			/* Something is wrong with the connection, we need to remove
+			 * this from our list */
 			printf("discover_topology: is_master return with an error for %s:%d: [%s]\n", servers->server[i]->host, servers->server[i]->port, error_message);
 			free(error_message);
+			mongo_manager_connection_deregister(manager, hash, con);
 		}
 
 		free(hash);
@@ -186,6 +188,41 @@ mongo_connection *mongo_manager_connection_register(mongo_con_manager *manager, 
 			ptr = ptr->next;
 		} while (1);
 	}
+}
+
+int mongo_manager_connection_deregister(mongo_con_manager *manager, char *hash, mongo_connection *con)
+{
+	mongo_con_manager_item *ptr = manager->connections;
+	mongo_con_manager_item *prev = NULL;
+
+	/* Remove from manager */
+	/* - if there are no connections, simply return false */
+	if (!ptr) {
+		return 0;
+	}
+	/* Loop over existing connections and compare hashes */
+	do {
+		/* The connection is the one we're looking for */
+		if (strcmp(ptr->hash, hash) == 0) {
+			if (prev == NULL) { /* It's the first one in the list... */
+				manager->connections = ptr->next;
+			} else {
+				prev->next = ptr->next;
+			}
+			/* Free structures */
+			mongo_connection_destroy(con);
+			free_manager_item(ptr);
+
+			/* Woo! */
+			return 1;
+		}
+
+		/* Next iteration */
+		prev = ptr;
+		ptr = ptr->next;
+	} while (ptr);
+
+	return 0;
 }
 
 /* Init/deinit */
