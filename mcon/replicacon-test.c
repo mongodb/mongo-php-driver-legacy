@@ -9,7 +9,7 @@ int main(void)
 
 	manager = mongo_init();
 
-	servers = mongo_parse_server_spec("mongodb://127.0.0.1:13002,127.0.0.1:27017,localhost:13001/?replicaSet=seta");
+	servers = mongo_parse_server_spec("mongodb://root:root@127.0.0.1:13002,127.0.0.1:27017,localhost:13001/demo?replicaSet=seta");
 	mongo_servers_dump(servers);
 	con = mongo_get_connection(manager, servers);
 	mongo_servers_dtor(servers);

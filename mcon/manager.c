@@ -59,8 +59,9 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 
 				/* Create a temp server definition to create a new connection */
 				tmp_def = malloc(sizeof(mongo_server_def));
-				/* TODO: set from current server that ismaster is called on */
-				tmp_def->username = tmp_def->password = tmp_def->db = NULL;
+				tmp_def->username = servers->server[i]->username ? strdup(servers->server[i]->username) : NULL;
+				tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;
+				tmp_def->db = servers->server[i]->db ? strdup(servers->server[i]->db) : NULL;
 				tmp_def->host = strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
 				tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
 				
