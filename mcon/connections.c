@@ -245,6 +245,14 @@ mongo_connection *mongo_connection_create(mongo_server_def *server_def)
 
 void mongo_connection_destroy(mongo_connection *con)
 {
+#ifdef WIN32
+	shutdown(con->socket, SD_BOTH);
+	closesocket(con->socket);
+	WSACleanup();
+#else
+	shutdown(con->socket, SHUT_RDWR);
+	close(con->socket);
+#endif
 	free(con);
 }
 
