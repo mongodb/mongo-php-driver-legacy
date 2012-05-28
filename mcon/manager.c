@@ -147,15 +147,20 @@ static mongo_con_manager_item *create_new_manager_item(void)
 	return tmp;
 }
 
-static void destroy_manager_item(mongo_con_manager_item *item)
+static inline void free_manager_item(mongo_con_manager_item *item)
 {
 	printf("freeing connection %s\n", item->hash);
+	free(item->hash);
+	free(item);
+}
+
+static void destroy_manager_item(mongo_con_manager_item *item)
+{
 	if (item->next) {
 		destroy_manager_item(item->next);
 	}
 	mongo_connection_destroy(item->connection);
-	free(item->hash);
-	free(item);
+	free_manager_item(item);
 }
 
 mongo_connection *mongo_manager_connection_register(mongo_con_manager *manager, char *hash, mongo_connection *con)
