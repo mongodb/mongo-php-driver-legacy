@@ -44,9 +44,11 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	char *repl_set_name = servers->repl_set_name ? strdup(servers->repl_set_name) : NULL;
 	int nr_hosts;
 	char **found_hosts = NULL;
+	char *tmp_hash;
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
+		printf("discover_topology: checking is_master for %s\n", hash);
 		con = mongo_manager_connection_find_by_hash(manager, hash);
 
 		if (mongo_connection_is_master(con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message)) {
@@ -55,20 +57,31 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 				mongo_server_def *tmp_def;
 				mongo_connection *new_con;
 
-				printf("- discovered %s\n", found_hosts[j]);
-
 				/* Create a temp server definition to create a new connection */
 				tmp_def = malloc(sizeof(mongo_server_def));
 				/* TODO: set from current server that ismaster is called on */
 				tmp_def->username = tmp_def->password = tmp_def->db = NULL;
 				tmp_def->host = strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
 				tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
-				printf("%s %d\n", tmp_def->host, tmp_def->port);
+				
+				/* Create a hash so that we can check whether we already have a
+				 * connection for this server definition. If we don't create
+				 * the connection, register it (done in
+				 * mongo_get_connection_single) and add it to the list of
+				 * servers that we're processing so we might use this host to
+				 * find more servers. */
+				tmp_hash = mongo_server_create_hash(tmp_def);
+				if (!mongo_manager_connection_find_by_hash(manager, tmp_hash)) {
+					printf("discover_topology: found new host: %s:%d\n", tmp_def->host, tmp_def->port);
+					new_con = mongo_get_connection_single(manager, tmp_def);
+					servers->server[servers->count] = tmp_def;
+					servers->count++;
+				} else {
+					mongo_server_def_dtor(tmp_def);
+				}
+				free(tmp_hash);
 
-				new_con = mongo_get_connection_single(manager, tmp_def);
-
-				mongo_server_def_dtor(tmp_def);
-
+				/* Cleanup */
 				free(found_hosts[j]);
 			}
 			free(found_hosts);
