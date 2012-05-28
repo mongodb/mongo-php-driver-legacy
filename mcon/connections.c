@@ -318,7 +318,6 @@ int mongo_connection_ping(mongo_connection *con)
  * Sends an is_master command to the server and returns an array of new connectable nodes
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
- * TODO: Add and propagate error messages
  */
 int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message)
 {
