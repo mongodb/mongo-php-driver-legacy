@@ -103,7 +103,8 @@ static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *mana
 	for (i = 0; i < servers->count; i++) {
 		con = mongo_get_connection_single(manager, servers->server[i]);
 	}
-	/* Discover more nodes */
+	/* Discover more nodes. This also adds a connection to "servers" for each
+	 * new node */
 	mongo_discover_topology(manager, servers);
 	return con;
 }
