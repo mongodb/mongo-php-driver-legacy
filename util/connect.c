@@ -35,6 +35,7 @@
 #include "../mongo.h"
 #include "../db.h"
 #include "connect.h"
+#include "server.h"
 #include "log.h"
 
 extern zend_class_entry *mongo_ce_Mongo;
@@ -213,6 +214,11 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
 
   // if we're not using authentication, we're always logged in
   if (!server->username || !server->password) {
+    return SUCCESS;
+  }
+
+  // If it is a arbiter then we don't need to authenticate
+  if (mongo_util_server_get_state(server TSRMLS_CC) == 0) {
     return SUCCESS;
   }
 
