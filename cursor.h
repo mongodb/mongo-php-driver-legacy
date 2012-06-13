@@ -53,10 +53,14 @@ PHP_METHOD(MongoCursor, limit);
 PHP_METHOD(MongoCursor, batchSize);
 PHP_METHOD(MongoCursor, skip);
 PHP_METHOD(MongoCursor, fields);
-PHP_METHOD(MongoCursor, slaveOkay);
+
+PHP_METHOD(MongoCursor, setFlag);
 PHP_METHOD(MongoCursor, tailable);
+PHP_METHOD(MongoCursor, slaveOkay);
 PHP_METHOD(MongoCursor, immortal);
 PHP_METHOD(MongoCursor, awaitData);
+PHP_METHOD(MongoCursor, partial);
+
 PHP_METHOD(MongoCursor, timeout);
 PHP_METHOD(MongoCursor, dead);
 PHP_METHOD(MongoCursor, snapshot);

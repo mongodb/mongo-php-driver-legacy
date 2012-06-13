@@ -398,6 +398,20 @@ static inline void set_cursor_flag(INTERNAL_FUNCTION_PARAMETERS, int flag, int m
 	RETURN_ZVAL(getThis(), 1, 0);
 }
 
+/* {{{ MongoCursor::setFlag(int bit [, bool set])
+ */
+PHP_METHOD(MongoCursor, setFlag)
+{
+	long      bit;
+	zend_bool set = 1;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|b", &bit, &set) == FAILURE) {
+		return;
+	}
+	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1 << bit, set);
+}
+/* }}} */
+
 /* {{{ MongoCursor::tailable(bool flag)
  */
 PHP_METHOD(MongoCursor, tailable)
@@ -1079,6 +1093,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_hint, 0, ZEND_RETURN_VALUE, 1)
 ZEND_END_ARG_INFO()
 
 /* {{{ Cursor flags */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_set_flag, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, bit)
+	ZEND_ARG_INFO(0, set)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tailable, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, tail)
 ZEND_END_ARG_INFO()
@@ -1128,6 +1147,7 @@ static zend_function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, explain, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
   /* flags */
+  PHP_ME(MongoCursor, setFlag, arginfo_set_flag, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, slaveOkay, arginfo_slave_okay, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, tailable, arginfo_tailable, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, immortal, arginfo_immortal, ZEND_ACC_PUBLIC)
