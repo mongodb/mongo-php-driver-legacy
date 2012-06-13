@@ -64,6 +64,7 @@ PHP_METHOD(MongoCursor, fields);
 PHP_METHOD(MongoCursor, slaveOkay);
 PHP_METHOD(MongoCursor, tailable);
 PHP_METHOD(MongoCursor, immortal);
+PHP_METHOD(MongoCursor, awaitData);
 PHP_METHOD(MongoCursor, timeout);
 PHP_METHOD(MongoCursor, dead);
 PHP_METHOD(MongoCursor, snapshot);

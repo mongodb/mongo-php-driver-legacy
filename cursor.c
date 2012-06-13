@@ -396,6 +396,16 @@ PHP_METHOD(MongoCursor, immortal) {
 }
 /* }}} */
 
+/* {{{ MongoCursor::awaitData
+ */
+PHP_METHOD(MongoCursor, awaitData) {
+  zend_bool z = 1;
+  preiteration_setup;
+  default_to_true(5);
+  RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
 /* {{{ MongoCursor::partial
  */
 PHP_METHOD(MongoCursor, partial) {
@@ -1005,6 +1015,10 @@ PHP_METHOD(MongoCursor, count) {
   zval_ptr_dtor(&db_z);
 }
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_await_data, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, wait)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, __construct, NULL, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, hasNext, NULL, ZEND_ACC_PUBLIC)
@@ -1027,6 +1041,7 @@ static zend_function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, immortal, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, awaitData, arginfo_await_data, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, partial, NULL, ZEND_ACC_PUBLIC)
 
   /* query */
