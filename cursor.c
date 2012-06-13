@@ -45,6 +45,15 @@ HANDLE cursor_mutex;
 static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
+/* Cursor flags */
+#define CURSOR_FLAG_TAILABLE      2
+#define CURSOR_FLAG_SLAVE_OKAY    4
+#define CURSOR_FLAG_OPLOG_REPLAY  8 /* Don't use */
+#define CURSOR_FLAG_NO_CURSOR_TO 16
+#define CURSOR_FLAG_AWAIT_DATA   32
+#define CURSOR_FLAG_EXHAUST      64 /* Not implemented */
+#define CURSOR_FLAG_PARTIAL     128
+
 // externs
 extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_Mongo,
@@ -354,16 +363,6 @@ PHP_METHOD(MongoCursor, fields) {
 }
 /* }}} */
 
-/* {{{ MongoCursor::tailable
- */
-PHP_METHOD(MongoCursor, tailable) {
-  zend_bool z = 1;
-  preiteration_setup;
-  default_to_true(1);
-  RETURN_ZVAL(getThis(), 1, 0);
-}
-/* }}} */
-
 
 /* {{{ MongoCursor::dead
  */
@@ -375,35 +374,91 @@ PHP_METHOD(MongoCursor, dead) {
 }
 /* }}} */
 
-/* {{{ MongoCursor::slaveOkay
+/* {{{ Cursor flags
+ * Sets or unsets the flag <flag>. With mode = -1, the arguments are parsed.
+ * Otherwise the mode should contain 0 for unsetting and 1 for setting the flag.
  */
-PHP_METHOD(MongoCursor, slaveOkay) {
-  zend_bool z = 1;
-  preiteration_setup;
-  default_to_true(2);
-  RETURN_ZVAL(getThis(), 1, 0);
+static inline void set_cursor_flag(INTERNAL_FUNCTION_PARAMETERS, int flag, int mode)
+{
+	zend_bool z = 1;
+
+	preiteration_setup;
+	if (mode == -1 && zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &z) == FAILURE) {
+		return;
+	} else {
+		z = mode;
+	}
+
+	if (z) {
+		cursor->opts |= flag;
+	} else {
+		cursor->opts &= ~flag;
+	}
+
+	RETURN_ZVAL(getThis(), 1, 0);
+}
+
+/* {{{ MongoCursor::setFlag(int bit [, bool set])
+ */
+PHP_METHOD(MongoCursor, setFlag)
+{
+	long      bit;
+	zend_bool set = 1;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|b", &bit, &set) == FAILURE) {
+		return;
+	}
+	/* Prevent bit 3 (CURSOR_FLAG_OPLOG_REPLAY) and bit 6 (CURSOR_FLAG_EXHAUST) from
+	 * being set. The first because it's an internal flag, and the second because
+	 * the driver can't handle this at the moment. */
+	if (bit == 3 || bit == 6) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The CURSOR_FLAG_OPLOG_REPLAY(3) and CURSOR_FLAG_EXHAUST(6) flags are not supported.");
+		return;
+	}
+	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1 << bit, set);
+}
+/* }}} */
+
+/* {{{ MongoCursor::tailable(bool flag)
+ */
+PHP_METHOD(MongoCursor, tailable)
+{
+	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_TAILABLE, -1);
+}
+/* }}} */
+
+/* {{{ MongoCursor::slaveOkay(bool flag)
+ */
+PHP_METHOD(MongoCursor, slaveOkay)
+{
+	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_SLAVE_OKAY, -1);
 }
 /* }}} */
 
 
-/* {{{ MongoCursor::immortal
+/* {{{ MongoCursor::immortal(bool flag)
  */
-PHP_METHOD(MongoCursor, immortal) {
-  zend_bool z = 1;
-  preiteration_setup;
-  default_to_true(4);
-  RETURN_ZVAL(getThis(), 1, 0);
+PHP_METHOD(MongoCursor, immortal)
+{
+	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_NO_CURSOR_TO, -1);
 }
 /* }}} */
 
-/* {{{ MongoCursor::partial
+/* {{{ MongoCursor::awaitData(bool flag)
  */
-PHP_METHOD(MongoCursor, partial) {
-  zend_bool z = 1;
-  preiteration_setup;
-  default_to_true(7);
-  RETURN_ZVAL(getThis(), 1, 0);
+PHP_METHOD(MongoCursor, awaitData)
+{
+	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_AWAIT_DATA, -1);
 }
+/* }}} */
+
+/* {{{ MongoCursor::partial(bool flag)
+ */
+PHP_METHOD(MongoCursor, partial)
+{
+	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_PARTIAL, -1);
+}
+/* }}} */
 /* }}} */
 
 
@@ -476,7 +531,7 @@ PHP_METHOD(MongoCursor, snapshot) {
 /* }}} */
 
 
-/* {{{ MongoCursor->sort
+/* {{{ MongoCursor->sort(array fields)
  */
 PHP_METHOD(MongoCursor, sort) {
   zval *orderby, *fields;
@@ -485,7 +540,7 @@ PHP_METHOD(MongoCursor, sort) {
     return;
   }
   if (IS_SCALAR_P(fields)) {
-    zend_error(E_WARNING, "MongoCursor::sort() expects parameter 1 to be an array or object");
+    zend_error(E_WARNING, "MongoCursor::sort() expects parameter 1 to be an array");
     return;
   }
 
@@ -643,7 +698,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   ZVAL_NULL(errmsg);
 
   // If slave_okay is set, read from a slave.
-  if ((cursor->link->rs && cursor->opts & SLAVE_OKAY &&
+  if ((cursor->link->rs && cursor->opts & CURSOR_FLAG_SLAVE_OKAY &&
        (cursor->server = mongo_util_link_get_slave_socket(cursor->link, errmsg TSRMLS_CC)) == 0)) {
     // ignore errors and reset errmsg
     zval_ptr_dtor(&errmsg);
@@ -657,7 +712,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
     efree(buf.start);
 
     // if we couldn't connect to the master or the slave
-    if (cursor->opts & SLAVE_OKAY) {
+    if (cursor->opts & CURSOR_FLAG_SLAVE_OKAY) {
       mongo_cursor_throw(0, 14 TSRMLS_CC, "couldn't get a connection to any server");
     }
     else {
@@ -1004,47 +1059,124 @@ PHP_METHOD(MongoCursor, count) {
   zend_objects_store_del_ref(db_z TSRMLS_CC);
   zval_ptr_dtor(&db_z);
 }
+ 
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_OBJ_INFO(0, connection, Mongo, 0)
+	ZEND_ARG_INFO(0, database_and_collection_name)
+	ZEND_ARG_ARRAY_INFO(0, query, 0)
+	ZEND_ARG_INFO(0, array_of_fields_OR_object)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_limit, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, number)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, number)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_skip, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, number)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_fields, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_add_option, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_INFO(0, key)
+	ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_sort, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_hint, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, keyPattern, 0)
+ZEND_END_ARG_INFO()
+
+/* {{{ Cursor flags */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_set_flag, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, bit)
+	ZEND_ARG_INFO(0, set)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tailable, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, tail)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_slave_okay, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, okay)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_immortal, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, liveForever)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_await_data, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, wait)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_partial, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, okay)
+ZEND_END_ARG_INFO()
+/* }}} */
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timeout, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, milliseconds)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_count, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, foundOnly)
+ZEND_END_ARG_INFO()
+
 
 static zend_function_entry MongoCursor_methods[] = {
-  PHP_ME(MongoCursor, __construct, NULL, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, hasNext, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, getNext, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, hasNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, getNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
   /* options */
-  PHP_ME(MongoCursor, limit, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, batchSize, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, skip, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, fields, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, limit, arginfo_limit, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, batchSize, arginfo_batchsize, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, skip, arginfo_skip, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, fields, arginfo_fields, ZEND_ACC_PUBLIC)
 
   /* meta options */
-  PHP_ME(MongoCursor, addOption, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, snapshot, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, sort, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, hint, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, explain, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, addOption, arginfo_add_option, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, snapshot, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, sort, arginfo_sort, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, hint, arginfo_hint, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, explain, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
   /* flags */
-  PHP_ME(MongoCursor, slaveOkay, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, tailable, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, immortal, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, partial, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, setFlag, arginfo_set_flag, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, slaveOkay, arginfo_slave_okay, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, tailable, arginfo_tailable, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, immortal, arginfo_immortal, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, awaitData, arginfo_await_data, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, partial, arginfo_partial, ZEND_ACC_PUBLIC)
 
   /* query */
   PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, doQuery, NULL, ZEND_ACC_PROTECTED)
-  PHP_ME(MongoCursor, info, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, dead, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, doQuery, arginfo_no_parameters, ZEND_ACC_PROTECTED)
+  PHP_ME(MongoCursor, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
   /* iterator funcs */
-  PHP_ME(MongoCursor, current, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, key, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, next, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, rewind, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, valid, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCursor, reset, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, current, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, key, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, next, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, rewind, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, valid, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, reset, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
   /* stand-alones */
-  PHP_ME(MongoCursor, count, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCursor, count, arginfo_count, ZEND_ACC_PUBLIC)
 
   {NULL, NULL, NULL}
 };
