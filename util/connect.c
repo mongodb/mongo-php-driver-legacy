@@ -35,6 +35,7 @@
 #include "../mongo.h"
 #include "../db.h"
 #include "connect.h"
+#include "server.h"
 #include "log.h"
 
 extern zend_class_entry *mongo_ce_Mongo;
@@ -216,6 +217,11 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
     return SUCCESS;
   }
 
+  // If it is a arbiter then we don't need to authenticate
+  if (mongo_util_server_get_state(server TSRMLS_CC) == 0) {
+    return SUCCESS;
+  }
+
   // make a "fake" connection
   MAKE_STD_ZVAL(connection);
   object_init_ex(connection, mongo_ce_Mongo);
@@ -286,9 +292,9 @@ int mongo_util_connect_authenticate(mongo_server *server, zval *errmsg TSRMLS_DC
 
   // check if we've logged in successfully
   if (!logged_in) {
-    char *full_error;
-    spprintf(&full_error, 0, "Couldn't authenticate with database %s: username [%s], password [%s]", server->db, server->username, server->password);
     if (errmsg) {
+      char *full_error;
+      spprintf(&full_error, 0, "Couldn't authenticate with database %s: username [%s], password [%s]", server->db, server->username, server->password);
       ZVAL_STRING(errmsg, full_error, 0);
     }
     zval_ptr_dtor(&ok);
