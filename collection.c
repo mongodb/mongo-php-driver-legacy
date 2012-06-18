@@ -64,6 +64,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_batchInsert, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, array_of_options)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_distinct, 0, 0, 1)
+	ZEND_ARG_INFO(0, key)
+	ZEND_ARG_INFO(0, query)
+ZEND_END_ARG_INFO()
+
 PHP_METHOD(MongoCollection, __construct) {
   zval *parent, *name, *zns, *w, *wtimeout;
   mongo_collection *c;
@@ -1076,6 +1081,48 @@ PHP_METHOD(MongoCollection, toIndexString) {
   RETURN_STRING(name, 0)
 }
 
+/* {{{ proto array MongoCollection::distinct(string key)
+ * Returns a list of distinct values for the given key across a collection */
+PHP_METHOD(MongoCollection, distinct)
+{
+    char *key;
+    int key_len;
+    zval *data, **values, *tmp, *query = NULL;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &key, &key_len, &query) == FAILURE) {
+        return;
+    }
+
+    mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+    MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+
+
+    MAKE_STD_ZVAL(data);
+    array_init(data);
+
+    add_assoc_zval(data, "distinct", c->name);
+    zval_add_ref(&c->name);
+    add_assoc_stringl(data, "key", key, key_len, 1);
+
+    if (query) {
+        add_assoc_zval(data, "query", query);
+        zval_add_ref(&query);
+    }
+
+    MAKE_STD_ZVAL(tmp);
+    MONGO_CMD(tmp, c->parent);
+
+    if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values")+1, (void **)&values) == SUCCESS) {
+        array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
+        zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+    } else {
+        RETVAL_FALSE;
+    }
+
+    zval_ptr_dtor(&data);
+    zval_ptr_dtor(&tmp);
+}
+/* }}} */
 
 /* {{{ MongoCollection::group
  */
@@ -1220,6 +1267,7 @@ static zend_function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, getDBRef, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, toIndexString, NULL, ZEND_ACC_PROTECTED|ZEND_ACC_STATIC)
   PHP_ME(MongoCollection, group, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, distinct, arginfo_distinct, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
 
