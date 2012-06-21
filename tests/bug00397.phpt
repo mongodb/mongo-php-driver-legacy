@@ -1,9 +1,9 @@
 --TEST--
-Endless loop on non-existing file
+Bug PHP-397 Endless loop on non-existing file
 --FILE--
 <?php
-$m = new Mongo("mongodb://tmp:tmp@primary:27001/phpunit", array("replicaSet" => "foobar"));
-$db = $m->selectDB("phpunit");
+$m = new Mongo("mongodb://user:user@primary.local:27001/phpunit-auth", array("replicaSet" => "foobar"));
+$db = $m->selectDB("phpunit-unit");
 $c = $db->selectCollection("example");
 $c->setSlaveOkay(true);
 
