@@ -1160,7 +1160,11 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   str_ptr = str;
 
   if (apply_to_cursor(cursor, copy_bytes, &str TSRMLS_CC) == FAILURE) {
-    zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
+      if (EG(exception)) {
+          return;
+      }
+      zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
+      return;
   }
 
   zval_ptr_dtor(&cursor);
@@ -1196,7 +1200,10 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
   MAKE_STD_ZVAL(next);
   MONGO_METHOD(MongoCursor, getNext, next, cursor);
 
-  while (Z_TYPE_P(next) != IS_NULL) {
+  if (EG(exception)) {
+      return FAILURE;
+  }
+  while (Z_TYPE_P(next) == IS_ARRAY) {
     zval **zdata;
 
     // check if data field exists.  if it doesn't, we've probably
