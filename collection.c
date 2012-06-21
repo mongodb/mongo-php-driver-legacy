@@ -1081,7 +1081,7 @@ PHP_METHOD(MongoCollection, toIndexString) {
   RETURN_STRING(name, 0)
 }
 
-/* {{{ proto array MongoCollection::distinct(string key)
+/* {{{ proto array MongoCollection::distinct(string key [, array query])
  * Returns a list of distinct values for the given key across a collection */
 PHP_METHOD(MongoCollection, distinct)
 {
