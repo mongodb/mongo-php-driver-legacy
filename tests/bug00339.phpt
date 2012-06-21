@@ -4,11 +4,9 @@ Bug#339 (Segfault on insert timeout)
 <?php
 // This test may fail if you have blazing fast machine and the 1ms timeout
 // isn't low enough.
-// It may also fail if you don't have authentication running, or replicaset for
-// that matter. This is a very horrible test case, pending proper testsuite =)
 
-$m = new Mongo("mongodb://php:339@localhost/phpunit", array("replicaSet" => "foobar"));
-$c = $m->selectDB("PHP339")->selectCollection("collection");
+$m = new Mongo("mongodb://user:user@primary.local/phpunit-auth", array("replicaSet" => "foobar"));
+$c = $m->selectDB("phpunit-auth")->selectCollection("collection");
 
 try {
     $foo = array("foo" => time());
