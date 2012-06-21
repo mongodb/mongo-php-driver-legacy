@@ -345,13 +345,14 @@ PHP_METHOD(MongoId, getTimestamp) {
 /* {{{ MongoId::getPID
  */
 PHP_METHOD(MongoId, getPID) {
-  int pid;
+  int pid = 0, i;
+  mongo_id *id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  MONGO_CHECK_INITIALIZED_STRING(id->id, MongoId);
 
-#ifdef WIN32
-  pid = GetCurrentThreadId();
-#else
-  pid = (int)getpid();
-#endif
+  for (i=8; i>6; i--) {
+    int x = ((int)id->id[i] < 0) ? 256+id->id[i] : id->id[i];
+    pid = (pid*256) + x;
+  }
 
   RETURN_LONG(pid);
 }
