@@ -51,6 +51,11 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 		printf("discover_topology: checking is_master for %s\n", hash);
 		con = mongo_manager_connection_find_by_hash(manager, hash);
 
+		if (!con) {
+			printf("discover_topology: couldn't create a connection for %s\n", hash);
+			free(hash);
+			continue;
+		}
 		if (mongo_connection_is_master(con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message)) {
 			printf("discover_topology: is_master worked\n");
 			for (j = 0; j < nr_hosts; j++) {
