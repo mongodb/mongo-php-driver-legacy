@@ -174,7 +174,7 @@ PHP_METHOD(MongoCollection, validate) {
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_string(data, "validate", Z_STRVAL_P(c->name), 1);
-  add_assoc_bool(data, "scandata", scan_data);
+  add_assoc_bool(data, "full", scan_data);
 
   MONGO_CMD(return_value, c->parent);
 
