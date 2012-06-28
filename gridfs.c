@@ -344,12 +344,14 @@ static cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid)
 {
 	zval *chunks, *files, *criteria_chunks, *criteria_files;
 	char *message = NULL;
+	long code = 0;
 	smart_str tmp_message = { 0 };
 	zval *temp_return;
 
 	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 	if (EG(exception)) {
 		message = estrdup(Z_STRVAL_P(zend_read_property(mongo_ce_GridFSException, EG(exception), "message", strlen("message"), NOISY TSRMLS_CC)));
+		code = Z_LVAL_P(zend_read_property(mongo_ce_GridFSException, EG(exception), "code", strlen("code"), NOISY TSRMLS_CC));
 		zend_clear_exception(TSRMLS_C);
 	}
 
@@ -386,7 +388,7 @@ static cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid)
 		smart_str_appends(&tmp_message, "Could not store file for unknown reasons");
 		smart_str_0(&tmp_message);
 	}
-	zend_throw_exception(mongo_ce_GridFSException, tmp_message.c, 0 TSRMLS_CC);
+	zend_throw_exception(mongo_ce_GridFSException, tmp_message.c, code TSRMLS_CC);
 	smart_str_free(&tmp_message);
 	RETVAL_FALSE;
 }
@@ -1158,7 +1160,11 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   str_ptr = str;
 
   if (apply_to_cursor(cursor, copy_bytes, &str TSRMLS_CC) == FAILURE) {
-    zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
+      if (EG(exception)) {
+          return;
+      }
+      zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
+      return;
   }
 
   zval_ptr_dtor(&cursor);
@@ -1194,7 +1200,10 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
   MAKE_STD_ZVAL(next);
   MONGO_METHOD(MongoCursor, getNext, next, cursor);
 
-  while (Z_TYPE_P(next) != IS_NULL) {
+  if (EG(exception)) {
+      return FAILURE;
+  }
+  while (Z_TYPE_P(next) == IS_ARRAY) {
     zval **zdata;
 
     // check if data field exists.  if it doesn't, we've probably
