@@ -18,14 +18,6 @@
 #ifndef MONGO_CURSOR_H
 #define MONGO_CURSOR_H 1
 
-// Cursor flags
-#define TAILABLE 2
-#define SLAVE_OKAY 4
-#define OPLOG_REPLAY 8
-#define NO_CURSOR_TO 16
-#define AWAIT_DATA 32
-#define EXHAUST 64
-
 void php_mongo_cursor_free(void *object TSRMLS_DC);
 
 /**
@@ -61,9 +53,14 @@ PHP_METHOD(MongoCursor, limit);
 PHP_METHOD(MongoCursor, batchSize);
 PHP_METHOD(MongoCursor, skip);
 PHP_METHOD(MongoCursor, fields);
-PHP_METHOD(MongoCursor, slaveOkay);
+
+PHP_METHOD(MongoCursor, setFlag);
 PHP_METHOD(MongoCursor, tailable);
+PHP_METHOD(MongoCursor, slaveOkay);
 PHP_METHOD(MongoCursor, immortal);
+PHP_METHOD(MongoCursor, awaitData);
+PHP_METHOD(MongoCursor, partial);
+
 PHP_METHOD(MongoCursor, timeout);
 PHP_METHOD(MongoCursor, dead);
 PHP_METHOD(MongoCursor, snapshot);
@@ -89,17 +86,6 @@ PHP_METHOD(MongoCursor, info);
                          "cannot modify cursor after beginning iteration.", 0 \
                          TSRMLS_CC);                                    \
     return;                                                             \
-  }
-
-#define default_to_true(bit)                                            \
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &z) == FAILURE) { \
-    return;                                                             \
-  }                                                                     \
-                                                                        \
-  if (z) {                                                              \
-    cursor->opts |= 1 << bit;                                           \
-  } else {                                                              \
-    cursor->opts &= !(1 << bit);                                        \
   }
 
 PHP_METHOD(MongoCursorException, getHost);
