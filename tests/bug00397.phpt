@@ -2,7 +2,7 @@
 Bug PHP-397 Endless loop on non-existing file
 --FILE--
 <?php
-$m = new Mongo("mongodb://user:user@primary.local:27001/phpunit-auth", array("replicaSet" => "foobar"));
+$m = new Mongo();
 $db = $m->selectDB("phpunit-unit");
 $c = $db->selectCollection("example");
 $c->setSlaveOkay(true);
