@@ -5,6 +5,10 @@
 #include "utils.h"
 #include "manager.h"
 #include "connections.h"
+#include "parse.h"
+
+/* Forward declarations */
+int mongo_manager_connection_deregister(mongo_con_manager *manager, char *hash, mongo_connection *con);
 
 /* Helpers */
 static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server)
@@ -143,6 +147,7 @@ mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers
 			return mongo_get_connection_multiple(manager, servers);
 */
 	}
+	return NULL;
 }
 
 /* Connection management */
@@ -186,7 +191,7 @@ static void destroy_manager_item(mongo_con_manager_item *item)
 	free_manager_item(item);
 }
 
-mongo_connection *mongo_manager_connection_register(mongo_con_manager *manager, char *hash, mongo_connection *con)
+void mongo_manager_connection_register(mongo_con_manager *manager, char *hash, mongo_connection *con)
 {
 	mongo_con_manager_item *ptr = manager->connections;
 	mongo_con_manager_item *new;

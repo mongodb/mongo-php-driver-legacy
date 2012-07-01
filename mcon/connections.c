@@ -22,10 +22,12 @@
 #include <sys/un.h>
 #endif
 
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/time.h>
 
 #define INT_32  4
 #define FLAGS   0
@@ -269,7 +271,7 @@ int mongo_connection_ping(mongo_connection *con)
 {
 	mcon_str      *packet;
 	char          *error_message = NULL;
-	int            len, read;
+	int            read;
 	struct timeval start, end;
 	uint32_t       data_size;
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
@@ -325,7 +327,7 @@ int mongo_connection_ping(mongo_connection *con)
 int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message)
 {
 	mcon_str      *packet;
-	int            len, read;
+	int            read;
 	uint32_t       data_size;
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
 	uint32_t       flags; /* To check for query reply status */

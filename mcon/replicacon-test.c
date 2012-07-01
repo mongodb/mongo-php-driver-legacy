@@ -15,4 +15,6 @@ int main(void)
 	mongo_servers_dtor(servers);
 
 	mongo_deinit(manager);
+
+	return 0;
 }

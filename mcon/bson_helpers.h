@@ -1,3 +1,6 @@
+#include "str.h"
+#include <sys/types.h>
+
 #if PHP_C_BIGENDIAN
 // reverse the bytes in an int
 // wheeee stupid byte tricks
@@ -22,3 +25,6 @@
 #define MONGO_64(b) (b)
 #endif
 
+inline void mcon_serialize_int(struct mcon_str *str, int num);
+inline void mcon_serialize_int32(struct mcon_str *str, int num);
+inline void mcon_serialize_int64(struct mcon_str *str, int64_t num);

@@ -5,10 +5,6 @@
 
 #include "str.h"
 
-inline static mcon_resize(mcon_str *xs, int extra)
-{
-}
-
 void mcon_str_add(mcon_str *xs, char *str, int f)
 {
 	return mcon_str_addl(xs, str, strlen(str), f);

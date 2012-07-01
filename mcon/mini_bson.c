@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "str.h"
 #include "mini_bson.h"
 #include "types.h"
 #include "bson_helpers.h"
+#include "connections.h"
 
 #define MONGO_QUERY_FLAG_EMPTY    0x00
 #define MONGO_QUERY_FLAG_SLAVE_OK 0x04
@@ -102,7 +104,6 @@ char *bson_skip_field_name(char *data)
 char *bson_next(char *data)
 {
 	unsigned char type = data[0];
-	char         *name;
 	int32_t       length;
 
 	if (type == 0) {
@@ -171,6 +172,7 @@ element 	::= 	"\x01" e_name double 	Floating point
 		case BSON_INT32:
 			return data + sizeof(int32_t);
 	}
+	return NULL;
 }
 
 void *bson_get_current(char *data, char **field_name, int *type)
@@ -194,7 +196,7 @@ void *bson_find_field(char *data, char *field_name, int type)
 
 	return_data = bson_get_current(ptr, &read_field, &read_type);
 	printf("bson_find_field: read_field: %s\n", read_field);
-	while (read_field && strcmp(read_field, field_name) != 0 || read_type != type) {
+	while (read_field && (strcmp(read_field, field_name) != 0 || read_type != type)) {
 		ptr = bson_next(ptr);
 		if (ptr == NULL) {
 			read_field = NULL;

@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "types.h"
 
 /* Creates a unique hash for a server def with some info from the server config,
