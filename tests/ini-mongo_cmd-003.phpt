@@ -15,5 +15,5 @@ $referrer = $coll->findOne(array('_id' => 456));
 $referee = MongoDBRef::get($coll->db, $referrer['ref']);
 echo $referee['hello'] . "\n";
 ?>
---EXPECTF--
+--EXPECT--
 world

@@ -14,7 +14,7 @@ var_dump(array_key_exists('version', $info));
 var_dump(array_key_exists('gitVersion', $info));
 var_dump(array_key_exists('sysInfo', $info));
 ?>
---EXPECTF--
+--EXPECT--
 bool(true)
 bool(true)
 bool(true)

@@ -12,6 +12,6 @@ echo (int) $result['ok'] . "\n";
 $result = $db->authenticate('testUser', 'wrongPass');
 echo (int) $result['ok'] . "\n";
 ?>
---EXPECTF--
+--EXPECT--
 1
 0

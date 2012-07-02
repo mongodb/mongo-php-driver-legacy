@@ -23,7 +23,7 @@ foreach ($cursor as $result) {
     }
 }
 ?>
---EXPECTF--
+--EXPECT--
 MongoMinKey
 null
 1

@@ -23,7 +23,7 @@ foreach ($cursor as $result) {
     }
 }
 ?>
---EXPECTF--
+--EXPECT--
 null
 1
 1.1

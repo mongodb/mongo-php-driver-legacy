@@ -18,6 +18,6 @@ $coll->update(array('_id' => 1), array('#set' => array('name' => 'yahoo.com')));
 $result = $coll->findOne();
 echo $result['name'] . "\n";
 ?>
---EXPECTF--
+--EXPECT--
 google.com
 yahoo.com
