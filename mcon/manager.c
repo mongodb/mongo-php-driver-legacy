@@ -5,7 +5,9 @@
 #include "utils.h"
 #include "manager.h"
 #include "connections.h"
+#include "collection.h"
 #include "parse.h"
+#include "read_preference.h"
 
 /* Forward declarations */
 int mongo_manager_connection_deregister(mongo_con_manager *manager, char *hash, mongo_connection *con);
@@ -111,15 +113,37 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	}
 }
 
+mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
+{
+	/* Depending on read preference type, run the correct algorithm */
+	switch (rp->type) {
+		case MONGO_RP_PRIMARY:
+			return mongo_rp_collect_primary(manager);
+			break;
+		case MONGO_RP_SECONDARY:
+			return mongo_rp_collect_secondary(manager);
+			break;
+		case MONGO_RP_SECONDARY_ONLY:
+			return mongo_rp_collect_secondary_only(manager);
+			break;
+		case MONGO_RP_ANY:
+			return mongo_rp_collect_any(manager);
+			break;
+		default:
+			return NULL;
+	}
+}
+
 /* Fetching connections */
 static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *manager, mongo_servers *servers)
 {
 	return mongo_get_connection_single(manager, servers->server[0]);
 }
 
-static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers)
+static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, mongo_read_preference *rp)
 {
 	mongo_connection *con;
+	mcon_collection *collection;
 	int i;
 
 	/* Create a connection to every of the servers in the seed list */
@@ -129,11 +153,15 @@ static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *mana
 	/* Discover more nodes. This also adds a connection to "servers" for each
 	 * new node */
 	mongo_discover_topology(manager, servers);
+	/* Depending on read preference type, run the correct algorithms */
+	collection = mongo_find_candidate_servers(manager, rp);
+	/* Cleaning up */
+	mcon_collection_free(collection);	
 	return con;
 }
 
 /* API interface to fetch a connection */
-mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers *servers)
+mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers *servers, mongo_read_preference *rp)
 {
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->con_type) {
@@ -141,7 +169,7 @@ mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers
 			return mongo_get_connection_standalone(manager, servers);
 
 		case MONGO_CON_TYPE_REPLSET:
-			return mongo_get_connection_replicaset(manager, servers);
+			return mongo_get_connection_replicaset(manager, servers, rp);
 /*
 		case MONGO_CON_TYPE_MULTIPLE:
 			return mongo_get_connection_multiple(manager, servers);

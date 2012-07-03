@@ -7,10 +7,13 @@
 #define MONGO_CON_TYPE_MULTIPLE   2
 #define MONGO_CON_TYPE_REPLSET    3
 
-#define MONGO_NODE_PRIMARY        1
-#define MONGO_NODE_SECONDARY      2
-#define MONGO_NODE_ARBITER        3
-#define MONGO_NODE_MONGOS         4
+/* These constants are a bit field - however, each connection will only have
+ * one type. The reason why it's a bit field is because of filtering during
+ * read preference scanning (see read_preference.c). */
+#define MONGO_NODE_PRIMARY        0x01
+#define MONGO_NODE_SECONDARY      0x02
+#define MONGO_NODE_ARBITER        0x04
+#define MONGO_NODE_MONGOS         0x08
 
 typedef struct _mongo_connection
 {
@@ -18,7 +21,7 @@ typedef struct _mongo_connection
 	int    ping_ms;
 	int    last_reqid;
 	int    socket;
-	int    connection_type; /* primary, secondary, mongos */
+	int    connection_type; /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
 } mongo_connection;
 
 typedef struct _mongo_con_manager_item
