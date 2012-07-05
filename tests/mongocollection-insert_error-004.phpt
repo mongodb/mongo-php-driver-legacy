@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::insert() error with non-UTF8 strings
+MongoCollection::insert() error with zero-length keys
 --FILE--
 <?php
 $mongo = new Mongo('mongodb://localhost');
@@ -7,10 +7,9 @@ $coll = $mongo->selectCollection('test', 'insert');
 $coll->drop();
 
 $documents = array(
-    array('_id' => "\xFE\xF0"),
-    array('x' => "\xFE\xF0"),
-    (object) array('x' => "\xFE\xF0"),
-    array('x' => new MongoCode('return y;', array('y' => "\xFE\xF0"))),
+    array('' => 'foo'),
+    array('x' => array('' => 'foo')),
+    array('x' => array('' => 'foo'), 'y' => 'z'),
 );
 
 foreach ($documents as $document) {
@@ -22,7 +21,6 @@ foreach ($documents as $document) {
 }
 ?>
 --EXPECT--
-MongoException: 12
-MongoException: 12
-MongoException: 12
-MongoException: 12
+MongoException: 1
+MongoException: 1
+MongoException: 1
