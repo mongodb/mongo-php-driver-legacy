@@ -383,8 +383,10 @@ static inline void set_cursor_flag(INTERNAL_FUNCTION_PARAMETERS, int flag, int m
 	zend_bool z = 1;
 
 	preiteration_setup;
-	if (mode == -1 && zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &z) == FAILURE) {
-		return;
+	if (mode == -1) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &z) == FAILURE) {
+			return;
+		}
 	} else {
 		z = mode;
 	}
