@@ -1,0 +1,26 @@
+<?php # vim: ft=php
+/*
+ * Example config file.
+ * Copy this file to mongo-test-cfg.inc and adjust the values
+ * to match your setup.
+ *
+ * Server types you do not have (i.e. standalone or secondary)
+ * should be set to FALSE.
+ *
+ * For example, if you only have a replicaset running (no standalone)
+ * then set $STANDALONE_HOSTNAME = FALSE;
+ *
+ */
+$STANDALONE_HOSTNAME = "standalone.local";
+
+$REPLICASET_NAME       = "RS";
+$REPLICASET_PRIMARY    = "primary.rs.local";
+$REPLICASET_SECONDARY  = "secondary.rs.local";
+$REPLICASET_ARBITER    = "tertiary.rs.local";
+
+$STANDALONE_PORT =
+    $REPLICASET_PORT =
+    $REPLICASET_PRIMARY_PORT =
+    $REPLICASET_SECONDARY_PORT =
+    $REPLICASET_ARBITER_PORT = 27017;
+
