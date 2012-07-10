@@ -5,7 +5,7 @@ Test for database timeout option.
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";
-$m = mongo();
+$m = mongo("admin");
 $d = $m->selectDb('admin');
 
 try

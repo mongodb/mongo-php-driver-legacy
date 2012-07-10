@@ -9,6 +9,7 @@ try {
     $m = null;
     $m = mongo();
 } catch(Exception $e) {
+    die("skip " . $e->getMessage());
 }
 if (!$m) {
     $cfg = __DIR__ . "/../mongo-test-cfg.inc";

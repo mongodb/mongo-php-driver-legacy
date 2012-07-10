@@ -10,7 +10,7 @@ $d = $a->selectDb("phpunit");
 $ns = $d->selectCollection('system.namespaces');
 
 // cleanup
-$d->drop('create-col1');
+$d->dropCollection('create-col1');
 var_dump($ns->findOne(array('name' => 'phpunit.create-col1')));
 
 // create

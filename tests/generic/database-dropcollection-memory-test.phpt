@@ -12,14 +12,14 @@ $ns = $d->selectCollection('system.namespaces');
 // drop the collection 1000 times
 $u = memory_get_usage(true);
 for ($i = 0; $i < 1000; $i++) {
-	$d->drop($d->dropcoltest);
+	$d->dropCollection($d->dropcoltest);
 }
 var_dump($u - memory_get_usage(true));
 
 // drop the collection 1000 times
 $u = memory_get_usage(true);
 for ($i = 0; $i < 1000; $i++) {
-	$d->drop('dropcoltest');
+	$d->dropCollection('dropcoltest');
 }
 var_dump($u - memory_get_usage(true));
 

@@ -14,11 +14,11 @@ $d->dropcoltest->insert(array('foo' => 'bar'));
 var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
 
 // drop the collection
-$d->drop($d->dropcoltest);
+$d->dropCollection($d->dropcoltest);
 var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
 
 // dropping the new non-existant collection
-$d->drop($d->dropcoltest);
+$d->dropCollection($d->dropcoltest);
 var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
 ?>
 --EXPECTF--

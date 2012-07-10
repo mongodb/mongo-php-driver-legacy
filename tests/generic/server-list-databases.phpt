@@ -5,7 +5,7 @@ Server: list databases
 --FILE--
 <?php
 require __DIR__ ."/../utils.inc";
-$a = mongo();
+$a = mongo("admin");
 $dbs = $a->listDBs();
 var_dump($dbs['ok']);
 var_dump($dbs['totalSize']);
