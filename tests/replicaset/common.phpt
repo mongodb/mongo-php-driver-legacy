@@ -1,8 +1,10 @@
 --TEST--
 MongoDB ReplicaSet
 --SKIPIF--
-<?php # vim:ft=php
-if (!extension_loaded('mongo')) print 'skip mongo not loaded';
+<?php
+// Force replicaset mode
+$_ENV["MONGO_SERVER"] = "REPLICASET";
+require __DIR__ ."/skipif.inc";
 ?>
 --REDIRECTTEST--
 return array(
