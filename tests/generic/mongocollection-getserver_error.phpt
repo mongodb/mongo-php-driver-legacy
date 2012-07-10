@@ -3,6 +3,8 @@ MongoCollection::getServer()
 --DESCRIPTION--
 Test for error when trying to insert something in a collection when
 no server is attached to it.
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 try

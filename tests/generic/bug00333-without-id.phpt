@@ -1,5 +1,7 @@
 --TEST--
 Test for bug PHP-333: GridFS find's key without returning _id
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";

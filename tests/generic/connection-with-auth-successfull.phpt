@@ -1,12 +1,12 @@
 --TEST--
 Connection strings: succesfull authentication
 --SKIPIF--
-<?php die("skip FIXME: This test executes local binaries..."); ?>
+<?php require __DIR__ ."/skipif.inc"; ?>
+<?php if (!strstr("AUTH", $_ENV["MONGO_SERVER"])) die("skip Only applicable in authenticated environments") ?>
 --FILE--
+<?php require_once __DIR__ ."/skipif.inc"; ?>
 <?php
-passthru("mongo tests/addUser.js");
-$a = new Mongo("mongodb://testUser:testPass@localhost");
-var_dump($a->connected);
+$a = mongo(dbname());
 echo $a, "\n";
 ?>
 --EXPECTF--

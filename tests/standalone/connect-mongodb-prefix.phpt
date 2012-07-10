@@ -1,6 +1,7 @@
 --TEST--
 Connection strings: Prefixed with mongodb://
 --SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 <?php
 require __DIR__ . "/../utils.inc";
 if ($STANDALONE_PORT != "27017") {

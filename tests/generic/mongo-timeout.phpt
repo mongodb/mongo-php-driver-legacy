@@ -1,9 +1,11 @@
 --TEST--
 Test for database timeout option.
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";
-$m = mongo();
+$m = mongo("admin");
 $d = $m->selectDb('admin');
 
 try

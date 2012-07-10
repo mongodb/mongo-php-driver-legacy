@@ -1,6 +1,7 @@
 --TEST--
 Connection strings: toString.
 --SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 <?php exit("skip This test doesn't make whole lot of sense"); ?>
 --FILE--
 <?php

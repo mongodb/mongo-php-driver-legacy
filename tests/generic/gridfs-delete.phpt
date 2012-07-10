@@ -1,5 +1,7 @@
 --TEST--
 GridFS: deleting files by ID
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";

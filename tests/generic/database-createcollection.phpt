@@ -1,5 +1,7 @@
 --TEST--
 Database: Create collection
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";
@@ -8,7 +10,7 @@ $d = $a->selectDb("phpunit");
 $ns = $d->selectCollection('system.namespaces');
 
 // cleanup
-$d->drop('create-col1');
+$d->dropCollection('create-col1');
 $retval = $ns->findOne(array('name' => 'phpunit.create-col1'));
 var_dump($retval);
 
