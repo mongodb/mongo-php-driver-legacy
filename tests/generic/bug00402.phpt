@@ -1,5 +1,7 @@
 --TEST--
 Test for bug #402: MongoCollection::validate(true) doesn't set the correct scan-all flag.
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ ."/../utils.inc";

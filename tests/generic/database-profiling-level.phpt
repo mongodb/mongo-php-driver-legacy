@@ -1,5 +1,7 @@
 --TEST--
 Database: Profiling (turning on and off)
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";

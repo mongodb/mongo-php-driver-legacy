@@ -1,5 +1,7 @@
 --TEST--
 Test for bug PHP-300: execute crashes with array() as argument
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";

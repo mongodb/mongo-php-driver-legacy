@@ -1,6 +1,7 @@
 --TEST--
 Connection strings: unsuccesfull authentication
 --SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 <?php die("skip FIXME: This test executes local binaries..."); ?>
 --FILE--
 <?php

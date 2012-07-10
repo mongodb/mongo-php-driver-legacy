@@ -1,5 +1,7 @@
 --TEST--
 Database: Dropping collections (name-as-string)
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";

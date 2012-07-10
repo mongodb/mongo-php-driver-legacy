@@ -1,5 +1,7 @@
 --TEST--
 Test for PHP-353: Iterating over a MongoCursor without _id field should not create an empty string
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ ."/../utils.inc";

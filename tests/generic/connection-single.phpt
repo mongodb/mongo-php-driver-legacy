@@ -1,6 +1,7 @@
 --TEST--
 Connection strings: Test single host name with/without port
 --SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 <?php
 require __DIR__ . "/../utils.inc";
 
