@@ -9,7 +9,10 @@
 
 /* These constants are a bit field - however, each connection will only have
  * one type. The reason why it's a bit field is because of filtering during
- * read preference scanning (see read_preference.c). */
+ * read preference scanning (see read_preference.c).
+ *
+ * SECONDARY needs to have a larger constant value than PRIMARY for the read
+ * preference sorting algorithm to work. */
 #define MONGO_NODE_PRIMARY        0x01
 #define MONGO_NODE_SECONDARY      0x02
 #define MONGO_NODE_ARBITER        0x04

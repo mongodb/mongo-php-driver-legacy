@@ -8,11 +8,16 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 	mcon_collection *col;
 	mongo_con_manager_item *ptr = manager->connections;
 
-	col = mcon_init_collection(sizeof(mongo_connection));
+	col = mcon_init_collection(sizeof(mongo_connection*));
 
 	while (ptr) {
 		/* we need to check for username and pw on the connection too later */
 		if (ptr->connection->connection_type & types) {
+			printf("filter connections: adding type: %d, socket: %d, ping: %d\n",
+				ptr->connection->connection_type,
+				ptr->connection->socket,
+				ptr->connection->ping_ms
+			);
 			mcon_collection_add(col, ptr->connection);
 		}
 		ptr = ptr->next;
