@@ -21,20 +21,22 @@ See [the PHP manual](http://us.php.net/manual/en/book.mongo.php).
 
 The tests are not available as part of the PECL package, but they are available 
 on [Github](http://www.github.com/mongodb/mongo-php-driver/tree/master/tests).  
-They use [PHPUnit](from http://www.phpunit.de).  To run the tests:
+To run the test, you'll have to configure the tests/mongo-test-cfg.inc file
+(copy the tests/mongo-test-cfg.inc.template to tests/mongo-test-cfg.inc and edit it).
+By default, the tests will be executed in several different environments;
+(currently:)
+* Replicaset (without authentication)
+* Standalone
 
-    $ phpunit tests/MongoSuite.php
+If you are not running any of these environments, you can disable these runs by
+adjusting theconfiguration file.
 
-There must be a mongod instance running on port 27017 in order to run the tests.
-They also assume that php.ini sets error_reporting to `E_STRICT | E_ALL`.
 
-The tests will spit out a bunch of warnings if you do not have 
-_mongo-php-driver/php_ on your include path, but it will just skip the tests that 
-require that.
+Once you have filled out the configuration template, run the following command to
+launch the test suite.
 
-The tests will also attempt to create an admin user using the shell.  If 
-_mongo_ is not on your path, you will get some output complaining about it but
-those tests will just be skipped.
+    $ make test
+
 
 ## Credits
 
