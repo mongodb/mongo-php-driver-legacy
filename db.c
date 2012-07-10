@@ -676,6 +676,7 @@ PHP_METHOD(MongoDB, authenticate) {
   add_assoc_long(data, "getnonce", 1);
 
   MAKE_STD_ZVAL(result);
+  ZVAL_NULL(result);
   MONGO_CMD(result, getThis());
 
   zval_ptr_dtor(&data);
