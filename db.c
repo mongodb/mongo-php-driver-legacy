@@ -191,6 +191,13 @@ PHP_METHOD(MongoDB, setProfilingLevel) {
 
 PHP_METHOD(MongoDB, drop) {
   zval *data;
+
+
+  if (zend_parse_parameters_none() == FAILURE) {
+    return;
+  }
+
+
   MAKE_STD_ZVAL(data);
   array_init(data);
   add_assoc_long(data, "dropDatabase", 1);
