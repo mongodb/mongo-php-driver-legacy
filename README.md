@@ -21,7 +21,8 @@ See [the PHP manual](http://us.php.net/manual/en/book.mongo.php).
 
 The tests are not available as part of the PECL package, but they are available 
 on [Github](http://www.github.com/mongodb/mongo-php-driver/tree/master/tests).  
-To run the test, you'll have to configure the tests/mongo-test-cfg.inc file.
+To run the test, you'll have to configure the tests/mongo-test-cfg.inc file
+(copy the tests/mongo-test-cfg.inc.template to tests/mongo-test-cfg.inc and edit it).
 By default, the tests will be executed in several different environments;
 (currently:)
 * Replicaset (without authentication)
