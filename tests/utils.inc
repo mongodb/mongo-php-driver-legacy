@@ -146,6 +146,10 @@ function password($db = null) {
     }
     return null;
 }
+function serverversion($m) {
+    $data = $m->selectDB(dbname())->command(array('buildinfo'=>true));
+    return $data["version"];
+}
 
 if (!function_exists("iterator_to_array")) {
     function iterator_to_array($it) {
