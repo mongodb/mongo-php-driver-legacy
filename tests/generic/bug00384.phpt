@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-384: Segfaults with GridFS and long_as_object.
 --SKIPIF--
-<?php exit("skip This test fails"); ?>
+<?php require __DIR__ ."/skipif.inc"; ?>
 --INI--
 mongo.long_as_object=0
 --FILE--

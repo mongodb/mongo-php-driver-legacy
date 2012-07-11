@@ -1,5 +1,7 @@
 --TEST--
 Test for issue PHP-233: support keep_going flag.
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";

@@ -1,10 +1,12 @@
 --TEST--
 Database: Create collection with max size and items
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";
 
-$a = rs();
+$a = mongo();
 $d = $a->selectDb("phpunit");
 
 // cleanup

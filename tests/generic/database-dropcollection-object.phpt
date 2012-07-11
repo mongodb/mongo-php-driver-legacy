@@ -1,5 +1,7 @@
 --TEST--
 Database: Dropping collections (object)
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";
@@ -12,11 +14,11 @@ $d->dropcoltest->insert(array('foo' => 'bar'));
 var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
 
 // drop the collection
-$d->drop($d->dropcoltest);
+$d->dropCollection($d->dropcoltest);
 var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
 
 // dropping the new non-existant collection
-$d->drop($d->dropcoltest);
+$d->dropCollection($d->dropcoltest);
 var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
 ?>
 --EXPECTF--

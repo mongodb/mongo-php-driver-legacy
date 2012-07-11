@@ -1,12 +1,14 @@
 --TEST--
 MongoDB Standalone
 --SKIPIF--
-<?php # vim:ft=php
-if (!extension_loaded('mongo')) print 'skip mongo not loaded';
+<?php
+// Force standalone mode
+$_ENV["MONGO_SERVER"] = "STANDALONE";
+require __DIR__ ."/skipif.inc";
 ?>
 --REDIRECTTEST--
 return array(
-    'ENV'   => array(),
+    'ENV'   => array("MONGO_SERVER" => "STANDALONE"),
     'TESTS' => "tests/generic",
 );
 
