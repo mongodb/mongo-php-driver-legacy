@@ -2,6 +2,8 @@
 MongoCollection::__toString()
 --DESCRIPTION--
 Test implicit and explicit __toString
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";

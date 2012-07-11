@@ -1,6 +1,7 @@
 --TEST--
 MongoCollection::insert()
 --SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 <?php die("skip unfixed bug"); ?>
 --XFAIL--
 Invalid options for ->insert() do not throw exception

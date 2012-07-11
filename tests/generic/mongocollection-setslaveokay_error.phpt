@@ -2,6 +2,8 @@
 MongoCollection::setSlaveOkay()
 --DESCRIPTION--
 Test for a value that cannot convert to boolean
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";

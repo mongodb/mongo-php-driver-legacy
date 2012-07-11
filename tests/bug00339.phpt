@@ -1,5 +1,7 @@
 --TEST--
 Bug#339 (Segfault on insert timeout)
+--SKIPIF--
+<?php exit("skip move me");
 --FILE--
 <?php
 // This test may fail if you have blazing fast machine and the 1ms timeout

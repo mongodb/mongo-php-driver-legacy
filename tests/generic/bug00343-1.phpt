@@ -1,5 +1,7 @@
 --TEST--
 Test for bug PHP-343: Segfault when adding a file to GridFS (storeBytes)
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";

@@ -13,14 +13,28 @@
  */
 $STANDALONE_HOSTNAME = "standalone.local";
 
+$STANDALONE_AUTH_HOSTNAME = "standalone.auth.local";
+$STANDALONE_AUTH_USERNAME = "testusername";
+$STANDALONE_AUTH_PASSWORD = "testpassword";
+$STANDALONE_AUTH_DATABASE = "phpunit";
+
 $REPLICASET_NAME       = "RS";
 $REPLICASET_PRIMARY    = "primary.rs.local";
 $REPLICASET_SECONDARY  = "secondary.rs.local";
 $REPLICASET_ARBITER    = "tertiary.rs.local";
 
+$REPLICASET_AUTH_PRIMARY = "primary.rs-auth.local";
+$REPLICASET_AUTH_ADMIN_USERNAME = "adminusername";
+$REPLICASET_AUTH_ADMIN_PASSWORD = "adminpassword";
+$REPLICASET_AUTH_USERNAME = "testusername";
+$REPLICASET_AUTH_PASSWORD = "testpassword";
+$REPLICASET_AUTH_DATABASE = "phpunit";
+
 $STANDALONE_PORT =
+    $STANDALONE_AUTH_PORT =
     $REPLICASET_PORT =
     $REPLICASET_PRIMARY_PORT =
     $REPLICASET_SECONDARY_PORT =
-    $REPLICASET_ARBITER_PORT = 27017;
+    $REPLICASET_ARBITER_PORT =
+    $REPLICASET_AUTH_PORT = 27017;
 

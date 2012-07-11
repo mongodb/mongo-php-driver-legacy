@@ -2,6 +2,8 @@
 PHP-372 (Error codes not being passed to MongoGridFSException)
 --CREDITS--
 Alex Yam
+--SKIPIF--
+<?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--
 <?php
 /*-----------------------------------------------------------
