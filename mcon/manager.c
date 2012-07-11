@@ -121,21 +121,42 @@ mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_
 		case MONGO_RP_PRIMARY:
 			return mongo_rp_collect_primary(manager);
 			break;
+		case MONGO_RP_PRIMARY_PREFERRED:
+		case MONGO_RP_SECONDARY_PREFERRED:
+		case MONGO_RP_NEAREST:
+			return mongo_rp_collect_primary_and_secondary(manager);
+			break;
 		case MONGO_RP_SECONDARY:
 			return mongo_rp_collect_secondary(manager);
-			break;
-		case MONGO_RP_SECONDARY_ONLY:
-			return mongo_rp_collect_secondary_only(manager);
-			break;
-		case MONGO_RP_ANY:
-			return mongo_rp_collect_any(manager);
 			break;
 		default:
 			return NULL;
 	}
 }
 
-int mongo_rp_sort_secondary(const void* a, const void *b)
+int mongo_rp_sort_primary_preferred(const void* a, const void *b)
+{
+	mongo_connection *con_a = *(mongo_connection**) a;
+	mongo_connection *con_b = *(mongo_connection**) b;
+
+	/* First we prefer primary over secondary, and if the field type is the
+	 * same, we sort on ping_ms again. *_SECONDARY is a higher constant value
+	 * than *_PRIMARY, so we sort descendingly by connection_type */
+	if (con_a->connection_type < con_b->connection_type) {
+		return 1;
+	} else if (con_a->connection_type > con_b->connection_type) {
+		return -1;
+	} else {
+		if (con_a->ping_ms > con_b->ping_ms) {
+			return 1;
+		} else if (con_a->ping_ms < con_b->ping_ms) {
+			return -1;
+		}
+	}
+	return 0;
+}
+
+int mongo_rp_sort_secondary_preferred(const void* a, const void *b)
 {
 	mongo_connection *con_a = *(mongo_connection**) a;
 	mongo_connection *con_b = *(mongo_connection**) b;
@@ -155,7 +176,6 @@ int mongo_rp_sort_secondary(const void* a, const void *b)
 		}
 	}
 	return 0;
-
 }
 
 int mongo_rp_sort_any(const void* a, const void *b)
@@ -190,15 +210,23 @@ mcon_collection *mongo_select_server(mcon_collection *col, mongo_read_preference
 			 * be one server */
 			break;
 
+		case MONGO_RP_PRIMARY_PREFERRED:
+			sort_function = mongo_rp_sort_primary_preferred;
+			break;
+
 		case MONGO_RP_SECONDARY:
-			sort_function = mongo_rp_sort_secondary;
+			/* Should not really have to do anything as there is only going to
+			 * be one server */
 			break;
-		case MONGO_RP_SECONDARY_ONLY:
-			sort_function = mongo_rp_sort_secondary_only;
+
+		case MONGO_RP_SECONDARY_PREFERRED:
+			sort_function = mongo_rp_sort_secondary_preferred;
 			break;
-		case MONGO_RP_ANY:
+
+		case MONGO_RP_NEAREST:
 			sort_function = mongo_rp_sort_any;
 			break;
+
 		default:
 			return NULL;
 	}
@@ -228,7 +256,7 @@ static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *mana
 	mongo_discover_topology(manager, servers);
 	/* Depending on read preference type, run the correct algorithms */
 	collection = mongo_find_candidate_servers(manager, rp);
-	con = mongo_select_server(collection, rp);
+	collection = mongo_select_server(collection, rp);
 	/* Cleaning up */
 	mcon_collection_free(collection);	
 	return con;
