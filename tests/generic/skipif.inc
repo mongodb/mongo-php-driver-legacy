@@ -13,3 +13,10 @@ if (!$m) {
     die("skip Did you remember to configure " . realpath($cfg) . " based on your environment?");
 }
 
+if (isset($needs)) {
+    $serverversion = serverversion($m);
+    if (version_compare($serverversion, $needs, "lt")) {
+        die("skip This test requires MongoDB $needs, but you are running $serverversion");
+    }
+}
+
