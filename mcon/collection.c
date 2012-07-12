@@ -24,6 +24,15 @@ void mcon_collection_add(mcon_collection *c, void *data)
 	c->count++;
 }
 
+void mcon_collection_iterate(mcon_collection *c, mcon_collection_callback_t cb)
+{
+	int i;
+
+	for (i = 0; i < c->count; i++) {
+		cb(c->data[i]);
+	}
+}
+
 void mcon_collection_free(mcon_collection *c)
 {
 	free(c->data);

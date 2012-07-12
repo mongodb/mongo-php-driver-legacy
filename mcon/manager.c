@@ -191,11 +191,14 @@ int mongo_rp_sort_any(const void* a, const void *b)
 	return 0;
 }
 
-int mongo_rp_sort_secondary_only(const void* a, const void *b)
+static void print_mongo_connection(void *elem)
 {
-	/* We use *_any here, as the algorithm is the same. The only difference is
-	 * that secondary_only's collection only has secondaries in its list */
-	return mongo_rp_sort_any(a, b);
+	mongo_connection *con = (mongo_connection*) elem;
+	printf("  - connection: type: %d, socket: %d, ping: %d\n",
+		con->connection_type,
+		con->socket,
+		con->ping_ms
+	);
 }
 
 /* This method is the master for selecting the correct algorithm for the order
@@ -231,8 +234,12 @@ mcon_collection *mongo_select_server(mcon_collection *col, mongo_read_preference
 			return NULL;
 	}
 	printf("select server: sorting\n");
+	printf("- before:\n");
+	mcon_collection_iterate(col, print_mongo_connection);
 	qsort(col->data, col->count, sizeof(mongo_connection*), sort_function);
-	return col->data[0];
+	printf("- after:\n");
+	mcon_collection_iterate(col, print_mongo_connection);
+	return col;
 }
 
 /* Fetching connections */
