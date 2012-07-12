@@ -10,7 +10,9 @@ no server is attached to it.
 try
 {
 	$c = new MongoCollection();
-	$c->insert(array('hello' => 'Hello, world!', 0 => 'Joehoe'));
+    if ($c) {
+        $c->insert(array('hello' => 'Hello, world!', 0 => 'Joehoe'));
+    }
 }
 catch (Exception $e)
 {
@@ -19,4 +21,3 @@ catch (Exception $e)
 ?>
 --EXPECTF--
 Warning: MongoCollection::__construct() expects exactly 2 parameters, 0 given in %smongocollection-getserver_error.php on line %d
-The MongoCollection object has not been correctly initialized by its constructor

@@ -77,6 +77,8 @@ PHP_METHOD(MongoCollection, __construct) {
   int name_len;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &parent, mongo_ce_DB, &name_str, &name_len) == FAILURE) {
+    zval *object = getThis();
+    ZVAL_NULL(object);
     return;
   }
 
