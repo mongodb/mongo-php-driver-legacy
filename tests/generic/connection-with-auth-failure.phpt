@@ -19,4 +19,4 @@ try {
 }
 ?>
 --EXPECTF--
-Couldn't authenticate with database %s: username [%S], password [%s]
+Couldn't authenticate with database %s: username [%S]
