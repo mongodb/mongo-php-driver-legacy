@@ -29,8 +29,8 @@ int main(void)
 	manager = mongo_init();
 
 	/* Register connections */
-	con = create_con(manager, MONGO_NODE_PRIMARY, 15, "whisky:13000;X;10120");
 	con = create_con(manager, MONGO_NODE_SECONDARY, 13, "whisky:13001;X;10120");
+	con = create_con(manager, MONGO_NODE_PRIMARY, 15, "whisky:13000;X;10120");
 	con = create_con(manager, MONGO_NODE_SECONDARY, 19, "whisky:13002;X;10120");
 
 	/* Configure RP */

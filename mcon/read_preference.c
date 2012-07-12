@@ -85,9 +85,9 @@ static int mongo_rp_sort_primary_preferred(const void* a, const void *b)
 	/* First we prefer primary over secondary, and if the field type is the
 	 * same, we sort on ping_ms again. *_SECONDARY is a higher constant value
 	 * than *_PRIMARY, so we sort descendingly by connection_type */
-	if (con_a->connection_type < con_b->connection_type) {
+	if (con_a->connection_type > con_b->connection_type) {
 		return 1;
-	} else if (con_a->connection_type > con_b->connection_type) {
+	} else if (con_a->connection_type < con_b->connection_type) {
 		return -1;
 	} else {
 		if (con_a->ping_ms > con_b->ping_ms) {
