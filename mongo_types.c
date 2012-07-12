@@ -664,13 +664,16 @@ PHP_METHOD(MongoDBRef, create) {
 }
 /* }}} */
 
-/* {{{ MongoDBRef::isRef()
- */
+/* {{{ proto bool MongoDBRef::isRef(mixed ref)
+   Checks if $ref has a $ref and $id property/key */
 PHP_METHOD(MongoDBRef, isRef) {
   zval *ref;
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ref) == FAILURE ||
-      IS_SCALAR_P(ref)) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ref) == FAILURE) {
     return;
+  }
+
+  if (IS_SCALAR_P(ref)) {
+      RETURN_FALSE;
   }
 
   // check that $ref and $id fields exists
