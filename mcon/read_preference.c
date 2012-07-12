@@ -8,10 +8,11 @@
 static void print_mongo_connection(void *elem)
 {
 	mongo_connection *con = (mongo_connection*) elem;
-	printf("  - connection: type: %d, socket: %d, ping: %d\n",
-		con->connection_type,
+	printf("  - connection: type: %s, socket: %d, ping: %d, hash: %s\n",
+		con->connection_type == 1 ? "PRIMARY  " : "SECONDARY",
 		con->socket,
-		con->ping_ms
+		con->ping_ms,
+		con->hash
 	);
 }
 
