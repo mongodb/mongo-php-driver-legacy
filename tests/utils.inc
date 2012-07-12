@@ -118,13 +118,31 @@ function dbname() {
             return "phpunit";
     }
 }
-function port() {
+function port($env = null) {
+    if ($env) {
+        $tmp = $_ENV["MONGO_SERVER"];
+        $_ENV["MONGO_SERVER"] = $env;
+    }
+
     m($dsn, $port, $db, $opts);
+
+    if ($env) {
+        $_ENV["MONGO_SERVER"] = $tmp;
+    }
     return $port;
 }
 
-function hostname() {
+function hostname($env = null) {
+    if ($env) {
+        $tmp = $_ENV["MONGO_SERVER"];
+        $_ENV["MONGO_SERVER"] = $env;
+    }
+
     m($dsn, $port, $db, $opts);
+
+    if ($env) {
+        $_ENV["MONGO_SERVER"] = $tmp;
+    }
     return $dsn;
 }
 
