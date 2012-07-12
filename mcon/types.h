@@ -25,6 +25,7 @@ typedef struct _mongo_connection
 	int    last_reqid;
 	int    socket;
 	int    connection_type; /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
+	char  *hash; /* Duplicate of the hash that the manager knows this connection as */
 } mongo_connection;
 
 typedef struct _mongo_con_manager_item

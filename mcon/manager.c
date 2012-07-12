@@ -25,7 +25,8 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 		if (con) {
 			printf("get_connection_single: pinging %s\n", hash);
 			if (mongo_connection_ping(con)) {
-				mongo_manager_connection_register(manager, hash, con);
+				con->hash = strdup(hash);
+				mongo_manager_connection_register(manager, con);
 			} else {
 				mongo_connection_destroy(con);
 				free(hash);
@@ -199,14 +200,14 @@ static void destroy_manager_item(mongo_con_manager_item *item)
 	free_manager_item(item);
 }
 
-void mongo_manager_connection_register(mongo_con_manager *manager, char *hash, mongo_connection *con)
+void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connection *con)
 {
 	mongo_con_manager_item *ptr = manager->connections;
 	mongo_con_manager_item *new;
 
 	/* Setup new entry */
 	new = create_new_manager_item();
-	new->hash = strdup(hash);
+	new->hash = strdup(con->hash);
 	new->connection = con;
 	new->next = NULL;
 

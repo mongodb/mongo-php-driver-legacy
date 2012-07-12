@@ -257,6 +257,7 @@ void mongo_connection_destroy(mongo_connection *con)
 	shutdown(con->socket, SHUT_RDWR);
 	close(con->socket);
 #endif
+	free(con->hash);
 	free(con);
 }
 

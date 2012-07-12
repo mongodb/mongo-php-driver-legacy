@@ -13,5 +13,5 @@ mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers
 
 /* Connection management */
 mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manager, char *hash);
-void mongo_manager_connection_register(mongo_con_manager *manager, char *hash, mongo_connection *con);
+void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connection *con);
 #endif
