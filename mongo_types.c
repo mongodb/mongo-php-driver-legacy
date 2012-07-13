@@ -460,6 +460,10 @@ PHP_METHOD(MongoBinData, __construct) {
     return;
   }
 
+  if (ZEND_NUM_ARGS() == 1) {
+      php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The default value for type will change to 0 in the future. Please pass in '0' explicitly.");
+  }
+
   zend_update_property_stringl(mongo_ce_BinData, getThis(), "bin", strlen("bin"), bin, bin_len TSRMLS_CC);
   zend_update_property_long(mongo_ce_BinData, getThis(), "type", strlen("type"), type TSRMLS_CC);
 }
@@ -664,13 +668,16 @@ PHP_METHOD(MongoDBRef, create) {
 }
 /* }}} */
 
-/* {{{ MongoDBRef::isRef()
- */
+/* {{{ proto bool MongoDBRef::isRef(mixed ref)
+   Checks if $ref has a $ref and $id property/key */
 PHP_METHOD(MongoDBRef, isRef) {
   zval *ref;
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ref) == FAILURE ||
-      IS_SCALAR_P(ref)) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ref) == FAILURE) {
     return;
+  }
+
+  if (IS_SCALAR_P(ref)) {
+      RETURN_FALSE;
   }
 
   // check that $ref and $id fields exists

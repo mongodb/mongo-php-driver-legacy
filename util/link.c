@@ -16,6 +16,7 @@
  */
 
 #include <php.h>
+#include <zend_exceptions.h>
 
 #include "../php_mongo.h"
 #include "link.h"
@@ -95,6 +96,12 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
 int mongo_util_link_failed(mongo_link *link, mongo_server *server TSRMLS_DC) {
   int retval = SUCCESS;
 
+  if (EG(exception)) {
+      /* We could hit this when we are automatically reconnecting after f.e. query failure */
+      zend_exception_save(TSRMLS_C);
+  }
+
+
   if (mongo_util_pool_failed(server TSRMLS_CC) == FAILURE) {
     retval = FAILURE;
   }
@@ -103,12 +110,15 @@ int mongo_util_link_failed(mongo_link *link, mongo_server *server TSRMLS_DC) {
     rs_monitor *monitor;
 
     if ((monitor = mongo_util_rs__get_monitor(link TSRMLS_CC)) == 0) {
-      return FAILURE;
+      retval = FAILURE;
+      goto bailout;
     }
 
     mongo_util_rs__ping(monitor TSRMLS_CC);
   }
 
+bailout:
+      zend_exception_restore(TSRMLS_C);
   return retval;
 }
 
