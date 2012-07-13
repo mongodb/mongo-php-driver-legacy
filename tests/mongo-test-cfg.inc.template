@@ -14,6 +14,8 @@
 $STANDALONE_HOSTNAME = "standalone.local";
 
 $STANDALONE_AUTH_HOSTNAME = "standalone.auth.local";
+$STANDALONE_AUTH_ADMIN_USERNAME = "adminusername";
+$STANDALONE_AUTH_ADMIN_PASSWORD = "adminpassword";
 $STANDALONE_AUTH_USERNAME = "testusername";
 $STANDALONE_AUTH_PASSWORD = "testpassword";
 $STANDALONE_AUTH_DATABASE = "phpunit";
