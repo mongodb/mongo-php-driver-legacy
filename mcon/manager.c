@@ -128,14 +128,22 @@ static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *mana
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
-		con = mongo_get_connection_single(manager, servers->server[i]);
+		mongo_get_connection_single(manager, servers->server[i]);
 	}
 	/* Discover more nodes. This also adds a connection to "servers" for each
 	 * new node */
 	mongo_discover_topology(manager, servers);
 	/* Depending on read preference type, run the correct algorithms */
 	collection = mongo_find_candidate_servers(manager, rp);
-	collection = mongo_select_server(collection, rp);
+	if (collection->count == 0) {
+		/* FIXME: Set error message: "No candidate servers found" */
+		goto bailout;
+	}
+	collection = mongo_sort_servers(collection, rp);
+	collection = mongo_select_nearest_servers(collection, rp);
+	con = mongo_pick_server_from_set(collection, rp);
+
+bailout:
 	/* Cleaning up */
 	mcon_collection_free(collection);	
 	return con;

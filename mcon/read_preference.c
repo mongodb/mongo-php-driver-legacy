@@ -5,10 +5,10 @@
 #include <stdlib.h>
 
 /* Helpers */
-static void print_mongo_connection(void *elem)
+void mongo_print_connection_info(void *elem)
 {
 	mongo_connection *con = (mongo_connection*) elem;
-	printf("  - connection: type: %s, socket: %d, ping: %d, hash: %s\n",
+	printf("- connection: type: %s, socket: %d, ping: %d, hash: %s\n",
 		con->connection_type == 1 ? "PRIMARY  " : "SECONDARY",
 		con->socket,
 		con->ping_ms,
@@ -27,11 +27,7 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 	while (ptr) {
 		/* we need to check for username and pw on the connection too later */
 		if (ptr->connection->connection_type & types) {
-			printf("filter connections: adding type: %d, socket: %d, ping: %d\n",
-				ptr->connection->connection_type,
-				ptr->connection->socket,
-				ptr->connection->ping_ms
-			);
+			mongo_print_connection_info(ptr->connection);
 			mcon_collection_add(col, ptr->connection);
 		}
 		ptr = ptr->next;
@@ -107,9 +103,9 @@ static int mongo_rp_sort_secondary_preferred(const void* a, const void *b)
 	/* First we prefer secondary over primary, and if the field type is the
 	 * same, we sort on ping_ms again. *_SECONDARY is a higher constant value
 	 * than *_PRIMARY. */
-	if (con_a->connection_type > con_b->connection_type) {
+	if (con_a->connection_type < con_b->connection_type) {
 		return 1;
-	} else if (con_a->connection_type < con_b->connection_type) {
+	} else if (con_a->connection_type > con_b->connection_type) {
 		return -1;
 	} else {
 		if (con_a->ping_ms > con_b->ping_ms) {
@@ -136,7 +132,7 @@ static int mongo_rp_sort_any(const void* a, const void *b)
 
 /* This method is the master for selecting the correct algorithm for the order
  * of servers in which to try the candidate servers that we've previously found */
-mcon_collection *mongo_select_server(mcon_collection *col, mongo_read_preference *rp)
+mcon_collection *mongo_sort_servers(mcon_collection *col, mongo_read_preference *rp)
 {
 	mongo_connection_sort_t *sort_function;
 
@@ -144,6 +140,7 @@ mcon_collection *mongo_select_server(mcon_collection *col, mongo_read_preference
 		case MONGO_RP_PRIMARY:
 			/* Should not really have to do anything as there is only going to
 			 * be one server */
+			sort_function = mongo_rp_sort_any;
 			break;
 
 		case MONGO_RP_PRIMARY_PREFERRED:
@@ -151,8 +148,7 @@ mcon_collection *mongo_select_server(mcon_collection *col, mongo_read_preference
 			break;
 
 		case MONGO_RP_SECONDARY:
-			/* Should not really have to do anything as there is only going to
-			 * be one server */
+			sort_function = mongo_rp_sort_any;
 			break;
 
 		case MONGO_RP_SECONDARY_PREFERRED:
@@ -167,10 +163,60 @@ mcon_collection *mongo_select_server(mcon_collection *col, mongo_read_preference
 			return NULL;
 	}
 	printf("select server: sorting\n");
-	printf("- before:\n");
-	mcon_collection_iterate(col, print_mongo_connection);
 	qsort(col->data, col->count, sizeof(mongo_connection*), sort_function);
-	printf("- after:\n");
-	mcon_collection_iterate(col, print_mongo_connection);
+	mcon_collection_iterate(col, mongo_print_connection_info);
 	return col;
+}
+
+mcon_collection *mongo_select_nearest_servers(mcon_collection *col, mongo_read_preference *rp)
+{
+	mcon_collection *filtered;
+	int              i, nearest_ping;
+
+	filtered = mcon_init_collection(sizeof(mongo_connection*));
+
+	printf("select server: only nearest\n");
+
+	switch (rp->type) {
+		case MONGO_RP_PRIMARY:
+		case MONGO_RP_PRIMARY_PREFERRED:
+		case MONGO_RP_SECONDARY:
+		case MONGO_RP_SECONDARY_PREFERRED:
+		case MONGO_RP_NEAREST:
+			/* The nearest ping time is in the first element */
+			nearest_ping = ((mongo_connection*)col->data[0])->ping_ms;
+			printf("select server: nearest is %dms\n", nearest_ping);
+
+			/* FIXME: Change to iterator later */
+			for (i = 0; i < col->count; i++) {
+				if (((mongo_connection*)col->data[i])->ping_ms <= nearest_ping + MONGO_RP_CUTOFF) {
+					mcon_collection_add(filtered, col->data[i]);
+				}
+			}
+			break;
+
+		default:
+			return NULL;
+	}
+
+	/* Clean up the old collection that we no longer need */
+	mcon_collection_free(col);
+
+	mcon_collection_iterate(filtered, mongo_print_connection_info);
+	return filtered;
+}
+
+mongo_connection *mongo_pick_server_from_set(mcon_collection *col, mongo_read_preference *rp)
+{
+	int entry = rand() % col->count;
+
+	if (rp->type == MONGO_RP_PRIMARY_PREFERRED) {
+		if (((mongo_connection*)col->data[0])->connection_type == MONGO_NODE_PRIMARY) {
+			printf("pick server: the primary\n");
+			return (mongo_connection*)col->data[0];
+		}
+	}
+	/* For now, we just pick a random server from the set */
+	printf("pick server: random element %d\n", entry);
+	return (mongo_connection*)col->data[entry];
 }
