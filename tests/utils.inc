@@ -5,27 +5,23 @@ function m(&$dsn, &$port, &$db, &$opts = array()) {
     $port = "27017";
     $opts = array();
 
-    if (!empty($_ENV["MONGO_OPTS"])) {
-        $opts = json_decode($_ENV["MONGO_OPTS"]);
-    }
-    if (!empty($_ENV["MONGO_DSN"])) {
-        $dsn = $_ENV["MONGO_DSN"];
-        return;
-    }
+    $type = $_ENV["MONGO_SERVER"];
 
-    $type = "STANDALONE";
-    if (!empty($_ENV["MONGO_SERVER"])) {
-        $type = $_ENV["MONGO_SERVER"];
-    }
-
+    $prefix = "";
     switch($type) {
+        case "BRIDGE_STANDALONE":
+            $prefix = "BRIDGE_";
+            /* break intentionally omitted */
         case "STANDALONE":
-            $dsn                = $GLOBALS["STANDALONE_HOSTNAME"];
+            $dsn                = $GLOBALS[$prefix."STANDALONE_HOSTNAME"];
             $port               = $GLOBALS["STANDALONE_PORT"];
+            $db                 = $GLOBALS["STANDALONE_DATABASE"];
         return;
 
+        case "BRIDGE_STANDALONE_AUTH":
+            $prefix = "BRIDGE_";
         case "STANDALONE_AUTH":
-            $dsn                = $GLOBALS["STANDALONE_AUTH_HOSTNAME"];
+            $dsn                = $GLOBALS[$prefix."STANDALONE_AUTH_HOSTNAME"];
             $port               = $GLOBALS["STANDALONE_AUTH_PORT"];
             if ($db == "admin") {
                 $opts["username"]   = $GLOBALS["STANDALONE_AUTH_ADMIN_USERNAME"];
@@ -40,6 +36,7 @@ function m(&$dsn, &$port, &$db, &$opts = array()) {
 
         case "REPLICASET":
             $dsn                = $GLOBALS["REPLICASET_PRIMARY"];
+            $db                 = $GLOBALS["REPLICASET_DATABASE"];
             $port               = $GLOBALS["REPLICASET_PRIMARY_PORT"];
             $opts["replicaSet"] = $GLOBALS["REPLICASET_NAME"];
         return;
@@ -64,7 +61,7 @@ function mongo($usedb = null, $useprefix = true, $useport = true, $creds = array
     m($dsn, $port, $usedb, $opts);
 
     if (!$dsn) {
-        throw new Exception("Don't have a host to connect to");
+        die(sprintf("skip The '%s' environment is not configured to be executed", $_ENV["MONGO_SERVER"]));
     }
 
     if ($useport) {
@@ -92,31 +89,9 @@ function mongo($usedb = null, $useprefix = true, $useport = true, $creds = array
     return $m;
 }
 
-function rs($db = null) {
-    $_ENV["MONGO_SERVER"] = "REPLICASET";
-    return mongo($db);
-}
-
-
-function auth($usedb = null, $creds = array(), $useprefix = true, $useport = true) {
-    return mongo($usedb, $useprefix, $useport, $creds);
-}
 function dbname() {
-    if (empty($_ENV["MONGO_SERVER"])) {
-        return;
-    }
-    switch($_ENV["MONGO_SERVER"]) {
-        case "STANDALONE_AUTH":
-            return $GLOBALS["STANDALONE_AUTH_DATABASE"];
-        return;
-
-        case "REPLICASET_AUTH":
-            return $GLOBALS["REPLICASET_AUTH_DATABASE"];
-        return;
-
-        default:
-            return "phpunit";
-    }
+    m($dsn, $port, $db, $opts);
+    return $db;
 }
 function port() {
     m($dsn, $port, $db, $opts);
@@ -145,12 +120,16 @@ function password() {
 }
 
 $STANDALONE_HOSTNAME = "localhost";
+$BRIDGE_STANDALONE_HOSTNAME = "";
 $STANDALONE_AUTH_HOSTNAME = "";
+$BRIDGE_STANDALONE_AUTH_HOSTNAME = "";
+
 $STANDALONE_AUTH_ADMIN_USERNAME = "";
 $STANDALONE_AUTH_ADMIN_PASSWORD = "";
 $STANDALONE_AUTH_USERNAME = "";
 $STANDALONE_AUTH_PASSWORD = "";
 $STANDALONE_AUTH_DATABASE = "";
+$STANDALONE_DATABASE      = "";
 
 $REPLICASET_AUTH_ADMIN_USERNAME = "";
 $REPLICASET_AUTH_ADMIN_PASSWORD = "";
@@ -159,6 +138,7 @@ $REPLICASET_AUTH_PASSWORD = "";
 $STANDALONE_AUTH_DATABASE = "";
 
 $REPLICASET_NAME       = "RS";
+$REPLICASET_DATABASE = "";
 $REPLICASET_PRIMARY    = "";
 $REPLICASET_SECONDARY  = "";
 $REPLICASET_ARBITER    = "";
@@ -194,4 +174,19 @@ if ($REPLICASET_ARBITER) {
 }
 
 $REPLICASET_HOSTNAME   = join(",", $RS_HOSTS);
+
+if (empty($_ENV["MONGO_SERVER"])) {
+    $self = $_SERVER["PHP_SELF"];
+    $type = basename(dirname($self));
+    $type = strtoupper($type);
+    $type = str_replace("-", "_", $type);
+
+    switch ($type) {
+    case "GENERIC":
+        $type = "STANDALONE";
+        break;
+
+    }
+    $_ENV["MONGO_SERVER"] = $type;
+}
 
