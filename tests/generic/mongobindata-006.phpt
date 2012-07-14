@@ -6,7 +6,7 @@ MongoBinData insertion with 4MB of binary data
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'mongobindata');
+$coll = $mongo->selectCollection(dbname(), 'mongobindata');
 $coll->drop();
 
 $data = '';
@@ -23,5 +23,6 @@ $result = $coll->findOne(array('_id' => 1));
 
 var_dump($data === $result['bin']->bin);
 ?>
---EXPECT--
+--EXPECTF--
+Deprecated: MongoBinData::__construct(): The default value for type will change to 0 in the future. Please pass in '0' explicitly. in %s on line %d
 bool(true)

@@ -89,6 +89,12 @@ function mongo($usedb = null, $useprefix = true, $useport = true, $creds = array
     return $m;
 }
 
+function isauth() {
+    if (empty($_ENV["MONGO_SERVER"])) {
+        return false;
+    }
+    return (bool)strstr($_ENV["MONGO_SERVER"], "AUTH");
+}
 function dbname() {
     m($dsn, $port, $db, $opts);
     return $db;
