@@ -6,7 +6,7 @@ MongoBinData insertion with null bytes, control characters and symbols
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'mongobindata');
+$coll = $mongo->selectCollection(dbname(), 'mongobindata');
 $coll->drop();
 
 $coll->insert(array('bin' => new MongoBinData(str_repeat(chr(0), 3), 0)));

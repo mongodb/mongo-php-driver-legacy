@@ -6,7 +6,7 @@ MongoMinKey insertion and sorting
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'mongominkey');
+$coll = $mongo->selectCollection(dbname(), 'mongominkey');
 $coll->drop();
 
 $coll->insert(array('x' => 1));

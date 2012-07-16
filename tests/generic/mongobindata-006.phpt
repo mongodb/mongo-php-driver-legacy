@@ -6,7 +6,7 @@ MongoBinData insertion with 4MB of binary data
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'mongobindata');
+$coll = $mongo->selectCollection(dbname(), 'mongobindata');
 $coll->drop();
 
 $data = '';
@@ -23,5 +23,5 @@ $result = $coll->findOne(array('_id' => 1));
 
 var_dump($data === $result['bin']->bin);
 ?>
---EXPECT--
+--EXPECTF--
 bool(true)

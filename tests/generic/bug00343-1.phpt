@@ -24,7 +24,7 @@ var_dump( $grid->findOne() );
 echo "OK\n";
 ?>
 --EXPECTF--
-object(MongoGridFSFile)#%d (2) {
+object(MongoGridFSFile)#%d (%d) {
   ["file"]=>
   array(8) {
     ["_id"]=>
@@ -70,5 +70,7 @@ object(MongoGridFSFile)#%d (2) {
     ["chunksName":protected]=>
     string(9) "fs.chunks"
   }
+  ["flags"]=>
+  int(%d)
 }
 OK

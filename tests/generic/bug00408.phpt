@@ -1,5 +1,5 @@
 --TEST--
-Bug#00408 (MongoBinData custom type is returned as -128)
+Test for bug PHP-408: MongoBinData custom type is returned as -128
 --SKIPIF--
 <?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--

@@ -89,7 +89,13 @@ function mongo($usedb = null, $useprefix = true, $useport = true, $creds = array
     return $m;
 }
 
-function dbname() {
+function isauth() {
+    if (empty($_ENV["MONGO_SERVER"])) {
+        return false;
+    }
+    return (bool)strstr($_ENV["MONGO_SERVER"], "AUTH");
+}
+function dbname($db = null) {
     m($dsn, $port, $db, $opts);
     return $db;
 }
@@ -121,7 +127,7 @@ function hostname($env = null) {
     return $dsn;
 }
 
-function username() {
+function username($db = null) {
     m($dsn, $port, $db, $opts);
     if (isset($opts["username"])) {
         return $opts["username"];
@@ -129,7 +135,7 @@ function username() {
     return null;
 }
 
-function password() {
+function password($db = null) {
     m($dsn, $port, $db, $opts);
     if (isset($opts["password"])) {
         return $opts["password"];
