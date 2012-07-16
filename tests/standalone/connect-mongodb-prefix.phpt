@@ -22,8 +22,11 @@ $b = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT", false);
 var_dump($b->connected);
 $b = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 var_dump($b->connected);
---EXPECT--
+--EXPECTF--
+Deprecated: Mongo::__construct(): Passing scalar values for the options parameter is deprecated and will be removed in the near future in %s on line %d
 bool(false)
 bool(true)
+
+Deprecated: Mongo::__construct(): Passing scalar values for the options parameter is deprecated and will be removed in the near future in %s on line %d
 bool(false)
 bool(true)
