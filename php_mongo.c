@@ -278,6 +278,9 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   mongo_globals->machine = hash;
 
   mongo_globals->ts_inc = 0;
+
+	mongo_globals->log_level = 0;
+	mongo_globals->log_module = 0;
 }
 /* }}} */
 
