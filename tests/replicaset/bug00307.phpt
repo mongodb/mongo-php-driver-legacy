@@ -5,7 +5,7 @@ Test for bug PHP-307: getHosts() turns wrong results.
 --FILE--
 <?php
 require __DIR__ . "/../utils.inc";
-$m = rs();
+$m = mongo();
 
 
 $d = $m->phpunit->bug307;

@@ -1,10 +1,14 @@
 --TEST--
 MongoCollection::distinct() basic tests
+--SKIPIF--
+<?php require __DIR__ . "/skipif.inc"; ?>
 --FILE--
 <?php
-$m = new Mongo();
-$m->phpunit->dropCollection("addresses");
-$c = $m->phpunit->addresses;
+require_once __DIR__ ."/../utils.inc";
+$m = mongo();
+$db = $m->selectDB(dbname());
+$db->dropCollection("addresses");
+$c = $db->addresses;
 
 $c->insert(array("stuff" => "bar", "zip-code" => 10010));
 $c->insert(array("stuff" => "foo", "zip-code" => 10010));
