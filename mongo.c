@@ -336,7 +336,7 @@ PHP_METHOD(Mongo, connectUtil) {
     RETURN_TRUE;
   }
 
-  link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  PHP_MONGO_GET_LINK(getThis());
 
   if (link->rs) {
     // connected will be 1 unless something goes very wrong. we might not
