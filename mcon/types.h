@@ -40,6 +40,11 @@ typedef struct _mongo_con_manager
 	mongo_con_manager_item *connections;
 } mongo_con_manager;
 
+typedef struct _mongo_read_preference
+{
+	int type; /* MONGO_RP_* */
+} mongo_read_preference;
+
 typedef struct _mongo_server_def
 {
 	char *host;
@@ -55,7 +60,9 @@ typedef struct _mongo_servers
 	mongo_server_def *server[16];
 
 	/* flags and options */
-	int               con_type;
-	char             *repl_set_name;
+	int                   con_type;
+	char                 *repl_set_name;
+
+	mongo_read_preference rp;
 } mongo_servers;
 #endif

@@ -1,6 +1,7 @@
 #ifndef __MCON_READ_PREFERENCE_H__
 #define __MCON_READ_PREFERENCE_H__
 
+#include "types.h"
 #include "collection.h"
 
 #define MONGO_RP_PRIMARY             0x01
@@ -11,11 +12,6 @@
 
 /* FIXME: Needs to be a setting through the connection string/options */
 #define MONGO_RP_CUTOFF  15
-
-typedef struct _mongo_read_preference
-{
-	int type; /* MONGO_RP_* */
-} mongo_read_preference;
 
 typedef int (mongo_connection_sort_t)(const void *a, const void *b);
 

@@ -120,7 +120,7 @@ static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *mana
 	return mongo_get_connection_single(manager, servers->server[0]);
 }
 
-static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, mongo_read_preference *rp)
+static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers)
 {
 	mongo_connection *con;
 	mcon_collection *collection;
@@ -134,14 +134,14 @@ static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *mana
 	 * new node */
 	mongo_discover_topology(manager, servers);
 	/* Depending on read preference type, run the correct algorithms */
-	collection = mongo_find_candidate_servers(manager, rp);
+	collection = mongo_find_candidate_servers(manager, &servers->rp);
 	if (collection->count == 0) {
 		/* FIXME: Set error message: "No candidate servers found" */
 		goto bailout;
 	}
-	collection = mongo_sort_servers(collection, rp);
-	collection = mongo_select_nearest_servers(collection, rp);
-	con = mongo_pick_server_from_set(collection, rp);
+	collection = mongo_sort_servers(collection, &servers->rp);
+	collection = mongo_select_nearest_servers(collection, &servers->rp);
+	con = mongo_pick_server_from_set(collection, &servers->rp);
 
 bailout:
 	/* Cleaning up */
@@ -150,7 +150,7 @@ bailout:
 }
 
 /* API interface to fetch a connection */
-mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers *servers, mongo_read_preference *rp)
+mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers *servers)
 {
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->con_type) {
@@ -158,7 +158,7 @@ mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers
 			return mongo_get_connection_standalone(manager, servers);
 
 		case MONGO_CON_TYPE_REPLSET:
-			return mongo_get_connection_replicaset(manager, servers, rp);
+			return mongo_get_connection_replicaset(manager, servers);
 /*
 		case MONGO_CON_TYPE_MULTIPLE:
 			return mongo_get_connection_multiple(manager, servers);

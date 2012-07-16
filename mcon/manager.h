@@ -9,7 +9,7 @@ mongo_con_manager *mongo_init(void);
 void mongo_deinit(mongo_con_manager *manager);
 
 /* Fetching connections */
-mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers *servers, mongo_read_preference *rp);
+mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers *servers);
 
 /* Connection management */
 mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manager, char *hash);
