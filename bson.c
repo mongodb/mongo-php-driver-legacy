@@ -933,7 +933,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
       break;
     }
     case BSON_BINARY: {
-      char type;
+      unsigned char type;
 
       int len = MONGO_32(*(int*)buf);
       if (INVALID_STRING_LEN(len)) {
