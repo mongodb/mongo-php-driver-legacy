@@ -7,7 +7,7 @@ version 2.0 of the extension (see: https://jira.mongodb.org/browse/PHP-407).
 <?php require __DIR__ . "/skipif.inc";?>
 --FILE--
 <?php
-error_reporting(E_ALL);
+error_reporting(-1);
 
 $numNotices = 0;
 
@@ -33,7 +33,6 @@ echo $result['bin']->type . "\n";
 var_dump(1 === $numNotices);
 ?>
 --EXPECTF--
-Deprecated: MongoBinData::__construct(): The default value for type will change to 0 in the future. Please pass in '0' explicitly. in %s on line %d
 MongoBinData
 abcdefg
 2

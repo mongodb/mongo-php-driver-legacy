@@ -1,7 +1,7 @@
 --TEST--
-Bug#00394 (Crashes & mem leaks)
+Test for bug PHP-394: Crashes and mem leaks
 --SKIPIF--
-<?php if (version_compare(PHP_VERSION, "5.4.0", "gte")) { exit("skip This test requires PHP version prior to PHP5.4"); }?>
+<?php if (version_compare(PHP_VERSION, "5.4.0", "ge")) { exit("skip This test requires PHP version prior to PHP5.4"); }?>
 <?php require __DIR__ ."/skipif.inc" ?>
 --FILE--
 <?php

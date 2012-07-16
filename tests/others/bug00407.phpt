@@ -1,5 +1,5 @@
 --TEST--
-Bug#00407
+Test for bug PHP-407 MongoBinData should default to 0, not 2
 --SKIPIF--
 <?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--

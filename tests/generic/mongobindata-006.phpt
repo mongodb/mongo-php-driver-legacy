@@ -24,5 +24,4 @@ $result = $coll->findOne(array('_id' => 1));
 var_dump($data === $result['bin']->bin);
 ?>
 --EXPECTF--
-Deprecated: MongoBinData::__construct(): The default value for type will change to 0 in the future. Please pass in '0' explicitly. in %s on line %d
 bool(true)

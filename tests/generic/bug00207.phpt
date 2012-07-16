@@ -15,127 +15,29 @@ $db->dropCollection("fs.chunks");
 
 $gridfs = $db->getGridFS();
 
-for($i=0; $i<10; $i++) {
-    $x = $i . rand(0, 10);
-    $ok = $gridfs->storeFile(__FILE__, array( "_id" => "slaveOkayFile-$x"));
+for($i=0; $i<5; $i++) {
+    $ok = $gridfs->storeFile(__FILE__, array( "_id" => "slaveOkayFile-$i"));
     var_dump($ok);
 }
+$bytes = strlen(file_get_contents(__FILE__));
 
-while($i--) {
-    $cursor = $gridfs->find()->slaveOkay(true);
-    foreach($cursor as $file) {
-        var_dump(strlen($file->getBytes()) > 500);
-    }
+$cursor = $gridfs->find()->slaveOkay(true);
+var_dump($cursor->count());
+foreach($cursor as $file) {
+    var_dump($file->file["_id"]);
 }
-
 ?>
+===DONE===
 --EXPECTF--
 string(%d) "%s"
 string(%d) "%s"
 string(%d) "%s"
 string(%d) "%s"
 string(%d) "%s"
-string(%d) "%s"
-string(%d) "%s"
-string(%d) "%s"
-string(%d) "%s"
-string(%d) "%s"
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-bool(true)
+int(5)
+string(15) "slaveOkayFile-0"
+string(15) "slaveOkayFile-1"
+string(15) "slaveOkayFile-2"
+string(15) "slaveOkayFile-3"
+string(15) "slaveOkayFile-4"
+===DONE===

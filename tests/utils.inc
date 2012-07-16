@@ -95,7 +95,7 @@ function isauth() {
     }
     return (bool)strstr($_ENV["MONGO_SERVER"], "AUTH");
 }
-function dbname() {
+function dbname($db = null) {
     m($dsn, $port, $db, $opts);
     return $db;
 }
@@ -127,7 +127,7 @@ function hostname($env = null) {
     return $dsn;
 }
 
-function username() {
+function username($db = null) {
     m($dsn, $port, $db, $opts);
     if (isset($opts["username"])) {
         return $opts["username"];
@@ -135,7 +135,7 @@ function username() {
     return null;
 }
 
-function password() {
+function password($db = null) {
     m($dsn, $port, $db, $opts);
     if (isset($opts["password"])) {
         return $opts["password"];
