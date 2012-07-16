@@ -220,6 +220,8 @@ PHP_METHOD(Mongo, __construct) {
   mongo_server *current;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|szbb", &server, &server_len, &options, &persist, &garbage) == FAILURE) {
+    zval *object = getThis();
+    ZVAL_NULL(object);
     return;
   }
 
