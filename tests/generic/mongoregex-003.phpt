@@ -6,7 +6,7 @@ MongoRegex insertion
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'mongoregex');
+$coll = $mongo->selectCollection(dbname(), 'mongoregex');
 $coll->drop();
 
 $regex = new MongoRegex('/foo[bar]{3}/imx');

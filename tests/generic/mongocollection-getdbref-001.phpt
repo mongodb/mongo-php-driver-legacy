@@ -2,12 +2,13 @@
 MongoCollection::getDBRef()
 --SKIPIF--
 <?php require __DIR__ . "/skipif.inc";?>
+<?php if (isauth()) { die("skip The test suite doesn't support two databases at the moment"); } ?>
 --FILE--
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
 
-$coll1 = $mongo->selectCollection('test', 'dbref');
+$coll1 = $mongo->selectCollection(dbname(), 'dbref');
 $coll1->drop();
 $coll1->insert(array('_id' => 123, 'x' => 'foo'));
 

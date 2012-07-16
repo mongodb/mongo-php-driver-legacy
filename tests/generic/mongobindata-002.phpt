@@ -7,7 +7,7 @@ version 2.0 of the extension (see: https://jira.mongodb.org/browse/PHP-407).
 <?php require __DIR__ . "/skipif.inc";?>
 --FILE--
 <?php
-error_reporting(E_ALL);
+error_reporting(-1);
 
 $numNotices = 0;
 
@@ -20,7 +20,7 @@ set_error_handler('handleNotice', E_DEPRECATED);
 
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'mongobindata');
+$coll = $mongo->selectCollection(dbname(), 'mongobindata');
 $coll->drop();
 
 $coll->insert(array('_id' => 1, 'bin' => new MongoBinData('abcdefg')));
@@ -32,7 +32,7 @@ echo $result['bin']->bin . "\n";
 echo $result['bin']->type . "\n";
 var_dump(1 === $numNotices);
 ?>
---EXPECT--
+--EXPECTF--
 MongoBinData
 abcdefg
 2

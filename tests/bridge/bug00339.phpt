@@ -1,5 +1,5 @@
 --TEST--
-Bug#339 (Segfault on insert timeout)
+Test for bug PHP-339: Segfault on insert timeout
 --SKIPIF--
 <?php require __DIR__ ."/skipif.inc"; ?>
 --FILE--

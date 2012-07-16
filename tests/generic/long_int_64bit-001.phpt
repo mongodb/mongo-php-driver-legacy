@@ -7,7 +7,7 @@ Long integer insertion
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'int');
+$coll = $mongo->selectCollection(dbname(), 'int');
 $coll->drop();
 
 ini_set('mongo.native_long', false);
