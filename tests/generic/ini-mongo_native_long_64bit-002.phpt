@@ -7,7 +7,7 @@ Disabled "mongo.native_long" INI option stores 32-bits of 64-bit integers
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'mongo_native_long');
+$coll = $mongo->selectCollection(dbname(), 'mongo_native_long');
 $coll->drop();
 
 ini_set('mongo.native_long', false);

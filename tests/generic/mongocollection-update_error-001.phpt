@@ -6,7 +6,7 @@ MongoCollection::update() error with non-UTF8 strings
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'update');
+$coll = $mongo->selectCollection(dbname(), 'update');
 $coll->drop();
 
 $coll->insert(array('_id' => 1, 'foo' => 'bar'));

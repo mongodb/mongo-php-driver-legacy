@@ -1,5 +1,5 @@
 --TEST--
-Bug#00266 (segfault when connection string refers to unknown replica set member)
+Test for bug PHP-266: segfault when connection string refers to unknown replica set member
 --SKIPIF--
 <?php require __DIR__ ."/skipif.inc"; ?>
 <?php if (!$STANDALONE_HOSTNAME) { exit("skip Needs a standalone server too"); } ?>

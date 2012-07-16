@@ -6,7 +6,7 @@ MongoCollection::insert() encodes arrays as objects
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'insert');
+$coll = $mongo->selectCollection(dbname(), 'insert');
 $coll->drop();
 
 $coll->insert(array('foo', 'bar'));

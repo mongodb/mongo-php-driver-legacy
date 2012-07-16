@@ -6,7 +6,7 @@ MongoCode insertion with optional scope
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'mongocode');
+$coll = $mongo->selectCollection(dbname(), 'mongocode');
 $coll->drop();
 
 $codeStr = 'return (x < 5);';

@@ -40,9 +40,8 @@ $m = mongo("phpunit");
 	echo "# Current documents in fs.files\n";
 	echo "######################################\n";
 	$cursor = $GridFS->findOne('/tmp/GridFS_test.txt');
-		foreach($cursor as $this_cursor){
+    $this_cursor = $cursor->file;
 		echo "[file] [_id:".$this_cursor['_id']."] [filename:".$this_cursor['filename']."] [length:".$this_cursor['length']."] [chunkSize:".$this_cursor['chunkSize']."]\n";
-	}
 	echo "\n";
 	echo "######################################\n";
 	echo "# Current documents in fs.chunks\n";

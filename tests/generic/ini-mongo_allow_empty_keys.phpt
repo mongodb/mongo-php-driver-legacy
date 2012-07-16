@@ -6,7 +6,7 @@
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'allow_empty_keys');
+$coll = $mongo->selectCollection(dbname(), 'allow_empty_keys');
 $coll->drop();
 
 ini_set('mongo.allow_empty_keys', true);

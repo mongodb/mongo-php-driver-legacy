@@ -6,7 +6,7 @@ MongoCollection::remove() error with non-UTF8 strings
 <?php
 require_once __DIR__ . "/../utils.inc";
 $mongo = mongo();
-$coll = $mongo->selectCollection('test', 'remove');
+$coll = $mongo->selectCollection(dbname(), 'remove');
 $coll->drop();
 
 try {
