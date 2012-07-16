@@ -1037,13 +1037,15 @@ void mongo_init_MongoGridFS(TSRMLS_D) {
 
 PHP_METHOD(MongoGridFSFile, __construct) {
   zval *gridfs = 0, *file = 0;
+  long flags = 0;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oa", &gridfs, mongo_ce_GridFS, &file) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oa|l", &gridfs, mongo_ce_GridFS, &file, &flags) == FAILURE) {
     return;
   }
 
   zend_update_property(mongo_ce_GridFSFile, getThis(), "gridfs", strlen("gridfs"), gridfs TSRMLS_CC);
   zend_update_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), file TSRMLS_CC);
+  zend_update_property_long(mongo_ce_GridFSFile, getThis(), "flags", strlen("flags"), flags TSRMLS_CC);
 }
 
 PHP_METHOD(MongoGridFSFile, getFilename) {
@@ -1140,6 +1142,8 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   zval **id, **size;
   char *str, *str_ptr;
   int len;
+  mongo_cursor *cursorobj;
+  zval *flags;
 
   file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
   zend_hash_find(HASH_P(file), "_id", strlen("_id")+1, (void**)&id);
@@ -1164,6 +1168,13 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 
   MAKE_STD_ZVAL(cursor);
   MONGO_METHOD1(MongoCollection, find, cursor, chunks, query);
+
+  // Copy the flags from the original cursor and apply it to this one
+  flags = zend_read_property(mongo_ce_GridFSFile, getThis(), "flags", strlen("flags"), NOISY TSRMLS_CC);
+  cursorobj = (mongo_cursor*)zend_object_store_get_object(cursor);
+  convert_to_long(flags);
+  cursorobj->opts = Z_LVAL_P(flags);
+
 
   MAKE_STD_ZVAL(sort);
   array_init(sort);
@@ -1317,18 +1328,21 @@ PHP_METHOD(MongoGridFSCursor, getNext) {
 PHP_METHOD(MongoGridFSCursor, current) {
   zval temp;
   zval *gridfs;
+  zval *flags;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->link, MongoGridFSCursor);
 
   if (!cursor->current) {
     RETURN_NULL();
   }
+  MAKE_STD_ZVAL(flags);
+  ZVAL_LONG(flags, cursor->opts);
 
   object_init_ex(return_value, mongo_ce_GridFSFile);
 
   gridfs = zend_read_property(mongo_ce_GridFSCursor, getThis(), "gridfs", strlen("gridfs"), NOISY TSRMLS_CC);
 
-  MONGO_METHOD2(MongoGridFSFile, __construct, &temp, return_value, gridfs, cursor->current);
+  MONGO_METHOD3(MongoGridFSFile, __construct, &temp, return_value, gridfs, cursor->current, flags);
 }
 
 PHP_METHOD(MongoGridFSCursor, key)
