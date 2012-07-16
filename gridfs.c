@@ -97,6 +97,8 @@ PHP_METHOD(MongoGridFS, __construct) {
 
   // chunks is deprecated
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|zz", &zdb, mongo_ce_DB, &files, &chunks) == FAILURE) {
+    zval *object = getThis();
+    ZVAL_NULL(object);
     return;
   }
 
@@ -1024,6 +1026,8 @@ PHP_METHOD(MongoGridFSFile, __construct) {
   long flags = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oa|l", &gridfs, mongo_ce_GridFS, &file, &flags) == FAILURE) {
+    zval *object = getThis();
+    ZVAL_NULL(object);
     return;
   }
 
@@ -1283,6 +1287,8 @@ PHP_METHOD(MongoGridFSCursor, __construct) {
   zval *gridfs = 0, *connection = 0, *ns = 0, *query = 0, *fields = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Ozzzz", &gridfs, mongo_ce_GridFS, &connection, &ns, &query, &fields) == FAILURE) {
+    zval *object = getThis();
+    ZVAL_NULL(object);
     return;
   }
 
