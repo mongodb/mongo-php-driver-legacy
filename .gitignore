@@ -8,7 +8,10 @@
 *.lai
 *.libs
 *.sw*
-Makefile*
+Makefile
+Makefile.fragments
+Makefile.global
+Makefile.objects
 build
 config*
 doc
@@ -52,3 +55,5 @@ tmp-php.ini
 tests/mongo-test-cfg.inc
 
 
+.coverage
+coverage
