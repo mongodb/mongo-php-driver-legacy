@@ -58,6 +58,8 @@ PHP_METHOD(MongoDB, __construct) {
   mongo_link *link;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &zlink, mongo_ce_Mongo, &name, &name_len) == FAILURE) {
+    zval *object = getThis();
+    ZVAL_NULL(object);
     return;
   }
 
