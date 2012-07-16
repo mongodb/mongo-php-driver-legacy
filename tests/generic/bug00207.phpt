@@ -16,7 +16,13 @@ $db->dropCollection("fs.chunks");
 $gridfs = $db->getGridFS();
 
 for($i=0; $i<5; $i++) {
-    $ok = $gridfs->storeFile(__FILE__, array( "_id" => "slaveOkayFile-$i"));
+    // Since we will be reading from slave in a second, it is nice to know that the file is there
+    $safe = array("safe" => 1, "w" => 2);
+    try {
+        $ok = $gridfs->storeFile(__FILE__, array( "_id" => "slaveOkayFile-$i"), $safe);
+    } catch(Exception $e) {
+        var_dump("Failed writing it ($i)");
+    }
     var_dump($ok);
 }
 $bytes = strlen(file_get_contents(__FILE__));
