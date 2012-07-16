@@ -546,6 +546,7 @@ PHP_METHOD(MongoCollection, update) {
     if (options && IS_SCALAR_P(options)) {
       zend_bool upsert = options ? Z_BVAL_P(options) : 0;
       bit_opts = upsert << 0;
+      php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
     }
 
     MAKE_STD_ZVAL(opts);
@@ -609,6 +610,7 @@ PHP_METHOD(MongoCollection, remove) {
     zval *opts;
 
     if (options && IS_SCALAR_P(options)) {
+      php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
       flags = Z_BVAL_P(options);
     }
 
@@ -695,6 +697,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
     // old-style
     if (IS_SCALAR_P(options)) {
       zval *opts;
+      php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
       // assumes the person correctly passed in a boolean.  if they passed in a
       // string or something, it won't work and maybe they'll read the docs
       add_assoc_bool(data, "unique", Z_BVAL_P(options));
@@ -1187,6 +1190,7 @@ PHP_METHOD(MongoCollection, group) {
       zval_add_ref(finalize);
     }
     if (!condition && !finalize) {
+      php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "Implicitly passing condition as $options will be removed in the future");
       add_assoc_zval(group, "cond", options);
       zval_add_ref(&options);
     }
