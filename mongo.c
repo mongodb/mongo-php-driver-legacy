@@ -335,24 +335,6 @@ PHP_METHOD(Mongo, connect) {
   MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
 }
 
-/* {{{ Mongo->pairConnect
- */
-PHP_METHOD(Mongo, pairConnect) {
-  zend_error(E_WARNING, "Deprecated, use constructor instead");
-}
-
-/* {{{ Mongo->persistConnect
- */
-PHP_METHOD(Mongo, persistConnect) {
-  zend_error(E_WARNING, "Deprecated, use constructor instead");
-}
-
-/* {{{ Mongo->pairPersistConnect
- */
-PHP_METHOD(Mongo, pairPersistConnect) {
-  zend_error(E_WARNING, "Deprecated, use constructor instead");
-}
-
 /* {{{ Mongo->connectUtil
  */
 PHP_METHOD(Mongo, connectUtil) {
