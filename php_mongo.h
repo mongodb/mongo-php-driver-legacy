@@ -575,7 +575,6 @@ void mongo_init_MongoInt64(TSRMLS_D);
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 // php.ini options
 // these must be IN THE SAME ORDER as mongo.c lists them
-int auto_reconnect;
 int allow_persistent;
 char *default_host;
 int default_port;
