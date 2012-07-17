@@ -113,7 +113,6 @@ ZEND_GET_MODULE(mongo)
 /* {{{ PHP_INI */
 // these must be in the same order as mongo_globals are declared or it will segfault on 64-bit machines!
 PHP_INI_BEGIN()
-STD_PHP_INI_ENTRY("mongo.auto_reconnect", "1", PHP_INI_ALL, OnUpdateLong, auto_reconnect, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.allow_persistent", "1", PHP_INI_ALL, OnUpdateLong, allow_persistent, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.default_host", "localhost", PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.default_port", "27017", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals)
@@ -224,7 +223,6 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   char *hostname, host_start[256];
   register ulong hash;
 
-  mongo_globals->auto_reconnect = 1;
   mongo_globals->default_host = "localhost";
   mongo_globals->default_port = 27017;
   mongo_globals->request_id = 3;
@@ -278,6 +276,9 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
   mongo_globals->machine = hash;
 
   mongo_globals->ts_inc = 0;
+
+	mongo_globals->log_level = 0;
+	mongo_globals->log_module = 0;
 }
 /* }}} */
 

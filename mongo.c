@@ -245,7 +245,12 @@ PHP_METHOD(Mongo, __construct) {
   mongo_server *current;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|szbb", &server, &server_len, &options, &persist, &garbage) == FAILURE) {
+    zval *object = getThis();
+    ZVAL_NULL(object);
     return;
+  }
+  if (garbage) {
+    php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "This argument doesn't actually do anything. Please stop using it");
   }
 
   link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -288,6 +293,7 @@ PHP_METHOD(Mongo, __construct) {
       }
     }
     else {
+       php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
       // backwards compatibility
       connect = Z_BVAL_P(options);
       if (MonGlo(allow_persistent) && persist) {
@@ -359,7 +365,7 @@ PHP_METHOD(Mongo, connectUtil) {
     RETURN_TRUE;
   }
 
-  link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
+  PHP_MONGO_GET_LINK(getThis());
 
   if (link->rs) {
     // connected will be 1 unless something goes very wrong. we might not

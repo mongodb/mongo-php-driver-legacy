@@ -58,6 +58,8 @@ PHP_METHOD(MongoDB, __construct) {
   mongo_link *link;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &zlink, mongo_ce_Mongo, &name, &name_len) == FAILURE) {
+    zval *object = getThis();
+    ZVAL_NULL(object);
     return;
   }
 
@@ -115,6 +117,9 @@ PHP_METHOD(MongoDB, getGridFS) {
   // arg2 is deprecated
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &arg1, &arg2) == FAILURE) {
     return;
+  }
+  if (arg2) {
+      php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "This argument doesn't do anything. Please stop sending it");
   }
 
   object_init_ex(return_value, mongo_ce_GridFS);
@@ -897,7 +902,7 @@ static zend_function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, prevError, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, forceError, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, authenticate, arginfo_authenticate, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, authenticate, arginfo_authenticate, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   { NULL, NULL, NULL }
 };
 
