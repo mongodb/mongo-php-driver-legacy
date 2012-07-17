@@ -36,6 +36,10 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	}
 	free(hash);
 
+	/* FIXME: Re-ping every 5 and/or configured seconds. The ping can actually
+	 * be run against a machine that has dropped to connection too, so test for
+	 * that. */
+
 	return con;
 }
 
