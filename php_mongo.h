@@ -107,6 +107,12 @@
 # define POP_EO_PARAM() (void)zend_ptr_stack_pop(&EG(argument_stack))
 #endif
 
+#if ZEND_MODULE_API_NO > 20060613
+#define MONGO_E_DEPRECATED E_DEPRECATED
+#else
+#define MONGO_E_DEPRECATED E_STRICT
+#endif
+
 #if ZEND_MODULE_API_NO >= 20060613
 // normal, nice method
 #define MONGO_METHOD_BASE(classname, name) zim_##classname##_##name
