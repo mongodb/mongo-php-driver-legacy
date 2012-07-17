@@ -23,6 +23,7 @@ mongo_servers* mongo_parse_server_spec(char *spec)
 
 	/* Create tmp server definitions */
 	servers = malloc(sizeof(mongo_servers));
+	memset(servers, 0, sizeof(mongo_servers));
 	servers->count = 0;
 	servers->repl_set_name = NULL;
 
@@ -150,6 +151,7 @@ void static mongo_add_parsed_server_addr(mongo_servers *servers, char *host_star
 	mongo_server_def *tmp;
 
 	tmp = malloc(sizeof(mongo_server_def));
+	memset(tmp, 0, sizeof(mongo_server_def));
 	tmp->username = tmp->password = tmp->db = NULL;
 	tmp->port = 27017;
 
