@@ -461,7 +461,7 @@ PHP_METHOD(MongoBinData, __construct) {
   }
 
   if (ZEND_NUM_ARGS() == 1) {
-      php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The default value for type will change to 0 in the future. Please pass in '0' explicitly.");
+      php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The default value for type will change to 0 in the future. Please pass in '0' explicitly.");
   }
 
   zend_update_property_stringl(mongo_ce_BinData, getThis(), "bin", strlen("bin"), bin, bin_len TSRMLS_CC);
