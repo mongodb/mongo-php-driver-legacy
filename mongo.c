@@ -353,6 +353,8 @@ PHP_METHOD(Mongo, pairPersistConnect) {
   zend_error(E_WARNING, "Deprecated, use constructor instead");
 }
 
+/* {{{ Mongo->connectUtil
+ */
 PHP_METHOD(Mongo, connectUtil) {
   int connected = 0;
   mongo_link *link;
