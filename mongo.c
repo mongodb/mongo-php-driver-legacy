@@ -303,71 +303,36 @@ PHP_METHOD(Mongo, __construct) {
 }
 /* }}} */
 
+/* {{{ Helper for connecting the servers */
+static void php_mongo_connect(mongo_link *link)
+{
+	/* We don't care about the result so we're not assigning it to a var */
+	/* TODO: Implement error messages forwarding to exceptions */
+	mongo_get_connection(link->manager, link->servers);
+}
 
 /* {{{ Mongo->connect
  */
-PHP_METHOD(Mongo, connect) {
-  MONGO_METHOD(Mongo, connectUtil, return_value, getThis());
+PHP_METHOD(Mongo, connect)
+{
+	mongo_link *link;
+
+	PHP_MONGO_GET_LINK(getThis());
+	php_mongo_connect(link);
 }
+/* }}} */
 
 /* {{{ Mongo->connectUtil
  */
-PHP_METHOD(Mongo, connectUtil) {
-  int connected = 0;
-  mongo_link *link;
-  char *msg = 0;
-  zval *connected_z = 0;
+PHP_METHOD(Mongo, connectUtil)
+{
+	mongo_link *link;
 
-  connected_z = zend_read_property(mongo_ce_Mongo, getThis(), "connected", strlen("connected"),
-                                   QUIET TSRMLS_CC);
-  if (Z_TYPE_P(connected_z) == IS_BOOL && Z_BVAL_P(connected_z)) {
-    RETURN_TRUE;
-  }
-
-  PHP_MONGO_GET_LINK(getThis());
-
-  if (link->rs) {
-    // connected will be 1 unless something goes very wrong. we might not
-    // actually be connected
-    connected = (mongo_util_rs_init(link TSRMLS_CC) == SUCCESS);
-
-    if (!connected && !EG(exception)) {
-      msg = estrdup("Could not create replica set connection");
-    }
-  }
-  else {
-    mongo_server *current;
-    current = link->server_set->server;
-    while (current) {
-      zval *errmsg;
-      MAKE_STD_ZVAL(errmsg);
-      ZVAL_NULL(errmsg);
-
-      connected |= (mongo_util_pool_get(current, errmsg TSRMLS_CC) == SUCCESS);
-
-      if (!msg && Z_TYPE_P(errmsg) == IS_STRING) {
-        msg = estrndup(Z_STRVAL_P(errmsg), Z_STRLEN_P(errmsg));
-      }
-      zval_ptr_dtor(&errmsg);
-      current = current->next;
-    }
-  }
-
-  if (!connected) {
-    zend_throw_exception(mongo_ce_ConnectionException, msg, 0 TSRMLS_CC);
-  }
-  else {
-    zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
-                              strlen("connected"), 1 TSRMLS_CC);
-    if (return_value) {
-      ZVAL_BOOL(return_value, 1);
-    }
-  }
-
-  if (msg) {
-    efree(msg);
-  }
+	PHP_MONGO_GET_LINK(getThis());
+	php_mongo_connect(link);
 }
+/* }}} */
+
 
 /* {{{ Mongo->close()
  */
