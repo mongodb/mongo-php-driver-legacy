@@ -182,7 +182,7 @@ PHP_METHOD(Mongo, __construct) {
   zend_bool persist = 0, garbage = 0, connect = 1;
   zval *options = 0, *slave_okay = 0;
   mongo_link *link;
-  mongo_server *current;
+	int i;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|szbb", &server, &server_len, &options, &persist, &garbage) == FAILURE) {
     zval *object = getThis();
@@ -193,94 +193,95 @@ PHP_METHOD(Mongo, __construct) {
     php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "This argument doesn't actually do anything. Please stop using it");
   }
 
-	servers = mongo_parse_server_spec(server);
-
-  link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	
+	/* Parse the server specification */
+	link->servers = mongo_parse_server_spec(server);
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_BVAL_P(slave_okay)) {
-		if (server->rp.type != MONGO_RP_PRIMARY) {
+		if (link->servers->rp.type != MONGO_RP_PRIMARY) {
 			/* the server already has read preferences configured, but we're still
 			 * trying to set slave okay. The spec says that's an error */
-			zend_throw_exception(mongo_ce_ConnectionException, msg, 0 TSRMLS_CC);
+			zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 0 TSRMLS_CC);
 		} else {
 			/* Old style option, that needs to be removed. For now, spec dictates
 			 * it needs to be ReadPreference=SECONDARY_PREFERRED */
-			servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
+			link->servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
 		}
 	}
 
 	/* Options through array */
 	if (options) {
-		if (IS_ARRAY_P(options)) {
+		if (Z_TYPE_P(options) == IS_ARRAY) {
 			zval **timeout_z, **replica_z, **slave_okay_z, **username_z, **password_z,
 			**db_z, **connect_z;
 
 			if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_z) == SUCCESS) {
-				server->connectTimeoutMS = Z_LVAL_PP(timeout_z);
+				link->servers->connectTimeoutMS = Z_LVAL_PP(timeout_z);
 			}
 			if (zend_hash_find(HASH_P(options), "replicaSet", strlen("replicaSet")+1, (void**)&replica_z) == SUCCESS) {
 				/* Setting the replica set name automatically triggers
 				 * the connection type to be set as REPLSET */
-				servers->con_type = MONGO_CON_TYPE_REPLSET;
+				link->servers->con_type = MONGO_CON_TYPE_REPLSET;
 
-				if (server->repl_set_name) {
+				if (link->servers->repl_set_name) {
 					/* Free the already existing one */
-					free(server->repl_set_name);
-					server->repl_set_name; /* We reset it as not all options set a string as replset name */
+					free(link->servers->repl_set_name);
+					link->servers->repl_set_name = NULL; /* We reset it as not all options set a string as replset name */
 				}
 				if (Z_TYPE_PP(replica_z) == IS_STRING) {
-					servers->repl_set_name = strdup(Z_STRVAL_PP(replica_z));
+					link->servers->repl_set_name = strdup(Z_STRVAL_PP(replica_z));
 				} else if ((Z_TYPE_PP(replica_z) == IS_BOOL || Z_TYPE_PP(replica_z) == IS_LONG) && !Z_BVAL_PP(replica_z)) {
 					/* Turn off replica set handling, which means either use a
 					 * standalone server, or a "multi-set". Why you would do
 					 * this? No idea. */
-					if (servers->count == 1) {
-						servers->con_type = MONGO_CON_TYPE_STANDALONE;
+					if (link->servers->count == 1) {
+						link->servers->con_type = MONGO_CON_TYPE_STANDALONE;
 					} else {
-						servers->con_type = MONGO_CON_TYPE_MULTIPLE;
+						link->servers->con_type = MONGO_CON_TYPE_MULTIPLE;
 					}
 				}
 			}
 
 			if (zend_hash_find(HASH_P(options), "slaveOkay", strlen("slaveOkay")+1, (void**)&slave_okay_z) == SUCCESS) {
 				if (Z_BVAL_PP(slave_okay_z)) {
-					if (server->rp.type != MONGO_RP_PRIMARY) {
+					if (link->servers->rp.type != MONGO_RP_PRIMARY) {
 						/* the server already has read preferences configured, but we're still
 						 * trying to set slave okay. The spec says that's an error */
-						zend_throw_exception(mongo_ce_ConnectionException, msg, 0 TSRMLS_CC);
+						zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 0 TSRMLS_CC);
 					} else {
 						/* Old style option, that needs to be removed. For now, spec dictates
 						 * it needs to be ReadPreference=SECONDARY_PREFERRED */
-						servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
+						link->servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
 					}
 				}
 			}
 			if (zend_hash_find(HASH_P(options), "username", sizeof("username"), (void**)&username_z) == SUCCESS) {
 				/* Update all servers in the set */
-				for (i = 0; i < servers->count; i++) {
-					if (servers->server[i]->username) {
-						free(servers->server[i]->username);
+				for (i = 0; i < link->servers->count; i++) {
+					if (link->servers->server[i]->username) {
+						free(link->servers->server[i]->username);
 					}
-					servers->server[i]->username = strdup(Z_STRVAL_PP(username_z));
+					link->servers->server[i]->username = strdup(Z_STRVAL_PP(username_z));
 				}
 			}
 			if (zend_hash_find(HASH_P(options), "password", sizeof("password"), (void**)&password_z) == SUCCESS) {
 				/* Update all servers in the set */
-				for (i = 0; i < servers->count; i++) {
-					if (servers->server[i]->password) {
-						free(servers->server[i]->password);
+				for (i = 0; i < link->servers->count; i++) {
+					if (link->servers->server[i]->password) {
+						free(link->servers->server[i]->password);
 					}
-					servers->server[i]->password = strdup(Z_STRVAL_PP(password_z));
+					link->servers->server[i]->password = strdup(Z_STRVAL_PP(password_z));
 				}
 			}
 			if (zend_hash_find(HASH_P(options), "db", sizeof("db"), (void**)&db_z) == SUCCESS) {
 				/* Update all servers in the set */
-				for (i = 0; i < servers->count; i++) {
-					if (servers->server[i]->db) {
-						free(servers->server[i]->db);
+				for (i = 0; i < link->servers->count; i++) {
+					if (link->servers->server[i]->db) {
+						free(link->servers->server[i]->db);
 					}
-					servers->server[i]->db = strdup(Z_STRVAL_PP(db_z));
+					link->servers->server[i]->db = strdup(Z_STRVAL_PP(db_z));
 				}
 			}
 			if (zend_hash_find(HASH_P(options), "connect", sizeof("connect"), (void**)&connect_z) == SUCCESS) {
