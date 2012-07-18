@@ -499,7 +499,7 @@ PHP_METHOD(Mongo, setSlaveOkay)
 	PHP_MONGO_GET_LINK(getThis());
 
 	RETVAL_BOOL(link->servers->rp.type != MONGO_RP_PRIMARY);
-	link->servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
+	link->servers->rp.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
 
 

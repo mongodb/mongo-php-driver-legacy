@@ -123,18 +123,19 @@ PHP_METHOD(MongoCollection, getSlaveOkay)
 	RETURN_BOOL(c->rp.type != MONGO_RP_PRIMARY);
 }
 
-PHP_METHOD(MongoCollection, setSlaveOkay) {
-  zend_bool slave_okay = 1;
-  mongo_collection *c;
+PHP_METHOD(MongoCollection, setSlaveOkay)
+{
+	zend_bool slave_okay = 1;
+	mongo_collection *c;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
+		return;
+	}
 
-  PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_COLLECTION(getThis());
 
-  RETVAL_BOOL(c->slave_okay);
-  c->slave_okay = slave_okay;
+	RETVAL_BOOL(c->rp.type != MONGO_RP_PRIMARY);
+	c->rp.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
 
 PHP_METHOD(MongoCollection, drop) {
