@@ -26,6 +26,7 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
+#include "ext/standard/php_smart_str.h"
 
 #include "php_mongo.h"
 #include "mongo.h"
@@ -44,9 +45,16 @@
 #include "util/server.h"
 #include "util/log.h"
 
+#include "mcon/types.h"
+#include "mcon/read_preference.h"
+#include "mcon/parse.h"
+#include "mcon/manager.h"
+#include "mcon/utils.h"
+
+
 static void php_mongo_link_free(void* TSRMLS_DC);
 static void run_err(int, zval*, zval* TSRMLS_DC);
-static char* stringify_server(mongo_server*, char*, int*, int*);
+static void stringify_server(mongo_server_def *server, smart_str *str);
 
 zend_object_handlers mongo_default_handlers;
 
@@ -349,79 +357,50 @@ PHP_METHOD(Mongo, close) {
 }
 /* }}} */
 
-static char* stringify_server(mongo_server *server, char *str, int *pos, int *len) {
-  // length: "[" + strlen(hostname) + ":" + strlen(port (maxint=12)) + "]"
-  if (*len - *pos < (int)strlen(server->host)+15) {
-    int new_len = *len + 256 + (2 * (strlen(server->host)+15));
-    str = (char*)erealloc(str, new_len);
-    *(len) = new_len;
-  }
+static void stringify_server(mongo_server_def *server, smart_str *str)
+{
+	/* if this host is not connected, enclose in []s: [localhost:27017]
+	if (!server->connected) {
+	str[*pos] = '[';
+	*(pos) = *pos + 1;
+	}
+	*/
 
-  // if this host is not connected, enclose in []s: [localhost:27017]
-  if (!server->connected) {
-    str[*pos] = '[';
-    *(pos) = *pos + 1;
-  }
+	/* copy host */
+	smart_str_appends(str, server->host);
+	smart_str_appendc(str, ':');
+	smart_str_append_long(str, server->port);
 
-  // copy host
-  memcpy(str+*pos, server->label, strlen(server->label));
-  *(pos) = *pos + strlen(server->label);
-
-  // close []s
-  if (!server->connected) {
-    str[*pos] = ']';
-    *(pos) = *pos + 1;
-  }
-
-  return str;
+	/* close []s
+	if (!server->connected) {
+	str[*pos] = ']';
+	*(pos) = *pos + 1;
+	}
+	*/
 }
 
 
 /* {{{ Mongo->__toString()
  */
 PHP_METHOD(Mongo, __toString) {
-  int tpos = 0, tlen = 256, *pos, *len;
-  char *str;
-  mongo_server *server;
-  mongo_link *link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	smart_str str = { 0 };
+	mongo_link *link;
+	int i;
 
-  // if we haven't connected yet, we should still be able to get the __toString
-  // from the server field
-  if (!link->server_set) {
-    zval *server = zend_read_property(mongo_ce_Mongo, getThis(), "server", strlen("server"), NOISY TSRMLS_CC);
-    RETURN_ZVAL(server, 1, 0);
-  }
+	PHP_MONGO_GET_LINK(getThis());
 
-  pos = &tpos;
-  len = &tlen;
-  str = (char*)emalloc(*len);
+	for (i = 0; i < link->servers->count; i++) {
+		/* if this is not the first one, add a comma */
+		if (i) {
+			smart_str_appendc(&str, ',');
+		}
 
-  // stringify the master, if there is one
-  if (link->server_set->master) {
-    str = stringify_server(link->server_set->master, str, pos, len);
-  }
+		stringify_server(link->servers->server[i], &str);
+	}
 
-  server = link->server_set->server;
-  // stringify each server
-  while (server) {
-    if (server == link->server_set->master) {
-      server = server->next;
-      continue;
-    }
+	smart_str_0(&str);
 
-    // if this is not the first one, add a comma
-    if (*pos != 0) {
-      str[*pos] = ',';
-      *(pos) = *pos+1;
-    }
-
-    str = stringify_server(server, str, pos, len);
-    server = server->next;
-  }
-
-  str[*pos] = '\0';
-
-  RETURN_STRING(str, 0);
+	RETURN_STRING(str.c, 0);
 }
 /* }}} */
 
