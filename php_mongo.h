@@ -483,7 +483,7 @@ typedef struct {
   zval *link;
   zval *name;
 
-  zend_bool slave_okay;
+	mongo_read_preference rp;
 } mongo_db;
 
 typedef struct {

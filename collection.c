@@ -96,7 +96,7 @@ PHP_METHOD(MongoCollection, __construct) {
   MAKE_STD_ZVAL(zns);
   ZVAL_STRING(zns, ns, 0);
   c->ns = zns;
-  c->slave_okay = db->slave_okay;
+  c->rp = db->rp;
 
   w = zend_read_property(mongo_ce_DB, parent, "w", strlen("w"), NOISY TSRMLS_CC);
   zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_LVAL_P(w) TSRMLS_CC);
