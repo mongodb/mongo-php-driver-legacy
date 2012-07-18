@@ -35,3 +35,18 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 
 	return tmp;
 }
+
+/* Split a hash back into its constituent parts */
+int mongo_server_split_hash(char *hash, char **host, int *port, char **db, char **username, int *pid)
+{
+	char *ptr;
+
+	ptr = hash;
+
+	/* Find the host */
+	ptr = strchr(ptr, ':');
+	*host = strndup(hash, ptr - hash);
+
+	/* Find the port */
+	*port = atoi(ptr + 1);
+}

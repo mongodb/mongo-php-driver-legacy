@@ -4,4 +4,5 @@
 #include "types.h"
 
 char *mongo_server_create_hash(mongo_server_def *server_def);
+int mongo_server_split_hash(char *hash, char **host, int *port, char **db, char **username, int *pid);
 #endif
