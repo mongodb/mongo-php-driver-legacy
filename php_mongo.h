@@ -21,6 +21,8 @@
 #define PHP_MONGO_VERSION "1.3.0dev"
 #define PHP_MONGO_EXTNAME "mongo"
 
+#include "mcon/types.h"
+
 // resource names
 #define PHP_CONNECTION_RES_NAME "mongo connection"
 #define PHP_SERVER_RES_NAME "mongo server info"
@@ -233,22 +235,10 @@ typedef struct _mongo_server_set {
 } mongo_server_set;
 
 typedef struct {
-  zend_object std;
+	zend_object std;
 
-  int timeout;
-  // if this is a replica set
-
-  mongo_server_set *server_set;
-
-  // slave to send reads to
-  mongo_server *slave;
-
-  // if this connection should distribute reads to slaves
-  zend_bool slave_okay;
-  char *username;
-  char *password;
-  char *db;
-  char *rs;
+	mongo_con_manager *manager; /* Contains a link to the manager */
+	mongo_servers     *servers;
 } mongo_link;
 
 #define MONGO_SERVER 0
@@ -312,7 +302,7 @@ typedef struct {
 
 #define PHP_MONGO_GET_LINK(obj)                                         \
   link = (mongo_link*)zend_object_store_get_object((obj) TSRMLS_CC);    \
-  MONGO_CHECK_INITIALIZED(link->server_set, Mongo);
+  MONGO_CHECK_INITIALIZED(link->servers, Mongo);
 
 #define PHP_MONGO_GET_DB(obj)                                           \
   db = (mongo_db*)zend_object_store_get_object((obj) TSRMLS_CC);        \

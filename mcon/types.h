@@ -64,6 +64,7 @@ typedef struct _mongo_servers
 	/* flags and options */
 	int                   con_type;
 	char                 *repl_set_name;
+	int                   connectTimeoutMS;
 
 	mongo_read_preference rp;
 } mongo_servers;
