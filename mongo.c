@@ -345,6 +345,7 @@ PHP_METHOD(Mongo, connectUtil)
 /* {{{ Mongo->close()
  */
 PHP_METHOD(Mongo, close) {
+/* TODO: IMPLEMENT
   mongo_link *link;
 
   PHP_MONGO_GET_LINK(getThis());
@@ -353,6 +354,7 @@ PHP_METHOD(Mongo, close) {
 
   zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
                             strlen("connected"), 0 TSRMLS_CC);
+*/
   RETURN_TRUE;
 }
 /* }}} */
