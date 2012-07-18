@@ -144,16 +144,16 @@ function password($db = null) {
 }
 
 if (!function_exists("iterator_to_array")) {
-	function iterator_to_array($it) {
-		$retval = array();
-		foreach($it as $v) {
-			$retval[] = $v;
-		}
-		return $retval;
-	}
+    function iterator_to_array($it) {
+        $retval = array();
+        foreach($it as $v) {
+            $retval[] = $v;
+        }
+        return $retval;
+    }
 }
 if (!defined("E_DEPRECATED")) {
-	define("E_DEPRECATED", E_STRICT);
+    define("E_DEPRECATED", E_STRICT);
 }
 
 

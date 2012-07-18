@@ -21,8 +21,9 @@ echo (int) $result['ok'] . "\n";
 $result = $db->authenticate($username, $password.'wrongPass');
 echo (int) $result['ok'] . "\n";
 ?>
---EXPECT--
-Deprecated: Function MongoDB::authenticate() is deprecated in %s on line %d
+--EXPECTF--
+%s: Function MongoDB::authenticate() is deprecated in %s on line %d
 1
-Deprecated: Function MongoDB::authenticate() is deprecated in %s on line %d
+
+%s: Function MongoDB::authenticate() is deprecated in %s on line %d
 0
