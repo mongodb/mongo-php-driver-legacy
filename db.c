@@ -130,7 +130,7 @@ PHP_METHOD(MongoDB, getGridFS) {
     return;
   }
   if (arg2) {
-      php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "This argument doesn't do anything. Please stop sending it");
+      php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "This argument doesn't do anything. Please stop sending it");
   }
 
   object_init_ex(return_value, mongo_ce_GridFS);

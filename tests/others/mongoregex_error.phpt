@@ -1,7 +1,7 @@
 --TEST--
 MongoRegex constructor given invalid arguments
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc"; ?>
+<?php require dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 $regexes = array('', '/', '345', 'b');

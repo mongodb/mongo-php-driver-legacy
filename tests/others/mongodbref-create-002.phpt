@@ -1,7 +1,7 @@
 --TEST--
 MongoDBRef::create() with optional database parameter
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc"; ?>
+<?php require dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 var_dump(MongoDBRef::create('foo', 123, 'bar'));

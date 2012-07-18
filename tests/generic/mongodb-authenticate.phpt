@@ -1,11 +1,11 @@
 --TEST--
 MongoDB::authenticate()
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc";?>
+<?php require dirname(__FILE__) . "/skipif.inc";?>
 <?php if (!isauth()) { die("skip Requires authenticated environment"); } ?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 
 $host = hostname();
 $port = port();
@@ -21,8 +21,9 @@ echo (int) $result['ok'] . "\n";
 $result = $db->authenticate($username, $password.'wrongPass');
 echo (int) $result['ok'] . "\n";
 ?>
---EXPECT--
-Deprecated: Function MongoDB::authenticate() is deprecated in %s on line %d
+--EXPECTF--
+%s: Function MongoDB::authenticate() is deprecated in %s on line %d
 1
-Deprecated: Function MongoDB::authenticate() is deprecated in %s on line %d
+
+%s: Function MongoDB::authenticate() is deprecated in %s on line %d
 0

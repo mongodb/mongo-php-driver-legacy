@@ -3,10 +3,10 @@ MongoCollection::__toString()
 --DESCRIPTION--
 Test implicit and explicit __toString
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require __DIR__ . "/../utils.inc";
+require dirname(__FILE__) . "/../utils.inc";
 $m = mongo();
 $c = $m->phpunit->col;
 echo "This is collection $c\n";
