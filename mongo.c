@@ -586,44 +586,20 @@ PHP_METHOD(Mongo, getHosts)
 	}
 }
 
-PHP_METHOD(Mongo, getSlave) {
-  mongo_link *link;
+PHP_METHOD(Mongo, getSlave)
+{
+	mongo_link *link;
+	mongo_connection *con;
 
-  PHP_MONGO_GET_LINK(getThis());
+	PHP_MONGO_GET_LINK(getThis());
+	con = mongo_get_connection(link->manager, link->servers);
 
-  if (link->rs && link->slave) {
-    RETURN_STRING(link->slave->label, 1);
-  }
+	RETURN_STRING(con->hash, 1);
 }
 
-PHP_METHOD(Mongo, switchSlave) {
-  mongo_link *link;
-  char *errmsg = 0;
-
-  PHP_MONGO_GET_LINK(getThis());
-
-  if (!link->rs) {
-    zend_throw_exception(mongo_ce_Exception,
-                         "Reading from slaves won't work without using the replicaSet option on connect",
-                         15 TSRMLS_CC);
-    return;
-  }
-
-  mongo_util_rs_ping(link TSRMLS_CC);
-  if (mongo_util_rs__set_slave(link, &errmsg TSRMLS_CC) == FAILURE) {
-    if (!EG(exception)) {
-      if (errmsg) {
-        zend_throw_exception(mongo_ce_Exception, errmsg, 16 TSRMLS_CC);
-        efree(errmsg);
-      }
-      else {
-        zend_throw_exception(mongo_ce_Exception, "No server found for reads", 16 TSRMLS_CC);
-      }
-    }
-    return;
-  }
-
-  MONGO_METHOD(Mongo, getSlave, return_value, getThis());
+PHP_METHOD(Mongo, switchSlave)
+{
+	zim_Mongo_switchSlave(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC) {
