@@ -128,35 +128,22 @@ static zend_function_entry mongo_methods[] = {
 
 /* {{{ php_mongo_link_free
  */
-static void php_mongo_link_free(void *object TSRMLS_DC) {
-  mongo_link *link = (mongo_link*)object;
+static void php_mongo_link_free(void *object TSRMLS_DC)
+{
+	mongo_link *link = (mongo_link*)object;
 
-  // already freed
-  if (!link) {
-    return;
-  }
+	/* already freed */
+	if (!link) {
+		return;
+	}
 
-  if (link->rs) {
-    mongo_server *current = link->server_set->server;
+	if (link->servers) {
+		mongo_servers_dtor(link->servers);
+	}
 
-    if (link->server_set->master) {
-      php_mongo_server_free(link->server_set->master, NO_PERSIST TSRMLS_CC);
-    }
-    if (link->slave) {
-      php_mongo_server_free(link->slave, NO_PERSIST TSRMLS_CC);
-    }
-  }
+	zend_object_std_dtor(&link->std TSRMLS_CC);
 
-  php_mongo_server_set_free(link->server_set TSRMLS_CC);
-
-  if (link->username) efree(link->username);
-  if (link->password) efree(link->password);
-  if (link->db) efree(link->db);
-  if (link->rs) efree(link->rs);
-
-  zend_object_std_dtor(&link->std TSRMLS_CC);
-
-  efree(link);
+	efree(link);
 }
 /* }}} */
 
