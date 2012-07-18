@@ -555,55 +555,34 @@ PHP_METHOD(Mongo, listDBs) {
 
 PHP_METHOD(Mongo, getHosts)
 {
-	mongo_link *link;
+	mongo_link             *link;
+	mongo_con_manager_item *item;
+
+	PHP_MONGO_GET_LINK(getThis());
+	item = link->manager->connections;
 
 	array_init(return_value);
-	PHP_MONGO_GET_LINK(getThis());
 
-	if (link->rs) {
-		rsm_server *current;
-		rs_monitor *monitor;
+	while (item) {
+		zval *infoz;
+		char *host;
+		int   port;
 
-		monitor = mongo_util_rs__get_monitor(link TSRMLS_CC);
+		MAKE_STD_ZVAL(infoz);
+		array_init(infoz);
 
-		current = monitor->servers;
-		while (current) {
-			zval *infoz;
-			server_info *info;
+		mongo_server_split_hash(item->connection->hash, (char**) &host, (int*) &port, NULL, NULL, NULL);
+		add_assoc_string(infoz, "host", host, 1);
+		add_assoc_long(infoz, "port", port);
+		free(host);
 
-			MAKE_STD_ZVAL(infoz);
-			array_init(infoz);
+		add_assoc_long(infoz, "health", 1);
+		add_assoc_long(infoz, "state", item->connection->connection_type == MONGO_NODE_PRIMARY ? 1 : (item->connection->connection_type == MONGO_NODE_SECONDARY ? 2 : 0));
+		add_assoc_long(infoz, "ping", item->connection->ping_ms);
+		add_assoc_long(infoz, "lastPing", item->connection->last_ping);
 
-			add_assoc_string(infoz, "host", current->server->host, 1);
-			add_assoc_long(infoz, "port", current->server->port);
-
-			info = mongo_util_server__get_info(current->server TSRMLS_CC);
-			add_assoc_long(infoz, "health", info->guts->readable);
-			add_assoc_long(infoz, "state", info->guts->master ? 1 : info->guts->readable ? 2 : 0);
-			if (info->guts->pinged) {
-				add_assoc_long(infoz, "ping", info->guts->ping);
-				add_assoc_long(infoz, "lastPing", info->guts->last_ping);
-			}
-
-			add_assoc_zval(return_value, current->server->label, infoz);
-			current = current->next;
-		}
-	} else { // not in a replicaset
-		mongo_server *current;
-
-		current = link->server_set->server;
-		while (current) {
-			zval *infoz;
-
-			MAKE_STD_ZVAL(infoz);
-			array_init(infoz);
-
-			add_assoc_string(infoz, "host", current->host, 1);
-			add_assoc_long(infoz, "port", current->port);
-
-			add_assoc_zval(return_value, current->label, infoz);
-			current = current->next;
-		}
+		add_assoc_zval(return_value, item->connection->hash, infoz);
+		item = item->next;
 	}
 }
 
