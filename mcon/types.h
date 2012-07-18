@@ -18,6 +18,8 @@
 #define MONGO_NODE_ARBITER        0x04
 #define MONGO_NODE_MONGOS         0x08
 
+/* Stores all the information about the connection. The hash is a group of
+ * parameters to identify a unique connection. */
 typedef struct _mongo_connection
 {
 	time_t last_ping;
@@ -57,7 +59,7 @@ typedef struct _mongo_server_def
 typedef struct _mongo_servers
 {
 	int               count;
-	mongo_server_def *server[16];
+	mongo_server_def *server[16]; /* TODO: Make this dynamic */
 
 	/* flags and options */
 	int                   con_type;
