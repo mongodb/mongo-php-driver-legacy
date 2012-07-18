@@ -22,6 +22,7 @@
 #define PHP_MONGO_EXTNAME "mongo"
 
 #include "mcon/types.h"
+#include "mcon/read_preference.h"
 
 // resource names
 #define PHP_CONNECTION_RES_NAME "mongo connection"
@@ -496,7 +497,7 @@ typedef struct {
   zval *name;
   zval *ns;
 
-	mongo_read_preferece rp;
+	mongo_read_preference rp;
 } mongo_collection;
 
 
