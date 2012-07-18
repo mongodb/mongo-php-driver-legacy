@@ -1,3 +1,3 @@
 <?php
-require __DIR__ . "/../generic/skipif.inc";
+require dirname(__FILE__) . "/../generic/skipif.inc";
 

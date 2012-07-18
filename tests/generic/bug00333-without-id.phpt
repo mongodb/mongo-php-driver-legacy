@@ -1,10 +1,10 @@
 --TEST--
 Test for bug PHP-333: GridFS find's key without returning _id
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require __DIR__ . "/../utils.inc";
+require dirname(__FILE__) . "/../utils.inc";
 $m = mongo("phpunit");
 $mdb = $m->selectDB("phpunit");
 $mdb->dropCollection("fs.files");

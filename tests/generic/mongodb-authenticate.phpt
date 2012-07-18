@@ -1,11 +1,11 @@
 --TEST--
 MongoDB::authenticate()
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc";?>
+<?php require dirname(__FILE__) . "/skipif.inc";?>
 <?php if (!isauth()) { die("skip Requires authenticated environment"); } ?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 
 $host = hostname();
 $port = port();

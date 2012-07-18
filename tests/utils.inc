@@ -143,6 +143,20 @@ function password($db = null) {
     return null;
 }
 
+if (!function_exists("iterator_to_array")) {
+	function iterator_to_array($it) {
+		$retval = array();
+		foreach($it as $v) {
+			$retval[] = $v;
+		}
+		return $retval;
+	}
+}
+if (!defined("E_DEPRECATED")) {
+	define("E_DEPRECATED", E_STRICT);
+}
+
+
 $STANDALONE_HOSTNAME = "localhost";
 $BRIDGE_STANDALONE_HOSTNAME = "";
 $STANDALONE_AUTH_HOSTNAME = "";
