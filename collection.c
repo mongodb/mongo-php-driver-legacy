@@ -116,10 +116,11 @@ PHP_METHOD(MongoCollection, getName) {
   RETURN_ZVAL(c->name, 1, 0);
 }
 
-PHP_METHOD(MongoCollection, getSlaveOkay) {
-  mongo_collection *c;
-  PHP_MONGO_GET_COLLECTION(getThis());
-  RETURN_BOOL(c->slave_okay);
+PHP_METHOD(MongoCollection, getSlaveOkay)
+{
+	mongo_collection *c;
+	PHP_MONGO_GET_COLLECTION(getThis());
+	RETURN_BOOL(c->rp.type != MONGO_RP_PRIMARY);
 }
 
 PHP_METHOD(MongoCollection, setSlaveOkay) {
