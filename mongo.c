@@ -478,24 +478,26 @@ PHP_METHOD(Mongo, selectCollection) {
 }
 /* }}} */
 
-PHP_METHOD(Mongo, getSlaveOkay) {
-  mongo_link *link;
-  PHP_MONGO_GET_LINK(getThis());
-  RETURN_BOOL(link->slave_okay);
+PHP_METHOD(Mongo, getSlaveOkay)
+{
+	mongo_link *link;
+	PHP_MONGO_GET_LINK(getThis());
+	RETURN_BOOL(link->servers->rp.type != MONGO_RP_PRIMARY);
 }
 
-PHP_METHOD(Mongo, setSlaveOkay) {
-  zend_bool slave_okay = 1;
-  mongo_link *link;
+PHP_METHOD(Mongo, setSlaveOkay)
+{
+	zend_bool slave_okay = 1;
+	mongo_link *link;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
+		return;
+	}
 
-  PHP_MONGO_GET_LINK(getThis());
+	PHP_MONGO_GET_LINK(getThis());
 
-  RETVAL_BOOL(link->slave_okay);
-  link->slave_okay = slave_okay;
+	RETVAL_BOOL(link->servers->rp.type != MONGO_RP_PRIMARY);
+	link->servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
 }
 
 
