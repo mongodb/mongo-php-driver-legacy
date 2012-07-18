@@ -445,9 +445,10 @@ PHP_METHOD(MongoCollection, batchInsert) {
   efree(buf.start);
 }
 
-PHP_METHOD(MongoCollection, find) {
+PHP_METHOD(MongoCollection, find)
+{
   zval *query = 0, *fields = 0;
-  zend_bool slave_okay;
+	mongo_read_preference rp;
   mongo_collection *c;
   mongo_link *link;
   zval temp;
@@ -461,10 +462,12 @@ PHP_METHOD(MongoCollection, find) {
 
   object_init_ex(return_value, mongo_ce_Cursor);
 
-  // save & replace slave_okay
-  slave_okay = link->slave_okay;
-  link->slave_okay = c->slave_okay;
+	/* save & replace slave_okay */
+	rp = link->servers->rp;
+	link->servers->rp = c->rp;
 
+	/* TODO: Don't call an internal function like this, but add a new C-level
+	 * function for instantiating cursors */
   if (!query) {
     MONGO_METHOD2(MongoCursor, __construct, &temp, return_value, c->link, c->ns);
   }
@@ -475,7 +478,7 @@ PHP_METHOD(MongoCollection, find) {
     MONGO_METHOD4(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query, fields);
   }
 
-  link->slave_okay = slave_okay;
+	link->servers->rp = rp;
 }
 
 PHP_METHOD(MongoCollection, findOne) {

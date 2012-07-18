@@ -506,7 +506,7 @@ typedef struct {
   zval *name;
   zval *ns;
 
-  zend_bool slave_okay;
+	mongo_read_preferece rp;
 } mongo_collection;
 
 
