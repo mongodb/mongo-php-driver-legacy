@@ -1097,12 +1097,13 @@ PHP_METHOD(MongoCollection, distinct)
     char *key;
     int key_len;
     zval *data, **values, *tmp, *query = NULL;
+	mongo_collection *c;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &key, &key_len, &query) == FAILURE) {
         return;
     }
 
-    mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
     MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
 
