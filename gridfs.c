@@ -1174,7 +1174,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 
   // Copy the flags from the original cursor and apply it to this one
   flags = zend_read_property(mongo_ce_GridFSFile, getThis(), "flags", strlen("flags"), NOISY TSRMLS_CC);
-  cursorobj = (mongo_cursor*)zend_object_store_get_object(cursor);
+  cursorobj = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
   convert_to_long(flags);
   cursorobj->opts = Z_LVAL_P(flags);
 
