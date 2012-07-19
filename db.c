@@ -83,7 +83,7 @@ PHP_METHOD(MongoDB, __construct) {
   zval_add_ref(&db->link);
 
   PHP_MONGO_GET_LINK(zlink);
-  db->slave_okay = link->slave_okay;
+	db->rp = link->servers->rp;
 
   MAKE_STD_ZVAL(db->name);
   ZVAL_STRING(db->name, name, 1);
