@@ -515,6 +515,7 @@ PHP_METHOD(MongoDB, command) {
   mongo_db *db;
   mongo_link *link;
   char *cmd_ns;
+	zval slave_okay;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {
     return;
@@ -561,18 +562,17 @@ PHP_METHOD(MongoDB, command) {
     }
   }
 
-  // make sure commands aren't be sent to slaves
-  PHP_MONGO_GET_LINK(db->link);
-  if (link->rs) {
-    zval slave_okay;
-    Z_TYPE(slave_okay) = IS_BOOL;
-    Z_LVAL(slave_okay) = 0;
+	/* Make sure commands aren't be sent to slaves */
+	/* TODO: The read preferences spec has a list of commands that *can* be send
+	 * to slave */
+	PHP_MONGO_GET_LINK(db->link);
+	Z_TYPE(slave_okay) = IS_BOOL;
+	Z_LVAL(slave_okay) = 0;
 
-    MAKE_STD_ZVAL(temp);
-    ZVAL_NULL(temp);
-    MONGO_METHOD1(MongoCursor, slaveOkay, temp, cursor, &slave_okay);
-    zval_ptr_dtor(&temp);
-  }
+	MAKE_STD_ZVAL(temp);
+	ZVAL_NULL(temp);
+	MONGO_METHOD1(MongoCursor, slaveOkay, temp, cursor, &slave_okay);
+	zval_ptr_dtor(&temp);
 
   // query
   MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
@@ -618,16 +618,13 @@ zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database,
 zval* mongo_db_cmd(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
 {
   zval temp_ret, *response, *cursor_zval;
-  mongo_link temp;
-  mongo_server *temp_next = 0;
-  mongo_server_set temp_server_set;
   mongo_cursor *cursor = 0;
   int exception = 0;
 
 	/* Create a cursor */
 	cursor_zval = mongo_db__create_fake_cursor(connection, database, cmd TSRMLS_CC);
 	cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
-	cursor->connection = &temp;
+	cursor->connection = connection;
 
   // need to call this after setting cursor->link
   // reset checks that cursor->link != 0
