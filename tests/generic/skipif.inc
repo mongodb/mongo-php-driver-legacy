@@ -1,6 +1,6 @@
 <?php
-require __DIR__ . "/../others/skipif.inc";
-require __DIR__ ."/../utils.inc";
+require dirname(__FILE__) . "/../others/skipif.inc";
+require dirname(__FILE__) ."/../utils.inc";
 $m = null;
 
 try {
@@ -9,7 +9,7 @@ try {
     die("skip " . $e->getMessage());
 }
 if (!$m) {
-    $cfg = __DIR__ . "/../mongo-test-cfg.inc";
+    $cfg = dirname(__FILE__) . "/../mongo-test-cfg.inc";
     die("skip Did you remember to configure " . realpath($cfg) . " based on your environment?");
 }
 

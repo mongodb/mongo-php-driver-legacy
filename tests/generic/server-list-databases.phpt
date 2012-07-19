@@ -1,10 +1,10 @@
 --TEST--
 Server: list databases
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require __DIR__ ."/../utils.inc";
+require dirname(__FILE__) ."/../utils.inc";
 $a = mongo("admin");
 $dbs = $a->listDBs();
 var_dump($dbs['ok']);

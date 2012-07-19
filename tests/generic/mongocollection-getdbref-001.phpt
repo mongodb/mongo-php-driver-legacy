@@ -1,11 +1,11 @@
 --TEST--
 MongoCollection::getDBRef()
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc";?>
+<?php require dirname(__FILE__) . "/skipif.inc";?>
 <?php if (isauth()) { die("skip The test suite doesn't support two databases at the moment"); } ?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 $mongo = mongo();
 
 $coll1 = $mongo->selectCollection(dbname(), 'dbref');

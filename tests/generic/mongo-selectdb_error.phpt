@@ -1,10 +1,10 @@
 --TEST--
 Mongo::selectDB
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require __DIR__ . "/../utils.inc";
+require dirname(__FILE__) . "/../utils.inc";
 $m = mongo();
 $db = $m->selectDB();
 echo is_object($db) ? '1' : '0', "\n";

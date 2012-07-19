@@ -1,7 +1,7 @@
 --TEST--
 MongoDate constructor has millisecond precision
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc"; ?>
+<?php require dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 $date = new MongoDate();

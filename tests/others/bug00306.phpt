@@ -1,7 +1,7 @@
 --TEST--
 Test for bug PHP-306: MongoID::__set_state does not work.
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
 $n = new MongoId('4f06e55e44670ab92b000000');

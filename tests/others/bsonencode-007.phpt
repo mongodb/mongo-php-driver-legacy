@@ -1,7 +1,7 @@
 --TEST--
 bson_encode() MongoId
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
 $hex = '0123456789abcdef01234567';

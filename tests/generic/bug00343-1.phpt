@@ -1,10 +1,10 @@
 --TEST--
 Test for bug PHP-343: Segfault when adding a file to GridFS (storeBytes)
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require __DIR__ . "/../utils.inc";
+require dirname(__FILE__) . "/../utils.inc";
 $m = mongo();
 $bytes = file_get_contents(__FILE__);
 $db = $m->phpunit;
@@ -52,7 +52,7 @@ object(MongoGridFSFile)#%d (%d) {
     ["md5"]=>
     string(32) "%s"
   }
-  ["gridfs":protected]=>
+  ["gridfs%S:protected%S]=>
   object(MongoGridFS)#3 (5) {
     ["w"]=>
     int(1)
@@ -65,9 +65,9 @@ object(MongoGridFSFile)#%d (%d) {
       ["wtimeout"]=>
       int(10000)
     }
-    ["filesName":protected]=>
+    ["filesName%S:protected%S]=>
     string(8) "fs.files"
-    ["chunksName":protected]=>
+    ["chunksName%S:protected%S]=>
     string(9) "fs.chunks"
   }
   ["flags"]=>

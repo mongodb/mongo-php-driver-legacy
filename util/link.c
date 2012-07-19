@@ -95,10 +95,20 @@ mongo_server* mongo_util_link_get_socket(mongo_link *link, zval *errmsg TSRMLS_D
 
 int mongo_util_link_failed(mongo_link *link, mongo_server *server TSRMLS_DC) {
   int retval = SUCCESS;
+#if ZEND_MODULE_API_NO <= 20060613
+	zval *tmp_exception;
+#endif
 
   if (EG(exception)) {
       /* We could hit this when we are automatically reconnecting after f.e. query failure */
+#if ZEND_MODULE_API_NO > 20060613
       zend_exception_save(TSRMLS_C);
+#else
+	if (EG(exception)) {
+		tmp_exception = EG(exception);
+		EG(exception) = NULL;
+	}
+#endif
   }
 
 
@@ -118,7 +128,14 @@ int mongo_util_link_failed(mongo_link *link, mongo_server *server TSRMLS_DC) {
   }
 
 bailout:
+#if ZEND_MODULE_API_NO > 20060613
       zend_exception_restore(TSRMLS_C);
+#else
+	if (tmp_exception) {
+		EG(exception) = tmp_exception;
+		tmp_exception = NULL;
+	}
+#endif
   return retval;
 }
 
