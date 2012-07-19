@@ -1335,7 +1335,7 @@ PHP_METHOD(MongoGridFSCursor, current) {
   zval *gridfs;
   zval *flags;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoGridFSCursor);
+  MONGO_CHECK_INITIALIZED(cursor->connection, MongoGridFSCursor);
 
   if (!cursor->current) {
     RETURN_NULL();
@@ -1354,7 +1354,7 @@ PHP_METHOD(MongoGridFSCursor, key)
 {
 	zval **id;
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->link, MongoGridFSCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoGridFSCursor);
 
 	if (!cursor->current) {
 		RETURN_NULL();
