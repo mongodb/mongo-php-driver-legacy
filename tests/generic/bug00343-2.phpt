@@ -38,7 +38,7 @@ object(MongoGridFSFile)#%d (%d) {
     ["otherdata"]=>
     string(3) "BIG"
     ["uploadDate"]=>
-    object(MongoDate)#9 (2) {
+    object(MongoDate)#%d (2) {
       ["sec"]=>
       int(%d)
       ["usec"]=>
