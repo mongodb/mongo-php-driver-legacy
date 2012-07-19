@@ -803,8 +803,8 @@ static zend_function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, __toString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, __get, arginfo___get, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, getGridFS, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, getSlaveOkay, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, setSlaveOkay, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, getSlaveOkay, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(MongoDB, setSlaveOkay, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(MongoDB, getProfilingLevel, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, setProfilingLevel, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, drop, NULL, ZEND_ACC_PUBLIC)
@@ -818,9 +818,9 @@ static zend_function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, execute, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, command, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, lastError, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, prevError, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoDB, forceError, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, prevError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(MongoDB, forceError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(MongoDB, authenticate, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   { NULL, NULL, NULL }
 };
