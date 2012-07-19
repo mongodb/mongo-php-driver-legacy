@@ -18,6 +18,7 @@
 #include <php.h>
 #include <zend_exceptions.h>
 #include <ext/standard/md5.h>
+#include "ext/standard/php_smart_str.h"
 
 #include "php_mongo.h"
 #include "util/pool.h"
@@ -581,9 +582,11 @@ PHP_METHOD(MongoDB, command) {
   zval_ptr_dtor(&cursor);
 }
 
-zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC) {
+zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
+{
   zval *cursor_zval;
   mongo_cursor *cursor;
+	smart_str ns = { 0 };
 
   MAKE_STD_ZVAL(cursor_zval);
   object_init_ex(cursor_zval, mongo_ce_Cursor);
@@ -593,15 +596,14 @@ zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC) {
   cursor->query = cmd;
   zval_add_ref(&cmd);
 
-  if (current->db) {
-    cursor->ns = (char*)emalloc(strlen(current->db)+6);
-    memcpy(cursor->ns, current->db, strlen(current->db));
-    memcpy(cursor->ns+strlen(current->db), ".$cmd", 5);
-    cursor->ns[strlen(current->db)+5] = 0;
-  }
-  else {
-    cursor->ns = estrdup("admin.$cmd");
-  }
+	if (database) {
+		smart_str_append(&ns, database);
+		smart_str_appendl(&ns, ".$cmd", 5);
+		smart_str_0(&ns);
+		cursor->ns = ns.c;
+	} else {
+		cursor->ns = estrdup("admin.$cmd");
+	}
 
   cursor->fields = 0;
   cursor->limit = -1;
@@ -613,7 +615,8 @@ zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC) {
   return cursor_zval;
 }
 
-zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
+zval* mongo_db_cmd(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
+{
   zval temp_ret, *response, *cursor_zval;
   mongo_link temp;
   mongo_server *temp_next = 0;
@@ -621,25 +624,10 @@ zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
   mongo_cursor *cursor = 0;
   int exception = 0;
 
-  // skip if we're not connected
-  if (!current->connected) {
-    return 0;
-  }
-
-  // make a fake link
-  temp.server_set = &temp_server_set;
-  temp.server_set->num = 1;
-  temp.server_set->server = current;
-  temp.server_set->master = current;
-  temp.rs = 0;
-
-  temp_next = current->next;
-  current->next = 0;
-
-  // create a cursor
-  cursor_zval = mongo_db__create_fake_cursor(current, cmd TSRMLS_CC);
-  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
-  cursor->link = &temp;
+	/* Create a cursor */
+	cursor_zval = mongo_db__create_fake_cursor(connection, database, cmd TSRMLS_CC);
+	cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
+	cursor->connection = &temp;
 
   // need to call this after setting cursor->link
   // reset checks that cursor->link != 0
@@ -654,8 +642,7 @@ zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
     exception = 1;
   }
 
-  current->next = temp_next;
-  cursor->link = 0;
+	cursor->connection = 0;
   zval_ptr_dtor(&cursor_zval);
 
   if (exception || IS_SCALAR_P(response)) {

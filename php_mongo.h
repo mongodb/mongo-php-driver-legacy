@@ -406,9 +406,9 @@ typedef struct {
 typedef struct {
   zend_object std;
 
-  // connection
-  mongo_link *link;
-  zval *resource;
+	/* Connection */
+	mongo_connection *connection;
+	zval *resource;
 
   // collection namespace
   char *ns;
