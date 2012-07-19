@@ -572,9 +572,9 @@ ZEND_END_ARG_INFO()
 
 
 static zend_function_entry MongoPool_methods[] = {
-  PHP_ME(MongoPool, info, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(MongoPool, setSize, arginfo_setPoolSize, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(MongoPool, getSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(MongoPool, info, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(MongoPool, setSize, arginfo_setPoolSize, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(MongoPool, getSize, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
   {NULL, NULL, NULL}
 };
 

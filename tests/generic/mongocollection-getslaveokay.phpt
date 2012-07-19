@@ -15,6 +15,13 @@ var_dump($c->getSlaveOkay());
 $c->setSlaveOkay((bool) null);
 var_dump($c->getSlaveOkay());
 ?>
---EXPECT--
+--EXPECTF--
+Deprecated: Function MongoCollection::setSlaveOkay() is deprecated in %smongocollection-getslaveokay.php on line %d
+
+Deprecated: Function MongoCollection::getSlaveOkay() is deprecated in %smongocollection-getslaveokay.php on line %d
 bool(true)
+
+Deprecated: Function MongoCollection::setSlaveOkay() is deprecated in %smongocollection-getslaveokay.php on line %d
+
+Deprecated: Function MongoCollection::getSlaveOkay() is deprecated in %smongocollection-getslaveokay.php on line %d
 bool(false)

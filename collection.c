@@ -1080,12 +1080,13 @@ PHP_METHOD(MongoCollection, distinct)
     char *key;
     int key_len;
     zval *data, **values, *tmp, *query = NULL;
+	mongo_collection *c;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &key, &key_len, &query) == FAILURE) {
         return;
     }
 
-    mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
     MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
 
@@ -1328,8 +1329,8 @@ static zend_function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, __get, arginfo___get, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, getName, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoCollection, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(MongoCollection, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(MongoCollection, drop, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, validate, arginfo_validate, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, insert, arginfo_insert, ZEND_ACC_PUBLIC)
