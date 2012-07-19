@@ -3,7 +3,7 @@ PHP-372 (Error codes not being passed to MongoGridFSException)
 --CREDITS--
 Alex Yam
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
 /*-----------------------------------------------------------
@@ -17,7 +17,7 @@ PHP mongo driver: 1.3.0dev (16th Apr 2012)
 -----------------------------------------------------------*/
 
 #Connect to GridFS
-require __DIR__ ."/../utils.inc";
+require dirname(__FILE__) ."/../utils.inc";
 $db = 'phpunit';
 $m = mongo($db);
 $prefix = 'test_prefix';

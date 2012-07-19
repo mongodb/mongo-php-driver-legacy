@@ -1,7 +1,7 @@
 --TEST--
 MongoTimestamp constructor casts arguments to integers
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc"; ?>
+<?php require dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 $ts = new MongoTimestamp('60', '30');

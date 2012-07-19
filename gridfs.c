@@ -425,7 +425,6 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   // file array object
   MAKE_STD_ZVAL(zfile);
-  ZVAL_NULL(zfile);
 
   // merge extra & zfile and add _id if needed
   zid = setup_extra(zfile, extra TSRMLS_CC);
@@ -480,11 +479,11 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 	}
 
 cleanup_on_failure:
-	if (!revert) {
-		RETVAL_ZVAL(zid, 1, 0);
-	} else {
+	if (revert) {
 		cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
 		RETVAL_FALSE;
+	} else {
+		RETVAL_ZVAL(zid, 1, 0);
 	}
 
 	zval_ptr_dtor(&zfile);

@@ -1,7 +1,7 @@
 --TEST--
 bson_encode() boolean
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
 var_dump(chr(1) === bson_encode(true));

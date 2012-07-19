@@ -4,7 +4,7 @@ MongoDB ReplicaSet with authentication
 <?php
 // Force replicaset mode
 $_ENV["MONGO_SERVER"] = "REPLICASET_AUTH";
-require __DIR__ ."/skipif.inc";
+require dirname(__FILE__) ."/skipif.inc";
 ?>
 --REDIRECTTEST--
 return array(

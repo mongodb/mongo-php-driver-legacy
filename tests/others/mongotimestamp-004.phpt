@@ -1,7 +1,7 @@
 --TEST--
 MongoTimestamp comparison
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc"; ?>
+<?php require dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 $ts1 = new MongoTimestamp(60, 30);

@@ -1,10 +1,10 @@
 --TEST--
 Test for PHP-207: setSlaveOkay not supported for GridFS queries
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 
 // FIXME: How on earth can we verify the data came from secondaries?
 // The only way I found so far was to watch mongotop :)

@@ -1,16 +1,16 @@
 --TEST--
 Connection strings: Prefixed with mongodb://
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
-require __DIR__ . "/../utils.inc";
+require dirname(__FILE__) . "/../utils.inc";
 if ($STANDALONE_PORT != "27017") {
     die("skip This tests expects a server running on the default port");
 }
 ?>
 --FILE--
 <?php
-require __DIR__ . "/../utils.inc";
+require dirname(__FILE__) . "/../utils.inc";
 
 // The connect param will always be true in RS so we only test this standalone
 
@@ -23,10 +23,10 @@ var_dump($b->connected);
 $b = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 var_dump($b->connected);
 --EXPECTF--
-Deprecated: Mongo::__construct(): Passing scalar values for the options parameter is deprecated and will be removed in the near future in %s on line %d
+%s: Mongo::__construct(): Passing scalar values for the options parameter is deprecated and will be removed in the near future in %s on line %d
 bool(false)
 bool(true)
 
-Deprecated: Mongo::__construct(): Passing scalar values for the options parameter is deprecated and will be removed in the near future in %s on line %d
+%s: Mongo::__construct(): Passing scalar values for the options parameter is deprecated and will be removed in the near future in %s on line %d
 bool(false)
 bool(true)

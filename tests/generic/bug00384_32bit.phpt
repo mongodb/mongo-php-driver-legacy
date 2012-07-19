@@ -2,12 +2,12 @@
 Test for PHP-384: Segfaults with GridFS and long_as_object.
 --SKIPIF--
 <?php if (4 !== PHP_INT_SIZE) { die('skip Only for 32-bit platform'); } ?>
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --INI--
 mongo.long_as_object=0
 --FILE--
 <?php
-require __DIR__ ."/../utils.inc";
+require dirname(__FILE__) ."/../utils.inc";
 $m = mongo();
 
 $m->phpunit->dropCollection( 'fs.files' );

@@ -1,11 +1,11 @@
 --TEST--
 MongoInt32 constructed with 64-bit integer
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc" ?>
+<?php require dirname(__FILE__) . "/skipif.inc" ?>
 <?php if (8 !== PHP_INT_SIZE) { die('skip Only for 64-bit platform'); } ?>
 --FILE--
 <?php
-require_once __DIR__ ."/../utils.inc";
+require_once dirname(__FILE__) ."/../utils.inc";
 $mongo = mongo();
 $coll = $mongo->selectCollection('phpunit', 'mongoint32');
 $coll->drop();
