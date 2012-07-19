@@ -4,6 +4,7 @@ Test for PHP-384: Segfaults with GridFS and long_as_object.
 <?php if (8 !== PHP_INT_SIZE) { die('skip Only for 64-bit platform'); } ?>
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --INI--
+mongo.native_long=1
 mongo.long_as_object=0
 --FILE--
 <?php
@@ -31,5 +32,8 @@ echo 'OK'. PHP_EOL;
 ?>
 --EXPECTF--
 int(4096)
-int(4096)
+object(MongoInt64)#12 (1) {
+  ["value"]=>
+  string(4) "4096"
+}
 OK
