@@ -505,10 +505,17 @@ static char *get_cmd_ns(char *db, int db_len) {
 }
 
 PHP_METHOD(MongoDB, command) {
-  zval limit, *temp, *cmd, *cursor, *ns, *options = 0;
+  zval limit, *temp, *cmd, *cursor, *ns, *options = 0, **data;
   mongo_db *db;
   mongo_link *link;
   char *cmd_ns;
+  HashTable *arr_hash;
+  HashPosition pointer;
+  int array_count;
+
+
+  HashTable *inner_hash;
+  HashPosition inner_pointer;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {
     return;
@@ -557,10 +564,29 @@ PHP_METHOD(MongoDB, command) {
 
   // make sure commands aren't be sent to slaves
   PHP_MONGO_GET_LINK(db->link);
-  if (link->rs) {
+  if (link->rs) { 
+    arr_hash = Z_ARRVAL_P(cmd);
+    array_count = zend_hash_num_elements(arr_hash)
+
     zval slave_okay;
     Z_TYPE(slave_okay) = IS_BOOL;
     Z_LVAL(slave_okay) = 0;
+
+    for(zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void**) &data, &pointer) == SUCCESS; zend_hash_move_forward_ex(arr_hash, &pointer)) {
+
+        zval temp_main;
+        char *key;
+        int key_len;
+        long index;
+
+        if (zend_hash_get_current_key_ex(arr_hash, &key, &key_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
+            if (strcmp(key, "count") == 0) {
+                    Z_LVAL(slave_okay) = 1;
+            } else if (strcmp(key, "distinct") == 0) {
+                   Z_LVAL(slave_okay) = 1;
+            } 
+        }
+    }
 
     MAKE_STD_ZVAL(temp);
     ZVAL_NULL(temp);
