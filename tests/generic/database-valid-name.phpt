@@ -1,10 +1,10 @@
 --TEST--
 Database: valid name checks
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require __DIR__ . "/../utils.inc";
+require dirname(__FILE__) . "/../utils.inc";
 $a = mongo();
 $names = array("\\", "\$", "/", "foo.bar");
 foreach ($names as $name) {

@@ -1,7 +1,7 @@
 --TEST--
 MongoBinData type constants
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc"; ?>
+<?php require dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 echo MongoBinData::FUNC . "\n";

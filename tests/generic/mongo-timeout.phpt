@@ -1,10 +1,10 @@
 --TEST--
 Test for database timeout option.
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require __DIR__ . "/../utils.inc";
+require dirname(__FILE__) . "/../utils.inc";
 $m = mongo("admin");
 $d = $m->selectDb('admin');
 
@@ -20,17 +20,17 @@ sleep( 2 );
 ?>
 --EXPECTF--
 object(MongoCursorTimeoutException)#%d (%d) {
-  ["message":protected]=>
+  ["message%S:protected%S]=>
   string(%s) "cursor timed out (timeout: 1, time left: 0:%d, status: 0)"
-  ["string":"Exception":private]=>
+  ["string%S:private%S]=>
   string(0) ""
-  ["code":protected]=>
+  ["code%S:protected%S]=>
   int(0)
-  ["file":protected]=>
+  ["file%S:protected%S]=>
   string(%d) "%s"
-  ["line":protected]=>
+  ["line%S:protected%S]=>
   int(%d)
-  ["trace":"Exception":private]=>
+  ["trace%S:private%S]=>
   array(1) {
     [0]=>
     array(6) {
@@ -61,7 +61,7 @@ object(MongoCursorTimeoutException)#%d (%d) {
       }
     }
   }
-  ["previous":"Exception":private]=>
+  ["previous%S:private%S]=>
   NULL
   ["host":"MongoCursorException":private]=>
   NULL

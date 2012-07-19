@@ -1,10 +1,10 @@
 --TEST--
 MongoDB::getDBRef() returns null if reference parameter is invalid
 --SKIPIF--
-<?php require __DIR__ . "/skipif.inc";?>
+<?php require dirname(__FILE__) . "/skipif.inc";?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 $mongo = mongo();
 $db = $mongo->selectDB('test');
 

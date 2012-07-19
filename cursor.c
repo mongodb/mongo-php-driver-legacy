@@ -290,6 +290,7 @@ PHP_METHOD(MongoCursor, getNext) {
   // will be null unless there was an error
   if (EG(exception) ||
       (Z_TYPE_P(return_value) == IS_BOOL && Z_BVAL_P(return_value) == 0)) {
+		ZVAL_NULL(return_value);
     return;
   }
   MONGO_METHOD(MongoCursor, current, return_value, getThis());

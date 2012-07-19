@@ -1,10 +1,10 @@
 --TEST--
 Test for bug PHP-408: MongoBinData custom type is returned as -128
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require __DIR__ ."/../utils.inc";
+require dirname(__FILE__) ."/../utils.inc";
 $mongo = mongo();
 $coll = $mongo->selectCollection('phpunit', 'mongobindata');
 $coll->drop();

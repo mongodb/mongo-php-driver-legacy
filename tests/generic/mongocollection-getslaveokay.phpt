@@ -3,10 +3,10 @@ MongoCollection::getSlaveOkay()
 --DESCRIPTION--
 Test both true and false for slave_okay attribute
 --SKIPIF--
-<?php require __DIR__ ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require __DIR__ . "/../utils.inc";
+require dirname(__FILE__) . "/../utils.inc";
 $m = mongo();
 
 $c = $m->phpunit->col;
