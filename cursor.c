@@ -18,6 +18,7 @@
 #include <php.h>
 #include <zend_interfaces.h>
 #include <zend_exceptions.h>
+#include "mcon/manager.h"
 
 #ifdef WIN32
 #  ifndef int64_t
@@ -112,9 +113,9 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->resource = zlink;
   zval_add_ref(&zlink);
 
-  // db connection resource
-  PHP_MONGO_GET_LINK(zlink);
-  cursor->link = link;
+	/* db connection resource */
+	PHP_MONGO_GET_LINK(zlink);
+	cursor->connection = mongo_get_connection(link->manager, link->servers);
 
   // change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1}
   if (Z_TYPE_P(zfields) == IS_ARRAY) {
@@ -177,7 +178,8 @@ PHP_METHOD(MongoCursor, __construct) {
   timeout = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
   cursor->timeout = Z_LVAL_P(timeout);
 
-  cursor->opts = link->slave_okay ? (1 << 2) : 0;
+	/* Sets the wire protocol flag to allow reading from a secondary */
+	cursor->opts = cursor->connection->connection_type == MONGO_NODE_PRIMARY ? (1 << 2) : 0;
 
   // get rid of extra ref
   zval_ptr_dtor(&empty);
@@ -207,7 +209,7 @@ PHP_METHOD(MongoCursor, hasNext) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   zval *temp;
 
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
   if (!cursor->started_iterating) {
     MONGO_METHOD(MongoCursor, doQuery, return_value, getThis());
@@ -369,7 +371,7 @@ PHP_METHOD(MongoCursor, fields) {
  */
 PHP_METHOD(MongoCursor, dead) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
   RETURN_BOOL(cursor->started_iterating && cursor->cursor_id == 0);
 }
@@ -497,7 +499,7 @@ PHP_METHOD(MongoCursor, addOption) {
   }
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
   if (cursor->started_iterating) {
     mongo_cursor_throw(cursor->server, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
@@ -519,7 +521,7 @@ PHP_METHOD(MongoCursor, addOption) {
 PHP_METHOD(MongoCursor, snapshot) {
   zval *snapshot, *yes;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
   MAKE_STD_ZVAL(snapshot);
   ZVAL_STRING(snapshot, "$snapshot", 1);
@@ -584,7 +586,7 @@ PHP_METHOD(MongoCursor, hint) {
 PHP_METHOD(MongoCursor, info)
 {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
   array_init(return_value);
 
   add_assoc_string(return_value, "ns", cursor->ns, 1);
@@ -621,7 +623,7 @@ PHP_METHOD(MongoCursor, explain) {
   int temp_limit;
   zval *explain, *yes, *temp = 0;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
   MONGO_METHOD(MongoCursor, reset, return_value, getThis());
 
@@ -699,7 +701,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 
   MAKE_STD_ZVAL(errmsg);
   ZVAL_NULL(errmsg);
-
+#if 0
   // If slave_okay is set, read from a slave.
   if ((cursor->link->rs && cursor->opts & CURSOR_FLAG_SLAVE_OKAY &&
        (cursor->server = mongo_util_link_get_slave_socket(cursor->link, errmsg TSRMLS_CC)) == 0)) {
@@ -725,18 +727,17 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
     zval_ptr_dtor(&errmsg);
     return FAILURE;
   }
-
-  if (mongo_say(cursor->server, &buf, errmsg TSRMLS_CC) == FAILURE) {
-    if (Z_TYPE_P(errmsg) == IS_STRING) {
-      mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query: %s", Z_STRVAL_P(errmsg));
-    }
-    else {
-      mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query");
-    }
-    efree(buf.start);
-    zval_ptr_dtor(&errmsg);
-    return mongo_util_cursor_failed(cursor TSRMLS_CC);
-  }
+#endif
+	if (mongo_say(cursor->connection, &buf, errmsg TSRMLS_CC) == FAILURE) {
+		if (errmsg) {
+			mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query: %s", errmsg);
+		} else {
+			mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query");
+		}
+		efree(buf.start);
+		zval_ptr_dtor(&errmsg);
+		return mongo_util_cursor_failed(cursor TSRMLS_CC);
+	}
 
   efree(buf.start);
 
@@ -755,7 +756,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   return SUCCESS;
 }
 /* }}} */
-
+#if 0
 int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC) {
   mongo_server *old = cursor->server;
 
@@ -768,7 +769,7 @@ int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC) {
 
   return FAILURE;
 }
-
+#endif
 
 // ITERATOR FUNCTIONS
 
@@ -776,7 +777,7 @@ int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC) {
  */
 PHP_METHOD(MongoCursor, current) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
   if (cursor->current) {
     RETURN_ZVAL(cursor->current, 1, 0);
@@ -792,7 +793,7 @@ PHP_METHOD(MongoCursor, current) {
 PHP_METHOD(MongoCursor, key) {
   zval **id;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
   if (!cursor->current) {
     RETURN_NULL();
@@ -916,7 +917,7 @@ PHP_METHOD(MongoCursor, next) {
           code = (int)Z_DVAL_PP(code_z);
         }
         // else code == 4
-
+#if 0
         // this shouldn't be necessary after 1.7.* is standard, it forces
         // failover in case the master steps down.
         // not master: 10107
@@ -925,6 +926,7 @@ PHP_METHOD(MongoCursor, next) {
         if (cursor->link->rs && (code == 10107 || code == 13435 || code == 13436 || code == 10058)) {
           mongo_util_link_master_failed(cursor->link TSRMLS_CC);
         }
+#endif
       }
 
       exception = mongo_cursor_throw(cursor->server, code TSRMLS_CC, Z_STRVAL_PP(err));
@@ -951,7 +953,7 @@ PHP_METHOD(MongoCursor, rewind) {
  */
 PHP_METHOD(MongoCursor, valid) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
   RETURN_BOOL(cursor->current);
 }
@@ -961,7 +963,7 @@ PHP_METHOD(MongoCursor, valid) {
  */
 PHP_METHOD(MongoCursor, reset) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
   mongo_util_cursor_reset(cursor TSRMLS_CC);
 }
