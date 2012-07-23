@@ -37,7 +37,6 @@
 
 #include "util/rs.h"
 #include "util/parse.h"
-#include "util/io.h"
 #include "util/hash.h"
 #include "util/connect.h"
 #include "util/pool.h"

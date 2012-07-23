@@ -27,7 +27,6 @@
 #include "util/link.h"
 #include "util/rs.h"
 #include "util/server.h"
-#include "util/io.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,

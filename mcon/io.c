@@ -33,7 +33,7 @@ int mongo_io_send(int sock, char *packet, int total, char **error_message)
 }
 
 /*
- * Low-level receive function.
+ * Low-level receive functions.
  *
  * On failure, sets errmsg to errno string and returns -1.
  * On success, returns number of bytes read.
@@ -76,4 +76,63 @@ int mongo_io_recv_data(int sock, void *dest, int size, char **error_message)
 		received += num;
 	}
 	return received;
+}
+
+/* Wait on socket availability with a timeout
+ * TODO: Port to use poll() instead of select().
+ *
+ * Returns:
+ * 0 on success
+ * -1 on failure, but not critical enough to throw an exception
+ * 1.. on failure, and throw an exception. The return value is the error code
+ */
+static int do_timeout(int sock, int to, char **error_message)
+{
+	while (1) {
+		int status;
+		struct timeval timeout;
+		fd_set readfds, exceptfds;
+
+		FD_ZERO(&readfds);
+		FD_SET(sock, &readfds);
+		FD_ZERO(&exceptfds);
+		FD_SET(sock, &exceptfds);
+
+		timeout.tv_sec = to / 1000 ;
+		timeout.tv_usec = (to % 1000) * 1000;
+
+		status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
+
+		if (status == -1) {
+			/* on EINTR, retry - this resets the timeout however to its full length */
+			if (errno == EINTR) {
+				continue;
+			}
+
+			*error_message = strdup(strerror(errno));
+			return 13;
+		}
+
+		if (FD_ISSET(sock, &exceptfds)) {
+			*error_message = strdup("Exceptional condition on socket");
+			return 17;
+		}
+
+		if (status == 0 && !FD_ISSET(sock, &readfds)) {
+			*error_message = malloc(256);
+			snprintf(
+				*error_message, 256,
+				"cursor timed out (timeout: %d, time left: %d:%d, status: %d)", 
+				to, timeout.tv_sec, timeout.tv_usec, status
+			);
+			return 80;
+		}
+
+		/* if our descriptor is ready break out */
+		if (FD_ISSET(sock, &readfds)) {
+			break;
+		}
+	}
+
+	return 0;
 }

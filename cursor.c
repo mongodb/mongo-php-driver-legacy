@@ -38,7 +38,7 @@
 #include "mongo_types.h"
 #include "util/link.h"
 #include "util/rs.h"
-#include "util/io.h"
+#include "util/log.h"
 
 #if WIN32
 HANDLE cursor_mutex;
@@ -76,6 +76,138 @@ static void make_special(mongo_cursor *);
 static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
+
+/*
+ * Cursor related read/write functions
+ */
+/*
+ * This method reads the message header for a database response
+ * It returns failure or success and throws an exception on failure.
+ *
+ * Returns:
+ * 0 on success
+ * -1 on failure, but not critical enough to throw an exception
+ * 1.. on failure, and throw an exception. The return value is the error code
+ */
+static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error_message)
+{
+	int status = 0;
+	int num_returned = 0;
+	char buf[REPLY_HEADER_LEN];
+
+	/* set a timeout */
+	if (cursor->timeout && cursor->timeout > 0) {
+		status = do_timeout(sock, cursor->timeout, error_message);
+		if (status != 0) {
+			return status;
+		}
+	}
+
+	status = recv(sock, buf, REPLY_HEADER_LEN, FLAGS);
+	/* socket has been closed, retry */
+	if (status == 0) {
+		*error_message = strdup("socket has been closed, retry");
+		return -1;
+	} else if (status < INT_32*4) {
+		*error_message = strdup("couldn't get response header");
+		return 4;
+	}
+
+	/* switch the byte order, if necessary */
+	cursor->recv.length = MONGO_32(*(int*)buf);
+
+	/* make sure we're not getting crazy data */
+	if (cursor->recv.length == 0) {
+		*error_message = strdup("No response from the database");
+		return 5;
+	} else if (cursor->recv.length < REPLY_HEADER_SIZE) {
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "bad response length: %d, did the db assert?", cursor->recv.length);
+		return 6;
+	}
+
+	cursor->recv.request_id  = MONGO_32(*(int*)(buf+INT_32));
+	cursor->recv.response_to = MONGO_32(*(int*)(buf+INT_32*2));
+	cursor->recv.op          = MONGO_32(*(int*)(buf+INT_32*3));
+	cursor->flag             = MONGO_32(*(int*)(buf+INT_32*4));
+	cursor->cursor_id        = MONGO_64(*(int64_t*)(buf+INT_32*5));
+	cursor->start            = MONGO_32(*(int*)(buf+INT_32*5+INT_64));
+	num_returned             = MONGO_32(*(int*)(buf+INT_32*6+INT_64));
+
+	/* TODO: find out what this does */
+	if (cursor->recv.response_to > MonGlo(response_num)) {
+		MonGlo(response_num) = cursor->recv.response_to;
+	}
+
+	/* cursor->num is the total of the elements we've retrieved (elements
+	 * already iterated through + elements in db response but not yet iterated
+	 * through) */
+	cursor->num += num_returned;
+
+	/* create buf */
+	cursor->recv.length -= REPLY_HEADER_LEN;
+
+	return 0;
+}
+
+/* Reads a cursors body
+ * Returns 0 on failure or an int indicating the number of bytes read */
+static int get_cursor_body(int sock, mongo_cursor *cursor)
+{
+	if (cursor->buf.start) {
+		free(cursor->buf.start);
+	}
+
+	cursor->buf.start = (char*)malloc(cursor->recv.length);
+	cursor->buf.end = cursor->buf.start + cursor->recv.length;
+	cursor->buf.pos = cursor->buf.start;
+
+	/* finish populating cursor */
+	return mongo_io_recv_data(sock, cursor->buf.pos, cursor->recv.length);
+}
+
+/* Cursor helper function */
+int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
+{
+	int          sock;
+	unsigned int status;
+	char        *error_message;
+
+	mongo_log(MONGO_LOG_IO, MONGO_LOG_FINE TSRMLS_CC, "hearing something");
+	sock = cursor->server->socket;
+
+	status = get_cursor_header(sock, cursor, (char**) &error_message TSRMLS_CC);
+	if (status == -1) {
+		return FAILURE;
+	}
+	if (status > 0) {
+		mongo_cursor_throw(cursor->server, status TSRMLS_CC, "%s", error_message);
+		return FAILURE;
+	}
+
+	/* Check that this is actually the response we want */
+	if (cursor->send.request_id != cursor->recv.response_to) {
+		mongo_log(MONGO_LOG_IO, MONGO_LOG_FINE TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
+
+		mongo_cursor_throw(cursor->server, 9 TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
+		return FAILURE;
+	}
+
+	if (FAILURE == get_cursor_body(sock, cursor TSRMLS_CC)) {
+#ifdef WIN32
+		mongo_cursor_throw(cursor->server, 12 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
+#else
+		mongo_cursor_throw(cursor->server, 12 TSRMLS_CC, "error getting database response: %d", strerror(errno));
+#endif
+		return FAILURE;
+	}
+
+	/* If no catastrophic error has happened yet, we're fine, set errmsg to
+	 * null */
+	ZVAL_NULL(errmsg);
+
+	return SUCCESS;
+}
 
 /* {{{ MongoCursor->__construct
  */
