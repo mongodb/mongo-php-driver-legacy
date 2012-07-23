@@ -209,7 +209,7 @@ PHP_METHOD(Mongo, __construct)
 	link->manager = manager;
 	
 	/* Parse the server specification */
-	link->servers = mongo_parse_server_spec(server);
+	link->servers = mongo_parse_server_spec(server ? server : "mongodb://127.0.0.1");
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_BVAL_P(slave_okay)) {
