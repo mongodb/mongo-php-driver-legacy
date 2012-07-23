@@ -185,7 +185,8 @@ void mongo_init_Mongo(TSRMLS_D) {
 
 /* {{{ Mongo->__construct
  */
-PHP_METHOD(Mongo, __construct) {
+PHP_METHOD(Mongo, __construct)
+{
   char *server = 0;
   int server_len = 0;
   zend_bool persist = 0, garbage = 0, connect = 1;
