@@ -106,9 +106,9 @@ ZEND_END_ARG_INFO()
 static zend_function_entry mongo_methods[] = {
   PHP_ME(Mongo, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, connect, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, pairConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(Mongo, persistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(Mongo, pairPersistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+//  PHP_ME(Mongo, pairConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+//  PHP_ME(Mongo, persistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+//  PHP_ME(Mongo, pairPersistConnect, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, connectUtil, arginfo_no_parameters, ZEND_ACC_PROTECTED)
   PHP_ME(Mongo, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, __get, arginfo___get, ZEND_ACC_PUBLIC)
@@ -126,10 +126,10 @@ static zend_function_entry mongo_methods[] = {
   PHP_ME(Mongo, getSlave, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, switchSlave, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, setPoolSize, arginfo_setPoolSize, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(Mongo, getPoolSize, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(Mongo, poolDebug, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(Mongo, serverInfo, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+//  PHP_ME(Mongo, setPoolSize, arginfo_setPoolSize, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
+//  PHP_ME(Mongo, getPoolSize, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
+//  PHP_ME(Mongo, poolDebug, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+//  PHP_ME(Mongo, serverInfo, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   { NULL, NULL, NULL }
 };
 
