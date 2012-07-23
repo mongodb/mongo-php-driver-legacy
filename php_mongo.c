@@ -55,6 +55,9 @@ int le_pconnection,
   le_prs,
   le_cursor_list;
 
+/* Manager */
+mongo_con_manager *manager;
+
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
@@ -191,6 +194,10 @@ PHP_MINIT_FUNCTION(mongo) {
 
   // start random number generator
   srand(time(0));
+
+	/* initialize manager */
+	/* TODO: Make this thread safe - not so easy! */
+	manager = mongo_init();
 
 #ifdef WIN32
   cursor_mutex = CreateMutex(NULL, FALSE, NULL);
