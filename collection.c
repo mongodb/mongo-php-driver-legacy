@@ -304,7 +304,7 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
     mongo_cursor_throw(server, 16 TSRMLS_CC, Z_STRVAL_P(errmsg));
 
     zval_ptr_dtor(&errmsg);
-    cursor->link = 0;
+    cursor->connection = NULL;
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
@@ -314,7 +314,7 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
     mongo_util_link_failed(cursor->link, server TSRMLS_CC);
 
     zval_ptr_dtor(&errmsg);
-    cursor->link = 0;
+    cursor->connection = NULL;
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
@@ -326,7 +326,7 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
 
   if (EG(exception) ||
       (Z_TYPE_P(return_value) ==IS_BOOL && Z_BVAL_P(return_value) == 0)) {
-    cursor->link = 0;
+    cursor->connection = NULL;
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
@@ -338,13 +338,13 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
 
     mongo_cursor_throw(cursor->server, (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC, Z_STRVAL_PP(err));
 
-    cursor->link = 0;
+    cursor->connection = NULL;
     zval_ptr_dtor(&cursor_z);
     return FAILURE;
   }
 
 
-  cursor->link = 0;
+    cursor->connection = NULL;
   zval_ptr_dtor(&cursor_z);
   return SUCCESS;
 }
