@@ -300,7 +300,8 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
   cursor->server = server;
 
   if (FAILURE == mongo_say(server, buf, errmsg TSRMLS_CC)) {
-    mongo_util_link_failed(cursor->link, server TSRMLS_CC);
+	  /* TODO: Figure out what to do on FAIL
+    mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
     mongo_cursor_throw(server, 16 TSRMLS_CC, Z_STRVAL_P(errmsg));
 
     zval_ptr_dtor(&errmsg);
@@ -311,7 +312,8 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
 
   // get reply
   if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
-    mongo_util_link_failed(cursor->link, server TSRMLS_CC);
+	  /* TODO: Figure out what to do on FAIL
+    mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
 
     zval_ptr_dtor(&errmsg);
     cursor->connection = NULL;
