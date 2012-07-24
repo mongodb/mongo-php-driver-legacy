@@ -339,7 +339,8 @@ PHP_METHOD(MongoCursor, hasNext) {
   buffer buf;
   int size;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  zval *temp;
+	char *error_message = NULL;
+	zval *temp;
 
 	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
@@ -374,22 +375,22 @@ PHP_METHOD(MongoCursor, hasNext) {
     return;
   }
 
-  MAKE_STD_ZVAL(temp);
-  ZVAL_NULL(temp);
+	if (mongo_io_send(cursor->server->socket, buf.start, buf.end - buf.start, (char**) &error_message) == -1) {
+		efree(buf.start);
 
-  if(mongo_say(cursor->server, &buf, temp TSRMLS_CC) == FAILURE) {
-    efree(buf.start);
-
-    mongo_cursor_throw(cursor->server, 1 TSRMLS_CC, Z_STRVAL_P(temp));
-    zval_ptr_dtor(&temp);
-    mongo_util_cursor_failed(cursor TSRMLS_CC);
-    return;
-  }
+		mongo_cursor_throw(cursor->server, 1 TSRMLS_CC, error_message);
+		free(error_message);
+		mongo_util_cursor_failed(cursor TSRMLS_CC);
+		return;
+	}
 
   efree(buf.start);
 
+	MAKE_STD_ZVAL(temp);
+	ZVAL_NULL(temp);
+
   if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
-    zval_ptr_dtor(&temp);
+	free(error_message);
     mongo_util_cursor_failed(cursor TSRMLS_CC);
     return;
   }
@@ -816,6 +817,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   mongo_cursor *cursor;
   buffer buf;
   zval *errmsg;
+	char *error_message;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   if (!cursor) {
@@ -831,8 +833,6 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
     return FAILURE;
   }
 
-  MAKE_STD_ZVAL(errmsg);
-  ZVAL_NULL(errmsg);
 #if 0
   // If slave_okay is set, read from a slave.
   if ((cursor->link->rs && cursor->opts & CURSOR_FLAG_SLAVE_OKAY &&
@@ -860,19 +860,22 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
     return FAILURE;
   }
 #endif
-	if (mongo_say(cursor->connection, &buf, errmsg TSRMLS_CC) == FAILURE) {
-		if (errmsg) {
-			mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query: %s", errmsg);
+	if (mongo_io_send(cursor->connection->socket, buf.start, buf.end - buf.start, (char **) &error_message) == -1) {
+		if (error_message) {
+			mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query: %s", error_message);
+			free(error_message);
 		} else {
 			mongo_cursor_throw(cursor->server, 14 TSRMLS_CC, "couldn't send query");
 		}
 		efree(buf.start);
-		zval_ptr_dtor(&errmsg);
+		
 		return mongo_util_cursor_failed(cursor TSRMLS_CC);
 	}
 
   efree(buf.start);
 
+	MAKE_STD_ZVAL(errmsg);
+	ZVAL_NULL(errmsg);
   if (php_mongo_get_reply(cursor, errmsg TSRMLS_CC) == FAILURE) {
     zval_ptr_dtor(&errmsg);
     return mongo_util_cursor_failed(cursor TSRMLS_CC);
