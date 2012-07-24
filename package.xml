@@ -29,11 +29,11 @@
   <email>bjori@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-07-19</date>
- <time>13:53:00</time>
+ <date>2012-07-24</date>
+ <time>10:51:00</time>
  <version>
-  <release>1.2.11</release>
-  <api>1.2.11</api>
+  <release>1.2.12</release>
+  <api>1.2.12</api>
  </version>
  <stability>
   <release>stable</release>
@@ -42,38 +42,13 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-207] - setSlaveOkay not supported for GridFS queries
-    * [PHP-266] - segfault when connection string refers to unknown replica set member
-    * [PHP-269] - Mongo::__construct should only throw MongoConnectionException
-    * [PHP-331] - PHP segfaults when master changes
-    * [PHP-339] - Seg fault on insert timeout
-    * [PHP-359] - getPID() does not return expected PID when called on custom MongoID object
-    * [PHP-368] - uploadDate is missing in the file property of the MongoGridFSFile class.
-    * [PHP-369] - GridFS segfaults when iterating with an _id field set in the result object
-    * [PHP-372] - Error codes not being passed to MongoGridFSException
-    * [PHP-382] - When 'replicaSet' option is used, authentication calls are being sent to the arbiter server
-    * [PHP-384] - Segfault for GridFS with long_as_object option
-    * [PHP-388] - Cursors don't get closed after limit() is exhausted
-    * [PHP-391] - The driver crashes when there are more than FD_SETSIZE open file descriptors.
-    * [PHP-392] - Arbiter in the seed list acts wonky
-    * [PHP-394] - Crashes &amp; mem leaks
-    * [PHP-397] - Endless loop on non-existing file
-    * [PHP-402] - MongoCollection::validate(true) doesn't set the correct scan-all flag.
-    * [PHP-408] - MongoBinData custom type is returned as -128
-    * [PHP-413] - Authentication with wrong password.. prints the password!
-    * [PHP-417] - MongoDBRef::isRef() returns null in some cases it should return false
-    * [PHP-420] - MongoDB::drop() doesn't warn about arguments
-    * [PHP-431] - PHP driver throws tons of NOTICE messages
-    * [PHP-434] - Mongo::connect() doesn't validate the object
-    * [PHP-435] - 1.2.11 doesn't build with PHP5.2
+    * [PHP-443] - Add zend_parse_parameters_none for PHP 5.2 builds 
+    * [PHP-444] - Undeprecate getSlaveOkay()/setSlaveOkay() on Mongo, MongoDB
+      and MongoCollection; and getSlave() on Mongo.
 
 ** Improvement
-    * [PHP-389] - Support setting query flags (opts)
-    * [PHP-428] - Coverage statistics
-    * [PHP-430] - Deprecate "old ways" which will be removed in 2.0.0
-
-** Task
-    * [PHP-405] - Migrate PHPUnit tests to phpt
+    * [PHP-442] - Fixed a typo in "MongoBinData::__construct(): The default
+      value for type will change to 0 in the future"
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
