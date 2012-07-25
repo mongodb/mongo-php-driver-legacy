@@ -86,7 +86,7 @@ int mongo_io_recv_data(int sock, void *dest, int size, char **error_message)
  * -1 on failure, but not critical enough to throw an exception
  * 1.. on failure, and throw an exception. The return value is the error code
  */
-static int do_timeout(int sock, int to, char **error_message)
+int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 {
 	while (1) {
 		int status;

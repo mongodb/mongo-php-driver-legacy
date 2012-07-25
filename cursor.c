@@ -97,7 +97,7 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 
 	/* set a timeout */
 	if (cursor->timeout && cursor->timeout > 0) {
-		status = do_timeout(sock, cursor->timeout, error_message);
+		status = mongo_io_wait_with_timeout(sock, cursor->timeout, error_message);
 		if (status != 0) {
 			return status;
 		}
