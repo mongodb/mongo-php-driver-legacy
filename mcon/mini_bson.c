@@ -234,6 +234,17 @@ int bson_find_field_as_bool(char *buffer, char *field, unsigned char *data)
 	return 0;
 }
 
+int bson_find_field_as_int32(char *buffer, char *field, int32_t *data)
+{
+	char *tmp = (char*) bson_find_field(buffer, field, BSON_INT32);
+
+	if (tmp) {
+		*data = ((int32_t*)tmp)[0];
+		return 1;
+	}
+	return 0;
+}
+
 int bson_find_field_as_string(char *buffer, char *field, char **data)
 {
 	char* tmp = bson_find_field(buffer, field, BSON_STRING);

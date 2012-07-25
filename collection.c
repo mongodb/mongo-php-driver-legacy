@@ -394,8 +394,7 @@ PHP_METHOD(MongoCollection, insert) {
   }
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
-  if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a,
-                                        mongo_util_server_get_bson_size(server TSRMLS_CC) TSRMLS_CC)) {
+	if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a, connection->max_bson_size TSRMLS_CC)) {
     efree(buf.start);
     zval_ptr_dtor(&options);
     RETURN_FALSE;
@@ -439,8 +438,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
-  if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), bit_opts, docs,
-                                   mongo_util_server_get_bson_size(server TSRMLS_CC) TSRMLS_CC) == FAILURE) {
+	if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), bit_opts, docs, connection->max_bson_size TSRMLS_CC) == FAILURE) {
     efree(buf.start);
     return;
   }

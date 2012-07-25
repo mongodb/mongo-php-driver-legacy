@@ -330,6 +330,7 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 	mcon_str      *packet;
 	int            read;
 	uint32_t       data_size;
+	int32_t        max_bson_size = 0;
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
 	uint32_t       flags; /* To check for query reply status */
 	char          *set = NULL;      /* For replicaset in return */
@@ -401,6 +402,12 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 	/* Check for flags */
 	bson_find_field_as_bool(ptr, "ismaster", &is_master);
 	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
+
+	/* Find max bson size */
+	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {
+		printf("setting maxBsonObjectSize to %d\n", max_bson_size);
+		con->max_bson_size = max_bson_size;
+	}
 
 	/* Find all hosts */
 	bson_find_field_as_array(ptr, "hosts", &hosts);
