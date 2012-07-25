@@ -102,7 +102,7 @@ void mongo_init_CursorExceptions(TSRMLS_D);
  * Uses the server to fill in information about the connection that cause the
  * exception. Does nothing if an exception has already been thrown.
  */
-zval* mongo_cursor_throw(mongo_server *server, int code TSRMLS_DC, char *format, ...);
+zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char *format, ...);
 
 /**
  * The cursor_list

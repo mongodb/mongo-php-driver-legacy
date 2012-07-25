@@ -443,7 +443,6 @@ typedef struct {
   // server.  server just points to a member of link, so it should never need to
   // be freed.
   int64_t cursor_id;
-  mongo_server *server;
 
   zend_bool started_iterating;
   zend_bool persist;

@@ -45,7 +45,7 @@ zend_class_entry *mongo_ce_Collection = NULL;
 
 static mongo_server* get_server(mongo_collection *c TSRMLS_DC);
 static int is_safe_op(zval *options TSRMLS_DC);
-static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
+static int safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_distinct, 0, 0, 1)
@@ -287,29 +287,30 @@ static int is_safe_op(zval *options TSRMLS_DC) {
       Z_BVAL_PP(fsync_pp) == 1));
 }
 
-static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC) {
+static int safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC) {
   zval *errmsg, **err;
   mongo_cursor *cursor;
-
-  MAKE_STD_ZVAL(errmsg);
-  ZVAL_NULL(errmsg);
+	char *error_message;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
 
-  cursor->server = server;
+	cursor->connection = connection;
 
-  if (FAILURE == mongo_say(server, buf, errmsg TSRMLS_CC)) {
-	  /* TODO: Figure out what to do on FAIL
-    mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
-    mongo_cursor_throw(server, 16 TSRMLS_CC, Z_STRVAL_P(errmsg));
+	if (-1 == mongo_io_send(connection->socket, buf, buf->end - buf->start, (char **) &error_message)) {
+		/* TODO: Figure out what to do on FAIL
+		mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
+		mongo_cursor_throw(connection, 16 TSRMLS_CC, error_message);
 
-    zval_ptr_dtor(&errmsg);
-    cursor->connection = NULL;
-    zval_ptr_dtor(&cursor_z);
-    return FAILURE;
-  }
+		free(error_message);    
+		cursor->connection = NULL;
+		zval_ptr_dtor(&cursor_z);
+		return FAILURE;
+	}
 
-  // get reply
+	/* get reply */
+	MAKE_STD_ZVAL(errmsg);
+	ZVAL_NULL(errmsg);
+
   if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
 	  /* TODO: Figure out what to do on FAIL
     mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
@@ -337,7 +338,7 @@ static int safe_op(mongo_server *server, zval *cursor_z, buffer *buf, zval *retu
     zval **code;
     int status = zend_hash_find(Z_ARRVAL_P(return_value), "n", strlen("n")+1, (void**)&code);
 
-    mongo_cursor_throw(cursor->server, (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC, Z_STRVAL_PP(err));
+		mongo_cursor_throw(cursor->connection, (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC, Z_STRVAL_PP(err));
 
     cursor->connection = NULL;
     zval_ptr_dtor(&cursor_z);
