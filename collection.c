@@ -277,7 +277,7 @@ static int send_message(mongo_connection *connection, buffer buf, zval *options,
 {
 	int retval;
 	zval *this_ptr = NULL;
-	char *error_message;
+	char *error_message = NULL;
 
 	if (is_safe_op(options TSRMLS_CC)) {
 		zval *cursor = append_getlasterror(getThis(), &buf, options TSRMLS_CC);
@@ -286,13 +286,13 @@ static int send_message(mongo_connection *connection, buffer buf, zval *options,
 		} else {
 			retval = 0;
 		}
-	} else if (mongo_io_send(connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message)) {
+	} else if (mongo_io_send(connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		/* TODO: Find out what to do with the error message here */
+		free(error_message);
 		retval = 0;
 	} else {
 		retval = 1;
 	}
-	free(error_message);
 	return retval;
 }
 
