@@ -375,7 +375,7 @@ PHP_METHOD(MongoCursor, hasNext) {
     return;
   }
 
-	if (mongo_io_send(cursor->connection->socket, buf.start, buf.end - buf.start, (char**) &error_message) == -1) {
+	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
 		efree(buf.start);
 
 		mongo_cursor_throw(cursor->connection, 1 TSRMLS_CC, error_message);
@@ -861,7 +861,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
     return FAILURE;
   }
 #endif
-	if (mongo_io_send(cursor->connection->socket, buf.start, buf.end - buf.start, (char **) &error_message) == -1) {
+	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {
 			mongo_cursor_throw(cursor->connection, 14 TSRMLS_CC, "couldn't send query: %s", error_message);
 			free(error_message);

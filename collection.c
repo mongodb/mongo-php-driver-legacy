@@ -286,7 +286,7 @@ static int send_message(mongo_connection *connection, buffer buf, zval *options,
 		} else {
 			retval = 0;
 		}
-	} else if (mongo_io_send(connection->socket, buf, buf.end - buf.start, (char **) &error_message)) {
+	} else if (mongo_io_send(connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message)) {
 		/* TODO: Find out what to do with the error message here */
 		retval = 0;
 	} else {
@@ -318,7 +318,7 @@ static void safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, z
 
 	cursor->connection = connection;
 
-	if (-1 == mongo_io_send(connection->socket, buf, buf->end - buf->start, (char **) &error_message)) {
+	if (-1 == mongo_io_send(connection->socket, buf->start, buf->pos - buf->start, (char **) &error_message)) {
 		/* TODO: Figure out what to do on FAIL
 		mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
 		mongo_cursor_throw(connection, 16 TSRMLS_CC, error_message);
