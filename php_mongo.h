@@ -352,27 +352,6 @@ typedef struct {
     return ZEND_HASH_APPLY_STOP;                                \
   }
 
-#define SEND_MSG                                                \
-  MAKE_STD_ZVAL(errmsg);                                        \
-  ZVAL_NULL(errmsg);                                            \
-                                                                \
-  if (is_safe_op(options TSRMLS_CC)) {                          \
-    zval *cursor = append_getlasterror(getThis(), &buf, options TSRMLS_CC); \
-    if (cursor) {                                               \
-      safe_op(server, cursor, &buf, return_value TSRMLS_CC);    \
-    }                                                           \
-    else {                                                      \
-      RETVAL_FALSE;                                             \
-    }                                                           \
-  }                                                             \
-  else if (mongo_say(server, &buf, errmsg TSRMLS_CC) == FAILURE) {\
-    RETVAL_FALSE;                                               \
-  }                                                             \
-  else {                                                        \
-    RETVAL_TRUE;                                                \
-  }                                                             \
-  zval_ptr_dtor(&errmsg);
-
 
 #define GET_OPTIONS                                                     \
   timeout_p = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC); \

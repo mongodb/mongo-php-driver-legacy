@@ -272,9 +272,30 @@ static mongo_connection* get_server(mongo_collection *c TSRMLS_DC) {
   return connection;
 }
 
-  zval_ptr_dtor(&errmsg);
-  return server;
+/* Wrapper for sending and wrapping in a safe op */
+static int send_message(mongo_connection *connection, buffer buf, zval *options, zval *return_value)
+{
+	int retval;
+	zval *this_ptr = NULL;
+	char *error_message;
+
+	if (is_safe_op(options TSRMLS_CC)) {
+		zval *cursor = append_getlasterror(getThis(), &buf, options TSRMLS_CC);
+		if (cursor) {
+			safe_op(connection, cursor, &buf, return_value TSRMLS_CC);
+		} else {
+			retval = 0;
+		}
+	} else if (mongo_io_send(connection->socket, buf, buf.end - buf.start, (char **) &error_message)) {
+		/* TODO: Find out what to do with the error message here */
+		retval = 0;
+	} else {
+		retval = 1;
+	}
+	free(error_message);
+	return retval;
 }
+
 
 static int is_safe_op(zval *options TSRMLS_DC) {
   zval **safe_pp = 0, **fsync_pp = 0;
@@ -400,7 +421,7 @@ PHP_METHOD(MongoCollection, insert) {
     RETURN_FALSE;
   }
 
-  SEND_MSG;
+	send_message(connection, buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
   if (free_options) {
@@ -443,7 +464,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
     return;
   }
 
-  SEND_MSG;
+	send_message(connection, buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
 }
@@ -557,7 +578,7 @@ PHP_METHOD(MongoCollection, update) {
     return;
   }
 
-  SEND_MSG;
+	send_message(connection, buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
 }
@@ -622,7 +643,7 @@ PHP_METHOD(MongoCollection, remove) {
     return;
   }
 
-  SEND_MSG;
+	send_message(connection, buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
   zval_ptr_dtor(&options);
