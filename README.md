@@ -51,6 +51,7 @@ Pierre-Alain Joye
 Cesar Rodas
 
 * Created the `MongoCursor::info` method
+* Implemented GridFS read streaming
 
 William Volkman
 

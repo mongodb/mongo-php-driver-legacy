@@ -1,6 +1,4 @@
 <?php
-require_once 'PHPUnit/Framework.php';
-
 class MongoCollectionTest2 extends PHPUnit_Framework_TestCase
 {
     /**
