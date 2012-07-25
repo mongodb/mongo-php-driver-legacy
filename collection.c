@@ -45,7 +45,7 @@ zend_class_entry *mongo_ce_Collection = NULL;
 
 static mongo_server* get_server(mongo_collection *c TSRMLS_DC);
 static int is_safe_op(zval *options TSRMLS_DC);
-static int safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
+static void safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_distinct, 0, 0, 1)
@@ -287,7 +287,8 @@ static int is_safe_op(zval *options TSRMLS_DC) {
       Z_BVAL_PP(fsync_pp) == 1));
 }
 
-static int safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC) {
+static void safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC)
+{
   zval *errmsg, **err;
   mongo_cursor *cursor;
 	char *error_message;
@@ -304,7 +305,7 @@ static int safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zv
 		free(error_message);    
 		cursor->connection = NULL;
 		zval_ptr_dtor(&cursor_z);
-		return FAILURE;
+		return;
 	}
 
 	/* get reply */
@@ -318,7 +319,7 @@ static int safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zv
     zval_ptr_dtor(&errmsg);
     cursor->connection = NULL;
     zval_ptr_dtor(&cursor_z);
-    return FAILURE;
+		return;
   }
   zval_ptr_dtor(&errmsg);
 
@@ -330,7 +331,7 @@ static int safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zv
       (Z_TYPE_P(return_value) ==IS_BOOL && Z_BVAL_P(return_value) == 0)) {
     cursor->connection = NULL;
     zval_ptr_dtor(&cursor_z);
-    return FAILURE;
+		return;
   }
   // w timeout
   else if (zend_hash_find(Z_ARRVAL_P(return_value), "errmsg", strlen("errmsg")+1, (void**)&err) == SUCCESS &&
@@ -342,13 +343,13 @@ static int safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zv
 
     cursor->connection = NULL;
     zval_ptr_dtor(&cursor_z);
-    return FAILURE;
+		return;
   }
 
 
     cursor->connection = NULL;
   zval_ptr_dtor(&cursor_z);
-  return SUCCESS;
+	return;
 }
 
 
