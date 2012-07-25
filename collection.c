@@ -27,6 +27,7 @@
 #include "util/link.h"
 #include "util/rs.h"
 #include "util/server.h"
+#include "mcon/manager.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,
@@ -43,7 +44,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_Collection = NULL;
 
-static mongo_server* get_server(mongo_collection *c TSRMLS_DC);
+static mongo_connection* get_server(mongo_collection *c TSRMLS_DC);
 static int is_safe_op(zval *options TSRMLS_DC);
 static void safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
@@ -252,10 +253,9 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   return cursor_z;
 }
 
-static mongo_server* get_server(mongo_collection *c TSRMLS_DC) {
-  zval *errmsg;
+static mongo_connection* get_server(mongo_collection *c TSRMLS_DC) {
   mongo_link *link;
-  mongo_server *server;
+	mongo_connection *connection;
 
   link = (mongo_link*)zend_object_store_get_object((c->link) TSRMLS_CC);
   if (!link) {
@@ -263,14 +263,14 @@ static mongo_server* get_server(mongo_collection *c TSRMLS_DC) {
     return 0;
   }
 
-  MAKE_STD_ZVAL(errmsg);
-  ZVAL_NULL(errmsg);
+	/* TODO: Fix better error message */
+	if ((connection = mongo_get_connection(link->manager, link->servers)) == NULL) {
+		mongo_cursor_throw(0, 16 TSRMLS_CC, "Couldn't get connection");
+		return 0;
+	}
 
-  if ((server = mongo_util_link_get_socket(link, errmsg TSRMLS_CC)) == 0) {
-    mongo_cursor_throw(0, 16 TSRMLS_CC, Z_STRVAL_P(errmsg));
-    zval_ptr_dtor(&errmsg);
-    return 0;
-  }
+  return connection;
+}
 
   zval_ptr_dtor(&errmsg);
   return server;
@@ -354,11 +354,11 @@ static void safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, z
 
 
 PHP_METHOD(MongoCollection, insert) {
-  zval *a, *options = 0, *errmsg = 0;
+  zval *a, *options = 0;
   mongo_collection *c;
-  mongo_server *server;
   buffer buf;
   int free_options = 0;
+	mongo_connection *connection;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE) {
     return;
@@ -389,9 +389,9 @@ PHP_METHOD(MongoCollection, insert) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-  if ((server = get_server(c TSRMLS_CC)) == 0) {
-    RETURN_FALSE;
-  }
+	if ((connection = get_server(c TSRMLS_CC)) == 0) {
+		RETURN_FALSE;
+	}
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 	if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a, connection->max_bson_size TSRMLS_CC)) {
@@ -411,7 +411,7 @@ PHP_METHOD(MongoCollection, insert) {
 PHP_METHOD(MongoCollection, batchInsert) {
   zval *docs, *options = NULL, *errmsg = 0;
   mongo_collection *c;
-  mongo_server *server;
+	mongo_connection *connection;
   buffer buf;
   int bit_opts = 0;
 
@@ -432,9 +432,9 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-  if ((server = get_server(c TSRMLS_CC)) == 0) {
-    RETURN_FALSE;
-  }
+	if ((connection = get_server(c TSRMLS_CC)) == 0) {
+		RETURN_FALSE;
+	}
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
@@ -508,7 +508,7 @@ PHP_METHOD(MongoCollection, findOne) {
 PHP_METHOD(MongoCollection, update) {
   zval *criteria, *newobj, *options = 0, *errmsg = 0;
   mongo_collection *c;
-  mongo_server *server;
+	mongo_connection *connection;
   buffer buf;
   int bit_opts = 0;
 
@@ -547,9 +547,9 @@ PHP_METHOD(MongoCollection, update) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-  if ((server = get_server(c TSRMLS_CC)) == 0) {
-    RETURN_FALSE;
-  }
+	if ((connection = get_server(c TSRMLS_CC)) == 0) {
+		RETURN_FALSE;
+	}
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, newobj TSRMLS_CC)) {
@@ -566,7 +566,7 @@ PHP_METHOD(MongoCollection, remove) {
   zval *criteria = 0, *options = 0, *errmsg = 0;
   int flags = 0;
   mongo_collection *c;
-  mongo_server *server;
+	mongo_connection *connection;
   buffer buf;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &criteria, &options) == FAILURE) {
@@ -610,9 +610,9 @@ PHP_METHOD(MongoCollection, remove) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-  if ((server = get_server(c TSRMLS_CC)) == 0) {
-    RETURN_FALSE;
-  }
+	if ((connection = get_server(c TSRMLS_CC)) == 0) {
+		RETURN_FALSE;
+	}
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (FAILURE == php_mongo_write_delete(&buf, Z_STRVAL_P(c->ns), flags, criteria TSRMLS_CC)) {
