@@ -155,10 +155,10 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 static int get_cursor_body(int sock, mongo_cursor *cursor)
 {
 	if (cursor->buf.start) {
-		free(cursor->buf.start);
+		efree(cursor->buf.start);
 	}
 
-	cursor->buf.start = (char*)malloc(cursor->recv.length);
+	cursor->buf.start = (char*)emalloc(cursor->recv.length);
 	cursor->buf.end = cursor->buf.start + cursor->recv.length;
 	cursor->buf.pos = cursor->buf.start;
 
@@ -384,7 +384,7 @@ PHP_METHOD(MongoCursor, hasNext) {
 		return;
 	}
 
-  efree(buf.start);
+	efree(buf.start);
 
 	MAKE_STD_ZVAL(temp);
 	ZVAL_NULL(temp);
@@ -873,7 +873,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 		return mongo_util_cursor_failed(cursor TSRMLS_CC);
 	}
 
-  efree(buf.start);
+	efree(buf.start);
 
 	MAKE_STD_ZVAL(errmsg);
 	ZVAL_NULL(errmsg);
@@ -1619,7 +1619,7 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
     if (cursor->query) zval_ptr_dtor(&cursor->query);
     if (cursor->fields) zval_ptr_dtor(&cursor->fields);
 
-    if (cursor->buf.start) free(cursor->buf.start);
+    if (cursor->buf.start) efree(cursor->buf.start);
     if (cursor->ns) efree(cursor->ns);
 
     if (cursor->resource) zval_ptr_dtor(&cursor->resource);
