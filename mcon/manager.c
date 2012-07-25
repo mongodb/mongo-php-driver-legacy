@@ -121,7 +121,15 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 /* Fetching connections */
 static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *manager, mongo_servers *servers)
 {
-	return mongo_get_connection_single(manager, servers->server[0]);
+	mongo_connection *tmp;
+	char *error_message;
+
+	tmp = mongo_get_connection_single(manager, servers->server[0]);
+
+	/* We call get_server_flags to the maxBsonObjectSize data */
+	mongo_connection_get_server_flags(tmp, (char**) &error_message);
+
+	return tmp;
 }
 
 static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers)
