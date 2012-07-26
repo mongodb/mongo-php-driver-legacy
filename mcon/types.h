@@ -3,6 +3,10 @@
 
 #include <time.h>
 
+#define MCONDEBUG 0
+
+#define MCONDBG(c) if (MCONDEBUG) c;
+
 #define MONGO_CON_TYPE_STANDALONE 1
 #define MONGO_CON_TYPE_MULTIPLE   2
 #define MONGO_CON_TYPE_REPLSET    3

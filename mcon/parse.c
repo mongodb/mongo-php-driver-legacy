@@ -221,15 +221,15 @@ void mongo_servers_dump(mongo_servers *servers)
 {
 	int i;
 
-	printf("Seeds:\n");
+	MCONDBG(printf("Seeds:\n"));
 	for (i = 0; i < servers->count; i++) {
 		mongo_server_def_dump(servers->server[i]);
 	}
-	printf("\n");
+	MCONDBG(printf("\n"));
 
-	printf("Options:\n");
-	printf("- repl_set_name: %s\n", servers->repl_set_name);
-	printf("\n\n");
+	MCONDBG(printf("Options:\n"));
+	MCONDBG(printf("- repl_set_name: %s\n", servers->repl_set_name));
+	MCONDBG(printf("\n\n"));
 }
 
 /* Cleanup */

@@ -53,7 +53,7 @@ static mcon_collection *mongo_rp_collect_secondary(mongo_con_manager *manager)
 
 mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
 {
-	printf("finding candidate servers\n");
+	MCONDBG(printf("finding candidate servers\n"));
 	/* Depending on read preference type, run the correct algorithm */
 	switch (rp->type) {
 		case MONGO_RP_PRIMARY:
@@ -162,7 +162,7 @@ mcon_collection *mongo_sort_servers(mcon_collection *col, mongo_read_preference 
 		default:
 			return NULL;
 	}
-	printf("select server: sorting\n");
+	MCONDBG(printf("select server: sorting\n"));
 	qsort(col->data, col->count, sizeof(mongo_connection*), sort_function);
 	mcon_collection_iterate(col, mongo_print_connection_info);
 	return col;
@@ -175,7 +175,7 @@ mcon_collection *mongo_select_nearest_servers(mcon_collection *col, mongo_read_p
 
 	filtered = mcon_init_collection(sizeof(mongo_connection*));
 
-	printf("select server: only nearest\n");
+	MCONDBG(printf("select server: only nearest\n"));
 
 	switch (rp->type) {
 		case MONGO_RP_PRIMARY:
@@ -185,7 +185,7 @@ mcon_collection *mongo_select_nearest_servers(mcon_collection *col, mongo_read_p
 		case MONGO_RP_NEAREST:
 			/* The nearest ping time is in the first element */
 			nearest_ping = ((mongo_connection*)col->data[0])->ping_ms;
-			printf("select server: nearest is %dms\n", nearest_ping);
+			MCONDBG(printf("select server: nearest is %dms\n", nearest_ping));
 
 			/* FIXME: Change to iterator later */
 			for (i = 0; i < col->count; i++) {
@@ -212,11 +212,11 @@ mongo_connection *mongo_pick_server_from_set(mcon_collection *col, mongo_read_pr
 
 	if (rp->type == MONGO_RP_PRIMARY_PREFERRED) {
 		if (((mongo_connection*)col->data[0])->connection_type == MONGO_NODE_PRIMARY) {
-			printf("pick server: the primary\n");
+			MCONDBG(printf("pick server: the primary\n"));
 			return (mongo_connection*)col->data[0];
 		}
 	}
 	/* For now, we just pick a random server from the set */
-	printf("pick server: random element %d\n", entry);
+	MCONDBG(printf("pick server: random element %d\n", entry));
 	return (mongo_connection*)col->data[entry];
 }

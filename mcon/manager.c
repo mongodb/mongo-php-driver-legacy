@@ -23,7 +23,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	if (!con) {
 		con = mongo_connection_create(server);
 		if (con) {
-			printf("get_connection_single: pinging %s\n", hash);
+			MCONDBG(printf("get_connection_single: pinging %s\n", hash));
 			if (mongo_connection_ping(con)) {
 				con->hash = strdup(hash);
 				mongo_manager_connection_register(manager, con);
@@ -59,16 +59,16 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
-		printf("discover_topology: checking is_master for %s\n", hash);
+		MCONDBG(printf("discover_topology: checking is_master for %s\n", hash));
 		con = mongo_manager_connection_find_by_hash(manager, hash);
 
 		if (!con) {
-			printf("discover_topology: couldn't create a connection for %s\n", hash);
+			MCONDBG(printf("discover_topology: couldn't create a connection for %s\n", hash));
 			free(hash);
 			continue;
 		}
 		if (mongo_connection_is_master(con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message)) {
-			printf("discover_topology: is_master worked\n");
+			MCONDBG(printf("discover_topology: is_master worked\n"));
 			for (j = 0; j < nr_hosts; j++) {
 				mongo_server_def *tmp_def;
 				mongo_connection *new_con;
@@ -89,7 +89,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 				 * find more servers. */
 				tmp_hash = mongo_server_create_hash(tmp_def);
 				if (!mongo_manager_connection_find_by_hash(manager, tmp_hash)) {
-					printf("discover_topology: found new host: %s:%d\n", tmp_def->host, tmp_def->port);
+					MCONDBG(printf("discover_topology: found new host: %s:%d\n", tmp_def->host, tmp_def->port));
 					new_con = mongo_get_connection_single(manager, tmp_def);
 					servers->server[servers->count] = tmp_def;
 					servers->count++;
@@ -106,7 +106,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 		} else {
 			/* Something is wrong with the connection, we need to remove
 			 * this from our list */
-			printf("discover_topology: is_master return with an error for %s:%d: [%s]\n", servers->server[i]->host, servers->server[i]->port, error_message);
+			MCONDBG(printf("discover_topology: is_master return with an error for %s:%d: [%s]\n", servers->server[i]->host, servers->server[i]->port, error_message));
 			free(error_message);
 			mongo_manager_connection_deregister(manager, hash, con);
 		}
@@ -188,7 +188,7 @@ mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manag
 
 	while (ptr) {
 		if (strcmp(ptr->hash, hash) == 0) {
-			printf("found connection %s (looking for %s)\n", ptr->hash, hash);
+			MCONDBG(printf("found connection %s (looking for %s)\n", ptr->hash, hash));
 			return ptr->connection;
 		}
 		ptr = ptr->next;
@@ -206,7 +206,7 @@ static mongo_con_manager_item *create_new_manager_item(void)
 
 static inline void free_manager_item(mongo_con_manager_item *item)
 {
-	printf("freeing connection %s\n", item->hash);
+	MCONDBG(printf("freeing connection %s\n", item->hash));
 	free(item->hash);
 	free(item);
 }
