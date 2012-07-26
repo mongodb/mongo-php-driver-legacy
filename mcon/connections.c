@@ -321,6 +321,9 @@ int mongo_connection_ping(mongo_connection *con)
 	return 1;
 }
 
+/* TODO: Refector mongo_connection_is_master and
+ * mongo_connection_get_server_flags to use some of the same code. */
+
 /**
  * Sends an is_master command to the server and returns an array of new connectable nodes
  *
