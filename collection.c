@@ -273,10 +273,9 @@ static mongo_connection* get_server(mongo_collection *c TSRMLS_DC) {
 }
 
 /* Wrapper for sending and wrapping in a safe op */
-static int send_message(mongo_connection *connection, buffer buf, zval *options, zval *return_value)
+static int send_message(zval *this_ptr, mongo_connection *connection, buffer buf, zval *options, zval *return_value)
 {
 	int retval;
-	zval *this_ptr = NULL;
 	char *error_message = NULL;
 
 	if (is_safe_op(options TSRMLS_CC)) {
@@ -421,7 +420,7 @@ PHP_METHOD(MongoCollection, insert) {
     RETURN_FALSE;
   }
 
-	send_message(connection, buf, options, return_value TSRMLS_CC);
+	send_message(this_ptr, connection, buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
   if (free_options) {
@@ -464,7 +463,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
     return;
   }
 
-	send_message(connection, buf, options, return_value TSRMLS_CC);
+	send_message(this_ptr, connection, buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
 }
@@ -578,7 +577,7 @@ PHP_METHOD(MongoCollection, update) {
     return;
   }
 
-	send_message(connection, buf, options, return_value TSRMLS_CC);
+	send_message(this_ptr, connection, buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
 }
@@ -643,7 +642,7 @@ PHP_METHOD(MongoCollection, remove) {
     return;
   }
 
-	send_message(connection, buf, options, return_value TSRMLS_CC);
+	send_message(this_ptr, connection, buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
   zval_ptr_dtor(&options);
