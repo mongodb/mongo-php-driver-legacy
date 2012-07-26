@@ -18,6 +18,7 @@
 #include <php.h>
 #include <zend_interfaces.h>
 #include <zend_exceptions.h>
+#include "mcon/io.h"
 #include "mcon/manager.h"
 
 #ifdef WIN32
