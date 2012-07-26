@@ -1,10 +1,13 @@
 --TEST--
 GridFS: Testing memory usage
+--SKIPIF--
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --INI--
 memory_limit=1G
 --FILE--
 <?php
-$conn = new Mongo();
+require dirname(__FILE__) . "/../utils.inc";
+$conn = Mongo();
 $db   = $conn->selectDb('phpunit');
 $grid = $db->getGridFs('wrapper');
 
