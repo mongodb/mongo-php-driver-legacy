@@ -8,12 +8,12 @@
 void mongo_print_connection_info(void *elem)
 {
 	mongo_connection *con = (mongo_connection*) elem;
-	printf("- connection: type: %s, socket: %d, ping: %d, hash: %s\n",
+	MCONDBG(printf("- connection: type: %s, socket: %d, ping: %d, hash: %s\n",
 		con->connection_type == 1 ? "PRIMARY  " : "SECONDARY",
 		con->socket,
 		con->ping_ms,
 		con->hash
-	);
+	));
 }
 
 /* Collecting the correct servers */
