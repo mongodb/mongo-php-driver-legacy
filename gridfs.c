@@ -1348,6 +1348,7 @@ PHP_METHOD(MongoGridFSCursor, current) {
   gridfs = zend_read_property(mongo_ce_GridFSCursor, getThis(), "gridfs", strlen("gridfs"), NOISY TSRMLS_CC);
 
   MONGO_METHOD3(MongoGridFSFile, __construct, &temp, return_value, gridfs, cursor->current, flags);
+	zval_ptr_dtor(&flags);
 }
 
 PHP_METHOD(MongoGridFSCursor, key)

@@ -564,18 +564,21 @@ PHP_METHOD(MongoCollection, update) {
   PHP_MONGO_GET_COLLECTION(getThis());
 
 	if ((connection = get_server(c TSRMLS_CC)) == 0) {
+		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, newobj TSRMLS_CC)) {
     efree(buf.start);
+		zval_ptr_dtor(&options);
     return;
   }
 
 	send_message(this_ptr, connection, buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
+	zval_ptr_dtor(&options);
 }
 
 PHP_METHOD(MongoCollection, remove) {
@@ -627,6 +630,7 @@ PHP_METHOD(MongoCollection, remove) {
   PHP_MONGO_GET_COLLECTION(getThis());
 
 	if ((connection = get_server(c TSRMLS_CC)) == 0) {
+		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
 
@@ -756,6 +760,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
       zval_ptr_dtor(&data);
       zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_P(key_str), MAX_INDEX_NAME_LEN);
       zval_ptr_dtor(&key_str);
+			zval_ptr_dtor(&options);
       return;
     }
 
