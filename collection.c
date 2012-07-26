@@ -377,7 +377,6 @@ PHP_METHOD(MongoCollection, insert) {
   zval *a, *options = 0;
   mongo_collection *c;
   buffer buf;
-  int free_options = 0;
 	mongo_connection *connection;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE) {
@@ -402,7 +401,6 @@ PHP_METHOD(MongoCollection, insert) {
       int safe = Z_BVAL_P(options);
       add_assoc_bool(opts, "safe", safe);
     }
-    free_options = 1;
 
     options = opts;
   }
@@ -422,10 +420,8 @@ PHP_METHOD(MongoCollection, insert) {
 
 	send_message(this_ptr, connection, buf, options, return_value TSRMLS_CC);
 
-  efree(buf.start);
-  if (free_options) {
-      zval_ptr_dtor(&options);
-  }
+	efree(buf.start);
+	zval_ptr_dtor(&options);
 }
 
 PHP_METHOD(MongoCollection, batchInsert) {
