@@ -132,9 +132,9 @@ static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *mana
 	return tmp;
 }
 
-static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers)
+static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
 {
-	mongo_connection *con;
+	mongo_connection *con = NULL;
 	mcon_collection *collection;
 	int i;
 
@@ -148,7 +148,7 @@ static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *mana
 	/* Depending on read preference type, run the correct algorithms */
 	collection = mongo_find_candidate_servers(manager, &servers->rp);
 	if (collection->count == 0) {
-		/* FIXME: Set error message: "No candidate servers found" */
+		*error_message = strdup("No candidate servers found");
 		goto bailout;
 	}
 	collection = mongo_sort_servers(collection, &servers->rp);
@@ -162,7 +162,7 @@ bailout:
 }
 
 /* API interface to fetch a connection */
-mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers *servers)
+mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
 {
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->con_type) {
@@ -170,7 +170,7 @@ mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers
 			return mongo_get_connection_standalone(manager, servers);
 
 		case MONGO_CON_TYPE_REPLSET:
-			return mongo_get_connection_replicaset(manager, servers);
+			return mongo_get_connection_replicaset(manager, servers, error_message);
 /*
 		case MONGO_CON_TYPE_MULTIPLE:
 			return mongo_get_connection_multiple(manager, servers);

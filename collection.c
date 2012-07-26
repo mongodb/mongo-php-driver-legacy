@@ -256,6 +256,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 static mongo_connection* get_server(mongo_collection *c TSRMLS_DC) {
   mongo_link *link;
 	mongo_connection *connection;
+	char *error_message = NULL;
 
   link = (mongo_link*)zend_object_store_get_object((c->link) TSRMLS_CC);
   if (!link) {
@@ -264,8 +265,12 @@ static mongo_connection* get_server(mongo_collection *c TSRMLS_DC) {
   }
 
 	/* TODO: Fix better error message */
-	if ((connection = mongo_get_connection(link->manager, link->servers)) == NULL) {
-		mongo_cursor_throw(0, 16 TSRMLS_CC, "Couldn't get connection");
+	if ((connection = mongo_get_connection(link->manager, link->servers, (char **) &error_message)) == NULL) {
+		if (error_message) {
+			mongo_cursor_throw(0, 16 TSRMLS_CC, "Couldn't get connection: %s", error_message);
+		} else {
+			mongo_cursor_throw(0, 16 TSRMLS_CC, "Couldn't get connection");
+		}
 		return 0;
 	}
 

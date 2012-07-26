@@ -62,6 +62,7 @@ extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_DB,
   *mongo_ce_Collection,
   *mongo_ce_Exception,
+  *mongo_ce_ConnectionException,
   *mongo_ce_CursorTOException;
 
 extern int le_pconnection,
@@ -218,6 +219,7 @@ PHP_METHOD(MongoCursor, __construct) {
   zval **data;
   mongo_cursor *cursor;
   mongo_link *link;
+	char *error_message = NULL;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz|zz", &zlink,
                             mongo_ce_Mongo, &zns, &zquery, &zfields) == FAILURE) {
@@ -249,7 +251,11 @@ PHP_METHOD(MongoCursor, __construct) {
 
 	/* db connection resource */
 	PHP_MONGO_GET_LINK(zlink);
-	cursor->connection = mongo_get_connection(link->manager, link->servers);
+	cursor->connection = mongo_get_connection(link->manager, link->servers, (char**) &error_message);
+	if (!cursor->connection && error_message) {
+		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
+		return;
+	}
 
   // change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1}
   if (Z_TYPE_P(zfields) == IS_ARRAY) {

@@ -317,11 +317,18 @@ PHP_METHOD(Mongo, __construct)
 /* }}} */
 
 /* {{{ Helper for connecting the servers */
-static void php_mongo_connect(mongo_link *link)
+static void php_mongo_connect(mongo_link *link TSRMLS_DC)
 {
+	mongo_connection *con;
+	char *error_message = NULL;
+
 	/* We don't care about the result so we're not assigning it to a var */
 	/* TODO: Implement error messages forwarding to exceptions */
-	mongo_get_connection(link->manager, link->servers);
+	con = mongo_get_connection(link->manager, link->servers, (char **) &error_message);
+	if (!con && error_message) {
+		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
+		return;
+	}
 }
 
 /* {{{ Mongo->connect
@@ -331,7 +338,7 @@ PHP_METHOD(Mongo, connect)
 	mongo_link *link;
 
 	PHP_MONGO_GET_LINK(getThis());
-	php_mongo_connect(link);
+	php_mongo_connect(link TSRMLS_CC);
 }
 /* }}} */
 
@@ -342,7 +349,7 @@ PHP_METHOD(Mongo, connectUtil)
 	mongo_link *link;
 
 	PHP_MONGO_GET_LINK(getThis());
-	php_mongo_connect(link);
+	php_mongo_connect(link TSRMLS_CC);
 }
 /* }}} */
 
@@ -597,9 +604,14 @@ PHP_METHOD(Mongo, getSlave)
 {
 	mongo_link *link;
 	mongo_connection *con;
+	char *error_message = NULL;
 
 	PHP_MONGO_GET_LINK(getThis());
-	con = mongo_get_connection(link->manager, link->servers);
+	con = mongo_get_connection(link->manager, link->servers, (char**) &error_message);
+	if (!con && error_message) {
+		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
+		return;
+	}
 
 	RETURN_STRING(con->hash, 1);
 }
