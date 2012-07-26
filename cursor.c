@@ -61,7 +61,8 @@ extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_Mongo,
   *mongo_ce_DB,
   *mongo_ce_Collection,
-  *mongo_ce_Exception;
+  *mongo_ce_Exception,
+  *mongo_ce_CursorTOException;
 
 extern int le_pconnection,
   le_cursor_list;
@@ -153,7 +154,7 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 
 /* Reads a cursors body
  * Returns 0 on failure or an int indicating the number of bytes read */
-static int get_cursor_body(int sock, mongo_cursor *cursor)
+static int get_cursor_body(int sock, mongo_cursor *cursor, char **error_message)
 {
 	if (cursor->buf.start) {
 		efree(cursor->buf.start);
@@ -164,7 +165,7 @@ static int get_cursor_body(int sock, mongo_cursor *cursor)
 	cursor->buf.pos = cursor->buf.start;
 
 	/* finish populating cursor */
-	return mongo_io_recv_data(sock, cursor->buf.pos, cursor->recv.length);
+	return mongo_io_recv_data(sock, cursor->buf.pos, cursor->recv.length, error_message);
 }
 
 /* Cursor helper function */
@@ -172,7 +173,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 {
 	int          sock;
 	unsigned int status;
-	char        *error_message;
+	char        *error_message = NULL;
 
 	mongo_log(MONGO_LOG_IO, MONGO_LOG_FINE TSRMLS_CC, "hearing something");
 	sock = cursor->connection->socket;
@@ -182,7 +183,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 		return FAILURE;
 	}
 	if (status > 0) {
-		mongo_cursor_throw(cursor->connection, status TSRMLS_CC, "%s", error_message);
+		mongo_cursor_throw(cursor->connection, status TSRMLS_CC, error_message);
 		return FAILURE;
 	}
 
@@ -194,11 +195,11 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 		return FAILURE;
 	}
 
-	if (FAILURE == get_cursor_body(sock, cursor TSRMLS_CC)) {
+	if (FAILURE == get_cursor_body(sock, cursor, (char **) &error_message TSRMLS_CC)) {
 #ifdef WIN32
-		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "WSA error getting database response: %d", WSAGetLastError());
+		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "WSA error getting database response %s (%d)", error_message, WSAGetLastError());
 #else
-		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "error getting database response: %d", strerror(errno));
+		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "error getting database response %s (%d)", error_message, strerror(errno));
 #endif
 		return FAILURE;
 	}
@@ -1353,22 +1354,32 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 {
   zval *e;
   va_list arg;
+	zend_class_entry *exception_ce;
 
   if (EG(exception)) {
     return EG(exception);
   }
 
-  va_start(arg, format);
-  e = zend_throw_exception_ex(mongo_ce_CursorException, code TSRMLS_CC, format, arg);
-  va_end(arg);
-
-	if (connection) {
-		/* TODO: Use host instead of the hash */
-		zend_update_property_string(mongo_ce_CursorException, e, "host", strlen("host"), connection->hash TSRMLS_CC);
-		zend_update_property_long(mongo_ce_CursorException, e, "fd", strlen("fd"), connection->socket TSRMLS_CC);
+	/* Based on the status, we pick a different exception class. Right now, we
+	 * choose mongo_ce_CursorException for everything but status 80, which is a
+	 * cursor timeout instead. */
+	if (code == 80) {
+		exception_ce = mongo_ce_CursorTOException;
+	} else {
+		exception_ce = mongo_ce_CursorException;
 	}
 
-  return e;
+	va_start(arg, format);
+	e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, format, arg);
+	va_end(arg);
+
+	if (connection && code != 80) {
+		/* TODO: Use host instead of the hash */
+		zend_update_property_string(exception_ce, e, "host", strlen("host"), connection->hash TSRMLS_CC);
+		zend_update_property_long(exception_ce, e, "fd", strlen("fd"), connection->socket TSRMLS_CC);
+	}
+
+	return e;
 }
 
 

@@ -25,7 +25,7 @@ object(MongoCursorTimeoutException)#%d (%d) {
   ["string%S:private%S]=>
   string(0) ""
   ["code%S:protected%S]=>
-  int(0)
+  int(80)
   ["file%S:protected%S]=>
   string(%d) "%s"
   ["line%S:protected%S]=>
