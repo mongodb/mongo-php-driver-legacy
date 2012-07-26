@@ -1,7 +1,10 @@
 --TEST--
 GridFS: Testing fseek and fread (2)
+--SKIPIF--
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
+require dirname(__FILE__) . "/../utils.inc";
 function readRange($fp, $seek, $length = false)
 {
 	fseek($fp, $seek, SEEK_SET);
@@ -22,7 +25,7 @@ function readRange($fp, $seek, $length = false)
 	return $data;
 }
 
-$m = new Mongo();
+$m = Mongo();
 $db = $m->selectDb('phpunit');
 $grid = $db->getGridFS('wrapper');
 $grid->drop();

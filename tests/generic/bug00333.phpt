@@ -1,11 +1,12 @@
 --TEST--
 Test for bug PHP-333: GridFS find's key
+--SKIPIF--
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-$ip = '127.0.0.1';
-$port = '27017';
-$db_name = 'phpunit';
-$m = new Mongo('mongodb://'.$ip.':'.$port.'/'.$db_name);
+require dirname(__FILE__) ."/../utils.inc";
+$db_name = dbname();
+$m = mongo();
 $mdb = $m->selectDB($db_name);
 $mdb->dropCollection("fs.files");
 $mdb->dropCollection("fs.chunks");

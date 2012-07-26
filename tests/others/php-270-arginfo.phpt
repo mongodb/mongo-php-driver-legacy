@@ -170,6 +170,9 @@ MongoCollection
     1: initial_value
     2: array_OR_MongoCode
     3: options (optional)
+  Method distinct expects 2 parameters
+    0: key
+    1: query (optional)
 
 MongoCursor
   Method __construct expects 4 parameters
@@ -196,12 +199,17 @@ MongoCursor
   Method hint expects 1 parameters
     0: keyPattern
   Method explain expects 0 parameters
+  Method setFlag expects 2 parameters
+    0: bit
+    1: set (optional)
   Method slaveOkay expects 1 parameters
     0: okay (optional)
   Method tailable expects 1 parameters
     0: tail (optional)
   Method immortal expects 1 parameters
     0: liveForever (optional)
+  Method awaitData expects 1 parameters
+    0: wait (optional)
   Method partial expects 1 parameters
     0: okay (optional)
   Method timeout expects 0 parameters
