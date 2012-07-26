@@ -283,6 +283,9 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 	packet = bson_create_ping_packet(con);
 
 	gettimeofday(&start, NULL);
+	/* TODO: This is identical to mongo_connect_send_packet(), except for the gettimeofday()
+	 * Is the ping time without the read overhead more accurate then just writing?
+	 */
 
 	/* Send and wait for reply */
 	mongo_io_send(con->socket, packet->d, packet->l, &error_message);
