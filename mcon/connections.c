@@ -321,9 +321,6 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 	return 1;
 }
 
-/* TODO: Refector mongo_connection_is_master and
- * mongo_connection_get_server_flags to use some of the same code. */
-
 /**
  * Sends an is_master command to the server and returns an array of new connectable nodes
  *
@@ -332,11 +329,8 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message)
 {
 	mcon_str      *packet;
-	int            read;
-	uint32_t       data_size;
 	int32_t        max_bson_size = 0;
-	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
-	uint32_t       flags; /* To check for query reply status */
+	char           *data_buffer;
 	char          *set = NULL;      /* For replicaset in return */
 	unsigned char  is_master = 0, arbiter = 0;
 	char          *hosts, *ptr, *string;
@@ -344,28 +338,7 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: start");
 	packet = bson_create_is_master_packet(con);
 
-	/* Send and wait for reply */
-	mongo_io_send(con->socket, packet->d, packet->l, error_message);
-	mcon_str_ptr_dtor(packet);
-	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
-
-	/* If the header too small? */
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: read from header: %d", read);
-	if (read < MONGO_REPLY_HEADER_SIZE) {
-		return 0;
-	}
-	/* Check for a query error */
-	flags = MONGO_32(*(int*)(reply_buffer + sizeof(int32_t) * 4));
-	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
-		return 0;
-	}
-	/* Read the rest of the data */
-	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: data_size: %d", data_size);
-	/* TODO: Check size limits */
-	data_buffer = malloc(data_size + 1);
-	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, error_message)) {
-		free(data_buffer);
+	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
 		return 0;
 	}
 
@@ -447,38 +420,14 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, char **error_message)
 {
 	mcon_str      *packet;
-	int            read;
-	uint32_t       data_size;
 	int32_t        max_bson_size = 0;
-	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
-	uint32_t       flags; /* To check for query reply status */
+	char           *data_buffer;
 	char          *ptr;
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: start");
 	packet = bson_create_is_master_packet(con);
 
-	/* Send and wait for reply */
-	mongo_io_send(con->socket, packet->d, packet->l, error_message);
-	mcon_str_ptr_dtor(packet);
-	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
-
-	/* If the header too small? */
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: read from header: %d", read);
-	if (read < MONGO_REPLY_HEADER_SIZE) {
-		return 0;
-	}
-	/* Check for a query error */
-	flags = MONGO_32(*(int*)(reply_buffer + sizeof(int32_t) * 4));
-	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
-		return 0;
-	}
-	/* Read the rest of the data */
-	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: data_size: %d", data_size);
-	/* TODO: Check size limits */
-	data_buffer = malloc(data_size + 1);
-	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, error_message)) {
-		free(data_buffer);
+	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
 		return 0;
 	}
 
@@ -487,7 +436,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 
 	/* Find max bson size */
 	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: setting maxBsonObjectSize to %d", max_bson_size);
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_master: setting maxBsonObjectSize to %d", max_bson_size);
 		con->max_bson_size = max_bson_size;
 	} else {
 		*error_message = strdup("Couldn't find the maxBsonObjectSize field");
@@ -499,3 +448,42 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 
 	return 1;
 }
+
+int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mcon_str *packet, char **data_buffer, char **error_message)
+{
+	int            read;
+	uint32_t       data_size;
+	char           reply_buffer[MONGO_REPLY_HEADER_SIZE];
+	uint32_t       flags; /* To check for query reply status */
+
+	/* Send and wait for reply */
+	mongo_io_send(con->socket, packet->d, packet->l, error_message);
+	mcon_str_ptr_dtor(packet);
+	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: read from header: %d", read);
+	if (read < MONGO_REPLY_HEADER_SIZE) {
+		return 0;
+	}
+
+	/* Check for a query error */
+	flags = MONGO_32(*(int*)(reply_buffer + sizeof(int32_t) * 4));
+	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
+		return 0;
+	}
+
+	/* Read the rest of the data */
+	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: data_size: %d", data_size);
+
+	/* TODO: Check size limits */
+	*data_buffer = malloc(data_size + 1);
+	if (!mongo_io_recv_data(con->socket, *data_buffer, data_size, error_message)) {
+		free(data_buffer);
+		return 0;
+	}
+
+	return 1;
+}
+
+

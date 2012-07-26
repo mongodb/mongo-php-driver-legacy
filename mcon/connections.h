@@ -2,6 +2,7 @@
 #define __MCON_CONNECTION_H__
 
 #include "types.h"
+#include "str.h"
 
 mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_server_def *server_def);
 
@@ -10,5 +11,6 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con);
 int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message);
 int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, char **error_message);
 void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con);
+int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mcon_str *packet, char **data_buffer, char **error_message);
 
 #endif
