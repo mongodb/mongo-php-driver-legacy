@@ -343,7 +343,7 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
   }
 }
 
-static cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid)
+static void cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid)
 {
 	zval *chunks, *files, *criteria_chunks, *criteria_files;
 	char *message = NULL;

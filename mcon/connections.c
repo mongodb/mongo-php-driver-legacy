@@ -319,7 +319,8 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 	if (con->ping_ms < 0) { /* some clocks do weird stuff */
 		con->ping_ms = 0;
 	}
-	mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_ping: last pinged at %d; time: %dms", con->last_ping, con->ping_ms);
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_ping: last pinged at %ld; time: %dms", con->last_ping, con->ping_ms);
 
 	return 1;
 }

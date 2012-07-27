@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -125,7 +126,7 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 			*error_message = malloc(256);
 			snprintf(
 				*error_message, 256,
-				"cursor timed out (timeout: %d, time left: %d:%d, status: %d)", 
+				"cursor timed out (timeout: %d, time left: %ld:%d, status: %d)", 
 				to, timeout.tv_sec, timeout.tv_usec, status
 			);
 			return 80;

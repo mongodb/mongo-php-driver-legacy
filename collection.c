@@ -28,6 +28,7 @@
 #include "util/rs.h"
 #include "util/server.h"
 #include "mcon/manager.h"
+#include "mcon/io.h"
 
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_DB,

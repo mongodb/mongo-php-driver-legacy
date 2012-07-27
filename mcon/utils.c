@@ -49,4 +49,6 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **db, char 
 
 	/* Find the port */
 	*port = atoi(ptr + 1);
+
+    return 0;
 }
