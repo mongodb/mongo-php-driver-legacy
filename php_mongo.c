@@ -36,6 +36,8 @@
 #include "util/rs.h"
 #include "util/log.h"
 
+#include "mcon/manager.h"
+
 extern zend_object_handlers mongo_default_handlers,
   mongo_id_handlers;
 
@@ -55,20 +57,12 @@ int le_pconnection,
   le_prs,
   le_cursor_list;
 
-/* Manager */
-mongo_con_manager *manager;
-
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
 
-#if ZEND_MODULE_API_NO >= 20060613
-// 5.2+ globals
 static PHP_GINIT_FUNCTION(mongo);
-#else
-// 5.1- globals
-static void mongo_init_globals(zend_mongo_globals* g TSRMLS_DC);
-#endif /* ZEND_MODULE_API_NO >= 20060613 */
+static PHP_GSHUTDOWN_FUNCTION(mongo);
 
 #if WIN32
 extern HANDLE cursor_mutex;
@@ -99,7 +93,7 @@ zend_module_entry mongo_module_entry = {
 #if ZEND_MODULE_API_NO >= 20060613
   PHP_MODULE_GLOBALS(mongo),
   PHP_GINIT(mongo),
-  NULL,
+  PHP_GSHUTDOWN(mongo),
   NULL,
   STANDARD_MODULE_PROPERTIES_EX
 #else
@@ -195,10 +189,6 @@ PHP_MINIT_FUNCTION(mongo) {
   // start random number generator
   srand(time(0));
 
-	/* initialize manager */
-	/* TODO: Make this thread safe - not so easy! */
-	manager = mongo_init();
-
 #ifdef WIN32
   cursor_mutex = CreateMutex(NULL, FALSE, NULL);
   pool_mutex = CreateMutex(NULL, FALSE, NULL);
@@ -213,15 +203,9 @@ PHP_MINIT_FUNCTION(mongo) {
 }
 
 
-#if ZEND_MODULE_API_NO >= 20060613
 /* {{{ PHP_GINIT_FUNCTION
  */
 static PHP_GINIT_FUNCTION(mongo)
-#else
-/* {{{ mongo_init_globals
- */
-static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
-#endif /* ZEND_MODULE_API_NO >= 20060613 */
 {
   // on windows, the max length is 256.  linux doesn't have a limit, but it will
   // fill in the first 256 chars of hostname even if the actual hostname is
@@ -287,9 +271,15 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
 
 	mongo_globals->log_level = 0;
 	mongo_globals->log_module = 0;
+
+	mongo_globals->manager = mongo_init();
 }
 /* }}} */
 
+PHP_GSHUTDOWN_FUNCTION(mongo)
+{
+	mongo_deinit(mongo_globals->manager);
+}
 
 /* {{{ PHP_MSHUTDOWN_FUNCTION
  */
@@ -311,8 +301,12 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
 
 /* {{{ PHP_RINIT_FUNCTION
  */
-PHP_RINIT_FUNCTION(mongo) {
-  return SUCCESS;
+PHP_RINIT_FUNCTION(mongo)
+{
+	/* initialize manager */
+	MonGlo(manager) = mongo_init();
+
+	return SUCCESS;
 }
 /* }}} */
 

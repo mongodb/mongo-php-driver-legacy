@@ -59,8 +59,6 @@ zend_object_handlers mongo_default_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
-extern mongo_con_manager *manager;
-
 zend_class_entry *mongo_ce_Mongo;
 
 extern zend_class_entry *mongo_ce_DB,
@@ -206,7 +204,7 @@ PHP_METHOD(Mongo, __construct)
 	link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	/* Set the manager from the global manager */
-	link->manager = manager;
+	link->manager = MonGlo(manager);
 	
 	/* Parse the server specification */
 	link->servers = mongo_parse_server_spec(server ? server : "mongodb://127.0.0.1");

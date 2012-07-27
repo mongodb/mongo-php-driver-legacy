@@ -578,6 +578,8 @@ int pool_size;
 
 	long ping_interval;
 	long is_master_interval;
+
+	mongo_con_manager *manager;
 ZEND_END_MODULE_GLOBALS(mongo)
 
 #ifdef ZTS
