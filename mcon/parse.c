@@ -1,16 +1,17 @@
-#include "types.h"
-#include "parse.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "types.h"
+#include "parse.h"
+#include "manager.h"
+
 /* Forward declarations */
-void static mongo_add_parsed_server_addr(mongo_servers *servers, char *host_start, char *host_end, char *port_start, char *port_end);
-void static mongo_parse_options(mongo_servers *servers, char *options_string);
+void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start, char *port_end);
+void static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string);
 
 /* Parsing routine */
-mongo_servers* mongo_parse_server_spec(char *spec)
+mongo_servers* mongo_parse_server_spec(mongo_con_manager *manager, char *spec)
 {
 	mongo_servers *servers;
 	char          *pos; /* Pointer to current parsing position */
@@ -20,6 +21,7 @@ mongo_servers* mongo_parse_server_spec(char *spec)
 
 	/* Initialisation */
 	pos = spec;
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "Parsing %s", spec);
 
 	/* Create tmp server definitions */
 	servers = malloc(sizeof(mongo_servers));
@@ -51,6 +53,7 @@ mongo_servers* mongo_parse_server_spec(char *spec)
 			 * mongodb://user:pass@host:port,host:port
 			 *                     ^                   */
 			pos = at + 1;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found user '%s' and a password", tmp_user);
 		}
 	}
 
@@ -72,7 +75,7 @@ mongo_servers* mongo_parse_server_spec(char *spec)
 				port_end = pos;
 			}
 
-			mongo_add_parsed_server_addr(servers, host_start, host_end, port_start, port_end);
+			mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
 
 			host_start = pos + 1;
 			host_end = port_start = port_end = NULL;
@@ -90,7 +93,7 @@ mongo_servers* mongo_parse_server_spec(char *spec)
 
 	/* We are now either at the end of the string, or at / where the dbname starts.
 	 * We still have to add the last parser host/port combination though: */
-	mongo_add_parsed_server_addr(servers, host_start, host_end, port_start, port_end);
+	mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
 
 	/* Check for dbname
 	 * mongodb://user:pass@host:port,host:port/dbname?foo=bar
@@ -117,8 +120,11 @@ mongo_servers* mongo_parse_server_spec(char *spec)
 		 * mongodb://user:pass@host:port,host:port/dbname?foo=bar
 		 *                                               ^ */
 		if (question) {
-			mongo_parse_options(servers, question + 1);
+			mongo_parse_options(manager, servers, question + 1);
 		}
+	}
+	if (db_start) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found database name '%s'", db_start);
 	}
 
 	/* Update all servers with user, password and dbname */
@@ -131,11 +137,14 @@ mongo_servers* mongo_parse_server_spec(char *spec)
 	/* Update connection type */
 	if (servers->repl_set_name) {
 		servers->con_type = MONGO_CON_TYPE_REPLSET;
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: REPLSET");
 	} else {
 		if (servers->count > 1) {
 			servers->con_type = MONGO_CON_TYPE_MULTIPLE;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: MULTIPLE");
 		} else {
 			servers->con_type = MONGO_CON_TYPE_STANDALONE;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: STANDALONE");
 		}
 	}
 
@@ -146,7 +155,7 @@ mongo_servers* mongo_parse_server_spec(char *spec)
 }
 
 /* Helpers */
-void static mongo_add_parsed_server_addr(mongo_servers *servers, char *host_start, char *host_end, char *port_start, char *port_end)
+void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start, char *port_end)
 {
 	mongo_server_def *tmp;
 
@@ -161,12 +170,13 @@ void static mongo_add_parsed_server_addr(mongo_servers *servers, char *host_star
 	}
 	servers->server[servers->count] = tmp;
 	servers->count++;
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found node: %s:%d", tmp->host, tmp->port);
 }
 
 /* Processes a single option/value pair.
  * Returns 0 if it worked, 1 if either name or value was missing and 2 if the option didn't exist
  */
-int static mongo_process_option(mongo_servers *servers, char *name, char *value, char *pos)
+int static mongo_process_option(mongo_con_manager *manager, mongo_servers *servers, char *name, char *value, char *pos)
 {
 	char *tmp_name;
 	char *tmp_value;
@@ -180,8 +190,10 @@ int static mongo_process_option(mongo_servers *servers, char *name, char *value,
 	tmp_value = strndup(value, pos - value);
 
 	if (strcmp(tmp_name, "replicaSet") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': %s", tmp_value);
 		servers->repl_set_name = strdup(tmp_value);
 	} else {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found unknown option '%s' with value %s", tmp_name, tmp_value);
 		retval = 2;
 	}
 
@@ -191,7 +203,7 @@ int static mongo_process_option(mongo_servers *servers, char *name, char *value,
 	return retval;
 }
 
-void static mongo_parse_options(mongo_servers *servers, char *options_string)
+void static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string)
 {
 	char *name_start, *value_start = NULL, *pos;
 
@@ -202,34 +214,35 @@ void static mongo_parse_options(mongo_servers *servers, char *options_string)
 			value_start = pos + 1;
 		}
 		if (*pos == ';' || *pos == '&') {
-			mongo_process_option(servers, name_start, value_start, pos);
+			mongo_process_option(manager, servers, name_start, value_start, pos);
 			name_start = pos + 1;
 			value_start = NULL;
 		}
 		pos++;
 	} while (*pos != '\0');
-	mongo_process_option(servers, name_start, value_start, pos);
+	mongo_process_option(manager, servers, name_start, value_start, pos);
 }
 
-void static mongo_server_def_dump(mongo_server_def *server_def)
+void static mongo_server_def_dump(mongo_con_manager *manager, mongo_server_def *server_def)
 {
-	printf("- host: %s; port: %d; username: %s, password: %s, database: %s\n",
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO,
+		"- host: %s; port: %d; username: %s, password: %s, database: %s",
 		server_def->host, server_def->port, server_def->username, server_def->password, server_def->db);
 }
 
-void mongo_servers_dump(mongo_servers *servers)
+void mongo_servers_dump(mongo_con_manager *manager, mongo_servers *servers)
 {
 	int i;
 
-	MCONDBG(printf("Seeds:\n"));
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "Seeds:");
 	for (i = 0; i < servers->count; i++) {
-		mongo_server_def_dump(servers->server[i]);
+		mongo_server_def_dump(manager, servers->server[i]);
 	}
-	MCONDBG(printf("\n"));
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "");
 
-	MCONDBG(printf("Options:\n"));
-	MCONDBG(printf("- repl_set_name: %s\n", servers->repl_set_name));
-	MCONDBG(printf("\n\n"));
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "Options:");
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- repl_set_name: %s", servers->repl_set_name);
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "\n");
 }
 
 /* Cleanup */

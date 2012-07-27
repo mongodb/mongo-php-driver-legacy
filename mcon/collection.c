@@ -24,12 +24,12 @@ void mcon_collection_add(mcon_collection *c, void *data)
 	c->count++;
 }
 
-void mcon_collection_iterate(mcon_collection *c, mcon_collection_callback_t cb)
+void mcon_collection_iterate(mongo_con_manager *manager, mcon_collection *c, mcon_collection_callback_t cb)
 {
 	int i;
 
 	for (i = 0; i < c->count; i++) {
-		cb(c->data[i]);
+		cb(manager, c->data[i]);
 	}
 }
 

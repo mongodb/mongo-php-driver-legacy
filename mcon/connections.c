@@ -226,7 +226,7 @@ error:
 	return -1;
 }
 
-mongo_connection *mongo_connection_create(mongo_server_def *server_def)
+mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_server_def *server_def)
 {
 	mongo_connection *tmp;
 	char             *error_message = NULL;
@@ -237,10 +237,10 @@ mongo_connection *mongo_connection_create(mongo_server_def *server_def)
 	tmp->last_reqid = rand();
 
 	/* Connect */
-	MCONDBG(printf("connection_create: creating new connection for %s:%d\n", server_def->host, server_def->port));
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_create: creating new connection for %s:%d", server_def->host, server_def->port);
 	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, 1000, &error_message);
 	if (tmp->socket == -1) {
-		MCONDBG(printf("connection_create: error: %s\n", error_message));
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error: %s", error_message);
 		free(tmp);
 		return NULL;
 	}
@@ -248,7 +248,7 @@ mongo_connection *mongo_connection_create(mongo_server_def *server_def)
 	return tmp;
 }
 
-void mongo_connection_destroy(mongo_connection *con)
+void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 {
 #ifdef WIN32
 	shutdown(con->socket, SD_BOTH);
@@ -269,7 +269,7 @@ void mongo_connection_destroy(mongo_connection *con)
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
  */
-int mongo_connection_ping(mongo_connection *con)
+int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 {
 	mcon_str      *packet;
 	char          *error_message = NULL;
@@ -279,7 +279,7 @@ int mongo_connection_ping(mongo_connection *con)
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
 	uint32_t       flags; /* To check for query reply status */
 
-	MCONDBG(printf("is_ping: start\n"));
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: start");
 	packet = bson_create_ping_packet(con);
 
 	gettimeofday(&start, NULL);
@@ -302,7 +302,7 @@ int mongo_connection_ping(mongo_connection *con)
 
 	/* Read the rest of the data, which we'll ignore */
 	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
-	MCONDBG(printf("is_ping: data_size: %d\n", data_size));
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: data_size: %d", data_size);
 	/* TODO: Check size limits */
 	data_buffer = malloc(data_size + 1);
 	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, &error_message)) {
@@ -316,7 +316,7 @@ int mongo_connection_ping(mongo_connection *con)
 	if (con->ping_ms < 0) { /* some clocks do weird stuff */
 		con->ping_ms = 0;
 	}
-	MCONDBG(printf("is_ping: last pinged at %d; time: %dms\n", con->last_ping, con->ping_ms));
+	mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_ping: last pinged at %d; time: %dms", con->last_ping, con->ping_ms);
 
 	return 1;
 }
@@ -329,7 +329,7 @@ int mongo_connection_ping(mongo_connection *con)
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
  */
-int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message)
+int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message)
 {
 	mcon_str      *packet;
 	int            read;
@@ -341,7 +341,7 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 	unsigned char  is_master = 0, arbiter = 0;
 	char          *hosts, *ptr, *string;
 
-	MCONDBG(printf("is_master: start\n"));
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: start");
 	packet = bson_create_is_master_packet(con);
 
 	/* Send and wait for reply */
@@ -350,7 +350,7 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
 
 	/* If the header too small? */
-	MCONDBG(printf("is_master: read from header: %d\n", read));
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: read from header: %d", read);
 	if (read < MONGO_REPLY_HEADER_SIZE) {
 		return 0;
 	}
@@ -361,7 +361,7 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 	}
 	/* Read the rest of the data */
 	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
-	MCONDBG(printf("is_master: data_size: %d\n", data_size));
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: data_size: %d", data_size);
 	/* TODO: Check size limits */
 	data_buffer = malloc(data_size + 1);
 	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, error_message)) {
@@ -394,12 +394,12 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 			free(data_buffer);
 			return 0;
 		} else {
-			MCONDBG(printf("is_master: the found replicaset name matches the expected one (%s).\n", set));
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: the found replicaset name matches the expected one (%s).", set);
 		}
 	} else if (*repl_set_name == NULL) {
 		/* This can not happen, as for the REPLSET CON_TYPE to be active in the
 		 * first place, there needs to be a repl_set_name set. */
-		MCONDBG(printf("is_master: the replicaset name is not set, so we're using %s.\n", set));
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_master: the replicaset name is not set, so we're using %s.", set);
 		*repl_set_name = strdup(set);
 	}
 
@@ -409,20 +409,20 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
 
 	/* Find max bson size */
 	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {
-		MCONDBG(printf("setting maxBsonObjectSize to %d\n", max_bson_size));
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_master: setting maxBsonObjectSize to %d", max_bson_size);
 		con->max_bson_size = max_bson_size;
 	}
 
 	/* Find all hosts */
 	bson_find_field_as_array(ptr, "hosts", &hosts);
-	MCONDBG(printf("is_master: set name: %s, is_master: %d, is_arbiter: %d\n", set, is_master, arbiter));
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: set name: %s, is_master: %d, is_arbiter: %d", set, is_master, arbiter);
 	*nr_hosts = 0;
 	ptr = hosts;
 	while (bson_array_find_next_string(&ptr, &string)) {
 		(*nr_hosts)++;
 		*found_hosts = realloc(*found_hosts, (*nr_hosts) * sizeof(char*));
 		(*found_hosts)[*nr_hosts-1] = strdup(string);
-		MCONDBG(printf("found host: %s\n", string));
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "found host: %s", string);
 	}
 
 	/* Set connection type depending on flags */
@@ -444,7 +444,7 @@ int mongo_connection_is_master(mongo_connection *con, char **repl_set_name, int 
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
  */
-int mongo_connection_get_server_flags(mongo_connection *con, char **error_message)
+int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, char **error_message)
 {
 	mcon_str      *packet;
 	int            read;
@@ -454,7 +454,7 @@ int mongo_connection_get_server_flags(mongo_connection *con, char **error_messag
 	uint32_t       flags; /* To check for query reply status */
 	char          *ptr;
 
-	MCONDBG(printf("get_server_flags: start\n"));
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: start");
 	packet = bson_create_is_master_packet(con);
 
 	/* Send and wait for reply */
@@ -463,7 +463,7 @@ int mongo_connection_get_server_flags(mongo_connection *con, char **error_messag
 	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
 
 	/* If the header too small? */
-	MCONDBG(printf("get_server_flags: read from header: %d\n", read));
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: read from header: %d", read);
 	if (read < MONGO_REPLY_HEADER_SIZE) {
 		return 0;
 	}
@@ -474,7 +474,7 @@ int mongo_connection_get_server_flags(mongo_connection *con, char **error_messag
 	}
 	/* Read the rest of the data */
 	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
-	MCONDBG(printf("get_server_flags: data_size: %d\n", data_size));
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: data_size: %d", data_size);
 	/* TODO: Check size limits */
 	data_buffer = malloc(data_size + 1);
 	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, error_message)) {
@@ -487,7 +487,7 @@ int mongo_connection_get_server_flags(mongo_connection *con, char **error_messag
 
 	/* Find max bson size */
 	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {
-		MCONDBG(printf("setting maxBsonObjectSize to %d\n", max_bson_size));
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: setting maxBsonObjectSize to %d", max_bson_size);
 		con->max_bson_size = max_bson_size;
 	} else {
 		*error_message = strdup("Couldn't find the maxBsonObjectSize field");

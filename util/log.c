@@ -40,17 +40,19 @@ void mongo_init_MongoLog(TSRMLS_D) {
   INIT_CLASS_ENTRY(ce, "MongoLog", mongo_log_methods);
   mongo_ce_Log = zend_register_internal_class(&ce TSRMLS_CC);
 
-  zend_declare_class_constant_long(mongo_ce_Log, "NONE", strlen("NONE"), MONGO_LOG_NONE TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "NONE", strlen("NONE"), MLOG_NONE TSRMLS_CC);
 
-  zend_declare_class_constant_long(mongo_ce_Log, "WARNING", strlen("WARNING"), MONGO_LOG_WARNING TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "INFO", strlen("INFO"), MONGO_LOG_INFO TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "FINE", strlen("FINE"), MONGO_LOG_FINE TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "WARNING", strlen("WARNING"), MLOG_WARN TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "INFO", strlen("INFO"), MLOG_INFO TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "FINE", strlen("FINE"), MLOG_FINE TSRMLS_CC);
 
-  zend_declare_class_constant_long(mongo_ce_Log, "RS", strlen("RS"), MONGO_LOG_RS TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "POOL", strlen("POOL"), MONGO_LOG_POOL TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "IO", strlen("IO"), MONGO_LOG_IO TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "SERVER", strlen("SERVER"), MONGO_LOG_SERVER TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "ALL", strlen("ALL"), MONGO_LOG_ALL TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "RS", strlen("RS"), MLOG_RS TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "POOL", strlen("POOL"), MLOG_RS TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "PARSE", strlen("PARSE"), MLOG_PARSE TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "CON", strlen("CON"), MLOG_CON TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "IO", strlen("IO"), MLOG_IO TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "SERVER", strlen("SERVER"), MLOG_SERVER TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "ALL", strlen("ALL"), MLOG_ALL TSRMLS_CC);
 
   zend_declare_property_long(mongo_ce_Log, "level", strlen("level"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
   zend_declare_property_long(mongo_ce_Log, "module", strlen("module"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
@@ -96,7 +98,7 @@ PHP_METHOD(MongoLog, getModule)
 	get_value("module", return_value TSRMLS_CC);
 }
 
-void mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...)
+void php_mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...)
 {
 	if ((module & MonGlo(log_module)) && (level & MonGlo(log_level))) {
 		va_list args;
@@ -104,5 +106,19 @@ void mongo_log(const int module, const int level TSRMLS_DC, const char *format, 
 		va_start(args, format);
 		php_verror(NULL, "", E_NOTICE, format, args TSRMLS_CC);
 		va_end(args);
+	}
+}
+
+void php_mcon_log_wrapper(int module, int level, void *context, char *format, va_list arg)
+{
+	TSRMLS_D;
+	TSRMLS_FETCH_FROM_CTX(context);
+
+	if ((module & MonGlo(log_module)) && (level & MonGlo(log_level))) {
+		va_list tmp;
+
+		va_copy(tmp, arg);
+		php_verror(NULL, "", E_NOTICE, format, arg TSRMLS_CC);
+		va_end(tmp);
 	}
 }

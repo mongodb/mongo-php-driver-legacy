@@ -273,6 +273,8 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->log_module = 0;
 
 	mongo_globals->manager = mongo_init();
+	TSRMLS_SET_CTX(mongo_globals->manager->log_context);
+	mongo_globals->manager->log_function = php_mcon_log_wrapper;
 }
 /* }}} */
 

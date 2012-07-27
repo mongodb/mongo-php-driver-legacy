@@ -18,19 +18,6 @@
 #ifndef MONGO_LOG_H
 #define MONGO_LOG_H
 
-#define MONGO_LOG_NONE 0
-
-#define MONGO_LOG_WARNING 1
-#define MONGO_LOG_INFO 2
-#define MONGO_LOG_FINE 4
-
-#define MONGO_LOG_RS 1
-#define MONGO_LOG_POOL 2
-#define MONGO_LOG_IO 4
-#define MONGO_LOG_SERVER 8
-#define MONGO_LOG_PARSE 4
-#define MONGO_LOG_ALL 15
-
 void mongo_init_MongoLog(TSRMLS_D);
 
 PHP_METHOD(MongoLog, setLevel);
@@ -38,6 +25,7 @@ PHP_METHOD(MongoLog, getLevel);
 PHP_METHOD(MongoLog, setModule);
 PHP_METHOD(MongoLog, getModule);
 
-void mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...);
+void php_mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...);
+void php_mcon_log_wrapper(int module, int level, void *context, char *format, va_list arg);
 
 #endif

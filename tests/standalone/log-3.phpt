@@ -1,5 +1,5 @@
 --TEST--
-Test for MongoLog (IO only)
+Test for MongoLog (PARSE only)
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
@@ -12,11 +12,11 @@ function error_handler($code, $message)
 
 set_error_handler('error_handler');
 
-MongoLog::setModule(MongoLog::IO);
+MongoLog::setModule(MongoLog::PARSE);
 MongoLog::setLevel(MongoLog::ALL);
 $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 ?>
 --EXPECTF--
-Mongo::__construct(): parsing servers
-Mongo::__construct(): current: %s
-Mongo::__construct(): done parsing
+Mongo::__construct(): Parsing mongodb://%s:%d
+Mongo::__construct(): - Found node: %s:%d
+Mongo::__construct(): - Connection type: STANDALONE

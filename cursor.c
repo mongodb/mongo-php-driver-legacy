@@ -176,7 +176,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 	unsigned int status;
 	char        *error_message = NULL;
 
-	mongo_log(MONGO_LOG_IO, MONGO_LOG_FINE TSRMLS_CC, "hearing something");
+	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "hearing something");
 	sock = cursor->connection->socket;
 
 	status = get_cursor_header(sock, cursor, (char**) &error_message TSRMLS_CC);
@@ -190,7 +190,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 
 	/* Check that this is actually the response we want */
 	if (cursor->send.request_id != cursor->recv.response_to) {
-		mongo_log(MONGO_LOG_IO, MONGO_LOG_FINE TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
+		php_mongo_log(MLOG_IO, MLOG_WARN TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
 
 		mongo_cursor_throw(cursor->connection, 9 TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
 		return FAILURE;

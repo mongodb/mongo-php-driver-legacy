@@ -15,12 +15,12 @@
 
 typedef int (mongo_connection_sort_t)(const void *a, const void *b);
 
-void mongo_print_connection_info(void *elem);
+void mongo_print_connection_info(mongo_con_manager *manager, void *elem);
 
 mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp);
-mcon_collection *mongo_sort_servers(mcon_collection *col, mongo_read_preference *rp);
-mcon_collection *mongo_select_nearest_servers(mcon_collection *col, mongo_read_preference *rp);
-mongo_connection *mongo_pick_server_from_set(mcon_collection *col, mongo_read_preference *rp);
+mcon_collection *mongo_sort_servers(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp);
+mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp);
+mongo_connection *mongo_pick_server_from_set(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp);
 
 
 #endif

@@ -2,10 +2,7 @@
 #define __MCON_TYPES_H__
 
 #include <time.h>
-
-#define MCONDEBUG 0
-
-#define MCONDBG(c) if (MCONDEBUG) c;
+#include <stdarg.h>
 
 #define MONGO_CON_TYPE_STANDALONE 1
 #define MONGO_CON_TYPE_MULTIPLE   2
@@ -21,6 +18,26 @@
 #define MONGO_NODE_SECONDARY      0x02
 #define MONGO_NODE_ARBITER        0x04
 #define MONGO_NODE_MONGOS         0x08
+
+
+/*
+ * Constants for the logging framework
+ */
+/* Levels */
+#define MLOG_WARN    1
+#define MLOG_INFO    2
+#define MLOG_FINE    4
+
+/* Modules */
+#define MLOG_RS      1
+#define MLOG_CON     2
+#define MLOG_IO      4
+#define MLOG_SERVER  8
+#define MLOG_PARSE  16
+
+#define MLOG_NONE    0
+#define MLOG_ALL    31 /* Must be the bit sum of all above */
+
 
 /* Stores all the information about the connection. The hash is a group of
  * parameters to identify a unique connection. */
@@ -42,9 +59,14 @@ typedef struct _mongo_con_manager_item
 	struct _mongo_con_manager_item *next;
 } mongo_con_manager_item;
 
+typedef void (mongo_log_callback_t)(int module, int level, void *context, char *format, va_list arg);
+
 typedef struct _mongo_con_manager
 {
 	mongo_con_manager_item *connections;
+
+	void                   *log_context;
+	mongo_log_callback_t   *log_function;
 } mongo_con_manager;
 
 typedef struct _mongo_read_preference
@@ -73,4 +95,15 @@ typedef struct _mongo_servers
 
 	mongo_read_preference rp;
 } mongo_servers;
+
+typedef struct _mcon_collection
+{
+	int count;
+	int space;
+	int data_size;
+	void **data;
+} mcon_collection;
+
+typedef void (mcon_collection_callback_t)(mongo_con_manager *manager, void *elem);
+
 #endif

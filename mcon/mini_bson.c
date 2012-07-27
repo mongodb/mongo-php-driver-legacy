@@ -195,7 +195,6 @@ void *bson_find_field(char *data, char *field_name, int type)
 	int   read_type;
 
 	return_data = bson_get_current(ptr, &read_field, &read_type);
-	MCONDBG(printf("bson_find_field: read_field: %s\n", read_field));
 	while (read_field && (strcmp(read_field, field_name) != 0 || read_type != type)) {
 		ptr = bson_next(ptr);
 		if (ptr == NULL) {
@@ -203,7 +202,6 @@ void *bson_find_field(char *data, char *field_name, int type)
 			break;
 		}
 		return_data = bson_get_current(ptr, &read_field, &read_type);
-		MCONDBG(printf("bson_find_field: read_field: %s\n", read_field));
 	}
 	if (read_field && strcmp(read_field, field_name) == 0 && read_type == type) {
 		return return_data;

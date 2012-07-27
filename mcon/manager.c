@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+
 #include "types.h"
 #include "utils.h"
 #include "manager.h"
@@ -21,14 +23,14 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	hash = mongo_server_create_hash(server);
 	con = mongo_manager_connection_find_by_hash(manager, hash);
 	if (!con) {
-		con = mongo_connection_create(server);
+		con = mongo_connection_create(manager, server);
 		if (con) {
-			MCONDBG(printf("get_connection_single: pinging %s\n", hash));
-			if (mongo_connection_ping(con)) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: pinging %s", hash);
+			if (mongo_connection_ping(manager, con)) {
 				con->hash = strdup(hash);
 				mongo_manager_connection_register(manager, con);
 			} else {
-				mongo_connection_destroy(con);
+				mongo_connection_destroy(manager, con);
 				free(hash);
 				return NULL;
 			}
@@ -59,16 +61,16 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
-		MCONDBG(printf("discover_topology: checking is_master for %s\n", hash));
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: checking is_master for %s", hash);
 		con = mongo_manager_connection_find_by_hash(manager, hash);
 
 		if (!con) {
-			MCONDBG(printf("discover_topology: couldn't create a connection for %s\n", hash));
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: couldn't create a connection for %s", hash);
 			free(hash);
 			continue;
 		}
-		if (mongo_connection_is_master(con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message)) {
-			MCONDBG(printf("discover_topology: is_master worked\n"));
+		if (mongo_connection_is_master(manager, con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message)) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: is_master worked");
 			for (j = 0; j < nr_hosts; j++) {
 				mongo_server_def *tmp_def;
 				mongo_connection *new_con;
@@ -89,7 +91,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 				 * find more servers. */
 				tmp_hash = mongo_server_create_hash(tmp_def);
 				if (!mongo_manager_connection_find_by_hash(manager, tmp_hash)) {
-					MCONDBG(printf("discover_topology: found new host: %s:%d\n", tmp_def->host, tmp_def->port));
+					mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
 					new_con = mongo_get_connection_single(manager, tmp_def);
 					servers->server[servers->count] = tmp_def;
 					servers->count++;
@@ -106,7 +108,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 		} else {
 			/* Something is wrong with the connection, we need to remove
 			 * this from our list */
-			MCONDBG(printf("discover_topology: is_master return with an error for %s:%d: [%s]\n", servers->server[i]->host, servers->server[i]->port, error_message));
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: is_master return with an error for %s:%d: [%s]", servers->server[i]->host, servers->server[i]->port, error_message);
 			free(error_message);
 			mongo_manager_connection_deregister(manager, hash, con);
 		}
@@ -127,7 +129,7 @@ static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *mana
 	tmp = mongo_get_connection_single(manager, servers->server[0]);
 
 	/* We call get_server_flags to the maxBsonObjectSize data */
-	mongo_connection_get_server_flags(tmp, (char**) &error_message);
+	mongo_connection_get_server_flags(manager, tmp, (char**) &error_message);
 
 	return tmp;
 }
@@ -151,9 +153,9 @@ static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *mana
 		*error_message = strdup("No candidate servers found");
 		goto bailout;
 	}
-	collection = mongo_sort_servers(collection, &servers->rp);
-	collection = mongo_select_nearest_servers(collection, &servers->rp);
-	con = mongo_pick_server_from_set(collection, &servers->rp);
+	collection = mongo_sort_servers(manager, collection, &servers->rp);
+	collection = mongo_select_nearest_servers(manager, collection, &servers->rp);
+	con = mongo_pick_server_from_set(manager, collection, &servers->rp);
 
 bailout:
 	/* Cleaning up */
@@ -188,7 +190,7 @@ mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manag
 
 	while (ptr) {
 		if (strcmp(ptr->hash, hash) == 0) {
-			MCONDBG(printf("found connection %s (looking for %s)\n", ptr->hash, hash));
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "found connection %s (looking for %s)", ptr->hash, hash);
 			return ptr->connection;
 		}
 		ptr = ptr->next;
@@ -204,20 +206,20 @@ static mongo_con_manager_item *create_new_manager_item(void)
 	return tmp;
 }
 
-static inline void free_manager_item(mongo_con_manager_item *item)
+static inline void free_manager_item(mongo_con_manager *manager, mongo_con_manager_item *item)
 {
-	MCONDBG(printf("freeing connection %s\n", item->hash));
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "freeing connection %s", item->hash);
 	free(item->hash);
 	free(item);
 }
 
-static void destroy_manager_item(mongo_con_manager_item *item)
+static void destroy_manager_item(mongo_con_manager *manager, mongo_con_manager_item *item)
 {
 	if (item->next) {
-		destroy_manager_item(item->next);
+		destroy_manager_item(manager, item->next);
 	}
-	mongo_connection_destroy(item->connection);
-	free_manager_item(item);
+	mongo_connection_destroy(manager, item->connection);
+	free_manager_item(manager, item);
 }
 
 void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connection *con)
@@ -265,8 +267,8 @@ int mongo_manager_connection_deregister(mongo_con_manager *manager, char *hash, 
 				prev->next = ptr->next;
 			}
 			/* Free structures */
-			mongo_connection_destroy(con);
-			free_manager_item(ptr);
+			mongo_connection_destroy(manager, con);
+			free_manager_item(manager, ptr);
 
 			/* Woo! */
 			return 1;
@@ -280,6 +282,39 @@ int mongo_manager_connection_deregister(mongo_con_manager *manager, char *hash, 
 	return 0;
 }
 
+/* Logging */
+void mongo_manager_log(mongo_con_manager *manager, int module, int level, char *format, ...)
+{
+	va_list arg;
+
+	va_start(arg, format);
+	if (manager->log_function) {
+		manager->log_function(module, level, manager->log_context, format, arg);
+	}
+	va_end(arg);
+}
+
+/* Log handler which does nothing */
+void mongo_log_null(int module, int level, void *context, char *format, va_list arg)
+{
+}
+
+/* Log handler which uses printf */
+void mongo_log_printf(int module, int level, void *context, char *format, va_list arg)
+{
+	va_list  tmp;
+	char    *message;
+
+	message = malloc(1024);
+
+	va_copy(tmp, arg);
+	vsnprintf(message, 1024, format, tmp);
+	va_end(tmp);
+
+	printf("%s\n", message);
+	free(message);
+}
+
 /* Init/deinit */
 mongo_con_manager *mongo_init(void)
 {
@@ -288,6 +323,9 @@ mongo_con_manager *mongo_init(void)
 	tmp = malloc(sizeof(mongo_con_manager));
 	memset(tmp, 0, sizeof(mongo_con_manager));
 
+	tmp->log_context = NULL;
+	tmp->log_function = mongo_log_null;
+
 	return tmp;
 }
 
@@ -295,7 +333,7 @@ void mongo_deinit(mongo_con_manager *manager)
 {
 	if (manager->connections) {
 		/* Does this recursively for all cons */
-		destroy_manager_item(manager->connections);
+		destroy_manager_item(manager, manager->connections);
 	}
 
 	free(manager);
