@@ -305,9 +305,6 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
  */
 PHP_RINIT_FUNCTION(mongo)
 {
-	/* initialize manager */
-	MonGlo(manager) = mongo_init();
-
 	return SUCCESS;
 }
 /* }}} */
