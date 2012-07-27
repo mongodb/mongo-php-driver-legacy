@@ -69,10 +69,6 @@ extern zend_class_entry *mongo_ce_DB,
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, server)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
-/* Those two used to be there, but no longer it seems
-	ZEND_ARG_INFO(0, persist)
-	ZEND_ARG_INFO(0, garbage)
-*/
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
@@ -187,27 +183,30 @@ PHP_METHOD(Mongo, __construct)
 {
   char *server = 0;
   int server_len = 0;
-  zend_bool persist = 0, garbage = 0, connect = 1;
+  zend_bool connect = 1;
   zval *options = 0, *slave_okay = 0;
   mongo_link *link;
 	int i;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|szbb", &server, &server_len, &options, &persist, &garbage) == FAILURE) {
-    zval *object = getThis();
-    ZVAL_NULL(object);
-    return;
-  }
-  if (garbage) {
-    php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "This argument doesn't actually do anything. Please stop using it");
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/", &server, &server_len, &options) == FAILURE) {
+		return;
+	}
 
 	link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	/* Set the manager from the global manager */
 	link->manager = MonGlo(manager);
 	
-	/* Parse the server specification */
-	link->servers = mongo_parse_server_spec(link->manager, server ? server : "mongodb://127.0.0.1");
+	/* Parse the server specification
+	 * Default to the mongo.default_host & mongo.default_port INI options */
+	if (server) {
+		link->servers = mongo_parse_server_spec(link->manager, server);
+	} else {
+		char *tmp;
+		spprintf(&tmp, 0, "%s:%d", MonGlo(default_host), MonGlo(default_port));
+		link->servers = mongo_parse_server_spec(link->manager, tmp);
+		efree(tmp);
+	}
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_BVAL_P(slave_okay)) {
@@ -215,6 +214,7 @@ PHP_METHOD(Mongo, __construct)
 			/* the server already has read preferences configured, but we're still
 			 * trying to set slave okay. The spec says that's an error */
 			zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 0 TSRMLS_CC);
+			return;
 		} else {
 			/* Old style option, that needs to be removed. For now, spec dictates
 			 * it needs to be ReadPreference=SECONDARY_PREFERRED */
@@ -224,11 +224,11 @@ PHP_METHOD(Mongo, __construct)
 
 	/* Options through array */
 	if (options) {
-		if (Z_TYPE_P(options) == IS_ARRAY) {
 			zval **timeout_z, **replica_z, **slave_okay_z, **username_z, **password_z,
 			**db_z, **connect_z;
 
 			if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_z) == SUCCESS) {
+				convert_to_long_ex(timeout_z);
 				link->servers->connectTimeoutMS = Z_LVAL_PP(timeout_z);
 			}
 			if (zend_hash_find(HASH_P(options), "replicaSet", strlen("replicaSet")+1, (void**)&replica_z) == SUCCESS) {
@@ -261,6 +261,7 @@ PHP_METHOD(Mongo, __construct)
 						/* the server already has read preferences configured, but we're still
 						 * trying to set slave okay. The spec says that's an error */
 						zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 0 TSRMLS_CC);
+						return;
 					} else {
 						/* Old style option, that needs to be removed. For now, spec dictates
 						 * it needs to be ReadPreference=SECONDARY_PREFERRED */
@@ -269,6 +270,7 @@ PHP_METHOD(Mongo, __construct)
 				}
 			}
 			if (zend_hash_find(HASH_P(options), "username", sizeof("username"), (void**)&username_z) == SUCCESS) {
+				convert_to_string_ex(username_z);
 				/* Update all servers in the set */
 				for (i = 0; i < link->servers->count; i++) {
 					if (link->servers->server[i]->username) {
@@ -278,6 +280,7 @@ PHP_METHOD(Mongo, __construct)
 				}
 			}
 			if (zend_hash_find(HASH_P(options), "password", sizeof("password"), (void**)&password_z) == SUCCESS) {
+				convert_to_string_ex(password_z);
 				/* Update all servers in the set */
 				for (i = 0; i < link->servers->count; i++) {
 					if (link->servers->server[i]->password) {
@@ -287,6 +290,7 @@ PHP_METHOD(Mongo, __construct)
 				}
 			}
 			if (zend_hash_find(HASH_P(options), "db", sizeof("db"), (void**)&db_z) == SUCCESS) {
+				convert_to_string_ex(db_z);
 				/* Update all servers in the set */
 				for (i = 0; i < link->servers->count; i++) {
 					if (link->servers->server[i]->db) {
@@ -296,16 +300,9 @@ PHP_METHOD(Mongo, __construct)
 				}
 			}
 			if (zend_hash_find(HASH_P(options), "connect", sizeof("connect"), (void**)&connect_z) == SUCCESS) {
+				convert_to_boolean_ex(connect_z);
 				connect = Z_BVAL_PP(connect_z);
 			}
-		} else {
-			// backwards compatibility
-			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
-			connect = Z_BVAL_P(options);
-			if (MonGlo(allow_persistent) && persist) {
-				zend_update_property_string(mongo_ce_Mongo, getThis(), "persistent", strlen("persistent"), "" TSRMLS_CC);
-			}
-		}
 	}
 
 	if (connect) {
