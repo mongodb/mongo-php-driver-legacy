@@ -1,11 +1,14 @@
 --TEST--
 Database: Enumerating collections
+--SKIPIF--
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-$a = new Mongo("localhost");
-$d = $a->selectDb("phpunit");
+require dirname(__FILE__) ."/../utils.inc";
+$a = mongo();
+$d = $a->selectDb(dbname());
 
-$d->drop("listcol");
+$d->listcol->drop();
 $d->listcol->insert(array('_id' => 'test'));
 
 echo "without flag\n";

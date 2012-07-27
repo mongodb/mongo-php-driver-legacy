@@ -1,8 +1,11 @@
 --TEST--
 Indexes: Sparse
+--SKIPIF--
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-$m = new Mongo();
+require dirname(__FILE__) . "/../utils.inc";
+$m = Mongo();
 $db = $m->phpunit;
 
 $db->people->drop();

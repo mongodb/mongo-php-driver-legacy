@@ -1,8 +1,11 @@
 --TEST--
 GridFS: Testing fseek and fread
+--SKIPIF--
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-$conn = new Mongo();
+require dirname(__FILE__) . "/../utils.inc";
+$conn = mongo();
 $db   = $conn->selectDb('phpunit');
 $grid = $db->getGridFs('wrapper');
 
