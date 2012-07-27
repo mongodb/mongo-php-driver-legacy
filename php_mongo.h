@@ -597,6 +597,8 @@ extern zend_module_entry mongo_module_entry;
 /*
  * Error codes
  *
+ * TODO: Check and update those all 
+ *
  * MongoException:
  * 0: The <class> object has not been correctly initialized by its constructor
  * 1: zero-length keys are not allowed, did you use $ with double quotes?
@@ -627,6 +629,9 @@ extern zend_module_entry mongo_module_entry;
  * 10: failed to get host from <substr> of <str>
  * 11: failed to get port from <substr> of <str>
  * 12: lost db connection
+ *
+ * MongoCursorTOException:
+ * 80: timeout exception
  *
  * MongoCursorException:
  * 0: cannot modify cursor after beginning iteration
