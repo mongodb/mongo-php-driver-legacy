@@ -1,8 +1,11 @@
 --TEST--
 GridFS: Testing reading the whole file
+--SKIPIF--
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-$conn = new Mongo();
+require dirname(__FILE__) . "/../utils.inc";
+$conn = Mongo();
 $db   = $conn->selectDb('admin');
 $grid = $db->getGridFs('wrapper');
 

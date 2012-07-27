@@ -1,8 +1,11 @@
 --TEST--
 GridFS: Testing minor memory issue
+--SKIPIF--
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-$conn = new Mongo;
+require dirname(__FILE__) . "/../utils.inc";
+$conn = Mongo();
 $db   = $conn->phpunit;
 
 $grid = $db->getGridFS();
