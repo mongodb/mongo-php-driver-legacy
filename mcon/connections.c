@@ -35,7 +35,7 @@
 #define MONGO_REPLY_FLAG_QUERY_FAILURE 0x02
 
 /* Helper functions */
-inline int mongo_connection_get_reqid(mongo_connection *con)
+int mongo_connection_get_reqid(mongo_connection *con)
 {
 	con->last_reqid++;
 	return con->last_reqid;
