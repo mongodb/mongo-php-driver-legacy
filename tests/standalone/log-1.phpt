@@ -26,8 +26,6 @@ Mongo::__construct(): is_ping: start
 Mongo::__construct(): is_ping: data_size: 17
 Mongo::__construct(): is_ping: last pinged at 1%d; time: 0ms
 Mongo::__construct(): get_server_flags: start
-Mongo::__construct(): get_server_flags: read from header: 36
-Mongo::__construct(): get_server_flags: data_size: 51
-Mongo::__construct(): get_server_flags: setting maxBsonObjectSize to %d
-
-Notice: PHP Shutdown: freeing connection %s:%d;X;%d in Unknown on line 0
+Mongo::__construct(): send_packet: read from header: 36
+Mongo::__construct(): send_packet: data_size: 51
+Mongo::__construct(): is_master: setting maxBsonObjectSize to 16777216
