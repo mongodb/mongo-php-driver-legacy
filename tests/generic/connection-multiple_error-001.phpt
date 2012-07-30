@@ -1,5 +1,5 @@
 --TEST--
-Connection strings: Test multiple host names with/without port
+Connection strings: Test unconnectable host names without replicaset name
 --SKIPIF--
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
