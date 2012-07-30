@@ -11,9 +11,21 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 void static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string);
 
 /* Parsing routine */
-mongo_servers* mongo_parse_server_spec(mongo_con_manager *manager, char *spec)
+mongo_servers* mongo_parse_init(void)
 {
 	mongo_servers *servers;
+
+	/* Create tmp server definitions */
+	servers = malloc(sizeof(mongo_servers));
+	memset(servers, 0, sizeof(mongo_servers));
+	servers->count = 0;
+	servers->repl_set_name = NULL;
+
+	return servers;
+}
+
+mongo_servers* mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, char *spec)
+{
 	char          *pos; /* Pointer to current parsing position */
 	char          *tmp_user = NULL, *tmp_pass = NULL; /* Stores parsed user/pw to be copied to each server struct */
 	char          *host_start, *host_end, *port_start, *port_end, *db_start, *db_end;
@@ -22,12 +34,6 @@ mongo_servers* mongo_parse_server_spec(mongo_con_manager *manager, char *spec)
 	/* Initialisation */
 	pos = spec;
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "Parsing %s", spec);
-
-	/* Create tmp server definitions */
-	servers = malloc(sizeof(mongo_servers));
-	memset(servers, 0, sizeof(mongo_servers));
-	servers->count = 0;
-	servers->repl_set_name = NULL;
 
 	if (strstr(spec, "mongodb://") == spec) {
 		char *at, *colon;

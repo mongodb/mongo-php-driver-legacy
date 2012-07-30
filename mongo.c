@@ -212,12 +212,13 @@ PHP_METHOD(Mongo, __construct)
 	
 	/* Parse the server specification
 	 * Default to the mongo.default_host & mongo.default_port INI options */
+	link->servers = mongo_parse_init();
 	if (server) {
-		link->servers = mongo_parse_server_spec(link->manager, server);
+		mongo_parse_server_spec(link->manager, link->servers, server);
 	} else {
 		char *tmp;
 		spprintf(&tmp, 0, "%s:%d", MonGlo(default_host), MonGlo(default_port));
-		link->servers = mongo_parse_server_spec(link->manager, tmp);
+		mongo_parse_server_spec(link->manager, link->servers, tmp);
 		efree(tmp);
 	}
 
