@@ -325,6 +325,7 @@ static void php_mongo_connect(mongo_link *link TSRMLS_DC)
 	con = mongo_get_connection(link->manager, link->servers, (char **) &error_message);
 	if (!con && error_message) {
 		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
+		free(error_message);
 		return;
 	}
 }

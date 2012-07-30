@@ -226,10 +226,9 @@ error:
 	return -1;
 }
 
-mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_server_def *server_def)
+mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_server_def *server_def, char **error_message)
 {
 	mongo_connection *tmp;
-	char             *error_message = NULL;
 
 	/* Init struct */
 	tmp = malloc(sizeof(mongo_connection));
@@ -238,9 +237,9 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 
 	/* Connect */
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_create: creating new connection for %s:%d", server_def->host, server_def->port);
-	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, 1000, &error_message);
+	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, 1000, error_message);
 	if (tmp->socket == -1) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error: %s", error_message);
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error: %s", *error_message);
 		free(tmp);
 		return NULL;
 	}

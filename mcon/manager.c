@@ -15,7 +15,7 @@
 int mongo_manager_connection_deregister(mongo_con_manager *manager, char *hash, mongo_connection *con);
 
 /* Helpers */
-static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server)
+static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, char **error_message)
 {
 	char *hash;
 	mongo_connection *con;
@@ -23,7 +23,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	hash = mongo_server_create_hash(server);
 	con = mongo_manager_connection_find_by_hash(manager, hash);
 	if (!con) {
-		con = mongo_connection_create(manager, server);
+		con = mongo_connection_create(manager, server, error_message);
 		if (con) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: pinging %s", hash);
 			if (mongo_connection_ping(manager, con)) {
@@ -74,6 +74,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 			for (j = 0; j < nr_hosts; j++) {
 				mongo_server_def *tmp_def;
 				mongo_connection *new_con;
+				char *con_error_message = NULL;
 
 				/* Create a temp server definition to create a new connection */
 				tmp_def = malloc(sizeof(mongo_server_def));
@@ -92,9 +93,14 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 				tmp_hash = mongo_server_create_hash(tmp_def);
 				if (!mongo_manager_connection_find_by_hash(manager, tmp_hash)) {
 					mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
-					new_con = mongo_get_connection_single(manager, tmp_def);
-					servers->server[servers->count] = tmp_def;
-					servers->count++;
+					new_con = mongo_get_connection_single(manager, tmp_def, (char **) &con_error_message);
+					if (new_con) {
+						servers->server[servers->count] = tmp_def;
+						servers->count++;
+					} else {
+						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: could not connect to new host: %s:%d: %s", tmp_def->host, tmp_def->port, con_error_message);
+						free(con_error_message);
+					}
 				} else {
 					mongo_server_def_dtor(tmp_def);
 				}
@@ -121,28 +127,46 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 }
 
 /* Fetching connections */
-static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *manager, mongo_servers *servers)
+static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
 {
 	mongo_connection *tmp;
-	char *error_message;
+	char *con_error_message = NULL;
 
-	tmp = mongo_get_connection_single(manager, servers->server[0]);
+	tmp = mongo_get_connection_single(manager, servers->server[0], (char **) &con_error_message);
+
+	if (!tmp) {
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "Couldn't connect to '%s:%d': %s", servers->server[0]->host, servers->server[0]->port, con_error_message);
+		goto bailout;
+	}
 
 	/* We call get_server_flags to the maxBsonObjectSize data */
 	mongo_connection_get_server_flags(manager, tmp, (char**) &error_message);
 
+bailout:
+	if (con_error_message) {
+		free(con_error_message);
+	}
 	return tmp;
 }
 
 static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
 {
 	mongo_connection *con = NULL;
-	mcon_collection *collection;
+	mongo_connection *tmp;
+	mcon_collection  *collection;
+	char             *con_error_message = NULL;
 	int i;
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
-		mongo_get_connection_single(manager, servers->server[i]);
+		tmp = mongo_get_connection_single(manager, servers->server[i], (char **) &con_error_message);
+
+		if (!tmp) {
+			*error_message = malloc(256);
+			snprintf(*error_message, 256, "Couldn't connect to '%s:%d': %s", servers->server[0]->host, servers->server[0]->port, con_error_message);
+			free(con_error_message);
+		}
 	}
 	/* Discover more nodes. This also adds a connection to "servers" for each
 	 * new node */
@@ -169,7 +193,7 @@ mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
-			return mongo_get_connection_standalone(manager, servers);
+			return mongo_get_connection_standalone(manager, servers, error_message);
 
 		case MONGO_CON_TYPE_REPLSET:
 			return mongo_get_connection_replicaset(manager, servers, error_message);
