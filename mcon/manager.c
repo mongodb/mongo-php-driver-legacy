@@ -193,14 +193,20 @@ mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_connection: finding a STANDALONE connection");
 			return mongo_get_connection_standalone(manager, servers, error_message);
 
 		case MONGO_CON_TYPE_REPLSET:
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_connection: finding a REPLSET connection");
 			return mongo_get_connection_replicaset(manager, servers, error_message);
 /*
 		case MONGO_CON_TYPE_MULTIPLE:
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_connection: finding a MULTIPLE connection");
 			return mongo_get_connection_multiple(manager, servers);
 */
+		default:
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "mongo_get_connection: connection type %d is not supported", servers->con_type);
+			*error_message = strdup("mongo_get_connection: Unknown connection type requested");
 	}
 	return NULL;
 }

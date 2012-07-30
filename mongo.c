@@ -323,9 +323,13 @@ static void php_mongo_connect(mongo_link *link TSRMLS_DC)
 	/* We don't care about the result so we're not assigning it to a var */
 	/* TODO: Implement error messages forwarding to exceptions */
 	con = mongo_get_connection(link->manager, link->servers, (char **) &error_message);
-	if (!con && error_message) {
-		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
-		free(error_message);
+	if (!con) {
+		if (error_message) {
+			zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
+			free(error_message);
+		} else {
+			zend_throw_exception(mongo_ce_ConnectionException, "Unknown error obtaining connection", 72 TSRMLS_CC);
+		}
 		return;
 	}
 }
