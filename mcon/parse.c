@@ -20,6 +20,7 @@ mongo_servers* mongo_parse_init(void)
 	memset(servers, 0, sizeof(mongo_servers));
 	servers->count = 0;
 	servers->repl_set_name = NULL;
+	servers->con_type = MONGO_CON_TYPE_STANDALONE;
 
 	return servers;
 }
@@ -140,20 +141,6 @@ mongo_servers* mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers
 		servers->server[i]->db       = db_start ? strndup(db_start, db_end-db_start) : NULL;
 	}
 
-	/* Update connection type */
-	if (servers->repl_set_name) {
-		servers->con_type = MONGO_CON_TYPE_REPLSET;
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: REPLSET");
-	} else {
-		if (servers->count > 1) {
-			servers->con_type = MONGO_CON_TYPE_MULTIPLE;
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: MULTIPLE");
-		} else {
-			servers->con_type = MONGO_CON_TYPE_STANDALONE;
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: STANDALONE");
-		}
-	}
-
 	free(tmp_user);
 	free(tmp_pass);
 
@@ -180,7 +167,7 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 }
 
 /* Processes a single option/value pair.
- * Returns 0 if it worked, 1 if either name or value was missing and 2 if the option didn't exist
+ * Returns 0 if it worked, 1 if either name or value was missing, 2 if the option didn't exist, 3 on logic errors
  */
 int static mongo_process_option(mongo_con_manager *manager, mongo_servers *servers, char *name, char *value, char *pos)
 {
@@ -195,19 +182,105 @@ int static mongo_process_option(mongo_con_manager *manager, mongo_servers *serve
 	tmp_name = strndup(name, value - name - 1);
 	tmp_value = strndup(value, pos - value);
 
-	if (strcmp(tmp_name, "replicaSet") == 0) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': %s", tmp_value);
-		servers->repl_set_name = strdup(tmp_value);
-	} else {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found unknown option '%s' with value %s", tmp_name, tmp_value);
-		retval = 2;
-	}
+	retval = mongo_store_option(manager, servers, tmp_name, tmp_value);
 
 	free(tmp_name);
 	free(tmp_value);
 
 	return retval;
 }
+
+/* Sets server options.
+ * Returns 0 if it worked, 2 if the option didn't exist, 3 on logical errors
+ */
+int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char *option_name, char *option_value)
+{
+	if (strcasecmp(option_name, "replicaSet") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': '%s'", option_value);
+
+		if (servers->repl_set_name) {
+			/* Free the already existing one */
+			free(servers->repl_set_name);
+			servers->repl_set_name = NULL; /* We reset it as not all options set a string as replset name */
+		}
+
+		if (option_value && *option_value) {
+			servers->repl_set_name = strdup(option_value);
+			servers->con_type = MONGO_CON_TYPE_REPLSET;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: REPLSET");
+		} else {
+			/* Turn off replica set handling, which means either use a
+			 * standalone server, or a "multi-set". Why you would do
+			 * this? No idea. */
+			if (servers->count == 1) {
+				servers->con_type = MONGO_CON_TYPE_STANDALONE;
+				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: STANDALONE");
+			} else {
+				servers->con_type = MONGO_CON_TYPE_MULTIPLE;
+				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: MULTIPLE");
+			}
+		}
+		return 0;
+	}
+	if (strcasecmp(option_name, "username") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'username': '%s'", option_value);
+		for (int i = 0; i < servers->count; i++) {
+			if (servers->server[i]->username) {
+				free(servers->server[i]->username);
+			}
+			servers->server[i]->username = strdup(option_value);
+		}
+		return 0;
+	}
+	if (strcasecmp(option_name, "password") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'password': '%s'", option_value);
+		for (int i = 0; i < servers->count; i++) {
+			if (servers->server[i]->password) {
+				free(servers->server[i]->password);
+			}
+			servers->server[i]->password = strdup(option_value);
+		}
+		return 0;
+	}
+	if (strcasecmp(option_name, "db") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'db': '%s'", option_value);
+		for (int i = 0; i < servers->count; i++) {
+			if (servers->server[i]->db) {
+				free(servers->server[i]->db);
+			}
+			servers->server[i]->db = strdup(option_value);
+		}
+		return 0;
+	}
+	if (strcasecmp(option_name, "slaveOkay") == 0) {
+		if (option_value && *option_value) {
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
+			if (servers->rp.type != MONGO_RP_PRIMARY) {
+				/* the server already has read preferences configured, but we're still
+				 * trying to set slave okay. The spec says that's an error */
+				return 3;
+			} else {
+				/* Old style option, that needs to be removed. For now, spec dictates
+				 * it needs to be ReadPreference=SECONDARY_PREFERRED */
+				servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
+			}
+			return 0;
+		}
+
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': false");
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "timeout") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'timeout': %d", atoi(option_value));
+		servers->connectTimeoutMS = atoi(option_value);
+		return 0;
+	}
+
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found unknown option '%s' with value %s", option_name, option_value); \
+	return 2;
+}
+
 
 void static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string)
 {

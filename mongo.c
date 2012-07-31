@@ -199,6 +199,11 @@ PHP_METHOD(Mongo, __construct)
   zend_bool connect = 1;
   zval *options = 0, *slave_okay = 0;
   mongo_link *link;
+	zval **opt_entry;
+	char *opt_key;
+	uint opt_key_len;
+	ulong num_key;
+	HashPosition pos;
 	int i;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/", &server, &server_len, &options) == FAILURE) {
@@ -222,6 +227,54 @@ PHP_METHOD(Mongo, __construct)
 		efree(tmp);
 	}
 
+
+
+
+	/* Options through array */
+	if (options) {
+		for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(options), &pos);
+			zend_hash_get_current_data_ex(Z_ARRVAL_P(options), (void **)&opt_entry, &pos) == SUCCESS;
+			zend_hash_move_forward_ex(Z_ARRVAL_P(options), &pos)
+		) {
+
+			switch (zend_hash_get_current_key_ex(Z_ARRVAL_P(options), &opt_key, &opt_key_len, &num_key, 0, &pos)) {
+				case HASH_KEY_IS_STRING:
+					{
+						int error = 0;
+						convert_to_string_ex(opt_entry);
+						error = mongo_store_option(link->manager, link->servers, opt_key, Z_STRVAL_PP(opt_entry));
+
+						if (error == 3) {
+							zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 0 TSRMLS_CC);
+						} else if (error == 2) {
+							if (strcasecmp(opt_key, "connect") == 0) {
+								convert_to_boolean_ex(opt_entry);
+								connect = Z_BVAL_PP(opt_entry);
+								php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'connect' option is deprecated and will be removed in the future");
+							} else {
+								zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, "Unrecognized or unsupported option '%s'", opt_key);
+							}
+						} else if (error == 1) {
+							zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, "Empty value for '%s'?", opt_key);
+						}
+					}
+					break;
+
+				case HASH_KEY_IS_LONG:
+						zend_throw_exception(mongo_ce_ConnectionException, "Unrecognized or unsupported option", 0 TSRMLS_CC);
+						return;
+					break;
+			}
+		}
+	}
+
+
+
+
+
+
+
+
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_BVAL_P(slave_okay)) {
 		if (link->servers->rp.type != MONGO_RP_PRIMARY) {
@@ -234,89 +287,6 @@ PHP_METHOD(Mongo, __construct)
 			 * it needs to be ReadPreference=SECONDARY_PREFERRED */
 			link->servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
 		}
-	}
-
-	/* Options through array */
-	if (options) {
-			zval **timeout_z, **replica_z, **slave_okay_z, **username_z, **password_z,
-			**db_z, **connect_z;
-
-			if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_z) == SUCCESS) {
-				convert_to_long_ex(timeout_z);
-				link->servers->connectTimeoutMS = Z_LVAL_PP(timeout_z);
-			}
-			if (zend_hash_find(HASH_P(options), "replicaSet", strlen("replicaSet")+1, (void**)&replica_z) == SUCCESS) {
-				/* Setting the replica set name automatically triggers
-				 * the connection type to be set as REPLSET */
-				link->servers->con_type = MONGO_CON_TYPE_REPLSET;
-
-				if (link->servers->repl_set_name) {
-					/* Free the already existing one */
-					free(link->servers->repl_set_name);
-					link->servers->repl_set_name = NULL; /* We reset it as not all options set a string as replset name */
-				}
-				if (Z_TYPE_PP(replica_z) == IS_STRING) {
-					link->servers->repl_set_name = strdup(Z_STRVAL_PP(replica_z));
-				} else if ((Z_TYPE_PP(replica_z) == IS_BOOL || Z_TYPE_PP(replica_z) == IS_LONG) && !Z_BVAL_PP(replica_z)) {
-					/* Turn off replica set handling, which means either use a
-					 * standalone server, or a "multi-set". Why you would do
-					 * this? No idea. */
-					if (link->servers->count == 1) {
-						link->servers->con_type = MONGO_CON_TYPE_STANDALONE;
-					} else {
-						link->servers->con_type = MONGO_CON_TYPE_MULTIPLE;
-					}
-				}
-			}
-
-			if (zend_hash_find(HASH_P(options), "slaveOkay", strlen("slaveOkay")+1, (void**)&slave_okay_z) == SUCCESS) {
-				if (Z_BVAL_PP(slave_okay_z)) {
-					if (link->servers->rp.type != MONGO_RP_PRIMARY) {
-						/* the server already has read preferences configured, but we're still
-						 * trying to set slave okay. The spec says that's an error */
-						zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 0 TSRMLS_CC);
-						return;
-					} else {
-						/* Old style option, that needs to be removed. For now, spec dictates
-						 * it needs to be ReadPreference=SECONDARY_PREFERRED */
-						link->servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
-					}
-				}
-			}
-			if (zend_hash_find(HASH_P(options), "username", sizeof("username"), (void**)&username_z) == SUCCESS) {
-				convert_to_string_ex(username_z);
-				/* Update all servers in the set */
-				for (i = 0; i < link->servers->count; i++) {
-					if (link->servers->server[i]->username) {
-						free(link->servers->server[i]->username);
-					}
-					link->servers->server[i]->username = strdup(Z_STRVAL_PP(username_z));
-				}
-			}
-			if (zend_hash_find(HASH_P(options), "password", sizeof("password"), (void**)&password_z) == SUCCESS) {
-				convert_to_string_ex(password_z);
-				/* Update all servers in the set */
-				for (i = 0; i < link->servers->count; i++) {
-					if (link->servers->server[i]->password) {
-						free(link->servers->server[i]->password);
-					}
-					link->servers->server[i]->password = strdup(Z_STRVAL_PP(password_z));
-				}
-			}
-			if (zend_hash_find(HASH_P(options), "db", sizeof("db"), (void**)&db_z) == SUCCESS) {
-				convert_to_string_ex(db_z);
-				/* Update all servers in the set */
-				for (i = 0; i < link->servers->count; i++) {
-					if (link->servers->server[i]->db) {
-						free(link->servers->server[i]->db);
-					}
-					link->servers->server[i]->db = strdup(Z_STRVAL_PP(db_z));
-				}
-			}
-			if (zend_hash_find(HASH_P(options), "connect", sizeof("connect"), (void**)&connect_z) == SUCCESS) {
-				convert_to_boolean_ex(connect_z);
-				connect = Z_BVAL_PP(connect_z);
-			}
 	}
 
 	if (connect) {
