@@ -19,4 +19,3 @@ $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 --EXPECTF--
 Mongo::__construct(): Parsing mongodb://%s:%d
 Mongo::__construct(): - Found node: %s:%d
-Mongo::__construct(): - Connection type: STANDALONE
