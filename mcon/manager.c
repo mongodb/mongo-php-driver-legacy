@@ -356,6 +356,9 @@ mongo_con_manager *mongo_init(void)
 	tmp->log_context = NULL;
 	tmp->log_function = mongo_log_null;
 
+	tmp->ping_interval = MONGO_MANAGER_DEFAULT_PING_INTERVAL;
+	tmp->is_master_interval = MONGO_MANAGER_DEFAULT_MASTER_INTERVAL;
+
 	return tmp;
 }
 

@@ -337,6 +337,13 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 	char          *set = NULL;      /* For replicaset in return */
 	unsigned char  is_master = 0, arbiter = 0;
 	char          *hosts, *ptr, *string;
+	struct timeval now;
+
+	gettimeofday(&now, NULL);
+	if (con->last_is_master + manager->is_master_interval > now.tv_sec) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_is_master, now.tv_sec, con->last_is_master + manager->is_master_interval - now.tv_sec);
+		return 1;
+	}
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: start");
 	packet = bson_create_is_master_packet(con);
@@ -412,6 +419,9 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 
 	free(data_buffer);
 
+	con->last_is_master = now.tv_sec;
+	mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_master: last ran at %ld", con->last_is_master);
+
 	return 1;
 }
 
@@ -426,6 +436,13 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	int32_t        max_bson_size = 0;
 	char           *data_buffer;
 	char          *ptr;
+	struct timeval now;
+
+	gettimeofday(&now, NULL);
+	if (con->last_is_master + manager->is_master_interval > now.tv_sec) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_is_master, now.tv_sec, con->last_is_master + manager->is_master_interval - now.tv_sec);
+		return 1;
+	}
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: start");
 	packet = bson_create_is_master_packet(con);

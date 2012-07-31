@@ -43,8 +43,9 @@
  * parameters to identify a unique connection. */
 typedef struct _mongo_connection
 {
-	time_t last_ping;
+	time_t last_ping; /* The timestamp when ping was called last */
 	int    ping_ms;
+	int    last_is_master; /* The timestamp when is_master/get_server_flags was called last */
 	int    last_reqid;
 	int    socket;
 	int    connection_type; /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
@@ -61,12 +62,23 @@ typedef struct _mongo_con_manager_item
 
 typedef void (mongo_log_callback_t)(int module, int level, void *context, char *format, va_list arg);
 
+#define MONGO_MANAGER_DEFAULT_PING_INTERVAL    5
+#define MONGO_MANAGER_DEFAULT_MASTER_INTERVAL 15
+
 typedef struct _mongo_con_manager
 {
 	mongo_con_manager_item *connections;
 
+	/* context and callback function that is used to send logging information
+	 * through */
 	void                   *log_context;
 	mongo_log_callback_t   *log_function;
+
+	/* ping/is_master will not be called more often than the amount of seconds that
+	 * is configured with ping_interval/is_master_interval. The is_master interval
+	 * is also used for the get_server_flags function. */
+	long                    ping_interval;      /* default:  5 seconds */
+	long                    is_master_interval; /* default: 15 seconds */
 } mongo_con_manager;
 
 typedef struct _mongo_read_preference
