@@ -389,8 +389,8 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
     first_dot = strchr(Z_STRVAL_PP(collection), '.');
     system = strstr(Z_STRVAL_PP(collection), ".system.");
     // check that this isn't a system ns
-    if (!system_col && ((system && first_dot == system) ||
-      (name = strchr(Z_STRVAL_PP(collection), '.')) == 0)) {
+    if ((!system_col && (system && first_dot == system)) ||
+      (name = strchr(Z_STRVAL_PP(collection), '.')) == 0) {
 
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
