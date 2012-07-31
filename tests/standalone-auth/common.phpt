@@ -4,7 +4,7 @@ MongoDB Standalone with authentication
 <?php
 // Force standalone mode
 $_ENV["MONGO_SERVER"] = "STANDALONE_AUTH";
-require dirname(__FILE__) ."/skipif.inc";
+require_once dirname(__FILE__) ."/skipif.inc";
 ?>
 --REDIRECTTEST--
 return array(

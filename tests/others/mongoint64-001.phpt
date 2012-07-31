@@ -1,7 +1,7 @@
 --TEST--
 MongoInt64 constructed with integers
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 var_dump('1234567890' === (string) new MongoInt64(1234567890));

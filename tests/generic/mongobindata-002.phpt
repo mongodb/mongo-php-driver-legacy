@@ -4,7 +4,7 @@ MongoBinData insertion with default type
 This test expects an E_DEPRECATED notice because the default type will change in
 version 2.0 of the extension (see: https://jira.mongodb.org/browse/PHP-407).
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once dirname(__FILE__) . "/skipif.inc";?>
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";

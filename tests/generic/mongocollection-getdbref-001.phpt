@@ -1,7 +1,7 @@
 --TEST--
 MongoCollection::getDBRef()
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once dirname(__FILE__) . "/skipif.inc";?>
 <?php if (isauth()) { die("skip The test suite doesn't support two databases at the moment"); } ?>
 --FILE--
 <?php

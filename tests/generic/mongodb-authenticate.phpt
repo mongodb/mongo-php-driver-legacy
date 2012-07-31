@@ -1,7 +1,7 @@
 --TEST--
 MongoDB::authenticate()
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once dirname(__FILE__) . "/skipif.inc";?>
 <?php if (!isauth()) { die("skip Requires authenticated environment"); } ?>
 --FILE--
 <?php

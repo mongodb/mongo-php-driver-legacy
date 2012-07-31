@@ -1,10 +1,10 @@
 --TEST--
 Test for issue PHP-233: support keep_going flag.
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 $db = new MongoDB(mongo(), "phpunit");
 $object = $db->selectCollection('c');
 $object->drop();

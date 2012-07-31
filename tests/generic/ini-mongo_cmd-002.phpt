@@ -1,7 +1,7 @@
 --TEST--
 Custom "mongo.cmd" INI option with namespaces
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once dirname(__FILE__) . "/skipif.inc";?>
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";

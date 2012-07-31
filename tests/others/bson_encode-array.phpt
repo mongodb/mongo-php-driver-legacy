@@ -4,7 +4,7 @@ Array input for bson_encode()
 Stefan Koopmanschap <stefan.koopmanschap@gmail.com>
 # PFZ.nl/AmsterdamPHP TestFest 2012-06-23
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
 // numeric keys

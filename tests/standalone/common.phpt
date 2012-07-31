@@ -11,7 +11,7 @@ if (!isset($_ENV["TESTS"])) {
 }
 // Force standalone mode
 $_ENV["MONGO_SERVER"] = "STANDALONE";
-require dirname(__FILE__) ."/skipif.inc";
+require_once dirname(__FILE__) ."/skipif.inc";
 ?>
 --REDIRECTTEST--
 return array(

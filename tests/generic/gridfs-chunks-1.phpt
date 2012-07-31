@@ -1,10 +1,10 @@
 --TEST--
 GridFS: Testing issues with chunks and reading too much
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 $conn = mongo();
 $db   = $conn->selectDb(dbname());
 $grid = $db->getGridFs('wrapper');

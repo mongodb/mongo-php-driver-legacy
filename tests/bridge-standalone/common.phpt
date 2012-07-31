@@ -4,7 +4,7 @@ MongoDB Standalone via mongobridge
 <?php
 // Force standalone mode
 $_ENV["MONGO_SERVER"] = "BRIDGE_STANDALONE";
-require dirname(__FILE__) ."/skipif.inc";
+require_once dirname(__FILE__) ."/skipif.inc";
 ?>
 --REDIRECTTEST--
 return array(

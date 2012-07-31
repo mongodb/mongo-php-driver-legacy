@@ -1,9 +1,9 @@
 --TEST--
 Connection strings: Test single host name with/without port
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 
 $port = port();
 if ($port != "27017") {
@@ -12,7 +12,7 @@ if ($port != "27017") {
 ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 
 $hostname = hostname();
 $port     = port();

@@ -1,7 +1,7 @@
 --TEST--
 MongoDBRef::create() casts reference and database parameters to strings
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 var_dump(MongoDBRef::create(123, 456, 789));

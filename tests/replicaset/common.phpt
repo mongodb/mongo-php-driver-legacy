@@ -4,7 +4,7 @@ MongoDB ReplicaSet
 <?php
 // Force replicaset mode
 $_ENV["MONGO_SERVER"] = "REPLICASET";
-require dirname(__FILE__) ."/skipif.inc";
+require_once dirname(__FILE__) ."/skipif.inc";
 ?>
 --REDIRECTTEST--
 return array(

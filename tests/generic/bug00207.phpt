@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-207: setSlaveOkay not supported for GridFS queries
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";

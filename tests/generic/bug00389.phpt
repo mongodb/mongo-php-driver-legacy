@@ -1,10 +1,10 @@
 --TEST--
 Test for PHP-389: Setting arbitrary flags
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) ."/../utils.inc";
+require_once dirname(__FILE__) ."/../utils.inc";
 $m = mongo();
 $c = $m->phpunit->test;
 

@@ -1,10 +1,10 @@
 --TEST--
 Test for bug PHP-320: GridFS transaction issues with storeFile().
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 $m = mongo("phpunit");
 	$mdb = $m->selectDB("phpunit");
 	$mdb->dropCollection("fs.files");

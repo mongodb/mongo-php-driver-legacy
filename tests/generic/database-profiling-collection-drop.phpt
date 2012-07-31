@@ -1,11 +1,10 @@
 --TEST--
 Database: Profiling (turning on and off)
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
-<?php require_once dirname(__FILE__) . '/skipif_mongos.inc'; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 $a = mongo();
 $d = $a->selectDb("phpunit");
 $ns = $d->selectCollection('system.namespaces');
