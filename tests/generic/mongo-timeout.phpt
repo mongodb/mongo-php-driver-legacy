@@ -2,6 +2,7 @@
 Test for database timeout option.
 --SKIPIF--
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . '/skipif_mongos.inc'; ?>
 --FILE--
 <?php
 require dirname(__FILE__) . "/../utils.inc";
