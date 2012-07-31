@@ -1,10 +1,10 @@
 --TEST--
 Database: Dropping collections (name-as-string)
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 $a = mongo();
 $d = $a->selectDb("phpunit");
 $c = $d->selectCollection("dropcoltest");

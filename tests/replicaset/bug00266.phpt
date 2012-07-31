@@ -1,10 +1,10 @@
 --TEST--
 Test for bug PHP-266: segfault when connection string refers to unknown replica set member
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php if (!$STANDALONE_HOSTNAME) { exit("skip Needs a standalone server too"); } ?>
 --FILE--
-<?php require dirname(__FILE__) ."/cfg.inc"; ?>
+<?php require_once dirname(__FILE__) ."/cfg.inc"; ?>
 <?php
 $host = hostname();
 $port = port();

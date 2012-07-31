@@ -1,7 +1,7 @@
 --TEST--
 MongoDB::getDBRef() throws exception if $ref or $db fields are not strings
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once dirname(__FILE__) . "/skipif.inc";?>
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";

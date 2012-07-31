@@ -1,10 +1,10 @@
 --TEST--
 GridFS: Testing fseek and fread (2)
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 function readRange($fp, $seek, $length = false)
 {
 	fseek($fp, $seek, SEEK_SET);

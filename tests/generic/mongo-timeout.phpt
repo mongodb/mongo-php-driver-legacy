@@ -1,11 +1,10 @@
 --TEST--
 Test for database timeout option.
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
-<?php require_once dirname(__FILE__) . '/skipif_mongos.inc'; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 $m = mongo("admin");
 $d = $m->selectDb('admin');
 
