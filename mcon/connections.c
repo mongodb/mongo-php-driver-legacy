@@ -263,6 +263,43 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 
 #define MONGO_REPLY_HEADER_SIZE 36
 
+static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mcon_str *packet, char **data_buffer, char **error_message)
+{
+	int            read;
+	uint32_t       data_size;
+	char           reply_buffer[MONGO_REPLY_HEADER_SIZE];
+	uint32_t       flags; /* To check for query reply status */
+
+	/* Send and wait for reply */
+	mongo_io_send(con->socket, packet->d, packet->l, error_message);
+	mcon_str_ptr_dtor(packet);
+	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: read from header: %d", read);
+	if (read < MONGO_REPLY_HEADER_SIZE) {
+		return 0;
+	}
+
+	/* Check for a query error */
+	flags = MONGO_32(*(int*)(reply_buffer + sizeof(int32_t) * 4));
+	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
+		return 0;
+	}
+
+	/* Read the rest of the data */
+	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: data_size: %d", data_size);
+
+	/* TODO: Check size limits */
+	*data_buffer = malloc(data_size + 1);
+	if (!mongo_io_recv_data(con->socket, *data_buffer, data_size, error_message)) {
+		free(data_buffer);
+		return 0;
+	}
+
+	return 1;
+}
+
 /**
  * Sends a ping command to the server and stores the result.
  *
@@ -282,35 +319,10 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 	packet = bson_create_ping_packet(con);
 
 	gettimeofday(&start, NULL);
-	/* TODO: This is identical to mongo_connect_send_packet(), except for the gettimeofday()
-	 * Is the ping time without the read overhead more accurate then just writing?
-	 */
-
-	/* Send and wait for reply */
-	mongo_io_send(con->socket, packet->d, packet->l, &error_message);
-	mcon_str_ptr_dtor(packet);
-	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, &error_message);
-
-	/* If the header too small? */
-	if (read < 5 * sizeof(int32_t)) {
-		return 0;
-	}
-	/* Check for a query error */
-	flags = MONGO_32(*(int*)(reply_buffer + sizeof(int32_t) * 4));
-	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
+	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, (char **) &error_message)) {
 		return 0;
 	}
 	gettimeofday(&end, NULL);
-
-	/* Read the rest of the data, which we'll ignore */
-	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: data_size: %d", data_size);
-	/* TODO: Check size limits */
-	data_buffer = malloc(data_size + 1);
-	if (!mongo_io_recv_data(con->socket, data_buffer, data_size, &error_message)) {
-		free(data_buffer);
-		return 0;
-	}
 	free(data_buffer);
 
 	con->last_ping = end.tv_sec;
@@ -466,44 +478,8 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 
 	free(data_buffer);
 
-	return 1;
-}
-
-int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mcon_str *packet, char **data_buffer, char **error_message)
-{
-	int            read;
-	uint32_t       data_size;
-	char           reply_buffer[MONGO_REPLY_HEADER_SIZE];
-	uint32_t       flags; /* To check for query reply status */
-
-	/* Send and wait for reply */
-	mongo_io_send(con->socket, packet->d, packet->l, error_message);
-	mcon_str_ptr_dtor(packet);
-	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
-
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: read from header: %d", read);
-	if (read < MONGO_REPLY_HEADER_SIZE) {
-		return 0;
-	}
-
-	/* Check for a query error */
-	flags = MONGO_32(*(int*)(reply_buffer + sizeof(int32_t) * 4));
-	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
-		return 0;
-	}
-
-	/* Read the rest of the data */
-	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: data_size: %d", data_size);
-
-	/* TODO: Check size limits */
-	*data_buffer = malloc(data_size + 1);
-	if (!mongo_io_recv_data(con->socket, *data_buffer, data_size, error_message)) {
-		free(data_buffer);
-		return 0;
-	}
+	con->last_is_master = now.tv_sec;
+	mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "get_server_flags: last ran at %ld", con->last_is_master);
 
 	return 1;
 }
-
-
