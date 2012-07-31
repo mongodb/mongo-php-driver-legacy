@@ -1,6 +1,6 @@
 <?php
-require dirname(__FILE__) . "/../others/skipif.inc";
-require dirname(__FILE__) ."/../utils.inc";
+require_once dirname(__FILE__) . "/../others/skipif.inc";
+require_once dirname(__FILE__) ."/../utils.inc";
 $m = null;
 
 try {

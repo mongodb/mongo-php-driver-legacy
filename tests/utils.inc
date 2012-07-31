@@ -197,7 +197,7 @@ $STANDALONE_PORT =
     $REPLICASET_AUTH_PORT = 27017;
 
 // Include user define config file to overwrite the defaults
-require "mongo-test-cfg.inc";
+require_once "mongo-test-cfg.inc";
 
 $RS_HOSTS = array();
 if ($REPLICASET_PRIMARY) {

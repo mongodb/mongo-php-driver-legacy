@@ -1,10 +1,10 @@
 --TEST--
 Connection strings: toString.
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php exit("skip This test doesn't make whole lot of sense"); ?>
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 
 if (isset($_ENV["MONGO_SERVER"]) && $_ENV["MONGO_SERVER"] == "REPLICASET") {
     $port = $REPLICASET_PRIMARY_PORT;

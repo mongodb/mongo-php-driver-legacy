@@ -1,7 +1,7 @@
 --TEST--
 MongoTimestamp constructor uses automatic increment
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 $ts = new MongoTimestamp(0, 0);

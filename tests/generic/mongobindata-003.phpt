@@ -1,7 +1,7 @@
 --TEST--
 MongoBinData insertion with null bytes, control characters and symbols
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once dirname(__FILE__) . "/skipif.inc";?>
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";

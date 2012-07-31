@@ -1,7 +1,7 @@
 --TEST--
 MongoInt64 constructed with number larger than 64-bit integers
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc" ?>
+<?php require_once dirname(__FILE__) . "/skipif.inc" ?>
 <?php if (4 !== PHP_INT_SIZE) { die('skip Only for 32-bit platform'); } ?>
 --FILE--
 <?php

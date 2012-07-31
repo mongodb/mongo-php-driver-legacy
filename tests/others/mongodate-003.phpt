@@ -1,7 +1,7 @@
 --TEST--
 MongoDate constructor with custom arguments
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 $date = new MongoDate(0, 0);

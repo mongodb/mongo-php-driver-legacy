@@ -1,10 +1,10 @@
 --TEST--
 Test for bug PHP-333: GridFS find's key
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) ."/../utils.inc";
+require_once dirname(__FILE__) ."/../utils.inc";
 $db_name = dbname();
 $m = mongo();
 $mdb = $m->selectDB($db_name);
