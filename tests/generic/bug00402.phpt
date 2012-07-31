@@ -1,24 +1,29 @@
 --TEST--
-Test for bug #402: MongoCollection::validate(true) doesn't set the correct scan-all flag.
+Test for bug PHP-402: MongoCollection::validate(true) doesn't set the correct scan-all flag.
+--DESCRIPTION--
+This test skips mongos because its validate() results contain only a top-level
+"validate" field, which collects the shard results, and grouped results for each
+shard in a "raw" array field.
 --SKIPIF--
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require dirname(__FILE__) . '/skipif_mongos.inc'; ?>
 --FILE--
 <?php
 require dirname(__FILE__) ."/../utils.inc";
+
 $m = mongo();
-$c = $m->phpunit->col;
-$c->insert( array( 'test' => 'foo' ) );
+$c = $m->selectCollection('phpunit', 'col');
+$c->insert(array('x' => 1), array('safe' => true));
 
-$r = $c->validate();
-var_dump( array_key_exists( 'warning', $r ) );
-var_dump( $r['warning'] );
+$result = $c->validate();
+var_dump(isset($result['warning']));
+var_dump($result['warning']);
 
-$r = $c->validate( true );
-var_dump( array_key_exists( 'warning', $r ) );
+$result = $c->validate(true);
+var_dump(isset($result['warning']));
 
 $c->drop();
-$r = $c->validate();
-var_dump( $r );
+var_dump($c->validate());;
 ?>
 --EXPECT--
 bool(true)
