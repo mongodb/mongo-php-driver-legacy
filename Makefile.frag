@@ -1,5 +1,5 @@
 clean-coverage:
-	@rm -f .coverage coverage
+	@rm -rf .coverage coverage
 
 coverage: test clean-coverage
 	@echo "Generating $@"
