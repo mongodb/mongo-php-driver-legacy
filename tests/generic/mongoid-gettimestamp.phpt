@@ -1,10 +1,10 @@
 --TEST--
 Test the getTimestamp from a created id.
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) ."/../utils.inc";
+require_once dirname(__FILE__) ."/../utils.inc";
 // Connect
 $m = mongo();
 // Select the DB

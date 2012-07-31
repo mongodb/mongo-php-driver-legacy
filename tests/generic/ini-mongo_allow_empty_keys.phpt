@@ -1,7 +1,7 @@
 --TEST--
 "mongo.allow_empty_keys" INI option
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once dirname(__FILE__) . "/skipif.inc";?>
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";

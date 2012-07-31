@@ -1,7 +1,7 @@
 --TEST--
 MongoRegex constructor with unsupported or redundant flags
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 $regex = new MongoRegex('//nope');

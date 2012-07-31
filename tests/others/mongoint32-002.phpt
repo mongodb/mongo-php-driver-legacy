@@ -1,7 +1,7 @@
 --TEST--
 MongoInt32 constructed with strings
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 var_dump('1234567890' === (string) new MongoInt32('1234567890'));

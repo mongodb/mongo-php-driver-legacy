@@ -4,7 +4,7 @@ MongoDB Standalone Auth via mongobridge
 <?php
 // Force standalone auth mode
 $_ENV["MONGO_SERVER"] = "BRIDGE_STANDALONE_AUTH";
-require dirname(__FILE__) ."/skipif.inc";
+require_once dirname(__FILE__) ."/skipif.inc";
 ?>
 --REDIRECTTEST--
 return array(

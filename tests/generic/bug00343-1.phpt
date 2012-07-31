@@ -1,10 +1,10 @@
 --TEST--
 Test for bug PHP-343: Segfault when adding a file to GridFS (storeBytes)
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once dirname(__FILE__) . "/../utils.inc";
 $m = mongo();
 $bytes = file_get_contents(__FILE__);
 $db = $m->phpunit;
