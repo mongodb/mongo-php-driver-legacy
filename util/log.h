@@ -24,6 +24,8 @@ PHP_METHOD(MongoLog, setLevel);
 PHP_METHOD(MongoLog, getLevel);
 PHP_METHOD(MongoLog, setModule);
 PHP_METHOD(MongoLog, getModule);
+PHP_METHOD(MongoLog, setCallback);
+PHP_METHOD(MongoLog, getCallback);
 
 void php_mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...);
 void php_mcon_log_wrapper(int module, int level, void *context, char *format, va_list arg);
