@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include "types.h"
 
+/* Hash format is: HOST:PORT;X;PID or HOST:PORT;DB/USERNAME;PID */
+
 /* Creates a unique hash for a server def with some info from the server config,
  * but also with the PID to make sure forking works */
 char *mongo_server_create_hash(mongo_server_def *server_def)
@@ -50,5 +52,17 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **db, char 
 	/* Find the port */
 	*port = atoi(ptr + 1);
 
+	/* TODO: return db, username and pid */
+
     return 0;
+}
+
+/* Returns just the host and port from the hash */
+char *mongo_server_hash_to_server(char *hash)
+{
+	char *ptr, *tmp;
+
+	ptr = strchr(hash, ';');
+	tmp = strndup(hash, ptr - hash);
+	return tmp;
 }
