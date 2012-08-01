@@ -259,7 +259,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 	if (strcasecmp(option_name, "slaveOkay") == 0) {
-		if (option_value && *option_value) {
+		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
 			if (servers->rp.type != MONGO_RP_PRIMARY) {
 				/* the server already has read preferences configured, but we're still
