@@ -39,6 +39,8 @@ PHP_METHOD(MongoDB, selectCollection);
 PHP_METHOD(MongoDB, getGridFS);
 PHP_METHOD(MongoDB, getSlaveOkay);
 PHP_METHOD(MongoDB, setSlaveOkay);
+PHP_METHOD(MongoDB, getReadPreference);
+PHP_METHOD(MongoDB, setReadPreference);
 PHP_METHOD(MongoDB, getProfilingLevel);
 PHP_METHOD(MongoDB, setProfilingLevel);
 PHP_METHOD(MongoDB, drop);

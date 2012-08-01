@@ -139,6 +139,33 @@ PHP_METHOD(MongoCollection, setSlaveOkay)
 	c->rp.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
 
+
+PHP_METHOD(MongoCollection, getReadPreference)
+{
+	mongo_collection *c;
+	PHP_MONGO_GET_COLLECTION(getThis());
+	RETURN_LONG(c->rp.type);
+}
+
+/* {{{ MongoCollection::setReadPreference(int read_preference)
+ * Sets a read preference to be used for all read queries.*/
+PHP_METHOD(MongoCollection, setReadPreference)
+{
+	long read_preference;
+	mongo_collection *c;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &read_preference) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_COLLECTION(getThis());
+
+	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
+		c->rp.type = read_preference;
+	}
+}
+/* }}} */
+
 PHP_METHOD(MongoCollection, drop) {
   zval *data;
   mongo_collection *c;
@@ -1288,6 +1315,10 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN
 	ZEND_ARG_INFO(0, slave_okay)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, read_preference)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_validate, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, validate)
 ZEND_END_ARG_INFO()
@@ -1364,6 +1395,8 @@ static zend_function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, getName, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(MongoCollection, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(MongoCollection, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, drop, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, validate, arginfo_validate, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, insert, arginfo_insert, ZEND_ACC_PUBLIC)

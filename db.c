@@ -158,6 +158,33 @@ PHP_METHOD(MongoDB, setSlaveOkay)
 	db->rp.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
 
+
+PHP_METHOD(MongoDB, getReadPreference)
+{
+	mongo_db *db;
+	PHP_MONGO_GET_DB(getThis());
+	RETURN_LONG(db->rp.type);
+}
+
+/* {{{ MongoDB::setReadPreference(int read_preference)
+ * Sets a read preference to be used for all read queries.*/
+PHP_METHOD(MongoDB, setReadPreference)
+{
+	long read_preference;
+	mongo_db *db;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &read_preference) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_DB(getThis());
+
+	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
+		db->rp.type = read_preference;
+	}
+}
+/* }}} */
+
 PHP_METHOD(MongoDB, getProfilingLevel) {
   zval l;
   Z_TYPE(l) = IS_LONG;
@@ -814,6 +841,10 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN
 	ZEND_ARG_INFO(0, slave_okay)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 0)
+	ZEND_ARG_INFO(0, read_preference)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setProfilingLevel, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, level)
 ZEND_END_ARG_INFO()
@@ -874,6 +905,8 @@ static zend_function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, getGridFS, arginfo_getGridFS, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(MongoDB, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(MongoDB, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, getProfilingLevel, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, setProfilingLevel, arginfo_setProfilingLevel, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, drop, arginfo_no_parameters, ZEND_ACC_PUBLIC)

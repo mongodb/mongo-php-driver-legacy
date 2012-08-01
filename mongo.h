@@ -39,6 +39,8 @@ PHP_METHOD(Mongo, selectDB);
 PHP_METHOD(Mongo, selectCollection);
 PHP_METHOD(Mongo, getSlaveOkay);
 PHP_METHOD(Mongo, setSlaveOkay);
+PHP_METHOD(Mongo, getReadPreference);
+PHP_METHOD(Mongo, setReadPreference);
 PHP_METHOD(Mongo, dropDB);
 PHP_METHOD(Mongo, lastError);
 PHP_METHOD(Mongo, prevError);
