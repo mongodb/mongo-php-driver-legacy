@@ -98,27 +98,57 @@ PHP_METHOD(MongoLog, getModule)
 	get_value("module", return_value TSRMLS_CC);
 }
 
-void php_mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...)
+static char *level_name(int level)
 {
-	if ((module & MonGlo(log_module)) && (level & MonGlo(log_level))) {
-		va_list args;
-
-		va_start(args, format);
-		php_verror(NULL, "", E_NOTICE, format, args TSRMLS_CC);
-		va_end(args);
+	switch (level) {
+		case MLOG_WARN: return "WARN";
+		case MLOG_INFO: return "INFO";
+		case MLOG_FINE: return "FINE";
+		default: return "?";
 	}
 }
 
-void php_mcon_log_wrapper(int module, int level, void *context, char *format, va_list arg)
+static char *module_name(int module)
+{
+	switch (module) {
+		case MLOG_RS: return "REPLSET";
+		case MLOG_CON: return "CON    ";
+		case MLOG_IO: return "IO     ";
+		case MLOG_SERVER: return "SERVER ";
+		case MLOG_PARSE: return "PARSE  ";
+		default: return "?";
+	}
+}
+
+void php_mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...)
+{
+	if ((module & MonGlo(log_module)) && (level & MonGlo(log_level))) {
+		va_list  args;
+		char    *tmp = malloc(256);
+
+		va_start(args, format);
+		vsnprintf(tmp, 256, format, args);
+		va_end(args);
+
+		php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
+		free(tmp);
+	}
+}
+
+void php_mcon_log_wrapper(int module, int level, void *context, char *format, va_list args)
 {
 	TSRMLS_D;
 	TSRMLS_FETCH_FROM_CTX(context);
 
 	if ((module & MonGlo(log_module)) && (level & MonGlo(log_level))) {
-		va_list tmp;
+		va_list  tmp_args;
+		char    *tmp = malloc(256);
 
-		va_copy(tmp, arg);
-		php_verror(NULL, "", E_NOTICE, format, arg TSRMLS_CC);
-		va_end(tmp);
+		va_copy(tmp_args, args);
+		vsnprintf(tmp, 256, format, tmp_args);
+		va_end(tmp_args);
+
+		php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
+		free(tmp);
 	}
 }
