@@ -81,6 +81,11 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 				mongo_manager_connection_deregister(manager, hash, con);
 				break;
 
+			case 3:
+				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: is_master worked, but we need to remove the seed host (%s:%d)", servers->server[i]->host, servers->server[i]->port);
+				mongo_manager_connection_deregister(manager, hash, con);
+				/* Break intentionally missing */
+
 			case 1:
 				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: is_master worked");
 				for (j = 0; j < nr_hosts; j++) {

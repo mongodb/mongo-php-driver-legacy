@@ -337,12 +337,15 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 }
 
 /**
- * Sends an is_master command to the server and returns an array of new connectable nodes
+ * Sends an is_master command to the server and returns an array of new
+ * connectable nodes
  *
  * Returns:
  * 0: when an error occurred
  * 1: when is master was run and worked
  * 2: when is master wasn't run due to the time-out limit
+ * 3: when it all worked, but we need to remove the seed host (due to its name
+ *    not being what the server thought it is)
  */
 int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message)
 {
@@ -352,7 +355,9 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 	char          *set = NULL;      /* For replicaset in return */
 	unsigned char  is_master = 0, arbiter = 0;
 	char          *hosts, *ptr, *string;
+	char          *connected_name, *we_think_we_are;
 	struct timeval now;
+	int            retval = 1;
 
 	gettimeofday(&now, NULL);
 	if (con->last_is_master + manager->is_master_interval > now.tv_sec) {
@@ -369,6 +374,18 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 
 	/* Find data fields */
 	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	/* We find out whether the machine we connected too, is actually the
+	 * one we thought we were connecting too */
+	bson_find_field_as_string(ptr, "me", &connected_name);
+	we_think_we_are = mongo_server_hash_to_server(con->hash);
+	if (strcmp(connected_name, we_think_we_are) == 0) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: the server name matches what we thought it'd be (%s).", we_think_we_are);
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_master: the server name (%s) did not match with what we thought it'd be (%s).", connected_name, we_think_we_are);
+		retval = 3;
+	}
+	free(we_think_we_are);
 
 	/* Do replica set name test */
 	bson_find_field_as_string(ptr, "setName", &set);
@@ -437,7 +454,7 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 	con->last_is_master = now.tv_sec;
 	mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_master: last ran at %ld", con->last_is_master);
 
-	return 1;
+	return retval;
 }
 
 /**
