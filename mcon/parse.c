@@ -8,7 +8,7 @@
 
 /* Forward declarations */
 void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start, char *port_end);
-void static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string);
+int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message);
 
 /* Parsing routine */
 mongo_servers* mongo_parse_init(void)
@@ -25,7 +25,7 @@ mongo_servers* mongo_parse_init(void)
 	return servers;
 }
 
-mongo_servers* mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, char *spec)
+int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, char *spec, char **error_message)
 {
 	char          *pos; /* Pointer to current parsing position */
 	char          *tmp_user = NULL, *tmp_pass = NULL; /* Stores parsed user/pw to be copied to each server struct */
@@ -127,7 +127,11 @@ mongo_servers* mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers
 		 * mongodb://user:pass@host:port,host:port/dbname?foo=bar
 		 *                                               ^ */
 		if (question) {
-			mongo_parse_options(manager, servers, question + 1);
+			int retval = -1;
+			retval = mongo_parse_options(manager, servers, question + 1, error_message);
+			if (retval > 0) {
+				return 1;
+			}
 		}
 	}
 	if (db_start) {
@@ -144,7 +148,7 @@ mongo_servers* mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers
 	free(tmp_user);
 	free(tmp_pass);
 
-	return servers;
+	return 0;
 }
 
 /* Helpers */
@@ -169,20 +173,21 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 /* Processes a single option/value pair.
  * Returns 0 if it worked, 1 if either name or value was missing, 2 if the option didn't exist, 3 on logic errors
  */
-int static mongo_process_option(mongo_con_manager *manager, mongo_servers *servers, char *name, char *value, char *pos)
+int static mongo_process_option(mongo_con_manager *manager, mongo_servers *servers, char *name, char *value, char *pos, char **error_message)
 {
 	char *tmp_name;
 	char *tmp_value;
 	int   retval = 0;
 
 	if (!name || !value) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Got an empty option name or value");
 		return 1;
 	}
 
 	tmp_name = strndup(name, value - name - 1);
 	tmp_value = strndup(value, pos - value);
 
-	retval = mongo_store_option(manager, servers, tmp_name, tmp_value);
+	retval = mongo_store_option(manager, servers, tmp_name, tmp_value, error_message);
 
 	free(tmp_name);
 	free(tmp_value);
@@ -191,9 +196,10 @@ int static mongo_process_option(mongo_con_manager *manager, mongo_servers *serve
 }
 
 /* Sets server options.
- * Returns 0 if it worked, 2 if the option didn't exist, 3 on logical errors
+ * Returns 0 if it worked, 2 if the option didn't exist, 3 on logical errors.
+ * On logical errors, the error_message will be populated with the reason.
  */
-int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char *option_name, char *option_value)
+int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char *option_name, char *option_value, char **error_message)
 {
 	if (strcasecmp(option_name, "replicaSet") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': '%s'", option_value);
@@ -258,6 +264,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			if (servers->rp.type != MONGO_RP_PRIMARY) {
 				/* the server already has read preferences configured, but we're still
 				 * trying to set slave okay. The spec says that's an error */
+				*error_message = strdup("You can not use both slaveOkay and read-preferences. Please switch to read-preferences.");
 				return 3;
 			} else {
 				/* Old style option, that needs to be removed. For now, spec dictates
@@ -277,13 +284,18 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 
-	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found unknown option '%s' with value %s", option_name, option_value); \
+	*error_message = malloc(256);
+	snprintf(*error_message, 256, "- Found unknown option '%s' with value %s", option_name, option_value);
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found unknown option '%s' with value %s", option_name, option_value);
 	return 2;
 }
 
 
-void static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string)
+/* Returns 0 if all options were processed without errors.
+ * On failure, returns 1 and populates error_message */
+int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message)
 {
+	int retval = 0;
 	char *name_start, *value_start = NULL, *pos;
 
 	name_start = pos = options_string;
@@ -293,13 +305,20 @@ void static mongo_parse_options(mongo_con_manager *manager, mongo_servers *serve
 			value_start = pos + 1;
 		}
 		if (*pos == ';' || *pos == '&') {
-			mongo_process_option(manager, servers, name_start, value_start, pos);
+			retval = mongo_process_option(manager, servers, name_start, value_start, pos, error_message);
+			/* An empty name/value isn't an error */
+			if (retval > 1) {
+				return 1;
+			}
 			name_start = pos + 1;
 			value_start = NULL;
 		}
 		pos++;
 	} while (*pos != '\0');
-	mongo_process_option(manager, servers, name_start, value_start, pos);
+	retval = mongo_process_option(manager, servers, name_start, value_start, pos, error_message);
+
+	/* An empty name/value isn't an error */
+	return retval > 1 ? 1 : 0;
 }
 
 void static mongo_server_def_dump(mongo_con_manager *manager, mongo_server_def *server_def)

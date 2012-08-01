@@ -200,7 +200,7 @@ PHP_METHOD(Mongo, __construct)
   zval *options = 0, *slave_okay = 0;
   mongo_link *link;
 	zval **opt_entry;
-	char *opt_key;
+	char *opt_key, *error_message = NULL;
 	uint opt_key_len;
 	ulong num_key;
 	HashPosition pos;
@@ -219,12 +219,24 @@ PHP_METHOD(Mongo, __construct)
 	 * Default to the mongo.default_host & mongo.default_port INI options */
 	link->servers = mongo_parse_init();
 	if (server) {
-		mongo_parse_server_spec(link->manager, link->servers, server);
+		if (mongo_parse_server_spec(link->manager, link->servers, server, (char **)&error_message)) {
+			zend_throw_exception(mongo_ce_ConnectionException, error_message, 0 TSRMLS_CC);
+			free(error_message);
+			return;
+		}
 	} else {
 		char *tmp;
+		int error;
+
 		spprintf(&tmp, 0, "%s:%d", MonGlo(default_host), MonGlo(default_port));
-		mongo_parse_server_spec(link->manager, link->servers, tmp);
+		error = mongo_parse_server_spec(link->manager, link->servers, tmp, (char **)&error_message);
 		efree(tmp);
+
+		if (error) {
+			zend_throw_exception(mongo_ce_ConnectionException, error_message, 0 TSRMLS_CC);
+			free(error_message);
+			return;
+		}
 	}
 
 
@@ -242,20 +254,26 @@ PHP_METHOD(Mongo, __construct)
 					{
 						int error = 0;
 						convert_to_string_ex(opt_entry);
-						error = mongo_store_option(link->manager, link->servers, opt_key, Z_STRVAL_PP(opt_entry));
+						error = mongo_store_option(link->manager, link->servers, opt_key, Z_STRVAL_PP(opt_entry), (char **)&error_message);
 
-						if (error == 3) {
-							zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 0 TSRMLS_CC);
-						} else if (error == 2) {
+						switch(error) {
+						case 3: /* Logical error (i.e. conflicting options)*/
+						case 1: /* Empty option name or value */
+							zend_throw_exception(mongo_ce_ConnectionException, error_message, 0 TSRMLS_CC);
+							free(error_message);
+							return;
+
+						case 2: /* Unknown option */
 							if (strcasecmp(opt_key, "connect") == 0) {
 								convert_to_boolean_ex(opt_entry);
 								connect = Z_BVAL_PP(opt_entry);
 								php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'connect' option is deprecated and will be removed in the future");
 							} else {
-								zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, "Unrecognized or unsupported option '%s'", opt_key);
+								zend_throw_exception(mongo_ce_ConnectionException, error_message, 0 TSRMLS_CC);
+								free(error_message);
+								return;
 							}
-						} else if (error == 1) {
-							zend_throw_exception_ex(mongo_ce_ConnectionException, 0 TSRMLS_CC, "Empty value for '%s'?", opt_key);
+							break;
 						}
 					}
 					break;
@@ -267,12 +285,6 @@ PHP_METHOD(Mongo, __construct)
 			}
 		}
 	}
-
-
-
-
-
-
 
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
