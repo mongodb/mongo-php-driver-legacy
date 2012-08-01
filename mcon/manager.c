@@ -58,6 +58,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	int nr_hosts;
 	char **found_hosts = NULL;
 	char *tmp_hash;
+	int   res;
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
@@ -69,54 +70,64 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 			free(hash);
 			continue;
 		}
-		if (mongo_connection_is_master(manager, con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message)) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: is_master worked");
-			for (j = 0; j < nr_hosts; j++) {
-				mongo_server_def *tmp_def;
-				mongo_connection *new_con;
-				char *con_error_message = NULL;
+		
+		res = mongo_connection_is_master(manager, con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message);
+		switch (res) {
+			case 0:
+				/* Something is wrong with the connection, we need to remove
+				 * this from our list */
+				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: is_master return with an error for %s:%d: [%s]", servers->server[i]->host, servers->server[i]->port, error_message);
+				free(error_message);
+				mongo_manager_connection_deregister(manager, hash, con);
+				break;
 
-				/* Create a temp server definition to create a new connection */
-				tmp_def = malloc(sizeof(mongo_server_def));
-				tmp_def->username = servers->server[i]->username ? strdup(servers->server[i]->username) : NULL;
-				tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;
-				tmp_def->db = servers->server[i]->db ? strdup(servers->server[i]->db) : NULL;
-				tmp_def->host = strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
-				tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
-				
-				/* Create a hash so that we can check whether we already have a
-				 * connection for this server definition. If we don't create
-				 * the connection, register it (done in
-				 * mongo_get_connection_single) and add it to the list of
-				 * servers that we're processing so we might use this host to
-				 * find more servers. */
-				tmp_hash = mongo_server_create_hash(tmp_def);
-				if (!mongo_manager_connection_find_by_hash(manager, tmp_hash)) {
-					mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
-					new_con = mongo_get_connection_single(manager, tmp_def, (char **) &con_error_message);
-					if (new_con) {
-						servers->server[servers->count] = tmp_def;
-						servers->count++;
+			case 1:
+				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: is_master worked");
+				for (j = 0; j < nr_hosts; j++) {
+					mongo_server_def *tmp_def;
+					mongo_connection *new_con;
+					char *con_error_message = NULL;
+
+					/* Create a temp server definition to create a new connection */
+					tmp_def = malloc(sizeof(mongo_server_def));
+					tmp_def->username = servers->server[i]->username ? strdup(servers->server[i]->username) : NULL;
+					tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;
+					tmp_def->db = servers->server[i]->db ? strdup(servers->server[i]->db) : NULL;
+					tmp_def->host = strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
+					tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
+					
+					/* Create a hash so that we can check whether we already have a
+					 * connection for this server definition. If we don't create
+					 * the connection, register it (done in
+					 * mongo_get_connection_single) and add it to the list of
+					 * servers that we're processing so we might use this host to
+					 * find more servers. */
+					tmp_hash = mongo_server_create_hash(tmp_def);
+					if (!mongo_manager_connection_find_by_hash(manager, tmp_hash)) {
+						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
+						new_con = mongo_get_connection_single(manager, tmp_def, (char **) &con_error_message);
+						if (new_con) {
+							servers->server[servers->count] = tmp_def;
+							servers->count++;
+						} else {
+							mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: could not connect to new host: %s:%d: %s", tmp_def->host, tmp_def->port, con_error_message);
+							free(con_error_message);
+						}
 					} else {
-						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: could not connect to new host: %s:%d: %s", tmp_def->host, tmp_def->port, con_error_message);
-						free(con_error_message);
+						mongo_server_def_dtor(tmp_def);
 					}
-				} else {
-					mongo_server_def_dtor(tmp_def);
-				}
-				free(tmp_hash);
+					free(tmp_hash);
 
-				/* Cleanup */
-				free(found_hosts[j]);
-			}
-			free(found_hosts);
-			found_hosts = NULL;
-		} else {
-			/* Something is wrong with the connection, we need to remove
-			 * this from our list */
-			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: is_master return with an error for %s:%d: [%s]", servers->server[i]->host, servers->server[i]->port, error_message);
-			free(error_message);
-			mongo_manager_connection_deregister(manager, hash, con);
+					/* Cleanup */
+					free(found_hosts[j]);
+				}
+				free(found_hosts);
+				found_hosts = NULL;
+				break;
+
+			case 2:
+				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: is_master got skipped");
+				break;
 		}
 
 		free(hash);

@@ -339,7 +339,10 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 /**
  * Sends an is_master command to the server and returns an array of new connectable nodes
  *
- * Returns 1 when it worked, and 0 when an error was encountered.
+ * Returns:
+ * 0: when an error occurred
+ * 1: when is master was run and worked
+ * 2: when is master wasn't run due to the time-out limit
  */
 int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message)
 {
@@ -354,7 +357,7 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 	gettimeofday(&now, NULL);
 	if (con->last_is_master + manager->is_master_interval > now.tv_sec) {
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_is_master, now.tv_sec, con->last_is_master + manager->is_master_interval - now.tv_sec);
-		return 1;
+		return 2;
 	}
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: start");
