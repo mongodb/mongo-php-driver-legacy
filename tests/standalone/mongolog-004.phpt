@@ -1,5 +1,5 @@
 --TEST--
-Test for MongoLog (level variations)
+MongoLog (various levels, all modules)
 --SKIPIF--
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

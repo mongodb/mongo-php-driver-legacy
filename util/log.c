@@ -50,6 +50,7 @@ void mongo_init_MongoLog(TSRMLS_D) {
   zend_declare_class_constant_long(mongo_ce_Log, "POOL", strlen("POOL"), MONGO_LOG_POOL TSRMLS_CC);
   zend_declare_class_constant_long(mongo_ce_Log, "IO", strlen("IO"), MONGO_LOG_IO TSRMLS_CC);
   zend_declare_class_constant_long(mongo_ce_Log, "SERVER", strlen("SERVER"), MONGO_LOG_SERVER TSRMLS_CC);
+  zend_declare_class_constant_long(mongo_ce_Log, "PARSE", strlen("PARSE"), MONGO_LOG_PARSE TSRMLS_CC);
   zend_declare_class_constant_long(mongo_ce_Log, "ALL", strlen("ALL"), MONGO_LOG_ALL TSRMLS_CC);
 
   zend_declare_property_long(mongo_ce_Log, "level", strlen("level"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
