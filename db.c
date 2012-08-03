@@ -28,6 +28,7 @@
 #include "cursor.h"
 #include "gridfs.h"
 #include "mongo_types.h"
+#include "mcon/manager.h"
 
 #ifndef zend_parse_parameters_none
 #define zend_parse_parameters_none()    \
@@ -41,7 +42,8 @@ extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Id,
   *mongo_ce_Code,
   *mongo_ce_Exception,
-  *mongo_ce_CursorException;
+  *mongo_ce_CursorException,
+  *mongo_ce_ConnectionException;
 
 extern int le_pconnection,
   le_connection;
@@ -51,6 +53,23 @@ extern zend_object_handlers mongo_default_handlers;
 zend_class_entry *mongo_ce_DB = NULL;
 
 static void clear_exception(zval* return_value TSRMLS_DC);
+
+void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link)
+{
+	int   old_rp;
+	char *error_message = NULL;
+
+	if (link->servers->rp.type != MONGO_RP_PRIMARY) {
+		old_rp = link->servers->rp.type;
+		link->servers->rp.type = MONGO_RP_PRIMARY;
+		cursor->connection = mongo_get_connection(link->manager, link->servers, (char**) &error_message);
+		link->servers->rp.type = old_rp;
+		if (!cursor->connection && error_message) {
+			zend_throw_exception(mongo_ce_ConnectionException, error_message, 72 TSRMLS_CC);
+			return;
+		}
+	}
+}
 
 /* {{{ MongoDB::__construct
  */
@@ -543,6 +562,7 @@ PHP_METHOD(MongoDB, command) {
   mongo_link *link;
   char *cmd_ns;
 	zval slave_okay;
+	mongo_cursor *cursor_tmp;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {
     return;
@@ -593,13 +613,10 @@ PHP_METHOD(MongoDB, command) {
 	/* TODO: The read preferences spec has a list of commands that *can* be send
 	 * to slave */
 	PHP_MONGO_GET_LINK(db->link);
-	Z_TYPE(slave_okay) = IS_BOOL;
-	Z_LVAL(slave_okay) = 0;
+	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
+	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
+	php_mongo_connection_force_primary(cursor_tmp, link);
 
-	MAKE_STD_ZVAL(temp);
-	ZVAL_NULL(temp);
-	MONGO_METHOD1(MongoCursor, slaveOkay, temp, cursor, &slave_okay);
-	zval_ptr_dtor(&temp);
 
   // query
   MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
