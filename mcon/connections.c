@@ -345,9 +345,10 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
  * 1: when is master was run and worked
  * 2: when is master wasn't run due to the time-out limit
  * 3: when it all worked, but we need to remove the seed host (due to its name
- *    not being what the server thought it is)
+ *    not being what the server thought it is) - in that case, the server in
+ *    the last argument is changed
  */
-int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message)
+int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
 {
 	mcon_str      *packet;
 	int32_t        max_bson_size = 0;
@@ -383,6 +384,11 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: the server name matches what we thought it'd be (%s).", we_think_we_are);
 	} else {
 		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_master: the server name (%s) did not match with what we thought it'd be (%s).", connected_name, we_think_we_are);
+		/* We reset the name as the server responded with a different name than
+		 * what we thought it was */
+		free(server->host);
+		server->host = strndup(connected_name, strchr(connected_name, ':') - connected_name);
+		server->port = atoi(strchr(connected_name, ':') + 1);
 		retval = 3;
 	}
 	free(we_think_we_are);
