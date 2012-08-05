@@ -251,7 +251,13 @@ PHP_METHOD(MongoCursor, __construct) {
 
 	/* db connection resource */
 	PHP_MONGO_GET_LINK(zlink);
-	cursor->connection = mongo_get_connection(link->manager, link->servers, (char**) &error_message);
+
+	/* TODO: We have to assume to use a read connection here, but it should
+	 * really be refactored so that we can create a cursor with the correct
+	 * read/write setup already, instead of having to force a new mode later
+	 * (like we do for commands right now through php_mongo_connection_force_primary). */
+	cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, 0, (char**) &error_message);
+
 	if (!cursor->connection && error_message) {
 		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
 		return;

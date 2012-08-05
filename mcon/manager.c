@@ -166,7 +166,7 @@ bailout:
 	return tmp;
 }
 
-static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
+static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int write_connection, char **error_message)
 {
 	mongo_connection *con = NULL;
 	mongo_connection *tmp;
@@ -187,8 +187,16 @@ static mongo_connection *mongo_get_connection_replicaset(mongo_con_manager *mana
 	/* Discover more nodes. This also adds a connection to "servers" for each
 	 * new node */
 	mongo_discover_topology(manager, servers);
-	/* Depending on read preference type, run the correct algorithms */
-	collection = mongo_find_candidate_servers(manager, &servers->rp);
+	/* Depending on whether we want a read or a write connection, run the correct algorithms */
+	if (write_connection) {
+		mongo_read_preference tmp_rp;
+
+		tmp_rp = servers->rp;
+		tmp_rp.type = MONGO_RP_PRIMARY;
+		collection = mongo_find_candidate_servers(manager, &tmp_rp);
+	} else {
+		collection = mongo_find_candidate_servers(manager, &servers->rp);
+	}
 	if (collection->count == 0) {
 		*error_message = strdup("No candidate servers found");
 		goto bailout;
@@ -203,26 +211,42 @@ bailout:
 	return con;
 }
 
+static mongo_connection *mongo_get_read_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
+{
+	return mongo_get_read_write_connection_replicaset(manager, servers, 0, error_message);
+}
+
+static mongo_connection *mongo_get_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
+{
+	return mongo_get_read_write_connection_replicaset(manager, servers, 1, error_message);
+}
+
+
 /* API interface to fetch a connection */
-mongo_connection *mongo_get_connection(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
+mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int write_connection, char **error_message)
 {
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_connection: finding a STANDALONE connection");
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a STANDALONE connection");
 			return mongo_get_connection_standalone(manager, servers, error_message);
 
 		case MONGO_CON_TYPE_REPLSET:
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_connection: finding a REPLSET connection");
-			return mongo_get_connection_replicaset(manager, servers, error_message);
+			if (write_connection) {
+				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a REPLSET connection (write)");
+				return mongo_get_write_connection_replicaset(manager, servers, error_message);
+			} else {
+				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a REPLSET connection (read)");
+				return mongo_get_read_connection_replicaset(manager, servers, error_message);
+			}
 /*
 		case MONGO_CON_TYPE_MULTIPLE:
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_connection: finding a MULTIPLE connection");
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a MULTIPLE connection");
 			return mongo_get_connection_multiple(manager, servers);
 */
 		default:
-			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "mongo_get_connection: connection type %d is not supported", servers->con_type);
-			*error_message = strdup("mongo_get_connection: Unknown connection type requested");
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "mongo_get_read_write_connection: connection type %d is not supported", servers->con_type);
+			*error_message = strdup("mongo_get_read_write_connection: Unknown connection type requested");
 	}
 	return NULL;
 }

@@ -325,14 +325,15 @@ PHP_METHOD(Mongo, __construct)
 /* }}} */
 
 /* {{{ Helper for connecting the servers */
-static void php_mongo_connect(mongo_link *link TSRMLS_DC)
+static mongo_connection *php_mongo_connect(mongo_link *link TSRMLS_DC)
 {
 	mongo_connection *con;
 	char *error_message = NULL;
 
-	/* We don't care about the result so we're not assigning it to a var */
-	/* TODO: Implement error messages forwarding to exceptions */
-	con = mongo_get_connection(link->manager, link->servers, (char **) &error_message);
+	/* We don't care about the result so although we assign it to a var, we
+	 * only do that to handle errors and return it so that the calling function
+	 * knows whether a connection could be obtained or not. */
+	con = mongo_get_read_write_connection(link->manager, link->servers, 0, (char **) &error_message);
 	if (!con) {
 		if (error_message) {
 			zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
@@ -340,8 +341,9 @@ static void php_mongo_connect(mongo_link *link TSRMLS_DC)
 		} else {
 			zend_throw_exception(mongo_ce_ConnectionException, "Unknown error obtaining connection", 72 TSRMLS_CC);
 		}
-		return;
+		return NULL;
 	}
+	return con;
 }
 
 /* {{{ Mongo->connect
@@ -646,9 +648,10 @@ PHP_METHOD(Mongo, getSlave)
 	char *error_message = NULL;
 
 	PHP_MONGO_GET_LINK(getThis());
-	con = mongo_get_connection(link->manager, link->servers, (char**) &error_message);
-	if (!con && error_message) {
-		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
+	con = php_mongo_connect(link TSRMLS_CC);
+	if (!con) {
+		/* We have to return here, as otherwise the exception doesn't trigger
+		 * before we return the hash at the end. */
 		return;
 	}
 

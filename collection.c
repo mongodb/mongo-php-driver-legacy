@@ -45,7 +45,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_Collection = NULL;
 
-static mongo_connection* get_server(mongo_collection *c TSRMLS_DC);
+static mongo_connection* get_server(mongo_collection *c, int write_connection TSRMLS_DC);
 static int is_safe_op(zval *options TSRMLS_DC);
 static void safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
@@ -281,19 +281,24 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   return cursor_z;
 }
 
-static mongo_connection* get_server(mongo_collection *c TSRMLS_DC) {
-  mongo_link *link;
+/* Returns a connection for the operation.
+ * If 1 is passed for write_connection, a writable connection will be returned,
+ * otherwise a readable connection is returned.
+ */
+static mongo_connection* get_server(mongo_collection *c, int write_connection TSRMLS_DC)
+{
+	mongo_link *link;
 	mongo_connection *connection;
 	char *error_message = NULL;
 
-  link = (mongo_link*)zend_object_store_get_object((c->link) TSRMLS_CC);
-  if (!link) {
-    zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
-    return 0;
-  }
+	link = (mongo_link*)zend_object_store_get_object((c->link) TSRMLS_CC);
+	if (!link) {
+	zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
+		return 0;
+	}
 
 	/* TODO: Fix better error message */
-	if ((connection = mongo_get_connection(link->manager, link->servers, (char **) &error_message)) == NULL) {
+	if ((connection = mongo_get_read_write_connection(link->manager, link->servers, write_connection, (char **) &error_message)) == NULL) {
 		if (error_message) {
 			mongo_cursor_throw(0, 16 TSRMLS_CC, "Couldn't get connection: %s", error_message);
 		} else {
@@ -440,7 +445,7 @@ PHP_METHOD(MongoCollection, insert) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, 1 TSRMLS_CC)) == 0) {
 		RETURN_FALSE;
 	}
 
@@ -481,7 +486,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, 1 TSRMLS_CC)) == 0) {
 		RETURN_FALSE;
 	}
 
@@ -596,7 +601,7 @@ PHP_METHOD(MongoCollection, update) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, 1 TSRMLS_CC)) == 0) {
 		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
@@ -662,7 +667,7 @@ PHP_METHOD(MongoCollection, remove) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, 1 TSRMLS_CC)) == 0) {
 		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}

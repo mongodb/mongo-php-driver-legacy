@@ -60,10 +60,7 @@ void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link)
 	char *error_message = NULL;
 
 	if (link->servers->rp.type != MONGO_RP_PRIMARY) {
-		old_rp = link->servers->rp.type;
-		link->servers->rp.type = MONGO_RP_PRIMARY;
-		cursor->connection = mongo_get_connection(link->manager, link->servers, (char**) &error_message);
-		link->servers->rp.type = old_rp;
+		cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, 1, (char**) &error_message);
 		if (!cursor->connection && error_message) {
 			zend_throw_exception(mongo_ce_ConnectionException, error_message, 72 TSRMLS_CC);
 			return;
