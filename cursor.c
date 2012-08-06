@@ -1368,7 +1368,8 @@ void mongo_init_CursorExceptions(TSRMLS_D) {
 zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char *format, ...)
 {
   zval *e;
-  va_list arg;
+	char *message;
+	va_list arg;
 	zend_class_entry *exception_ce;
 
   if (EG(exception)) {
@@ -1385,8 +1386,11 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 	}
 
 	va_start(arg, format);
-	e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, format, arg);
+	message = malloc(1024);
+	vsnprintf(message, 1024, format, arg);
 	va_end(arg);
+	e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, "%s", message);
+	free(message);
 
 	if (connection && code != 80) {
 		/* TODO: Use host instead of the hash */
