@@ -39,12 +39,12 @@ int main(void)
 	rp.type = MONGO_RP_PRIMARY_PREFERRED;
 	collection = mongo_find_candidate_servers(manager, &rp);
 	if (collection->count) {
-		collection = mongo_sort_servers(collection, &rp);
+		collection = mongo_sort_servers(manager, collection, &rp);
 		printf("collection size: %d\n", collection->count);
-		collection = mongo_select_nearest_servers(collection, &rp);
+		collection = mongo_select_nearest_servers(manager, collection, &rp);
 		printf("collection size: %d\n", collection->count);
-		con = mongo_pick_server_from_set(collection, &rp);
-		mongo_print_connection_info(con);
+		con = mongo_pick_server_from_set(manager, collection, &rp);
+		mongo_print_connection_info(manager, con);
 	} else {
 		printf("no servers found\n");
 	}
