@@ -17,6 +17,7 @@ MongoLog::setLevel(MongoLog::ALL);
 $m = new Mongo("mongodb://$REPLICASET_PRIMARY:$REPLICASET_PRIMARY_PORT", array("replicaSet" => $REPLICASET_NAME));
 ?>
 --EXPECTF--
-Mongo::__construct(): Parsing mongodb://primary.rs.local:27017
-Mongo::__construct(): - Found node: primary.rs.local:27017
-Mongo::__construct(): - Connection type: STANDALONE
+Mongo::__construct(): Parsing mongodb://%s:%d
+Mongo::__construct(): - Found node: %s:%d
+Mongo::__construct(): - Found option 'replicaSet': '%s'
+Mongo::__construct(): - Connection type: REPLSET
