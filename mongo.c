@@ -239,24 +239,19 @@ PHP_METHOD(Mongo, __construct)
 		}
 	}
 
-
-
-
 	/* Options through array */
 	if (options) {
 		for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(options), &pos);
 			zend_hash_get_current_data_ex(Z_ARRVAL_P(options), (void **)&opt_entry, &pos) == SUCCESS;
 			zend_hash_move_forward_ex(Z_ARRVAL_P(options), &pos)
 		) {
-
 			switch (zend_hash_get_current_key_ex(Z_ARRVAL_P(options), &opt_key, &opt_key_len, &num_key, 0, &pos)) {
-				case HASH_KEY_IS_STRING:
-					{
-						int error = 0;
-						convert_to_string_ex(opt_entry);
-						error = mongo_store_option(link->manager, link->servers, opt_key, Z_STRVAL_PP(opt_entry), (char **)&error_message);
+				case HASH_KEY_IS_STRING: {
+					int error = 0;
+					convert_to_string_ex(opt_entry);
+					error = mongo_store_option(link->manager, link->servers, opt_key, Z_STRVAL_PP(opt_entry), (char **)&error_message);
 
-						switch(error) {
+					switch (error) {
 						case 3: /* Logical error (i.e. conflicting options)*/
 						case 1: /* Empty option name or value */
 							zend_throw_exception(mongo_ce_ConnectionException, error_message, 0 TSRMLS_CC);
@@ -274,18 +269,15 @@ PHP_METHOD(Mongo, __construct)
 								return;
 							}
 							break;
-						}
 					}
-					break;
+				} break;
 
 				case HASH_KEY_IS_LONG:
-						zend_throw_exception(mongo_ce_ConnectionException, "Unrecognized or unsupported option", 0 TSRMLS_CC);
-						return;
-					break;
+					zend_throw_exception(mongo_ce_ConnectionException, "Unrecognized or unsupported option", 0 TSRMLS_CC);
+					return;
 			}
 		}
 	}
-
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_BVAL_P(slave_okay)) {
