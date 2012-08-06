@@ -97,6 +97,8 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 	int num_returned = 0;
 	char buf[REPLY_HEADER_LEN];
 
+	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting cursor header");
+
 	/* set a timeout */
 	if (cursor->timeout && cursor->timeout > 0) {
 		status = mongo_io_wait_with_timeout(sock, cursor->timeout, error_message);
@@ -156,6 +158,8 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
  * Returns 0 on failure or an int indicating the number of bytes read */
 static int get_cursor_body(int sock, mongo_cursor *cursor, char **error_message)
 {
+	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting cursor body");
+
 	if (cursor->buf.start) {
 		efree(cursor->buf.start);
 	}
@@ -175,7 +179,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 	unsigned int status;
 	char        *error_message = NULL;
 
-	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "hearing something");
+	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting reply");
 	sock = cursor->connection->socket;
 
 	status = get_cursor_header(sock, cursor, (char**) &error_message TSRMLS_CC);
