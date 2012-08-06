@@ -575,6 +575,8 @@ int pool_size;
 
 	long log_level;
 	long log_module;
+	zend_fcall_info log_callback_info;
+	zend_fcall_info_cache log_callback_info_cache;
 
 	long ping_interval;
 	long is_master_interval;

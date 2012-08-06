@@ -413,6 +413,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
+  zval **z_safe;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
@@ -450,7 +451,14 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 	}
 
 	// force safe mode
-	add_assoc_long(options, "safe", 1);
+	if (zend_hash_find(Z_ARRVAL_P(options), "safe", strlen("safe")+1, (void**)&z_safe) == SUCCESS) {
+		convert_to_long_ex(z_safe);
+		if (Z_LVAL_PP(z_safe) < 1) {
+			add_assoc_long(options, "safe", 1);
+		}
+	} else {
+		add_assoc_long(options, "safe", 1);
+	}
 
   // insert chunks
   while (pos < bytes_len) {
@@ -586,6 +594,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   zval temp;
   zval *zid = 0, *zfile = 0, *chunks = 0;
+  zval **z_safe;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
@@ -666,7 +675,14 @@ PHP_METHOD(MongoGridFS, storeFile) {
 	}
 
 	// force safe mode
-	add_assoc_long(options, "safe", 1);
+	if (zend_hash_find(Z_ARRVAL_P(options), "safe", strlen("safe")+1, (void**)&z_safe) == SUCCESS) {
+		convert_to_long_ex(z_safe);
+		if (Z_LVAL_PP(z_safe) < 1) {
+			add_assoc_long(options, "safe", 1);
+		}
+	} else {
+		add_assoc_long(options, "safe", 1);
+	}
 
   // insert chunks
   while (pos < size || fp == 0) {
@@ -913,12 +929,6 @@ PHP_METHOD(MongoGridFS, storeUpload) {
     return;
   }
 
-  zend_hash_find(Z_ARRVAL_PP(file), "tmp_name", strlen("tmp_name")+1, (void**)&temp);
-  if (!temp || Z_TYPE_PP(temp) != IS_STRING) {
-    zend_throw_exception(mongo_ce_GridFSException, "tmp_name was not a string", 0 TSRMLS_CC);
-    return;
-  }
-
   if (extra && Z_TYPE_P(extra) == IS_ARRAY) {
     zval_add_ref(&extra);
     extra_param = extra;
@@ -935,14 +945,58 @@ PHP_METHOD(MongoGridFS, storeUpload) {
     }
   }
 
-  if (!found_name &&
-      zend_hash_find(Z_ARRVAL_PP(file), "name", strlen("name")+1, (void**)&name) == SUCCESS &&
-      Z_TYPE_PP(name) == IS_STRING) {
-    add_assoc_string(extra_param, "filename", Z_STRVAL_PP(name), 1);
+  zend_hash_find(Z_ARRVAL_PP(file), "tmp_name", strlen("tmp_name")+1, (void**)&temp);
+  if (!temp) {
+    zend_throw_exception(mongo_ce_GridFSException, "Couldn't find tmp_name in the $_FILES array. Are you sure the upload worked?", 0 TSRMLS_CC);
+    return;
   }
 
-  MONGO_METHOD2(MongoGridFS, storeFile, return_value, getThis(), *temp, extra_param);
-  zval_ptr_dtor(&extra_param);
+
+  if (Z_TYPE_PP(temp) == IS_ARRAY) {
+    HashPosition pos;
+    zval **entry, **names;
+
+    zend_hash_find(Z_ARRVAL_PP(file), "name", strlen("name")+1, (void**)&names);
+
+    array_init(return_value);
+    zend_hash_internal_pointer_reset(Z_ARRVAL_PP(names));
+    zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(temp), &pos);
+    while (zend_hash_get_current_data_ex(Z_ARRVAL_PP(temp), (void **)&entry, &pos) == SUCCESS) {
+      zval *retval;
+      zval *copied;
+      zval **name;
+      MAKE_STD_ZVAL(retval);
+
+      zend_hash_get_current_data(Z_ARRVAL_PP(names), (void **)&name);
+      add_assoc_string(extra_param, "filename", Z_STRVAL_PP(name), 1);
+
+      MONGO_METHOD2(MongoGridFS, storeFile, retval, getThis(), *entry, extra_param);
+
+      ALLOC_ZVAL(copied);
+      MAKE_COPY_ZVAL(&retval, copied);
+      Z_ADDREF_P(copied);
+
+      zend_hash_next_index_insert(Z_ARRVAL_P(return_value), &copied, sizeof(zval *), NULL);
+      zend_hash_move_forward_ex(Z_ARRVAL_PP(temp), &pos);
+      zend_hash_move_forward(Z_ARRVAL_PP(names));
+
+      zval_ptr_dtor(&retval);
+      zval_ptr_dtor(&copied);
+    }
+
+    zval_ptr_dtor(&extra_param);
+  } else if (Z_TYPE_PP(temp) == IS_STRING) {
+    if (!found_name &&
+        zend_hash_find(Z_ARRVAL_PP(file), "name", strlen("name")+1, (void**)&name) == SUCCESS &&
+        Z_TYPE_PP(name) == IS_STRING) {
+      add_assoc_string(extra_param, "filename", Z_STRVAL_PP(name), 1);
+    }
+
+    MONGO_METHOD2(MongoGridFS, storeFile, return_value, getThis(), *temp, extra_param);
+    zval_ptr_dtor(&extra_param);
+  } else {
+    zend_throw_exception(mongo_ce_GridFSException, "tmp_name was not a string or an array", 0 TSRMLS_CC);
+  }
 }
 
 /*

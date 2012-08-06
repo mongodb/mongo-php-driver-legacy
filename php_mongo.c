@@ -271,6 +271,8 @@ static PHP_GINIT_FUNCTION(mongo)
 
 	mongo_globals->log_level = 0;
 	mongo_globals->log_module = 0;
+	mongo_globals->log_callback_info = empty_fcall_info;
+	mongo_globals->log_callback_info_cache = empty_fcall_info_cache;
 
 	mongo_globals->manager = mongo_init();
 	TSRMLS_SET_CTX(mongo_globals->manager->log_context);

@@ -32,6 +32,7 @@ Warnings:
 Mongo::__construct(): is_ping: last pinged at %d; time: %dms
 Mongo::__construct(): is_ping: last pinged at %d; time: %dms
 Fine:
+Mongo::__construct(): mongo_get_connection: finding a REPLSET connection
 Mongo::__construct(): found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 Mongo::__construct(): found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 Mongo::__construct(): is_master: start
@@ -48,7 +49,8 @@ Mongo::__construct(): select server: only nearest
 Info:
 Mongo::__construct(): Parsing mongodb://%s:%d
 Mongo::__construct(): - Found node: %s:%d
-Mongo::__construct(): - Connection type: STANDALONE
+Mongo::__construct(): - Found option 'replicaSet': '%s'
+Mongo::__construct(): - Connection type: REPLSET
 Mongo::__construct(): discover_topology: checking is_master for %s:%d;X;%d
 Mongo::__construct(): is_master: setting maxBsonObjectSize to 16777216
 Mongo::__construct(): found host: %s:%d

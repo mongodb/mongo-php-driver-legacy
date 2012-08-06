@@ -17,6 +17,7 @@ MongoLog::setLevel(MongoLog::ALL);
 $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 ?>
 --EXPECTF--
+Mongo::__construct(): mongo_get_connection: finding a STANDALONE connection
 Mongo::__construct(): connection_create: creating new connection for %s:%d
 Mongo::__construct(): get_connection_single: pinging %s:%d;X;%d
 Mongo::__construct(): is_ping: start

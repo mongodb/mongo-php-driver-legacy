@@ -19,8 +19,9 @@ $m = new Mongo("mongodb://$REPLICASET_PRIMARY:$REPLICASET_PRIMARY_PORT/?replicaS
 --EXPECTF--
 Mongo::__construct(): Parsing mongodb://%s:%d/?replicaSet=%s
 Mongo::__construct(): - Found node: %s:%d
-Mongo::__construct(): - Found option 'replicaSet': %s
+Mongo::__construct(): - Found option 'replicaSet': '%s'
 Mongo::__construct(): - Connection type: REPLSET
+Mongo::__construct(): mongo_get_connection: finding a REPLSET connection
 Mongo::__construct(): connection_create: creating new connection for %s:%d
 Mongo::__construct(): get_connection_single: pinging %s:%d;X;%d
 Mongo::__construct(): is_ping: start

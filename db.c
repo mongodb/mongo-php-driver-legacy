@@ -115,19 +115,26 @@ PHP_METHOD(MongoDB, __toString) {
 
 PHP_METHOD(MongoDB, selectCollection) {
   zval temp;
-  zval *collection;
+  zval *z_collection;
+  char *collection;
+  int collection_len;
   mongo_db *db;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &collection) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &collection, &collection_len) == FAILURE) {
     return;
   }
+
+  MAKE_STD_ZVAL(z_collection);
+  ZVAL_STRINGL(z_collection, collection, collection_len, 1);
 
   db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(db->name, MongoDB);
 
   object_init_ex(return_value, mongo_ce_Collection);
 
-  MONGO_METHOD2(MongoCollection, __construct, &temp, return_value, getThis(), collection);
+  MONGO_METHOD2(MongoCollection, __construct, &temp, return_value, getThis(), z_collection);
+
+  zval_ptr_dtor(&z_collection);
 }
 
 PHP_METHOD(MongoDB, getGridFS) {
@@ -389,8 +396,8 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
     first_dot = strchr(Z_STRVAL_PP(collection), '.');
     system = strstr(Z_STRVAL_PP(collection), ".system.");
     // check that this isn't a system ns
-    if (!system_col && ((system && first_dot == system) ||
-      (name = strchr(Z_STRVAL_PP(collection), '.')) == 0)) {
+    if ((!system_col && (system && first_dot == system)) ||
+      (name = strchr(Z_STRVAL_PP(collection), '.')) == 0) {
 
       zval_ptr_dtor(&next);
       MAKE_STD_ZVAL(next);
