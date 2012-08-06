@@ -201,6 +201,8 @@ int static mongo_process_option(mongo_con_manager *manager, mongo_servers *serve
  */
 int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char *option_name, char *option_value, char **error_message)
 {
+	int i;
+
 	if (strcasecmp(option_name, "replicaSet") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': '%s'", option_value);
 
@@ -230,7 +232,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	}
 	if (strcasecmp(option_name, "username") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'username': '%s'", option_value);
-		for (int i = 0; i < servers->count; i++) {
+		for (i = 0; i < servers->count; i++) {
 			if (servers->server[i]->username) {
 				free(servers->server[i]->username);
 			}
@@ -240,7 +242,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	}
 	if (strcasecmp(option_name, "password") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'password': '%s'", option_value);
-		for (int i = 0; i < servers->count; i++) {
+		for (i = 0; i < servers->count; i++) {
 			if (servers->server[i]->password) {
 				free(servers->server[i]->password);
 			}
@@ -250,7 +252,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	}
 	if (strcasecmp(option_name, "db") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'db': '%s'", option_value);
-		for (int i = 0; i < servers->count; i++) {
+		for (i = 0; i < servers->count; i++) {
 			if (servers->server[i]->db) {
 				free(servers->server[i]->db);
 			}
