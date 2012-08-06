@@ -292,7 +292,7 @@ static mongo_connection* get_server(mongo_collection *c, int write_connection TS
 
 	link = (mongo_link*)zend_object_store_get_object((c->link) TSRMLS_CC);
 	if (!link) {
-	zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
+		zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
 		return 0;
 	}
 
