@@ -25,12 +25,16 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 static long set_value(char *setting, zval *return_value TSRMLS_DC);
 static void get_value(char *setting, zval *return_value TSRMLS_DC);
+static void userland_callback(int module, int level, char *message TSRMLS_DC);
+
 
 static zend_function_entry mongo_log_methods[] = {
   PHP_ME(MongoLog, setLevel, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(MongoLog, getLevel, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(MongoLog, setModule, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(MongoLog, getModule, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(MongoLog, setCallback, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+  PHP_ME(MongoLog, getCallback, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   {NULL, NULL, NULL}
 };
 
@@ -56,6 +60,7 @@ void mongo_init_MongoLog(TSRMLS_D) {
 
   zend_declare_property_long(mongo_ce_Log, "level", strlen("level"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
   zend_declare_property_long(mongo_ce_Log, "module", strlen("module"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Log, "callback", strlen("callback"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
 static long set_value(char *setting, zval *return_value TSRMLS_DC) {
@@ -91,6 +96,28 @@ PHP_METHOD(MongoLog, getLevel)
 PHP_METHOD(MongoLog, setModule)
 {
 	MonGlo(log_module) = set_value("module", return_value TSRMLS_CC);
+}
+
+PHP_METHOD(MongoLog, setCallback)
+{
+	zend_fcall_info fci = empty_fcall_info;
+	zend_fcall_info_cache fci_cache = empty_fcall_info_cache;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f/", &MonGlo(log_callback_info), &MonGlo(log_callback_info_cache)) == FAILURE) {
+		return;
+	}
+	zend_update_static_property(mongo_ce_Log, "callback", strlen("callback"), MonGlo(log_callback_info).function_name TSRMLS_CC);
+
+	RETURN_TRUE;
+}
+
+PHP_METHOD(MongoLog, getCallback)
+{
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "") == FAILURE) {
+		return;
+	}
+
+	RETURN_ZVAL(MonGlo(log_callback_info).function_name, 1, 0);
 }
 
 PHP_METHOD(MongoLog, getModule)
@@ -130,14 +157,18 @@ void php_mongo_log(const int module, const int level TSRMLS_DC, const char *form
 		vsnprintf(tmp, 256, format, args);
 		va_end(args);
 
-		php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
+		if (MonGlo(log_callback_info).function_name) {
+			userland_callback(module, level, tmp TSRMLS_CC);
+		} else {
+			php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
+		}
+
 		free(tmp);
 	}
 }
 
 void php_mcon_log_wrapper(int module, int level, void *context, char *format, va_list args)
 {
-	TSRMLS_D;
 	TSRMLS_FETCH_FROM_CTX(context);
 
 	if ((module & MonGlo(log_module)) && (level & MonGlo(log_level))) {
@@ -148,7 +179,46 @@ void php_mcon_log_wrapper(int module, int level, void *context, char *format, va
 		vsnprintf(tmp, 256, format, tmp_args);
 		va_end(tmp_args);
 
-		php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
+		if (MonGlo(log_callback_info).function_name) {
+			userland_callback(module, level, tmp TSRMLS_CC);
+		} else {
+			php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
+		}
+
 		free(tmp);
 	}
 }
+
+
+
+static void userland_callback(int module, int level, char *message TSRMLS_DC)
+{
+	zval **params[3];
+	zval *z_module, *z_level, *z_message, *z_retval = NULL;
+
+
+	ALLOC_INIT_ZVAL(z_module);
+	ZVAL_LONG(z_module, module);
+	params[0] = &z_module;
+
+	ALLOC_INIT_ZVAL(z_level);
+	ZVAL_LONG(z_level, level);
+	params[1] = &z_level;
+
+	ALLOC_INIT_ZVAL(z_message);
+	ZVAL_STRING(z_message, message, 1);
+	params[2] = &z_message;
+
+	MonGlo(log_callback_info).param_count = 3;
+	MonGlo(log_callback_info).params = params;
+	MonGlo(log_callback_info).retval_ptr_ptr = &z_retval;
+
+	if (SUCCESS == zend_call_function(&MonGlo(log_callback_info), &MonGlo(log_callback_info_cache) TSRMLS_CC)) {
+		zval_ptr_dtor(&z_retval);
+	}
+
+	zval_ptr_dtor(&z_message);
+	zval_ptr_dtor(&z_level);
+	zval_ptr_dtor(&z_module);
+}
+
