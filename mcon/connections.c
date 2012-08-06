@@ -309,11 +309,8 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 {
 	mcon_str      *packet;
 	char          *error_message = NULL;
-	int            read;
 	struct timeval start, end;
-	uint32_t       data_size;
-	char           reply_buffer[MONGO_REPLY_HEADER_SIZE], *data_buffer;
-	uint32_t       flags; /* To check for query reply status */
+	char          *data_buffer;
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: start");
 	packet = bson_create_ping_packet(con);
