@@ -413,6 +413,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
+  zval **z_safe;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
@@ -450,7 +451,14 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 	}
 
 	// force safe mode
-	add_assoc_long(options, "safe", 1);
+	if (zend_hash_find(Z_ARRVAL_P(options), "safe", strlen("safe")+1, (void**)&z_safe) == SUCCESS) {
+		convert_to_long_ex(z_safe);
+		if (Z_LVAL_PP(z_safe) < 1) {
+			add_assoc_long(options, "safe", 1);
+		}
+	} else {
+		add_assoc_long(options, "safe", 1);
+	}
 
   // insert chunks
   while (pos < bytes_len) {
@@ -586,6 +594,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
   zval temp;
   zval *zid = 0, *zfile = 0, *chunks = 0;
+  zval **z_safe;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
@@ -666,7 +675,14 @@ PHP_METHOD(MongoGridFS, storeFile) {
 	}
 
 	// force safe mode
-	add_assoc_long(options, "safe", 1);
+	if (zend_hash_find(Z_ARRVAL_P(options), "safe", strlen("safe")+1, (void**)&z_safe) == SUCCESS) {
+		convert_to_long_ex(z_safe);
+		if (Z_LVAL_PP(z_safe) < 1) {
+			add_assoc_long(options, "safe", 1);
+		}
+	} else {
+		add_assoc_long(options, "safe", 1);
+	}
 
   // insert chunks
   while (pos < size || fp == 0) {
