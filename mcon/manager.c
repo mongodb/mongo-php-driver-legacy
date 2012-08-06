@@ -11,9 +11,6 @@
 #include "parse.h"
 #include "read_preference.h"
 
-/* Forward declarations */
-int mongo_manager_connection_deregister(mongo_con_manager *manager, char *hash, mongo_connection *con);
-
 /* Helpers */
 static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, char **error_message)
 {
@@ -78,12 +75,12 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 				 * this from our list */
 				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: is_master return with an error for %s:%d: [%s]", servers->server[i]->host, servers->server[i]->port, error_message);
 				free(error_message);
-				mongo_manager_connection_deregister(manager, hash, con);
+				mongo_manager_connection_deregister(manager, con);
 				break;
 
 			case 3:
 				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: is_master worked, but we need to remove the seed host's connection");
-				mongo_manager_connection_deregister(manager, hash, con);
+				mongo_manager_connection_deregister(manager, con);
 				/* Break intentionally missing */
 
 			case 1:
@@ -317,7 +314,7 @@ void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connect
 	}
 }
 
-int mongo_manager_connection_deregister(mongo_con_manager *manager, char *hash, mongo_connection *con)
+int mongo_manager_connection_deregister(mongo_con_manager *manager, mongo_connection *con)
 {
 	mongo_con_manager_item *ptr = manager->connections;
 	mongo_con_manager_item *prev = NULL;
@@ -330,7 +327,7 @@ int mongo_manager_connection_deregister(mongo_con_manager *manager, char *hash, 
 	/* Loop over existing connections and compare hashes */
 	do {
 		/* The connection is the one we're looking for */
-		if (strcmp(ptr->hash, hash) == 0) {
+		if (strcmp(ptr->hash, con->hash) == 0) {
 			if (prev == NULL) { /* It's the first one in the list... */
 				manager->connections = ptr->next;
 			} else {
