@@ -1,4 +1,3 @@
-// php_mongo.c
 /**
  *  Copyright 2009-2011 10gen, Inc.
  *
@@ -108,7 +107,6 @@ ZEND_GET_MODULE(mongo)
 
 
 /* {{{ PHP_INI */
-// these must be in the same order as mongo_globals are declared or it will segfault on 64-bit machines!
 PHP_INI_BEGIN()
 STD_PHP_INI_ENTRY("mongo.allow_persistent", "1", PHP_INI_ALL, OnUpdateLong, allow_persistent, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.default_host", "localhost", PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals)
@@ -166,7 +164,6 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoInt64(TSRMLS_C);
 
   mongo_init_MongoLog(TSRMLS_C);
-//  mongo_init_MongoPool(TSRMLS_C);
 
   /*
    * MongoMaxKey and MongoMinKey are completely non-interactive: they have no

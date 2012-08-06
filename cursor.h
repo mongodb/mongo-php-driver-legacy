@@ -1,4 +1,3 @@
-//cursor.h
 /**
  *  Copyright 2009-2011 10gen, Inc.
  *

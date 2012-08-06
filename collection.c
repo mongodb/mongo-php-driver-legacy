@@ -1,4 +1,3 @@
-//collection.c
 /**
  *  Copyright 2009-2011 10gen, Inc.
  *
@@ -307,7 +306,7 @@ static mongo_connection* get_server(mongo_collection *c, int write_connection TS
 		return 0;
 	}
 
-  return connection;
+	return connection;
 }
 
 /* Wrapper for sending and wrapping in a safe op */
