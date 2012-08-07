@@ -41,7 +41,7 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 /* Split a hash back into its constituent parts */
 int mongo_server_split_hash(char *hash, char **host, int *port, char **db, char **username, int *pid)
 {
-	char *ptr;
+	char *ptr, *pid_semi;
 
 	ptr = hash;
 
@@ -52,7 +52,19 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **db, char 
 	/* Find the port */
 	*port = atoi(ptr + 1);
 
-	/* TODO: return db, username and pid */
+	/* Find the database and username */
+	ptr = strchr(ptr, ';') + 1;
+	if (ptr[0] != 'X') {
+		*db = strndup(ptr, strchr(ptr, '/') - ptr);
+		pid_semi = strchr(ptr, ';');
+		*username = strndup(strchr(ptr, '/') + 1, pid_semi - strchr(ptr, '/') - 1);
+	} else {
+		*db = *username = NULL;
+		pid_semi = strchr(ptr, ';');
+	}
+
+	/* Find the PID */
+	*pid = atoi(pid_semi + 1);
 
     return 0;
 }
