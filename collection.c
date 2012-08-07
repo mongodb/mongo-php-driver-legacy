@@ -46,7 +46,7 @@ zend_class_entry *mongo_ce_Collection = NULL;
 
 static mongo_connection* get_server(mongo_collection *c, int write_connection TSRMLS_DC);
 static int is_safe_op(zval *options TSRMLS_DC);
-static void safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
+static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_distinct, 0, 0, 1)
@@ -314,11 +314,20 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer buf
 {
 	int retval;
 	char *error_message = NULL;
+	mongo_link *link;
+	mongo_collection *c;
+
+	PHP_MONGO_GET_COLLECTION(this_ptr);
+	link = (mongo_link*)zend_object_store_get_object((c->link) TSRMLS_CC);
+	if (!link) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
+		return 0;
+	}
 
 	if (is_safe_op(options TSRMLS_CC)) {
 		zval *cursor = append_getlasterror(getThis(), &buf, options TSRMLS_CC);
 		if (cursor) {
-			safe_op(connection, cursor, &buf, return_value TSRMLS_CC);
+			safe_op(link->manager, connection, cursor, &buf, return_value TSRMLS_CC);
 		} else {
 			retval = 0;
 		}
@@ -344,7 +353,33 @@ static int is_safe_op(zval *options TSRMLS_DC) {
       Z_BVAL_PP(fsync_pp) == 1));
 }
 
-static void safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC)
+/*
+ * This wrapper temporarily turns off the exception throwing bit if it has been
+ * set (by calling mongo_cursor_throw() before). We can't call
+ * mongo_cursor_throw after deregister as it frees up bits of memory that
+ * mongo_cursor_throw uses to construct its error message.
+ *
+ * Without the disabling of the exception bit and when a user defined error
+ * handler is used on the PHP side, the notice would never been shown because
+ * the exception bubbles up before the notice can actually be shown. By turning
+ * the error handling mode to EH_NORMAL temporarily, we circumvent this
+ * problem.
+ */
+static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_connection *connection)
+{
+	int orig_error_handling;
+
+	/* Save EG(error_handling) so that we can show log messages when we
+	 * have already thrown an exception */
+	orig_error_handling = EG(error_handling);
+	EG(error_handling) = EH_NORMAL;
+
+	mongo_manager_connection_deregister(manager, connection);
+
+	EG(error_handling) = orig_error_handling;
+}
+
+static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC)
 {
   zval *errmsg, **err;
   mongo_cursor *cursor;
@@ -357,7 +392,9 @@ static void safe_op(mongo_connection *connection, zval *cursor_z, buffer *buf, z
 	if (-1 == mongo_io_send(connection->socket, buf->start, buf->pos - buf->start, (char **) &error_message)) {
 		/* TODO: Figure out what to do on FAIL
 		mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
+		mongo_manager_log(manager, MLOG_IO, MLOG_WARN, "safe_op: sending data failed, removing connection %s", connection->hash);
 		mongo_cursor_throw(connection, 16 TSRMLS_CC, error_message);
+		connection_deregister_wrapper(manager, connection);
 
 		free(error_message);    
 		cursor->connection = NULL;
