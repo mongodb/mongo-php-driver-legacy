@@ -616,6 +616,9 @@ PHP_METHOD(MongoDB, command) {
 	/* Make sure commands aren't be sent to slaves */
 	/* TODO: The read preferences spec has a list of commands that *can* be send
 	 * to slave */
+	/* This should be refactored alongside with the getLastError redirection in
+	 * collection.c/append_getlasterror. The Cursor creation should be done through
+	 * an init method otherwise a connection have to be requested twice. */
 	PHP_MONGO_GET_LINK(db->link);
 	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
 	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");

@@ -258,7 +258,9 @@ PHP_METHOD(MongoCursor, __construct) {
 	/* TODO: We have to assume to use a read connection here, but it should
 	 * really be refactored so that we can create a cursor with the correct
 	 * read/write setup already, instead of having to force a new mode later
-	 * (like we do for commands right now through php_mongo_connection_force_primary). */
+	 * (like we do for commands right now through
+	 * php_mongo_connection_force_primary).  See also MongoDB::command and
+	 * append_getlasterror, where this has to be done too. */
 	cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, 0, (char**) &error_message);
 
 	if (!cursor->connection && error_message) {
