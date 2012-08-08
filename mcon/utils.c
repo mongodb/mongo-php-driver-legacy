@@ -66,7 +66,7 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **db, char 
 	/* Find the PID */
 	*pid = atoi(pid_semi + 1);
 
-    return 0;
+	return 0;
 }
 
 /* Returns just the host and port from the hash */
