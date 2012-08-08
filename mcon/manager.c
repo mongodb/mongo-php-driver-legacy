@@ -59,7 +59,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
-		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: checking is_master for %s", hash);
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: checking is_master for %s", hash);
 		con = mongo_manager_connection_find_by_hash(manager, hash);
 
 		if (!con) {
@@ -84,7 +84,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 				/* Break intentionally missing */
 
 			case 1:
-				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: is_master worked");
+				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: is_master worked");
 				for (j = 0; j < nr_hosts; j++) {
 					mongo_server_def *tmp_def;
 					mongo_connection *new_con;
@@ -225,15 +225,15 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a STANDALONE connection");
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a STANDALONE connection");
 			return mongo_get_connection_standalone(manager, servers, error_message);
 
 		case MONGO_CON_TYPE_REPLSET:
 			if (write_connection) {
-				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a REPLSET connection (write)");
+				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a REPLSET connection (write)");
 				return mongo_get_write_connection_replicaset(manager, servers, error_message);
 			} else {
-				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a REPLSET connection (read)");
+				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a REPLSET connection (read)");
 				return mongo_get_read_connection_replicaset(manager, servers, error_message);
 			}
 /*
@@ -242,7 +242,7 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 			return mongo_get_connection_multiple(manager, servers);
 */
 		default:
-			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "mongo_get_read_write_connection: connection type %d is not supported", servers->con_type);
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: connection type %d is not supported", servers->con_type);
 			*error_message = strdup("mongo_get_read_write_connection: Unknown connection type requested");
 	}
 	return NULL;

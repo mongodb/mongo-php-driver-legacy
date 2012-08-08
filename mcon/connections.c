@@ -363,7 +363,7 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 		return 2;
 	}
 
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: start");
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_master: start");
 	packet = bson_create_is_master_packet(con);
 
 	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
@@ -427,13 +427,13 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 
 	/* Find max bson size */
 	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_master: setting maxBsonObjectSize to %d", max_bson_size);
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: setting maxBsonObjectSize to %d", max_bson_size);
 		con->max_bson_size = max_bson_size;
 	}
 
 	/* Find all hosts */
 	bson_find_field_as_array(ptr, "hosts", &hosts);
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: set name: %s, is_master: %d, is_arbiter: %d", set, is_master, arbiter);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_master: set name: %s, is_master: %d, is_arbiter: %d", set, is_master, arbiter);
 	*nr_hosts = 0;
 	ptr = hosts;
 	while (bson_array_find_next_string(&ptr, &string)) {
@@ -455,7 +455,7 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 	free(data_buffer);
 
 	con->last_is_master = now.tv_sec;
-	mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_master: last ran at %ld", con->last_is_master);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_master: last ran at %ld", con->last_is_master);
 
 	return retval;
 }
@@ -479,7 +479,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 		return 1;
 	}
 
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: start");
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: start");
 	packet = bson_create_is_master_packet(con);
 
 	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
@@ -491,7 +491,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 
 	/* Find max bson size */
 	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: setting maxBsonObjectSize to %d", max_bson_size);
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: setting maxBsonObjectSize to %d", max_bson_size);
 		con->max_bson_size = max_bson_size;
 	} else {
 		*error_message = strdup("Couldn't find the maxBsonObjectSize field");
@@ -502,7 +502,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	free(data_buffer);
 
 	con->last_is_master = now.tv_sec;
-	mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "get_server_flags: last ran at %ld", con->last_is_master);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: last ran at %ld", con->last_is_master);
 
 	return 1;
 }
