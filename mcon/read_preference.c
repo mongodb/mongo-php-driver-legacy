@@ -7,16 +7,24 @@
 #include <stdlib.h>
 
 /* Helpers */
-void mongo_print_connection_info(mongo_con_manager *manager, void *elem)
+
+static void mongo_print_connection_info(mongo_con_manager *manager, mongo_connection *con, int level)
 {
-	mongo_connection *con = (mongo_connection*) elem;
-	mongo_manager_log(manager, MLOG_RS, MLOG_INFO,
+	mongo_manager_log(manager, MLOG_RS, level,
 		"- connection: type: %s, socket: %d, ping: %d, hash: %s",
 		con->connection_type == 1 ? "PRIMARY  " : "SECONDARY",
 		con->socket,
 		con->ping_ms,
 		con->hash
 	);
+}
+
+void mongo_print_connection_iterate_wrapper(mongo_con_manager *manager, void *elem)
+{
+	mongo_connection *con = (mongo_connection*) elem;
+
+	mongo_print_connection_info(manager, con, MLOG_FINE);
+
 }
 
 /* Collecting the correct servers */
@@ -31,7 +39,7 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 	while (ptr) {
 		/* we need to check for username and pw on the connection too later */
 		if (ptr->connection->connection_type & types) {
-			mongo_print_connection_info(manager, ptr->connection);
+			mongo_print_connection_info(manager, ptr->connection, MLOG_FINE);
 			mcon_collection_add(col, ptr->connection);
 		}
 		ptr = ptr->next;
@@ -169,7 +177,8 @@ mcon_collection *mongo_sort_servers(mongo_con_manager *manager, mcon_collection 
 	}
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "mongo_sort_servers: sorting");
 	qsort(col->data, col->count, sizeof(mongo_connection*), sort_function);
-	mcon_collection_iterate(manager, col, mongo_print_connection_info);
+	mcon_collection_iterate(manager, col, mongo_print_connection_iterate_wrapper);
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "mongo_sort_servers: done");
 	return col;
 }
 
@@ -212,15 +221,20 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 
 mongo_connection *mongo_pick_server_from_set(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp)
 {
+	mongo_connection *con = NULL;
 	int entry = rand() % col->count;
 
 	if (rp->type == MONGO_RP_PRIMARY_PREFERRED) {
 		if (((mongo_connection*)col->data[0])->connection_type == MONGO_NODE_PRIMARY) {
 			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "pick server: the primary");
-			return (mongo_connection*)col->data[0];
+			con = (mongo_connection*)col->data[0];
+			mongo_print_connection_info(manager, con, MLOG_INFO);
+			return con;
 		}
 	}
 	/* For now, we just pick a random server from the set */
-	mongo_manager_log(manager, MLOG_RS, MLOG_INFO, "pick server: random element %d", entry);
-	return (mongo_connection*)col->data[entry];
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "pick server: random element %d", entry);
+	con = (mongo_connection*)col->data[entry];
+	mongo_print_connection_info(manager, con, MLOG_INFO);
+	return con;
 }
