@@ -80,7 +80,7 @@ char *mongo_server_hash_to_server(char *hash)
 }
 
 /* Returns just the PID from the hash */
-int *mongo_server_hash_to_pid(char *hash)
+int mongo_server_hash_to_pid(char *hash)
 {
 	char *ptr;
 
