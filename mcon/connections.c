@@ -239,7 +239,7 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_create: creating new connection for %s:%d", server_def->host, server_def->port);
 	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, 1000, error_message);
 	if (tmp->socket == -1) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error: %s", *error_message);
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error while creating connection for %s:%d: %s", server_def->host, server_def->port, *error_message);
 		free(tmp);
 		return NULL;
 	}
