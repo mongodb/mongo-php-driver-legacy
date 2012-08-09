@@ -249,16 +249,28 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 
 void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 {
+	int current_pid, connection_pid;
+
+	current_pid = getpid();
+	connection_pid = mongo_server_hash_to_pid(con->hash);
+
+	/* Only close the connection if it matches the current PID */
+	if (current_pid != connection_pid) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_connection_destroy: The process pid (%d) for %s doesn't match the connection pid (%d).", current_pid, con->hash, connection_pid);
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_connection_destroy: Closing socket for %s.", con->hash);
+
 #ifdef WIN32
-	shutdown(con->socket, SD_BOTH);
-	closesocket(con->socket);
-	WSACleanup();
+		shutdown(con->socket, SD_BOTH);
+		closesocket(con->socket);
+		WSACleanup();
 #else
-	shutdown(con->socket, SHUT_RDWR);
-	close(con->socket);
+		shutdown(con->socket, SHUT_RDWR);
+		close(con->socket);
 #endif
-	free(con->hash);
-	free(con);
+		free(con->hash);
+		free(con);
+	}
 }
 
 #define MONGO_REPLY_HEADER_SIZE 36
