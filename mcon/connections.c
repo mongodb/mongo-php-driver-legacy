@@ -244,6 +244,9 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 		return NULL;
 	}
 
+	/* We call get_server_flags to the maxBsonObjectSize data */
+	mongo_connection_get_server_flags(manager, tmp, (char**) &error_message);
+
 	return tmp;
 }
 
@@ -483,13 +486,6 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	int32_t        max_bson_size = 0;
 	char           *data_buffer;
 	char          *ptr;
-	struct timeval now;
-
-	gettimeofday(&now, NULL);
-	if (con->last_is_master + manager->is_master_interval > now.tv_sec) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_is_master, now.tv_sec, con->last_is_master + manager->is_master_interval - now.tv_sec);
-		return 1;
-	}
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: start");
 	packet = bson_create_is_master_packet(con);
@@ -512,9 +508,6 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	}
 
 	free(data_buffer);
-
-	con->last_is_master = now.tv_sec;
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: last ran at %ld", con->last_is_master);
 
 	return 1;
 }

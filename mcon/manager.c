@@ -153,9 +153,6 @@ static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *mana
 		goto bailout;
 	}
 
-	/* We call get_server_flags to the maxBsonObjectSize data */
-	mongo_connection_get_server_flags(manager, tmp, (char**) &error_message);
-
 bailout:
 	if (con_error_message) {
 		free(con_error_message);
