@@ -345,7 +345,12 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer buf
 	mongo_link *link;
 	mongo_collection *c;
 
-	PHP_MONGO_GET_COLLECTION(this_ptr);
+	c = (mongo_collection*)zend_object_store_get_object(this_ptr TSRMLS_CC);
+	if (!c->ns) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return 0;
+	}
+
 	link = (mongo_link*)zend_object_store_get_object((c->link) TSRMLS_CC);
 	if (!link) {
 		zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
