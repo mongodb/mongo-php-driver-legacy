@@ -19,6 +19,19 @@
 #define MONGO_NODE_ARBITER        0x04
 #define MONGO_NODE_MONGOS         0x08
 
+/* Constants for health states as returned by replSetGetStatus
+ * From: http://docs.mongodb.org/manual/reference/replica-status/#statuses */
+#define MONGO_STATE_STARTING1     0x00
+#define MONGO_STATE_PRIMARY       0x01
+#define MONGO_STATE_SECONDARY     0x02
+#define MONGO_STATE_RECOVERING    0x03
+#define MONGO_STATE_FATAL_ERROR   0x04
+#define MONGO_STATE_STARTING2     0x05
+#define MONGO_STATE_UNKNOWN       0x06
+#define MONGO_STATE_ARBITER       0x07
+#define MONGO_STATE_DOWN          0x08
+#define MONGO_STATE_ROLLBACK      0x09
+#define MONGO_STATE_REMOVED       0x0a
 
 /*
  * Constants for the logging framework

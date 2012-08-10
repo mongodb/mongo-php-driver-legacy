@@ -455,21 +455,34 @@ int mongo_connection_rs_status(mongo_con_manager *manager, mongo_connection *con
 			 * will get this updated when they get hit during the rs_status()
 			 * call on it. */
 			switch (state) {
-				case 1: con->connection_type = MONGO_NODE_PRIMARY; break;
-				case 2: con->connection_type = MONGO_NODE_SECONDARY; break;
-				case 7: con->connection_type = MONGO_NODE_ARBITER; break;
+				case MONGO_STATE_PRIMARY:
+					con->connection_type = MONGO_NODE_PRIMARY;
+					break;
+				case MONGO_STATE_SECONDARY:
+					con->connection_type = MONGO_NODE_SECONDARY;
+					break;
+				case MONGO_STATE_ARBITER:
+					con->connection_type = MONGO_NODE_ARBITER;
+					break;
 			}
 		}
 
-		if (state == 1 || state == 2) { /* Primary or secondary */
-			(*nr_hosts)++;
-			*found_hosts = realloc(*found_hosts, (*nr_hosts) * sizeof(char*));
-			(*found_hosts)[*nr_hosts-1] = strdup(name);
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "rs_status: adding found host: %s (state: %d)", name, state);
-		} else if (state == 7) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "rs_status: found an arbiter host: %s (state: %d)", name, state);
-		} else if (state == 8) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "rs_status: found an unhealthy host: %s (state: %d)", name, state);
+		switch (state) {
+			case MONGO_STATE_PRIMARY:
+			case MONGO_STATE_SECONDARY:
+				(*nr_hosts)++;
+				*found_hosts = realloc(*found_hosts, (*nr_hosts) * sizeof(char*));
+				(*found_hosts)[*nr_hosts-1] = strdup(name);
+				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "rs_status: found a connectable host: %s (state: %d)", name, state);
+				break;
+
+			case MONGO_STATE_ARBITER:
+				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "rs_status: found an arbiter host: %s (state: %d)", name, state);
+				break;
+
+			default:
+				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "rs_status: found an unconnectable host: %s (state: %d)", name, state);
+				break;
 		}
 	} while (bson_array_find_next_embedded_doc(&hosts));
 
