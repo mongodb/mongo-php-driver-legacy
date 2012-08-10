@@ -73,6 +73,23 @@ mcon_str *bson_create_is_master_packet(mongo_connection *con)
 	return str;
 }
 
+mcon_str *bson_create_rs_status_packet(mongo_connection *con)
+{
+	struct mcon_str *str = create_simple_header(con);
+	int    hdr;
+
+	hdr = str->l;
+	mcon_serialize_int(str, 0); /* We need to fill this with the length */
+	bson_add_long(str, "replSetGetStatus", 1);
+	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
+
+	/* Set length */
+	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+
+	((int*) str->d)[0] = str->l;
+	return str;
+}
+
 /* Field reading functionality */
 /* - helpers */
 char *bson_skip_field_name(char *data)
@@ -266,4 +283,15 @@ int bson_array_find_next_string(char **buffer, char **data)
 	}
 	*buffer = bson_next(*buffer);
 	return *buffer == NULL ? 0 : 1;
+}
+
+int bson_array_find_next_embedded_doc(char **buffer)
+{
+	char *read_field;
+	int   read_type;
+	void *return_data;
+
+	*buffer = bson_next(*buffer);
+	return_data = bson_get_current(*buffer, &read_field, &read_type);
+	return read_type == BSON_DOCUMENT;
 }
