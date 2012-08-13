@@ -253,6 +253,7 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 {
 	int current_pid, connection_pid;
+	int i;
 
 	current_pid = getpid();
 	connection_pid = mongo_server_hash_to_pid(con->hash);
@@ -271,6 +272,10 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 		shutdown(con->socket, SHUT_RDWR);
 		close(con->socket);
 #endif
+		for (i = 0; i < con->tag_count; i++) {
+			free(con->tags[i]);
+		}
+		free(con->tags);
 		free(con->hash);
 		free(con);
 	}
@@ -503,8 +508,9 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 {
 	mcon_str      *packet;
 	int32_t        max_bson_size = 0;
-	char           *data_buffer;
+	char          *data_buffer;
 	char          *ptr;
+	char          *tags;
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: start");
 	packet = bson_create_is_master_packet(con);
@@ -524,6 +530,26 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 		*error_message = strdup("Couldn't find the maxBsonObjectSize field");
 		free(data_buffer);
 		return 0;
+	}
+
+	/* Find read preferences tags */
+	con->tag_count = 0;
+	con->tags = NULL;
+	if (bson_find_field_as_document(ptr, "tags", (char**) &tags)) {
+		char *it, *name, *value;
+		int   length;
+
+		it = tags;
+
+		while (bson_array_find_next_string(&it, &name, &value)) {
+			con->tags = realloc(con->tags, (con->tag_count + 1) * sizeof(char*));
+			length = strlen(name) + strlen(value) + 2;
+			con->tags[con->tag_count] = malloc(length);
+			snprintf(con->tags[con->tag_count], length, "%s:%s", name, value);
+			free(name);
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: added tag %s", con->tags[con->tag_count]);
+			con->tag_count++;
+		}
 	}
 
 	free(data_buffer);

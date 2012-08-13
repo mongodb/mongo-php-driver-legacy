@@ -238,6 +238,17 @@ int bson_find_field_as_array(char *buffer, char *field, char **data)
 	return 0;
 }
 
+int bson_find_field_as_document(char *buffer, char *field, char **data)
+{
+	char* tmp = bson_find_field(buffer, field, BSON_DOCUMENT);
+
+	if (tmp) {
+		*data = tmp + 4; /* int32 for length */
+		return 1;
+	}
+	return 0;
+}
+
 int bson_find_field_as_bool(char *buffer, char *field, unsigned char *data)
 {
 	char *tmp = (char*) bson_find_field(buffer, field, BSON_BOOLEAN);
@@ -271,7 +282,7 @@ int bson_find_field_as_string(char *buffer, char *field, char **data)
 	return 0;
 }
 
-int bson_array_find_next_string(char **buffer, char **data)
+int bson_array_find_next_string(char **buffer, char **field, char **data)
 {
 	char *read_field;
 	int   read_type;
@@ -280,6 +291,9 @@ int bson_array_find_next_string(char **buffer, char **data)
 	return_data = bson_get_current(*buffer, &read_field, &read_type);
 	if (read_type == BSON_STRING) {
 		*data = return_data + 4;
+		if (*field) {
+			*field = strdup(read_field);
+		}
 	}
 	*buffer = bson_next(*buffer);
 	return *buffer == NULL ? 0 : 1;

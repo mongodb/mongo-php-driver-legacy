@@ -63,6 +63,8 @@ typedef struct _mongo_connection
 	int    socket;
 	int    connection_type; /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
 	int    max_bson_size; /* Store per connection, as it can actually differ */
+	int    tag_count;
+	char **tags;
 	char  *hash; /* Duplicate of the hash that the manager knows this connection as */
 } mongo_connection;
 
