@@ -229,10 +229,10 @@ void *bson_find_field(char *data, char *field_name, int type)
 /* - Public API */
 int bson_find_field_as_array(char *buffer, char *field, char **data)
 {
-	char* tmp = bson_find_field(buffer, field, BSON_ARRAY) + 4; /* int32 for length */
+	char* tmp = bson_find_field(buffer, field, BSON_ARRAY);
 
 	if (tmp) {
-		*data = tmp;
+		*data = tmp + 4; /* int32 for length */
 		return 1;
 	}
 	return 0;
