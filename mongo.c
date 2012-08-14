@@ -501,7 +501,11 @@ PHP_METHOD(Mongo, getReadPreference)
 {
 	mongo_link *link;
 	PHP_MONGO_GET_LINK(getThis());
-	RETURN_LONG(link->servers->read_pref.type);
+
+	array_init(return_value);
+	add_assoc_long(return_value, "type", link->servers->read_pref.type);
+	add_assoc_string(return_value, "type_string", mongo_read_preference_type_to_name(link->servers->read_pref.type), 1);
+	/* TODO: Add: tag sets */
 }
 
 /* {{{ Mongo::setReadPreference(int read_preference)
@@ -511,12 +515,14 @@ PHP_METHOD(Mongo, setReadPreference)
 	long read_preference;
 	mongo_link *link;
 
+	/* TODO: Add tagsets as second argument */
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &read_preference) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_LINK(getThis());
 
+	/* TODO: Add warning for wrong type */
 	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
 		link->servers->read_pref.type = read_preference;
 	}
