@@ -263,7 +263,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	if (strcasecmp(option_name, "slaveOkay") == 0) {
 		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
-			if (servers->rp.type != MONGO_RP_PRIMARY) {
+			if (servers->read_pref.type != MONGO_RP_PRIMARY || servers->read_pref.tagset_count) {
 				/* the server already has read preferences configured, but we're still
 				 * trying to set slave okay. The spec says that's an error */
 				*error_message = strdup("You can not use both slaveOkay and read-preferences. Please switch to read-preferences.");
@@ -271,7 +271,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			} else {
 				/* Old style option, that needs to be removed. For now, spec dictates
 				 * it needs to be ReadPreference=SECONDARY_PREFERRED */
-				servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
+				servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
 			}
 			return 0;
 		}

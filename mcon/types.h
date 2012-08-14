@@ -96,9 +96,17 @@ typedef struct _mongo_con_manager
 	long                    is_master_interval; /* default: 15 seconds */
 } mongo_con_manager;
 
+typedef struct _mongo_read_preference_tagset
+{
+	int    tag_count;
+	char **tags;
+} mongo_read_preference_tagset;
+
 typedef struct _mongo_read_preference
 {
-	int type; /* MONGO_RP_* */
+	int                            type; /* MONGO_RP_* */
+	int                            tagset_count; /* The number of tag sets in this RP */
+	mongo_read_preference_tagset **tagsets;
 } mongo_read_preference;
 
 typedef struct _mongo_server_def
@@ -120,7 +128,7 @@ typedef struct _mongo_servers
 	char                 *repl_set_name;
 	int                   connectTimeoutMS;
 
-	mongo_read_preference rp;
+	mongo_read_preference read_pref;
 } mongo_servers;
 
 typedef struct _mcon_collection

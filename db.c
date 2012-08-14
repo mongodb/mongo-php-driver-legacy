@@ -59,7 +59,7 @@ void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link)
 	int   old_rp;
 	char *error_message = NULL;
 
-	if (link->servers->rp.type != MONGO_RP_PRIMARY) {
+	if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {
 		cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, 1, (char**) &error_message);
 		if (!cursor->connection && error_message) {
 			zend_throw_exception(mongo_ce_ConnectionException, error_message, 72 TSRMLS_CC);
@@ -100,7 +100,7 @@ PHP_METHOD(MongoDB, __construct) {
   zval_add_ref(&db->link);
 
   PHP_MONGO_GET_LINK(zlink);
-	db->rp = link->servers->rp;
+	mongo_read_preference_copy(&link->servers->read_pref, &db->read_pref);
 
   MAKE_STD_ZVAL(db->name);
   ZVAL_STRING(db->name, name, 1);
@@ -163,7 +163,7 @@ PHP_METHOD(MongoDB, getSlaveOkay)
 {
 	mongo_db *db;
 	PHP_MONGO_GET_DB(getThis());
-	RETURN_BOOL(db->rp.type != MONGO_RP_PRIMARY);
+	RETURN_BOOL(db->read_pref.type != MONGO_RP_PRIMARY);
 }
 
 PHP_METHOD(MongoDB, setSlaveOkay)
@@ -177,8 +177,8 @@ PHP_METHOD(MongoDB, setSlaveOkay)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	RETVAL_BOOL(db->rp.type != MONGO_RP_PRIMARY);
-	db->rp.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
+	RETVAL_BOOL(db->read_pref.type != MONGO_RP_PRIMARY);
+	db->read_pref.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
 
 
@@ -186,7 +186,10 @@ PHP_METHOD(MongoDB, getReadPreference)
 {
 	mongo_db *db;
 	PHP_MONGO_GET_DB(getThis());
-	RETURN_LONG(db->rp.type);
+
+	array_init(return_value);
+	add_assoc_long(return_value, "type", db->read_pref.type);
+	/* TODO: Add: string for type, tag sets */
 }
 
 /* {{{ MongoDB::setReadPreference(int read_preference)
@@ -203,7 +206,7 @@ PHP_METHOD(MongoDB, setReadPreference)
 	PHP_MONGO_GET_DB(getThis());
 
 	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
-		db->rp.type = read_preference;
+		db->read_pref.type = read_preference;
 	}
 }
 /* }}} */
@@ -962,7 +965,7 @@ static void php_mongo_db_free(void *object TSRMLS_DC) {
     if (db->name) {
       zval_ptr_dtor(&db->name);
     }
-
+	mongo_read_preference_dtor(&db->read_pref);
     zend_object_std_dtor(&db->std TSRMLS_CC);
     efree(db);
   }

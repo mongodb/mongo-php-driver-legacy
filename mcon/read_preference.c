@@ -5,11 +5,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Helpers */
 
 static void mongo_print_connection_info(mongo_con_manager *manager, mongo_connection *con, int level)
 {
+	int i;
+
 	mongo_manager_log(manager, MLOG_RS, level,
 		"- connection: type: %s, socket: %d, ping: %d, hash: %s",
 		con->connection_type == 1 ? "PRIMARY  " : "SECONDARY",
@@ -17,6 +20,11 @@ static void mongo_print_connection_info(mongo_con_manager *manager, mongo_connec
 		con->ping_ms,
 		con->hash
 	);
+	for (i = 0; i < con->tag_count; i++) {
+		mongo_manager_log(manager, MLOG_RS, level,
+			"  - tag: %s", con->tags[i]
+		);
+	}
 }
 
 void mongo_print_connection_iterate_wrapper(mongo_con_manager *manager, void *elem)
@@ -237,4 +245,56 @@ mongo_connection *mongo_pick_server_from_set(mongo_con_manager *manager, mcon_co
 	con = (mongo_connection*)col->data[entry];
 	mongo_print_connection_info(manager, con, MLOG_INFO);
 	return con;
+}
+
+/* Tagset helpers */
+void mongo_read_preference_add_tag(mongo_read_preference_tagset *tagset, char *name, char *value)
+{
+	tagset->tag_count++;
+	tagset->tags = realloc(tagset->tags, tagset->tag_count * sizeof(char*));
+	tagset->tags[tagset->tag_count - 1] = malloc(strlen(name) + strlen(value) + 2);
+	snprintf(tagset->tags[tagset->tag_count - 1], strlen(name) + strlen(value) + 2, "%s:%s", name, value);
+}
+
+void mongo_read_preference_add_tagset(mongo_read_preference *rp, mongo_read_preference_tagset *tagset)
+{
+	rp->tagset_count++;
+	rp->tagsets = realloc(rp->tagsets, rp->tagset_count * sizeof(mongo_read_preference_tagset*));
+	rp->tagsets[rp->tagset_count - 1] = tagset;
+}
+
+void mongo_read_preference_dtor(mongo_read_preference *rp)
+{
+	int i, j;
+
+	for (i = 0; i < rp->tagset_count; i++) {
+		for (j = 0; j < rp->tagsets[i]->tag_count; j++) {
+			free(rp->tagsets[i]->tags[j]);
+		}
+		free(rp->tagsets[i]->tags);
+	}
+	free(rp->tagsets);
+}
+
+void mongo_read_preference_copy(mongo_read_preference *from, mongo_read_preference *to)
+{
+	int i, j;
+
+	to->tagset_count = from->tagset_count;
+	to->tagsets = calloc(1, to->tagset_count * sizeof(mongo_read_preference_tagset*));
+
+	for (i = 0; i < from->tagset_count; i++) {
+		to->tagsets[i]->tag_count = from->tagsets[i]->tag_count;
+		to->tagsets[i]->tags = calloc(1, to->tagsets[i]->tag_count * sizeof(char*));
+
+		for (j = 0; j < from->tagsets[i]->tag_count; j++) {
+			to->tagsets[i]->tags[j] = strdup(from->tagsets[i]->tags[j]);
+		}
+	}
+}
+
+void mongo_read_preference_replace(mongo_read_preference *from, mongo_read_preference *to)
+{
+	mongo_read_preference_dtor(to);
+	mongo_read_preference_copy(from, to);
 }

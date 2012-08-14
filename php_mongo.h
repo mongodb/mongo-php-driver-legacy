@@ -461,7 +461,7 @@ typedef struct {
   zval *link;
   zval *name;
 
-	mongo_read_preference rp;
+	mongo_read_preference read_pref;
 } mongo_db;
 
 typedef struct {
@@ -475,7 +475,7 @@ typedef struct {
   zval *name;
   zval *ns;
 
-	mongo_read_preference rp;
+	mongo_read_preference read_pref;
 } mongo_collection;
 
 

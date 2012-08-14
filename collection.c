@@ -96,7 +96,7 @@ PHP_METHOD(MongoCollection, __construct) {
   MAKE_STD_ZVAL(zns);
   ZVAL_STRING(zns, ns, 0);
   c->ns = zns;
-  c->rp = db->rp;
+  mongo_read_preference_copy(&db->read_pref, &c->read_pref);
 
   w = zend_read_property(mongo_ce_DB, parent, "w", strlen("w"), NOISY TSRMLS_CC);
   zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_LVAL_P(w) TSRMLS_CC);
@@ -120,7 +120,7 @@ PHP_METHOD(MongoCollection, getSlaveOkay)
 {
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
-	RETURN_BOOL(c->rp.type != MONGO_RP_PRIMARY);
+	RETURN_BOOL(c->read_pref.type != MONGO_RP_PRIMARY);
 }
 
 PHP_METHOD(MongoCollection, setSlaveOkay)
@@ -134,8 +134,8 @@ PHP_METHOD(MongoCollection, setSlaveOkay)
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	RETVAL_BOOL(c->rp.type != MONGO_RP_PRIMARY);
-	c->rp.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
+	RETVAL_BOOL(c->read_pref.type != MONGO_RP_PRIMARY);
+	c->read_pref.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
 
 
@@ -143,7 +143,10 @@ PHP_METHOD(MongoCollection, getReadPreference)
 {
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
-	RETURN_LONG(c->rp.type);
+
+	array_init(return_value);
+	add_assoc_long(return_value, "type", c->read_pref.type);
+	/* TODO: Add: string for type, tag sets */
 }
 
 /* {{{ MongoCollection::setReadPreference(int read_preference)
@@ -160,7 +163,7 @@ PHP_METHOD(MongoCollection, setReadPreference)
 	PHP_MONGO_GET_COLLECTION(getThis());
 
 	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
-		c->rp.type = read_preference;
+		c->read_pref.type = read_preference;
 	}
 }
 /* }}} */
@@ -565,8 +568,8 @@ PHP_METHOD(MongoCollection, find)
   object_init_ex(return_value, mongo_ce_Cursor);
 
 	/* save & replace slave_okay */
-	rp = link->servers->rp;
-	link->servers->rp = c->rp;
+	mongo_read_preference_copy(&link->servers->read_pref, &rp);
+	mongo_read_preference_replace(&c->read_pref, &link->servers->read_pref);
 
 	/* TODO: Don't call an internal function like this, but add a new C-level
 	 * function for instantiating cursors */
@@ -580,7 +583,8 @@ PHP_METHOD(MongoCollection, find)
     MONGO_METHOD4(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query, fields);
   }
 
-	link->servers->rp = rp;
+	mongo_read_preference_replace(&rp, &link->servers->read_pref);
+	mongo_read_preference_dtor(&rp);
 }
 
 PHP_METHOD(MongoCollection, findOne) {
@@ -1485,6 +1489,7 @@ static void php_mongo_collection_free(void *object TSRMLS_DC) {
     if (c->ns) {
       zval_ptr_dtor(&c->ns);
     }
+	mongo_read_preference_dtor(&c->read_pref);
     zend_object_std_dtor(&c->std TSRMLS_CC);
     efree(c);
   }

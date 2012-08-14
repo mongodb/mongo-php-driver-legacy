@@ -185,19 +185,20 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	if (write_connection) {
 		mongo_read_preference tmp_rp;
 
-		tmp_rp = servers->rp;
+		mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
 		tmp_rp.type = MONGO_RP_PRIMARY;
 		collection = mongo_find_candidate_servers(manager, &tmp_rp);
+		mongo_read_preference_dtor(&tmp_rp);
 	} else {
-		collection = mongo_find_candidate_servers(manager, &servers->rp);
+		collection = mongo_find_candidate_servers(manager, &servers->read_pref);
 	}
 	if (collection->count == 0) {
 		*error_message = strdup("No candidate servers found");
 		goto bailout;
 	}
-	collection = mongo_sort_servers(manager, collection, &servers->rp);
-	collection = mongo_select_nearest_servers(manager, collection, &servers->rp);
-	con = mongo_pick_server_from_set(manager, collection, &servers->rp);
+	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
+	collection = mongo_select_nearest_servers(manager, collection, &servers->read_pref);
+	con = mongo_pick_server_from_set(manager, collection, &servers->read_pref);
 
 bailout:
 	/* Cleaning up */

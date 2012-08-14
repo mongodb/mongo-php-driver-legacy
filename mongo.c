@@ -273,7 +273,7 @@ PHP_METHOD(Mongo, __construct)
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_BVAL_P(slave_okay)) {
-		if (link->servers->rp.type != MONGO_RP_PRIMARY) {
+		if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {
 			/* the server already has read preferences configured, but we're still
 			 * trying to set slave okay. The spec says that's an error */
 			zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 0 TSRMLS_CC);
@@ -281,7 +281,7 @@ PHP_METHOD(Mongo, __construct)
 		} else {
 			/* Old style option, that needs to be removed. For now, spec dictates
 			 * it needs to be ReadPreference=SECONDARY_PREFERRED */
-			link->servers->rp.type = MONGO_RP_SECONDARY_PREFERRED;
+			link->servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
 		}
 	}
 
@@ -478,7 +478,7 @@ PHP_METHOD(Mongo, getSlaveOkay)
 {
 	mongo_link *link;
 	PHP_MONGO_GET_LINK(getThis());
-	RETURN_BOOL(link->servers->rp.type != MONGO_RP_PRIMARY);
+	RETURN_BOOL(link->servers->read_pref.type != MONGO_RP_PRIMARY);
 }
 
 PHP_METHOD(Mongo, setSlaveOkay)
@@ -492,8 +492,8 @@ PHP_METHOD(Mongo, setSlaveOkay)
 
 	PHP_MONGO_GET_LINK(getThis());
 
-	RETVAL_BOOL(link->servers->rp.type != MONGO_RP_PRIMARY);
-	link->servers->rp.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
+	RETVAL_BOOL(link->servers->read_pref.type != MONGO_RP_PRIMARY);
+	link->servers->read_pref.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
 
 
@@ -501,7 +501,7 @@ PHP_METHOD(Mongo, getReadPreference)
 {
 	mongo_link *link;
 	PHP_MONGO_GET_LINK(getThis());
-	RETURN_LONG(link->servers->rp.type);
+	RETURN_LONG(link->servers->read_pref.type);
 }
 
 /* {{{ Mongo::setReadPreference(int read_preference)
@@ -518,7 +518,7 @@ PHP_METHOD(Mongo, setReadPreference)
 	PHP_MONGO_GET_LINK(getThis());
 
 	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
-		link->servers->rp.type = read_preference;
+		link->servers->read_pref.type = read_preference;
 	}
 }
 /* }}} */
