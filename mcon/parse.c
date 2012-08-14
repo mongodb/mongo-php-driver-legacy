@@ -279,6 +279,27 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': false");
 		return 0;
 	}
+	if (strcasecmp(option_name, "readPreference") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'readPreference': '%s'", option_value);
+		if (strcasecmp(option_value, "primary") == 0) {
+			servers->read_pref.type = MONGO_RP_PRIMARY;
+		} else if (strcasecmp(option_value, "primaryPreferred") == 0) {
+			servers->read_pref.type = MONGO_RP_PRIMARY_PREFERRED;
+		} else if (strcasecmp(option_value, "secondary") == 0) {
+			servers->read_pref.type = MONGO_RP_SECONDARY;
+		} else if (strcasecmp(option_value, "secondaryPreferred") == 0) {
+			servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
+		} else if (strcasecmp(option_value, "nearest") == 0) {
+			servers->read_pref.type = MONGO_RP_NEAREST;
+		} else {
+			int len = strlen(option_value) + sizeof("The readPreference value '' is not supported.");
+
+			*error_message = malloc(len + 1);
+			snprintf(*error_message, len, "The readPreference value '%s' is not supported.", option_value);
+			return 3;
+		}
+		return 0;
+	}
 
 	if (strcasecmp(option_name, "timeout") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'timeout': %d", atoi(option_value));
