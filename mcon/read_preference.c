@@ -2,6 +2,7 @@
 #include "types.h"
 #include "read_preference.h"
 #include "manager.h"
+#include "str.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +37,7 @@ void mongo_print_connection_iterate_wrapper(mongo_con_manager *manager, void *el
 }
 
 /* Collecting the correct servers */
-static mcon_collection *filter_connections(mongo_con_manager *manager, int types)
+static mcon_collection *filter_connections(mongo_con_manager *manager, int types, mongo_read_preference *rp)
 {
 	mcon_collection *col;
 	mongo_con_manager_item *ptr = manager->connections;
@@ -57,39 +58,121 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 	return col;
 }
 
-static mcon_collection *mongo_rp_collect_primary(mongo_con_manager *manager)
+/* Wrappers for the different collection types */
+static mcon_collection *mongo_rp_collect_primary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
-	return filter_connections(manager, MONGO_NODE_PRIMARY);
+	return filter_connections(manager, MONGO_NODE_PRIMARY, rp);
 }
 
-static mcon_collection *mongo_rp_collect_primary_and_secondary(mongo_con_manager *manager)
+static mcon_collection *mongo_rp_collect_primary_and_secondary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
-	return filter_connections(manager, MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY);
+	return filter_connections(manager, MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY, rp);
 }
 
-static mcon_collection *mongo_rp_collect_secondary(mongo_con_manager *manager)
+static mcon_collection *mongo_rp_collect_secondary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
-	return filter_connections(manager, MONGO_NODE_SECONDARY);
+	return filter_connections(manager, MONGO_NODE_SECONDARY, rp);
 }
 
-mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
+static mcon_collection* mongo_find_all_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
 {
-	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "finding candidate servers");
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- all servers");
 	/* Depending on read preference type, run the correct algorithm */
 	switch (rp->type) {
 		case MONGO_RP_PRIMARY:
-			return mongo_rp_collect_primary(manager);
+			return mongo_rp_collect_primary(manager, rp);
 			break;
 		case MONGO_RP_PRIMARY_PREFERRED:
 		case MONGO_RP_SECONDARY_PREFERRED:
 		case MONGO_RP_NEAREST:
-			return mongo_rp_collect_primary_and_secondary(manager);
+			return mongo_rp_collect_primary_and_secondary(manager, rp);
 			break;
 		case MONGO_RP_SECONDARY:
-			return mongo_rp_collect_secondary(manager);
+			return mongo_rp_collect_secondary(manager, rp);
 			break;
 		default:
 			return NULL;
+	}
+}
+
+static int candidate_matches_tags(mongo_con_manager *manager, mongo_connection *con, mongo_read_preference_tagset *tagset)
+{
+	int i, j, found = 0;
+
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "candidate_matches_tags: checking tags on %s", con->hash);
+	for (i = 0; i < tagset->tag_count; i++) {
+		for (j = 0; j < con->tag_count; j++) {
+			if (strcmp(tagset->tags[i], con->tags[j]) == 0) {
+				found++;
+				mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "candidate_matches_tags: found %s", con->tags[j]);
+			}
+		}
+	}
+	if (found == tagset->tag_count) {
+		mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "candidate_matches_tags: all tags matched for %s", con->hash);
+		return 1;
+	} else {
+		mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "candidate_matches_tags: not all tags matched for %s", con->hash);
+		return 0;
+	}
+}
+
+static mcon_collection* mongo_filter_candidates_by_tagset(mongo_con_manager *manager, mcon_collection *candidates, mongo_read_preference_tagset *tagset)
+{
+	int              i;
+	mcon_collection *tmp;
+
+	tmp = mcon_init_collection(sizeof(mongo_connection*));
+	for (i = 0; i < candidates->count; i++) {
+		if (candidate_matches_tags(manager, (mongo_connection *) candidates->data[i], tagset)) {
+			mcon_collection_add(tmp, candidates->data[i]);
+		}
+	}
+	return tmp;
+}
+
+static char *squash_tagset(mongo_read_preference_tagset *tagset)
+{
+	int    i;
+	struct mcon_str str = { 0 };
+
+	for (i = 0; i < tagset->tag_count; i++) {
+		if (i) {
+			mcon_str_addl(&str, ", ", 2, 0);
+		}
+		mcon_str_add(&str, tagset->tags[i], 0);
+	}
+	return str.d;
+}
+
+mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
+{
+	int              i;
+	mcon_collection *all, *filtered;
+
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "finding candidate servers");
+	all = mongo_find_all_candidate_servers(manager, rp);
+	if (rp->tagset_count != 0) {
+		mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by tagsets");
+		/* If we have tagsets configured for the replicaset then we need to do
+		 * some more filtering */
+		for (i = 0; i < rp->tagset_count; i++) {
+			char *tmp_ts = squash_tagset(rp->tagsets[i]);
+
+			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "checking tagset: %s", tmp_ts);
+			filtered = mongo_filter_candidates_by_tagset(manager, all, rp->tagsets[i]);
+			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "tagset %s matched %d candidates", tmp_ts, filtered->count);
+			free(tmp_ts);
+
+			if (filtered->count > 0) {
+				mcon_collection_free(all);
+				return filtered;
+			}
+		}
+		mcon_collection_free(all);
+		return NULL;
+	} else {
+		return all;
 	}
 }
 

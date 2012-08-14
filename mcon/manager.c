@@ -192,7 +192,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	} else {
 		collection = mongo_find_candidate_servers(manager, &servers->read_pref);
 	}
-	if (collection->count == 0) {
+	if (!collection || collection->count == 0) {
 		*error_message = strdup("No candidate servers found");
 		goto bailout;
 	}
