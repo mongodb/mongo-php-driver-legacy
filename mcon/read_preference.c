@@ -43,6 +43,7 @@ char *mongo_read_preference_type_to_name(int type)
 		case MONGO_RP_SECONDARY_PREFERRED: return "secondary preferred";
 		case MONGO_RP_NEAREST:             return "nearest";
 	}
+	return "unknown";
 }
 
 /* Collecting the correct servers */
