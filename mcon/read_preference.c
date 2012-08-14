@@ -34,6 +34,17 @@ void mongo_print_connection_iterate_wrapper(mongo_con_manager *manager, void *el
 	mongo_print_connection_info(manager, con, MLOG_FINE);
 }
 
+char *mongo_read_preference_type_to_name(int type)
+{
+	switch (type) {
+		case MONGO_RP_PRIMARY:             return "primary";
+		case MONGO_RP_PRIMARY_PREFERRED:   return "primary preferred";
+		case MONGO_RP_SECONDARY:           return "secondary";
+		case MONGO_RP_SECONDARY_PREFERRED: return "secondary preferred";
+		case MONGO_RP_NEAREST:             return "nearest";
+	}
+}
+
 /* Collecting the correct servers */
 static mcon_collection *filter_connections(mongo_con_manager *manager, int types, mongo_read_preference *rp)
 {

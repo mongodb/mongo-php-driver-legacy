@@ -26,6 +26,8 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 mongo_connection *mongo_pick_server_from_set(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp);
 
 /* RP helpers */
+char *mongo_read_preference_type_to_name(int type);
+
 void mongo_read_preference_add_tag(mongo_read_preference_tagset *tagset, char *name, char *value);
 void mongo_read_preference_add_tagset(mongo_read_preference *rp, mongo_read_preference_tagset *tagset);
 

@@ -146,7 +146,8 @@ PHP_METHOD(MongoCollection, getReadPreference)
 
 	array_init(return_value);
 	add_assoc_long(return_value, "type", c->read_pref.type);
-	/* TODO: Add: string for type, tag sets */
+	add_assoc_string(return_value, "type_string", mongo_read_preference_type_to_name(c->read_pref.type), 1);
+	/* TODO: Add: tag sets */
 }
 
 /* {{{ MongoCollection::setReadPreference(int read_preference)
