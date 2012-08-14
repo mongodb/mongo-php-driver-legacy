@@ -9,7 +9,6 @@
 #include <string.h>
 
 /* Helpers */
-
 static void mongo_print_connection_info(mongo_con_manager *manager, mongo_connection *con, int level)
 {
 	int i;
@@ -33,7 +32,6 @@ void mongo_print_connection_iterate_wrapper(mongo_con_manager *manager, void *el
 	mongo_connection *con = (mongo_connection*) elem;
 
 	mongo_print_connection_info(manager, con, MLOG_FINE);
-
 }
 
 /* Collecting the correct servers */
