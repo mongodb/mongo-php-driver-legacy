@@ -140,7 +140,7 @@ static mcon_collection* mongo_filter_candidates_by_tagset(mongo_con_manager *man
 	return tmp;
 }
 
-static char *squash_tagset(mongo_read_preference_tagset *tagset)
+char *mongo_read_preference_squash_tagset(mongo_read_preference_tagset *tagset)
 {
 	int    i;
 	struct mcon_str str = { 0 };
@@ -166,7 +166,7 @@ mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_
 		/* If we have tagsets configured for the replicaset then we need to do
 		 * some more filtering */
 		for (i = 0; i < rp->tagset_count; i++) {
-			char *tmp_ts = squash_tagset(rp->tagsets[i]);
+			char *tmp_ts = mongo_read_preference_squash_tagset(rp->tagsets[i]);
 
 			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "checking tagset: %s", tmp_ts);
 			filtered = mongo_filter_candidates_by_tagset(manager, all, rp->tagsets[i]);
@@ -355,15 +355,23 @@ void mongo_read_preference_add_tagset(mongo_read_preference *rp, mongo_read_pref
 	rp->tagsets[rp->tagset_count - 1] = tagset;
 }
 
+void mongo_read_preference_tagset_dtor(mongo_read_preference_tagset *tagset)
+{
+	int i;
+
+	for (i = 0; i < tagset->tag_count; i++) {
+		free(tagset->tags[i]);
+	}
+	free(tagset->tags);
+	free(tagset);
+}
+
 void mongo_read_preference_dtor(mongo_read_preference *rp)
 {
-	int i, j;
+	int i;
 
 	for (i = 0; i < rp->tagset_count; i++) {
-		for (j = 0; j < rp->tagsets[i]->tag_count; j++) {
-			free(rp->tagsets[i]->tags[j]);
-		}
-		free(rp->tagsets[i]->tags);
+		mongo_read_preference_tagset_dtor(rp->tagsets[i]);
 	}
 	free(rp->tagsets);
 }

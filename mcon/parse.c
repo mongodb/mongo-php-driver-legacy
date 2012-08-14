@@ -5,6 +5,7 @@
 #include "types.h"
 #include "parse.h"
 #include "manager.h"
+#include "read_preference.h"
 
 /* Forward declarations */
 void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start, char *port_end);
@@ -195,6 +196,46 @@ int static mongo_process_option(mongo_con_manager *manager, mongo_servers *serve
 	return retval;
 }
 
+/* Option parser helpers */
+static int parse_read_preference_tags(mongo_con_manager *manager, mongo_servers *servers, char *value, char **error_message)
+{
+	mongo_read_preference_tagset *tmp_ts = calloc(1, sizeof(mongo_read_preference_tagset));
+
+	/* format = dc:ny,rack:1 - empty is allowed! */
+	if (strlen(value) == 0) {
+		mongo_read_preference_add_tagset(&servers->read_pref, tmp_ts);
+	} else {
+		char *start, *end, *colon, *tmp_name, *tmp_value;
+
+		start = value;
+
+		while (1) {
+			end = strchr(start, ',');
+			colon = strchr(start, ':');
+			if (!colon) {
+				*error_message = malloc(256 + strlen(start));
+				snprintf(*error_message, 256 + strlen(start), "Error while trying to parse tags: No separator for '%s'", start);
+				mongo_read_preference_tagset_dtor(tmp_ts);
+				return 3;
+			}
+			tmp_name = strndup(start, colon - start);
+			if (end) {
+				tmp_value = strndup(colon + 1, end - colon - 1);
+				start = end + 1;
+				mongo_read_preference_add_tag(tmp_ts, tmp_name, tmp_value);
+				free(tmp_value);
+				free(tmp_name);
+			} else {
+				mongo_read_preference_add_tag(tmp_ts, tmp_name, colon + 1);
+				free(tmp_name);
+				break;
+			}
+		}
+		mongo_read_preference_add_tagset(&servers->read_pref, tmp_ts);
+	}
+	return 0;
+}
+
 /* Sets server options.
  * Returns 0 if it worked, 2 if the option didn't exist, 3 on logical errors.
  * On logical errors, the error_message will be populated with the reason.
@@ -300,6 +341,10 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		}
 		return 0;
 	}
+	if (strcasecmp(option_name, "readPreferenceTags") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'readPreferenceTags': '%s'", option_value);
+		return parse_read_preference_tags(manager, servers, option_value, error_message);
+	}
 
 	if (strcasecmp(option_name, "timeout") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'timeout': %d", atoi(option_value));
@@ -363,6 +408,12 @@ void mongo_servers_dump(mongo_con_manager *manager, mongo_servers *servers)
 
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "Options:");
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- repl_set_name: %s", servers->repl_set_name);
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- readPreference: %s", mongo_read_preference_type_to_name(servers->read_pref.type));
+	for (i = 0; i < servers->read_pref.tagset_count; i++) {
+		char *tmp = mongo_read_preference_squash_tagset(servers->read_pref.tagsets[i]);
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- tagset: %s", tmp);
+		free(tmp);
+	}
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "\n");
 }
 
@@ -393,6 +444,12 @@ void mongo_servers_dtor(mongo_servers *servers)
 	}
 	if (servers->repl_set_name) {
 		free(servers->repl_set_name);
+	}
+	for (i = 0; i < servers->read_pref.tagset_count; i++) {
+		mongo_read_preference_tagset_dtor(servers->read_pref.tagsets[i]);
+	}
+	if (servers->read_pref.tagsets) {
+		free(servers->read_pref.tagsets);
 	}
 	free(servers);
 }
