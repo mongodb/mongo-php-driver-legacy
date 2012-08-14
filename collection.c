@@ -156,12 +156,14 @@ PHP_METHOD(MongoCollection, setReadPreference)
 	long read_preference;
 	mongo_collection *c;
 
+	/* TODO: Add tagsets as second argument */
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &read_preference) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
+	/* TODO: Add warning for wrong type */
 	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
 		c->read_pref.type = read_preference;
 	}
