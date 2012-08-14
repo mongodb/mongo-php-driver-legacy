@@ -368,11 +368,10 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 int mongo_connection_rs_status(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
 {
 	mcon_str      *packet;
-	int32_t        max_bson_size = 0;
 	char          *data_buffer;
 	char          *set = NULL;      /* For replicaset in return */
 	char          *hosts, *ptr, *member_ptr;
-	char          *connected_name, *we_think_we_are;
+	char          *we_think_we_are;
 	struct timeval now;
 	int            retval = 1;
 
@@ -427,11 +426,9 @@ int mongo_connection_rs_status(mongo_con_manager *manager, mongo_connection *con
 	bson_find_field_as_array(ptr, "members", &hosts);
 	*nr_hosts = 0;
 	do {
-		char    *tmp_field_name;
-		int      tmp_type;
-		char    *name;
-		int32_t  state = 0;
-		char     self = 0;
+		char          *name;
+		int32_t        state = 0;
+		unsigned char  self = 0;
 
 		member_ptr = hosts;
 		member_ptr = bson_skip_field_name(member_ptr);

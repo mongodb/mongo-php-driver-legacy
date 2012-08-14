@@ -17,5 +17,7 @@ void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connect
 int mongo_manager_connection_deregister(mongo_con_manager *manager, mongo_connection *con);
 
 /* Logging */
+void mongo_log_null(int module, int level, void *context, char *format, va_list arg);
+void mongo_log_printf(int module, int level, void *context, char *format, va_list arg);
 void mongo_manager_log(mongo_con_manager *manager, int module, int level, char *format, ...);
 #endif

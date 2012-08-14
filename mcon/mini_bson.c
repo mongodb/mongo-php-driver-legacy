@@ -303,9 +303,8 @@ int bson_array_find_next_embedded_doc(char **buffer)
 {
 	char *read_field;
 	int   read_type;
-	void *return_data;
 
 	*buffer = bson_next(*buffer);
-	return_data = bson_get_current(*buffer, &read_field, &read_type);
+	bson_get_current(*buffer, &read_field, &read_type);
 	return read_type == BSON_DOCUMENT;
 }
