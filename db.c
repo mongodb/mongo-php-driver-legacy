@@ -207,9 +207,10 @@ PHP_METHOD(MongoDB, setReadPreference)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	/* TODO: Add warning for wrong type */
 	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
 		db->read_pref.type = read_preference;
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %d is not valid as read preference type", read_preference);
 	}
 }
 /* }}} */

@@ -164,9 +164,10 @@ PHP_METHOD(MongoCollection, setReadPreference)
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	/* TODO: Add warning for wrong type */
 	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
 		c->read_pref.type = read_preference;
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %d is not valid as read preference type", read_preference);
 	}
 }
 /* }}} */
