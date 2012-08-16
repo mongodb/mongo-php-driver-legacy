@@ -190,7 +190,7 @@ PHP_METHOD(MongoDB, getReadPreference)
 	array_init(return_value);
 	add_assoc_long(return_value, "type", db->read_pref.type);
 	add_assoc_string(return_value, "type_string", mongo_read_preference_type_to_name(db->read_pref.type), 1);
-	/* TODO: Add: tag sets */
+	php_mongo_add_tagsets(return_value, &db->read_pref);
 }
 
 /* {{{ MongoDB::setReadPreference(int read_preference)

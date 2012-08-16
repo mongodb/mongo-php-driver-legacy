@@ -345,3 +345,30 @@ static void mongo_init_MongoExceptions(TSRMLS_D) {
   INIT_CLASS_ENTRY(e2, "MongoGridFSException", NULL);
   mongo_ce_GridFSException = zend_register_internal_class_ex(&e2, mongo_ce_Exception, NULL TSRMLS_CC);
 }
+
+/* Shared helper functions */
+void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
+{
+	zval *tagsets, *tagset;
+	int   i, j;
+
+	if (!rp->tagset_count) {
+		return;
+	}
+
+	MAKE_STD_ZVAL(tagsets);
+	array_init(tagsets);
+
+	for (i = 0; i < rp->tagset_count; i++) {
+		MAKE_STD_ZVAL(tagset);
+		array_init(tagset);
+
+		for (j = 0; j < rp->tagsets[i]->tag_count; j++) {
+			add_next_index_string(tagset, rp->tagsets[i]->tags[j], 1);
+		}
+
+		add_next_index_zval(tagsets, tagset);
+	}
+
+	add_assoc_zval_ex(return_value, "tagsets", 8, tagsets);
+}

@@ -547,6 +547,9 @@ void mongo_init_MongoTimestamp(TSRMLS_D);
 void mongo_init_MongoInt32(TSRMLS_D);
 void mongo_init_MongoInt64(TSRMLS_D);
 
+/* Shared helper functions */
+void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp);
+
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 // php.ini options
 int allow_persistent;
