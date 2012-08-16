@@ -1,5 +1,5 @@
 PHP_ARG_ENABLE(mongo, whether to enable Mongo extension,
-[  --enable-mongo   Enable Mongo extension])
+[  --enable-mongo          Enable the MongoDB extension])
 
 PHP_MONGO_CFLAGS="-I@ext_builddir@/util"
 
@@ -10,6 +10,9 @@ if test "$PHP_MONGO" != "no"; then
   PHP_ADD_BUILD_DIR([$ext_builddir/util], 1)
   PHP_ADD_INCLUDE([$ext_builddir/util])
   PHP_ADD_INCLUDE([$ext_srcdir/util])
+  PHP_ADD_BUILD_DIR([$ext_builddir/mcon], 1)
+  PHP_ADD_INCLUDE([$ext_builddir/mcon])
+  PHP_ADD_INCLUDE([$ext_srcdir/mcon])
 
   dnl call acinclude func to check endian-ness
   PHP_C_BIGENDIAN
@@ -34,7 +37,7 @@ if test "$PHP_MONGO" != "no"; then
 fi
 
 PHP_ARG_ENABLE(coverage,  whether to include code coverage symbols,
-[  --enable-coverage           DEVELOPERS ONLY!!], no, no)
+[  --enable-coverage         Mongo: Enable code coverage symbols, maintainers only!], no, no)
 
 if test "$PHP_COVERAGE" = "yes"; then
 
