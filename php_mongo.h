@@ -549,6 +549,7 @@ void mongo_init_MongoInt64(TSRMLS_D);
 
 /* Shared helper functions */
 void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp);
+int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 // php.ini options
