@@ -1,4 +1,3 @@
-// db.h
 /**
  *  Copyright 2009-2011 10gen, Inc.
  *
@@ -24,13 +23,17 @@ zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
 /**
  * Create a fake cursor that can be used to query the db from C.
  */
-zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC);
+zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC);
 
 /**
  * Run the given database command on the given server.
  */
-zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC);
+zval* mongo_db_cmd(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC);
 
+/**
+ * Switch to primary connection, or throw exception on failure
+ */
+void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link);
 
 PHP_METHOD(MongoDB, __construct);
 PHP_METHOD(MongoDB, __toString);
@@ -39,6 +42,8 @@ PHP_METHOD(MongoDB, selectCollection);
 PHP_METHOD(MongoDB, getGridFS);
 PHP_METHOD(MongoDB, getSlaveOkay);
 PHP_METHOD(MongoDB, setSlaveOkay);
+PHP_METHOD(MongoDB, getReadPreference);
+PHP_METHOD(MongoDB, setReadPreference);
 PHP_METHOD(MongoDB, getProfilingLevel);
 PHP_METHOD(MongoDB, setProfilingLevel);
 PHP_METHOD(MongoDB, drop);
