@@ -34,13 +34,6 @@
 #include "mongo_types.h"
 #include "bson.h"
 
-#include "util/rs.h"
-#include "util/parse.h"
-#include "util/hash.h"
-#include "util/connect.h"
-#include "util/pool.h"
-#include "util/link.h"
-#include "util/server.h"
 #include "util/log.h"
 
 #include "mcon/types.h"

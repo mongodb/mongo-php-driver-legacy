@@ -36,8 +36,6 @@
 #include "cursor.h"
 #include "collection.h"
 #include "mongo_types.h"
-#include "util/link.h"
-#include "util/rs.h"
 #include "util/log.h"
 
 #if WIN32

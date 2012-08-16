@@ -23,9 +23,6 @@
 #include "bson.h"
 #include "mongo_types.h"
 #include "db.h"
-#include "util/link.h"
-#include "util/rs.h"
-#include "util/server.h"
 #include "mcon/manager.h"
 #include "mcon/io.h"
 

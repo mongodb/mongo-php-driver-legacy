@@ -21,7 +21,6 @@
 #include "ext/standard/php_smart_str.h"
 
 #include "php_mongo.h"
-#include "util/pool.h"
 
 #include "db.h"
 #include "collection.h"

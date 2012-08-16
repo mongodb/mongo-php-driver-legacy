@@ -30,9 +30,6 @@
 #include "cursor.h"
 #include "mongo_types.h"
 
-#include "util/pool.h"
-#include "util/server.h"
-#include "util/rs.h"
 #include "util/log.h"
 
 #include "mcon/manager.h"

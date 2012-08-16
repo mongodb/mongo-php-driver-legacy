@@ -52,22 +52,29 @@
    <file role="src" name="gridfs.h"/>
    <file role="src" name="util/hash.c"/>
    <file role="src" name="util/hash.h"/>
-   <file role="src" name="util/connect.c"/>
-   <file role="src" name="util/connect.h"/>
-   <file role="src" name="util/link.c"/>
-   <file role="src" name="util/link.h"/>
-   <file role="src" name="util/pool.c"/>
-   <file role="src" name="util/pool.h"/>
-   <file role="src" name="util/rs.c"/>
-   <file role="src" name="util/rs.h"/>
-   <file role="src" name="util/server.c"/>
-   <file role="src" name="util/server.h"/>
    <file role="src" name="util/log.c"/>
    <file role="src" name="util/log.h"/>
-   <file role="src" name="util/io.c"/>
-   <file role="src" name="util/io.h"/>
-   <file role="src" name="util/parse.c"/>
-   <file role="src" name="util/parse.h"/>
+   <file role="src" name="mcon/bson_helpers.h"/>
+   <file role="src" name="mcon/collection.h"/>
+   <file role="src" name="mcon/connections.h"/>
+   <file role="src" name="mcon/io.h"/>
+   <file role="src" name="mcon/manager.h"/>
+   <file role="src" name="mcon/mini_bson.h"/>
+   <file role="src" name="mcon/parse.h"/>
+   <file role="src" name="mcon/read_preference.h"/>
+   <file role="src" name="mcon/str.h"/>
+   <file role="src" name="mcon/types.h"/>
+   <file role="src" name="mcon/utils.h"/>
+   <file role="src" name="mcon/bson_helpers.c"/>
+   <file role="src" name="mcon/collection.c"/>
+   <file role="src" name="mcon/connections.c"/>
+   <file role="src" name="mcon/io.c"/>
+   <file role="src" name="mcon/manager.c"/>
+   <file role="src" name="mcon/mini_bson.c"/>
+   <file role="src" name="mcon/parse.c"/>
+   <file role="src" name="mcon/read_preference.c"/>
+   <file role="src" name="mcon/str.c"/>
+   <file role="src" name="mcon/utils.c"/>
   </dir>
  </contents>
  <dependencies>
