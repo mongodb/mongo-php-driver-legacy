@@ -53,7 +53,7 @@ zend_class_entry *mongo_ce_DB = NULL;
 
 static void clear_exception(zval* return_value TSRMLS_DC);
 
-void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link)
+void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link TSRMLS_DC)
 {
 	int   old_rp;
 	char *error_message = NULL;
@@ -640,7 +640,7 @@ PHP_METHOD(MongoDB, command) {
 	PHP_MONGO_GET_LINK(db->link);
 	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
 	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
-	php_mongo_connection_force_primary(cursor_tmp, link);
+	php_mongo_connection_force_primary(cursor_tmp, link TSRMLS_CC);
 
 
   // query

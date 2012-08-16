@@ -33,7 +33,7 @@ zval* mongo_db_cmd(mongo_connection *connection, char *database, zval *cmd TSRML
 /**
  * Switch to primary connection, or throw exception on failure
  */
-void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link);
+void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link TSRMLS_DC);
 
 PHP_METHOD(MongoDB, __construct);
 PHP_METHOD(MongoDB, __toString);

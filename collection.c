@@ -286,7 +286,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	 * an init method otherwise a connection have to be requested twice. */
 	link = (mongo_link*) zend_object_store_get_object((db->link) TSRMLS_CC);
 	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for getlasterror");
-	php_mongo_connection_force_primary(cursor, link);
+	php_mongo_connection_force_primary(cursor, link TSRMLS_CC);
 
   cursor->limit = -1;
   cursor->timeout = timeout;
@@ -335,7 +335,7 @@ static mongo_connection* get_server(mongo_collection *c, int write_connection TS
 }
 
 /* Wrapper for sending and wrapping in a safe op */
-static int send_message(zval *this_ptr, mongo_connection *connection, buffer buf, zval *options, zval *return_value)
+static int send_message(zval *this_ptr, mongo_connection *connection, buffer buf, zval *options, zval *return_value TSRMLS_DC)
 {
 	int retval;
 	char *error_message = NULL;
@@ -395,7 +395,7 @@ static int is_safe_op(zval *options TSRMLS_DC) {
  * the error handling mode to EH_NORMAL temporarily, we circumvent this
  * problem.
  */
-static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_connection *connection)
+static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_connection *connection TSRMLS_DC)
 {
 	int orig_error_handling;
 
@@ -424,7 +424,7 @@ static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zv
 		mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
 		mongo_manager_log(manager, MLOG_IO, MLOG_WARN, "safe_op: sending data failed, removing connection %s", connection->hash);
 		mongo_cursor_throw(connection, 16 TSRMLS_CC, error_message);
-		connection_deregister_wrapper(manager, connection);
+		connection_deregister_wrapper(manager, connection TSRMLS_CC);
 
 		free(error_message);    
 		cursor->connection = NULL;

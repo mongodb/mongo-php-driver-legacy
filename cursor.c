@@ -89,7 +89,7 @@ zend_class_entry *mongo_ce_Cursor = NULL;
  * -1 on failure, but not critical enough to throw an exception
  * 1.. on failure, and throw an exception. The return value is the error code
  */
-static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error_message)
+static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error_message TSRMLS_DC)
 {
 	int status = 0;
 	int num_returned = 0;
@@ -154,7 +154,7 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 
 /* Reads a cursors body
  * Returns 0 on failure or an int indicating the number of bytes read */
-static int get_cursor_body(int sock, mongo_cursor *cursor, char **error_message)
+static int get_cursor_body(int sock, mongo_cursor *cursor, char **error_message TSRMLS_DC)
 {
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting cursor body");
 
