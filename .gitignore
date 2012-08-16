@@ -61,3 +61,6 @@ coverage
 mcon/rp-test1
 mcon/test3
 mcon/hash-test1
+
+mongo-1*.tgz
+mongo-1*.tar
