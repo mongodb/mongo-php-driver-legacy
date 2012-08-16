@@ -375,6 +375,7 @@ void mongo_read_preference_dtor(mongo_read_preference *rp)
 		mongo_read_preference_tagset_dtor(rp->tagsets[i]);
 	}
 	free(rp->tagsets);
+	/* We are not freeing *rp itself, as that's not always a pointer */
 }
 
 void mongo_read_preference_copy(mongo_read_preference *from, mongo_read_preference *to)
