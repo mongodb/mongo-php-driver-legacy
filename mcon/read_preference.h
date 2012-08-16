@@ -38,4 +38,6 @@ void mongo_read_preference_dtor(mongo_read_preference *rp);
 void mongo_read_preference_copy(mongo_read_preference *from, mongo_read_preference *to);
 void mongo_read_preference_replace(mongo_read_preference *from, mongo_read_preference *to);
 
+/* Debug helpers */
+void mongo_print_connection_iterate_wrapper(mongo_con_manager *manager, void *elem);
 #endif
