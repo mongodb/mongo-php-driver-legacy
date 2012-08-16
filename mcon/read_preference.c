@@ -392,6 +392,7 @@ void mongo_read_preference_copy(mongo_read_preference *from, mongo_read_preferen
 	to->tagsets = calloc(1, to->tagset_count * sizeof(mongo_read_preference_tagset*));
 
 	for (i = 0; i < from->tagset_count; i++) {
+		to->tagsets[i] = calloc(1, sizeof(mongo_read_preference_tagset));
 		to->tagsets[i]->tag_count = from->tagsets[i]->tag_count;
 		to->tagsets[i]->tags = calloc(1, to->tagsets[i]->tag_count * sizeof(char*));
 
