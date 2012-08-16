@@ -1,4 +1,3 @@
-//collection.h
 /**
  *  Copyright 2009-2011 10gen, Inc.
  *
@@ -28,6 +27,8 @@ PHP_METHOD(MongoCollection, __get);
 PHP_METHOD(MongoCollection, getName);
 PHP_METHOD(MongoCollection, getSlaveOkay);
 PHP_METHOD(MongoCollection, setSlaveOkay);
+PHP_METHOD(MongoCollection, getReadPreference);
+PHP_METHOD(MongoCollection, setReadPreference);
 PHP_METHOD(MongoCollection, drop);
 PHP_METHOD(MongoCollection, validate);
 PHP_METHOD(MongoCollection, insert);

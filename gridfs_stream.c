@@ -1,4 +1,3 @@
-/* gridfs_stream.c */
 /**
  *  Copyright 2009-2011 10gen, Inc.
  *

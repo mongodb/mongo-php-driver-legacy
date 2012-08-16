@@ -55,6 +55,9 @@ tmp-php.ini
 
 tests/mongo-test-cfg.inc
 
-
 .coverage
 coverage
+
+mcon/rp-test1
+mcon/test3
+mcon/hash-test1

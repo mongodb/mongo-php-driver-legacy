@@ -1,4 +1,3 @@
-// php_mongo.c
 /**
  *  Copyright 2009-2011 10gen, Inc.
  *
@@ -36,6 +35,8 @@
 #include "util/rs.h"
 #include "util/log.h"
 
+#include "mcon/manager.h"
+
 extern zend_object_handlers mongo_default_handlers,
   mongo_id_handlers;
 
@@ -59,13 +60,8 @@ static void mongo_init_MongoExceptions(TSRMLS_D);
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
 
-#if ZEND_MODULE_API_NO >= 20060613
-// 5.2+ globals
 static PHP_GINIT_FUNCTION(mongo);
-#else
-// 5.1- globals
-static void mongo_init_globals(zend_mongo_globals* g TSRMLS_DC);
-#endif /* ZEND_MODULE_API_NO >= 20060613 */
+static PHP_GSHUTDOWN_FUNCTION(mongo);
 
 #if WIN32
 extern HANDLE cursor_mutex;
@@ -96,7 +92,7 @@ zend_module_entry mongo_module_entry = {
 #if ZEND_MODULE_API_NO >= 20060613
   PHP_MODULE_GLOBALS(mongo),
   PHP_GINIT(mongo),
-  NULL,
+  PHP_GSHUTDOWN(mongo),
   NULL,
   STANDARD_MODULE_PROPERTIES_EX
 #else
@@ -111,7 +107,6 @@ ZEND_GET_MODULE(mongo)
 
 
 /* {{{ PHP_INI */
-// these must be in the same order as mongo_globals are declared or it will segfault on 64-bit machines!
 PHP_INI_BEGIN()
 STD_PHP_INI_ENTRY("mongo.allow_persistent", "1", PHP_INI_ALL, OnUpdateLong, allow_persistent, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.default_host", "localhost", PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals)
@@ -139,10 +134,11 @@ PHP_MINIT_FUNCTION(mongo) {
 #endif /* ZEND_MODULE_API_NO < 20060613 */
 
   REGISTER_INI_ENTRIES();
-
+/*
   le_pconnection = zend_register_list_destructors_ex(NULL, mongo_util_pool_shutdown, PHP_CONNECTION_RES_NAME, module_number);
   le_pserver = zend_register_list_destructors_ex(NULL, mongo_util_server_shutdown, PHP_SERVER_RES_NAME, module_number);
   le_prs = zend_register_list_destructors_ex(NULL, mongo_util_rs_shutdown, PHP_RS_RES_NAME, module_number);
+*/
   le_cursor_list = zend_register_list_destructors_ex(NULL, php_mongo_cursor_list_pfree, PHP_CURSOR_LIST_RES_NAME, module_number);
 
   mongo_init_Mongo(TSRMLS_C);
@@ -168,7 +164,6 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoInt64(TSRMLS_C);
 
   mongo_init_MongoLog(TSRMLS_C);
-  mongo_init_MongoPool(TSRMLS_C);
 
   /*
    * MongoMaxKey and MongoMinKey are completely non-interactive: they have no
@@ -205,15 +200,9 @@ PHP_MINIT_FUNCTION(mongo) {
 }
 
 
-#if ZEND_MODULE_API_NO >= 20060613
 /* {{{ PHP_GINIT_FUNCTION
  */
 static PHP_GINIT_FUNCTION(mongo)
-#else
-/* {{{ mongo_init_globals
- */
-static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
-#endif /* ZEND_MODULE_API_NO >= 20060613 */
 {
   // on windows, the max length is 256.  linux doesn't have a limit, but it will
   // fill in the first 256 chars of hostname even if the actual hostname is
@@ -279,9 +268,19 @@ static void mongo_init_globals(zend_mongo_globals *mongo_globals TSRMLS_DC)
 
 	mongo_globals->log_level = 0;
 	mongo_globals->log_module = 0;
+	mongo_globals->log_callback_info = empty_fcall_info;
+	mongo_globals->log_callback_info_cache = empty_fcall_info_cache;
+
+	mongo_globals->manager = mongo_init();
+	TSRMLS_SET_CTX(mongo_globals->manager->log_context);
+	mongo_globals->manager->log_function = php_mcon_log_wrapper;
 }
 /* }}} */
 
+PHP_GSHUTDOWN_FUNCTION(mongo)
+{
+	mongo_deinit(mongo_globals->manager);
+}
 
 /* {{{ PHP_MSHUTDOWN_FUNCTION
  */
@@ -303,8 +302,9 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
 
 /* {{{ PHP_RINIT_FUNCTION
  */
-PHP_RINIT_FUNCTION(mongo) {
-  return SUCCESS;
+PHP_RINIT_FUNCTION(mongo)
+{
+	return SUCCESS;
 }
 /* }}} */
 
@@ -344,4 +344,98 @@ static void mongo_init_MongoExceptions(TSRMLS_D) {
 
   INIT_CLASS_ENTRY(e2, "MongoGridFSException", NULL);
   mongo_ce_GridFSException = zend_register_internal_class_ex(&e2, mongo_ce_Exception, NULL TSRMLS_CC);
+}
+
+/* Shared helper functions */
+void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
+{
+	zval *tagsets, *tagset;
+	int   i, j;
+
+	if (!rp->tagset_count) {
+		return;
+	}
+
+	MAKE_STD_ZVAL(tagsets);
+	array_init(tagsets);
+
+	for (i = 0; i < rp->tagset_count; i++) {
+		MAKE_STD_ZVAL(tagset);
+		array_init(tagset);
+
+		for (j = 0; j < rp->tagsets[i]->tag_count; j++) {
+			add_next_index_string(tagset, rp->tagsets[i]->tags[j], 1);
+		}
+
+		add_next_index_zval(tagsets, tagset);
+	}
+
+	add_assoc_zval_ex(return_value, "tagsets", 8, tagsets);
+}
+
+static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *ztagset TSRMLS_DC)
+{
+	HashTable  *tagset = HASH_OF(ztagset);
+	zval      **tag;
+	int         item_count = 1, fail = 0;
+	mongo_read_preference_tagset *tmp_ts = calloc(1, sizeof(mongo_read_preference_tagset));
+
+	zend_hash_internal_pointer_reset(tagset);
+	while (zend_hash_get_current_data(tagset, (void **)&tag) == SUCCESS) {
+		if (Z_TYPE_PP(tag) != IS_STRING) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tag %d in tagset %d needs to contain a string", item_count, tagset_id);
+			fail = 1;
+		} else {
+			char *key;
+			uint key_len;
+			ulong num_key;
+
+            switch (zend_hash_get_current_key_ex(tagset, &key, &key_len, &num_key, 0, NULL)) {
+                case HASH_KEY_IS_LONG:
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tag %d in tagset %d has no string key", item_count, tagset_id);
+					fail = 1;
+                    break;
+                case HASH_KEY_IS_STRING:
+					mongo_read_preference_add_tag(tmp_ts, key, Z_STRVAL_PP(tag));
+                    break;
+            }
+
+		}
+		item_count++;
+		zend_hash_move_forward(tagset);
+	}
+	if (fail) {
+		mongo_read_preference_tagset_dtor(tmp_ts);
+		return NULL;
+	}
+	return tmp_ts;
+}
+
+int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC)
+{
+	zval **tagset;
+	int    item_count = 1;
+	mongo_read_preference_tagset *tagset_tmp;
+
+	/* Empty out what we had - this means that if it fails, the read preference
+	 * tagsets are gone though */
+	mongo_read_preference_dtor(rp);
+
+	zend_hash_internal_pointer_reset(tagsets);
+	while (zend_hash_get_current_data(tagsets, (void **)&tagset) == SUCCESS) {
+		if (Z_TYPE_PP(tagset) != IS_ARRAY) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tagset %d needs to contain an array of 0 or more tags", item_count);
+			return 0;
+		} else {
+			tagset_tmp = get_tagset_from_array(item_count, *tagset TSRMLS_CC);
+			if (tagset_tmp) {
+				mongo_read_preference_add_tagset(rp, tagset_tmp);
+			} else {
+				return 0;
+			}
+		}
+		item_count++;
+		zend_hash_move_forward(tagsets);
+	}
+	return 1;
 }

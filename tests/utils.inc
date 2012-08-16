@@ -95,6 +95,10 @@ function isauth() {
     }
     return (bool)strstr($_ENV["MONGO_SERVER"], "AUTH");
 }
+function rsname($db = null) {
+    m($dsn, $port, $db, $opts);
+    return $opts["replicaSet"];
+}
 function dbname($db = null) {
     m($dsn, $port, $db, $opts);
     return $db;

@@ -1,4 +1,3 @@
-// db.c
 /**
  *  Copyright 2009-2011 10gen, Inc.
  *
@@ -19,6 +18,7 @@
 #include <php.h>
 #include <zend_exceptions.h>
 #include <ext/standard/md5.h>
+#include "ext/standard/php_smart_str.h"
 
 #include "php_mongo.h"
 #include "util/pool.h"
@@ -28,6 +28,7 @@
 #include "cursor.h"
 #include "gridfs.h"
 #include "mongo_types.h"
+#include "mcon/manager.h"
 
 #ifndef zend_parse_parameters_none
 #define zend_parse_parameters_none()    \
@@ -41,7 +42,8 @@ extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Id,
   *mongo_ce_Code,
   *mongo_ce_Exception,
-  *mongo_ce_CursorException;
+  *mongo_ce_CursorException,
+  *mongo_ce_ConnectionException;
 
 extern int le_pconnection,
   le_connection;
@@ -51,6 +53,20 @@ extern zend_object_handlers mongo_default_handlers;
 zend_class_entry *mongo_ce_DB = NULL;
 
 static void clear_exception(zval* return_value TSRMLS_DC);
+
+void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link)
+{
+	int   old_rp;
+	char *error_message = NULL;
+
+	if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {
+		cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, 1, (char**) &error_message);
+		if (!cursor->connection && error_message) {
+			zend_throw_exception(mongo_ce_ConnectionException, error_message, 72 TSRMLS_CC);
+			return;
+		}
+	}
+}
 
 /* {{{ MongoDB::__construct
  */
@@ -84,7 +100,7 @@ PHP_METHOD(MongoDB, __construct) {
   zval_add_ref(&db->link);
 
   PHP_MONGO_GET_LINK(zlink);
-  db->slave_okay = link->slave_okay;
+	mongo_read_preference_copy(&link->servers->read_pref, &db->read_pref);
 
   MAKE_STD_ZVAL(db->name);
   ZVAL_STRING(db->name, name, 1);
@@ -99,19 +115,26 @@ PHP_METHOD(MongoDB, __toString) {
 
 PHP_METHOD(MongoDB, selectCollection) {
   zval temp;
-  zval *collection;
+  zval *z_collection;
+  char *collection;
+  int collection_len;
   mongo_db *db;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &collection) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &collection, &collection_len) == FAILURE) {
     return;
   }
+
+  MAKE_STD_ZVAL(z_collection);
+  ZVAL_STRINGL(z_collection, collection, collection_len, 1);
 
   db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(db->name, MongoDB);
 
   object_init_ex(return_value, mongo_ce_Collection);
 
-  MONGO_METHOD2(MongoCollection, __construct, &temp, return_value, getThis(), collection);
+  MONGO_METHOD2(MongoCollection, __construct, &temp, return_value, getThis(), z_collection);
+
+  zval_ptr_dtor(&z_collection);
 }
 
 PHP_METHOD(MongoDB, getGridFS) {
@@ -136,25 +159,73 @@ PHP_METHOD(MongoDB, getGridFS) {
   }
 }
 
-PHP_METHOD(MongoDB, getSlaveOkay) {
-  mongo_db *db;
-  PHP_MONGO_GET_DB(getThis());
-  RETURN_BOOL(db->slave_okay);
+PHP_METHOD(MongoDB, getSlaveOkay)
+{
+	mongo_db *db;
+	PHP_MONGO_GET_DB(getThis());
+	RETURN_BOOL(db->read_pref.type != MONGO_RP_PRIMARY);
 }
 
-PHP_METHOD(MongoDB, setSlaveOkay) {
-  zend_bool slave_okay = 1;
-  mongo_db *db;
+PHP_METHOD(MongoDB, setSlaveOkay)
+{
+	zend_bool slave_okay = 1;
+	mongo_db *db;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
+		return;
+	}
 
-  PHP_MONGO_GET_DB(getThis());
+	PHP_MONGO_GET_DB(getThis());
 
-  RETVAL_BOOL(db->slave_okay);
-  db->slave_okay = slave_okay;
+	RETVAL_BOOL(db->read_pref.type != MONGO_RP_PRIMARY);
+	db->read_pref.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
+
+
+PHP_METHOD(MongoDB, getReadPreference)
+{
+	mongo_db *db;
+	PHP_MONGO_GET_DB(getThis());
+
+	array_init(return_value);
+	add_assoc_long(return_value, "type", db->read_pref.type);
+	add_assoc_string(return_value, "type_string", mongo_read_preference_type_to_name(db->read_pref.type), 1);
+	php_mongo_add_tagsets(return_value, &db->read_pref);
+}
+
+/* {{{ MongoDB::setReadPreference(int read_preference [, array tags ])
+ * Sets a read preference to be used for all read queries.*/
+PHP_METHOD(MongoDB, setReadPreference)
+{
+	long read_preference;
+	mongo_db *db;
+	HashTable  *tags = NULL;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|H", &read_preference, &tags) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_DB(getThis());
+
+	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
+		db->read_pref.type = read_preference;
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %ld is not valid as read preference type", read_preference);
+		RETURN_FALSE;
+	}
+	if (tags) {
+		if (read_preference == MONGO_RP_PRIMARY) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't use read preference tags with a read preference of PRIMARY");
+			RETURN_FALSE;
+		}
+
+		if (!php_mongo_use_tagsets(&db->read_pref, tags TSRMLS_CC)) {
+			RETURN_FALSE;
+		}
+	}
+	RETURN_TRUE;
+}
+/* }}} */
 
 PHP_METHOD(MongoDB, getProfilingLevel) {
   zval l;
@@ -344,7 +415,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
     first_dot = strchr(Z_STRVAL_PP(collection), '.');
     system = strstr(Z_STRVAL_PP(collection), ".system.");
     // check that this isn't a system ns
-    if (!system_col && (system && first_dot == system) ||
+    if ((!system_col && (system && first_dot == system)) ||
       (name = strchr(Z_STRVAL_PP(collection), '.')) == 0) {
 
       zval_ptr_dtor(&next);
@@ -513,6 +584,8 @@ PHP_METHOD(MongoDB, command) {
   mongo_db *db;
   mongo_link *link;
   char *cmd_ns;
+	zval slave_okay;
+	mongo_cursor *cursor_tmp;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {
     return;
@@ -559,18 +632,17 @@ PHP_METHOD(MongoDB, command) {
     }
   }
 
-  // make sure commands aren't be sent to slaves
-  PHP_MONGO_GET_LINK(db->link);
-  if (link->rs) {
-    zval slave_okay;
-    Z_TYPE(slave_okay) = IS_BOOL;
-    Z_LVAL(slave_okay) = 0;
+	/* Make sure commands aren't be sent to slaves */
+	/* TODO: The read preferences spec has a list of commands that *can* be send
+	 * to slave */
+	/* This should be refactored alongside with the getLastError redirection in
+	 * collection.c/append_getlasterror. The Cursor creation should be done through
+	 * an init method otherwise a connection have to be requested twice. */
+	PHP_MONGO_GET_LINK(db->link);
+	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
+	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
+	php_mongo_connection_force_primary(cursor_tmp, link);
 
-    MAKE_STD_ZVAL(temp);
-    ZVAL_NULL(temp);
-    MONGO_METHOD1(MongoCursor, slaveOkay, temp, cursor, &slave_okay);
-    zval_ptr_dtor(&temp);
-  }
 
   // query
   MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
@@ -580,9 +652,11 @@ PHP_METHOD(MongoDB, command) {
   zval_ptr_dtor(&cursor);
 }
 
-zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC) {
+zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
+{
   zval *cursor_zval;
   mongo_cursor *cursor;
+	smart_str ns = { 0 };
 
   MAKE_STD_ZVAL(cursor_zval);
   object_init_ex(cursor_zval, mongo_ce_Cursor);
@@ -592,15 +666,14 @@ zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC) {
   cursor->query = cmd;
   zval_add_ref(&cmd);
 
-  if (current->db) {
-    cursor->ns = (char*)emalloc(strlen(current->db)+6);
-    memcpy(cursor->ns, current->db, strlen(current->db));
-    memcpy(cursor->ns+strlen(current->db), ".$cmd", 5);
-    cursor->ns[strlen(current->db)+5] = 0;
-  }
-  else {
-    cursor->ns = estrdup("admin.$cmd");
-  }
+	if (database) {
+		smart_str_append(&ns, database);
+		smart_str_appendl(&ns, ".$cmd", 5);
+		smart_str_0(&ns);
+		cursor->ns = ns.c;
+	} else {
+		cursor->ns = estrdup("admin.$cmd");
+	}
 
   cursor->fields = 0;
   cursor->limit = -1;
@@ -612,33 +685,16 @@ zval* mongo_db__create_fake_cursor(mongo_server *current, zval *cmd TSRMLS_DC) {
   return cursor_zval;
 }
 
-zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
+zval* mongo_db_cmd(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
+{
   zval temp_ret, *response, *cursor_zval;
-  mongo_link temp;
-  mongo_server *temp_next = 0;
-  mongo_server_set temp_server_set;
   mongo_cursor *cursor = 0;
   int exception = 0;
 
-  // skip if we're not connected
-  if (!current->connected) {
-    return 0;
-  }
-
-  // make a fake link
-  temp.server_set = &temp_server_set;
-  temp.server_set->num = 1;
-  temp.server_set->server = current;
-  temp.server_set->master = current;
-  temp.rs = 0;
-
-  temp_next = current->next;
-  current->next = 0;
-
-  // create a cursor
-  cursor_zval = mongo_db__create_fake_cursor(current, cmd TSRMLS_CC);
-  cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
-  cursor->link = &temp;
+	/* Create a cursor */
+	cursor_zval = mongo_db__create_fake_cursor(connection, database, cmd TSRMLS_CC);
+	cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
+	cursor->connection = connection;
 
   // need to call this after setting cursor->link
   // reset checks that cursor->link != 0
@@ -653,8 +709,7 @@ zval* mongo_db_cmd(mongo_server *current, zval *cmd TSRMLS_DC) {
     exception = 1;
   }
 
-  current->next = temp_next;
-  cursor->link = 0;
+	cursor->connection = 0;
   zval_ptr_dtor(&cursor_zval);
 
   if (exception || IS_SCALAR_P(response)) {
@@ -829,6 +884,11 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN
 	ZEND_ARG_INFO(0, slave_okay)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, read_preference)
+	ZEND_ARG_ARRAY_INFO(0, tags, 0)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setProfilingLevel, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, level)
 ZEND_END_ARG_INFO()
@@ -889,6 +949,8 @@ static zend_function_entry MongoDB_methods[] = {
   PHP_ME(MongoDB, getGridFS, arginfo_getGridFS, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(MongoDB, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+  PHP_ME(MongoDB, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoDB, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, getProfilingLevel, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, setProfilingLevel, arginfo_setProfilingLevel, ZEND_ACC_PUBLIC)
   PHP_ME(MongoDB, drop, arginfo_no_parameters, ZEND_ACC_PUBLIC)
@@ -920,7 +982,7 @@ static void php_mongo_db_free(void *object TSRMLS_DC) {
     if (db->name) {
       zval_ptr_dtor(&db->name);
     }
-
+	mongo_read_preference_dtor(&db->read_pref);
     zend_object_std_dtor(&db->std TSRMLS_CC);
     efree(db);
   }

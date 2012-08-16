@@ -21,6 +21,9 @@
 #define PHP_MONGO_VERSION "1.3.0dev"
 #define PHP_MONGO_EXTNAME "mongo"
 
+#include "mcon/types.h"
+#include "mcon/read_preference.h"
+
 // resource names
 #define PHP_CONNECTION_RES_NAME "mongo connection"
 #define PHP_SERVER_RES_NAME "mongo server info"
@@ -233,22 +236,10 @@ typedef struct _mongo_server_set {
 } mongo_server_set;
 
 typedef struct {
-  zend_object std;
+	zend_object std;
 
-  int timeout;
-  // if this is a replica set
-
-  mongo_server_set *server_set;
-
-  // slave to send reads to
-  mongo_server *slave;
-
-  // if this connection should distribute reads to slaves
-  zend_bool slave_okay;
-  char *username;
-  char *password;
-  char *db;
-  char *rs;
+	mongo_con_manager *manager; /* Contains a link to the manager */
+	mongo_servers     *servers;
 } mongo_link;
 
 #define MONGO_SERVER 0
@@ -312,7 +303,7 @@ typedef struct {
 
 #define PHP_MONGO_GET_LINK(obj)                                         \
   link = (mongo_link*)zend_object_store_get_object((obj) TSRMLS_CC);    \
-  MONGO_CHECK_INITIALIZED(link->server_set, Mongo);
+  MONGO_CHECK_INITIALIZED(link->servers, Mongo);
 
 #define PHP_MONGO_GET_DB(obj)                                           \
   db = (mongo_db*)zend_object_store_get_object((obj) TSRMLS_CC);        \
@@ -324,7 +315,7 @@ typedef struct {
 
 #define PHP_MONGO_GET_CURSOR(obj)                                       \
   cursor = (mongo_cursor*)zend_object_store_get_object((obj) TSRMLS_CC); \
-  MONGO_CHECK_INITIALIZED(cursor->link, MongoCursor);
+  MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
 #define PHP_MONGO_CHECK_EXCEPTION() if (EG(exception)) { return; }
 #define PHP_MONGO_CHECK_EXCEPTION1(arg1)                        \
@@ -361,27 +352,6 @@ typedef struct {
     return ZEND_HASH_APPLY_STOP;                                \
   }
 
-#define SEND_MSG                                                \
-  MAKE_STD_ZVAL(errmsg);                                        \
-  ZVAL_NULL(errmsg);                                            \
-                                                                \
-  if (is_safe_op(options TSRMLS_CC)) {                          \
-    zval *cursor = append_getlasterror(getThis(), &buf, options TSRMLS_CC); \
-    if (cursor) {                                               \
-      safe_op(server, cursor, &buf, return_value TSRMLS_CC);    \
-    }                                                           \
-    else {                                                      \
-      RETVAL_FALSE;                                             \
-    }                                                           \
-  }                                                             \
-  else if (mongo_say(server, &buf, errmsg TSRMLS_CC) == FAILURE) {\
-    RETVAL_FALSE;                                               \
-  }                                                             \
-  else {                                                        \
-    RETVAL_TRUE;                                                \
-  }                                                             \
-  zval_ptr_dtor(&errmsg);
-
 
 #define GET_OPTIONS                                                     \
   timeout_p = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC); \
@@ -415,9 +385,9 @@ typedef struct {
 typedef struct {
   zend_object std;
 
-  // connection
-  mongo_link *link;
-  zval *resource;
+	/* Connection */
+	mongo_connection *connection;
+	zval *resource;
 
   // collection namespace
   char *ns;
@@ -452,7 +422,6 @@ typedef struct {
   // server.  server just points to a member of link, so it should never need to
   // be freed.
   int64_t cursor_id;
-  mongo_server *server;
 
   zend_bool started_iterating;
   zend_bool persist;
@@ -492,7 +461,7 @@ typedef struct {
   zval *link;
   zval *name;
 
-  zend_bool slave_okay;
+	mongo_read_preference read_pref;
 } mongo_db;
 
 typedef struct {
@@ -506,7 +475,7 @@ typedef struct {
   zval *name;
   zval *ns;
 
-  zend_bool slave_okay;
+	mongo_read_preference read_pref;
 } mongo_collection;
 
 
@@ -578,9 +547,12 @@ void mongo_init_MongoTimestamp(TSRMLS_D);
 void mongo_init_MongoInt32(TSRMLS_D);
 void mongo_init_MongoInt64(TSRMLS_D);
 
+/* Shared helper functions */
+void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp);
+int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC);
+
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 // php.ini options
-// these must be IN THE SAME ORDER as mongo.c lists them
 int allow_persistent;
 char *default_host;
 int default_port;
@@ -606,9 +578,13 @@ int pool_size;
 
 	long log_level;
 	long log_module;
+	zend_fcall_info log_callback_info;
+	zend_fcall_info_cache log_callback_info_cache;
 
 	long ping_interval;
 	long is_master_interval;
+
+	mongo_con_manager *manager;
 ZEND_END_MODULE_GLOBALS(mongo)
 
 #ifdef ZTS
@@ -625,6 +601,8 @@ extern zend_module_entry mongo_module_entry;
 
 /*
  * Error codes
+ *
+ * TODO: Check and update those all 
  *
  * MongoException:
  * 0: The <class> object has not been correctly initialized by its constructor
@@ -656,6 +634,9 @@ extern zend_module_entry mongo_module_entry;
  * 10: failed to get host from <substr> of <str>
  * 11: failed to get port from <substr> of <str>
  * 12: lost db connection
+ *
+ * MongoCursorTOException:
+ * 80: timeout exception
  *
  * MongoCursorException:
  * 0: cannot modify cursor after beginning iteration
