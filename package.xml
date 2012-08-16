@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package packagerversion="1.4.11" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
+<package packagerversion="1.4.11" version="2.0"
+  xmlns="http://pear.php.net/dtd/package-2.0"
+  xmlns:tasks="http://pear.php.net/dtd/tasks-1.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
   http://pear.php.net/dtd/tasks-1.0.xsd
   http://pear.php.net/dtd/package-2.0
   http://pear.php.net/dtd/package-2.0.xsd">
@@ -11,13 +15,25 @@
   <name>Kristina Chodorow</name>
   <user>kristina</user>
   <email>kristina@10gen.com</email>
+  <active>no</active>
+ </lead>
+ <lead>
+  <name>Derick Rethans</name>
+  <user>derick</user>
+  <email>derick@php.net</email>
   <active>yes</active>
  </lead>
- <date>2011-09-30</date>
- <time>12:00:00</time>
+ <lead>
+  <name>Hannes Magnusson</name>
+  <user>bjori</user>
+  <email>bjori@php.net</email>
+  <active>yes</active>
+ </lead>
+ <date>2012-07-24</date>
+ <time>10:51:00</time>
  <version>
-  <release>1.2.6</release>
-  <api>1.2.6</api>
+  <release>1.2.12</release>
+  <api>1.2.12</api>
  </version>
  <stability>
   <release>stable</release>
@@ -25,9 +41,14 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-   BUG FIXES
+** Bug
+    * [PHP-443] - Add zend_parse_parameters_none for PHP 5.2 builds 
+    * [PHP-444] - Undeprecate getSlaveOkay()/setSlaveOkay() on Mongo, MongoDB
+      and MongoCollection; and getSlave() on Mongo.
 
-   * Patched connection closing code (Carlos Rodriguez)
+** Improvement
+    * [PHP-442] - Fixed a typo in "MongoBinData::__construct(): The default
+      value for type will change to 0 in the future"
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -90,6 +111,155 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.11</release>
+    <api>1.2.11</api>
+   </version>
+   <date>2012-07-19</date>
+   <notes>
+** Bug
+    * [PHP-207] - setSlaveOkay not supported for GridFS queries
+    * [PHP-266] - segfault when connection string refers to unknown replica set member
+    * [PHP-269] - Mongo::__construct should only throw MongoConnectionException
+    * [PHP-331] - PHP segfaults when master changes
+    * [PHP-339] - Seg fault on insert timeout
+    * [PHP-359] - getPID() does not return expected PID when called on custom MongoID object
+    * [PHP-368] - uploadDate is missing in the file property of the MongoGridFSFile class.
+    * [PHP-369] - GridFS segfaults when iterating with an _id field set in the result object
+    * [PHP-372] - Error codes not being passed to MongoGridFSException
+    * [PHP-382] - When 'replicaSet' option is used, authentication calls are being sent to the arbiter server
+    * [PHP-384] - Segfault for GridFS with long_as_object option
+    * [PHP-388] - Cursors don't get closed after limit() is exhausted
+    * [PHP-391] - The driver crashes when there are more than FD_SETSIZE open file descriptors.
+    * [PHP-392] - Arbiter in the seed list acts wonky
+    * [PHP-394] - Crashes &amp; mem leaks
+    * [PHP-397] - Endless loop on non-existing file
+    * [PHP-402] - MongoCollection::validate(true) doesn't set the correct scan-all flag.
+    * [PHP-408] - MongoBinData custom type is returned as -128
+    * [PHP-413] - Authentication with wrong password.. prints the password!
+    * [PHP-417] - MongoDBRef::isRef() returns null in some cases it should return false
+    * [PHP-420] - MongoDB::drop() doesn't warn about arguments
+    * [PHP-431] - PHP driver throws tons of NOTICE messages
+    * [PHP-434] - Mongo::connect() doesn't validate the object
+    * [PHP-435] - 1.2.11 doesn't build with PHP5.2
+
+** Improvement
+    * [PHP-389] - Support setting query flags (opts)
+    * [PHP-428] - Coverage statistics
+    * [PHP-430] - Deprecate "old ways" which will be removed in 2.0.0
+
+** Task
+    * [PHP-405] - Migrate PHPUnit tests to phpt
+   </notes>
+  </release>
+
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.10</release>
+    <api>1.2.10</api>
+   </version>
+   <date>2012-04-06</date>
+   <notes>
+** Bug
+    * [PHP-329] - MongoCursorException with Apache while master steps down
+    * [PHP-335] - 1.2.8/1.2.9 don't compile with PHP &lt; 5.3
+    * [PHP-337] - failover with replicaset
+    * [PHP-340] - MongoCursorException - could not determine master
+    * [PHP-343] - PHP segfaults when adding a file to GridFS after upgrade to 1.2.9
+    * [PHP-344] - Segmentation Fault on $grid->storeFile('foo', $bar)
+    * [PHP-346] - getGridFS followed by storeBytes hangs request indefinitely
+    * [PHP-349] - MongoCursorTimeoutException causes connections not to close
+    * [PHP-351] - php driver doest close connection , when catch cursor timed out exception.
+    * [PHP-353] - Iterator key not set when _id field is not requested
+    * [PHP-361] - Mongo::getHosts() segfaults (at least when not connecting to a replica set)
+
+** Improvement
+    * [PHP-352] - Return only one element after "iterator_to_array()" if exclude "_id" from field list
+   </notes>
+  </release>
+
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.9</release>
+    <api>1.2.9</api>
+   </version>
+   <date>2012-02-23</date>
+   <notes>
+   BUG FIXES
+
+   * ZTS compile fixes
+   * Re-package due to bug in PEAR/PECL packaging system
+   </notes>
+  </release>
+
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.8</release>
+    <api>1.2.8</api>
+   </version>
+   <date>2012-02-22</date>
+   <notes>
+   BUG FIXES
+
+   * PHP-306 - MongoID::__set_state does not work
+   * PHP-307 - getHosts() not working with 1.2.7
+   * PHP-311 - Apache httpd segfault with PHP mongo 1.2.7
+   * PHP-312 - Seg fault with curl POST + mongo replicaset close
+   * PHP-313 - Kill cursor can be called on a different connection than the one the cursor was created on
+   * PHP-319 - Issues when the the driver tests for other connections to close if it find a "bad connection".
+   * PHP-320 - GridFS doesn't check for correct insertion of file-meta-document
+   * PHP-325 - mongo-php-driver abort with SEGV
+   </notes>
+  </release>
+
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.2.7</release>
+    <api>1.2.7</api>
+   </version>
+   <date>2012-01-05</date>
+   <notes>
+   BUG FIXES
+
+   * PHP-204: ClusteredCursor::query not throwing an Exception
+   * PHP-262: Added persistent replicaSet container
+   * PHP-277: Remove cursor from list on cursor reset
+   * PHP-279: Make accessing connected property quiet
+   * PHP-286: Try ping on another connection when one fails
+   * PHP-300: Fixed segfault when execute() is given array() as argument.
+   * Make mongoLog settings thread safe.
+   * Fixed memory leaks
+   * Fixed issues with connection pooling
+
+   NEW FEATURES
+
+   * PHP-233: Added the continueOnError flag to batch_insert().
+   * PHP-268: Add slave buckets
+   * PHP-272: Randomly choose slaves from a given bucket
+   </notes>
+  </release>
+
   <release>
    <stability>
     <release>stable</release>
