@@ -86,14 +86,14 @@ mongo_server* mongo_util_rs_get_master(mongo_link *link TSRMLS_DC);
  */
 int mongo_util_rs__set_slave(mongo_link *link, char **errmsg TSRMLS_DC);
 
-void mongo_util_rs_ping(mongo_link *link TSRMLS_DC);
+void mongo_util_rs_ping(mongo_link *link, int force TSRMLS_DC);
 
 /**
  * Clears the hosts, returning each host to the pool. Takes the output of
  * rs__ismaster and looks through the hosts and passives fields to build a new
  * list of hosts.
  */
-void mongo_util_rs_refresh(rs_monitor *monitor, time_t now TSRMLS_DC);
+void mongo_util_rs_refresh(rs_monitor *monitor, time_t now, int force TSRMLS_DC);
 
 /**
  * Free ping time.
@@ -109,7 +109,7 @@ void mongo_util_rs_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC);
  */
 rs_monitor* mongo_util_rs__get_monitor(mongo_link *link TSRMLS_DC);
 
-void mongo_util_rs__ping(rs_monitor *monitor TSRMLS_DC);
+void mongo_util_rs__ping(rs_monitor *monitor, int force TSRMLS_DC);
 
 /**
  * Calls ismaster on the given server.

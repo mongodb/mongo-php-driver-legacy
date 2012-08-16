@@ -72,6 +72,9 @@ typedef struct _server_info {
 #define MONGO_PING_INTERVAL (MonGlo(ping_interval))
 #define MONGO_ISMASTER_INTERVAL (MonGlo(is_master_interval))
 
+#define MONGO_INTERVAL_FOECE_LV0 (0)  // Follow the intervals
+#define MONGO_INTERVAL_FOECE_LV1 (1)  // Ignore ISMASTER_INTERVAL but follow PING_INTERVAL
+#define MONGO_INTERVAL_FOECE_LV2 (2)  // Ignore intervals
 // ------- Server Info Interface -----------
 
 /**
@@ -100,7 +103,7 @@ int mongo_util_server_cmp(char *host1, char *host2 TSRMLS_DC);
  *
  * Returns SUCCESS if this server is readable, failure otherwise.
  */
-int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC);
+int mongo_util_server_ping(mongo_server *server, time_t now, int force TSRMLS_DC);
 
 /**
  * If it's been ISMASTER_INTERVAL since we last pinged this server, calls isMaster

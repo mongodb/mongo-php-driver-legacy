@@ -99,7 +99,7 @@ static int mongo_util_server_reconnect(mongo_server *server TSRMLS_DC) {
   return SUCCESS;
 }
 
-int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
+int mongo_util_server_ping(mongo_server *server, time_t now, int force TSRMLS_DC) {
   server_info* info;
   zval *response = 0, **ok = 0;
   struct timeval start, end;
@@ -109,7 +109,7 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
   }
 
   // call ismaster every ISMASTER_INTERVAL seconds
-  if (info->guts->last_ismaster + MONGO_ISMASTER_INTERVAL <= now) {
+  if (info->guts->last_ismaster + MONGO_ISMASTER_INTERVAL <= now || force > MONGO_INTERVAL_FOECE_LV0 ) {
     if (mongo_util_server_reconnect(server TSRMLS_CC) == FAILURE) {
       return FAILURE;
     }
@@ -119,7 +119,7 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
 	mongo_util_server_ismaster(info, server, now TSRMLS_CC);
   }
 
-  if (info->guts->last_ping + MONGO_PING_INTERVAL > now) {
+  if (info->guts->last_ping + MONGO_PING_INTERVAL > now && force < MONGO_INTERVAL_FOECE_LV2 ) {
     return info->guts->readable ? SUCCESS : FAILURE;
   }
 
@@ -142,7 +142,7 @@ int mongo_util_server_ping(mongo_server *server, time_t now TSRMLS_DC) {
 
   zend_hash_find(HASH_P(response), "ok", strlen("ok")+1, (void**)&ok);
   if (Z_NUMVAL_PP(ok, 1) &&
-      info->guts->last_ismaster + MONGO_ISMASTER_INTERVAL <= now) {
+      info->guts->last_ismaster + MONGO_ISMASTER_INTERVAL <= now  || force > MONGO_INTERVAL_FOECE_LV0) {
     mongo_util_server_ismaster(info, server, now TSRMLS_CC);
   }
   zval_ptr_dtor(&response);
@@ -226,7 +226,7 @@ void mongo_util_server__prime(server_info *info, mongo_server *server TSRMLS_DC)
     return;
   }
 
-  mongo_util_server_ping(server, MONGO_SERVER_PING TSRMLS_CC);
+  mongo_util_server_ping(server, MONGO_SERVER_PING, MONGO_INTERVAL_FOECE_LV0 TSRMLS_CC);
 }
 
 int mongo_util_server_get_bucket(mongo_server *server TSRMLS_DC) {

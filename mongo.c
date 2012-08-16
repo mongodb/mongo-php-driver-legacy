@@ -698,7 +698,7 @@ PHP_METHOD(Mongo, switchSlave) {
     return;
   }
 
-  mongo_util_rs_ping(link TSRMLS_CC);
+  mongo_util_rs_ping(link,MONGO_INTERVAL_FOECE_LV0 TSRMLS_CC);
   if (mongo_util_rs__set_slave(link, &errmsg TSRMLS_CC) == FAILURE) {
     if (!EG(exception)) {
       if (errmsg) {
