@@ -150,7 +150,7 @@ PHP_METHOD(MongoCollection, getReadPreference)
 	php_mongo_add_tagsets(return_value, &c->read_pref);
 }
 
-/* {{{ Mongo::setReadPreference(int read_preference [, array tags ])
+/* {{{ MongoCollection::setReadPreference(int read_preference [, array tags ])
  * Sets a read preference to be used for all read queries.*/
 PHP_METHOD(MongoCollection, setReadPreference)
 {
@@ -167,7 +167,7 @@ PHP_METHOD(MongoCollection, setReadPreference)
 	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
 		c->read_pref.type = read_preference;
 	} else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %d is not valid as read preference type", read_preference);
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %ld is not valid as read preference type", read_preference);
 		RETVAL_FALSE;
 	}
 	if (tags) {
@@ -1390,8 +1390,9 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN
 	ZEND_ARG_INFO(0, slave_okay)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 0)
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, read_preference)
+	ZEND_ARG_ARRAY_INFO(0, tags, 0)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_validate, 0, ZEND_RETURN_VALUE, 0)
