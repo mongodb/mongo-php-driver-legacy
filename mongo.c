@@ -530,7 +530,7 @@ PHP_METHOD(Mongo, setReadPreference)
 	}
 	if (tags) {
 		if (read_preference == MONGO_RP_PRIMARY) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't use read preference tags with a read preference of PRIMARY", read_preference);
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't use read preference tags with a read preference of PRIMARY");
 			RETURN_FALSE;
 		}
 
