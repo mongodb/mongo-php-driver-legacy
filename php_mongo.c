@@ -372,3 +372,70 @@ void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
 
 	add_assoc_zval_ex(return_value, "tagsets", 8, tagsets);
 }
+
+static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *ztagset TSRMLS_DC)
+{
+	HashTable  *tagset = HASH_OF(ztagset);
+	zval      **tag;
+	int         item_count = 1, fail = 0;
+	mongo_read_preference_tagset *tmp_ts = calloc(1, sizeof(mongo_read_preference_tagset));
+
+	zend_hash_internal_pointer_reset(tagset);
+	while (zend_hash_get_current_data(tagset, (void **)&tag) == SUCCESS) {
+		if (Z_TYPE_PP(tag) != IS_STRING) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tag %d in tagset %d needs to contain a string", item_count, tagset_id);
+			fail = 1;
+		} else {
+			char *key;
+			uint key_len;
+			ulong num_key;
+
+            switch (zend_hash_get_current_key_ex(tagset, &key, &key_len, &num_key, 0, NULL)) {
+                case HASH_KEY_IS_LONG:
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tag %d in tagset %d has no string key", item_count, tagset_id);
+					fail = 1;
+                    break;
+                case HASH_KEY_IS_STRING:
+					mongo_read_preference_add_tag(tmp_ts, key, Z_STRVAL_PP(tag));
+                    break;
+            }
+
+		}
+		item_count++;
+		zend_hash_move_forward(tagset);
+	}
+	if (fail) {
+		mongo_read_preference_tagset_dtor(tmp_ts);
+		return NULL;
+	}
+	return tmp_ts;
+}
+
+int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC)
+{
+	zval **tagset;
+	int    item_count = 1;
+	mongo_read_preference_tagset *tagset_tmp;
+
+	/* Empty out what we had - this means that if it fails, the read preference
+	 * tagsets are gone though */
+	mongo_read_preference_dtor(rp);
+
+	zend_hash_internal_pointer_reset(tagsets);
+	while (zend_hash_get_current_data(tagsets, (void **)&tagset) == SUCCESS) {
+		if (Z_TYPE_PP(tagset) != IS_ARRAY) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tagset %d needs to contain an array of 0 or more tags", item_count);
+			return 0;
+		} else {
+			tagset_tmp = get_tagset_from_array(item_count, *tagset TSRMLS_CC);
+			if (tagset_tmp) {
+				mongo_read_preference_add_tagset(rp, tagset_tmp);
+			} else {
+				return 0;
+			}
+		}
+		item_count++;
+		zend_hash_move_forward(tagsets);
+	}
+	return 1;
+}

@@ -508,15 +508,15 @@ PHP_METHOD(Mongo, getReadPreference)
 	php_mongo_add_tagsets(return_value, &link->servers->read_pref);
 }
 
-/* {{{ Mongo::setReadPreference(int read_preference)
+/* {{{ Mongo::setReadPreference(int read_preference [, array tags ])
  * Sets a read preference to be used for all read queries.*/
 PHP_METHOD(Mongo, setReadPreference)
 {
 	long read_preference;
 	mongo_link *link;
+	HashTable  *tags = NULL;
 
-	/* TODO: Add tagsets as second argument */
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &read_preference) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|H", &read_preference, &tags) == FAILURE) {
 		return;
 	}
 
@@ -526,7 +526,19 @@ PHP_METHOD(Mongo, setReadPreference)
 		link->servers->read_pref.type = read_preference;
 	} else {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %d is not valid as read preference type", read_preference);
+		RETURN_FALSE;
 	}
+	if (tags) {
+		if (read_preference == MONGO_RP_PRIMARY) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't use read preference tags with a read preference of PRIMARY", read_preference);
+			RETURN_FALSE;
+		}
+
+		if (!php_mongo_use_tagsets(&link->servers->read_pref, tags TSRMLS_CC)) {
+			RETURN_FALSE;
+		}
+	}
+	RETURN_TRUE;
 }
 /* }}} */
 
