@@ -173,9 +173,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 		tmp = mongo_get_connection_single(manager, servers->server[i], (char **) &con_error_message);
 
 		if (!tmp) {
-			*error_message = malloc(256);
-			snprintf(*error_message, 256, "Couldn't connect to '%s:%d': %s", servers->server[0]->host, servers->server[0]->port, con_error_message);
-			free(con_error_message);
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 		}
 	}
 	/* Discover more nodes. This also adds a connection to "servers" for each
@@ -231,9 +229,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 		tmp = mongo_get_connection_single(manager, servers->server[i], (char **) &con_error_message);
 
 		if (!tmp) {
-			*error_message = malloc(256);
-			snprintf(*error_message, 256, "Couldn't connect to '%s:%d': %s", servers->server[1]->host, servers->server[1]->port, con_error_message);
-			free(con_error_message);
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 		}
 	}
 
