@@ -116,6 +116,7 @@ typedef struct _mongo_server_def
 	char *db;
 	char *username;
 	char *password;
+	time_t last_try; /* Contains the time of the last failed connection attempted */
 } mongo_server_def;
 
 typedef struct _mongo_servers

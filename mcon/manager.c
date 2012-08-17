@@ -20,7 +20,21 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	hash = mongo_server_create_hash(server);
 	con = mongo_manager_connection_find_by_hash(manager, hash);
 	if (!con) {
+		struct timeval now;
+
+		gettimeofday(&now, NULL);
+		/* Check when we last tried, if it's not more than ping_interval secs
+		 * ago, then we simply don't bother. */
+		if (server->last_try + manager->ping_interval > now.tv_sec) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: skipping connect as we last tried at %ld, now: %ld, time left: %ld", server->last_try, now.tv_sec, server->last_try + manager->ping_interval - now.tv_sec);
+			return NULL;
+		}
+
 		con = mongo_connection_create(manager, server, error_message);
+		/* We store the last time we tried to connect, so we can prevent to
+		 * have to try on every request. Instead we wait some time before we
+		 * try again - configurable with the ping_interval setting. */
+		server->last_try = now.tv_sec;
 		if (con) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: pinging %s", hash);
 			if (mongo_connection_ping(manager, con)) {
