@@ -9,13 +9,24 @@
 #include <string.h>
 
 /* Helpers */
+static char *mongo_connection_type(int type)
+{
+	switch (type) {
+		case MONGO_NODE_PRIMARY: return "PRIMARY";
+		case MONGO_NODE_SECONDARY: return "SECONDARY";
+		case MONGO_NODE_ARBITER: return "ARBITER";
+		case MONGO_NODE_MONGOS: return "MONGOS";
+		default:
+			return "UNKNOWN?";
+	}
+}
 static void mongo_print_connection_info(mongo_con_manager *manager, mongo_connection *con, int level)
 {
 	int i;
 
 	mongo_manager_log(manager, MLOG_RS, level,
 		"- connection: type: %s, socket: %d, ping: %d, hash: %s",
-		con->connection_type == 1 ? "PRIMARY  " : "SECONDARY",
+		mongo_connection_type(con->connection_type),
 		con->socket,
 		con->ping_ms,
 		con->hash
@@ -76,7 +87,11 @@ static mcon_collection *mongo_rp_collect_primary(mongo_con_manager *manager, mon
 
 static mcon_collection *mongo_rp_collect_primary_and_secondary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
-	return filter_connections(manager, MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY, rp);
+	/* We add the MONGO_NODE_MONGOS here, because that's needed for the
+	 * MULTIPLE connection type. Right now, that only is used for
+	 * MONGO_RP_NEAREST, and MONGO_RP_NEAREST uses this function (see below in
+	 * mongo_find_all_candidate_servers(). */
+	return filter_connections(manager, MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY | MONGO_NODE_MONGOS, rp);
 }
 
 static mcon_collection *mongo_rp_collect_secondary(mongo_con_manager *manager, mongo_read_preference *rp)

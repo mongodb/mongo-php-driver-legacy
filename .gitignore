@@ -58,9 +58,14 @@ tests/mongo-test-cfg.inc
 .coverage
 coverage
 
-mcon/rp-test1
-mcon/test3
-mcon/hash-test1
+mcon/tests/sc-test1
+mcon/tests/rc-test1
+mcon/tests/rp-test1
+mcon/tests/rp-test2
+mcon/tests/hash-test1
+mcon/tests/parse-test1
+mcon/tests/parse-test2
+mcon/tests/shc-test1
 
 mongo-1*.tgz
 mongo-1*.tar

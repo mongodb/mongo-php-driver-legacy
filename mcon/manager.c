@@ -173,9 +173,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 		tmp = mongo_get_connection_single(manager, servers->server[i], (char **) &con_error_message);
 
 		if (!tmp) {
-			*error_message = malloc(256);
-			snprintf(*error_message, 256, "Couldn't connect to '%s:%d': %s", servers->server[0]->host, servers->server[0]->port, con_error_message);
-			free(con_error_message);
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 		}
 	}
 	/* Discover more nodes. This also adds a connection to "servers" for each
@@ -217,6 +215,45 @@ static mongo_connection *mongo_get_write_connection_replicaset(mongo_con_manager
 }
 
 
+static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
+{
+	mongo_connection *con = NULL;
+	mongo_connection *tmp;
+	mcon_collection  *collection;
+	char             *con_error_message = NULL;
+	mongo_read_preference tmp_rp; /* We only support NEAREST for MULTIPLE right now */
+	int i;
+
+	/* Create a connection to every of the servers in the seed list */
+	for (i = 0; i < servers->count; i++) {
+		tmp = mongo_get_connection_single(manager, servers->server[i], (char **) &con_error_message);
+
+		if (!tmp) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+		}
+	}
+
+	/* Force the RP of NEAREST, which is the only one that makes sense right
+	 * now. Technically, read preference tags are also supported, but not
+	 * implemented on the mongos side yet. */
+	mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
+	tmp_rp.type = MONGO_RP_NEAREST;
+	collection = mongo_find_candidate_servers(manager, &tmp_rp);
+	mongo_read_preference_dtor(&tmp_rp);
+	if (!collection || collection->count == 0) {
+		*error_message = strdup("No candidate servers found");
+		goto bailout;
+	}
+	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
+	collection = mongo_select_nearest_servers(manager, collection, &servers->read_pref);
+	con = mongo_pick_server_from_set(manager, collection, &servers->read_pref);
+
+bailout:
+	/* Cleaning up */
+	mcon_collection_free(collection);	
+	return con;
+}
+
 /* API interface to fetch a connection */
 mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int write_connection, char **error_message)
 {
@@ -234,11 +271,11 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a REPLSET connection (read)");
 				return mongo_get_read_connection_replicaset(manager, servers, error_message);
 			}
-/*
+
 		case MONGO_CON_TYPE_MULTIPLE:
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a MULTIPLE connection");
-			return mongo_get_connection_multiple(manager, servers);
-*/
+			return mongo_get_connection_multiple(manager, servers, error_message);
+
 		default:
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: connection type %d is not supported", servers->con_type);
 			*error_message = strdup("mongo_get_read_write_connection: Unknown connection type requested");
