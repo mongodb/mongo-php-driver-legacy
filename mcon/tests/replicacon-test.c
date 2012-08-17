@@ -19,7 +19,7 @@ int main(void)
 	if (error_message) {
 		printf("ERROR: %s\n", error_message);
 	}
-	mongo_servers_dtor(manager, servers);
+	mongo_servers_dtor(servers);
 
 	mongo_deinit(manager);
 
