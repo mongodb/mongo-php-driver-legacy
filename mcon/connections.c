@@ -508,6 +508,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	char          *data_buffer;
 	char          *ptr;
 	char          *tags;
+	char          *msg; /* If set and its value is "isdbgrid", it signals we connected to a mongos */
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: start");
 	packet = bson_create_is_master_packet(con);
@@ -527,6 +528,14 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 		*error_message = strdup("Couldn't find the maxBsonObjectSize field");
 		free(data_buffer);
 		return 0;
+	}
+
+	/* Find msg and whether it contains "isdbgrid" */
+	if (bson_find_field_as_string(ptr, "msg", (char**) &msg)) {
+		if (strcmp(msg, "isdbgrid") == 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: msg contains 'isdbgrid' - we're connected to a mongos");
+			con->connection_type = MONGO_NODE_MONGOS;
+		}
 	}
 
 	/* Find read preferences tags */

@@ -103,6 +103,16 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 	 * We still have to add the last parser host/port combination though: */
 	mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
 
+	/* Set the default connection type, we might change this if we encounter
+	 * the replicaSet option later */
+	if (servers->count == 1) {
+		servers->con_type = MONGO_CON_TYPE_STANDALONE;
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: STANDALONE");
+	} else {
+		servers->con_type = MONGO_CON_TYPE_MULTIPLE;
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: MULTIPLE");
+	}
+
 	/* Check for dbname
 	 * mongodb://user:pass@host:port,host:port/dbname?foo=bar
 	 *                                        ^ */
@@ -256,18 +266,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		if (option_value && *option_value) {
 			servers->repl_set_name = strdup(option_value);
 			servers->con_type = MONGO_CON_TYPE_REPLSET;
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: REPLSET");
-		} else {
-			/* Turn off replica set handling, which means either use a
-			 * standalone server, or a "multi-set". Why you would do
-			 * this? No idea. */
-			if (servers->count == 1) {
-				servers->con_type = MONGO_CON_TYPE_STANDALONE;
-				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: STANDALONE");
-			} else {
-				servers->con_type = MONGO_CON_TYPE_MULTIPLE;
-				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: MULTIPLE");
-			}
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Switching connection type: REPLSET");
 		}
 		return 0;
 	}
