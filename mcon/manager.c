@@ -27,6 +27,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 		 * ago, then we simply don't bother. */
 		if (server->last_try + manager->ping_interval > now.tv_sec) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: skipping connect as we last tried at %ld, now: %ld, time left: %ld", server->last_try, now.tv_sec, server->last_try + manager->ping_interval - now.tv_sec);
+			free(hash);
 			return NULL;
 		}
 
