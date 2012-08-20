@@ -7,7 +7,6 @@ $classes = array(
     'MongoDB',
     'MongoCollection',
     'MongoCursor',
-    'MongoPool',
 );
 foreach ($classes as $class) {
 	echo $class, "\n";
@@ -29,9 +28,6 @@ Mongo
     0: server (optional)
     1: options (optional)
   Method connect expects 0 parameters
-  Method pairConnect expects 0 parameters
-  Method persistConnect expects 0 parameters
-  Method pairPersistConnect expects 0 parameters
   Method connectUtil expects 0 parameters
   Method __toString expects 0 parameters
   Method __get expects 1 parameters
@@ -44,6 +40,10 @@ Mongo
   Method getSlaveOkay expects 0 parameters
   Method setSlaveOkay expects 1 parameters
     0: slave_okay (optional)
+  Method getReadPreference expects 0 parameters
+  Method setReadPreference expects 2 parameters
+    0: read_preference
+    1: tags (optional)
   Method dropDB expects 1 parameters
     0: MongoDB_object_OR_database_name
   Method lastError expects 0 parameters
@@ -55,11 +55,6 @@ Mongo
   Method getSlave expects 0 parameters
   Method switchSlave expects 0 parameters
   Method close expects 0 parameters
-  Method setPoolSize expects 1 parameters
-    0: maximum_pool_size
-  Method getPoolSize expects 0 parameters
-  Method poolDebug expects 0 parameters
-  Method serverInfo expects 0 parameters
 
 MongoDB
   Method __construct expects 2 parameters
@@ -73,6 +68,10 @@ MongoDB
   Method getSlaveOkay expects 0 parameters
   Method setSlaveOkay expects 1 parameters
     0: slave_okay (optional)
+  Method getReadPreference expects 0 parameters
+  Method setReadPreference expects 2 parameters
+    0: read_preference
+    1: tags (optional)
   Method getProfilingLevel expects 0 parameters
   Method setProfilingLevel expects 1 parameters
     0: level
@@ -123,6 +122,10 @@ MongoCollection
   Method getSlaveOkay expects 0 parameters
   Method setSlaveOkay expects 1 parameters
     0: slave_okay (optional)
+  Method getReadPreference expects 0 parameters
+  Method setReadPreference expects 2 parameters
+    0: read_preference
+    1: tags (optional)
   Method drop expects 0 parameters
   Method validate expects 1 parameters
     0: validate (optional)
@@ -224,9 +227,3 @@ MongoCursor
   Method reset expects 0 parameters
   Method count expects 1 parameters
     0: foundOnly (optional)
-
-MongoPool
-  Method info expects 0 parameters
-  Method setSize expects 1 parameters
-    0: maximum_pool_size
-  Method getSize expects 0 parameters
