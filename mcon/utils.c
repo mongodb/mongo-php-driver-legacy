@@ -47,24 +47,32 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **db, char 
 
 	/* Find the host */
 	ptr = strchr(ptr, ':');
-	*host = strndup(hash, ptr - hash);
+	if (host) {
+		*host = strndup(hash, ptr - hash);
+	}
 
 	/* Find the port */
-	*port = atoi(ptr + 1);
+	if (port) {
+		*port = atoi(ptr + 1);
+	}
 
 	/* Find the database and username */
-	ptr = strchr(ptr, ';') + 1;
-	if (ptr[0] != 'X') {
-		*db = strndup(ptr, strchr(ptr, '/') - ptr);
-		pid_semi = strchr(ptr, ';');
-		*username = strndup(strchr(ptr, '/') + 1, pid_semi - strchr(ptr, '/') - 1);
-	} else {
-		*db = *username = NULL;
-		pid_semi = strchr(ptr, ';');
+	if (db && username) {
+		ptr = strchr(ptr, ';') + 1;
+		if (ptr[0] != 'X') {
+			*db = strndup(ptr, strchr(ptr, '/') - ptr);
+			pid_semi = strchr(ptr, ';');
+			*username = strndup(strchr(ptr, '/') + 1, pid_semi - strchr(ptr, '/') - 1);
+		} else {
+			*db = *username = NULL;
+			pid_semi = strchr(ptr, ';');
+		}
 	}
 
 	/* Find the PID */
-	*pid = atoi(pid_semi + 1);
+	if (pid) {
+		*pid = atoi(pid_semi + 1);
+	}
 
 	return 0;
 }
