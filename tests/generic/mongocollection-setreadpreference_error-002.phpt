@@ -3,13 +3,17 @@ MongoCollection::setReadPreference errors [2]
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) ."/../utils.inc"; ?>
 <?php
 $host = hostname();
 $port = port();
 $db   = dbname();
 
 $baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
+function myerror($errno, $errstr) {
+    var_dump($errno, $errstr);
+}
+set_error_handler("myerror", E_RECOVERABLE_ERROR);
 
 $a = array(
 	42,
@@ -34,7 +38,21 @@ foreach ($a as $value) {
 }
 ?>
 --EXPECTF--
-Warning: MongoCollection::setReadPreference() expects parameter 2 to be array, integer given in %smong%s-setreadpreference_error-002.php on line 24
+int(4096)
+string(89) "Argument 2 passed to MongoCollection::setReadPreference() must be an array, integer given"
+
+Warning: MongoCollection::setReadPreference() expects parameter 2 to be array, integer given in %s on line %d
+array(2) {
+  ["type"]=>
+  int(0)
+  ["type_string"]=>
+  string(7) "primary"
+}
+---
+int(4096)
+string(88) "Argument 2 passed to MongoCollection::setReadPreference() must be an array, string given"
+
+Warning: MongoCollection::setReadPreference() expects parameter 2 to be array, string given in %s on line %d
 array(2) {
   ["type"]=>
   int(0)
@@ -43,16 +61,7 @@ array(2) {
 }
 ---
 
-Warning: MongoCollection::setReadPreference() expects parameter 2 to be array, string given in %smong%s-setreadpreference_error-002.php on line 24
-array(2) {
-  ["type"]=>
-  int(0)
-  ["type_string"]=>
-  string(7) "primary"
-}
----
-
-Warning: MongoCollection::setReadPreference(): Tagset 1 needs to contain an array of 0 or more tags in %smong%s-setreadpreference_error-002.php on line 24
+Warning: MongoCollection::setReadPreference(): Tagset 1 needs to contain an array of 0 or more tags in %s on line %d
 array(2) {
   ["type"]=>
   int(2)
@@ -61,7 +70,7 @@ array(2) {
 }
 ---
 
-Warning: MongoCollection::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %smong%s-setreadpreference_error-002.php on line 24
+Warning: MongoCollection::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %s on line %d
 array(2) {
   ["type"]=>
   int(2)
@@ -70,7 +79,7 @@ array(2) {
 }
 ---
 
-Warning: MongoCollection::setReadPreference(): Tag 2 in tagset 1 needs to contain a string in %smong%s-setreadpreference_error-002.php on line 24
+Warning: MongoCollection::setReadPreference(): Tag 2 in tagset 1 needs to contain a string in %s on line %d
 array(2) {
   ["type"]=>
   int(2)
@@ -79,7 +88,7 @@ array(2) {
 }
 ---
 
-Warning: MongoCollection::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %smong%s-setreadpreference_error-002.php on line 24
+Warning: MongoCollection::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %s on line %d
 array(2) {
   ["type"]=>
   int(2)
@@ -88,7 +97,7 @@ array(2) {
 }
 ---
 
-Warning: MongoCollection::setReadPreference(): Tag 1 in tagset 2 needs to contain a string in %smong%s-setreadpreference_error-002.php on line 24
+Warning: MongoCollection::setReadPreference(): Tag 1 in tagset 2 needs to contain a string in %s on line %d
 array(3) {
   ["type"]=>
   int(2)
@@ -105,7 +114,7 @@ array(3) {
 }
 ---
 
-Warning: MongoCollection::setReadPreference(): Tag 1 in tagset 1 has no string key in %smong%s-setreadpreference_error-002.php on line 24
+Warning: MongoCollection::setReadPreference(): Tag 1 in tagset 1 has no string key in %s on line %d
 array(2) {
   ["type"]=>
   int(2)
