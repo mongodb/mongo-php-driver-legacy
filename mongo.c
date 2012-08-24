@@ -193,6 +193,8 @@ PHP_METHOD(Mongo, __construct)
 	int i;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/", &server, &server_len, &options) == FAILURE) {
+		zval *object = getThis();
+		ZVAL_NULL(object);
 		return;
 	}
 
