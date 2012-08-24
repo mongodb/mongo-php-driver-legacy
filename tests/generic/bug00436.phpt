@@ -1,5 +1,7 @@
 --TEST--
 MongGridFS::storeUpload() breaks on HTML5 multiple file upload
+--SKIPIF--
+<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --INI--
 file_uploads=1
 upload_max_filesize=1024
@@ -24,7 +26,8 @@ Content-Type: text/plain-file3
 -----------------------------20896060251896012921717172737--
 --FILE--
 <?php
-$m = new Mongo("standalone");
+require_once dirname(__FILE__) ."/../utils.inc";
+$m = mongo();
 $gridfs = $m->test->getGridFS();
 try {
     $retval = $gridfs->storeUpload("multifiles");
