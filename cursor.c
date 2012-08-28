@@ -259,7 +259,7 @@ PHP_METHOD(MongoCursor, __construct) {
 	 * (like we do for commands right now through
 	 * php_mongo_connection_force_primary).  See also MongoDB::command and
 	 * append_getlasterror, where this has to be done too. */
-	cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, 0, (char**) &error_message);
+	cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char**) &error_message);
 
 	if (!cursor->connection && error_message) {
 		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);

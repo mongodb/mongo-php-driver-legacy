@@ -161,7 +161,7 @@ bailout:
 	return tmp;
 }
 
-static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int write_connection, char **error_message)
+static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
 	mongo_connection *con = NULL;
 	mongo_connection *tmp;
@@ -181,7 +181,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	 * new node */
 	mongo_discover_topology(manager, servers);
 	/* Depending on whether we want a read or a write connection, run the correct algorithms */
-	if (write_connection) {
+	if (connection_flags & MONGO_CON_FLAG_WRITE) {
 		mongo_read_preference tmp_rp;
 
 		mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
@@ -203,16 +203,6 @@ bailout:
 	/* Cleaning up */
 	mcon_collection_free(collection);	
 	return con;
-}
-
-static mongo_connection *mongo_get_read_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
-{
-	return mongo_get_read_write_connection_replicaset(manager, servers, 0, error_message);
-}
-
-static mongo_connection *mongo_get_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
-{
-	return mongo_get_read_write_connection_replicaset(manager, servers, 1, error_message);
 }
 
 
@@ -256,7 +246,7 @@ bailout:
 }
 
 /* API interface to fetch a connection */
-mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int write_connection, char **error_message)
+mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->con_type) {
@@ -265,13 +255,12 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 			return mongo_get_connection_standalone(manager, servers, error_message);
 
 		case MONGO_CON_TYPE_REPLSET:
-			if (write_connection) {
-				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a REPLSET connection (write)");
-				return mongo_get_write_connection_replicaset(manager, servers, error_message);
-			} else {
-				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a REPLSET connection (read)");
-				return mongo_get_read_connection_replicaset(manager, servers, error_message);
-			}
+			mongo_manager_log(
+				manager, MLOG_CON, MLOG_INFO,
+				"mongo_get_read_write_connection: finding a REPLSET connection (%s)",
+				connection_flags & MONGO_CON_FLAG_WRITE ? "write" : "read"
+			);
+			return mongo_get_read_write_connection_replicaset(manager, servers, connection_flags, error_message);
 
 		case MONGO_CON_TYPE_MULTIPLE:
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a MULTIPLE connection");

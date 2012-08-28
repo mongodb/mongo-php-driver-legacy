@@ -296,7 +296,7 @@ static mongo_connection *php_mongo_connect(mongo_link *link TSRMLS_DC)
 	/* We don't care about the result so although we assign it to a var, we
 	 * only do that to handle errors and return it so that the calling function
 	 * knows whether a connection could be obtained or not. */
-	con = mongo_get_read_write_connection(link->manager, link->servers, 0, (char **) &error_message);
+	con = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char **) &error_message);
 	if (!con) {
 		if (error_message) {
 			zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);

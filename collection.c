@@ -41,7 +41,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_Collection = NULL;
 
-static mongo_connection* get_server(mongo_collection *c, int write_connection TSRMLS_DC);
+static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
 static int is_safe_op(zval *options TSRMLS_DC);
 static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
@@ -306,10 +306,9 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 }
 
 /* Returns a connection for the operation.
- * If 1 is passed for write_connection, a writable connection will be returned,
- * otherwise a readable connection is returned.
+ * Connection flags (connection_flags) are MONGO_CON_TYPE_READ and MONGO_CON_TYPE_WRITE.
  */
-static mongo_connection* get_server(mongo_collection *c, int write_connection TSRMLS_DC)
+static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC)
 {
 	mongo_link *link;
 	mongo_connection *connection;
@@ -322,7 +321,7 @@ static mongo_connection* get_server(mongo_collection *c, int write_connection TS
 	}
 
 	/* TODO: Fix better error message */
-	if ((connection = mongo_get_read_write_connection(link->manager, link->servers, write_connection, (char **) &error_message)) == NULL) {
+	if ((connection = mongo_get_read_write_connection(link->manager, link->servers, connection_flags, (char **) &error_message)) == NULL) {
 		if (error_message) {
 			mongo_cursor_throw(0, 16 TSRMLS_CC, "Couldn't get connection: %s", error_message);
 		} else {
@@ -511,7 +510,7 @@ PHP_METHOD(MongoCollection, insert) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c, 1 TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
 		RETURN_FALSE;
 	}
 
@@ -552,7 +551,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c, 1 TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
 		RETURN_FALSE;
 	}
 
@@ -668,7 +667,7 @@ PHP_METHOD(MongoCollection, update) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c, 1 TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
 		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
@@ -734,7 +733,7 @@ PHP_METHOD(MongoCollection, remove) {
 
   PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c, 1 TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
 		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}

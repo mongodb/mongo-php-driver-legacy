@@ -8,6 +8,10 @@
 #define MONGO_CON_TYPE_MULTIPLE   2
 #define MONGO_CON_TYPE_REPLSET    3
 
+/* Bitfield used for fetching connections */
+#define MONGO_CON_FLAG_READ            0x01
+#define MONGO_CON_FLAG_WRITE           0x02
+
 /* These constants are a bit field - however, each connection will only have
  * one type. The reason why it's a bit field is because of filtering during
  * read preference scanning (see read_preference.c).
