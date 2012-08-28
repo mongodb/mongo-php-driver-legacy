@@ -850,8 +850,15 @@ PHP_METHOD(MongoGridFS, remove) {
     MAKE_STD_ZVAL(criteria);
     array_init(criteria);
   }
-  else {
-    zval_add_ref(&criteria);
+	else if(Z_TYPE_P(criteria) == IS_ARRAY) {
+		zval_add_ref(&criteria);
+	} else {
+		zval *tmp;
+		MAKE_STD_ZVAL(tmp);
+		array_init(tmp);
+		convert_to_string(criteria);
+		add_assoc_stringl(tmp, "filename", Z_STRVAL_P(criteria), Z_STRLEN_P(criteria), 1);
+		criteria = tmp;
   }
 
   if (!options) {
