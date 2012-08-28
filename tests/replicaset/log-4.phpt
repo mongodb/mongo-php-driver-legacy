@@ -29,34 +29,36 @@ $m = new Mongo("mongodb://$REPLICASET_PRIMARY:$REPLICASET_PRIMARY_PORT", array("
 ?>
 --EXPECTF--
 Warnings:
-Mongo::__construct(): is_ping: last pinged at %d; time: %dms
-Mongo::__construct(): is_ping: last pinged at %d; time: %dms
+CON     WARN: is_ping: last pinged at %d; time: %dms
+CON     WARN: rs_status: found an unconnectable host: tertiary.rs.local:%d (state: 8)
+CON     WARN: is_ping: last pinged at %d; time: %dms
+CON     WARN: rs_status: found an unconnectable host: tertiary.rs.local:%d (state: 8)
 Fine:
-Mongo::__construct(): mongo_get_connection: finding a REPLSET connection
-Mongo::__construct(): found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-Mongo::__construct(): found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-Mongo::__construct(): is_master: start
-Mongo::__construct(): send_packet: read from header: 36
-Mongo::__construct(): send_packet: data_size: 266
-Mongo::__construct(): is_master: the found replicaset name matches the expected one (%s).
-Mongo::__construct(): is_master: set name: %s, is_master: 1, is_arbiter: 0
-Mongo::__construct(): discover_topology: is_master worked
-Mongo::__construct(): found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-Mongo::__construct(): found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-Mongo::__construct(): finding candidate servers
-Mongo::__construct(): select server: sorting
-Mongo::__construct(): select server: only nearest
+CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
+CON     FINE: discover_topology: checking is_master for %s:%d;X;%d
+CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
+CON     FINE: rs_status: skipping: last ran at %d, now: %d, time left: %d
+CON     FINE: discover_topology: is_master got skipped
+REPLSET FINE: finding candidate servers
+REPLSET FINE: - all servers
+REPLSET FINE: filter_connections: adding connections:
+REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: %d, hash: %s:%d;X;%d
+REPLSET FINE: filter_connections: done
+REPLSET FINE: mongo_sort_servers: sorting
+REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: %d, hash: %s:%d;X;%d
+REPLSET FINE: mongo_sort_servers: done
+REPLSET FINE: select server: only nearest
+REPLSET FINE: select server: nearest is %dms
+REPLSET FINE: pick server: random element 0
 Info:
-Mongo::__construct(): Parsing mongodb://%s:%d
-Mongo::__construct(): - Found node: %s:%d
-Mongo::__construct(): - Found option 'replicaSet': '%s'
-Mongo::__construct(): - Connection type: REPLSET
-Mongo::__construct(): discover_topology: checking is_master for %s:%d;X;%d
-Mongo::__construct(): is_master: setting maxBsonObjectSize to 16777216
-Mongo::__construct(): found host: %s:%d
-Mongo::__construct(): found host: %s:%d
-Mongo::__construct(): - connection: type: PRIMARY  , socket: 3, ping: %d, hash: %s:%d;X;%d
-Mongo::__construct(): - connection: type: PRIMARY  , socket: 3, ping: %d, hash: %s:%d;X;%d
-Mongo::__construct(): select server: nearest is %dms
-Mongo::__construct(): - connection: type: PRIMARY  , socket: 3, ping: %d, hash: %s:%d;X;%d
-Mongo::__construct(): pick server: random element 0
+PARSE   INFO: Parsing mongodb://%s:%d
+PARSE   INFO: - Found node: %s:%d
+PARSE   INFO: - Connection type: STANDALONE
+PARSE   INFO: - Found option 'replicaSet': 'RS'
+PARSE   INFO: - Switching connection type: REPLSET
+CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
+REPLSET INFO: - connection: type: PRIMARY, socket: 3, ping: %d, hash: %s:%d;X;%d
+
+Notice: CON     INFO: freeing connection secondary.rs.local:%d;X;%d in Unknown on line 0
+
+Notice: CON     INFO: freeing connection %s:%d;X;%d in Unknown on line 0

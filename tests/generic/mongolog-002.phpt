@@ -20,12 +20,22 @@ $mongo = mongo();
 
 var_dump(MongoLog::getCallback());
 
+echo "Selecting collection\n";
 $coll = $mongo->selectCollection(dbname(), 'mongolog');
 $coll->drop();
+echo "Finished\n";
 ?>
 --EXPECTF--
 bool(true)
 string(1) "f"
+Selecting collection
 int(4)
 int(4)
-string(17) "hearing something"
+string(13) "getting reply"
+int(4)
+int(4)
+string(21) "getting cursor header"
+int(4)
+int(4)
+string(19) "getting cursor body"
+Finished
