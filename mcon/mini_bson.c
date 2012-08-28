@@ -90,6 +90,23 @@ mcon_str *bson_create_rs_status_packet(mongo_connection *con)
 	return str;
 }
 
+mcon_str *bson_create_getnonce_packet(mongo_connection *con)
+{
+	struct mcon_str *str = create_simple_header(con);
+	int    hdr;
+
+	hdr = str->l;
+	mcon_serialize_int(str, 0); /* We need to fill this with the length */
+	bson_add_long(str, "getnonce", 1);
+	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
+
+	/* Set length */
+	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+
+	((int*) str->d)[0] = str->l;
+	return str;
+}
+
 /* Field reading functionality */
 /* - helpers */
 char *bson_skip_field_name(char *data)

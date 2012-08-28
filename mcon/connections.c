@@ -562,3 +562,42 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 
 	return 1;
 }
+
+/**
+ * Sends a getnonce command to the server for authentication
+ *
+ * Returns the nonsense when it worked, or NULL if it didn't.
+ */
+char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *con, char **error_message)
+{
+	mcon_str      *packet;
+	char          *data_buffer;
+	char          *ptr;
+	char          *nonce;
+	char          *retval = NULL;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "getnonce: start");
+	packet = bson_create_getnonce_packet(con);
+
+	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+		return NULL;
+	}
+
+	/* Find data fields */
+	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	/* Find getnonce */
+	if (bson_find_field_as_string(ptr, "nonce", &nonce)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "getnonce: found nonce '%s'", nonce);
+	} else {
+		*error_message = strdup("Couldn't find the nonce field");
+		free(data_buffer);
+		return NULL;
+	}
+
+	retval = strdup(nonce);
+
+	free(data_buffer);
+
+	return retval;
+}

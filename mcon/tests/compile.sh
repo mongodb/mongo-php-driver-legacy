@@ -11,3 +11,4 @@ gcc $FLAGS -o hash-test1 test-hash-split.c $FILES
 gcc $FLAGS -o parse-test1 parse-test.c $FILES
 gcc $FLAGS -o parse-test2 parse-test2.c $FILES
 gcc $FLAGS -o shc-test1 shardcon-test.c $FILES
+gcc $FLAGS -o auth-test1 authcon-test.c $FILES
