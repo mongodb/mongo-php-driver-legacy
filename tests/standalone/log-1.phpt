@@ -17,15 +17,21 @@ MongoLog::setLevel(MongoLog::ALL);
 $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 ?>
 --EXPECTF--
-Mongo::__construct(): Parsing mongodb://%s:%d
-Mongo::__construct(): - Found node: %s:%d
-Mongo::__construct(): mongo_get_connection: finding a STANDALONE connection
-Mongo::__construct(): connection_create: creating new connection for %s:%d
-Mongo::__construct(): get_connection_single: pinging %s:%d;X;%d
-Mongo::__construct(): is_ping: start
-Mongo::__construct(): is_ping: data_size: 17
-Mongo::__construct(): is_ping: last pinged at %d; time: %dms
-Mongo::__construct(): get_server_flags: start
-Mongo::__construct(): send_packet: read from header: 36
-Mongo::__construct(): send_packet: data_size: 51
-Mongo::__construct(): is_master: setting maxBsonObjectSize to 16777216
+PARSE   INFO: Parsing mongodb://%s:%d
+PARSE   INFO: - Found node: %s:%d
+PARSE   INFO: - Connection type: STANDALONE
+CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
+CON     INFO: connection_create: creating new connection for %s:%d
+CON     INFO: get_server_flags: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: 51
+CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
+CON     INFO: get_connection_single: pinging %s:%d;X;%d
+CON     FINE: is_ping: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: 17
+CON     WARN: is_ping: last pinged at %d; time: %dms
+
+Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;X;%d. in Unknown on line 0
+
+Notice: CON     INFO: freeing connection %s:%d;X;%d in Unknown on line 0

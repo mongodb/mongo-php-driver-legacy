@@ -21,7 +21,7 @@ $c = $d->phpunit->test1;
 var_dump( $c->findOne() );
 ?>
 --EXPECTF--
-Fatal error: Uncaught exception 'MongoConnectionException' with message 'mongo_get_connection: Unknown connection type requested' in %sconnection-multiple_error-001.php:%d
+Fatal error: Uncaught exception 'MongoConnectionException' with message 'No candidate servers found' in %sconnection-multiple_error-001.php:%d
 Stack trace:
 #0 %sconnection-multiple_error-001.php(%d): Mongo->__construct('mongodb://foofa...')
 #1 {main}
