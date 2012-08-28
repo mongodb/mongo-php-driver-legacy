@@ -39,7 +39,7 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 }
 
 /* Split a hash back into its constituent parts */
-int mongo_server_split_hash(char *hash, char **host, int *port, char **db, char **username, int *pid)
+int mongo_server_split_hash(char *hash, char **host, int *port, char **database, char **username, int *pid)
 {
 	char *ptr, *pid_semi;
 
@@ -57,14 +57,14 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **db, char 
 	}
 
 	/* Find the database and username */
-	if (db && username) {
+	if (database && username) {
 		ptr = strchr(ptr, ';') + 1;
 		if (ptr[0] != 'X') {
-			*db = strndup(ptr, strchr(ptr, '/') - ptr);
+			*database = strndup(ptr, strchr(ptr, '/') - ptr);
 			pid_semi = strchr(ptr, ';');
 			*username = strndup(strchr(ptr, '/') + 1, pid_semi - strchr(ptr, '/') - 1);
 		} else {
-			*db = *username = NULL;
+			*database = *username = NULL;
 			pid_semi = strchr(ptr, ';');
 		}
 	}
