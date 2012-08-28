@@ -29,14 +29,13 @@ $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 ?>
 --EXPECTF--
 Warnings:
-Mongo::__construct(): is_ping: last pinged at %d; time: %dms
+CON     WARN: is_ping: last pinged at %d; time: %dms
 Fine:
-Mongo::__construct(): mongo_get_connection: finding a STANDALONE connection
-Mongo::__construct(): found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-Mongo::__construct(): get_server_flags: start
-Mongo::__construct(): send_packet: read from header: 36
-Mongo::__construct(): send_packet: data_size: 51
+CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 Info:
-Mongo::__construct(): Parsing mongodb://%s:%d
-Mongo::__construct(): - Found node: %s:%d
-Mongo::__construct(): is_master: setting maxBsonObjectSize to 16777216
+PARSE   INFO: Parsing mongodb://%s:%d
+PARSE   INFO: - Found node: %s:%d
+PARSE   INFO: - Connection type: STANDALONE
+CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
+
+Notice: CON     INFO: freeing connection %s:%d;X;%d in Unknown on line 0

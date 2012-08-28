@@ -31,6 +31,8 @@ echo "All done\n";
 Notice: Array to string conversion in %smongo-ctor-002.php on line %d
 
 Notice: Array to string conversion in %smongo-ctor-002.php on line %d
+
+Deprecated: Mongo::__construct(): The 'connect' option is deprecated and will be removed in the future in %s on line %d
 array(5) {
   ["replicaSet"]=>
   string(%d) "%s"

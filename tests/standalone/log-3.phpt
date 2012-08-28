@@ -17,5 +17,6 @@ MongoLog::setLevel(MongoLog::ALL);
 $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 ?>
 --EXPECTF--
-Mongo::__construct(): Parsing mongodb://%s:%d
-Mongo::__construct(): - Found node: %s:%d
+PARSE   INFO: Parsing mongodb://%s:%d
+PARSE   INFO: - Found node: %s:%d
+PARSE   INFO: - Connection type: STANDALONE
