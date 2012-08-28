@@ -283,6 +283,8 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 
 #define MONGO_REPLY_HEADER_SIZE 36
 
+/* Returns 1 if it worked, and 0 if it didn't. If 0 is returned, *error_message
+ * is set and must be freed */
 static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mcon_str *packet, char **data_buffer, char **error_message)
 {
 	int            read;
@@ -297,14 +299,13 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: read from header: %d", read);
 	if (read < MONGO_REPLY_HEADER_SIZE) {
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "send_package: the amount of bytes read (%d) is less than the header size (%d)", read, MONGO_REPLY_HEADER_SIZE);
 		return 0;
 	}
 
-	/* Check for a query error */
+	/* Read result flags */
 	flags = MONGO_32(*(int*)(reply_buffer + sizeof(int32_t) * 4));
-	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
-		return 0;
-	}
 
 	/* Read the rest of the data */
 	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
@@ -313,7 +314,28 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	/* TODO: Check size limits */
 	*data_buffer = malloc(data_size + 1);
 	if (!mongo_io_recv_data(con->socket, *data_buffer, data_size, error_message)) {
-		free(data_buffer);
+		return 0;
+	}
+
+	/* Check for a query error */
+	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
+		char *ptr = *data_buffer + sizeof(int32_t); /* Skip the length */
+		char *err;
+		int32_t code;
+
+		/* Find the error */
+		if (bson_find_field_as_string(ptr, "$err", &err)) {
+			*error_message = malloc(256 + strlen(err));
+
+			if (bson_find_field_as_int32(ptr, "code", &code)) {
+				snprintf(*error_message, 256 + strlen(err), "send_package: the query returned a failure: %s (code: %d)", err, code);
+			} else {
+				snprintf(*error_message, 256 + strlen(err), "send_package: the query returned a failure: %s", err);
+			}
+		} else {
+			*error_message = strdup("send_package: the query returned an unknown error");
+		}
+
 		return 0;
 	}
 
