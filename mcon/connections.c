@@ -623,3 +623,82 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
 
 	return retval;
 }
+
+static char *md5_hex(char *hash, int hash_length)
+{
+	MD5_CTX           md5ctx;
+	unsigned char     digest[16];
+	static const char hexits[17] = "0123456789abcdef";
+	char              md5str[33];
+	int               i;
+
+	MD5_Init(&md5ctx);
+	MD5_Update(&md5ctx, hash, hash_length);
+	MD5_Final(digest, &md5ctx);
+
+	for (i = 0; i < 16; i++) {
+		md5str[i * 2]       = hexits[digest[i] >> 4];
+		md5str[(i * 2) + 1] = hexits[digest[i] &  0x0F];
+	}
+	md5str[16 * 2] = '\0';
+
+	return strdup(md5str);
+}
+
+/**
+ * Authenticates a connection
+ *
+ * Returns 1 when it worked, or 0 when it didn't - with the error_message set.
+ */
+int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, char *database, char *username, char *password, char *nonce, char **error_message)
+{
+	mcon_str      *packet;
+	char          *data_buffer, *errmsg;
+	char          *ptr;
+	char          *salted;
+	int            length;
+	char          *hash, *key;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: start");
+
+	/* Calculate hash=md5(${username}:mongo:${password}) */
+	length = strlen(username) + 7 + strlen(password) + 1;
+	salted = malloc(length);
+	snprintf(salted, length, "%s:mongo:%s", username, password);
+	hash = md5_hex(salted, length - 1); /* -1 to chop off \0 */
+	free(salted);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: hash=md5(%s:mongo:%s) = %s", username, password, hash);
+
+	/* Calculate key=md5(${nonce}${username}${hash}) */
+	length = strlen(nonce) + strlen(username) + strlen(hash) + 1;
+	salted = malloc(length);
+	snprintf(salted, length, "%s%s%s", nonce, username, hash);
+	key = md5_hex(salted, length - 1); /* -1 to chop off \0 */
+	free(salted);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: key=md5(%s%s%s) = %s", nonce, username, hash, key);
+
+	packet = bson_create_authenticate_packet(con, database, username, nonce, key);
+
+	free(hash);
+	free(key);
+
+	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+		free(data_buffer);
+		return 0;
+	}
+
+	/* Find data fields */
+	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	/* Find errmsg */
+	if (bson_find_field_as_string(ptr, "errmsg", &errmsg)) {
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "Authentication failed: %s", errmsg);
+		free(data_buffer);
+		return 0;
+	}
+
+	free(data_buffer);
+
+	return 1;
+}

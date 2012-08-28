@@ -22,6 +22,11 @@ int main(void)
 	nonce = mongo_connection_getnonce(manager, con, (char**) &error_message);
 	printf("The nonce is: %s\n", nonce);
 
+	if (!mongo_connection_authenticate(manager, con, "phpunit", "admin", "admin", "c610366174df1bec", (char**) &error_message)) {
+		printf("ERROR: %s\n", error_message);
+		free(error_message);
+	}
+
 	free(nonce);
 	mongo_servers_dtor(servers);
 

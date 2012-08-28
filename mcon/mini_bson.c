@@ -12,7 +12,11 @@
 #define MONGO_QUERY_FLAG_EMPTY    0x00
 #define MONGO_QUERY_FLAG_SLAVE_OK 0x04
 
-static mcon_str *create_simple_header(mongo_connection *con)
+/* Creates a simple query header.
+ *
+ * The ns argument selects which namespace to use. If it's not set, we use
+ * "admin.$cmd". */
+static mcon_str *create_simple_header(mongo_connection *con, char *ns)
 {
 	struct mcon_str *str;
 
@@ -25,7 +29,7 @@ static mcon_str *create_simple_header(mongo_connection *con)
 	mcon_serialize_int(str, 2004); /* OP_QUERY */
 
 	mcon_serialize_int(str, MONGO_QUERY_FLAG_SLAVE_OK); /* Flags */
-	mcon_str_addl(str, "admin.$cmd", 11, 0);
+	mcon_str_addl(str, ns ? ns : "admin.$cmd", ns ? strlen(ns) + 1 : 11, 0);
 	mcon_serialize_int(str, 0); /* Number to skip */
 	mcon_serialize_int(str, -1); /* Number to return, has to be -1 for admin commands */
 
@@ -39,9 +43,18 @@ void bson_add_long(mcon_str *str, char *fieldname, int64_t v)
 	mcon_serialize_int64(str, v);
 }
 
+void bson_add_string(mcon_str *str, char *fieldname, char *string)
+{
+	mcon_str_addl(str, "\x02", 1, 0);
+	mcon_str_addl(str, fieldname, strlen(fieldname) + 1, 0);
+	mcon_serialize_int(str, strlen(string) + 1);
+	mcon_str_add(str, string, 0);
+	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
+}
+
 mcon_str *bson_create_ping_packet(mongo_connection *con)
 {
-	struct mcon_str *str = create_simple_header(con);
+	struct mcon_str *str = create_simple_header(con, NULL);
 	int    hdr;
 
 	hdr = str->l;
@@ -58,7 +71,7 @@ mcon_str *bson_create_ping_packet(mongo_connection *con)
 
 mcon_str *bson_create_is_master_packet(mongo_connection *con)
 {
-	struct mcon_str *str = create_simple_header(con);
+	struct mcon_str *str = create_simple_header(con, NULL);
 	int    hdr;
 
 	hdr = str->l;
@@ -75,7 +88,7 @@ mcon_str *bson_create_is_master_packet(mongo_connection *con)
 
 mcon_str *bson_create_rs_status_packet(mongo_connection *con)
 {
-	struct mcon_str *str = create_simple_header(con);
+	struct mcon_str *str = create_simple_header(con, NULL);
 	int    hdr;
 
 	hdr = str->l;
@@ -92,12 +105,40 @@ mcon_str *bson_create_rs_status_packet(mongo_connection *con)
 
 mcon_str *bson_create_getnonce_packet(mongo_connection *con)
 {
-	struct mcon_str *str = create_simple_header(con);
+	struct mcon_str *str = create_simple_header(con, NULL);
 	int    hdr;
 
 	hdr = str->l;
 	mcon_serialize_int(str, 0); /* We need to fill this with the length */
 	bson_add_long(str, "getnonce", 1);
+	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
+
+	/* Set length */
+	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+
+	((int*) str->d)[0] = str->l;
+	return str;
+}
+
+mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *database, char *username, char *nonce, char *key)
+{
+	struct mcon_str *str;
+	char  *ns;
+	int    hdr, length;
+
+	/* We use the selected database to construct the namespace */
+	length = strlen(database) + 5 + 1;
+	ns = malloc(length);
+	snprintf(ns, length, "%s.$cmd", database);
+	str = create_simple_header(con, ns);
+	free(ns);
+
+	hdr = str->l;
+	mcon_serialize_int(str, 0); /* We need to fill this with the length */
+	bson_add_long(str, "authenticate", 1);
+	bson_add_string(str, "user", username);
+	bson_add_string(str, "nonce", nonce);
+	bson_add_string(str, "key", key);
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
 
 	/* Set length */
