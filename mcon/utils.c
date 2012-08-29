@@ -6,21 +6,39 @@
 #include "types.h"
 #include "utils.h"
 
-/* Hash format is: HOST:PORT;X;PID or HOST:PORT;DB/USERNAME;PID */
+/* Creates a hash out of the password so that we can store it in the connection hash.
+ * The format of this hash is md5(PID,PASSWORD,USERNAME). */
+static char *create_hashed_password(char *username, char *password, int pid)
+{
+	int salt_length, length;
+	char *hash, *salt;
+
+	/* First we create a hash for the password to store (md5(pid,password,username)) */
+	salt_length = strlen(password) + strlen(username) + 10 + 1; /* 10 for the 32bit int at max size */
+	salt = malloc(salt_length);
+	length = snprintf(salt, salt_length, "%d%s%s", getpid(), password, username);
+	hash = mongo_util_md5_hex(salt, length);
+	free(salt);
+
+	return hash;
+}
+
+/* Hash format is: HOST:PORT;X;PID or HOST:PORT;DB/USERNAME/md5(PID,PASSWORD,USERNAME);PID */
 
 /* Creates a unique hash for a server def with some info from the server config,
  * but also with the PID to make sure forking works */
 char *mongo_server_create_hash(mongo_server_def *server_def)
 {
-	char *tmp;
+	char *tmp, *hash;
 	int   size = 0;
 
 	/* Host (string) and port (max 5 digits) + 2 separators */
 	size += strlen(server_def->host) + 1 + 5 + 1;
 
-	/* Database and username */
-	if (server_def->db && server_def->username) {
-		size += strlen(server_def->db) + 1 + strlen(server_def->username) + 1;
+	/* Database, username and hashed password */
+	if (server_def->db && server_def->username && server_def->password) {
+		hash = create_hashed_password(server_def->username, server_def->password, getpid());
+		size += strlen(server_def->db) + 1 + strlen(server_def->username) + 1 + strlen(hash) + 1;
 	}
 
 	/* PID (assume max size, a signed 32bit int) */
@@ -29,8 +47,9 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 	/* Allocate and fill */
 	tmp = malloc(size);
 	sprintf(tmp, "%s:%d;", server_def->host, server_def->port);
-	if (server_def->db && server_def->username) {
-		sprintf(tmp + strlen(tmp), "%s/%s;", server_def->db, server_def->username);
+	if (server_def->db && server_def->username && server_def->password) {
+		sprintf(tmp + strlen(tmp), "%s/%s/%s;", server_def->db, server_def->username, hash);
+		free(hash);
 	} else {
 		sprintf(tmp + strlen(tmp), "X;");
 	}
@@ -42,7 +61,7 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 /* Split a hash back into its constituent parts */
 int mongo_server_split_hash(char *hash, char **host, int *port, char **database, char **username, int *pid)
 {
-	char *ptr, *pid_semi;
+	char *ptr, *pid_semi, *username_slash;
 
 	ptr = hash;
 
@@ -62,8 +81,9 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **database,
 		ptr = strchr(ptr, ';') + 1;
 		if (ptr[0] != 'X') {
 			*database = strndup(ptr, strchr(ptr, '/') - ptr);
+			username_slash = strchr(ptr, '/');
+			*username = strndup(username_slash + 1, strchr(username_slash + 1, '/') - username_slash - 1);
 			pid_semi = strchr(ptr, ';');
-			*username = strndup(strchr(ptr, '/') + 1, pid_semi - strchr(ptr, '/') - 1);
 		} else {
 			*database = *username = NULL;
 			pid_semi = strchr(ptr, ';');
