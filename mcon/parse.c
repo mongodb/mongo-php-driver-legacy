@@ -171,7 +171,6 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 	memset(tmp, 0, sizeof(mongo_server_def));
 	tmp->username = tmp->password = tmp->db = NULL;
 	tmp->port = 27017;
-	tmp->last_try = 0;
 
 	tmp->host = strndup(host_start, host_end - host_start);
 	if (port_start) {
