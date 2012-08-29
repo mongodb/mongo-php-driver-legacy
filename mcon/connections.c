@@ -624,27 +624,6 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
 	return retval;
 }
 
-static char *md5_hex(char *hash, int hash_length)
-{
-	MD5_CTX           md5ctx;
-	unsigned char     digest[16];
-	static const char hexits[17] = "0123456789abcdef";
-	char              md5str[33];
-	int               i;
-
-	MD5_Init(&md5ctx);
-	MD5_Update(&md5ctx, hash, hash_length);
-	MD5_Final(digest, &md5ctx);
-
-	for (i = 0; i < 16; i++) {
-		md5str[i * 2]       = hexits[digest[i] >> 4];
-		md5str[(i * 2) + 1] = hexits[digest[i] &  0x0F];
-	}
-	md5str[16 * 2] = '\0';
-
-	return strdup(md5str);
-}
-
 /**
  * Authenticates a connection
  *
@@ -665,7 +644,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	length = strlen(username) + 7 + strlen(password) + 1;
 	salted = malloc(length);
 	snprintf(salted, length, "%s:mongo:%s", username, password);
-	hash = md5_hex(salted, length - 1); /* -1 to chop off \0 */
+	hash = mongo_util_md5_hex(salted, length - 1); /* -1 to chop off \0 */
 	free(salted);
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: hash=md5(%s:mongo:%s) = %s", username, password, hash);
 
@@ -673,7 +652,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	length = strlen(nonce) + strlen(username) + strlen(hash) + 1;
 	salted = malloc(length);
 	snprintf(salted, length, "%s%s%s", nonce, username, hash);
-	key = md5_hex(salted, length - 1); /* -1 to chop off \0 */
+	key = mongo_util_md5_hex(salted, length - 1); /* -1 to chop off \0 */
 	free(salted);
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: key=md5(%s%s%s) = %s", nonce, username, hash, key);
 

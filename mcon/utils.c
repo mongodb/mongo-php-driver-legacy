@@ -97,6 +97,34 @@ int mongo_server_hash_to_pid(char *hash)
 	return atoi(ptr+1);
 }
 
+/* Forward declaration for the MD5 algorithm */
+void MD5_Init(MD5_CTX *ctx);
+void MD5_Update(MD5_CTX *ctx, void *data, unsigned long size);
+void MD5_Final(unsigned char *result, MD5_CTX *ctx);
+
+/* Convience function around the MD5 implementation */
+char *mongo_util_md5_hex(char *hash, int hash_length)
+{
+	MD5_CTX           md5ctx;
+	unsigned char     digest[16];
+	static const char hexits[17] = "0123456789abcdef";
+	char              md5str[33];
+	int               i;
+
+	MD5_Init(&md5ctx);
+	MD5_Update(&md5ctx, hash, hash_length);
+	MD5_Final(digest, &md5ctx);
+
+	for (i = 0; i < 16; i++) {
+		md5str[i * 2]       = hexits[digest[i] >> 4];
+		md5str[(i * 2) + 1] = hexits[digest[i] &  0x0F];
+	}
+	md5str[16 * 2] = '\0';
+
+	return strdup(md5str);
+}
+
+
 /*
  * This is an OpenSSL-compatible implementation of the RSA Data Security, Inc.
  * MD5 Message-Digest Algorithm (RFC 1321).
