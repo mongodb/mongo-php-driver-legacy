@@ -92,13 +92,12 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					char *con_error_message = NULL;
 
 					/* Create a temp server definition to create a new connection */
-					tmp_def = malloc(sizeof(mongo_server_def));
+					tmp_def = calloc(1, sizeof(mongo_server_def));
 					tmp_def->username = servers->server[i]->username ? strdup(servers->server[i]->username) : NULL;
 					tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;
 					tmp_def->db = servers->server[i]->db ? strdup(servers->server[i]->db) : NULL;
 					tmp_def->host = strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
 					tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
-					tmp_def->last_try = 0;
 					
 					/* Create a hash so that we can check whether we already have a
 					 * connection for this server definition. If we don't create
