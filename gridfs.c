@@ -194,6 +194,8 @@ PHP_METHOD(MongoGridFS, find) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &zquery, &zfields) == FAILURE) {
     return;
   }
+  MUST_BE_ARRAY_OR_OBJECT(1, zquery);
+  MUST_BE_ARRAY_OR_OBJECT(2, zfields);
 
   if (!zquery) {
     MAKE_STD_ZVAL(zquery);
@@ -789,6 +791,7 @@ PHP_METHOD(MongoGridFS, findOne) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &zquery, &zfields) == FAILURE) {
     return;
   }
+  MUST_BE_ARRAY_OR_OBJECT(2, zfields);
 
   if (!zquery) {
     MAKE_STD_ZVAL(zquery);
@@ -1053,12 +1056,12 @@ PHP_METHOD(MongoGridFS, put) {
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_find, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)
-	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+	ZEND_ARG_INFO(0, fields)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)
-	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+	ZEND_ARG_INFO(0, fields)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE, 0)
