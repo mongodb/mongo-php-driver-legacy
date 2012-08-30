@@ -416,6 +416,48 @@ void mongo_servers_dump(mongo_con_manager *manager, mongo_servers *servers)
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "\n");
 }
 
+/* Cloning */
+static void mongo_server_def_copy(mongo_server_def *to, mongo_server_def *from, int flags)
+{
+	to->host = to->db = to->username = to->password = NULL;
+	if (from->host) {
+		to->host = strdup(from->host);
+	}
+	to->port = from->port;
+
+	if (flags & MONGO_SERVER_COPY_CREDENTIALS) {
+		if (from->db) {
+			to->db = strdup(from->db);
+		}
+		if (from->username) {
+			to->username = strdup(from->username);
+		}
+		if (from->password) {
+			to->password = strdup(from->password);
+		}
+	}
+}
+
+void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
+{
+	int i;
+
+	to->count = from->count;
+	for (i = 0; i < from->count; i++) {
+		to->server[i] = malloc(sizeof(mongo_server_def));
+		mongo_server_def_copy(to->server[i], from->server[i], flags);
+	}
+
+	to->con_type = from->con_type;
+	to->repl_set_name = NULL;
+	to->connectTimeoutMS = from->connectTimeoutMS;
+
+	if (from->repl_set_name) {
+		to->repl_set_name = strdup(from->repl_set_name);
+	}
+	mongo_read_preference_copy(&from->read_pref, &to->read_pref);
+}
+
 /* Cleanup */
 void mongo_server_def_dtor(mongo_server_def *server_def)
 {

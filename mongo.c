@@ -403,6 +403,7 @@ PHP_METHOD(Mongo, selectDB) {
   zval temp, *name;
   char *db;
   int db_len;
+	mongo_link *link;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &db, &db_len) == FAILURE) {
     return;
@@ -410,6 +411,39 @@ PHP_METHOD(Mongo, selectDB) {
 
   MAKE_STD_ZVAL(name);
   ZVAL_STRING(name, db, 1);
+
+	PHP_MONGO_GET_LINK(getThis());
+
+	/* We need to check whether we are switching to a database that was not
+	 * part of the connection string. This is not a problem if we are not using
+	 * authentication, but it is if we are. If we are, we need to do some fancy
+	 * cloning and creating a new mongo_servers structure. Authentication is a
+	 * pain™ */
+	if (link->servers->server[0]->db && strcmp(link->servers->server[0]->db, db) != 0) {
+		mongo_manager_log(
+			link->manager, MLOG_CON, MLOG_FINE,
+			"The requested database (%s) is not what we have in the link info (%s)",
+			db, link->servers->server[0]->db
+		);
+		/* So here we check if a username and password are used. If so, the
+		 * madness starts */
+		if (link->servers->server[0]->username && link->servers->server[0]->password) {
+			zval       *new_link;
+			mongo_link *tmp_link;
+			mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "We are in an authenticated link, so we need to clone it.");
+
+			/* Create the new link object */
+			MAKE_STD_ZVAL(new_link);
+			object_init_ex(new_link, mongo_ce_Mongo);
+			tmp_link = (mongo_link*) zend_object_store_get_object(new_link TSRMLS_CC);
+
+			tmp_link->manager = link->manager;
+			tmp_link->servers = malloc(sizeof(mongo_servers));
+			mongo_servers_copy(tmp_link->servers, link->servers, MONGO_SERVER_COPY_NONE);
+
+			this_ptr = new_link;
+		}
+	}
 
   object_init_ex(return_value, mongo_ce_DB);
   MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), name);
