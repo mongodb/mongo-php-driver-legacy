@@ -63,24 +63,10 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 {
 	mcon_collection *col;
 	mongo_con_manager_item *ptr = manager->connections;
-	char *database, *username;
-
 	col = mcon_init_collection(sizeof(mongo_connection*));
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "filter_connections: adding connections:");
 	while (ptr) {
-		mongo_server_split_hash(ptr->connection->hash, NULL, NULL, (char**) &database, (char**) &username, NULL);
-		/* we need to check for username and pw on the connection too later */
-		if (rp->authenticated) {
-			if (strcmp(rp->database, database) != 0 || strcmp(rp->username, username) != 0) {
-				mongo_manager_log(
-					manager, MLOG_RS, MLOG_FINE,
-					"filter_connections: skipping incorrectly authenticated connection %s (wanted database/username: %s, %s)",
-					ptr->connection->hash, rp->database, rp->username
-				);
-				continue;
-			}
-		}
 		if (ptr->connection->connection_type & types) {
 			mongo_print_connection_info(manager, ptr->connection, MLOG_FINE);
 			mcon_collection_add(col, ptr->connection);
@@ -403,12 +389,6 @@ void mongo_read_preference_dtor(mongo_read_preference *rp)
 		mongo_read_preference_tagset_dtor(rp->tagsets[i]);
 	}
 	free(rp->tagsets);
-	if (rp->database) {
-		free(rp->database);
-	}
-	if (rp->username) {
-		free(rp->username);
-	}
 	/* We are not freeing *rp itself, as that's not always a pointer */
 }
 
@@ -418,15 +398,6 @@ void mongo_read_preference_copy(mongo_read_preference *from, mongo_read_preferen
 
 	to->type = from->type;
 	to->tagset_count = from->tagset_count;
-	to->authenticated = from->authenticated;
-	to->database = to->username = NULL;
-	if (from->database) {
-		to->database = strdup(from->database);
-	}
-	if (from->username) {
-		to->username = strdup(from->username);
-	}
-
 	if (!from->tagset_count) {
 		to->tagset_count = 0;
 		to->tagsets = NULL;

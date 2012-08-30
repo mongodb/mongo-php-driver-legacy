@@ -111,9 +111,6 @@ typedef struct _mongo_read_preference
 	int                            type; /* MONGO_RP_* */
 	int                            tagset_count; /* The number of tag sets in this RP */
 	mongo_read_preference_tagset **tagsets;
-	int                            authenticated; /* 0 if no authentication required, 1 if authenticated connection required */
-	char                          *database;
-	char                          *username;
 } mongo_read_preference;
 
 typedef struct _mongo_server_def
