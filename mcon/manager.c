@@ -13,33 +13,57 @@
 #include "read_preference.h"
 
 /* Helpers */
+static int authenticate_connection(mongo_con_manager *manager, mongo_connection *con, char *database, char *username, char *password, char **error_message)
+{
+	char *nonce;
+	int   retval = 0;
+
+	nonce = mongo_connection_getnonce(manager, con, error_message);
+	if (!nonce) {
+		return 0;
+	}
+
+	retval = mongo_connection_authenticate(manager, con, database, username, password, nonce, error_message);
+	free(nonce);
+
+	return retval;
+}
+
 static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, char **error_message)
 {
 	char *hash;
-	mongo_connection *con;
+	mongo_connection *con = NULL;
 
 	hash = mongo_server_create_hash(server);
 	con = mongo_manager_connection_find_by_hash(manager, hash);
 	if (!con) {
 		con = mongo_connection_create(manager, server, error_message);
 		if (con) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: pinging %s", hash);
-			if (mongo_connection_ping(manager, con)) {
-				con->hash = strdup(hash);
-				mongo_manager_connection_register(manager, con);
-			} else {
-				mongo_connection_destroy(manager, con);
-				free(hash);
-				return NULL;
+			/* Store hash */
+			con->hash = strdup(hash);
+			/* Do authentication if requested */
+			if (server->db && server->username && server->password) {
+				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
+				if (!authenticate_connection(manager, con, server->db, server->username, server->password, error_message)) {
+					mongo_connection_destroy(manager, con);
+					con = NULL;
+					goto bailout;
+				}
 			}
+			/* Do the ping */
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: pinging %s", hash);
+			if (!mongo_connection_ping(manager, con)) {
+				mongo_connection_destroy(manager, con);
+				con = NULL;
+				goto bailout;
+			}
+			/* Register the connection */
+			mongo_manager_connection_register(manager, con);
 		}
 	}
+
+bailout:
 	free(hash);
-
-	/* FIXME: Re-ping every 5 and/or configured seconds. The ping can actually
-	 * be run against a machine that has dropped to connection too, so test for
-	 * that. */
-
 	return con;
 }
 
