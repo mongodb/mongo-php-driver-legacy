@@ -486,11 +486,7 @@ PHP_METHOD(MongoCollection, insert) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE) {
     return;
   }
-
-  if (IS_SCALAR_P(a)) {
-    zend_error(E_WARNING, "MongoCollection::insert() expects parameter 1 to be an array or object");
-    return;
-  }
+	MUST_BE_ARRAY_OR_OBJECT(1, a);
 
   // old boolean options
   if (options && !IS_SCALAR_P(options)) {
@@ -580,6 +576,9 @@ PHP_METHOD(MongoCollection, find)
     return;
   }
 
+  MUST_BE_ARRAY_OR_OBJECT(1, query);
+  MUST_BE_ARRAY_OR_OBJECT(2, fields);
+
   PHP_MONGO_GET_COLLECTION(getThis());
   PHP_MONGO_GET_LINK(c->link);
 
@@ -613,6 +612,8 @@ PHP_METHOD(MongoCollection, findOne) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
     return;
   }
+  MUST_BE_ARRAY_OR_OBJECT(1, query);
+  MUST_BE_ARRAY_OR_OBJECT(2, fields);
 
   MAKE_STD_ZVAL(cursor);
   MONGO_METHOD_BASE(MongoCollection, find)(ZEND_NUM_ARGS(), cursor, NULL, getThis(), 0 TSRMLS_CC);
@@ -636,10 +637,8 @@ PHP_METHOD(MongoCollection, update) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &criteria, &newobj, &options) == FAILURE) {
     return;
   }
-  if (IS_SCALAR_P(criteria) || IS_SCALAR_P(newobj)) {
-    zend_error(E_WARNING, "MongoCollection::update() expects parameters 1 and 2 to be arrays or objects");
-    return;
-  }
+  MUST_BE_ARRAY_OR_OBJECT(1, criteria);
+  MUST_BE_ARRAY_OR_OBJECT(2, newobj);
 
   if (options && !IS_SCALAR_P(options)) {
     zval **upsert = 0, **multiple = 0;
@@ -696,11 +695,7 @@ PHP_METHOD(MongoCollection, remove) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &criteria, &options) == FAILURE) {
     return;
   }
-
-  if (criteria && IS_SCALAR_P(criteria)) {
-    zend_error(E_WARNING, "MongoCollection::remove() expects parameter 1 to be an array or object");
-    return;
-  }
+  MUST_BE_ARRAY_OR_OBJECT(1, criteria);
 
   if (!criteria) {
     MAKE_STD_ZVAL(criteria);
@@ -1022,10 +1017,7 @@ PHP_METHOD(MongoCollection, save) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &a, &options) == FAILURE) {
     return;
   }
-  if (IS_SCALAR_P(a) || (options && IS_SCALAR_P(options))) {
-    zend_error(E_WARNING, "MongoCollection::save() expects parameters 1 and 2 to be arrays or objects");
-    return;
-  }
+  MUST_BE_ARRAY_OR_OBJECT(1, a);
 
   if (!options) {
     MAKE_STD_ZVAL(options);
@@ -1075,6 +1067,7 @@ PHP_METHOD(MongoCollection, getDBRef) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ref) == FAILURE) {
     return;
   }
+  MUST_BE_ARRAY_OR_OBJECT(1, ref);
 
   PHP_MONGO_GET_COLLECTION(getThis());
   MONGO_METHOD2(MongoDBRef, get, return_value, NULL, c->parent, ref);
@@ -1263,6 +1256,7 @@ PHP_METHOD(MongoCollection, group) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|z", &key, &initial, &reduce, &options) == FAILURE) {
     return;
   }
+  MUST_BE_ARRAY_OR_OBJECT(4, options);
 
   if (Z_TYPE_P(reduce) == IS_STRING) {
     zval *code;
@@ -1389,7 +1383,7 @@ ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, read_preference)
-	ZEND_ARG_ARRAY_INFO(0, tags, 0)
+	ZEND_ARG_ARRAY_INFO(0, tags, 0) /* Yes, this should be an array */
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_validate, 0, ZEND_RETURN_VALUE, 0)
@@ -1402,18 +1396,18 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_insert, 0, ZEND_RETURN_VALUE
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_batchInsert, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, documents, 0)
+	ZEND_ARG_ARRAY_INFO(0, documents, 0) /* Array of documents */
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_find, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)
-	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+	ZEND_ARG_INFO(0, fields)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)
-	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+	ZEND_ARG_INFO(0, fields)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_update, 0, ZEND_RETURN_VALUE, 2)
@@ -1447,7 +1441,7 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_createDBRef, 0, ZEND_RETURN_
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getDBRef, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, reference, 0)
+	ZEND_ARG_INFO(0, reference)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_toIndexString, 0, ZEND_RETURN_VALUE, 1)

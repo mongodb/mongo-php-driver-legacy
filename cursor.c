@@ -226,10 +226,8 @@ PHP_METHOD(MongoCursor, __construct) {
                             mongo_ce_Mongo, &zns, &zquery, &zfields) == FAILURE) {
     return;
   }
-  if ((zquery && IS_SCALAR_P(zquery)) || (zfields && IS_SCALAR_P(zfields))) {
-    zend_error(E_WARNING, "MongoCursor::__construct() expects parameters 3 and 4 to be arrays or objects");
-    return;
-  }
+  MUST_BE_ARRAY_OR_OBJECT(3, zquery);
+  MUST_BE_ARRAY_OR_OBJECT(4, zfields);
 
   // if query or fields weren't passed, make them default to an empty array
   MAKE_STD_ZVAL(empty);
@@ -503,10 +501,7 @@ PHP_METHOD(MongoCursor, fields) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
     return;
   }
-  if (IS_SCALAR_P(z)) {
-    zend_error(E_WARNING, "MongoCursor::fields() expects parameter 1 to be an array or object");
-    return;
-  }
+  MUST_BE_ARRAY_OR_OBJECT(1, z);
 
   zval_ptr_dtor(&cursor->fields);
   cursor->fields = z;
@@ -694,10 +689,7 @@ PHP_METHOD(MongoCursor, sort) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &fields) == FAILURE) {
     return;
   }
-  if (IS_SCALAR_P(fields)) {
-    zend_error(E_WARNING, "MongoCursor::sort() expects parameter 1 to be an array");
-    return;
-  }
+  MUST_BE_ARRAY_OR_OBJECT(1, fields);
 
   MAKE_STD_ZVAL(orderby);
   ZVAL_STRING(orderby, "$orderby", 1);
@@ -716,10 +708,7 @@ PHP_METHOD(MongoCursor, hint) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &fields) == FAILURE) {
     return;
   }
-  if (IS_SCALAR_P(fields)) {
-    zend_error(E_WARNING, "MongoCursor::hint() expects parameter 1 to be an array or object");
-    return;
-  }
+  MUST_BE_ARRAY_OR_OBJECT(1, fields);
 
 
   MAKE_STD_ZVAL(hint);
@@ -1220,7 +1209,7 @@ PHP_METHOD(MongoCursor, count) {
 ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, connection, Mongo, 0)
 	ZEND_ARG_INFO(0, database_and_collection_name)
-	ZEND_ARG_ARRAY_INFO(0, query, 0)
+	ZEND_ARG_INFO(0, query)
 	ZEND_ARG_INFO(0, array_of_fields_OR_object)
 ZEND_END_ARG_INFO()
 
@@ -1240,7 +1229,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_skip, 0, ZEND_RETURN_VALUE, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_fields, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+	ZEND_ARG_INFO(0, fields)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_add_option, 0, ZEND_RETURN_VALUE, 2)
@@ -1249,11 +1238,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_add_option, 0, ZEND_RETURN_VALUE, 2)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_sort, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, fields, 0)
+	ZEND_ARG_INFO(0, fields)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_hint, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, keyPattern, 0)
+	ZEND_ARG_INFO(0, keyPattern)
 ZEND_END_ARG_INFO()
 
 /* {{{ Cursor flags */
