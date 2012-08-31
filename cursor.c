@@ -53,6 +53,14 @@ static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define CURSOR_FLAG_EXHAUST      64 /* Not implemented */
 #define CURSOR_FLAG_PARTIAL     128
 
+/* Macro to check whether a cursor is dead, and if so, bailout */
+#define MONGO_CURSOR_CHECK_DEAD \
+	if (cursor->dead) { \
+		zend_throw_exception(mongo_ce_ConnectionException, "the connection has been terminated, and this cursor is dead", 12 TSRMLS_CC); \
+		return; \
+	}
+	
+
 // externs
 extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_Mongo,
@@ -442,11 +450,8 @@ PHP_METHOD(MongoCursor, getNext)
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CURSOR_CHECK_DEAD;
 
-	if (cursor->dead) {
-		zend_throw_exception(mongo_ce_ConnectionException, "the connection has been terminated, and this cursor is dead", 12 TSRMLS_CC);
-		return;
-	}
   MONGO_METHOD(MongoCursor, next, return_value, getThis());
   // will be null unless there was an error
   if (EG(exception) ||
@@ -532,7 +537,7 @@ PHP_METHOD(MongoCursor, dead) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
-  RETURN_BOOL(cursor->started_iterating && cursor->cursor_id == 0);
+  RETURN_BOOL(cursor->dead || (cursor->started_iterating && cursor->cursor_id == 0));
 }
 /* }}} */
 
@@ -936,6 +941,7 @@ int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
 PHP_METHOD(MongoCursor, current) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CURSOR_CHECK_DEAD;
 
   if (cursor->current) {
     RETURN_ZVAL(cursor->current, 1, 0);
@@ -1016,6 +1022,7 @@ PHP_METHOD(MongoCursor, next) {
 	char *error_message = NULL;
 
   PHP_MONGO_GET_CURSOR(getThis());
+	MONGO_CURSOR_CHECK_DEAD;
 
   if (!cursor->started_iterating) {
     MONGO_METHOD(MongoCursor, doQuery, return_value, getThis());
