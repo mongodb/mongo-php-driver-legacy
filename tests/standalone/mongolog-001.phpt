@@ -1,5 +1,5 @@
 --TEST--
-Test for MongoLog (IO only)
+MongoLog (all levels, all modules)
 --SKIPIF--
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
@@ -12,7 +12,7 @@ function error_handler($code, $message)
 
 set_error_handler('error_handler');
 
-MongoLog::setModule(MongoLog::IO);
+MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::ALL);
 $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 ?>
@@ -20,3 +20,6 @@ $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 Mongo::__construct(): parsing servers
 Mongo::__construct(): current: %s
 Mongo::__construct(): done parsing
+Mongo::__construct(): %s:%d: pool get (%s)
+Mongo::__construct(): %s:%d: pool connect (%s)
+Unknown: %s:%d: pool done (%s)

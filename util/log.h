@@ -28,8 +28,8 @@
 #define MONGO_LOG_POOL 2
 #define MONGO_LOG_IO 4
 #define MONGO_LOG_SERVER 8
-#define MONGO_LOG_PARSE 4
-#define MONGO_LOG_ALL 15
+#define MONGO_LOG_PARSE 16
+#define MONGO_LOG_ALL 31
 
 void mongo_init_MongoLog(TSRMLS_D);
 
