@@ -29,6 +29,6 @@ try {
 }
 ?>
 --EXPECTF--
-Couldn't authenticate with database %s: username [%S]
-Couldn't authenticate with database %s: username [%S]
-Couldn't authenticate with database %s: username [%S]
+Couldn't connect to '%s:%d': Authentication failed on database '%s' with username '%S': auth fails
+Couldn't connect to '%s:%d': Authentication failed on database '%s' with username '%S': auth fails
+Couldn't connect to '%s:%d': Authentication failed on database '%s' with username '%S': auth fails
