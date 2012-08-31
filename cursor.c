@@ -1618,7 +1618,7 @@ void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le) {
 static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
   char quickbuf[128];
   buffer buf;
-  zval temp;
+	char *error_message;
 
   /*
    * If the cursor_id is 0, the db is out of results anyway.
@@ -1634,12 +1634,10 @@ static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
 
   php_mongo_write_kill_cursors(&buf, node->cursor_id TSRMLS_CC);
 
-  Z_TYPE(temp) = IS_NULL;
-  _mongo_say(node->socket, &buf, &temp TSRMLS_CC);
-  if (Z_TYPE(temp) == IS_STRING) {
-    efree(Z_STRVAL(temp));
-    Z_TYPE(temp) = IS_NULL;
-  }
+	if (!mongo_io_send(node->socket, buf.start, buf.pos - buf.start, (char**) &error_message)) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %d on socket %d: %s", node->cursor_id, node->socket, error_message);
+		free(error_message);
+	}
 
   // free this cursor/link pair
   php_mongo_free_cursor_node(node, le);
