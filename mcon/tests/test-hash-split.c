@@ -16,11 +16,15 @@ int main(void)
 	mongo_server_split_hash(hash1, &host, &port, &db, &username, &pid);
 	printf("HASH: %s; host: %s, port: %d, db: %s, username: %s, pid: %d\n",
 		hash1, host, port, db, username, pid);
+	free(host);
+	free(hash1);
 
 	hash2 = mongo_server_create_hash(&def2);
 	mongo_server_split_hash(hash2, &host, &port, &db, &username, &pid);
 	printf("HASH: %s; host: %s, port: %d, db: %s, username: %s, pid: %d\n",
 		hash2, host, port, db, username, pid);
+	free(host); free(db); free(username);
+	free(hash2);
 
 	return 0;
 }

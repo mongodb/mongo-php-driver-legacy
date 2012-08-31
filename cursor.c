@@ -259,7 +259,7 @@ PHP_METHOD(MongoCursor, __construct) {
 	 * (like we do for commands right now through
 	 * php_mongo_connection_force_primary).  See also MongoDB::command and
 	 * append_getlasterror, where this has to be done too. */
-	cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, 0, (char**) &error_message);
+	cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char**) &error_message);
 
 	if (!cursor->connection && error_message) {
 		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
@@ -1008,6 +1008,7 @@ int mongo_cursor__should_retry(mongo_cursor *cursor) {
 PHP_METHOD(MongoCursor, next) {
   zval has_next;
   mongo_cursor *cursor;
+	char *error_message = NULL;
 
   PHP_MONGO_GET_CURSOR(getThis());
 
@@ -1037,7 +1038,7 @@ PHP_METHOD(MongoCursor, next) {
 
   // we got more results
   if (cursor->at < cursor->num) {
-    zval **err = 0;
+		zval **err = NULL, **wnote = NULL;
 
     MAKE_STD_ZVAL(cursor->current);
     array_init(cursor->current);
@@ -1082,7 +1083,20 @@ PHP_METHOD(MongoCursor, next) {
 #endif
       }
 
-      exception = mongo_cursor_throw(cursor->connection, code TSRMLS_CC, Z_STRVAL_PP(err));
+			error_message = strdup(Z_STRVAL_PP(err));
+
+			/* We check for additional information as well, in the "wnote" property */
+			if (
+				(zend_hash_find(Z_ARRVAL_P(cursor->current), "wnote", strlen("wnote") + 1, (void**) &wnote) == SUCCESS) &&
+				(Z_TYPE_PP(wnote) == IS_STRING)
+			) {
+				free(error_message);
+				error_message = malloc(Z_STRLEN_PP(err) + 2 + Z_STRLEN_PP(wnote) + 1);
+				snprintf(error_message, Z_STRLEN_PP(err) + 2 + Z_STRLEN_PP(wnote) + 1, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote));
+			}
+
+      exception = mongo_cursor_throw(cursor->connection, code TSRMLS_CC, error_message);
+			free(error_message);
       zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current TSRMLS_CC);
       zval_ptr_dtor(&cursor->current);
       cursor->current = 0;

@@ -6,6 +6,8 @@
 mcon_str *bson_create_ping_packet(mongo_connection *con);
 mcon_str *bson_create_is_master_packet(mongo_connection *con);
 mcon_str *bson_create_rs_status_packet(mongo_connection *con);
+mcon_str *bson_create_getnonce_packet(mongo_connection *con);
+mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *database, char *username, char *nonce, char *key);
 
 char *bson_skip_field_name(char *data);
 int bson_find_field_as_array(char *buffer, char *field, char **data);

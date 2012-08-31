@@ -13,33 +13,57 @@
 #include "read_preference.h"
 
 /* Helpers */
+static int authenticate_connection(mongo_con_manager *manager, mongo_connection *con, char *database, char *username, char *password, char **error_message)
+{
+	char *nonce;
+	int   retval = 0;
+
+	nonce = mongo_connection_getnonce(manager, con, error_message);
+	if (!nonce) {
+		return 0;
+	}
+
+	retval = mongo_connection_authenticate(manager, con, database, username, password, nonce, error_message);
+	free(nonce);
+
+	return retval;
+}
+
 static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, char **error_message)
 {
 	char *hash;
-	mongo_connection *con;
+	mongo_connection *con = NULL;
 
 	hash = mongo_server_create_hash(server);
 	con = mongo_manager_connection_find_by_hash(manager, hash);
 	if (!con) {
 		con = mongo_connection_create(manager, server, error_message);
 		if (con) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: pinging %s", hash);
-			if (mongo_connection_ping(manager, con)) {
-				con->hash = strdup(hash);
-				mongo_manager_connection_register(manager, con);
-			} else {
-				mongo_connection_destroy(manager, con);
-				free(hash);
-				return NULL;
+			/* Store hash */
+			con->hash = strdup(hash);
+			/* Do authentication if requested */
+			if (server->db && server->username && server->password) {
+				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
+				if (!authenticate_connection(manager, con, server->db, server->username, server->password, error_message)) {
+					mongo_connection_destroy(manager, con);
+					con = NULL;
+					goto bailout;
+				}
 			}
+			/* Do the ping */
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: pinging %s", hash);
+			if (!mongo_connection_ping(manager, con)) {
+				mongo_connection_destroy(manager, con);
+				con = NULL;
+				goto bailout;
+			}
+			/* Register the connection */
+			mongo_manager_connection_register(manager, con);
 		}
 	}
+
+bailout:
 	free(hash);
-
-	/* FIXME: Re-ping every 5 and/or configured seconds. The ping can actually
-	 * be run against a machine that has dropped to connection too, so test for
-	 * that. */
-
 	return con;
 }
 
@@ -161,7 +185,7 @@ bailout:
 	return tmp;
 }
 
-static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int write_connection, char **error_message)
+static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
 	mongo_connection *con = NULL;
 	mongo_connection *tmp;
@@ -181,7 +205,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	 * new node */
 	mongo_discover_topology(manager, servers);
 	/* Depending on whether we want a read or a write connection, run the correct algorithms */
-	if (write_connection) {
+	if (connection_flags & MONGO_CON_FLAG_WRITE) {
 		mongo_read_preference tmp_rp;
 
 		mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
@@ -203,16 +227,6 @@ bailout:
 	/* Cleaning up */
 	mcon_collection_free(collection);	
 	return con;
-}
-
-static mongo_connection *mongo_get_read_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
-{
-	return mongo_get_read_write_connection_replicaset(manager, servers, 0, error_message);
-}
-
-static mongo_connection *mongo_get_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
-{
-	return mongo_get_read_write_connection_replicaset(manager, servers, 1, error_message);
 }
 
 
@@ -256,7 +270,7 @@ bailout:
 }
 
 /* API interface to fetch a connection */
-mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int write_connection, char **error_message)
+mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->con_type) {
@@ -265,13 +279,12 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 			return mongo_get_connection_standalone(manager, servers, error_message);
 
 		case MONGO_CON_TYPE_REPLSET:
-			if (write_connection) {
-				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a REPLSET connection (write)");
-				return mongo_get_write_connection_replicaset(manager, servers, error_message);
-			} else {
-				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a REPLSET connection (read)");
-				return mongo_get_read_connection_replicaset(manager, servers, error_message);
-			}
+			mongo_manager_log(
+				manager, MLOG_CON, MLOG_INFO,
+				"mongo_get_read_write_connection: finding a REPLSET connection (%s)",
+				connection_flags & MONGO_CON_FLAG_WRITE ? "write" : "read"
+			);
+			return mongo_get_read_write_connection_replicaset(manager, servers, connection_flags, error_message);
 
 		case MONGO_CON_TYPE_MULTIPLE:
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a MULTIPLE connection");

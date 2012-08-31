@@ -3,6 +3,7 @@
 #include "read_preference.h"
 #include "manager.h"
 #include "str.h"
+#include "utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,12 +63,10 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 {
 	mcon_collection *col;
 	mongo_con_manager_item *ptr = manager->connections;
-
 	col = mcon_init_collection(sizeof(mongo_connection*));
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "filter_connections: adding connections:");
 	while (ptr) {
-		/* we need to check for username and pw on the connection too later */
 		if (ptr->connection->connection_type & types) {
 			mongo_print_connection_info(manager, ptr->connection, MLOG_FINE);
 			mcon_collection_add(col, ptr->connection);
@@ -399,7 +398,6 @@ void mongo_read_preference_copy(mongo_read_preference *from, mongo_read_preferen
 
 	to->type = from->type;
 	to->tagset_count = from->tagset_count;
-
 	if (!from->tagset_count) {
 		to->tagset_count = 0;
 		to->tagsets = NULL;

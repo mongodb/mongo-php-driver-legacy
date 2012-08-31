@@ -283,6 +283,8 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 
 #define MONGO_REPLY_HEADER_SIZE 36
 
+/* Returns 1 if it worked, and 0 if it didn't. If 0 is returned, *error_message
+ * is set and must be freed */
 static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mcon_str *packet, char **data_buffer, char **error_message)
 {
 	int            read;
@@ -297,14 +299,13 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: read from header: %d", read);
 	if (read < MONGO_REPLY_HEADER_SIZE) {
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "send_package: the amount of bytes read (%d) is less than the header size (%d)", read, MONGO_REPLY_HEADER_SIZE);
 		return 0;
 	}
 
-	/* Check for a query error */
+	/* Read result flags */
 	flags = MONGO_32(*(int*)(reply_buffer + sizeof(int32_t) * 4));
-	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
-		return 0;
-	}
 
 	/* Read the rest of the data */
 	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
@@ -313,7 +314,28 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	/* TODO: Check size limits */
 	*data_buffer = malloc(data_size + 1);
 	if (!mongo_io_recv_data(con->socket, *data_buffer, data_size, error_message)) {
-		free(data_buffer);
+		return 0;
+	}
+
+	/* Check for a query error */
+	if (flags & MONGO_REPLY_FLAG_QUERY_FAILURE) {
+		char *ptr = *data_buffer + sizeof(int32_t); /* Skip the length */
+		char *err;
+		int32_t code;
+
+		/* Find the error */
+		if (bson_find_field_as_string(ptr, "$err", &err)) {
+			*error_message = malloc(256 + strlen(err));
+
+			if (bson_find_field_as_int32(ptr, "code", &code)) {
+				snprintf(*error_message, 256 + strlen(err), "send_package: the query returned a failure: %s (code: %d)", err, code);
+			} else {
+				snprintf(*error_message, 256 + strlen(err), "send_package: the query returned a failure: %s", err);
+			}
+		} else {
+			*error_message = strdup("send_package: the query returned an unknown error");
+		}
+
 		return 0;
 	}
 
@@ -556,6 +578,103 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: added tag %s", con->tags[con->tag_count]);
 			con->tag_count++;
 		}
+	}
+
+	free(data_buffer);
+
+	return 1;
+}
+
+/**
+ * Sends a getnonce command to the server for authentication
+ *
+ * Returns the nonsense when it worked, or NULL if it didn't.
+ */
+char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *con, char **error_message)
+{
+	mcon_str      *packet;
+	char          *data_buffer;
+	char          *ptr;
+	char          *nonce;
+	char          *retval = NULL;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "getnonce: start");
+	packet = bson_create_getnonce_packet(con);
+
+	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+		return NULL;
+	}
+
+	/* Find data fields */
+	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	/* Find getnonce */
+	if (bson_find_field_as_string(ptr, "nonce", &nonce)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "getnonce: found nonce '%s'", nonce);
+	} else {
+		*error_message = strdup("Couldn't find the nonce field");
+		free(data_buffer);
+		return NULL;
+	}
+
+	retval = strdup(nonce);
+
+	free(data_buffer);
+
+	return retval;
+}
+
+/**
+ * Authenticates a connection
+ *
+ * Returns 1 when it worked, or 0 when it didn't - with the error_message set.
+ */
+int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, char *database, char *username, char *password, char *nonce, char **error_message)
+{
+	mcon_str      *packet;
+	char          *data_buffer, *errmsg;
+	char          *ptr;
+	char          *salted;
+	int            length;
+	char          *hash, *key;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: start");
+
+	/* Calculate hash=md5(${username}:mongo:${password}) */
+	length = strlen(username) + 7 + strlen(password) + 1;
+	salted = malloc(length);
+	snprintf(salted, length, "%s:mongo:%s", username, password);
+	hash = mongo_util_md5_hex(salted, length - 1); /* -1 to chop off \0 */
+	free(salted);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: hash=md5(%s:mongo:%s) = %s", username, password, hash);
+
+	/* Calculate key=md5(${nonce}${username}${hash}) */
+	length = strlen(nonce) + strlen(username) + strlen(hash) + 1;
+	salted = malloc(length);
+	snprintf(salted, length, "%s%s%s", nonce, username, hash);
+	key = mongo_util_md5_hex(salted, length - 1); /* -1 to chop off \0 */
+	free(salted);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: key=md5(%s%s%s) = %s", nonce, username, hash, key);
+
+	packet = bson_create_authenticate_packet(con, database, username, nonce, key);
+
+	free(hash);
+	free(key);
+
+	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+		free(data_buffer);
+		return 0;
+	}
+
+	/* Find data fields */
+	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	/* Find errmsg */
+	if (bson_find_field_as_string(ptr, "errmsg", &errmsg)) {
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "Authentication failed: %s", errmsg);
+		free(data_buffer);
+		return 0;
 	}
 
 	free(data_buffer);
