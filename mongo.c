@@ -430,18 +430,30 @@ PHP_METHOD(Mongo, selectDB) {
 		if (link->servers->server[0]->username && link->servers->server[0]->password) {
 			zval       *new_link;
 			mongo_link *tmp_link;
-			mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "We are in an authenticated link, so we need to clone it.");
+		
+			if (strcmp(link->servers->server[0]->db, "admin") == 0) {
+				mongo_manager_log(
+					link->manager, MLOG_CON, MLOG_FINE,
+					"The link info has 'admin' as database, no need to clone it then"
+				);
+			} else {
+				mongo_manager_log(
+					link->manager, MLOG_CON, MLOG_INFO,
+					"We are in an authenticated link (db: %s, user: %s), so we need to clone it.",
+					link->servers->server[0]->db, link->servers->server[0]->username
+				);
 
-			/* Create the new link object */
-			MAKE_STD_ZVAL(new_link);
-			object_init_ex(new_link, mongo_ce_Mongo);
-			tmp_link = (mongo_link*) zend_object_store_get_object(new_link TSRMLS_CC);
+				/* Create the new link object */
+				MAKE_STD_ZVAL(new_link);
+				object_init_ex(new_link, mongo_ce_Mongo);
+				tmp_link = (mongo_link*) zend_object_store_get_object(new_link TSRMLS_CC);
 
-			tmp_link->manager = link->manager;
-			tmp_link->servers = malloc(sizeof(mongo_servers));
-			mongo_servers_copy(tmp_link->servers, link->servers, MONGO_SERVER_COPY_NONE);
+				tmp_link->manager = link->manager;
+				tmp_link->servers = malloc(sizeof(mongo_servers));
+				mongo_servers_copy(tmp_link->servers, link->servers, MONGO_SERVER_COPY_NONE);
 
-			this_ptr = new_link;
+				this_ptr = new_link;
+			}
 		}
 	}
 
