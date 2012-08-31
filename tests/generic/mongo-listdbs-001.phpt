@@ -6,7 +6,7 @@ Mongo::listDBs()
 <?php
 require dirname(__FILE__) ."/../utils.inc";
 
-$m = mongo();
+$m = mongo("admin");
 $dbs = $m->listDBs();
 var_dump($dbs['ok']);
 var_dump(isset($dbs['totalSize']));
