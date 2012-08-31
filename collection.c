@@ -1248,6 +1248,71 @@ PHP_METHOD(MongoCollection, toIndexString) {
   RETURN_STRING(name, 0)
 }
 
+/* {{{ proto array MongoCollection::aggregate(array pipelines, [, array pipeline [, ...]])
+   Wrapper for the aggregate runCommand. Either one array of pipelines, or variable pipeline arguments */
+PHP_METHOD(MongoCollection, aggregate)
+{
+	zval ***argv, *pipelines, *data, *retval, **values, *tmp;
+	int argc, i;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &argv, &argc) == FAILURE) {
+		return;
+	}
+
+	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+
+	for (i = 0; i < argc; i++) {
+		tmp = *argv[i];
+		if (Z_TYPE_P(tmp) != IS_ARRAY) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Argument %d is not an array", i + 1);
+			return;
+		}
+	}
+
+	MAKE_STD_ZVAL(data);
+	array_init(data);
+
+	add_assoc_zval(data, "aggregate", c->name);
+	zval_add_ref(&c->name);
+
+	if (argc == 1) {
+		Z_ADDREF_PP(*argv);
+		add_assoc_zval(data, "pipeline", **argv);
+	} else {
+		MAKE_STD_ZVAL(pipelines);
+		array_init(pipelines);
+
+		for (i = 0; i < argc; i++) {
+			tmp = *argv[i];
+			Z_ADDREF_P(tmp);
+			if (zend_hash_next_index_insert(Z_ARRVAL_P(pipelines), &tmp, sizeof(zval*), NULL) == FAILURE) {
+				Z_DELREF_P(tmp);
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create pipelines array");
+				efree(argv);
+				RETURN_FALSE;
+			}
+		}
+		add_assoc_zval(data, "pipeline", pipelines);
+	}
+	efree(argv);
+
+	MAKE_STD_ZVAL(retval);
+	MONGO_CMD(retval, c->parent);
+
+	if (zend_hash_find(Z_ARRVAL_P(retval), "result", strlen("result") + 1, (void **) &values) == SUCCESS) {
+		array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
+		zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval*));
+	} else {
+		RETVAL_FALSE;
+	}
+
+	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&retval);
+}
+/* }}} */
+
+
 /* {{{ proto array MongoCollection::distinct(string key [, array query])
  * Returns a list of distinct values for the given key across a collection */
 PHP_METHOD(MongoCollection, distinct)
@@ -1517,6 +1582,12 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_group, 0, ZEND_RETURN_VALUE,
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregate, 0, 0, 1)
+	ZEND_ARG_INFO(0, pipelines)
+	ZEND_ARG_INFO(0, pipeline)
+	ZEND_ARG_INFO(0, ..)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
@@ -1546,6 +1617,7 @@ static zend_function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, toIndexString, arginfo_toIndexString, ZEND_ACC_PROTECTED|ZEND_ACC_STATIC)
   PHP_ME(MongoCollection, group, arginfo_group, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, distinct, arginfo_distinct, ZEND_ACC_PUBLIC)
+  PHP_ME(MongoCollection, aggregate, arginfo_aggregate, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
 
