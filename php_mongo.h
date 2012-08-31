@@ -429,6 +429,7 @@ typedef struct {
   zval *current;
   int retry;
 
+	int dead;
 } mongo_cursor;
 
 /*
@@ -659,6 +660,7 @@ extern zend_module_entry mongo_module_entry;
  * 17: exceptional condition on socket
  * 18: Trying to get more, but cannot find server
  * 19: max number of retries exhausted, couldn't send query
+ * 20: something exceptional has happened, and the cursor is now dead
  * various: database error
  */
 

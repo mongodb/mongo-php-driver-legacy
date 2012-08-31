@@ -437,7 +437,16 @@ PHP_METHOD(MongoCursor, hasNext) {
 
 /* {{{ MongoCursor::getNext
  */
-PHP_METHOD(MongoCursor, getNext) {
+PHP_METHOD(MongoCursor, getNext)
+{
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+
+	if (cursor->dead) {
+		zend_throw_exception(mongo_ce_ConnectionException, "the connection has been terminated, and this cursor is dead", 12 TSRMLS_CC);
+		return;
+	}
   MONGO_METHOD(MongoCursor, next, return_value, getThis());
   // will be null unless there was an error
   if (EG(exception) ||
@@ -909,20 +918,16 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   return SUCCESS;
 }
 /* }}} */
-#if 0
-int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC) {
-  mongo_server *old = cursor->connection;
 
-  // kill cursor so that the server stops and the new connection doesn't try
-  // to kill something it doesn't own
-  mongo_util_cursor_reset(cursor TSRMLS_CC);
+int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
+{
+	mongo_connection *connection = cursor->connection;
 
-  // reset sets cursor->connection to 0, so we use "old" here
-  mongo_util_link_failed(cursor->link, old TSRMLS_CC);
+	mongo_manager_connection_deregister(MonGlo(manager), connection);
+	cursor->dead = 1;
 
-  return FAILURE;
+	return FAILURE;
 }
-#endif
 
 // ITERATOR FUNCTIONS
 
