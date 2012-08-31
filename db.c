@@ -508,6 +508,7 @@ PHP_METHOD(MongoDB, getDBRef) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ref) == FAILURE) {
     return;
   }
+  MUST_BE_ARRAY_OR_OBJECT(1, ref);
 
   MONGO_METHOD2(MongoDBRef, get, return_value, NULL, getThis(), ref);
 }
@@ -589,10 +590,8 @@ PHP_METHOD(MongoDB, command) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {
     return;
   }
-  if (IS_SCALAR_P(cmd)) {
-    zend_error(E_WARNING, "MongoDB::command() expects parameter 1 to be an array or object");
-    return;
-  }
+
+  MUST_BE_ARRAY_OR_OBJECT(1, cmd);
 
   PHP_MONGO_GET_DB(getThis());
 
@@ -880,7 +879,7 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_createDBRef, 0, ZEND_RETURN_
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getDBRef, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, reference_information, 0)
+	ZEND_ARG_INFO(0, reference_information)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALUE, 1)
@@ -889,7 +888,7 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALU
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_command, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, command, 0)
+	ZEND_ARG_INFO(0, command)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 

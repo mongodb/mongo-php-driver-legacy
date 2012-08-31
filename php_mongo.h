@@ -116,6 +116,13 @@
 #define MONGO_E_DEPRECATED E_STRICT
 #endif
 
+#define MUST_BE_ARRAY_OR_OBJECT(num, arg) do { \
+	if (arg && !(Z_TYPE_P(arg) == IS_ARRAY || Z_TYPE_P(arg) == IS_OBJECT)) { \
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "expects parameter %d to be an array or object, %s given", num, zend_get_type_by_const(Z_TYPE_P(arg))); \
+		RETURN_NULL(); \
+	} \
+} while(0);
+
 #if ZEND_MODULE_API_NO >= 20060613
 // normal, nice method
 #define MONGO_METHOD_BASE(classname, name) zim_##classname##_##name
