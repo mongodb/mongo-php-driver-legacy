@@ -66,6 +66,7 @@ mcon/tests/hash-test1
 mcon/tests/parse-test1
 mcon/tests/parse-test2
 mcon/tests/shc-test1
+mcon/tests/auth-test1
 
 mongo-1*.tgz
 mongo-1*.tar
