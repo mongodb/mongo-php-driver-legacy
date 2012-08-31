@@ -720,75 +720,37 @@ zval* mongo_db_cmd(mongo_connection *connection, char *database, zval *cmd TSRML
 }
 
 
-static void md5_hash(char *md5str, char *arg) {
-  PHP_MD5_CTX context;
-  unsigned char digest[16];
+PHP_METHOD(MongoDB, authenticate)
+{
+	mongo_db   *db;
+	mongo_link *link;
+	char       *username, *password;
+	int         ulen, plen, i;
 
-  md5str[0] = '\0';
-  PHP_MD5Init(&context);
-  PHP_MD5Update(&context, arg, strlen(arg));
-  PHP_MD5Final(digest, &context);
-  make_digest(md5str, digest);
-}
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &username, &ulen, &password, &plen) == FAILURE) {
+		return;
+	}
 
+	PHP_MONGO_GET_DB(getThis());
+	PHP_MONGO_GET_LINK(db->link);
 
-PHP_METHOD(MongoDB, authenticate) {
-  char *username, *password;
-  int ulen, plen;
-  zval *data, *result, **nonce;
+	/* First we check whether the link already has database/username/password set. If
+	 * so, we can't re-authenticate and bailout. */
+	if (
+		link->servers->server[0]->db ||
+		link->servers->server[0]->username ||
+		link->servers->server[0]->password
+	) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't authenticate an already authenticated connection.");
+		RETURN_FALSE;
+	}
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &username, &ulen, &password, &plen) == FAILURE) {
-    return;
-  }
-
-  MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "getnonce", 1);
-
-  MAKE_STD_ZVAL(result);
-  ZVAL_NULL(result);
-  MONGO_CMD(result, getThis());
-
-  zval_ptr_dtor(&data);
-
-  if (EG(exception)) {
-    zval_ptr_dtor(&result);
-    RETURN_FALSE;
-  }
-
-  if (zend_hash_find(HASH_P(result), "nonce", strlen("nonce")+1, (void**)&nonce) == SUCCESS) {
-    char *salt, *rash;
-    char hash[33], digest[33];
-
-    // create username:mongo:password hash
-    spprintf(&salt, 0, "%s:mongo:%s", username, password);
-    md5_hash(hash, salt);
-    efree(salt);
-
-    // create nonce|username|hash hash
-    spprintf(&rash, 0, "%s%s%s", Z_STRVAL_PP(nonce), username, hash);
-    md5_hash(digest, rash);
-    efree(rash);
-
-    // make actual authentication cmd
-    MAKE_STD_ZVAL(data);
-    array_init(data);
-
-    add_assoc_long(data, "authenticate", 1);
-    add_assoc_stringl(data, "user", username, ulen, 1);
-    add_assoc_zval(data, "nonce", *nonce);
-    zval_add_ref(nonce);
-    add_assoc_string(data, "key", digest, 1);
-
-    MONGO_CMD(return_value, getThis());
-
-    zval_ptr_dtor(&data);
-  }
-  else {
-    RETVAL_FALSE;
-  }
-
-  zval_ptr_dtor(&result);
+	/* Update all the servers */
+	for (i = 0; i < link->servers->count; i++) {
+		link->servers->server[i]->db = strdup(Z_STRVAL_P(db->name));
+		link->servers->server[i]->username = strdup(username);
+		link->servers->server[i]->password = strdup(password);
+	}
 }
 
 static void clear_exception(zval* return_value TSRMLS_DC) {
