@@ -672,7 +672,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	/* Find errmsg */
 	if (bson_find_field_as_string(ptr, "errmsg", &errmsg)) {
 		*error_message = malloc(256);
-		snprintf(*error_message, 256, "Authentication failed: %s", errmsg);
+		snprintf(*error_message, 256, "Authentication failed on database '%s' with username '%s': %s", database, username, errmsg);
 		free(data_buffer);
 		return 0;
 	}
