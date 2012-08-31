@@ -46,17 +46,6 @@ static int is_safe_op(zval *options TSRMLS_DC);
 static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_distinct, 0, 0, 1)
-	ZEND_ARG_INFO(0, key)
-	ZEND_ARG_INFO(0, query)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregate, 0, 0, 1)
-	ZEND_ARG_INFO(0, pipelines)
-	ZEND_ARG_INFO(0, pipeline)
-	ZEND_ARG_INFO(0, ..)
-ZEND_END_ARG_INFO()
-
 PHP_METHOD(MongoCollection, __construct) {
   zval *parent, *name, *zns, *w, *wtimeout;
   mongo_collection *c;
@@ -1259,68 +1248,67 @@ PHP_METHOD(MongoCollection, toIndexString) {
   RETURN_STRING(name, 0)
 }
 
-/* {{{ proto array MongoCollection::aggregate(array piplines, [, array pipeline [, ...]])
-   Wrapper for the aggregate runCommand. Either one array of piplines, or variable pipeline arguments */
+/* {{{ proto array MongoCollection::aggregate(array pipelines, [, array pipeline [, ...]])
+   Wrapper for the aggregate runCommand. Either one array of pipelines, or variable pipeline arguments */
 PHP_METHOD(MongoCollection, aggregate)
 {
-    zval ***argv, *pipelines, *data, *retval, **values, *tmp;
-    int argc;
+	zval ***argv, *pipelines, *data, *retval, **values, *tmp;
+	int argc, i;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &argv, &argc) == FAILURE) {
-        return;
-    }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &argv, &argc) == FAILURE) {
+		return;
+	}
 
-    mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
-    MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-    for(int i = 0; i < argc; i++) {
-        tmp = *argv[i];
-        if (Z_TYPE_P(tmp) != IS_ARRAY) {
-            php_error_docref(NULL TSRMLS_CC, E_WARNING, "Argument %d is not an array", i+1);
-            return;
-        }
-    }
+	for (i = 0; i < argc; i++) {
+		tmp = *argv[i];
+		if (Z_TYPE_P(tmp) != IS_ARRAY) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Argument %d is not an array", i + 1);
+			return;
+		}
+	}
 
-    MAKE_STD_ZVAL(data);
-    array_init(data);
+	MAKE_STD_ZVAL(data);
+	array_init(data);
 
-    add_assoc_zval(data, "aggregate", c->name);
-    zval_add_ref(&c->name);
+	add_assoc_zval(data, "aggregate", c->name);
+	zval_add_ref(&c->name);
 
-    if (argc == 1) {
-        Z_ADDREF_PP(*argv);
-        add_assoc_zval(data, "pipeline", **argv);
-    }
-    else {
-        MAKE_STD_ZVAL(pipelines);
-        array_init(pipelines);
+	if (argc == 1) {
+		Z_ADDREF_PP(*argv);
+		add_assoc_zval(data, "pipeline", **argv);
+	} else {
+		MAKE_STD_ZVAL(pipelines);
+		array_init(pipelines);
 
-        for(int i = 0; i < argc; i++) {
-            tmp = *argv[i];
-            Z_ADDREF_P(tmp);
-            if (zend_hash_next_index_insert(Z_ARRVAL_P(pipelines), &tmp, sizeof(zval *), NULL) == FAILURE) {
-                Z_DELREF_P(tmp);
-                php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create pipelines array");
-                efree(argv);
-                RETURN_FALSE;
-            }
-        }
-        add_assoc_zval(data, "pipeline", pipelines);
-    }
-    efree(argv);
+		for (i = 0; i < argc; i++) {
+			tmp = *argv[i];
+			Z_ADDREF_P(tmp);
+			if (zend_hash_next_index_insert(Z_ARRVAL_P(pipelines), &tmp, sizeof(zval*), NULL) == FAILURE) {
+				Z_DELREF_P(tmp);
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create pipelines array");
+				efree(argv);
+				RETURN_FALSE;
+			}
+		}
+		add_assoc_zval(data, "pipeline", pipelines);
+	}
+	efree(argv);
 
-    MAKE_STD_ZVAL(retval);
-    MONGO_CMD(retval, c->parent);
+	MAKE_STD_ZVAL(retval);
+	MONGO_CMD(retval, c->parent);
 
-    if (zend_hash_find(Z_ARRVAL_P(retval), "result", strlen("result")+1, (void **)&values) == SUCCESS) {
-        array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
-        zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
-    } else {
-        RETVAL_FALSE;
-    }
+	if (zend_hash_find(Z_ARRVAL_P(retval), "result", strlen("result") + 1, (void **) &values) == SUCCESS) {
+		array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
+		zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval*));
+	} else {
+		RETVAL_FALSE;
+	}
 
-    zval_ptr_dtor(&data);
-    zval_ptr_dtor(&retval);
+	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&retval);
 }
 /* }}} */
 
@@ -1592,6 +1580,12 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_group, 0, ZEND_RETURN_VALUE,
 	ZEND_ARG_INFO(0, initial_value)
 	ZEND_ARG_INFO(0, array_OR_MongoCode)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregate, 0, 0, 1)
+	ZEND_ARG_INFO(0, pipelines)
+	ZEND_ARG_INFO(0, pipeline)
+	ZEND_ARG_INFO(0, ..)
 ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoCollection_methods[] = {
