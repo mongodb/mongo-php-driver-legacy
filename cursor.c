@@ -53,6 +53,14 @@ static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define CURSOR_FLAG_EXHAUST      64 /* Not implemented */
 #define CURSOR_FLAG_PARTIAL     128
 
+/* Macro to check whether a cursor is dead, and if so, bailout */
+#define MONGO_CURSOR_CHECK_DEAD \
+	if (cursor->dead) { \
+		zend_throw_exception(mongo_ce_ConnectionException, "the connection has been terminated, and this cursor is dead", 12 TSRMLS_CC); \
+		return; \
+	}
+	
+
 // externs
 extern zend_class_entry *mongo_ce_Id,
   *mongo_ce_Mongo,
@@ -437,7 +445,13 @@ PHP_METHOD(MongoCursor, hasNext) {
 
 /* {{{ MongoCursor::getNext
  */
-PHP_METHOD(MongoCursor, getNext) {
+PHP_METHOD(MongoCursor, getNext)
+{
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CURSOR_CHECK_DEAD;
+
   MONGO_METHOD(MongoCursor, next, return_value, getThis());
   // will be null unless there was an error
   if (EG(exception) ||
@@ -523,7 +537,7 @@ PHP_METHOD(MongoCursor, dead) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
-  RETURN_BOOL(cursor->started_iterating && cursor->cursor_id == 0);
+  RETURN_BOOL(cursor->dead || (cursor->started_iterating && cursor->cursor_id == 0));
 }
 /* }}} */
 
@@ -909,20 +923,16 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   return SUCCESS;
 }
 /* }}} */
-#if 0
-int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC) {
-  mongo_server *old = cursor->connection;
 
-  // kill cursor so that the server stops and the new connection doesn't try
-  // to kill something it doesn't own
-  mongo_util_cursor_reset(cursor TSRMLS_CC);
+int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
+{
+	mongo_connection *connection = cursor->connection;
 
-  // reset sets cursor->connection to 0, so we use "old" here
-  mongo_util_link_failed(cursor->link, old TSRMLS_CC);
+	mongo_manager_connection_deregister(MonGlo(manager), connection);
+	cursor->dead = 1;
 
-  return FAILURE;
+	return FAILURE;
 }
-#endif
 
 // ITERATOR FUNCTIONS
 
@@ -931,6 +941,7 @@ int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC) {
 PHP_METHOD(MongoCursor, current) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CURSOR_CHECK_DEAD;
 
   if (cursor->current) {
     RETURN_ZVAL(cursor->current, 1, 0);
@@ -1011,6 +1022,7 @@ PHP_METHOD(MongoCursor, next) {
 	char *error_message = NULL;
 
   PHP_MONGO_GET_CURSOR(getThis());
+	MONGO_CURSOR_CHECK_DEAD;
 
   if (!cursor->started_iterating) {
     MONGO_METHOD(MongoCursor, doQuery, return_value, getThis());
@@ -1618,7 +1630,7 @@ void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le) {
 static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
   char quickbuf[128];
   buffer buf;
-  zval temp;
+	char *error_message;
 
   /*
    * If the cursor_id is 0, the db is out of results anyway.
@@ -1634,12 +1646,12 @@ static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
 
   php_mongo_write_kill_cursors(&buf, node->cursor_id TSRMLS_CC);
 
-  Z_TYPE(temp) = IS_NULL;
-  _mongo_say(node->socket, &buf, &temp TSRMLS_CC);
-  if (Z_TYPE(temp) == IS_STRING) {
-    efree(Z_STRVAL(temp));
-    Z_TYPE(temp) = IS_NULL;
-  }
+	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_INFO, "Killing unfinished cursor %ld", node->cursor_id);
+
+	if (!mongo_io_send(node->socket, buf.start, buf.pos - buf.start, (char**) &error_message)) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %ld on socket %d: %s", node->cursor_id, node->socket, error_message);
+		free(error_message);
+	}
 
   // free this cursor/link pair
   php_mongo_free_cursor_node(node, le);
