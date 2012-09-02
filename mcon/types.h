@@ -18,10 +18,11 @@
  *
  * SECONDARY needs to have a larger constant value than PRIMARY for the read
  * preference sorting algorithm to work. */
-#define MONGO_NODE_PRIMARY        0x01
-#define MONGO_NODE_SECONDARY      0x02
-#define MONGO_NODE_ARBITER        0x04
-#define MONGO_NODE_MONGOS         0x08
+#define MONGO_NODE_STANDALONE     0x01
+#define MONGO_NODE_PRIMARY        0x02
+#define MONGO_NODE_SECONDARY      0x04
+#define MONGO_NODE_ARBITER        0x08
+#define MONGO_NODE_MONGOS         0x10
 
 /* Constants for health states as returned by replSetGetStatus
  * From: http://docs.mongodb.org/manual/reference/replica-status/#statuses */
