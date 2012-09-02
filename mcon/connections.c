@@ -234,6 +234,7 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 	tmp = malloc(sizeof(mongo_connection));
 	memset(tmp, 0, sizeof(mongo_connection));
 	tmp->last_reqid = rand();
+	tmp->connection_type = MONGO_NODE_STANDALONE;
 
 	/* Connect */
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_create: creating new connection for %s:%d", server_def->host, server_def->port);
