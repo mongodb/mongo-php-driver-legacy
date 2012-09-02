@@ -13,6 +13,7 @@
 static char *mongo_connection_type(int type)
 {
 	switch (type) {
+		case MONGO_NODE_STANDALONE: return "STANDALONE";
 		case MONGO_NODE_PRIMARY: return "PRIMARY";
 		case MONGO_NODE_SECONDARY: return "SECONDARY";
 		case MONGO_NODE_ARBITER: return "ARBITER";
@@ -86,16 +87,21 @@ static mcon_collection *mongo_rp_collect_primary(mongo_con_manager *manager, mon
 
 static mcon_collection *mongo_rp_collect_primary_and_secondary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
-	/* We add the MONGO_NODE_MONGOS here, because that's needed for the
-	 * MULTIPLE connection type. Right now, that only is used for
-	 * MONGO_RP_NEAREST, and MONGO_RP_NEAREST uses this function (see below in
-	 * mongo_find_all_candidate_servers(). */
-	return filter_connections(manager, MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY | MONGO_NODE_MONGOS, rp);
+	return filter_connections(manager, MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY, rp);
 }
 
 static mcon_collection *mongo_rp_collect_secondary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
 	return filter_connections(manager, MONGO_NODE_SECONDARY, rp);
+}
+
+static mcon_collection *mongo_rp_collect_any(mongo_con_manager *manager, mongo_read_preference *rp)
+{
+	/* We add the MONGO_NODE_STANDALONE and MONGO_NODE_MONGOS here, because
+	 * that's needed for the MULTIPLE connection type. Right now, that only is
+	 * used for MONGO_RP_NEAREST, and MONGO_RP_NEAREST uses this function (see
+	 * below in mongo_find_all_candidate_servers(). */
+	return filter_connections(manager, MONGO_NODE_STANDALONE | MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY | MONGO_NODE_MONGOS, rp);
 }
 
 static mcon_collection* mongo_find_all_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
@@ -108,11 +114,13 @@ static mcon_collection* mongo_find_all_candidate_servers(mongo_con_manager *mana
 			break;
 		case MONGO_RP_PRIMARY_PREFERRED:
 		case MONGO_RP_SECONDARY_PREFERRED:
-		case MONGO_RP_NEAREST:
 			return mongo_rp_collect_primary_and_secondary(manager, rp);
 			break;
 		case MONGO_RP_SECONDARY:
 			return mongo_rp_collect_secondary(manager, rp);
+			break;
+		case MONGO_RP_NEAREST:
+			return mongo_rp_collect_any(manager, rp);
 			break;
 		default:
 			return NULL;
