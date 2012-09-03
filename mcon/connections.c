@@ -439,8 +439,8 @@ int mongo_connection_rs_status(mongo_con_manager *manager, mongo_connection *con
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "rs_status: the found replicaset name matches the expected one (%s).", set);
 		}
 	} else if (*repl_set_name == NULL) {
-		/* This can not happen, as for the REPLSET CON_TYPE to be active in the
-		 * first place, there needs to be a repl_set_name set. */
+		/* This can happen, in case the replicaset name was not given, but just
+		 * bool(true) (or string("1")) in the connection options. */
 		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "rs_status: the replicaset name is not set, so we're using %s.", set);
 		*repl_set_name = strdup(set);
 	}
