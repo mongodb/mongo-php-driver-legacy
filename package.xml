@@ -29,25 +29,25 @@
   <email>bjori@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-08-16</date>
- <time>18:53:32</time>
+ <date>2012-09-03</date>
+ <time>13:33:32</time>
  <version>
-  <release>1.3.0beta1</release>
-  <api>1.3.0beta1</api>
+  <release>1.3.0beta2</release>
+  <api>1.3.0beta2</api>
  </version>
  <stability>
-  <release>alpha</release>
-  <api>alpha</api>
+  <release>beta</release>
+  <api>beta</api>
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-This is a new major release, which has a rewritten connection handling
-backend. It has been rewritten to form a new improved framework for
-handling connections. On top of this new framework, new functionality is
-also implemented to provide read preference support that comes with
-MongoDB 2.2. The new framework no longer has the concept of a connection
-pool, but instead make sure there is only one connect per
-node/db/username.
+This is the second beta of the 1.3 release.  The 1.3 release is a new major
+release, which has a rewritten connection handling backend. It has been
+rewritten to form a new improved framework for handling connections. On top of
+this new framework, new functionality is also implemented to provide read
+preference support that comes with MongoDB 2.2. The new framework no longer has
+the concept of a connection pool, but instead make sure there is only one
+connect per node/db/username.
 
 We also have introduced some deprecation notices for features and methods that
 are going to disappear in version 2 of the driver, which we plan to release
@@ -58,42 +58,32 @@ New major features in this release to support the MongoDB 2.2 release:
 - Support for the aggregation framework through the aggregate() helper.
 - Support for read preferences and read preference tags (See:
   http://docs.mongodb.org/manual/applications/replication/#replica-set-read-preference)
+- Support for connections to multiple mongos nodes is not implemented yet.
 
 Known issues (to be addressed before 1.3.0):
 
-- Authentication has not been implemented it, so this release will only work
-  for installations without authentication enabled.
-- Support for connections to multiple mongos nodes is not implemented yet.
 - It has not been tested on anything but Linux.
 
 The rest of the standard changelog:
 
 ** Bug
-    * [PHP-293] - listCollections 
-    * [PHP-300] - execute crashes with array() as argument
-    * [PHP-354] - CLONE - "couldn't send query: Broken pipe" when using forked processes in 1.2.9
-    * [PHP-373] - Overriding batchInsert
-    * [PHP-429] - MongoDB::selectCollection() causes Segmentation fault
-    * [PHP-433] - GridFS safe option overwritten
-    * [PHP-436] - MongGridFS::storeUpload() breaks on HTML5 multiple file upload
-    * [PHP-445] - Cannot use mongo.default_host with Mongo constructor options
-    * [PHP-446] - Uncaught exception 'MongoCursorException' with message 'couldn't send query: ' when find()ing items on an empty collection
-    * [PHP-454] - Memory leak when many inserts
-    * Note: More might have been fixed, but those issues need to be verified
-      first.
+    * [PHP-158] - Persistent connections: Dropped connections not detected
+    * [PHP-462] - ping_interval reconnect logic breaks forked processes
+    * [PHP-463] - Specifying multiple hostnames for a standalone server fails
+    * [PHP-465] - Marking connections as failed isn't supported
+    * [PHP-466] - Seed list of 1 replicaset member, and one standalone, with array("replicaSet" => true) fails
+    * [PHP-469] - MongoGridFS::remove() does not support filename argument
+    * [PHP-472] - Compile Error
+    * [PHP-473] - Sort by field "0" (zero char, ASCII 0x30) does not work
 
 ** Improvement
-    * [PHP-270] - ext/mongo classes should return meaningful results from Reflection API
-    * [PHP-389] - Support setting query flags (opts)
-    * [PHP-403] - bson_encode and bson_decode should trigger warnings for non-document BSON objects
+    * [PHP-268] - Implement ReadPreferences + Slave Timing Buckets + Deprecate SlaveOk
 
 ** New Feature
-    * [PHP-79] - GridFS stream wrapper
-    * [PHP-117] - Implement findAndModify
-    * [PHP-280] - Allow MongoLog to log to Pear Log module
+    * [PHP-421] - Aggregation helper
 
-** Question
-    * [PHP-333] - MongoGridFSCursor::key
+** Task
+    * [PHP-450] - Port GridFS tests from PHPUnit to phpt
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -158,6 +148,74 @@ The rest of the standard changelog:
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <date>2012-08-16</date>
+   <time>13:33:32</time>
+   <version>
+    <release>1.3.0beta2</release>
+    <api>1.3.0beta2</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+This is a new major release, which has a rewritten connection handling
+backend. It has been rewritten to form a new improved framework for
+handling connections. On top of this new framework, new functionality is
+also implemented to provide read preference support that comes with
+MongoDB 2.2. The new framework no longer has the concept of a connection
+pool, but instead make sure there is only one connect per
+node/db/username.
+
+We also have introduced some deprecation notices for features and methods that
+are going to disappear in version 2 of the driver, which we plan to release
+before the end of the year.
+
+New major features in this release to support the MongoDB 2.2 release:
+
+- Support for the aggregation framework through the aggregate() helper.
+- Support for read preferences and read preference tags (See:
+  http://docs.mongodb.org/manual/applications/replication/#replica-set-read-preference)
+
+Known issues (to be addressed before 1.3.0):
+
+- Authentication has not been implemented it, so this release will only work
+  for installations without authentication enabled.
+- Support for connections to multiple mongos nodes is not implemented yet.
+- It has not been tested on anything but Linux.
+
+The rest of the standard changelog:
+
+** Bug
+    * [PHP-293] - listCollections 
+    * [PHP-300] - execute crashes with array() as argument
+    * [PHP-354] - CLONE - "couldn't send query: Broken pipe" when using forked processes in 1.2.9
+    * [PHP-373] - Overriding batchInsert
+    * [PHP-429] - MongoDB::selectCollection() causes Segmentation fault
+    * [PHP-433] - GridFS safe option overwritten
+    * [PHP-436] - MongGridFS::storeUpload() breaks on HTML5 multiple file upload
+    * [PHP-445] - Cannot use mongo.default_host with Mongo constructor options
+    * [PHP-446] - Uncaught exception 'MongoCursorException' with message 'couldn't send query: ' when find()ing items on an empty collection
+    * [PHP-454] - Memory leak when many inserts
+    * Note: More might have been fixed, but those issues need to be verified
+      first.
+
+** Improvement
+    * [PHP-270] - ext/mongo classes should return meaningful results from Reflection API
+    * [PHP-389] - Support setting query flags (opts)
+    * [PHP-403] - bson_encode and bson_decode should trigger warnings for non-document BSON objects
+
+** New Feature
+    * [PHP-79] - GridFS stream wrapper
+    * [PHP-117] - Implement findAndModify
+    * [PHP-280] - Allow MongoLog to log to Pear Log module
+
+** Question
+    * [PHP-333] - MongoGridFSCursor::key
+   </notes>
+  </release>
   <release>
    <stability>
     <release>stable</release>
