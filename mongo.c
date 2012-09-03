@@ -246,7 +246,7 @@ PHP_METHOD(Mongo, __construct)
 							free(error_message);
 							return;
 
-						case 2: /* Unknown option */
+						case 2: /* Unknown connection string option, additional options for object configuration are checked here */
 							if (strcasecmp(opt_key, "connect") == 0) {
 								convert_to_boolean_ex(opt_entry);
 								connect = Z_BVAL_PP(opt_entry);
