@@ -1,10 +1,13 @@
 --TEST--
 MongoCollection::findAndModify() helper
+--SKIPIF--
+<?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
+require dirname(__FILE__) . "/../utils.inc";
 
-$m = new Mongo("standalone");
-$col = $m->selectDB("test")->jobs;
+$m = mongo();
+$col = $m->selectDB(dbname())->jobs;
 
 $col->remove();
 
