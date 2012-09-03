@@ -255,8 +255,6 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	int i;
 
 	if (strcasecmp(option_name, "replicaSet") == 0) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': '%s'", option_value);
-
 		if (servers->repl_set_name) {
 			/* Free the already existing one */
 			free(servers->repl_set_name);
@@ -264,7 +262,15 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		}
 
 		if (option_value && *option_value) {
-			servers->repl_set_name = strdup(option_value);
+			/* We explicitly check for the stringified version of "true" here,
+			 * as "true" has a special meaning. It does not mean that the
+			 * replicaSet name is "1". */
+			if (strcmp(option_value, "1") != 0) {
+				servers->repl_set_name = strdup(option_value);
+				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': '%s'", option_value);
+			} else {
+				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': true");
+			}
 			servers->con_type = MONGO_CON_TYPE_REPLSET;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Switching connection type: REPLSET");
 		}
@@ -352,8 +358,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	}
 
 	*error_message = malloc(256);
-	snprintf(*error_message, 256, "- Found unknown option '%s' with value %s", option_name, option_value);
-	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found unknown option '%s' with value %s", option_name, option_value);
+	snprintf(*error_message, 256, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
 	return 2;
 }
 
