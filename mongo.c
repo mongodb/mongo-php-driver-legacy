@@ -251,6 +251,7 @@ PHP_METHOD(Mongo, __construct)
 								convert_to_boolean_ex(opt_entry);
 								connect = Z_BVAL_PP(opt_entry);
 								php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'connect' option is deprecated and will be removed in the future");
+								free(error_message);
 							} else {
 								zend_throw_exception(mongo_ce_ConnectionException, error_message, 0 TSRMLS_CC);
 								free(error_message);
