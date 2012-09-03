@@ -34,6 +34,7 @@ $REPLICASET_PRIMARY    = "primary.rs.local";
 $REPLICASET_SECONDARY  = "secondary.rs.local";
 $REPLICASET_ARBITER    = "tertiary.rs.local";
 
+$REPLICASET_AUTH_NAME    = $REPLICASET_NAME;
 $REPLICASET_AUTH_PRIMARY = "primary.rs-auth.local";
 $REPLICASET_AUTH_ADMIN_USERNAME = "adminusername";
 $REPLICASET_AUTH_ADMIN_PASSWORD = "adminpassword";
