@@ -44,7 +44,7 @@ function m(&$dsn, &$port, &$db, &$opts = array()) {
         case "REPLICASET_AUTH":
             $dsn                = $GLOBALS["REPLICASET_AUTH_PRIMARY"];
             $port               = $GLOBALS["REPLICASET_AUTH_PORT"];
-            $opts["replicaSet"] = $GLOBALS["REPLICASET_NAME"];
+            $opts["replicaSet"] = $GLOBALS["REPLICASET_AUTH_NAME"];
             if ($db == "admin") {
                 $opts["username"]   = $GLOBALS["REPLICASET_AUTH_ADMIN_USERNAME"];
                 $opts["password"]   = $GLOBALS["REPLICASET_AUTH_ADMIN_PASSWORD"];
