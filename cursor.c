@@ -334,7 +334,7 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->timeout = Z_LVAL_P(timeout);
 
 	/* Sets the wire protocol flag to allow reading from a secondary */
-	cursor->opts = cursor->connection->connection_type == MONGO_NODE_PRIMARY ? (1 << 2) : 0;
+	cursor->opts = cursor->connection->connection_type == MONGO_NODE_SECONDARY ? (1 << 2) : 0;
 
   // get rid of extra ref
   zval_ptr_dtor(&empty);
