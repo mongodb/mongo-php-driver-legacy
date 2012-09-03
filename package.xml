@@ -58,7 +58,7 @@ New major features in this release to support the MongoDB 2.2 release:
 - Support for the aggregation framework through the aggregate() helper.
 - Support for read preferences and read preference tags (See:
   http://docs.mongodb.org/manual/applications/replication/#replica-set-read-preference)
-- Support for connections to multiple mongos nodes is not implemented yet.
+- Support for connections to multiple mongos nodes.
 
 Known issues (to be addressed before 1.3.0):
 
