@@ -25,7 +25,7 @@ $coll1 = $mongo->selectCollection('phpunit', 'query');
 $coll1->drop();
 
 $i = 0;
-while (true) {
+while ($i < 5) {
 	echo "Inserting $i\n";
 	try {
 		$coll1->insert(array('_id' => $i, 'x' => "foo" . dechex($i)), array('safe' => 1));
