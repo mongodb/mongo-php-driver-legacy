@@ -312,7 +312,14 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	data_size = MONGO_32(*(int*)(reply_buffer)) - MONGO_REPLY_HEADER_SIZE;
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: data_size: %d", data_size);
 
-	/* TODO: Check size limits */
+	/* Check size limits */
+	if (con->max_bson_size && data_size > con->max_bson_size) {
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "send_package: data corruption: the returned size of the reply (%d) is larger than the maximum allowed size (%d)", data_size, con->max_bson_size);
+		return 0;
+	}
+
+	/* Read data */
 	*data_buffer = malloc(data_size + 1);
 	if (!mongo_io_recv_data(con->socket, *data_buffer, data_size, error_message)) {
 		return 0;
