@@ -307,6 +307,17 @@ int bson_find_field_as_document(char *buffer, char *field, char **data)
 	return 0;
 }
 
+int bson_find_field_as_double(char *buffer, char *field, double *data)
+{
+	char *tmp = (char*) bson_find_field(buffer, field, BSON_DOUBLE);
+
+	if (tmp) {
+		*data = ((double*)tmp)[0];
+		return 1;
+	}
+	return 0;
+}
+
 int bson_find_field_as_bool(char *buffer, char *field, unsigned char *data)
 {
 	char *tmp = (char*) bson_find_field(buffer, field, BSON_BOOLEAN);
