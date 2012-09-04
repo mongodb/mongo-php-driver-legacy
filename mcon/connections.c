@@ -424,7 +424,13 @@ int mongo_connection_rs_status(mongo_con_manager *manager, mongo_connection *con
 	/* Do replica set name test */
 	bson_find_field_as_string(ptr, "set", &set);
 	if (!set) {
-		*error_message = strdup("Not a replicaset member");
+		char *errmsg = NULL;
+		bson_find_field_as_string(ptr, "errmsg", &errmsg);
+		if (errmsg) {
+			*error_message = strdup(errmsg);
+		} else {
+			*error_message = strdup("Not a replicaset member");
+		}
 		free(data_buffer);
 		return 0;
 	} else if (*repl_set_name) {
@@ -641,6 +647,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 {
 	mcon_str      *packet;
 	char          *data_buffer, *errmsg;
+	double         ok;
 	char          *ptr;
 	char          *salted;
 	int            length;
@@ -678,6 +685,13 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
 
 	/* Find errmsg */
+	if (bson_find_field_as_double(ptr, "ok", &ok)) {
+		if (ok > 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authentication successful");
+		} else {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authentication failed");
+		}
+	}
 	if (bson_find_field_as_string(ptr, "errmsg", &errmsg)) {
 		*error_message = malloc(256);
 		snprintf(*error_message, 256, "Authentication failed on database '%s' with username '%s': %s", database, username, errmsg);
