@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-389: Setting arbitrary flags
+Test for PHP-389: Setting arbitrary flags.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

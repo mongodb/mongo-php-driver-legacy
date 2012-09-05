@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-394 (2): Crashes and mem leaks
+Test for PHP-394: Crashes and mem leaks. (2)
 --SKIPIF--
 <?php require_once __DIR__ . "/skipif.inc" ?>
 --FILE--

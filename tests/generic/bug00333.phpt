@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-333: GridFS find's key
+Test for PHP-333: GridFS find's key.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

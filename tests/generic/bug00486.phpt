@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-486: GridFS cleanup routines remove existing files
+Test for PHP-486: GridFS cleanup routines remove existing files.
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc" ?>
 --FILE--

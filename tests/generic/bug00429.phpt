@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-429: MongoDB::selectCollection() causes Segmentation fault
+Test for PHP-429: MongoDB::selectCollection() causes Segmentation fault.
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc";?>
 --FILE--

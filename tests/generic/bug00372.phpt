@@ -1,5 +1,5 @@
 --TEST--
-PHP-372 (Error codes not being passed to MongoGridFSException)
+Test for PHP-372: Error codes not being passed to MongoGridFSException.
 --CREDITS--
 Alex Yam
 --SKIPIF--

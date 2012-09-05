@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-353: Iterating over a MongoCursor without _id field should not create an empty string
+Test for PHP-353: Iterating over a MongoCursor without _id field should not create an empty string.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-473: Sort by field "0" (zero char, ASCII 0x30) does not work
+Test for PHP-473: Sort by field "0" (zero char, ASCII 0x30) does not work.
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc" ?>
 --FILE--

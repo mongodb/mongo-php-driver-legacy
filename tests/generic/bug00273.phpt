@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::distinct() basic tests
+Test for PHP-273: MongoCollection::distinct() basic tests
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--

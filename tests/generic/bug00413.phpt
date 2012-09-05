@@ -1,5 +1,5 @@
 --TEST--
-Connection strings: unsuccesfull authentication
+Test for PHP-413: Connection strings: unsuccesfull authentication.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

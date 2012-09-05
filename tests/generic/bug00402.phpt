@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-402: MongoCollection::validate(true) doesn't set the correct scan-all flag.
+Test for PHP-402: MongoCollection::validate(true) doesn't set the correct scan-all flag.
 --DESCRIPTION--
 This test skips mongos because its validate() results contain only a top-level
 "validate" field, which collects the shard results, and grouped results for each

@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-320: GridFS transaction issues with storeFile().
+Test for PHP-320: GridFS transaction issues with storeFile().
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

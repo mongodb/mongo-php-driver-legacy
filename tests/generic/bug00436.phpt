@@ -1,5 +1,5 @@
 --TEST--
-MongGridFS::storeUpload() breaks on HTML5 multiple file upload
+Test for PHP-436: MongGridFS::storeUpload() breaks on HTML5 multiple file upload.
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --INI--

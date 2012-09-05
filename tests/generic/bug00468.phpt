@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-468: Undefined behavior calling MongoGridFSFile::write() without a filename
+Test for PHP-468: Undefined behavior calling MongoGridFSFile::write() without a filename.
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
