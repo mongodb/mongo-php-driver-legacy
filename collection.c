@@ -1266,6 +1266,7 @@ PHP_METHOD(MongoCollection, aggregate)
 		tmp = *argv[i];
 		if (Z_TYPE_P(tmp) != IS_ARRAY) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Argument %d is not an array", i + 1);
+			efree(argv);
 			return;
 		}
 	}
