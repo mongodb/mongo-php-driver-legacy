@@ -329,7 +329,7 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 }
 
 /* Wrapper for sending and wrapping in a safe op */
-static int send_message(zval *this_ptr, mongo_connection *connection, buffer buf, zval *options, zval *return_value TSRMLS_DC)
+static int send_message(zval *this_ptr, mongo_connection *connection, buffer *buf, zval *options, zval *return_value TSRMLS_DC)
 {
 	int retval;
 	char *error_message = NULL;
@@ -349,13 +349,13 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer buf
 	}
 
 	if (is_safe_op(options TSRMLS_CC)) {
-		zval *cursor = append_getlasterror(getThis(), &buf, options TSRMLS_CC);
+		zval *cursor = append_getlasterror(getThis(), buf, options TSRMLS_CC);
 		if (cursor) {
-			safe_op(link->manager, connection, cursor, &buf, return_value TSRMLS_CC);
+			safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
 		} else {
 			retval = 0;
 		}
-	} else if (mongo_io_send(connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
+	} else if (mongo_io_send(connection->socket, buf->start, buf->pos - buf->start, (char **) &error_message) == -1) {
 		/* TODO: Find out what to do with the error message here */
 		free(error_message);
 		retval = 0;
@@ -512,7 +512,7 @@ PHP_METHOD(MongoCollection, insert) {
     RETURN_FALSE;
   }
 
-	send_message(this_ptr, connection, buf, options, return_value TSRMLS_CC);
+	send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 
 	efree(buf.start);
 	zval_ptr_dtor(&options);
@@ -553,7 +553,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
     return;
   }
 
-	send_message(this_ptr, connection, buf, options, return_value TSRMLS_CC);
+	send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
 }
@@ -729,7 +729,7 @@ PHP_METHOD(MongoCollection, update) {
     return;
   }
 
-	send_message(this_ptr, connection, buf, options, return_value TSRMLS_CC);
+	send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
 	zval_ptr_dtor(&options);
@@ -792,7 +792,7 @@ PHP_METHOD(MongoCollection, remove) {
     return;
   }
 
-	send_message(this_ptr, connection, buf, options, return_value TSRMLS_CC);
+	send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
   zval_ptr_dtor(&options);
