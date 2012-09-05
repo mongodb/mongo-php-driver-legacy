@@ -50,7 +50,7 @@ $ops = array(
     array('$unwind' => '$tags'),
     array(
         '$group' => array(
-            "_id" => array("tags" => 1),
+            "_id" => array("tags" => '$tags'),
             "authors" => array('$addToSet' => '$author'),
         )
     )
