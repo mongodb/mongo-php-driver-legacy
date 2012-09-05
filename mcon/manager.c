@@ -93,7 +93,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 			continue;
 		}
 		
-		res = mongo_connection_rs_status(manager, con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
+		res = mongo_connection_is_master(manager, con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
 		switch (res) {
 			case 0:
 				/* Something is wrong with the connection, we need to remove
