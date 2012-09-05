@@ -491,7 +491,11 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
 cleanup_on_failure:
 	if (revert) {
-		cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
+		int code = Z_LVAL_P(zend_read_property(mongo_ce_GridFSException, EG(exception), "code", strlen("code"), NOISY TSRMLS_CC));
+		// On duplicate key error we shouldn't clean anything up
+		if (!(code == 11000 || code == 11001)) {
+			cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
+		}
 		RETVAL_FALSE;
 	} else {
 		RETVAL_ZVAL(zid, 1, 0);
@@ -774,7 +778,11 @@ PHP_METHOD(MongoGridFS, storeFile) {
 cleanup_on_failure:
 	// remove all inserted chunks and main file document
 	if (revert) {
-		cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
+		int code = Z_LVAL_P(zend_read_property(mongo_ce_GridFSException, EG(exception), "code", strlen("code"), NOISY TSRMLS_CC));
+		// On duplicate key error we shouldn't clean anything up
+		if (!(code == 11000 || code == 11001)) {
+			cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
+		}
 		RETVAL_FALSE;
 	}
 
