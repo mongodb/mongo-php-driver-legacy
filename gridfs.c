@@ -1148,15 +1148,15 @@ PHP_METHOD(MongoGridFSFile, write) {
   chunks = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   ensure_gridfs_index(return_value, chunks TSRMLS_CC);
 
-  if (!filename) {
-    zval **temp;
-	if (zend_hash_find(HASH_P(file), "filename", strlen("filename")+1, (void**)&temp) == SUCCESS) {
-		filename = Z_STRVAL_PP(temp);
-	} else {
-		zend_throw_exception(mongo_ce_GridFSException, "Cannot find filename", 0 TSRMLS_CC);
-		return;
+	if (!filename) {
+		zval **temp;
+		if (zend_hash_find(HASH_P(file), "filename", strlen("filename") + 1, (void**) &temp) == SUCCESS) {
+			filename = Z_STRVAL_PP(temp);
+		} else {
+			zend_throw_exception(mongo_ce_GridFSException, "Cannot find filename", 0 TSRMLS_CC);
+			return;
+		}
 	}
-  }
 
 
   fp = fopen(filename, "wb");
