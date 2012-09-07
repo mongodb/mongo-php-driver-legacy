@@ -55,7 +55,6 @@ static void clear_exception(zval* return_value TSRMLS_DC);
 
 void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link TSRMLS_DC)
 {
-	int   old_rp;
 	char *error_message = NULL;
 
 	if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {
@@ -584,7 +583,6 @@ PHP_METHOD(MongoDB, command) {
   mongo_db *db;
   mongo_link *link;
   char *cmd_ns;
-	zval slave_okay;
 	mongo_cursor *cursor_tmp;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {

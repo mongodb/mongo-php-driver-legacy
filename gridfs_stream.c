@@ -201,7 +201,7 @@ static int gridfs_stat(php_stream *stream, php_stream_statbuf *ssb TSRMLS_DC)
 /* {{{ int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id) */
 static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 {
-	zval * chunk = 0, *zfields, **data, *bin;
+	zval * chunk = 0, **data, *bin;
 
 	if (chunk_id == -1) {
 		/* we need to figure out which chunk to load */
