@@ -190,7 +190,6 @@ PHP_METHOD(Mongo, __construct)
 	uint opt_key_len;
 	ulong num_key;
 	HashPosition pos;
-	int i;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/", &server, &server_len, &options) == FAILURE) {
 		zval *object = getThis();
@@ -674,7 +673,6 @@ PHP_METHOD(Mongo, getSlave)
 {
 	mongo_link *link;
 	mongo_connection *con;
-	char *error_message = NULL;
 
 	PHP_MONGO_GET_LINK(getThis());
 	con = php_mongo_connect(link TSRMLS_CC);

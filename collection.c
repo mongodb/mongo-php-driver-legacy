@@ -519,7 +519,7 @@ PHP_METHOD(MongoCollection, insert) {
 }
 
 PHP_METHOD(MongoCollection, batchInsert) {
-  zval *docs, *options = NULL, *errmsg = 0;
+	zval *docs, *options = NULL;
   mongo_collection *c;
 	mongo_connection *connection;
   buffer buf;
@@ -678,7 +678,7 @@ PHP_METHOD(MongoCollection, findAndModify)
 /* }}} */
 
 PHP_METHOD(MongoCollection, update) {
-  zval *criteria, *newobj, *options = 0, *errmsg = 0;
+	zval *criteria, *newobj, *options = 0;
   mongo_collection *c;
 	mongo_connection *connection;
   buffer buf;
@@ -736,7 +736,7 @@ PHP_METHOD(MongoCollection, update) {
 }
 
 PHP_METHOD(MongoCollection, remove) {
-  zval *criteria = 0, *options = 0, *errmsg = 0;
+	zval *criteria = 0, *options = 0;
   int flags = 0;
   mongo_collection *c;
 	mongo_connection *connection;
