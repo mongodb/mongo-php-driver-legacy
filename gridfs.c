@@ -346,7 +346,7 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
 
 static void cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid)
 {
-	zval *chunks, *files, *criteria_chunks, *criteria_files;
+	zval *chunks, *criteria_chunks, *criteria_files;
 	char *message = NULL;
 	long code = 0;
 	smart_str tmp_message = { 0 };
@@ -410,7 +410,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   char *bytes = 0;
   int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0,
     pos = 0;
-	int free_options = 0, revert = 0, code = 0;
+	int revert = 0, code = 0;
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
@@ -1023,8 +1023,6 @@ PHP_METHOD(MongoGridFS, storeUpload) {
 PHP_METHOD(MongoGridFS, delete)
 {
 	zval *id, *criteria;
-	char *str_id;
-	size_t str_len;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &id) == FAILURE) {
 		return;
