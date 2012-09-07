@@ -100,9 +100,6 @@ PHP_METHOD(MongoLog, setModule)
 
 PHP_METHOD(MongoLog, setCallback)
 {
-	zend_fcall_info fci = empty_fcall_info;
-	zend_fcall_info_cache fci_cache = empty_fcall_info_cache;
-
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f/", &MonGlo(log_callback_info), &MonGlo(log_callback_info_cache)) == FAILURE) {
 		return;
 	}
