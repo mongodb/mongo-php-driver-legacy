@@ -356,7 +356,7 @@ static void gridfs_rewrite_cursor_exception(TSRMLS_D)
 		zend_clear_exception(TSRMLS_C);
 	}
 
-	// create the message for the exception
+	/* create the message for the exception */
 	if (message) {
 		smart_str_appends(&tmp_message, "Could not store file: ");
 		smart_str_appends(&tmp_message, message);
