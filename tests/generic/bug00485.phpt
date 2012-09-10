@@ -11,7 +11,7 @@ $collection = $m->selectCollection(dbname(), 'crash');
 $collection->drop();
 
 // Load the problem record.
-$arrayData = file_get_contents(dirname(__FILE__) . '/bug00485-data.txt');
+$arrayData = file_get_contents(dirname(__FILE__) . '/../generic/bug00485-data.txt');
 $doc = unserialize($arrayData);
 
 $collection->insert( $doc );
