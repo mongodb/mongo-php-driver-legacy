@@ -1248,11 +1248,11 @@ PHP_METHOD(MongoCollection, toIndexString) {
   RETURN_STRING(name, 0)
 }
 
-/* {{{ proto array MongoCollection::aggregate(array pipelines, [, array pipeline [, ...]])
-   Wrapper for the aggregate runCommand. Either one array of pipelines, or variable pipeline arguments */
+/* {{{ proto array MongoCollection::aggregate(array pipeline, [, array op [, ...]])
+   Wrapper for the aggregate runCommand. Either one array of ops (a pipeline), or a variable number of op arguments */
 PHP_METHOD(MongoCollection, aggregate)
 {
-	zval ***argv, *pipelines, *data, *retval, **values, *tmp;
+	zval ***argv, *pipeline, *data, *retval, **values, *tmp;
 	int argc, i;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &argv, &argc) == FAILURE) {
@@ -1281,20 +1281,20 @@ PHP_METHOD(MongoCollection, aggregate)
 		Z_ADDREF_PP(*argv);
 		add_assoc_zval(data, "pipeline", **argv);
 	} else {
-		MAKE_STD_ZVAL(pipelines);
-		array_init(pipelines);
+		MAKE_STD_ZVAL(pipeline);
+		array_init(pipeline);
 
 		for (i = 0; i < argc; i++) {
 			tmp = *argv[i];
 			Z_ADDREF_P(tmp);
-			if (zend_hash_next_index_insert(Z_ARRVAL_P(pipelines), &tmp, sizeof(zval*), NULL) == FAILURE) {
+			if (zend_hash_next_index_insert(Z_ARRVAL_P(pipeline), &tmp, sizeof(zval*), NULL) == FAILURE) {
 				Z_DELREF_P(tmp);
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create pipelines array");
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create pipeline array");
 				efree(argv);
 				RETURN_FALSE;
 			}
 		}
-		add_assoc_zval(data, "pipeline", pipelines);
+		add_assoc_zval(data, "pipeline", pipeline);
 	}
 	efree(argv);
 
@@ -1584,8 +1584,8 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_group, 0, ZEND_RETURN_VALUE,
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregate, 0, 0, 1)
-	ZEND_ARG_INFO(0, pipelines)
 	ZEND_ARG_INFO(0, pipeline)
+	ZEND_ARG_INFO(0, op)
 	ZEND_ARG_INFO(0, ...)
 ZEND_END_ARG_INFO()
 

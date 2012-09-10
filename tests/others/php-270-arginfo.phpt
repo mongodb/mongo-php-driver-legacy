@@ -176,6 +176,10 @@ MongoCollection
   Method distinct expects 2 parameters
     0: key
     1: query (optional)
+  Method aggregate expects 3 parameters
+    0: pipeline
+    1: op (optional)
+    2: ... (optional)
 
 MongoCursor
   Method __construct expects 4 parameters
