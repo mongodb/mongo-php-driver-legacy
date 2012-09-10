@@ -29,14 +29,14 @@ static int authenticate_connection(mongo_con_manager *manager, mongo_connection 
 	return retval;
 }
 
-static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, char **error_message)
+static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, int connection_flags, char **error_message)
 {
 	char *hash;
 	mongo_connection *con = NULL;
 
 	hash = mongo_server_create_hash(server);
 	con = mongo_manager_connection_find_by_hash(manager, hash);
-	if (!con) {
+	if (!con && !(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
 		con = mongo_connection_create(manager, server, error_message);
 		if (con) {
 			/* Store hash */
@@ -137,7 +137,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					tmp_hash = mongo_server_create_hash(tmp_def);
 					if (!mongo_manager_connection_find_by_hash(manager, tmp_hash)) {
 						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
-						new_con = mongo_get_connection_single(manager, tmp_def, (char **) &con_error_message);
+						new_con = mongo_get_connection_single(manager, tmp_def, MONGO_CON_FLAG_WRITE, (char **) &con_error_message);
 						if (new_con) {
 							servers->server[servers->count] = tmp_def;
 							servers->count++;
@@ -177,16 +177,23 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	char             *con_error_message = NULL;
 	char             *auth_hash = NULL;
 	int i;
+	int found_connected_server = 0;
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
-		tmp = mongo_get_connection_single(manager, servers->server[i], (char **) &con_error_message);
+		tmp = mongo_get_connection_single(manager, servers->server[i], connection_flags, (char **) &con_error_message);
 
-		if (!tmp) {
+		if (tmp) {
+			found_connected_server = 1;
+		} else if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 			free(con_error_message);
 		}
 	}
+	if (!found_connected_server && connection_flags & MONGO_CON_FLAG_DONT_CONNECT) {
+		return NULL;
+	}
+
 	/* Discover more nodes. This also adds a connection to "servers" for each
 	 * new node */
 	mongo_discover_topology(manager, servers);
@@ -220,7 +227,7 @@ bailout:
 }
 
 
-static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
+static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
 	mongo_connection *con = NULL;
 	mongo_connection *tmp;
@@ -235,7 +242,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
-		tmp = mongo_get_connection_single(manager, servers->server[i], (char **) &con_error_message);
+		tmp = mongo_get_connection_single(manager, servers->server[i], connection_flags, (char **) &con_error_message);
 
 		if (!tmp) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
@@ -290,7 +297,7 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 	switch (servers->con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a STANDALONE connection");
-			return mongo_get_connection_multiple(manager, servers, error_message);
+			return mongo_get_connection_multiple(manager, servers, connection_flags, error_message);
 
 		case MONGO_CON_TYPE_REPLSET:
 			mongo_manager_log(
@@ -302,7 +309,7 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 
 		case MONGO_CON_TYPE_MULTIPLE:
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a MULTIPLE connection");
-			return mongo_get_connection_multiple(manager, servers, error_message);
+			return mongo_get_connection_multiple(manager, servers, connection_flags, error_message);
 
 		default:
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: connection type %d is not supported", servers->con_type);
