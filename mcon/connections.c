@@ -425,8 +425,17 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 	/* We find out whether the machine we connected too, is actually the
 	 * one we thought we were connecting too */
 	if (!bson_find_field_as_string(ptr, "me", &connected_name)) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "This isn't a replicaset member!");
-		*error_message = strdup("This isn't a replicaset member!");
+		struct mcon_str *tmp;
+
+		mcon_str_ptr_init(tmp);
+		mcon_str_add(tmp, "Host does not seem to be a replicaset member (", 0);
+		mcon_str_add(tmp, mongo_server_hash_to_server(con->hash), 1);
+		mcon_str_add(tmp, ")", 0);
+
+		*error_message = strdup(tmp->d);
+		mcon_str_ptr_dtor(tmp);
+
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, *error_message);
 		free(data_buffer);
 		return 0;
 	}
