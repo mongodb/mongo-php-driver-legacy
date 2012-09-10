@@ -148,6 +148,11 @@ MongoCollection
   Method findOne expects 2 parameters
     0: query (optional)
     1: fields (optional)
+  Method findAndModify expects 4 parameters
+    0: query
+    1: update (optional)
+    2: fields (optional)
+    3: options (optional)
   Method ensureIndex expects 2 parameters
     0: key_OR_array_of_keys
     1: options (optional)
