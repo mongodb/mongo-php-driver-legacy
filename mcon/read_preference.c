@@ -177,13 +177,30 @@ char *mongo_read_preference_squash_tagset(mongo_read_preference_tagset *tagset)
 	return str.d;
 }
 
-mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
+mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, char *auth_hash)
 {
 	int              i;
 	mcon_collection *all, *filtered;
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "finding candidate servers");
 	all = mongo_find_all_candidate_servers(manager, rp);
+	if (auth_hash) {
+		mongo_con_manager_item *ptr = manager->connections;
+		char                   *server_auth_hash;
+
+		mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by authentication (%s)", auth_hash);
+		filtered = mcon_init_collection(sizeof(mongo_connection*));
+		while (ptr) {
+			mongo_server_split_hash(ptr->connection->hash, NULL, NULL, NULL, NULL, &server_auth_hash, NULL);
+			if (server_auth_hash && strcmp(server_auth_hash, auth_hash) == 0) {
+				mongo_print_connection_info(manager, ptr->connection, MLOG_FINE);
+				mcon_collection_add(filtered, ptr->connection);
+			}
+			ptr = ptr->next;
+		}
+		mcon_collection_free(all);
+		all = filtered;
+	}
 	if (rp->tagset_count != 0) {
 		mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by tagsets");
 		/* If we have tagsets configured for the replicaset then we need to do
