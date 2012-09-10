@@ -1433,19 +1433,7 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC) {
     while (current) {
       cursor_node *next = current->next;
 
-      if (type == MONGO_SERVER) {
-        mongo_server *server = (mongo_server*)val;
-        if (server != 0 && current->socket == server->socket) {
-          if (!server->connected) {
-            php_mongo_free_cursor_node(current, le);
-          }
-          else {
-            kill_cursor(current, le TSRMLS_CC);
-          }
-          // keep going, free all cursor for this connection
-        }
-      }
-      else if (type == MONGO_CURSOR) {
+      if (type == MONGO_CURSOR) {
         mongo_cursor *cursor = (mongo_cursor*)val;
         if (current->cursor_id == cursor->cursor_id &&
             cursor->connection != 0 &&
