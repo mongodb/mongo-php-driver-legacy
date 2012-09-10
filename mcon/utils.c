@@ -59,7 +59,7 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 }
 
 /* Split a hash back into its constituent parts */
-int mongo_server_split_hash(char *hash, char **host, int *port, char **database, char **username, int *pid)
+int mongo_server_split_hash(char *hash, char **host, int *port, char **database, char **username, char **auth_hash, int *pid)
 {
 	char *ptr, *pid_semi, *username_slash;
 
@@ -77,17 +77,30 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **database,
 	}
 
 	/* Find the database and username */
-	if (database && username) {
-		ptr = strchr(ptr, ';') + 1;
-		if (ptr[0] != 'X') {
+	ptr = strchr(ptr, ';') + 1;
+	if (ptr[0] != 'X') {
+		if (database) {
 			*database = strndup(ptr, strchr(ptr, '/') - ptr);
-			username_slash = strchr(ptr, '/');
-			*username = strndup(username_slash + 1, strchr(username_slash + 1, '/') - username_slash - 1);
-			pid_semi = strchr(ptr, ';');
-		} else {
-			*database = *username = NULL;
-			pid_semi = strchr(ptr, ';');
 		}
+		username_slash = strchr(ptr, '/');
+		if (username) {
+			*username = strndup(username_slash + 1, strchr(username_slash + 1, '/') - username_slash - 1);
+		}
+		pid_semi = strchr(ptr, ';');
+		if (auth_hash) {
+			*auth_hash = strndup(strchr(username_slash + 1, '/') + 1, pid_semi - strchr(username_slash + 1, '/') - 1);
+		}
+	} else {
+		if (database) {
+			*database = NULL;
+		}
+		if (username) {
+			*username = NULL;
+		}
+		if (auth_hash) {
+			*auth_hash = NULL;
+		}
+		pid_semi = strchr(ptr, ';');
 	}
 
 	/* Find the PID */
