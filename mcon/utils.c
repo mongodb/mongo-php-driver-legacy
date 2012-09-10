@@ -8,7 +8,7 @@
 
 /* Creates a hash out of the password so that we can store it in the connection hash.
  * The format of this hash is md5(PID,PASSWORD,USERNAME). */
-static char *create_hashed_password(char *username, char *password, int pid)
+static char *create_hashed_password(char *username, char *password)
 {
 	int salt_length, length;
 	char *hash, *salt;
@@ -37,7 +37,7 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 
 	/* Database, username and hashed password */
 	if (server_def->db && server_def->username && server_def->password) {
-		hash = create_hashed_password(server_def->username, server_def->password, getpid());
+		hash = create_hashed_password(server_def->username, server_def->password);
 		size += strlen(server_def->db) + 1 + strlen(server_def->username) + 1 + strlen(hash) + 1;
 	}
 
