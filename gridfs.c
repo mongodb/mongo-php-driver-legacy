@@ -344,20 +344,38 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC) {
   }
 }
 
-static void cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid)
+static void gridfs_rewrite_cursor_exception(TSRMLS_D)
 {
-	zval *chunks, *criteria_chunks, *criteria_files;
 	char *message = NULL;
 	long code = 0;
 	smart_str tmp_message = { 0 };
-	zval *temp_return;
 
-	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 	if (EG(exception)) {
 		message = estrdup(Z_STRVAL_P(zend_read_property(mongo_ce_GridFSException, EG(exception), "message", strlen("message"), NOISY TSRMLS_CC)));
 		code = Z_LVAL_P(zend_read_property(mongo_ce_GridFSException, EG(exception), "code", strlen("code"), NOISY TSRMLS_CC));
 		zend_clear_exception(TSRMLS_C);
 	}
+
+	/* create the message for the exception */
+	if (message) {
+		smart_str_appends(&tmp_message, "Could not store file: ");
+		smart_str_appends(&tmp_message, message);
+		smart_str_0(&tmp_message);
+		efree(message);
+	} else {
+		smart_str_appends(&tmp_message, "Could not store file for unknown reasons");
+		smart_str_0(&tmp_message);
+	}
+	zend_throw_exception(mongo_ce_GridFSException, tmp_message.c, code TSRMLS_CC);
+	smart_str_free(&tmp_message);
+}
+
+static void cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid)
+{
+	zval *chunks, *criteria_chunks, *criteria_files;
+	zval *temp_return;
+
+	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
 	MAKE_STD_ZVAL(criteria_files);
 	array_init(criteria_files);
@@ -382,18 +400,6 @@ static void cleanup_broken_insert(INTERNAL_FUNCTION_PARAMETERS, zval *zid)
 	zval_ptr_dtor(&criteria_files);
 	zval_ptr_dtor(&criteria_chunks);
 
-	// create the message for the exception
-	if (message) {
-		smart_str_appends(&tmp_message, "Could not store file: ");
-		smart_str_appends(&tmp_message, message);
-		smart_str_0(&tmp_message);
-		efree(message);
-	} else {
-		smart_str_appends(&tmp_message, "Could not store file for unknown reasons");
-		smart_str_0(&tmp_message);
-	}
-	zend_throw_exception(mongo_ce_GridFSException, tmp_message.c, code TSRMLS_CC);
-	smart_str_free(&tmp_message);
 	RETVAL_FALSE;
 }
 
@@ -496,6 +502,7 @@ cleanup_on_failure:
 		if (!(code == 11000 || code == 11001)) {
 			cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
 		}
+		gridfs_rewrite_cursor_exception(TSRMLS_C);
 		RETVAL_FALSE;
 	} else {
 		RETVAL_ZVAL(zid, 1, 0);
@@ -783,6 +790,7 @@ cleanup_on_failure:
 		if (!(code == 11000 || code == 11001)) {
 			cleanup_broken_insert(INTERNAL_FUNCTION_PARAM_PASSTHRU, zid);
 		}
+		gridfs_rewrite_cursor_exception(TSRMLS_C);
 		RETVAL_FALSE;
 	}
 
