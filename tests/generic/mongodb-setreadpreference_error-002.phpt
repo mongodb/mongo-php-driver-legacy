@@ -38,7 +38,7 @@ foreach ($a as $value) {
 ?>
 --EXPECTF--
 int(4096)
-string(81) "Argument 2 passed to MongoDB::setReadPreference() must be an array, integer given"
+string(81) "Argument 2 passed to MongoDB::setReadPreference() must be %s array, integer given"
 
 Warning: MongoDB::setReadPreference() expects parameter 2 to be array, integer given in %s on line %d
 array(2) {
@@ -49,7 +49,7 @@ array(2) {
 }
 ---
 int(4096)
-string(80) "Argument 2 passed to MongoDB::setReadPreference() must be an array, string given"
+string(80) "Argument 2 passed to MongoDB::setReadPreference() must be %s array, string given"
 
 Warning: MongoDB::setReadPreference() expects parameter 2 to be array, string given in %s on line %d
 array(2) {
