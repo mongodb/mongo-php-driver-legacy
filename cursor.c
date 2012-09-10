@@ -333,8 +333,11 @@ PHP_METHOD(MongoCursor, __construct) {
   timeout = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
   cursor->timeout = Z_LVAL_P(timeout);
 
-	/* Sets the wire protocol flag to allow reading from a secondary */
-	cursor->opts = cursor->connection->connection_type == MONGO_NODE_SECONDARY ? (1 << 2) : 0;
+	/* Sets the wire protocol flag to allow reading from a secondary. The read
+	 * preference spec states: "slaveOk remains as a bit in the wire protocol
+	 * and drivers will set this bit to 1 for all reads except with PRIMARY
+	 * read preference." */
+	cursor->opts = link->servers->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0;
 
   // get rid of extra ref
   zval_ptr_dtor(&empty);
