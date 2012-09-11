@@ -211,37 +211,6 @@
 #define RS_PRIMARY 1
 #define RS_SECONDARY 2
 
-typedef struct _mongo_server {
-  int socket;
-  int connected;
-  pid_t owner;
-  int port;
-  char *host;
-  char *label;
-
-  char *username;
-  char *password;
-  char *db;
-
-  struct _mongo_server *next;
-  // list of handed-out sockets for this address
-  struct _mongo_server *next_in_pool;
-} mongo_server;
-
-typedef struct _mongo_server_set {
-  int num;
-  // the last time we repopulated the server list
-  int server_ts;
-  // the last time we updated the hosts hash
-  int ts;
-
-  mongo_server *server;
-
-  // if num is greater than -1, master keeps track of the master connection,
-  // otherwise it points to "server"
-  mongo_server *master;
-} mongo_server_set;
-
 typedef struct {
 	zend_object std;
 
@@ -249,7 +218,6 @@ typedef struct {
 	mongo_servers     *servers;
 } mongo_link;
 
-#define MONGO_SERVER 0
 #define MONGO_CURSOR 1
 
 
