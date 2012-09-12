@@ -14,15 +14,14 @@ require_once dirname(__FILE__) . "/../utils.inc";
 
 // The connect param will always be true in RS so we only test this standalone
 
+$c = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT", array("connect" => false));
+var_dump($c->connected);
 $a = new Mongo("mongodb://$STANDALONE_HOSTNAME");
 var_dump($a->connected);
 $b = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 var_dump($b->connected);
-$c = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT", array("connect" => false));
-var_dump($c->connected);
 --EXPECTF--
-bool(true)
-bool(true)
-
 Deprecated: Mongo::__construct(): The 'connect' option is deprecated and will be removed in the future in %s on line %d
 bool(false)
+bool(true)
+bool(true)

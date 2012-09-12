@@ -46,8 +46,10 @@
 static void php_mongo_link_free(void* TSRMLS_DC);
 static void run_err(int, zval*, zval* TSRMLS_DC);
 static void stringify_server(mongo_server_def *server, smart_str *str);
+static zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
 
 zend_object_handlers mongo_default_handlers;
+zend_object_handlers mongo_link_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -142,11 +144,58 @@ static void php_mongo_link_free(void *object TSRMLS_DC)
 }
 /* }}} */
 
+static zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
+{
+	zval *retval;
+	zval tmp_member;
+	mongo_link *obj;
+
+	if (member->type != IS_STRING) {
+		tmp_member = *member;
+		zval_copy_ctor(&tmp_member);
+		convert_to_string(&tmp_member);
+		member = &tmp_member;
+	}
+
+	obj = (mongo_link *)zend_objects_get_address(object TSRMLS_CC);
+	if (strcmp(Z_STRVAL_P(member), "connected") == 0) {
+		char *error_message = NULL;
+		mongo_connection *conn = mongo_get_read_write_connection(obj->manager, obj->servers, MONGO_CON_FLAG_READ|MONGO_CON_FLAG_DONT_CONNECT, (char**) &error_message);
+		ALLOC_INIT_ZVAL(retval);
+		Z_SET_REFCOUNT_P(retval, 0);
+		ZVAL_BOOL(retval, conn ? 1 : 0);
+		if (error_message) {
+			free(error_message);
+		}
+		return retval;
+	}
+
+	retval = (zend_get_std_object_handlers())->read_property(object, member, type TSRMLS_CC);
+	if (member == &tmp_member) {
+		zval_dtor(member);
+	}
+	return retval;
+}
 
 /* {{{ php_mongo_link_new
  */
 static zend_object_value php_mongo_link_new(zend_class_entry *class_type TSRMLS_DC) {
-  php_mongo_obj_new(mongo_link);
+  zend_object_value retval;
+  mongo_link *intern;
+  zval *tmp;
+
+  intern = (mongo_link*)emalloc(sizeof(mongo_link));
+  memset(intern, 0, sizeof(mongo_link));
+
+  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
+  init_properties(intern);
+
+  retval.handle = zend_objects_store_put(intern,
+     (zend_objects_store_dtor_t) zend_objects_destroy_object,
+     php_mongo_link_free, NULL TSRMLS_CC);
+  retval.handlers = &mongo_link_handlers;
+
+  return retval;
 }
 /* }}} */
 
@@ -156,6 +205,12 @@ void mongo_init_Mongo(TSRMLS_D) {
   INIT_CLASS_ENTRY(ce, "Mongo", mongo_methods);
   ce.create_object = php_mongo_link_new;
   mongo_ce_Mongo = zend_register_internal_class(&ce TSRMLS_CC);
+
+  /* make mongo_link object uncloneable, and with its own read_property */
+  memcpy(&mongo_link_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+  mongo_link_handlers.clone_obj = NULL;
+  mongo_link_handlers.read_property = mongo_read_property;
+
 
   /* Mongo class constants */
   zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), "localhost" TSRMLS_CC);
