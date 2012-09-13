@@ -25,7 +25,7 @@ void mongo_init_Mongo(TSRMLS_D);
  * Mongo class
  */
 PHP_METHOD(Mongo, __construct);
-PHP_METHOD(Mongo, getAvailableConnections);
+PHP_METHOD(Mongo, getConnections);
 PHP_METHOD(Mongo, connect);
 PHP_METHOD(Mongo, pairConnect);
 PHP_METHOD(Mongo, persistConnect);
