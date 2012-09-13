@@ -98,7 +98,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry mongo_methods[] = {
   PHP_ME(Mongo, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
-  PHP_ME(Mongo, getAvailableConnections, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+  PHP_ME(Mongo, getConnections, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(Mongo, connect, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(Mongo, connectUtil, arginfo_no_parameters, ZEND_ACC_PROTECTED)
   PHP_ME(Mongo, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
@@ -686,25 +686,23 @@ PHP_METHOD(Mongo, getSlave)
 	RETURN_STRING(con->hash, 1);
 }
 
-/* {{{ proto array Mongo::getAvailableConnections(void)
+/* {{{ proto static array Mongo::getConnections(void)
    Returns an array of all open connections, and information about each of the servers */
-PHP_METHOD(Mongo, getAvailableConnections)
+PHP_METHOD(Mongo, getConnections)
 {
-	mongo_link *link;
 	mongo_con_manager_item *ptr;
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
 	}
 
-	link = (mongo_link*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	ptr = link->manager->connections;
+	ptr = MonGlo(manager)->connections;
 
 	array_init(return_value);
 	while (ptr) {
-		zval *entry, *server, *connection;
+		zval *entry, *server, *connection, *tags;
 		char *host, *database, *username;
-		int port, pid;
+		int port, pid, i;
 
 		MAKE_STD_ZVAL(entry);
 		array_init(entry);
@@ -715,10 +713,14 @@ PHP_METHOD(Mongo, getAvailableConnections)
 		MAKE_STD_ZVAL(connection);
 		array_init(connection);
 
+		MAKE_STD_ZVAL(tags);
+		array_init(tags);
+
 		/* Grab server information */
 		mongo_server_split_hash(ptr->connection->hash, (char **)&host, (int *)&port, &database, (char **)&username, (int *)&pid);
 
-		add_assoc_string(server, "host", host, 0);
+		add_assoc_string(server, "host", host, 1);
+		free(host);
 		add_assoc_long(server, "port", port);
 		if (database) {
 			add_assoc_string(server, "database", database, 1);
@@ -731,10 +733,15 @@ PHP_METHOD(Mongo, getAvailableConnections)
 		/* Grab connection info */
 		add_assoc_long(connection, "last_ping", ptr->connection->last_ping);
 		add_assoc_long(connection, "ping_master", ptr->connection->last_is_master);
-		add_assoc_long(connection, "ping", ptr->connection->ping_ms);
+		add_assoc_long(connection, "ping_ms", ptr->connection->ping_ms);
 		add_assoc_long(connection, "connection_type", ptr->connection->connection_type);
+		add_assoc_string(connection, "connection_type_desc", mongo_connection_type(ptr->connection->connection_type), 1);
 		add_assoc_long(connection, "max_bson_size", ptr->connection->max_bson_size);
 		add_assoc_long(connection, "tag_count", ptr->connection->tag_count);
+		for (i = 0; i < ptr->connection->tag_count; i++) {
+			add_next_index_string(tags, ptr->connection->tags[i], 1);
+		}
+		add_assoc_zval(connection, "tags", tags);
 
 
 		add_assoc_zval(entry, "server", server);
