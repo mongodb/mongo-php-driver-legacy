@@ -177,6 +177,52 @@ static zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 	return retval;
 }
 
+#if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3
+HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC)
+{
+	HashPosition pos;
+	HashTable *props = zend_std_get_properties(object);
+	zval **entry;
+	ulong num_key;
+
+	zend_hash_internal_pointer_reset_ex(props, &pos);
+	while (zend_hash_get_current_data_ex(props, (void **)&entry, &pos) == SUCCESS) {
+		char *key;
+		uint key_len;
+
+		switch (zend_hash_get_current_key_ex(props, &key, &key_len, &num_key, 0, &pos)) {
+			case HASH_KEY_IS_STRING: {
+				/* Override the connected property like we do for the read_property handler */
+				if (strcmp(key, "connected") == 0) {
+					zval member;
+					zval *tmp;
+					INIT_ZVAL(member);
+					ZVAL_STRINGL(&member, key, key_len, 0);
+
+					tmp = mongo_read_property(object, &member, BP_VAR_IS TSRMLS_CC);
+					convert_to_boolean_ex(entry);
+					ZVAL_BOOL(*entry, Z_BVAL_P(tmp));
+					/* the var is set to refcount = 0, need to set it to 1 so it'll get free()d */
+					if (Z_REFCOUNT_P(tmp) == 0) {
+						Z_SET_REFCOUNT_P(tmp, 1);
+					}
+					zval_ptr_dtor(&tmp);
+				}
+				break;
+			}
+			case HASH_KEY_IS_LONG:
+			case HASH_KEY_NON_EXISTANT:
+				break;
+		}
+		zend_hash_move_forward_ex(props, &pos);
+	}
+
+	*is_temp = 0;
+	return props;
+}
+#endif
+
+
 /* {{{ php_mongo_link_new
  */
 static zend_object_value php_mongo_link_new(zend_class_entry *class_type TSRMLS_DC) {
@@ -210,6 +256,9 @@ void mongo_init_Mongo(TSRMLS_D) {
   memcpy(&mongo_link_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
   mongo_link_handlers.clone_obj = NULL;
   mongo_link_handlers.read_property = mongo_read_property;
+#if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3
+  mongo_link_handlers.get_debug_info = mongo_get_debug_info;
+#endif
 
 
   /* Mongo class constants */
