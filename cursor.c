@@ -189,11 +189,9 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 	sock = cursor->connection->socket;
 
 	status = get_cursor_header(sock, cursor, (char**) &error_message TSRMLS_CC);
-	if (status == -1) {
-		return FAILURE;
-	}
-	if (status > 0) {
+	if (status == -1 || status > 0) {
 		mongo_cursor_throw(cursor->connection, status TSRMLS_CC, error_message);
+		free(error_message);
 		return FAILURE;
 	}
 
