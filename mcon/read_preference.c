@@ -315,10 +315,10 @@ mcon_collection *mongo_sort_servers(mongo_con_manager *manager, mcon_collection 
 		default:
 			return NULL;
 	}
-	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "mongo_sort_servers: sorting");
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "sorting servers by priority and ping time");
 	qsort(col->data, col->count, sizeof(mongo_connection*), sort_function);
 	mcon_collection_iterate(manager, col, mongo_print_connection_iterate_wrapper);
-	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "mongo_sort_servers: done");
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "sorting servers: done");
 	return col;
 }
 
@@ -329,7 +329,7 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 
 	filtered = mcon_init_collection(sizeof(mongo_connection*));
 
-	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "select server: only nearest");
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "selecting near servers");
 
 	switch (rp->type) {
 		case MONGO_RP_PRIMARY:
@@ -339,7 +339,7 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 		case MONGO_RP_NEAREST:
 			/* The nearest ping time is in the first element */
 			nearest_ping = ((mongo_connection*)col->data[0])->ping_ms;
-			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "select server: nearest is %dms", nearest_ping);
+			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "selecting near servers: nearest is %dms", nearest_ping);
 
 			/* FIXME: Change to iterator later */
 			for (i = 0; i < col->count; i++) {
@@ -355,6 +355,9 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 
 	/* Clean up the old collection that we no longer need */
 	mcon_collection_free(col);
+
+	mcon_collection_iterate(manager, filtered, mongo_print_connection_iterate_wrapper);
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "selecting near server: done");
 
 	return filtered;
 }
