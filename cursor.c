@@ -344,7 +344,7 @@ PHP_METHOD(MongoCursor, hasNext) {
 	char *error_message = NULL;
 	zval *temp;
 
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
   if (!cursor->started_iterating) {
     MONGO_METHOD(MongoCursor, doQuery, return_value, getThis());
@@ -426,7 +426,7 @@ PHP_METHOD(MongoCursor, getNext)
 {
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 	MONGO_CURSOR_CHECK_DEAD;
 
   MONGO_METHOD(MongoCursor, next, return_value, getThis());
@@ -509,7 +509,7 @@ PHP_METHOD(MongoCursor, fields) {
  */
 PHP_METHOD(MongoCursor, dead) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-  MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+  MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
   RETURN_BOOL(cursor->dead || (cursor->started_iterating && cursor->cursor_id == 0));
 }
@@ -637,7 +637,7 @@ PHP_METHOD(MongoCursor, addOption) {
   }
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
   if (cursor->started_iterating) {
     mongo_cursor_throw(cursor->connection, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
@@ -659,7 +659,7 @@ PHP_METHOD(MongoCursor, addOption) {
 PHP_METHOD(MongoCursor, snapshot) {
   zval *snapshot, *yes;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
   MAKE_STD_ZVAL(snapshot);
   ZVAL_STRING(snapshot, "$snapshot", 1);
@@ -718,7 +718,7 @@ PHP_METHOD(MongoCursor, hint) {
 PHP_METHOD(MongoCursor, info)
 {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
   array_init(return_value);
 
   add_assoc_string(return_value, "ns", cursor->ns, 1);
@@ -756,7 +756,7 @@ PHP_METHOD(MongoCursor, explain) {
   int temp_limit;
   zval *explain, *yes, *temp = 0;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
   MONGO_METHOD(MongoCursor, reset, return_value, getThis());
 
@@ -933,7 +933,7 @@ int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
  */
 PHP_METHOD(MongoCursor, current) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 	MONGO_CURSOR_CHECK_DEAD;
 
   if (cursor->current) {
@@ -950,7 +950,7 @@ PHP_METHOD(MongoCursor, current) {
 PHP_METHOD(MongoCursor, key) {
   zval **id;
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
   if (!cursor->current) {
     RETURN_NULL();
@@ -1125,7 +1125,7 @@ PHP_METHOD(MongoCursor, rewind) {
  */
 PHP_METHOD(MongoCursor, valid) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
   RETURN_BOOL(cursor->current);
 }
@@ -1135,7 +1135,7 @@ PHP_METHOD(MongoCursor, valid) {
  */
 PHP_METHOD(MongoCursor, reset) {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
   mongo_util_cursor_reset(cursor TSRMLS_CC);
 }
