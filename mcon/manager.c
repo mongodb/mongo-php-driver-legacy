@@ -51,7 +51,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 				}
 			}
 			/* Do the ping */
-			if (!mongo_connection_ping(manager, con)) {
+			if (!mongo_connection_ping(manager, con, error_message)) {
 				mongo_connection_destroy(manager, con);
 				con = NULL;
 				goto bailout;
@@ -61,7 +61,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 		}
 	} else {
 		/* Do the ping */
-		if (!mongo_connection_ping(manager, con)) {
+		if (!mongo_connection_ping(manager, con, error_message)) {
 			mongo_manager_connection_deregister(manager, con);
 			con = NULL;
 			goto bailout;
@@ -235,6 +235,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 		if (!tmp) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+			free(con_error_message);
 		}
 	}
 
