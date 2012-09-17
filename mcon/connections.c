@@ -293,11 +293,18 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	uint32_t       data_size;
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE];
 	uint32_t       flags; /* To check for query reply status */
+	char          *recv_error_message;
 
 	/* Send and wait for reply */
 	mongo_io_send(con->socket, packet->d, packet->l, error_message);
 	mcon_str_ptr_dtor(packet);
-	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
+	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
+	if (read == -1) {
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "send_package: error reading from socket: %s", recv_error_message);
+		free(recv_error_message);
+		return 0;
+	}
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: read from header: %d", read);
 	if (read < MONGO_REPLY_HEADER_SIZE) {
@@ -356,10 +363,9 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
  */
-int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
+int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, char **error_message)
 {
 	mcon_str      *packet;
-	char          *error_message = NULL;
 	struct timeval start, end;
 	char          *data_buffer;
 
@@ -371,7 +377,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 		return 2;
 	}
 	packet = bson_create_ping_packet(con);
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, (char **) &error_message)) {
+	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
 		return 0;
 	}
 	gettimeofday(&end, NULL);
