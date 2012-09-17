@@ -169,27 +169,6 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	}
 }
 
-/* Fetching connections */
-static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
-{
-	mongo_connection *tmp;
-	char *con_error_message = NULL;
-
-	tmp = mongo_get_connection_single(manager, servers->server[0], (char **) &con_error_message);
-
-	if (!tmp) {
-		*error_message = malloc(256);
-		snprintf(*error_message, 256, "Couldn't connect to '%s:%d': %s", servers->server[0]->host, servers->server[0]->port, con_error_message);
-		goto bailout;
-	}
-
-bailout:
-	if (con_error_message) {
-		free(con_error_message);
-	}
-	return tmp;
-}
-
 static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
 	mongo_connection *con = NULL;
@@ -291,7 +270,7 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 	switch (servers->con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a STANDALONE connection");
-			return mongo_get_connection_standalone(manager, servers, error_message);
+			return mongo_get_connection_multiple(manager, servers, error_message);
 
 		case MONGO_CON_TYPE_REPLSET:
 			mongo_manager_log(
