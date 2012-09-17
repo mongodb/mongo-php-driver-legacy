@@ -362,10 +362,14 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
 	struct timeval start, end;
 	char          *data_buffer;
 
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: start");
-	packet = bson_create_ping_packet(con);
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: pinging %s", con->hash);
 
 	gettimeofday(&start, NULL);
+	if (con->last_ping + manager->ping_interval > start.tv_sec) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_ping, start.tv_sec, con->last_ping + manager->ping_interval - start.tv_sec);
+		return 2;
+	}
+	packet = bson_create_ping_packet(con);
 	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, (char **) &error_message)) {
 		return 0;
 	}

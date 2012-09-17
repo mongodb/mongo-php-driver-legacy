@@ -51,7 +51,6 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 				}
 			}
 			/* Do the ping */
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: pinging %s", hash);
 			if (!mongo_connection_ping(manager, con)) {
 				mongo_connection_destroy(manager, con);
 				con = NULL;
@@ -60,8 +59,14 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 			/* Register the connection */
 			mongo_manager_connection_register(manager, con);
 		}
+	} else {
+		/* Do the ping */
+		if (!mongo_connection_ping(manager, con)) {
+			mongo_manager_connection_deregister(manager, con);
+			con = NULL;
+			goto bailout;
+		}
 	}
-
 bailout:
 	free(hash);
 	return con;
