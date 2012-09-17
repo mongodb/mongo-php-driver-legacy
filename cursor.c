@@ -254,22 +254,6 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->resource = zlink;
   zval_add_ref(&zlink);
 
-	/* db connection resource */
-	PHP_MONGO_GET_LINK(zlink);
-
-	/* TODO: We have to assume to use a read connection here, but it should
-	 * really be refactored so that we can create a cursor with the correct
-	 * read/write setup already, instead of having to force a new mode later
-	 * (like we do for commands right now through
-	 * php_mongo_connection_force_primary).  See also MongoDB::command and
-	 * append_getlasterror, where this has to be done too. */
-	cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char**) &error_message);
-
-	if (!cursor->connection && error_message) {
-		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
-		return;
-	}
-
   // change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1}
   if (Z_TYPE_P(zfields) == IS_ARRAY) {
     HashPosition pointer;
@@ -330,12 +314,6 @@ PHP_METHOD(MongoCursor, __construct) {
 
   timeout = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
   cursor->timeout = Z_LVAL_P(timeout);
-
-	/* Sets the wire protocol flag to allow reading from a secondary. The read
-	 * preference spec states: "slaveOk remains as a bit in the wire protocol
-	 * and drivers will set this bit to 1 for all reads except with PRIMARY
-	 * read preference." */
-	cursor->opts = link->servers->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0;
 
   // get rid of extra ref
   zval_ptr_dtor(&empty);
@@ -840,6 +818,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   buffer buf;
   zval *errmsg;
 	char *error_message;
+	mongo_link *link;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   if (!cursor) {
@@ -854,6 +833,30 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
     efree(buf.start);
     return FAILURE;
   }
+
+	/* db connection resource */
+	PHP_MONGO_GET_LINK(cursor->resource);
+
+	/* TODO: We have to assume to use a read connection here, but it should
+	 * really be refactored so that we can create a cursor with the correct
+	 * read/write setup already, instead of having to force a new mode later
+	 * (like we do for commands right now through
+	 * php_mongo_connection_force_primary).  See also MongoDB::command and
+	 * append_getlasterror, where this has to be done too. */
+	cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char**) &error_message);
+
+	if (!cursor->connection && error_message) {
+		efree(buf.start);
+		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
+		free(error_message);
+		return FAILURE;
+	}
+
+	/* Sets the wire protocol flag to allow reading from a secondary. The read
+	 * preference spec states: "slaveOk remains as a bit in the wire protocol
+	 * and drivers will set this bit to 1 for all reads except with PRIMARY
+	 * read preference." */
+	cursor->opts = link->servers->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0;
 
 #if 0
   // If slave_okay is set, read from a slave.
