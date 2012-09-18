@@ -184,6 +184,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 
 		if (!tmp) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+			free(con_error_message);
 		}
 	}
 	/* Discover more nodes. This also adds a connection to "servers" for each
@@ -228,6 +229,9 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	char             *auth_hash = NULL;
 	mongo_read_preference tmp_rp; /* We only support NEAREST for MULTIPLE right now */
 	int i;
+	mcon_str         *messages;
+
+	mcon_str_ptr_init(messages);
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
@@ -235,7 +239,15 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 		if (!tmp) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
-			free(con_error_message);
+			if (messages->l) {
+				mcon_str_addl(messages, "; ", 2, 0);
+			}
+			mcon_str_add(messages, "Failed to connect to: ", 0);
+			mcon_str_add(messages, servers->server[i]->host, 0);
+			mcon_str_addl(messages, ":", 1, 0);
+			mcon_str_add_int(messages, servers->server[i]->port);
+			mcon_str_addl(messages, ": ", 2, 0);
+			mcon_str_add(messages, con_error_message, 1); /* Also frees con_error_message */
 		}
 	}
 
@@ -251,7 +263,11 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	collection = mongo_find_candidate_servers(manager, &tmp_rp, auth_hash);
 	mongo_read_preference_dtor(&tmp_rp);
 	if (!collection || collection->count == 0) {
-		*error_message = strdup("No candidate servers found");
+		if (messages->l) {
+			*error_message = strdup(messages->d);
+		} else {
+			*error_message = strdup("No candidate servers found");
+		}
 		goto bailout;
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
@@ -260,6 +276,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 bailout:
 	/* Cleaning up */
+	mcon_str_ptr_dtor(messages);
 	mcon_collection_free(collection);	
 	return con;
 }

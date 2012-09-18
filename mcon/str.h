@@ -14,6 +14,7 @@ typedef struct mcon_str {
 
 void mcon_str_add(mcon_str *xs, char *str, int f);
 void mcon_str_addl(mcon_str *xs, char *str, int le, int f);
+void mcon_str_add_int(mcon_str *xs, int i);
 void mcon_str_free(mcon_str *s);
 
 #endif
