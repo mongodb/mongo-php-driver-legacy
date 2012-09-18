@@ -19,6 +19,7 @@
 #include <zend_exceptions.h>
 #include "mcon/io.h"
 #include "mcon/manager.h"
+#include "mcon/utils.h"
 
 #ifdef WIN32
 #  ifndef int64_t
@@ -225,8 +226,6 @@ PHP_METHOD(MongoCursor, __construct) {
   zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, *timeout;
   zval **data;
   mongo_cursor *cursor;
-  mongo_link *link;
-	char *error_message = NULL;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz|zz", &zlink,
                             mongo_ce_Mongo, &zns, &zquery, &zfields) == FAILURE) {
@@ -835,7 +834,11 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   }
 
 	/* db connection resource */
-	PHP_MONGO_GET_LINK(cursor->resource);
+	link = (mongo_link*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
+	if (!link->servers) {
+		zend_throw_exception(mongo_ce_Exception, "The Mongo object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return FAILURE;
+	}
 
 	/* TODO: We have to assume to use a read connection here, but it should
 	 * really be refactored so that we can create a cursor with the correct
@@ -1391,7 +1394,6 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 	va_list arg;
 	zend_class_entry *exception_ce;
 	char *host;
-	long  port;
 
 	if (EG(exception)) {
 		return EG(exception);
@@ -1407,18 +1409,17 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 	}
 
 	/* Retrieve connections host and port */
-	mongo_server_split_hash(connection->hash, &host, &port, NULL, NULL, NULL, NULL);
+	host = mongo_server_hash_to_server(connection->hash);
 
 	va_start(arg, format);
 	message = malloc(1024);
 	vsnprintf(message, 1024, format, arg);
 	va_end(arg);
-	e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, "%s:%d: %s", host, port, message);
+	e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, "%s: %s", host, message);
 	free(message);
 
 	if (connection && code != 80) {
-		/* TODO: Use host instead of the hash */
-		zend_update_property_string(exception_ce, e, "host", strlen("host"), connection->hash TSRMLS_CC);
+		zend_update_property_string(exception_ce, e, "host", strlen("host"), host TSRMLS_CC);
 		zend_update_property_long(exception_ce, e, "fd", strlen("fd"), connection->socket TSRMLS_CC);
 	}
 
@@ -1447,7 +1448,7 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC) {
       if (type == MONGO_CURSOR) {
         mongo_cursor *cursor = (mongo_cursor*)val;
         if (current->cursor_id == cursor->cursor_id &&
-            cursor->connection != 0 &&
+            cursor->connection != NULL &&
             current->socket == cursor->connection->socket) {
 
           // If the cursor_id is 0, the db is out of results anyway
