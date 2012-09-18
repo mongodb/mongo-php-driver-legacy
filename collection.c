@@ -331,7 +331,7 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 /* Wrapper for sending and wrapping in a safe op */
 static int send_message(zval *this_ptr, mongo_connection *connection, buffer *buf, zval *options, zval *return_value TSRMLS_DC)
 {
-	int retval;
+	int retval = 1;
 	char *error_message = NULL;
 	mongo_link *link;
 	mongo_collection *c;
@@ -352,6 +352,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 		zval *cursor = append_getlasterror(getThis(), buf, options TSRMLS_CC);
 		if (cursor) {
 			safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
+			retval = -1;
 		} else {
 			retval = 0;
 		}
@@ -476,6 +477,7 @@ PHP_METHOD(MongoCollection, insert) {
   mongo_collection *c;
   buffer buf;
 	mongo_connection *connection;
+	int retval;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE) {
     return;
@@ -512,7 +514,10 @@ PHP_METHOD(MongoCollection, insert) {
     RETURN_FALSE;
   }
 
-	send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
+	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
+	if (retval != -1) {
+		RETVAL_BOOL(retval);
+	}
 
 	efree(buf.start);
 	zval_ptr_dtor(&options);
@@ -683,6 +688,7 @@ PHP_METHOD(MongoCollection, update) {
 	mongo_connection *connection;
   buffer buf;
   int bit_opts = 0;
+	int retval;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &criteria, &newobj, &options) == FAILURE) {
     return;
@@ -729,7 +735,10 @@ PHP_METHOD(MongoCollection, update) {
     return;
   }
 
-	send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
+	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
+	if (retval != -1) {
+		RETVAL_BOOL(retval);
+	}
 
   efree(buf.start);
 	zval_ptr_dtor(&options);
@@ -741,6 +750,7 @@ PHP_METHOD(MongoCollection, remove) {
   mongo_collection *c;
 	mongo_connection *connection;
   buffer buf;
+  	int retval;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &criteria, &options) == FAILURE) {
     return;
@@ -792,7 +802,10 @@ PHP_METHOD(MongoCollection, remove) {
     return;
   }
 
-	send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
+	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
+	if (retval != -1) {
+		RETVAL_BOOL(retval);
+	}
 
   efree(buf.start);
   zval_ptr_dtor(&options);
