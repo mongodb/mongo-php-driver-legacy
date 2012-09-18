@@ -371,7 +371,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: pinging %s", con->hash);
 
 	gettimeofday(&start, NULL);
-	if (con->last_ping + manager->ping_interval > start.tv_sec) {
+	if ((con->last_ping + manager->ping_interval) > start.tv_sec) {
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_ping, start.tv_sec, con->last_ping + manager->ping_interval - start.tv_sec);
 		return 2;
 	}
@@ -417,7 +417,7 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 	int            retval = 1;
 
 	gettimeofday(&now, NULL);
-	if (con->last_is_master + manager->is_master_interval > now.tv_sec) {
+	if ((con->last_is_master + manager->is_master_interval) > now.tv_sec) {
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_is_master, now.tv_sec, con->last_is_master + manager->is_master_interval - now.tv_sec);
 		return 2;
 	}
