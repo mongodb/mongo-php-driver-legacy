@@ -290,7 +290,7 @@ typedef struct {
 
 #define PHP_MONGO_GET_CURSOR(obj)                                       \
   cursor = (mongo_cursor*)zend_object_store_get_object((obj) TSRMLS_CC); \
-  MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+  MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
 #define PHP_MONGO_CHECK_EXCEPTION() if (EG(exception)) { return; }
 #define PHP_MONGO_CHECK_EXCEPTION1(arg1)                        \

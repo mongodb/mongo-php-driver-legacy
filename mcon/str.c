@@ -28,6 +28,14 @@ void mcon_str_addl(mcon_str *xs, char *str, int le, int f)
 	}
 }
 
+void mcon_str_add_int(mcon_str *xs, int i)
+{
+	char *tmp = calloc(1, 11);
+
+	snprintf(tmp, 10, "%ld", i);
+	mcon_str_add(xs, tmp, 1);
+}
+
 void mcon_str_free(mcon_str *s)
 {
 	if (s->d) {

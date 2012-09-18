@@ -654,7 +654,7 @@ PHP_METHOD(Mongo, getHosts)
 		MAKE_STD_ZVAL(infoz);
 		array_init(infoz);
 
-		mongo_server_split_hash(item->connection->hash, (char**) &host, (int*) &port, NULL, NULL, NULL);
+		mongo_server_split_hash(item->connection->hash, (char**) &host, (int*) &port, NULL, NULL, NULL, NULL);
 		add_assoc_string(infoz, "host", host, 1);
 		add_assoc_long(infoz, "port", port);
 		free(host);
