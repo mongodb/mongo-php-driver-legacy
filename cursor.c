@@ -350,6 +350,8 @@ PHP_METHOD(MongoCursor, hasNext) {
     cursor->started_iterating = 1;
   }
 
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+
 	if ((cursor->limit > 0 && cursor->at >= cursor->limit) || cursor->num == 0) {
 		if (cursor->cursor_id != 0) {
 			mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
@@ -638,10 +640,12 @@ PHP_METHOD(MongoCursor, addOption) {
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
-  if (cursor->started_iterating) {
-    mongo_cursor_throw(cursor->connection, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
-    return;
-  }
+	if (cursor->started_iterating) {
+		MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+
+		mongo_cursor_throw(cursor->connection, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
+		return;
+	}
 
   make_special(cursor);
   query = cursor->query;
@@ -718,6 +722,7 @@ PHP_METHOD(MongoCursor, info)
 {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
   array_init(return_value);
 
   add_assoc_string(return_value, "ns", cursor->ns, 1);
@@ -795,6 +800,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   mongo_cursor *cursor;
 
   PHP_MONGO_GET_CURSOR(getThis());
+	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
   do {
     MONGO_METHOD(MongoCursor, reset, return_value, getThis());
