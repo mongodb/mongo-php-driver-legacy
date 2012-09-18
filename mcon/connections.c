@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <sys/un.h>
+#include <sys/socket.h>
 #endif
 
 #include <unistd.h>
