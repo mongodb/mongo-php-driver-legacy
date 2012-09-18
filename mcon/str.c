@@ -32,7 +32,7 @@ void mcon_str_add_int(mcon_str *xs, int i)
 {
 	char *tmp = calloc(1, 11);
 
-	snprintf(tmp, 10, "%ld", i);
+	snprintf(tmp, 10, "%d", i);
 	mcon_str_add(xs, tmp, 1);
 }
 
