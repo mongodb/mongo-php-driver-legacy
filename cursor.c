@@ -867,33 +867,6 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 	 * read preference." */
 	cursor->opts = link->servers->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0;
 
-#if 0
-  // If slave_okay is set, read from a slave.
-  if ((cursor->link->rs && cursor->opts & CURSOR_FLAG_SLAVE_OKAY &&
-       (cursor->connection = mongo_util_link_get_slave_socket(cursor->link, errmsg TSRMLS_CC)) == 0)) {
-    // ignore errors and reset errmsg
-    zval_ptr_dtor(&errmsg);
-    MAKE_STD_ZVAL(errmsg);
-    ZVAL_NULL(errmsg);
-  }
-
-  // if getting the slave didn't work (or we're not using a rs), just get master socket
-  if (cursor->connection == 0 &&
-      (cursor->connection = mongo_util_link_get_socket(cursor->link, errmsg TSRMLS_CC)) == 0) {
-    efree(buf.start);
-
-    // if we couldn't connect to the master or the slave
-    if (cursor->opts & CURSOR_FLAG_SLAVE_OKAY) {
-      mongo_cursor_throw(0, 14 TSRMLS_CC, "couldn't get a connection to any server");
-    }
-    else {
-      mongo_cursor_throw(0, 14 TSRMLS_CC, Z_STRVAL_P(errmsg));
-    }
-
-    zval_ptr_dtor(&errmsg);
-    return FAILURE;
-  }
-#endif
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {
 			mongo_cursor_throw(cursor->connection, 14 TSRMLS_CC, "couldn't send query: %s", error_message);
