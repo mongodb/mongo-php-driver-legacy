@@ -114,9 +114,9 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 	}
 
 	status = recv(sock, buf, REPLY_HEADER_LEN, FLAGS);
-	/* socket has been closed, retry */
+	/* socket has been closed */
 	if (status == 0) {
-		*error_message = strdup("socket has been closed, retry");
+		*error_message = strdup("socket has been closed");
 		return -1;
 	} else if (status < INT_32*4) {
 		*error_message = strdup("couldn't get response header");
@@ -1386,14 +1386,16 @@ void mongo_init_CursorExceptions(TSRMLS_D) {
 
 zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char *format, ...)
 {
-  zval *e;
+	zval *e;
 	char *message;
 	va_list arg;
 	zend_class_entry *exception_ce;
+	char *host;
+	long  port;
 
-  if (EG(exception)) {
-    return EG(exception);
-  }
+	if (EG(exception)) {
+		return EG(exception);
+	}
 
 	/* Based on the status, we pick a different exception class. Right now, we
 	 * choose mongo_ce_CursorException for everything but status 80, which is a
@@ -1404,11 +1406,14 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 		exception_ce = mongo_ce_CursorException;
 	}
 
+	/* Retrieve connections host and port */
+	mongo_server_split_hash(connection->hash, &host, &port, NULL, NULL, NULL, NULL);
+
 	va_start(arg, format);
 	message = malloc(1024);
 	vsnprintf(message, 1024, format, arg);
 	va_end(arg);
-	e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, "%s", message);
+	e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, "%s:%d: %s", host, port, message);
 	free(message);
 
 	if (connection && code != 80) {
@@ -1416,6 +1421,8 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 		zend_update_property_string(exception_ce, e, "host", strlen("host"), connection->hash TSRMLS_CC);
 		zend_update_property_long(exception_ce, e, "fd", strlen("fd"), connection->socket TSRMLS_CC);
 	}
+
+	free(host);
 
 	return e;
 }
