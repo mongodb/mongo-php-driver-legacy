@@ -558,6 +558,8 @@ PHP_METHOD(MongoCollection, batchInsert) {
     return;
   }
 
+	RETVAL_TRUE;
+
 	send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 
   efree(buf.start);
