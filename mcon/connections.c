@@ -293,11 +293,18 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	uint32_t       data_size;
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE];
 	uint32_t       flags; /* To check for query reply status */
+	char          *recv_error_message;
 
 	/* Send and wait for reply */
 	mongo_io_send(con->socket, packet->d, packet->l, error_message);
 	mcon_str_ptr_dtor(packet);
-	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
+	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
+	if (read == -1) {
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "send_package: error reading from socket: %s", recv_error_message);
+		free(recv_error_message);
+		return 0;
+	}
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: read from header: %d", read);
 	if (read < MONGO_REPLY_HEADER_SIZE) {
@@ -356,18 +363,21 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
  */
-int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con)
+int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, char **error_message)
 {
 	mcon_str      *packet;
-	char          *error_message = NULL;
 	struct timeval start, end;
 	char          *data_buffer;
 
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: start");
-	packet = bson_create_ping_packet(con);
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: pinging %s", con->hash);
 
 	gettimeofday(&start, NULL);
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, (char **) &error_message)) {
+	if ((con->last_ping + manager->ping_interval) > start.tv_sec) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_ping, start.tv_sec, con->last_ping + manager->ping_interval - start.tv_sec);
+		return 2;
+	}
+	packet = bson_create_ping_packet(con);
+	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
 		return 0;
 	}
 	gettimeofday(&end, NULL);
@@ -408,7 +418,7 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 	int            retval = 1;
 
 	gettimeofday(&now, NULL);
-	if (con->last_is_master + manager->is_master_interval > now.tv_sec) {
+	if ((con->last_is_master + manager->is_master_interval) > now.tv_sec) {
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_is_master, now.tv_sec, con->last_is_master + manager->is_master_interval - now.tv_sec);
 		return 2;
 	}
