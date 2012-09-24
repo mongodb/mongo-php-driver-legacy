@@ -51,8 +51,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 				}
 			}
 			/* Do the ping */
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: pinging %s", hash);
-			if (!mongo_connection_ping(manager, con)) {
+			if (!mongo_connection_ping(manager, con, error_message)) {
 				mongo_connection_destroy(manager, con);
 				con = NULL;
 				goto bailout;
@@ -60,8 +59,14 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 			/* Register the connection */
 			mongo_manager_connection_register(manager, con);
 		}
+	} else {
+		/* Do the ping */
+		if (!mongo_connection_ping(manager, con, error_message)) {
+			mongo_manager_connection_deregister(manager, con);
+			con = NULL;
+			goto bailout;
+		}
 	}
-
 bailout:
 	free(hash);
 	return con;
@@ -164,33 +169,13 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	}
 }
 
-/* Fetching connections */
-static mongo_connection *mongo_get_connection_standalone(mongo_con_manager *manager, mongo_servers *servers, char **error_message)
-{
-	mongo_connection *tmp;
-	char *con_error_message = NULL;
-
-	tmp = mongo_get_connection_single(manager, servers->server[0], (char **) &con_error_message);
-
-	if (!tmp) {
-		*error_message = malloc(256);
-		snprintf(*error_message, 256, "Couldn't connect to '%s:%d': %s", servers->server[0]->host, servers->server[0]->port, con_error_message);
-		goto bailout;
-	}
-
-bailout:
-	if (con_error_message) {
-		free(con_error_message);
-	}
-	return tmp;
-}
-
 static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
 	mongo_connection *con = NULL;
 	mongo_connection *tmp;
 	mcon_collection  *collection;
 	char             *con_error_message = NULL;
+	char             *auth_hash = NULL;
 	int i;
 
 	/* Create a connection to every of the servers in the seed list */
@@ -199,21 +184,26 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 
 		if (!tmp) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+			free(con_error_message);
 		}
 	}
 	/* Discover more nodes. This also adds a connection to "servers" for each
 	 * new node */
 	mongo_discover_topology(manager, servers);
+	/* Create the authentication hash to filter connections */
+	if (servers->server[0]->username && servers->server[0]->password) {
+		auth_hash = mongo_server_create_hashed_password(servers->server[0]->username, servers->server[0]->password);
+	}
 	/* Depending on whether we want a read or a write connection, run the correct algorithms */
 	if (connection_flags & MONGO_CON_FLAG_WRITE) {
 		mongo_read_preference tmp_rp;
 
 		mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
 		tmp_rp.type = MONGO_RP_PRIMARY;
-		collection = mongo_find_candidate_servers(manager, &tmp_rp);
+		collection = mongo_find_candidate_servers(manager, &tmp_rp, auth_hash);
 		mongo_read_preference_dtor(&tmp_rp);
 	} else {
-		collection = mongo_find_candidate_servers(manager, &servers->read_pref);
+		collection = mongo_find_candidate_servers(manager, &servers->read_pref, auth_hash);
 	}
 	if (!collection || collection->count == 0) {
 		*error_message = strdup("No candidate servers found");
@@ -234,10 +224,14 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 {
 	mongo_connection *con = NULL;
 	mongo_connection *tmp;
-	mcon_collection  *collection;
+	mcon_collection  *collection = NULL;
 	char             *con_error_message = NULL;
+	char             *auth_hash = NULL;
 	mongo_read_preference tmp_rp; /* We only support NEAREST for MULTIPLE right now */
 	int i;
+	mcon_str         *messages;
+
+	mcon_str_ptr_init(messages);
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
@@ -245,18 +239,35 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 		if (!tmp) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+			if (messages->l) {
+				mcon_str_addl(messages, "; ", 2, 0);
+			}
+			mcon_str_add(messages, "Failed to connect to: ", 0);
+			mcon_str_add(messages, servers->server[i]->host, 0);
+			mcon_str_addl(messages, ":", 1, 0);
+			mcon_str_add_int(messages, servers->server[i]->port);
+			mcon_str_addl(messages, ": ", 2, 0);
+			mcon_str_add(messages, con_error_message, 1); /* Also frees con_error_message */
 		}
 	}
 
+	/* Create the authentication hash to filter connections */
+	if (servers->server[0]->username && servers->server[0]->password) {
+		auth_hash = mongo_server_create_hashed_password(servers->server[0]->username, servers->server[0]->password);
+	}
 	/* Force the RP of NEAREST, which is the only one that makes sense right
 	 * now. Technically, read preference tags are also supported, but not
 	 * implemented on the mongos side yet. */
 	mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
 	tmp_rp.type = MONGO_RP_NEAREST;
-	collection = mongo_find_candidate_servers(manager, &tmp_rp);
+	collection = mongo_find_candidate_servers(manager, &tmp_rp, auth_hash);
 	mongo_read_preference_dtor(&tmp_rp);
 	if (!collection || collection->count == 0) {
-		*error_message = strdup("No candidate servers found");
+		if (messages->l) {
+			*error_message = strdup(messages->d);
+		} else {
+			*error_message = strdup("No candidate servers found");
+		}
 		goto bailout;
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
@@ -265,7 +276,10 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 bailout:
 	/* Cleaning up */
-	mcon_collection_free(collection);	
+	mcon_str_ptr_dtor(messages);
+	if (collection) {
+		mcon_collection_free(collection);	
+	}
 	return con;
 }
 
@@ -276,7 +290,7 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 	switch (servers->con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a STANDALONE connection");
-			return mongo_get_connection_standalone(manager, servers, error_message);
+			return mongo_get_connection_multiple(manager, servers, error_message);
 
 		case MONGO_CON_TYPE_REPLSET:
 			mongo_manager_log(
