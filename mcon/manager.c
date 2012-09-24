@@ -224,7 +224,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 {
 	mongo_connection *con = NULL;
 	mongo_connection *tmp;
-	mcon_collection  *collection;
+	mcon_collection  *collection = NULL;
 	char             *con_error_message = NULL;
 	char             *auth_hash = NULL;
 	mongo_read_preference tmp_rp; /* We only support NEAREST for MULTIPLE right now */
@@ -277,7 +277,9 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 bailout:
 	/* Cleaning up */
 	mcon_str_ptr_dtor(messages);
-	mcon_collection_free(collection);	
+	if (collection) {
+		mcon_collection_free(collection);	
+	}
 	return con;
 }
 
