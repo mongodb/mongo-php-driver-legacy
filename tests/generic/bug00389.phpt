@@ -45,9 +45,9 @@ for ( $i = 1; $i < 11; $i++ )
 }
 ?>
 --EXPECTF--
-tailable cursor requested on non capped collection
+%s:%d: tailable cursor requested on non capped collection
 Setting flag #1
-tailable cursor requested on non capped collection
+%s:%d: tailable cursor requested on non capped collection
 Setting flag #2
 Setting flag #3
 

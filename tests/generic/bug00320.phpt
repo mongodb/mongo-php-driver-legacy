@@ -56,9 +56,9 @@ $m = mongo("phpunit");
 # Saving files to GridFS
 ######################################
 [Saved file] New file id:file0
-error message: Could not store file: E11000 duplicate key error index: phpunit.fs.files.$filename_1  dup key: { : "/tmp/GridFS_test.txt" }
+error message: Could not store file: %s:%d: E11000 duplicate key error index: phpunit.fs.files.$filename_1  dup key: { : "/tmp/GridFS_test.txt" }
 error code: 11000
-error message: Could not store file: E11000 duplicate key error index: phpunit.fs.files.$filename_1  dup key: { : "/tmp/GridFS_test.txt" }
+error message: Could not store file: %s:%d: E11000 duplicate key error index: phpunit.fs.files.$filename_1  dup key: { : "/tmp/GridFS_test.txt" }
 error code: 11000
 array(1) {
   ["safe"]=>

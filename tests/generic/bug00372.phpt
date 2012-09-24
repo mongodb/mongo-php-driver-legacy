@@ -44,24 +44,8 @@ try{
     echo "error message: ".$e->getMessage()."\n";
     echo "error code: ".$e->getCode()."\n";
 }
-
-
-/*
------------------
-Expected result:
------------------
-error message: Could not store file: E11000 duplicate key error index: phpunit.test_prefix.files.$filename_1 dup key: { : "test.txt" }
-error code: 11000
-
------------------
-Actual result:
------------------
-error message: Could not store file: E11000 duplicate key error index: phpunit.test_prefix.files.$filename_1 dup key: { : "test.txt" }
-error code: 0
-*/
-
 ?>
---EXPECT--
-error message: Could not store file: E11000 duplicate key error index: phpunit.test_prefix.files.$filename_1  dup key: { : "test.txt" }
+--EXPECTF--
+error message: Could not store file: %s:%d: E11000 duplicate key error index: phpunit.test_prefix.files.$filename_1  dup key: { : "test.txt" }
 error code: 11000
 
