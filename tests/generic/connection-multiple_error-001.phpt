@@ -21,7 +21,7 @@ $c = $d->phpunit->test1;
 var_dump( $c->findOne() );
 ?>
 --EXPECTF--
-Fatal error: Uncaught exception 'MongoConnectionException' with message 'No candidate servers found' in %sconnection-multiple_error-001.php:%d
+Fatal error: Uncaught exception 'MongoConnectionException' with message 'Failed to connect to: foofas:234: Couldn't get host info for foofas; Failed to connect to: foofas:5345: Couldn't get host info for foofas' in %sconnection-multiple_error-001.php:%d
 Stack trace:
 #0 %sconnection-multiple_error-001.php(%d): Mongo->__construct('mongodb://foofa...')
 #1 {main}

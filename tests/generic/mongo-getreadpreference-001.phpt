@@ -26,7 +26,7 @@ $b = array(
 
 foreach ($a as $value) {
 	foreach ($b as $tags) {
-		$m = new mongo($baseString . $value . $tags);
+		$m = new mongo($baseString . $value . $tags, array( 'connect' => false ) );
 		$rp = $m->getReadPreference();
 		var_dump($rp);
 		echo "---\n";
