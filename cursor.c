@@ -800,7 +800,7 @@ PHP_METHOD(MongoCursor, doQuery) {
   mongo_cursor *cursor;
 
   PHP_MONGO_GET_CURSOR(getThis());
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
   do {
     MONGO_METHOD(MongoCursor, reset, return_value, getThis());
