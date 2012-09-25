@@ -45,6 +45,7 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 static int is_safe_op(zval *options TSRMLS_DC);
 static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
+static int php_mongo_trigger_error_on_command_failure(zval *document);
 
 PHP_METHOD(MongoCollection, __construct) {
   zval *parent, *name, *zns, *w, *wtimeout;
@@ -676,12 +677,16 @@ PHP_METHOD(MongoCollection, findAndModify)
 	ZVAL_NULL(tmpretval);
 	MONGO_CMD(tmpretval, c->parent);
 
-	if (zend_hash_find(Z_ARRVAL_P(tmpretval), "value", strlen("value")+1, (void **)&values) == SUCCESS) {
-		array_init(return_value);
-		/* We may wind up with a NULL here if there simply aren't any results */
-		if (Z_TYPE_PP(values) == IS_ARRAY) {
-			zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+	if (php_mongo_trigger_error_on_command_failure(tmpretval) == SUCCESS) {
+		if (zend_hash_find(Z_ARRVAL_P(tmpretval), "value", strlen("value")+1, (void **)&values) == SUCCESS) {
+			array_init(return_value);
+			/* We may wind up with a NULL here if there simply aren't any results */
+			if (Z_TYPE_PP(values) == IS_ARRAY) {
+				zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+			}
 		}
+	} else {
+		RETVAL_FALSE;
 	}
 
 	zval_ptr_dtor(&data);
@@ -1662,6 +1667,23 @@ static void php_mongo_collection_free(void *object TSRMLS_DC) {
     zend_object_std_dtor(&c->std TSRMLS_CC);
     efree(c);
   }
+}
+
+static int php_mongo_trigger_error_on_command_failure(zval *document) {
+	zval **tmpvalue;
+
+	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
+		if (Z_LVAL_PP(tmpvalue) < 1) {
+			zval **errmsg;
+			if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void **) &errmsg) == SUCCESS) {
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s", Z_STRVAL_PP(errmsg));
+			} else {
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unkown error executing command");
+			}
+			return FAILURE;
+		}
+	}
+	return SUCCESS;
 }
 
 
