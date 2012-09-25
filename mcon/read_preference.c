@@ -185,18 +185,16 @@ mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "finding candidate servers");
 	all = mongo_find_all_candidate_servers(manager, rp);
 	if (auth_hash) {
-		mongo_con_manager_item *ptr = manager->connections;
-		char                   *server_auth_hash;
+		char *server_auth_hash;
 
 		mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by authentication (%s)", auth_hash);
 		filtered = mcon_init_collection(sizeof(mongo_connection*));
-		while (ptr) {
-			mongo_server_split_hash(ptr->connection->hash, NULL, NULL, NULL, NULL, &server_auth_hash, NULL);
+		for (i = 0; i < all->count; i++) {
+			mongo_server_split_hash(((mongo_connection *) all->data[i])->hash, NULL, NULL, NULL, NULL, &server_auth_hash, NULL);
 			if (server_auth_hash && strcmp(server_auth_hash, auth_hash) == 0) {
-				mongo_print_connection_info(manager, ptr->connection, MLOG_FINE);
-				mcon_collection_add(filtered, ptr->connection);
+				mongo_print_connection_info(manager, (mongo_connection *) all->data[i], MLOG_FINE);
+				mcon_collection_add(filtered, (mongo_connection *) all->data[i]);
 			}
-			ptr = ptr->next;
 		}
 		mcon_collection_free(all);
 		all = filtered;
