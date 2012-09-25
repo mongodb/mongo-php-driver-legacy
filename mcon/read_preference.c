@@ -177,13 +177,28 @@ char *mongo_read_preference_squash_tagset(mongo_read_preference_tagset *tagset)
 	return str.d;
 }
 
-mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
+mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, char *auth_hash)
 {
 	int              i;
 	mcon_collection *all, *filtered;
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "finding candidate servers");
 	all = mongo_find_all_candidate_servers(manager, rp);
+	if (auth_hash) {
+		char *server_auth_hash;
+
+		mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by authentication (%s)", auth_hash);
+		filtered = mcon_init_collection(sizeof(mongo_connection*));
+		for (i = 0; i < all->count; i++) {
+			mongo_server_split_hash(((mongo_connection *) all->data[i])->hash, NULL, NULL, NULL, NULL, &server_auth_hash, NULL);
+			if (server_auth_hash && strcmp(server_auth_hash, auth_hash) == 0) {
+				mongo_print_connection_info(manager, (mongo_connection *) all->data[i], MLOG_FINE);
+				mcon_collection_add(filtered, (mongo_connection *) all->data[i]);
+			}
+		}
+		mcon_collection_free(all);
+		all = filtered;
+	}
 	if (rp->tagset_count != 0) {
 		mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by tagsets");
 		/* If we have tagsets configured for the replicaset then we need to do
@@ -298,10 +313,10 @@ mcon_collection *mongo_sort_servers(mongo_con_manager *manager, mcon_collection 
 		default:
 			return NULL;
 	}
-	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "mongo_sort_servers: sorting");
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "sorting servers by priority and ping time");
 	qsort(col->data, col->count, sizeof(mongo_connection*), sort_function);
 	mcon_collection_iterate(manager, col, mongo_print_connection_iterate_wrapper);
-	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "mongo_sort_servers: done");
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "sorting servers: done");
 	return col;
 }
 
@@ -312,7 +327,7 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 
 	filtered = mcon_init_collection(sizeof(mongo_connection*));
 
-	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "select server: only nearest");
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "selecting near servers");
 
 	switch (rp->type) {
 		case MONGO_RP_PRIMARY:
@@ -322,7 +337,7 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 		case MONGO_RP_NEAREST:
 			/* The nearest ping time is in the first element */
 			nearest_ping = ((mongo_connection*)col->data[0])->ping_ms;
-			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "select server: nearest is %dms", nearest_ping);
+			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "selecting near servers: nearest is %dms", nearest_ping);
 
 			/* FIXME: Change to iterator later */
 			for (i = 0; i < col->count; i++) {
@@ -338,6 +353,9 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 
 	/* Clean up the old collection that we no longer need */
 	mcon_collection_free(col);
+
+	mcon_collection_iterate(manager, filtered, mongo_print_connection_iterate_wrapper);
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "selecting near server: done");
 
 	return filtered;
 }

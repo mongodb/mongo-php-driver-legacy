@@ -11,11 +11,11 @@ MongoLog::setLevel(MongoLog::INFO);
 MongoLog::setModule(MongoLog::IO);
 $m = mongo();
 $d = $m->phpunit;
-$c = $d->killcursors;
-$c->drop();
+var_dump( $c = $d->killcursors );
+var_dump( $c->drop() );
 
 for ($i = 0; $i < 1000; $i++) {
-	$c->insert(array( '_id' => "d{$i}", 'v' => log(($i * 10) + 10) ) );
+	$c->insert(array( '_id' => "d{$i}", 'v' => log(($i * 10) + 10) ), array( 'safe' => true ) );
 }
 
 $tries = array(

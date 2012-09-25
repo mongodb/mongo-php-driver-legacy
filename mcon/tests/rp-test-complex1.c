@@ -76,7 +76,7 @@ int main(void)
 	add_rp_tag2(&rp, "dc", "west", "use", "reporting");
 	add_rp_tag(&rp, "use", "documenting");
 	add_rp_tag0(&rp);
-	collection = mongo_find_candidate_servers(manager, &rp);
+	collection = mongo_find_candidate_servers(manager, &rp, NULL);
 	if (collection && collection->count) {
 		collection = mongo_sort_servers(manager, collection, &rp);
 		printf("collection size: %d\n", collection->count);

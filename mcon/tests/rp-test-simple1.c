@@ -37,7 +37,7 @@ int main(void)
 
 	/* Configure RP */
 	rp.type = MONGO_RP_PRIMARY_PREFERRED;
-	collection = mongo_find_candidate_servers(manager, &rp);
+	collection = mongo_find_candidate_servers(manager, &rp, NULL);
 	if (collection->count) {
 		collection = mongo_sort_servers(manager, collection, &rp);
 		printf("collection size: %d\n", collection->count);
