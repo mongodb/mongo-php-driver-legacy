@@ -290,7 +290,6 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC) {
   }
   else {
     zid = *zzid;
-	Z_ADDREF_P(zid);
   }
   return zid;
 }
