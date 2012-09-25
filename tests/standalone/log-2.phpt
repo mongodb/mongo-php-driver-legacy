@@ -21,7 +21,7 @@ CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 70
+CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: is_ping: pinging %s:%d;X;%d
 CON     FINE: send_packet: read from header: 36
