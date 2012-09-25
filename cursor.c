@@ -833,16 +833,22 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
     return FAILURE;
   }
 
-  CREATE_BUF(buf, INITIAL_BUF_SIZE);
-  if (php_mongo_write_query(&buf, cursor TSRMLS_CC) == FAILURE) {
-    efree(buf.start);
-    return FAILURE;
-  }
-
 	/* db connection resource */
 	link = (mongo_link*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
 	if (!link->servers) {
 		zend_throw_exception(mongo_ce_Exception, "The Mongo object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return FAILURE;
+	}
+
+	/* Sets the wire protocol flag to allow reading from a secondary. The read
+	 * preference spec states: "slaveOk remains as a bit in the wire protocol
+	 * and drivers will set this bit to 1 for all reads except with PRIMARY
+	 * read preference." */
+	cursor->opts = cursor->opts | (link->servers->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0);
+
+	CREATE_BUF(buf, INITIAL_BUF_SIZE);
+	if (php_mongo_write_query(&buf, cursor TSRMLS_CC) == FAILURE) {
+		efree(buf.start);
 		return FAILURE;
 	}
 
@@ -860,12 +866,6 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 		free(error_message);
 		return FAILURE;
 	}
-
-	/* Sets the wire protocol flag to allow reading from a secondary. The read
-	 * preference spec states: "slaveOk remains as a bit in the wire protocol
-	 * and drivers will set this bit to 1 for all reads except with PRIMARY
-	 * read preference." */
-	cursor->opts = link->servers->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0;
 
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {
