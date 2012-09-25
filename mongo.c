@@ -288,7 +288,7 @@ PHP_METHOD(Mongo, __construct)
 /* }}} */
 
 /* {{{ Helper for connecting the servers */
-static mongo_connection *php_mongo_connect(mongo_link *link TSRMLS_DC)
+static mongo_connection *php_mongo_connect(mongo_link *link, zval *this_ptr TSRMLS_DC)
 {
 	mongo_connection *con;
 	char *error_message = NULL;
@@ -306,6 +306,9 @@ static mongo_connection *php_mongo_connect(mongo_link *link TSRMLS_DC)
 		}
 		return NULL;
 	}
+
+	zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected", strlen("connected"), 1 TSRMLS_CC);
+
 	return con;
 }
 
@@ -316,7 +319,7 @@ PHP_METHOD(Mongo, connect)
 	mongo_link *link;
 
 	PHP_MONGO_GET_LINK(getThis());
-	php_mongo_connect(link TSRMLS_CC);
+	php_mongo_connect(link, this_ptr TSRMLS_CC);
 }
 /* }}} */
 
@@ -327,7 +330,7 @@ PHP_METHOD(Mongo, connectUtil)
 	mongo_link *link;
 
 	PHP_MONGO_GET_LINK(getThis());
-	php_mongo_connect(link TSRMLS_CC);
+	php_mongo_connect(link, this_ptr TSRMLS_CC);
 }
 /* }}} */
 
@@ -675,7 +678,7 @@ PHP_METHOD(Mongo, getSlave)
 	mongo_connection *con;
 
 	PHP_MONGO_GET_LINK(getThis());
-	con = php_mongo_connect(link TSRMLS_CC);
+	con = php_mongo_connect(link, this_ptr TSRMLS_CC);
 	if (!con) {
 		/* We have to return here, as otherwise the exception doesn't trigger
 		 * before we return the hash at the end. */
