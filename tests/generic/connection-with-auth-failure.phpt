@@ -19,4 +19,4 @@ try {
 }
 ?>
 --EXPECTF--
-Couldn't connect to '%s:%d': Authentication failed on database '%s' with username '%S': auth fails
+Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth fails

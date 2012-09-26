@@ -29,5 +29,5 @@ $gridfs->drop();
 ?>
 --EXPECTF--
 string(11) "./README.md"
-string(113) "Could not store file: E11000 duplicate key error index: %s.fs.chunks.$files_id_1_n_1  dup key: { : 1, : 0 }"
+string(%d) "Could not store file: %s:%d: E11000 duplicate key error index: %s.fs.chunks.$files_id_1_n_1  dup key: { : 1, : 0 }"
 string(11) "./README.md"
