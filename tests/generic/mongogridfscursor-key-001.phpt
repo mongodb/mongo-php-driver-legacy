@@ -21,10 +21,10 @@ var_dump(null === $cursor->key());
 $next = $cursor->getNext();
 
 var_dump($next instanceof MongoGridFSFile);
-var_dump($next->getFilename() === $cursor->key());
 var_dump($cursor->key());
---EXPECT--
+--EXPECTF--
 bool(true)
 bool(true)
 bool(true)
-bool(true)
+string(24) "%s"
+
