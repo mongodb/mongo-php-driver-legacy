@@ -59,7 +59,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 			/* Register the connection */
 			mongo_manager_connection_register(manager, con);
 		}
-	} else {
+	} else if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
 		/* Do the ping */
 		if (!mongo_connection_ping(manager, con, error_message)) {
 			mongo_manager_connection_deregister(manager, con);
@@ -190,7 +190,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 			free(con_error_message);
 		}
 	}
-	if (!found_connected_server && connection_flags & MONGO_CON_FLAG_DONT_CONNECT) {
+	if (!found_connected_server && (connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
 		return NULL;
 	}
 
@@ -236,6 +236,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	char             *auth_hash = NULL;
 	mongo_read_preference tmp_rp; /* We only support NEAREST for MULTIPLE right now */
 	int i;
+	int found_connected_server = 0;
 	mcon_str         *messages;
 
 	mcon_str_ptr_init(messages);
@@ -244,7 +245,9 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	for (i = 0; i < servers->count; i++) {
 		tmp = mongo_get_connection_single(manager, servers->server[i], connection_flags, (char **) &con_error_message);
 
-		if (!tmp) {
+		if (tmp) {
+			found_connected_server = 1;
+		} else if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 			if (messages->l) {
 				mcon_str_addl(messages, "; ", 2, 0);
@@ -256,6 +259,11 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 			mcon_str_addl(messages, ": ", 2, 0);
 			mcon_str_add(messages, con_error_message, 1); /* Also frees con_error_message */
 		}
+	}
+
+	/* If we don't have a connected server then there is no point in continueing */
+	if (!found_connected_server && (connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
+		return NULL;
 	}
 
 	/* Create the authentication hash to filter connections */
