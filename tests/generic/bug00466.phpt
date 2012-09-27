@@ -13,13 +13,11 @@ PARSE   INFO: Parsing mongodb://whisky:13000
 PARSE   INFO: - Found node: whisky:13000
 PARSE   INFO: - Connection type: STANDALONE
 PARSE   INFO: - Found unknown connection string option 'connect' with value ''
-Mongo::__construct(): The 'connect' option is deprecated and will be removed in the future
 PARSE   INFO: - Found option 'replicaSet': true
 PARSE   INFO: - Switching connection type: REPLSET
 PARSE   INFO: Parsing mongodb://whisky:13000
 PARSE   INFO: - Found node: whisky:13000
 PARSE   INFO: - Connection type: STANDALONE
 PARSE   INFO: - Found unknown connection string option 'connect' with value ''
-Mongo::__construct(): The 'connect' option is deprecated and will be removed in the future
 PARSE   INFO: - Found option 'replicaSet': 'seta'
 PARSE   INFO: - Switching connection type: REPLSET

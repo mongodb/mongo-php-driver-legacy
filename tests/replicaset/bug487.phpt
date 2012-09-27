@@ -25,7 +25,7 @@ $c->findOne();
 ?>
 ===DONE===
 --EXPECTF--
-string(28) "not master and slaveok=false"
+string(%d) "%s:%d: not master and slaveOk=false"
 
 Deprecated: Function Mongo::setSlaveOkay() is deprecated in %s on line %d
 bool(false)

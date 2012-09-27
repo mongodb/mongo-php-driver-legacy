@@ -15,9 +15,7 @@ $m = new Mongo($STANDALONE_HOSTNAME);
 var_dump($m, $m->connected);
 ?>
 --EXPECTF--
-Deprecated: Mongo::__construct(): The 'connect' option is deprecated and will be removed in the future in %s on line %d
 object(Mongo)#%d (%d) {
-Got connected
   ["connected"]=>
   bool(false)
   ["status"]=>
@@ -29,7 +27,6 @@ Got connected
 }
 bool(false)
 object(Mongo)#%d (%d) {
-Got connected
   ["connected"]=>
   bool(true)
   ["status"]=>
