@@ -2,6 +2,7 @@
 GridFS: Testing file validity
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
 --INI--
 memory_limit=1G
 --FILE--
