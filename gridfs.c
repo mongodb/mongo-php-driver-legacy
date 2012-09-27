@@ -857,6 +857,8 @@ PHP_METHOD(MongoGridFS, findOne) {
 
 PHP_METHOD(MongoGridFS, remove) {
   zval *criteria = 0, *options = 0, *zfields, *zcursor, *chunks, *next, temp;
+  zval **tmp;
+  int justOne = -1;
 
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   ensure_gridfs_index(&temp, chunks TSRMLS_CC);
@@ -903,6 +905,12 @@ PHP_METHOD(MongoGridFS, remove) {
   MONGO_METHOD(MongoCursor, getNext, next, zcursor);
   PHP_MONGO_CHECK_EXCEPTION4(&next, &zcursor, &criteria, &options);
 
+	// Temporarily ignore the justOne option while cleaning the data by _id
+	if (zend_hash_find(Z_ARRVAL_P(options), "justOne", strlen("justOne")+1, (void**)&tmp) == SUCCESS) {
+		convert_to_boolean(*tmp);
+		justOne = Z_BVAL_PP(tmp);
+		add_assoc_bool(options, "justOne", 0);
+	}
   while (Z_TYPE_P(next) != IS_NULL) {
     zval **id;
     zval *temp, *temp_return;
@@ -933,6 +941,10 @@ PHP_METHOD(MongoGridFS, remove) {
   zval_ptr_dtor(&next);
   zval_ptr_dtor(&zcursor);
 
+	// Restore the justOne option when we cleanup the files collection itself
+	if (justOne != -1) {
+		add_assoc_bool(options, "justOne", justOne);
+	}
   MONGO_METHOD2(MongoCollection, remove, return_value, getThis(), criteria, options);
 
   zval_ptr_dtor(&criteria);
