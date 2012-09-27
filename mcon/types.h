@@ -11,6 +11,7 @@
 /* Bitfield used for fetching connections */
 #define MONGO_CON_FLAG_READ            0x01
 #define MONGO_CON_FLAG_WRITE           0x02
+#define MONGO_CON_FLAG_DONT_CONNECT         0x04
 
 /* These constants are a bit field - however, each connection will only have
  * one type. The reason why it's a bit field is because of filtering during
