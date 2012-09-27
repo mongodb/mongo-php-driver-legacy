@@ -46,8 +46,10 @@
 static void php_mongo_link_free(void* TSRMLS_DC);
 static void run_err(int, zval*, zval* TSRMLS_DC);
 static void stringify_server(mongo_server_def *server, smart_str *str);
+static zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
 
 zend_object_handlers mongo_default_handlers;
+zend_object_handlers mongo_link_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -142,11 +144,104 @@ static void php_mongo_link_free(void *object TSRMLS_DC)
 }
 /* }}} */
 
+static zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
+{
+	zval *retval;
+	zval tmp_member;
+	mongo_link *obj;
+
+	if (member->type != IS_STRING) {
+		tmp_member = *member;
+		zval_copy_ctor(&tmp_member);
+		convert_to_string(&tmp_member);
+		member = &tmp_member;
+	}
+
+	obj = (mongo_link *)zend_objects_get_address(object TSRMLS_CC);
+	if (strcmp(Z_STRVAL_P(member), "connected") == 0) {
+		char *error_message = NULL;
+		mongo_connection *conn = mongo_get_read_write_connection(obj->manager, obj->servers, MONGO_CON_FLAG_READ|MONGO_CON_FLAG_DONT_CONNECT, (char**) &error_message);
+		ALLOC_INIT_ZVAL(retval);
+		Z_SET_REFCOUNT_P(retval, 0);
+		ZVAL_BOOL(retval, conn ? 1 : 0);
+		if (error_message) {
+			free(error_message);
+		}
+		return retval;
+	}
+
+	retval = (zend_get_std_object_handlers())->read_property(object, member, type TSRMLS_CC);
+	if (member == &tmp_member) {
+		zval_dtor(member);
+	}
+	return retval;
+}
+
+#if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3
+HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC)
+{
+	HashPosition pos;
+	HashTable *props = zend_std_get_properties(object);
+	zval **entry;
+	ulong num_key;
+
+	zend_hash_internal_pointer_reset_ex(props, &pos);
+	while (zend_hash_get_current_data_ex(props, (void **)&entry, &pos) == SUCCESS) {
+		char *key;
+		uint key_len;
+
+		switch (zend_hash_get_current_key_ex(props, &key, &key_len, &num_key, 0, &pos)) {
+			case HASH_KEY_IS_STRING: {
+				/* Override the connected property like we do for the read_property handler */
+				if (strcmp(key, "connected") == 0) {
+					zval member;
+					zval *tmp;
+					INIT_ZVAL(member);
+					ZVAL_STRINGL(&member, key, key_len, 0);
+
+					tmp = mongo_read_property(object, &member, BP_VAR_IS TSRMLS_CC);
+					convert_to_boolean_ex(entry);
+					ZVAL_BOOL(*entry, Z_BVAL_P(tmp));
+					/* the var is set to refcount = 0, need to set it to 1 so it'll get free()d */
+					if (Z_REFCOUNT_P(tmp) == 0) {
+						Z_SET_REFCOUNT_P(tmp, 1);
+					}
+					zval_ptr_dtor(&tmp);
+				}
+				break;
+			}
+			case HASH_KEY_IS_LONG:
+			case HASH_KEY_NON_EXISTANT:
+				break;
+		}
+		zend_hash_move_forward_ex(props, &pos);
+	}
+
+	*is_temp = 0;
+	return props;
+}
+#endif
+
 
 /* {{{ php_mongo_link_new
  */
 static zend_object_value php_mongo_link_new(zend_class_entry *class_type TSRMLS_DC) {
-  php_mongo_obj_new(mongo_link);
+  zend_object_value retval;
+  mongo_link *intern;
+  zval *tmp;
+
+  intern = (mongo_link*)emalloc(sizeof(mongo_link));
+  memset(intern, 0, sizeof(mongo_link));
+
+  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
+  init_properties(intern);
+
+  retval.handle = zend_objects_store_put(intern,
+     (zend_objects_store_dtor_t) zend_objects_destroy_object,
+     php_mongo_link_free, NULL TSRMLS_CC);
+  retval.handlers = &mongo_link_handlers;
+
+  return retval;
 }
 /* }}} */
 
@@ -156,6 +251,15 @@ void mongo_init_Mongo(TSRMLS_D) {
   INIT_CLASS_ENTRY(ce, "Mongo", mongo_methods);
   ce.create_object = php_mongo_link_new;
   mongo_ce_Mongo = zend_register_internal_class(&ce TSRMLS_CC);
+
+  /* make mongo_link object uncloneable, and with its own read_property */
+  memcpy(&mongo_link_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+  mongo_link_handlers.clone_obj = NULL;
+  mongo_link_handlers.read_property = mongo_read_property;
+#if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3
+  mongo_link_handlers.get_debug_info = mongo_get_debug_info;
+#endif
+
 
   /* Mongo class constants */
   zend_declare_class_constant_string(mongo_ce_Mongo, "DEFAULT_HOST", strlen("DEFAULT_HOST"), "localhost" TSRMLS_CC);

@@ -9,7 +9,7 @@ mongo_con_manager *mongo_init(void);
 void mongo_deinit(mongo_con_manager *manager);
 
 /* Fetching connections */
-/* connection_flags: Bitfield consisting of MONGO_CON_FLAG_READ/MONGO_CON_FLAG_WRITE */
+/* connection_flags: Bitfield consisting of MONGO_CON_FLAG_READ/MONGO_CON_FLAG_WRITE/MONGO_CON_FLAG_DONT_CONNECT */
 mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message);
 
 /* Connection management */
