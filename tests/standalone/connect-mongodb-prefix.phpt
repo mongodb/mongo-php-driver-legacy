@@ -21,7 +21,6 @@ var_dump($a->connected);
 $b = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 var_dump($b->connected);
 --EXPECTF--
-Deprecated: Mongo::__construct(): The 'connect' option is deprecated and will be removed in the future in %s on line %d
 bool(false)
 bool(true)
 bool(true)
