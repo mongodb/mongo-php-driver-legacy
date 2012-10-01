@@ -11,8 +11,10 @@ var_dump($m->getConnections());
 ?>
 --EXPECTF--
 array(1) {
-  ["%s"]=>
-  array(2) {
+  [0]=>
+  array(3) {
+    ["hash"]=>
+    string(%d) "%s:%d;X;%d"
     ["server"]=>
     array(3) {
       ["host"]=>
