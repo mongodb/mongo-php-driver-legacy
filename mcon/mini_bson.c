@@ -69,7 +69,7 @@ mcon_str *bson_create_ping_packet(mongo_connection *con)
 	return str;
 }
 
-mcon_str *bson_create_is_master_packet(mongo_connection *con)
+mcon_str *bson_create_ismaster_packet(mongo_connection *con)
 {
 	struct mcon_str *str = create_simple_header(con, NULL);
 	int    hdr;

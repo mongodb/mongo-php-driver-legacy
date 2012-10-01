@@ -26,7 +26,7 @@ array(1) {
     array(8) {
       ["last_ping"]=>
       int(%d)
-      ["ping_master"]=>
+      ["last_ismaster"]=>
       int(0)
       ["ping_ms"]=>
       int(%d)

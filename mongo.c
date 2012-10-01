@@ -835,7 +835,7 @@ PHP_METHOD(Mongo, getConnections)
 
 		/* Grab connection info */
 		add_assoc_long(connection, "last_ping", ptr->connection->last_ping);
-		add_assoc_long(connection, "ping_master", ptr->connection->last_is_master);
+		add_assoc_long(connection, "last_ismaster", ptr->connection->last_ismaster);
 		add_assoc_long(connection, "ping_ms", ptr->connection->ping_ms);
 		add_assoc_long(connection, "connection_type", ptr->connection->connection_type);
 		add_assoc_string(connection, "connection_type_desc", mongo_connection_type(ptr->connection->connection_type), 1);
