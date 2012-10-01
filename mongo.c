@@ -804,7 +804,7 @@ PHP_METHOD(Mongo, getConnections)
 	array_init(return_value);
 	while (ptr) {
 		zval *entry, *server, *connection, *tags;
-		char *host, *database, *username;
+		char *host, *database, *username, *auth_hash;
 		int port, pid, i;
 
 		MAKE_STD_ZVAL(entry);
@@ -820,16 +820,22 @@ PHP_METHOD(Mongo, getConnections)
 		array_init(tags);
 
 		/* Grab server information */
-		mongo_server_split_hash(ptr->connection->hash, (char **)&host, (int *)&port, &database, (char **)&username, (int *)&pid);
+		mongo_server_split_hash(ptr->connection->hash, &host, &port, &database, &username, &auth_hash, &pid);
 
 		add_assoc_string(server, "host", host, 1);
 		free(host);
 		add_assoc_long(server, "port", port);
 		if (database) {
 			add_assoc_string(server, "database", database, 1);
+			free(database);
 		}
 		if (username) {
 			add_assoc_string(server, "username", username, 1);
+			free(username);
+		}
+		if (auth_hash) {
+			add_assoc_string(server, "auth_hash", auth_hash, 1);
+			free(auth_hash);
 		}
 		add_assoc_long(server, "pid", pid);
 
@@ -846,10 +852,11 @@ PHP_METHOD(Mongo, getConnections)
 		}
 		add_assoc_zval(connection, "tags", tags);
 
-
+		/* Top level elements */
+		add_assoc_string(entry, "hash", ptr->connection->hash, 1);
 		add_assoc_zval(entry, "server", server);
 		add_assoc_zval(entry, "connection", connection);
-		add_assoc_zval(return_value, host, entry);
+		add_next_index_zval(return_value, entry);
 
 		ptr = ptr->next;
 	}
