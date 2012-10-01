@@ -10,7 +10,7 @@
 #include <string.h>
 
 /* Helpers */
-static char *mongo_connection_type(int type)
+char *mongo_connection_type(int type)
 {
 	switch (type) {
 		case MONGO_NODE_STANDALONE: return "STANDALONE";
