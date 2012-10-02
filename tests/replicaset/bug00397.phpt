@@ -1,5 +1,5 @@
 --TEST--
-Bug PHP-397 Endless loop on non-existing file
+Test for PHP-397: Endless loop on non-existing file.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php exit("skip test requires authentication on a replicaset.."); ?>

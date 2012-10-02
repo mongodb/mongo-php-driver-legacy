@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-434: Mongo::connect() doesn't validate the object
+Test for PHP-434: Mongo::connect() doesn't validate the object.
 --FILE--
 <?php
 class m extends Mongo { function __construct() {} }
