@@ -35,7 +35,7 @@ CON     FINE: is_ping: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     WARN: is_ping: last pinged at %d; time: %dms
-CON     FINE: discover_topology: checking is_master for %s:%d;X;%d
+CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     INFO: rs_status: start
 CON     FINE: send_packet: read from header: 36
@@ -46,7 +46,7 @@ CON     INFO: rs_status: found a connectable host: %s:%d (state: 1)
 CON     INFO: rs_status: found a connectable host: %s:%d (state: 2)
 CON     WARN: rs_status: found an unconnectable host: %s:%d (state: 8)
 CON     INFO: rs_status: last ran at %d
-CON     INFO: discover_topology: is_master worked
+CON     INFO: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
@@ -59,7 +59,7 @@ CON     FINE: is_ping: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     WARN: is_ping: last pinged at %d; time: %dms
-CON     FINE: discover_topology: checking is_master for %s:%d;X;%d
+CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     INFO: rs_status: start
 CON     FINE: send_packet: read from header: 36
@@ -70,7 +70,7 @@ CON     FINE: rs_status: the server name matches what we thought it'd be (%s:%d)
 CON     INFO: rs_status: found a connectable host: %s:%d (state: 2)
 CON     WARN: rs_status: found an unconnectable host: %s:%d (state: 8)
 CON     INFO: rs_status: last ran at %d
-CON     INFO: discover_topology: is_master worked
+CON     INFO: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 REPLSET FINE: finding candidate servers
