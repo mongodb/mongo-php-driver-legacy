@@ -8,7 +8,7 @@ require_once dirname(__FILE__) . "/../utils.inc";
 $mongo = mongo();
 $d = $mongo->selectDb(dbname());
 $c = $d->capped;
-$d->drop();
+$c->drop();
 
 $d->createCollection( 'capped', true, 10*1024, 10 );
 
