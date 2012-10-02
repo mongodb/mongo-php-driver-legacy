@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-306: MongoID::__set_state does not work.
+Test for PHP-306: MongoID::__set_state does not work.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

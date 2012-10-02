@@ -1,12 +1,11 @@
 --TEST--
-Test for PHP-464 Re-imppelment ->connected (var_dump())
+Test for PHP-464: Re-implement ->connected (var_dump())
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 
 require_once dirname(__FILE__) . "/../mongo-test-cfg.inc";
-
 
 $m = new Mongo($STANDALONE_HOSTNAME, array("connect" => false));
 var_dump($m, $m->connected);
@@ -37,7 +36,3 @@ object(Mongo)#%d (%d) {
   NULL
 }
 bool(true)
-
-
-
-

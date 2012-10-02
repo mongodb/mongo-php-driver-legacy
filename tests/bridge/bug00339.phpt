@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-339: Segfault on insert timeout
+Test for PHP-339: Segfault on insert timeout.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-359: getPID() does not return expected PID when called on custom MongoID object
+Test for PHP-359: getPID() does not return expected PID when called on custom MongoID object.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
