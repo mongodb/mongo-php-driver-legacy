@@ -1,5 +1,5 @@
 --TEST--
-Test the getTimestamp from a created id.
+MongoID: Test getting the getTimestamp.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

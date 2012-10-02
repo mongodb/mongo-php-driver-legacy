@@ -25,6 +25,9 @@ mcon_collection *mongo_sort_servers(mongo_con_manager *manager, mcon_collection 
 mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp);
 mongo_connection *mongo_pick_server_from_set(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp);
 
+/* Info helpers */
+char *mongo_connection_type(int type);
+
 /* RP helpers */
 char *mongo_read_preference_type_to_name(int type);
 char *mongo_read_preference_squash_tagset(mongo_read_preference_tagset *tagset);

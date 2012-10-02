@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-307: getHosts() turns wrong results.
+Test for PHP-307: getHosts() turns wrong results.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

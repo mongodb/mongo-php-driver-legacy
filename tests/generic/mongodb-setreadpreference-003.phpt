@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::setReadPreference [3]
+MongoDB::setReadPreference [3]
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

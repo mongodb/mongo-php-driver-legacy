@@ -89,7 +89,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: checking is_master for %s", hash);
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: checking ismaster for %s", hash);
 		con = mongo_manager_connection_find_by_hash(manager, hash);
 
 		if (!con) {
@@ -98,23 +98,23 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 			continue;
 		}
 		
-		res = mongo_connection_is_master(manager, con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
+		res = mongo_connection_ismaster(manager, con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
 		switch (res) {
 			case 0:
 				/* Something is wrong with the connection, we need to remove
 				 * this from our list */
-				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: is_master return with an error for %s:%d: [%s]", servers->server[i]->host, servers->server[i]->port, error_message);
+				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: ismaster return with an error for %s:%d: [%s]", servers->server[i]->host, servers->server[i]->port, error_message);
 				free(error_message);
 				mongo_manager_connection_deregister(manager, con);
 				break;
 
 			case 3:
-				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: is_master worked, but we need to remove the seed host's connection");
+				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: ismaster worked, but we need to remove the seed host's connection");
 				mongo_manager_connection_deregister(manager, con);
 				/* Break intentionally missing */
 
 			case 1:
-				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: is_master worked");
+				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: ismaster worked");
 				for (j = 0; j < nr_hosts; j++) {
 					mongo_server_def *tmp_def;
 					mongo_connection *new_con;
@@ -158,7 +158,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 				break;
 
 			case 2:
-				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: is_master got skipped");
+				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: ismaster got skipped");
 				break;
 		}
 
@@ -472,7 +472,7 @@ mongo_con_manager *mongo_init(void)
 	tmp->log_function = mongo_log_null;
 
 	tmp->ping_interval = MONGO_MANAGER_DEFAULT_PING_INTERVAL;
-	tmp->is_master_interval = MONGO_MANAGER_DEFAULT_MASTER_INTERVAL;
+	tmp->ismaster_interval = MONGO_MANAGER_DEFAULT_MASTER_INTERVAL;
 
 	return tmp;
 }

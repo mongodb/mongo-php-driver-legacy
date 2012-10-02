@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-300: execute crashes with array() as argument
+Test for PHP-300: execute crashes with array() as argument.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

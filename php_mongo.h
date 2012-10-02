@@ -558,7 +558,7 @@ int pool_size;
 	zend_fcall_info_cache log_callback_info_cache;
 
 	long ping_interval;
-	long is_master_interval;
+	long ismaster_interval;
 
 	mongo_con_manager *manager;
 ZEND_END_MODULE_GLOBALS(mongo)
