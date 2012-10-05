@@ -107,7 +107,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 		if (*pos == '?') {
 			/* We've made it to the options, if the previous char is a slash then it is
 			   the full socket path as a slash is required before options */
-			if (last_slash == pos-1) {
+			if (last_slash == pos - 1) {
 				/* Back up one, the next section expects the current pos to be a slash or \0 */
 				host_end = last_slash;
 				pos--;
@@ -180,7 +180,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 		}
 	}
 	if (db_start) {
-		char *tmp_db = strndup(db_start, db_end-db_start);
+		char *tmp_db = strndup(db_start, db_end - db_start);
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found database name '%s'", tmp_db);
 		free(tmp_db);
 	}
