@@ -185,7 +185,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 		tmp_database = strndup(db_start, db_end - db_start);
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found database name '%s'", tmp_database);
 	} else if (tmp_user && tmp_pass) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- No database name found for an authenticated connection, so defaulting to 'admin'");
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- No database name found for an authenticated connection. Using 'admin' as default database");
 		tmp_database = strdup("admin");
 	}
 
