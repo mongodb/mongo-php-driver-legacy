@@ -3,8 +3,7 @@ MongoCollection::findOne() with multiple queries.
 --DESCRIPTION--
 Here we test whether the ping is only done once every 5 seconds.
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc";?>
-<?php if (isauth()) { die("skip The test suite doesn't support two databases at the moment"); } ?>
+skip Manual test
 --FILE--
 <?php
 function error_handler($code, $message)
