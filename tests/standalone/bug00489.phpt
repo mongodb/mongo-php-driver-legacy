@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-489: is_master() crashes for standalone servers
+Test for PHP-489: ismaster() crashes for standalone servers
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
@@ -20,7 +20,7 @@ Notice: CON     WARN: is_ping: last pinged at %d; time: 0ms in %s line %d
 
 Notice: CON     WARN: Host does not seem to be a replicaset member (%s:%d) in %s on line %d
 
-Notice: CON     WARN: discover_topology: is_master return with an error for %s:%d: [Host does not seem to be a replicaset member (%s:%d)] in %s on line %d
+Notice: CON     WARN: discover_topology: ismaster return with an error for %s:%d: [Host does not seem to be a replicaset member (%s:%d)] in %s on line %d
 string(26) "No candidate servers found"
 I'm alive!
 ==DONE==
