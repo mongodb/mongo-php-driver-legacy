@@ -45,16 +45,19 @@ int main(void)
 	parse_test("mongodb://derick:test@host1,host2:123/database");
 	parse_test("mongodb://host1,host2:123/database");
 	/* Specifying options */
-	parse_test("mongodb://derick:test@host1,host2:123/database?option1=foo");
-	parse_test("mongodb://derick:test@host1,host2:123/?option2=bar");
-	parse_test("mongodb://derick:test@host1,host2:123?option3=bar");
-	parse_test("mongodb://derick:test@host1,host2:123/?option4");
-	parse_test("mongodb://derick:test@host1,host2:123/?option5=bar;option6=baz");
-	parse_test("mongodb://derick:test@host1,host2:123/?option7=bar&option8=baz");
-	parse_test("mongodb://derick:test@host1,host2:123/?option9=bar;option10");
-	parse_test("mongodb://derick:test@host1,host2:123/?option11;option12=baz");
+	parse_test("mongodb://derick:test@host1,host2:123/database?readPreference=secondary_preferred");
+	parse_test("mongodb://derick:test@host1,host2:123/?readPreference=secondary");
+	parse_test("mongodb://derick:test@host1,host2:123?timeout=4");
+	parse_test("mongodb://derick:test@host1,host2:123/?readPreference");
+	parse_test("mongodb://derick:test@host1,host2:123/?readPreference=primary;timeout=baz");
+	parse_test("mongodb://derick:test@host1,host2:123/?readPreference=primary&timeout=baz");
+	parse_test("mongodb://derick:test@host1,host2:123/?readPreference=primary;timeout");
+	parse_test("mongodb://derick:test@host1,host2:123/?readPreference;timeout=baz");
 	/* Specific options */
 	parse_test("mongodb://host1/?replicaSet=testset");
+	parse_test("mongodb://foo:bar@primary:14000/database?replicaSet=seta");
+	parse_test("mongodb://foo:bar@primary:14000/database/?replicaSet=seta");
+
 
 	return 0;
 }

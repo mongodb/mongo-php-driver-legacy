@@ -29,7 +29,7 @@ mongo_servers* mongo_parse_init(void)
 int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, char *spec, char **error_message)
 {
 	char          *pos; /* Pointer to current parsing position */
-	char          *tmp_user = NULL, *tmp_pass = NULL; /* Stores parsed user/pw to be copied to each server struct */
+	char          *tmp_user = NULL, *tmp_pass = NULL, *tmp_database = NULL; /* Stores parsed user/password/database to be copied to each server struct */
 	char          *host_start, *host_end, *last_slash, *port_start, *db_start, *db_end;
 	int            i, is_hostname;
 
@@ -179,21 +179,26 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 			}
 		}
 	}
+
+	/* Handling database name */
 	if (db_start) {
-		char *tmp_db = strndup(db_start, db_end - db_start);
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found database name '%s'", tmp_db);
-		free(tmp_db);
+		tmp_database = strndup(db_start, db_end - db_start);
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found database name '%s'", tmp_database);
+	} else if (tmp_user && tmp_pass) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- No database name found for an authenticated connection, so defaulting to 'admin'");
+		tmp_database = strdup("admin");
 	}
 
 	/* Update all servers with user, password and dbname */
 	for (i = 0; i < servers->count; i++) {
 		servers->server[i]->username = tmp_user ? strdup(tmp_user) : NULL;
 		servers->server[i]->password = tmp_pass ? strdup(tmp_pass) : NULL;
-		servers->server[i]->db       = db_start ? strndup(db_start, db_end-db_start) : NULL;
+		servers->server[i]->db       = tmp_database ? strdup(tmp_database) : NULL;
 	}
 
 	free(tmp_user);
 	free(tmp_pass);
+	free(tmp_database);
 
 	return 0;
 }
