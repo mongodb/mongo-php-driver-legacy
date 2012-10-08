@@ -3,6 +3,7 @@ MongoCollection::insert() with ReplicaSet failover.
 --DESCRIPTION--
 Here we test whether the ping is only done once every 5 seconds.
 --SKIPIF--
+skip Manual test
 --FILE--
 <?php
 function error_handler($code, $message)

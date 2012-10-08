@@ -27,6 +27,7 @@ Mongo
   Method __construct expects 2 parameters
     0: server (optional)
     1: options (optional)
+  Method getConnections expects 0 parameters
   Method connect expects 0 parameters
   Method connectUtil expects 0 parameters
   Method __toString expects 0 parameters
