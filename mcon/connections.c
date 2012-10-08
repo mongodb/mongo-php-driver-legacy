@@ -395,7 +395,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
 }
 
 /**
- * Sends an is_master command to the server and returns an array of new
+ * Sends an ismaster command to the server and returns an array of new
  * connectable nodes
  *
  * Returns:
@@ -406,25 +406,25 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
  *    not being what the server thought it is) - in that case, the server in
  *    the last argument is changed
  */
-int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
+int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
 {
 	mcon_str      *packet;
 	char          *data_buffer;
 	char          *set = NULL;      /* For replicaset in return */
 	char          *hosts, *ptr, *string;
-	unsigned char  is_master = 0, arbiter = 0;
+	unsigned char  ismaster = 0, arbiter = 0;
 	char          *connected_name, *we_think_we_are;
 	struct timeval now;
 	int            retval = 1;
 
 	gettimeofday(&now, NULL);
-	if ((con->last_is_master + manager->is_master_interval) > now.tv_sec) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_is_master, now.tv_sec, con->last_is_master + manager->is_master_interval - now.tv_sec);
+	if ((con->last_ismaster + manager->ismaster_interval) > now.tv_sec) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_ismaster, now.tv_sec, con->last_ismaster + manager->ismaster_interval - now.tv_sec);
 		return 2;
 	}
 
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_master: start");
-	packet = bson_create_is_master_packet(con);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: start");
+	packet = bson_create_ismaster_packet(con);
 
 	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
 		return 0;
@@ -453,9 +453,9 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 
 	we_think_we_are = mongo_server_hash_to_server(con->hash);
 	if (strcmp(connected_name, we_think_we_are) == 0) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: the server name matches what we thought it'd be (%s).", we_think_we_are);
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: the server name matches what we thought it'd be (%s).", we_think_we_are);
 	} else {
-		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_master: the server name (%s) did not match with what we thought it'd be (%s).", connected_name, we_think_we_are);
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "ismaster: the server name (%s) did not match with what we thought it'd be (%s).", connected_name, we_think_we_are);
 		/* We reset the name as the server responded with a different name than
 		 * what we thought it was */
 		free(server->host);
@@ -493,22 +493,22 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 			free(data_buffer);
 			return 0;
 		} else {
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_master: the found replicaset name matches the expected one (%s).", set);
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: the found replicaset name matches the expected one (%s).", set);
 		}
 	} else if (*repl_set_name == NULL) {
 		/* This can happen, in case the replicaset name was not given, but just
 		 * bool(true) (or string("1")) in the connection options. */
-		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_master: the replicaset name is not set, so we're using %s.", set);
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "ismaster: the replicaset name is not set, so we're using %s.", set);
 		*repl_set_name = strdup(set);
 	}
 
 	/* Check for flags */
-	bson_find_field_as_bool(ptr, "ismaster", &is_master);
+	bson_find_field_as_bool(ptr, "ismaster", &ismaster);
 	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
 
 	/* Find all hosts */
 	bson_find_field_as_array(ptr, "hosts", &hosts);
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_master: set name: %s, is_master: %d, is_arbiter: %d", set, is_master, arbiter);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: set name: %s, ismaster: %d, is_arbiter: %d", set, ismaster, arbiter);
 	*nr_hosts = 0;
 
 	ptr = hosts;
@@ -520,7 +520,7 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 	}
 
 	/* Set connection type depending on flags */
-	if (is_master) {
+	if (ismaster) {
 		con->connection_type = MONGO_NODE_PRIMARY;
 	} else if (arbiter) {
 		con->connection_type = MONGO_NODE_ARBITER;
@@ -530,14 +530,14 @@ int mongo_connection_is_master(mongo_con_manager *manager, mongo_connection *con
 
 	free(data_buffer);
 
-	con->last_is_master = now.tv_sec;
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_master: last ran at %ld", con->last_is_master);
+	con->last_ismaster = now.tv_sec;
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: last ran at %ld", con->last_ismaster);
 
 	return retval;
 }
 
 /**
- * Sends an is_master command to the server to find server flags
+ * Sends an ismaster command to the server to find server flags
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
  */
@@ -551,7 +551,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	char          *msg; /* If set and its value is "isdbgrid", it signals we connected to a mongos */
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: start");
-	packet = bson_create_is_master_packet(con);
+	packet = bson_create_ismaster_packet(con);
 
 	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
 		return 0;
