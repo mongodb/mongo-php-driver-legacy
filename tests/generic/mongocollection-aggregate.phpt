@@ -1,10 +1,10 @@
 --TEST--
 MongoCollection::aggregate() basic tests
 --SKIPIF--
-<?php $needs = "2.1.0"; require __DIR__ . "/skipif.inc" ?>
+<?php $needs = "2.1.0"; require dirname( __FILE__ ) . "/skipif.inc" ?>
 --FILE--
 <?php
-require __DIR__ . "/../utils.inc";
+require dirname( __FILE__ ) . "/../utils.inc";
 
 $m = mongo();
 $c = $m->selectDB("phpunit")->selectCollection("article");
