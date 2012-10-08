@@ -141,6 +141,10 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 			int retval = -1;
 			retval = mongo_parse_options(manager, servers, question + 1, error_message);
 			if (retval > 0) {
+				free(tmp_user);
+				free(tmp_pass);
+				free(tmp_database);
+
 				return 1;
 			}
 		}
