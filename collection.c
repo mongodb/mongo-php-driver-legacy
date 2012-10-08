@@ -378,6 +378,12 @@ static int is_safe_op(zval *options TSRMLS_DC) {
       Z_BVAL_PP(fsync_pp) == 1));
 }
 
+#if PHP_VERSION_ID >= 50300
+# define MONGO_ERROR_G EG
+#else
+# define MONGO_ERROR_G PG
+#endif
+
 /*
  * This wrapper temporarily turns off the exception throwing bit if it has been
  * set (by calling mongo_cursor_throw() before). We can't call
@@ -394,14 +400,14 @@ static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_conn
 {
 	int orig_error_handling;
 
-	/* Save EG(error_handling) so that we can show log messages when we
+	/* Save EG/PG(error_handling) so that we can show log messages when we
 	 * have already thrown an exception */
-	orig_error_handling = EG(error_handling);
-	EG(error_handling) = EH_NORMAL;
+	orig_error_handling = MONGO_ERROR_G(error_handling);
+	MONGO_ERROR_G(error_handling) = EH_NORMAL;
 
 	mongo_manager_connection_deregister(manager, connection);
 
-	EG(error_handling) = orig_error_handling;
+	MONGO_ERROR_G(error_handling) = orig_error_handling;
 }
 
 static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC)

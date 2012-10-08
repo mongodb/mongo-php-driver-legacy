@@ -43,6 +43,9 @@
 #  define Z_DELREF_P(pz)                (pz)->refcount--
 #endif
 
+#ifndef Z_SET_REFCOUNT_P
+#  define Z_SET_REFCOUNT_P(pz, rc)      (pz)->refcount = (rc)
+#endif
 
 #define INT_32 4
 #define INT_64 8
