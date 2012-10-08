@@ -30,7 +30,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 {
 	char          *pos; /* Pointer to current parsing position */
 	char          *tmp_user = NULL, *tmp_pass = NULL, *tmp_database = NULL; /* Stores parsed user/password/database to be copied to each server struct */
-	char          *host_start, *host_end, *port_start, *port_end, *db_start, *db_end;
+	char          *host_start, *host_end, *port_start, *port_end, *db_start, *db_end, *last_slash;
 	int            i;
 
 	/* Initialisation */
@@ -69,39 +69,70 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 	host_end   = NULL;
 	port_start = NULL;
 	port_end   = NULL;
+	last_slash = NULL;
 
-	/* Now we parse the host:port parts up to the / which starts the dbname */
-	do {
-		if (*pos == ':') {
-			host_end = pos;
-			port_start = pos + 1;
-		}
-		if (*pos == ',') {
-			if (!host_end) {
+	/* Now we parse the host part - there are two cases:
+	 * 1: mongodb://user:pass@host:port,host:port/database?opt=1 -- TCP/IP
+	 *                        ^
+	 * 2: mongodb://user:pass@/tmp/mongo.sock/database?opt=1 -- Unix Domain sockets
+	 *                        ^                                                     */
+	if (*pos != '/') {
+		/* TCP/IP:
+		 * mongodb://user:pass@host:port,host:port/database?opt=1 -- TCP/IP
+		 *                     ^                                            */
+		do {
+			if (*pos == ':') {
 				host_end = pos;
-			} else {
-				port_end = pos;
+				port_start = pos + 1;
 			}
+			if (*pos == ',') {
+				if (!host_end) {
+					host_end = pos;
+				} else {
+					port_end = pos;
+				}
 
-			mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
+				mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
 
-			host_start = pos + 1;
-			host_end = port_start = port_end = NULL;
-		}
-		if (*pos == '/') {
-			if (!host_end) {
-				host_end = pos;
-			} else {
-				port_end = pos;
+				host_start = pos + 1;
+				host_end = port_start = port_end = NULL;
 			}
-			break;
-		}
-		pos++;
-	} while (*pos != '\0');
+			if (*pos == '/') {
+				if (!host_end) {
+					host_end = pos;
+				} else {
+					port_end = pos;
+				}
+				break;
+			}
+			pos++;
+		} while (*pos != '\0');
 
-	/* We are now either at the end of the string, or at / where the dbname starts.
-	 * We still have to add the last parser host/port combination though: */
-	mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
+		/* We are now either at the end of the string, or at / where the dbname starts.
+		 * We still have to add the last parser host/port combination though: */
+		mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
+	} else if (*pos == '/') {
+		host_start = pos;
+		port_start = "0";
+		port_end   = NULL;
+
+		/* Unix Domain Socket
+		 * mongodb://user:pass@/tmp/mongo.sock
+		 * mongodb://user:pass@/tmp/mongo.sock/?opt=1
+		 * mongodb://user:pass@/tmp/mongo.sock/database?opt=1
+		 */
+		last_slash = strrchr(pos, '/');
+
+		/* The last component of the path *could* be a database name.
+		 * The rule is; if the last component has a dot, we use the full string since "host_start" as host */
+		if (strchr(last_slash, '.')) {
+			host_end = host_start + strlen(host_start);
+		} else {
+			host_end = last_slash;
+		}
+		pos = host_end;
+		mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
+	}
 
 	/* Set the default connection type, we might change this if we encounter
 	 * the replicaSet option later */
