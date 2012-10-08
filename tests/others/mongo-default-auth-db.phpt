@@ -27,7 +27,7 @@ PARSE   INFO: Parsing mongodb://admin:admin@whisky
 PARSE   INFO: - Found user 'admin' and a password
 PARSE   INFO: - Found node: whisky:27017
 PARSE   INFO: - Connection type: STANDALONE
-PARSE   INFO: - No database name found for an authenticated connection, so defaulting to 'admin'
+PARSE   INFO: - No database name found for an authenticated connection. Using 'admin' as default database
 PARSE   INFO: - Found unknown connection string option 'connect' with value ''
 
 mongodb://foo:bar@localhost/?replicaSet=seta
@@ -37,7 +37,7 @@ PARSE   INFO: - Found node: localhost:27017
 PARSE   INFO: - Connection type: STANDALONE
 PARSE   INFO: - Found option 'replicaSet': 'seta'
 PARSE   INFO: - Switching connection type: REPLSET
-PARSE   INFO: - No database name found for an authenticated connection, so defaulting to 'admin'
+PARSE   INFO: - No database name found for an authenticated connection. Using 'admin' as default database
 PARSE   INFO: - Found unknown connection string option 'connect' with value ''
 
 mongodb://foo:bar@primary,secondary/?replicaSet=seta
@@ -48,7 +48,7 @@ PARSE   INFO: - Found node: secondary:27017
 PARSE   INFO: - Connection type: MULTIPLE
 PARSE   INFO: - Found option 'replicaSet': 'seta'
 PARSE   INFO: - Switching connection type: REPLSET
-PARSE   INFO: - No database name found for an authenticated connection, so defaulting to 'admin'
+PARSE   INFO: - No database name found for an authenticated connection. Using 'admin' as default database
 PARSE   INFO: - Found unknown connection string option 'connect' with value ''
 
 mongodb://foo:bar@primary:14000/database?replicaSet=seta
