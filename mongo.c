@@ -46,7 +46,6 @@
 static void php_mongo_link_free(void* TSRMLS_DC);
 static void run_err(int, zval*, zval* TSRMLS_DC);
 static void stringify_server(mongo_server_def *server, smart_str *str);
-static zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
 
 zend_object_handlers mongo_default_handlers;
 zend_object_handlers mongo_link_handlers;
@@ -145,7 +144,11 @@ static void php_mongo_link_free(void *object TSRMLS_DC)
 }
 /* }}} */
 
+#if PHP_VERSION_ID >= 50400
+static zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC)
+#else
 static zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
+#endif
 {
 	zval *retval;
 	zval tmp_member;
@@ -171,7 +174,11 @@ static zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 		return retval;
 	}
 
+#if PHP_VERSION_ID >= 50400
+	retval = (zend_get_std_object_handlers())->read_property(object, member, type, key TSRMLS_CC);
+#else
 	retval = (zend_get_std_object_handlers())->read_property(object, member, type TSRMLS_CC);
+#endif
 	if (member == &tmp_member) {
 		zval_dtor(member);
 	}
@@ -200,7 +207,11 @@ HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC)
 					INIT_ZVAL(member);
 					ZVAL_STRINGL(&member, key, key_len, 0);
 
+#if PHP_VERSION_ID >= 50400
+					tmp = mongo_read_property(object, &member, BP_VAR_IS, NULL TSRMLS_CC);
+#else
 					tmp = mongo_read_property(object, &member, BP_VAR_IS TSRMLS_CC);
+#endif
 					convert_to_boolean_ex(entry);
 					ZVAL_BOOL(*entry, Z_BVAL_P(tmp));
 					/* the var is set to refcount = 0, need to set it to 1 so it'll get free()d */
