@@ -253,6 +253,11 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->resource = zlink;
   zval_add_ref(&zlink);
 
+	/* Initialize read_pref to empty */
+	cursor->read_pref.type = MONGO_RP_PRIMARY;
+	cursor->read_pref.tagset_count = 0;
+	cursor->read_pref.tagsets = NULL;
+
   // change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1}
   if (Z_TYPE_P(zfields) == IS_ARRAY) {
     HashPosition pointer;
@@ -824,6 +829,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   zval *errmsg;
 	char *error_message;
 	mongo_link *link;
+	mongo_read_preference rp;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
   if (!cursor) {
@@ -839,6 +845,10 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 		zend_throw_exception(mongo_ce_Exception, "The Mongo object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
 		return FAILURE;
 	}
+
+	/* store the link's read preference to backup, and overwrite with the collection's read preferences */
+	mongo_read_preference_copy(&link->servers->read_pref, &rp);
+	mongo_read_preference_replace(&cursor->read_pref, &link->servers->read_pref);
 
 	/* Sets the wire protocol flag to allow reading from a secondary. The read
 	 * preference spec states: "slaveOk remains as a bit in the wire protocol
@@ -859,6 +869,10 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 	 * php_mongo_connection_force_primary).  See also MongoDB::command and
 	 * append_getlasterror, where this has to be done too. */
 	cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char**) &error_message);
+
+	/* restore read preferences from backup */
+	mongo_read_preference_replace(&rp, &link->servers->read_pref);
+	mongo_read_preference_dtor(&rp);
 
 	if (!cursor->connection && error_message) {
 		efree(buf.start);
@@ -1648,6 +1662,8 @@ void php_mongo_cursor_free(void *object TSRMLS_DC) {
     if (cursor->ns) efree(cursor->ns);
 
     if (cursor->resource) zval_ptr_dtor(&cursor->resource);
+
+		mongo_read_preference_dtor(&cursor->read_pref);
 
     zend_object_std_dtor(&cursor->std TSRMLS_CC);
 
