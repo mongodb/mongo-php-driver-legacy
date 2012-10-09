@@ -2,6 +2,8 @@
 Test for PHP-511: Setting slaveOkay on MongoDB doesn't get passed properly to MongoCollection
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+--INI--
+error_reporting=E_ALL & ~E_DEPRECATED
 --FILE--
 <?php
 $mentions = array(); 
@@ -17,22 +19,31 @@ $db->setSlaveOkay(true);
 
 $mentions = array();
 
-// Normal find
+// Normal find (on a secondary)
 $ret = $db->safe->find(array("doc" => 1));
 iterator_to_array($ret);
 var_dump($mentions); $mentions = array();
  
 // Force primary for command
-$db->setProfilingLevel(42);
+$db->safe->drop();
 var_dump($mentions); $mentions = array();
  
-// Normal find
+// Normal find (on a secondary)
 $ret = $db->safe->find(array("doc" => 1));
 iterator_to_array($ret);
 var_dump($mentions); $mentions = array();
+
+var_dump($db->getSlaveOkay());
+$db->setSlaveOkay(false);
+
+// Normal find (on a primary)
+$ret = $db->safe->find(array("doc" => 1));
+iterator_to_array($ret);
+var_dump($mentions); $mentions = array();
+
+ 
 ?>
 --EXPECTF--
-Deprecated: Function MongoDB::setSlaveOkay() is deprecated in %sbug00511.php on line %d
 array(2) {
   ["PRIMARY"]=>
   int(3)
@@ -47,5 +58,10 @@ array(2) {
   ["PRIMARY"]=>
   int(3)
   ["SECONDARY"]=>
+  int(3)
+}
+bool(true)
+array(1) {
+  ["PRIMARY"]=>
   int(3)
 }
