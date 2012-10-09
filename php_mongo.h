@@ -404,6 +404,8 @@ typedef struct {
   zval *current;
   int retry;
 
+	mongo_read_preference read_pref;
+
 	int dead;
 } mongo_cursor;
 
