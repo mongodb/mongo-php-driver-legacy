@@ -189,7 +189,7 @@ static zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC)
 {
 	HashPosition pos;
-	HashTable *props = zend_std_get_properties(object);
+	HashTable *props = zend_std_get_properties(object TSRMLS_CC);
 	zval **entry;
 	ulong num_key;
 
