@@ -8,7 +8,7 @@
 #include "read_preference.h"
 
 /* Forward declarations */
-void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start, char *port_end);
+void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start);
 int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message);
 
 /* Parsing routine */
@@ -92,7 +92,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 					port_end = pos;
 				}
 
-				mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
+				mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start);
 
 				host_start = pos + 1;
 				host_end = port_start = port_end = NULL;
@@ -110,7 +110,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 
 		/* We are now either at the end of the string, or at / where the dbname starts.
 		 * We still have to add the last parser host/port combination though: */
-		mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
+		mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start);
 	} else if (*pos == '/') {
 		host_start = pos;
 		port_start = "0";
@@ -131,7 +131,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 			host_end = last_slash;
 		}
 		pos = host_end;
-		mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start, port_end);
+		mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start);
 	}
 
 	/* Set the default connection type, we might change this if we encounter
@@ -205,7 +205,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 }
 
 /* Helpers */
-void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start, char *port_end)
+void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start)
 {
 	mongo_server_def *tmp;
 
