@@ -11,6 +11,8 @@ function f($module, $log, $m) {
     var_dump($module, $log, $m);
 }
 
+var_dump(MongoLog::getCallback());
+
 MongoLog::setModule(MongoLog::IO);
 MongoLog::setLevel(MongoLog::FINE);
 var_dump(MongoLog::setCallback("f"));
@@ -27,6 +29,7 @@ $coll->drop();
 echo "Finished\n";
 ?>
 --EXPECTF--
+bool(false)
 bool(true)
 string(1) "f"
 Selecting collection

@@ -150,7 +150,11 @@ PHP_METHOD(MongoLog, getCallback)
 		return;
 	}
 
-	RETURN_ZVAL(MonGlo(log_callback_info).function_name, 1, 0);
+	if (MonGlo(log_callback_info).function_name) {
+		RETURN_ZVAL(MonGlo(log_callback_info).function_name, 1, 0);
+	} else {
+		RETURN_FALSE;
+	}
 }
 #endif
 
