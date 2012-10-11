@@ -48,6 +48,7 @@ int main(void)
 	parse_test("mongodb://derick:test@host1,host2:123/database?readPreference=secondary_preferred");
 	parse_test("mongodb://derick:test@host1,host2:123/?readPreference=secondary");
 	parse_test("mongodb://derick:test@host1,host2:123?timeout=4");
+	parse_test("mongodb://derick:test@host1,host2:123/?timeout=4");
 	parse_test("mongodb://derick:test@host1,host2:123/?readPreference");
 	parse_test("mongodb://derick:test@host1,host2:123/?readPreference=primary;timeout=baz");
 	parse_test("mongodb://derick:test@host1,host2:123/?readPreference=primary&timeout=baz");
@@ -57,6 +58,17 @@ int main(void)
 	parse_test("mongodb://host1/?replicaSet=testset");
 	parse_test("mongodb://foo:bar@primary:14000/database?replicaSet=seta");
 	parse_test("mongodb://foo:bar@primary:14000/database/?replicaSet=seta");
+	/* Unix Domain Sockets */
+	parse_test("mongodb:///tmp/mongodb-27017.sock");
+	parse_test("mongodb:///tmp/mongodb-27017.sock/");
+	parse_test("mongodb:///tmp/mongodb-27017.sock/?timeout=4");
+	parse_test("mongodb:///tmp/mongodb-27017.sock/database");
+	parse_test("mongodb:///tmp/mongodb-27017.sock/database?timeout=4");
+	parse_test("mongodb://derick:test@/tmp/mongodb-27017.sock");
+	parse_test("mongodb://derick:test@/tmp/mongodb-27017.sock/");
+	parse_test("mongodb://derick:test@/tmp/mongodb-27017.sock/?timeout=4");
+	parse_test("mongodb://derick:test@/tmp/mongodb-27017.sock/database");
+	parse_test("mongodb://derick:test@/tmp/mongodb-27017.sock/database?timeout=4");
 
 
 	return 0;
