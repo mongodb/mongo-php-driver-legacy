@@ -35,10 +35,10 @@ CON     WARN: is_ping: last pinged at %d; time: %dms
 CON     WARN: rs_status: found an unconnectable host: tertiary.rs.local:%d (state: 8)
 Fine:
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: discover_topology: checking is_master for %s:%d;X;%d
+CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: rs_status: skipping: last ran at %d, now: %d, time left: %d
-CON     FINE: discover_topology: is_master got skipped
+CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:

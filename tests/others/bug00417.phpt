@@ -1,5 +1,5 @@
 --TEST--
-Test for bug PHP-417: MongoDBRef::isRef() returns null, not false
+Test for PHP-417: MongoDBRef::isRef() returns null, not false.
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
