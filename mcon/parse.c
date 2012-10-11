@@ -30,7 +30,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 {
 	char          *pos; /* Pointer to current parsing position */
 	char          *tmp_user = NULL, *tmp_pass = NULL, *tmp_database = NULL; /* Stores parsed user/password/database to be copied to each server struct */
-	char          *host_start, *host_end, *port_start, *port_end, *db_start, *db_end, *last_slash;
+	char          *host_start, *host_end, *port_start, *db_start, *db_end, *last_slash;
 	int            i;
 
 	/* Initialisation */
@@ -68,7 +68,6 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 	host_start = pos;
 	host_end   = NULL;
 	port_start = NULL;
-	port_end   = NULL;
 	last_slash = NULL;
 
 	/* Now we parse the host part - there are two cases:
@@ -88,20 +87,16 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 			if (*pos == ',') {
 				if (!host_end) {
 					host_end = pos;
-				} else {
-					port_end = pos;
 				}
 
 				mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start);
 
 				host_start = pos + 1;
-				host_end = port_start = port_end = NULL;
+				host_end = port_start = NULL;
 			}
 			if (*pos == '/') {
 				if (!host_end) {
 					host_end = pos;
-				} else {
-					port_end = pos;
 				}
 				break;
 			}
@@ -114,7 +109,6 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 	} else if (*pos == '/') {
 		host_start = pos;
 		port_start = "0";
-		port_end   = NULL;
 
 		/* Unix Domain Socket
 		 * mongodb://user:pass@/tmp/mongo.sock
