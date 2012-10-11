@@ -14,12 +14,12 @@ $baseString = sprintf("mongodb://%s:%d/%s?readPreference=secondaryPreferred", $h
 // set before db reference
 $m = new mongo($baseString);
 $m->setReadPreference(Mongo::RP_PRIMARY_PREFERRED);
-$d = $m->phpunit->test;
+$c = $m->phpunit->test;
 var_dump($c->getReadPreference());
 
 // set after db reference
 $m = new mongo($baseString);
-$d = $m->phpunit->test;
+$c = $m->phpunit->test;
 $m->setReadPreference(Mongo::RP_SECONDARY);
 var_dump($c->getReadPreference());
 
@@ -33,7 +33,7 @@ array(2) {
 }
 array(2) {
   ["type"]=>
-  int(2)
+  int(3)
   ["type_string"]=>
-  string(9) "secondary"
+  string(19) "secondary preferred"
 }
