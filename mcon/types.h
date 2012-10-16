@@ -60,6 +60,14 @@
 
 /* Stores all the information about the connection. The hash is a group of
  * parameters to identify a unique connection. */
+
+typedef int (mongo_cleanup_t)(void *callback_data);
+typedef struct _mongo_connection_deregister_callback {
+  void *callback_data;
+  mongo_cleanup_t *mongo_cleanup_cb;
+  struct _mongo_connection_deregister_callback *next;
+} mongo_connection_deregister_callback;
+
 typedef struct _mongo_connection
 {
 	time_t last_ping; /* The timestamp when ping was called last */
@@ -72,6 +80,7 @@ typedef struct _mongo_connection
 	int    tag_count;
 	char **tags;
 	char  *hash; /* Duplicate of the hash that the manager knows this connection as */
+	mongo_connection_deregister_callback *cleanup_list;
 } mongo_connection;
 
 typedef struct _mongo_con_manager_item

@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-426: Connection pool not paying attention to authentication when using replicaSet=true
 --SKIPIF--
-<?php // require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
 //require_once dirname(__FILE__) . "/../debug.inc";
