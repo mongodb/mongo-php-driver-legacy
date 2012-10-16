@@ -277,6 +277,22 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 		for (i = 0; i < con->tag_count; i++) {
 			free(con->tags[i]);
 		}
+		if (con->cleanup_list) {
+			mongo_connection_deregister_callback *ptr = con->cleanup_list;
+			mongo_connection_deregister_callback *prev;
+			do {
+				ptr->mongo_cleanup_cb(ptr->callback_data);
+
+				if (!ptr->next) {
+					free(ptr);
+					break;
+				}
+				prev = ptr;
+				ptr = ptr->next;
+				free(prev);
+			} while(1);
+			con->cleanup_list = NULL;
+		}
 		free(con->tags);
 		free(con->hash);
 		free(con);

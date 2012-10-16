@@ -298,6 +298,54 @@ bailout:
 	return con;
 }
 
+int mongo_deregister_cursor_from_connection(mongo_connection *connection, void *cursor)
+{
+	if (connection->cleanup_list) {
+		mongo_connection_deregister_callback *ptr = connection->cleanup_list;
+		mongo_connection_deregister_callback *prev = NULL;
+		do {
+			if (ptr && ptr->callback_data == cursor) {
+				if (prev) {
+					prev->next = ptr->next;
+				} else {
+					connection->cleanup_list = NULL;
+				}
+				free(ptr);
+				break;
+			}
+			prev = ptr;
+			ptr = ptr->next;
+		} while(1);
+	}
+	return 1;
+
+}
+mongo_connection *mongo_get_read_write_connection_for_cursor(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, void *callback_data, mongo_cleanup_t cleanup_cb, char **error_message)
+{
+	mongo_connection *connection;
+	mongo_connection_deregister_callback *cb = malloc(sizeof(mongo_connection_deregister_callback));
+	memset(cb, 0, sizeof(mongo_connection_deregister_callback));
+
+	connection = mongo_get_read_write_connection(manager, servers, connection_flags, error_message);
+
+	cb->mongo_cleanup_cb = cleanup_cb;
+	cb->callback_data = callback_data;
+
+	if (connection->cleanup_list) {
+		mongo_connection_deregister_callback *ptr = connection->cleanup_list;
+		do {
+			if (!ptr->next) {
+				ptr->next = cb;
+				break;
+			}
+			ptr = ptr->next;
+		} while(1);
+	} else {
+		connection->cleanup_list = cb;
+	}
+	return connection;
+}
+
 /* API interface to fetch a connection */
 mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {

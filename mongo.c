@@ -450,17 +450,21 @@ PHP_METHOD(Mongo, connectUtil)
 /* {{{ Mongo->close()
  */
 PHP_METHOD(Mongo, close) {
-/* TODO: IMPLEMENT
-  mongo_link *link;
+	mongo_link *link;
+	mongo_connection *connection;
+	char *error_message;
 
-  PHP_MONGO_GET_LINK(getThis());
+	PHP_MONGO_GET_LINK(getThis());
+	connection = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char **) &error_message);
 
-  mongo_util_link_disconnect(link TSRMLS_CC);
+	if (connection) {
+		mongo_manager_connection_deregister(link->manager, connection);
+		RETURN_TRUE;
+	} else {
+		free(error_message);
+		RETURN_FALSE;
+	}
 
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
-                            strlen("connected"), 0 TSRMLS_CC);
-*/
-  RETURN_TRUE;
 }
 /* }}} */
 
