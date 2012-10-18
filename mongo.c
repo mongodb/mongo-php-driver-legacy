@@ -448,8 +448,9 @@ PHP_METHOD(Mongo, connectUtil)
 
 
 /* {{{ Mongo->close()
- */
-PHP_METHOD(Mongo, close) {
+   Closes a random connection */
+PHP_METHOD(Mongo, close)
+{
 	mongo_link *link;
 	mongo_connection *connection;
 	char *error_message;
@@ -464,7 +465,6 @@ PHP_METHOD(Mongo, close) {
 		free(error_message);
 		RETURN_FALSE;
 	}
-
 }
 /* }}} */
 
