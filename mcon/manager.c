@@ -323,8 +323,9 @@ int mongo_deregister_cursor_from_connection(mongo_connection *connection, void *
 mongo_connection *mongo_get_read_write_connection_for_cursor(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, void *callback_data, mongo_cleanup_t cleanup_cb, char **error_message)
 {
 	mongo_connection *connection;
-	mongo_connection_deregister_callback *cb = malloc(sizeof(mongo_connection_deregister_callback));
-	memset(cb, 0, sizeof(mongo_connection_deregister_callback));
+	mongo_connection_deregister_callback *cb;
+	
+	cb = calloc(1, sizeof(mongo_connection_deregister_callback));
 
 	connection = mongo_get_read_write_connection(manager, servers, connection_flags, error_message);
 
