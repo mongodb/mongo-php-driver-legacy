@@ -1272,7 +1272,7 @@ PHP_METHOD(MongoCollection, toIndexString) {
    Wrapper for the aggregate runCommand. Either one array of ops (a pipeline), or a variable number of op arguments */
 PHP_METHOD(MongoCollection, aggregate)
 {
-	zval ***argv, *pipeline, *data, *retval, **values, *tmp;
+	zval ***argv, *pipeline, *data, *tmp;
 	int argc, i;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &argv, &argc) == FAILURE) {
@@ -1318,18 +1318,9 @@ PHP_METHOD(MongoCollection, aggregate)
 	}
 	efree(argv);
 
-	MAKE_STD_ZVAL(retval);
-	MONGO_CMD(retval, c->parent);
-
-	if (zend_hash_find(Z_ARRVAL_P(retval), "result", strlen("result") + 1, (void **) &values) == SUCCESS) {
-		array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
-		zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval*));
-	} else {
-		RETVAL_FALSE;
-	}
+	MONGO_CMD(return_value, c->parent);
 
 	zval_ptr_dtor(&data);
-	zval_ptr_dtor(&retval);
 }
 /* }}} */
 
