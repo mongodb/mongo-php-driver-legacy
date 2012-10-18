@@ -822,7 +822,9 @@ PHP_METHOD(MongoCursor, doQuery) {
 
 	mongo_cursor_throw(cursor->connection, 19 TSRMLS_CC, "max number of retries exhausted, couldn't send query");
 }
+/* }}} */
 
+/* Cursor helpers */
 int mongo_cursor_mark_dead(void *callback_data)
 {
 	mongo_cursor *cursor = (mongo_cursor*) callback_data;
@@ -832,6 +834,7 @@ int mongo_cursor_mark_dead(void *callback_data)
 
 	return 1;
 }
+
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   mongo_cursor *cursor;
   buffer buf;
