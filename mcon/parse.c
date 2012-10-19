@@ -22,6 +22,7 @@ mongo_servers* mongo_parse_init(void)
 	servers->count = 0;
 	servers->repl_set_name = NULL;
 	servers->con_type = MONGO_CON_TYPE_STANDALONE;
+	servers->fire_and_forget = -1;
 
 	return servers;
 }
@@ -390,6 +391,19 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	if (strcasecmp(option_name, "timeout") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'timeout': %d", atoi(option_value));
 		servers->connectTimeoutMS = atoi(option_value);
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "fireAndForget") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'fireAndForget': %s", option_value);
+		if (strcmp(option_value, "true") == 0) {
+			servers->default_fire_and_forget = 1;
+		} else if (strcmp(option_value, "false") == 0) {
+			servers->default_fire_and_forget = 0;
+		} else {
+			*error_message = strdup("The value of 'fireAndForget' needs to be either 'true' or 'false'");
+			return 3;
+		}
 		return 0;
 	}
 

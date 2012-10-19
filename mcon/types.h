@@ -142,6 +142,7 @@ typedef struct _mongo_servers
 	int                   con_type;
 	char                 *repl_set_name;
 	int                   connectTimeoutMS;
+	int                   default_fire_and_forget; /* Sets a flag whether all operations should be "safe" by default or not, -1 is not set, where 0 and 1 are explicit sets. */
 
 	mongo_read_preference read_pref;
 } mongo_servers;
