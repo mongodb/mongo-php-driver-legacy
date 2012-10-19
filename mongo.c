@@ -471,20 +471,15 @@ PHP_METHOD(Mongo, close)
 		if (Z_BVAL_P(hash)) {
 			/* Close all connections */
 			mongo_con_manager_item *ptr = link->manager->connections;
-			mongo_con_manager_item *current = ptr;
-			long count = 0;
+			mongo_con_manager_item *current;
+			long                    count = 0;
 
-			do {
-				if (current) {
-					ptr = current;
-					current = current->next;
-					close_connection(link->manager, ptr->connection);
-					count++;
-				}
-				else {
-					break;
-				}
-			} while(1);
+			while (ptr) {
+				current = ptr;
+				ptr = ptr->next;
+				close_connection(link->manager, current->connection);
+				count++;
+			}
 
 			RETVAL_LONG(count);
 		} else {
