@@ -44,7 +44,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 zend_class_entry *mongo_ce_Collection = NULL;
 
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
-static int is_safe_op(zval *options TSRMLS_DC);
+static int is_safe_op(zval *options, int default_safe TSRMLS_DC);
 static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document);
@@ -351,7 +351,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 		return 0;
 	}
 
-	if (is_safe_op(options TSRMLS_CC)) {
+	if (is_safe_op(options, link->servers->default_safe TSRMLS_CC)) {
 		zval *cursor = append_getlasterror(getThis(), buf, options TSRMLS_CC);
 		if (cursor) {
 			safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
@@ -370,15 +370,41 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 }
 
 
-static int is_safe_op(zval *options TSRMLS_DC) {
-  zval **safe_pp = 0, **fsync_pp = 0;
+static int is_safe_op(zval *options, int default_safe TSRMLS_DC)
+{
+	zval **safe_pp = 0, **fsync_pp = 0;
+	int    safe_op  = 0;
 
-  return options &&
-    ((zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS &&
-      (Z_TYPE_PP(safe_pp) == IS_STRING ||
-       ((Z_TYPE_PP(safe_pp) == IS_LONG || Z_TYPE_PP(safe_pp) == IS_BOOL) && Z_LVAL_PP(safe_pp) >= 1))) ||
-     (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS &&
-      Z_BVAL_PP(fsync_pp) == 1));
+	/* First we check for the global (connection string) default */
+	if (default_safe != -1) {
+		safe_op = default_safe;
+	}
+	/* Then we check the options array that could overwrite the default */
+	if (options && Z_TYPE_P(options) == IS_ARRAY) {
+		/* Check for "safe" in options array */
+		if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS) {
+			/* Check for bool/int value >= 1 */
+			if ((Z_TYPE_PP(safe_pp) == IS_LONG || Z_TYPE_PP(safe_pp) == IS_BOOL)) {
+				safe_op = (Z_LVAL_PP(safe_pp) >= 1);
+				goto ok;
+			}
+			/* Check for string value ("majority", or a tag) */
+			if (Z_TYPE_PP(safe_pp) == IS_STRING) {
+				safe_op = 1;
+				goto ok;
+			}
+		}
+		/* Check for "fsync" in options array */
+		if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS) {
+			/* Check for bool/int value of 1 */
+			if ((Z_TYPE_PP(fsync_pp) == IS_LONG || Z_TYPE_PP(fsync_pp) == IS_BOOL) && Z_LVAL_PP(fsync_pp) == 1) {
+				safe_op = 1;
+				goto ok;
+			}
+		}
+	}
+ok:
+	return safe_op;
 }
 
 #if PHP_VERSION_ID >= 50300
