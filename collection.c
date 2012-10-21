@@ -236,21 +236,35 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	if (options && !IS_SCALAR_P(options)) {
 		zval **safe_pp, **fsync_pp, **timeout_pp;
 												
-		if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp)) {
-			if (Z_TYPE_PP(safe_pp) == IS_STRING) {
-				safe_str = Z_STRVAL_PP(safe_pp);
-			} else {
-				safe = Z_LVAL_PP(safe_pp);
+		if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**)&safe_pp)) {
+			switch (Z_TYPE_PP(safe_pp)) {
+				case IS_STRING:
+					safe_str = Z_STRVAL_PP(safe_pp);
+					break;
+				case IS_BOOL:
+				case IS_LONG:
+					safe = Z_LVAL_PP(safe_pp); /* This is actually "wrong" for bools, but it works */
+					break;
+				default:
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'safe' option either needs to be a boolean or a string");
 			}
 		}
-		if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp)) {
-			fsync = Z_BVAL_PP(fsync_pp);
+		if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp)) {
+			if (Z_TYPE_PP(fsync_pp) == IS_BOOL || Z_TYPE_PP(fsync_pp) == IS_LONG) { 
+				fsync = Z_LVAL_PP(fsync_pp);
+			} else {
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'fsync' option either needs to be a boolean");
+			}
 			if (fsync && !safe) {
 				safe = 1;
 			}
 		}
-		if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_pp)) {
-			timeout = Z_LVAL_PP(timeout_pp);
+		if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout_pp)) {
+			if (Z_TYPE_PP(timeout_pp) == IS_LONG) { 
+				timeout = Z_LVAL_PP(timeout_pp);
+			} else {
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'timeout' option either needs to be a long");
+			}
 		}
 	}
 
