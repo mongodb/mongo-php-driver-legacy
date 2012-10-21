@@ -22,7 +22,7 @@ mongo_servers* mongo_parse_init(void)
 	servers->count = 0;
 	servers->repl_set_name = NULL;
 	servers->con_type = MONGO_CON_TYPE_STANDALONE;
-	servers->fire_and_forget = -1;
+	servers->default_fire_and_forget = -1;
 
 	return servers;
 }
