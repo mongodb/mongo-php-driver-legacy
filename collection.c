@@ -229,7 +229,31 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   int response, safe = 0, fsync = 0, timeout = -1;
 	mongo_link *link;
 
-  GET_OPTIONS;
+	timeout_p = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
+	timeout = Z_LVAL_P(timeout_p);
+
+	/* Fetch all the options from the options array*/
+	if (options && !IS_SCALAR_P(options)) {
+		zval **safe_pp, **fsync_pp, **timeout_pp;
+												
+		if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp)) {
+			if (Z_TYPE_PP(safe_pp) == IS_STRING) {
+				safe_str = Z_STRVAL_PP(safe_pp);
+			} else {
+				safe = Z_LVAL_PP(safe_pp);
+			}
+		}
+		if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp)) {
+			fsync = Z_BVAL_PP(fsync_pp);
+			if (fsync && !safe) {
+				safe = 1;
+			}
+		}
+		if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_pp)) {
+			timeout = Z_LVAL_PP(timeout_pp);
+		}
+	}
+
 
   // get "db.$cmd" zval
   MAKE_STD_ZVAL(cmd_ns_z);
