@@ -7,6 +7,7 @@ $classes = array(
     'MongoDB',
     'MongoCollection',
     'MongoCursor',
+    'MongoPool',
 );
 foreach ($classes as $class) {
 	echo $class, "\n";
@@ -56,6 +57,10 @@ Mongo
   Method getSlave expects 0 parameters
   Method switchSlave expects 0 parameters
   Method close expects 0 parameters
+  Method setPoolSize expects 1 parameters
+    0: maximum_pool_size
+  Method getPoolSize expects 0 parameters
+  Method poolDebug expects 0 parameters
 
 MongoDB
   Method __construct expects 2 parameters
@@ -237,3 +242,9 @@ MongoCursor
   Method reset expects 0 parameters
   Method count expects 1 parameters
     0: foundOnly (optional)
+
+MongoPool
+  Method info expects 0 parameters
+  Method setSize expects 1 parameters
+    0: size
+  Method getSize expects 0 parameters

@@ -31,6 +31,7 @@
 #include "mongo_types.h"
 
 #include "util/log.h"
+#include "util/pool.h"
 
 #include "mcon/manager.h"
 
@@ -161,6 +162,9 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoInt64(TSRMLS_C);
 
   mongo_init_MongoLog(TSRMLS_C);
+
+	/* Deprecated, but we will keep it for now */
+	mongo_init_MongoPool(TSRMLS_C);
 
   /*
    * MongoMaxKey and MongoMinKey are completely non-interactive: they have no
