@@ -20,19 +20,19 @@ function createCons()
 echo "Testing closing master (BC):\n";
 createCons();
 echo "closing:\n";
-$c->close();
+var_dump( $c->close() );
 echo "done.\n\n";
 
 echo "Testing closing all (true):\n";
 createCons();
 echo "closing:\n";
-$c->close(true);
+var_dump( $c->close(true) );
 echo "done.\n\n";
 
 echo "Testing closing master (false):\n";
 createCons();
 echo "closing:\n";
-$c->close(false);
+var_dump( $c->close(false) );
 echo "done.\n\n";
 
 echo "Testing closing per-hash (hash):\n";
@@ -41,22 +41,22 @@ echo "closing:\n";
 foreach ( $cons as $con )
 {
 	echo "- closing hash {$con['hash']}\n";
-	$c->close( $con['hash']);
+	var_dump( $c->close( $con['hash']) );
 }
 echo "done.\n\n";
 
 echo "Testing closing invalid hash (hash):\n";
 createCons();
 echo "closing:\n";
-$c->close( "randomnonsense" );
+var_dump( $c->close( "randomnonsense" ) );
 echo "done.\n\n";
 
 echo "Testing closing invalid args):\n";
 createCons();
 echo "closing:\n";
-$c->close( array() );
-$c->close( new stdclass() );
-$c->close( fopen('/etc/passwd', 'r') );
+var_dump( $c->close( array() ) );
+var_dump( $c->close( new stdclass() ) );
+var_dump( $c->close( fopen('/etc/passwd', 'r') ) );
 echo "done.\n\n";
 ?>
 --EXPECTF--

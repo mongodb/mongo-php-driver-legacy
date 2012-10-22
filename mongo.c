@@ -490,6 +490,7 @@ PHP_METHOD(Mongo, close)
 		connection = mongo_manager_connection_find_by_hash(link->manager, hash);
 		if (!connection) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "A connection with hash '%s' does not exist.", hash);
+			RETURN_LONG(0);
 		}
 		RETVAL_LONG(close_connection(link->manager, connection));
 	} else {
