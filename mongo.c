@@ -35,6 +35,7 @@
 #include "bson.h"
 
 #include "util/log.h"
+#include "util/pool.h"
 
 #include "mcon/types.h"
 #include "mcon/read_preference.h"
@@ -120,6 +121,10 @@ static zend_function_entry mongo_methods[] = {
   PHP_ME(Mongo, getSlave, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, switchSlave, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(Mongo, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(Mongo, setPoolSize, arginfo_setPoolSize, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
+	PHP_ME(Mongo, getPoolSize, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
+	PHP_ME(Mongo, poolDebug, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
+
   { NULL, NULL, NULL }
 };
 
