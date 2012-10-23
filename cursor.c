@@ -822,6 +822,18 @@ PHP_METHOD(MongoCursor, doQuery) {
 
 	mongo_cursor_throw(cursor->connection, 19 TSRMLS_CC, "max number of retries exhausted, couldn't send query");
 }
+/* }}} */
+
+/* Cursor helpers */
+int mongo_cursor_mark_dead(void *callback_data)
+{
+	mongo_cursor *cursor = (mongo_cursor*) callback_data;
+
+	cursor->dead = 1;
+	cursor->connection = NULL;
+
+	return 1;
+}
 
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   mongo_cursor *cursor;
@@ -868,7 +880,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 	 * (like we do for commands right now through
 	 * php_mongo_connection_force_primary).  See also MongoDB::command and
 	 * append_getlasterror, where this has to be done too. */
-	cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char**) &error_message);
+	cursor->connection = mongo_get_read_write_connection_with_callback(link->manager, link->servers, MONGO_CON_FLAG_READ, cursor, mongo_cursor_mark_dead, (char**) &error_message);
 
 	/* restore read preferences from backup */
 	mongo_read_preference_replace(&rp, &link->servers->read_pref);
@@ -1440,13 +1452,17 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC) {
 
       if (type == MONGO_CURSOR) {
         mongo_cursor *cursor = (mongo_cursor*)val;
+		if (cursor->connection) {
+			mongo_deregister_callback_from_connection(cursor->connection, cursor);
+		}
+
+
         if (current->cursor_id == cursor->cursor_id &&
             cursor->connection != NULL &&
             current->socket == cursor->connection->socket) {
 
           // If the cursor_id is 0, the db is out of results anyway
-          // If the connection is not connected, just return
-          if (current->cursor_id == 0/* || !cursor->connection->connected*/) {
+          if (current->cursor_id == 0) {
             php_mongo_free_cursor_node(current, le);
           }
           else {
@@ -1646,12 +1662,14 @@ static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRML
 
 
 void php_mongo_cursor_free(void *object TSRMLS_DC) {
-  mongo_cursor *cursor = (mongo_cursor*)object;
+mongo_cursor *cursor = (mongo_cursor*)object;
 
-  if (cursor) {
-    if (cursor->cursor_id != 0) {
-      mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
-    }
+	if (cursor) {
+		if (cursor->cursor_id != 0) {
+			mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+		} else if (cursor->connection) {
+			mongo_deregister_callback_from_connection(cursor->connection, cursor);
+		}
 
     if (cursor->current) zval_ptr_dtor(&cursor->current);
 
