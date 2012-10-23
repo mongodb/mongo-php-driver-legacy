@@ -258,7 +258,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 			if (Z_TYPE_PP(fsync_pp) == IS_BOOL || Z_TYPE_PP(fsync_pp) == IS_LONG) { 
 				fsync = Z_LVAL_PP(fsync_pp);
 			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'fsync' option either needs to be a boolean");
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'fsync' option needs to be a boolean or an integer");
 			}
 			if (fsync && !safe) {
 				safe = 1;
@@ -268,7 +268,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 			if (Z_TYPE_PP(timeout_pp) == IS_LONG) { 
 				timeout = Z_LVAL_PP(timeout_pp);
 			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'timeout' option either needs to be a long");
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'timeout' option needs to be an integer");
 			}
 		}
 	}
@@ -438,6 +438,7 @@ static int is_safe_op(zval *options, int default_fire_and_forget TSRMLS_DC)
 				safe_op = 1;
 				goto ok;
 			}
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'safe' option either needs to be a boolean or a string");
 		}
 		/* Check for "fsync" in options array */
 		if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS) {
