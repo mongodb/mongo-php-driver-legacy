@@ -274,7 +274,7 @@ typedef struct {
 
 	mongo_con_manager *manager; /* Contains a link to the manager */
 	mongo_servers     *servers;
-} mongo_link;
+} mongoclient;
 
 #define MONGO_CURSOR 1
 
@@ -335,7 +335,7 @@ typedef struct {
   }
 
 #define PHP_MONGO_GET_LINK(obj)                                         \
-  link = (mongo_link*)zend_object_store_get_object((obj) TSRMLS_CC);    \
+  link = (mongoclient*)zend_object_store_get_object((obj) TSRMLS_CC);    \
   MONGO_CHECK_INITIALIZED(link->servers, Mongo);
 
 #define PHP_MONGO_GET_DB(obj)                                           \

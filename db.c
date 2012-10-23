@@ -27,7 +27,12 @@
 #include "mongo_types.h"
 #include "mcon/manager.h"
 
-extern zend_class_entry *mongo_ce_Mongo,
+#ifndef zend_parse_parameters_none
+#define zend_parse_parameters_none()    \
+        zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
+#endif
+
+extern zend_class_entry *mongo_ce_MongoClient,
   *mongo_ce_Collection,
   *mongo_ce_Cursor,
   *mongo_ce_GridFS,
@@ -46,7 +51,7 @@ zend_class_entry *mongo_ce_DB = NULL;
 
 static void clear_exception(zval* return_value TSRMLS_DC);
 
-void php_mongo_connection_force_primary(mongo_cursor *cursor, mongo_link *link TSRMLS_DC)
+void php_mongo_connection_force_primary(mongo_cursor *cursor, mongoclient *link TSRMLS_DC)
 {
 	char *error_message = NULL;
 
@@ -66,9 +71,9 @@ PHP_METHOD(MongoDB, __construct) {
   char *name;
   int name_len;
   mongo_db *db;
-  mongo_link *link;
+  mongoclient *link;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &zlink, mongo_ce_Mongo, &name, &name_len) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &zlink, mongo_ce_MongoClient, &name, &name_len) == FAILURE) {
     zval *object = getThis();
     ZVAL_NULL(object);
     return;
@@ -583,7 +588,7 @@ static char *get_cmd_ns(char *db, int db_len) {
 PHP_METHOD(MongoDB, command) {
   zval limit, *temp, *cmd, *cursor, *ns, *options = 0;
   mongo_db *db;
-  mongo_link *link;
+  mongoclient *link;
   char *cmd_ns;
 	mongo_cursor *cursor_tmp;
 
@@ -722,7 +727,7 @@ zval* mongo_db_cmd(mongo_connection *connection, char *database, zval *cmd TSRML
 PHP_METHOD(MongoDB, authenticate)
 {
 	mongo_db   *db;
-	mongo_link *link;
+	mongoclient *link;
 	char       *username, *password;
 	int         ulen, plen, i;
 
@@ -825,7 +830,7 @@ PHP_METHOD(MongoDB, __get) {
 /* }}} */
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
-	ZEND_ARG_OBJ_INFO(0, connection, Mongo, 0)
+	ZEND_ARG_OBJ_INFO(0, connection, MongoClient, 0)
 	ZEND_ARG_INFO(0, database_name)
 ZEND_END_ARG_INFO()
 
