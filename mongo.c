@@ -47,6 +47,7 @@
 static void php_mongo_link_free(void* TSRMLS_DC);
 static void run_err(int, zval*, zval* TSRMLS_DC);
 static void stringify_server(mongo_server_def *server, smart_str *str);
+static int close_connection(mongo_con_manager *manager, mongo_connection *connection);
 
 zend_object_handlers mongo_default_handlers;
 zend_object_handlers mongo_link_handlers;
@@ -452,22 +453,70 @@ PHP_METHOD(Mongo, connectUtil)
 /* }}} */
 
 
-/* {{{ Mongo->close()
- */
-PHP_METHOD(Mongo, close) {
-/* TODO: IMPLEMENT
-  mongo_link *link;
+/* {{{ proto int Mongo->close([string|bool hash|all])
+   Closes the connection to $hash, or only master - or all open connections. Returns how many connections were closed */
+PHP_METHOD(Mongo, close)
+{
+	char             *hash = NULL;
+	int               hash_len;
+	mongo_link       *link;
+	mongo_connection *connection;
+	char             *error_message = NULL;
+	zval             *all = NULL;
 
-  PHP_MONGO_GET_LINK(getThis());
+	PHP_MONGO_GET_LINK(getThis());
 
-  mongo_util_link_disconnect(link TSRMLS_CC);
+	if (ZEND_NUM_ARGS() == 0) {
+		/* BC: Close master when no arguments passed */
+		connection = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_WRITE|MONGO_CON_FLAG_DONT_CONNECT, (char **) &error_message);
+		RETVAL_LONG(close_connection(link->manager, connection));
+	} else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "z", &all) == SUCCESS && Z_TYPE_P(all) == IS_BOOL) {
+		if (Z_BVAL_P(all)) {
+			/* Close all connections */
+			mongo_con_manager_item *ptr = link->manager->connections;
+			mongo_con_manager_item *current;
+			long                    count = 0;
 
-  zend_update_property_bool(mongo_ce_Mongo, getThis(), "connected",
-                            strlen("connected"), 0 TSRMLS_CC);
-*/
-  RETURN_TRUE;
+			while (ptr) {
+				current = ptr;
+				ptr = ptr->next;
+				close_connection(link->manager, current->connection);
+				count++;
+			}
+
+			RETVAL_LONG(count);
+		} else {
+			/* Close master */
+			connection = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_WRITE|MONGO_CON_FLAG_DONT_CONNECT, (char **) &error_message);
+			RETVAL_LONG(close_connection(link->manager, connection));
+		}
+	} else if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &hash, &hash_len) == SUCCESS) {
+		/* Lookup hash and destroy it */
+		connection = mongo_manager_connection_find_by_hash(link->manager, hash);
+		if (!connection) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "A connection with hash '%s' does not exist.", hash);
+			RETURN_LONG(0);
+		}
+		RETVAL_LONG(close_connection(link->manager, connection));
+	} else {
+		return;
+	}
+
+	if (error_message) {
+		free(error_message);
+	}
 }
 /* }}} */
+
+static int close_connection(mongo_con_manager *manager, mongo_connection *connection)
+{
+	if (connection) {
+		mongo_manager_connection_deregister(manager, connection);
+		return 1;
+	} else {
+		return 0;
+	}
+}
 
 static void stringify_server(mongo_server_def *server, smart_str *str)
 {
