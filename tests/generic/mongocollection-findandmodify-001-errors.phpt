@@ -38,7 +38,7 @@ $col->insert(array(
 
 $retval = $col->findAndModify(
      array("inprogress" => false, "name" => "Biz report"),
-     array('$set' => array('inprogress' => true, "started" => new MongoDate())),
+     array('$set' => array('$set' => array('inprogress' => true, "started" => new MongoDate()))),
      null,
      array(
         "sort" => array("priority" => -1),
@@ -51,8 +51,8 @@ var_dump($retval);
 $retval = $col->findAndModify(
      array("inprogress" => false, "name" => "Next promo"),
      array('$pop' => array("tasks" => -1)),
-     array("tasks" => 1),
-     array("new" => false)
+     array("tasks" => array('$pop' => array("stuff"))),
+     array("new" => true)
 );
 
 var_dump($retval);
@@ -60,7 +60,7 @@ var_dump($retval);
 
 $col->findAndModify(
     null,
-    null,
+    array("asdf"),
     null,
     array("sort" => array("priority" => -1), "remove" => true)
 );
@@ -74,54 +74,18 @@ var_dump($retval)
 
 ?>
 --EXPECTF--
-array(6) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
-  }
-  ["inprogress"]=>
-  bool(true)
-  ["name"]=>
-  string(10) "Biz report"
-  ["priority"]=>
-  int(2)
-  ["started"]=>
-  object(MongoDate)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["usec"]=>
-    int(%d)
-  }
-  ["tasks"]=>
-  array(2) {
-    [0]=>
-    string(20) "run marketing report"
-    [1]=>
-    string(12) "email report"
-  }
-}
-array(2) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
-  }
-  ["tasks"]=>
-  array(3) {
-    [0]=>
-    string(14) "select product"
-    [1]=>
-    string(13) "add inventory"
-    [2]=>
-    string(12) "do placement"
-  }
-}
-array(2) {
+Warning: MongoCollection::findAndModify(): Modified field name may not start with $ in %s on line %d
+bool(false)
+
+Warning: MongoCollection::findAndModify(): exception: Unsupported projection option: $pop in %s on line %d
+bool(false)
+
+Warning: MongoCollection::findAndModify(): exception: can't remove and update in %s on line %d
+array(3) {
   ["%s"]=>
   array(5) {
     ["_id"]=>
-    object(MongoId)#%d (1) {
+    object(MongoId)#6 (1) {
       ["$id"]=>
       string(24) "%s"
     }
@@ -142,7 +106,7 @@ array(2) {
   ["%s"]=>
   array(5) {
     ["_id"]=>
-    object(MongoId)#%d (1) {
+    object(MongoId)#7 (1) {
       ["$id"]=>
       string(24) "%s"
     }
@@ -156,6 +120,27 @@ array(2) {
     array(2) {
       [0]=>
       string(16) "run sales report"
+      [1]=>
+      string(12) "email report"
+    }
+  }
+  ["%s"]=>
+  array(5) {
+    ["_id"]=>
+    object(MongoId)#8 (1) {
+      ["$id"]=>
+      string(24) "%s"
+    }
+    ["name"]=>
+    string(10) "Biz report"
+    ["inprogress"]=>
+    bool(false)
+    ["priority"]=>
+    int(2)
+    ["tasks"]=>
+    array(2) {
+      [0]=>
+      string(20) "run marketing report"
       [1]=>
       string(12) "email report"
     }
