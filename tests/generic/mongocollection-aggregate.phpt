@@ -72,60 +72,70 @@ $retval = $c->aggregate((object)$ops);
 --EXPECTF--
 bool(true)
 array(2) {
-  [0]=>
+  ["result"]=>
   array(2) {
-    ["_id"]=>
-    array(1) {
-      ["tags"]=>
-      string(4) "good"
+    [0]=>
+    array(2) {
+      ["_id"]=>
+      array(1) {
+        ["tags"]=>
+        string(4) "good"
+      }
+      ["authors"]=>
+      array(1) {
+        [0]=>
+        string(3) "bob"
+      }
     }
-    ["authors"]=>
-    array(1) {
-      [0]=>
-      string(3) "bob"
+    [1]=>
+    array(2) {
+      ["_id"]=>
+      array(1) {
+        ["tags"]=>
+        string(3) "fun"
+      }
+      ["authors"]=>
+      array(1) {
+        [0]=>
+        string(3) "bob"
+      }
     }
   }
-  [1]=>
-  array(2) {
-    ["_id"]=>
-    array(1) {
-      ["tags"]=>
-      string(3) "fun"
-    }
-    ["authors"]=>
-    array(1) {
-      [0]=>
-      string(3) "bob"
-    }
-  }
+  ["ok"]=>
+  float(1)
 }
 array(2) {
-  [0]=>
+  ["result"]=>
   array(2) {
-    ["_id"]=>
-    array(1) {
-      ["tags"]=>
-      string(4) "good"
+    [0]=>
+    array(2) {
+      ["_id"]=>
+      array(1) {
+        ["tags"]=>
+        string(4) "good"
+      }
+      ["authors"]=>
+      array(1) {
+        [0]=>
+        string(3) "bob"
+      }
     }
-    ["authors"]=>
-    array(1) {
-      [0]=>
-      string(3) "bob"
+    [1]=>
+    array(2) {
+      ["_id"]=>
+      array(1) {
+        ["tags"]=>
+        string(3) "fun"
+      }
+      ["authors"]=>
+      array(1) {
+        [0]=>
+        string(3) "bob"
+      }
     }
   }
-  [1]=>
-  array(2) {
-    ["_id"]=>
-    array(1) {
-      ["tags"]=>
-      string(3) "fun"
-    }
-    ["authors"]=>
-    array(1) {
-      [0]=>
-      string(3) "bob"
-    }
-  }
+  ["ok"]=>
+  float(1)
 }
 
 Warning: MongoCollection::aggregate() expects at least 1 parameter, 0 given in %s on line %d
