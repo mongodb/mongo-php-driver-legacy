@@ -1272,7 +1272,7 @@ PHP_METHOD(MongoCollection, toIndexString) {
    Wrapper for the aggregate runCommand. Either one array of ops (a pipeline), or a variable number of op arguments */
 PHP_METHOD(MongoCollection, aggregate)
 {
-	zval ***argv, *pipeline, *data, *retval, **values, *tmp;
+	zval ***argv, *pipeline, *data, *retval, **values, *tmp, **tmpvalue;
 	int argc, i;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &argv, &argc) == FAILURE) {
@@ -1321,9 +1321,23 @@ PHP_METHOD(MongoCollection, aggregate)
 	MAKE_STD_ZVAL(retval);
 	MONGO_CMD(retval, c->parent);
 
-	if (zend_hash_find(Z_ARRVAL_P(retval), "result", strlen("result") + 1, (void **) &values) == SUCCESS) {
-		array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
-		zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval*));
+	if (zend_hash_find(Z_ARRVAL_P(retval), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
+		if (Z_LVAL_PP(tmpvalue) < 1) {
+			zval **errmsg;
+			if (zend_hash_find(Z_ARRVAL_P(retval), "errmsg", strlen("errmsg") + 1, (void **) &errmsg) == SUCCESS) {
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s", Z_STRVAL_PP(errmsg));
+			} else {
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unkown error executing pipeline");
+			}
+			RETVAL_FALSE;
+		} else {
+			if (zend_hash_find(Z_ARRVAL_P(retval), "result", strlen("result") + 1, (void **) &values) == SUCCESS) {
+				array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
+				zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval*));
+			} else {
+				RETVAL_FALSE;
+			}
+		}
 	} else {
 		RETVAL_FALSE;
 	}
