@@ -39,7 +39,8 @@ extern zend_object_handlers mongo_default_handlers,
   mongo_id_handlers;
 
 /** Classes */
-extern zend_class_entry *mongo_ce_CursorException;
+extern zend_class_entry *mongo_ce_CursorException,
+  *mongo_ce_ResultException;
 
 zend_class_entry *mongo_ce_ConnectionException,
   *mongo_ce_CursorTOException,
@@ -156,6 +157,7 @@ PHP_MINIT_FUNCTION(mongo) {
   mongo_init_MongoDBRef(TSRMLS_C);
 
   mongo_init_MongoExceptions(TSRMLS_C);
+  mongo_init_MongoResultException(TSRMLS_C);
 
   mongo_init_MongoTimestamp(TSRMLS_C);
   mongo_init_MongoInt32(TSRMLS_C);
