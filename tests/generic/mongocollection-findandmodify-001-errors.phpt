@@ -36,116 +36,103 @@ $col->insert(array(
 
 
 
-$retval = $col->findAndModify(
-     array("inprogress" => false, "name" => "Biz report"),
-     array('$set' => array('$set' => array('inprogress' => true, "started" => new MongoDate()))),
-     null,
-     array(
-        "sort" => array("priority" => -1),
-        "new" => true,
-    )
-);
-
-var_dump($retval);
-
-$retval = $col->findAndModify(
-     array("inprogress" => false, "name" => "Next promo"),
-     array('$pop' => array("tasks" => -1)),
-     array("tasks" => array('$pop' => array("stuff"))),
-     array("new" => true)
-);
-
-var_dump($retval);
+try {
+    $retval = $col->findAndModify(
+         array("inprogress" => false, "name" => "Biz report"),
+         array('$set' => array('$set' => array('inprogress' => true, "started" => new MongoDate()))),
+         null,
+         array(
+            "sort" => array("priority" => -1),
+            "new" => true,
+        )
+    );
+} catch(MongoResultException $e) {
+    echo $e->getCode(), " : ", $e->getMessage(), "\n";
+    var_dump($e->getDocument());
+}
 
 
-$col->findAndModify(
-    null,
-    array("asdf"),
-    null,
-    array("sort" => array("priority" => -1), "remove" => true)
-);
+try {
+    $retval = $col->findAndModify(
+         array("inprogress" => false, "name" => "Next promo"),
+         array('$pop' => array("tasks" => -1)),
+         array("tasks" => array('$pop' => array("stuff"))),
+         array("new" => true)
+    );
+} catch(MongoResultException $e) {
+    echo $e->getCode(), " : ", $e->getMessage(), "\n";
+    var_dump($e->getDocument());
+}
 
-$retval = $col->find();
-var_dump(iterator_to_array($retval));
-$col->remove();
 
-$retval = $col->findAndModify(null);
-var_dump($retval)
+try {
+    $col->findAndModify(
+        null,
+        array("asdf"),
+        null,
+        array("sort" => array("priority" => -1), "remove" => true)
+    );
+    $retval = $col->find();
+    var_dump(iterator_to_array($retval));
+    $col->remove();
+
+} catch(MongoResultException $e) {
+    echo $e->getCode(), " : ", $e->getMessage(), "\n";
+    var_dump($e->getDocument());
+}
+
+try {
+    $retval = $col->findAndModify(null);
+    var_dump($retval);
+} catch(MongoResultException $e) {
+    echo $e->getCode(), " : ", $e->getMessage(), "\n";
+    var_dump($e->getDocument());
+}
 
 ?>
 --EXPECTF--
-Warning: MongoCollection::findAndModify(): Modified field name may not start with $ in %s on line %d
-bool(false)
-
-Warning: MongoCollection::findAndModify(): exception: Unsupported projection option: $pop in %s on line %d
-bool(false)
-
-Warning: MongoCollection::findAndModify(): exception: can't remove and update in %s on line %d
+0 : Modified field name may not start with $
 array(3) {
-  ["%s"]=>
+  ["lastErrorObject"]=>
   array(5) {
-    ["_id"]=>
-    object(MongoId)#6 (1) {
-      ["$id"]=>
-      string(24) "%s"
-    }
-    ["inprogress"]=>
-    bool(false)
-    ["name"]=>
-    string(10) "Next promo"
-    ["priority"]=>
+    ["err"]=>
+    string(40) "Modified field name may not start with $"
+    ["code"]=>
+    int(15896)
+    ["n"]=>
     int(0)
-    ["tasks"]=>
-    array(2) {
-      [0]=>
-      string(13) "add inventory"
-      [1]=>
-      string(12) "do placement"
-    }
+    ["connectionId"]=>
+    int(%d)
+    ["ok"]=>
+    float(1)
   }
-  ["%s"]=>
-  array(5) {
-    ["_id"]=>
-    object(MongoId)#7 (1) {
-      ["$id"]=>
-      string(24) "%s"
-    }
-    ["name"]=>
-    string(10) "Biz report"
-    ["inprogress"]=>
-    bool(false)
-    ["priority"]=>
-    int(1)
-    ["tasks"]=>
-    array(2) {
-      [0]=>
-      string(16) "run sales report"
-      [1]=>
-      string(12) "email report"
-    }
-  }
-  ["%s"]=>
-  array(5) {
-    ["_id"]=>
-    object(MongoId)#8 (1) {
-      ["$id"]=>
-      string(24) "%s"
-    }
-    ["name"]=>
-    string(10) "Biz report"
-    ["inprogress"]=>
-    bool(false)
-    ["priority"]=>
-    int(2)
-    ["tasks"]=>
-    array(2) {
-      [0]=>
-      string(20) "run marketing report"
-      [1]=>
-      string(12) "email report"
-    }
-  }
+  ["errmsg"]=>
+  string(40) "Modified field name may not start with $"
+  ["ok"]=>
+  float(0)
 }
-
-Warning: MongoCollection::findAndModify(): need remove or update in %s on line %d
-bool(false)
+13097 : exception: Unsupported projection option: $pop
+array(3) {
+  ["errmsg"]=>
+  string(46) "exception: Unsupported projection option: $pop"
+  ["code"]=>
+  int(13097)
+  ["ok"]=>
+  float(0)
+}
+12515 : exception: can't remove and update
+array(3) {
+  ["errmsg"]=>
+  string(34) "exception: can't remove and update"
+  ["code"]=>
+  int(12515)
+  ["ok"]=>
+  float(0)
+}
+0 : need remove or update
+array(2) {
+  ["errmsg"]=>
+  string(21) "need remove or update"
+  ["ok"]=>
+  float(0)
+}

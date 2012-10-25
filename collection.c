@@ -1687,12 +1687,26 @@ static int php_mongo_trigger_error_on_command_failure(zval *document) {
 
 	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
 		if (Z_LVAL_PP(tmpvalue) < 1) {
-			zval **errmsg;
-			if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void **) &errmsg) == SUCCESS) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s", Z_STRVAL_PP(errmsg));
+			zval **tmp, *exception;
+			char *message;
+			long code;
+
+			if (zend_hash_find(Z_ARRVAL_P(document), "errms", strlen("errms") + 1, (void **) &tmp) == SUCCESS) {
+				message = Z_STRVAL_PP(tmp);
 			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unkown error executing command");
+				message = strdup("Unknown error executing command");
 			}
+
+			if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &tmp) == SUCCESS) {
+				convert_to_long_ex(tmp);
+				code = Z_LVAL_PP(tmp);
+			} else {
+				code = 0;
+			}
+
+			exception = zend_throw_exception(mongo_ce_ResultException, message, code);
+			zend_update_property(mongo_ce_Exception, exception, "document", strlen("document"), document TSRMLS_CC);
+
 			return FAILURE;
 		}
 	}
