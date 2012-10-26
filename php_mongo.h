@@ -513,6 +513,7 @@ PHP_FUNCTION(bson_decode);
 void mongo_init_MongoDB(TSRMLS_D);
 void mongo_init_MongoCollection(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);
+void mongo_init_MongoResultException(TSRMLS_D);
 
 void mongo_init_MongoGridFS(TSRMLS_D);
 void mongo_init_MongoGridFSFile(TSRMLS_D);

@@ -37,6 +37,8 @@ extern int le_pconnection,
 
 extern zend_object_handlers mongo_default_handlers;
 
+zend_class_entry *mongo_ce_ResultException;
+
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_Collection = NULL;
@@ -45,6 +47,7 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 static int is_safe_op(zval *options TSRMLS_DC);
 static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
+static int php_mongo_trigger_error_on_command_failure(zval *document);
 
 PHP_METHOD(MongoCollection, __construct) {
   zval *parent, *name, *zns, *w, *wtimeout;
@@ -676,12 +679,16 @@ PHP_METHOD(MongoCollection, findAndModify)
 	ZVAL_NULL(tmpretval);
 	MONGO_CMD(tmpretval, c->parent);
 
-	if (zend_hash_find(Z_ARRVAL_P(tmpretval), "value", strlen("value")+1, (void **)&values) == SUCCESS) {
-		array_init(return_value);
-		/* We may wind up with a NULL here if there simply aren't any results */
-		if (Z_TYPE_PP(values) == IS_ARRAY) {
-			zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+	if (php_mongo_trigger_error_on_command_failure(tmpretval) == SUCCESS) {
+		if (zend_hash_find(Z_ARRVAL_P(tmpretval), "value", strlen("value")+1, (void **)&values) == SUCCESS) {
+			array_init(return_value);
+			/* We may wind up with a NULL here if there simply aren't any results */
+			if (Z_TYPE_PP(values) == IS_ARRAY) {
+				zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+			}
 		}
+	} else {
+		RETVAL_FALSE;
 	}
 
 	zval_ptr_dtor(&data);
@@ -1492,6 +1499,19 @@ PHP_METHOD(MongoCollection, __get) {
 }
 /* }}} */
 
+/* {{{ proto array MongoResultException::getDocument(void)
+ * Returns the full result document from mongodb */
+PHP_METHOD(MongoResultException, getDocument)
+{
+  zval *h;
+
+  h = zend_read_property(mongo_ce_ResultException, getThis(), "document", strlen("document"), NOISY TSRMLS_CC);
+
+  RETURN_ZVAL(h, 1, 0);
+}
+/* }}} */
+
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, database, MongoDB, 0)
 	ZEND_ARG_INFO(0, collection_name)
@@ -1600,6 +1620,9 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregate, 0, 0, 1)
 	ZEND_ARG_INFO(0, ...)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getdocument, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry MongoCollection_methods[] = {
   PHP_ME(MongoCollection, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCollection, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
@@ -1633,6 +1656,11 @@ static zend_function_entry MongoCollection_methods[] = {
   {NULL, NULL, NULL}
 };
 
+static zend_function_entry MongoResultException_methods[] = {
+  PHP_ME(MongoResultException, getDocument, arginfo_getdocument, ZEND_ACC_PUBLIC)
+  {NULL, NULL, NULL}
+};
+
 static void php_mongo_collection_free(void *object TSRMLS_DC) {
   mongo_collection *c = (mongo_collection*)object;
 
@@ -1655,6 +1683,38 @@ static void php_mongo_collection_free(void *object TSRMLS_DC) {
   }
 }
 
+static int php_mongo_trigger_error_on_command_failure(zval *document)
+{
+	zval **tmpvalue;
+
+	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
+		if (Z_LVAL_PP(tmpvalue) < 1) {
+			zval **tmp, *exception;
+			char *message;
+			long code;
+
+			if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void **) &tmp) == SUCCESS) {
+				message = Z_STRVAL_PP(tmp);
+			} else {
+				message = strdup("Unknown error executing command");
+			}
+
+			if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &tmp) == SUCCESS) {
+				convert_to_long_ex(tmp);
+				code = Z_LVAL_PP(tmp);
+			} else {
+				code = 0;
+			}
+
+			exception = zend_throw_exception(mongo_ce_ResultException, message, code);
+			zend_update_property(mongo_ce_Exception, exception, "document", strlen("document"), document TSRMLS_CC);
+
+			return FAILURE;
+		}
+	}
+	return SUCCESS;
+}
+
 
 /* {{{ php_mongo_collection_new
  */
@@ -1675,4 +1735,13 @@ void mongo_init_MongoCollection(TSRMLS_D) {
 
   zend_declare_property_long(mongo_ce_Collection, "w", strlen("w"), 1, ZEND_ACC_PUBLIC TSRMLS_CC);
   zend_declare_property_long(mongo_ce_Collection, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_TIMEOUT, ZEND_ACC_PUBLIC TSRMLS_CC);
+
+}
+void mongo_init_MongoResultException(TSRMLS_D) {
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "MongoResultException", MongoResultException_methods);
+  mongo_ce_ResultException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
+
+  zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC TSRMLS_CC);
 }
