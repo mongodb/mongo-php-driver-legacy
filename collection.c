@@ -288,6 +288,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	 * and MongoDb, but only if safe is still 1. */
 	if (safe == 1) {
 		zval *w = zend_read_property(mongo_ce_Collection, coll, "w", strlen("w"), NOISY TSRMLS_CC);
+		convert_to_long(w);
 		safe = Z_LVAL_P(w);
 	}
 
