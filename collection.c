@@ -1501,7 +1501,8 @@ PHP_METHOD(MongoCollection, __get) {
 
 /* {{{ proto array MongoResultException::getDocument(void)
  * Returns the full result document from mongodb */
-PHP_METHOD(MongoResultException, getDocument) {
+PHP_METHOD(MongoResultException, getDocument)
+{
   zval *h;
 
   h = zend_read_property(mongo_ce_ResultException, getThis(), "document", strlen("document"), NOISY TSRMLS_CC);
@@ -1682,7 +1683,8 @@ static void php_mongo_collection_free(void *object TSRMLS_DC) {
   }
 }
 
-static int php_mongo_trigger_error_on_command_failure(zval *document) {
+static int php_mongo_trigger_error_on_command_failure(zval *document)
+{
 	zval **tmpvalue;
 
 	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
@@ -1691,7 +1693,7 @@ static int php_mongo_trigger_error_on_command_failure(zval *document) {
 			char *message;
 			long code;
 
-			if (zend_hash_find(Z_ARRVAL_P(document), "errms", strlen("errms") + 1, (void **) &tmp) == SUCCESS) {
+			if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void **) &tmp) == SUCCESS) {
 				message = Z_STRVAL_PP(tmp);
 			} else {
 				message = strdup("Unknown error executing command");
