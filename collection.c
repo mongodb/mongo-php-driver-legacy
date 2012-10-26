@@ -94,8 +94,10 @@ PHP_METHOD(MongoCollection, __construct) {
   mongo_read_preference_copy(&db->read_pref, &c->read_pref);
 
   w = zend_read_property(mongo_ce_DB, parent, "w", strlen("w"), NOISY TSRMLS_CC);
+  convert_to_long(w);
   zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_LVAL_P(w) TSRMLS_CC);
   wtimeout = zend_read_property(mongo_ce_DB, parent, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
+  convert_to_long(wtimeout);
   zend_update_property_long(mongo_ce_Collection, getThis(), "wtimeout", strlen("wtimeout"), Z_LVAL_P(wtimeout) TSRMLS_CC);
 }
 
@@ -230,6 +232,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	mongo_link *link = (mongo_link*) zend_object_store_get_object(c->link TSRMLS_CC);
 
 	timeout_p = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
+	convert_to_long(timeout_p);
 	timeout = Z_LVAL_P(timeout_p);
 
 	/* Read the default_fire_and_forget property from the link */
@@ -303,6 +306,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
     }
 
     wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
+	convert_to_long(wtimeout);
     add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
   }
   if (fsync) {
