@@ -258,21 +258,16 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 			}
 		}
 		if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp)) {
-			if (Z_TYPE_PP(fsync_pp) == IS_BOOL || Z_TYPE_PP(fsync_pp) == IS_LONG) { 
-				fsync = Z_LVAL_PP(fsync_pp);
-			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'fsync' option needs to be a boolean or an integer");
-			}
+			convert_to_boolean(*fsync_pp);
+			fsync = Z_BVAL_PP(fsync_pp);
+
 			if (fsync && !safe) {
 				safe = 1;
 			}
 		}
 		if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout_pp)) {
-			if (Z_TYPE_PP(timeout_pp) == IS_LONG) { 
-				timeout = Z_LVAL_PP(timeout_pp);
-			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'timeout' option needs to be an integer");
-			}
+			convert_to_long(*timeout_pp);
+			timeout = Z_LVAL_PP(timeout_pp);
 		}
 	}
 
@@ -300,17 +295,21 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 
     if (safe_str) {
       add_assoc_string(cmd, "w", safe_str, 1);
+			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added w='%s'", safe_str);
     }
     else {
       add_assoc_long(cmd, "w", safe);
+			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added w=%d", safe);
     }
 
     wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
 	convert_to_long(wtimeout);
     add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
+		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d", Z_LVAL_P(wtimeout));
   }
   if (fsync) {
     add_assoc_bool(cmd, "fsync", 1);
+		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added fsync=1");
   }
 
   // get cursor
