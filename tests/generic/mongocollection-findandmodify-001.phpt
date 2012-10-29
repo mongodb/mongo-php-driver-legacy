@@ -69,8 +69,13 @@ $retval = $col->find();
 var_dump(iterator_to_array($retval));
 $col->remove();
 
-$retval = $col->findAndModify(null);
-var_dump($retval)
+try {
+    $retval = $col->findAndModify(null);
+    var_dump($retval);
+} catch(MongoResultException $e) {
+    echo $e->getCode(), " ", $e->getMessage(), "\n";
+    var_dump($e->getDocument());
+}
 
 ?>
 --EXPECTF--
@@ -161,5 +166,10 @@ array(2) {
     }
   }
 }
-array(0) {
+0 need remove or update
+array(2) {
+  ["errmsg"]=>
+  string(21) "need remove or update"
+  ["ok"]=>
+  float(0)
 }
