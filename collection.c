@@ -1657,8 +1657,8 @@ static zend_function_entry MongoCollection_methods[] = {
 };
 
 static zend_function_entry MongoResultException_methods[] = {
-  PHP_ME(MongoResultException, getDocument, arginfo_getdocument, ZEND_ACC_PUBLIC)
-  {NULL, NULL, NULL}
+	PHP_ME(MongoResultException, getDocument, arginfo_getdocument, ZEND_ACC_PUBLIC)
+	{NULL, NULL, NULL}
 };
 
 static void php_mongo_collection_free(void *object TSRMLS_DC) {
@@ -1735,13 +1735,14 @@ void mongo_init_MongoCollection(TSRMLS_D) {
 
   zend_declare_property_long(mongo_ce_Collection, "w", strlen("w"), 1, ZEND_ACC_PUBLIC TSRMLS_CC);
   zend_declare_property_long(mongo_ce_Collection, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_TIMEOUT, ZEND_ACC_PUBLIC TSRMLS_CC);
-
 }
-void mongo_init_MongoResultException(TSRMLS_D) {
-  zend_class_entry ce;
 
-  INIT_CLASS_ENTRY(ce, "MongoResultException", MongoResultException_methods);
-  mongo_ce_ResultException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
+void mongo_init_MongoResultException(TSRMLS_D)
+{
+	zend_class_entry ce;
 
-  zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	INIT_CLASS_ENTRY(ce, "MongoResultException", MongoResultException_methods);
+	mongo_ce_ResultException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
+
+	zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC TSRMLS_CC);
 }
