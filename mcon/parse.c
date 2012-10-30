@@ -23,7 +23,11 @@ mongo_servers* mongo_parse_init(void)
 	servers->count = 0;
 	servers->repl_set_name = NULL;
 	servers->con_type = MONGO_CON_TYPE_STANDALONE;
+
 	servers->default_fire_and_forget = -1;
+	servers->default_w = -1;
+	servers->default_wstring = NULL;
+	servers->default_wtimeout = -1;
 
 	return servers;
 }
@@ -408,6 +412,28 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 
+	if (strcasecmp(option_name, "w") == 0) {
+		/* Rough check to see whether this is a numeric string or not */
+		if (option_value[0] >= '0' && option_value[0] <= '9' || option_value[0] == '-') {
+			servers->default_w = atoi(option_value);
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': %d", servers->default_w);
+			if (servers->default_w < 1) {
+				*error_message = strdup("The value of 'w' needs to be 1 or higher (or a string).");
+				return 3;
+			}
+		} else {
+			servers->default_wstring = strdup(option_value);
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': '%s'", servers->default_wstring);
+		}
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "wTimeout") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'wTimeout': %d", atoi(option_value));
+		servers->default_wtimeout = atoi(option_value);
+		return 0;
+	}
+
 	*error_message = malloc(256);
 	snprintf(*error_message, 256, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
@@ -506,12 +532,21 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	}
 
 	to->con_type = from->con_type;
-	to->repl_set_name = NULL;
-	to->connectTimeoutMS = from->connectTimeoutMS;
 
 	if (from->repl_set_name) {
 		to->repl_set_name = strdup(from->repl_set_name);
 	}
+	to->repl_set_name = NULL;
+
+	to->connectTimeoutMS = from->connectTimeoutMS;
+
+	to->default_fire_and_forget = from->default_fire_and_forget;
+	to->default_w = from->default_w;
+	to->default_wtimeout = from->default_wtimeout;
+	if (from->default_wstring) {
+		to->default_wstring = strdup(from->default_wstring);
+	}
+
 	mongo_read_preference_copy(&from->read_pref, &to->read_pref);
 }
 
@@ -542,6 +577,9 @@ void mongo_servers_dtor(mongo_servers *servers)
 	}
 	if (servers->repl_set_name) {
 		free(servers->repl_set_name);
+	}
+	if (servers->default_wstring) {
+		free(servers->default_wstring);
 	}
 	for (i = 0; i < servers->read_pref.tagset_count; i++) {
 		mongo_read_preference_tagset_dtor(servers->read_pref.tagsets[i]);
