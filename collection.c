@@ -340,7 +340,6 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	/* This should be refactored alongside with the getLastError redirection in
 	 * db.c/MongoDB::command. The Cursor creation should be done through
 	 * an init method otherwise a connection have to be requested twice. */
-	link = (mongo_link*) zend_object_store_get_object((db->link) TSRMLS_CC);
 	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for getlasterror");
 	php_mongo_connection_force_primary(cursor, link TSRMLS_CC);
 
