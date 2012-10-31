@@ -47,7 +47,7 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 static int is_safe_op(zval *options TSRMLS_DC);
 static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
-static int php_mongo_trigger_error_on_command_failure(zval *document);
+static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
 
 PHP_METHOD(MongoCollection, __construct) {
   zval *parent, *name, *zns, *w, *wtimeout;
@@ -679,7 +679,7 @@ PHP_METHOD(MongoCollection, findAndModify)
 	ZVAL_NULL(tmpretval);
 	MONGO_CMD(tmpretval, c->parent);
 
-	if (php_mongo_trigger_error_on_command_failure(tmpretval) == SUCCESS) {
+	if (php_mongo_trigger_error_on_command_failure(tmpretval TSRMLS_CC) == SUCCESS) {
 		if (zend_hash_find(Z_ARRVAL_P(tmpretval), "value", strlen("value")+1, (void **)&values) == SUCCESS) {
 			array_init(return_value);
 			/* We may wind up with a NULL here if there simply aren't any results */
@@ -1684,7 +1684,7 @@ static void php_mongo_collection_free(void *object TSRMLS_DC) {
   }
 }
 
-static int php_mongo_trigger_error_on_command_failure(zval *document)
+static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
 {
 	zval **tmpvalue;
 
@@ -1707,7 +1707,7 @@ static int php_mongo_trigger_error_on_command_failure(zval *document)
 				code = 0;
 			}
 
-			exception = zend_throw_exception(mongo_ce_ResultException, message, code);
+			exception = zend_throw_exception(mongo_ce_ResultException, message, code TSRMLS_CC);
 			zend_update_property(mongo_ce_Exception, exception, "document", strlen("document"), document TSRMLS_CC);
 
 			return FAILURE;
