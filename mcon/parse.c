@@ -4,6 +4,7 @@
 
 #include "types.h"
 #include "parse.h"
+#include "utils.h"
 #include "manager.h"
 #include "read_preference.h"
 
@@ -54,8 +55,8 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 
 		/* check for username:password */
 		if (at && colon && at - colon > 0) {
-			tmp_user = strndup(pos, colon - pos);
-			tmp_pass = strndup(colon + 1, at - (colon + 1));
+			tmp_user = mcon_strndup(pos, colon - pos);
+			tmp_pass = mcon_strndup(colon + 1, at - (colon + 1));
 
 			/* move current
 			 * mongodb://user:pass@host:port,host:port
@@ -177,7 +178,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 
 	/* Handling database name */
 	if (db_start) {
-		tmp_database = strndup(db_start, db_end - db_start);
+		tmp_database = mcon_strndup(db_start, db_end - db_start);
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found database name '%s'", tmp_database);
 	} else if (tmp_user && tmp_pass) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- No database name found for an authenticated connection. Using 'admin' as default database");
@@ -208,7 +209,7 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 	tmp->username = tmp->password = tmp->db = NULL;
 	tmp->port = 27017;
 
-	tmp->host = strndup(host_start, host_end - host_start);
+	tmp->host = mcon_strndup(host_start, host_end - host_start);
 	if (port_start) {
 		tmp->port = atoi(port_start);
 	}
@@ -231,8 +232,8 @@ int static mongo_process_option(mongo_con_manager *manager, mongo_servers *serve
 		return 1;
 	}
 
-	tmp_name = strndup(name, value - name - 1);
-	tmp_value = strndup(value, pos - value);
+	tmp_name = mcon_strndup(name, value - name - 1);
+	tmp_value = mcon_strndup(value, pos - value);
 
 	retval = mongo_store_option(manager, servers, tmp_name, tmp_value, error_message);
 
@@ -264,9 +265,9 @@ static int parse_read_preference_tags(mongo_con_manager *manager, mongo_servers 
 				mongo_read_preference_tagset_dtor(tmp_ts);
 				return 3;
 			}
-			tmp_name = strndup(start, colon - start);
+			tmp_name = mcon_strndup(start, colon - start);
 			if (end) {
-				tmp_value = strndup(colon + 1, end - colon - 1);
+				tmp_value = mcon_strndup(colon + 1, end - colon - 1);
 				start = end + 1;
 				mongo_read_preference_add_tag(tmp_ts, tmp_name, tmp_value);
 				free(tmp_value);

@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "str.h"
+#include "types.h"
 
 void mcon_str_add(mcon_str *xs, char *str, int f)
 {

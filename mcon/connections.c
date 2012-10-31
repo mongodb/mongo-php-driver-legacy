@@ -11,9 +11,7 @@
 
 #ifdef WIN32
 #include <winsock2.h>
-#  ifndef int64_t
-     typedef __int64 int64_t;
-#  endif
+#include <ws2tcpip.h>
 #else
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -21,14 +19,14 @@
 #include <netdb.h>
 #include <sys/un.h>
 #include <sys/socket.h>
+#include <unistd.h>
+#include <sys/time.h>
 #endif
 
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/time.h>
 
 #define INT_32  4
 #define FLAGS   0
@@ -86,8 +84,6 @@ int mongo_connection_connect(char *host, int port, int timeout, char **error_mes
 	int                status;
 	int                tmp_socket;
 
-	*error_message = NULL;
-
 #ifdef WIN32
 	WORD       version;
 	WSADATA    wsaData;
@@ -99,6 +95,8 @@ int mongo_connection_connect(char *host, int port, int timeout, char **error_mes
 	uint               size;
 	int                yes = 1;
 #endif
+
+	*error_message = NULL;
 
 #ifdef WIN32
 	family = AF_INET;
@@ -475,7 +473,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 		/* We reset the name as the server responded with a different name than
 		 * what we thought it was */
 		free(server->host);
-		server->host = strndup(connected_name, strchr(connected_name, ':') - connected_name);
+		server->host = mcon_strndup(connected_name, strchr(connected_name, ':') - connected_name);
 		server->port = atoi(strchr(connected_name, ':') + 1);
 		retval = 3;
 	}

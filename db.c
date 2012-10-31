@@ -29,11 +29,6 @@
 #include "mongo_types.h"
 #include "mcon/manager.h"
 
-#ifndef zend_parse_parameters_none
-#define zend_parse_parameters_none()    \
-        zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
-#endif
-
 extern zend_class_entry *mongo_ce_Mongo,
   *mongo_ce_Collection,
   *mongo_ce_Cursor,

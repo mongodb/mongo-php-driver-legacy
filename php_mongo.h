@@ -29,6 +29,39 @@
 #define PHP_SERVER_RES_NAME "mongo server info"
 #define PHP_CURSOR_LIST_RES_NAME "cursor list"
 
+
+#ifndef zend_parse_parameters_none
+#define zend_parse_parameters_none()    \
+        zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
+#endif
+
+#ifndef Z_UNSET_ISREF_P
+# define Z_UNSET_ISREF_P(pz)      pz->is_ref = 0
+#endif
+
+#ifndef ZVAL_COPY_VALUE
+#define ZVAL_COPY_VALUE(z, v) \
+    do { \
+        (z)->value = (v)->value; \
+        Z_TYPE_P(z) = Z_TYPE_P(v); \
+    } while (0)
+#endif
+
+#ifndef INIT_PZVAL_COPY
+#define INIT_PZVAL_COPY(z, v)                   \
+    do {                                        \
+        ZVAL_COPY_VALUE(z, v);                  \
+        Z_SET_REFCOUNT_P(z, 1);                 \
+        Z_UNSET_ISREF_P(z);                     \
+    } while (0)
+#endif
+
+#ifndef MAKE_COPY_ZVAL
+#define MAKE_COPY_ZVAL(ppzv, pzv)   \
+    INIT_PZVAL_COPY(pzv, *(ppzv));  \
+    zval_copy_ctor((pzv));
+#endif
+
 #ifdef WIN32
 #  ifndef int64_t
      typedef __int64 int64_t;
@@ -37,6 +70,10 @@
 
 #ifndef Z_ADDREF_P
 #  define Z_ADDREF_P(pz)                (pz)->refcount++
+#endif
+
+#ifndef Z_ADDREF_PP
+#  define Z_ADDREF_PP(ppz)               Z_ADDREF_P(*(ppz))
 #endif
 
 #ifndef Z_DELREF_P
