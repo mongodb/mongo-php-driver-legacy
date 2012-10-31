@@ -4,6 +4,19 @@
 #include <time.h>
 #include <stdarg.h>
 
+/* Windows compatibility */
+#ifdef WIN32
+typedef __int32 int32_t;
+typedef unsigned __int32 uint32_t;
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#define strcasecmp(a,b) stricmp((a), (b))
+#define snprintf _snprintf
+#define va_copy(d,s) ((void)((d) = (s)))
+#else
+# include <stdint.h>
+#endif
+
 #define MONGO_CON_TYPE_STANDALONE 1
 #define MONGO_CON_TYPE_MULTIPLE   2
 #define MONGO_CON_TYPE_REPLSET    3

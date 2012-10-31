@@ -64,8 +64,6 @@ static PHP_GSHUTDOWN_FUNCTION(mongo);
 
 #if WIN32
 extern HANDLE cursor_mutex;
-extern HANDLE io_mutex;
-extern HANDLE pool_mutex;
 #endif
 
 zend_function_entry mongo_functions[] = {
@@ -191,9 +189,7 @@ PHP_MINIT_FUNCTION(mongo) {
 
 #ifdef WIN32
   cursor_mutex = CreateMutex(NULL, FALSE, NULL);
-  pool_mutex = CreateMutex(NULL, FALSE, NULL);
-  io_mutex = CreateMutex(NULL, FALSE, NULL);
-  if (cursor_mutex == NULL || pool_mutex == NULL || io_mutex == NULL) {
+  if (cursor_mutex == NULL) {
     php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
     return FAILURE;
   }
@@ -294,7 +290,7 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
 
 #if WIN32
   // 0 is failure
-  if (CloseHandle(cursor_mutex) == 0 || CloseHandle(pool_mutex) == 0 || CloseHandle(io_mutex) == 0) {
+  if (CloseHandle(cursor_mutex) == 0) {
     php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
     return FAILURE;
   }

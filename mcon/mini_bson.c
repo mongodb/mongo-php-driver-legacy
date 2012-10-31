@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 #include <stdio.h>
 
 #include "str.h"
@@ -359,7 +358,7 @@ int bson_array_find_next_string(char **buffer, char **field, char **data)
 
 	return_data = bson_get_current(*buffer, &read_field, &read_type);
 	if (read_type == BSON_STRING) {
-		*data = return_data + 4;
+		*data = (char*) return_data + 4;
 		if (field) {
 			*field = strdup(read_field);
 		}

@@ -1,6 +1,6 @@
+#include "types.h"
 #include "bson_helpers.h"
 #include "str.h"
-#include <stdint.h>
 
 void mcon_serialize_int(struct mcon_str *str, int num)
 {
