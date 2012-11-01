@@ -44,7 +44,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 zend_class_entry *mongo_ce_Collection = NULL;
 
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
-static int is_safe_op(zval *options TSRMLS_DC);
+static int is_safe_op(zval *options, int default_fire_and_forget TSRMLS_DC);
 static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
@@ -94,8 +94,15 @@ PHP_METHOD(MongoCollection, __construct) {
   mongo_read_preference_copy(&db->read_pref, &c->read_pref);
 
   w = zend_read_property(mongo_ce_DB, parent, "w", strlen("w"), NOISY TSRMLS_CC);
-  zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_LVAL_P(w) TSRMLS_CC);
+  if (Z_TYPE_P(w) == IS_STRING) {
+	  zend_update_property_string(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_STRVAL_P(w) TSRMLS_CC);
+  } else {
+	  convert_to_long(w);
+	  zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_LVAL_P(w) TSRMLS_CC);
+  }
+
   wtimeout = zend_read_property(mongo_ce_DB, parent, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
+  convert_to_long(wtimeout);
   zend_update_property_long(mongo_ce_Collection, getThis(), "wtimeout", strlen("wtimeout"), Z_LVAL_P(wtimeout) TSRMLS_CC);
 }
 
@@ -222,14 +229,53 @@ PHP_METHOD(MongoCollection, validate) {
  */
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC) {
   zval *cmd_ns_z, *cmd, *cursor_z, *temp, *timeout_p;
-  char *cmd_ns, *safe_str = 0;
+	char *cmd_ns, *safe_str = NULL;
   mongo_cursor *cursor;
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
   mongo_db *db = (mongo_db*)zend_object_store_get_object(c->parent TSRMLS_CC);
   int response, safe = 0, fsync = 0, timeout = -1;
-	mongo_link *link;
+	mongo_link *link = (mongo_link*) zend_object_store_get_object(c->link TSRMLS_CC);
 
-  GET_OPTIONS;
+	timeout_p = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
+	convert_to_long(timeout_p);
+	timeout = Z_LVAL_P(timeout_p);
+
+	/* Read the default_* properties from the link */
+	if (link->servers->default_fire_and_forget != -1) {
+		safe = !link->servers->default_fire_and_forget;
+	}
+
+	/* Fetch all the options from the options array*/
+	if (options && !IS_SCALAR_P(options)) {
+		zval **safe_pp, **fsync_pp, **timeout_pp;
+												
+		if (SUCCESS == zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**)&safe_pp)) {
+			switch (Z_TYPE_PP(safe_pp)) {
+				case IS_STRING:
+					safe_str = Z_STRVAL_PP(safe_pp);
+					break;
+				case IS_BOOL:
+				case IS_LONG:
+					safe = Z_LVAL_PP(safe_pp); /* This is actually "wrong" for bools, but it works */
+					break;
+				default:
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'safe' option either needs to be a boolean or a string");
+			}
+		}
+		if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp)) {
+			convert_to_boolean(*fsync_pp);
+			fsync = Z_BVAL_PP(fsync_pp);
+
+			if (fsync && !safe) {
+				safe = 1;
+			}
+		}
+		if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout_pp)) {
+			convert_to_long(*timeout_pp);
+			timeout = Z_LVAL_PP(timeout_pp);
+		}
+	}
+
 
   // get "db.$cmd" zval
   MAKE_STD_ZVAL(cmd_ns_z);
@@ -241,26 +287,38 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   array_init(cmd);
   add_assoc_long(cmd, "getlasterror", 1);
 
-  if (safe == 1) {
-    zval *w = zend_read_property(mongo_ce_Collection, coll, "w", strlen("w"), NOISY TSRMLS_CC);
-    safe = Z_LVAL_P(w);
-  }
+	/* This picks up the default "w" through the properties of MongoCollection
+	 * and MongoDb, but only if safe is still 1. */
+	if (safe == 1) {
+		zval *w = zend_read_property(mongo_ce_Collection, coll, "w", strlen("w"), NOISY TSRMLS_CC);
+		if (Z_TYPE_P(w) == IS_STRING) {
+			safe_str = Z_STRVAL_P(w);
+		} else {
+			convert_to_long(w);
+			safe = Z_LVAL_P(w);
+		}
+	}
 
   if (safe_str || safe > 1) {
     zval *wtimeout;
 
     if (safe_str) {
       add_assoc_string(cmd, "w", safe_str, 1);
+			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added w='%s'", safe_str);
     }
     else {
       add_assoc_long(cmd, "w", safe);
+			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added w=%d", safe);
     }
 
     wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
+	convert_to_long(wtimeout);
     add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
+		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d", Z_LVAL_P(wtimeout));
   }
   if (fsync) {
     add_assoc_bool(cmd, "fsync", 1);
+		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added fsync=1");
   }
 
   // get cursor
@@ -282,7 +340,6 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	/* This should be refactored alongside with the getLastError redirection in
 	 * db.c/MongoDB::command. The Cursor creation should be done through
 	 * an init method otherwise a connection have to be requested twice. */
-	link = (mongo_link*) zend_object_store_get_object((db->link) TSRMLS_CC);
 	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for getlasterror");
 	php_mongo_connection_force_primary(cursor, link TSRMLS_CC);
 
@@ -351,7 +408,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 		return 0;
 	}
 
-	if (is_safe_op(options TSRMLS_CC)) {
+	if (is_safe_op(options, link->servers->default_fire_and_forget TSRMLS_CC)) {
 		zval *cursor = append_getlasterror(getThis(), buf, options TSRMLS_CC);
 		if (cursor) {
 			safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
@@ -370,15 +427,42 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 }
 
 
-static int is_safe_op(zval *options TSRMLS_DC) {
-  zval **safe_pp = 0, **fsync_pp = 0;
+static int is_safe_op(zval *options, int default_fire_and_forget TSRMLS_DC)
+{
+	zval **safe_pp = 0, **fsync_pp = 0;
+	int    safe_op  = 0;
 
-  return options &&
-    ((zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS &&
-      (Z_TYPE_PP(safe_pp) == IS_STRING ||
-       ((Z_TYPE_PP(safe_pp) == IS_LONG || Z_TYPE_PP(safe_pp) == IS_BOOL) && Z_LVAL_PP(safe_pp) >= 1))) ||
-     (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS &&
-      Z_BVAL_PP(fsync_pp) == 1));
+	/* First we check for the global (connection string) default */
+	if (default_fire_and_forget != -1) {
+		safe_op = !default_fire_and_forget;
+	}
+	/* Then we check the options array that could overwrite the default */
+	if (options && Z_TYPE_P(options) == IS_ARRAY) {
+		/* Check for "safe" in options array */
+		if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS) {
+			/* Check for bool/int value >= 1 */
+			if ((Z_TYPE_PP(safe_pp) == IS_LONG || Z_TYPE_PP(safe_pp) == IS_BOOL)) {
+				safe_op = (Z_LVAL_PP(safe_pp) >= 1);
+				goto ok;
+			}
+			/* Check for string value ("majority", or a tag) */
+			if (Z_TYPE_PP(safe_pp) == IS_STRING) {
+				safe_op = 1;
+				goto ok;
+			}
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'safe' option either needs to be a boolean or a string");
+		}
+		/* Check for "fsync" in options array */
+		if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS) {
+			/* Check for bool/int value of 1 */
+			if ((Z_TYPE_PP(fsync_pp) == IS_LONG || Z_TYPE_PP(fsync_pp) == IS_BOOL) && Z_LVAL_PP(fsync_pp) == 1) {
+				safe_op = 1;
+				goto ok;
+			}
+		}
+	}
+ok:
+	return safe_op;
 }
 
 #if PHP_VERSION_ID >= 50300
