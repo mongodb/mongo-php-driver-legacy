@@ -29,11 +29,11 @@
   <email>bjori@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-09-03</date>
- <time>13:33:32</time>
+ <date>2012-11-02</date>
+ <time>10:00:32</time>
  <version>
-  <release>1.3.0beta2</release>
-  <api>1.3.0beta2</api>
+  <release>1.3.0RC1</release>
+  <api>1.3.0RC1</api>
  </version>
  <stability>
   <release>beta</release>
@@ -41,17 +41,13 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-This is the second beta of the 1.3 release.  The 1.3 release is a new major
-release, which has a rewritten connection handling backend. It has been
+This is the first release candidate of the 1.3 series. The 1.3 series are
+a major improvement with a completely rewritten connection handling backend. It has been
 rewritten to form a new improved framework for handling connections. On top of
 this new framework, new functionality is also implemented to provide read
 preference support that comes with MongoDB 2.2. The new framework no longer has
 the concept of a connection pool, but instead make sure there is only one
 connect per node/db/username.
-
-We also have introduced some deprecation notices for features and methods that
-are going to disappear in version 2 of the driver, which we plan to release
-before the end of the year.
 
 New major features in this release to support the MongoDB 2.2 release:
 
@@ -60,30 +56,88 @@ New major features in this release to support the MongoDB 2.2 release:
   http://docs.mongodb.org/manual/applications/replication/#replica-set-read-preference)
 - Support for connections to multiple mongos nodes.
 
-Known issues (to be addressed before 1.3.0):
+But we also have added a general purpose features:
 
-- It has not been tested on anything but Linux.
+- The connection string now accepts the "fireAndForget" option to turn on
+  "safe mode" by default:
 
-The rest of the standard changelog:
+  $m = new Mongo("mongodb://localhost/?fireAndForget=false");
+
+The whole list of resolved tickets (since 1.3.0beta2) follows:
 
 ** Bug
-    * [PHP-158] - Persistent connections: Dropped connections not detected
-    * [PHP-462] - ping_interval reconnect logic breaks forked processes
-    * [PHP-463] - Specifying multiple hostnames for a standalone server fails
-    * [PHP-465] - Marking connections as failed isn't supported
-    * [PHP-466] - Seed list of 1 replicaset member, and one standalone, with array("replicaSet" => true) fails
-    * [PHP-469] - MongoGridFS::remove() does not support filename argument
-    * [PHP-472] - Compile Error
-    * [PHP-473] - Sort by field "0" (zero char, ASCII 0x30) does not work
+    * [PHP-202] - Too many open files
+    * [PHP-285] - Cursor not found sometimes when slaveOkay in replica set
+    * [PHP-315] - Random "unauthorized db" messages
+    * [PHP-321] - Lazy loading of connections doesn't work with Replica Sets
+    * [PHP-347] - MongoPool not working as expected when using php-fpm / cgi - a pool seems to be created per each child process
+    * [PHP-350] - couldn't send query:
+    * [PHP-364] - Stale connection in connection pool after restarting MongoDB server
+    * [PHP-373] - Overriding batchInsert
+    * [PHP-411] - Mongo says it is connected.. when it isn't. (when connecting to replicaset)
+    * [PHP-424] - cannot determine master when slave(s) are down
+    * [PHP-426] - Connection pool not paying attention to authentication when using replicaSet=true
+    * [PHP-464] - Re-implement ->connected
+    * [PHP-468] - Undefined behavior calling MongoGridFSFile::write() without a filename
+    * [PHP-471] - Update documentation for MongoGridFSCursor::key() returning ObjectId instead of filename
+    * [PHP-480] - Throw an error when not all members of the seed lists are in the same replicaset
+    * [PHP-481] - setSlaveOkay / read preferences don't set slaveOkay flag correctly.
+    * [PHP-482] - Aggregate() method leaks
+    * [PHP-484] - Authenticating against normal db doesn't work
+    * [PHP-485] - Update (and other methods) in safemode crash under certain conditions.
+    * [PHP-486] - GridFS cleanup routines remove existing files
+    * [PHP-487] - Connect to replicaset member in standalone mode
+    * [PHP-488] - GridFS failures no longer throw MongoGridFSException
+    * [PHP-489] - is_master() crashes for standalone servers
+    * [PHP-499] - Re-order changelogs in documentation
+    * [PHP-500] - MongoCollection insert, update and remove no longer return booleans
+    * [PHP-502] - w can pick up garbage memory
+    * [PHP-504] - Build error on FreeBSD (missing sys/socket.h)
+    * [PHP-507] - Chunks are not removed completely when using the justOne option with MongoGridFS::remove
+    * [PHP-510] - Memory leak in GridFS
+    * [PHP-511] - Setting slaveOkay on MongoDB doesn't get passed properly to MongoCollection
+    * [PHP-512] - RS handover is not handled correctly
+    * [PHP-515] - Re-implement ->close()
+    * [PHP-518] - Segmentation Fault with php-1.2.12
+    * [PHP-521] - Build failures with PHP 5.2 and 5.4.
+    * [PHP-528] - MongoLog::getCallback() segfaults if no callback was set.
+    * [PHP-533] - Callback map for destroying cursors
+    * [PHP-548] - Make the w property support string
 
 ** Improvement
-    * [PHP-268] - Implement ReadPreferences + Slave Timing Buckets + Deprecate SlaveOk
+    * [PHP-176] - Ability to choose which slaves to (not) read from
+    * [PHP-218] - Add driver standard connection URI options
+    * [PHP-292] - Mention MongoPool::setSize makes connection creation block if no connections available
+    * [PHP-298] - Support safe write default through the connection string
+    * [PHP-459] - MongoCollection::update doc should have a note about bug #PHP-50
+    * [PHP-492] - Implement a method to return all opened connections
+    * [PHP-501] - Add Unix domain socket support back into the driver
+    * [PHP-516] - Document sparse and expireAfterSeconds index options
+    * [PHP-522] - Support fireAndForget, w, and wtimeout in connection string
+    * [PHP-526] - Create new exception to be thrown for runtime errors in command helpers
+    * [PHP-532] - Return full result document from command wrappers
 
-** New Feature
-    * [PHP-421] - Aggregation helper
+** Question
+    * [PHP-271] - MongoCursorException - Couldn't get response header
+    * [PHP-274] - Connection pooling a replica shutdon
 
 ** Task
-    * [PHP-450] - Port GridFS tests from PHPUnit to phpt
+    * [PHP-412] - Connecting to replicaset with authentication without providing any credentials..
+    * [PHP-414] - Revise MongoLog documentation
+    * [PHP-460] - Add docs mention of connecting to a sharded cluster / mongos
+    * [PHP-476] - Add documentation for the Aggregate Framework
+    * [PHP-477] - Add documentation for read preferences
+    * [PHP-478] - Compile and test on Windows
+    * [PHP-479] - Fix all compiler warnings
+    * [PHP-493] - Make aggregate to return the full command document, and not just the "result" field.
+    * [PHP-494] - Document MongoCollection::findAndModify()
+    * [PHP-495] - Make findAndModify() to return the full command document, and not just the "value" field.
+    * [PHP-497] - Make authentication documentation more explicit
+    * [PHP-498] - Check default database for authentication in 1.3.x
+    * [PHP-505] - Document MongoLog::setCallback
+    * [PHP-519] - Document un-deprecation of get/setSlaveOkay() for 1.2.12
+    * [PHP-520] - Remove MongoDB::authenticate() example from connection documentation
+    * [PHP-531] - Restore MongoPool class/methods as no-ops with deprecation warnings
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -112,6 +166,8 @@ The rest of the standard changelog:
    <file role="src" name="util/hash.h"/>
    <file role="src" name="util/log.c"/>
    <file role="src" name="util/log.h"/>
+   <file role="src" name="util/pool.c"/>
+   <file role="src" name="util/pool.h"/>
    <file role="src" name="mcon/bson_helpers.h"/>
    <file role="src" name="mcon/collection.h"/>
    <file role="src" name="mcon/connections.h"/>

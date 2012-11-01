@@ -6,7 +6,7 @@
 class MongoTest extends PHPUnit_Framework_TestCase
 {
     public function testVersion() {
-        $this->assertEquals("1.3.0RC1-dev", Mongo::VERSION);
+        $this->assertEquals("1.3.0RC1", Mongo::VERSION);
     }
 
     /**
