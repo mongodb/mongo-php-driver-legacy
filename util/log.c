@@ -195,11 +195,15 @@ void php_mongo_log(const int module, const int level TSRMLS_DC, const char *form
 		vsnprintf(tmp, 256, format, args);
 		va_end(args);
 
+#if PHP_VERSION_ID >= 50300
 		if (MonGlo(log_callback_info).function_name) {
 			userland_callback(module, level, tmp TSRMLS_CC);
 		} else {
+#endif
 			php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
+#if PHP_VERSION_ID >= 50300
 		}
+#endif
 
 		free(tmp);
 	}
@@ -217,11 +221,15 @@ void php_mcon_log_wrapper(int module, int level, void *context, char *format, va
 		vsnprintf(tmp, 256, format, tmp_args);
 		va_end(tmp_args);
 
+#if PHP_VERSION_ID >= 50300
 		if (MonGlo(log_callback_info).function_name) {
 			userland_callback(module, level, tmp TSRMLS_CC);
 		} else {
+#endif
 			php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
+#if PHP_VERSION_ID >= 50300
 		}
+#endif
 
 		free(tmp);
 	}

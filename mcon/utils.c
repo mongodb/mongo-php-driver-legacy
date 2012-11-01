@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include "types.h"
 #include "utils.h"
 
@@ -68,7 +70,7 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **database,
 	/* Find the host */
 	ptr = strchr(ptr, ':');
 	if (host) {
-		*host = strndup(hash, ptr - hash);
+		*host = mcon_strndup(hash, ptr - hash);
 	}
 
 	/* Find the port */
@@ -80,15 +82,15 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **database,
 	ptr = strchr(ptr, ';') + 1;
 	if (ptr[0] != 'X') {
 		if (database) {
-			*database = strndup(ptr, strchr(ptr, '/') - ptr);
+			*database = mcon_strndup(ptr, strchr(ptr, '/') - ptr);
 		}
 		username_slash = strchr(ptr, '/');
 		if (username) {
-			*username = strndup(username_slash + 1, strchr(username_slash + 1, '/') - username_slash - 1);
+			*username = mcon_strndup(username_slash + 1, strchr(username_slash + 1, '/') - username_slash - 1);
 		}
 		pid_semi = strchr(ptr, ';');
 		if (auth_hash) {
-			*auth_hash = strndup(strchr(username_slash + 1, '/') + 1, pid_semi - strchr(username_slash + 1, '/') - 1);
+			*auth_hash = mcon_strndup(strchr(username_slash + 1, '/') + 1, pid_semi - strchr(username_slash + 1, '/') - 1);
 		}
 	} else {
 		if (database) {
@@ -117,7 +119,7 @@ char *mongo_server_hash_to_server(char *hash)
 	char *ptr, *tmp;
 
 	ptr = strchr(hash, ';');
-	tmp = strndup(hash, ptr - hash);
+	tmp = mcon_strndup(hash, ptr - hash);
 	return tmp;
 }
 
@@ -445,3 +447,16 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx)
  
 	memset(ctx, 0, sizeof(*ctx));
 }
+
+#ifdef WIN32
+/* Compat stuff for Windows */
+char *mcon_strndup(char *str, size_t len)
+{
+    char *dup = (char *)malloc(len+1);
+    if (dup) {
+        strncpy(dup,str,len);
+        dup[len]= '\0';
+    }
+    return dup;
+}
+#endif

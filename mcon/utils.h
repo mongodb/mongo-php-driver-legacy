@@ -46,4 +46,10 @@ typedef struct {
  
 char *mongo_util_md5_hex(char *hash, int hash_length);
 
+#ifdef WIN32
+char *mcon_strndup(char *str, size_t len);
+#else
+#define mcon_strndup(s,l) strndup((s), (l))
+#endif
+
 #endif
