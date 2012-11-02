@@ -29,7 +29,7 @@
   <email>bjori@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-11-02</date>
+ <date>2012-11-05</date>
  <time>10:00:32</time>
  <version>
   <release>1.3.0RC1</release>
@@ -55,13 +55,6 @@ New major features in this release to support the MongoDB 2.2 release:
 - Support for read preferences and read preference tags (See:
   http://docs.mongodb.org/manual/applications/replication/#replica-set-read-preference)
 - Support for connections to multiple mongos nodes.
-
-But we also have added a general purpose features:
-
-- The connection string now accepts the "fireAndForget" option to turn on
-  "safe mode" by default:
-
-  $m = new Mongo("mongodb://localhost/?fireAndForget=false");
 
 The whole list of resolved tickets (since 1.3.0beta2) follows:
 
@@ -113,7 +106,7 @@ The whole list of resolved tickets (since 1.3.0beta2) follows:
     * [PHP-492] - Implement a method to return all opened connections
     * [PHP-501] - Add Unix domain socket support back into the driver
     * [PHP-516] - Document sparse and expireAfterSeconds index options
-    * [PHP-522] - Support fireAndForget, w, and wtimeout in connection string
+    * [PHP-522] - Support w, and wtimeout in connection string
     * [PHP-526] - Create new exception to be thrown for runtime errors in command helpers
     * [PHP-532] - Return full result document from command wrappers
 
