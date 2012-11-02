@@ -123,7 +123,7 @@ array(2) {
   }
 }
 array(2) {
-  ["%s"]=>
+  [%s]=>
   array(5) {
     ["_id"]=>
     object(MongoId)#%d (1) {
@@ -144,7 +144,7 @@ array(2) {
       string(12) "do placement"
     }
   }
-  ["%s"]=>
+  [%s]=>
   array(5) {
     ["_id"]=>
     object(MongoId)#%d (1) {

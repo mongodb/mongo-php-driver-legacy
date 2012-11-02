@@ -160,7 +160,7 @@ PHP_METHOD(MongoCollection, setReadPreference)
 	mongo_collection *c;
 	HashTable  *tags = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|H", &read_preference, &tags) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|h", &read_preference, &tags) == FAILURE) {
 		return;
 	}
 
@@ -1367,9 +1367,7 @@ PHP_METHOD(MongoCollection, aggregate)
 	int argc, i;
 	mongo_collection *c;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &argv, &argc) == FAILURE) {
-		return;
-	}
+	zpp_var_args(argv, argc);
 
 	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);

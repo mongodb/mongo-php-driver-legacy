@@ -2,6 +2,7 @@
 Test for PHP-511: Setting slaveOkay on MongoDB doesn't get passed properly to MongoCollection
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php if (version_compare(PHP_VERSION, "5.3.0", "lt")) { exit("skip MongoLog::setCallback only available in 5.3+"); } ?>
 --FILE--
 <?php
 $mentions = array(); 
