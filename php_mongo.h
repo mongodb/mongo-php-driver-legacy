@@ -163,6 +163,26 @@
 	} \
 } while(0);
 
+#if PHP_VERSION_ID < 50300
+#define zpp_var_args(argv, argc) do { \
+	if (ZEND_NUM_ARGS() < 1) { \
+		WRONG_PARAM_COUNT; \
+	} \
+	argv = (zval ***)safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval **), 0); \
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), argv) == FAILURE) { \
+		efree(argv); \
+		WRONG_PARAM_COUNT; \
+	} \
+	argc = ZEND_NUM_ARGS(); \
+} while(0);
+#else
+#define zpp_var_args(argv, argc) do { \
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &argv, &argc) == FAILURE) { \
+		return; \
+	} \
+} while(0);
+#endif
+
 #if ZEND_MODULE_API_NO >= 20060613
 // normal, nice method
 #define MONGO_METHOD_BASE(classname, name) zim_##classname##_##name
