@@ -44,7 +44,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 zend_class_entry *mongo_ce_Collection = NULL;
 
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
-static int is_safe_op(zval *options, int default_fire_and_forget TSRMLS_DC);
+static int is_safe_op(zval *options, int default_do_gle TSRMLS_DC);
 static void safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
@@ -241,8 +241,8 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	timeout = Z_LVAL_P(timeout_p);
 
 	/* Read the default_* properties from the link */
-	if (link->servers->default_fire_and_forget != -1) {
-		safe = !link->servers->default_fire_and_forget;
+	if (link->servers->default_do_gle != -1) {
+		safe = link->servers->default_do_gle;
 	}
 
 	/* Fetch all the options from the options array*/
@@ -408,7 +408,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 		return 0;
 	}
 
-	if (is_safe_op(options, link->servers->default_fire_and_forget TSRMLS_CC)) {
+	if (is_safe_op(options, link->servers->default_do_gle TSRMLS_CC)) {
 		zval *cursor = append_getlasterror(getThis(), buf, options TSRMLS_CC);
 		if (cursor) {
 			safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
@@ -427,14 +427,14 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 }
 
 
-static int is_safe_op(zval *options, int default_fire_and_forget TSRMLS_DC)
+static int is_safe_op(zval *options, int default_do_gle TSRMLS_DC)
 {
 	zval **safe_pp = 0, **fsync_pp = 0;
 	int    safe_op  = 0;
 
 	/* First we check for the global (connection string) default */
-	if (default_fire_and_forget != -1) {
-		safe_op = !default_fire_and_forget;
+	if (default_do_gle != -1) {
+		safe_op = default_do_gle;
 	}
 	/* Then we check the options array that could overwrite the default */
 	if (options && Z_TYPE_P(options) == IS_ARRAY) {
