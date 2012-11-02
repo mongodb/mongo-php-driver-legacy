@@ -160,7 +160,7 @@ PHP_METHOD(MongoCollection, setReadPreference)
 	mongo_collection *c;
 	HashTable  *tags = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|H", &read_preference, &tags) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|h", &read_preference, &tags) == FAILURE) {
 		return;
 	}
 
