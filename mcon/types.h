@@ -156,7 +156,7 @@ typedef struct _mongo_servers
 	int   con_type;
 	char *repl_set_name;
 	int   connectTimeoutMS;
-	int   default_fire_and_forget; /* Sets a flag whether all operations should be "safe" by default or not, -1 is not set, where 0 and 1 are explicit sets. */
+	int   default_do_gle;   /* Sets a flag whether all operations should be "safe" by default or not, -1 is not set, where 0 and 1 are explicit sets. */
 	int   default_w;        /* The number specifies the number of replica nodes */
 	char *default_wstring;  /* If the value for "w" is a string, then it means a getLastError error-mode */
 	int   default_wtimeout; /* How many milliseconds to wait for replication to "w" nodes */
