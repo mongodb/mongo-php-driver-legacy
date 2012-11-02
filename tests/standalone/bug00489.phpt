@@ -16,7 +16,7 @@ echo "I'm alive!\n";
 ?>
 ==DONE==
 --EXPECTF--
-Notice: CON     WARN: is_ping: last pinged at %d; time: 0ms in %s line %d
+Notice: CON     WARN: is_ping: last pinged at %d; time: %dms in %s line %d
 
 Notice: CON     WARN: Host does not seem to be a replicaset member (%s:%d) in %s on line %d
 

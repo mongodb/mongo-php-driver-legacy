@@ -17,7 +17,7 @@ for ($i = 0; $i < 50; $i++) {
 }
 ?>
 --EXPECTF--
-Deprecated: Function MongoDB::setSlaveOkay() is deprecated in %smongocollection-findone.php on line %d
+%s: Function MongoDB::setSlaveOkay() is deprecated in %smongocollection-findone.php on line %d
 NULL
 NULL
 NULL
