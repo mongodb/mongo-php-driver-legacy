@@ -18,6 +18,9 @@ function handleNotice($errno, $errstr) {
     ++$numNotices;
 }
 
+if (!defined("E_DEPRECATED")) {
+    define("E_DEPRECATED", E_STRICT);
+}
 set_error_handler('handleNotice', E_DEPRECATED);
 
 $bin = new MongoBinData('abcdefg');
