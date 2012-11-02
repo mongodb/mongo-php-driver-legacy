@@ -138,7 +138,7 @@ array(2) {
   float(1)
 }
 
-Warning: MongoCollection::aggregate() expects at least 1 parameter, 0 given in %s on line %d
+Warning: %s in %s on line %d
 
 Warning: MongoCollection::aggregate(): Argument 1 is not an array in %s on line %d
 
