@@ -2,7 +2,7 @@
 Test for PHP-464: Re-implement ->connected (var_dump())
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
-<?php if (version_compare(PHP_VERSION, "5.3.0", "lt")) { exit("skip var_dump() overloading only supported in 5.3 and later"); } ?>
+<?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
 --FILE--
 <?php
 
