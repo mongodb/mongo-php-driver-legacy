@@ -84,7 +84,7 @@ class MongoUtil
     const BIN_FUNCTION = 1;
 
     /**
-     * Default binary type: an arrray of binary data.
+     * Default binary type: an array of binary data.
      */
     const BIN_ARRAY = 2;
 
