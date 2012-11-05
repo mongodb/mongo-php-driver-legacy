@@ -24,7 +24,7 @@ static mcon_str *create_simple_header(mongo_connection *con, char *ns)
 	mcon_serialize_int(str, 0); /* We need to fill this with the length */
 
 	mcon_serialize_int(str, mongo_connection_get_reqid(con));
-	mcon_serialize_int(str, 0); /* Reponse to */
+	mcon_serialize_int(str, 0); /* Response to */
 	mcon_serialize_int(str, 2004); /* OP_QUERY */
 
 	mcon_serialize_int(str, MONGO_QUERY_FLAG_SLAVE_OK); /* Flags */
