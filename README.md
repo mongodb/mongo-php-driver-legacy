@@ -29,7 +29,7 @@ By default, the tests will be executed in several different environments;
 * Standalone
 
 If you are not running any of these environments, you can disable these runs by
-adjusting theconfiguration file.
+adjusting the configuration file.
 
 
 Once you have filled out the configuration template, run the following command to
