@@ -179,7 +179,6 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	mongo_connection *tmp;
 	mcon_collection  *collection;
 	char             *con_error_message = NULL;
-	char             *auth_hash = NULL;
 	int i;
 	int found_connected_server = 0;
 
@@ -201,20 +200,16 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	/* Discover more nodes. This also adds a connection to "servers" for each
 	 * new node */
 	mongo_discover_topology(manager, servers);
-	/* Create the authentication hash to filter connections */
-	if (servers->server[0]->username && servers->server[0]->password) {
-		auth_hash = mongo_server_create_hashed_password(servers->server[0]->username, servers->server[0]->password);
-	}
 	/* Depending on whether we want a read or a write connection, run the correct algorithms */
 	if (connection_flags & MONGO_CON_FLAG_WRITE) {
 		mongo_read_preference tmp_rp;
 
 		mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
 		tmp_rp.type = MONGO_RP_PRIMARY;
-		collection = mongo_find_candidate_servers(manager, &tmp_rp, auth_hash);
+		collection = mongo_find_candidate_servers(manager, &tmp_rp, servers);
 		mongo_read_preference_dtor(&tmp_rp);
 	} else {
-		collection = mongo_find_candidate_servers(manager, &servers->read_pref, auth_hash);
+		collection = mongo_find_candidate_servers(manager, &servers->read_pref, servers);
 	}
 	if (!collection || collection->count == 0) {
 		*error_message = strdup("No candidate servers found");
@@ -237,7 +232,6 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	mongo_connection *tmp;
 	mcon_collection  *collection = NULL;
 	char             *con_error_message = NULL;
-	char             *auth_hash = NULL;
 	mongo_read_preference tmp_rp; /* We only support NEAREST for MULTIPLE right now */
 	int i;
 	int found_connected_server = 0;
@@ -270,16 +264,12 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 		return NULL;
 	}
 
-	/* Create the authentication hash to filter connections */
-	if (servers->server[0]->username && servers->server[0]->password) {
-		auth_hash = mongo_server_create_hashed_password(servers->server[0]->username, servers->server[0]->password);
-	}
 	/* Force the RP of NEAREST, which is the only one that makes sense right
 	 * now. Technically, read preference tags are also supported, but not
 	 * implemented on the mongos side yet. */
 	mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
 	tmp_rp.type = MONGO_RP_NEAREST;
-	collection = mongo_find_candidate_servers(manager, &tmp_rp, auth_hash);
+	collection = mongo_find_candidate_servers(manager, &tmp_rp, servers);
 	mongo_read_preference_dtor(&tmp_rp);
 	if (!collection || collection->count == 0) {
 		if (messages->l) {

@@ -177,28 +177,43 @@ char *mongo_read_preference_squash_tagset(mongo_read_preference_tagset *tagset)
 	return str.d;
 }
 
-mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, char *auth_hash)
+static mcon_collection *mongo_filter_candidates_by_seed(mongo_con_manager *manager, mcon_collection *candidates, mongo_servers *servers)
+{
+	int              i, j;
+	mcon_collection *filtered;
+	char            *server_hash;
+
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by seeded/discovered servers");
+	filtered = mcon_init_collection(sizeof(mongo_connection*));
+
+	for (i = 0; i < candidates->count; i++) {
+		for (j = 0; j < servers->count; j++) {
+			server_hash = mongo_server_create_hash(servers->server[j]);
+			if (strcmp(((mongo_connection *) candidates->data[i])->hash, server_hash) == 0) {
+				mongo_print_connection_info(manager, (mongo_connection *) candidates->data[i], MLOG_FINE);
+				mcon_collection_add(filtered, (mongo_connection *) candidates->data[i]);
+			}
+			free(server_hash);
+		}
+	}
+
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by seeded/discovered servers: done");
+
+	return filtered;
+}
+
+mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, mongo_servers *servers)
 {
 	int              i;
 	mcon_collection *all, *filtered;
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "finding candidate servers");
 	all = mongo_find_all_candidate_servers(manager, rp);
-	if (auth_hash) {
-		char *server_auth_hash;
 
-		mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by authentication (%s)", auth_hash);
-		filtered = mcon_init_collection(sizeof(mongo_connection*));
-		for (i = 0; i < all->count; i++) {
-			mongo_server_split_hash(((mongo_connection *) all->data[i])->hash, NULL, NULL, NULL, NULL, &server_auth_hash, NULL);
-			if (server_auth_hash && strcmp(server_auth_hash, auth_hash) == 0) {
-				mongo_print_connection_info(manager, (mongo_connection *) all->data[i], MLOG_FINE);
-				mcon_collection_add(filtered, (mongo_connection *) all->data[i]);
-			}
-		}
-		mcon_collection_free(all);
-		all = filtered;
-	}
+	filtered = mongo_filter_candidates_by_seed(manager, all, servers);
+	mcon_collection_free(all);
+	all = filtered;
+
 	if (rp->tagset_count != 0) {
 		mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by tagsets");
 		/* If we have tagsets configured for the replicaset then we need to do
