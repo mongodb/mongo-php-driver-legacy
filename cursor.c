@@ -1413,22 +1413,28 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 		exception_ce = mongo_ce_CursorException;
 	}
 
-	/* Retrieve connections host and port */
-	host = mongo_server_hash_to_server(connection->hash);
-
+	/* Construct message */
 	va_start(arg, format);
 	message = malloc(1024);
 	vsnprintf(message, 1024, format, arg);
 	va_end(arg);
-	e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, "%s: %s", host, message);
-	free(message);
 
-	if (connection && code != 80) {
-		zend_update_property_string(exception_ce, e, "host", strlen("host"), host TSRMLS_CC);
-		zend_update_property_long(exception_ce, e, "fd", strlen("fd"), connection->socket TSRMLS_CC);
+	if (connection) {
+		host = mongo_server_hash_to_server(connection->hash);
+		e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, "%s: %s", host, message);
+
+		/* Add properties */
+		if (code != 80) {
+			zend_update_property_string(exception_ce, e, "host", strlen("host"), host TSRMLS_CC);
+			zend_update_property_long(exception_ce, e, "fd", strlen("fd"), connection->socket TSRMLS_CC);
+		}
+
+		free(host);
+	} else {
+		e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, "%s", message);
 	}
 
-	free(host);
+	free(message);
 
 	return e;
 }
