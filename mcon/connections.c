@@ -516,6 +516,11 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 		*repl_set_name = strdup(set);
 	}
 
+	/* If the server definition has not set the repl_set_name member yet, set it here */
+	if (!server->repl_set_name) {
+		server->repl_set_name = strdup(set);
+	}
+
 	/* Check for flags */
 	bson_find_field_as_bool(ptr, "ismaster", &ismaster);
 	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);

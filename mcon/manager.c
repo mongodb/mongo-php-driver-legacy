@@ -119,6 +119,14 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 
 			case 1:
 				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: ismaster worked");
+				/* Update the replica set name in the parsed "servers" struct
+				 * so that we can consistently compare it to the information
+				 * that is stored in the connection hashes. */
+				if (!servers->repl_set_name && repl_set_name) {
+					servers->repl_set_name = strdup(repl_set_name);
+				}
+
+				/* Now loop over all the hosts that were found */
 				for (j = 0; j < nr_hosts; j++) {
 					mongo_server_def *tmp_def;
 					mongo_connection *new_con;
@@ -128,6 +136,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					tmp_def = calloc(1, sizeof(mongo_server_def));
 					tmp_def->username = servers->server[i]->username ? strdup(servers->server[i]->username) : NULL;
 					tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;
+					tmp_def->repl_set_name = servers->server[i]->repl_set_name ? strdup(servers->server[i]->repl_set_name) : NULL;
 					tmp_def->db = servers->server[i]->db ? strdup(servers->server[i]->db) : NULL;
 					tmp_def->host = mcon_strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
 					tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);

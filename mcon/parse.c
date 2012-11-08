@@ -310,6 +310,14 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			if (strcmp(option_value, "1") != 0) {
 				servers->repl_set_name = strdup(option_value);
 				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': '%s'", option_value);
+
+				/* Associate the given replica set name with all the server definitions from the seed */
+				for (i = 0; i < servers->count; i++) {
+					if (servers->server[i]->repl_set_name) {
+						free(servers->server[i]->repl_set_name);
+					}
+					servers->server[i]->repl_set_name = strdup(option_value);
+				}
 			} else {
 				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': true");
 			}
@@ -414,7 +422,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 #endif
 	if (strcasecmp(option_name, "w") == 0) {
 		/* Rough check to see whether this is a numeric string or not */
-		if (option_value[0] >= '0' && option_value[0] <= '9' || option_value[0] == '-') {
+		if ((option_value[0] >= '0' && option_value[0] <= '9') || option_value[0] == '-') {
 			servers->default_w = atoi(option_value);
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': %d", servers->default_w);
 			if (servers->default_w < 1) {
@@ -555,6 +563,9 @@ void mongo_server_def_dtor(mongo_server_def *server_def)
 {
 	if (server_def->host) {
 		free(server_def->host);
+	}
+	if (server_def->repl_set_name) {
+		free(server_def->repl_set_name);
 	}
 	if (server_def->db) {
 		free(server_def->db);

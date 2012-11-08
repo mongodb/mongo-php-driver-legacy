@@ -177,6 +177,38 @@ char *mongo_read_preference_squash_tagset(mongo_read_preference_tagset *tagset)
 	return str.d;
 }
 
+static mcon_collection *mongo_filter_candidates_by_replicaset_name(mongo_con_manager *manager, mcon_collection *candidates, mongo_servers *servers)
+{
+	int              i;
+	mcon_collection *filtered;
+	char            *candidate_hash;
+	char            *candidate_replsetname;
+
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting to servers with same replicaset name");
+	filtered = mcon_init_collection(sizeof(mongo_connection*));
+
+	for (i = 0; i < candidates->count; i++) {
+		candidate_hash = ((mongo_connection *) candidates->data[i])->hash;
+		mongo_server_split_hash(candidate_hash, NULL, NULL, (char**) &candidate_replsetname, NULL, NULL, NULL, NULL);
+
+		/* Filter out all servers that don't have the replicaset name the same
+		 * as what we have in the server definition struct. But only when the
+		 * repl_set_name in the server definition struct is actually *set*. If
+		 * not, we allow all connections. This make sure we can sort of handle
+		 * [ replicaset => true ], although it would not support one PHP worker
+		 * process connecting to multiple replicasets correctly. */
+		if (candidate_replsetname && (!servers->repl_set_name || strcmp(candidate_replsetname, servers->repl_set_name) == 0)) {
+			mongo_print_connection_info(manager, (mongo_connection *) candidates->data[i], MLOG_FINE);
+			mcon_collection_add(filtered, (mongo_connection *) candidates->data[i]);
+		}
+		free(candidate_replsetname);
+	}
+
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting to servers with same replicaset name: done");
+
+	return filtered;
+}
+
 static mcon_collection *mongo_filter_candidates_by_seed(mongo_con_manager *manager, mcon_collection *candidates, mongo_servers *servers)
 {
 	int              i, j;
@@ -210,7 +242,11 @@ mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "finding candidate servers");
 	all = mongo_find_all_candidate_servers(manager, rp);
 
-	filtered = mongo_filter_candidates_by_seed(manager, all, servers);
+	if (servers->con_type == MONGO_CON_TYPE_REPLSET) {
+		filtered = mongo_filter_candidates_by_replicaset_name(manager, all, servers);
+	} else {
+		filtered = mongo_filter_candidates_by_seed(manager, all, servers);
+	}
 	mcon_collection_free(all);
 	all = filtered;
 

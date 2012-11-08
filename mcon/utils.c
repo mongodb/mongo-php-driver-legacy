@@ -25,7 +25,11 @@ char *mongo_server_create_hashed_password(char *username, char *password)
 	return hash;
 }
 
-/* Hash format is: HOST:PORT;X;PID or HOST:PORT;DB/USERNAME/md5(PID,PASSWORD,USERNAME);PID */
+/* Hash format is:
+ * - HOST:PORT;X;X;PID (with the first X being the replica set name and the second one a place holder for credentials)
+ * or:
+ * - HOST:PORT;REPLSETNAME;DB/USERNAME/md5(PID,PASSWORD,USERNAME);PID
+ */
 
 /* Creates a unique hash for a server def with some info from the server config,
  * but also with the PID to make sure forking works */
@@ -36,6 +40,11 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 
 	/* Host (string) and port (max 5 digits) + 2 separators */
 	size += strlen(server_def->host) + 1 + 5 + 1;
+
+	/* Replica set name */
+	if (server_def->repl_set_name) {
+		size += strlen(server_def->repl_set_name) + 1;
+	}
 
 	/* Database, username and hashed password */
 	if (server_def->db && server_def->username && server_def->password) {
@@ -49,6 +58,11 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 	/* Allocate and fill */
 	tmp = malloc(size);
 	sprintf(tmp, "%s:%d;", server_def->host, server_def->port);
+	if (server_def->repl_set_name) {
+		sprintf(tmp + strlen(tmp), "%s;", server_def->repl_set_name);
+	} else {
+		sprintf(tmp + strlen(tmp), "X;");
+	}
 	if (server_def->db && server_def->username && server_def->password) {
 		sprintf(tmp + strlen(tmp), "%s/%s/%s;", server_def->db, server_def->username, hash);
 		free(hash);
@@ -61,7 +75,7 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 }
 
 /* Split a hash back into its constituent parts */
-int mongo_server_split_hash(char *hash, char **host, int *port, char **database, char **username, char **auth_hash, int *pid)
+int mongo_server_split_hash(char *hash, char **host, int *port, char **repl_set_name, char **database, char **username, char **auth_hash, int *pid)
 {
 	char *ptr, *pid_semi, *username_slash;
 
@@ -76,6 +90,18 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **database,
 	/* Find the port */
 	if (port) {
 		*port = atoi(ptr + 1);
+	}
+
+	/* Find the replica set name */
+	ptr = strchr(ptr, ';') + 1;
+	if (ptr[0] != 'X') {
+		if (repl_set_name) {
+			*repl_set_name = mcon_strndup(ptr, strchr(ptr, ';') - ptr);
+		}
+	} else {
+		if (repl_set_name) {
+			*repl_set_name = NULL;
+		}
 	}
 
 	/* Find the database and username */
