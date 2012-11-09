@@ -197,11 +197,13 @@ static mcon_collection *mongo_filter_candidates_by_replicaset_name(mongo_con_man
 		 * not, we allow all connections. This make sure we can sort of handle
 		 * [ replicaset => true ], although it would not support one PHP worker
 		 * process connecting to multiple replicasets correctly. */
-		if (candidate_replsetname && (!servers->repl_set_name || strcmp(candidate_replsetname, servers->repl_set_name) == 0)) {
-			mongo_print_connection_info(manager, (mongo_connection *) candidates->data[i], MLOG_FINE);
-			mcon_collection_add(filtered, (mongo_connection *) candidates->data[i]);
+		if (candidate_replsetname) {
+			if (!servers->repl_set_name || strcmp(candidate_replsetname, servers->repl_set_name) == 0) {
+				mongo_print_connection_info(manager, (mongo_connection *) candidates->data[i], MLOG_FINE);
+				mcon_collection_add(filtered, (mongo_connection *) candidates->data[i]);
+			}
+			free(candidate_replsetname);
 		}
-		free(candidate_replsetname);
 	}
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting to servers with same replicaset name: done");
@@ -218,15 +220,15 @@ static mcon_collection *mongo_filter_candidates_by_seed(mongo_con_manager *manag
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by seeded/discovered servers");
 	filtered = mcon_init_collection(sizeof(mongo_connection*));
 
-	for (i = 0; i < candidates->count; i++) {
-		for (j = 0; j < servers->count; j++) {
-			server_hash = mongo_server_create_hash(servers->server[j]);
+	for (j = 0; j < servers->count; j++) {
+		server_hash = mongo_server_create_hash(servers->server[j]);
+		for (i = 0; i < candidates->count; i++) {
 			if (strcmp(((mongo_connection *) candidates->data[i])->hash, server_hash) == 0) {
 				mongo_print_connection_info(manager, (mongo_connection *) candidates->data[i], MLOG_FINE);
 				mcon_collection_add(filtered, (mongo_connection *) candidates->data[i]);
 			}
-			free(server_hash);
 		}
+		free(server_hash);
 	}
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by seeded/discovered servers: done");

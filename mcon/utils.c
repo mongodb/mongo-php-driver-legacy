@@ -26,7 +26,7 @@ char *mongo_server_create_hashed_password(char *username, char *password)
 }
 
 /* Hash format is:
- * - HOST:PORT;X;X;PID (with the first X being the replica set name and the second one a place holder for credentials)
+ * - HOST:PORT;-;X;PID (with the - being the replica set name and the X a placeholder for credentials)
  * or:
  * - HOST:PORT;REPLSETNAME;DB/USERNAME/md5(PID,PASSWORD,USERNAME);PID
  */
@@ -61,7 +61,7 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 	if (server_def->repl_set_name) {
 		sprintf(tmp + strlen(tmp), "%s;", server_def->repl_set_name);
 	} else {
-		sprintf(tmp + strlen(tmp), "X;");
+		sprintf(tmp + strlen(tmp), "-;");
 	}
 	if (server_def->db && server_def->username && server_def->password) {
 		sprintf(tmp + strlen(tmp), "%s/%s/%s;", server_def->db, server_def->username, hash);
@@ -94,7 +94,7 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **repl_set_
 
 	/* Find the replica set name */
 	ptr = strchr(ptr, ';') + 1;
-	if (ptr[0] != 'X') {
+	if (ptr[0] != '-') {
 		if (repl_set_name) {
 			*repl_set_name = mcon_strndup(ptr, strchr(ptr, ';') - ptr);
 		}
