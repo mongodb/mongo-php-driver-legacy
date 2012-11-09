@@ -16,4 +16,4 @@ $a->phpunit->test->insert( array( 'foo' => 'bar' ) );
 echo "\nINSERTING 2\n";
 $b->phpunit->test->insert( array( 'foo' => 'bar' ) );
 ?>
---EXPECTF-
+--EXPECTF--
