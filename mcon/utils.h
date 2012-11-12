@@ -5,7 +5,7 @@
 
 char *mongo_server_create_hashed_password(char *username, char *password);
 char *mongo_server_create_hash(mongo_server_def *server_def);
-int mongo_server_split_hash(char *hash, char **host, int *port, char **database, char **username, char **auth_hash, int *pid);
+int mongo_server_split_hash(char *hash, char **host, int *port, char **repl_set_name, char **database, char **username, char **auth_hash, int *pid);
 char *mongo_server_hash_to_server(char *hash);
 int mongo_server_hash_to_pid(char *hash);
 

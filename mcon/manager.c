@@ -119,6 +119,14 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 
 			case 1:
 				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: ismaster worked");
+				/* Update the replica set name in the parsed "servers" struct
+				 * so that we can consistently compare it to the information
+				 * that is stored in the connection hashes. */
+				if (!servers->repl_set_name && repl_set_name) {
+					servers->repl_set_name = strdup(repl_set_name);
+				}
+
+				/* Now loop over all the hosts that were found */
 				for (j = 0; j < nr_hosts; j++) {
 					mongo_server_def *tmp_def;
 					mongo_connection *new_con;
@@ -128,6 +136,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					tmp_def = calloc(1, sizeof(mongo_server_def));
 					tmp_def->username = servers->server[i]->username ? strdup(servers->server[i]->username) : NULL;
 					tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;
+					tmp_def->repl_set_name = servers->server[i]->repl_set_name ? strdup(servers->server[i]->repl_set_name) : NULL;
 					tmp_def->db = servers->server[i]->db ? strdup(servers->server[i]->db) : NULL;
 					tmp_def->host = mcon_strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
 					tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
@@ -179,7 +188,6 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	mongo_connection *tmp;
 	mcon_collection  *collection;
 	char             *con_error_message = NULL;
-	char             *auth_hash = NULL;
 	int i;
 	int found_connected_server = 0;
 
@@ -201,20 +209,16 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	/* Discover more nodes. This also adds a connection to "servers" for each
 	 * new node */
 	mongo_discover_topology(manager, servers);
-	/* Create the authentication hash to filter connections */
-	if (servers->server[0]->username && servers->server[0]->password) {
-		auth_hash = mongo_server_create_hashed_password(servers->server[0]->username, servers->server[0]->password);
-	}
 	/* Depending on whether we want a read or a write connection, run the correct algorithms */
 	if (connection_flags & MONGO_CON_FLAG_WRITE) {
 		mongo_read_preference tmp_rp;
 
 		mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
 		tmp_rp.type = MONGO_RP_PRIMARY;
-		collection = mongo_find_candidate_servers(manager, &tmp_rp, auth_hash);
+		collection = mongo_find_candidate_servers(manager, &tmp_rp, servers);
 		mongo_read_preference_dtor(&tmp_rp);
 	} else {
-		collection = mongo_find_candidate_servers(manager, &servers->read_pref, auth_hash);
+		collection = mongo_find_candidate_servers(manager, &servers->read_pref, servers);
 	}
 	if (!collection || collection->count == 0) {
 		*error_message = strdup("No candidate servers found");
@@ -237,7 +241,6 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	mongo_connection *tmp;
 	mcon_collection  *collection = NULL;
 	char             *con_error_message = NULL;
-	char             *auth_hash = NULL;
 	mongo_read_preference tmp_rp; /* We only support NEAREST for MULTIPLE right now */
 	int i;
 	int found_connected_server = 0;
@@ -270,16 +273,12 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 		return NULL;
 	}
 
-	/* Create the authentication hash to filter connections */
-	if (servers->server[0]->username && servers->server[0]->password) {
-		auth_hash = mongo_server_create_hashed_password(servers->server[0]->username, servers->server[0]->password);
-	}
 	/* Force the RP of NEAREST, which is the only one that makes sense right
 	 * now. Technically, read preference tags are also supported, but not
 	 * implemented on the mongos side yet. */
 	mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
 	tmp_rp.type = MONGO_RP_NEAREST;
-	collection = mongo_find_candidate_servers(manager, &tmp_rp, auth_hash);
+	collection = mongo_find_candidate_servers(manager, &tmp_rp, servers);
 	mongo_read_preference_dtor(&tmp_rp);
 	if (!collection || collection->count == 0) {
 		if (messages->l) {

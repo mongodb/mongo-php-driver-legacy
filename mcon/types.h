@@ -141,6 +141,7 @@ typedef struct _mongo_server_def
 {
 	char *host;
 	int   port;
+	char *repl_set_name;
 	char *db;
 	char *username;
 	char *password;
@@ -153,7 +154,7 @@ typedef struct _mongo_servers
 
 	/* flags and options */
 	/* NOTE: when making changes, update mongo_parse_init, mongo_servers_copy and mongo_servers_dtor */
-	int   con_type;
+	int   con_type;         /* One of MONGO_CON_TYPE_STANDALONE, MONGO_CON_TYPE_MULTIPLE or MONGO_CON_TYPE_REPLSET */
 	char *repl_set_name;
 	int   connectTimeoutMS;
 	int   default_do_gle;   /* Sets a flag whether all operations should be "safe" by default or not, -1 is not set, where 0 and 1 are explicit sets. */

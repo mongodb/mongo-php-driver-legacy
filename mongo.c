@@ -823,7 +823,7 @@ PHP_METHOD(Mongo, getHosts)
 		MAKE_STD_ZVAL(infoz);
 		array_init(infoz);
 
-		mongo_server_split_hash(item->connection->hash, (char**) &host, (int*) &port, NULL, NULL, NULL, NULL);
+		mongo_server_split_hash(item->connection->hash, (char**) &host, (int*) &port, NULL, NULL, NULL, NULL, NULL);
 		add_assoc_string(infoz, "host", host, 1);
 		add_assoc_long(infoz, "port", port);
 		free(host);
@@ -869,7 +869,7 @@ PHP_METHOD(Mongo, getConnections)
 	array_init(return_value);
 	while (ptr) {
 		zval *entry, *server, *connection, *tags;
-		char *host, *database, *username, *auth_hash;
+		char *host, *repl_set_name, *database, *username, *auth_hash;
 		int port, pid, i;
 
 		MAKE_STD_ZVAL(entry);
@@ -885,11 +885,15 @@ PHP_METHOD(Mongo, getConnections)
 		array_init(tags);
 
 		/* Grab server information */
-		mongo_server_split_hash(ptr->connection->hash, &host, &port, &database, &username, &auth_hash, &pid);
+		mongo_server_split_hash(ptr->connection->hash, &host, &port, &repl_set_name, &database, &username, &auth_hash, &pid);
 
 		add_assoc_string(server, "host", host, 1);
 		free(host);
 		add_assoc_long(server, "port", port);
+		if (repl_set_name) {
+			add_assoc_string(server, "repl_set_name", repl_set_name, 1);
+			free(repl_set_name);
+		}
 		if (database) {
 			add_assoc_string(server, "database", database, 1);
 			free(database);
