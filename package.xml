@@ -29,11 +29,11 @@
   <email>bjori@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-11-05</date>
- <time>10:00:32</time>
+ <date>2012-11-12</date>
+ <time>11:00:32</time>
  <version>
-  <release>1.3.0RC1</release>
-  <api>1.3.0RC1</api>
+  <release>1.3.0RC2</release>
+  <api>1.3.0RC2</api>
  </version>
  <stability>
   <release>beta</release>
@@ -41,6 +41,98 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
+** Bug
+    * [PHP-377] - Uncaught exception 'MongoCursorException' with message 'couldn't send query: ' from PHP
+    * [PHP-559] - The wrong connection is sometimes picked when there are two connections open
+    * [PHP-334] - Close connection with ReplicaSet
+
+** Improvement
+    * [PHP-171] - It'd be nice if mongo was playing nicely with pcntl php extension
+
+** Task
+    * [PHP-491] - Forking and connection handling still fails
+    * [PHP-552] - Document connection string options
+    * [PHP-553] - Make 1.3.x work with PHP 5.2.x
+    * [PHP-562] - Document changes to Mongo::close().
+ </notes>
+ <contents>
+  <dir baseinstalldir="/" name="/">
+   <file role="src" name="config.m4" />
+   <file role="src" name="config.w32" />
+   <file role="doc" name="README.md"/>
+   <file role="src" name="php_mongo.c"/>
+   <file role="src" name="php_mongo.h"/>
+   <file role="src" name="mongo.c"/>
+   <file role="src" name="mongo.h"/>
+   <file role="src" name="mongo_types.c"/>
+   <file role="src" name="mongo_types.h"/>
+   <file role="src" name="bson.c"/>
+   <file role="src" name="bson.h"/>
+   <file role="src" name="collection.c"/>
+   <file role="src" name="collection.h"/>
+   <file role="src" name="db.c"/>
+   <file role="src" name="db.h"/>
+   <file role="src" name="cursor.c"/>
+   <file role="src" name="cursor.h"/>
+   <file role="src" name="gridfs.c"/>
+   <file role="src" name="gridfs.h"/>
+   <file role="src" name="gridfs_stream.c"/>
+   <file role="src" name="gridfs_stream.h"/>
+   <file role="src" name="util/hash.c"/>
+   <file role="src" name="util/hash.h"/>
+   <file role="src" name="util/log.c"/>
+   <file role="src" name="util/log.h"/>
+   <file role="src" name="util/pool.c"/>
+   <file role="src" name="util/pool.h"/>
+   <file role="src" name="mcon/bson_helpers.h"/>
+   <file role="src" name="mcon/collection.h"/>
+   <file role="src" name="mcon/connections.h"/>
+   <file role="src" name="mcon/io.h"/>
+   <file role="src" name="mcon/manager.h"/>
+   <file role="src" name="mcon/mini_bson.h"/>
+   <file role="src" name="mcon/parse.h"/>
+   <file role="src" name="mcon/read_preference.h"/>
+   <file role="src" name="mcon/str.h"/>
+   <file role="src" name="mcon/types.h"/>
+   <file role="src" name="mcon/utils.h"/>
+   <file role="src" name="mcon/bson_helpers.c"/>
+   <file role="src" name="mcon/collection.c"/>
+   <file role="src" name="mcon/connections.c"/>
+   <file role="src" name="mcon/io.c"/>
+   <file role="src" name="mcon/manager.c"/>
+   <file role="src" name="mcon/mini_bson.c"/>
+   <file role="src" name="mcon/parse.c"/>
+   <file role="src" name="mcon/read_preference.c"/>
+   <file role="src" name="mcon/str.c"/>
+   <file role="src" name="mcon/utils.c"/>
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>5.3.0</min>
+   </php>
+   <pearinstaller>
+    <min>1.4.3</min>
+   </pearinstaller>
+  </required>
+ </dependencies>
+ <providesextension>mongo</providesextension>
+ <extsrcrelease/>
+ <changelog>
+  <release>
+   <date>2012-11-05</date>
+   <time>10:00:32</time>
+   <version>
+    <release>1.3.0RC1</release>
+    <api>1.3.0RC1</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
 This is the first release candidate of the 1.3 series. The 1.3 series are
 a major improvement with a completely rewritten connection handling backend. It has been
 rewritten to form a new improved framework for handling connections. On top of
@@ -131,72 +223,8 @@ The whole list of resolved tickets (since 1.3.0beta2) follows:
     * [PHP-519] - Document un-deprecation of get/setSlaveOkay() for 1.2.12
     * [PHP-520] - Remove MongoDB::authenticate() example from connection documentation
     * [PHP-531] - Restore MongoPool class/methods as no-ops with deprecation warnings
- </notes>
- <contents>
-  <dir baseinstalldir="/" name="/">
-   <file role="src" name="config.m4" />
-   <file role="src" name="config.w32" />
-   <file role="doc" name="README.md"/>
-   <file role="src" name="php_mongo.c"/>
-   <file role="src" name="php_mongo.h"/>
-   <file role="src" name="mongo.c"/>
-   <file role="src" name="mongo.h"/>
-   <file role="src" name="mongo_types.c"/>
-   <file role="src" name="mongo_types.h"/>
-   <file role="src" name="bson.c"/>
-   <file role="src" name="bson.h"/>
-   <file role="src" name="collection.c"/>
-   <file role="src" name="collection.h"/>
-   <file role="src" name="db.c"/>
-   <file role="src" name="db.h"/>
-   <file role="src" name="cursor.c"/>
-   <file role="src" name="cursor.h"/>
-   <file role="src" name="gridfs.c"/>
-   <file role="src" name="gridfs.h"/>
-   <file role="src" name="gridfs_stream.c"/>
-   <file role="src" name="gridfs_stream.h"/>
-   <file role="src" name="util/hash.c"/>
-   <file role="src" name="util/hash.h"/>
-   <file role="src" name="util/log.c"/>
-   <file role="src" name="util/log.h"/>
-   <file role="src" name="util/pool.c"/>
-   <file role="src" name="util/pool.h"/>
-   <file role="src" name="mcon/bson_helpers.h"/>
-   <file role="src" name="mcon/collection.h"/>
-   <file role="src" name="mcon/connections.h"/>
-   <file role="src" name="mcon/io.h"/>
-   <file role="src" name="mcon/manager.h"/>
-   <file role="src" name="mcon/mini_bson.h"/>
-   <file role="src" name="mcon/parse.h"/>
-   <file role="src" name="mcon/read_preference.h"/>
-   <file role="src" name="mcon/str.h"/>
-   <file role="src" name="mcon/types.h"/>
-   <file role="src" name="mcon/utils.h"/>
-   <file role="src" name="mcon/bson_helpers.c"/>
-   <file role="src" name="mcon/collection.c"/>
-   <file role="src" name="mcon/connections.c"/>
-   <file role="src" name="mcon/io.c"/>
-   <file role="src" name="mcon/manager.c"/>
-   <file role="src" name="mcon/mini_bson.c"/>
-   <file role="src" name="mcon/parse.c"/>
-   <file role="src" name="mcon/read_preference.c"/>
-   <file role="src" name="mcon/str.c"/>
-   <file role="src" name="mcon/utils.c"/>
-  </dir>
- </contents>
- <dependencies>
-  <required>
-   <php>
-    <min>5.3.0</min>
-   </php>
-   <pearinstaller>
-    <min>1.4.3</min>
-   </pearinstaller>
-  </required>
- </dependencies>
- <providesextension>mongo</providesextension>
- <extsrcrelease/>
- <changelog>
+   </notes>
+  </release>
   <release>
    <date>2012-08-16</date>
    <time>13:33:32</time>
