@@ -618,7 +618,7 @@ PHP_METHOD(Mongo, selectDB) {
 				tmp_link = (mongo_link*) zend_object_store_get_object(new_link TSRMLS_CC);
 
 				tmp_link->manager = link->manager;
-				tmp_link->servers = malloc(sizeof(mongo_servers));
+				tmp_link->servers = calloc(1, sizeof(mongo_servers));
 				mongo_servers_copy(tmp_link->servers, link->servers, MONGO_SERVER_COPY_NONE);
 
 				this_ptr = new_link;

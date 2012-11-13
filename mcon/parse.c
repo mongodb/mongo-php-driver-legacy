@@ -510,11 +510,14 @@ void mongo_servers_dump(mongo_con_manager *manager, mongo_servers *servers)
 /* Cloning */
 static void mongo_server_def_copy(mongo_server_def *to, mongo_server_def *from, int flags)
 {
-	to->host = to->db = to->username = to->password = NULL;
+	to->host = to->repl_set_name = to->db = to->username = to->password = NULL;
 	if (from->host) {
 		to->host = strdup(from->host);
 	}
 	to->port = from->port;
+	if (from->repl_set_name) {
+		to->repl_set_name = strdup(from->repl_set_name);
+	}
 
 	if (flags & MONGO_SERVER_COPY_CREDENTIALS) {
 		if (from->db) {
@@ -535,7 +538,7 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 
 	to->count = from->count;
 	for (i = 0; i < from->count; i++) {
-		to->server[i] = malloc(sizeof(mongo_server_def));
+		to->server[i] = calloc(1, sizeof(mongo_server_def));
 		mongo_server_def_copy(to->server[i], from->server[i], flags);
 	}
 
@@ -544,7 +547,6 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	if (from->repl_set_name) {
 		to->repl_set_name = strdup(from->repl_set_name);
 	}
-	to->repl_set_name = NULL;
 
 	to->connectTimeoutMS = from->connectTimeoutMS;
 
