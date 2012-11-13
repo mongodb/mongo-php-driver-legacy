@@ -355,14 +355,19 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 		}
 	}
 
+	/* If "w" was *not* set as an option, then assign the default */
+	if (link->servers->default_w == -1) {
+		if (bc) {
+			/* Default to WriteConcern=0 for Mongo */
+			link->servers->default_w = 0;
+		} else {
+			/* Default to WriteConcern=1 for MongoClient */
+			link->servers->default_w = 1;
+		}
+	}
+
 	/* Options through array */
 	if (options) {
-		if (!bc) {
-			/* Default to WriteConcern=1 for MongoClient */
-			if (!zend_symtable_exists(HASH_OF(options), "w", strlen("w"))) {
-				add_assoc_long(options, "w", 1);
-			}
-		}
 		for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(options), &pos);
 			zend_hash_get_current_data_ex(Z_ARRVAL_P(options), (void **)&opt_entry, &pos) == SUCCESS;
 			zend_hash_move_forward_ex(Z_ARRVAL_P(options), &pos)
