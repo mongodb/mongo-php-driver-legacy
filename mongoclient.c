@@ -80,10 +80,6 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_selectCollection, 0, ZEND_RE
 	ZEND_ARG_INFO(0, collection_name)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, slave_okay)
-ZEND_END_ARG_INFO()
-
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, read_preference)
 	ZEND_ARG_ARRAY_INFO(0, tags, 0)
@@ -93,32 +89,19 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_dropDB, 0, ZEND_RETURN_VALUE
 	ZEND_ARG_INFO(0, MongoDB_object_OR_database_name)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setPoolSize, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, maximum_pool_size)
-ZEND_END_ARG_INFO()
-
 static zend_function_entry mongo_methods[] = {
   PHP_ME(MongoClient, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
   PHP_ME(MongoClient, getConnections, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
   PHP_ME(MongoClient, connect, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, connectUtil, arginfo_no_parameters, ZEND_ACC_PROTECTED)
   PHP_ME(MongoClient, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoClient, __get, arginfo___get, ZEND_ACC_PUBLIC)
   PHP_ME(MongoClient, selectDB, arginfo_selectDB, ZEND_ACC_PUBLIC)
   PHP_ME(MongoClient, selectCollection, arginfo_selectCollection, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(MongoClient, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(MongoClient, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoClient, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
   PHP_ME(MongoClient, dropDB, arginfo_dropDB, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, lastError, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(MongoClient, prevError, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(MongoClient, resetError, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(MongoClient, forceError, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(MongoClient, listDBs, arginfo_no_parameters, ZEND_ACC_PUBLIC)
   PHP_ME(MongoClient, getHosts, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, getSlave, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-  PHP_ME(MongoClient, switchSlave, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
   PHP_ME(MongoClient, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
   { NULL, NULL, NULL }
@@ -146,9 +129,9 @@ static void php_mongoclient_free(void *object TSRMLS_DC)
 /* }}} */
 
 #if PHP_VERSION_ID >= 50400
-static zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC)
+zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC)
 #else
-static zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
+zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 #endif
 {
 	zval *retval;
@@ -238,7 +221,7 @@ HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC)
 
 /* {{{ php_mongoclient_new
  */
-static zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC) {
+zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC) {
   zend_object_value retval;
   mongoclient *intern;
   zval *tmp;
@@ -293,7 +276,30 @@ void mongo_init_MongoClient(TSRMLS_D) {
   zend_declare_property_null(mongo_ce_MongoClient, "persistent", strlen("persistent"), ZEND_ACC_PROTECTED TSRMLS_CC);
 }
 
-/* {{{ Mongo->__construct
+/* {{{ Helper for connecting the servers */
+mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC)
+{
+	mongo_connection *con;
+	char *error_message = NULL;
+
+	/* We don't care about the result so although we assign it to a var, we
+	 * only do that to handle errors and return it so that the calling function
+	 * knows whether a connection could be obtained or not. */
+	con = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char **) &error_message);
+	if (!con) {
+		if (error_message) {
+			zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
+			free(error_message);
+		} else {
+			zend_throw_exception(mongo_ce_ConnectionException, "Unknown error obtaining connection", 72 TSRMLS_CC);
+		}
+		return NULL;
+	}
+	return con;
+}
+/* }}} */
+
+/* {{{ MongoClient->__construct
  */
 PHP_METHOD(MongoClient, __construct)
 {
@@ -398,34 +404,13 @@ PHP_METHOD(MongoClient, __construct)
 	}
 
 	if (connect) {
-		MONGO_METHOD(MongoClient, connectUtil, NULL, getThis());
+		php_mongo_connect(link TSRMLS_CC);
 	}
 }
 /* }}} */
 
-/* {{{ Helper for connecting the servers */
-static mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC)
-{
-	mongo_connection *con;
-	char *error_message = NULL;
 
-	/* We don't care about the result so although we assign it to a var, we
-	 * only do that to handle errors and return it so that the calling function
-	 * knows whether a connection could be obtained or not. */
-	con = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char **) &error_message);
-	if (!con) {
-		if (error_message) {
-			zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
-			free(error_message);
-		} else {
-			zend_throw_exception(mongo_ce_ConnectionException, "Unknown error obtaining connection", 72 TSRMLS_CC);
-		}
-		return NULL;
-	}
-	return con;
-}
-
-/* {{{ Mongo->connect
+/* {{{ MongoClient->connect
  */
 PHP_METHOD(MongoClient, connect)
 {
@@ -436,21 +421,10 @@ PHP_METHOD(MongoClient, connect)
 }
 /* }}} */
 
-/* {{{ Mongo->connectUtil
- */
-PHP_METHOD(MongoClient, connectUtil)
-{
-	mongoclient *link;
 
-	PHP_MONGO_GET_LINK(getThis());
-	php_mongo_connect(link TSRMLS_CC);
-}
-/* }}} */
-
-
-/* {{{ proto int Mongo->close([string|bool hash|all])
+/* {{{ proto int MongoClient->close([string|bool hash|all])
    Closes the connection to $hash, or only master - or all open connections. Returns how many connections were closed */
-PHP_METHOD(Mongo, close)
+PHP_METHOD(MongoClient, close)
 {
 	char             *hash = NULL;
 	int               hash_len;
@@ -536,7 +510,7 @@ static void stringify_server(mongo_server_def *server, smart_str *str)
 }
 
 
-/* {{{ Mongo->__toString()
+/* {{{ MongoClient->__toString()
  */
 PHP_METHOD(MongoClient, __toString) {
 	smart_str str = { 0 };
@@ -561,7 +535,7 @@ PHP_METHOD(MongoClient, __toString) {
 /* }}} */
 
 
-/* {{{ Mongo->selectDB()
+/* {{{ MongoClient->selectDB()
  */
 PHP_METHOD(MongoClient, selectDB) {
   zval temp, *name;
@@ -680,29 +654,6 @@ PHP_METHOD(MongoClient, selectCollection) {
 }
 /* }}} */
 
-PHP_METHOD(MongoClient, getSlaveOkay)
-{
-	mongoclient *link;
-	PHP_MONGO_GET_LINK(getThis());
-	RETURN_BOOL(link->servers->read_pref.type != MONGO_RP_PRIMARY);
-}
-
-PHP_METHOD(MongoClient, setSlaveOkay)
-{
-	zend_bool slave_okay = 1;
-	mongoclient *link;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
-		return;
-	}
-
-	PHP_MONGO_GET_LINK(getThis());
-
-	RETVAL_BOOL(link->servers->read_pref.type != MONGO_RP_PRIMARY);
-	link->servers->read_pref.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
-}
-
-
 PHP_METHOD(MongoClient, getReadPreference)
 {
 	mongoclient *link;
@@ -775,7 +726,7 @@ PHP_METHOD(MongoClient, dropDB) {
 }
 /* }}} */
 
-/* {{{ Mongo->listDBs
+/* {{{ MongoClient->listDBs
  */
 PHP_METHOD(MongoClient, listDBs) {
   zval *admin, *data, *db;
@@ -831,22 +782,6 @@ PHP_METHOD(MongoClient, getHosts)
 		add_assoc_zval(return_value, item->connection->hash, infoz);
 		item = item->next;
 	}
-}
-
-PHP_METHOD(MongoClient, getSlave)
-{
-	mongoclient *link;
-	mongo_connection *con;
-
-	PHP_MONGO_GET_LINK(getThis());
-	con = php_mongo_connect(link TSRMLS_CC);
-	if (!con) {
-		/* We have to return here, as otherwise the exception doesn't trigger
-		 * before we return the hash at the end. */
-		return;
-	}
-
-	RETURN_STRING(con->hash, 1);
 }
 
 /* {{{ proto static array Mongo::getConnections(void)
@@ -924,69 +859,6 @@ PHP_METHOD(MongoClient, getConnections)
 
 		ptr = ptr->next;
 	}
-}
-/* }}} */
-
-PHP_METHOD(MongoClient, switchSlave)
-{
-	zim_MongoClient_switchSlave(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-}
-
-static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC) {
-  zval *db_name, *db;
-  MAKE_STD_ZVAL(db_name);
-  ZVAL_STRING(db_name, "admin", 1);
-
-  MAKE_STD_ZVAL(db);
-  MONGO_METHOD1(MongoClient, selectDB, db, getThis(), db_name);
-  zval_ptr_dtor(&db_name);
-
-  switch (err_type) {
-  case LAST_ERROR:
-    MONGO_METHOD(MongoDB, lastError, return_value, db);
-    break;
-  case PREV_ERROR:
-    MONGO_METHOD(MongoDB, prevError, return_value, db);
-    break;
-  case RESET_ERROR:
-    MONGO_METHOD(MongoDB, resetError, return_value, db);
-    break;
-  case FORCE_ERROR:
-    MONGO_METHOD(MongoDB, forceError, return_value, db);
-    break;
-  }
-
-  zval_ptr_dtor(&db);
-}
-
-
-/* {{{ Mongo->lastError()
- */
-PHP_METHOD(MongoClient, lastError) {
-  run_err(LAST_ERROR, return_value, getThis() TSRMLS_CC);
-}
-/* }}} */
-
-
-/* {{{ Mongo->prevError()
- */
-PHP_METHOD(MongoClient, prevError) {
-  run_err(PREV_ERROR, return_value, getThis() TSRMLS_CC);
-}
-/* }}} */
-
-
-/* {{{ Mongo->resetError()
- */
-PHP_METHOD(MongoClient, resetError) {
-  run_err(RESET_ERROR, return_value, getThis() TSRMLS_CC);
-}
-/* }}} */
-
-/* {{{ Mongo->forceError()
- */
-PHP_METHOD(MongoClient, forceError) {
-  run_err(FORCE_ERROR, return_value, getThis() TSRMLS_CC);
 }
 /* }}} */
 

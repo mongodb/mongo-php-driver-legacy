@@ -18,11 +18,20 @@
 #define MONGOCLIENT_H
 
 int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
-
+zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC);
 void mongo_init_MongoClient(TSRMLS_D);
+void mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc);
+/* Helper for connecting the servers */
+mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC);
+HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC);
+#if PHP_VERSION_ID >= 50400
+zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC);
+#else
+zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
+#endif
 
 /*
- * Mongo class
+ * MongoClient class
  */
 PHP_METHOD(MongoClient, __construct);
 PHP_METHOD(MongoClient, getConnections);
@@ -30,13 +39,10 @@ PHP_METHOD(MongoClient, connect);
 PHP_METHOD(MongoClient, pairConnect);
 PHP_METHOD(MongoClient, persistConnect);
 PHP_METHOD(MongoClient, pairPersistConnect);
-PHP_METHOD(MongoClient, connectUtil);
 PHP_METHOD(MongoClient, __toString);
 PHP_METHOD(MongoClient, __get);
 PHP_METHOD(MongoClient, selectDB);
 PHP_METHOD(MongoClient, selectCollection);
-PHP_METHOD(MongoClient, getSlaveOkay);
-PHP_METHOD(MongoClient, setSlaveOkay);
 PHP_METHOD(MongoClient, getReadPreference);
 PHP_METHOD(MongoClient, setReadPreference);
 PHP_METHOD(MongoClient, dropDB);
@@ -47,8 +53,6 @@ PHP_METHOD(MongoClient, forceError);
 PHP_METHOD(MongoClient, close);
 PHP_METHOD(MongoClient, listDBs);
 PHP_METHOD(MongoClient, getHosts);
-PHP_METHOD(MongoClient, getSlave);
-PHP_METHOD(MongoClient, switchSlave);
 
 #endif
 

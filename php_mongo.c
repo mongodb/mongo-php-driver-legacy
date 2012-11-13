@@ -26,6 +26,7 @@
 #include "php_mongo.h"
 
 #include "mongoclient.h"
+#include "mongo.h"
 #include "cursor.h"
 #include "mongo_types.h"
 
@@ -138,6 +139,7 @@ PHP_MINIT_FUNCTION(mongo) {
   le_cursor_list = zend_register_list_destructors_ex(NULL, php_mongo_cursor_list_pfree, PHP_CURSOR_LIST_RES_NAME, module_number);
 
   mongo_init_MongoClient(TSRMLS_C);
+  mongo_init_Mongo(TSRMLS_C);
   mongo_init_MongoDB(TSRMLS_C);
   mongo_init_MongoCollection(TSRMLS_C);
   mongo_init_MongoCursor(TSRMLS_C);
