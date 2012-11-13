@@ -201,7 +201,7 @@ PHP_METHOD(Mongo, connectUtil)
 
 PHP_METHOD(Mongo, switchSlave)
 {
-	zim_Mongo_switchSlave(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	zim_Mongo_getSlave(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
 
