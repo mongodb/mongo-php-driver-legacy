@@ -56,8 +56,9 @@ function m(&$dsn, &$port, &$db, &$opts = array()) {
         return;
     }
 }
-function mongo($usedb = null, $useprefix = true, $useport = true, $opts = array()) {
 
+function mongo_helper($usedb = null, $useprefix = true, $useport = true, &$opts = array(), &$dsn)
+{
     m($dsn, $port, $usedb, $opts);
 
     if (!$dsn) {
@@ -78,15 +79,35 @@ function mongo($usedb = null, $useprefix = true, $useport = true, $opts = array(
     if ($useprefix) {
         $dsn = "mongodb://$dsn";
     }
+}
+
+function new_mongo($usedb = null, $useprefix = true, $useport = true, $opts = array())
+{
+	mongo_helper($usedb, $useprefix, $useport, $opts, $dsn);
+
+    if ($opts) {
+        $m = new MongoClient($dsn, $opts);
+    } else {
+        $m = new MongoClient($dsn);
+    }
+    return $m;
+}
+
+function old_mongo($usedb = null, $useprefix = true, $useport = true, $opts = array())
+{
+	mongo_helper($usedb, $useprefix, $useport, $opts, $dsn);
 
     if ($opts) {
         $m = new Mongo($dsn, $opts);
-    }
-    else {
+    } else {
         $m = new Mongo($dsn);
     }
-
     return $m;
+}
+
+function mongo($usedb = null, $useprefix = true, $useport = true, $opts = array())
+{
+	return old_mongo($usedb, $useprefix, $useport, $opts);
 }
 
 function isauth() {

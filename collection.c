@@ -243,8 +243,28 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	timeout = Z_LVAL_P(timeout_p);
 
 	/* Read the default_* properties from the link */
-	if (link->servers->default_do_gle != -1) {
-		w = link->servers->default_do_gle;
+	if (link->servers->default_w != -1) {
+		w = link->servers->default_w;
+	}
+	if (link->servers->default_wstring != NULL) {
+		w_str = link->servers->default_wstring;
+	}
+
+	/* This picks up the default "w" through the properties of MongoCollection
+	 * and MongoDb, but only if w is still 1 - as otherwise it was perhaps
+	 * overridden with the "w" (or "safe") option. */
+	{
+		zval *w_prop = zend_read_property(mongo_ce_Collection, coll, "w", strlen("w"), NOISY TSRMLS_CC);
+
+		if (Z_TYPE_P(w_prop) == IS_STRING) {
+			w_str = Z_STRVAL_P(w_prop);
+		} else {
+			convert_to_long(w_prop);
+			if (Z_LVAL_P(w_prop) != 1) {
+				w = Z_LVAL_P(w_prop);
+				w_str = NULL;
+			}
+		}
 	}
 
 	/* Fetch all the options from the options array*/
@@ -299,20 +319,6 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   MAKE_STD_ZVAL(cmd);
   array_init(cmd);
   add_assoc_long(cmd, "getlasterror", 1);
-
-	/* This picks up the default "w" through the properties of MongoCollection
-	 * and MongoDb, but only if w is still 1 - as otherwise it was perhaps
-	 * overridden with the "w" (or "safe") option. */
-	if (w == 1) {
-		zval *w_prop = zend_read_property(mongo_ce_Collection, coll, "w", strlen("w"), NOISY TSRMLS_CC);
-
-		if (Z_TYPE_P(w_prop) == IS_STRING) {
-			w_str = Z_STRVAL_P(w_prop);
-		} else {
-			convert_to_long(w_prop);
-			w = Z_LVAL_P(w_prop);
-		}
-	}
 
 	/* if we have either a strong, or w > 1, then we need to add "w" and perhaps "wtimeout" to GLE */
 	if (w_str || w > 1) {
@@ -424,7 +430,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 		return 0;
 	}
 
-	if (is_gle_op(options, link->servers->default_do_gle TSRMLS_CC)) {
+	if (is_gle_op(options, link->servers->default_w TSRMLS_CC)) {
 		zval *cursor = append_getlasterror(getThis(), buf, options TSRMLS_CC);
 		if (cursor) {
 			do_safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
