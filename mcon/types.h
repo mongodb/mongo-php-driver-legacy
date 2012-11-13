@@ -1,3 +1,18 @@
+/**
+ *  Copyright 2009-2012 10gen, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 #ifndef __MCON_TYPES_H__
 #define __MCON_TYPES_H__
 
@@ -71,16 +86,17 @@ typedef unsigned __int64 uint64_t;
 #define MLOG_ALL    31 /* Must be the bit sum of all above */
 
 
-/* Stores all the information about the connection. The hash is a group of
- * parameters to identify a unique connection. */
-
 typedef int (mongo_cleanup_t)(void *callback_data);
-typedef struct _mongo_connection_deregister_callback {
-  void *callback_data;
-  mongo_cleanup_t *mongo_cleanup_cb;
-  struct _mongo_connection_deregister_callback *next;
+
+typedef struct _mongo_connection_deregister_callback
+{
+	void                                         *callback_data;
+	mongo_cleanup_t                              *mongo_cleanup_cb;
+	struct _mongo_connection_deregister_callback *next;
 } mongo_connection_deregister_callback;
 
+/* Stores all the information about the connection. The hash is a group of
+ * parameters to identify a unique connection. */
 typedef struct _mongo_connection
 {
 	time_t last_ping; /* The timestamp when ping was called last */
