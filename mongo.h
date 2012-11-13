@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2011 10gen, Inc.
+ *  Copyright 2009-2012 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef MONGO_H
-#define MONGO_H
+#ifndef __MONGO_H__
+#define __MONGO_H__
 
 int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 
@@ -36,4 +36,3 @@ PHP_METHOD(Mongo, getSlave);
 PHP_METHOD(Mongo, switchSlave);
 
 #endif
-
