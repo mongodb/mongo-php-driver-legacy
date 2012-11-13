@@ -25,7 +25,7 @@
 #include "mcon/manager.h"
 #include "mcon/io.h"
 
-extern zend_class_entry *mongo_ce_Mongo,
+extern zend_class_entry *mongo_ce_MongoClient,
   *mongo_ce_DB,
   *mongo_ce_Cursor,
   *mongo_ce_Code,
@@ -234,7 +234,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
   mongo_db *db = (mongo_db*)zend_object_store_get_object(c->parent TSRMLS_CC);
 	int response, w = 0, fsync = 0, timeout = -1;
-	mongo_link *link = (mongo_link*) zend_object_store_get_object(c->link TSRMLS_CC);
+	mongoclient *link = (mongoclient*) zend_object_store_get_object(c->link TSRMLS_CC);
 
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror");
 
@@ -381,11 +381,11 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
  */
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC)
 {
-	mongo_link *link;
+	mongoclient *link;
 	mongo_connection *connection;
 	char *error_message = NULL;
 
-	link = (mongo_link*)zend_object_store_get_object((c->link) TSRMLS_CC);
+	link = (mongoclient*)zend_object_store_get_object((c->link) TSRMLS_CC);
 	if (!link) {
 		zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
 		return 0;
@@ -409,7 +409,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 {
 	int retval = 1;
 	char *error_message = NULL;
-	mongo_link *link;
+	mongoclient *link;
 	mongo_collection *c;
 
 	c = (mongo_collection*)zend_object_store_get_object(this_ptr TSRMLS_CC);
@@ -418,7 +418,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 		return 0;
 	}
 
-	link = (mongo_link*)zend_object_store_get_object((c->link) TSRMLS_CC);
+	link = (mongoclient*)zend_object_store_get_object((c->link) TSRMLS_CC);
 	if (!link) {
 		zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
 		return 0;
@@ -685,7 +685,7 @@ PHP_METHOD(MongoCollection, find)
 {
   zval *query = 0, *fields = 0;
   mongo_collection *c;
-  mongo_link *link;
+  mongoclient *link;
   zval temp;
 	mongo_cursor *cursor;
 
