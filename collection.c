@@ -320,7 +320,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   array_init(cmd);
   add_assoc_long(cmd, "getlasterror", 1);
 
-	/* if we have either a strong, or w > 1, then we need to add "w" and perhaps "wtimeout" to GLE */
+	/* if we have either a string, or w > 1, then we need to add "w" and perhaps "wtimeout" to GLE */
 	if (w_str || w > 1) {
 		zval *wtimeout;
 
