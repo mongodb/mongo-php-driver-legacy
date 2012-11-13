@@ -27,9 +27,8 @@
 #include <ext/standard/php_rand.h>
 
 #include "php_mongo.h"
-#include "mongo.h"
+#include "mongoclient.h"
 #include "mongo_types.h"
-#include "php_mongo.h"
 #include "db.h"
 #include "collection.h"
 #include "bson.h"
@@ -728,7 +727,7 @@ PHP_METHOD(MongoDBRef, get) {
       MAKE_STD_ZVAL(new_db_z);
       ZVAL_NULL(new_db_z);
 
-      MONGO_METHOD1(Mongo, selectDB, new_db_z, temp_db->link, *dbname);
+      MONGO_METHOD1(MongoClient, selectDB, new_db_z, temp_db->link, *dbname);
 
       // make the new db the current one
       db = new_db_z;
