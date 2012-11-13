@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2011 10gen, Inc.
+ *  Copyright 2009-2012210gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,17 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-#ifndef MONGOCLIENT_H
-#define MONGOCLIENT_H
+#ifndef __MONGOCLIENT_H__
+#define __MONGOCLIENT_H__
 
 int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC);
 void mongo_init_MongoClient(TSRMLS_D);
-void mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc);
+void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc);
+
 /* Helper for connecting the servers */
 mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC);
 HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC);
+
 #if PHP_VERSION_ID >= 50400
 zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC);
 #else
@@ -55,4 +56,3 @@ PHP_METHOD(MongoClient, listDBs);
 PHP_METHOD(MongoClient, getHosts);
 
 #endif
-

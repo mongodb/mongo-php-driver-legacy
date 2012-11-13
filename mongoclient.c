@@ -90,21 +90,21 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_dropDB, 0, ZEND_RETURN_VALUE
 ZEND_END_ARG_INFO()
 
 static zend_function_entry mongo_methods[] = {
-  PHP_ME(MongoClient, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, getConnections, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(MongoClient, connect, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, __get, arginfo___get, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, selectDB, arginfo_selectDB, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, selectCollection, arginfo_selectCollection, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, dropDB, arginfo_dropDB, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, listDBs, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, getHosts, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoClient, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, getConnections, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	PHP_ME(MongoClient, connect, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, __get, arginfo___get, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, selectDB, arginfo_selectDB, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, selectCollection, arginfo_selectCollection, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, dropDB, arginfo_dropDB, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, listDBs, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, getHosts, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
-  { NULL, NULL, NULL }
+{ NULL, NULL, NULL }
 };
 
 /* {{{ php_mongoclient_free
@@ -221,59 +221,58 @@ HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC)
 
 /* {{{ php_mongoclient_new
  */
-zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC) {
-  zend_object_value retval;
-  mongoclient *intern;
-  zval *tmp;
+zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC)
+{
+	zend_object_value retval;
+	mongoclient *intern;
+	zval *tmp;
 
-  intern = (mongoclient*)emalloc(sizeof(mongoclient));
-  memset(intern, 0, sizeof(mongoclient));
+	intern = (mongoclient*)emalloc(sizeof(mongoclient));
+	memset(intern, 0, sizeof(mongoclient));
 
-  zend_object_std_init(&intern->std, class_type TSRMLS_CC);
-  init_properties(intern);
+	zend_object_std_init(&intern->std, class_type TSRMLS_CC);
+	init_properties(intern);
 
-  retval.handle = zend_objects_store_put(intern,
-     (zend_objects_store_dtor_t) zend_objects_destroy_object,
-     php_mongoclient_free, NULL TSRMLS_CC);
-  retval.handlers = &mongoclient_handlers;
+	retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, php_mongoclient_free, NULL TSRMLS_CC);
+	retval.handlers = &mongoclient_handlers;
 
-  return retval;
+	return retval;
 }
 /* }}} */
 
-void mongo_init_MongoClient(TSRMLS_D) {
-  zend_class_entry ce;
+void mongo_init_MongoClient(TSRMLS_D)
+{
+	zend_class_entry ce;
 
-  INIT_CLASS_ENTRY(ce, "MongoClient", mongo_methods);
-  ce.create_object = php_mongoclient_new;
-  mongo_ce_MongoClient = zend_register_internal_class(&ce TSRMLS_CC);
+	INIT_CLASS_ENTRY(ce, "MongoClient", mongo_methods);
+	ce.create_object = php_mongoclient_new;
+	mongo_ce_MongoClient = zend_register_internal_class(&ce TSRMLS_CC);
 
-  /* make mongoclient object uncloneable, and with its own read_property */
-  memcpy(&mongoclient_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  mongoclient_handlers.clone_obj = NULL;
-  mongoclient_handlers.read_property = mongo_read_property;
+	/* make mongoclient object uncloneable, and with its own read_property */
+	memcpy(&mongoclient_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+	mongoclient_handlers.clone_obj = NULL;
+	mongoclient_handlers.read_property = mongo_read_property;
 #if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3
-  mongoclient_handlers.get_debug_info = mongo_get_debug_info;
+	mongoclient_handlers.get_debug_info = mongo_get_debug_info;
 #endif
 
+	/* Mongo class constants */
+	zend_declare_class_constant_string(mongo_ce_MongoClient, "DEFAULT_HOST", strlen("DEFAULT_HOST"), "localhost" TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_MongoClient, "DEFAULT_PORT", strlen("DEFAULT_PORT"), 27017 TSRMLS_CC);
+	zend_declare_class_constant_string(mongo_ce_MongoClient, "VERSION", strlen("VERSION"), PHP_MONGO_VERSION TSRMLS_CC);
 
-  /* Mongo class constants */
-  zend_declare_class_constant_string(mongo_ce_MongoClient, "DEFAULT_HOST", strlen("DEFAULT_HOST"), "localhost" TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_MongoClient, "DEFAULT_PORT", strlen("DEFAULT_PORT"), 27017 TSRMLS_CC);
-  zend_declare_class_constant_string(mongo_ce_MongoClient, "VERSION", strlen("VERSION"), PHP_MONGO_VERSION TSRMLS_CC);
+	/* Read preferences types */
+	zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_PRIMARY", strlen("RP_PRIMARY"), MONGO_RP_PRIMARY TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_PRIMARY_PREFERRED", strlen("RP_PRIMARY_PREFERRED"), MONGO_RP_PRIMARY_PREFERRED TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_SECONDARY", strlen("RP_SECONDARY"), MONGO_RP_SECONDARY TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_SECONDARY_PREFERRED", strlen("RP_SECONDARY_PREFERRED"), MONGO_RP_SECONDARY_PREFERRED TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_NEAREST", strlen("RP_NEAREST"), MONGO_RP_NEAREST TSRMLS_CC);
 
-  /* Read preferences types */
-  zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_PRIMARY", strlen("RP_PRIMARY"), MONGO_RP_PRIMARY TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_PRIMARY_PREFERRED", strlen("RP_PRIMARY_PREFERRED"), MONGO_RP_PRIMARY_PREFERRED TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_SECONDARY", strlen("RP_SECONDARY"), MONGO_RP_SECONDARY TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_SECONDARY_PREFERRED", strlen("RP_SECONDARY_PREFERRED"), MONGO_RP_SECONDARY_PREFERRED TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_NEAREST", strlen("RP_NEAREST"), MONGO_RP_NEAREST TSRMLS_CC);
-
-  /* Mongo fields */
-  zend_declare_property_bool(mongo_ce_MongoClient, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
-  zend_declare_property_null(mongo_ce_MongoClient, "status", strlen("status"), ZEND_ACC_PUBLIC TSRMLS_CC);
-  zend_declare_property_null(mongo_ce_MongoClient, "server", strlen("server"), ZEND_ACC_PROTECTED TSRMLS_CC);
-  zend_declare_property_null(mongo_ce_MongoClient, "persistent", strlen("persistent"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	/* Mongo fields */
+	zend_declare_property_bool(mongo_ce_MongoClient, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_MongoClient, "status", strlen("status"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_MongoClient, "server", strlen("server"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_MongoClient, "persistent", strlen("persistent"), ZEND_ACC_PROTECTED TSRMLS_CC);
 }
 
 /* {{{ Helper for connecting the servers */
@@ -303,21 +302,23 @@ mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC)
  */
 PHP_METHOD(MongoClient, __construct)
 {
-	mongo_ctor(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
+	php_mongo_ctor(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
 }
 
-void mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
+void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 {
-  char *server = 0;
-  int server_len = 0;
-  zend_bool connect = 1;
-  zval *options = 0, *slave_okay = 0;
-  mongoclient *link;
-	zval **opt_entry;
-	char *opt_key, *error_message = NULL;
-	uint opt_key_len;
-	ulong num_key;
-	HashPosition pos;
+	char         *server = 0;
+	int           server_len = 0;
+	zend_bool     connect = 1;
+	zval         *options = 0;
+	zval         *slave_okay = 0;
+	mongoclient  *link;
+	zval        **opt_entry;
+	char         *opt_key;
+	char         *error_message = NULL;
+	uint          opt_key_len;
+	ulong         num_key;
+	HashPosition  pos;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/", &server, &server_len, &options) == FAILURE) {
 		zval *object = getThis();
@@ -500,30 +501,17 @@ static int close_connection(mongo_con_manager *manager, mongo_connection *connec
 
 static void stringify_server(mongo_server_def *server, smart_str *str)
 {
-	/* if this host is not connected, enclose in []s: [localhost:27017]
-	if (!server->connected) {
-	str[*pos] = '[';
-	*(pos) = *pos + 1;
-	}
-	*/
-
 	/* copy host */
 	smart_str_appends(str, server->host);
 	smart_str_appendc(str, ':');
 	smart_str_append_long(str, server->port);
-
-	/* close []s
-	if (!server->connected) {
-	str[*pos] = ']';
-	*(pos) = *pos + 1;
-	}
-	*/
 }
 
 
 /* {{{ MongoClient->__toString()
  */
-PHP_METHOD(MongoClient, __toString) {
+PHP_METHOD(MongoClient, __toString)
+{
 	smart_str str = { 0 };
 	mongoclient *link;
 	int i;
@@ -548,18 +536,19 @@ PHP_METHOD(MongoClient, __toString) {
 
 /* {{{ MongoClient->selectDB()
  */
-PHP_METHOD(MongoClient, selectDB) {
-  zval temp, *name;
-  char *db;
-  int db_len;
+PHP_METHOD(MongoClient, selectDB)
+{
+	zval temp, *name;
+	char *db;
+	int db_len;
 	mongoclient *link;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &db, &db_len) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &db, &db_len) == FAILURE) {
+		return;
+	}
 
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, db, 1);
+	MAKE_STD_ZVAL(name);
+	ZVAL_STRING(name, db, 1);
 
 	PHP_MONGO_GET_LINK(getThis());
 
@@ -606,65 +595,70 @@ PHP_METHOD(MongoClient, selectDB) {
 		}
 	}
 
-  object_init_ex(return_value, mongo_ce_DB);
-  MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), name);
+	object_init_ex(return_value, mongo_ce_DB);
+	MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), name);
 
-  zval_ptr_dtor(&name);
+	zval_ptr_dtor(&name);
 }
 /* }}} */
 
 
 /* {{{ Mongo::__get
  */
-PHP_METHOD(MongoClient, __get) {
-  zval *name;
-  char *str;
-  int str_len;
+PHP_METHOD(MongoClient, __get)
+{
+	zval *name;
+	char *str;
+	int str_len;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
+		return;
+	}
 
-  MAKE_STD_ZVAL(name);
-  ZVAL_STRING(name, str, 1);
+	MAKE_STD_ZVAL(name);
+	ZVAL_STRING(name, str, 1);
 
-  // select this db
-  MONGO_METHOD1(MongoClient, selectDB, return_value, getThis(), name);
+	/* select this db */
+	MONGO_METHOD1(MongoClient, selectDB, return_value, getThis(), name);
 
-  zval_ptr_dtor(&name);
+	zval_ptr_dtor(&name);
 }
 /* }}} */
 
 
 /* {{{ Mongo::selectCollection()
  */
-PHP_METHOD(MongoClient, selectCollection) {
-  char *db, *coll;
-  int db_len, coll_len;
-  zval *db_name, *coll_name, *temp_db;
+PHP_METHOD(MongoClient, selectCollection)
+{
+	char *db, *coll;
+	int db_len, coll_len;
+	zval *db_name, *coll_name, *temp_db;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &db, &db_len, &coll, &coll_len) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &db, &db_len, &coll, &coll_len) == FAILURE) {
+	return;
+	}
 
-  MAKE_STD_ZVAL(db_name);
-  ZVAL_STRING(db_name, db, 1);
+	MAKE_STD_ZVAL(db_name);
+	ZVAL_STRING(db_name, db, 1);
 
-  MAKE_STD_ZVAL(temp_db);
-  MONGO_METHOD1(MongoClient, selectDB, temp_db, getThis(), db_name);
-  zval_ptr_dtor(&db_name);
-  PHP_MONGO_CHECK_EXCEPTION1(&temp_db);
+	MAKE_STD_ZVAL(temp_db);
+	MONGO_METHOD1(MongoClient, selectDB, temp_db, getThis(), db_name);
+	zval_ptr_dtor(&db_name);
+	PHP_MONGO_CHECK_EXCEPTION1(&temp_db);
 
-  MAKE_STD_ZVAL(coll_name);
-  ZVAL_STRING(coll_name, coll, 1);
+	MAKE_STD_ZVAL(coll_name);
+	ZVAL_STRING(coll_name, coll, 1);
 
-  MONGO_METHOD1(MongoDB, selectCollection, return_value, temp_db, coll_name);
+	MONGO_METHOD1(MongoDB, selectCollection, return_value, temp_db, coll_name);
 
-  zval_ptr_dtor(&coll_name);
-  zval_ptr_dtor(&temp_db);
+	zval_ptr_dtor(&coll_name);
+	zval_ptr_dtor(&temp_db);
 }
 /* }}} */
 
+
+/* {{{ array Mongo::getReadPreference()
+ * Returns the currently set read preference.*/
 PHP_METHOD(MongoClient, getReadPreference)
 {
 	mongoclient *link;
@@ -675,6 +669,8 @@ PHP_METHOD(MongoClient, getReadPreference)
 	add_assoc_string(return_value, "type_string", mongo_read_preference_type_to_name(link->servers->read_pref.type), 1);
 	php_mongo_add_tagsets(return_value, &link->servers->read_pref);
 }
+/* }}} */
+
 
 /* {{{ Mongo::setReadPreference(int read_preference [, array tags ])
  * Sets a read preference to be used for all read queries.*/
@@ -710,32 +706,33 @@ PHP_METHOD(MongoClient, setReadPreference)
 }
 /* }}} */
 
+
 /* {{{ Mongo::dropDB()
  */
-PHP_METHOD(MongoClient, dropDB) {
-  zval *db, *temp_db;
+PHP_METHOD(MongoClient, dropDB)
+{
+	zval *db, *temp_db;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &db) == FAILURE) {
-    RETURN_FALSE;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &db) == FAILURE) {
+		RETURN_FALSE;
+	}
 
-  if (Z_TYPE_P(db) != IS_OBJECT ||
-      Z_OBJCE_P(db) != mongo_ce_DB) {
-    MAKE_STD_ZVAL(temp_db);
-    ZVAL_NULL(temp_db);
+	if (Z_TYPE_P(db) != IS_OBJECT || Z_OBJCE_P(db) != mongo_ce_DB) {
+		MAKE_STD_ZVAL(temp_db);
+		ZVAL_NULL(temp_db);
 
-    // reusing db param from Mongo::drop call
-    MONGO_METHOD_BASE(MongoClient, selectDB)(1, temp_db, NULL, getThis(), 0 TSRMLS_CC);
-    db = temp_db;
-  }
-  else {
-    zval_add_ref(&db);
-  }
+		/* reusing db param from Mongo::drop call */
+		MONGO_METHOD_BASE(MongoClient, selectDB)(1, temp_db, NULL, getThis(), 0 TSRMLS_CC);
+		db = temp_db;
+	} else {
+		zval_add_ref(&db);
+	}
 
-  MONGO_METHOD(MongoDB, drop, return_value, db);
-  zval_ptr_dtor(&db);
+	MONGO_METHOD(MongoDB, drop, return_value, db);
+	zval_ptr_dtor(&db);
 }
 /* }}} */
+
 
 /* {{{ MongoClient->listDBs
  */
@@ -762,6 +759,9 @@ PHP_METHOD(MongoClient, listDBs) {
 }
 /* }}} */
 
+
+/* {{{ MongoClient->getHosts
+ */
 PHP_METHOD(MongoClient, getHosts)
 {
 	mongoclient             *link;
@@ -794,6 +794,8 @@ PHP_METHOD(MongoClient, getHosts)
 		item = item->next;
 	}
 }
+/* }}} */
+
 
 /* {{{ proto static array Mongo::getConnections(void)
    Returns an array of all open connections, and information about each of the servers */
@@ -872,4 +874,3 @@ PHP_METHOD(MongoClient, getConnections)
 	}
 }
 /* }}} */
-

@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2011 10gen, Inc.
+ *  Copyright 2009-2012 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,9 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-
-
 #include <php.h>
 #include <zend_exceptions.h>
 #include "php_mongo.h"
@@ -50,10 +47,10 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setPoolSize, 0, ZEND_RETURN_
 	ZEND_ARG_INFO(0, size)
 ZEND_END_ARG_INFO()
 
-
-
 static zend_function_entry mongo_methods[] = {
 	PHP_ME(Mongo, __construct, arginfo___construct, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
+
+	/* All these methods only exist in Mongo, and no longer in MongoClient */
 	PHP_ME(Mongo, connectUtil, arginfo_no_parameters, ZEND_ACC_PROTECTED)
 	PHP_ME(Mongo, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
@@ -66,11 +63,13 @@ static zend_function_entry mongo_methods[] = {
 	PHP_ME(Mongo, setPoolSize, arginfo_setPoolSize, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, getPoolSize, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, poolDebug, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
+
 	{ NULL, NULL, NULL }
 };
 
 
-void mongo_init_Mongo(TSRMLS_D) {
+void mongo_init_Mongo(TSRMLS_D)
+{
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "Mongo", mongo_methods); /* FIXME: Use mongo_methods here */
@@ -90,7 +89,7 @@ void mongo_init_Mongo(TSRMLS_D) {
 */
 PHP_METHOD(Mongo, __construct)
 {
-	mongo_ctor(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
+	php_mongo_ctor(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
 }
 /* }}} */
 
@@ -131,6 +130,8 @@ PHP_METHOD(Mongo, setSlaveOkay)
 	RETVAL_BOOL(link->servers->read_pref.type != MONGO_RP_PRIMARY);
 	link->servers->read_pref.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
+
+
 static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC) {
 	zval *db_name, *db;
 	MAKE_STD_ZVAL(db_name);
@@ -157,7 +158,6 @@ static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC) 
 
 	zval_ptr_dtor(&db);
 }
-
 
 /* {{{ Mongo->lastError()
 */
@@ -204,4 +204,3 @@ PHP_METHOD(Mongo, switchSlave)
 	zim_Mongo_getSlave(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 /* }}} */
-
