@@ -440,8 +440,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		if ((option_value[0] >= '0' && option_value[0] <= '9') || option_value[0] == '-') {
 			servers->default_w = atoi(option_value);
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': %d", servers->default_w);
-			if (servers->default_w < 1) {
-				*error_message = strdup("The value of 'w' needs to be 1 or higher (or a string).");
+			if (servers->default_w < 0) {
+				*error_message = strdup("The value of 'w' needs to be 0 or higher (or a string).");
 				return 3;
 			}
 		} else {
