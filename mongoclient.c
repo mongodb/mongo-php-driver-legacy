@@ -303,6 +303,11 @@ mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC)
  */
 PHP_METHOD(MongoClient, __construct)
 {
+	mongo_ctor(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
+}
+
+void mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
+{
   char *server = 0;
   int server_len = 0;
   zend_bool connect = 1;
@@ -351,6 +356,12 @@ PHP_METHOD(MongoClient, __construct)
 
 	/* Options through array */
 	if (options) {
+		if (!bc) {
+			/* Default to WriteConcern=1 for MongoClient */
+			if (!zend_symtable_exists(HASH_OF(options), "w", strlen("w"))) {
+				add_assoc_long(options, "w", 1);
+			}
+		}
 		for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(options), &pos);
 			zend_hash_get_current_data_ex(Z_ARRVAL_P(options), (void **)&opt_entry, &pos) == SUCCESS;
 			zend_hash_move_forward_ex(Z_ARRVAL_P(options), &pos)
