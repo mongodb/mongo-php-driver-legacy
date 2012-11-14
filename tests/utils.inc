@@ -56,7 +56,7 @@ function m(&$dsn, &$port, &$db, &$opts = array()) {
         return;
     }
 }
-function mongo($usedb = null, $useprefix = true, $useport = true, $creds = array()) {
+function mongo($usedb = null, $useprefix = true, $useport = true, $opts = array()) {
 
     m($dsn, $port, $usedb, $opts);
 

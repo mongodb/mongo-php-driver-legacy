@@ -435,7 +435,7 @@ PHP_METHOD(Mongo, connect)
 	mongo_link *link;
 
 	PHP_MONGO_GET_LINK(getThis());
-	php_mongo_connect(link TSRMLS_CC);
+	RETURN_BOOL(php_mongo_connect(link TSRMLS_CC) != NULL);
 }
 /* }}} */
 
