@@ -63,7 +63,7 @@ static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // externs
 extern zend_class_entry *mongo_ce_Id,
-  *mongo_ce_Mongo,
+  *mongo_ce_MongoClient,
   *mongo_ce_DB,
   *mongo_ce_Collection,
   *mongo_ce_Exception,
@@ -227,7 +227,7 @@ PHP_METHOD(MongoCursor, __construct) {
   mongo_cursor *cursor;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz|zz", &zlink,
-                            mongo_ce_Mongo, &zns, &zquery, &zfields) == FAILURE) {
+                            mongo_ce_MongoClient, &zns, &zquery, &zfields) == FAILURE) {
     return;
   }
   MUST_BE_ARRAY_OR_OBJECT(3, zquery);
@@ -839,7 +839,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   buffer buf;
   zval *errmsg;
 	char *error_message;
-	mongo_link *link;
+	mongoclient *link;
 	mongo_read_preference rp;
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -851,7 +851,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   }
 
 	/* db connection resource */
-	link = (mongo_link*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
+	link = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
 	if (!link->servers) {
 		zend_throw_exception(mongo_ce_Exception, "The Mongo object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
 		return FAILURE;
@@ -1244,7 +1244,7 @@ PHP_METHOD(MongoCursor, count) {
 }
  
 ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
-	ZEND_ARG_OBJ_INFO(0, connection, Mongo, 0)
+	ZEND_ARG_OBJ_INFO(0, connection, MongoClient, 0)
 	ZEND_ARG_INFO(0, database_and_collection_name)
 	ZEND_ARG_INFO(0, query)
 	ZEND_ARG_INFO(0, array_of_fields_OR_object)

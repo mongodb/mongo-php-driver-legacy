@@ -39,7 +39,6 @@ mongo_servers* mongo_parse_init(void)
 	servers->repl_set_name = NULL;
 	servers->con_type = MONGO_CON_TYPE_STANDALONE;
 
-	servers->default_do_gle = -1;
 	servers->default_w = -1;
 	servers->default_wstring = NULL;
 	servers->default_wtimeout = -1;
@@ -421,30 +420,18 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		servers->connectTimeoutMS = atoi(option_value);
 		return 0;
 	}
-#if 0
-	if (strcasecmp(option_name, "fireAndForget") == 0) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'fireAndForget': %s", option_value);
-		if (strcmp(option_value, "true") == 0) {
-			servers->default_do_gle = 1;
-		} else if (strcmp(option_value, "false") == 0) {
-			servers->default_do_gle = 0;
-		} else {
-			*error_message = strdup("The value of 'fireAndForget' needs to be either 'true' or 'false'");
-			return 3;
-		}
-		return 0;
-	}
-#endif
+
 	if (strcasecmp(option_name, "w") == 0) {
 		/* Rough check to see whether this is a numeric string or not */
 		if ((option_value[0] >= '0' && option_value[0] <= '9') || option_value[0] == '-') {
 			servers->default_w = atoi(option_value);
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': %d", servers->default_w);
-			if (servers->default_w < 1) {
-				*error_message = strdup("The value of 'w' needs to be 1 or higher (or a string).");
+			if (servers->default_w < 0) {
+				*error_message = strdup("The value of 'w' needs to be 0 or higher (or a string).");
 				return 3;
 			}
 		} else {
+			servers->default_w = 1;
 			servers->default_wstring = strdup(option_value);
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': '%s'", servers->default_wstring);
 		}
@@ -565,7 +552,6 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 
 	to->connectTimeoutMS = from->connectTimeoutMS;
 
-	to->default_do_gle = from->default_do_gle;
 	to->default_w = from->default_w;
 	to->default_wtimeout = from->default_wtimeout;
 	if (from->default_wstring) {
