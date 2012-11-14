@@ -372,9 +372,13 @@ mongo_connection *mongo_get_read_write_connection_with_callback(mongo_con_manage
 	mongo_connection *connection;
 	mongo_connection_deregister_callback *cb;
 	
-	cb = calloc(1, sizeof(mongo_connection_deregister_callback));
-
 	connection = mongo_get_read_write_connection(manager, servers, connection_flags, error_message);
+
+	if (!connection) {
+		return NULL;
+	}
+
+	cb = calloc(1, sizeof(mongo_connection_deregister_callback));
 
 	cb->mongo_cleanup_cb = cleanup_cb;
 	cb->callback_data = callback_data;
