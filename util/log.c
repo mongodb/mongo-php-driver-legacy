@@ -29,6 +29,28 @@ static void get_value(char *setting, zval *return_value TSRMLS_DC);
 static void userland_callback(int module, int level, char *message TSRMLS_DC);
 #endif
 
+static char *level_name(int level)
+{
+	switch (level) {
+		case MLOG_WARN: return "WARN";
+		case MLOG_INFO: return "INFO";
+		case MLOG_FINE: return "FINE";
+		default: return "?";
+	}
+}
+
+static char *module_name(int module)
+{
+	switch (module) {
+		case MLOG_RS: return "REPLSET";
+		case MLOG_CON: return "CON";
+		case MLOG_IO: return "IO";
+		case MLOG_SERVER: return "SERVER";
+		case MLOG_PARSE: return "PARSE";
+		default: return "?";
+	}
+}
+
 
 static zend_function_entry mongo_log_methods[] = {
   PHP_ME(MongoLog, setLevel, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
@@ -105,23 +127,30 @@ PHP_METHOD(MongoLog, setModule)
 #if PHP_VERSION_ID >= 50300
 static void userland_callback(int module, int level, char *message TSRMLS_DC)
 {
-	zval **params[3];
-	zval *z_module, *z_level, *z_message, *z_retval = NULL;
-
+	zval **params[5];
+	zval *z_module, *z_module_name, *z_level, *z_level_name, *z_message, *z_retval = NULL;
 
 	ALLOC_INIT_ZVAL(z_module);
 	ZVAL_LONG(z_module, module);
 	params[0] = &z_module;
 
+	ALLOC_INIT_ZVAL(z_module_name);
+	ZVAL_STRING(z_module_name, module_name(module), 1);
+	params[1] = &z_module_name;
+
 	ALLOC_INIT_ZVAL(z_level);
 	ZVAL_LONG(z_level, level);
-	params[1] = &z_level;
+	params[2] = &z_level;
+
+	ALLOC_INIT_ZVAL(z_level_name);
+	ZVAL_STRING(z_level_name, level_name(level), 1);
+	params[3] = &z_level_name;
 
 	ALLOC_INIT_ZVAL(z_message);
 	ZVAL_STRING(z_message, message, 1);
-	params[2] = &z_message;
+	params[4] = &z_message;
 
-	MonGlo(log_callback_info).param_count = 3;
+	MonGlo(log_callback_info).param_count = 5;
 	MonGlo(log_callback_info).params = params;
 	MonGlo(log_callback_info).retval_ptr_ptr = &z_retval;
 
@@ -129,9 +158,11 @@ static void userland_callback(int module, int level, char *message TSRMLS_DC)
 		zval_ptr_dtor(&z_retval);
 	}
 
-	zval_ptr_dtor(&z_message);
-	zval_ptr_dtor(&z_level);
 	zval_ptr_dtor(&z_module);
+	zval_ptr_dtor(&z_module_name);
+	zval_ptr_dtor(&z_level);
+	zval_ptr_dtor(&z_level_name);
+	zval_ptr_dtor(&z_message);
 }
 
 PHP_METHOD(MongoLog, setCallback)
@@ -163,28 +194,6 @@ PHP_METHOD(MongoLog, getModule)
 	get_value("module", return_value TSRMLS_CC);
 }
 
-static char *level_name(int level)
-{
-	switch (level) {
-		case MLOG_WARN: return "WARN";
-		case MLOG_INFO: return "INFO";
-		case MLOG_FINE: return "FINE";
-		default: return "?";
-	}
-}
-
-static char *module_name(int module)
-{
-	switch (module) {
-		case MLOG_RS: return "REPLSET";
-		case MLOG_CON: return "CON    ";
-		case MLOG_IO: return "IO     ";
-		case MLOG_SERVER: return "SERVER ";
-		case MLOG_PARSE: return "PARSE  ";
-		default: return "?";
-	}
-}
-
 void php_mongo_log(const int module, const int level TSRMLS_DC, const char *format, ...)
 {
 	if ((module & MonGlo(log_module)) && (level & MonGlo(log_level))) {
@@ -200,7 +209,7 @@ void php_mongo_log(const int module, const int level TSRMLS_DC, const char *form
 			userland_callback(module, level, tmp TSRMLS_CC);
 		} else {
 #endif
-			php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
+			php_error(E_NOTICE, "%-7s %-4s: %s", module_name(module), level_name(level), tmp);
 #if PHP_VERSION_ID >= 50300
 		}
 #endif
@@ -226,7 +235,7 @@ void php_mcon_log_wrapper(int module, int level, void *context, char *format, va
 			userland_callback(module, level, tmp TSRMLS_CC);
 		} else {
 #endif
-			php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
+			php_error(E_NOTICE, "%-7s %-4s: %s", module_name(module), level_name(level), tmp);
 #if PHP_VERSION_ID >= 50300
 		}
 #endif

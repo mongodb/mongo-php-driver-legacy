@@ -8,7 +8,7 @@ Test for MongoLog with callback (>= PHP 5.3).
 require_once dirname(__FILE__) . "/../utils.inc";
 
 function f($module, $moduleName, $log, $logName, $m) {
-    var_dump($module, $log, $m);
+    printf("%-7s %-4s: %s\n", $moduleName, $logName, $m);
 }
 
 var_dump(MongoLog::getCallback());
@@ -33,13 +33,7 @@ bool(false)
 bool(true)
 string(1) "f"
 Selecting collection
-int(4)
-int(4)
-string(13) "getting reply"
-int(4)
-int(4)
-string(21) "getting cursor header"
-int(4)
-int(4)
-string(19) "getting cursor body"
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
 Finished
