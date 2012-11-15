@@ -100,5 +100,6 @@ if test "$PHP_COVERAGE" = "yes"; then
   dnl Add the special gcc flags
   CFLAGS="$CFLAGS -O0 -fprofile-arcs -ftest-coverage"
   CXXFLAGS="$CXXFLAGS -O0 -fprofile-arcs -ftest-coverage"
+  LDFLAGS="$LDFLAGS -precious-files-regex \.gcno$"
 fi
 
