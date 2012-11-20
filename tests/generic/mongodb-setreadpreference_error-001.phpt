@@ -22,14 +22,14 @@ foreach ($b as $newRP) {
 }
 ?>
 --EXPECTF--
-Warning: MongoDB::setReadPreference(): The value blaat is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
+Warning: MongoDB::setReadPreference(): The value 'blaat' is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
 primary preferred
 
-Warning: MongoDB::setReadPreference(): The value 42 is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
+Warning: MongoDB::setReadPreference(): The value '42' is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
 primary preferred
 
-Warning: MongoDB::setReadPreference(): The value 1 is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
+Warning: MongoDB::setReadPreference(): The value '1' is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
 primary preferred
 
-Warning: MongoDB::setReadPreference(): The value 3.14 is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
+Warning: MongoDB::setReadPreference(): The value '3.14' is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
 primary preferred

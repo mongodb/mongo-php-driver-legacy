@@ -703,7 +703,7 @@ PHP_METHOD(MongoClient, setReadPreference)
 	} else if (strcasecmp(read_preference, "nearest") == 0) {
 		link->servers->read_pref.type = MONGO_RP_NEAREST;
 	} else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %s is not valid as read preference type", read_preference);
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value '%s' is not valid as read preference type", read_preference);
 		RETURN_FALSE;
 	}
 	if (tags) {
