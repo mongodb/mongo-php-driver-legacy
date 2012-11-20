@@ -28,9 +28,9 @@ var_dump($opts, $m);
 echo "All done\n";
 ?>
 --EXPECTF--
-Notice: Array to string conversion in %smongo-ctor-002.php on line %d
+Notice: Array to string conversion in %smongoclient-ctor-002.php on line %d
 
-Notice: Array to string conversion in %smongo-ctor-002.php on line %d
+Notice: Array to string conversion in %smongoclient-ctor-002.php on line %d
 array(5) {
   ["replicaSet"]=>
   string(%d) "%s"

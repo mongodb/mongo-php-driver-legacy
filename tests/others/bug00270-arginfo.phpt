@@ -4,6 +4,7 @@ Test for PHP-270: ext/mongo classes should return meaningful results from Reflec
 <?php
 $classes = array(
     'Mongo',
+    'MongoClient',
     'MongoDB',
     'MongoCollection',
     'MongoCursor',
@@ -28,9 +29,22 @@ Mongo
   Method __construct expects 2 parameters
     0: server (optional)
     1: options (optional)
+  Method connectUtil expects 0 parameters
+  Method getSlaveOkay expects 0 parameters
+  Method setSlaveOkay expects 1 parameters
+    0: slave_okay (optional)
+  Method lastError expects 0 parameters
+  Method prevError expects 0 parameters
+  Method resetError expects 0 parameters
+  Method forceError expects 0 parameters
+  Method getSlave expects 0 parameters
+  Method switchSlave expects 0 parameters
+  Method setPoolSize expects 1 parameters
+    0: size
+  Method getPoolSize expects 0 parameters
+  Method poolDebug expects 0 parameters
   Method getConnections expects 0 parameters
   Method connect expects 0 parameters
-  Method connectUtil expects 0 parameters
   Method __toString expects 0 parameters
   Method __get expects 1 parameters
     0: name
@@ -39,28 +53,39 @@ Mongo
   Method selectCollection expects 2 parameters
     0: database_name
     1: collection_name (optional)
-  Method getSlaveOkay expects 0 parameters
-  Method setSlaveOkay expects 1 parameters
-    0: slave_okay (optional)
   Method getReadPreference expects 0 parameters
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
   Method dropDB expects 1 parameters
     0: MongoDB_object_OR_database_name
-  Method lastError expects 0 parameters
-  Method prevError expects 0 parameters
-  Method resetError expects 0 parameters
-  Method forceError expects 0 parameters
   Method listDBs expects 0 parameters
   Method getHosts expects 0 parameters
-  Method getSlave expects 0 parameters
-  Method switchSlave expects 0 parameters
   Method close expects 0 parameters
-  Method setPoolSize expects 1 parameters
-    0: maximum_pool_size
-  Method getPoolSize expects 0 parameters
-  Method poolDebug expects 0 parameters
+
+MongoClient
+  Method __construct expects 2 parameters
+    0: server (optional)
+    1: options (optional)
+  Method getConnections expects 0 parameters
+  Method connect expects 0 parameters
+  Method __toString expects 0 parameters
+  Method __get expects 1 parameters
+    0: name
+  Method selectDB expects 1 parameters
+    0: database_name
+  Method selectCollection expects 2 parameters
+    0: database_name
+    1: collection_name (optional)
+  Method getReadPreference expects 0 parameters
+  Method setReadPreference expects 2 parameters
+    0: read_preference
+    1: tags (optional)
+  Method dropDB expects 1 parameters
+    0: MongoDB_object_OR_database_name
+  Method listDBs expects 0 parameters
+  Method getHosts expects 0 parameters
+  Method close expects 0 parameters
 
 MongoDB
   Method __construct expects 2 parameters
