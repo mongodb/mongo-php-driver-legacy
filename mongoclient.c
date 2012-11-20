@@ -262,11 +262,11 @@ void mongo_init_MongoClient(TSRMLS_D)
 	zend_declare_class_constant_string(mongo_ce_MongoClient, "VERSION", strlen("VERSION"), PHP_MONGO_VERSION TSRMLS_CC);
 
 	/* Read preferences types */
-	zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_PRIMARY", strlen("RP_PRIMARY"), MONGO_RP_PRIMARY TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_PRIMARY_PREFERRED", strlen("RP_PRIMARY_PREFERRED"), MONGO_RP_PRIMARY_PREFERRED TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_SECONDARY", strlen("RP_SECONDARY"), MONGO_RP_SECONDARY TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_SECONDARY_PREFERRED", strlen("RP_SECONDARY_PREFERRED"), MONGO_RP_SECONDARY_PREFERRED TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_MongoClient, "RP_NEAREST", strlen("RP_NEAREST"), MONGO_RP_NEAREST TSRMLS_CC);
+	zend_declare_class_constant_string(mongo_ce_MongoClient, "RP_PRIMARY", strlen("RP_PRIMARY"), "primary" TSRMLS_CC);
+	zend_declare_class_constant_string(mongo_ce_MongoClient, "RP_PRIMARY_PREFERRED", strlen("RP_PRIMARY_PREFERRED"), "primaryPreferred" TSRMLS_CC);
+	zend_declare_class_constant_string(mongo_ce_MongoClient, "RP_SECONDARY", strlen("RP_SECONDARY"), "secondary" TSRMLS_CC);
+	zend_declare_class_constant_string(mongo_ce_MongoClient, "RP_SECONDARY_PREFERRED", strlen("RP_SECONDARY_PREFERRED"), "secondaryPreferred" TSRMLS_CC);
+	zend_declare_class_constant_string(mongo_ce_MongoClient, "RP_NEAREST", strlen("RP_NEAREST"), "nearest" TSRMLS_CC);
 
 	/* Mongo fields */
 	zend_declare_property_bool(mongo_ce_MongoClient, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
@@ -677,28 +677,37 @@ PHP_METHOD(MongoClient, getReadPreference)
 /* }}} */
 
 
-/* {{{ Mongo::setReadPreference(int read_preference [, array tags ])
+/* {{{ Mongo::setReadPreference(string read_preference [, array tags ])
  * Sets a read preference to be used for all read queries.*/
 PHP_METHOD(MongoClient, setReadPreference)
 {
-	long read_preference;
+	char *read_preference;
+	int   read_preference_len;
 	mongoclient *link;
 	HashTable  *tags = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|h", &read_preference, &tags) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|h", &read_preference, &read_preference_len, &tags) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_LINK(getThis());
 
-	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
-		link->servers->read_pref.type = read_preference;
+	if (strcasecmp(read_preference, "primary") == 0) {
+		link->servers->read_pref.type = MONGO_RP_PRIMARY;
+	} else if (strcasecmp(read_preference, "primaryPreferred") == 0) {
+		link->servers->read_pref.type = MONGO_RP_PRIMARY_PREFERRED;
+	} else if (strcasecmp(read_preference, "secondary") == 0) {
+		link->servers->read_pref.type = MONGO_RP_SECONDARY;
+	} else if (strcasecmp(read_preference, "secondaryPreferred") == 0) {
+		link->servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
+	} else if (strcasecmp(read_preference, "nearest") == 0) {
+		link->servers->read_pref.type = MONGO_RP_NEAREST;
 	} else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %ld is not valid as read preference type", read_preference);
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %s is not valid as read preference type", read_preference);
 		RETURN_FALSE;
 	}
 	if (tags) {
-		if (read_preference == MONGO_RP_PRIMARY) {
+		if (strcasecmp(read_preference, "primary") == 0) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't use read preference tags with a read preference of PRIMARY");
 			RETURN_FALSE;
 		}

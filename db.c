@@ -198,28 +198,37 @@ PHP_METHOD(MongoDB, getReadPreference)
 	php_mongo_add_tagsets(return_value, &db->read_pref);
 }
 
-/* {{{ MongoDB::setReadPreference(int read_preference [, array tags ])
+/* {{{ MongoDB::setReadPreference(string read_preference [, array tags ])
  * Sets a read preference to be used for all read queries.*/
 PHP_METHOD(MongoDB, setReadPreference)
 {
-	long read_preference;
+	char *read_preference;
+	int   read_preference_len;
 	mongo_db *db;
 	HashTable  *tags = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|h", &read_preference, &tags) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|h", &read_preference, &read_preference_len, &tags) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_DB(getThis());
 
-	if (read_preference >= MONGO_RP_FIRST && read_preference <= MONGO_RP_LAST) { 
-		db->read_pref.type = read_preference;
+	if (strcasecmp(read_preference, "primary") == 0) {
+		db->read_pref.type = MONGO_RP_PRIMARY;
+	} else if (strcasecmp(read_preference, "primaryPreferred") == 0) {
+		db->read_pref.type = MONGO_RP_PRIMARY_PREFERRED;
+	} else if (strcasecmp(read_preference, "secondary") == 0) {
+		db->read_pref.type = MONGO_RP_SECONDARY;
+	} else if (strcasecmp(read_preference, "secondaryPreferred") == 0) {
+		db->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
+	} else if (strcasecmp(read_preference, "nearest") == 0) {
+		db->read_pref.type = MONGO_RP_NEAREST;
 	} else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %ld is not valid as read preference type", read_preference);
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value %s is not valid as read preference type", read_preference);
 		RETURN_FALSE;
 	}
 	if (tags) {
-		if (read_preference == MONGO_RP_PRIMARY) {
+		if (strcasecmp(read_preference, "primary") == 0) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't use read preference tags with a read preference of PRIMARY");
 			RETURN_FALSE;
 		}
