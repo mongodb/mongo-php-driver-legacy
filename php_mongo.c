@@ -115,8 +115,8 @@ STD_PHP_INI_ENTRY("mongo.native_long", "0", PHP_INI_ALL, OnUpdateLong, native_lo
 STD_PHP_INI_ENTRY("mongo.long_as_object", "0", PHP_INI_ALL, OnUpdateLong, long_as_object, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.allow_empty_keys", "0", PHP_INI_ALL, OnUpdateLong, allow_empty_keys, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.no_id", "0", PHP_INI_SYSTEM, OnUpdateLong, no_id, zend_mongo_globals, mongo_globals)
-STD_PHP_INI_ENTRY("mongo.ping_interval", "5", PHP_INI_ALL, OnUpdateLong, ping_interval, zend_mongo_globals, mongo_globals)
-STD_PHP_INI_ENTRY("mongo.is_master_interval", "60", PHP_INI_ALL, OnUpdateLong, ismaster_interval, zend_mongo_globals, mongo_globals)
+PHP_INI_ENTRY("mongo.ping_interval", "5", PHP_INI_ALL, OnUpdatePingInterval, ping_interval, zend_mongo_globals, mongo_globals)
+PHP_INI_ENTRY("mongo.is_master_interval", "60", PHP_INI_ALL, OnUpdateIsMasterInterval, ismaster_interval, zend_mongo_globals, mongo_globals)
 PHP_INI_END()
 /* }}} */
 
