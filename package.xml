@@ -29,11 +29,11 @@
   <email>bjori@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-11-12</date>
- <time>11:00:32</time>
+ <date>2012-11-20</date>
+ <time>13:22:32</time>
  <version>
-  <release>1.3.0RC2</release>
-  <api>1.3.0RC2</api>
+  <release>1.3.0RC3</release>
+  <api>1.3.0RC3</api>
  </version>
  <stability>
   <release>beta</release>
@@ -42,18 +42,18 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-377] - Uncaught exception 'MongoCursorException' with message 'couldn't send query: ' from PHP
-    * [PHP-559] - The wrong connection is sometimes picked when there are two connections open
-    * [PHP-334] - Close connection with ReplicaSet
+    * [PHP-543] - mongo::connect() should return a bool value
+    * [PHP-568] - The driver crashes after having copied a server definition to resolve authenticated connections
+    * [PHP-574] - Problems with auth-switch and wrong credentials
 
 ** Improvement
-    * [PHP-171] - It'd be nice if mongo was playing nicely with pcntl php extension
+    * [PHP-569] - Add support for w=0 and make sure append_getlasterror sets the correct flags
+
+** New Feature
+    * [PHP-557] - Implement w=0/w=1 as specific values for writeConcerns.
 
 ** Task
-    * [PHP-491] - Forking and connection handling still fails
-    * [PHP-552] - Document connection string options
-    * [PHP-553] - Make 1.3.x work with PHP 5.2.x
-    * [PHP-562] - Document changes to Mongo::close().
+    * [PHP-565] - Add license headers to the files in mcon/
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -64,6 +64,8 @@
    <file role="src" name="php_mongo.h"/>
    <file role="src" name="mongo.c"/>
    <file role="src" name="mongo.h"/>
+   <file role="src" name="mongoclient.c"/>
+   <file role="src" name="mongoclient.h"/>
    <file role="src" name="mongo_types.c"/>
    <file role="src" name="mongo_types.h"/>
    <file role="src" name="bson.c"/>
@@ -120,6 +122,34 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <date>2012-11-12</date>
+   <time>11:00:32</time>
+   <version>
+    <release>1.3.0RC2</release>
+    <api>1.3.0RC2</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-377] - Uncaught exception 'MongoCursorException' with message 'couldn't send query: ' from PHP
+    * [PHP-559] - The wrong connection is sometimes picked when there are two connections open
+    * [PHP-334] - Close connection with ReplicaSet
+
+** Improvement
+    * [PHP-171] - It'd be nice if mongo was playing nicely with pcntl php extension
+
+** Task
+    * [PHP-491] - Forking and connection handling still fails
+    * [PHP-552] - Document connection string options
+    * [PHP-553] - Make 1.3.x work with PHP 5.2.x
+    * [PHP-562] - Document changes to Mongo::close().
+   </notes>
+  </release>
   <release>
    <date>2012-11-05</date>
    <time>10:00:32</time>
