@@ -693,7 +693,9 @@ PHP_METHOD(MongoClient, setReadPreference)
 	PHP_MONGO_GET_LINK(getThis());
 
 	if (strcasecmp(read_preference, "primary") == 0) {
-		link->servers->read_pref.type = MONGO_RP_PRIMARY;
+		if (!tags) { /* This prevents the RP to be overwritten to PRIMARY in case tags are set (which is an error) */
+			link->servers->read_pref.type = MONGO_RP_PRIMARY;
+		}
 	} else if (strcasecmp(read_preference, "primaryPreferred") == 0) {
 		link->servers->read_pref.type = MONGO_RP_PRIMARY_PREFERRED;
 	} else if (strcasecmp(read_preference, "secondary") == 0) {
