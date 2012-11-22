@@ -39,8 +39,8 @@ secondary preferred
 nearest
 nearest
 
-Fatal error: Uncaught exception 'MongoConnectionException' with message 'The readPreference value 'nonsense' is not supported.' in %smongo-ctor-readPref-001.php:%d
+Fatal error: Uncaught exception 'MongoConnectionException' with message 'The readPreference value 'nonsense' is not supported.' in %smongoclient-ctor-readPref-001.php:%d
 Stack trace:
-#0 %smongo-ctor-readPref-001.php(%d): Mongo->__construct('%s')
+#0 %smongoclient-ctor-readPref-001.php(%d): Mongo->__construct('%s')
 #1 {main}
-  thrown in %smongo-ctor-readPref-001.php on line %d
+  thrown in %smongoclient-ctor-readPref-001.php on line %d

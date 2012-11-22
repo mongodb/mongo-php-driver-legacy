@@ -1,5 +1,5 @@
 --TEST--
-Mongo::selectDB
+MongoClient::selectDB
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
@@ -22,13 +22,13 @@ $db = $m->selectDB(new stdClass);
 echo is_object($db) ? '1' : '0', "\n";
 ?>
 --EXPECTF--
-Warning: Mongo::selectDB() expects exactly 1 parameter, 0 given in %s/mongo-selectdb_error.php on line %d
+Warning: MongoClient::selectDB() expects exactly 1 parameter, 0 given in %smongoclient-selectdb_error.php on line %d
 0
 
-Warning: Mongo::selectDB() expects parameter 1 to be string, array given in %s/mongo-selectdb_error.php on line %d
+Warning: MongoClient::selectDB() expects parameter 1 to be string, array given in %smongoclient-selectdb_error.php on line %d
 0
 MongoDB::__construct(): invalid name .
 
-Warning: Mongo::selectDB() expects parameter 1 to be string, object given in %s/mongo-selectdb_error.php on line %d
+Warning: MongoClient::selectDB() expects parameter 1 to be string, object given in %smongoclient-selectdb_error.php on line %d
 0
 

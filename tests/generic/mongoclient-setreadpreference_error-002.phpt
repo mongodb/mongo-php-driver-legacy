@@ -1,5 +1,5 @@
 --TEST--
-Mongo::setReadPreference errors [2]
+MongoClient::setReadPreference errors [2]
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
@@ -28,7 +28,7 @@ $a = array(
 
 foreach ($a as $value) {
 	$m = new mongo($baseString);
-	$m->setReadPreference(Mongo::RP_SECONDARY, $value);
+	$m->setReadPreference(MongoClient::RP_SECONDARY, $value);
 	$rp = $m->getReadPreference();
 	var_dump($rp);
 
@@ -39,9 +39,9 @@ foreach ($a as $value) {
 <?php exit(0); ?>
 --EXPECTF--
 int(4096)
-string(%d) "Argument 2 passed to Mongo::setReadPreference() must be %s array, integer given"
+string(%d) "Argument 2 passed to MongoClient::setReadPreference() must be %s array, integer given"
 
-Warning: Mongo::setReadPreference() expects parameter 2 to be array, integer given in %s on line %d
+Warning: MongoClient::setReadPreference() expects parameter 2 to be array, integer given in %s on line %d
 array(2) {
   ["type"]=>
   int(0)
@@ -50,9 +50,9 @@ array(2) {
 }
 ---
 int(4096)
-string(%d) "Argument 2 passed to Mongo::setReadPreference() must be %s array, string given"
+string(%d) "Argument 2 passed to MongoClient::setReadPreference() must be %s array, string given"
 
-Warning: Mongo::setReadPreference() expects parameter 2 to be array, string given in %s on line %d
+Warning: MongoClient::setReadPreference() expects parameter 2 to be array, string given in %s on line %d
 array(2) {
   ["type"]=>
   int(0)
@@ -61,7 +61,7 @@ array(2) {
 }
 ---
 
-Warning: Mongo::setReadPreference(): Tagset 1 needs to contain an array of 0 or more tags in %s on line %d
+Warning: MongoClient::setReadPreference(): Tagset 1 needs to contain an array of 0 or more tags in %s on line %d
 array(2) {
   ["type"]=>
   int(2)
@@ -70,7 +70,7 @@ array(2) {
 }
 ---
 
-Warning: Mongo::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %s on line %d
+Warning: MongoClient::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %s on line %d
 array(2) {
   ["type"]=>
   int(2)
@@ -79,7 +79,7 @@ array(2) {
 }
 ---
 
-Warning: Mongo::setReadPreference(): Tag 2 in tagset 1 needs to contain a string in %s on line %d
+Warning: MongoClient::setReadPreference(): Tag 2 in tagset 1 needs to contain a string in %s on line %d
 array(2) {
   ["type"]=>
   int(2)
@@ -88,7 +88,7 @@ array(2) {
 }
 ---
 
-Warning: Mongo::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %s on line %d
+Warning: MongoClient::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %s on line %d
 array(2) {
   ["type"]=>
   int(2)
@@ -97,7 +97,7 @@ array(2) {
 }
 ---
 
-Warning: Mongo::setReadPreference(): Tag 1 in tagset 2 needs to contain a string in %s on line %d
+Warning: MongoClient::setReadPreference(): Tag 1 in tagset 2 needs to contain a string in %s on line %d
 array(3) {
   ["type"]=>
   int(2)
@@ -114,7 +114,7 @@ array(3) {
 }
 ---
 
-Warning: Mongo::setReadPreference(): Tag 1 in tagset 1 has no string key in %s on line %d
+Warning: MongoClient::setReadPreference(): Tag 1 in tagset 1 has no string key in %s on line %d
 array(2) {
   ["type"]=>
   int(2)
