@@ -29,11 +29,10 @@ $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 ?>
 --EXPECTF--
 Warnings:
-CON     WARN: is_ping: last pinged at %d; time: %dms
 Fine:
 CON     FINE: found connection %s:%d;-;X;%d (looking for %s:%d;-;X;%d)
-CON     FINE: is_ping: pinging %s:%d;-;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: 17
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
@@ -49,12 +48,14 @@ REPLSET FINE: selecting near servers
 REPLSET FINE: selecting near servers: nearest is 0ms
 REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;-;X;%d
 REPLSET FINE: selecting near server: done
-REPLSET FINE: pick server: random element 0
 Info:
 PARSE   INFO: Parsing mongodb://%s:%d
 PARSE   INFO: - Found node: %s:%d
 PARSE   INFO: - Connection type: STANDALONE
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
+CON     INFO: is_ping: pinging %s:%d;-;X;%d
+CON     INFO: is_ping: last pinged at %d; time: %dms
+REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;-;X;%d
 
 Notice: CON     INFO: freeing connection %s:%d;-;X;%d in Unknown on line 0

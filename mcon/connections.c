@@ -398,13 +398,13 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
 	struct timeval start, end;
 	char          *data_buffer;
 
-	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: pinging %s", con->hash);
-
 	gettimeofday(&start, NULL);
 	if ((con->last_ping + manager->ping_interval) > start.tv_sec) {
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_ping, start.tv_sec, con->last_ping + manager->ping_interval - start.tv_sec);
 		return 2;
 	}
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_ping: pinging %s", con->hash);
 	packet = bson_create_ping_packet(con);
 	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
 		return 0;
@@ -418,7 +418,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
 		con->ping_ms = 0;
 	}
 
-	mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "is_ping: last pinged at %ld; time: %dms", con->last_ping, con->ping_ms);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_ping: last pinged at %ld; time: %dms", con->last_ping, con->ping_ms);
 
 	return 1;
 }
@@ -699,7 +699,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	snprintf(salted, length, "%s:mongo:%s", username, password);
 	hash = mongo_util_md5_hex(salted, length - 1); /* -1 to chop off \0 */
 	free(salted);
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: hash=md5(%s:mongo:%s) = %s", username, password, hash);
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "authenticate: hash=md5(%s:mongo:%s) = %s", username, password, hash);
 
 	/* Calculate key=md5(${nonce}${username}${hash}) */
 	length = strlen(nonce) + strlen(username) + strlen(hash) + 1;
@@ -707,7 +707,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	snprintf(salted, length, "%s%s%s", nonce, username, hash);
 	key = mongo_util_md5_hex(salted, length - 1); /* -1 to chop off \0 */
 	free(salted);
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: key=md5(%s%s%s) = %s", nonce, username, hash, key);
+	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "authenticate: key=md5(%s%s%s) = %s", nonce, username, hash, key);
 
 	packet = bson_create_authenticate_packet(con, database, username, nonce, key);
 
@@ -727,7 +727,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 		if (ok > 0) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authentication successful");
 		} else {
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authentication failed");
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "authentication failed");
 		}
 	}
 	if (bson_find_field_as_string(ptr, "errmsg", &errmsg)) {

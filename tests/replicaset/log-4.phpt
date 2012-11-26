@@ -29,36 +29,61 @@ $m = new Mongo("mongodb://$REPLICASET_PRIMARY:$REPLICASET_PRIMARY_PORT", array("
 ?>
 --EXPECTF--
 Warnings:
-CON     WARN: is_ping: last pinged at %d; time: %dms
-CON     WARN: rs_status: found an unconnectable host: tertiary.rs.local:%d (state: 8)
-CON     WARN: is_ping: last pinged at %d; time: %dms
-CON     WARN: rs_status: found an unconnectable host: tertiary.rs.local:%d (state: 8)
 Fine:
-CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;X;%d)
+CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: 17
 CON     FINE: discover_topology: checking ismaster for %s:%d;%s;X;%d
-CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;X;%d)
-CON     FINE: rs_status: skipping: last ran at %d, now: %d, time left: %d
-CON     FINE: discover_topology: ismaster got skipped
+CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: 278
+CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
+CON     FINE: ismaster: the found replicaset name matches the expected one (%s).
+CON     FINE: discover_topology: ismaster worked
+CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
+CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
-REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: %d, hash: %s:%d;%s;X;%d
+REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: 0, hash: %s:%d;%s;X;%d
+REPLSET FINE:   - tag: dc:west
+REPLSET FINE:   - tag: use:accounting
 REPLSET FINE: filter_connections: done
-REPLSET FINE: mongo_sort_servers: sorting
-REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: %d, hash: %s:%d;%s;X;%d
-REPLSET FINE: mongo_sort_servers: done
-REPLSET FINE: select server: only nearest
-REPLSET FINE: select server: nearest is %dms
-REPLSET FINE: pick server: random element 0
+REPLSET FINE: limiting to servers with same replicaset name
+REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: 0, hash: %s:%d;%s;X;%d
+REPLSET FINE:   - tag: dc:west
+REPLSET FINE:   - tag: use:accounting
+REPLSET FINE: limiting to servers with same replicaset name: done
+REPLSET FINE: sorting servers by priority and ping time
+REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: 0, hash: %s:%d;%s;X;%d
+REPLSET FINE:   - tag: dc:west
+REPLSET FINE:   - tag: use:accounting
+REPLSET FINE: sorting servers: done
+REPLSET FINE: selecting near servers
+REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: 0, hash: %s:%d;%s;X;%d
+REPLSET FINE:   - tag: dc:west
+REPLSET FINE:   - tag: use:accounting
+REPLSET FINE: selecting near server: done
 Info:
 PARSE   INFO: Parsing mongodb://%s:%d
 PARSE   INFO: - Found node: %s:%d
 PARSE   INFO: - Connection type: STANDALONE
-PARSE   INFO: - Found option 'replicaSet': 'RS'
+PARSE   INFO: - Found option 'replicaSet': '%s'
 PARSE   INFO: - Switching connection type: REPLSET
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
-REPLSET INFO: - connection: type: PRIMARY, socket: 3, ping: %d, hash: %s:%d;%s;X;%d
+CON     INFO: is_ping: pinging %s:%d;%s;X;%d
+CON     INFO: is_ping: last pinged at %d; time: 0ms
+CON     INFO: ismaster: start
+CON     INFO: ismaster: set name: %s, ismaster: 1, is_arbiter: 0
+CON     INFO: found host: %s:%d
+CON     INFO: found host: %s:%d
+CON     INFO: ismaster: last ran at %d
+REPLSET INFO: pick server: random element 0
+REPLSET INFO: - connection: type: PRIMARY, socket: 3, ping: 0, hash: %s:%d;%s;X;%d
+REPLSET INFO:   - tag: dc:west
+REPLSET INFO:   - tag: use:accounting
 
-Notice: CON     INFO: freeing connection secondary.rs.local:%d;X;%d in Unknown on line 0
+Notice: CON     INFO: freeing connection %s:%d;%s;X;%d in Unknown on line 0
 
 Notice: CON     INFO: freeing connection %s:%d;%s;X;%d in Unknown on line 0

@@ -1649,7 +1649,7 @@ static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
 
   php_mongo_write_kill_cursors(&buf, node->cursor_id TSRMLS_CC);
 
-	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_INFO, "Killing unfinished cursor %ld", node->cursor_id);
+	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", node->cursor_id);
 
 	if (!mongo_io_send(node->socket, buf.start, buf.pos - buf.start, (char**) &error_message)) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %ld on socket %d: %s", node->cursor_id, node->socket, error_message);
