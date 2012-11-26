@@ -564,7 +564,7 @@ PHP_METHOD(MongoClient, selectDB)
 	 * pain™ */
 	if (link->servers->server[0]->db && strcmp(link->servers->server[0]->db, db) != 0) {
 		mongo_manager_log(
-			link->manager, MLOG_CON, MLOG_FINE,
+			link->manager, MLOG_CON, MLOG_INFO,
 			"The requested database (%s) is not what we have in the link info (%s)",
 			db, link->servers->server[0]->db
 		);

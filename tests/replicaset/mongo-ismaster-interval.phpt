@@ -1,5 +1,7 @@
 --TEST--
 mongo.is_master_interval
+--SKIPIF--
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --INI--
 mongo.is_master_interval=93
 --FILE--

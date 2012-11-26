@@ -133,7 +133,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 				/* Break intentionally missing */
 
 			case 1:
-				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: ismaster worked");
+				mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "discover_topology: ismaster worked");
 				/* Update the replica set name in the parsed "servers" struct
 				 * so that we can consistently compare it to the information
 				 * that is stored in the connection hashes. */
@@ -170,7 +170,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 							servers->server[servers->count] = tmp_def;
 							servers->count++;
 						} else {
-							mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: could not connect to new host: %s:%d: %s", tmp_def->host, tmp_def->port, con_error_message);
+							mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: could not connect to new host: %s:%d: %s", tmp_def->host, tmp_def->port, con_error_message);
 							free(con_error_message);
 						}
 					} else {
@@ -357,11 +357,11 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 			return mongo_get_read_write_connection_replicaset(manager, servers, connection_flags, error_message);
 
 		case MONGO_CON_TYPE_MULTIPLE:
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_get_read_write_connection: finding a MULTIPLE connection");
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a MULTIPLE connection");
 			return mongo_get_connection_multiple(manager, servers, connection_flags, error_message);
 
 		default:
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: connection type %d is not supported", servers->con_type);
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "mongo_get_read_write_connection: connection type %d is not supported", servers->con_type);
 			*error_message = strdup("mongo_get_read_write_connection: Unknown connection type requested");
 	}
 	return NULL;

@@ -16,7 +16,11 @@ function error( $a, $b, $c )
 $m = mongo();
 $c = $m->selectCollection( dbname(), "php-522_error" );
 
-var_dump( $c->insert( array( 'test' => 1 ), array( 'fsync' => "1", 'safe' => 1, 'w' => 4, 'timeout' => "45foo" ) ) );
+try {
+	var_dump( $c->insert( array( 'test' => 1 ), array( 'fsync' => "1", 'safe' => 1, 'w' => 4, 'timeout' => "45foo" ) ) );
+} catch ( Exception $e ) {
+	echo $e->getMessage(), "\n";
+}
 echo "-----\n";
 
 try {
@@ -45,16 +49,25 @@ try {
 echo "-----\n";
 ?>
 --EXPECTF--
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: append_getlasterror: added w=4
+IO      FINE: append_getlasterror: added wtimeout=10000
 IO      FINE: append_getlasterror: added fsync=1
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-array(5) {
+localhost:27017: norepl: no replication has been enabled, so w=2+ won't work
+-----
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
+array(4) {
   ["n"]=>
   int(0)
   ["connectionId"]=>
-  int(%d)
-  ["waited"]=>
   int(%d)
   ["err"]=>
   NULL
@@ -62,13 +75,8 @@ array(5) {
   float(1)
 }
 -----
-IO      FINE: append_getlasterror: added w=2
-IO      FINE: append_getlasterror: added wtimeout=10000
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=2+ won't work
------
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=4
 IO      FINE: append_getlasterror: added wtimeout=10000
 IO      FINE: append_getlasterror: added fsync=1
@@ -77,6 +85,8 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 %s:%d: norepl: no replication has been enabled, so w=2+ won't work
 -----
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
 IO      FINE: append_getlasterror: added wtimeout=4500
 IO      FINE: getting reply

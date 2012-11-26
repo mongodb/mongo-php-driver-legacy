@@ -12,12 +12,12 @@ $m = new Mongo("mongodb://whisky:13000", array( "connect" => false, "replicaSet"
 PARSE   INFO: Parsing mongodb://whisky:13000
 PARSE   INFO: - Found node: whisky:13000
 PARSE   INFO: - Connection type: STANDALONE
-PARSE   INFO: - Found unknown connection string option 'connect' with value ''
-PARSE   INFO: - Found option 'replicaSet': true
+PARSE   WARN: - Found unknown connection string option 'connect' with value ''
+PARSE   WARN: - Found option 'replicaSet': true
 PARSE   INFO: - Switching connection type: REPLSET
 PARSE   INFO: Parsing mongodb://whisky:13000
 PARSE   INFO: - Found node: whisky:13000
 PARSE   INFO: - Connection type: STANDALONE
-PARSE   INFO: - Found unknown connection string option 'connect' with value ''
+PARSE   WARN: - Found unknown connection string option 'connect' with value ''
 PARSE   INFO: - Found option 'replicaSet': 'seta'
 PARSE   INFO: - Switching connection type: REPLSET
