@@ -247,7 +247,7 @@ int static mongo_process_option(mongo_con_manager *manager, mongo_servers *serve
 	int   retval = 0;
 
 	if (!name || !value) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Got an empty option name or value");
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Got an empty option name or value");
 		return 1;
 	}
 
@@ -333,7 +333,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 					servers->server[i]->repl_set_name = strdup(option_value);
 				}
 			} else {
-				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': true");
+				mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Found option 'replicaSet': true - Expected the name of the replica set");
 			}
 			servers->con_type = MONGO_CON_TYPE_REPLSET;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Switching connection type: REPLSET");
@@ -446,7 +446,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 	*error_message = malloc(256);
 	snprintf(*error_message, 256, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
-	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
 	return 2;
 }
 

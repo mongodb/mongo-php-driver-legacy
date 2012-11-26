@@ -1,5 +1,7 @@
 --TEST--
 mongo.ping_interval
+--SKIPIF--
+<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --INI--
 mongo.ping_interval=103
 --FILE--

@@ -435,14 +435,14 @@ mongo_connection *mongo_pick_server_from_set(mongo_con_manager *manager, mcon_co
 
 	if (rp->type == MONGO_RP_PRIMARY_PREFERRED) {
 		if (((mongo_connection*)col->data[0])->connection_type == MONGO_NODE_PRIMARY) {
-			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "pick server: the primary");
+			mongo_manager_log(manager, MLOG_RS, MLOG_INFO, "pick server: the primary");
 			con = (mongo_connection*)col->data[0];
 			mongo_print_connection_info(manager, con, MLOG_INFO);
 			return con;
 		}
 	}
 	/* For now, we just pick a random server from the set */
-	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "pick server: random element %d", entry);
+	mongo_manager_log(manager, MLOG_RS, MLOG_INFO, "pick server: random element %d", entry);
 	con = (mongo_connection*)col->data[entry];
 	mongo_print_connection_info(manager, con, MLOG_INFO);
 	return con;
