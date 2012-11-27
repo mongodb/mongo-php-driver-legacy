@@ -294,15 +294,19 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 			mongo_connection_deregister_callback *ptr = con->cleanup_list;
 			mongo_connection_deregister_callback *prev;
 			do {
-				ptr->mongo_cleanup_cb(ptr->callback_data);
+				if (ptr->callback_data) {
+					ptr->mongo_cleanup_cb(ptr->callback_data);
+				}
 
 				if (!ptr->next) {
 					free(ptr);
+					ptr = NULL;
 					break;
 				}
 				prev = ptr;
 				ptr = ptr->next;
 				free(prev);
+				prev = NULL;
 			} while(1);
 			con->cleanup_list = NULL;
 		}
