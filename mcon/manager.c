@@ -326,14 +326,15 @@ int mongo_deregister_callback_from_connection(mongo_connection *connection, void
 				if (prev) {
 					prev->next = ptr->next;
 				} else {
-					connection->cleanup_list = NULL;
+					connection->cleanup_list = ptr->next;
 				}
 				free(ptr);
+				ptr = NULL;
 				break;
 			}
 			prev = ptr;
 			ptr = ptr->next;
-		} while(1);
+		} while(ptr);
 	}
 	return 1;
 
