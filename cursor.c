@@ -873,6 +873,13 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 		return FAILURE;
 	}
 
+	/* If we had a connection we need to remove it from the callback map before
+	 * we assign it another connection
+	 */
+	if (cursor->connection) {
+		mongo_deregister_callback_from_connection(cursor->connection, cursor);
+	}
+
 	/* TODO: We have to assume to use a read connection here, but it should
 	 * really be refactored so that we can create a cursor with the correct
 	 * read/write setup already, instead of having to force a new mode later
