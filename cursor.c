@@ -726,7 +726,6 @@ PHP_METHOD(MongoCursor, info)
 {
   mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
-	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
   array_init(return_value);
 
   add_assoc_string(return_value, "ns", cursor->ns, 1);
