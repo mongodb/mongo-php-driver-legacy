@@ -563,7 +563,6 @@ int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_D
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 // php.ini options
-int allow_persistent;
 char *default_host;
 int default_port;
 int request_id;
