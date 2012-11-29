@@ -50,6 +50,8 @@ void mcon_collection_iterate(mongo_con_manager *manager, mcon_collection *c, mco
 
 void mcon_collection_free(mcon_collection *c)
 {
-	free(c->data);
-	free(c);
+	if (c) {
+		free(c->data);
+		free(c);
+	}
 }
