@@ -1,14 +1,22 @@
 --TEST--
-No longer possible to get field information from $cursor->info()
+Test for PHP-602: No longer possible to get field information from $cursor->info().
 --SKIPIF--
 <?php require_once __DIR__ . "/skipif.inc"; ?>
 --FILE--
 <?php
 require_once __DIR__ . "/../utils.inc";
 
-
 $m = mongo();
-$cursor = $m->selectDb(dbname())->bug602->find()->skip(3)->limit(1);
+$c = $m->selectDb(dbname())->bug602;
+$c->remove();
+$c->insert( array( 'test' => 'one' ) );
+$c->insert( array( 'test' => 'two' ) );
+$c->insert( array( 'test' => 'three' ) );
+$c->insert( array( 'test' => 'four' ) );
+$c->insert( array( 'test' => 'five' ) );
+$c->insert( array( 'test' => 'six' ) );
+$c->insert( array( 'test' => 'seven' ) );
+$cursor = $c->find()->skip(3)->limit(2);
 var_dump($cursor->info());
 $cursor->getNext();
 var_dump($cursor->info());
@@ -18,7 +26,7 @@ array(8) {
   ["ns"]=>
   string(%d) "%s.bug602"
   ["limit"]=>
-  int(1)
+  int(2)
   ["batchSize"]=>
   int(0)
   ["skip"]=>
@@ -38,7 +46,7 @@ array(12) {
   ["ns"]=>
   string(%d) "%s.bug602"
   ["limit"]=>
-  int(1)
+  int(2)
   ["batchSize"]=>
   int(0)
   ["skip"]=>
@@ -54,11 +62,11 @@ array(12) {
   ["started_iterating"]=>
   bool(true)
   ["id"]=>
-  int(0)
+  int(%d)
   ["at"]=>
-  int(0)
+  int(1)
   ["numReturned"]=>
-  int(0)
+  int(2)
   ["server"]=>
   string(%d) "%s"
 }
