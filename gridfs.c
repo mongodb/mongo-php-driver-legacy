@@ -1082,7 +1082,7 @@ PHP_METHOD(MongoGridFS, delete)
 PHP_METHOD(MongoGridFS, get) {
   zval *id, *criteria;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O", &id, mongo_ce_Id) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &id) == FAILURE) {
     return;
   }
 
