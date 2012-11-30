@@ -298,6 +298,37 @@ mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC)
 }
 /* }}} */
 
+int mongo_store_option_wrapper(mongo_con_manager *manager, mongo_servers *servers, char *option_name, zval **option_value, char **error_message)
+{
+	/* Special cases:
+	 *  - "connect" isn't supported by the URL parsing
+	 *  - "readPreferenceTags" is an array of tagsets we need to iterate over
+	 */
+	if (strcasecmp(option_name, "connect") == 0) {
+		return 4;
+	}
+	if (strcasecmp(option_name, "readPreferenceTags") == 0) {
+		int error = 0;
+		HashPosition  pos;
+		zval        **opt_entry;
+
+		convert_to_array_ex(option_value);
+		for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(option_value), &pos);
+			zend_hash_get_current_data_ex(Z_ARRVAL_PP(option_value), (void **)&opt_entry, &pos) == SUCCESS;
+			zend_hash_move_forward_ex(Z_ARRVAL_PP(option_value), &pos)
+		) {
+			convert_to_string_ex(opt_entry);
+			error = mongo_store_option(manager, servers, option_name, Z_STRVAL_PP(opt_entry), (char **)&error_message);
+			if (error) {
+				return error;
+			}
+		}
+		return error;
+	}
+	convert_to_string_ex(option_value);
+	return mongo_store_option(manager, servers, option_name, Z_STRVAL_PP(option_value), (char **)&error_message);
+}
+
 /* {{{ MongoClient->__construct
  */
 PHP_METHOD(MongoClient, __construct)
@@ -375,27 +406,22 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 			switch (zend_hash_get_current_key_ex(Z_ARRVAL_P(options), &opt_key, &opt_key_len, &num_key, 0, &pos)) {
 				case HASH_KEY_IS_STRING: {
 					int error = 0;
-					convert_to_string_ex(opt_entry);
-					error = mongo_store_option(link->manager, link->servers, opt_key, Z_STRVAL_PP(opt_entry), (char **)&error_message);
+					error = mongo_store_option_wrapper(link->manager, link->servers, opt_key, opt_entry, (char **)&error_message);
 
 					switch (error) {
+						case 4: /* Special options parameters, invalid for URL parsing - only possiblity is 'connect' for now */
+							if (strcasecmp(opt_key, "connect") == 0) {
+								convert_to_boolean_ex(opt_entry);
+								connect = Z_BVAL_PP(opt_entry);
+							}
+							break;
+
 						case 3: /* Logical error (i.e. conflicting options)*/
+						case 2: /* Unknown connection string option, additional options for object configuration are checked here */
 						case 1: /* Empty option name or value */
 							zend_throw_exception(mongo_ce_ConnectionException, error_message, 0 TSRMLS_CC);
 							free(error_message);
 							return;
-
-						case 2: /* Unknown connection string option, additional options for object configuration are checked here */
-							if (strcasecmp(opt_key, "connect") == 0) {
-								convert_to_boolean_ex(opt_entry);
-								connect = Z_BVAL_PP(opt_entry);
-								free(error_message);
-							} else {
-								zend_throw_exception(mongo_ce_ConnectionException, error_message, 0 TSRMLS_CC);
-								free(error_message);
-								return;
-							}
-							break;
 					}
 				} break;
 
