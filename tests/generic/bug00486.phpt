@@ -6,7 +6,7 @@ Test for PHP-486: GridFS cleanup routines remove existing files.
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
 $m = mongo();
-$db = $m->selectDB("examples");
+$db = $m->selectDB(dbname());
 
 $gridfs = $db->getGridFS();
 $gridfs->drop();
