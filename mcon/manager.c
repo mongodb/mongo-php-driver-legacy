@@ -235,15 +235,19 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	} else {
 		collection = mongo_find_candidate_servers(manager, &servers->read_pref, servers);
 	}
-	if (!collection || collection->count == 0) {
+	if (!collection) {
 		*error_message = strdup("No candidate servers found");
-		goto bailout;
+		return NULL;
+	}
+	if (collection->count == 0) {
+		*error_message = strdup("No candidate servers found");
+		mcon_collection_free(collection);	
+		return NULL;
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
 	collection = mongo_select_nearest_servers(manager, collection, &servers->read_pref);
 	con = mongo_pick_server_from_set(manager, collection, &servers->read_pref);
 
-bailout:
 	/* Cleaning up */
 	mcon_collection_free(collection);	
 	return con;
