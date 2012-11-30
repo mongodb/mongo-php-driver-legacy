@@ -196,7 +196,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 	}
 
 	/* Handling database name */
-	if (db_start) {
+	if (db_start && (db_end != db_start)) {
 		tmp_database = mcon_strndup(db_start, db_end - db_start);
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found database name '%s'", tmp_database);
 	} else if (tmp_user && tmp_pass) {
