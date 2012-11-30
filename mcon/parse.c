@@ -288,10 +288,12 @@ static int parse_read_preference_tags(mongo_con_manager *manager, mongo_servers 
 			if (end) {
 				tmp_value = mcon_strndup(colon + 1, end - colon - 1);
 				start = end + 1;
+				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found tag '%s': '%s'", tmp_name, tmp_value);
 				mongo_read_preference_add_tag(tmp_ts, tmp_name, tmp_value);
 				free(tmp_value);
 				free(tmp_name);
 			} else {
+				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found tag '%s': '%s'", tmp_name, colon + 1);
 				mongo_read_preference_add_tag(tmp_ts, tmp_name, colon + 1);
 				free(tmp_name);
 				break;
