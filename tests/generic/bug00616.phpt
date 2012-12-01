@@ -1,5 +1,5 @@
 --TEST--
-GridFS: deleting files by ID
+Test for PHP-616: GridFS: deleting files by ID
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
@@ -51,7 +51,7 @@ Using ID:bool(true)
 Items in DB: 1
 Items in DB: 0
 
-Using ID:object(MongoId)#5 (1) {
+Using ID:object(MongoId)#%d (1) {
   ["$id"]=>
   string(24) "%s"
 }
