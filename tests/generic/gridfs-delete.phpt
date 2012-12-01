@@ -51,7 +51,7 @@ Using ID:bool(true)
 Items in DB: 1
 Items in DB: 0
 
-Using ID:object(MongoId)#5 (1) {
+Using ID:object(MongoId)%d (1) {
   ["$id"]=>
   string(24) "%s"
 }
