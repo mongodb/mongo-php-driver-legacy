@@ -284,6 +284,7 @@ mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_
 				return filtered;
 			}
 		}
+		mcon_collection_free(filtered);
 		mcon_collection_free(all);
 		return NULL;
 	} else {
