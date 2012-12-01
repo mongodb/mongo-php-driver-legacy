@@ -489,8 +489,6 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx)
 	memset(ctx, 0, sizeof(*ctx));
 }
 
-#ifdef WIN32
-/* Compat stuff for Windows */
 char *mcon_strndup(char *str, size_t len)
 {
     char *dup = (char *)malloc(len+1);
@@ -500,4 +498,3 @@ char *mcon_strndup(char *str, size_t len)
     }
     return dup;
 }
-#endif
