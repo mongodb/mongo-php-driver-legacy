@@ -12,6 +12,7 @@ set_error_handler( 'foo' ); function foo($a, $b, $c) { echo $b, "\n"; }
 
 new MongoClient("mongodb://localhost", array( 'connect' => false ));
 new MongoClient("mongodb://localhost/", array( 'connect' => false ));
+new MongoClient("mongodb://localhost/x", array( 'connect' => false ));
 new MongoClient("mongodb://localhost/?readPreference=PRIMARY", array( 'connect' => false ));
 ?>
 --EXPECT--
@@ -21,9 +22,10 @@ PARSE   INFO: - Connection type: STANDALONE
 PARSE   INFO: Parsing mongodb://localhost/
 PARSE   INFO: - Found node: localhost:27017
 PARSE   INFO: - Connection type: STANDALONE
-PARSE   INFO: Parsing mongodb://localhost/
+PARSE   INFO: Parsing mongodb://localhost/x
 PARSE   INFO: - Found node: localhost:27017
 PARSE   INFO: - Connection type: STANDALONE
+PARSE   INFO: - Found database name 'x'
 PARSE   INFO: Parsing mongodb://localhost/?readPreference=PRIMARY
 PARSE   INFO: - Found node: localhost:27017
 PARSE   INFO: - Connection type: STANDALONE
