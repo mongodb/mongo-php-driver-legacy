@@ -1,5 +1,5 @@
 --TEST--
-GridFS: deleting files by ID
+Test for PHP-616: GridFS: deleting files by ID
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
