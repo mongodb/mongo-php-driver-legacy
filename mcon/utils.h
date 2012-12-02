@@ -61,6 +61,6 @@ typedef struct {
  
 char *mongo_util_md5_hex(char *hash, int hash_length);
 
-char *mcon_strndup(char *str, size_t len);
+char *mcon_strndup(char *str, size_t n);
 
 #endif
