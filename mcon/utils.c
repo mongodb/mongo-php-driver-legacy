@@ -491,13 +491,19 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx)
 
 #ifdef WIN32
 /* Compat stuff for Windows */
-char *mcon_strndup(char *str, size_t len)
+char *mcon_strndup(char *str, size_t n)
 {
-    char *dup = (char *)malloc(len+1);
-    if (dup) {
-        strncpy(dup,str,len);
-        dup[len]= '\0';
-    }
-    return dup;
+	/* Borrowed from FreeBSD strndup.c */
+	size_t len;
+	char *copy;
+
+	for (len = 0; len < n && str[len]; len++)
+		continue;
+
+	if ((copy = malloc(len + 1)) == NULL)
+		return (NULL);
+	memcpy(copy, str, len);
+	copy[len] = '\0';
+	return (copy);
 }
 #endif
