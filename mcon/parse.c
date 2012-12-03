@@ -125,7 +125,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 
 		/* We are now either at the end of the string, or at / where the dbname starts.
 		 * We still have to add the last parser host/port combination though: */
-		mongo_add_parsed_server_addr(manager, servers, host_start, host_end, port_start);
+		mongo_add_parsed_server_addr(manager, servers, host_start, host_end ? host_end : pos, port_start);
 	} else if (*pos == '/') {
 		host_start = pos;
 		port_start = "0";
