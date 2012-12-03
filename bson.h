@@ -37,8 +37,8 @@
 #define BSON_INT 16
 #define BSON_TIMESTAMP 17
 #define BSON_LONG 18
-#define BSON_MINKEY -1
-#define BSON_MAXKEY 127
+#define BSON_MINKEY 0xff
+#define BSON_MAXKEY 0x7f
 
 #define GROW_SLOWLY 1048576
 #define INVALID_STRING_LEN(len) (len < 0 || len > (64*1024*1024))
