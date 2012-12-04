@@ -851,7 +851,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
    * need buf_start to save it.
    */
   char *buf_start = buf;
-  char type;
+  unsigned char type;
 
   if (buf == 0) {
     return 0;

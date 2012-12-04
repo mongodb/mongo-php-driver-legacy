@@ -19,26 +19,27 @@
 
 #define OID_SIZE 12
 
-#define BSON_DOUBLE 1
-#define BSON_STRING 2
-#define BSON_OBJECT 3
-#define BSON_ARRAY 4
-#define BSON_BINARY 5
-#define BSON_UNDEF 6
-#define BSON_OID 7
-#define BSON_BOOL 8
-#define BSON_DATE 9
-#define BSON_NULL 10
-#define BSON_REGEX 11
-#define BSON_DBREF 12
-#define BSON_CODE__D 13
-#define BSON_SYMBOL 14
-#define BSON_CODE 15
-#define BSON_INT 16
-#define BSON_TIMESTAMP 17
-#define BSON_LONG 18
-#define BSON_MINKEY -1
-#define BSON_MAXKEY 127
+/* BSON type constants from http://bsonspec.org/#/specification */
+#define BSON_DOUBLE    0x01
+#define BSON_STRING    0x02
+#define BSON_OBJECT    0x03
+#define BSON_ARRAY     0x04
+#define BSON_BINARY    0x05
+#define BSON_UNDEF     0x06
+#define BSON_OID       0x07
+#define BSON_BOOL      0x08
+#define BSON_DATE      0x09
+#define BSON_NULL      0x0A
+#define BSON_REGEX     0x0B
+#define BSON_DBREF     0x0C
+#define BSON_CODE__D   0x0D
+#define BSON_SYMBOL    0x0E
+#define BSON_CODE      0x0F
+#define BSON_INT       0x10
+#define BSON_TIMESTAMP 0x11
+#define BSON_LONG      0x12
+#define BSON_MINKEY    0xFF
+#define BSON_MAXKEY    0x7F
 
 #define GROW_SLOWLY 1048576
 #define INVALID_STRING_LEN(len) (len < 0 || len > (64*1024*1024))
