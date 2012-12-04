@@ -16,7 +16,7 @@
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1
 
-#define PHP_MONGO_VERSION "1.3.1"
+#define PHP_MONGO_VERSION "1.3.2dev"
 #define PHP_MONGO_EXTNAME "mongo"
 
 #include "mcon/types.h"
