@@ -241,10 +241,12 @@ PHP_METHOD(MongoId, __construct) {
   else if (id &&
            Z_TYPE_P(id) == IS_OBJECT &&
            Z_OBJCE_P(id) == mongo_ce_Id) {
-    mongo_id *that_id = (mongo_id*)zend_object_store_get_object(id TSRMLS_CC);
+		zval *str;
+		mongo_id *that_id = (mongo_id*)zend_object_store_get_object(id TSRMLS_CC);
+
     memcpy(this_id->id, that_id->id, OID_SIZE);
 
-	zval *str = zend_read_property(mongo_ce_Id, id, "$id", strlen("$id"), NOISY TSRMLS_CC);
+		str = zend_read_property(mongo_ce_Id, id, "$id", strlen("$id"), NOISY TSRMLS_CC);
 	zend_update_property(mongo_ce_Id, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
   }
   else {
