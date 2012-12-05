@@ -57,7 +57,7 @@ IO      FINE: append_getlasterror: added fsync=1
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-localhost:27017: norepl: no replication has been enabled, so w=2+ won't work
+%s:%d: norepl: no replication has been enabled, so w=2+ won't work
 -----
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
