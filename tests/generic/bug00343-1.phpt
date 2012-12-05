@@ -5,7 +5,7 @@ Test for PHP-343: Segfault when adding a file to GridFS (storeBytes).
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
-$m = mongo();
+$m = new_mongo();
 $bytes = file_get_contents(__FILE__);
 $db = $m->phpunit;
 $db->dropCollection( 'phpunit' );
