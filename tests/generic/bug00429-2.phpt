@@ -5,7 +5,7 @@ Test for PHP-429: MongoDB::selectCollection() causes Segmentation fault. (2)
 --FILE--
 <?php require_once dirname(__FILE__) . "/../utils.inc";
 
-$mongo = mongo();
+$mongo = new_mongo();
 
 $db = $mongo->selectDB(dbname());
 
