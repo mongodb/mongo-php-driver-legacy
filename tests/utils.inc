@@ -172,6 +172,29 @@ function serverversion($m) {
     return $data["version"];
 }
 
+function logCallback($module, $level, $message) {
+    global $_LOG_CALLBACK_REGEX;
+    if ($_LOG_CALLBACK_REGEX) {
+        if (preg_match($_LOG_CALLBACK_REGEX, $message)) {
+            echo $message, "\n";
+        }
+    }
+    else {
+        echo $message, "\n";
+    }
+}
+function printLogs($module, $level, $containing = null) {
+    global $_LOG_CALLBACK_REGEX;
+
+    MongoLog::setModule($module);
+    MongoLog::setLevel($level);
+
+    if ($containing) {
+        $_LOG_CALLBACK_REGEX = $containing;
+    }
+    MongoLog::setCallback("logCallback");
+}
+
 if (!function_exists("iterator_to_array")) {
     function iterator_to_array($it) {
         $retval = array();
