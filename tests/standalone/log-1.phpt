@@ -33,20 +33,20 @@ CON     INFO: is_ping: last pinged at %d; time: %dms
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;-;X;%d
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: filter_connections: done
 REPLSET FINE: limiting by seeded/discovered servers
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;-;X;%d
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: limiting by seeded/discovered servers: done
 REPLSET FINE: sorting servers by priority and ping time
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;-;X;%d
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;-;X;%d
+REPLSET FINE: selecting near servers: nearest is %dms
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: selecting near server: done
 REPLSET INFO: pick server: random element 0
-REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;-;X;%d
+REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;-;X;%d. in Unknown on line 0
 

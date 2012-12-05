@@ -26,7 +26,7 @@ CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     INFO: is_ping: pinging %s:%d;-;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
-CON     INFO: is_ping: last pinged at %d; time: 0ms
+CON     INFO: is_ping: last pinged at %d; time: %dms
 
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;-;X;%d. in Unknown on line 0
 
