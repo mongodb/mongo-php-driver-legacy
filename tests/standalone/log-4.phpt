@@ -45,7 +45,7 @@ REPLSET FINE: sorting servers by priority and ping time
 REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is %2ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: selecting near server: done
 Info:
