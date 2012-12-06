@@ -349,6 +349,10 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 				free(servers->server[i]->username);
 			}
 			servers->server[i]->username = strdup(option_value);
+			/* Use "admin" as the default db if none selected yet */
+			if (!servers->server[i]->db) {
+				servers->server[i]->db = strdup("admin");
+			}
 		}
 		return 0;
 	}
