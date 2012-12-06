@@ -5,7 +5,7 @@ Test for PHP-343: Segfault when adding a file to GridFS (storeFile). (2)
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
-$m = mongo();
+$m = new_mongo();
 $db = $m->phpunit;
 $db->dropCollection( 'phpunit' );
 $grid = $db->getGridFS();
