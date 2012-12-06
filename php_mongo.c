@@ -361,13 +361,13 @@ static void mongo_init_MongoExceptions(TSRMLS_D) {
 }
 
 /* Shared helper functions */
-void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
+zval * php_mongo_make_tagsets(mongo_read_preference *rp)
 {
 	zval *tagsets, *tagset;
 	int   i, j;
 
 	if (!rp->tagset_count) {
-		return;
+		return NULL;
 	}
 
 	MAKE_STD_ZVAL(tagsets);
@@ -378,13 +378,18 @@ void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
 		array_init(tagset);
 
 		for (j = 0; j < rp->tagsets[i]->tag_count; j++) {
-			add_next_index_string(tagset, rp->tagsets[i]->tags[j], 1);
+			char *name, *colon;
+			char *tag = rp->tagsets[i]->tags[j];
+			colon = strchr(tag, ':');
+			name = strndup(tag, colon - tag);
+
+			add_assoc_string(tagset, name, colon+1, 1);
 		}
 
 		add_next_index_zval(tagsets, tagset);
 	}
 
-	add_assoc_zval_ex(return_value, "tagsets", 8, tagsets);
+	return tagsets;
 }
 
 static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *ztagset TSRMLS_DC)

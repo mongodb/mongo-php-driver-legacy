@@ -833,6 +833,35 @@ int mongo_cursor_mark_dead(void *callback_data)
 	return 1;
 }
 
+int mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
+{
+	zval *query, *rp, *tags;
+	char *type;
+
+	if (link->servers->read_pref.type == MONGO_RP_PRIMARY) {
+		return 0;
+	}
+	if (link->servers->read_pref.type == MONGO_RP_SECONDARY_PREFERRED) {
+		/* If there aren't any tags, don't add $readPreference, the slaveOkay flag is enough */
+		if (link->servers->read_pref.tagset_count == 0) {
+			return 0;
+		}
+	}
+
+	type = mongo_read_preference_type_to_name(link->servers->read_pref.type);
+	MAKE_STD_ZVAL(rp);
+	array_init(rp);
+	add_assoc_string(rp, "mode", type, 1);
+
+	tags = php_mongo_make_tagsets(&link->servers->read_pref);
+	if (tags) {
+		add_assoc_zval(rp, "tags", tags);
+	}
+
+	make_special(cursor);
+	query = cursor->query;
+	add_assoc_zval(query, "$readPreference", rp);
+}
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   mongo_cursor *cursor;
   buffer buf;
@@ -866,12 +895,6 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 	 * read preference." */
 	cursor->opts = cursor->opts | (link->servers->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0);
 
-	CREATE_BUF(buf, INITIAL_BUF_SIZE);
-	if (php_mongo_write_query(&buf, cursor TSRMLS_CC) == FAILURE) {
-		efree(buf.start);
-		return FAILURE;
-	}
-
 	/* If we had a connection we need to remove it from the callback map before
 	 * we assign it another connection
 	 */
@@ -892,11 +915,20 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 	mongo_read_preference_dtor(&rp);
 
 	if (!cursor->connection && error_message) {
-		efree(buf.start);
 		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
 		free(error_message);
 		return FAILURE;
 	}
+	if (cursor->connection->connection_type == MONGO_NODE_MONGOS) {
+		mongo_apply_mongos_rp(cursor, link);
+	}
+
+	CREATE_BUF(buf, INITIAL_BUF_SIZE);
+	if (php_mongo_write_query(&buf, cursor TSRMLS_CC) == FAILURE) {
+		efree(buf.start);
+		return FAILURE;
+	}
+
 
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {

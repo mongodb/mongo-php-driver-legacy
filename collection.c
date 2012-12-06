@@ -143,12 +143,17 @@ PHP_METHOD(MongoCollection, setSlaveOkay)
 PHP_METHOD(MongoCollection, getReadPreference)
 {
 	mongo_collection *c;
+	zval *tagsets = NULL;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
 	array_init(return_value);
 	add_assoc_long(return_value, "type", c->read_pref.type);
 	add_assoc_string(return_value, "type_string", mongo_read_preference_type_to_name(c->read_pref.type), 1);
-	php_mongo_add_tagsets(return_value, &c->read_pref);
+
+	tagsets = php_mongo_make_tagsets(&c->read_pref);
+	if (tagsets) {
+		add_assoc_zval_ex(return_value, "tagsets", 8, tagsets);
+	}
 }
 
 /* {{{ MongoCollection::setReadPreference(string read_preference [, array tags ])

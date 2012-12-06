@@ -50,8 +50,8 @@ array(3) {
   array(1) {
     [0]=>
     array(1) {
-      [0]=>
-      string(7) "dc:west"
+      ["dc"]=>
+      string(4) "west"
     }
   }
 }
@@ -65,10 +65,10 @@ array(3) {
   array(1) {
     [0]=>
     array(2) {
-      [0]=>
-      string(7) "dc:west"
-      [1]=>
-      string(13) "use:reporting"
+      ["dc"]=>
+      string(4) "west"
+      ["use"]=>
+      string(9) "reporting"
     }
   }
 }
@@ -95,15 +95,15 @@ array(3) {
   array(2) {
     [0]=>
     array(2) {
-      [0]=>
-      string(7) "dc:west"
-      [1]=>
-      string(13) "use:reporting"
+      ["dc"]=>
+      string(4) "west"
+      ["use"]=>
+      string(9) "reporting"
     }
     [1]=>
     array(1) {
-      [0]=>
-      string(7) "dc:east"
+      ["dc"]=>
+      string(4) "east"
     }
   }
 }
@@ -124,8 +124,8 @@ array(3) {
   array(1) {
     [0]=>
     array(1) {
-      [0]=>
-      string(7) "dc:west"
+      ["dc"]=>
+      string(4) "west"
     }
   }
 }
@@ -139,10 +139,10 @@ array(3) {
   array(1) {
     [0]=>
     array(2) {
-      [0]=>
-      string(7) "dc:west"
-      [1]=>
-      string(13) "use:reporting"
+      ["dc"]=>
+      string(4) "west"
+      ["use"]=>
+      string(9) "reporting"
     }
   }
 }
@@ -169,15 +169,15 @@ array(3) {
   array(2) {
     [0]=>
     array(2) {
-      [0]=>
-      string(7) "dc:west"
-      [1]=>
-      string(13) "use:reporting"
+      ["dc"]=>
+      string(4) "west"
+      ["use"]=>
+      string(9) "reporting"
     }
     [1]=>
     array(1) {
-      [0]=>
-      string(7) "dc:east"
+      ["dc"]=>
+      string(4) "east"
     }
   }
 }
