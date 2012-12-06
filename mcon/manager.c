@@ -292,13 +292,14 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 		return NULL;
 	}
 
-	/* Force the RP of NEAREST, which is the only one that makes sense right
-	 * now. Technically, read preference tags are also supported, but not
-	 * implemented on the mongos side yet. */
-	mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
+	/* When selecting a *mongos* node, readPreferences make no sense as we don't
+	 * have a "primary" or "secondary" mongos. The mongos nodes aren't tagged either.
+	 * To pick a mongos we therefore simply pick the "nearest" mongos node.
+	 **/
 	tmp_rp.type = MONGO_RP_NEAREST;
+	tmp_rp.tagsets = NULL;
+	tmp_rp.tagset_count = 0;
 	collection = mongo_find_candidate_servers(manager, &tmp_rp, servers);
-	mongo_read_preference_dtor(&tmp_rp);
 	if (!collection || collection->count == 0) {
 		if (messages->l) {
 			*error_message = strdup(messages->d);
