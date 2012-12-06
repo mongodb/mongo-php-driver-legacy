@@ -667,12 +667,17 @@ PHP_METHOD(MongoClient, selectCollection)
 PHP_METHOD(MongoClient, getReadPreference)
 {
 	mongoclient *link;
+	zval *tagsets = NULL;
 	PHP_MONGO_GET_LINK(getThis());
 
 	array_init(return_value);
 	add_assoc_long(return_value, "type", link->servers->read_pref.type);
 	add_assoc_string(return_value, "type_string", mongo_read_preference_type_to_name(link->servers->read_pref.type), 1);
-	php_mongo_add_tagsets(return_value, &link->servers->read_pref);
+
+	tagsets = php_mongo_make_tagsets(&link->servers->read_pref);
+	if (tagsets) {
+		add_assoc_zval_ex(return_value, "tagsets", 8, tagsets);
+	}
 }
 /* }}} */
 

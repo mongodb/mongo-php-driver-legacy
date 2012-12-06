@@ -190,12 +190,17 @@ PHP_METHOD(MongoDB, setSlaveOkay)
 PHP_METHOD(MongoDB, getReadPreference)
 {
 	mongo_db *db;
+	zval *tagsets = NULL;
 	PHP_MONGO_GET_DB(getThis());
 
 	array_init(return_value);
 	add_assoc_long(return_value, "type", db->read_pref.type);
 	add_assoc_string(return_value, "type_string", mongo_read_preference_type_to_name(db->read_pref.type), 1);
-	php_mongo_add_tagsets(return_value, &db->read_pref);
+
+	tagsets = php_mongo_make_tagsets(&db->read_pref);
+	if (tagsets) {
+		add_assoc_zval_ex(return_value, "tagsets", 8, tagsets);
+	}
 }
 
 /* {{{ MongoDB::setReadPreference(string read_preference [, array tags ])
