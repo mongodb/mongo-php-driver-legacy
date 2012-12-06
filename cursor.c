@@ -869,11 +869,8 @@ zval *php_mongo_make_tagsets(mongo_read_preference *rp)
 	return tagsets;
 }
 
-/* Adds the $readPreference option to the query objects
- * Returns 1 if we added $readPreference, or 0 if we didn't need
- * to do anything
- **/
-int mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
+/* Adds the $readPreference option to the query objects */
+void mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
 {
 	zval *query, *rp, *tags;
 	char *type;
@@ -881,13 +878,13 @@ int mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
 	/* Older mongos don't like $readPreference, so don't apply it
 	 * when we want the default behaviour anyway */
 	if (link->servers->read_pref.type == MONGO_RP_PRIMARY) {
-		return 0;
+		return;
 	}
 	if (link->servers->read_pref.type == MONGO_RP_SECONDARY_PREFERRED) {
 		/* If there aren't any tags, don't add $readPreference, the slaveOkay flag is enough
 		 * This gives us improved compatability with older mongos */
 		if (link->servers->read_pref.tagset_count == 0) {
-			return 0;
+			return;
 		}
 	}
 
@@ -904,8 +901,6 @@ int mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
 	make_special(cursor);
 	query = cursor->query;
 	add_assoc_zval(query, "$readPreference", rp);
-
-	return 1;
 }
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   mongo_cursor *cursor;
