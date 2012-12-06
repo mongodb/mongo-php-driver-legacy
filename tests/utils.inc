@@ -172,18 +172,21 @@ function serverversion($m) {
     return $data["version"];
 }
 
-function logCallback($module, $level, $message) {
+function logCallback($module, $level, $message)
+{
     global $_LOG_CALLBACK_REGEX;
+
     if ($_LOG_CALLBACK_REGEX) {
         if (preg_match($_LOG_CALLBACK_REGEX, $message)) {
             echo $message, "\n";
         }
-    }
-    else {
+    } else {
         echo $message, "\n";
     }
 }
-function printLogs($module, $level, $containing = null) {
+
+function printLogs($module, $level, $containing = null)
+{
     global $_LOG_CALLBACK_REGEX;
 
     MongoLog::setModule($module);
