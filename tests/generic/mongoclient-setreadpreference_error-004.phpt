@@ -28,8 +28,8 @@ array(3) {
   array(1) {
     [0]=>
     array(1) {
-      [0]=>
-      string(7) "foo:bar"
+      ["foo"]=>
+      string(3) "bar"
     }
   }
 }

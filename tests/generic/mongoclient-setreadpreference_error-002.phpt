@@ -107,8 +107,8 @@ array(3) {
   array(1) {
     [0]=>
     array(1) {
-      [0]=>
-      string(7) "bar:foo"
+      ["bar"]=>
+      string(3) "foo"
     }
   }
 }
@@ -123,4 +123,3 @@ array(2) {
 }
 ---
 ==DONE==
-
