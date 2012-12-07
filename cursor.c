@@ -833,10 +833,10 @@ int mongo_cursor_mark_dead(void *callback_data)
 	return 1;
 }
 
-/* Returns an array of key=>value pairs, per tagset, from a mongo_read_preference.
- * This maps to the structure on how mongos expects them
- **/
-zval *php_mongo_make_tagsets(mongo_read_preference *rp)
+/* Returns an array of key=>value pairs, per tagset, from a
+ * mongo_read_preference.  This maps to the structure on how mongos expects
+ * them */
+static zval *php_mongo_make_tagsets(mongo_read_preference *rp)
 {
 	zval *tagsets, *tagset;
 	int   i, j;
@@ -881,8 +881,9 @@ void mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
 		return;
 	}
 	if (link->servers->read_pref.type == MONGO_RP_SECONDARY_PREFERRED) {
-		/* If there aren't any tags, don't add $readPreference, the slaveOkay flag is enough
-		 * This gives us improved compatability with older mongos */
+		/* If there aren't any tags, don't add $readPreference, the slaveOkay
+		 * flag is enough This gives us improved compatability with older
+		 * mongos */
 		if (link->servers->read_pref.tagset_count == 0) {
 			return;
 		}
@@ -902,6 +903,7 @@ void mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
 	query = cursor->query;
 	add_assoc_zval(query, "$readPreference", rp);
 }
+
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   mongo_cursor *cursor;
   buffer buf;
@@ -954,21 +956,24 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 	mongo_read_preference_replace(&rp, &link->servers->read_pref);
 	mongo_read_preference_dtor(&rp);
 
+	/* Throw exception in case we have no connection */
 	if (!cursor->connection && error_message) {
 		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
 		free(error_message);
 		return FAILURE;
 	}
+
+	/* Apply read preference query option, but only if we have a MongoS connection */
 	if (cursor->connection->connection_type == MONGO_NODE_MONGOS) {
 		mongo_apply_mongos_rp(cursor, link);
 	}
 
+	/* Create query buffer */
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
 	if (php_mongo_write_query(&buf, cursor TSRMLS_CC) == FAILURE) {
 		efree(buf.start);
 		return FAILURE;
 	}
-
 
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {
