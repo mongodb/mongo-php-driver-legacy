@@ -858,7 +858,7 @@ static zval *php_mongo_make_tagsets(mongo_read_preference *rp)
 
 			/* Split the "dc:ny" into ["dc" => "ny"] */
 			colon = strchr(tag, ':');
-			name = strndup(tag, colon - tag);
+			name = zend_strndup(tag, colon - tag);
 
 			add_assoc_string(tagset, name, colon+1, 1);
 		}
