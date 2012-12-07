@@ -261,8 +261,9 @@ static mcon_collection *mongo_filter_candidates_by_credentials(mongo_con_manager
 	filtered = mcon_init_collection(sizeof(mongo_connection*));
 
 	for (i = 0; i < candidates->count; i++) {
+		db = username = auth_hash = hashed = NULL;
 		mongo_server_split_hash(((mongo_connection *) candidates->data[i])->hash, NULL, NULL, NULL, &db, &username, &auth_hash, NULL);
-		if (servers->server[0]->username && servers->server[0]->password) {
+		if (servers->server[0]->username && servers->server[0]->password && servers->server[0]->db) {
 			if (strcmp(db, servers->server[0]->db) != 0) {
 				mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "Skipping one, database credentials didn't match");
 				goto skip;
@@ -281,9 +282,6 @@ static mcon_collection *mongo_filter_candidates_by_credentials(mongo_con_manager
 		mcon_collection_add(filtered, (mongo_connection *) candidates->data[i]);
 		mongo_print_connection_info(manager, (mongo_connection *) candidates->data[i], MLOG_FINE);
 skip:
-		if (hashed) {
-			free(hashed);
-		}
 		if (db) {
 			free(db);
 		}
@@ -292,6 +290,9 @@ skip:
 		}
 		if (auth_hash) {
 			free(auth_hash);
+		}
+		if (hashed) {
+			free(hashed);
 		}
 	}
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by credentials: done");
