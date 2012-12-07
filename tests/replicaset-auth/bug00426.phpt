@@ -36,7 +36,7 @@ var_dump(get_user($m, username()));
 --EXPECTF--
 object(Mongo)#%d (4) {
   ["connected"]=>
-  bool(false)
+  bool(true)
   ["status"]=>
   NULL
   ["server":protected]=>
@@ -51,17 +51,17 @@ array(4) {
     string(24) "%s"
   }
   ["user"]=>
-  string(4) "user"
+  string(%d) "%s"
   ["readOnly"]=>
   bool(false)
   ["pwd"]=>
   string(32) "%s"
 }
-string(5) "admin"
+string(%d) "%s"
 No candidate servers found
 object(Mongo)#%d (4) {
   ["connected"]=>
-  bool(false)
+  bool(true)
   ["status"]=>
   NULL
   ["server":protected]=>
@@ -76,7 +76,7 @@ array(4) {
     string(24) "%s"
   }
   ["user"]=>
-  string(4) "user"
+  string(%d) "%s"
   ["readOnly"]=>
   bool(false)
   ["pwd"]=>

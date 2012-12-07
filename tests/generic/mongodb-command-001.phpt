@@ -6,8 +6,8 @@ MongoDB::command()
 <?php
 require dirname(__FILE__) . "/../utils.inc";
 
-$m = mongo();
-$db = $m->selectDb('phpunit');
+$m = mongo("admin");
+$db = $m->selectDb("admin");
 
 $status = $db->command(array('serverStatus' => 1));
 var_dump($status['ok']);
