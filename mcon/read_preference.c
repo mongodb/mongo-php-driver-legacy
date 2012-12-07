@@ -251,6 +251,53 @@ static mcon_collection *mongo_filter_candidates_by_seed(mongo_con_manager *manag
 	return filtered;
 }
 
+static mcon_collection *mongo_filter_candidates_by_credentials(mongo_con_manager *manager, mcon_collection *candidates, mongo_servers *servers)
+{
+	int              i;
+	char            *db, *username, *auth_hash, *hashed = NULL;
+	mcon_collection *filtered;
+
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by credentials");
+	filtered = mcon_init_collection(sizeof(mongo_connection*));
+
+	for (i = 0; i < candidates->count; i++) {
+		mongo_server_split_hash(((mongo_connection *) candidates->data[i])->hash, NULL, NULL, NULL, &db, &username, &auth_hash, NULL);
+		if (servers->server[0]->username && servers->server[0]->password) {
+			if (strcmp(db, servers->server[0]->db) != 0) {
+				mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "Skipping one, database credentials didn't match");
+				goto skip;
+			}
+			if (strcmp(username, servers->server[0]->username) != 0) {
+				mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "Skipping one, username credentials didn't match");
+				goto skip;
+			}
+			hashed = mongo_server_create_hashed_password(username, servers->server[0]->password);
+			if (strcmp(auth_hash, hashed) != 0) {
+				mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "Skipping one, authentication hash didn't match");
+				goto skip;
+			}
+		}
+
+		mcon_collection_add(filtered, (mongo_connection *) candidates->data[i]);
+		mongo_print_connection_info(manager, (mongo_connection *) candidates->data[i], MLOG_FINE);
+skip:
+		if (hashed) {
+			free(hashed);
+		}
+		if (db) {
+			free(db);
+		}
+		if (username) {
+			free(username);
+		}
+		if (auth_hash) {
+			free(auth_hash);
+		}
+	}
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by credentials: done");
+
+	return filtered;
+}
 mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, mongo_servers *servers)
 {
 	int              i;
@@ -264,6 +311,10 @@ mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_
 	} else {
 		filtered = mongo_filter_candidates_by_seed(manager, all, servers);
 	}
+	mcon_collection_free(all);
+	all = filtered;
+
+	filtered = mongo_filter_candidates_by_credentials(manager, all, servers);
 	mcon_collection_free(all);
 	all = filtered;
 
