@@ -1811,7 +1811,7 @@ static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
 	zval **tmpvalue;
 
 	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
-		if (Z_LVAL_PP(tmpvalue) < 1) {
+		if ((Z_TYPE_PP(tmpvalue) == IS_LONG && Z_LVAL_PP(tmpvalue) < 1) || (Z_TYPE_PP(tmpvalue) == IS_DOUBLE && Z_DVAL_PP(tmpvalue) < 1)) {
 			zval **tmp, *exception;
 			char *message;
 			long code;
