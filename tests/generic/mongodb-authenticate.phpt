@@ -26,4 +26,6 @@ echo (int) $result['ok'] . "\n";
 1
 
 %s: Function MongoDB::authenticate() is deprecated in %s on line %d
+
+Warning: MongoDB::authenticate(): You can't authenticate an already authenticated connection. in %s on line %d
 0

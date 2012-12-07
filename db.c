@@ -741,6 +741,7 @@ PHP_METHOD(MongoDB, authenticate)
 	mongoclient *link;
 	char       *username, *password;
 	int         ulen, plen, i;
+	char       *error_message;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &username, &ulen, &password, &plen) == FAILURE) {
 		return;
@@ -765,6 +766,23 @@ PHP_METHOD(MongoDB, authenticate)
 		link->servers->server[i]->db = strdup(Z_STRVAL_P(db->name));
 		link->servers->server[i]->username = strdup(username);
 		link->servers->server[i]->password = strdup(password);
+	}
+	array_init(return_value);
+	if (mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char**) &error_message)) {
+		add_assoc_long(return_value, "ok", 1);
+	} else {
+		add_assoc_long(return_value, "ok", 0);
+		add_assoc_string(return_value, "errmsg", error_message, 1);
+		/* Reset the credentials since it failed */
+		for (i = 0; i < link->servers->count; i++) {
+			free(link->servers->server[i]->db);
+			link->servers->server[i]->db = NULL;
+			free(link->servers->server[i]->username);
+			link->servers->server[i]->username = NULL;
+			free(link->servers->server[i]->password);
+			link->servers->server[i]->password = NULL;
+		}
+		free(error_message);
 	}
 }
 
