@@ -85,6 +85,11 @@ REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: 0, hash: %s:%d;%s;X;
 REPLSET FINE:   - tag: dc:west
 REPLSET FINE:   - tag: use:accounting
 REPLSET FINE: limiting to servers with same replicaset name: done
+REPLSET FINE: limiting by credentials
+REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: 0, hash: %s:%d;%s;X;%d
+REPLSET FINE:   - tag: dc:west
+REPLSET FINE:   - tag: use:accounting
+REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
 REPLSET FINE: - connection: type: PRIMARY, socket: 3, ping: 0, hash: %s:%d;%s;X;%d
 REPLSET FINE:   - tag: dc:west

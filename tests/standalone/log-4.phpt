@@ -31,8 +31,7 @@ $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 Warnings:
 Fine:
 CON     FINE: found connection %s:%d;-;X;%d (looking for %s:%d;-;X;%d)
-CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 17
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
@@ -41,6 +40,9 @@ REPLSET FINE: filter_connections: done
 REPLSET FINE: limiting by seeded/discovered servers
 REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: limiting by seeded/discovered servers: done
+REPLSET FINE: limiting by credentials
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;-;X;%d
+REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
 REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: sorting servers: done
@@ -53,8 +55,6 @@ PARSE   INFO: Parsing mongodb://%s:%d
 PARSE   INFO: - Found node: %s:%d
 PARSE   INFO: - Connection type: STANDALONE
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
-CON     INFO: is_ping: pinging %s:%d;-;X;%d
-CON     INFO: is_ping: last pinged at %d; time: %dms
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 
