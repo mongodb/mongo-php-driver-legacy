@@ -5,7 +5,7 @@ GridFS: Testing reading the whole file
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
-$conn = Mongo();
+$conn = Mongo("admin");
 $db   = $conn->selectDb('admin');
 $grid = $db->getGridFs('wrapper');
 
