@@ -351,6 +351,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	mongoclient  *link;
 	zval        **opt_entry;
 	char         *opt_key;
+	int           error;
 	char         *error_message = NULL;
 	uint          opt_key_len;
 	ulong         num_key;
@@ -371,14 +372,14 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	 * Default to the mongo.default_host & mongo.default_port INI options */
 	link->servers = mongo_parse_init();
 	if (server) {
-		if (mongo_parse_server_spec(link->manager, link->servers, server, (char **)&error_message)) {
-			zend_throw_exception(mongo_ce_ConnectionException, error_message, 0 TSRMLS_CC);
+		error = mongo_parse_server_spec(link->manager, link->servers, server, (char **)&error_message);
+		if (error) {
+			zend_throw_exception(mongo_ce_ConnectionException, error_message, 20 + error TSRMLS_CC);
 			free(error_message);
 			return;
 		}
 	} else {
 		char *tmp;
-		int error;
 
 		spprintf(&tmp, 0, "%s:%d", MonGlo(default_host), MonGlo(default_port));
 		error = mongo_parse_server_spec(link->manager, link->servers, tmp, (char **)&error_message);
@@ -425,14 +426,16 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 						case 3: /* Logical error (i.e. conflicting options) */
 						case 2: /* Unknown connection string option, additional options for object configuration are checked here */
 						case 1: /* Empty option name or value */
-							zend_throw_exception(mongo_ce_ConnectionException, error_message, 0 TSRMLS_CC);
+							/* Throw exception - error code is 20 + above value. They are defined in php_mongo.h */
+							zend_throw_exception(mongo_ce_ConnectionException, error_message, 20 + error TSRMLS_CC);
 							free(error_message);
 							return;
 					}
 				} break;
 
 				case HASH_KEY_IS_LONG:
-					zend_throw_exception(mongo_ce_ConnectionException, "Unrecognized or unsupported option", 0 TSRMLS_CC);
+					/* Throw exception - error code is 25. This is defined in php_mongo.h */
+					zend_throw_exception(mongo_ce_ConnectionException, "Unrecognized or unsupported option", 25 TSRMLS_CC);
 					return;
 			}
 		}
@@ -442,8 +445,9 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	if (Z_BVAL_P(slave_okay)) {
 		if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {
 			/* the server already has read preferences configured, but we're still
-			 * trying to set slave okay. The spec says that's an error */
-			zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 0 TSRMLS_CC);
+			 * trying to set slave okay. The spec says that's an error, so we
+			 * throw an exception with code 23 (defined in php_mongo.h) */
+			zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 23 TSRMLS_CC);
 			return;
 		} else {
 			/* Old style option, that needs to be removed. For now, spec dictates
