@@ -190,7 +190,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 				free(tmp_pass);
 				free(tmp_database);
 
-				return 1;
+				return retval;
 			}
 		}
 	}
@@ -246,8 +246,14 @@ int static mongo_process_option(mongo_con_manager *manager, mongo_servers *serve
 	char *tmp_value;
 	int   retval = 0;
 
-	if (!name || !value) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Got an empty option name or value");
+	if (!name || strcmp(name, "") == 0 || (name + 1 == value)) {
+		*error_message = strdup("- Found an empty option name");
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Found an empty option name");
+		return 1;
+	}
+	if (!value) {
+		*error_message = strdup("- Found an empty option value");
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Found an empty option value");
 		return 1;
 	}
 
@@ -474,9 +480,9 @@ int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *server
 		}
 		if (*pos == ';' || *pos == '&') {
 			retval = mongo_process_option(manager, servers, name_start, value_start, pos, error_message);
-			/* An empty name/value isn't an error */
-			if (retval > 1) {
-				return 1;
+
+			if (retval > 0) {
+				return retval;
 			}
 			name_start = pos + 1;
 			value_start = NULL;
@@ -485,8 +491,7 @@ int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *server
 	} while (*pos != '\0');
 	retval = mongo_process_option(manager, servers, name_start, value_start, pos, error_message);
 
-	/* An empty name/value isn't an error */
-	return retval > 1 ? 1 : 0;
+	return retval;
 }
 
 void static mongo_server_def_dump(mongo_con_manager *manager, mongo_server_def *server_def)
