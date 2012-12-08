@@ -424,7 +424,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 							break;
 
 						case 3: /* Logical error (i.e. conflicting options) */
-						case 2: /* Unknown connection string option, additional options for object configuration are checked here */
+						case 2: /* Unknown connection string option */
 						case 1: /* Empty option name or value */
 							/* Throw exception - error code is 20 + above value. They are defined in php_mongo.h */
 							zend_throw_exception(mongo_ce_ConnectionException, error_message, 20 + error TSRMLS_CC);
