@@ -330,7 +330,7 @@ int mongo_store_option_wrapper(mongo_con_manager *manager, mongo_servers *server
 	}
 	convert_to_string_ex(option_value);
 
-	return mongo_store_option(manager, servers, option_name, Z_STRVAL_PP(option_value), (char **) &error_message);
+	return mongo_store_option(manager, servers, option_name, Z_STRVAL_PP(option_value), error_message);
 }
 /* }}} */
 
