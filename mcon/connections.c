@@ -603,9 +603,9 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: setting maxBsonObjectSize to %d", max_bson_size);
 		con->max_bson_size = max_bson_size;
 	} else {
-		*error_message = strdup("Couldn't find the maxBsonObjectSize field");
-		free(data_buffer);
-		return 0;
+		/* This seems to be very old MongoDB installation (PHP-634).. Default to 4MB */
+		con->max_bson_size = 4194304;
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: can't find maxBsonObjectSize.. guesstimating %d", con->max_bson_size);
 	}
 
 	/* Find msg and whether it contains "isdbgrid" */
