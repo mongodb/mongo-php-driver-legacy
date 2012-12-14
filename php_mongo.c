@@ -278,8 +278,6 @@ static PHP_GINIT_FUNCTION(mongo)
 
   mongo_globals->ts_inc = 0;
 
-	mongo_globals->log_level = 0;
-	mongo_globals->log_module = 0;
 #if PHP_VERSION_ID >= 50300
 	mongo_globals->log_callback_info = empty_fcall_info;
 	mongo_globals->log_callback_info_cache = empty_fcall_info_cache;
@@ -318,6 +316,9 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
  */
 PHP_RINIT_FUNCTION(mongo)
 {
+	MonGlo(log_level) = 0;
+	MonGlo(log_module) = 0;
+
 	return SUCCESS;
 }
 /* }}} */
