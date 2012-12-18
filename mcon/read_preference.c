@@ -481,11 +481,24 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 	return filtered;
 }
 
+/* The algorithm works as follows: In case we have a read preference of
+ * primary, secondary or nearest the set will always contain a set of all nodes
+ * that should always be considered to be returned. With primary, there is only
+ * going to be one node, with primary the set contains only secondaries and
+ * with nearest we do not prefer a secondary over a primary or v.v.
+ *
+ * In case we have a read preference of primaryPreferred or
+ * secondaryPreferred, we need to do a bit more logic for selecting the node
+ * that we use. */
 mongo_connection *mongo_pick_server_from_set(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp)
 {
 	mongo_connection *con = NULL;
-	int entry = rand() % col->count;
+	int entry;
 
+	/* If we prefer the primary, we check whether the first node is a primary
+	 * (which it should be if it's available and sorted according to primary >
+	 * secondary). If the first node in the list is no primary, we fall back
+	 * to picking a random node from the set. */
 	if (rp->type == MONGO_RP_PRIMARY_PREFERRED) {
 		if (((mongo_connection*)col->data[0])->connection_type == MONGO_NODE_PRIMARY) {
 			mongo_manager_log(manager, MLOG_RS, MLOG_INFO, "pick server: the primary");
@@ -494,7 +507,25 @@ mongo_connection *mongo_pick_server_from_set(mongo_con_manager *manager, mcon_co
 			return con;
 		}
 	}
+
+	/* If we prefer a secondary, then we need to ignore the last item from the
+	 * list, as this is the primary node - but only if there is more than one
+	 * node in the list AND the last node in the list is a primary. */
+	if (rp->type == MONGO_RP_SECONDARY_PREFERRED) {
+		if (
+			(col->count > 1) &&
+			(((mongo_connection*)col->data[col->count - 1])->connection_type == MONGO_NODE_PRIMARY)
+		) {
+			entry = rand() % (col->count - 1);
+			mongo_manager_log(manager, MLOG_RS, MLOG_INFO, "pick server: random element %d while ignoring the primary", entry);
+			con = (mongo_connection*)col->data[entry];
+			mongo_print_connection_info(manager, con, MLOG_INFO);
+			return con;
+		}
+	}
+
 	/* For now, we just pick a random server from the set */
+	entry = rand() % col->count;
 	mongo_manager_log(manager, MLOG_RS, MLOG_INFO, "pick server: random element %d", entry);
 	con = (mongo_connection*)col->data[entry];
 	mongo_print_connection_info(manager, con, MLOG_INFO);
