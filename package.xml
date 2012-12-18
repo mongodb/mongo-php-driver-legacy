@@ -23,15 +23,15 @@
   <email>bjori@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-12-07</date>
- <time>17:47:32</time>
+ <date>2012-12-18</date>
+ <time>10:54:32</time>
  <version>
-  <release>1.3.2RC1</release>
+  <release>1.3.2</release>
   <api>1.3.2</api>
  </version>
  <stability>
-  <release>beta</release>
-  <api>beta</api>
+  <release>stable</release>
+  <api>stable</api>
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
@@ -39,11 +39,15 @@
     * [PHP-308] - Incorrect method declaration
     * [PHP-418] - Use descending date order for changelog entries
     * [PHP-612] - Impossible to provide a list of tagsets to the readPreferenceTags options
+    * [PHP-623] - Segmentation fault (11) 
     * [PHP-625] - the windows 1.30+ dll MongoCollection findandmodify method will throw a excption which not on linux platform
     * [PHP-629] - Missing support for passing the username/password in the $options array
     * [PHP-631] - One replica set, but two different db/user/passwords
     * [PHP-632] - MongoDB::authenticate() no longer attempts to authenticate, and doesn't return anything either
     * [PHP-633] - findAndModify sometimes throws exception on success
+    * [PHP-634] - Mongo PHP driver v1.3.1/1.3.2RC1 fail to connect to mongoDB 1.6.3
+    * [PHP-640] - The secondaryPreferred read preference always considers the primary node too.
+    * [PHP-641] - MongoLog::setModule/setLevel don't reset for each request
 
 ** Improvement
     * [PHP-317] - slaveOk option not documented in Mongo.__construct()
@@ -117,6 +121,35 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <date>2012-12-07</date>
+   <time>17:47:32</time>
+   <version>
+    <release>1.3.2RC1</release>
+    <api>1.3.2</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-308] - Incorrect method declaration
+    * [PHP-418] - Use descending date order for changelog entries
+    * [PHP-612] - Impossible to provide a list of tagsets to the readPreferenceTags options
+    * [PHP-625] - the windows 1.30+ dll MongoCollection findandmodify method will throw a excption which not on linux platform
+    * [PHP-629] - Missing support for passing the username/password in the $options array
+    * [PHP-631] - One replica set, but two different db/user/passwords
+    * [PHP-632] - MongoDB::authenticate() no longer attempts to authenticate, and doesn't return anything either
+    * [PHP-633] - findAndModify sometimes throws exception on success
+
+** Improvement
+    * [PHP-317] - slaveOk option not documented in Mongo.__construct()
+    * [PHP-529] - Document that MongoCollection::save() may set _id
+    * [PHP-626] - Implement Read Preferences support with sharding.
+   </notes>
+  </release>
   <release>
    <date>2012-12-04</date>
    <time>16:00:32</time>
