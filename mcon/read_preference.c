@@ -513,8 +513,8 @@ mongo_connection *mongo_pick_server_from_set(mongo_con_manager *manager, mcon_co
 	 * node in the list AND the last node in the list is a primary. */
 	if (rp->type == MONGO_RP_SECONDARY_PREFERRED) {
 		if (
-			(((mongo_connection*)col->data[col->count - 1])->connection_type == MONGO_NODE_PRIMARY) &&
-			col->count > 1
+			(col->count > 1) &&
+			(((mongo_connection*)col->data[col->count - 1])->connection_type == MONGO_NODE_PRIMARY)
 		) {
 			entry = rand() % (col->count - 1);
 			mongo_manager_log(manager, MLOG_RS, MLOG_INFO, "pick server: random element %d while ignoring the primary", entry);
