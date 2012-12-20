@@ -107,6 +107,8 @@ static PHP_INI_MH(OnUpdatePingInterval)
 	if (new_value) {
 		MonGlo(manager)->ping_interval = atoi(new_value);
 	}
+
+	return SUCCESS;
 }
 
 static PHP_INI_MH(OnUpdateIsMasterInterval)
@@ -114,6 +116,8 @@ static PHP_INI_MH(OnUpdateIsMasterInterval)
 	if (new_value) {
 		MonGlo(manager)->ismaster_interval = atoi(new_value);
 	}
+
+	return SUCCESS;
 }
 
 /* {{{ PHP_INI */
