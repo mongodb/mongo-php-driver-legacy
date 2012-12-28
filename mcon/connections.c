@@ -445,7 +445,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	char          *data_buffer;
 	char          *set = NULL;      /* For replicaset in return */
 	char          *hosts, *ptr, *string;
-	unsigned char  ismaster = 0, arbiter = 0;
+	unsigned char  ismaster = 0, secondary = 0, arbiter = 0;
 	char          *connected_name, *we_think_we_are;
 	struct timeval now;
 	int            retval = 1;
@@ -542,11 +542,12 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 
 	/* Check for flags */
 	bson_find_field_as_bool(ptr, "ismaster", &ismaster);
+	bson_find_field_as_bool(ptr, "secondary", &secondary);
 	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
 
 	/* Find all hosts */
 	bson_find_field_as_array(ptr, "hosts", &hosts);
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: set name: %s, ismaster: %d, is_arbiter: %d", set, ismaster, arbiter);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: set name: %s, ismaster: %d, secondary: %d, is_arbiter: %d", set, ismaster, secondary, arbiter);
 	*nr_hosts = 0;
 
 	ptr = hosts;
@@ -560,10 +561,12 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	/* Set connection type depending on flags */
 	if (ismaster) {
 		con->connection_type = MONGO_NODE_PRIMARY;
+	} else if (secondary) {
+		con->connection_type = MONGO_NODE_SECONDARY;
 	} else if (arbiter) {
 		con->connection_type = MONGO_NODE_ARBITER;
 	} else {
-		con->connection_type = MONGO_NODE_SECONDARY;
+		con->connection_type = MONGO_NODE_INVALID;
 	} /* TODO: case for mongos */
 
 	free(data_buffer);
