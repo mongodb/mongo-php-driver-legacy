@@ -1,5 +1,5 @@
 --TEST--
-Test for bug #644: mongo.ping_interval and mongo.is_master_interval is unused.
+Test for bug #644: mongo.ping_interval and mongo.is_master_interval is unused. (1)
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --INI--
