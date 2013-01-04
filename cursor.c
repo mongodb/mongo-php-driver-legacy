@@ -222,14 +222,16 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 /* {{{ MongoCursor->__construct
  */
 PHP_METHOD(MongoCursor, __construct) {
-  zval *zlink = 0, *zns = 0, *zquery = 0, *zfields = 0, *empty, *timeout;
+	zval *zlink = 0, *zquery = 0, *zfields = 0, *empty, *timeout;
+	char *ns;
+	int   ns_len;
   zval **data;
   mongo_cursor *cursor;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz|zz", &zlink,
-                            mongo_ce_MongoClient, &zns, &zquery, &zfields) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os|zz", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zquery, &zfields) == FAILURE) {
+		return;
+	}
+
   MUST_BE_ARRAY_OR_OBJECT(3, zquery);
   MUST_BE_ARRAY_OR_OBJECT(4, zfields);
 
@@ -299,9 +301,8 @@ PHP_METHOD(MongoCursor, __construct) {
     zval_add_ref(&zfields);
   }
 
-  // ns
-  convert_to_string(zns);
-  cursor->ns = estrdup(Z_STRVAL_P(zns));
+	/* ns */
+	cursor->ns = estrdup(ns);
 
   // query
   cursor->query = zquery;
