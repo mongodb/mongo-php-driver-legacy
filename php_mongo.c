@@ -104,20 +104,26 @@ ZEND_GET_MODULE(mongo)
 
 static PHP_INI_MH(OnUpdatePingInterval)
 {
-	if (new_value) {
-		MonGlo(manager)->ping_interval = atoi(new_value);
+	long converted_val;
+
+	if (new_value && is_numeric_string(new_value, new_value_length, &converted_val, NULL, 0) == IS_LONG && converted_val > 0) {
+		MonGlo(manager)->ping_interval = converted_val;
+		return SUCCESS;
 	}
 
-	return SUCCESS;
+	return FAILURE;
 }
 
 static PHP_INI_MH(OnUpdateIsMasterInterval)
 {
-	if (new_value) {
-		MonGlo(manager)->ismaster_interval = atoi(new_value);
+	long converted_val;
+
+	if (new_value && is_numeric_string(new_value, new_value_length, &converted_val, NULL, 0) == IS_LONG && converted_val > 0) {
+		MonGlo(manager)->ismaster_interval = converted_val;
+		return SUCCESS;
 	}
 
-	return SUCCESS;
+	return FAILURE;
 }
 
 /* {{{ PHP_INI */
