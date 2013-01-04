@@ -121,8 +121,10 @@ typedef struct _mongo_con_manager_item
 
 typedef void (mongo_log_callback_t)(int module, int level, void *context, char *format, va_list arg);
 
-#define MONGO_MANAGER_DEFAULT_PING_INTERVAL    5
-#define MONGO_MANAGER_DEFAULT_MASTER_INTERVAL 15
+#define MONGO_MANAGER_DEFAULT_PING_INTERVAL     5
+#define MONGO_MANAGER_DEFAULT_PING_INTERVAL_S   "5"
+#define MONGO_MANAGER_DEFAULT_MASTER_INTERVAL   15
+#define MONGO_MANAGER_DEFAULT_MASTER_INTERVAL_S "15"
 
 typedef struct _mongo_con_manager
 {
