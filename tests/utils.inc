@@ -198,6 +198,58 @@ function printLogs($module, $level, $containing = null)
     MongoLog::setCallback("logCallback");
 }
 
+/**
+ * Return all replica set members in the given state.
+ *
+ * @param integer $state
+ * @return array of member names (<host:port>)
+ */
+function get_members_in_state($state)
+{
+    $mongo = mongo();
+    $status = $mongo->admin->command(array('replSetGetStatus' => true));
+    $members = array();
+
+    foreach ($status['members'] as $member) {
+        if ($member['state'] == $state) {
+            $members[] = $member['name'];
+        }
+    }
+
+    return $members;
+}
+
+/**
+ * Return all replica set members in the RECOVERING state.
+ *
+ * @return array of member names (<host:port>)
+ */
+function get_recovering()
+{
+    return get_members_in_state(3);
+}
+
+/**
+ * Put a member into RECOVERING state or restore it to a normal state.
+ *
+ * @param string $member <host:port>
+ * @param boolean $value Put member into RECOVERING state if true, normal otherwise
+ */
+function set_maintenance($member, $value)
+{
+    $mongo = new MongoClient($member);
+    $mongo->admin->command(array('replSetMaintenance' => $value));
+    $start = time();
+
+    while ($value != in_array($member, get_recovering())) {
+        if (time() - $start >= 10) {
+            throw new RuntimeException(sprintf('Member %s never switched state', $member));
+        }
+
+        usleep(250);
+    }
+}
+
 if (!function_exists("iterator_to_array")) {
     function iterator_to_array($it) {
         $retval = array();
