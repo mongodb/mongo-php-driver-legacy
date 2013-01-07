@@ -104,16 +104,26 @@ ZEND_GET_MODULE(mongo)
 
 static PHP_INI_MH(OnUpdatePingInterval)
 {
-	if (new_value) {
-		MonGlo(manager)->ping_interval = atoi(new_value);
+	long converted_val;
+
+	if (new_value && is_numeric_string(new_value, new_value_length, &converted_val, NULL, 0) == IS_LONG && converted_val > 0) {
+		MonGlo(manager)->ping_interval = converted_val;
+		return SUCCESS;
 	}
+
+	return FAILURE;
 }
 
 static PHP_INI_MH(OnUpdateIsMasterInterval)
 {
-	if (new_value) {
-		MonGlo(manager)->ismaster_interval = atoi(new_value);
+	long converted_val;
+
+	if (new_value && is_numeric_string(new_value, new_value_length, &converted_val, NULL, 0) == IS_LONG && converted_val > 0) {
+		MonGlo(manager)->ismaster_interval = converted_val;
+		return SUCCESS;
 	}
+
+	return FAILURE;
 }
 
 /* {{{ PHP_INI */
@@ -127,8 +137,8 @@ STD_PHP_INI_ENTRY("mongo.native_long", "0", PHP_INI_ALL, OnUpdateLong, native_lo
 STD_PHP_INI_ENTRY("mongo.long_as_object", "0", PHP_INI_ALL, OnUpdateLong, long_as_object, zend_mongo_globals, mongo_globals)
 STD_PHP_INI_ENTRY("mongo.allow_empty_keys", "0", PHP_INI_ALL, OnUpdateLong, allow_empty_keys, zend_mongo_globals, mongo_globals)
 
-	PHP_INI_ENTRY("mongo.ping_interval", NULL, PHP_INI_ALL, OnUpdatePingInterval)
-	PHP_INI_ENTRY("mongo.is_master_interval", NULL, PHP_INI_ALL, OnUpdateIsMasterInterval)
+	PHP_INI_ENTRY("mongo.ping_interval", MONGO_MANAGER_DEFAULT_PING_INTERVAL_S, PHP_INI_ALL, OnUpdatePingInterval)
+	PHP_INI_ENTRY("mongo.is_master_interval", MONGO_MANAGER_DEFAULT_MASTER_INTERVAL_S, PHP_INI_ALL, OnUpdateIsMasterInterval)
 PHP_INI_END()
 /* }}} */
 
