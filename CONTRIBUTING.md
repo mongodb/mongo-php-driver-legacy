@@ -28,10 +28,10 @@ To execute the "tests/generic/" tests in a specific mongod environment you can
 export `MONGO_SERVER` environment variable to overwrite the default environment
 (standalone):
 
-    MONGO_SERVER=REPLICASET-auth php run-tests.php tests/generic/mongo-listdbs-001.phpt
+    MONGO_SERVER=REPLICASET_AUTH php run-tests.php tests/generic/mongo-listdbs-001.phpt
 
 If you export the variable, remember to unset it later - otherwise the test
-suite may not be executed correctly in the environment you expect it too.
+suite may not be executed correctly in the environment you expect it to.
 
 
 ## Writing tests
