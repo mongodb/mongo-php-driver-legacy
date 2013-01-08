@@ -450,7 +450,9 @@ PHP_METHOD(MongoCursor, getNext)
  */
 PHP_METHOD(MongoCursor, limit) {
   long l;
-  preiteration_setup;
+	mongo_cursor *cursor;
+
+	PREITERATION_SETUP;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
     return;
@@ -465,7 +467,9 @@ PHP_METHOD(MongoCursor, limit) {
  */
 PHP_METHOD(MongoCursor, batchSize) {
   long l;
-  preiteration_setup;
+	mongo_cursor *cursor;
+
+	PREITERATION_SETUP;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
     return;
@@ -480,7 +484,9 @@ PHP_METHOD(MongoCursor, batchSize) {
  */
 PHP_METHOD(MongoCursor, skip) {
   long l;
-  preiteration_setup;
+	mongo_cursor *cursor;
+
+	PREITERATION_SETUP;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
     return;
@@ -495,7 +501,9 @@ PHP_METHOD(MongoCursor, skip) {
  */
 PHP_METHOD(MongoCursor, fields) {
   zval *z;
-  preiteration_setup;
+	mongo_cursor *cursor;
+
+	PREITERATION_SETUP;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
     return;
@@ -528,8 +536,10 @@ PHP_METHOD(MongoCursor, dead) {
 static inline void set_cursor_flag(INTERNAL_FUNCTION_PARAMETERS, int flag, int mode)
 {
 	zend_bool z = 1;
+	mongo_cursor *cursor;
 
-	preiteration_setup;
+	PREITERATION_SETUP;
+
 	if (mode == -1) {
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &z) == FAILURE) {
 			return;

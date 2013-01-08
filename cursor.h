@@ -81,7 +81,7 @@ PHP_METHOD(MongoCursor, reset);
 PHP_METHOD(MongoCursor, count);
 PHP_METHOD(MongoCursor, info);
 
-#define preiteration_setup   mongo_cursor *cursor;                      \
+#define PREITERATION_SETUP                                              \
   PHP_MONGO_GET_CURSOR(getThis());                                      \
                                                                         \
   if (cursor->started_iterating) {                                      \
