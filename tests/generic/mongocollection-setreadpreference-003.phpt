@@ -36,17 +36,13 @@ foreach ($a as $value) {
 }
 ?>
 --EXPECT--
-array(2) {
+array(1) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
 }
 ---
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(1) {
@@ -58,10 +54,8 @@ array(3) {
   }
 }
 ---
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(1) {
@@ -75,10 +69,8 @@ array(3) {
   }
 }
 ---
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(1) {
@@ -88,10 +80,8 @@ array(3) {
   }
 }
 ---
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(2) {
@@ -110,10 +100,8 @@ array(3) {
   }
 }
 ---
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(3) {

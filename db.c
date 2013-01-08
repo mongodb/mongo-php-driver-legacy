@@ -193,8 +193,7 @@ PHP_METHOD(MongoDB, getReadPreference)
 	PHP_MONGO_GET_DB(getThis());
 
 	array_init(return_value);
-	add_assoc_long(return_value, "type", db->read_pref.type);
-	add_assoc_string(return_value, "type_string", mongo_read_preference_type_to_name(db->read_pref.type), 1);
+	add_assoc_string(return_value, "type", mongo_read_preference_type_to_name(db->read_pref.type), 1);
 	php_mongo_add_tagsets(return_value, &db->read_pref);
 }
 

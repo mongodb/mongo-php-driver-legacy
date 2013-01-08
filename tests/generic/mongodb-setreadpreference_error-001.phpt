@@ -18,18 +18,18 @@ foreach ($b as $newRP) {
 	$d = $m->phpunit;
 	$d->setReadPreference($newRP);
 	$rp = $d->getReadPreference();
-	echo $rp["type_string"], "\n";
+	echo $rp["type"], "\n";
 }
 ?>
 --EXPECTF--
 Warning: MongoDB::setReadPreference(): The value 'blaat' is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
-primary preferred
+primaryPreferred
 
 Warning: MongoDB::setReadPreference(): The value '42' is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
-primary preferred
+primaryPreferred
 
 Warning: MongoDB::setReadPreference(): The value '1' is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
-primary preferred
+primaryPreferred
 
 Warning: MongoDB::setReadPreference(): The value '3.14' is not valid as read preference type in %smongodb-setreadpreference_error-001.php on line %d
-primary preferred
+primaryPreferred
