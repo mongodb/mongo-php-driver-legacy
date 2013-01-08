@@ -54,6 +54,12 @@ function m(&$dsn, &$port, &$db, &$opts = array()) {
                 $db                 = $GLOBALS["REPLICASET_AUTH_DATABASE"];
             }
         return;
+
+        case "SHARDING":
+            $dsn  = $GLOBALS["SHARDING_HOSTNAME"];
+            $port = $GLOBALS["SHARDING_PORT"];
+            $db   = $GLOBALS["SHARDING_DATABASE"];
+        return;
     }
 }
 
@@ -243,13 +249,17 @@ $REPLICASET_AUTH_USERNAME = "";
 $REPLICASET_AUTH_PASSWORD = "";
 $REPLICASET_AUTH_DATABASE = "";
 
+$SHARDING_HOSTNAME = "";
+$SHARDING_DATABASE = "";
+
 $STANDALONE_PORT =
     $STANDALONE_AUTH_PORT =
     $REPLICASET_PORT =
     $REPLICASET_PRIMARY_PORT =
     $REPLICASET_SECONDARY_PORT =
     $REPLICASET_ARBITER_PORT =
-    $REPLICASET_AUTH_PORT = 27017;
+    $REPLICASET_AUTH_PORT =
+    $SHARDING_PORT = 27017;
 
 // Include user define config file to overwrite the defaults
 require_once "mongo-test-cfg.inc";
