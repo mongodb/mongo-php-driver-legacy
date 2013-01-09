@@ -933,11 +933,11 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 	 * (like we do for commands right now through
 	 * php_mongo_connection_force_primary).  See also MongoDB::command and
 	 * append_getlasterror, where this has to be done too. */
-	cursor->connection = mongo_get_read_write_connection_with_callback(link->manager, link->servers, MONGO_CON_FLAG_READ, cursor, mongo_cursor_mark_dead, (char**) &error_message);
 
 	/* restore read preferences from backup */
 	mongo_read_preference_replace(&rp, &link->servers->read_pref);
 	mongo_read_preference_dtor(&rp);
+	cursor->connection = mongo_get_read_write_connection_with_callback(link->manager, link->servers, cursor->force_primary ? MONGO_CON_FLAG_WRITE : MONGO_CON_FLAG_READ, cursor, mongo_cursor_mark_dead, (char**) &error_message);
 
 	/* Throw exception in case we have no connection */
 	if (!cursor->connection && error_message) {
