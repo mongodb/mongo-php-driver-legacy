@@ -586,7 +586,18 @@ PHP_METHOD(MongoCursor, tailable)
  */
 PHP_METHOD(MongoCursor, slaveOkay)
 {
+	mongo_cursor *cursor;
+
+	PREITERATION_SETUP;
+
 	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_SLAVE_OKAY, -1);
+
+	/* SlaveOkay implicitly should set the read preference to
+	 * RP_SECONDARY_PREFERRED, but only, if it's still the default of
+	 * RP_PRIMARY */
+	if (cursor->read_pref.type == MONGO_RP_PRIMARY) {
+		cursor->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
+	}
 }
 /* }}} */
 
