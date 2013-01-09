@@ -42,7 +42,7 @@ array(8) {
   ["started_iterating"]=>
   bool(false)
 }
-array(12) {
+array(15) {
   ["ns"]=>
   string(%d) "%s.bug602"
   ["limit"]=>
@@ -68,5 +68,11 @@ array(12) {
   ["numReturned"]=>
   int(2)
   ["server"]=>
+  string(%d) "%s"
+  ["host"]=>
+  string(%d) "%s"
+  ["port"]=>
+  int(%d)
+  ["connection_type_desc"]=>
   string(%d) "%s"
 }
