@@ -759,11 +759,19 @@ PHP_METHOD(MongoCursor, info)
 
   add_assoc_bool(return_value, "started_iterating", cursor->started_iterating);
   if (cursor->started_iterating) {
+	  char *host;
+	  int   port;
+
     add_assoc_long(return_value, "id", (long)cursor->cursor_id);
     add_assoc_long(return_value, "at", cursor->at);
     add_assoc_long(return_value, "numReturned", cursor->num);
-		/* TODO: Use real host instead of hash */
 		add_assoc_string(return_value, "server", cursor->connection->hash, 1);
+
+		mongo_server_split_hash(cursor->connection->hash, &host, &port, NULL, NULL, NULL, NULL, NULL);
+		add_assoc_string(return_value, "host", host, 1);
+		free(host);
+		add_assoc_long(return_value, "port", port);
+		add_assoc_string(return_value, "connection_type_desc", mongo_connection_type(cursor->connection->connection_type), 1);
   }
 }
 /* }}} */
