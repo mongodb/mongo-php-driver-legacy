@@ -370,8 +370,8 @@ static void gridfs_rewrite_cursor_exception(TSRMLS_D)
 
 static void cleanup_stale_chunks(INTERNAL_FUNCTION_PARAMETERS, zval *cleanup_ids)
 {
-	zval *chunks, *temp_return, *query;
-	zval **cid;
+	zval *chunks, *temp_return;
+	zval **tmp;
 	HashPosition pos;
 	zval *tmp_exception;
 	if (EG(exception)) {
@@ -382,19 +382,25 @@ static void cleanup_stale_chunks(INTERNAL_FUNCTION_PARAMETERS, zval *cleanup_ids
 	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
 	zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(cleanup_ids), &pos);
-	while(zend_hash_get_current_data_ex(Z_ARRVAL_P(cleanup_ids), (void **) &cid, &pos) == SUCCESS) {
+	while(zend_hash_get_current_data_ex(Z_ARRVAL_P(cleanup_ids), (void **) &tmp, &pos) == SUCCESS) {
+		zval *query, *cid;
 		MAKE_STD_ZVAL(query);
+		MAKE_STD_ZVAL(cid);
 		array_init(query);
-		add_assoc_zval(query, "_id", *cid);
+		MAKE_COPY_ZVAL(tmp, cid);
+
+		add_assoc_zval(query, "_id", cid);
 
 		MAKE_STD_ZVAL(temp_return);
 		ZVAL_NULL(temp_return);
 		MONGO_METHOD1(MongoCollection, remove, temp_return, chunks, query);
+
+		zend_hash_move_forward_ex(Z_ARRVAL_P(cleanup_ids), &pos);
 		zval_ptr_dtor(&temp_return);
 		zval_ptr_dtor(&query);
 
-		zend_hash_move_forward_ex(Z_ARRVAL_P(cleanup_ids), &pos);
 	}
+
 	if (tmp_exception) {
 		EG(exception) = tmp_exception;
 	}
@@ -613,7 +619,6 @@ static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int
 PHP_METHOD(MongoGridFS, storeFile) {
   zval *fh, *extra = 0, *options = 0;
   char *filename = 0;
-  int free_options = 0;
   int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1, safe = 0;
 	int revert = 0;
   FILE *fp = 0;
@@ -698,7 +703,8 @@ PHP_METHOD(MongoGridFS, storeFile) {
 		MAKE_STD_ZVAL(opts);
 		array_init(opts);
 		options = opts;
-		free_options = 1;
+	} else {
+		Z_ADDREF_P(options);
 	}
 
 	// force safe mode
@@ -817,9 +823,7 @@ cleanup_on_failure:
 	zval_ptr_dtor(&zfile);
 	zval_ptr_dtor(&cleanup_ids);
 
-	if (free_options) {
-		zval_ptr_dtor(&options);
-	}
+	zval_ptr_dtor(&options);
 }
 
 PHP_METHOD(MongoGridFS, findOne) {
