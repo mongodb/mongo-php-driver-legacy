@@ -701,7 +701,6 @@ PHP_METHOD(MongoCollection, find)
 {
   zval *query = 0, *fields = 0;
   mongo_collection *c;
-  mongoclient *link;
   zval temp;
 	mongo_cursor *cursor;
 
@@ -713,11 +712,8 @@ PHP_METHOD(MongoCollection, find)
   MUST_BE_ARRAY_OR_OBJECT(2, fields);
 
   PHP_MONGO_GET_COLLECTION(getThis());
-  PHP_MONGO_GET_LINK(c->link);
 
   object_init_ex(return_value, mongo_ce_Cursor);
-
-	mongo_read_preference_replace(&c->read_pref, &link->servers->read_pref);
 
 	/* TODO: Don't call an internal function like this, but add a new C-level
 	 * function for instantiating cursors */
