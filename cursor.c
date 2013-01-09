@@ -227,6 +227,7 @@ PHP_METHOD(MongoCursor, __construct) {
 	int   ns_len;
   zval **data;
   mongo_cursor *cursor;
+	mongoclient *link;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os|zz", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zquery, &zfields) == FAILURE) {
 		return;
@@ -253,11 +254,6 @@ PHP_METHOD(MongoCursor, __construct) {
   // db connection
   cursor->resource = zlink;
   zval_add_ref(&zlink);
-
-	/* Initialize read_pref to empty */
-	cursor->read_pref.type = MONGO_RP_PRIMARY;
-	cursor->read_pref.tagset_count = 0;
-	cursor->read_pref.tagsets = NULL;
 
   // change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1}
   if (Z_TYPE_P(zfields) == IS_ARRAY) {
@@ -910,15 +906,11 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 		return FAILURE;
 	}
 
-	/* store the link's read preference to backup, and overwrite with the collection's read preferences */
-	mongo_read_preference_copy(&link->servers->read_pref, &rp);
-	mongo_read_preference_replace(&cursor->read_pref, &link->servers->read_pref);
-
 	/* Sets the wire protocol flag to allow reading from a secondary. The read
 	 * preference spec states: "slaveOk remains as a bit in the wire protocol
 	 * and drivers will set this bit to 1 for all reads except with PRIMARY
 	 * read preference." */
-	cursor->opts = cursor->opts | (link->servers->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0);
+	cursor->opts = cursor->opts | (cursor->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0);
 
 	/* If we had a connection we need to remove it from the callback map before
 	 * we assign it another connection
@@ -927,17 +919,21 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 		mongo_deregister_callback_from_connection(cursor->connection, cursor);
 	}
 
+	/* store the link's read preference to backup, and overwrite with the cursors's read preferences */
+	mongo_read_preference_copy(&link->servers->read_pref, &rp);
+	mongo_read_preference_replace(&cursor->read_pref, &link->servers->read_pref);
+
 	/* TODO: We have to assume to use a read connection here, but it should
 	 * really be refactored so that we can create a cursor with the correct
 	 * read/write setup already, instead of having to force a new mode later
 	 * (like we do for commands right now through
 	 * php_mongo_connection_force_primary).  See also MongoDB::command and
 	 * append_getlasterror, where this has to be done too. */
+	cursor->connection = mongo_get_read_write_connection_with_callback(link->manager, link->servers, cursor->force_primary ? MONGO_CON_FLAG_WRITE : MONGO_CON_FLAG_READ, cursor, mongo_cursor_mark_dead, (char**) &error_message);
 
 	/* restore read preferences from backup */
 	mongo_read_preference_replace(&rp, &link->servers->read_pref);
 	mongo_read_preference_dtor(&rp);
-	cursor->connection = mongo_get_read_write_connection_with_callback(link->manager, link->servers, cursor->force_primary ? MONGO_CON_FLAG_WRITE : MONGO_CON_FLAG_READ, cursor, mongo_cursor_mark_dead, (char**) &error_message);
 
 	/* Throw exception in case we have no connection */
 	if (!cursor->connection && error_message) {
