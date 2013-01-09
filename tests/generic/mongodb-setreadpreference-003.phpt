@@ -47,8 +47,8 @@ array(2) {
   array(1) {
     [0]=>
     array(1) {
-      [0]=>
-      string(7) "dc:east"
+      ["dc"]=>
+      string(4) "east"
     }
   }
 }
@@ -60,10 +60,10 @@ array(2) {
   array(1) {
     [0]=>
     array(2) {
-      [0]=>
-      string(7) "dc:east"
-      [1]=>
-      string(13) "use:reporting"
+      ["dc"]=>
+      string(4) "east"
+      ["use"]=>
+      string(9) "reporting"
     }
   }
 }
@@ -86,15 +86,15 @@ array(2) {
   array(2) {
     [0]=>
     array(2) {
-      [0]=>
-      string(7) "dc:east"
-      [1]=>
-      string(13) "use:reporting"
+      ["dc"]=>
+      string(4) "east"
+      ["use"]=>
+      string(9) "reporting"
     }
     [1]=>
     array(1) {
-      [0]=>
-      string(7) "dc:west"
+      ["dc"]=>
+      string(4) "west"
     }
   }
 }
@@ -106,15 +106,15 @@ array(2) {
   array(3) {
     [0]=>
     array(2) {
-      [0]=>
-      string(7) "dc:east"
-      [1]=>
-      string(13) "use:reporting"
+      ["dc"]=>
+      string(4) "east"
+      ["use"]=>
+      string(9) "reporting"
     }
     [1]=>
     array(1) {
-      [0]=>
-      string(7) "dc:west"
+      ["dc"]=>
+      string(4) "west"
     }
     [2]=>
     array(0) {
