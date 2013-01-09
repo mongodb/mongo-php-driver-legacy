@@ -36,17 +36,17 @@ var_dump($mentions); $mentions = array();
 Deprecated: Function MongoDB::setSlaveOkay() is deprecated in %sbug00511.php on line %d
 array(2) {
   ["PRIMARY"]=>
-  int(3)
+  int(5)
   ["SECONDARY"]=>
-  int(3)
+  int(5)
 }
 array(1) {
   ["PRIMARY"]=>
-  int(6)
+  int(5)
 }
 array(2) {
   ["PRIMARY"]=>
-  int(3)
+  int(5)
   ["SECONDARY"]=>
-  int(3)
+  int(5)
 }

@@ -29,9 +29,9 @@ zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database,
 zval* mongo_db_cmd(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC);
 
 /**
- * Switch to primary connection, or throw exception on failure
+ * Switch to primary connection
  */
-void php_mongo_connection_force_primary(mongo_cursor *cursor, mongoclient *link TSRMLS_DC);
+void php_mongo_connection_force_primary(mongo_cursor *cursor);
 
 PHP_METHOD(MongoDB, __construct);
 PHP_METHOD(MongoDB, __toString);

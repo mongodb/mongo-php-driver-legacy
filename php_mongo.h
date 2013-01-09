@@ -437,6 +437,7 @@ typedef struct {
 
 	mongo_read_preference read_pref;
 
+	int force_primary; /* If set to 1 then the connection selection will request a WRITE (primary) connection */
 	int dead;
 } mongo_cursor;
 

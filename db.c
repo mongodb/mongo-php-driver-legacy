@@ -51,17 +51,9 @@ zend_class_entry *mongo_ce_DB = NULL;
 
 static void clear_exception(zval* return_value TSRMLS_DC);
 
-void php_mongo_connection_force_primary(mongo_cursor *cursor, mongoclient *link TSRMLS_DC)
+void php_mongo_connection_force_primary(mongo_cursor *cursor)
 {
-	char *error_message = NULL;
-
-	if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {
-		cursor->connection = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_WRITE, (char**) &error_message);
-		if (!cursor->connection && error_message) {
-			zend_throw_exception(mongo_ce_ConnectionException, error_message, 72 TSRMLS_CC);
-			return;
-		}
-	}
+	cursor->force_primary = 1;
 }
 
 /* {{{ MongoDB::__construct
@@ -650,11 +642,11 @@ PHP_METHOD(MongoDB, command) {
 	 * to slave */
 	/* This should be refactored alongside with the getLastError redirection in
 	 * collection.c/append_getlasterror. The Cursor creation should be done through
-	 * an init method otherwise a connection have to be requested twice. */
+	 * an init method. */
 	PHP_MONGO_GET_LINK(db->link);
 	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
 	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
-	php_mongo_connection_force_primary(cursor_tmp, link TSRMLS_CC);
+	php_mongo_connection_force_primary(cursor_tmp);
 
 
   // query
