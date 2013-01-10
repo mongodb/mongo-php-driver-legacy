@@ -1,5 +1,5 @@
 --TEST--
-MongoDate micro/milliseconds disrepancy
+MongoDate micro/milliseconds discrepancy
 --FILE--
 <?php
 $times = array(

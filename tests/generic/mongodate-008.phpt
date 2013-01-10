@@ -1,5 +1,5 @@
 --TEST--
-MongoDate micro/milliseconds disrepancy (with write)
+MongoDate micro/milliseconds discrepancy (with write)
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc";?>
 --FILE--
