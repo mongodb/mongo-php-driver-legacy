@@ -587,15 +587,20 @@ PHP_METHOD(MongoCursor, tailable)
 PHP_METHOD(MongoCursor, slaveOkay)
 {
 	mongo_cursor *cursor;
+	zend_bool     slave_okay = 1;
 
 	PREITERATION_SETUP;
 
-	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_SLAVE_OKAY, -1);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
+		return;
+	}
+
+	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_SLAVE_OKAY, slave_okay);
 
 	/* SlaveOkay implicitly should set the read preference to
 	 * RP_SECONDARY_PREFERRED, but only, if it's still the default of
 	 * RP_PRIMARY */
-	if (cursor->read_pref.type == MONGO_RP_PRIMARY) {
+	if (slave_okay && cursor->read_pref.type == MONGO_RP_PRIMARY) {
 		cursor->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
 	}
 }
@@ -897,7 +902,7 @@ void mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   mongo_cursor *cursor;
   buffer buf;
-  zval *errmsg;
+	zval *errmsg, *zslaveokay;
 	char *error_message;
 	mongoclient *link;
 	mongo_read_preference rp;
@@ -917,18 +922,26 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 		return FAILURE;
 	}
 
-	/* Sets the wire protocol flag to allow reading from a secondary. The read
-	 * preference spec states: "slaveOk remains as a bit in the wire protocol
-	 * and drivers will set this bit to 1 for all reads except with PRIMARY
-	 * read preference." */
-	cursor->opts = cursor->opts | (cursor->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0);
-
 	/* If we had a connection we need to remove it from the callback map before
 	 * we assign it another connection
 	 */
 	if (cursor->connection) {
 		mongo_deregister_callback_from_connection(cursor->connection, cursor);
 	}
+
+	/* If the static property "slaveOkay" is set, we need to switch to a
+	 * MONGO_RP_SECONDARY_PREFERRED as well, but only if read preferences
+	 * aren't already set. */
+	if (cursor->read_pref.type == MONGO_RP_PRIMARY) {
+		zslaveokay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
+		cursor->read_pref.type = Z_BVAL_P(zslaveokay) ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
+	}
+
+	/* Sets the wire protocol flag to allow reading from a secondary. The read
+	 * preference spec states: "slaveOk remains as a bit in the wire protocol
+	 * and drivers will set this bit to 1 for all reads except with PRIMARY
+	 * read preference." */
+	cursor->opts = cursor->opts | (cursor->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0);
 
 	/* store the link's read preference to backup, and overwrite with the cursors's read preferences */
 	mongo_read_preference_copy(&link->servers->read_pref, &rp);

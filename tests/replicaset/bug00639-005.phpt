@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-639: MongoCursor::slaveOkay() has no effect
+Test for PHP-639: MongoCursor::slaveOkay() has no effect (inherited from client)
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
@@ -8,9 +8,8 @@ Test for PHP-639: MongoCursor::slaveOkay() has no effect
 $mentions = array(); 
 require_once dirname(__FILE__) . "/../utils.inc";
 
-$m = mongo();
-$db = $m->selectDB(dbname());
-$col = $db->bug639;
+// Has to be old_mongo here, as MongoClient doesn't have the deprecated setSlaveOkay() method.
+$m = old_mongo();
 
 MongoLog::setModule( MongoLog::ALL );
 MongoLog::setLevel( MongoLog::ALL );
@@ -28,15 +27,33 @@ MongoLog::setCallback( function($a, $b, $message) use (&$showNext) {
 	}
 } );
 
-MongoCursor::$slaveOkay = true;
+$m->setSlaveOkay(true);
+$db = $m->selectDB(dbname());
+$col = $db->bug639;
+
 $cursor = $col->find(array(), array('email' => true));
-$cursor->slaveOkay(true)->limit(1);
- 
+$cursor->limit(1);
+iterator_to_array($cursor);
+$info = $cursor->info();
+echo "connection type: ", $info['connection_type_desc'], "\n";
+
+$m->setSlaveOkay(false);
+$db = $m->selectDB(dbname());
+$col = $db->bug639;
+
+$cursor = $col->find(array(), array('email' => true));
+$cursor->limit(1);
 iterator_to_array($cursor);
 $info = $cursor->info();
 echo "connection type: ", $info['connection_type_desc'], "\n";
 ?>
 --EXPECTF--
+Deprecated: Function Mongo::setSlaveOkay() is deprecated in %s
 pick server: random element %d while ignoring the primary
 - connection: type: SECONDARY, socket: %d, ping: %d, hash: %s
 connection type: SECONDARY
+
+Deprecated: Function Mongo::setSlaveOkay() is deprecated in %s
+pick server: random element %d
+- connection: type: PRIMARY, socket: %d, ping: %d, hash: %s
+connection type: PRIMARY
