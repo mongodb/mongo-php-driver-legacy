@@ -19,17 +19,15 @@ var_dump($rp);
 ?>
 --EXPECTF--
 Warning: MongoClient::setReadPreference(): You can't use read preference tags with a read preference of PRIMARY in %smongoclient-setreadpreference_error-004.php on line %d
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(1) {
     [0]=>
     array(1) {
-      [0]=>
-      string(7) "foo:bar"
+      ["foo"]=>
+      string(3) "bar"
     }
   }
 }

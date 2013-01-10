@@ -23,19 +23,19 @@ $a = array(
 foreach ($a as $value) {
 	$m = new mongo($baseString . $value);
 	$rp = $m->getReadPreference();
-	echo $rp["type_string"], "\n";
+	echo $rp["type"], "\n";
 }
 ?>
 --EXPECTF--
 primary
 primary
-primary preferred
-primary preferred
-primary preferred
+primaryPreferred
+primaryPreferred
+primaryPreferred
 secondary
 secondary
-secondary preferred
-secondary preferred
+secondaryPreferred
+secondaryPreferred
 nearest
 nearest
 

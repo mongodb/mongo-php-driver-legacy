@@ -35,49 +35,41 @@ foreach ($a as $value) {
 }
 ?>
 --EXPECT--
-array(2) {
+array(1) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
 }
 ---
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(1) {
     [0]=>
     array(1) {
-      [0]=>
-      string(7) "dc:east"
+      ["dc"]=>
+      string(4) "east"
     }
   }
 }
 ---
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(1) {
     [0]=>
     array(2) {
-      [0]=>
-      string(7) "dc:east"
-      [1]=>
-      string(13) "use:reporting"
+      ["dc"]=>
+      string(4) "east"
+      ["use"]=>
+      string(9) "reporting"
     }
   }
 }
 ---
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(1) {
@@ -87,46 +79,42 @@ array(3) {
   }
 }
 ---
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(2) {
     [0]=>
     array(2) {
-      [0]=>
-      string(7) "dc:east"
-      [1]=>
-      string(13) "use:reporting"
+      ["dc"]=>
+      string(4) "east"
+      ["use"]=>
+      string(9) "reporting"
     }
     [1]=>
     array(1) {
-      [0]=>
-      string(7) "dc:west"
+      ["dc"]=>
+      string(4) "west"
     }
   }
 }
 ---
-array(3) {
+array(2) {
   ["type"]=>
-  int(2)
-  ["type_string"]=>
   string(9) "secondary"
   ["tagsets"]=>
   array(3) {
     [0]=>
     array(2) {
-      [0]=>
-      string(7) "dc:east"
-      [1]=>
-      string(13) "use:reporting"
+      ["dc"]=>
+      string(4) "east"
+      ["use"]=>
+      string(9) "reporting"
     }
     [1]=>
     array(1) {
-      [0]=>
-      string(7) "dc:west"
+      ["dc"]=>
+      string(4) "west"
     }
     [2]=>
     array(0) {

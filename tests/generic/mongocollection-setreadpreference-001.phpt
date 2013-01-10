@@ -34,7 +34,7 @@ foreach ($a as $value) {
 	foreach ($b as $newRP) {
 		$m->setReadPreference($newRP);
 		$rp = $m->getReadPreference();
-		echo $rp["type_string"], "\n";
+		echo $rp["type"], "\n";
 	}
 	echo "---\n";
 }
@@ -43,40 +43,40 @@ foreach ($a as $value) {
 primary
 
 primary
-primary preferred
+primaryPreferred
 secondary
-secondary preferred
+secondaryPreferred
 nearest
 ---
 primaryPreferred
 
 primary
-primary preferred
+primaryPreferred
 secondary
-secondary preferred
+secondaryPreferred
 nearest
 ---
 secondary
 
 primary
-primary preferred
+primaryPreferred
 secondary
-secondary preferred
+secondaryPreferred
 nearest
 ---
 secondaryPreferred
 
 primary
-primary preferred
+primaryPreferred
 secondary
-secondary preferred
+secondaryPreferred
 nearest
 ---
 nearest
 
 primary
-primary preferred
+primaryPreferred
 secondary
-secondary preferred
+secondaryPreferred
 nearest
 ---

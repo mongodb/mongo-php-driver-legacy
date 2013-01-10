@@ -834,42 +834,6 @@ int mongo_cursor_mark_dead(void *callback_data)
 	return 1;
 }
 
-/* Returns an array of key=>value pairs, per tagset, from a
- * mongo_read_preference.  This maps to the structure on how mongos expects
- * them */
-static zval *php_mongo_make_tagsets(mongo_read_preference *rp)
-{
-	zval *tagsets, *tagset;
-	int   i, j;
-
-	if (!rp->tagset_count) {
-		return NULL;
-	}
-
-	MAKE_STD_ZVAL(tagsets);
-	array_init(tagsets);
-
-	for (i = 0; i < rp->tagset_count; i++) {
-		MAKE_STD_ZVAL(tagset);
-		array_init(tagset);
-
-		for (j = 0; j < rp->tagsets[i]->tag_count; j++) {
-			char *name, *colon;
-			char *tag = rp->tagsets[i]->tags[j];
-
-			/* Split the "dc:ny" into ["dc" => "ny"] */
-			colon = strchr(tag, ':');
-			name = zend_strndup(tag, colon - tag);
-
-			add_assoc_string(tagset, name, colon+1, 1);
-		}
-
-		add_next_index_zval(tagsets, tagset);
-	}
-
-	return tagsets;
-}
-
 /* Adds the $readPreference option to the query objects */
 void mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
 {

@@ -25,15 +25,11 @@ var_dump($c->getReadPreference());
 
 ?>
 --EXPECT--
-array(2) {
+array(1) {
   ["type"]=>
-  int(1)
-  ["type_string"]=>
-  string(17) "primary preferred"
+  string(16) "primaryPreferred"
 }
-array(2) {
+array(1) {
   ["type"]=>
-  int(3)
-  ["type_string"]=>
-  string(19) "secondary preferred"
+  string(18) "secondaryPreferred"
 }
