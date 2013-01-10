@@ -47,6 +47,7 @@ typedef unsigned __int64 uint64_t;
  *
  * SECONDARY needs to have a larger constant value than PRIMARY for the read
  * preference sorting algorithm to work. */
+#define MONGO_NODE_INVALID        0x00
 #define MONGO_NODE_STANDALONE     0x01
 #define MONGO_NODE_PRIMARY        0x02
 #define MONGO_NODE_SECONDARY      0x04

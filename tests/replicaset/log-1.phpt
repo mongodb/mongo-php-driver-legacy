@@ -41,7 +41,7 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 278
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (%s).
-CON     INFO: ismaster: set name: %s, ismaster: 1, is_arbiter: 0
+CON     INFO: ismaster: set name: %s, ismaster: 1, secondary: 0, is_arbiter: 0
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: ismaster: last ran at %d
@@ -66,7 +66,7 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 277
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (%s).
-CON     INFO: ismaster: set name: %s, ismaster: 0, is_arbiter: 0
+CON     INFO: ismaster: set name: %s, ismaster: 0, secondary: 1, is_arbiter: 0
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: ismaster: last ran at %d
