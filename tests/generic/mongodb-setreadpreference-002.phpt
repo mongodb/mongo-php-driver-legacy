@@ -25,15 +25,11 @@ var_dump($c->getReadPreference());
 
 ?>
 --EXPECT--
-array(2) {
+array(1) {
   ["type"]=>
-  int(4)
-  ["type_string"]=>
   string(7) "nearest"
 }
-array(2) {
+array(1) {
   ["type"]=>
-  int(0)
-  ["type_string"]=>
   string(7) "primary"
 }

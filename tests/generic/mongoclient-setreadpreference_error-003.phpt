@@ -18,9 +18,7 @@ var_dump($rp);
 ?>
 --EXPECTF--
 Warning: MongoClient::setReadPreference(): You can't use read preference tags with a read preference of PRIMARY in %smongoclient-setreadpreference_error-003.php on line %d
-array(2) {
+array(1) {
   ["type"]=>
-  int(0)
-  ["type_string"]=>
   string(7) "primary"
 }

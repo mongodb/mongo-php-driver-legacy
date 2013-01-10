@@ -372,32 +372,6 @@ static void mongo_init_MongoExceptions(TSRMLS_D) {
 }
 
 /* Shared helper functions */
-void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
-{
-	zval *tagsets, *tagset;
-	int   i, j;
-
-	if (!rp->tagset_count) {
-		return;
-	}
-
-	MAKE_STD_ZVAL(tagsets);
-	array_init(tagsets);
-
-	for (i = 0; i < rp->tagset_count; i++) {
-		MAKE_STD_ZVAL(tagset);
-		array_init(tagset);
-
-		for (j = 0; j < rp->tagsets[i]->tag_count; j++) {
-			add_next_index_string(tagset, rp->tagsets[i]->tags[j], 1);
-		}
-
-		add_next_index_zval(tagsets, tagset);
-	}
-
-	add_assoc_zval_ex(return_value, "tagsets", 8, tagsets);
-}
-
 static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *ztagset TSRMLS_DC)
 {
 	HashTable  *tagset = HASH_OF(ztagset);
@@ -434,6 +408,53 @@ static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *
 		return NULL;
 	}
 	return tmp_ts;
+}
+
+/* Returns an array of key=>value pairs, per tagset, from a
+ * mongo_read_preference.  This maps to the structure on how mongos expects
+ * them */
+zval *php_mongo_make_tagsets(mongo_read_preference *rp)
+{
+	zval *tagsets, *tagset;
+	int   i, j;
+
+	if (!rp->tagset_count) {
+		return NULL;
+	}
+
+	MAKE_STD_ZVAL(tagsets);
+	array_init(tagsets);
+
+	for (i = 0; i < rp->tagset_count; i++) {
+		MAKE_STD_ZVAL(tagset);
+		array_init(tagset);
+
+		for (j = 0; j < rp->tagsets[i]->tag_count; j++) {
+			char *name, *colon;
+			char *tag = rp->tagsets[i]->tags[j];
+
+			/* Split the "dc:ny" into ["dc" => "ny"] */
+			colon = strchr(tag, ':');
+			name = zend_strndup(tag, colon - tag);
+
+			add_assoc_string(tagset, name, colon+1, 1);
+		}
+
+		add_next_index_zval(tagsets, tagset);
+	}
+
+	return tagsets;
+}
+
+void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
+{
+  zval *tagsets = php_mongo_make_tagsets(rp);
+
+  if (!tagsets) {
+    return;
+  }
+
+  add_assoc_zval_ex(return_value, "tagsets", sizeof("tagsets"), tagsets);
 }
 
 int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC)
