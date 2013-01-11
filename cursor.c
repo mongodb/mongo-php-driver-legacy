@@ -597,11 +597,21 @@ PHP_METHOD(MongoCursor, slaveOkay)
 
 	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_SLAVE_OKAY, slave_okay);
 
-	/* SlaveOkay implicitly should set the read preference to
-	 * RP_SECONDARY_PREFERRED, but only, if it's still the default of
-	 * RP_PRIMARY */
-	if (slave_okay && cursor->read_pref.type == MONGO_RP_PRIMARY) {
-		cursor->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
+	/* slaveOkay implicitly sets read preferences.
+	 *
+	 * With slave_okay being true or absent, the RP is switched to SECONDARY
+	 * PREFERRED but only if the current configured RP is PRIMARY - so that
+	 * other read preferences are not overwritten. As slaveOkay really only
+	 * means "read from any secondary" that does not conflict.
+	 *
+	 * With slave_okay being false, the RP is switched to PRIMARY. Setting it
+	 * to PRIMARY when it already is PRIMARY doesn't hurt. */
+	if (slave_okay) {
+		if (cursor->read_pref.type == MONGO_RP_PRIMARY) {
+			cursor->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
+		}
+	} else {
+		cursor->read_pref.type = MONGO_RP_PRIMARY;
 	}
 }
 /* }}} */
