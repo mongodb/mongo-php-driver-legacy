@@ -715,6 +715,10 @@ PHP_METHOD(MongoCollection, find)
 
   object_init_ex(return_value, mongo_ce_Cursor);
 
+	/* add read preferences to cursor */
+	cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
+	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
+
 	/* TODO: Don't call an internal function like this, but add a new C-level
 	 * function for instantiating cursors */
   if (!query) {
@@ -726,10 +730,6 @@ PHP_METHOD(MongoCollection, find)
   else {
     MONGO_METHOD4(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query, fields);
   }
-
-	/* add read preferences to cursor */
-	cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
-	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
 }
 
 PHP_METHOD(MongoCollection, findOne) {
