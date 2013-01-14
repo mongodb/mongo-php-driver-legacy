@@ -8,7 +8,7 @@ require_once dirname(__FILE__) . "/../utils.inc";
 
 $m = new_mongo();
 $gridfs = $m->selectDb(dbname())->getGridfs();
-
+$gridfs->remove();
 
 $id = $gridfs->put(__FILE__);
 $coll = $m->selectDB(dbname())->selectCollection("fs.chunks");
@@ -32,6 +32,6 @@ try {
 }
 ?>
 --EXPECTF--
-string(28) "Chunk#1 larger then expected"
-int(17)
+string(%d) "There is more data associated with this file than the metadata specifies (reading chunk 1)"
+int(1)
 

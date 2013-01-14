@@ -1380,26 +1380,26 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
      */
     // raw bytes
     if (Z_TYPE_PP(zdata) == IS_STRING) {
-		if (total + Z_STRLEN_PP(zdata) > max) {
-			zend_throw_exception_ex(mongo_ce_GridFSException, 17 TSRMLS_CC, "Chunk larger then expected");
-			return FAILURE;
-		}
+			if (total + Z_STRLEN_PP(zdata) > max) {
+				zend_throw_exception_ex(mongo_ce_GridFSException, 1 TSRMLS_CC, "There is more data associated with this file than the metadata specifies");
+				return FAILURE;
+			}
       total += apply_copy_func(to, Z_STRVAL_PP(zdata), Z_STRLEN_PP(zdata));
     }
     // MongoBinData
     else if (Z_TYPE_PP(zdata) == IS_OBJECT &&
              Z_OBJCE_PP(zdata) == mongo_ce_BinData) {
       zval *bin = zend_read_property(mongo_ce_BinData, *zdata, "bin", strlen("bin"), NOISY TSRMLS_CC);
-		if (total + Z_STRLEN_P(bin) > max) {
-			zval **n;
-			if (zend_hash_find(HASH_P(next), "n", strlen("n")+1, (void**)&n) == SUCCESS) {
-				convert_to_long_ex(n);
-				zend_throw_exception_ex(mongo_ce_GridFSException, 17 TSRMLS_CC, "Chunk#%d larger then expected", Z_LVAL_PP(n));
-			} else {
-				zend_throw_exception_ex(mongo_ce_GridFSException, 17 TSRMLS_CC, "Chunk larger then expected");
+			if (total + Z_STRLEN_P(bin) > max) {
+				zval **n;
+				if (zend_hash_find(HASH_P(next), "n", strlen("n")+1, (void**)&n) == SUCCESS) {
+					convert_to_long_ex(n);
+					zend_throw_exception_ex(mongo_ce_GridFSException, 1 TSRMLS_CC, "There is more data associated with this file than the metadata specifies (reading chunk %d)", Z_LVAL_PP(n));
+				} else {
+					zend_throw_exception_ex(mongo_ce_GridFSException, 1 TSRMLS_CC, "There is more data associated with this file than the metadata specifies");
+				}
+				return FAILURE;
 			}
-			return FAILURE;
-		}
       total += apply_copy_func(to, Z_STRVAL_P(bin), Z_STRLEN_P(bin));
     }
     // if it's not a string or a MongoBinData, give up
