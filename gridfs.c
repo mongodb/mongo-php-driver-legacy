@@ -83,7 +83,7 @@ static int copy_bytes(void *to, char *from, int len);
 static int copy_file(void *to, char *from, int len);
 static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC);
 
-static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to TSRMLS_DC);
+static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to, int max TSRMLS_DC);
 static int setup_file(FILE *fpp, char *filename TSRMLS_DC);
 static int get_chunk_size(zval *array TSRMLS_DC);
 static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC);
@@ -1231,7 +1231,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   MONGO_METHOD1(MongoCursor, sort, cursor, cursor, sort);
 
-  if ((total = apply_to_cursor(cursor, copy_file, fp TSRMLS_CC)) == FAILURE) {
+  if ((total = apply_to_cursor(cursor, copy_file, fp, 0 TSRMLS_CC)) == FAILURE) {
     zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
   }
 
@@ -1317,7 +1317,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   str = (char*)emalloc(len + 1);
   str_ptr = str;
 
-  if (apply_to_cursor(cursor, copy_bytes, &str TSRMLS_CC) == FAILURE) {
+  if (apply_to_cursor(cursor, copy_bytes, &str, len + 1 TSRMLS_CC) == FAILURE) {
       if (EG(exception)) {
           return;
       }
@@ -1351,7 +1351,7 @@ static int copy_file(void *to, char *from, int len) {
   return written;
 }
 
-static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to TSRMLS_DC) {
+static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to, int max TSRMLS_DC) {
   int total = 0;
   zval *next;
 
@@ -1380,12 +1380,26 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
      */
     // raw bytes
     if (Z_TYPE_PP(zdata) == IS_STRING) {
+			if (total + Z_STRLEN_PP(zdata) > max) {
+				zend_throw_exception_ex(mongo_ce_GridFSException, 1 TSRMLS_CC, "There is more data associated with this file than the metadata specifies");
+				return FAILURE;
+			}
       total += apply_copy_func(to, Z_STRVAL_PP(zdata), Z_STRLEN_PP(zdata));
     }
     // MongoBinData
     else if (Z_TYPE_PP(zdata) == IS_OBJECT &&
              Z_OBJCE_PP(zdata) == mongo_ce_BinData) {
       zval *bin = zend_read_property(mongo_ce_BinData, *zdata, "bin", strlen("bin"), NOISY TSRMLS_CC);
+			if (total + Z_STRLEN_P(bin) > max) {
+				zval **n;
+				if (zend_hash_find(HASH_P(next), "n", strlen("n")+1, (void**)&n) == SUCCESS) {
+					convert_to_long_ex(n);
+					zend_throw_exception_ex(mongo_ce_GridFSException, 1 TSRMLS_CC, "There is more data associated with this file than the metadata specifies (reading chunk %d)", Z_LVAL_PP(n));
+				} else {
+					zend_throw_exception_ex(mongo_ce_GridFSException, 1 TSRMLS_CC, "There is more data associated with this file than the metadata specifies");
+				}
+				return FAILURE;
+			}
       total += apply_copy_func(to, Z_STRVAL_P(bin), Z_STRLEN_P(bin));
     }
     // if it's not a string or a MongoBinData, give up
