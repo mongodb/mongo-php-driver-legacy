@@ -93,6 +93,7 @@ static void ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC);
 
 PHP_METHOD(MongoGridFS, __construct) {
   zval *zdb, *files = 0, *chunks = 0, *zchunks;
+  zval *z_w = NULL;
 
   // chunks is deprecated
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|zz", &zdb, mongo_ce_DB, &files, &chunks) == FAILURE) {
@@ -145,6 +146,18 @@ PHP_METHOD(MongoGridFS, __construct) {
   zend_update_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), zchunks TSRMLS_CC);
   zend_update_property(mongo_ce_GridFS, getThis(), "filesName", strlen("filesName"), files TSRMLS_CC);
   zend_update_property(mongo_ce_GridFS, getThis(), "chunksName", strlen("chunksName"), chunks TSRMLS_CC);
+
+	/* GridFS is forced in our codebase to be w=1 so this property doesn't actually mean
+	 * anything, but we can't lie to the user so we have to overwrite it if the MongoDB
+	 * object that created this object was w=0.
+	 * This property is initialized in the MongoCollection (which we extend) ctor */
+	z_w = zend_read_property(mongo_ce_GridFS, getThis(), "w", strlen("w"), NOISY TSRMLS_CC);
+	if (Z_TYPE_P(z_w) != IS_STRING) {
+		convert_to_long(z_w);
+		if (Z_LVAL_P(z_w) < 2) {
+			zend_update_property_long(mongo_ce_GridFS, getThis(), "w", strlen("w"), 1 TSRMLS_CC);
+		}
+	}
 
   // cleanup
   zval_ptr_dtor(&zchunks);
