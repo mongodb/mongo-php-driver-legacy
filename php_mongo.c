@@ -485,3 +485,34 @@ int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_D
 	}
 	return 1;
 }
+
+int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preference, HashTable *tags TSRMLS_DC)
+{
+	if (strcasecmp(read_preference, "primary") == 0) {
+		if (!tags) { /* This prevents the RP to be overwritten to PRIMARY in case tags are set (which is an error) */
+			rp->type = MONGO_RP_PRIMARY;
+		}
+	} else if (strcasecmp(read_preference, "primaryPreferred") == 0) {
+		rp->type = MONGO_RP_PRIMARY_PREFERRED;
+	} else if (strcasecmp(read_preference, "secondary") == 0) {
+		rp->type = MONGO_RP_SECONDARY;
+	} else if (strcasecmp(read_preference, "secondaryPreferred") == 0) {
+		rp->type = MONGO_RP_SECONDARY_PREFERRED;
+	} else if (strcasecmp(read_preference, "nearest") == 0) {
+		rp->type = MONGO_RP_NEAREST;
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value '%s' is not valid as read preference type", read_preference);
+		return 0;
+	}
+	if (tags) {
+		if (strcasecmp(read_preference, "primary") == 0) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't use read preference tags with a read preference of PRIMARY");
+			return 0;
+		}
+
+		if (!php_mongo_use_tagsets(rp, tags TSRMLS_CC)) {
+			return 0;
+		}
+	}
+	return 1;
+}
