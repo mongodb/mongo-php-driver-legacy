@@ -69,6 +69,10 @@ PHP_METHOD(MongoCursor, dead);
 PHP_METHOD(MongoCursor, snapshot);
 PHP_METHOD(MongoCursor, sort);
 PHP_METHOD(MongoCursor, hint);
+
+PHP_METHOD(MongoCursor, getReadPreference);
+PHP_METHOD(MongoCursor, setReadPreference);
+
 PHP_METHOD(MongoCursor, addOption);
 PHP_METHOD(MongoCursor, explain);
 PHP_METHOD(MongoCursor, doQuery);

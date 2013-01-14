@@ -671,6 +671,35 @@ PHP_METHOD(MongoCursor, timeout) {
 }
 /* }}} */
 
+PHP_METHOD(MongoCursor, getReadPreference)
+{
+	mongo_cursor *cursor;
+	PHP_MONGO_GET_CURSOR(getThis());
+
+	array_init(return_value);
+	add_assoc_string(return_value, "type", mongo_read_preference_type_to_name(cursor->read_pref.type), 1);
+	php_mongo_add_tagsets(return_value, &cursor->read_pref);
+}
+
+/* {{{ MongoCursor::setReadPreference(string read_preference [, array tags ])
+ * Sets a read preference to be used for all read queries.*/
+PHP_METHOD(MongoCursor, setReadPreference)
+{
+	char *read_preference;
+	int   read_preference_len;
+	mongo_cursor *cursor;
+	HashTable  *tags = NULL;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|h", &read_preference, &read_preference_len, &tags) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_CURSOR(getThis());
+
+	php_mongo_set_readpreference(&cursor->read_pref, read_preference, tags TSRMLS_CC);
+	RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
 
 /* {{{ MongoCursor::addOption
  */
@@ -1415,6 +1444,10 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_count, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, foundOnly)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, read_preference)
+	ZEND_ARG_ARRAY_INFO(0, tags, 0)
+ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
@@ -1441,6 +1474,10 @@ static zend_function_entry MongoCursor_methods[] = {
   PHP_ME(MongoCursor, immortal, arginfo_immortal, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, awaitData, arginfo_await_data, ZEND_ACC_PUBLIC)
   PHP_ME(MongoCursor, partial, arginfo_partial, ZEND_ACC_PUBLIC)
+
+	/* read preferences */
+	PHP_ME(MongoCursor, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCursor, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
 
   /* query */
   PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)
