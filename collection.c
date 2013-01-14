@@ -373,7 +373,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	 * db.c/MongoDB::command. The Cursor creation should be done through
 	 * an init method otherwise a connection have to be requested twice. */
 	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for getlasterror");
-	php_mongo_connection_force_primary(cursor, link TSRMLS_CC);
+	php_mongo_connection_force_primary(cursor);
 
   cursor->limit = -1;
   cursor->timeout = timeout;
@@ -701,7 +701,6 @@ PHP_METHOD(MongoCollection, find)
 {
   zval *query = 0, *fields = 0;
   mongo_collection *c;
-  mongoclient *link;
   zval temp;
 	mongo_cursor *cursor;
 
@@ -713,11 +712,12 @@ PHP_METHOD(MongoCollection, find)
   MUST_BE_ARRAY_OR_OBJECT(2, fields);
 
   PHP_MONGO_GET_COLLECTION(getThis());
-  PHP_MONGO_GET_LINK(c->link);
 
   object_init_ex(return_value, mongo_ce_Cursor);
 
-	mongo_read_preference_replace(&c->read_pref, &link->servers->read_pref);
+	/* add read preferences to cursor */
+	cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
+	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
 
 	/* TODO: Don't call an internal function like this, but add a new C-level
 	 * function for instantiating cursors */
@@ -730,10 +730,6 @@ PHP_METHOD(MongoCollection, find)
   else {
     MONGO_METHOD4(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query, fields);
   }
-
-	/* add read preferences to cursor */
-	cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
-	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
 }
 
 PHP_METHOD(MongoCollection, findOne) {

@@ -227,6 +227,7 @@ PHP_METHOD(MongoCursor, __construct) {
 	int   ns_len;
   zval **data;
   mongo_cursor *cursor;
+	mongoclient *link;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os|zz", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zquery, &zfields) == FAILURE) {
 		return;
@@ -253,11 +254,6 @@ PHP_METHOD(MongoCursor, __construct) {
   // db connection
   cursor->resource = zlink;
   zval_add_ref(&zlink);
-
-	/* Initialize read_pref to empty */
-	cursor->read_pref.type = MONGO_RP_PRIMARY;
-	cursor->read_pref.tagset_count = 0;
-	cursor->read_pref.tagsets = NULL;
 
   // change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1}
   if (Z_TYPE_P(zfields) == IS_ARRAY) {
@@ -318,6 +314,16 @@ PHP_METHOD(MongoCursor, __construct) {
 
   timeout = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
   cursor->timeout = Z_LVAL_P(timeout);
+
+	/* If the static property "slaveOkay" is set, we need to switch to a
+	 * MONGO_RP_SECONDARY_PREFERRED as well, but only if read preferences
+	 * aren't already set. */
+	if (cursor->read_pref.type == MONGO_RP_PRIMARY) {
+		zval *zslaveokay;
+
+		zslaveokay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
+		cursor->read_pref.type = Z_BVAL_P(zslaveokay) ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
+	}
 
   // get rid of extra ref
   zval_ptr_dtor(&empty);
@@ -450,7 +456,9 @@ PHP_METHOD(MongoCursor, getNext)
  */
 PHP_METHOD(MongoCursor, limit) {
   long l;
-  preiteration_setup;
+	mongo_cursor *cursor;
+
+	PREITERATION_SETUP;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
     return;
@@ -465,7 +473,9 @@ PHP_METHOD(MongoCursor, limit) {
  */
 PHP_METHOD(MongoCursor, batchSize) {
   long l;
-  preiteration_setup;
+	mongo_cursor *cursor;
+
+	PREITERATION_SETUP;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
     return;
@@ -480,7 +490,9 @@ PHP_METHOD(MongoCursor, batchSize) {
  */
 PHP_METHOD(MongoCursor, skip) {
   long l;
-  preiteration_setup;
+	mongo_cursor *cursor;
+
+	PREITERATION_SETUP;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
     return;
@@ -495,7 +507,9 @@ PHP_METHOD(MongoCursor, skip) {
  */
 PHP_METHOD(MongoCursor, fields) {
   zval *z;
-  preiteration_setup;
+	mongo_cursor *cursor;
+
+	PREITERATION_SETUP;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
     return;
@@ -528,8 +542,10 @@ PHP_METHOD(MongoCursor, dead) {
 static inline void set_cursor_flag(INTERNAL_FUNCTION_PARAMETERS, int flag, int mode)
 {
 	zend_bool z = 1;
+	mongo_cursor *cursor;
 
-	preiteration_setup;
+	PREITERATION_SETUP;
+
 	if (mode == -1) {
 		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &z) == FAILURE) {
 			return;
@@ -580,7 +596,33 @@ PHP_METHOD(MongoCursor, tailable)
  */
 PHP_METHOD(MongoCursor, slaveOkay)
 {
-	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_SLAVE_OKAY, -1);
+	mongo_cursor *cursor;
+	zend_bool     slave_okay = 1;
+
+	PREITERATION_SETUP;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &slave_okay) == FAILURE) {
+		return;
+	}
+
+	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, CURSOR_FLAG_SLAVE_OKAY, slave_okay);
+
+	/* slaveOkay implicitly sets read preferences.
+	 *
+	 * With slave_okay being true or absent, the RP is switched to SECONDARY
+	 * PREFERRED but only if the current configured RP is PRIMARY - so that
+	 * other read preferences are not overwritten. As slaveOkay really only
+	 * means "read from any secondary" that does not conflict.
+	 *
+	 * With slave_okay being false, the RP is switched to PRIMARY. Setting it
+	 * to PRIMARY when it already is PRIMARY doesn't hurt. */
+	if (slave_okay) {
+		if (cursor->read_pref.type == MONGO_RP_PRIMARY) {
+			cursor->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
+		}
+	} else {
+		cursor->read_pref.type = MONGO_RP_PRIMARY;
+	}
 }
 /* }}} */
 
@@ -749,11 +791,19 @@ PHP_METHOD(MongoCursor, info)
 
   add_assoc_bool(return_value, "started_iterating", cursor->started_iterating);
   if (cursor->started_iterating) {
+	  char *host;
+	  int   port;
+
     add_assoc_long(return_value, "id", (long)cursor->cursor_id);
     add_assoc_long(return_value, "at", cursor->at);
     add_assoc_long(return_value, "numReturned", cursor->num);
-		/* TODO: Use real host instead of hash */
 		add_assoc_string(return_value, "server", cursor->connection->hash, 1);
+
+		mongo_server_split_hash(cursor->connection->hash, &host, &port, NULL, NULL, NULL, NULL, NULL);
+		add_assoc_string(return_value, "host", host, 1);
+		free(host);
+		add_assoc_long(return_value, "port", port);
+		add_assoc_string(return_value, "connection_type_desc", mongo_connection_type(cursor->connection->connection_type), 1);
   }
 }
 /* }}} */
@@ -872,7 +922,7 @@ void mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
   mongo_cursor *cursor;
   buffer buf;
-  zval *errmsg;
+	zval *errmsg;
 	char *error_message;
 	mongoclient *link;
 	mongo_read_preference rp;
@@ -892,16 +942,6 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 		return FAILURE;
 	}
 
-	/* store the link's read preference to backup, and overwrite with the collection's read preferences */
-	mongo_read_preference_copy(&link->servers->read_pref, &rp);
-	mongo_read_preference_replace(&cursor->read_pref, &link->servers->read_pref);
-
-	/* Sets the wire protocol flag to allow reading from a secondary. The read
-	 * preference spec states: "slaveOk remains as a bit in the wire protocol
-	 * and drivers will set this bit to 1 for all reads except with PRIMARY
-	 * read preference." */
-	cursor->opts = cursor->opts | (link->servers->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0);
-
 	/* If we had a connection we need to remove it from the callback map before
 	 * we assign it another connection
 	 */
@@ -909,13 +949,23 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 		mongo_deregister_callback_from_connection(cursor->connection, cursor);
 	}
 
+	/* Sets the wire protocol flag to allow reading from a secondary. The read
+	 * preference spec states: "slaveOk remains as a bit in the wire protocol
+	 * and drivers will set this bit to 1 for all reads except with PRIMARY
+	 * read preference." */
+	cursor->opts = cursor->opts | (cursor->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0);
+
+	/* store the link's read preference to backup, and overwrite with the cursors's read preferences */
+	mongo_read_preference_copy(&link->servers->read_pref, &rp);
+	mongo_read_preference_replace(&cursor->read_pref, &link->servers->read_pref);
+
 	/* TODO: We have to assume to use a read connection here, but it should
 	 * really be refactored so that we can create a cursor with the correct
 	 * read/write setup already, instead of having to force a new mode later
 	 * (like we do for commands right now through
 	 * php_mongo_connection_force_primary).  See also MongoDB::command and
 	 * append_getlasterror, where this has to be done too. */
-	cursor->connection = mongo_get_read_write_connection_with_callback(link->manager, link->servers, MONGO_CON_FLAG_READ, cursor, mongo_cursor_mark_dead, (char**) &error_message);
+	cursor->connection = mongo_get_read_write_connection_with_callback(link->manager, link->servers, cursor->force_primary ? MONGO_CON_FLAG_WRITE : MONGO_CON_FLAG_READ, cursor, mongo_cursor_mark_dead, (char**) &error_message);
 
 	/* restore read preferences from backup */
 	mongo_read_preference_replace(&rp, &link->servers->read_pref);

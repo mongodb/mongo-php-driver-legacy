@@ -28,7 +28,7 @@ CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (rea
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 278
+CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: added tag dc:west
 CON     FINE: get_server_flags: added tag use:accounting
@@ -40,7 +40,7 @@ CON     FINE: discover_topology: checking ismaster for %s:%d;%s;X;%d
 CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 278
+CON     FINE: send_packet: data_size: %d
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (%s).
 CON     INFO: ismaster: set name: %s, ismaster: 1, secondary: 0, is_arbiter: 0
