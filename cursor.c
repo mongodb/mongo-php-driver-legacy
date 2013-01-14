@@ -315,6 +315,16 @@ PHP_METHOD(MongoCursor, __construct) {
   timeout = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
   cursor->timeout = Z_LVAL_P(timeout);
 
+	/* If the static property "slaveOkay" is set, we need to switch to a
+	 * MONGO_RP_SECONDARY_PREFERRED as well, but only if read preferences
+	 * aren't already set. */
+	if (cursor->read_pref.type == MONGO_RP_PRIMARY) {
+		zval *zslaveokay;
+
+		zslaveokay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
+		cursor->read_pref.type = Z_BVAL_P(zslaveokay) ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
+	}
+
   // get rid of extra ref
   zval_ptr_dtor(&empty);
 }
@@ -937,16 +947,6 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 	 */
 	if (cursor->connection) {
 		mongo_deregister_callback_from_connection(cursor->connection, cursor);
-	}
-
-	/* If the static property "slaveOkay" is set, we need to switch to a
-	 * MONGO_RP_SECONDARY_PREFERRED as well, but only if read preferences
-	 * aren't already set. */
-	if (cursor->read_pref.type == MONGO_RP_PRIMARY) {
-		zval *zslaveokay;
-
-		zslaveokay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
-		cursor->read_pref.type = Z_BVAL_P(zslaveokay) ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 	}
 
 	/* Sets the wire protocol flag to allow reading from a secondary. The read
