@@ -124,11 +124,11 @@ object(MongoDate)#%d (%d) {
 0.08123400 -1000
 object(MongoDate)#%d (%d) {
   ["sec"]=>
-  int(-999)
+  int(-1000)
   ["usec"]=>
-  int(-919000)
+  int(81000)
 }
--0.91900000 -999
+0.08100000 -1000
 
 -1000, 801234
 object(MongoDate)#%d (%d) {
@@ -140,11 +140,11 @@ object(MongoDate)#%d (%d) {
 0.80123400 -1000
 object(MongoDate)#%d (%d) {
   ["sec"]=>
-  int(-999)
+  int(-1000)
   ["usec"]=>
-  int(-199000)
+  int(801000)
 }
--0.19900000 -999
+0.80100000 -1000
 
 -1000, 8001234
 object(MongoDate)#%d (%d) {
@@ -156,11 +156,11 @@ object(MongoDate)#%d (%d) {
 8.00123400 -1000
 object(MongoDate)#%d (%d) {
   ["sec"]=>
-  int(-991)
+  int(-992)
   ["usec"]=>
-  int(-999000)
+  int(1000)
 }
--0.99900000 -991
+0.00100000 -992
 
 -1000, -81234
 object(MongoDate)#%d (%d) {
@@ -172,11 +172,11 @@ object(MongoDate)#%d (%d) {
 -0.08123400 -1000
 object(MongoDate)#%d (%d) {
   ["sec"]=>
-  int(-1000)
+  int(-1001)
   ["usec"]=>
-  int(-81000)
+  int(919000)
 }
--0.08100000 -1000
+0.91900000 -1001
 
 -1000, -801234
 object(MongoDate)#%d (%d) {
@@ -188,11 +188,11 @@ object(MongoDate)#%d (%d) {
 -0.80123400 -1000
 object(MongoDate)#%d (%d) {
   ["sec"]=>
-  int(-1000)
+  int(-1001)
   ["usec"]=>
-  int(-801000)
+  int(199000)
 }
--0.80100000 -1000
+0.19900000 -1001
 
 -1000, -8001234
 object(MongoDate)#%d (%d) {
@@ -204,11 +204,11 @@ object(MongoDate)#%d (%d) {
 -8.00123400 -1000
 object(MongoDate)#%d (%d) {
   ["sec"]=>
-  int(-1008)
+  int(-1009)
   ["usec"]=>
-  int(-1000)
+  int(999000)
 }
--0.00100000 -1008
+0.99900000 -1009
 
 1000, 81234
 object(MongoDate)#%d (%d) {
