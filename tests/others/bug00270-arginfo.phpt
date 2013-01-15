@@ -255,6 +255,10 @@ MongoCursor
     0: wait (optional)
   Method partial expects 1 parameters
     0: okay (optional)
+  Method getReadPreference expects 0 parameters
+  Method setReadPreference expects 2 parameters
+    0: read_preference
+    1: tags (optional)
   Method timeout expects 0 parameters
   Method doQuery expects 0 parameters
   Method info expects 0 parameters
