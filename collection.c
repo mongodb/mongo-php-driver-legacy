@@ -1400,7 +1400,11 @@ PHP_METHOD(MongoCollection, aggregate)
 	add_assoc_zval(data, "aggregate", c->name);
 	zval_add_ref(&c->name);
 
-	if (argc == 1) {
+	/* If the single array argument contains a zeroth index, consider it an
+	 * array of pipeline operators. Otherwise, assume it is a single pipeline
+	 * operator and allow it to be wrapped in an array.
+	 */
+	if (argc == 1 && zend_hash_index_exists(Z_ARRVAL_PP(argv[0]), 0)) {
 		Z_ADDREF_PP(*argv);
 		add_assoc_zval(data, "pipeline", **argv);
 	} else {
