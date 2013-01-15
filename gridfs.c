@@ -1184,7 +1184,8 @@ PHP_METHOD(MongoGridFSFile, write) {
   char *filename = 0;
   int filename_len, total = 0;
   zval *gridfs, *file, *chunks, *query, *cursor, *sort;
-  zval **id;
+	zval **id, **size;
+	int len;
   FILE *fp;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s", &filename, &filename_len) == FAILURE) {
@@ -1193,6 +1194,20 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   gridfs = zend_read_property(mongo_ce_GridFSFile, getThis(), "gridfs", strlen("gridfs"), NOISY TSRMLS_CC);
   file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
+
+	if (zend_hash_find(HASH_P(file), "length", strlen("length")+1, (void**)&size) == FAILURE) {
+		zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size", 0 TSRMLS_CC);
+		return;
+	}
+
+	if (Z_TYPE_PP(size) == IS_DOUBLE) {
+		len = (int)Z_DVAL_PP(size);
+	} else if (Z_TYPE_PP(size) == IS_LONG) {
+		len = Z_LVAL_PP(size);
+	} else if (Z_TYPE_PP(size) == IS_OBJECT && (Z_OBJCE_PP(size) == mongo_ce_Int32 || Z_OBJCE_PP(size) == mongo_ce_Int64)) {
+		zval *sizet = zend_read_property(mongo_ce_Int64, *size, "value", strlen("value"), NOISY TSRMLS_CC);
+		len = atoi(Z_STRVAL_P(sizet));
+	}
 
   // make sure that there's an index on chunks so we can sort by chunk num
   chunks = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
@@ -1231,7 +1246,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   MONGO_METHOD1(MongoCursor, sort, cursor, cursor, sort);
 
-  if ((total = apply_to_cursor(cursor, copy_file, fp, 0 TSRMLS_CC)) == FAILURE) {
+  if ((total = apply_to_cursor(cursor, copy_file, fp, len TSRMLS_CC)) == FAILURE) {
     zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
   }
 
