@@ -420,7 +420,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
   char *bytes = 0;
   int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0,
     pos = 0;
-	int revert = 0, code = 0;
+	int revert = 0;
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;

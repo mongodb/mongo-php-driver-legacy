@@ -227,7 +227,6 @@ PHP_METHOD(MongoCursor, __construct) {
 	int   ns_len;
   zval **data;
   mongo_cursor *cursor;
-	mongoclient *link;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os|zz", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zquery, &zfields) == FAILURE) {
 		return;
@@ -1797,7 +1796,7 @@ static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC) {
 
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC) {
-  php_mongo_obj_new(mongo_cursor);
+	PHP_MONGO_OBJ_NEW(mongo_cursor);
 }
 
 

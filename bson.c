@@ -166,7 +166,7 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
   }
 }
 
-int php_mongo_serialize_element(char *name, zval **data, buffer *buf, int prep TSRMLS_DC) {
+int php_mongo_serialize_element(const char *name, zval **data, buffer *buf, int prep TSRMLS_DC) {
   int name_len = strlen(name);
 
   if (prep && strcmp(name, "_id") == 0) {
@@ -562,7 +562,7 @@ void php_mongo_serialize_double(buffer *buf, double num) {
  * prep == true
  *    we are inserting, so keys can't have .s in them
  */
-void php_mongo_serialize_key(buffer *buf, char *str, int str_len, int prep TSRMLS_DC) {
+void php_mongo_serialize_key(buffer *buf, const char *str, int str_len, int prep TSRMLS_DC) {
   if (str[0] == '\0' && !MonGlo(allow_empty_keys)) {
     zend_throw_exception_ex(mongo_ce_Exception, 1 TSRMLS_CC, "zero-length keys are not allowed, did you use $ with double quotes?");
     return;

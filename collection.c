@@ -1819,7 +1819,7 @@ static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
 /* {{{ php_mongo_collection_new
  */
 zend_object_value php_mongo_collection_new(zend_class_entry *class_type TSRMLS_DC) {
-  php_mongo_obj_new(mongo_collection);
+	PHP_MONGO_OBJ_NEW(mongo_collection);
 }
 /* }}} */
 

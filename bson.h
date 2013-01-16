@@ -51,7 +51,7 @@
 int php_mongo_serialize_size(char *start, buffer *buf TSRMLS_DC);
 
 /* driver */
-int php_mongo_serialize_element(char*, zval**, buffer*, int TSRMLS_DC);
+int php_mongo_serialize_element(const char*, zval**, buffer*, int TSRMLS_DC);
 
 /* objects */
 void php_mongo_serialize_date(buffer*, zval* TSRMLS_DC);
@@ -69,7 +69,7 @@ void php_mongo_serialize_long(buffer*, int64_t);
 void php_mongo_serialize_int(buffer*, int);
 void php_mongo_serialize_byte(buffer*, char);
 void php_mongo_serialize_bytes(buffer*, char*, int);
-void php_mongo_serialize_key(buffer*, char*, int, int TSRMLS_DC);
+void php_mongo_serialize_key(buffer*, const char*, int, int TSRMLS_DC);
 void php_mongo_serialize_ns(buffer*, char* TSRMLS_DC);
 
 int php_mongo_write_insert(buffer*, char*, zval*, int max TSRMLS_DC);
