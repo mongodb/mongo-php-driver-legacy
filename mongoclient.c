@@ -43,7 +43,6 @@
 
 
 static void php_mongoclient_free(void* TSRMLS_DC);
-static void run_err(int, zval*, zval* TSRMLS_DC);
 static void stringify_server(mongo_server_def *server, smart_str *str);
 static int close_connection(mongo_con_manager *manager, mongo_connection *connection);
 
@@ -225,7 +224,6 @@ zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC)
 {
 	zend_object_value retval;
 	mongoclient *intern;
-	zval *tmp;
 
 	intern = (mongoclient*)emalloc(sizeof(mongoclient));
 	memset(intern, 0, sizeof(mongoclient));

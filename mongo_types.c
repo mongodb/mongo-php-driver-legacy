@@ -165,7 +165,6 @@ static void php_mongo_id_free(void *object TSRMLS_DC) {
 static zend_object_value php_mongo_id_new(zend_class_entry *class_type TSRMLS_DC) {
   zend_object_value retval;
   mongo_id *intern;
-  zval *tmp;
 
   intern = (mongo_id*)emalloc(sizeof(mongo_id));
   memset(intern, 0, sizeof(mongo_id));
