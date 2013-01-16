@@ -959,7 +959,7 @@ static void php_mongo_db_free(void *object TSRMLS_DC) {
 /* {{{ mongo_mongo_db_new
  */
 zend_object_value php_mongo_db_new(zend_class_entry *class_type TSRMLS_DC) {
-  php_mongo_obj_new(mongo_db);
+	PHP_MONGO_OBJ_NEW(mongo_db);
 }
 /* }}} */
 
