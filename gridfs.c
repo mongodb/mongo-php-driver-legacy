@@ -433,6 +433,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   ensure_gridfs_index(&temp, chunks TSRMLS_CC);
+  zval_dtor(&temp);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|aa/", &bytes, &bytes_len, &extra, &options) == FAILURE) {
 		return;
@@ -633,6 +634,7 @@ PHP_METHOD(MongoGridFS, storeFile) {
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
   ensure_gridfs_index(&temp, chunks TSRMLS_CC);
+  zval_dtor(&temp);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|aa/", &fh, &extra, &options) == FAILURE) {
 		return;
@@ -886,6 +888,7 @@ PHP_METHOD(MongoGridFS, remove) {
 
   chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
   ensure_gridfs_index(&temp, chunks TSRMLS_CC);
+  zval_dtor(&temp);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|za", &criteria, &options) == FAILURE) {
     return;
@@ -1293,6 +1296,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 
   MAKE_STD_ZVAL(temp);
   ensure_gridfs_index(temp, chunks TSRMLS_CC);
+  zval_dtor(temp);
 
   // query for chunks
   MAKE_STD_ZVAL(query);
@@ -1333,6 +1337,8 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   str_ptr = str;
 
   if (apply_to_cursor(cursor, copy_bytes, &str, len + 1 TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&cursor);
+		efree(str_ptr);
       if (EG(exception)) {
           return;
       }
@@ -1383,6 +1389,7 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
     // got an error message from the db, so return that
     if (zend_hash_find(HASH_P(next), "data", 5, (void**)&zdata) == FAILURE) {
       if(zend_hash_exists(HASH_P(next), "$err", 5)) {
+			zval_ptr_dtor(&next);
         return FAILURE;
       }
       continue;
@@ -1413,12 +1420,14 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
 				} else {
 					zend_throw_exception_ex(mongo_ce_GridFSException, 1 TSRMLS_CC, "There is more data associated with this file than the metadata specifies");
 				}
+				zval_ptr_dtor(&next);
 				return FAILURE;
 			}
       total += apply_copy_func(to, Z_STRVAL_P(bin), Z_STRLEN_P(bin));
     }
     // if it's not a string or a MongoBinData, give up
     else {
+		zval_ptr_dtor(&next);
       return FAILURE;
     }
 
