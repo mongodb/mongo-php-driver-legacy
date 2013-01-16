@@ -243,9 +243,12 @@
 #if ZEND_MODULE_API_NO >= 20100525
 #define init_properties(intern) object_properties_init(&intern->std, class_type)
 #else
-#define init_properties(intern) zend_hash_copy(intern->std.properties, \
+#define init_properties(intern) {                                      \
+	zval *tmp;                                                         \
+	zend_hash_copy(intern->std.properties,                             \
     &class_type->default_properties, (copy_ctor_func_t) zval_add_ref,  \
-    (void *) &tmp, sizeof(zval *))
+    (void *) &tmp, sizeof(zval *));                                    \
+}
 #endif
 
 #define PHP_MONGO_OBJ_NEW(mongo_obj)                    \
