@@ -84,7 +84,7 @@ static int copy_file(void *to, char *from, int len);
 static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC);
 
 static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to, int max TSRMLS_DC);
-static int setup_file(FILE *fpp, char *filename TSRMLS_DC);
+static long setup_file(FILE *fpp, char *filename TSRMLS_DC);
 static int get_chunk_size(zval *array TSRMLS_DC);
 static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC);
 static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
@@ -239,8 +239,8 @@ static int get_chunk_size(zval *array TSRMLS_DC) {
 }
 
 
-static int setup_file(FILE *fp, char *filename TSRMLS_DC) {
-  int size = 0;
+static long setup_file(FILE *fp, char *filename TSRMLS_DC) {
+  long size = 0;
 
   // try to open the file
   if (!fp) {
@@ -620,7 +620,8 @@ static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int
 PHP_METHOD(MongoGridFS, storeFile) {
   zval *fh, *extra = 0, *options = 0;
   char *filename = 0;
-  int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1, safe = 0;
+  int chunk_num = 0, global_chunk_size = 0, fd = -1, safe = 0;
+  long size = 0, pos = 0;
 	int revert = 0;
   FILE *fp = 0;
 
@@ -732,7 +733,8 @@ PHP_METHOD(MongoGridFS, storeFile) {
     buf = (char*)emalloc(chunk_size);
 
     if (fp) {
-      if ((int)fread(buf, 1, chunk_size, fp) < chunk_size) {
+        int retval = (int)fread(buf, 1, chunk_size, fp);
+      if (retval < chunk_size) {
         zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error reading file %s", filename);
 				revert = 1;
 				efree(buf);
