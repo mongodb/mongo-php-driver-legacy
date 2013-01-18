@@ -23,15 +23,13 @@ $result = $c->validate(true);
 var_dump(isset($result['warning']));
 
 $c->drop();
-var_dump($c->validate());;
+$res = $c->validate();
+var_dump($res["ok"], $res["errmsg"]);
 ?>
 --EXPECT--
 bool(true)
 string(79) "Some checks omitted for speed. use {full:true} option to do more thorough scan."
 bool(false)
-array(2) {
-  ["errmsg"]=>
-  string(12) "ns not found"
-  ["ok"]=>
-  float(0)
-}
+float(0)
+string(12) "ns not found"
+

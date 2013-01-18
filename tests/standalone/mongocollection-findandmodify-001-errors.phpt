@@ -48,7 +48,8 @@ try {
     );
 } catch(MongoResultException $e) {
     echo $e->getCode(), " : ", $e->getMessage(), "\n";
-    var_dump($e->getDocument());
+    $res = $e->getDocument();
+    var_dump($res["lastErrorObject"], $res["errmsg"], $res["ok"]);
 }
 
 
@@ -86,31 +87,27 @@ try {
     var_dump($retval);
 } catch(MongoResultException $e) {
     echo $e->getCode(), " : ", $e->getMessage(), "\n";
-    var_dump($e->getDocument());
+    $res = $e->getDocument();
+    var_dump($res["errmsg"], $res["ok"]);
 }
 
 ?>
 --EXPECTF--
 0 : Modified field name may not start with $
-array(3) {
-  ["lastErrorObject"]=>
-  array(5) {
-    ["err"]=>
-    string(40) "Modified field name may not start with $"
-    ["code"]=>
-    int(15896)
-    ["n"]=>
-    int(0)
-    ["connectionId"]=>
-    int(%d)
-    ["ok"]=>
-    float(1)
-  }
-  ["errmsg"]=>
+array(5) {
+  ["err"]=>
   string(40) "Modified field name may not start with $"
+  ["code"]=>
+  int(15896)
+  ["n"]=>
+  int(0)
+  ["connectionId"]=>
+  int(%d)
   ["ok"]=>
-  float(0)
+  float(1)
 }
+string(40) "Modified field name may not start with $"
+float(0)
 13097 : exception: Unsupported projection option: $pop
 array(3) {
   ["errmsg"]=>
@@ -130,9 +127,5 @@ array(3) {
   float(0)
 }
 0 : need remove or update
-array(2) {
-  ["errmsg"]=>
-  string(21) "need remove or update"
-  ["ok"]=>
-  float(0)
-}
+string(21) "need remove or update"
+float(0)
