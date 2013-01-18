@@ -17,11 +17,12 @@ $ip2   = gethostbyname($host2);
 $m = new Mongo("$ip:$port,$ip2:$port2", array("replicaSet" => true));
 $coll = $m->selectCollection("phpunit","bug00266");
 try {
-    print_r($coll->getIndexInfo());
+    $coll->getIndexInfo();
+    echo "I'm alive\n";
 } catch(MongoCursorException $e) {
     var_dump($e->getMessage());
 }
 ?>
 --EXPECT--
-string(25) "couldn't determine master"
+I'm alive
 
