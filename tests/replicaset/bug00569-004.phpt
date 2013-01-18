@@ -24,7 +24,7 @@ $tests = array(
 	0,
 	1,
 	2,
-	3,
+	7,
 	"majority",
 	"allDCs",
 );
@@ -77,7 +77,7 @@ IO      FINE: is_gle_op: no
 - Setting w property to 2:
 IO      FINE: is_gle_op: no
 
-- Setting w property to 3:
+- Setting w property to 7:
 IO      FINE: is_gle_op: no
 
 - Setting w property to majority:
@@ -120,10 +120,10 @@ IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
-- Setting w property to 3:
+- Setting w property to 7:
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
-IO      FINE: append_getlasterror: added w=3
+IO      FINE: append_getlasterror: added w=7
 IO      FINE: append_getlasterror: added wtimeout=1000
 IO      FINE: getting reply
 IO      FINE: getting cursor header
@@ -187,10 +187,10 @@ IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
-- Setting w property to 3:
+- Setting w property to 7:
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
-IO      FINE: append_getlasterror: added w=3
+IO      FINE: append_getlasterror: added w=7
 IO      FINE: append_getlasterror: added wtimeout=1000
 IO      FINE: getting reply
 IO      FINE: getting cursor header
@@ -256,10 +256,10 @@ IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
-- Setting w property to 3:
+- Setting w property to 7:
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
-IO      FINE: append_getlasterror: added w=3
+IO      FINE: append_getlasterror: added w=7
 IO      FINE: append_getlasterror: added wtimeout=1000
 IO      FINE: getting reply
 IO      FINE: getting cursor header
@@ -323,10 +323,10 @@ IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
-- Setting w property to 3:
+- Setting w property to 7:
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
-IO      FINE: append_getlasterror: added w=3
+IO      FINE: append_getlasterror: added w=7
 IO      FINE: append_getlasterror: added wtimeout=1000
 IO      FINE: getting reply
 IO      FINE: getting cursor header
