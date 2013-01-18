@@ -73,7 +73,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=2+ won't work
+%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 Running test 4, with options: {"safe":"majority"}:
 IO      FINE: is_gle_op: yes
@@ -83,7 +83,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=2+ won't work
+%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 Running test 5, with options: {"w":0}:
 IO      FINE: is_gle_op: no
@@ -103,7 +103,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=2+ won't work
+%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 Running test 8, with options: {"w":"majority"}:
 IO      FINE: is_gle_op: yes
@@ -113,7 +113,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=2+ won't work
+%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 Running test 9, with options: {"fsync":0}:
 IO      FINE: is_gle_op: yes

@@ -18,4 +18,4 @@ try {
 }
 ?>
 --EXPECTF--
-%s:%d: norepl: no replication has been enabled, so w=2+ won't work
+%s:%d: norepl: no replication has been enabled, so w=%s won't work
