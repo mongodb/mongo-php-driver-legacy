@@ -19,7 +19,7 @@ PHP mongo driver: 1.3.0dev (16th Apr 2012)
 #Connect to GridFS
 require_once dirname(__FILE__) ."/../utils.inc";
 $db = 'phpunit';
-$m = mongo($db);
+$m = new_mongo($db);
 $prefix = 'test_prefix';
 $GridFS = $m->selectDB($db)->getGridFS($prefix);
 
