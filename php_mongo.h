@@ -684,4 +684,24 @@ extern zend_module_entry mongo_module_entry;
  * MongoGridFSException:
  * 0: 
  * 1: There is more data in the stored file than the meta data shows
+ * 2: Invalid collection prefix (throws Exception, not MongoGridFSException)
+ * 3: Could not open file for reading
+ * 4: Filesize larger then we can handle
+ * 5: Invalid filehandle for a resource
+ * 6: Resource doesn't contain filehandle
+ * 7: Error setting up file for reading
+ * 8: Argument not a file stream or a filename string (throws Exception, not MongoGridFSException)
+ * 9: Error reading file data
+ * 10: Error reading from resource
+ * 11: Can't find uploaded file
+ * 12: tmp_name not found, upload probably failed
+ * 13: tmp_name was not a valid filename
+ * 14: Unable to determin file size
+ * 15: Missing filename
+ * 16: Could not open filename for writing
+ * 17: Could not read chunk
+ * 18: Failed creating file stream
+ * 19: Could not find array key
+ * 20: Chunk larger then chunksize
+ * 21: Unexpected chunk format
  */
