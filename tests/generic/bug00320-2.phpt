@@ -5,7 +5,7 @@ Test for PHP-320: GridFS transaction issues with storeBytes(). (2)
 --FILE--
 <?php
 require_once dirname(__FILE__) ."/../utils.inc";
-$m = mongo("phpunit");
+$m = new_mongo("phpunit");
 	$mdb = $m->selectDB("phpunit");
 	$mdb->dropCollection("fs.files");
 	$mdb->dropCollection("fs.chunks");
@@ -19,10 +19,9 @@ $m = mongo("phpunit");
 	echo "######################################\n";
 	echo "# Saving files to GridFS\n";
 	echo "######################################\n";
-	$options = array( 'safe' => false );
 	for ($i = 0; $i < 3; $i++) {
 		try {
-			$new_saved_file_object_id = $GridFS->storeBytes($temporary_file_data, array( '_id' => "file{$i}", 'filename' => '/tmp/GridFS_test.txt'), $options);
+			$new_saved_file_object_id = $GridFS->storeBytes($temporary_file_data, array( '_id' => "file{$i}", 'filename' => '/tmp/GridFS_test.txt'));
 			echo "[Saved file] New file id:".$new_saved_file_object_id."\n";
 		}
 		catch (MongoException $e) {
@@ -31,7 +30,6 @@ $m = mongo("phpunit");
 		}
 
 	}
-	var_dump( $options );
 
 	echo "\n";
 	echo "######################################\n";
@@ -58,10 +56,6 @@ error message: Could not store file: %s:%d: E11000 duplicate key error index: ph
 error code: 11000
 error message: Could not store file: %s:%d: E11000 duplicate key error index: phpunit.fs.files.$filename_1  dup key: { : "/tmp/GridFS_test.txt" }
 error code: 11000
-array(1) {
-  ["safe"]=>
-  bool(false)
-}
 
 ######################################
 # Current documents in fs.files
