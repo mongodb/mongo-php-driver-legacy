@@ -260,12 +260,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 		zval **w_pp = NULL, **fsync_pp, **timeout_pp;
 
 		/* First we try "w", and if that is not found we check for "safe" */
-		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**) &w_pp) == FAILURE) {
-			zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &w_pp);
-		}
-		/* After that, w_pp is either still NULL, or set to something if one of
-		 * the options was found */
-		if (w_pp) {
+		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**) &w_pp) == SUCCESS) {
 			switch (Z_TYPE_PP(w_pp)) {
 				case IS_STRING:
 					w_str = Z_STRVAL_PP(w_pp);
@@ -275,7 +270,28 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 					w = Z_LVAL_PP(w_pp); /* This is actually "wrong" for bools, but it works */
 					break;
 				default:
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'safe' option either needs to be a boolean or a string");
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'w' option either needs to be a integer or string");
+			}
+		} else if(zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &w_pp) == SUCCESS) {
+			switch (Z_TYPE_PP(w_pp)) {
+				case IS_STRING:
+					w_str = Z_STRVAL_PP(w_pp);
+					break;
+				case IS_LONG:
+					w = Z_LVAL_PP(w_pp);
+					break;
+				case IS_BOOL:
+					if (Z_BVAL_PP(w_pp)) {
+						/* If we already provided Write Concern, do not overwrite it with w=1 */
+						if (!(w > 1 || w_str)) {
+							w = 1;
+						}
+					} else {
+						w = 0;
+					}
+					break;
+				default:
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'safe' option either needs to be a integer or string");
 			}
 		}
 
