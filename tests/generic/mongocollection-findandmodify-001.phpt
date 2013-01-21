@@ -74,7 +74,8 @@ try {
     var_dump($retval);
 } catch(MongoResultException $e) {
     echo $e->getCode(), " ", $e->getMessage(), "\n";
-    var_dump($e->getDocument());
+    $err = $e->getDocument();
+    var_dump($err["errmsg"], $err["ok"]);
 }
 
 ?>
@@ -167,9 +168,5 @@ array(2) {
   }
 }
 0 need remove or update
-array(2) {
-  ["errmsg"]=>
-  string(21) "need remove or update"
-  ["ok"]=>
-  float(0)
-}
+string(21) "need remove or update"
+float(0)
