@@ -1222,7 +1222,16 @@ PHP_METHOD(MongoGridFSFile, write) {
 		len = Z_LVAL_PP(size);
 	} else if (Z_TYPE_PP(size) == IS_OBJECT && (Z_OBJCE_PP(size) == mongo_ce_Int32 || Z_OBJCE_PP(size) == mongo_ce_Int64)) {
 		zval *sizet = zend_read_property(mongo_ce_Int64, *size, "value", strlen("value"), NOISY TSRMLS_CC);
+		if (Z_TYPE_P(sizet) != IS_STRING) {
+			zval_ptr_dtor(&cursor);
+			zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size, value object broken", 0 TSRMLS_CC);
+			return;
+		}
 		len = atoi(Z_STRVAL_P(sizet));
+	} else {
+		zval_ptr_dtor(&cursor);
+		zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size, property invalid", 0 TSRMLS_CC);
+		return;
 	}
 
   // make sure that there's an index on chunks so we can sort by chunk num
@@ -1343,7 +1352,16 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
 		len = Z_LVAL_PP(size);
 	} else if (Z_TYPE_PP(size) == IS_OBJECT && (Z_OBJCE_PP(size) == mongo_ce_Int32 || Z_OBJCE_PP(size) == mongo_ce_Int64)) {
 		zval *sizet = zend_read_property(mongo_ce_Int64, *size, "value", strlen("value"), NOISY TSRMLS_CC);
+		if (Z_TYPE_P(sizet) != IS_STRING) {
+			zval_ptr_dtor(&cursor);
+			zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size, value object broken", 0 TSRMLS_CC);
+			return;
+		}
 		len = atoi(Z_STRVAL_P(sizet));
+	} else {
+		zval_ptr_dtor(&cursor);
+		zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size, property invalid", 0 TSRMLS_CC);
+		return;
 	}
 
   str = (char*)emalloc(len + 1);
