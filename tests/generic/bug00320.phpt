@@ -5,7 +5,7 @@ Test for PHP-320: GridFS transaction issues with storeFile().
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
-$m = mongo("phpunit");
+$m = new_mongo("phpunit");
 	$mdb = $m->selectDB("phpunit");
 	$mdb->dropCollection("fs.files");
 	$mdb->dropCollection("fs.chunks");
@@ -21,7 +21,7 @@ $m = mongo("phpunit");
 	echo "######################################\n";
 	echo "# Saving files to GridFS\n";
 	echo "######################################\n";
-	$options = array( 'safe' => false );
+	$options = array( 'safe' => true );
 	for ($i = 0; $i < 3; $i++) {
 		try {
 			$new_saved_file_object_id = $GridFS->storeFile($temporary_file_name, array( '_id' => "file{$i}"), $options);
@@ -62,7 +62,7 @@ error message: Could not store file: %s:%d: E11000 duplicate key error index: ph
 error code: 11000
 array(1) {
   ["safe"]=>
-  bool(false)
+  bool(true)
 }
 
 ######################################

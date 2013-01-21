@@ -19,4 +19,4 @@ try {
     echo $e->getMessage(), "\n";
 }
 --EXPECTF--
-Could not store file: %s:%d: E11000 duplicate key error index: %s.fs.chunks.$files_id_1_n_1  dup key: { : 1, : 0 }
+Could not store file:%sE11000 duplicate key error index: %s.fs.chunks.$files_id_1_n_1  dup key: { : 1, : 0 }
