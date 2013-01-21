@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-672: Fixed PHP-672: MongoGridFSFile::write() leaks memory
+Test for PHP-672: MongoGridFSFile::write() leaks memory
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc";?>
 --FILE--
