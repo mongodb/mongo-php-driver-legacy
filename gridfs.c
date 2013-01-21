@@ -1199,7 +1199,7 @@ PHP_METHOD(MongoGridFSFile, getSize) {
 PHP_METHOD(MongoGridFSFile, write) {
   char *filename = 0;
   int filename_len, total = 0;
-  zval *gridfs, *file, *chunks, *query, *cursor, *sort;
+  zval *gridfs, *file, *chunks, *query, *cursor, *sort, tmp;
 	zval **id, **size;
 	int len;
   FILE *fp;
@@ -1236,7 +1236,9 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   // make sure that there's an index on chunks so we can sort by chunk num
   chunks = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
-  ensure_gridfs_index(return_value, chunks TSRMLS_CC);
+
+  ensure_gridfs_index(&tmp, chunks TSRMLS_CC);
+  zval_dtor(&tmp);
 
 	if (!filename) {
 		zval **temp;
