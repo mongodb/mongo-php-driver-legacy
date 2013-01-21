@@ -437,7 +437,6 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 
   zval temp;
   zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
-  zval **z_safe;
 	zval *cleanup_ids;
 	zval *chunk_id = NULL;
 
@@ -480,16 +479,6 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 		zval_add_ref(&options);
 	}
 
-	// force safe mode
-	if (zend_hash_find(Z_ARRVAL_P(options), "safe", strlen("safe")+1, (void**)&z_safe) == SUCCESS) {
-		convert_to_long_ex(z_safe);
-		if (Z_LVAL_PP(z_safe) < 1) {
-			add_assoc_long(options, "safe", 1);
-		}
-	} else {
-		add_assoc_long(options, "safe", 1);
-	}
-
   // insert chunks
   while (pos < bytes_len) {
     chunk_size = bytes_len-pos >= global_chunk_size ? global_chunk_size : bytes_len-pos;
@@ -510,6 +499,36 @@ PHP_METHOD(MongoGridFS, storeBytes) {
     pos += chunk_size;
     chunk_num++;
   }
+
+
+	/* Run GLE, just to ensure all the data has been written */
+	{
+		zval *data, *gle_retval;
+		MAKE_STD_ZVAL(data);
+		array_init(data);
+
+		add_assoc_long(data, "getlasterror", 1);
+
+		MAKE_STD_ZVAL(gle_retval);
+		ZVAL_NULL(gle_retval);
+
+		// run command
+		MONGO_CMD(gle_retval, c->parent);
+
+		if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
+			zval **err;
+			if (zend_hash_find(Z_ARRVAL_P(gle_retval), "err", strlen("err")+1, (void**)&err) == SUCCESS && Z_TYPE_PP(err) == IS_STRING) {
+				zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, Z_STRVAL_PP(err));
+				/* Intentionally not returning, the exception is checked a line later */
+			}
+		}
+		zval_ptr_dtor(&data);
+		zval_ptr_dtor(&gle_retval);
+		if (EG(exception)) {
+			revert = 1;
+			goto cleanup_on_failure;
+		}
+	}
 
   // now that we've inserted the chunks, use them to calculate the hash
   add_md5(zfile, zid, c TSRMLS_CC);
@@ -633,13 +652,12 @@ static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int
 PHP_METHOD(MongoGridFS, storeFile) {
   zval *fh, *extra = 0, *options = 0;
   char *filename = 0;
-  int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1, safe = 0;
+  int chunk_num = 0, global_chunk_size = 0, size = 0, pos = 0, fd = -1;
 	int revert = 0;
   FILE *fp = 0;
 
   zval temp;
   zval *zid = 0, *zfile = 0, *chunks = 0;
-  zval **z_safe;
   zval *cleanup_ids;
 
   mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -722,16 +740,6 @@ PHP_METHOD(MongoGridFS, storeFile) {
 		Z_ADDREF_P(options);
 	}
 
-	// force safe mode
-	if (zend_hash_find(Z_ARRVAL_P(options), "safe", strlen("safe")+1, (void**)&z_safe) == SUCCESS) {
-		convert_to_long_ex(z_safe);
-		if (Z_LVAL_PP(z_safe) < 1) {
-			add_assoc_long(options, "safe", 1);
-		}
-	} else {
-		add_assoc_long(options, "safe", 1);
-	}
-
 	MAKE_STD_ZVAL(cleanup_ids);
 	array_init(cleanup_ids);
 
@@ -778,7 +786,36 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
     efree(buf);
 
-		if (safe && EG(exception)) {
+	/* Run GLE, just to ensure all the data has been written */
+	{
+		zval *data, *gle_retval;
+		MAKE_STD_ZVAL(data);
+		array_init(data);
+
+		add_assoc_long(data, "getlasterror", 1);
+
+		MAKE_STD_ZVAL(gle_retval);
+		ZVAL_NULL(gle_retval);
+
+		// run command
+		MONGO_CMD(gle_retval, c->parent);
+
+		if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
+			zval **err;
+			if (zend_hash_find(Z_ARRVAL_P(gle_retval), "err", strlen("err")+1, (void**)&err) == SUCCESS && Z_TYPE_PP(err) == IS_STRING) {
+				zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, Z_STRVAL_PP(err));
+				/* Intentionally not returning, the exception is checked a line later */
+			}
+		}
+		zval_ptr_dtor(&data);
+		zval_ptr_dtor(&gle_retval);
+		if (EG(exception)) {
+			revert = 1;
+			goto cleanup_on_failure;
+		}
+	}
+
+		if (EG(exception)) {
 			revert = 1;
 			goto cleanup_on_failure;
 		}
