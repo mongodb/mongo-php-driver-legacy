@@ -505,6 +505,7 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 	/* Run GLE, just to ensure all the data has been written */
 	{
 		zval *data, *gle_retval;
+
 		MAKE_STD_ZVAL(data);
 		array_init(data);
 
@@ -513,11 +514,12 @@ PHP_METHOD(MongoGridFS, storeBytes) {
 		MAKE_STD_ZVAL(gle_retval);
 		ZVAL_NULL(gle_retval);
 
-		// run command
+		/* run command */
 		MONGO_CMD(gle_retval, c->parent);
 
 		if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
 			zval **err;
+
 			if (zend_hash_find(Z_ARRVAL_P(gle_retval), "err", strlen("err")+1, (void**)&err) == SUCCESS && Z_TYPE_PP(err) == IS_STRING) {
 				zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, Z_STRVAL_PP(err));
 				/* Intentionally not returning, the exception is checked a line later */
@@ -789,34 +791,36 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
     efree(buf);
 
-	/* Run GLE, just to ensure all the data has been written */
-	{
-		zval *data, *gle_retval;
-		MAKE_STD_ZVAL(data);
-		array_init(data);
+		/* Run GLE, just to ensure all the data has been written */
+		{
+			zval *data, *gle_retval;
 
-		add_assoc_long(data, "getlasterror", 1);
+			MAKE_STD_ZVAL(data);
+			array_init(data);
 
-		MAKE_STD_ZVAL(gle_retval);
-		ZVAL_NULL(gle_retval);
+			add_assoc_long(data, "getlasterror", 1);
 
-		// run command
-		MONGO_CMD(gle_retval, c->parent);
+			MAKE_STD_ZVAL(gle_retval);
+			ZVAL_NULL(gle_retval);
 
-		if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
-			zval **err;
-			if (zend_hash_find(Z_ARRVAL_P(gle_retval), "err", strlen("err")+1, (void**)&err) == SUCCESS && Z_TYPE_PP(err) == IS_STRING) {
-				zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, Z_STRVAL_PP(err));
-				/* Intentionally not returning, the exception is checked a line later */
+			/* run command */
+			MONGO_CMD(gle_retval, c->parent);
+
+			if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
+				zval **err;
+
+				if (zend_hash_find(Z_ARRVAL_P(gle_retval), "err", strlen("err")+1, (void**)&err) == SUCCESS && Z_TYPE_PP(err) == IS_STRING) {
+					zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, Z_STRVAL_PP(err));
+					/* Intentionally not returning, the exception is checked a line later */
+				}
+			}
+			zval_ptr_dtor(&data);
+			zval_ptr_dtor(&gle_retval);
+			if (EG(exception)) {
+				revert = 1;
+				goto cleanup_on_failure;
 			}
 		}
-		zval_ptr_dtor(&data);
-		zval_ptr_dtor(&gle_retval);
-		if (EG(exception)) {
-			revert = 1;
-			goto cleanup_on_failure;
-		}
-	}
 
 		if (EG(exception)) {
 			revert = 1;
