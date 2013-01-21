@@ -252,8 +252,9 @@ static int get_chunk_size(zval *array TSRMLS_DC) {
 }
 
 
-static long setup_file(FILE *fp, char *filename TSRMLS_DC) {
-  long size = 0;
+static long setup_file(FILE *fp, char *filename TSRMLS_DC)
+{
+	long size = 0;
 
   // try to open the file
   if (!fp) {
@@ -633,8 +634,8 @@ static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int
 PHP_METHOD(MongoGridFS, storeFile) {
   zval *fh, *extra = 0, *options = 0;
   char *filename = 0;
-  int chunk_num = 0, global_chunk_size = 0, fd = -1, safe = 0;
-  long size = 0, pos = 0;
+	int chunk_num = 0, global_chunk_size = 0, fd = -1, safe = 0;
+	long size = 0, pos = 0;
 	int revert = 0;
   FILE *fp = 0;
 
@@ -746,8 +747,8 @@ PHP_METHOD(MongoGridFS, storeFile) {
     buf = (char*)emalloc(chunk_size);
 
     if (fp) {
-        int retval = (int)fread(buf, 1, chunk_size, fp);
-      if (retval < chunk_size) {
+				int retval = (int)fread(buf, 1, chunk_size, fp);
+				if (retval < chunk_size) {
         zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error reading file %s", filename);
 				revert = 1;
 				efree(buf);
