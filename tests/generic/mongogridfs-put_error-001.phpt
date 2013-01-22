@@ -14,7 +14,8 @@ try {
     $gridfs->put('/does/not/exist');
     var_dump(false);
 } catch (MongoGridFSException $e) {
-    var_dump(true);
+    var_dump($e->getMessage(), $e->getCode());
 }
 --EXPECT--
-bool(true)
+string(38) "error setting up file: /does/not/exist"
+int(7)
