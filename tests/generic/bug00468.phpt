@@ -14,9 +14,10 @@ $file = $grid->get($id);
 try {
     $file->write();
 } catch(MongoGridFSException $e) {
-    var_dump($e->getMessage());
+    var_dump($e->getMessage(), $e->getCode());
 }
 ?>
 --EXPECTF--
 string(20) "Cannot find filename"
+int(15)
 
