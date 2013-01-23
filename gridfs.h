@@ -37,6 +37,5 @@ PHP_METHOD(MongoGridFSFile, getBytes);
 PHP_METHOD(MongoGridFSCursor, __construct);
 PHP_METHOD(MongoGridFSCursor, getNext);
 PHP_METHOD(MongoGridFSCursor, current);
-PHP_METHOD(MongoGridFSCursor, key);
 
 #endif /* MONGO_GRIDFS_H */
