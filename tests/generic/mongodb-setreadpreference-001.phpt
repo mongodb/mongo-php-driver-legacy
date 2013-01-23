@@ -1,24 +1,12 @@
 --TEST--
-MongoDb::setReadPreference [1]
+MongoDB::setReadPreference() should set read preference mode
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
-$host = hostname();
-$port = port();
-$db   = dbname();
 
-$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", $host, $port, $db);
-
-$a = array(
-    'primary',
-    'primaryPreferred',
-    'secondary',
-    'secondaryPreferred',
-    'nearest'
-);
-$b = array(
+$modes = array(
     Mongo::RP_PRIMARY,
     Mongo::RP_PRIMARY_PREFERRED,
     Mongo::RP_SECONDARY,
@@ -26,13 +14,13 @@ $b = array(
     Mongo::RP_NEAREST
 );
 
-foreach ($a as $value) {
-    $c = new mongo($baseString . $value);
-    $m = $c->phpunit;
-    echo $value, "\n\n";
-    foreach ($b as $newRP) {
-        $m->setReadPreference($newRP);
-        $rp = $m->getReadPreference();
+foreach (array_values($modes) as $mode) {
+    $m = new_mongo(null, true, true, array('readPreference' => $mode));
+    $db = $m->phpunit;
+    echo $mode, "\n\n";
+    foreach (array_values($modes) as $newMode) {
+        $db->setReadPreference($newMode);
+        $rp = $db->getReadPreference();
         echo $rp["type"], "\n";
     }
     echo "---\n";

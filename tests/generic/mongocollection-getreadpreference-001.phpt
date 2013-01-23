@@ -1,15 +1,12 @@
 --TEST--
-MongoCollection::getReadPreference [1]
+MongoCollection::getReadPreference() returns read preferences
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
-$host = hostname();
-$port = port();
-$db   = dbname();
 
-$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", $host, $port, $db);
+$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", hostname(), port(), dbname());
 
 $a = array(
     'primary',
@@ -26,10 +23,8 @@ $b = array(
 
 foreach ($a as $value) {
     foreach ($b as $tags) {
-        $m = new mongo($baseString . $value . $tags, array( 'connect' => false ) );
-        $d = $m->phpunit;
-        $c = $d->test;
-        $rp = $c->getReadPreference();
+        $m = new MongoClient($baseString . $value . $tags, array('connect' => false));
+        $rp = $m->phpunit->test->getReadPreference();
         var_dump($rp);
         echo "---\n";
     }

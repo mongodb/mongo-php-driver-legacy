@@ -20,7 +20,7 @@ $a = array(
     array( array() ),
     /* two tag sets */
     array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ) ),
-    /* two tag sets + empty one*/
+    /* two tag sets + empty one */
     array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ), array() ),
 );
 

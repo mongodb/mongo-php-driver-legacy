@@ -1,5 +1,5 @@
 --TEST--
-MongoDB::getReadPreference() returns read preferences
+MongoCursor::getReadPreference() returns read preferences
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
@@ -24,7 +24,7 @@ $b = array(
 foreach ($a as $value) {
     foreach ($b as $tags) {
         $m = new MongoClient($baseString . $value . $tags, array('connect' => false));
-        $rp = $m->phpunit->getReadPreference();
+        $rp = $m->phpunit->test->getReadPreference();
         var_dump($rp);
         echo "---\n";
     }
