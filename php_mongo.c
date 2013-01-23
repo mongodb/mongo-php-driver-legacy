@@ -504,7 +504,7 @@ int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preferenc
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value '%s' is not valid as read preference type", read_preference);
 		return 0;
 	}
-	if (tags) {
+	if (tags && zend_hash_num_elements(tags)) {
 		if (strcasecmp(read_preference, "primary") == 0) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't use read preference tags with a read preference of PRIMARY");
 			return 0;
