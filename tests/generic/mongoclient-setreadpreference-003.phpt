@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::setReadPreference() should allow empty tags parameter for primary mode
+MongoClient::setReadPreference() should allow empty tags parameter for primary mode
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
@@ -7,9 +7,8 @@ MongoCollection::setReadPreference() should allow empty tags parameter for prima
 <?php
 
 $m = new_mongo();
-$c = $m->phpunit->test;
-var_dump($c->setReadPreference(Mongo::RP_PRIMARY, array()));
-var_dump($c->getReadPreference());
+var_dump($m->setReadPreference(Mongo::RP_PRIMARY, array()));
+var_dump($m->getReadPreference());
 ?>
 --EXPECT--
 bool(true)
