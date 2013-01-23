@@ -1,15 +1,11 @@
 --TEST--
-MongoCollection::setReadPreference errors [2]
+MongoCollection::setReadPreference() error setting invalid tag sets
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/../utils.inc"; ?>
+<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
-$host = hostname();
-$port = port();
-$db   = dbname();
 
-$baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
 function myerror($errno, $errstr) {
     var_dump($errno, $errstr);
 }
@@ -27,16 +23,17 @@ $a = array(
 );
 
 foreach ($a as $value) {
-    $m = new mongo($baseString);
-    $d = $m->$db;
-    $c = $d->test;
-    $c->setReadPreference(Mongo::RP_SECONDARY, $value);
+    $m = new_mongo();
+    $c = $m->phpunit->test;
+    $c->setReadPreference(MongoClient::RP_SECONDARY, $value);
     $rp = $c->getReadPreference();
     var_dump($rp);
 
     echo "---\n";
 }
 ?>
+==DONE==
+<?php exit(0); ?>
 --EXPECTF--
 int(4096)
 string(%d) "Argument 2 passed to MongoCollection::setReadPreference() must be %s array, integer given"
@@ -106,3 +103,4 @@ array(1) {
   string(9) "secondary"
 }
 ---
+==DONE==

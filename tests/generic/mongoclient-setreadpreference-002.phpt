@@ -1,15 +1,10 @@
 --TEST--
-Mongo::setReadPreference [2]
+MongoClient::setReadPreference() should set tags
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
-$host = hostname();
-$port = port();
-$db   = dbname();
-
-$baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
 
 $a = array(
     /* no tagsets */
@@ -20,12 +15,12 @@ $a = array(
     array( array() ),
     /* two tag sets */
     array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ) ),
-    /* two tag sets + empty one*/
+    /* two tag sets + empty one */
     array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ), array() ),
 );
 
 foreach ($a as $value) {
-    $m = new mongo($baseString);
+    $m = new_mongo();
     $m->setReadPreference(Mongo::RP_SECONDARY, $value);
     $rp = $m->getReadPreference();
     var_dump($rp);
