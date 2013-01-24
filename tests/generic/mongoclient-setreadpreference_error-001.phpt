@@ -14,10 +14,10 @@ $baseString = sprintf("mongodb://%s:%d/%s?readPreference=primaryPreferred", $hos
 $b = array("blaat", 42, true, 3.14);
 
 foreach ($b as $newRP) {
-	$m = new mongo($baseString);
-	$m->setReadPreference($newRP);
-	$rp = $m->getReadPreference();
-	echo $rp["type"], "\n";
+    $m = new mongo($baseString);
+    $m->setReadPreference($newRP);
+    $rp = $m->getReadPreference();
+    echo $rp["type"], "\n";
 }
 ?>
 --EXPECTF--

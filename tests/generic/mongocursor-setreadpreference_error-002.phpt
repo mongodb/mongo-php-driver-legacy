@@ -16,24 +16,24 @@ set_error_handler("myerror", E_RECOVERABLE_ERROR);
 $baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
 
 $a = array(
-	42,
-	"string",
-	array( 42 ),
-	array( array( 42 ) ),
-	array( array( 'bar' => 'foo', 42 ) ),
-	array( array( 42, 'bar' => 'foo' ) ),
-	array( array( 'bar' => 'foo' ), array( 42 ) ),
-	array( array( 'foo' ), array( 42 ) ),
+    42,
+    "string",
+    array( 42 ),
+    array( array( 42 ) ),
+    array( array( 'bar' => 'foo', 42 ) ),
+    array( array( 42, 'bar' => 'foo' ) ),
+    array( array( 'bar' => 'foo' ), array( 42 ) ),
+    array( array( 'foo' ), array( 42 ) ),
 );
 
 foreach ($a as $value) {
-	$m = new mongo($baseString);
-	$c = $m->$db->readpref->find();
-	$c->setReadPreference(MongoClient::RP_SECONDARY, $value);
-	$rp = $c->getReadPreference();
-	var_dump($rp);
+    $m = new mongo($baseString);
+    $c = $m->$db->readpref->find();
+    $c->setReadPreference(MongoClient::RP_SECONDARY, $value);
+    $rp = $c->getReadPreference();
+    var_dump($rp);
 
-	echo "---\n";
+    echo "---\n";
 }
 ?>
 ==DONE==
