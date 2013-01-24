@@ -12,27 +12,27 @@ $db   = dbname();
 $baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
 
 $a = array(
-	/* no tagsets */
-	array(),
-	/* one tag set */
-	array( array( 'dc' => 'east' ) ),
-	array( array( 'dc' => 'east', 'use' => 'reporting' ) ),
-	array( array() ),
-	/* two tag sets */
-	array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ) ),
-	/* two tag sets + empty one*/
-	array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ), array() ),
+    /* no tagsets */
+    array(),
+    /* one tag set */
+    array( array( 'dc' => 'east' ) ),
+    array( array( 'dc' => 'east', 'use' => 'reporting' ) ),
+    array( array() ),
+    /* two tag sets */
+    array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ) ),
+    /* two tag sets + empty one*/
+    array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ), array() ),
 );
 
 foreach ($a as $value) {
-	$m = new mongo($baseString);
-	$d = $m->phpunit;
-	$c = $d->test->find();
-	$c->setReadPreference(Mongo::RP_SECONDARY, $value);
-	$rp = $c->getReadPreference();
-	var_dump($rp);
+    $m = new mongo($baseString);
+    $d = $m->phpunit;
+    $c = $d->test->find();
+    $c->setReadPreference(Mongo::RP_SECONDARY, $value);
+    $rp = $c->getReadPreference();
+    var_dump($rp);
 
-	echo "---\n";
+    echo "---\n";
 }
 ?>
 --EXPECT--

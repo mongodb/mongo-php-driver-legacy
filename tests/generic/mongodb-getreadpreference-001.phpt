@@ -12,26 +12,26 @@ $db   = dbname();
 $baseString = sprintf("mongodb://%s:%d/%s?readPreference=", $host, $port, $db);
 
 $a = array(
-	'primary',
-	'secondary',
+    'primary',
+    'secondary',
 );
 
 $b = array(
-	'',
-	'&readPreferenceTags=dc:west',
-	'&readPreferenceTags=dc:west,use:reporting',
-	'&readPreferenceTags=',
-	'&readPreferenceTags=dc:west,use:reporting&readPreferenceTags=dc:east',
+    '',
+    '&readPreferenceTags=dc:west',
+    '&readPreferenceTags=dc:west,use:reporting',
+    '&readPreferenceTags=',
+    '&readPreferenceTags=dc:west,use:reporting&readPreferenceTags=dc:east',
 );
 
 foreach ($a as $value) {
-	foreach ($b as $tags) {
-		$m = new mongo($baseString . $value . $tags, array( 'connect' => false ) );
-		$d = $m->phpunit;
-		$rp = $d->getReadPreference();
-		var_dump($rp);
-		echo "---\n";
-	}
+    foreach ($b as $tags) {
+        $m = new mongo($baseString . $value . $tags, array( 'connect' => false ) );
+        $d = $m->phpunit;
+        $rp = $d->getReadPreference();
+        var_dump($rp);
+        echo "---\n";
+    }
 }
 ?>
 --EXPECT--

@@ -12,29 +12,29 @@ $db   = dbname();
 $baseString = sprintf("mongodb://%s:%d/%s?readPreference=", $host, $port, $db);
 
 $a = array(
-	'primary',
-	'primaryPreferred',
-	'secondary',
-	'secondaryPreferred',
-	'nearest'
+    'primary',
+    'primaryPreferred',
+    'secondary',
+    'secondaryPreferred',
+    'nearest'
 );
 $b = array(
-	Mongo::RP_PRIMARY,
-	Mongo::RP_PRIMARY_PREFERRED,
-	Mongo::RP_SECONDARY,
-	Mongo::RP_SECONDARY_PREFERRED,
-	Mongo::RP_NEAREST
+    Mongo::RP_PRIMARY,
+    Mongo::RP_PRIMARY_PREFERRED,
+    Mongo::RP_SECONDARY,
+    Mongo::RP_SECONDARY_PREFERRED,
+    Mongo::RP_NEAREST
 );
 
 foreach ($a as $value) {
-	$m = new mongo($baseString . $value);
-	echo $value, "\n\n";
-	foreach ($b as $newRP) {
-		$m->setReadPreference($newRP);
-		$rp = $m->getReadPreference();
-		echo $rp["type"], "\n";
-	}
-	echo "---\n";
+    $m = new mongo($baseString . $value);
+    echo $value, "\n\n";
+    foreach ($b as $newRP) {
+        $m->setReadPreference($newRP);
+        $rp = $m->getReadPreference();
+        echo $rp["type"], "\n";
+    }
+    echo "---\n";
 }
 ?>
 --EXPECT--
