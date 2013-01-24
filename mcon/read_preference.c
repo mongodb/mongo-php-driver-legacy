@@ -566,6 +566,7 @@ void mongo_read_preference_dtor(mongo_read_preference *rp)
 	for (i = 0; i < rp->tagset_count; i++) {
 		mongo_read_preference_tagset_dtor(rp->tagsets[i]);
 	}
+	rp->tagset_count = 0;
 	free(rp->tagsets);
 	/* We are not freeing *rp itself, as that's not always a pointer */
 }
