@@ -457,26 +457,34 @@ void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
   add_assoc_zval_ex(return_value, "tagsets", sizeof("tagsets"), tagsets);
 }
 
-int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC)
+/* Applies an array of tagsets to the read preference. This function clears the
+ * read preference before adding tagsets. If an error is encountered adding a
+ * tagset, the read preference will again be cleared to avoid being left in an
+ * inconsistent state.
+ */
+static int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC)
 {
 	zval **tagset;
 	int    item_count = 1;
 	mongo_read_preference_tagset *tagset_tmp;
 
-	/* Empty out what we had - this means that if it fails, the read preference
-	 * tagsets are gone though */
+	/* Clear existing tagsets */
 	mongo_read_preference_dtor(rp);
 
 	zend_hash_internal_pointer_reset(tagsets);
 	while (zend_hash_get_current_data(tagsets, (void **)&tagset) == SUCCESS) {
 		if (Z_TYPE_PP(tagset) != IS_ARRAY) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tagset %d needs to contain an array of 0 or more tags", item_count);
+			/* Clear any added tagsets to avoid an inconsistent state */
+			mongo_read_preference_dtor(rp);
 			return 0;
 		} else {
 			tagset_tmp = get_tagset_from_array(item_count, *tagset TSRMLS_CC);
 			if (tagset_tmp) {
 				mongo_read_preference_add_tagset(rp, tagset_tmp);
 			} else {
+				/* Clear any added tagsets to avoid an inconsistent state */
+				mongo_read_preference_dtor(rp);
 				return 0;
 			}
 		}
@@ -486,33 +494,43 @@ int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_D
 	return 1;
 }
 
+/* Sets read preference mode and tagsets. If an error is encountered, the read
+ * preference will not be changed.
+ */
 int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preference, HashTable *tags TSRMLS_DC)
 {
+	mongo_read_preference tmp_rp;
+
 	if (strcasecmp(read_preference, "primary") == 0) {
-		if (!tags) { /* This prevents the RP to be overwritten to PRIMARY in case tags are set (which is an error) */
-			rp->type = MONGO_RP_PRIMARY;
+		if (tags && zend_hash_num_elements(tags)) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't use read preference tags with a read preference of PRIMARY");
+			return 0;
 		}
+		tmp_rp.type = MONGO_RP_PRIMARY;
 	} else if (strcasecmp(read_preference, "primaryPreferred") == 0) {
-		rp->type = MONGO_RP_PRIMARY_PREFERRED;
+		tmp_rp.type = MONGO_RP_PRIMARY_PREFERRED;
 	} else if (strcasecmp(read_preference, "secondary") == 0) {
-		rp->type = MONGO_RP_SECONDARY;
+		tmp_rp.type = MONGO_RP_SECONDARY;
 	} else if (strcasecmp(read_preference, "secondaryPreferred") == 0) {
-		rp->type = MONGO_RP_SECONDARY_PREFERRED;
+		tmp_rp.type = MONGO_RP_SECONDARY_PREFERRED;
 	} else if (strcasecmp(read_preference, "nearest") == 0) {
-		rp->type = MONGO_RP_NEAREST;
+		tmp_rp.type = MONGO_RP_NEAREST;
 	} else {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value '%s' is not valid as read preference type", read_preference);
 		return 0;
 	}
-	if (tags && zend_hash_num_elements(tags)) {
-		if (strcasecmp(read_preference, "primary") == 0) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "You can't use read preference tags with a read preference of PRIMARY");
-			return 0;
-		}
 
-		if (!php_mongo_use_tagsets(rp, tags TSRMLS_CC)) {
+	tmp_rp.tagsets = NULL;
+	tmp_rp.tagset_count = 0;
+
+	if (tags && zend_hash_num_elements(tags)) {
+		if (!php_mongo_use_tagsets(&tmp_rp, tags TSRMLS_CC)) {
 			return 0;
 		}
 	}
+
+	mongo_read_preference_replace(&tmp_rp, rp);
+	mongo_read_preference_dtor(&tmp_rp);
+
 	return 1;
 }

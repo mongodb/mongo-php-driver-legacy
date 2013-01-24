@@ -57,50 +57,42 @@ array(1) {
 Warning: MongoCursor::setReadPreference(): Tagset 1 needs to contain an array of 0 or more tags in %s on line %d
 array(1) {
   ["type"]=>
-  string(9) "secondary"
+  string(7) "primary"
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %s on line %d
 array(1) {
   ["type"]=>
-  string(9) "secondary"
+  string(7) "primary"
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tag 2 in tagset 1 needs to contain a string in %s on line %d
 array(1) {
   ["type"]=>
-  string(9) "secondary"
+  string(7) "primary"
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %s on line %d
 array(1) {
   ["type"]=>
-  string(9) "secondary"
+  string(7) "primary"
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tag 1 in tagset 2 needs to contain a string in %s on line %d
-array(2) {
+array(1) {
   ["type"]=>
-  string(9) "secondary"
-  ["tagsets"]=>
-  array(1) {
-    [0]=>
-    array(1) {
-      ["bar"]=>
-      string(3) "foo"
-    }
-  }
+  string(7) "primary"
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tag 1 in tagset 1 has no string key in %s on line %d
 array(1) {
   ["type"]=>
-  string(9) "secondary"
+  string(7) "primary"
 }
 ---
 ==DONE==
