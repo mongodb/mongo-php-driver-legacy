@@ -564,7 +564,6 @@ void mongo_init_MongoInt64(TSRMLS_D);
 /* Shared helper functions */
 zval *php_mongo_make_tagsets(mongo_read_preference *rp);
 void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp);
-int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC);
 int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preference, HashTable *tags TSRMLS_DC);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
