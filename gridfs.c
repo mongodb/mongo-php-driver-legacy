@@ -1582,37 +1582,10 @@ PHP_METHOD(MongoGridFSCursor, current) {
 	zval_ptr_dtor(&flags);
 }
 
-PHP_METHOD(MongoGridFSCursor, key)
-{
-	zval **id;
-	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->resource, MongoGridFSCursor);
-
-	if (!cursor->current) {
-		RETURN_NULL();
-	}
-	if (zend_hash_find(HASH_P(cursor->current), "_id", strlen("_id")+1, (void**)&id) == SUCCESS) {
-		if (Z_TYPE_PP(id) == IS_OBJECT) {
-#if ZEND_MODULE_API_NO >= 20060613
-			zend_std_cast_object_tostring(*id, return_value, IS_STRING TSRMLS_CC);
-#else
-			zend_std_cast_object_tostring(*id, return_value, IS_STRING, 0 TSRMLS_CC);
-#endif /* ZEND_MODULE_API_NO >= 20060613 */
-		} else {
-			RETVAL_ZVAL(*id, 1, 0);
-			convert_to_string(return_value);
-		}
-	} else {
-		RETURN_LONG(cursor->at - 1);
-	}
-}
-
-
 static zend_function_entry MongoGridFSCursor_methods[] = {
   PHP_ME(MongoGridFSCursor, __construct, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSCursor, getNext, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(MongoGridFSCursor, current, NULL, ZEND_ACC_PUBLIC)
-  PHP_ME(MongoGridFSCursor, key, NULL, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
 
