@@ -230,6 +230,11 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	convert_to_long(timeout_p);
 	timeout = Z_LVAL_P(timeout_p);
 
+	/* Overwrite the timeout if MongoCursor::$timeout and we passed in a socketTimeoutMS in the connection string */
+	if (timeout == PHP_MONGO_DEFAULT_SOCKET_TIMEOUT && link->servers->options.socketTimeoutMS > 0) {
+		timeout = link->servers->options.socketTimeoutMS;
+	}
+
 	/* Read the default_* properties from the link */
 	if (link->servers->options.default_w != -1) {
 		w = link->servers->options.default_w;
@@ -1856,7 +1861,7 @@ void mongo_init_MongoCollection(TSRMLS_D) {
   zend_declare_class_constant_long(mongo_ce_Collection, "DESCENDING", strlen("DESCENDING"), -1 TSRMLS_CC);
 
   zend_declare_property_long(mongo_ce_Collection, "w", strlen("w"), 1, ZEND_ACC_PUBLIC TSRMLS_CC);
-  zend_declare_property_long(mongo_ce_Collection, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_TIMEOUT, ZEND_ACC_PUBLIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Collection, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_WTIMEOUT, ZEND_ACC_PUBLIC TSRMLS_CC);
 }
 
 void mongo_init_MongoResultException(TSRMLS_D)

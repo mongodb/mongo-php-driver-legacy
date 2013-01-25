@@ -40,6 +40,7 @@ mongo_servers* mongo_parse_init(void)
 	servers->options.con_type = MONGO_CON_TYPE_STANDALONE;
 
 	servers->options.connectTimeoutMS = 0;
+	servers->options.socketTimeoutMS = -1;
 	servers->options.default_w = -1;
 	servers->options.default_wstring = NULL;
 	servers->options.default_wtimeout = -1;
@@ -449,6 +450,12 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		}
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'connectTimeoutMS': %d", value);
 		servers->options.connectTimeoutMS = value;
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "socketTimeoutMS") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'socketTimeoutMS': %d", atoi(option_value));
+		servers->options.socketTimeoutMS = atoi(option_value);
 		return 0;
 	}
 
