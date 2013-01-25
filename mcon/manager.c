@@ -48,7 +48,7 @@ static int authenticate_connection(mongo_con_manager *manager, mongo_connection 
 	return retval;
 }
 
-static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, int connection_flags, char **error_message)
+static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, mongo_server_opts *options, int connection_flags, char **error_message)
 {
 	char *hash;
 	mongo_connection *con = NULL;
@@ -56,7 +56,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	hash = mongo_server_create_hash(server);
 	con = mongo_manager_connection_find_by_hash(manager, hash);
 	if (!con && !(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
-		con = mongo_connection_create(manager, server, error_message);
+		con = mongo_connection_create(manager, server, options, error_message);
 		if (con) {
 			/* Store hash */
 			con->hash = strdup(hash);
@@ -165,7 +165,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					tmp_hash = mongo_server_create_hash(tmp_def);
 					if (!mongo_manager_connection_find_by_hash(manager, tmp_hash)) {
 						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
-						new_con = mongo_get_connection_single(manager, tmp_def, MONGO_CON_FLAG_WRITE, (char **) &con_error_message);
+						new_con = mongo_get_connection_single(manager, tmp_def, &servers->options, MONGO_CON_FLAG_WRITE, (char **) &con_error_message);
 						if (new_con) {
 							servers->server[servers->count] = tmp_def;
 							servers->count++;
@@ -208,7 +208,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
-		tmp = mongo_get_connection_single(manager, servers->server[i], connection_flags, (char **) &con_error_message);
+		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
 		if (tmp) {
 			found_connected_server = 1;
@@ -269,7 +269,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
-		tmp = mongo_get_connection_single(manager, servers->server[i], connection_flags, (char **) &con_error_message);
+		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
 		if (tmp) {
 			found_connected_server = 1;
