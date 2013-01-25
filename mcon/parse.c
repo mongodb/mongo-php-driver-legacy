@@ -471,6 +471,18 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 	if (strcasecmp(option_name, "wTimeout") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'wTimeout': %d", atoi(option_value));
+		if (servers->options.default_wtimeout != -1) {
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Overwriting previously set value for 'wTimeoutMS' (%d)", servers->options.default_wtimeout);
+		}
+		servers->options.default_wtimeout = atoi(option_value);
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "wTimeoutMS") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'wTimeoutMS': %d", atoi(option_value));
+		if (servers->options.default_wtimeout != -1) {
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Overwriting previously set value for 'wTimeoutMS' (%d)", servers->options.default_wtimeout);
+		}
 		servers->options.default_wtimeout = atoi(option_value);
 		return 0;
 	}
