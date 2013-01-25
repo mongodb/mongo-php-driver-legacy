@@ -3,7 +3,7 @@
 function m(&$dsn, &$port, &$db, &$opts = array()) {
     $dsn  = "";
     $port = "27017";
-    $opts = array();
+    $opts = $opts ? $opts : array();
 
     $type = $_ENV["MONGO_SERVER"];
 
@@ -191,7 +191,7 @@ function logCallback($module, $level, $message)
     }
 }
 
-function printLogs($module, $level, $containing = null)
+function printLogs($module = MongoLog::ALL, $level = MongoLog::ALL, $containing = null)
 {
     global $_LOG_CALLBACK_REGEX;
 
