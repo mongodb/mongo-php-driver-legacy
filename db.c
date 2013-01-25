@@ -89,13 +89,13 @@ PHP_METHOD(MongoDB, __construct) {
 
   PHP_MONGO_GET_LINK(zlink);
 
-	if (link->servers->default_w != -1) {
-		zend_update_property_long(mongo_ce_DB, getThis(), "w", strlen("w"), link->servers->default_w TSRMLS_CC);
-	} else if (link->servers->default_wstring != NULL) {
-		zend_update_property_string(mongo_ce_DB, getThis(), "w", strlen("w"), link->servers->default_wstring TSRMLS_CC);
+	if (link->servers->options.default_w != -1) {
+		zend_update_property_long(mongo_ce_DB, getThis(), "w", strlen("w"), link->servers->options.default_w TSRMLS_CC);
+	} else if (link->servers->options.default_wstring != NULL) {
+		zend_update_property_string(mongo_ce_DB, getThis(), "w", strlen("w"), link->servers->options.default_wstring TSRMLS_CC);
 	}
-	if (link->servers->default_wtimeout != -1) {
-		zend_update_property_long(mongo_ce_DB, getThis(), "wtimeout", strlen("wtimeout"), link->servers->default_wtimeout TSRMLS_CC);
+	if (link->servers->options.default_wtimeout != -1) {
+		zend_update_property_long(mongo_ce_DB, getThis(), "wtimeout", strlen("wtimeout"), link->servers->options.default_wtimeout TSRMLS_CC);
 	}
 	mongo_read_preference_copy(&link->servers->read_pref, &db->read_pref);
 

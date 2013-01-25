@@ -100,7 +100,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	char *hash;
 	mongo_connection *con;
 	char *error_message;
-	char *repl_set_name = servers->repl_set_name ? strdup(servers->repl_set_name) : NULL;
+	char *repl_set_name = servers->options.repl_set_name ? strdup(servers->options.repl_set_name) : NULL;
 	int nr_hosts;
 	char **found_hosts = NULL;
 	char *tmp_hash;
@@ -137,8 +137,8 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 				/* Update the replica set name in the parsed "servers" struct
 				 * so that we can consistently compare it to the information
 				 * that is stored in the connection hashes. */
-				if (!servers->repl_set_name && repl_set_name) {
-					servers->repl_set_name = strdup(repl_set_name);
+				if (!servers->options.repl_set_name && repl_set_name) {
+					servers->options.repl_set_name = strdup(repl_set_name);
 				}
 
 				/* Now loop over all the hosts that were found */
@@ -349,7 +349,7 @@ int mongo_deregister_callback_from_connection(mongo_connection *connection, void
 mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
 	/* Which connection we return depends on the type of connection we want */
-	switch (servers->con_type) {
+	switch (servers->options.con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_get_read_write_connection: finding a STANDALONE connection");
 			return mongo_get_connection_multiple(manager, servers, connection_flags, error_message);
@@ -367,7 +367,7 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 			return mongo_get_connection_multiple(manager, servers, connection_flags, error_message);
 
 		default:
-			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "mongo_get_read_write_connection: connection type %d is not supported", servers->con_type);
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "mongo_get_read_write_connection: connection type %d is not supported", servers->options.con_type);
 			*error_message = strdup("mongo_get_read_write_connection: Unknown connection type requested");
 	}
 	return NULL;
