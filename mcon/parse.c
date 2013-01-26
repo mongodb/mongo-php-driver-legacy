@@ -36,12 +36,12 @@ mongo_servers* mongo_parse_init(void)
 	servers = malloc(sizeof(mongo_servers));
 	memset(servers, 0, sizeof(mongo_servers));
 	servers->count = 0;
-	servers->repl_set_name = NULL;
-	servers->con_type = MONGO_CON_TYPE_STANDALONE;
+	servers->options.repl_set_name = NULL;
+	servers->options.con_type = MONGO_CON_TYPE_STANDALONE;
 
-	servers->default_w = -1;
-	servers->default_wstring = NULL;
-	servers->default_wtimeout = -1;
+	servers->options.default_w = -1;
+	servers->options.default_wstring = NULL;
+	servers->options.default_wtimeout = -1;
 
 	return servers;
 }
@@ -151,10 +151,10 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 	/* Set the default connection type, we might change this if we encounter
 	 * the replicaSet option later */
 	if (servers->count == 1) {
-		servers->con_type = MONGO_CON_TYPE_STANDALONE;
+		servers->options.con_type = MONGO_CON_TYPE_STANDALONE;
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: STANDALONE");
 	} else {
-		servers->con_type = MONGO_CON_TYPE_MULTIPLE;
+		servers->options.con_type = MONGO_CON_TYPE_MULTIPLE;
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Connection type: MULTIPLE");
 	}
 
@@ -319,10 +319,10 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	int i;
 
 	if (strcasecmp(option_name, "replicaSet") == 0) {
-		if (servers->repl_set_name) {
+		if (servers->options.repl_set_name) {
 			/* Free the already existing one */
-			free(servers->repl_set_name);
-			servers->repl_set_name = NULL; /* We reset it as not all options set a string as replset name */
+			free(servers->options.repl_set_name);
+			servers->options.repl_set_name = NULL; /* We reset it as not all options set a string as replset name */
 		}
 
 		if (option_value && *option_value) {
@@ -330,7 +330,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			 * as "true" has a special meaning. It does not mean that the
 			 * replicaSet name is "1". */
 			if (strcmp(option_value, "1") != 0) {
-				servers->repl_set_name = strdup(option_value);
+				servers->options.repl_set_name = strdup(option_value);
 				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': '%s'", option_value);
 
 				/* Associate the given replica set name with all the server definitions from the seed */
@@ -343,7 +343,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			} else {
 				mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Found option 'replicaSet': true - Expected the name of the replica set");
 			}
-			servers->con_type = MONGO_CON_TYPE_REPLSET;
+			servers->options.con_type = MONGO_CON_TYPE_REPLSET;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Switching connection type: REPLSET");
 		}
 		return 0;
@@ -431,30 +431,30 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 	if (strcasecmp(option_name, "timeout") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'timeout': %d", atoi(option_value));
-		servers->connectTimeoutMS = atoi(option_value);
+		servers->options.connectTimeoutMS = atoi(option_value);
 		return 0;
 	}
 
 	if (strcasecmp(option_name, "w") == 0) {
 		/* Rough check to see whether this is a numeric string or not */
 		if ((option_value[0] >= '0' && option_value[0] <= '9') || option_value[0] == '-') {
-			servers->default_w = atoi(option_value);
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': %d", servers->default_w);
-			if (servers->default_w < 0) {
+			servers->options.default_w = atoi(option_value);
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': %d", servers->options.default_w);
+			if (servers->options.default_w < 0) {
 				*error_message = strdup("The value of 'w' needs to be 0 or higher (or a string).");
 				return 3;
 			}
 		} else {
-			servers->default_w = 1;
-			servers->default_wstring = strdup(option_value);
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': '%s'", servers->default_wstring);
+			servers->options.default_w = 1;
+			servers->options.default_wstring = strdup(option_value);
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': '%s'", servers->options.default_wstring);
 		}
 		return 0;
 	}
 
 	if (strcasecmp(option_name, "wTimeout") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'wTimeout': %d", atoi(option_value));
-		servers->default_wtimeout = atoi(option_value);
+		servers->options.default_wtimeout = atoi(option_value);
 		return 0;
 	}
 
@@ -512,7 +512,7 @@ void mongo_servers_dump(mongo_con_manager *manager, mongo_servers *servers)
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "");
 
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "Options:");
-	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- repl_set_name: %s", servers->repl_set_name);
+	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- repl_set_name: %s", servers->options.repl_set_name);
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- readPreference: %s", mongo_read_preference_type_to_name(servers->read_pref.type));
 	for (i = 0; i < servers->read_pref.tagset_count; i++) {
 		char *tmp = mongo_read_preference_squash_tagset(servers->read_pref.tagsets[i]);
@@ -557,18 +557,18 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 		mongo_server_def_copy(to->server[i], from->server[i], flags);
 	}
 
-	to->con_type = from->con_type;
+	to->options.con_type = from->options.con_type;
 
-	if (from->repl_set_name) {
-		to->repl_set_name = strdup(from->repl_set_name);
+	if (from->options.repl_set_name) {
+		to->options.repl_set_name = strdup(from->options.repl_set_name);
 	}
 
-	to->connectTimeoutMS = from->connectTimeoutMS;
+	to->options.connectTimeoutMS = from->options.connectTimeoutMS;
 
-	to->default_w = from->default_w;
-	to->default_wtimeout = from->default_wtimeout;
-	if (from->default_wstring) {
-		to->default_wstring = strdup(from->default_wstring);
+	to->options.default_w = from->options.default_w;
+	to->options.default_wtimeout = from->options.default_wtimeout;
+	if (from->options.default_wstring) {
+		to->options.default_wstring = strdup(from->options.default_wstring);
 	}
 
 	mongo_read_preference_copy(&from->read_pref, &to->read_pref);
@@ -602,11 +602,11 @@ void mongo_servers_dtor(mongo_servers *servers)
 	for (i = 0; i < servers->count; i++) {
 		mongo_server_def_dtor(servers->server[i]);
 	}
-	if (servers->repl_set_name) {
-		free(servers->repl_set_name);
+	if (servers->options.repl_set_name) {
+		free(servers->options.repl_set_name);
 	}
-	if (servers->default_wstring) {
-		free(servers->default_wstring);
+	if (servers->options.default_wstring) {
+		free(servers->options.default_wstring);
 	}
 	for (i = 0; i < servers->read_pref.tagset_count; i++) {
 		mongo_read_preference_tagset_dtor(servers->read_pref.tagsets[i]);

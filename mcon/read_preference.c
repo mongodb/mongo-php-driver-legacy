@@ -213,7 +213,7 @@ static mcon_collection *mongo_filter_candidates_by_replicaset_name(mongo_con_man
 		 * [ replicaset => true ], although it would not support one PHP worker
 		 * process connecting to multiple replicasets correctly. */
 		if (candidate_replsetname) {
-			if (!servers->repl_set_name || strcmp(candidate_replsetname, servers->repl_set_name) == 0) {
+			if (!servers->options.repl_set_name || strcmp(candidate_replsetname, servers->options.repl_set_name) == 0) {
 				mongo_print_connection_info(manager, (mongo_connection *) candidates->data[i], MLOG_FINE);
 				mcon_collection_add(filtered, (mongo_connection *) candidates->data[i]);
 			}
@@ -307,7 +307,7 @@ mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "finding candidate servers");
 	all = mongo_find_all_candidate_servers(manager, rp);
 
-	if (servers->con_type == MONGO_CON_TYPE_REPLSET) {
+	if (servers->options.con_type == MONGO_CON_TYPE_REPLSET) {
 		filtered = mongo_filter_candidates_by_replicaset_name(manager, all, servers);
 	} else {
 		filtered = mongo_filter_candidates_by_seed(manager, all, servers);

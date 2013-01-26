@@ -231,11 +231,11 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	timeout = Z_LVAL_P(timeout_p);
 
 	/* Read the default_* properties from the link */
-	if (link->servers->default_w != -1) {
-		w = link->servers->default_w;
+	if (link->servers->options.default_w != -1) {
+		w = link->servers->options.default_w;
 	}
-	if (link->servers->default_wstring != NULL) {
-		w_str = link->servers->default_wstring;
+	if (link->servers->options.default_wstring != NULL) {
+		w_str = link->servers->options.default_wstring;
 	}
 
 	/* This picks up the default "w" through the properties of MongoCollection
@@ -434,7 +434,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 		return 0;
 	}
 
-	if (is_gle_op(options, link->servers->default_w TSRMLS_CC)) {
+	if (is_gle_op(options, link->servers->options.default_w TSRMLS_CC)) {
 		zval *cursor = append_getlasterror(getThis(), buf, options TSRMLS_CC);
 		if (cursor) {
 			do_safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
