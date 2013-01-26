@@ -230,6 +230,11 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	convert_to_long(timeout_p);
 	timeout = Z_LVAL_P(timeout_p);
 
+	/* Overwrite the timeout if MongoCursor::$timeout and we passed in a socketTimeoutMS in the connection string */
+	if (timeout == PHP_MONGO_DEFAULT_SOCKET_TIMEOUT && link->servers->options.socketTimeoutMS > 0) {
+		timeout = link->servers->options.socketTimeoutMS;
+	}
+
 	/* Read the default_* properties from the link */
 	if (link->servers->options.default_w != -1) {
 		w = link->servers->options.default_w;
@@ -326,7 +331,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 
 	/* if we have either a string, or w > 1, then we need to add "w" and perhaps "wtimeout" to GLE */
 	if (w_str || w > 1) {
-		zval *wtimeout;
+		zval *wtimeout, **wtimeout_pp;
 
 		if (w_str) {
 			add_assoc_string(cmd, "w", w_str, 1);
@@ -336,10 +341,16 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added w=%d", w);
 		}
 
-		wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
-		convert_to_long(wtimeout);
-		add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
-		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d", Z_LVAL_P(wtimeout));
+		if (zend_hash_find(HASH_P(options), "wtimeout", strlen("wtimeout")+1, (void **)&wtimeout_pp) == SUCCESS) {
+			convert_to_long(*wtimeout_pp);
+			add_assoc_long(cmd, "wtimeout", Z_LVAL_PP(wtimeout_pp));
+			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d from options", Z_LVAL_PP(wtimeout_pp));
+		} else {
+			wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
+			convert_to_long(wtimeout);
+			add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
+			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d from MongoCollection property", Z_LVAL_P(wtimeout));
+		}
 	}
 
 	if (fsync) {
@@ -1850,7 +1861,7 @@ void mongo_init_MongoCollection(TSRMLS_D) {
   zend_declare_class_constant_long(mongo_ce_Collection, "DESCENDING", strlen("DESCENDING"), -1 TSRMLS_CC);
 
   zend_declare_property_long(mongo_ce_Collection, "w", strlen("w"), 1, ZEND_ACC_PUBLIC TSRMLS_CC);
-  zend_declare_property_long(mongo_ce_Collection, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_TIMEOUT, ZEND_ACC_PUBLIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Collection, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_WTIMEOUT, ZEND_ACC_PUBLIC TSRMLS_CC);
 }
 
 void mongo_init_MongoResultException(TSRMLS_D)

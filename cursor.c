@@ -227,6 +227,7 @@ PHP_METHOD(MongoCursor, __construct) {
 	int   ns_len;
   zval **data;
   mongo_cursor *cursor;
+	mongoclient  *link;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os|zz", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zquery, &zfields) == FAILURE) {
 		return;
@@ -249,6 +250,7 @@ PHP_METHOD(MongoCursor, __construct) {
   }
 
   cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	link = (mongoclient*)zend_object_store_get_object(zlink TSRMLS_CC);
 
   // db connection
   cursor->resource = zlink;
@@ -312,7 +314,13 @@ PHP_METHOD(MongoCursor, __construct) {
   cursor->persist = 0;
 
   timeout = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
+  convert_to_long(timeout);
   cursor->timeout = Z_LVAL_P(timeout);
+
+	/* Overwrite the timeout if MongoCursor::$timeout and we passed in a socketTimeoutMS in the connection string */
+	if (cursor->timeout == PHP_MONGO_DEFAULT_SOCKET_TIMEOUT && link->servers->options.socketTimeoutMS > 0) {
+		cursor->timeout = link->servers->options.socketTimeoutMS;
+	}
 
 	/* If the static property "slaveOkay" is set, we need to switch to a
 	 * MONGO_RP_SECONDARY_PREFERRED as well, but only if read preferences
@@ -1837,6 +1845,6 @@ void mongo_init_MongoCursor(TSRMLS_D) {
   zend_class_implements(mongo_ce_Cursor TSRMLS_CC, 1, zend_ce_iterator);
 
   zend_declare_property_bool(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
-  zend_declare_property_long(mongo_ce_Cursor, "timeout", strlen("timeout"), 30000L, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
+  zend_declare_property_long(mongo_ce_Cursor, "timeout", strlen("timeout"), PHP_MONGO_DEFAULT_SOCKET_TIMEOUT, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
