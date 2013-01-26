@@ -240,7 +240,7 @@ error:
 	return -1;
 }
 
-mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_server_def *server_def, mongo_server_opts *options, char **error_message)
+mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_server_def *server_def, mongo_server_options *options, char **error_message)
 {
 	mongo_connection *tmp;
 

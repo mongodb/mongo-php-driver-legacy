@@ -48,7 +48,7 @@ static int authenticate_connection(mongo_con_manager *manager, mongo_connection 
 	return retval;
 }
 
-static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, mongo_server_opts *options, int connection_flags, char **error_message)
+static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, int connection_flags, char **error_message)
 {
 	char *hash;
 	mongo_connection *con = NULL;
