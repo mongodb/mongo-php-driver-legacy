@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /* Helpers */
 char *mongo_connection_type(int type)
@@ -79,11 +81,18 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 {
 	mcon_collection *col;
 	mongo_con_manager_item *ptr = manager->connections;
+	int current_pid, connection_pid;
+
+	current_pid = getpid();
 	col = mcon_init_collection(sizeof(mongo_connection*));
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "filter_connections: adding connections:");
 	while (ptr) {
-		if (ptr->connection->connection_type & types) {
+		connection_pid = mongo_server_hash_to_pid(ptr->connection->hash);
+
+		if (connection_pid != current_pid) {
+			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "filter_connections: skipping %s as it doesn't match the current pid (%d)", ptr->connection->hash, current_pid);
+		} else if (ptr->connection->connection_type & types) {
 			mongo_print_connection_info(manager, ptr->connection, MLOG_FINE);
 			mcon_collection_add(col, ptr->connection);
 		}
