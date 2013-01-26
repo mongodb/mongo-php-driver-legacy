@@ -326,7 +326,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 
 	/* if we have either a string, or w > 1, then we need to add "w" and perhaps "wtimeout" to GLE */
 	if (w_str || w > 1) {
-		zval *wtimeout;
+		zval *wtimeout, **wtimeout_pp;
 
 		if (w_str) {
 			add_assoc_string(cmd, "w", w_str, 1);
@@ -336,10 +336,16 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added w=%d", w);
 		}
 
-		wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
-		convert_to_long(wtimeout);
-		add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
-		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d", Z_LVAL_P(wtimeout));
+		if (zend_hash_find(HASH_P(options), "wtimeout", strlen("wtimeout")+1, (void **)&wtimeout_pp) == SUCCESS) {
+			convert_to_long(*wtimeout_pp);
+			add_assoc_long(cmd, "wtimeout", Z_LVAL_PP(wtimeout_pp));
+			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d from options", Z_LVAL_PP(wtimeout_pp));
+		} else {
+			wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
+			convert_to_long(wtimeout);
+			add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
+			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d from MongoCollection property", Z_LVAL_P(wtimeout));
+		}
 	}
 
 	if (fsync) {
