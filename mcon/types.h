@@ -166,20 +166,24 @@ typedef struct _mongo_server_def
 	char *password;
 } mongo_server_def;
 
-typedef struct _mongo_servers
+/* NOTE: when making changes, update mongo_parse_init, mongo_servers_copy and mongo_servers_dtor */
+typedef struct _mongo_server_options
 {
-	int               count;
-	mongo_server_def *server[16]; /* TODO: Make this dynamic */
-
-	/* flags and options */
-	/* NOTE: when making changes, update mongo_parse_init, mongo_servers_copy and mongo_servers_dtor */
 	int   con_type;         /* One of MONGO_CON_TYPE_STANDALONE, MONGO_CON_TYPE_MULTIPLE or MONGO_CON_TYPE_REPLSET */
 	char *repl_set_name;
 	int   connectTimeoutMS;
 	int   default_w;        /* The number specifies the number of replica nodes */
 	char *default_wstring;  /* If the value for "w" is a string, then it means a getLastError error-mode */
 	int   default_wtimeout; /* How many milliseconds to wait for replication to "w" nodes */
+} mongo_server_options;
 
+typedef struct _mongo_servers
+{
+	int                   count;
+	mongo_server_def     *server[16]; /* TODO: Make this dynamic */
+
+	/* flags and options */
+	mongo_server_options  options;
 	mongo_read_preference read_pref;
 } mongo_servers;
 
