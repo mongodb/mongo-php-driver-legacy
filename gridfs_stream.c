@@ -112,14 +112,14 @@ php_stream_ops gridfs_stream_ops = {
 // returns 0 on failure
 #define READ_ARRAY_PROP_PTR(dest, name, toVariable) \
 	if (zend_hash_find(HASH_P(dest), name, strlen(name)+1, (void**)&toVariable) == FAILURE) { \
-		zend_throw_exception(mongo_ce_GridFSException, "couldn't find " name, 0 TSRMLS_CC); \
+		zend_throw_exception(mongo_ce_GridFSException, "couldn't find " name, 19 TSRMLS_CC); \
 		return 0; \
 	} \
 
 // returns FAILURE on failure
 #define READ_ARRAY_PROP(dest, name, toVariable) \
 	if (zend_hash_find(HASH_P(dest), name, strlen(name)+1, (void**)&toVariable) == FAILURE) { \
-		zend_throw_exception(mongo_ce_GridFSException, "couldn't find " name, 0 TSRMLS_CC); \
+		zend_throw_exception(mongo_ce_GridFSException, "couldn't find " name, 19 TSRMLS_CC); \
 		return FAILURE; \
 	} \
 
@@ -138,7 +138,7 @@ php_stream_ops gridfs_stream_ops = {
 	if (size > self->chunkSize) { \
 		char * err; \
 		spprintf(&err, 0, "chunk %d has wrong size (%d) when the max is %d", chunk_id, size, self->chunkSize); \
-		zend_throw_exception(mongo_ce_GridFSException, err, 1 TSRMLS_CC); \
+		zend_throw_exception(mongo_ce_GridFSException, err, 20 TSRMLS_CC); \
 		zval_ptr_dtor(&chunk); \
 		return FAILURE; \
 	} \
@@ -242,7 +242,7 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 		memcpy(self->buffer, Z_STRVAL_P(bin), Z_STRLEN_P(bin));
 		self->buffer_size = Z_STRLEN_P(bin);
 	} else {
-		zend_throw_exception(mongo_ce_GridFSException, "chunk has wrong format", 0 TSRMLS_CC);
+		zend_throw_exception(mongo_ce_GridFSException, "chunk has wrong format", 21 TSRMLS_CC);
 		zval_ptr_dtor(&chunk);
 
 		return FAILURE;

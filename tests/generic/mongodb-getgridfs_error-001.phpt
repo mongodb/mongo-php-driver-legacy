@@ -12,7 +12,8 @@ try {
     $db->getGridFS(null);
     var_dump(false);
 } catch (Exception $e) {
-    var_dump(true);
+    var_dump($e->getMessage(), $e->getCode());
 }
 --EXPECT--
-bool(true)
+string(42) "MongoGridFS::__construct(): invalid prefix"
+int(2)

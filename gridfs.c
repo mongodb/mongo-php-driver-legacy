@@ -114,11 +114,11 @@ PHP_METHOD(MongoGridFS, __construct) {
 
     if (Z_TYPE_P(files) != IS_STRING || Z_STRLEN_P(files) == 0 ) {
 #if ZEND_MODULE_API_NO >= 20060613
-        zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0
+        zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 2
                                 TSRMLS_CC,
                                 "MongoGridFS::__construct(): invalid prefix");
 #else
-        zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC,
+        zend_throw_exception_ex(zend_exception_get_default(), 2 TSRMLS_CC,
                                 "MongoGridFS::__construct(): invalid prefix");
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
         return;
@@ -258,7 +258,7 @@ static long setup_file(FILE *fp, char *filename TSRMLS_DC)
 
   // try to open the file
   if (!fp) {
-    zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "could not open file %s", filename);
+    zend_throw_exception_ex(mongo_ce_GridFSException, 3 TSRMLS_CC, "could not open file %s", filename);
     return FAILURE;
   }
 
@@ -266,7 +266,7 @@ static long setup_file(FILE *fp, char *filename TSRMLS_DC)
   fseek(fp, 0, SEEK_END);
   size = ftell(fp);
   if (size >= 0xffffffff) {
-    zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "file %s is too large: %ld bytes", filename, size);
+    zend_throw_exception_ex(mongo_ce_GridFSException, 4 TSRMLS_CC, "file %s is too large: %ld bytes", filename, size);
     fclose(fp);
     return FAILURE;
   }
@@ -682,20 +682,20 @@ PHP_METHOD(MongoGridFS, storeFile) {
     if (zend_hash_index_find(&EG(regular_list), Z_LVAL_P(fh), (void **) &le)==SUCCESS) {
       php_stream *stream = (php_stream*)le->ptr;
       if (!stream) {
-        zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "could not find filehandle");
+        zend_throw_exception_ex(mongo_ce_GridFSException, 5 TSRMLS_CC, "could not find filehandle");
         return;
       }
 
       stdio_fptr = (php_stdio_stream_data*)stream->abstract;
       if (!stdio_fptr) {
-        zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "no file is associate with this filehandle");
+        zend_throw_exception_ex(mongo_ce_GridFSException, 6 TSRMLS_CC, "no file is associate with this filehandle");
         return;
       }
     }
 
     if (stdio_fptr->file) {
       if ((size = setup_file(stdio_fptr->file, filename TSRMLS_CC)) == FAILURE) {
-        zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error setting up file: %s", filename);
+        zend_throw_exception_ex(mongo_ce_GridFSException, 7 TSRMLS_CC, "error setting up file: %s", filename);
         return;
       }
       fp = stdio_fptr->file;
@@ -709,16 +709,16 @@ PHP_METHOD(MongoGridFS, storeFile) {
 
     // no point in continuing if we can't open the file
     if ((size = setup_file(fp, filename TSRMLS_CC)) == FAILURE) {
-      zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error setting up file: %s", filename);
+      zend_throw_exception_ex(mongo_ce_GridFSException, 7 TSRMLS_CC, "error setting up file: %s", filename);
       return;
     }
   }
   else {
     char *msg = "first argument must be a string or stream resource";
 #if ZEND_MODULE_API_NO >= 20060613
-    zend_throw_exception(zend_exception_get_default(TSRMLS_C), msg, 0 TSRMLS_CC);
+    zend_throw_exception(zend_exception_get_default(TSRMLS_C), msg, 8 TSRMLS_CC);
 #else
-    zend_throw_exception(zend_exception_get_default(), msg, 0 TSRMLS_CC);
+    zend_throw_exception(zend_exception_get_default(), msg, 8 TSRMLS_CC);
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
     return;
   }
@@ -748,34 +748,34 @@ PHP_METHOD(MongoGridFS, storeFile) {
 	array_init(cleanup_ids);
 
   // insert chunks
-  while (pos < size || fp == 0) {
-    int result = 0;
-    char *buf;
-	zval *chunk_id = NULL;
+	while (pos < size || fp == 0) {
+		int result = 0;
+		char *buf;
+		zval *chunk_id = NULL;
 
-    int chunk_size = size-pos >= global_chunk_size || fp == 0 ? global_chunk_size : size-pos;
-    buf = (char*)emalloc(chunk_size);
+		int chunk_size = size-pos >= global_chunk_size || fp == 0 ? global_chunk_size : size-pos;
+		buf = (char*)emalloc(chunk_size);
 
-    if (fp) {
-				int retval = (int)fread(buf, 1, chunk_size, fp);
-				if (retval < chunk_size) {
-        zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error reading file %s", filename);
+		if (fp) {
+			int retval = (int)fread(buf, 1, chunk_size, fp);
+			if (retval < chunk_size) {
+				zend_throw_exception_ex(mongo_ce_GridFSException, 9 TSRMLS_CC, "error reading file %s", filename);
 				revert = 1;
 				efree(buf);
 				goto cleanup_on_failure;
-      }
-      pos += chunk_size;
-      if (!(chunk_id = insert_chunk(chunks, zid, chunk_num, buf, chunk_size, options TSRMLS_CC))) {
+			}
+			pos += chunk_size;
+			if (!(chunk_id = insert_chunk(chunks, zid, chunk_num, buf, chunk_size, options TSRMLS_CC))) {
 				revert = 1;
 				efree(buf);
 				goto cleanup_on_failure;
-      }
-		add_next_index_zval(cleanup_ids, chunk_id);
+			}
+			add_next_index_zval(cleanup_ids, chunk_id);
     }
     else {
       result = read(fd, buf, chunk_size);
       if (result == -1) {
-        zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "error reading filehandle");
+        zend_throw_exception_ex(mongo_ce_GridFSException, 10 TSRMLS_CC, "error reading filehandle");
 				revert = 1;
 				efree(buf);
 				goto cleanup_on_failure;
@@ -1046,7 +1046,7 @@ PHP_METHOD(MongoGridFS, storeUpload) {
 
   h = PG(http_globals)[TRACK_VARS_FILES];
   if (zend_hash_find(Z_ARRVAL_P(h), filename, file_len+1, (void**)&file) == FAILURE) {
-    zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "could not find uploaded file %s", filename);
+    zend_throw_exception_ex(mongo_ce_GridFSException, 11 TSRMLS_CC, "could not find uploaded file %s", filename);
     return;
   }
 
@@ -1068,7 +1068,7 @@ PHP_METHOD(MongoGridFS, storeUpload) {
 
   zend_hash_find(Z_ARRVAL_PP(file), "tmp_name", strlen("tmp_name")+1, (void**)&temp);
   if (!temp) {
-    zend_throw_exception(mongo_ce_GridFSException, "Couldn't find tmp_name in the $_FILES array. Are you sure the upload worked?", 0 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_GridFSException, "Couldn't find tmp_name in the $_FILES array. Are you sure the upload worked?", 12 TSRMLS_CC);
     return;
   }
 
@@ -1116,7 +1116,7 @@ PHP_METHOD(MongoGridFS, storeUpload) {
     MONGO_METHOD2(MongoGridFS, storeFile, return_value, getThis(), *temp, extra_param);
     zval_ptr_dtor(&extra_param);
   } else {
-    zend_throw_exception(mongo_ce_GridFSException, "tmp_name was not a string or an array", 0 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_GridFSException, "tmp_name was not a string or an array", 13 TSRMLS_CC);
   }
 }
 
@@ -1256,7 +1256,7 @@ PHP_METHOD(MongoGridFSFile, write) {
   file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
 
 	if (zend_hash_find(HASH_P(file), "length", strlen("length")+1, (void**)&size) == FAILURE) {
-		zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size", 0 TSRMLS_CC);
+		zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size", 14 TSRMLS_CC);
 		return;
 	}
 
@@ -1289,7 +1289,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 		if (zend_hash_find(HASH_P(file), "filename", strlen("filename") + 1, (void**) &temp) == SUCCESS) {
 			filename = Z_STRVAL_PP(temp);
 		} else {
-			zend_throw_exception(mongo_ce_GridFSException, "Cannot find filename", 0 TSRMLS_CC);
+			zend_throw_exception(mongo_ce_GridFSException, "Cannot find filename", 15 TSRMLS_CC);
 			return;
 		}
 	}
@@ -1297,7 +1297,7 @@ PHP_METHOD(MongoGridFSFile, write) {
 
   fp = fopen(filename, "wb");
   if (!fp) {
-    zend_throw_exception_ex(mongo_ce_GridFSException, 0 TSRMLS_CC, "could not open destination file %s", filename);
+    zend_throw_exception_ex(mongo_ce_GridFSException, 16 TSRMLS_CC, "could not open destination file %s", filename);
     return;
   }
 
@@ -1318,7 +1318,7 @@ PHP_METHOD(MongoGridFSFile, write) {
   MONGO_METHOD1(MongoCursor, sort, cursor, cursor, sort);
 
   if ((total = apply_to_cursor(cursor, copy_file, fp, len TSRMLS_CC)) == FAILURE) {
-    zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 17 TSRMLS_CC);
   }
 
   fclose(fp);
@@ -1335,7 +1335,7 @@ PHP_METHOD(MongoGridFSFile, getResource) {
 
     stream = gridfs_stream_init(getThis() TSRMLS_CC);
     if (!stream) {
-        zend_throw_exception(mongo_ce_GridFSException, "couldn't create a php_stream", 0 TSRMLS_CC);
+        zend_throw_exception(mongo_ce_GridFSException, "couldn't create a php_stream", 18 TSRMLS_CC);
         return;
     }
 
@@ -1354,7 +1354,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
   zend_hash_find(HASH_P(file), "_id", strlen("_id")+1, (void**)&id);
 
   if (zend_hash_find(HASH_P(file), "length", strlen("length")+1, (void**)&size) == FAILURE) {
-    zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size", 0 TSRMLS_CC);
+    zend_throw_exception(mongo_ce_GridFSException, "couldn't find file size", 14 TSRMLS_CC);
     return;
   }
 
@@ -1419,7 +1419,7 @@ PHP_METHOD(MongoGridFSFile, getBytes) {
       if (EG(exception)) {
           return;
       }
-      zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 0 TSRMLS_CC);
+      zend_throw_exception(mongo_ce_GridFSException, "error reading chunk of file", 17 TSRMLS_CC);
       return;
   }
 

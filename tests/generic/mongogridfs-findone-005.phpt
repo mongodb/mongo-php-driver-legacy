@@ -18,7 +18,8 @@ try {
     $file->getBytes();
     var_dump(false);
 } catch (MongoGridFSException $e) {
-    var_dump(true);
+    var_dump($e->getMessage(), $e->getCode());
 }
 --EXPECT--
-bool(true)
+string(23) "couldn't find file size"
+int(14)
