@@ -16,14 +16,14 @@ $coll->insert(array('bin' => new MongoBinData(chr(255) . chr(7) . chr(199), 0)))
 $cursor = $coll->find();
 
 foreach ($cursor as $result) {
-    $numBytes = strlen($result['bin']->bin);
-    $bytes = array();
+	$numBytes = strlen($result['bin']->bin);
+	$bytes = array();
 
-    for ($i = 0; $i < $numBytes; ++$i) {
-        $bytes[] = ord($result['bin']->bin[$i]);
-    }
+	for ($i = 0; $i < $numBytes; ++$i) {
+	$bytes[] = ord($result['bin']->bin[$i]);
+	}
 
-    printf("%d bytes: %s\n", $numBytes, implode(',', $bytes));
+	printf("%d bytes: %s\n", $numBytes, implode(',', $bytes));
 }
 ?>
 --EXPECT--

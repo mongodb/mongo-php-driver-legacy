@@ -6,14 +6,14 @@ Connection strings: unsuccesfull authentication
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
 try {
-    $host = hostname();
-    $port = port();
-    $user = username();
-    $pass = password();
-    $pass .= "bogus";
-    $db   = dbname();
+	$host = hostname();
+	$port = port();
+	$user = username();
+	$pass = password();
+	$pass .= "bogus";
+	$db	= dbname();
 
-    $m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", $user, $pass, $host, $port, $db));
+	$m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", $user, $pass, $host, $port, $db));
 } catch (Exception $e) {
 	echo $e->getMessage(), "\n";
 }

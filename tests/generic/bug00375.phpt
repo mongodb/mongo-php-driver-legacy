@@ -26,9 +26,9 @@ $file = $gridfs->findOne(array("_id" => $id));
 
 // Throws exception about to many chunks
 try {
-    $file->getBytes();
+	$file->getBytes();
 } catch(MongoGridFSException $e) {
-    var_dump($e->getMessage(), $e->getCode());
+	var_dump($e->getMessage(), $e->getCode());
 }
 ?>
 --EXPECTF--

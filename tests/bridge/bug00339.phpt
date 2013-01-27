@@ -9,11 +9,11 @@ $m = mongo();
 $c = $m->selectDB(dbname())->selectCollection("collection");
 
 try {
-    $foo = array("foo" => time());
-    $result = $c->insert($foo, array("safe" => true, "timeout" => 1));
+	$foo = array("foo" => time());
+	$result = $c->insert($foo, array("safe" => true, "timeout" => 1));
 } catch(Exception $e) {
-    var_dump(get_class($e), $e->getMessage());
-    var_dump($foo);
+	var_dump(get_class($e), $e->getMessage());
+	var_dump($foo);
 }
 ?>
 ===DONE===
@@ -25,8 +25,8 @@ array(2) {
   int(%d)
   ["_id"]=>
   object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
+	["$id"]=>
+	string(24) "%s"
   }
 }
 ===DONE===

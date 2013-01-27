@@ -48,10 +48,10 @@ mongo_servers* mongo_parse_init(void)
 
 int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, char *spec, char **error_message)
 {
-	char          *pos; /* Pointer to current parsing position */
-	char          *tmp_user = NULL, *tmp_pass = NULL, *tmp_database = NULL; /* Stores parsed user/password/database to be copied to each server struct */
-	char          *host_start, *host_end, *port_start, *db_start, *db_end, *last_slash;
-	int            i;
+	char	*pos; /* Pointer to current parsing position */
+	char	*tmp_user = NULL, *tmp_pass = NULL, *tmp_database = NULL; /* Stores parsed user/password/database to be copied to each server struct */
+	char	*host_start, *host_end, *port_start, *db_start, *db_end, *last_slash;
+	int	i;
 
 	/* Initialisation */
 	pos = spec;
@@ -61,15 +61,15 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 		char *at, *colon;
 
 		/* mongodb://user:pass@host:port,host:port
-		 *           ^                             */
+		 *	^	*/
 		pos += 10;
 
 		/* mongodb://user:pass@host:port,host:port
-		 *                    ^                    */
+		 *	^	*/
 		at = strchr(pos, '@');
 
 		/* mongodb://user:pass@host:port,host:port
-		 *               ^                         */
+		 *	^	*/
 		colon = strchr(pos, ':');
 
 		/* check for username:password */
@@ -79,26 +79,26 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 
 			/* move current
 			 * mongodb://user:pass@host:port,host:port
-			 *                     ^                   */
+			 *	^	*/
 			pos = at + 1;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found user '%s' and a password", tmp_user);
 		}
 	}
 
 	host_start = pos;
-	host_end   = NULL;
+	host_end	= NULL;
 	port_start = NULL;
 	last_slash = NULL;
 
 	/* Now we parse the host part - there are two cases:
 	 * 1: mongodb://user:pass@host:port,host:port/database?opt=1 -- TCP/IP
-	 *                        ^
+	 *	^
 	 * 2: mongodb://user:pass@/tmp/mongo.sock/database?opt=1 -- Unix Domain sockets
-	 *                        ^                                                     */
+	 *	^	*/
 	if (*pos != '/') {
 		/* TCP/IP:
 		 * mongodb://user:pass@host:port,host:port/database?opt=1 -- TCP/IP
-		 *                     ^                                            */
+		 *	^	*/
 		do {
 			if (*pos == ':') {
 				host_end = pos;
@@ -160,7 +160,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 
 	/* Check for dbname
 	 * mongodb://user:pass@host:port,host:port/dbname?foo=bar
-	 *                                        ^ */
+	 *	^ */
 	db_start = NULL;
 	db_end = spec + strlen(spec);
 	if (*pos == '/') {
@@ -181,7 +181,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 
 		/* Check for options
 		 * mongodb://user:pass@host:port,host:port/dbname?foo=bar
-		 *                                               ^ */
+		 *	^ */
 		if (question) {
 			int retval = -1;
 			retval = mongo_parse_options(manager, servers, question + 1, error_message);
@@ -208,7 +208,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 	for (i = 0; i < servers->count; i++) {
 		servers->server[i]->username = tmp_user ? strdup(tmp_user) : NULL;
 		servers->server[i]->password = tmp_pass ? strdup(tmp_pass) : NULL;
-		servers->server[i]->db       = tmp_database ? strdup(tmp_database) : NULL;
+		servers->server[i]->db	= tmp_database ? strdup(tmp_database) : NULL;
 	}
 
 	free(tmp_user);
@@ -244,7 +244,7 @@ int static mongo_process_option(mongo_con_manager *manager, mongo_servers *serve
 {
 	char *tmp_name;
 	char *tmp_value;
-	int   retval = 0;
+	int	retval = 0;
 
 	if (!name || strcmp(name, "") == 0 || (name + 1 == value)) {
 		*error_message = strdup("- Found an empty option name");

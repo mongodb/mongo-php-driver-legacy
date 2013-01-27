@@ -7,7 +7,7 @@ MongoClient::setReadPreference errors [3]
 <?php
 $host = hostname();
 $port = port();
-$db   = dbname();
+$db	= dbname();
 
 $baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
 

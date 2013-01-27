@@ -9,15 +9,15 @@ $mongo = mongo();
 $coll = $mongo->selectCollection(dbname(), 'dbref');
 
 try {
-    $coll->getDBRef(array('$ref' => 1, '$id' => 2));
+	$coll->getDBRef(array('$ref' => 1, '$id' => 2));
 } catch (Exception $e) {
-    printf("%s: %s\n", get_class($e), $e->getCode());
+	printf("%s: %s\n", get_class($e), $e->getCode());
 }
 
 try {
-    $coll->getDBRef(array('$ref' => 'dbref', '$id' => 2, '$db' => 3));
+	$coll->getDBRef(array('$ref' => 'dbref', '$id' => 2, '$db' => 3));
 } catch (Exception $e) {
-    printf("%s: %d\n", get_class($e), $e->getCode());
+	printf("%s: %d\n", get_class($e), $e->getCode());
 }
 ?>
 --EXPECT--

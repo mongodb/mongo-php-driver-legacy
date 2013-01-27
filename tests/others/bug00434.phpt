@@ -4,10 +4,10 @@ Test for PHP-434: Mongo::connect() doesn't validate the object.
 <?php
 class m extends Mongo { function __construct() {} }
 try {
-    $m = new m;
-    $m->connect();
+	$m = new m;
+	$m->connect();
 } catch(Exception $e) {
-    var_dump($e->getMessage());
+	var_dump($e->getMessage());
 }
 ?>
 ===DONE===

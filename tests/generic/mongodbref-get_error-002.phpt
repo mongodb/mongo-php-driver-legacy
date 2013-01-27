@@ -9,15 +9,15 @@ $mongo = mongo();
 $db = $mongo->selectDB('test');
 
 try {
-    MongoDBRef::get($db, array('$ref' => 1, '$id' => 2));
+	MongoDBRef::get($db, array('$ref' => 1, '$id' => 2));
 } catch (Exception $e) {
-    printf("%s: %s\n", get_class($e), $e->getCode());
+	printf("%s: %s\n", get_class($e), $e->getCode());
 }
 
 try {
-    MongoDBRef::get($db, array('$ref' => 'dbref', '$id' => 2, '$db' => 3));
+	MongoDBRef::get($db, array('$ref' => 'dbref', '$id' => 2, '$db' => 3));
 } catch (Exception $e) {
-    printf("%s: %d\n", get_class($e), $e->getCode());
+	printf("%s: %d\n", get_class($e), $e->getCode());
 }
 ?>
 --EXPECT--

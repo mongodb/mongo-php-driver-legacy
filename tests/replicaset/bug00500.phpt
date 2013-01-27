@@ -54,10 +54,10 @@ array(5) {
   int(0)
   ["lastOp"]=>
   object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
+	["sec"]=>
+	int(%d)
+	["inc"]=>
+	int(%d)
   }
   ["connectionId"]=>
   int(%d)
@@ -73,10 +73,10 @@ array(6) {
   int(1)
   ["lastOp"]=>
   object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
+	["sec"]=>
+	int(%d)
+	["inc"]=>
+	int(%d)
   }
   ["connectionId"]=>
   int(%d)
@@ -90,10 +90,10 @@ array(5) {
   int(1)
   ["lastOp"]=>
   object(MongoTimestamp)#5 (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
+	["sec"]=>
+	int(%d)
+	["inc"]=>
+	int(%d)
   }
   ["connectionId"]=>
   int(%d)

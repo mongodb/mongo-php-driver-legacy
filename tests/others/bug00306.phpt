@@ -9,13 +9,13 @@ var_export($n);
 echo "\n";
 
 $a = MongoId::__set_state(array(
-   '$id' => '4f06e55e44670ab92b000000',
+	'$id' => '4f06e55e44670ab92b000000',
 ));
 var_dump($a);
 ?>
 --EXPECT--
 MongoId::__set_state(array(
-   '$id' => '4f06e55e44670ab92b000000',
+	'$id' => '4f06e55e44670ab92b000000',
 ))
 object(MongoId)#2 (1) {
   ["$id"]=>

@@ -13,7 +13,7 @@ $coll = $db->test_sort;
 $coll->drop();
 // insert test data
 for ($i=0; $i<10; $i++) {
-    $coll->insert(array('0' => 'a' . $i, '1' => 'b' . $i, '2' => 'c' . $i), array('safe' => true));
+	$coll->insert(array('0' => 'a' . $i, '1' => 'b' . $i, '2' => 'c' . $i), array('safe' => true));
 }
 
 // ask user on which 'column' to sort

@@ -26,9 +26,9 @@ mongo_connection *create_con(mongo_con_manager *manager, int type, int ping_ms, 
 
 void add_tag(mongo_connection *con, char *tag)
 {
-	con->tags = realloc(con->tags, (con->tag_count + 1) * sizeof(char*));     
+	con->tags = realloc(con->tags, (con->tag_count + 1) * sizeof(char*));
 	con->tags[con->tag_count] = strdup(tag);
-	con->tag_count++; 
+	con->tag_count++;
 }
 
 void add_rp_tag0(mongo_read_preference *rp)

@@ -7,7 +7,7 @@ require dirname(__FILE__) . "/../utils.inc";
 
 $port = port();
 if ($port != "27017") {
-    die("skip this tests attempts to connect to the standard port");
+	die("skip this tests attempts to connect to the standard port");
 }
 ?>
 --FILE--

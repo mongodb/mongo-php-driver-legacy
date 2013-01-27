@@ -18,7 +18,7 @@ $chunks = $db->selectCollection('fs.chunks')->find(array('files_id' => $id));
 $chunksData = '';
 
 foreach ($chunks as $chunk) {
-    $chunksData .= $chunk['data']->bin;
+	$chunksData .= $chunk['data']->bin;
 }
 
 $contents = file_get_contents(__FILE__);

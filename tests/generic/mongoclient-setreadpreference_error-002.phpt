@@ -7,10 +7,10 @@ MongoClient::setReadPreference errors [2]
 <?php
 $host = hostname();
 $port = port();
-$db   = dbname();
+$db	= dbname();
 
 function myerror($errno, $errstr) {
-    var_dump($errno, $errstr);
+	var_dump($errno, $errstr);
 }
 set_error_handler("myerror", E_RECOVERABLE_ERROR);
 $baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
@@ -91,11 +91,11 @@ array(2) {
   string(9) "secondary"
   ["tagsets"]=>
   array(1) {
-    [0]=>
-    array(1) {
-      ["bar"]=>
-      string(3) "foo"
-    }
+	[0]=>
+	array(1) {
+	["bar"]=>
+	string(3) "foo"
+	}
   }
 }
 ---

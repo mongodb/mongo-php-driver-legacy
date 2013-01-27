@@ -31,10 +31,10 @@ array(6) {
   int(1)
   ["lastOp"]=>
   object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
+	["sec"]=>
+	int(%d)
+	["inc"]=>
+	int(%d)
   }
   ["connectionId"]=>
   int(%d)

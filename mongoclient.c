@@ -308,9 +308,9 @@ int mongo_store_option_wrapper(mongo_con_manager *manager, mongo_servers *server
 		return 4;
 	}
 	if (strcasecmp(option_name, "readPreferenceTags") == 0) {
-		int            error = 0;
-		HashPosition   pos;
-		zval         **opt_entry;
+		int	error = 0;
+		HashPosition	pos;
+		zval	**opt_entry;
 
 		convert_to_array_ex(option_value);
 		for (
@@ -341,18 +341,18 @@ PHP_METHOD(MongoClient, __construct)
 
 void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 {
-	char         *server = 0;
-	int           server_len = 0;
-	zend_bool     connect = 1;
-	zval         *options = 0;
-	zval         *slave_okay = 0;
+	char	*server = 0;
+	int	server_len = 0;
+	zend_bool	connect = 1;
+	zval	*options = 0;
+	zval	*slave_okay = 0;
 	mongoclient  *link;
-	zval        **opt_entry;
-	char         *opt_key;
-	int           error;
-	char         *error_message = NULL;
-	uint          opt_key_len;
-	ulong         num_key;
+	zval	**opt_entry;
+	char	*opt_key;
+	int	error;
+	char	*error_message = NULL;
+	uint	opt_key_len;
+	ulong	num_key;
 	HashPosition  pos;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/", &server, &server_len, &options) == FAILURE) {
@@ -365,7 +365,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 
 	/* Set the manager from the global manager */
 	link->manager = MonGlo(manager);
-	
+
 	/* Parse the server specification
 	 * Default to the mongo.default_host & mongo.default_port INI options */
 	link->servers = mongo_parse_init();
@@ -474,15 +474,15 @@ PHP_METHOD(MongoClient, connect)
 
 
 /* {{{ proto int MongoClient->close([string|bool hash|all])
-   Closes the connection to $hash, or only master - or all open connections. Returns how many connections were closed */
+	Closes the connection to $hash, or only master - or all open connections. Returns how many connections were closed */
 PHP_METHOD(MongoClient, close)
 {
-	char             *hash = NULL;
-	int               hash_len;
-	mongoclient       *link;
+	char	*hash = NULL;
+	int	hash_len;
+	mongoclient	*link;
 	mongo_connection *connection;
-	char             *error_message = NULL;
-	zval             *all = NULL;
+	char	*error_message = NULL;
+	zval	*all = NULL;
 
 	PHP_MONGO_GET_LINK(getThis());
 	if (ZEND_NUM_ARGS() == 0) {
@@ -494,7 +494,7 @@ PHP_METHOD(MongoClient, close)
 			/* Close all connections */
 			mongo_con_manager_item *ptr = link->manager->connections;
 			mongo_con_manager_item *current;
-			long                    count = 0;
+			long	count = 0;
 
 			while (ptr) {
 				current = ptr;
@@ -605,9 +605,9 @@ PHP_METHOD(MongoClient, selectDB)
 		/* So here we check if a username and password are used. If so, the
 		 * madness starts */
 		if (link->servers->server[0]->username && link->servers->server[0]->password) {
-			zval       *new_link;
+			zval	*new_link;
 			mongoclient *tmp_link;
-		
+
 			if (strcmp(link->servers->server[0]->db, "admin") == 0) {
 				mongo_manager_log(
 					link->manager, MLOG_CON, MLOG_FINE,
@@ -715,7 +715,7 @@ PHP_METHOD(MongoClient, getReadPreference)
 PHP_METHOD(MongoClient, setReadPreference)
 {
 	char *read_preference;
-	int   read_preference_len;
+	int	read_preference_len;
 	mongoclient *link;
 	HashTable  *tags = NULL;
 
@@ -791,7 +791,7 @@ PHP_METHOD(MongoClient, listDBs) {
  */
 PHP_METHOD(MongoClient, getHosts)
 {
-	mongoclient             *link;
+	mongoclient	*link;
 	mongo_con_manager_item *item;
 
 	PHP_MONGO_GET_LINK(getThis());
@@ -802,7 +802,7 @@ PHP_METHOD(MongoClient, getHosts)
 	while (item) {
 		zval *infoz;
 		char *host;
-		int   port;
+		int	port;
 
 		MAKE_STD_ZVAL(infoz);
 		array_init(infoz);
@@ -825,7 +825,7 @@ PHP_METHOD(MongoClient, getHosts)
 
 
 /* {{{ proto static array Mongo::getConnections(void)
-   Returns an array of all open connections, and information about each of the servers */
+	Returns an array of all open connections, and information about each of the servers */
 PHP_METHOD(MongoClient, getConnections)
 {
 	mongo_con_manager_item *ptr;

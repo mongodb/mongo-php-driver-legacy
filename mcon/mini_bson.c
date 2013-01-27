@@ -23,7 +23,7 @@
 #include "bson_helpers.h"
 #include "connections.h"
 
-#define MONGO_QUERY_FLAG_EMPTY    0x00
+#define MONGO_QUERY_FLAG_EMPTY	0x00
 #define MONGO_QUERY_FLAG_SLAVE_OK 0x04
 
 /* Creates a simple query header.
@@ -69,7 +69,7 @@ void bson_add_string(mcon_str *str, char *fieldname, char *string)
 mcon_str *bson_create_ping_packet(mongo_connection *con)
 {
 	struct mcon_str *str = create_simple_header(con, NULL);
-	int    hdr;
+	int	hdr;
 
 	hdr = str->l;
 	mcon_serialize_int(str, 0); /* We need to fill this with the length */
@@ -86,7 +86,7 @@ mcon_str *bson_create_ping_packet(mongo_connection *con)
 mcon_str *bson_create_ismaster_packet(mongo_connection *con)
 {
 	struct mcon_str *str = create_simple_header(con, NULL);
-	int    hdr;
+	int	hdr;
 
 	hdr = str->l;
 	mcon_serialize_int(str, 0); /* We need to fill this with the length */
@@ -103,7 +103,7 @@ mcon_str *bson_create_ismaster_packet(mongo_connection *con)
 mcon_str *bson_create_rs_status_packet(mongo_connection *con)
 {
 	struct mcon_str *str = create_simple_header(con, NULL);
-	int    hdr;
+	int	hdr;
 
 	hdr = str->l;
 	mcon_serialize_int(str, 0); /* We need to fill this with the length */
@@ -120,7 +120,7 @@ mcon_str *bson_create_rs_status_packet(mongo_connection *con)
 mcon_str *bson_create_getnonce_packet(mongo_connection *con)
 {
 	struct mcon_str *str = create_simple_header(con, NULL);
-	int    hdr;
+	int	hdr;
 
 	hdr = str->l;
 	mcon_serialize_int(str, 0); /* We need to fill this with the length */
@@ -138,7 +138,7 @@ mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *database,
 {
 	struct mcon_str *str;
 	char  *ns;
-	int    hdr, length;
+	int	hdr, length;
 
 	/* We use the selected database to construct the namespace */
 	length = strlen(database) + 5 + 1;
@@ -169,31 +169,31 @@ char *bson_skip_field_name(char *data)
 	return strchr(data, '\0') + 1;
 }
 
-#define BSON_DOUBLE          0x01
-#define BSON_STRING          0x02
-#define BSON_DOCUMENT        0x03
-#define BSON_ARRAY           0x04
-#define BSON_BINARY          0x05
-#define BSON_UNDEFINED       0x06
-#define BSON_OBJECT_ID       0x07
-#define BSON_BOOLEAN         0x08
-#define BSON_DATETIME        0x09
-#define BSON_NULL            0x0A
-#define BSON_REGEXP          0x0B
-#define BSON_DBPOINTER       0x0C
-#define BSON_JAVASCRIPT      0x0D
-#define BSON_SYMBOL          0x0E
+#define BSON_DOUBLE	0x01
+#define BSON_STRING	0x02
+#define BSON_DOCUMENT	0x03
+#define BSON_ARRAY	0x04
+#define BSON_BINARY	0x05
+#define BSON_UNDEFINED	0x06
+#define BSON_OBJECT_ID	0x07
+#define BSON_BOOLEAN	0x08
+#define BSON_DATETIME	0x09
+#define BSON_NULL	0x0A
+#define BSON_REGEXP	0x0B
+#define BSON_DBPOINTER	0x0C
+#define BSON_JAVASCRIPT	0x0D
+#define BSON_SYMBOL	0x0E
 #define BSON_JAVASCRIPT_WITH_SCOPE 0x0F
-#define BSON_INT32           0x10
-#define BSON_TIMESTAMP       0x11
-#define BSON_INT64           0x12
-#define BSON_MIN_KEY         0xFF
-#define BSON_MAX_KEY         0x7F
+#define BSON_INT32	0x10
+#define BSON_TIMESTAMP	0x11
+#define BSON_INT64	0x12
+#define BSON_MIN_KEY	0xFF
+#define BSON_MAX_KEY	0x7F
 
 char *bson_next(char *data)
 {
 	unsigned char type = data[0];
-	int32_t       length;
+	int32_t	length;
 
 	if (type == 0) {
 		return NULL;
@@ -281,7 +281,7 @@ void *bson_find_field(char *data, char *field_name, int type)
 	void *return_data;
 	char *ptr = data;
 	char *read_field = NULL;
-	int   read_type;
+	int	read_type;
 
 	return_data = bson_get_current(ptr, &read_field, &read_type);
 	while (read_field && (strcmp(read_field, field_name) != 0 || read_type != type)) {
@@ -368,7 +368,7 @@ int bson_find_field_as_string(char *buffer, char *field, char **data)
 int bson_array_find_next_string(char **buffer, char **field, char **data)
 {
 	char *read_field;
-	int   read_type;
+	int	read_type;
 	void *return_data;
 
 	return_data = bson_get_current(*buffer, &read_field, &read_type);
@@ -385,7 +385,7 @@ int bson_array_find_next_string(char **buffer, char **field, char **data)
 int bson_array_find_next_embedded_doc(char **buffer)
 {
 	char *read_field;
-	int   read_type;
+	int	read_type;
 
 	*buffer = bson_next(*buffer);
 	bson_get_current(*buffer, &read_field, &read_type);

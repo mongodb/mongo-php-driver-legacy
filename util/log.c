@@ -71,7 +71,7 @@ static long set_value(char *setting, zval *return_value TSRMLS_DC) {
   long value;
 
   if (zend_parse_parameters(1 TSRMLS_CC, "l", &value) == FAILURE) {
-    return 0;
+	return 0;
   }
 
   zend_update_static_property_long(mongo_ce_Log, setting, strlen(setting), value TSRMLS_CC);
@@ -177,8 +177,8 @@ static char *module_name(int module)
 {
 	switch (module) {
 		case MLOG_RS: return "REPLSET";
-		case MLOG_CON: return "CON    ";
-		case MLOG_IO: return "IO     ";
+		case MLOG_CON: return "CON	";
+		case MLOG_IO: return "IO	";
 		case MLOG_SERVER: return "SERVER ";
 		case MLOG_PARSE: return "PARSE  ";
 		default: return "?";
@@ -189,7 +189,7 @@ void php_mongo_log(const int module, const int level TSRMLS_DC, const char *form
 {
 	if ((module & MonGlo(log_module)) && (level & MonGlo(log_level))) {
 		va_list  args;
-		char    *tmp = malloc(256);
+		char	*tmp = malloc(256);
 
 		va_start(args, format);
 		vsnprintf(tmp, 256, format, args);
@@ -215,7 +215,7 @@ void php_mcon_log_wrapper(int module, int level, void *context, char *format, va
 
 	if ((module & MonGlo(log_module)) && (level & MonGlo(log_level))) {
 		va_list  tmp_args;
-		char    *tmp = malloc(256);
+		char	*tmp = malloc(256);
 
 		va_copy(tmp_args, args);
 		vsnprintf(tmp, 256, format, tmp_args);

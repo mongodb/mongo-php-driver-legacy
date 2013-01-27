@@ -41,8 +41,8 @@ foreach ($c as $item) {
 array(3) {
   ["_id"]=>
   object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "4cb4ab6d7addf98506010001"
+	["$id"]=>
+	string(24) "4cb4ab6d7addf98506010001"
   }
   ["id"]=>
   int(1)
@@ -52,8 +52,8 @@ array(3) {
 array(3) {
   ["_id"]=>
   object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "4cb4ab6d7addf98506010002"
+	["$id"]=>
+	string(24) "4cb4ab6d7addf98506010002"
   }
   ["id"]=>
   int(2)
@@ -63,8 +63,8 @@ array(3) {
 array(3) {
   ["_id"]=>
   object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "4cb4ab6d7addf98506010004"
+	["$id"]=>
+	string(24) "4cb4ab6d7addf98506010004"
   }
   ["id"]=>
   int(4)

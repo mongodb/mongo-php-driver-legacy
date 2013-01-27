@@ -5,35 +5,35 @@ GridFS: getting files by ID
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
-    $m = mongo("phpunit");
-    $db = $m->selectDB("phpunit");
-    $db->dropCollection("fs.files");
-    $db->dropCollection("fs.chunks");
+	$m = mongo("phpunit");
+	$db = $m->selectDB("phpunit");
+	$db->dropCollection("fs.files");
+	$db->dropCollection("fs.chunks");
 
-    $gridfs = $db->getGridFS();
+	$gridfs = $db->getGridFS();
 
-    $tempFileName = tempnam(sys_get_temp_dir(), "gridfs-delete");
-    $tempFileData = '1234567890';
-    file_put_contents($tempFileName, $tempFileData);
+	$tempFileName = tempnam(sys_get_temp_dir(), "gridfs-delete");
+	$tempFileData = '1234567890';
+	file_put_contents($tempFileName, $tempFileData);
 
-    $ids = array(
-        "file0",
-        452,
-        true,
-        new MongoID(),
-        array( 'a', 'b' => 5 ),
-    );
+	$ids = array(
+	"file0",
+	452,
+	true,
+	new MongoID(),
+	array( 'a', 'b' => 5 ),
+	);
 
-    foreach ($ids as $id) {
-        $gridfs->storeFile($tempFileName, array('_id' => $id));
-        $file = $gridfs->get($id);
+	foreach ($ids as $id) {
+	$gridfs->storeFile($tempFileName, array('_id' => $id));
+	$file = $gridfs->get($id);
 
-        echo 'File exists with ID: ';
-        var_dump($file->file['_id']);
-        echo "\n";
-    }
+	echo 'File exists with ID: ';
+	var_dump($file->file['_id']);
+	echo "\n";
+	}
 
-    unlink($tempFileName);
+	unlink($tempFileName);
 ?>
 --EXPECTF--
 File exists with ID: string(5) "file0"

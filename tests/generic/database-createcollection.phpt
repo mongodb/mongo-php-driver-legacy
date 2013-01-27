@@ -27,7 +27,7 @@ array(2) {
   string(19) "phpunit.create-col1"
   ["options"]=>
   array(1) {
-    ["create"]=>
-    string(11) "create-col1"
+	["create"]=>
+	string(11) "create-col1"
   }
 }

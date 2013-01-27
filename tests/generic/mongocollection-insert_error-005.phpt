@@ -10,9 +10,9 @@ $coll = $mongo->selectCollection(dbname(), 'insert');
 $coll->drop();
 
 try {
-    $coll->insert(array('x.y' => 'z'));
+	$coll->insert(array('x.y' => 'z'));
 } catch (Exception $e) {
-    printf("%s: %d\n", get_class($e), $e->getCode());
+	printf("%s: %d\n", get_class($e), $e->getCode());
 }
 ?>
 --EXPECT--

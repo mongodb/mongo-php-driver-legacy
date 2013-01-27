@@ -56,19 +56,19 @@ PHP_METHOD(MongoCollection, __construct) {
   int name_len;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &parent, mongo_ce_DB, &name_str, &name_len) == FAILURE) {
-    zval *object = getThis();
-    ZVAL_NULL(object);
-    return;
+	zval *object = getThis();
+	ZVAL_NULL(object);
+	return;
   }
 
   // check for empty collection name
   if (name_len == 0) {
 #if ZEND_MODULE_API_NO >= 20060613
-    zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
+	zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
 #else
-    zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
+	zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
-    return;
+	return;
   }
 
   c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -155,7 +155,7 @@ PHP_METHOD(MongoCollection, getReadPreference)
 PHP_METHOD(MongoCollection, setReadPreference)
 {
 	char *read_preference;
-	int   read_preference_len;
+	int	read_preference_len;
 	mongo_collection *c;
 	HashTable  *tags = NULL;
 
@@ -195,7 +195,7 @@ PHP_METHOD(MongoCollection, validate) {
   mongo_collection *c;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &scan_data) == FAILURE) {
-    return;
+	return;
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
@@ -356,8 +356,8 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   MONGO_METHOD2(MongoCursor, __construct, temp, cursor_z, c->link, cmd_ns_z);
   zval_ptr_dtor(&temp);
   if (EG(exception)) {
-    zval_ptr_dtor(&cmd_ns_z);
-    return 0;
+	zval_ptr_dtor(&cmd_ns_z);
+	return 0;
   }
 
   cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
@@ -380,7 +380,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   zval_ptr_dtor(&cmd_ns_z);
 
   if (FAILURE == response) {
-    return 0;
+	return 0;
   }
 
   return cursor_z;
@@ -456,7 +456,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 static int is_gle_op(zval *options, int default_do_gle TSRMLS_DC)
 {
 	zval **gle_pp = 0, **fsync_pp = 0;
-	int    gle_op = 0;
+	int	gle_op = 0;
 
 	/* First we check for the global (connection string) default */
 	if (default_do_gle != -1) {
@@ -547,7 +547,7 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
 		mongo_cursor_throw(connection, 16 TSRMLS_CC, error_message);
 		connection_deregister_wrapper(manager, connection TSRMLS_CC);
 
-		free(error_message);    
+		free(error_message);
 		cursor->connection = NULL;
 		zval_ptr_dtor(&cursor_z);
 		return;
@@ -559,11 +559,11 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
 
   if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
 	  /* TODO: Figure out what to do on FAIL
-    mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
+	mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
 
-    zval_ptr_dtor(&errmsg);
-    cursor->connection = NULL;
-    zval_ptr_dtor(&cursor_z);
+	zval_ptr_dtor(&errmsg);
+	cursor->connection = NULL;
+	zval_ptr_dtor(&cursor_z);
 		return;
   }
   zval_ptr_dtor(&errmsg);
@@ -573,26 +573,26 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
   MONGO_METHOD(MongoCursor, getNext, return_value, cursor_z);
 
   if (EG(exception) ||
-      (Z_TYPE_P(return_value) ==IS_BOOL && Z_BVAL_P(return_value) == 0)) {
-    cursor->connection = NULL;
-    zval_ptr_dtor(&cursor_z);
+	(Z_TYPE_P(return_value) ==IS_BOOL && Z_BVAL_P(return_value) == 0)) {
+	cursor->connection = NULL;
+	zval_ptr_dtor(&cursor_z);
 		return;
   }
   // w timeout
   else if (zend_hash_find(Z_ARRVAL_P(return_value), "errmsg", strlen("errmsg")+1, (void**)&err) == SUCCESS &&
-      Z_TYPE_PP(err) == IS_STRING) {
-    zval **code;
-    int status = zend_hash_find(Z_ARRVAL_P(return_value), "n", strlen("n")+1, (void**)&code);
+	Z_TYPE_PP(err) == IS_STRING) {
+	zval **code;
+	int status = zend_hash_find(Z_ARRVAL_P(return_value), "n", strlen("n")+1, (void**)&code);
 
 		mongo_cursor_throw(cursor->connection, (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC, Z_STRVAL_PP(err));
 
-    cursor->connection = NULL;
-    zval_ptr_dtor(&cursor_z);
+	cursor->connection = NULL;
+	zval_ptr_dtor(&cursor_z);
 		return;
   }
 
 
-    cursor->connection = NULL;
+	cursor->connection = NULL;
   zval_ptr_dtor(&cursor_z);
 	return;
 }
@@ -606,25 +606,25 @@ PHP_METHOD(MongoCollection, insert) {
 	int retval;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE) {
-    return;
+	return;
   }
 	MUST_BE_ARRAY_OR_OBJECT(1, a);
 
   // old boolean options
   if (options && !IS_SCALAR_P(options)) {
-    zval_add_ref(&options);
+	zval_add_ref(&options);
   }
   else {
-    zval *opts;
-    MAKE_STD_ZVAL(opts);
-    array_init(opts);
+	zval *opts;
+	MAKE_STD_ZVAL(opts);
+	array_init(opts);
 
-    if (options && IS_SCALAR_P(options)) {
-      int safe = Z_BVAL_P(options);
-      add_assoc_bool(opts, "safe", safe);
-    }
+	if (options && IS_SCALAR_P(options)) {
+	int safe = Z_BVAL_P(options);
+	add_assoc_bool(opts, "safe", safe);
+	}
 
-    options = opts;
+	options = opts;
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
@@ -635,9 +635,9 @@ PHP_METHOD(MongoCollection, insert) {
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 	if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a, connection->max_bson_size TSRMLS_CC)) {
-    efree(buf.start);
-    zval_ptr_dtor(&options);
-    RETURN_FALSE;
+	efree(buf.start);
+	zval_ptr_dtor(&options);
+	RETURN_FALSE;
   }
 
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
@@ -657,13 +657,13 @@ PHP_METHOD(MongoCollection, batchInsert) {
   int bit_opts = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|z", &docs, &options) == FAILURE) {
-    return;
+	return;
   }
 
   /*
-   * options are only supported in the new-style, ie: an array of "name parameters":
-   * array("continueOnError" => true);
-   */
+	* options are only supported in the new-style, ie: an array of "name parameters":
+	* array("continueOnError" => true);
+	*/
   if (options) {
 	  zval **continue_on_error = NULL;
 
@@ -680,8 +680,8 @@ PHP_METHOD(MongoCollection, batchInsert) {
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
 	if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), bit_opts, docs, connection->max_bson_size TSRMLS_CC) == FAILURE) {
-    efree(buf.start);
-    return;
+	efree(buf.start);
+	return;
   }
 
 	RETVAL_TRUE;
@@ -699,7 +699,7 @@ PHP_METHOD(MongoCollection, find)
 	mongo_cursor *cursor;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
-    return;
+	return;
   }
 
   MUST_BE_ARRAY_OR_OBJECT(1, query);
@@ -716,13 +716,13 @@ PHP_METHOD(MongoCollection, find)
 	/* TODO: Don't call an internal function like this, but add a new C-level
 	 * function for instantiating cursors */
   if (!query) {
-    MONGO_METHOD2(MongoCursor, __construct, &temp, return_value, c->link, c->ns);
+	MONGO_METHOD2(MongoCursor, __construct, &temp, return_value, c->link, c->ns);
   }
   else if (!fields) {
-    MONGO_METHOD3(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query);
+	MONGO_METHOD3(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query);
   }
   else {
-    MONGO_METHOD4(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query, fields);
+	MONGO_METHOD4(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query, fields);
   }
 }
 
@@ -732,7 +732,7 @@ PHP_METHOD(MongoCollection, findOne) {
   zval *limit = &temp;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
-    return;
+	return;
   }
   MUST_BE_ARRAY_OR_OBJECT(1, query);
   MUST_BE_ARRAY_OR_OBJECT(2, fields);
@@ -750,7 +750,7 @@ PHP_METHOD(MongoCollection, findOne) {
 }
 
 /* {{{ proto array MongoCollection::findAndModify(array query [, array update[, array fields [, array options]]])
-   Atomically update and return a document */
+	Atomically update and return a document */
 PHP_METHOD(MongoCollection, findAndModify)
 {
 	zval *query, *update = 0, *fields = 0, *options = 0;
@@ -818,34 +818,34 @@ PHP_METHOD(MongoCollection, update) {
 	int retval;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &criteria, &newobj, &options) == FAILURE) {
-    return;
+	return;
   }
   MUST_BE_ARRAY_OR_OBJECT(1, criteria);
   MUST_BE_ARRAY_OR_OBJECT(2, newobj);
 
   if (options && !IS_SCALAR_P(options)) {
-    zval **upsert = 0, **multiple = 0;
+	zval **upsert = 0, **multiple = 0;
 
-    zend_hash_find(HASH_P(options), "upsert", strlen("upsert")+1, (void**)&upsert);
-    bit_opts = (upsert ? Z_BVAL_PP(upsert) : 0) << 0;
+	zend_hash_find(HASH_P(options), "upsert", strlen("upsert")+1, (void**)&upsert);
+	bit_opts = (upsert ? Z_BVAL_PP(upsert) : 0) << 0;
 
-    zend_hash_find(HASH_P(options), "multiple", strlen("multiple")+1, (void**)&multiple);
-    bit_opts |= (multiple ? Z_BVAL_PP(multiple) : 0) << 1;
+	zend_hash_find(HASH_P(options), "multiple", strlen("multiple")+1, (void**)&multiple);
+	bit_opts |= (multiple ? Z_BVAL_PP(multiple) : 0) << 1;
 
-    zval_add_ref(&options);
+	zval_add_ref(&options);
   }
   else {
-    zval *opts;
+	zval *opts;
 
-    if (options && IS_SCALAR_P(options)) {
-      zend_bool upsert = options ? Z_BVAL_P(options) : 0;
-      bit_opts = upsert << 0;
-      php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
-    }
+	if (options && IS_SCALAR_P(options)) {
+	zend_bool upsert = options ? Z_BVAL_P(options) : 0;
+	bit_opts = upsert << 0;
+	php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
+	}
 
-    MAKE_STD_ZVAL(opts);
-    array_init(opts);
-    options = opts;
+	MAKE_STD_ZVAL(opts);
+	array_init(opts);
+	options = opts;
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
@@ -857,9 +857,9 @@ PHP_METHOD(MongoCollection, update) {
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, newobj TSRMLS_CC)) {
-    efree(buf.start);
+	efree(buf.start);
 		zval_ptr_dtor(&options);
-    return;
+	return;
   }
 
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
@@ -880,38 +880,38 @@ PHP_METHOD(MongoCollection, remove) {
   	int retval;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &criteria, &options) == FAILURE) {
-    return;
+	return;
   }
   MUST_BE_ARRAY_OR_OBJECT(1, criteria);
 
   if (!criteria) {
-    MAKE_STD_ZVAL(criteria);
-    array_init(criteria);
+	MAKE_STD_ZVAL(criteria);
+	array_init(criteria);
   }
   else {
-    zval_add_ref(&criteria);
+	zval_add_ref(&criteria);
   }
 
   if (options && !IS_SCALAR_P(options)) {
-    zval **just_one;
+	zval **just_one;
 
-    if (zend_hash_find(HASH_P(options), "justOne", strlen("justOne")+1, (void**)&just_one) == SUCCESS) {
-      flags = Z_BVAL_PP(just_one);
-    }
+	if (zend_hash_find(HASH_P(options), "justOne", strlen("justOne")+1, (void**)&just_one) == SUCCESS) {
+	flags = Z_BVAL_PP(just_one);
+	}
 
-    zval_add_ref(&options);
+	zval_add_ref(&options);
   }
   else {
-    zval *opts;
+	zval *opts;
 
-    if (options && IS_SCALAR_P(options)) {
-      php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
-      flags = Z_BVAL_P(options);
-    }
+	if (options && IS_SCALAR_P(options)) {
+	php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
+	flags = Z_BVAL_P(options);
+	}
 
-    MAKE_STD_ZVAL(opts);
-    array_init(opts);
-    options = opts;
+	MAKE_STD_ZVAL(opts);
+	array_init(opts);
+	options = opts;
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
@@ -923,10 +923,10 @@ PHP_METHOD(MongoCollection, remove) {
 
   CREATE_BUF(buf, INITIAL_BUF_SIZE);
   if (FAILURE == php_mongo_write_delete(&buf, Z_STRVAL_P(c->ns), flags, criteria TSRMLS_CC)) {
-    efree(buf.start);
-    zval_ptr_dtor(&options);
-    zval_ptr_dtor(&criteria);
-    return;
+	efree(buf.start);
+	zval_ptr_dtor(&options);
+	zval_ptr_dtor(&criteria);
+	return;
   }
 
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
@@ -945,25 +945,25 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   zend_bool done_name = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &keys, &options) == FAILURE) {
-    return;
+	return;
   }
 
   if (IS_SCALAR_P(keys)) {
-    zval *key_array;
+	zval *key_array;
 
-    convert_to_string(keys);
+	convert_to_string(keys);
 
-    if (Z_STRLEN_P(keys) == 0)
-      return;
+	if (Z_STRLEN_P(keys) == 0)
+	return;
 
-    MAKE_STD_ZVAL(key_array);
-    array_init(key_array);
-    add_assoc_long(key_array, Z_STRVAL_P(keys), 1);
+	MAKE_STD_ZVAL(key_array);
+	array_init(key_array);
+	add_assoc_long(key_array, Z_STRVAL_P(keys), 1);
 
-    keys = key_array;
+	keys = key_array;
   }
   else {
-    zval_add_ref(&keys);
+	zval_add_ref(&keys);
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
@@ -993,69 +993,69 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   // in ye new days, "options" is an array.
   if (options) {
 
-    // old-style
-    if (IS_SCALAR_P(options)) {
-      zval *opts;
-      php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
-      // assumes the person correctly passed in a boolean.  if they passed in a
-      // string or something, it won't work and maybe they'll read the docs
-      add_assoc_bool(data, "unique", Z_BVAL_P(options));
+	// old-style
+	if (IS_SCALAR_P(options)) {
+	zval *opts;
+	php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
+	// assumes the person correctly passed in a boolean.  if they passed in a
+	// string or something, it won't work and maybe they'll read the docs
+	add_assoc_bool(data, "unique", Z_BVAL_P(options));
 
-      MAKE_STD_ZVAL(opts);
-      array_init(opts);
-      options = opts;
-    }
-    // new style
-    else {
-      zval temp, **safe_pp, **fsync_pp, **timeout_pp, **name;
-      zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
+	MAKE_STD_ZVAL(opts);
+	array_init(opts);
+	options = opts;
+	}
+	// new style
+	else {
+	zval temp, **safe_pp, **fsync_pp, **timeout_pp, **name;
+	zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 
-      if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS) {
-        zend_hash_del(HASH_P(data), "safe", strlen("safe")+1);
-      }
-      if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS) {
-        zend_hash_del(HASH_P(data), "fsync", strlen("fsync")+1);
-      }
-      if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_pp) == SUCCESS) {
-        zend_hash_del(HASH_P(data), "timeout", strlen("timeout")+1);
-      }
+	if (zend_hash_find(HASH_P(options), "safe", strlen("safe")+1, (void**)&safe_pp) == SUCCESS) {
+	zend_hash_del(HASH_P(data), "safe", strlen("safe")+1);
+	}
+	if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync")+1, (void**)&fsync_pp) == SUCCESS) {
+	zend_hash_del(HASH_P(data), "fsync", strlen("fsync")+1);
+	}
+	if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout")+1, (void**)&timeout_pp) == SUCCESS) {
+	zend_hash_del(HASH_P(data), "timeout", strlen("timeout")+1);
+	}
 
-      if (zend_hash_find(HASH_P(options), "name", strlen("name")+1, (void**)&name) == SUCCESS) {
-        if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
-          zval_ptr_dtor(&data);
-          zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
-          return;
-        }
-        done_name = 1;
-      }
-      zval_add_ref(&options);
-    }
+	if (zend_hash_find(HASH_P(options), "name", strlen("name")+1, (void**)&name) == SUCCESS) {
+	if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
+	zval_ptr_dtor(&data);
+	zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
+	return;
+	}
+	done_name = 1;
+	}
+	zval_add_ref(&options);
+	}
   }
   else {
-    zval *opts;
-    MAKE_STD_ZVAL(opts);
-    array_init(opts);
-    options = opts;
+	zval *opts;
+	MAKE_STD_ZVAL(opts);
+	array_init(opts);
+	options = opts;
   }
 
   if (!done_name) {
-    // turn keys into a string
-    MAKE_STD_ZVAL(key_str);
-    ZVAL_NULL(key_str);
+	// turn keys into a string
+	MAKE_STD_ZVAL(key_str);
+	ZVAL_NULL(key_str);
 
-    // MongoCollection::toIndexString()
-    MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
+	// MongoCollection::toIndexString()
+	MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
 
-    if (Z_STRLEN_P(key_str) > MAX_INDEX_NAME_LEN) {
-      zval_ptr_dtor(&data);
-      zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_P(key_str), MAX_INDEX_NAME_LEN);
-      zval_ptr_dtor(&key_str);
+	if (Z_STRLEN_P(key_str) > MAX_INDEX_NAME_LEN) {
+	zval_ptr_dtor(&data);
+	zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_P(key_str), MAX_INDEX_NAME_LEN);
+	zval_ptr_dtor(&key_str);
 			zval_ptr_dtor(&options);
-      return;
-    }
+	return;
+	}
 
-    add_assoc_zval(data, "name", key_str);
-    zval_add_ref(&key_str);
+	add_assoc_zval(data, "name", key_str);
+	zval_add_ref(&key_str);
   }
 
   // MongoCollection::insert()
@@ -1068,7 +1068,7 @@ PHP_METHOD(MongoCollection, ensureIndex) {
   zval_ptr_dtor(&keys);
 
   if (!done_name) {
-    zval_ptr_dtor(&key_str);
+	zval_ptr_dtor(&key_str);
   }
 }
 
@@ -1077,7 +1077,7 @@ PHP_METHOD(MongoCollection, deleteIndex) {
   mongo_collection *c;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &keys) == FAILURE) {
-    return;
+	return;
   }
 
   MAKE_STD_ZVAL(key_str);
@@ -1142,11 +1142,11 @@ PHP_METHOD(MongoCollection, getIndexInfo) {
   MONGO_METHOD(MongoCursor, getNext, next, cursor);
   PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
   while (Z_TYPE_P(next) != IS_NULL) {
-    add_next_index_zval(return_value, next);
+	add_next_index_zval(return_value, next);
 
-    MAKE_STD_ZVAL(next);
-    MONGO_METHOD(MongoCursor, getNext, next, cursor);
-    PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
+	MAKE_STD_ZVAL(next);
+	MONGO_METHOD(MongoCursor, getNext, next, cursor);
+	PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
   }
   zval_ptr_dtor(&next);
   zval_ptr_dtor(&cursor);
@@ -1159,7 +1159,7 @@ PHP_METHOD(MongoCollection, count) {
   mongo_collection *c;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zll", &query, &limit, &skip) == FAILURE) {
-    return;
+	return;
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
@@ -1168,14 +1168,14 @@ PHP_METHOD(MongoCollection, count) {
   array_init(data);
   add_assoc_string(data, "count", Z_STRVAL_P(c->name), 1);
   if (query) {
-    add_assoc_zval(data, "query", query);
-    zval_add_ref(&query);
+	add_assoc_zval(data, "query", query);
+	zval_add_ref(&query);
   }
   if (limit) {
-    add_assoc_long(data, "limit", limit);
+	add_assoc_long(data, "limit", limit);
   }
   if (skip) {
-    add_assoc_long(data, "skip", skip);
+	add_assoc_long(data, "skip", skip);
   }
 
   MAKE_STD_ZVAL(response);
@@ -1186,17 +1186,17 @@ PHP_METHOD(MongoCollection, count) {
   zval_ptr_dtor(&data);
 
   if (EG(exception) || Z_TYPE_P(response) != IS_ARRAY) {
-    zval_ptr_dtor(&response);
-    return;
+	zval_ptr_dtor(&response);
+	return;
   }
 
   if (zend_hash_find(HASH_P(response), "n", 2, (void**)&n) == SUCCESS) {
-    convert_to_long(*n);
-    RETVAL_ZVAL(*n, 1, 0);
-    zval_ptr_dtor(&response);
+	convert_to_long(*n);
+	RETVAL_ZVAL(*n, 1, 0);
+	zval_ptr_dtor(&response);
   }
   else {
-    RETURN_ZVAL(response, 0, 0);
+	RETURN_ZVAL(response, 0, 0);
   }
 }
 
@@ -1205,33 +1205,33 @@ PHP_METHOD(MongoCollection, save) {
   zval **id;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &a, &options) == FAILURE) {
-    return;
+	return;
   }
   MUST_BE_ARRAY_OR_OBJECT(1, a);
 
   if (!options) {
-    MAKE_STD_ZVAL(options);
-    array_init(options);
+	MAKE_STD_ZVAL(options);
+	array_init(options);
   }
   else {
-    zval_add_ref(&options);
+	zval_add_ref(&options);
   }
 
   if (zend_hash_find(HASH_P(a), "_id", 4, (void**)&id) == SUCCESS) {
-    zval *criteria;
+	zval *criteria;
 
-    MAKE_STD_ZVAL(criteria);
-    array_init(criteria);
-    add_assoc_zval(criteria, "_id", *id);
-    zval_add_ref(id);
+	MAKE_STD_ZVAL(criteria);
+	array_init(criteria);
+	add_assoc_zval(criteria, "_id", *id);
+	zval_add_ref(id);
 
-    add_assoc_bool(options, "upsert", 1);
+	add_assoc_bool(options, "upsert", 1);
 
-    MONGO_METHOD3(MongoCollection, update, return_value, getThis(), criteria, a, options);
+	MONGO_METHOD3(MongoCollection, update, return_value, getThis(), criteria, a, options);
 
-    zval_ptr_dtor(&criteria);
-    zval_ptr_dtor(&options);
-    return;
+	zval_ptr_dtor(&criteria);
+	zval_ptr_dtor(&options);
+	return;
   }
 
   MONGO_METHOD2(MongoCollection, insert, return_value, getThis(), a, options);
@@ -1243,7 +1243,7 @@ PHP_METHOD(MongoCollection, createDBRef) {
   mongo_collection *c;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &obj) == FAILURE) {
-    return;
+	return;
   }
 
   PHP_MONGO_GET_COLLECTION(getThis());
@@ -1255,7 +1255,7 @@ PHP_METHOD(MongoCollection, getDBRef) {
   mongo_collection *c;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &ref) == FAILURE) {
-    return;
+	return;
   }
   MUST_BE_ARRAY_OR_OBJECT(1, ref);
 
@@ -1266,12 +1266,12 @@ PHP_METHOD(MongoCollection, getDBRef) {
 static char *replace_dots(char *key, int key_len, char *position) {
   int i;
   for (i=0; i<key_len; i++) {
-    if (key[i] == '.') {
-      *(position)++ = '_';
-    }
-    else {
-      *(position)++ = key[i];
-    }
+	if (key[i] == '.') {
+	*(position)++ = '_';
+	}
+	else {
+	*(position)++ = key[i];
+	}
   }
   return position;
 }
@@ -1283,103 +1283,103 @@ PHP_METHOD(MongoCollection, toIndexString) {
   int len = 0;
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zkeys) == FAILURE) {
-    return;
+	return;
   }
 
   if (Z_TYPE_P(zkeys) == IS_ARRAY ||
-      Z_TYPE_P(zkeys) == IS_OBJECT) {
-    HashTable *hindex = HASH_P(zkeys);
-    HashPosition pointer;
-    zval **data;
-    char *key;
-    uint key_len, first = 1, key_type;
-    ulong index;
+	Z_TYPE_P(zkeys) == IS_OBJECT) {
+	HashTable *hindex = HASH_P(zkeys);
+	HashPosition pointer;
+	zval **data;
+	char *key;
+	uint key_len, first = 1, key_type;
+	ulong index;
 
-    for(zend_hash_internal_pointer_reset_ex(hindex, &pointer);
-        zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
-        zend_hash_move_forward_ex(hindex, &pointer)) {
+	for(zend_hash_internal_pointer_reset_ex(hindex, &pointer);
+	zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
+	zend_hash_move_forward_ex(hindex, &pointer)) {
 
-      key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
-      switch (key_type) {
-      case HASH_KEY_IS_STRING: {
-        len += key_len;
+	key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
+	switch (key_type) {
+	case HASH_KEY_IS_STRING: {
+	len += key_len;
 
-        if (Z_TYPE_PP(data) == IS_STRING) {
-          len += Z_STRLEN_PP(data)+1;
-        }
-        else {
-          len += Z_LVAL_PP(data) == 1 ? 2 : 3;
-        }
+	if (Z_TYPE_PP(data) == IS_STRING) {
+	len += Z_STRLEN_PP(data)+1;
+	}
+	else {
+	len += Z_LVAL_PP(data) == 1 ? 2 : 3;
+	}
 
-        break;
-      }
-      case HASH_KEY_IS_LONG:
-        convert_to_string(*data);
+	break;
+	}
+	case HASH_KEY_IS_LONG:
+	convert_to_string(*data);
 
-        len += Z_STRLEN_PP(data);
-        len += 2;
-        break;
-      default:
-        continue;
-      }
-    }
+	len += Z_STRLEN_PP(data);
+	len += 2;
+	break;
+	default:
+	continue;
+	}
+	}
 
-    name = (char*)emalloc(len+1);
-    position = name;
+	name = (char*)emalloc(len+1);
+	position = name;
 
-    for(zend_hash_internal_pointer_reset_ex(hindex, &pointer);
-        zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
-        zend_hash_move_forward_ex(hindex, &pointer)) {
+	for(zend_hash_internal_pointer_reset_ex(hindex, &pointer);
+	zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
+	zend_hash_move_forward_ex(hindex, &pointer)) {
 
-      if (!first) {
-        *(position)++ = '_';
-      }
-      first = 0;
+	if (!first) {
+	*(position)++ = '_';
+	}
+	first = 0;
 
-      key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
+	key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
 
-      if (key_type == HASH_KEY_IS_LONG) {
-        key_len = spprintf(&key, 0, "%ld", index);
-        key_len += 1;
-      }
+	if (key_type == HASH_KEY_IS_LONG) {
+	key_len = spprintf(&key, 0, "%ld", index);
+	key_len += 1;
+	}
 
-      // copy str, replacing '.' with '_'
-      position = replace_dots(key, key_len-1, position);
+	// copy str, replacing '.' with '_'
+	position = replace_dots(key, key_len-1, position);
 
-      *(position)++ = '_';
+	*(position)++ = '_';
 
-      if (Z_TYPE_PP(data) == IS_STRING) {
-        memcpy(position, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
-        position += Z_STRLEN_PP(data);
-      }
-      else {
-        if (Z_LVAL_PP(data) != 1) {
-          *(position)++ = '-';
-        }
-        *(position)++ = '1';
-      }
+	if (Z_TYPE_PP(data) == IS_STRING) {
+	memcpy(position, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+	position += Z_STRLEN_PP(data);
+	}
+	else {
+	if (Z_LVAL_PP(data) != 1) {
+	*(position)++ = '-';
+	}
+	*(position)++ = '1';
+	}
 
-      if (key_type == HASH_KEY_IS_LONG) {
-        efree(key);
-      }
-    }
-    *(position) = 0;
+	if (key_type == HASH_KEY_IS_LONG) {
+	efree(key);
+	}
+	}
+	*(position) = 0;
   }
   else if (Z_TYPE_P(zkeys) == IS_STRING) {
-    int len;
-    convert_to_string(zkeys);
+	int len;
+	convert_to_string(zkeys);
 
-    len = Z_STRLEN_P(zkeys);
+	len = Z_STRLEN_P(zkeys);
 
-    name = (char*)emalloc(len + 3);
-    position = name;
+	name = (char*)emalloc(len + 3);
+	position = name;
 
-    // copy str, replacing '.' with '_'
-    position = replace_dots(Z_STRVAL_P(zkeys), Z_STRLEN_P(zkeys), position);
+	// copy str, replacing '.' with '_'
+	position = replace_dots(Z_STRVAL_P(zkeys), Z_STRLEN_P(zkeys), position);
 
-    *(position)++ = '_';
-    *(position)++ = '1';
-    *(position) = '\0';
+	*(position)++ = '_';
+	*(position)++ = '1';
+	*(position) = '\0';
   }
   else {
 	  php_error_docref(NULL TSRMLS_CC, E_WARNING, "The key needs to be either a string or an array");
@@ -1389,7 +1389,7 @@ PHP_METHOD(MongoCollection, toIndexString) {
 }
 
 /* {{{ proto array MongoCollection::aggregate(array pipeline, [, array op [, ...]])
-   Wrapper for the aggregate runCommand. Either one array of ops (a pipeline), or a variable number of op arguments */
+	Wrapper for the aggregate runCommand. Either one array of ops (a pipeline), or a variable number of op arguments */
 PHP_METHOD(MongoCollection, aggregate)
 {
 	zval ***argv, *pipeline, *data, *tmp;
@@ -1452,47 +1452,47 @@ PHP_METHOD(MongoCollection, aggregate)
  * Returns a list of distinct values for the given key across a collection */
 PHP_METHOD(MongoCollection, distinct)
 {
-    char *key;
-    int key_len;
-    zval *data, **values, *tmp, *query = NULL;
+	char *key;
+	int key_len;
+	zval *data, **values, *tmp, *query = NULL;
 	mongo_collection *c;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &key, &key_len, &query) == FAILURE) {
-        return;
-    }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &key, &key_len, &query) == FAILURE) {
+	return;
+	}
 
 	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
-    MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
 
-    MAKE_STD_ZVAL(data);
-    array_init(data);
+	MAKE_STD_ZVAL(data);
+	array_init(data);
 
-    add_assoc_zval(data, "distinct", c->name);
-    zval_add_ref(&c->name);
-    add_assoc_stringl(data, "key", key, key_len, 1);
+	add_assoc_zval(data, "distinct", c->name);
+	zval_add_ref(&c->name);
+	add_assoc_stringl(data, "key", key, key_len, 1);
 
-    if (query) {
-        add_assoc_zval(data, "query", query);
-        zval_add_ref(&query);
-    }
+	if (query) {
+	add_assoc_zval(data, "query", query);
+	zval_add_ref(&query);
+	}
 
-    MAKE_STD_ZVAL(tmp);
-    MONGO_CMD(tmp, c->parent);
+	MAKE_STD_ZVAL(tmp);
+	MONGO_CMD(tmp, c->parent);
 
-    if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values")+1, (void **)&values) == SUCCESS) {
+	if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values")+1, (void **)&values) == SUCCESS) {
 #ifdef array_init_size
-        array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
+	array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
 #else
-        array_init(return_value);
+	array_init(return_value);
 #endif
-        zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
-    } else {
-        RETVAL_FALSE;
-    }
+	zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+	} else {
+	RETVAL_FALSE;
+	}
 
-    zval_ptr_dtor(&data);
-    zval_ptr_dtor(&tmp);
+	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&tmp);
 }
 /* }}} */
 
@@ -1504,21 +1504,21 @@ PHP_METHOD(MongoCollection, group) {
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|z", &key, &initial, &reduce, &options) == FAILURE) {
-    return;
+	return;
   }
   MUST_BE_ARRAY_OR_OBJECT(4, options);
 
   if (Z_TYPE_P(reduce) == IS_STRING) {
-    zval *code;
-    MAKE_STD_ZVAL(code);
-    object_init_ex(code, mongo_ce_Code);
+	zval *code;
+	MAKE_STD_ZVAL(code);
+	object_init_ex(code, mongo_ce_Code);
 
-    MONGO_METHOD1(MongoCode, __construct, return_value, code, reduce);
+	MONGO_METHOD1(MongoCode, __construct, return_value, code, reduce);
 
-    reduce = code;
+	reduce = code;
   }
   else {
-    zval_add_ref(&reduce);
+	zval_add_ref(&reduce);
   }
 
   MAKE_STD_ZVAL(group);
@@ -1529,39 +1529,39 @@ PHP_METHOD(MongoCollection, group) {
   zval_add_ref(&reduce);
 
   if (Z_TYPE_P(key) == IS_OBJECT && Z_OBJCE_P(key) == mongo_ce_Code) {
-    add_assoc_zval(group, "$keyf", key);
+	add_assoc_zval(group, "$keyf", key);
   }
   else if (!IS_SCALAR_P(key)) {
-    add_assoc_zval(group, "key", key);
+	add_assoc_zval(group, "key", key);
   }
   else {
-    zval_ptr_dtor(&group);
-    zval_ptr_dtor(&reduce);
-    zend_throw_exception(mongo_ce_Exception, "MongoCollection::group takes an array, object, or MongoCode key", 0 TSRMLS_CC);
-    return;
+	zval_ptr_dtor(&group);
+	zval_ptr_dtor(&reduce);
+	zend_throw_exception(mongo_ce_Exception, "MongoCollection::group takes an array, object, or MongoCode key", 0 TSRMLS_CC);
+	return;
   }
   zval_add_ref(&key);
 
   /*
-   * options used to just be "condition" but now can be "condition" or "finalize"
-   */
+	* options used to just be "condition" but now can be "condition" or "finalize"
+	*/
   if (options) {
-    zval **condition = 0, **finalize = 0;
+	zval **condition = 0, **finalize = 0;
 
-    // new case
-    if (zend_hash_find(HASH_P(options), "condition", strlen("condition")+1, (void**)&condition) == SUCCESS) {
-      add_assoc_zval(group, "cond", *condition);
-      zval_add_ref(condition);
-    }
-    if (zend_hash_find(HASH_P(options), "finalize", strlen("finalize")+1, (void**)&finalize) == SUCCESS) {
-      add_assoc_zval(group, "finalize", *finalize);
-      zval_add_ref(finalize);
-    }
-    if (!condition && !finalize) {
-      php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Implicitly passing condition as $options will be removed in the future");
-      add_assoc_zval(group, "cond", options);
-      zval_add_ref(&options);
-    }
+	// new case
+	if (zend_hash_find(HASH_P(options), "condition", strlen("condition")+1, (void**)&condition) == SUCCESS) {
+	add_assoc_zval(group, "cond", *condition);
+	zval_add_ref(condition);
+	}
+	if (zend_hash_find(HASH_P(options), "finalize", strlen("finalize")+1, (void**)&finalize) == SUCCESS) {
+	add_assoc_zval(group, "finalize", *finalize);
+	zval_add_ref(finalize);
+	}
+	if (!condition && !finalize) {
+	php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Implicitly passing condition as $options will be removed in the future");
+	add_assoc_zval(group, "cond", options);
+	zval_add_ref(&options);
+	}
   }
 
   add_assoc_zval(group, "initial", initial);
@@ -1582,26 +1582,26 @@ PHP_METHOD(MongoCollection, group) {
  */
 PHP_METHOD(MongoCollection, __get) {
   /*
-   * this is a little trickier than the getters in Mongo and MongoDB... we need
-   * to combine the current collection name with the parameter passed in, get
-   * the parent db, then select the new collection from it.
-   */
+	* this is a little trickier than the getters in Mongo and MongoDB... we need
+	* to combine the current collection name with the parameter passed in, get
+	* the parent db, then select the new collection from it.
+	*/
   zval *name, *full_name;
   char *full_name_s;
   mongo_collection *c;
   PHP_MONGO_GET_COLLECTION(getThis());
 
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &name) == FAILURE) {
-    return;
+	return;
   }
 
   /*
-   * If this is "db", return the parent database.  This can't actually be a
-   * property of the obj because apache does weird things on object destruction
-   * that will cause the link to be destroyed twice.
-   */
+	* If this is "db", return the parent database.  This can't actually be a
+	* property of the obj because apache does weird things on object destruction
+	* that will cause the link to be destroyed twice.
+	*/
   if (strcmp(Z_STRVAL_P(name), "db") == 0) {
-    RETURN_ZVAL(c->parent, 1, 0);
+	RETURN_ZVAL(c->parent, 1, 0);
   }
 
   spprintf(&full_name_s, 0, "%s.%s", Z_STRVAL_P(c->name), Z_STRVAL_P(name));
@@ -1781,21 +1781,21 @@ static void php_mongo_collection_free(void *object TSRMLS_DC) {
   mongo_collection *c = (mongo_collection*)object;
 
   if (c) {
-    if (c->parent) {
-      zval_ptr_dtor(&c->parent);
-    }
-    if (c->link) {
-      zval_ptr_dtor(&c->link);
-    }
-    if (c->name) {
-      zval_ptr_dtor(&c->name);
-    }
-    if (c->ns) {
-      zval_ptr_dtor(&c->ns);
-    }
+	if (c->parent) {
+	zval_ptr_dtor(&c->parent);
+	}
+	if (c->link) {
+	zval_ptr_dtor(&c->link);
+	}
+	if (c->name) {
+	zval_ptr_dtor(&c->name);
+	}
+	if (c->ns) {
+	zval_ptr_dtor(&c->ns);
+	}
 	mongo_read_preference_dtor(&c->read_pref);
-    zend_object_std_dtor(&c->std TSRMLS_CC);
-    efree(c);
+	zend_object_std_dtor(&c->std TSRMLS_CC);
+	efree(c);
   }
 }
 

@@ -32,34 +32,34 @@ object(MongoCursorTimeoutException)#%d (%d) {
   int(%d)
   ["trace%S:private%S]=>
   array(1) {
-    [0]=>
-    array(6) {
-      ["file"]=>
-      string(%d) "%s"
-      ["line"]=>
-      int(%d)
-      ["function"]=>
-      string(7) "command"
-      ["class"]=>
-      string(7) "MongoDB"
-      ["type"]=>
-      string(2) "->"
-      ["args"]=>
-      array(2) {
-        [0]=>
-        array(2) {
-          ["sleep"]=>
-          bool(true)
-          ["secs"]=>
-          int(2)
-        }
-        [1]=>
-        array(1) {
-          ["timeout"]=>
-          int(1)
-        }
-      }
-    }
+	[0]=>
+	array(6) {
+	["file"]=>
+	string(%d) "%s"
+	["line"]=>
+	int(%d)
+	["function"]=>
+	string(7) "command"
+	["class"]=>
+	string(7) "MongoDB"
+	["type"]=>
+	string(2) "->"
+	["args"]=>
+	array(2) {
+	[0]=>
+	array(2) {
+	["sleep"]=>
+	bool(true)
+	["secs"]=>
+	int(2)
+	}
+	[1]=>
+	array(1) {
+	["timeout"]=>
+	int(1)
+	}
+	}
+	}
   }
   ["previous%S:private%S]=>
   NULL

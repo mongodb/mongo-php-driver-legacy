@@ -11,7 +11,7 @@ $c = $m->selectCollection(dbname(), 'bug627');
 $c->drop();
 
 foreach (range(1,5) as $x) {
-    $c->insert(array('x' => $x));
+	$c->insert(array('x' => $x));
 }
 
 $group = array('$group' => array('_id' => 1, 'count' => array('$sum' => 1)));
@@ -34,13 +34,13 @@ bool(true)
 array(2) {
   ["result"]=>
   array(1) {
-    [0]=>
-    array(2) {
-      ["_id"]=>
-      int(1)
-      ["count"]=>
-      int(5)
-    }
+	[0]=>
+	array(2) {
+	["_id"]=>
+	int(1)
+	["count"]=>
+	int(5)
+	}
   }
   ["ok"]=>
   float(1)

@@ -33,14 +33,14 @@ void mongo_util_hash_copy_to_p(void *pDest) {
 
   switch (Z_TYPE_PP(p)) {
   case IS_STRING: {
-    Z_STRVAL_PP(p) = (char*)malloc(Z_STRLEN_P(temp)+1);
-    memcpy(Z_STRVAL_PP(p), Z_STRVAL_P(temp), Z_STRLEN_P(temp)+1);
-    break;
+	Z_STRVAL_PP(p) = (char*)malloc(Z_STRLEN_P(temp)+1);
+	memcpy(Z_STRVAL_PP(p), Z_STRVAL_P(temp), Z_STRLEN_P(temp)+1);
+	break;
   }
   case IS_ARRAY: {
-    TSRMLS_FETCH();
-    mongo_util_hash_to_pzval(p, &temp TSRMLS_CC);
-    break;
+	TSRMLS_FETCH();
+	mongo_util_hash_to_pzval(p, &temp TSRMLS_CC);
+	break;
   }
   }
 }
@@ -55,13 +55,13 @@ void mongo_util_hash_copy_to_np(void *pDest) {
 
   switch(Z_TYPE_PP(p)) {
   case IS_STRING: {
-    Z_STRVAL_PP(p) = estrndup(Z_STRVAL_P(temp), Z_STRLEN_P(temp));
-    break;
+	Z_STRVAL_PP(p) = estrndup(Z_STRVAL_P(temp), Z_STRLEN_P(temp));
+	break;
   }
   case IS_ARRAY: {
-    TSRMLS_FETCH();
-    mongo_util_hash_to_zval(p, &temp TSRMLS_CC);
-    break;
+	TSRMLS_FETCH();
+	mongo_util_hash_to_zval(p, &temp TSRMLS_CC);
+	break;
   }
   }
 }
@@ -73,7 +73,7 @@ int mongo_util_hash_to_pzval(zval** destination, zval** source TSRMLS_DC) {
   dest = (zval*)malloc(sizeof(zval));
   ht = (HashTable*)malloc(sizeof(HashTable));
   if (!dest || !ht) {
-    return FAILURE;
+	return FAILURE;
   }
 
   // remove timestamp objs from source
@@ -112,7 +112,7 @@ static int remove_objects(void *pDest TSRMLS_DC) {
   switch (Z_TYPE_PP((zval**)pDest)) {
   case IS_OBJECT:
   case IS_ARRAY:
-      return ZEND_HASH_APPLY_REMOVE;
+	return ZEND_HASH_APPLY_REMOVE;
   }
   return ZEND_HASH_APPLY_KEEP;
 }
@@ -125,12 +125,12 @@ void mongo_util_hash_dtor(void *pDest) {
   case IS_DOUBLE:
   case IS_BOOL:
   case IS_STRING:
-    zval_internal_dtor(*elem);
-    break;
+	zval_internal_dtor(*elem);
+	break;
   case IS_ARRAY:
-    zend_hash_destroy(Z_ARRVAL_PP(elem));
-    free(Z_ARRVAL_PP(elem));
-    break;
+	zend_hash_destroy(Z_ARRVAL_PP(elem));
+	free(Z_ARRVAL_PP(elem));
+	break;
   }
   free(*elem);
 }

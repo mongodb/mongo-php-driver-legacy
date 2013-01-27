@@ -9,10 +9,10 @@ require_once dirname(__FILE__) . "/../utils.inc";
 $m = new Mongo("$REPLICASET_SECONDARY:$REPLICASET_SECONDARY_PORT");
 
 try {
-    $c = $m->selectDb(dbname())->test;
-    var_dump($c->findOne());
+	$c = $m->selectDb(dbname())->test;
+	var_dump($c->findOne());
 } catch(Exception $e) {
-    var_dump($e->getMessage());
+	var_dump($e->getMessage());
 }
 
 

@@ -18,7 +18,7 @@
 
 #include "types.h"
 
-#define MONGO_SERVER_COPY_NONE        0x00
+#define MONGO_SERVER_COPY_NONE	0x00
 #define MONGO_SERVER_COPY_CREDENTIALS 0x01
 
 /* Parsing server connection strings and its cleanup routines */
