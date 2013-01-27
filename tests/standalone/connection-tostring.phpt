@@ -7,13 +7,13 @@ Connection strings: toString.
 require_once dirname(__FILE__) . "/../utils.inc";
 
 if (isset($_ENV["MONGO_SERVER"]) && $_ENV["MONGO_SERVER"] == "REPLICASET") {
-    $port = $REPLICASET_PRIMARY_PORT;
+		$port = $REPLICASET_PRIMARY_PORT;
 } else {
-    $port = $STANDALONE_PORT;
+		$port = $STANDALONE_PORT;
 }
 
 if ($port != "27017") {
-    die("skip this tests attempts to connect to the standard port");
+		die("skip this tests attempts to connect to the standard port");
 }
 ?>
 --FILE--
@@ -21,13 +21,13 @@ if ($port != "27017") {
 require_once dirname(__FILE__) . "/../utils.inc";
 
 if (isset($_ENV["MONGO_SERVER"]) && $_ENV["MONGO_SERVER"] == "REPLICASET") {
-    $host = $REPLICASET_PRIMARY;
-    $ip = gethostbyname($host);
-    $port = $REPLICASET_PRIMARY_PORT;
+		$host = $REPLICASET_PRIMARY;
+		$ip = gethostbyname($host);
+		$port = $REPLICASET_PRIMARY_PORT;
 } else {
-    $host = $STANDALONE_HOSTNAME;
-    $ip = gethostbyname($host);
-    $port = $STANDALONE_PORT;
+		$host = $STANDALONE_HOSTNAME;
+		$ip = gethostbyname($host);
+		$port = $STANDALONE_PORT;
 }
 
 $a = new Mongo("$host,$ip", false);

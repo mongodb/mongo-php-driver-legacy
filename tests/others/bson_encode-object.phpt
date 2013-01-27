@@ -25,22 +25,22 @@ var_dump($testValue);
 ?>
 --EXPECTF--
 array(6) {
-  ["int"]=>
-  int(3)
-  ["boolean"]=>
-  bool(true)
-  ["array"]=>
-  array(2) {
-    [0]=>
-    string(3) "foo"
-    [1]=>
-    string(3) "bar"
-  }
-  ["object"]=>
-  array(0) {
-  }
-  ["string"]=>
-  string(4) "test"
-  [3]=>
-  string(4) "test"
+	["int"]=>
+	int(3)
+	["boolean"]=>
+	bool(true)
+	["array"]=>
+	array(2) {
+		[0]=>
+		string(3) "foo"
+		[1]=>
+		string(3) "bar"
+	}
+	["object"]=>
+	array(0) {
+	}
+	["string"]=>
+	string(4) "test"
+	[3]=>
+	string(4) "test"
 }

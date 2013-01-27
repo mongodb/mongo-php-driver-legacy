@@ -10,17 +10,17 @@ $coll = $mongo->selectCollection(dbname(), 'insert');
 $coll->drop();
 
 $documents = array(
-    array('' => 'foo'),
-    array('x' => array('' => 'foo')),
-    array('x' => array('' => 'foo'), 'y' => 'z'),
+		array('' => 'foo'),
+		array('x' => array('' => 'foo')),
+		array('x' => array('' => 'foo'), 'y' => 'z'),
 );
 
 foreach ($documents as $document) {
-    try {
-        $coll->insert($document);
-    } catch (Exception $e) {
-        printf("%s: %d\n", get_class($e), $e->getCode());
-    }
+		try {
+				$coll->insert($document);
+		} catch (Exception $e) {
+				printf("%s: %d\n", get_class($e), $e->getCode());
+		}
 }
 ?>
 --EXPECT--

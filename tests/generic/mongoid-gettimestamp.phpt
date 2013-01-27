@@ -9,12 +9,12 @@ require_once dirname(__FILE__) ."/../utils.inc";
 $m = mongo();
 // Select the DB
 $db = $m->phpunit;
-// Select a collection 
+// Select a collection
 $collection = $db->test;
 
 $collection->drop();
 
-// Add a record 
+// Add a record
 $obj = array("title" => "test1");
 
 $time = time();

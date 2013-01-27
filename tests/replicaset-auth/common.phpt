@@ -8,7 +8,7 @@ require_once dirname(__FILE__) ."/skipif.inc";
 ?>
 --REDIRECTTEST--
 return array(
-    'ENV'   => array("MONGO_SERVER" => "REPLICASET_AUTH"),
-    'TESTS' => "tests/generic",
+		'ENV'	 => array("MONGO_SERVER" => "REPLICASET_AUTH"),
+		'TESTS' => "tests/generic",
 );
 

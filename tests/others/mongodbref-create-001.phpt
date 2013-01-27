@@ -8,8 +8,8 @@ var_dump(MongoDBRef::create('foo', 123));
 ?>
 --EXPECT--
 array(2) {
-  ["$ref"]=>
-  string(3) "foo"
-  ["$id"]=>
-  int(123)
+	["$ref"]=>
+	string(3) "foo"
+	["$id"]=>
+	int(123)
 }

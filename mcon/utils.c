@@ -1,17 +1,17 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *	Copyright 2009-2012 10gen, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *	http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -51,7 +51,7 @@ char *mongo_server_create_hashed_password(char *username, char *password)
 char *mongo_server_create_hash(mongo_server_def *server_def)
 {
 	char *tmp, *hash;
-	int   size = 0;
+	int	 size = 0;
 
 	/* Host (string) and port (max 5 digits) + 2 separators */
 	size += strlen(server_def->host) + 1 + 5 + 1;
@@ -175,7 +175,7 @@ int mongo_server_hash_to_pid(char *hash)
 
 /* Forward declaration for the MD5 algorithm */
 typedef unsigned int MD5_u32plus;
- 
+
 typedef struct {
 	MD5_u32plus lo, hi;
 	MD5_u32plus a, b, c, d;
@@ -190,19 +190,19 @@ static void MD5_Final(unsigned char *result, MD5_CTX *ctx);
 /* Convience function around the MD5 implementation */
 char *mongo_util_md5_hex(char *hash, int hash_length)
 {
-	MD5_CTX           md5ctx;
-	unsigned char     digest[16];
+	MD5_CTX					 md5ctx;
+	unsigned char		 digest[16];
 	static const char hexits[17] = "0123456789abcdef";
-	char              md5str[33];
-	int               i;
+	char							md5str[33];
+	int							 i;
 
 	MD5_Init(&md5ctx);
 	MD5_Update(&md5ctx, hash, hash_length);
 	MD5_Final(digest, &md5ctx);
 
 	for (i = 0; i < 16; i++) {
-		md5str[i * 2]       = hexits[digest[i] >> 4];
-		md5str[(i * 2) + 1] = hexits[digest[i] &  0x0F];
+		md5str[i * 2]			 = hexits[digest[i] >> 4];
+		md5str[(i * 2) + 1] = hexits[digest[i] &	0x0F];
 	}
 	md5str[16 * 2] = '\0';
 
@@ -220,7 +220,7 @@ char *mongo_util_md5_hex(char *hash, int hash_length)
  * Author:
  * Alexander Peslyak, better known as Solar Designer <solar at openwall.com>
  *
- * This software was written by Alexander Peslyak in 2001.  No copyright is
+ * This software was written by Alexander Peslyak in 2001.	No copyright is
  * claimed, and the software is hereby placed in the public domain.
  * In case this attempt to disclaim copyright and place the software in the
  * public domain is deemed null and void, then the software is
@@ -237,16 +237,16 @@ char *mongo_util_md5_hex(char *hash, int hash_length)
  * This differs from Colin Plumb's older public domain implementation in that
  * no exactly 32-bit integer data type is required (any 32-bit or wider
  * unsigned integer data type will do), there's no compile-time endianness
- * configuration, and the function prototypes match OpenSSL's.  No code from
+ * configuration, and the function prototypes match OpenSSL's.	No code from
  * Colin Plumb's implementation has been reused; this comment merely compares
  * the properties of the two independent implementations.
  *
  * The primary goals of this implementation are portability and ease of use.
- * It is meant to be fast, but not as fast as possible.  Some known
+ * It is meant to be fast, but not as fast as possible.	Some known
  * optimizations are not included to reduce source code size and avoid
  * compile-time configuration.
  */
- 
+
 /*
  * The basic MD5 functions.
  *
@@ -258,7 +258,7 @@ char *mongo_util_md5_hex(char *hash, int hash_length)
 #define G(x, y, z)			((y) ^ ((z) & ((x) ^ (y))))
 #define H(x, y, z)			((x) ^ (y) ^ (z))
 #define I(x, y, z)			((y) ^ ((x) | ~(z)))
- 
+
 /*
  * The MD5 transformation for all four rounds.
  */
@@ -266,13 +266,13 @@ char *mongo_util_md5_hex(char *hash, int hash_length)
 	(a) += f((b), (c), (d)) + (x) + (t); \
 	(a) = (((a) << (s)) | (((a) & 0xffffffff) >> (32 - (s)))); \
 	(a) += (b);
- 
+
 /*
  * SET reads 4 input bytes in little-endian byte order and stores them
  * in a properly aligned word in host byte order.
  *
  * The check for little-endian architectures that tolerate unaligned
- * memory accesses is just an optimization.  Nothing will break if it
+ * memory accesses is just an optimization.	Nothing will break if it
  * doesn't work.
  */
 #if defined(__i386__) || defined(__x86_64__) || defined(__vax__)
@@ -290,30 +290,30 @@ char *mongo_util_md5_hex(char *hash, int hash_length)
 #define GET(n) \
 	(ctx->block[(n)])
 #endif
- 
+
 /*
  * This processes one or more 64-byte data blocks, but does NOT update
- * the bit counters.  There are no alignment requirements.
+ * the bit counters.	There are no alignment requirements.
  */
 static void *body(MD5_CTX *ctx, void *data, unsigned long size)
 {
 	unsigned char *ptr;
 	MD5_u32plus a, b, c, d;
 	MD5_u32plus saved_a, saved_b, saved_c, saved_d;
- 
+
 	ptr = data;
- 
+
 	a = ctx->a;
 	b = ctx->b;
 	c = ctx->c;
 	d = ctx->d;
- 
+
 	do {
 		saved_a = a;
 		saved_b = b;
 		saved_c = c;
 		saved_d = d;
- 
+
 /* Round 1 */
 		STEP(F, a, b, c, d, SET(0), 0xd76aa478, 7)
 		STEP(F, d, a, b, c, SET(1), 0xe8c7b756, 12)
@@ -331,7 +331,7 @@ static void *body(MD5_CTX *ctx, void *data, unsigned long size)
 		STEP(F, d, a, b, c, SET(13), 0xfd987193, 12)
 		STEP(F, c, d, a, b, SET(14), 0xa679438e, 17)
 		STEP(F, b, c, d, a, SET(15), 0x49b40821, 22)
- 
+
 /* Round 2 */
 		STEP(G, a, b, c, d, GET(1), 0xf61e2562, 5)
 		STEP(G, d, a, b, c, GET(6), 0xc040b340, 9)
@@ -349,7 +349,7 @@ static void *body(MD5_CTX *ctx, void *data, unsigned long size)
 		STEP(G, d, a, b, c, GET(2), 0xfcefa3f8, 9)
 		STEP(G, c, d, a, b, GET(7), 0x676f02d9, 14)
 		STEP(G, b, c, d, a, GET(12), 0x8d2a4c8a, 20)
- 
+
 /* Round 3 */
 		STEP(H, a, b, c, d, GET(5), 0xfffa3942, 4)
 		STEP(H, d, a, b, c, GET(8), 0x8771f681, 11)
@@ -367,7 +367,7 @@ static void *body(MD5_CTX *ctx, void *data, unsigned long size)
 		STEP(H, d, a, b, c, GET(12), 0xe6db99e5, 11)
 		STEP(H, c, d, a, b, GET(15), 0x1fa27cf8, 16)
 		STEP(H, b, c, d, a, GET(2), 0xc4ac5665, 23)
- 
+
 /* Round 4 */
 		STEP(I, a, b, c, d, GET(0), 0xf4292244, 6)
 		STEP(I, d, a, b, c, GET(7), 0x432aff97, 10)
@@ -385,87 +385,87 @@ static void *body(MD5_CTX *ctx, void *data, unsigned long size)
 		STEP(I, d, a, b, c, GET(11), 0xbd3af235, 10)
 		STEP(I, c, d, a, b, GET(2), 0x2ad7d2bb, 15)
 		STEP(I, b, c, d, a, GET(9), 0xeb86d391, 21)
- 
+
 		a += saved_a;
 		b += saved_b;
 		c += saved_c;
 		d += saved_d;
- 
+
 		ptr += 64;
 	} while (size -= 64);
- 
+
 	ctx->a = a;
 	ctx->b = b;
 	ctx->c = c;
 	ctx->d = d;
- 
+
 	return ptr;
 }
- 
+
 static void MD5_Init(MD5_CTX *ctx)
 {
 	ctx->a = 0x67452301;
 	ctx->b = 0xefcdab89;
 	ctx->c = 0x98badcfe;
 	ctx->d = 0x10325476;
- 
+
 	ctx->lo = 0;
 	ctx->hi = 0;
 }
- 
+
 static void MD5_Update(MD5_CTX *ctx, void *data, unsigned long size)
 {
 	MD5_u32plus saved_lo;
 	unsigned long used, free;
- 
+
 	saved_lo = ctx->lo;
 	if ((ctx->lo = (saved_lo + size) & 0x1fffffff) < saved_lo)
 		ctx->hi++;
 	ctx->hi += size >> 29;
- 
+
 	used = saved_lo & 0x3f;
- 
+
 	if (used) {
 		free = 64 - used;
- 
+
 		if (size < free) {
 			memcpy(&ctx->buffer[used], data, size);
 			return;
 		}
- 
+
 		memcpy(&ctx->buffer[used], data, free);
 		data = (unsigned char *)data + free;
 		size -= free;
 		body(ctx, ctx->buffer, 64);
 	}
- 
+
 	if (size >= 64) {
 		data = body(ctx, data, size & ~(unsigned long)0x3f);
 		size &= 0x3f;
 	}
- 
+
 	memcpy(ctx->buffer, data, size);
 }
- 
+
 static void MD5_Final(unsigned char *result, MD5_CTX *ctx)
 {
 	unsigned long used, free;
- 
+
 	used = ctx->lo & 0x3f;
- 
+
 	ctx->buffer[used++] = 0x80;
- 
+
 	free = 64 - used;
- 
+
 	if (free < 8) {
 		memset(&ctx->buffer[used], 0, free);
 		body(ctx, ctx->buffer, 64);
 		used = 0;
 		free = 64;
 	}
- 
+
 	memset(&ctx->buffer[used], 0, free - 8);
- 
+
 	ctx->lo <<= 3;
 	ctx->buffer[56] = ctx->lo;
 	ctx->buffer[57] = ctx->lo >> 8;
@@ -475,9 +475,9 @@ static void MD5_Final(unsigned char *result, MD5_CTX *ctx)
 	ctx->buffer[61] = ctx->hi >> 8;
 	ctx->buffer[62] = ctx->hi >> 16;
 	ctx->buffer[63] = ctx->hi >> 24;
- 
+
 	body(ctx, ctx->buffer, 64);
- 
+
 	result[0] = ctx->a;
 	result[1] = ctx->a >> 8;
 	result[2] = ctx->a >> 16;
@@ -494,30 +494,30 @@ static void MD5_Final(unsigned char *result, MD5_CTX *ctx)
 	result[13] = ctx->d >> 8;
 	result[14] = ctx->d >> 16;
 	result[15] = ctx->d >> 24;
- 
+
 	memset(ctx, 0, sizeof(*ctx));
 }
 
 /*
  * Copyright (c) 1988, 1993
- *      The Regents of the University of California.  All rights reserved.
+ *			The Regents of the University of California.	All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *		notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *		notice, this list of conditions and the following disclaimer in the
+ *		documentation and/or other materials provided with the distribution.
  * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *		may be used to endorse or promote products derived from this software
+ *		without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.	IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)

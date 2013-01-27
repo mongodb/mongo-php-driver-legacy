@@ -9,10 +9,10 @@ $mongo = mongo();
 $db = $mongo->selectDB(dbname());
 
 try {
-    $gridfs = new MongoGridFS($db, null);
-    var_dump(false);
+		$gridfs = new MongoGridFS($db, null);
+		var_dump(false);
 } catch (Exception $e) {
-    var_dump($e->getMessage(), $e->getCode());
+		var_dump($e->getMessage(), $e->getCode());
 }
 --EXPECT--
 string(42) "MongoGridFS::__construct(): invalid prefix"

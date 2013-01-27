@@ -1,17 +1,17 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *	Copyright 2009-2012 10gen, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *	http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -35,7 +35,7 @@
 static int authenticate_connection(mongo_con_manager *manager, mongo_connection *con, char *database, char *username, char *password, char **error_message)
 {
 	char *nonce;
-	int   retval = 0;
+	int	 retval = 0;
 
 	nonce = mongo_connection_getnonce(manager, con, error_message);
 	if (!nonce) {
@@ -104,7 +104,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	int nr_hosts;
 	char **found_hosts = NULL;
 	char *tmp_hash;
-	int   res;
+	int	 res;
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
@@ -116,7 +116,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 			free(hash);
 			continue;
 		}
-		
+
 		res = mongo_connection_ismaster(manager, con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
 		switch (res) {
 			case 0:
@@ -155,7 +155,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					tmp_def->db = servers->server[i]->db ? strdup(servers->server[i]->db) : NULL;
 					tmp_def->host = mcon_strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
 					tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
-					
+
 					/* Create a hash so that we can check whether we already have a
 					 * connection for this server definition. If we don't create
 					 * the connection, register it (done in
@@ -201,8 +201,8 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 {
 	mongo_connection *con = NULL;
 	mongo_connection *tmp;
-	mcon_collection  *collection;
-	char             *con_error_message = NULL;
+	mcon_collection	*collection;
+	char						 *con_error_message = NULL;
 	int i;
 	int found_connected_server = 0;
 
@@ -241,7 +241,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	}
 	if (collection->count == 0) {
 		*error_message = strdup("No candidate servers found");
-		mcon_collection_free(collection);	
+		mcon_collection_free(collection);
 		return NULL;
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
@@ -249,7 +249,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	con = mongo_pick_server_from_set(manager, collection, &servers->read_pref);
 
 	/* Cleaning up */
-	mcon_collection_free(collection);	
+	mcon_collection_free(collection);
 	return con;
 }
 
@@ -258,12 +258,12 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 {
 	mongo_connection *con = NULL;
 	mongo_connection *tmp;
-	mcon_collection  *collection = NULL;
-	char             *con_error_message = NULL;
+	mcon_collection	*collection = NULL;
+	char						 *con_error_message = NULL;
 	mongo_read_preference tmp_rp; /* We only support NEAREST for MULTIPLE right now */
 	int i;
 	int found_connected_server = 0;
-	mcon_str         *messages;
+	mcon_str				 *messages;
 
 	mcon_str_ptr_init(messages);
 
@@ -294,7 +294,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 	/* When selecting a *mongos* node, readPreferences make no sense as we
 	 * don't have a "primary" or "secondary" mongos. The mongos nodes aren't
-	 * tagged either.  To pick a mongos we therefore simply pick the "nearest"
+	 * tagged either.	To pick a mongos we therefore simply pick the "nearest"
 	 * mongos node. */
 	tmp_rp.type = MONGO_RP_NEAREST;
 	tmp_rp.tagsets = NULL;
@@ -316,7 +316,7 @@ bailout:
 	/* Cleaning up */
 	mcon_str_ptr_dtor(messages);
 	if (collection) {
-		mcon_collection_free(collection);	
+		mcon_collection_free(collection);
 	}
 	return con;
 }
@@ -377,7 +377,7 @@ mongo_connection *mongo_get_read_write_connection_with_callback(mongo_con_manage
 {
 	mongo_connection *connection;
 	mongo_connection_deregister_callback *cb;
-	
+
 	connection = mongo_get_read_write_connection(manager, servers, connection_flags, error_message);
 
 	if (!connection) {
@@ -525,8 +525,8 @@ void mongo_log_null(int module, int level, void *context, char *format, va_list 
 /* Log handler which uses printf */
 void mongo_log_printf(int module, int level, void *context, char *format, va_list arg)
 {
-	va_list  tmp;
-	char    *message;
+	va_list	tmp;
+	char		*message;
 
 	message = malloc(1024);
 

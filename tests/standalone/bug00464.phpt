@@ -16,24 +16,24 @@ var_dump($m, $m->connected);
 ?>
 --EXPECTF--
 object(Mongo)#%d (%d) {
-  ["connected"]=>
-  bool(false)
-  ["status"]=>
-  NULL
-  ["server":protected]=>
-  NULL
-  ["persistent":protected]=>
-  NULL
+	["connected"]=>
+	bool(false)
+	["status"]=>
+	NULL
+	["server":protected]=>
+	NULL
+	["persistent":protected]=>
+	NULL
 }
 bool(false)
 object(Mongo)#%d (%d) {
-  ["connected"]=>
-  bool(true)
-  ["status"]=>
-  NULL
-  ["server":protected]=>
-  NULL
-  ["persistent":protected]=>
-  NULL
+	["connected"]=>
+	bool(true)
+	["status"]=>
+	NULL
+	["server":protected]=>
+	NULL
+	["persistent":protected]=>
+	NULL
 }
 bool(true)

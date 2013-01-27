@@ -1,17 +1,17 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *	Copyright 2009-2012 10gen, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *	http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
  */
 #ifndef PHP_BSON_H
 #define PHP_BSON_H 1
@@ -20,33 +20,33 @@
 #define OID_SIZE 12
 
 /* BSON type constants from http://bsonspec.org/#/specification */
-#define BSON_DOUBLE    0x01
-#define BSON_STRING    0x02
-#define BSON_OBJECT    0x03
-#define BSON_ARRAY     0x04
-#define BSON_BINARY    0x05
-#define BSON_UNDEF     0x06
-#define BSON_OID       0x07
-#define BSON_BOOL      0x08
-#define BSON_DATE      0x09
-#define BSON_NULL      0x0A
-#define BSON_REGEX     0x0B
-#define BSON_DBREF     0x0C
-#define BSON_CODE__D   0x0D
-#define BSON_SYMBOL    0x0E
-#define BSON_CODE      0x0F
-#define BSON_INT       0x10
+#define BSON_DOUBLE		0x01
+#define BSON_STRING		0x02
+#define BSON_OBJECT		0x03
+#define BSON_ARRAY		 0x04
+#define BSON_BINARY		0x05
+#define BSON_UNDEF		 0x06
+#define BSON_OID			 0x07
+#define BSON_BOOL			0x08
+#define BSON_DATE			0x09
+#define BSON_NULL			0x0A
+#define BSON_REGEX		 0x0B
+#define BSON_DBREF		 0x0C
+#define BSON_CODE__D	 0x0D
+#define BSON_SYMBOL		0x0E
+#define BSON_CODE			0x0F
+#define BSON_INT			 0x10
 #define BSON_TIMESTAMP 0x11
-#define BSON_LONG      0x12
-#define BSON_MINKEY    0xFF
-#define BSON_MAXKEY    0x7F
+#define BSON_LONG			0x12
+#define BSON_MINKEY		0xFF
+#define BSON_MAXKEY		0x7F
 
 #define GROW_SLOWLY 1048576
 #define INVALID_STRING_LEN(len) (len < 0 || len > (64*1024*1024))
 
-#define CREATE_BUF_STATIC(n) char b[n];         \
-  buf.start = buf.pos = b;                      \
-  buf.end = b+n;
+#define CREATE_BUF_STATIC(n) char b[n];				 \
+	buf.start = buf.pos = b;											\
+	buf.end = b+n;
 
 int php_mongo_serialize_size(char *start, buffer *buf TSRMLS_DC);
 
@@ -96,7 +96,7 @@ char* bson_to_zval(char*, HashTable* TSRMLS_DC);
 void mongo_buf_init(char *dest);
 
 /**
- * Takes a buffer and a string to add to the buffer.  The buffer must be large
+ * Takes a buffer and a string to add to the buffer.	The buffer must be large
  * enough to append the string and the string must be null-terminated. This will
  * not work for strings containing null characters (e.g., BSON).
  */

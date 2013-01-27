@@ -5,7 +5,7 @@ Test for PHP-616: GridFS: deleting files by ID
 --FILE--
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
-    $m = mongo("phpunit");
+		$m = mongo("phpunit");
 	$mdb = $m->selectDB("phpunit");
 	$mdb->dropCollection("fs.files");
 	$mdb->dropCollection("fs.chunks");
@@ -36,7 +36,7 @@ require_once dirname(__FILE__) . "/../utils.inc";
 
 		echo "\n";
 	}
-    unlink($temporary_file_name);
+		unlink($temporary_file_name);
 ?>
 --EXPECTF--
 Using ID:string(5) "file0"
@@ -52,17 +52,17 @@ Items in DB: 1
 Items in DB: 0
 
 Using ID:object(MongoId)#%d (1) {
-  ["$id"]=>
-  string(24) "%s"
+	["$id"]=>
+	string(24) "%s"
 }
 Items in DB: 1
 Items in DB: 0
 
 Using ID:array(2) {
-  [0]=>
-  string(1) "a"
-  ["b"]=>
-  int(5)
+	[0]=>
+	string(1) "a"
+	["b"]=>
+	int(5)
 }
 Items in DB: 1
 Items in DB: 0

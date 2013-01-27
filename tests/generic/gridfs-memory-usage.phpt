@@ -6,7 +6,7 @@ GridFS: Testing memory usage
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
 $conn = Mongo();
-$db   = $conn->selectDb('phpunit');
+$db	 = $conn->selectDb('phpunit');
 $grid = $db->getGridFs('wrapper');
 
 // delete any previous results
@@ -15,7 +15,7 @@ $grid->drop();
 // dummy file
 $bytes = "";
 for ($i=0; $i < 200*1024; $i++) {
-    $bytes .= sha1(rand(1, 1000000000));
+		$bytes .= sha1(rand(1, 1000000000));
 }
 $grid->storeBytes($bytes, array("filename" => "demo.txt"), array('safe' => true));
 
@@ -31,7 +31,7 @@ $memory = memory_get_usage();
 $tmp = "";
 $i=0;
 while (!feof($fp)) {
-    $tmp .= ($t=fread($fp, rand(1024,8024)));
+		$tmp .= ($t=fread($fp, rand(1024,8024)));
 }
 var_dump($bytes === $tmp);
 

@@ -7,7 +7,7 @@ MongoDB::setReadPreference/MongoCollection::getReadPreference [2]
 <?php
 $host = hostname();
 $port = port();
-$db   = dbname();
+$db	 = dbname();
 
 $baseString = sprintf("mongodb://%s:%d/%s?readPreference=secondaryPreferred", $host, $port, $db);
 
@@ -26,10 +26,10 @@ var_dump($c->getReadPreference());
 ?>
 --EXPECT--
 array(1) {
-  ["type"]=>
-  string(16) "primaryPreferred"
+	["type"]=>
+	string(16) "primaryPreferred"
 }
 array(1) {
-  ["type"]=>
-  string(18) "secondaryPreferred"
+	["type"]=>
+	string(18) "secondaryPreferred"
 }

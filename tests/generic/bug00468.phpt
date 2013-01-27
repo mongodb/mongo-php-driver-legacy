@@ -12,9 +12,9 @@ $grid = $m->selectDB(dbname())->getGridFS();
 $id = $grid->storeBytes('foo');
 $file = $grid->get($id);
 try {
-    $file->write();
+		$file->write();
 } catch(MongoGridFSException $e) {
-    var_dump($e->getMessage(), $e->getCode());
+		var_dump($e->getMessage(), $e->getCode());
 }
 ?>
 --EXPECTF--

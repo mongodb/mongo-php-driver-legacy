@@ -8,12 +8,12 @@ error_reporting=-1
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
 $rp = array(
-    "replicaSet"         => "RS",
-    "connect"            => false,
-    "readPreference"     => MongoClient::RP_PRIMARY_PREFERRED,
-    "readPreferenceTags" => array("dc:ny,important:B", "dc:sf", ""),
-    "w"                  => "default",
-    "wtimeout"           => 200,
+		"replicaSet"				 => "RS",
+		"connect"						=> false,
+		"readPreference"		 => MongoClient::RP_PRIMARY_PREFERRED,
+		"readPreferenceTags" => array("dc:ny,important:B", "dc:sf", ""),
+		"w"									=> "default",
+		"wtimeout"					 => 200,
 );
 printLogs(MongoLog::PARSE, MongoLog::INFO);
 

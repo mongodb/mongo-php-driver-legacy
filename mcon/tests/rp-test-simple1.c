@@ -50,7 +50,7 @@ int main(void)
 	}
 
 	/* Cleaning up */
-	mcon_collection_free(collection);	
+	mcon_collection_free(collection);
 	mongo_deinit(manager);
 
 	return 0;

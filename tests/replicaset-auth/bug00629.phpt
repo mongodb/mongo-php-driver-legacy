@@ -7,11 +7,11 @@ Test for PHP-629
 require_once dirname(__FILE__) . "/../utils.inc";
 
 $options = array(
-        'connect'    => true,
-        'timeout'    => 5000,
-        'replicaSet' => rsname(),
-        'username'   => username("admin"),
-        'password'   => password("admin"),
+				'connect'		=> true,
+				'timeout'		=> 5000,
+				'replicaSet' => rsname(),
+				'username'	 => username("admin"),
+				'password'	 => password("admin"),
 );
 
 $mongoDbClient = new MongoClient('mongodb://' . hostname(), $options);
@@ -23,9 +23,9 @@ var_dump($response);
 ?>
 --EXPECTF--
 array(2) {
-  ["retval"]=>
-  string(%s) "%s"
-  ["ok"]=>
-  float(1)
+	["retval"]=>
+	string(%s) "%s"
+	["ok"]=>
+	float(1)
 }
 

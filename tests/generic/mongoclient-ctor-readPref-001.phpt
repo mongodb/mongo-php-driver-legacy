@@ -7,7 +7,7 @@ Connection strings: read preferences [1]
 <?php
 $host = hostname();
 $port = port();
-$db   = dbname();
+$db	 = dbname();
 
 $baseString = sprintf("mongodb://%s:%d/%s?readPreference=", $host, $port, $db);
 
@@ -43,4 +43,4 @@ Fatal error: Uncaught exception 'MongoConnectionException' with message 'The rea
 Stack trace:
 #0 %smongoclient-ctor-readPref-001.php(%d): Mongo->__construct('%s')
 #1 {main}
-  thrown in %smongoclient-ctor-readPref-001.php on line %d
+	thrown in %smongoclient-ctor-readPref-001.php on line %d

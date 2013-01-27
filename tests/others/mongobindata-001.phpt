@@ -14,12 +14,12 @@ error_reporting(E_ALL);
 $numNotices = 0;
 
 function handleNotice($errno, $errstr) {
-    global $numNotices;
-    ++$numNotices;
+		global $numNotices;
+		++$numNotices;
 }
 
 if (!defined("E_DEPRECATED")) {
-    define("E_DEPRECATED", E_STRICT);
+		define("E_DEPRECATED", E_STRICT);
 }
 set_error_handler('handleNotice', E_DEPRECATED);
 

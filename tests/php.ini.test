@@ -4,7 +4,7 @@
 extension=mongo.so
 error_reporting = E_STRICT | E_ALL
 
-;; If you are using PHP 5.3, the timezone must also be set.  Change to whatever
+;; If you are using PHP 5.3, the timezone must also be set.	Change to whatever
 ;; your local timezone is.
 date.timezone = America/New_York
 

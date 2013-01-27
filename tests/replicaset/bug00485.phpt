@@ -25,22 +25,22 @@ echo "DONE\n";
 ?>
 --EXPECTF--
 array(6) {
-  ["updatedExisting"]=>
-  bool(true)
-  ["n"]=>
-  int(1)
-  ["lastOp"]=>
-  object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
-  }
-  ["connectionId"]=>
-  int(%d)
-  ["err"]=>
-  NULL
-  ["ok"]=>
-  float(1)
+	["updatedExisting"]=>
+	bool(true)
+	["n"]=>
+	int(1)
+	["lastOp"]=>
+	object(MongoTimestamp)#%d (2) {
+		["sec"]=>
+		int(%d)
+		["inc"]=>
+		int(%d)
+	}
+	["connectionId"]=>
+	int(%d)
+	["err"]=>
+	NULL
+	["ok"]=>
+	float(1)
 }
 DONE

@@ -29,45 +29,45 @@ var_dump( $c->insert( array( 'test' => 'two' ), array( 'w' => 1 ) ) );
 --EXPECTF--
 bool(true)
 array(4) {
-  ["n"]=>
-  int(0)
-  ["connectionId"]=>
-  int(%d)
-  ["err"]=>
-  NULL
-  ["ok"]=>
-  float(1)
+	["n"]=>
+	int(0)
+	["connectionId"]=>
+	int(%d)
+	["err"]=>
+	NULL
+	["ok"]=>
+	float(1)
 }
 bool(true)
 bool(true)
 array(4) {
-  ["n"]=>
-  int(0)
-  ["connectionId"]=>
-  int(%d)
-  ["err"]=>
-  NULL
-  ["ok"]=>
-  float(1)
+	["n"]=>
+	int(0)
+	["connectionId"]=>
+	int(%d)
+	["err"]=>
+	NULL
+	["ok"]=>
+	float(1)
 }
 array(4) {
-  ["n"]=>
-  int(0)
-  ["connectionId"]=>
-  int(%d)
-  ["err"]=>
-  NULL
-  ["ok"]=>
-  float(1)
+	["n"]=>
+	int(0)
+	["connectionId"]=>
+	int(%d)
+	["err"]=>
+	NULL
+	["ok"]=>
+	float(1)
 }
 bool(true)
 array(4) {
-  ["n"]=>
-  int(0)
-  ["connectionId"]=>
-  int(%d)
-  ["err"]=>
-  NULL
-  ["ok"]=>
-  float(1)
+	["n"]=>
+	int(0)
+	["connectionId"]=>
+	int(%d)
+	["err"]=>
+	NULL
+	["ok"]=>
+	float(1)
 }

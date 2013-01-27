@@ -19,11 +19,11 @@ $coll->insert(array('x' => false));
 $cursor = $coll->find()->sort(array('x' => 1));
 
 foreach ($cursor as $result) {
-    if (is_object($result['x'])) {
-        echo get_class($result['x']) . "\n";
-    } else {
-        echo json_encode($result['x']) . "\n";
-    }
+		if (is_object($result['x'])) {
+				echo get_class($result['x']) . "\n";
+		} else {
+				echo json_encode($result['x']) . "\n";
+		}
 }
 ?>
 --EXPECT--

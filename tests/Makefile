@@ -1,13 +1,13 @@
 CC = gcc
 PHP_PATH = $(HOME)/php/php-5.3.3/install
-INCLUDES = -I./ -I../ -I$(PHP_PATH)/include/php -I$(PHP_PATH)/include/php/main -I$(PHP_PATH)/include/php/TSRM -I$(PHP_PATH)/include/php/Zend 
+INCLUDES = -I./ -I../ -I$(PHP_PATH)/include/php -I$(PHP_PATH)/include/php/main -I$(PHP_PATH)/include/php/TSRM -I$(PHP_PATH)/include/php/Zend
 TEST_OBJS = build/unit.o build/mongo.o build/bson.o build/db.o build/collection.o build/cursor.o build/gridfs.o build/mongo_types.o build/util/hash.o build/util/pool.o build/util/connect.o build/util/link.o build/util/rs.o build/lib/test_mongo.o build/lib/test_pool.o
-LIB_PATH = -L$(PHP_PATH)/lib 
+LIB_PATH = -L$(PHP_PATH)/lib
 LIBS = -lphp5
 BINARY = unit
 
 all: prereqs $(TEST_OBJS)
-	$(CC) $(LIB_PATH) $(LIBS) -o $(BINARY) $(TEST_OBJS) 
+	$(CC) $(LIB_PATH) $(LIBS) -o $(BINARY) $(TEST_OBJS)
 
 prereqs:
 	shtool mkdir -p ./build/util ./build/lib

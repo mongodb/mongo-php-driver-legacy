@@ -6,7 +6,7 @@ GridFS: Testing minor memory issue
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
 $conn = Mongo();
-$db   = $conn->phpunit;
+$db	 = $conn->phpunit;
 
 $grid = $db->getGridFS();
 

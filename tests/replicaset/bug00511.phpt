@@ -5,7 +5,7 @@ Test for PHP-511: Setting slaveOkay on MongoDB doesn't get passed properly to Mo
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
 --FILE--
 <?php
-$mentions = array(); 
+$mentions = array();
 require_once dirname(__FILE__) . "/../utils.inc";
 
 $m = mongo();
@@ -22,11 +22,11 @@ $mentions = array();
 $ret = $db->safe->find(array("doc" => 1));
 iterator_to_array($ret);
 var_dump($mentions); $mentions = array();
- 
+
 // Force primary for command
 $db->setProfilingLevel(42);
 var_dump($mentions); $mentions = array();
- 
+
 // Normal find
 $ret = $db->safe->find(array("doc" => 1));
 iterator_to_array($ret);
@@ -35,18 +35,18 @@ var_dump($mentions); $mentions = array();
 --EXPECTF--
 Deprecated: Function MongoDB::setSlaveOkay() is deprecated in %sbug00511.php on line %d
 array(2) {
-  ["PRIMARY"]=>
-  int(5)
-  ["SECONDARY"]=>
-  int(5)
+	["PRIMARY"]=>
+	int(5)
+	["SECONDARY"]=>
+	int(5)
 }
 array(1) {
-  ["PRIMARY"]=>
-  int(5)
+	["PRIMARY"]=>
+	int(5)
 }
 array(2) {
-  ["PRIMARY"]=>
-  int(5)
-  ["SECONDARY"]=>
-  int(5)
+	["PRIMARY"]=>
+	int(5)
+	["SECONDARY"]=>
+	int(5)
 }

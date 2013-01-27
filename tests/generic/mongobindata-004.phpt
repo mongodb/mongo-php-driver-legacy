@@ -18,7 +18,7 @@ $coll->insert(array('bin' => new MongoBinData('mno', MongoBinData::CUSTOM)));
 $cursor = $coll->find();
 
 foreach ($cursor as $result) {
-    printf("Type %d with data \"%s\"\n", $result['bin']->type, $result['bin']->bin);
+		printf("Type %d with data \"%s\"\n", $result['bin']->type, $result['bin']->bin);
 }
 ?>
 --EXPECT--

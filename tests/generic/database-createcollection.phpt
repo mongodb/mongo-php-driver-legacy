@@ -23,11 +23,11 @@ var_dump($retval);
 --EXPECT--
 NULL
 array(2) {
-  ["name"]=>
-  string(19) "phpunit.create-col1"
-  ["options"]=>
-  array(1) {
-    ["create"]=>
-    string(11) "create-col1"
-  }
+	["name"]=>
+	string(19) "phpunit.create-col1"
+	["options"]=>
+	array(1) {
+		["create"]=>
+		string(11) "create-col1"
+	}
 }
