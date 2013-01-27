@@ -31,18 +31,18 @@ $GridFS->ensureIndex(array('filename'=>1),array('unique'=>true));
 
 #Save first test.txt
 try{
-    $GridFS->storeBytes('1234567890',array('filename'=>'test.txt'));
+	$GridFS->storeBytes('1234567890',array('filename'=>'test.txt'));
 }catch (MongoGridFSException $e) {
-    echo "error message: ".$e->getMessage()."\n";
-    echo "error code: ".$e->getCode()."\n";
+	echo "error message: ".$e->getMessage()."\n";
+	echo "error code: ".$e->getCode()."\n";
 }
 
 #Save second test.txt
 try{
-    $GridFS->storeBytes('1234567890',array('filename'=>'test.txt'));
+	$GridFS->storeBytes('1234567890',array('filename'=>'test.txt'));
 }catch (MongoGridFSException $e) {
-    echo "error message: ".$e->getMessage()."\n";
-    echo "error code: ".$e->getCode()."\n";
+	echo "error message: ".$e->getMessage()."\n";
+	echo "error code: ".$e->getCode()."\n";
 }
 ?>
 --EXPECTF--

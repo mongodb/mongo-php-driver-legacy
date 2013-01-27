@@ -5,7 +5,7 @@ Connection strings: Prefixed with mongodb://
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
 if ($STANDALONE_PORT != "27017") {
-    die("skip This tests expects a server running on the default port");
+	die("skip This tests expects a server running on the default port");
 }
 ?>
 --FILE--

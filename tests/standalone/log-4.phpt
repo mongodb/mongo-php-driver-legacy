@@ -30,8 +30,8 @@ $m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
 --EXPECTF--
 Warnings:
 Fine:
-CON     FINE: found connection %s:%d;-;X;%d (looking for %s:%d;-;X;%d)
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON	FINE: found connection %s:%d;-;X;%d (looking for %s:%d;-;X;%d)
+CON	FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
@@ -51,11 +51,11 @@ REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: selecting near server: done
 Info:
-PARSE   INFO: Parsing mongodb://%s:%d
-PARSE   INFO: - Found node: %s:%d
-PARSE   INFO: - Connection type: STANDALONE
-CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
+PARSE	INFO: Parsing mongodb://%s:%d
+PARSE	INFO: - Found node: %s:%d
+PARSE	INFO: - Connection type: STANDALONE
+CON	INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
 
-Notice: CON     INFO: freeing connection %s:%d;-;X;%d in Unknown on line 0
+Notice: CON	INFO: freeing connection %s:%d;-;X;%d in Unknown on line 0

@@ -9,7 +9,7 @@ require_once __DIR__ . "/../utils.inc";
 $m = mongo();
 $collection = $m->selectDb(dbname())->bug635;
 var_dump($collection);
- 
+
 $cursor = new MongoCursor($m, $collection);
 var_dump($collection);
 var_dump(is_object($collection));

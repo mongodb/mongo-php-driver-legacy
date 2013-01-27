@@ -7,7 +7,7 @@ MongoCursor::setReadPreference errors [1]
 <?php
 $host = hostname();
 $port = port();
-$db   = dbname();
+$db	= dbname();
 
 $baseString = sprintf("mongodb://%s:%d/%s?readPreference=primaryPreferred", $host, $port, $db);
 

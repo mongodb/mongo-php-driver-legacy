@@ -7,10 +7,10 @@ $c = $m->foo->bar;
 while (true) {
   echo "finding... ";
   try {
-    $c->findOne();
+	$c->findOne();
   }
   catch (Exception $e) {
-    echo $e->getMessage();
+	echo $e->getMessage();
   }
   echo "\n";
 

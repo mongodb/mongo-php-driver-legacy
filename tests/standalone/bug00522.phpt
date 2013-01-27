@@ -49,21 +49,21 @@ try {
 echo "-----\n";
 ?>
 --EXPECTF--
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: append_getlasterror: added w=4
-IO      FINE: append_getlasterror: added wtimeout=10000
-IO      FINE: append_getlasterror: added fsync=1
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO	FINE: is_gle_op: yes
+IO	FINE: append_getlasterror
+IO	FINE: append_getlasterror: added w=4
+IO	FINE: append_getlasterror: added wtimeout=10000
+IO	FINE: append_getlasterror: added fsync=1
+IO	FINE: getting reply
+IO	FINE: getting cursor header
+IO	FINE: getting cursor body
 %s:%d: norepl: no replication has been enabled, so w=%s won't work
 -----
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO	FINE: is_gle_op: yes
+IO	FINE: append_getlasterror
+IO	FINE: getting reply
+IO	FINE: getting cursor header
+IO	FINE: getting cursor body
 array(4) {
   ["n"]=>
   int(0)
@@ -75,22 +75,22 @@ array(4) {
   float(1)
 }
 -----
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: append_getlasterror: added w=4
-IO      FINE: append_getlasterror: added wtimeout=10000
-IO      FINE: append_getlasterror: added fsync=1
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO	FINE: is_gle_op: yes
+IO	FINE: append_getlasterror
+IO	FINE: append_getlasterror: added w=4
+IO	FINE: append_getlasterror: added wtimeout=10000
+IO	FINE: append_getlasterror: added fsync=1
+IO	FINE: getting reply
+IO	FINE: getting cursor header
+IO	FINE: getting cursor body
 %s:%d: norepl: no replication has been enabled, so w=%s won't work
 -----
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=4500
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO	FINE: is_gle_op: yes
+IO	FINE: append_getlasterror
+IO	FINE: append_getlasterror: added w='allDCs'
+IO	FINE: append_getlasterror: added wtimeout=4500
+IO	FINE: getting reply
+IO	FINE: getting cursor header
+IO	FINE: getting cursor body
 %s:%d: norepl: no replication has been enabled, so w=%s won't work
 -----

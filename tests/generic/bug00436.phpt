@@ -30,14 +30,14 @@ require_once dirname(__FILE__) ."/../utils.inc";
 $m = mongo();
 $gridfs = $m->test->getGridFS();
 try {
-    $retval = $gridfs->storeUpload("multifiles");
-    var_dump($retval);
+	$retval = $gridfs->storeUpload("multifiles");
+	var_dump($retval);
 } catch(Exception $e) {
-    var_dump($e->getMessage());
+	var_dump($e->getMessage());
 }
 foreach($gridfs->find() as $file) {
-    var_dump($file);
-    $gridfs->delete($file->file["_id"]);
+	var_dump($file);
+	$gridfs->delete($file->file["_id"]);
 }
 ?>
 ===DONE===
@@ -46,61 +46,61 @@ foreach($gridfs->find() as $file) {
 array(3) {
   [0]=>
   object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
+	["$id"]=>
+	string(24) "%s"
   }
   [1]=>
   object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
+	["$id"]=>
+	string(24) "%s"
   }
   [2]=>
   object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
+	["$id"]=>
+	string(24) "%s"
   }
 }
 object(MongoGridFSFile)#%d (3) {
   ["file"]=>
   array(6) {
-    ["_id"]=>
-    object(MongoId)#%d (1) {
-      ["$id"]=>
-      string(24) "%s"
-    }
-    ["filename"]=>
-    string(9) "file1.txt"
-    ["uploadDate"]=>
-    object(MongoDate)#%d (2) {
-      ["sec"]=>
-      int(%d)
-      ["usec"]=>
-      int(%d)
-    }
-    ["length"]=>
-    int(1)
-    ["chunkSize"]=>
-    int(262144)
-    ["md5"]=>
-    string(32) "c4ca4238a0b923820dcc509a6f75849b"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+	["$id"]=>
+	string(24) "%s"
+	}
+	["filename"]=>
+	string(9) "file1.txt"
+	["uploadDate"]=>
+	object(MongoDate)#%d (2) {
+	["sec"]=>
+	int(%d)
+	["usec"]=>
+	int(%d)
+	}
+	["length"]=>
+	int(1)
+	["chunkSize"]=>
+	int(262144)
+	["md5"]=>
+	string(32) "c4ca4238a0b923820dcc509a6f75849b"
   }
   ["gridfs":protected]=>
   object(MongoGridFS)#%d (5) {
-    ["w"]=>
-    int(1)
-    ["wtimeout"]=>
-    int(10000)
-    ["chunks"]=>
-    object(MongoCollection)#%d (2) {
-      ["w"]=>
-      int(1)
-      ["wtimeout"]=>
-      int(10000)
-    }
-    ["filesName":protected]=>
-    string(8) "fs.files"
-    ["chunksName":protected]=>
-    string(9) "fs.chunks"
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
+	["chunks"]=>
+	object(MongoCollection)#%d (2) {
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
+	}
+	["filesName":protected]=>
+	string(8) "fs.files"
+	["chunksName":protected]=>
+	string(9) "fs.chunks"
   }
   ["flags"]=>
   int(0)
@@ -108,44 +108,44 @@ object(MongoGridFSFile)#%d (3) {
 object(MongoGridFSFile)#%d (3) {
   ["file"]=>
   array(6) {
-    ["_id"]=>
-    object(MongoId)#%d (1) {
-      ["$id"]=>
-      string(24) "%s"
-    }
-    ["filename"]=>
-    string(9) "file2.txt"
-    ["uploadDate"]=>
-    object(MongoDate)#%d (2) {
-      ["sec"]=>
-      int(%d)
-      ["usec"]=>
-      int(%d)
-    }
-    ["length"]=>
-    int(1)
-    ["chunkSize"]=>
-    int(262144)
-    ["md5"]=>
-    string(32) "c81e728d9d4c2f636f067f89cc14862c"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+	["$id"]=>
+	string(24) "%s"
+	}
+	["filename"]=>
+	string(9) "file2.txt"
+	["uploadDate"]=>
+	object(MongoDate)#%d (2) {
+	["sec"]=>
+	int(%d)
+	["usec"]=>
+	int(%d)
+	}
+	["length"]=>
+	int(1)
+	["chunkSize"]=>
+	int(262144)
+	["md5"]=>
+	string(32) "c81e728d9d4c2f636f067f89cc14862c"
   }
   ["gridfs":protected]=>
   object(MongoGridFS)#%d (5) {
-    ["w"]=>
-    int(1)
-    ["wtimeout"]=>
-    int(10000)
-    ["chunks"]=>
-    object(MongoCollection)#%d (2) {
-      ["w"]=>
-      int(1)
-      ["wtimeout"]=>
-      int(10000)
-    }
-    ["filesName":protected]=>
-    string(8) "fs.files"
-    ["chunksName":protected]=>
-    string(9) "fs.chunks"
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
+	["chunks"]=>
+	object(MongoCollection)#%d (2) {
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
+	}
+	["filesName":protected]=>
+	string(8) "fs.files"
+	["chunksName":protected]=>
+	string(9) "fs.chunks"
   }
   ["flags"]=>
   int(0)
@@ -153,44 +153,44 @@ object(MongoGridFSFile)#%d (3) {
 object(MongoGridFSFile)#%d (3) {
   ["file"]=>
   array(6) {
-    ["_id"]=>
-    object(MongoId)#%d (1) {
-      ["$id"]=>
-      string(24) "%s"
-    }
-    ["filename"]=>
-    string(9) "file3.txt"
-    ["uploadDate"]=>
-    object(MongoDate)#%d (2) {
-      ["sec"]=>
-      int(%d)
-      ["usec"]=>
-      int(%d)
-    }
-    ["length"]=>
-    int(1)
-    ["chunkSize"]=>
-    int(262144)
-    ["md5"]=>
-    string(32) "eccbc87e4b5ce2fe28308fd9f2a7baf3"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+	["$id"]=>
+	string(24) "%s"
+	}
+	["filename"]=>
+	string(9) "file3.txt"
+	["uploadDate"]=>
+	object(MongoDate)#%d (2) {
+	["sec"]=>
+	int(%d)
+	["usec"]=>
+	int(%d)
+	}
+	["length"]=>
+	int(1)
+	["chunkSize"]=>
+	int(262144)
+	["md5"]=>
+	string(32) "eccbc87e4b5ce2fe28308fd9f2a7baf3"
   }
   ["gridfs":protected]=>
   object(MongoGridFS)#%d (5) {
-    ["w"]=>
-    int(1)
-    ["wtimeout"]=>
-    int(10000)
-    ["chunks"]=>
-    object(MongoCollection)#%d (2) {
-      ["w"]=>
-      int(1)
-      ["wtimeout"]=>
-      int(10000)
-    }
-    ["filesName":protected]=>
-    string(8) "fs.files"
-    ["chunksName":protected]=>
-    string(9) "fs.chunks"
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
+	["chunks"]=>
+	object(MongoCollection)#%d (2) {
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
+	}
+	["filesName":protected]=>
+	string(8) "fs.files"
+	["chunksName":protected]=>
+	string(9) "fs.chunks"
   }
   ["flags"]=>
   int(0)

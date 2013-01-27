@@ -9,26 +9,26 @@ while (true) {
   $cursor = $c->find();
 
   try {
-      $cursor->getNext();
+	$cursor->getNext();
   }
   catch (Exception $e) {
-      echo $e->getMessage()." ";
+	echo $e->getMessage()." ";
   }
   $info1 = $cursor->info();
   if ($info1['server']) {
-      echo $info1['server']." ";
+	echo $info1['server']." ";
   }
   echo "$m\n";
 
   try {
-      echo "reading... ";
-      $cursor = $c->find()->slaveOkay();
-      $cursor->next();
-      $info2 = $cursor->info();
-      echo $info2['server'];
+	echo "reading... ";
+	$cursor = $c->find()->slaveOkay();
+	$cursor->next();
+	$info2 = $cursor->info();
+	echo $info2['server'];
   }
   catch (Exception $e) {
-      echo $e->getMessage()." ";
+	echo $e->getMessage()." ";
   }
   echo "\n";
 

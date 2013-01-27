@@ -9,36 +9,36 @@ require_once dirname(__FILE__) . "/../utils.inc";
 $x = new Mongo(array());
 var_dump($x);
 if ($x) {
-    $x->connect();
+	$x->connect();
 }
 $x = new MongoDB;
 var_dump($x);
 if ($x) {
-    $x->dropCollection(NULL);
-}
-
-$x = new MongoDB;
-var_dump($x);
-if ($x) {
-    $x->listCollections();
+	$x->dropCollection(NULL);
 }
 
 $x = new MongoDB;
 var_dump($x);
 if ($x) {
-    $x->getCollectionNames();
+	$x->listCollections();
+}
+
+$x = new MongoDB;
+var_dump($x);
+if ($x) {
+	$x->getCollectionNames();
 }
 
 $x = new MongoGridFS;
 var_dump($x);
 if ($x) {
-    $x->drop();
+	$x->drop();
 }
 
 $x = new MongoGridFSFile;
 var_dump($x);
 if ($x) {
-    $x->getFilename(-1);
+	$x->getFilename(-1);
 }
 
 

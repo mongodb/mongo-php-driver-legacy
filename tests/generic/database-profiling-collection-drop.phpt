@@ -31,12 +31,12 @@ array(2) {
   string(22) "phpunit.system.profile"
   ["options"]=>
   array(3) {
-    ["create"]=>
-    string(14) "system.profile"
-    ["size"]=>
-    int(5000)
-    ["capped"]=>
-    bool(true)
+	["create"]=>
+	string(14) "system.profile"
+	["size"]=>
+	int(5000)
+	["capped"]=>
+	bool(true)
   }
 }
 array(2) {
@@ -44,12 +44,12 @@ array(2) {
   string(22) "phpunit.system.profile"
   ["options"]=>
   array(3) {
-    ["create"]=>
-    string(14) "system.profile"
-    ["size"]=>
-    int(5000)
-    ["capped"]=>
-    bool(true)
+	["create"]=>
+	string(14) "system.profile"
+	["size"]=>
+	int(5000)
+	["capped"]=>
+	bool(true)
   }
 }
 NULL

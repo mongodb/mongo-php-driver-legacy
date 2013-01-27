@@ -27,12 +27,12 @@ var_dump(md5($contents) === $file->file['md5']);
 
 $gridfs->drop();
 $gridfs->storeFile(__FILE__, array(
-    '_id' => 1,
-    'filename' => 'foo',
-    'length' => 0,
-    'chunkSize' => 10000,
-    'uploadDate' => 'now',
-    'md5' => 'f00',
+	'_id' => 1,
+	'filename' => 'foo',
+	'length' => 0,
+	'chunkSize' => 10000,
+	'uploadDate' => 'now',
+	'md5' => 'f00',
 ));
 
 $file = $gridfs->findOne();

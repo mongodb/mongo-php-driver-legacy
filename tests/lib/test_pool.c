@@ -30,74 +30,74 @@ int test_mongo_util_pool(TSRMLS_D) {
 int test_mongo_util_pool_get_pool(TSRMLS_D) {
   HashTable *pools = 0;
   zend_rsrc_list_entry *le;
-  
+
   // check that no connection pools exist
   if (zend_hash_find(&EG(persistent_list), "mongoConnectionPool",
-                     sizeof("mongoConnectionPool"), (void**)&le) == SUCCESS) {
-    zend_hash_del(&EG(persistent_list), CONNECTION_POOLS, sizeof(CONNECTION_POOLS));
+	sizeof("mongoConnectionPool"), (void**)&le) == SUCCESS) {
+	zend_hash_del(&EG(persistent_list), CONNECTION_POOLS, sizeof(CONNECTION_POOLS));
   }
   assert(!zend_hash_exists(&EG(persistent_list), CONNECTION_POOLS, sizeof(CONNECTION_POOLS)));
-  
+
   // get a connection pool
   pools = mongo_util_pool__get_connection_pools(TSRMLS_C);
   assert(pools != 0);
   assert(zend_hash_exists(&EG(persistent_list), CONNECTION_POOLS, sizeof(CONNECTION_POOLS)));
-  
+
   // save le->ptr == 0
-  
+
   // get a connection pool
   // remove any created connection pool
   zend_hash_del(&EG(persistent_list), CONNECTION_POOLS, sizeof(CONNECTION_POOLS));
   assert(!zend_hash_exists(&EG(persistent_list), CONNECTION_POOLS, sizeof(CONNECTION_POOLS)));
-  
-  printf(".");  
+
+  printf(".");
 }
 
 int test_mongo_util_pool_init() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_get() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_done() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_failed() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_shutdown() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_stack_pop() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_stack_push() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_close() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_rm() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_get_id() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_connect() {
-  printf(".");  
+  printf(".");
 }
 
 int test_mongo_util_pool_get_monitor() {
-  printf(".");  
+  printf(".");
 }
 

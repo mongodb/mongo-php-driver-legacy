@@ -10,9 +10,9 @@ no server is attached to it.
 try
 {
 	$c = new MongoCollection();
-    if ($c) {
-        $c->insert(array('hello' => 'Hello, world!', 0 => 'Joehoe'));
-    }
+	if ($c) {
+	$c->insert(array('hello' => 'Hello, world!', 0 => 'Joehoe'));
+	}
 }
 catch (Exception $e)
 {

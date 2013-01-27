@@ -9,10 +9,10 @@ $mongo = new_mongo();
 $gridfs = $mongo->files->getGridFS();
 $i = 0;
 foreach(glob(dirname(__FILE__) . "/*") as $file) {
-    $gridfs->put($file);
-    if ($i++ > 10) {
-        break;
-    }
+	$gridfs->put($file);
+	if ($i++ > 10) {
+	break;
+	}
 }
 
 $file = $mongo->files->getGridFS()->find()->sort(array('length' => -1))->limit(1)->getNext();

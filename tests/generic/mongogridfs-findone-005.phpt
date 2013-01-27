@@ -15,10 +15,10 @@ $gridfs->storeFile(__FILE__, array('x' => 1));
 $file = $gridfs->findOne(array(), array('x' => 1));
 
 try {
-    $file->getBytes();
-    var_dump(false);
+	$file->getBytes();
+	var_dump(false);
 } catch (MongoGridFSException $e) {
-    var_dump($e->getMessage(), $e->getCode());
+	var_dump($e->getMessage(), $e->getCode());
 }
 --EXPECT--
 string(23) "couldn't find file size"

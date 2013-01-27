@@ -10,9 +10,9 @@ $mongo = new_mongo();
 $db = $mongo->selectDB(dbname());
 
 class foo {
-    function __toString() {
-        return "foo";
-    }
+	function __toString() {
+	return "foo";
+	}
 }
 $f = new foo;
 $m = new MongoCollection($db, $f);

@@ -26,7 +26,7 @@
 #include <ext/standard/file.h>
 #include <ext/standard/flock_compat.h>
 #ifdef HAVE_SYS_FILE_H
-#   include <sys/file.h>
+#	include <sys/file.h>
 #endif
 
 #include <zend_exceptions.h>
@@ -101,13 +101,13 @@ php_stream_ops gridfs_stream_ops = {
 
 /* some handy macros {{{ */
 #ifndef MIN
-#   define MIN(a, b) a > b ? b : a
+#	define MIN(a, b) a > b ? b : a
 #endif
 
 #if 0
-#   define DEBUG(x)  printf x;fflush(stdout);
+#	define DEBUG(x)  printf x;fflush(stdout);
 #else
-#   define DEBUG(x)
+#	define DEBUG(x)
 #endif
 // returns 0 on failure
 #define READ_ARRAY_PROP_PTR(dest, name, toVariable) \
@@ -167,7 +167,7 @@ php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC)
 	self->fileObj  = file_object;
 
 	self->chunkObj = READ_OBJ_PROP(GridFS, gridfs, "chunks");
-	self->buffer   = emalloc(self->chunkSize +1);
+	self->buffer	= emalloc(self->chunkSize +1);
 	self->id = *id;
 	self->chunkId = -1;
 	self->totalChunks = ceil(self->size/self->chunkSize);

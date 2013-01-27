@@ -190,9 +190,9 @@ PHP_MINIT_FUNCTION(mongo) {
 	mongo_init_MongoPool(TSRMLS_C);
 
   /*
-   * MongoMaxKey and MongoMinKey are completely non-interactive: they have no
-   * method, fields, or constants.
-   */
+	* MongoMaxKey and MongoMinKey are completely non-interactive: they have no
+	* method, fields, or constants.
+	*/
   INIT_CLASS_ENTRY(max_key, "MongoMaxKey", NULL);
   mongo_ce_MaxKey = zend_register_internal_class(&max_key TSRMLS_CC);
   INIT_CLASS_ENTRY(min_key, "MongoMinKey", NULL);
@@ -213,8 +213,8 @@ PHP_MINIT_FUNCTION(mongo) {
 #ifdef WIN32
   cursor_mutex = CreateMutex(NULL, FALSE, NULL);
   if (cursor_mutex == NULL) {
-    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
-    return FAILURE;
+	php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
+	return FAILURE;
   }
 #endif
 
@@ -250,9 +250,9 @@ static PHP_GINIT_FUNCTION(mongo)
 
   hostname = host_start;
   // from the gnu manual:
-  //     gethostname stores the beginning of the host name in name even if the
-  //     host name won't entirely fit. For some purposes, a truncated host name
-  //     is good enough. If it is, you can ignore the error code.
+  //	gethostname stores the beginning of the host name in name even if the
+  //	host name won't entirely fit. For some purposes, a truncated host name
+  //	is good enough. If it is, you can ignore the error code.
   // so we'll ignore the error code.
   // returns 0-terminated hostname.
   gethostname(hostname, win_max);
@@ -263,14 +263,14 @@ static PHP_GINIT_FUNCTION(mongo)
   /* from zend_hash.h */
   /* variant with the hash unrolled eight times */
   for (; len >= 8; len -= 8) {
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
+	hash = ((hash << 5) + hash) + *hostname++;
+	hash = ((hash << 5) + hash) + *hostname++;
+	hash = ((hash << 5) + hash) + *hostname++;
+	hash = ((hash << 5) + hash) + *hostname++;
+	hash = ((hash << 5) + hash) + *hostname++;
+	hash = ((hash << 5) + hash) + *hostname++;
+	hash = ((hash << 5) + hash) + *hostname++;
+	hash = ((hash << 5) + hash) + *hostname++;
   }
 
   switch (len) {
@@ -312,8 +312,8 @@ PHP_MSHUTDOWN_FUNCTION(mongo) {
 #if WIN32
   // 0 is failure
   if (CloseHandle(cursor_mutex) == 0) {
-    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
-    return FAILURE;
+	php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
+	return FAILURE;
   }
 #endif
 
@@ -375,8 +375,8 @@ static void mongo_init_MongoExceptions(TSRMLS_D) {
 static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *ztagset TSRMLS_DC)
 {
 	HashTable  *tagset = HASH_OF(ztagset);
-	zval      **tag;
-	int         item_count = 1, fail = 0;
+	zval	**tag;
+	int	item_count = 1, fail = 0;
 	mongo_read_preference_tagset *tmp_ts = calloc(1, sizeof(mongo_read_preference_tagset));
 
 	zend_hash_internal_pointer_reset(tagset);
@@ -389,15 +389,15 @@ static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *
 			uint key_len;
 			ulong num_key;
 
-            switch (zend_hash_get_current_key_ex(tagset, &key, &key_len, &num_key, 0, NULL)) {
-                case HASH_KEY_IS_LONG:
+	switch (zend_hash_get_current_key_ex(tagset, &key, &key_len, &num_key, 0, NULL)) {
+	case HASH_KEY_IS_LONG:
 					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tag %d in tagset %d has no string key", item_count, tagset_id);
 					fail = 1;
-                    break;
-                case HASH_KEY_IS_STRING:
+	break;
+	case HASH_KEY_IS_STRING:
 					mongo_read_preference_add_tag(tmp_ts, key, Z_STRVAL_PP(tag));
-                    break;
-            }
+	break;
+	}
 
 		}
 		item_count++;
@@ -416,7 +416,7 @@ static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *
 zval *php_mongo_make_tagsets(mongo_read_preference *rp)
 {
 	zval *tagsets, *tagset;
-	int   i, j;
+	int	i, j;
 
 	if (!rp->tagset_count) {
 		return NULL;
@@ -451,7 +451,7 @@ void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
   zval *tagsets = php_mongo_make_tagsets(rp);
 
   if (!tagsets) {
-    return;
+	return;
   }
 
   add_assoc_zval_ex(return_value, "tagsets", sizeof("tagsets"), tagsets);
@@ -460,7 +460,7 @@ void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
 int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC)
 {
 	zval **tagset;
-	int    item_count = 1;
+	int	item_count = 1;
 	mongo_read_preference_tagset *tagset_tmp;
 
 	/* Empty out what we had - this means that if it fails, the read preference

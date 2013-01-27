@@ -5,7 +5,7 @@ Test for PHP-639: MongoCursor::slaveOkay() has no effect (inherited from client)
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
 --FILE--
 <?php
-$mentions = array(); 
+$mentions = array();
 require_once dirname(__FILE__) . "/../utils.inc";
 
 // Has to be old_mongo here, as MongoClient doesn't have the deprecated setSlaveOkay() method.

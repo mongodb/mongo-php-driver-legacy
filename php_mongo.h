@@ -29,57 +29,57 @@
 
 
 #ifndef zend_parse_parameters_none
-#define zend_parse_parameters_none()    \
-        zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
+#define zend_parse_parameters_none()	\
+	zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
 #endif
 
 #ifndef Z_UNSET_ISREF_P
-# define Z_UNSET_ISREF_P(pz)      pz->is_ref = 0
+# define Z_UNSET_ISREF_P(pz)	pz->is_ref = 0
 #endif
 
 #ifndef ZVAL_COPY_VALUE
 #define ZVAL_COPY_VALUE(z, v) \
-    do { \
-        (z)->value = (v)->value; \
-        Z_TYPE_P(z) = Z_TYPE_P(v); \
-    } while (0)
+	do { \
+	(z)->value = (v)->value; \
+	Z_TYPE_P(z) = Z_TYPE_P(v); \
+	} while (0)
 #endif
 
 #ifndef INIT_PZVAL_COPY
-#define INIT_PZVAL_COPY(z, v)                   \
-    do {                                        \
-        ZVAL_COPY_VALUE(z, v);                  \
-        Z_SET_REFCOUNT_P(z, 1);                 \
-        Z_UNSET_ISREF_P(z);                     \
-    } while (0)
+#define INIT_PZVAL_COPY(z, v)	\
+	do {	\
+	ZVAL_COPY_VALUE(z, v);	\
+	Z_SET_REFCOUNT_P(z, 1);	\
+	Z_UNSET_ISREF_P(z);	\
+	} while (0)
 #endif
 
 #ifndef MAKE_COPY_ZVAL
-#define MAKE_COPY_ZVAL(ppzv, pzv)   \
-    INIT_PZVAL_COPY(pzv, *(ppzv));  \
-    zval_copy_ctor((pzv));
+#define MAKE_COPY_ZVAL(ppzv, pzv)	\
+	INIT_PZVAL_COPY(pzv, *(ppzv));  \
+	zval_copy_ctor((pzv));
 #endif
 
 #ifdef WIN32
 #  ifndef int64_t
-     typedef __int64 int64_t;
+	typedef __int64 int64_t;
 #  endif
 #endif
 
 #ifndef Z_ADDREF_P
-#  define Z_ADDREF_P(pz)                (pz)->refcount++
+#  define Z_ADDREF_P(pz)	(pz)->refcount++
 #endif
 
 #ifndef Z_ADDREF_PP
-#  define Z_ADDREF_PP(ppz)               Z_ADDREF_P(*(ppz))
+#  define Z_ADDREF_PP(ppz)	Z_ADDREF_P(*(ppz))
 #endif
 
 #ifndef Z_DELREF_P
-#  define Z_DELREF_P(pz)                (pz)->refcount--
+#  define Z_DELREF_P(pz)	(pz)->refcount--
 #endif
 
 #ifndef Z_SET_REFCOUNT_P
-#  define Z_SET_REFCOUNT_P(pz, rc)      (pz)->refcount = (rc)
+#  define Z_SET_REFCOUNT_P(pz, rc)	(pz)->refcount = (rc)
 #endif
 
 #define INT_32 4
@@ -233,39 +233,39 @@
 #define IS_SCALAR_PP(a) (Z_TYPE_PP(a) != IS_ARRAY && Z_TYPE_PP(a) != IS_OBJECT)
 
 // TODO: this should be expanded to handle long_as_object being set
-#define Z_NUMVAL_P(variable, value)                                     \
-  ((Z_TYPE_P(variable) == IS_LONG && Z_LVAL_P(variable) == value) ||    \
-   (Z_TYPE_P(variable) == IS_DOUBLE && Z_DVAL_P(variable) == value))
-#define Z_NUMVAL_PP(variable, value)                                    \
+#define Z_NUMVAL_P(variable, value)	\
+  ((Z_TYPE_P(variable) == IS_LONG && Z_LVAL_P(variable) == value) ||	\
+	(Z_TYPE_P(variable) == IS_DOUBLE && Z_DVAL_P(variable) == value))
+#define Z_NUMVAL_PP(variable, value)	\
   ((Z_TYPE_PP(variable) == IS_LONG && Z_LVAL_PP(variable) == value) ||  \
-   (Z_TYPE_PP(variable) == IS_DOUBLE && Z_DVAL_PP(variable) == value))
+	(Z_TYPE_PP(variable) == IS_DOUBLE && Z_DVAL_PP(variable) == value))
 
 #if ZEND_MODULE_API_NO >= 20100525
 #define init_properties(intern) object_properties_init(&intern->std, class_type)
 #else
-#define init_properties(intern) {                                      \
-	zval *tmp;                                                         \
-	zend_hash_copy(intern->std.properties,                             \
-    &class_type->default_properties, (copy_ctor_func_t) zval_add_ref,  \
-    (void *) &tmp, sizeof(zval *));                                    \
+#define init_properties(intern) {	\
+	zval *tmp;	\
+	zend_hash_copy(intern->std.properties,	\
+	&class_type->default_properties, (copy_ctor_func_t) zval_add_ref,  \
+	(void *) &tmp, sizeof(zval *));	\
 }
 #endif
 
-#define PHP_MONGO_OBJ_NEW(mongo_obj)                    \
-  zend_object_value retval;                             \
-  mongo_obj *intern;                                    \
-                                                        \
-  intern = (mongo_obj*)emalloc(sizeof(mongo_obj));               \
-  memset(intern, 0, sizeof(mongo_obj));                          \
-                                                                 \
-  zend_object_std_init(&intern->std, class_type TSRMLS_CC);      \
-  init_properties(intern);                                       \
-                                                                 \
-  retval.handle = zend_objects_store_put(intern,                 \
-     (zend_objects_store_dtor_t) zend_objects_destroy_object,    \
-     php_##mongo_obj##_free, NULL TSRMLS_CC);                    \
-  retval.handlers = &mongo_default_handlers;                     \
-                                                                 \
+#define PHP_MONGO_OBJ_NEW(mongo_obj)	\
+  zend_object_value retval;	\
+  mongo_obj *intern;	\
+	\
+  intern = (mongo_obj*)emalloc(sizeof(mongo_obj));	\
+  memset(intern, 0, sizeof(mongo_obj));	\
+	\
+  zend_object_std_init(&intern->std, class_type TSRMLS_CC);	\
+  init_properties(intern);	\
+	\
+  retval.handle = zend_objects_store_put(intern,	\
+	(zend_objects_store_dtor_t) zend_objects_destroy_object,	\
+	php_##mongo_obj##_free, NULL TSRMLS_CC);	\
+  retval.handlers = &mongo_default_handlers;	\
+	\
   return retval;
 
 #define RS_PRIMARY 1
@@ -275,7 +275,7 @@ typedef struct {
 	zend_object std;
 
 	mongo_con_manager *manager; /* Contains a link to the manager */
-	mongo_servers     *servers;
+	mongo_servers	*servers;
 } mongoclient;
 
 #define MONGO_CURSOR 1
@@ -294,97 +294,97 @@ typedef struct {
   char *end;
 } buffer;
 
-#define CREATE_MSG_HEADER(rid, rto, opcode)     \
-  header.length = 0;                            \
-  header.request_id = rid;                      \
-  header.response_to = rto;                     \
+#define CREATE_MSG_HEADER(rid, rto, opcode)	\
+  header.length = 0;	\
+  header.request_id = rid;	\
+  header.response_to = rto;	\
   header.op = opcode;
 
-#define CREATE_RESPONSE_HEADER(buf, ns, rto, opcode)    \
+#define CREATE_RESPONSE_HEADER(buf, ns, rto, opcode)	\
   CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode); \
   APPEND_HEADER_NS(buf, ns, 0);
 
 #define CREATE_HEADER_WITH_OPTS(buf, ns, opcode, opts)  \
-  CREATE_MSG_HEADER(MonGlo(request_id)++, 0, opcode);   \
+  CREATE_MSG_HEADER(MonGlo(request_id)++, 0, opcode);	\
   APPEND_HEADER_NS(buf, ns, opts);
 
-#define CREATE_HEADER(buf, ns, opcode)          \
+#define CREATE_HEADER(buf, ns, opcode)	\
   CREATE_RESPONSE_HEADER(buf, ns, 0, opcode);
 
 
-#define APPEND_HEADER(buf, opts) buf->pos += INT_32;     \
-  php_mongo_serialize_int(buf, header.request_id);     \
-  php_mongo_serialize_int(buf, header.response_to);    \
-  php_mongo_serialize_int(buf, header.op);             \
+#define APPEND_HEADER(buf, opts) buf->pos += INT_32;	\
+  php_mongo_serialize_int(buf, header.request_id);	\
+  php_mongo_serialize_int(buf, header.response_to);	\
+  php_mongo_serialize_int(buf, header.op);	\
   php_mongo_serialize_int(buf, opts);
 
 
-#define APPEND_HEADER_NS(buf, ns, opts)                         \
-  APPEND_HEADER(buf, opts);                                     \
+#define APPEND_HEADER_NS(buf, ns, opts)	\
+  APPEND_HEADER(buf, opts);	\
   php_mongo_serialize_ns(buf, ns TSRMLS_CC);
 
 
-#define MONGO_CHECK_INITIALIZED(member, class_name)                     \
-  if (!(member)) {                                                      \
-    zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
-    RETURN_FALSE;                                                       \
+#define MONGO_CHECK_INITIALIZED(member, class_name)	\
+  if (!(member)) {	\
+	zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
+	RETURN_FALSE;	\
   }
 
-#define MONGO_CHECK_INITIALIZED_STRING(member, class_name)              \
-  if (!(member)) {                                                      \
-    zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
-    RETURN_STRING("", 1);                                               \
+#define MONGO_CHECK_INITIALIZED_STRING(member, class_name)	\
+  if (!(member)) {	\
+	zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
+	RETURN_STRING("", 1);	\
   }
 
-#define PHP_MONGO_GET_LINK(obj)                                         \
-  link = (mongoclient*)zend_object_store_get_object((obj) TSRMLS_CC);    \
+#define PHP_MONGO_GET_LINK(obj)	\
+  link = (mongoclient*)zend_object_store_get_object((obj) TSRMLS_CC);	\
   MONGO_CHECK_INITIALIZED(link->servers, Mongo);
 
-#define PHP_MONGO_GET_DB(obj)                                           \
-  db = (mongo_db*)zend_object_store_get_object((obj) TSRMLS_CC);        \
+#define PHP_MONGO_GET_DB(obj)	\
+  db = (mongo_db*)zend_object_store_get_object((obj) TSRMLS_CC);	\
   MONGO_CHECK_INITIALIZED(db->name, MongoDB);
 
-#define PHP_MONGO_GET_COLLECTION(obj)                                   \
+#define PHP_MONGO_GET_COLLECTION(obj)	\
   c = (mongo_collection*)zend_object_store_get_object((obj) TSRMLS_CC); \
   MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-#define PHP_MONGO_GET_CURSOR(obj)                                       \
+#define PHP_MONGO_GET_CURSOR(obj)	\
   cursor = (mongo_cursor*)zend_object_store_get_object((obj) TSRMLS_CC); \
   MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
 #define PHP_MONGO_CHECK_EXCEPTION() if (EG(exception)) { return; }
-#define PHP_MONGO_CHECK_EXCEPTION1(arg1)                        \
-  if (EG(exception)) {                                          \
-    zval_ptr_dtor(arg1);                                        \
-    return;                                                     \
+#define PHP_MONGO_CHECK_EXCEPTION1(arg1)	\
+  if (EG(exception)) {	\
+	zval_ptr_dtor(arg1);	\
+	return;	\
   }
-#define PHP_MONGO_CHECK_EXCEPTION2(arg1, arg2)                  \
-  if (EG(exception)) {                                          \
-    zval_ptr_dtor(arg1);                                        \
-    zval_ptr_dtor(arg2);                                        \
-    return;                                                     \
+#define PHP_MONGO_CHECK_EXCEPTION2(arg1, arg2)	\
+  if (EG(exception)) {	\
+	zval_ptr_dtor(arg1);	\
+	zval_ptr_dtor(arg2);	\
+	return;	\
   }
-#define PHP_MONGO_CHECK_EXCEPTION3(arg1, arg2, arg3)            \
-  if (EG(exception)) {                                          \
-    zval_ptr_dtor(arg1);                                        \
-    zval_ptr_dtor(arg2);                                        \
-    zval_ptr_dtor(arg3);                                        \
-    return;                                                     \
+#define PHP_MONGO_CHECK_EXCEPTION3(arg1, arg2, arg3)	\
+  if (EG(exception)) {	\
+	zval_ptr_dtor(arg1);	\
+	zval_ptr_dtor(arg2);	\
+	zval_ptr_dtor(arg3);	\
+	return;	\
   }
-#define PHP_MONGO_CHECK_EXCEPTION4(arg1, arg2, arg3, arg4)      \
-  if (EG(exception)) {                                          \
-    zval_ptr_dtor(arg1);                                        \
-    zval_ptr_dtor(arg2);                                        \
-    zval_ptr_dtor(arg3);                                        \
-    zval_ptr_dtor(arg4);                                        \
-    return;                                                     \
+#define PHP_MONGO_CHECK_EXCEPTION4(arg1, arg2, arg3, arg4)	\
+  if (EG(exception)) {	\
+	zval_ptr_dtor(arg1);	\
+	zval_ptr_dtor(arg2);	\
+	zval_ptr_dtor(arg3);	\
+	zval_ptr_dtor(arg4);	\
+	return;	\
   }
 
-#define PHP_MONGO_SERIALIZE_KEY(type)                           \
-  php_mongo_set_type(buf, type);                                \
+#define PHP_MONGO_SERIALIZE_KEY(type)	\
+  php_mongo_set_type(buf, type);	\
   php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC); \
-  if (EG(exception)) {                                          \
-    return ZEND_HASH_APPLY_STOP;                                \
+  if (EG(exception)) {	\
+	return ZEND_HASH_APPLY_STOP;	\
   }
 
 
@@ -493,9 +493,9 @@ typedef struct {
 
 #define BUF_REMAINING (buf->end-buf->pos)
 
-#define CREATE_BUF(buf, size)                   \
-  buf.start = (char*)emalloc(size);             \
-  buf.pos = buf.start;                          \
+#define CREATE_BUF(buf, size)	\
+  buf.start = (char*)emalloc(size);	\
+  buf.pos = buf.start;	\
   buf.end = buf.start + size;
 
 
@@ -516,21 +516,21 @@ PHP_FUNCTION(bson_decode);
  */
 
 #ifdef WIN32
-#define LOCK(lk) {                              \
-    int ret = -1;                               \
-    int tries = 0;                              \
-                                                \
-    while (tries++ < 3 && ret != 0) {                 \
-      ret = WaitForSingleObject(lk##_mutex, 5000);    \
-      if (ret != 0) {                                 \
-        if (ret == WAIT_TIMEOUT) {                    \
-          continue;                                   \
-        }                                             \
-        else {                                                          \
-          break;                                                        \
-        }                                                               \
-      }                                                                 \
-    }                                                                   \
+#define LOCK(lk) {	\
+	int ret = -1;	\
+	int tries = 0;	\
+	\
+	while (tries++ < 3 && ret != 0) {	\
+	ret = WaitForSingleObject(lk##_mutex, 5000);	\
+	if (ret != 0) {	\
+	if (ret == WAIT_TIMEOUT) {	\
+	continue;	\
+	}	\
+	else {	\
+	break;	\
+	}	\
+	}	\
+	}	\
   }
 #define UNLOCK(lk) ReleaseMutex(lk##_mutex);
 #else
@@ -615,7 +615,7 @@ extern zend_module_entry mongo_module_entry;
 /*
  * Error codes
  *
- * TODO: Check and update those all 
+ * TODO: Check and update those all
  *
  * MongoException:
  * 0: The <class> object has not been correctly initialized by its constructor
@@ -682,7 +682,7 @@ extern zend_module_entry mongo_module_entry;
  * various: database error
  *
  * MongoGridFSException:
- * 0: 
+ * 0:
  * 1: There is more data in the stored file than the meta data shows
  * 2: Invalid collection prefix (throws Exception, not MongoGridFSException)
  * 3: Could not open file for reading

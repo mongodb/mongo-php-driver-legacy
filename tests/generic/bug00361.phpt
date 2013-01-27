@@ -9,7 +9,7 @@ $m = mongo();
 
 $hosts = $m->getHosts();
 if ($hosts && is_array($hosts)) {
-    echo "ok\n";
+	echo "ok\n";
 }
 
 $host = current($hosts);

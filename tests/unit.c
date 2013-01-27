@@ -29,10 +29,10 @@ int main() {
 
   test_mongo();
   test_mongo_util_pool(TSRMLS_C);
-  
+
   PHP_EMBED_END_BLOCK();
-  
-  printf("Done.\n");  
+
+  printf("Done.\n");
   return 0;
 }
 

@@ -12,7 +12,7 @@ $coll->drop();
 $data = '';
 
 for ($i = 0; $i < 1024; ++$i) {
-    $data .= chr($i % 256);
+	$data .= chr($i % 256);
 }
 
 $data = str_repeat($data, 4 * 1024);

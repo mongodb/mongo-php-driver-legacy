@@ -31,10 +31,10 @@ array(6) {
   bool(true)
   ["array"]=>
   array(2) {
-    [0]=>
-    string(3) "foo"
-    [1]=>
-    string(3) "bar"
+	[0]=>
+	string(3) "foo"
+	[1]=>
+	string(3) "bar"
   }
   ["object"]=>
   array(0) {
