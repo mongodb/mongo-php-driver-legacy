@@ -9,8 +9,7 @@ require_once dirname(__FILE__) . "/../utils.inc";
 $m = new_mongo();
 
 try {
-    /* Noway you can replicate to 2 server so fast :D */
-    $m->selectDb(dbname())->test->insert(array("random" => "data"), array("wtimeout" => 1, "w" => 2));
+    $m->selectDb(dbname())->test->insert(array("random" => "data"), array("wtimeout" => 1, "w" => 7));
 } catch(MongoCursorException $e) {
     var_dump($e->getMessage(), $e->getCode());
 }
