@@ -7,7 +7,7 @@ require_once dirname(__FILE__) . "/../utils.inc";
 
 $port = port();
 if ($port != "27017") {
-    die("skip this test attempts to connect to the standard port");
+		die("skip this test attempts to connect to the standard port");
 }
 ?>
 --FILE--
@@ -15,7 +15,7 @@ if ($port != "27017") {
 require_once dirname(__FILE__) . "/../utils.inc";
 
 $hostname = hostname();
-$port     = port();
+$port		 = port();
 
 $a = new Mongo($hostname);
 var_dump($a instanceof Mongo);

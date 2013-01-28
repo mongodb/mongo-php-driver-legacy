@@ -33,7 +33,7 @@ echo 'OK'. PHP_EOL;
 --EXPECTF--
 int(4096)
 object(MongoInt64)#12 (1) {
-  ["value"]=>
-  string(4) "4096"
+	["value"]=>
+	string(4) "4096"
 }
 OK

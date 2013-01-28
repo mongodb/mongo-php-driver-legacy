@@ -1,17 +1,17 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *	Copyright 2009-2012 10gen, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *	http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
  *
  * Author: César D. Rodas <crodas@php.net>
  */
@@ -19,14 +19,14 @@
 #ifdef WIN32
 #ifndef int64_t
 	 typedef __int64 int64_t;
-#  endif
+#	endif
 #endif
 
 #include <php_globals.h>
 #include <ext/standard/file.h>
 #include <ext/standard/flock_compat.h>
 #ifdef HAVE_SYS_FILE_H
-#   include <sys/file.h>
+#	 include <sys/file.h>
 #endif
 
 #include <zend_exceptions.h>
@@ -56,7 +56,7 @@ static int gridfs_seek(php_stream *stream, off_t offset, int whence, off_t *newo
 typedef struct _gridfs_stream_data {
 	zval * fileObj; /* MongoGridFSFile Object */
 	zval * chunkObj; /* Chunk collection object */
-	zval * id; /* File ID  */
+	zval * id; /* File ID	*/
 	zval * query; /* Query array */
 
 	/* file current position */
@@ -101,13 +101,13 @@ php_stream_ops gridfs_stream_ops = {
 
 /* some handy macros {{{ */
 #ifndef MIN
-#   define MIN(a, b) a > b ? b : a
+#	 define MIN(a, b) a > b ? b : a
 #endif
 
 #if 0
-#   define DEBUG(x)  printf x;fflush(stdout);
+#	 define DEBUG(x)	printf x;fflush(stdout);
 #else
-#   define DEBUG(x)
+#	 define DEBUG(x)
 #endif
 // returns 0 on failure
 #define READ_ARRAY_PROP_PTR(dest, name, toVariable) \
@@ -123,15 +123,15 @@ php_stream_ops gridfs_stream_ops = {
 		return FAILURE; \
 	} \
 
-#define READ_OBJ_PROP(type, obj, name)  \
+#define READ_OBJ_PROP(type, obj, name)	\
 	zend_read_property(mongo_ce_##type, obj, name, strlen(name), NOISY TSRMLS_CC);
 
 #define TO_INT(size, len) { \
-  if (Z_TYPE_PP(size) == IS_DOUBLE) { \
+	if (Z_TYPE_PP(size) == IS_DOUBLE) { \
 	len = (int)Z_DVAL_PP(size); \
-  } else {  \
+	} else {	\
 	len = Z_LVAL_PP(size); \
-  } \
+	} \
 }
 
 #define ASSERT_SIZE(size) \
@@ -144,7 +144,7 @@ php_stream_ops gridfs_stream_ops = {
 	} \
 /* }}} */
 
-/* {{{ php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC)  */
+/* {{{ php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC)	*/
 php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC)
 {
 	gridfs_stream_data * self;
@@ -164,10 +164,10 @@ php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC)
 	TO_INT(size, self->size);
 	TO_INT(chunkSize, self->chunkSize);
 
-	self->fileObj  = file_object;
+	self->fileObj	= file_object;
 
 	self->chunkObj = READ_OBJ_PROP(GridFS, gridfs, "chunks");
-	self->buffer   = emalloc(self->chunkSize +1);
+	self->buffer	 = emalloc(self->chunkSize +1);
 	self->id = *id;
 	self->chunkId = -1;
 	self->totalChunks = ceil(self->size/self->chunkSize);

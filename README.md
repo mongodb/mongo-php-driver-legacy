@@ -2,14 +2,14 @@
 
 To install:
 
-    phpize
-    ./configure
-    make
-    sudo make install
+		phpize
+		./configure
+		make
+		sudo make install
 
 Then add
 
-    extension=mongo.so
+		extension=mongo.so
 
 to your _php.ini_ file.
 
@@ -19,8 +19,8 @@ See [the PHP manual](http://us.php.net/manual/en/book.mongo.php).
 
 ## Testing
 
-The tests are not available as part of the PECL package, but they are available 
-on [Github](http://www.github.com/mongodb/mongo-php-driver/tree/master/tests).  
+The tests are not available as part of the PECL package, but they are available
+on [Github](http://www.github.com/mongodb/mongo-php-driver/tree/master/tests).
 To run the test, you'll have to configure the tests/mongo-test-cfg.inc file
 (copy the tests/mongo-test-cfg.inc.template to tests/mongo-test-cfg.inc and edit it).
 By default, the tests will be executed in several different environments;
@@ -35,7 +35,7 @@ adjusting the configuration file.
 Once you have filled out the configuration template, run the following command to
 launch the test suite.
 
-    $ make test
+		$ make test
 
 
 ## Credits

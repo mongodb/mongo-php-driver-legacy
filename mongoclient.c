@@ -1,17 +1,17 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *	Copyright 2009-2012 10gen, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *	http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
  */
 #include <stdlib.h>
 #include <string.h>
@@ -54,9 +54,9 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 zend_class_entry *mongo_ce_MongoClient;
 
 extern zend_class_entry *mongo_ce_DB,
-  *mongo_ce_Cursor,
-  *mongo_ce_Exception,
-  *mongo_ce_ConnectionException;
+	*mongo_ce_Cursor,
+	*mongo_ce_Exception,
+	*mongo_ce_ConnectionException;
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, server)
@@ -301,16 +301,16 @@ mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC)
 int mongo_store_option_wrapper(mongo_con_manager *manager, mongo_servers *servers, char *option_name, zval **option_value, char **error_message)
 {
 	/* Special cases:
-	 *  - "connect" isn't supported by the URL parsing
-	 *  - "readPreferenceTags" is an array of tagsets we need to iterate over
+	 *	- "connect" isn't supported by the URL parsing
+	 *	- "readPreferenceTags" is an array of tagsets we need to iterate over
 	 */
 	if (strcasecmp(option_name, "connect") == 0) {
 		return 4;
 	}
 	if (strcasecmp(option_name, "readPreferenceTags") == 0) {
-		int            error = 0;
-		HashPosition   pos;
-		zval         **opt_entry;
+		int						error = 0;
+		HashPosition	 pos;
+		zval				 **opt_entry;
 
 		convert_to_array_ex(option_value);
 		for (
@@ -341,19 +341,19 @@ PHP_METHOD(MongoClient, __construct)
 
 void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 {
-	char         *server = 0;
-	int           server_len = 0;
-	zend_bool     connect = 1;
-	zval         *options = 0;
-	zval         *slave_okay = 0;
-	mongoclient  *link;
-	zval        **opt_entry;
-	char         *opt_key;
-	int           error;
-	char         *error_message = NULL;
-	uint          opt_key_len;
-	ulong         num_key;
-	HashPosition  pos;
+	char				 *server = 0;
+	int					 server_len = 0;
+	zend_bool		 connect = 1;
+	zval				 *options = 0;
+	zval				 *slave_okay = 0;
+	mongoclient	*link;
+	zval				**opt_entry;
+	char				 *opt_key;
+	int					 error;
+	char				 *error_message = NULL;
+	uint					opt_key_len;
+	ulong				 num_key;
+	HashPosition	pos;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/", &server, &server_len, &options) == FAILURE) {
 		zval *object = getThis();
@@ -365,7 +365,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 
 	/* Set the manager from the global manager */
 	link->manager = MonGlo(manager);
-	
+
 	/* Parse the server specification
 	 * Default to the mongo.default_host & mongo.default_port INI options */
 	link->servers = mongo_parse_init();
@@ -474,15 +474,15 @@ PHP_METHOD(MongoClient, connect)
 
 
 /* {{{ proto int MongoClient->close([string|bool hash|all])
-   Closes the connection to $hash, or only master - or all open connections. Returns how many connections were closed */
+	 Closes the connection to $hash, or only master - or all open connections. Returns how many connections were closed */
 PHP_METHOD(MongoClient, close)
 {
-	char             *hash = NULL;
-	int               hash_len;
-	mongoclient       *link;
+	char						 *hash = NULL;
+	int							 hash_len;
+	mongoclient			 *link;
 	mongo_connection *connection;
-	char             *error_message = NULL;
-	zval             *all = NULL;
+	char						 *error_message = NULL;
+	zval						 *all = NULL;
 
 	PHP_MONGO_GET_LINK(getThis());
 	if (ZEND_NUM_ARGS() == 0) {
@@ -494,7 +494,7 @@ PHP_METHOD(MongoClient, close)
 			/* Close all connections */
 			mongo_con_manager_item *ptr = link->manager->connections;
 			mongo_con_manager_item *current;
-			long                    count = 0;
+			long										count = 0;
 
 			while (ptr) {
 				current = ptr;
@@ -524,7 +524,7 @@ PHP_METHOD(MongoClient, close)
 	if (error_message) {
 		free(error_message);
 	}
-  RETURN_TRUE;
+	RETURN_TRUE;
 }
 /* }}} */
 
@@ -605,9 +605,9 @@ PHP_METHOD(MongoClient, selectDB)
 		/* So here we check if a username and password are used. If so, the
 		 * madness starts */
 		if (link->servers->server[0]->username && link->servers->server[0]->password) {
-			zval       *new_link;
+			zval			 *new_link;
 			mongoclient *tmp_link;
-		
+
 			if (strcmp(link->servers->server[0]->db, "admin") == 0) {
 				mongo_manager_log(
 					link->manager, MLOG_CON, MLOG_FINE,
@@ -715,9 +715,9 @@ PHP_METHOD(MongoClient, getReadPreference)
 PHP_METHOD(MongoClient, setReadPreference)
 {
 	char *read_preference;
-	int   read_preference_len;
+	int	 read_preference_len;
 	mongoclient *link;
-	HashTable  *tags = NULL;
+	HashTable	*tags = NULL;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|h", &read_preference, &read_preference_len, &tags) == FAILURE) {
 		return;
@@ -764,25 +764,25 @@ PHP_METHOD(MongoClient, dropDB)
 /* {{{ MongoClient->listDBs
  */
 PHP_METHOD(MongoClient, listDBs) {
-  zval *admin, *data, *db;
+	zval *admin, *data, *db;
 
-  MAKE_STD_ZVAL(admin);
-  ZVAL_STRING(admin, "admin", 1);
+	MAKE_STD_ZVAL(admin);
+	ZVAL_STRING(admin, "admin", 1);
 
-  MAKE_STD_ZVAL(db);
+	MAKE_STD_ZVAL(db);
 
-  MONGO_METHOD1(MongoClient, selectDB, db, getThis(), admin);
+	MONGO_METHOD1(MongoClient, selectDB, db, getThis(), admin);
 
-  zval_ptr_dtor(&admin);
+	zval_ptr_dtor(&admin);
 
-  MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "listDatabases", 1);
+	MAKE_STD_ZVAL(data);
+	array_init(data);
+	add_assoc_long(data, "listDatabases", 1);
 
-  MONGO_CMD(return_value, db);
+	MONGO_CMD(return_value, db);
 
-  zval_ptr_dtor(&data);
-  zval_ptr_dtor(&db);
+	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&db);
 }
 /* }}} */
 
@@ -791,7 +791,7 @@ PHP_METHOD(MongoClient, listDBs) {
  */
 PHP_METHOD(MongoClient, getHosts)
 {
-	mongoclient             *link;
+	mongoclient						 *link;
 	mongo_con_manager_item *item;
 
 	PHP_MONGO_GET_LINK(getThis());
@@ -802,7 +802,7 @@ PHP_METHOD(MongoClient, getHosts)
 	while (item) {
 		zval *infoz;
 		char *host;
-		int   port;
+		int	 port;
 
 		MAKE_STD_ZVAL(infoz);
 		array_init(infoz);
@@ -825,7 +825,7 @@ PHP_METHOD(MongoClient, getHosts)
 
 
 /* {{{ proto static array Mongo::getConnections(void)
-   Returns an array of all open connections, and information about each of the servers */
+	 Returns an array of all open connections, and information about each of the servers */
 PHP_METHOD(MongoClient, getConnections)
 {
 	mongo_con_manager_item *ptr;

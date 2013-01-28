@@ -5,7 +5,7 @@ Test for PHP-639: MongoCursor::slaveOkay() has no effect (inherited from collect
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
 --FILE--
 <?php
-$mentions = array(); 
+$mentions = array();
 require_once dirname(__FILE__) . "/../utils.inc";
 
 $m = mongo();

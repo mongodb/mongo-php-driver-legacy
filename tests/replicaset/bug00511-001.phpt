@@ -7,7 +7,7 @@ Test for PHP-511: Setting slaveOkay on MongoDB doesn't get passed properly to Mo
 error_reporting=E_ALL & ~E_DEPRECATED
 --FILE--
 <?php
-$mentions = array(); 
+$mentions = array();
 require_once dirname(__FILE__) . "/../utils.inc";
 
 $m = mongo();
@@ -24,11 +24,11 @@ $mentions = array();
 $ret = $db->safe->find(array("doc" => 1));
 iterator_to_array($ret);
 var_dump($mentions); $mentions = array();
- 
+
 // Force primary for command
 $db->safe->drop();
 var_dump($mentions); $mentions = array();
- 
+
 // Normal find (on a secondary)
 $ret = $db->safe->find(array("doc" => 1));
 iterator_to_array($ret);
@@ -42,27 +42,27 @@ $ret = $db->safe->find(array("doc" => 1));
 iterator_to_array($ret);
 var_dump($mentions); $mentions = array();
 
- 
+
 ?>
 --EXPECTF--
 array(2) {
-  ["PRIMARY"]=>
-  int(5)
-  ["SECONDARY"]=>
-  int(5)
+	["PRIMARY"]=>
+	int(5)
+	["SECONDARY"]=>
+	int(5)
 }
 array(1) {
-  ["PRIMARY"]=>
-  int(5)
+	["PRIMARY"]=>
+	int(5)
 }
 array(2) {
-  ["PRIMARY"]=>
-  int(5)
-  ["SECONDARY"]=>
-  int(5)
+	["PRIMARY"]=>
+	int(5)
+	["SECONDARY"]=>
+	int(5)
 }
 bool(true)
 array(1) {
-  ["PRIMARY"]=>
-  int(5)
+	["PRIMARY"]=>
+	int(5)
 }

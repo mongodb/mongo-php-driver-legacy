@@ -7,7 +7,7 @@ require dirname(__FILE__) . "/../utils.inc";
 
 $port = port();
 if ($port != "27017") {
-    die("skip this tests attempts to connect to the standard port");
+		die("skip this tests attempts to connect to the standard port");
 }
 ?>
 --FILE--
@@ -22,4 +22,4 @@ Fatal error: Uncaught exception 'MongoConnectionException' with message 'Failed 
 Stack trace:
 #0 %sconnection-single_error-002.php(%d): Mongo->__construct('foofas:5345')
 #1 {main}
-  thrown in %sconnection-single_error-002.php on line %d
+	thrown in %sconnection-single_error-002.php on line %d

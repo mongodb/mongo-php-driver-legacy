@@ -29,73 +29,73 @@ var_dump( $c->insert( array( 'test' => 'two' ), array( 'w' => 1 ) ) );
 --EXPECTF--
 bool(true)
 array(5) {
-  ["n"]=>
-  int(0)
-  ["lastOp"]=>
-  object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
-  }
-  ["connectionId"]=>
-  int(%d)
-  ["err"]=>
-  NULL
-  ["ok"]=>
-  float(1)
+	["n"]=>
+	int(0)
+	["lastOp"]=>
+	object(MongoTimestamp)#%d (2) {
+		["sec"]=>
+		int(%d)
+		["inc"]=>
+		int(%d)
+	}
+	["connectionId"]=>
+	int(%d)
+	["err"]=>
+	NULL
+	["ok"]=>
+	float(1)
 }
 bool(true)
 bool(true)
 array(5) {
-  ["n"]=>
-  int(0)
-  ["lastOp"]=>
-  object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
-  }
-  ["connectionId"]=>
-  int(%d)
-  ["err"]=>
-  NULL
-  ["ok"]=>
-  float(1)
+	["n"]=>
+	int(0)
+	["lastOp"]=>
+	object(MongoTimestamp)#%d (2) {
+		["sec"]=>
+		int(%d)
+		["inc"]=>
+		int(%d)
+	}
+	["connectionId"]=>
+	int(%d)
+	["err"]=>
+	NULL
+	["ok"]=>
+	float(1)
 }
 array(5) {
-  ["n"]=>
-  int(0)
-  ["lastOp"]=>
-  object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
-  }
-  ["connectionId"]=>
-  int(%d)
-  ["err"]=>
-  NULL
-  ["ok"]=>
-  float(1)
+	["n"]=>
+	int(0)
+	["lastOp"]=>
+	object(MongoTimestamp)#%d (2) {
+		["sec"]=>
+		int(%d)
+		["inc"]=>
+		int(%d)
+	}
+	["connectionId"]=>
+	int(%d)
+	["err"]=>
+	NULL
+	["ok"]=>
+	float(1)
 }
 bool(true)
 array(5) {
-  ["n"]=>
-  int(0)
-  ["lastOp"]=>
-  object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
-  }
-  ["connectionId"]=>
-  int(%d)
-  ["err"]=>
-  NULL
-  ["ok"]=>
-  float(1)
+	["n"]=>
+	int(0)
+	["lastOp"]=>
+	object(MongoTimestamp)#%d (2) {
+		["sec"]=>
+		int(%d)
+		["inc"]=>
+		int(%d)
+	}
+	["connectionId"]=>
+	int(%d)
+	["err"]=>
+	NULL
+	["ok"]=>
+	float(1)
 }

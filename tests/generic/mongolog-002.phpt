@@ -8,7 +8,7 @@ Test for MongoLog with callback (>= PHP 5.3).
 require_once dirname(__FILE__) . "/../utils.inc";
 
 function f($module, $log, $m) {
-    var_dump($module, $log, $m);
+		var_dump($module, $log, $m);
 }
 
 var_dump(MongoLog::getCallback());

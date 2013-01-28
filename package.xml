@@ -1,336 +1,336 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <package packagerversion="1.4.11" version="2.0"
-  xmlns="http://pear.php.net/dtd/package-2.0"
-  xmlns:tasks="http://pear.php.net/dtd/tasks-1.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
-  http://pear.php.net/dtd/tasks-1.0.xsd
-  http://pear.php.net/dtd/package-2.0
-  http://pear.php.net/dtd/package-2.0.xsd">
+	xmlns="http://pear.php.net/dtd/package-2.0"
+	xmlns:tasks="http://pear.php.net/dtd/tasks-1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
+	http://pear.php.net/dtd/tasks-1.0.xsd
+	http://pear.php.net/dtd/package-2.0
+	http://pear.php.net/dtd/package-2.0.xsd">
  <name>mongo</name>
  <channel>pecl.php.net</channel>
  <summary>MongoDB database driver</summary>
  <description>This package provides an interface for communicating with the MongoDB database in PHP.</description>
  <lead>
-  <name>Derick Rethans</name>
-  <user>derick</user>
-  <email>derick@php.net</email>
-  <active>yes</active>
+	<name>Derick Rethans</name>
+	<user>derick</user>
+	<email>derick@php.net</email>
+	<active>yes</active>
  </lead>
  <lead>
-  <name>Hannes Magnusson</name>
-  <user>bjori</user>
-  <email>bjori@php.net</email>
-  <active>yes</active>
+	<name>Hannes Magnusson</name>
+	<user>bjori</user>
+	<email>bjori@php.net</email>
+	<active>yes</active>
  </lead>
  <date>2013-01-16</date>
  <time>14:42:32</time>
  <version>
-  <release>1.3.3</release>
-  <api>1.3.3</api>
+	<release>1.3.3</release>
+	<api>1.3.3</api>
  </version>
  <stability>
-  <release>stable</release>
-  <api>stable</api>
+	<release>stable</release>
+	<api>stable</api>
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-375] - GridFS segfaults when there are more chunks than expected
-    * [PHP-603] - MongoGridFS::storeUpload() stores multiple files with same $metadata 
-    * [PHP-617] - Use real error codes for MongoConnectionException on ctor failure
-    * [PHP-621] - GridFS test tests/generic/bug00320.phpt has a double free issue
-    * [PHP-627] - MongoConnection::aggregate() helper breaks on single pipeline operator argument
-    * [PHP-635] - Passing a collection as second argument to MongoCursor::__construct() turns it into a string
-    * [PHP-636] - MongoConnectionException when Mongo server restarted
-    * [PHP-637] - Deal with negative timestamps in MongoDate
-    * [PHP-638] - Read preference get/set methods are not consistent
-    * [PHP-639] - MongoCursor::slaveOkay() has no effect in 1.3.2
-    * [PHP-644] - mongo.ping_interval and mongo.is_master_interval is unused
-    * [PHP-647] - isMaster defaults non-master, non-arbiter connections to secondary
-    * [PHP-656] - Add host, port and node type to the MongoCursor::info() return value.
+		* [PHP-375] - GridFS segfaults when there are more chunks than expected
+		* [PHP-603] - MongoGridFS::storeUpload() stores multiple files with same $metadata
+		* [PHP-617] - Use real error codes for MongoConnectionException on ctor failure
+		* [PHP-621] - GridFS test tests/generic/bug00320.phpt has a double free issue
+		* [PHP-627] - MongoConnection::aggregate() helper breaks on single pipeline operator argument
+		* [PHP-635] - Passing a collection as second argument to MongoCursor::__construct() turns it into a string
+		* [PHP-636] - MongoConnectionException when Mongo server restarted
+		* [PHP-637] - Deal with negative timestamps in MongoDate
+		* [PHP-638] - Read preference get/set methods are not consistent
+		* [PHP-639] - MongoCursor::slaveOkay() has no effect in 1.3.2
+		* [PHP-644] - mongo.ping_interval and mongo.is_master_interval is unused
+		* [PHP-647] - isMaster defaults non-master, non-arbiter connections to secondary
+		* [PHP-656] - Add host, port and node type to the MongoCursor::info() return value.
 
 ** Improvement
-    * [PHP-383] - Insufficient documentation about the driver-generated document _id passing technique
-    * [PHP-483] - Implement MongoCursor::setReadPreference()
-    * [PHP-620] - Update PHP documentation regarding the "n" value that is returned on write acknowledged operations
+		* [PHP-383] - Insufficient documentation about the driver-generated document _id passing technique
+		* [PHP-483] - Implement MongoCursor::setReadPreference()
+		* [PHP-620] - Update PHP documentation regarding the "n" value that is returned on write acknowledged operations
 
 ** Task
-    * [PHP-387] - Add examples to GridFS storeBytes, storeFile  and storeUpload functions
-    * [PHP-479] - Fix all compiler warnings
+		* [PHP-387] - Add examples to GridFS storeBytes, storeFile	and storeUpload functions
+		* [PHP-479] - Fix all compiler warnings
  </notes>
  <contents>
-  <dir baseinstalldir="/" name="/">
-   <file role="src" name="config.m4" />
-   <file role="src" name="config.w32" />
-   <file role="doc" name="README.md"/>
-   <file role="src" name="php_mongo.c"/>
-   <file role="src" name="php_mongo.h"/>
-   <file role="src" name="mongo.c"/>
-   <file role="src" name="mongo.h"/>
-   <file role="src" name="mongoclient.c"/>
-   <file role="src" name="mongoclient.h"/>
-   <file role="src" name="mongo_types.c"/>
-   <file role="src" name="mongo_types.h"/>
-   <file role="src" name="bson.c"/>
-   <file role="src" name="bson.h"/>
-   <file role="src" name="collection.c"/>
-   <file role="src" name="collection.h"/>
-   <file role="src" name="db.c"/>
-   <file role="src" name="db.h"/>
-   <file role="src" name="cursor.c"/>
-   <file role="src" name="cursor.h"/>
-   <file role="src" name="gridfs.c"/>
-   <file role="src" name="gridfs.h"/>
-   <file role="src" name="gridfs_stream.c"/>
-   <file role="src" name="gridfs_stream.h"/>
-   <file role="src" name="util/hash.c"/>
-   <file role="src" name="util/hash.h"/>
-   <file role="src" name="util/log.c"/>
-   <file role="src" name="util/log.h"/>
-   <file role="src" name="util/pool.c"/>
-   <file role="src" name="util/pool.h"/>
-   <file role="src" name="mcon/bson_helpers.h"/>
-   <file role="src" name="mcon/collection.h"/>
-   <file role="src" name="mcon/connections.h"/>
-   <file role="src" name="mcon/io.h"/>
-   <file role="src" name="mcon/manager.h"/>
-   <file role="src" name="mcon/mini_bson.h"/>
-   <file role="src" name="mcon/parse.h"/>
-   <file role="src" name="mcon/read_preference.h"/>
-   <file role="src" name="mcon/str.h"/>
-   <file role="src" name="mcon/types.h"/>
-   <file role="src" name="mcon/utils.h"/>
-   <file role="src" name="mcon/bson_helpers.c"/>
-   <file role="src" name="mcon/collection.c"/>
-   <file role="src" name="mcon/connections.c"/>
-   <file role="src" name="mcon/io.c"/>
-   <file role="src" name="mcon/manager.c"/>
-   <file role="src" name="mcon/mini_bson.c"/>
-   <file role="src" name="mcon/parse.c"/>
-   <file role="src" name="mcon/read_preference.c"/>
-   <file role="src" name="mcon/str.c"/>
-   <file role="src" name="mcon/utils.c"/>
-  </dir>
+	<dir baseinstalldir="/" name="/">
+	 <file role="src" name="config.m4" />
+	 <file role="src" name="config.w32" />
+	 <file role="doc" name="README.md"/>
+	 <file role="src" name="php_mongo.c"/>
+	 <file role="src" name="php_mongo.h"/>
+	 <file role="src" name="mongo.c"/>
+	 <file role="src" name="mongo.h"/>
+	 <file role="src" name="mongoclient.c"/>
+	 <file role="src" name="mongoclient.h"/>
+	 <file role="src" name="mongo_types.c"/>
+	 <file role="src" name="mongo_types.h"/>
+	 <file role="src" name="bson.c"/>
+	 <file role="src" name="bson.h"/>
+	 <file role="src" name="collection.c"/>
+	 <file role="src" name="collection.h"/>
+	 <file role="src" name="db.c"/>
+	 <file role="src" name="db.h"/>
+	 <file role="src" name="cursor.c"/>
+	 <file role="src" name="cursor.h"/>
+	 <file role="src" name="gridfs.c"/>
+	 <file role="src" name="gridfs.h"/>
+	 <file role="src" name="gridfs_stream.c"/>
+	 <file role="src" name="gridfs_stream.h"/>
+	 <file role="src" name="util/hash.c"/>
+	 <file role="src" name="util/hash.h"/>
+	 <file role="src" name="util/log.c"/>
+	 <file role="src" name="util/log.h"/>
+	 <file role="src" name="util/pool.c"/>
+	 <file role="src" name="util/pool.h"/>
+	 <file role="src" name="mcon/bson_helpers.h"/>
+	 <file role="src" name="mcon/collection.h"/>
+	 <file role="src" name="mcon/connections.h"/>
+	 <file role="src" name="mcon/io.h"/>
+	 <file role="src" name="mcon/manager.h"/>
+	 <file role="src" name="mcon/mini_bson.h"/>
+	 <file role="src" name="mcon/parse.h"/>
+	 <file role="src" name="mcon/read_preference.h"/>
+	 <file role="src" name="mcon/str.h"/>
+	 <file role="src" name="mcon/types.h"/>
+	 <file role="src" name="mcon/utils.h"/>
+	 <file role="src" name="mcon/bson_helpers.c"/>
+	 <file role="src" name="mcon/collection.c"/>
+	 <file role="src" name="mcon/connections.c"/>
+	 <file role="src" name="mcon/io.c"/>
+	 <file role="src" name="mcon/manager.c"/>
+	 <file role="src" name="mcon/mini_bson.c"/>
+	 <file role="src" name="mcon/parse.c"/>
+	 <file role="src" name="mcon/read_preference.c"/>
+	 <file role="src" name="mcon/str.c"/>
+	 <file role="src" name="mcon/utils.c"/>
+	</dir>
  </contents>
  <dependencies>
-  <required>
-   <php>
-    <min>5.2.6</min>
-   </php>
-   <pearinstaller>
-    <min>1.4.3</min>
-   </pearinstaller>
-  </required>
+	<required>
+	 <php>
+		<min>5.2.6</min>
+	 </php>
+	 <pearinstaller>
+		<min>1.4.3</min>
+	 </pearinstaller>
+	</required>
  </dependencies>
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
-  <release>
-   <date>2012-12-18</date>
-   <time>10:54:32</time>
-   <version>
-    <release>1.3.2</release>
-    <api>1.3.2</api>
-   </version>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
-   <notes>
+	<release>
+	 <date>2012-12-18</date>
+	 <time>10:54:32</time>
+	 <version>
+		<release>1.3.2</release>
+		<api>1.3.2</api>
+	 </version>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+	 <notes>
 ** Bug
-    * [PHP-308] - Incorrect method declaration
-    * [PHP-418] - Use descending date order for changelog entries
-    * [PHP-612] - Impossible to provide a list of tagsets to the readPreferenceTags options
-    * [PHP-623] - Segmentation fault (11) 
-    * [PHP-625] - the windows 1.30+ dll MongoCollection findandmodify method will throw a excption which not on linux platform
-    * [PHP-629] - Missing support for passing the username/password in the $options array
-    * [PHP-631] - One replica set, but two different db/user/passwords
-    * [PHP-632] - MongoDB::authenticate() no longer attempts to authenticate, and doesn't return anything either
-    * [PHP-633] - findAndModify sometimes throws exception on success
-    * [PHP-634] - Mongo PHP driver v1.3.1/1.3.2RC1 fail to connect to mongoDB 1.6.3
-    * [PHP-640] - The secondaryPreferred read preference always considers the primary node too.
-    * [PHP-641] - MongoLog::setModule/setLevel don't reset for each request
+		* [PHP-308] - Incorrect method declaration
+		* [PHP-418] - Use descending date order for changelog entries
+		* [PHP-612] - Impossible to provide a list of tagsets to the readPreferenceTags options
+		* [PHP-623] - Segmentation fault (11)
+		* [PHP-625] - the windows 1.30+ dll MongoCollection findandmodify method will throw a excption which not on linux platform
+		* [PHP-629] - Missing support for passing the username/password in the $options array
+		* [PHP-631] - One replica set, but two different db/user/passwords
+		* [PHP-632] - MongoDB::authenticate() no longer attempts to authenticate, and doesn't return anything either
+		* [PHP-633] - findAndModify sometimes throws exception on success
+		* [PHP-634] - Mongo PHP driver v1.3.1/1.3.2RC1 fail to connect to mongoDB 1.6.3
+		* [PHP-640] - The secondaryPreferred read preference always considers the primary node too.
+		* [PHP-641] - MongoLog::setModule/setLevel don't reset for each request
 
 ** Improvement
-    * [PHP-317] - slaveOk option not documented in Mongo.__construct()
-    * [PHP-529] - Document that MongoCollection::save() may set _id
-    * [PHP-626] - Implement Read Preferences support with sharding.
-   </notes>
-  </release>
-  <release>
-   <date>2012-12-07</date>
-   <time>17:47:32</time>
-   <version>
-    <release>1.3.2RC1</release>
-    <api>1.3.2</api>
-   </version>
-   <stability>
-    <release>beta</release>
-    <api>beta</api>
-   </stability>
-   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
-   <notes>
+		* [PHP-317] - slaveOk option not documented in Mongo.__construct()
+		* [PHP-529] - Document that MongoCollection::save() may set _id
+		* [PHP-626] - Implement Read Preferences support with sharding.
+	 </notes>
+	</release>
+	<release>
+	 <date>2012-12-07</date>
+	 <time>17:47:32</time>
+	 <version>
+		<release>1.3.2RC1</release>
+		<api>1.3.2</api>
+	 </version>
+	 <stability>
+		<release>beta</release>
+		<api>beta</api>
+	 </stability>
+	 <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+	 <notes>
 ** Bug
-    * [PHP-308] - Incorrect method declaration
-    * [PHP-418] - Use descending date order for changelog entries
-    * [PHP-612] - Impossible to provide a list of tagsets to the readPreferenceTags options
-    * [PHP-625] - the windows 1.30+ dll MongoCollection findandmodify method will throw a excption which not on linux platform
-    * [PHP-629] - Missing support for passing the username/password in the $options array
-    * [PHP-631] - One replica set, but two different db/user/passwords
-    * [PHP-632] - MongoDB::authenticate() no longer attempts to authenticate, and doesn't return anything either
-    * [PHP-633] - findAndModify sometimes throws exception on success
+		* [PHP-308] - Incorrect method declaration
+		* [PHP-418] - Use descending date order for changelog entries
+		* [PHP-612] - Impossible to provide a list of tagsets to the readPreferenceTags options
+		* [PHP-625] - the windows 1.30+ dll MongoCollection findandmodify method will throw a excption which not on linux platform
+		* [PHP-629] - Missing support for passing the username/password in the $options array
+		* [PHP-631] - One replica set, but two different db/user/passwords
+		* [PHP-632] - MongoDB::authenticate() no longer attempts to authenticate, and doesn't return anything either
+		* [PHP-633] - findAndModify sometimes throws exception on success
 
 ** Improvement
-    * [PHP-317] - slaveOk option not documented in Mongo.__construct()
-    * [PHP-529] - Document that MongoCollection::save() may set _id
-    * [PHP-626] - Implement Read Preferences support with sharding.
-   </notes>
-  </release>
-  <release>
-   <date>2012-12-04</date>
-   <time>16:00:32</time>
-   <version>
-    <release>1.3.1</release>
-    <api>1.3.1</api>
-   </version>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
-   <notes>
+		* [PHP-317] - slaveOk option not documented in Mongo.__construct()
+		* [PHP-529] - Document that MongoCollection::save() may set _id
+		* [PHP-626] - Implement Read Preferences support with sharding.
+	 </notes>
+	</release>
+	<release>
+	 <date>2012-12-04</date>
+	 <time>16:00:32</time>
+	 <version>
+		<release>1.3.1</release>
+		<api>1.3.1</api>
+	 </version>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+	 <notes>
 ** Bug
-    * [PHP-564] - Segfault occurs on some of the queries
-    * [PHP-580] - Segfault while running phpunit
-    * [PHP-583] - Replace slave language in MongoClient::getHosts() documentation with read preferences
-    * [PHP-584] - Update and remove options have reversed keys in the description
-    * [PHP-590] - Segfaults in Mongo PHP driver 1.3RC3
-    * [PHP-594] - Review the install guide
-    * [PHP-595] - Restructure manual
-    * [PHP-596] - mongo.allow_persistent doesn't exist anymore
-    * [PHP-597] - Remove mongo.no_id
-    * [PHP-598] - Incorrect constant values for MongoClient::RP_*
-    * [PHP-599] - Update Changelog with 1.3. changes
-    * [PHP-600] - Document MongoClient::getConnections()
-    * [PHP-601] - Document WriteConcerns
-    * [PHP-602] - No longer possible to get field information from $cursor->info()
-    * [PHP-605] - Change in behaviour for return value of unsafe writes 
-    * [PHP-611] - Segfault when no candidate servers found
-    * [PHP-616] - MongoGridFS::get() only accepts MongoId arguments
-    * [PHP-618] - PHP Driver failure on OSX
-    * [PHP-619] - Connection failure 
-    * [PHP-622] - MINKEY is not deserialized properly when reading back from MongoD (on 32bit platforms)
+		* [PHP-564] - Segfault occurs on some of the queries
+		* [PHP-580] - Segfault while running phpunit
+		* [PHP-583] - Replace slave language in MongoClient::getHosts() documentation with read preferences
+		* [PHP-584] - Update and remove options have reversed keys in the description
+		* [PHP-590] - Segfaults in Mongo PHP driver 1.3RC3
+		* [PHP-594] - Review the install guide
+		* [PHP-595] - Restructure manual
+		* [PHP-596] - mongo.allow_persistent doesn't exist anymore
+		* [PHP-597] - Remove mongo.no_id
+		* [PHP-598] - Incorrect constant values for MongoClient::RP_*
+		* [PHP-599] - Update Changelog with 1.3. changes
+		* [PHP-600] - Document MongoClient::getConnections()
+		* [PHP-601] - Document WriteConcerns
+		* [PHP-602] - No longer possible to get field information from $cursor->info()
+		* [PHP-605] - Change in behaviour for return value of unsafe writes
+		* [PHP-611] - Segfault when no candidate servers found
+		* [PHP-616] - MongoGridFS::get() only accepts MongoId arguments
+		* [PHP-618] - PHP Driver failure on OSX
+		* [PHP-619] - Connection failure
+		* [PHP-622] - MINKEY is not deserialized properly when reading back from MongoD (on 32bit platforms)
 
 ** Improvement
-    * [PHP-561] - Handle empty database name better
+		* [PHP-561] - Handle empty database name better
 
 ** Task
-    * [PHP-544] - Update any documentation and tutorials for w=1 default and MongoClient usage
-    * [PHP-558] - Document Mongo::getConnections()
-    * [PHP-566] - Update setSlaveOkay documention to reflect deprecation correctly, and point to setReadPreference/connection strings
-    * [PHP-567] - Update "queries" documentation at http://www.php.net/manual/en/mongo.queries.php to show the new read preferences
-    * [PHP-588] - Update versions.xml in documentation
-    * [PHP-589] - Rename master/slave to primary/secondary in documentation
-   </notes>
-  </release>
-  <release>
-   <date>2012-11-27</date>
-   <time>16:00:32</time>
-   <version>
-    <release>1.3.0</release>
-    <api>1.3.0</api>
-   </version>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
-   <notes>
+		* [PHP-544] - Update any documentation and tutorials for w=1 default and MongoClient usage
+		* [PHP-558] - Document Mongo::getConnections()
+		* [PHP-566] - Update setSlaveOkay documention to reflect deprecation correctly, and point to setReadPreference/connection strings
+		* [PHP-567] - Update "queries" documentation at http://www.php.net/manual/en/mongo.queries.php to show the new read preferences
+		* [PHP-588] - Update versions.xml in documentation
+		* [PHP-589] - Rename master/slave to primary/secondary in documentation
+	 </notes>
+	</release>
+	<release>
+	 <date>2012-11-27</date>
+	 <time>16:00:32</time>
+	 <version>
+		<release>1.3.0</release>
+		<api>1.3.0</api>
+	 </version>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+	 <notes>
 ** Bug
-    * [PHP-576] - mongo.is_master_interval unused
-    * [PHP-577] - mongo.ping_interval unused
-    * [PHP-590] - Segfaults in Mongo PHP driver 1.3RC3
+		* [PHP-576] - mongo.is_master_interval unused
+		* [PHP-577] - mongo.ping_interval unused
+		* [PHP-590] - Segfaults in Mongo PHP driver 1.3RC3
 
 ** Improvement
-    * [PHP-587] - Change readPreference constants to be strings
+		* [PHP-587] - Change readPreference constants to be strings
 
 ** Task
-    * [PHP-545] - Update presentations for write=1 default and MongoClient
-    * [PHP-575] - Handle email to library owners regarding w=1 by default
-    * [PHP-591] - Check whether all MLOG modules and levels are correctly applied
-   </notes>
-  </release>
-  <release>
-   <date>2012-11-20</date>
-   <time>13:22:32</time>
-   <version>
-    <release>1.3.0RC3</release>
-    <api>1.3.0RC3</api>
-   </version>
-   <stability>
-    <release>beta</release>
-    <api>beta</api>
-   </stability>
-   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
-   <notes>
+		* [PHP-545] - Update presentations for write=1 default and MongoClient
+		* [PHP-575] - Handle email to library owners regarding w=1 by default
+		* [PHP-591] - Check whether all MLOG modules and levels are correctly applied
+	 </notes>
+	</release>
+	<release>
+	 <date>2012-11-20</date>
+	 <time>13:22:32</time>
+	 <version>
+		<release>1.3.0RC3</release>
+		<api>1.3.0RC3</api>
+	 </version>
+	 <stability>
+		<release>beta</release>
+		<api>beta</api>
+	 </stability>
+	 <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+	 <notes>
 ** Bug
-    * [PHP-543] - mongo::connect() should return a bool value
-    * [PHP-568] - The driver crashes after having copied a server definition to resolve authenticated connections
-    * [PHP-574] - Problems with auth-switch and wrong credentials
+		* [PHP-543] - mongo::connect() should return a bool value
+		* [PHP-568] - The driver crashes after having copied a server definition to resolve authenticated connections
+		* [PHP-574] - Problems with auth-switch and wrong credentials
 
 ** Improvement
-    * [PHP-569] - Add support for w=0 and make sure append_getlasterror sets the correct flags
+		* [PHP-569] - Add support for w=0 and make sure append_getlasterror sets the correct flags
 
 ** New Feature
-    * [PHP-557] - Implement w=0/w=1 as specific values for writeConcerns.
+		* [PHP-557] - Implement w=0/w=1 as specific values for writeConcerns.
 
 ** Task
-    * [PHP-565] - Add license headers to the files in mcon/
-   </notes>
-  </release>
-  <release>
-   <date>2012-11-12</date>
-   <time>11:00:32</time>
-   <version>
-    <release>1.3.0RC2</release>
-    <api>1.3.0RC2</api>
-   </version>
-   <stability>
-    <release>beta</release>
-    <api>beta</api>
-   </stability>
-   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
-   <notes>
+		* [PHP-565] - Add license headers to the files in mcon/
+	 </notes>
+	</release>
+	<release>
+	 <date>2012-11-12</date>
+	 <time>11:00:32</time>
+	 <version>
+		<release>1.3.0RC2</release>
+		<api>1.3.0RC2</api>
+	 </version>
+	 <stability>
+		<release>beta</release>
+		<api>beta</api>
+	 </stability>
+	 <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+	 <notes>
 ** Bug
-    * [PHP-377] - Uncaught exception 'MongoCursorException' with message 'couldn't send query: ' from PHP
-    * [PHP-559] - The wrong connection is sometimes picked when there are two connections open
-    * [PHP-334] - Close connection with ReplicaSet
+		* [PHP-377] - Uncaught exception 'MongoCursorException' with message 'couldn't send query: ' from PHP
+		* [PHP-559] - The wrong connection is sometimes picked when there are two connections open
+		* [PHP-334] - Close connection with ReplicaSet
 
 ** Improvement
-    * [PHP-171] - It'd be nice if mongo was playing nicely with pcntl php extension
+		* [PHP-171] - It'd be nice if mongo was playing nicely with pcntl php extension
 
 ** Task
-    * [PHP-491] - Forking and connection handling still fails
-    * [PHP-552] - Document connection string options
-    * [PHP-553] - Make 1.3.x work with PHP 5.2.x
-    * [PHP-562] - Document changes to Mongo::close().
-   </notes>
-  </release>
-  <release>
-   <date>2012-11-05</date>
-   <time>10:00:32</time>
-   <version>
-    <release>1.3.0RC1</release>
-    <api>1.3.0RC1</api>
-   </version>
-   <stability>
-    <release>beta</release>
-    <api>beta</api>
-   </stability>
-   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
-   <notes>
+		* [PHP-491] - Forking and connection handling still fails
+		* [PHP-552] - Document connection string options
+		* [PHP-553] - Make 1.3.x work with PHP 5.2.x
+		* [PHP-562] - Document changes to Mongo::close().
+	 </notes>
+	</release>
+	<release>
+	 <date>2012-11-05</date>
+	 <time>10:00:32</time>
+	 <version>
+		<release>1.3.0RC1</release>
+		<api>1.3.0RC1</api>
+	 </version>
+	 <stability>
+		<release>beta</release>
+		<api>beta</api>
+	 </stability>
+	 <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+	 <notes>
 This is the first release candidate of the 1.3 series. The 1.3 series are
 a major improvement with a completely rewritten connection handling backend. It has been
 rewritten to form a new improved framework for handling connections. On top of
@@ -343,99 +343,99 @@ New major features in this release to support the MongoDB 2.2 release:
 
 - Support for the aggregation framework through the aggregate() helper.
 - Support for read preferences and read preference tags (See:
-  http://docs.mongodb.org/manual/applications/replication/#replica-set-read-preference)
+	http://docs.mongodb.org/manual/applications/replication/#replica-set-read-preference)
 - Support for connections to multiple mongos nodes.
 
 The whole list of resolved tickets (since 1.3.0beta2) follows:
 
 ** Bug
-    * [PHP-202] - Too many open files
-    * [PHP-285] - Cursor not found sometimes when slaveOkay in replica set
-    * [PHP-315] - Random "unauthorized db" messages
-    * [PHP-321] - Lazy loading of connections doesn't work with Replica Sets
-    * [PHP-347] - MongoPool not working as expected when using php-fpm / cgi - a pool seems to be created per each child process
-    * [PHP-350] - couldn't send query:
-    * [PHP-364] - Stale connection in connection pool after restarting MongoDB server
-    * [PHP-373] - Overriding batchInsert
-    * [PHP-411] - Mongo says it is connected.. when it isn't. (when connecting to replicaset)
-    * [PHP-424] - cannot determine master when slave(s) are down
-    * [PHP-426] - Connection pool not paying attention to authentication when using replicaSet=true
-    * [PHP-464] - Re-implement ->connected
-    * [PHP-468] - Undefined behavior calling MongoGridFSFile::write() without a filename
-    * [PHP-471] - Update documentation for MongoGridFSCursor::key() returning ObjectId instead of filename
-    * [PHP-480] - Throw an error when not all members of the seed lists are in the same replicaset
-    * [PHP-481] - setSlaveOkay / read preferences don't set slaveOkay flag correctly.
-    * [PHP-482] - Aggregate() method leaks
-    * [PHP-484] - Authenticating against normal db doesn't work
-    * [PHP-485] - Update (and other methods) in safemode crash under certain conditions.
-    * [PHP-486] - GridFS cleanup routines remove existing files
-    * [PHP-487] - Connect to replicaset member in standalone mode
-    * [PHP-488] - GridFS failures no longer throw MongoGridFSException
-    * [PHP-489] - is_master() crashes for standalone servers
-    * [PHP-499] - Re-order changelogs in documentation
-    * [PHP-500] - MongoCollection insert, update and remove no longer return booleans
-    * [PHP-502] - w can pick up garbage memory
-    * [PHP-504] - Build error on FreeBSD (missing sys/socket.h)
-    * [PHP-507] - Chunks are not removed completely when using the justOne option with MongoGridFS::remove
-    * [PHP-510] - Memory leak in GridFS
-    * [PHP-511] - Setting slaveOkay on MongoDB doesn't get passed properly to MongoCollection
-    * [PHP-512] - RS handover is not handled correctly
-    * [PHP-515] - Re-implement ->close()
-    * [PHP-518] - Segmentation Fault with php-1.2.12
-    * [PHP-521] - Build failures with PHP 5.2 and 5.4.
-    * [PHP-528] - MongoLog::getCallback() segfaults if no callback was set.
-    * [PHP-533] - Callback map for destroying cursors
-    * [PHP-548] - Make the w property support string
+		* [PHP-202] - Too many open files
+		* [PHP-285] - Cursor not found sometimes when slaveOkay in replica set
+		* [PHP-315] - Random "unauthorized db" messages
+		* [PHP-321] - Lazy loading of connections doesn't work with Replica Sets
+		* [PHP-347] - MongoPool not working as expected when using php-fpm / cgi - a pool seems to be created per each child process
+		* [PHP-350] - couldn't send query:
+		* [PHP-364] - Stale connection in connection pool after restarting MongoDB server
+		* [PHP-373] - Overriding batchInsert
+		* [PHP-411] - Mongo says it is connected.. when it isn't. (when connecting to replicaset)
+		* [PHP-424] - cannot determine master when slave(s) are down
+		* [PHP-426] - Connection pool not paying attention to authentication when using replicaSet=true
+		* [PHP-464] - Re-implement ->connected
+		* [PHP-468] - Undefined behavior calling MongoGridFSFile::write() without a filename
+		* [PHP-471] - Update documentation for MongoGridFSCursor::key() returning ObjectId instead of filename
+		* [PHP-480] - Throw an error when not all members of the seed lists are in the same replicaset
+		* [PHP-481] - setSlaveOkay / read preferences don't set slaveOkay flag correctly.
+		* [PHP-482] - Aggregate() method leaks
+		* [PHP-484] - Authenticating against normal db doesn't work
+		* [PHP-485] - Update (and other methods) in safemode crash under certain conditions.
+		* [PHP-486] - GridFS cleanup routines remove existing files
+		* [PHP-487] - Connect to replicaset member in standalone mode
+		* [PHP-488] - GridFS failures no longer throw MongoGridFSException
+		* [PHP-489] - is_master() crashes for standalone servers
+		* [PHP-499] - Re-order changelogs in documentation
+		* [PHP-500] - MongoCollection insert, update and remove no longer return booleans
+		* [PHP-502] - w can pick up garbage memory
+		* [PHP-504] - Build error on FreeBSD (missing sys/socket.h)
+		* [PHP-507] - Chunks are not removed completely when using the justOne option with MongoGridFS::remove
+		* [PHP-510] - Memory leak in GridFS
+		* [PHP-511] - Setting slaveOkay on MongoDB doesn't get passed properly to MongoCollection
+		* [PHP-512] - RS handover is not handled correctly
+		* [PHP-515] - Re-implement ->close()
+		* [PHP-518] - Segmentation Fault with php-1.2.12
+		* [PHP-521] - Build failures with PHP 5.2 and 5.4.
+		* [PHP-528] - MongoLog::getCallback() segfaults if no callback was set.
+		* [PHP-533] - Callback map for destroying cursors
+		* [PHP-548] - Make the w property support string
 
 ** Improvement
-    * [PHP-176] - Ability to choose which slaves to (not) read from
-    * [PHP-218] - Add driver standard connection URI options
-    * [PHP-292] - Mention MongoPool::setSize makes connection creation block if no connections available
-    * [PHP-298] - Support safe write default through the connection string
-    * [PHP-459] - MongoCollection::update doc should have a note about bug #PHP-50
-    * [PHP-492] - Implement a method to return all opened connections
-    * [PHP-501] - Add Unix domain socket support back into the driver
-    * [PHP-516] - Document sparse and expireAfterSeconds index options
-    * [PHP-522] - Support w, and wtimeout in connection string
-    * [PHP-526] - Create new exception to be thrown for runtime errors in command helpers
-    * [PHP-532] - Return full result document from command wrappers
+		* [PHP-176] - Ability to choose which slaves to (not) read from
+		* [PHP-218] - Add driver standard connection URI options
+		* [PHP-292] - Mention MongoPool::setSize makes connection creation block if no connections available
+		* [PHP-298] - Support safe write default through the connection string
+		* [PHP-459] - MongoCollection::update doc should have a note about bug #PHP-50
+		* [PHP-492] - Implement a method to return all opened connections
+		* [PHP-501] - Add Unix domain socket support back into the driver
+		* [PHP-516] - Document sparse and expireAfterSeconds index options
+		* [PHP-522] - Support w, and wtimeout in connection string
+		* [PHP-526] - Create new exception to be thrown for runtime errors in command helpers
+		* [PHP-532] - Return full result document from command wrappers
 
 ** Question
-    * [PHP-271] - MongoCursorException - Couldn't get response header
-    * [PHP-274] - Connection pooling a replica shutdon
+		* [PHP-271] - MongoCursorException - Couldn't get response header
+		* [PHP-274] - Connection pooling a replica shutdon
 
 ** Task
-    * [PHP-412] - Connecting to replicaset with authentication without providing any credentials..
-    * [PHP-414] - Revise MongoLog documentation
-    * [PHP-460] - Add docs mention of connecting to a sharded cluster / mongos
-    * [PHP-476] - Add documentation for the Aggregate Framework
-    * [PHP-477] - Add documentation for read preferences
-    * [PHP-478] - Compile and test on Windows
-    * [PHP-479] - Fix all compiler warnings
-    * [PHP-493] - Make aggregate to return the full command document, and not just the "result" field.
-    * [PHP-494] - Document MongoCollection::findAndModify()
-    * [PHP-495] - Make findAndModify() to return the full command document, and not just the "value" field.
-    * [PHP-497] - Make authentication documentation more explicit
-    * [PHP-498] - Check default database for authentication in 1.3.x
-    * [PHP-505] - Document MongoLog::setCallback
-    * [PHP-519] - Document un-deprecation of get/setSlaveOkay() for 1.2.12
-    * [PHP-520] - Remove MongoDB::authenticate() example from connection documentation
-    * [PHP-531] - Restore MongoPool class/methods as no-ops with deprecation warnings
-   </notes>
-  </release>
-  <release>
-   <date>2012-08-16</date>
-   <time>13:33:32</time>
-   <version>
-    <release>1.3.0beta2</release>
-    <api>1.3.0beta2</api>
-   </version>
-   <stability>
-    <release>beta</release>
-    <api>beta</api>
-   </stability>
-   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
-   <notes>
+		* [PHP-412] - Connecting to replicaset with authentication without providing any credentials..
+		* [PHP-414] - Revise MongoLog documentation
+		* [PHP-460] - Add docs mention of connecting to a sharded cluster / mongos
+		* [PHP-476] - Add documentation for the Aggregate Framework
+		* [PHP-477] - Add documentation for read preferences
+		* [PHP-478] - Compile and test on Windows
+		* [PHP-479] - Fix all compiler warnings
+		* [PHP-493] - Make aggregate to return the full command document, and not just the "result" field.
+		* [PHP-494] - Document MongoCollection::findAndModify()
+		* [PHP-495] - Make findAndModify() to return the full command document, and not just the "value" field.
+		* [PHP-497] - Make authentication documentation more explicit
+		* [PHP-498] - Check default database for authentication in 1.3.x
+		* [PHP-505] - Document MongoLog::setCallback
+		* [PHP-519] - Document un-deprecation of get/setSlaveOkay() for 1.2.12
+		* [PHP-520] - Remove MongoDB::authenticate() example from connection documentation
+		* [PHP-531] - Restore MongoPool class/methods as no-ops with deprecation warnings
+	 </notes>
+	</release>
+	<release>
+	 <date>2012-08-16</date>
+	 <time>13:33:32</time>
+	 <version>
+		<release>1.3.0beta2</release>
+		<api>1.3.0beta2</api>
+	 </version>
+	 <stability>
+		<release>beta</release>
+		<api>beta</api>
+	 </stability>
+	 <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+	 <notes>
 This is a new major release, which has a rewritten connection handling
 backend. It has been rewritten to form a new improved framework for
 handling connections. On top of this new framework, new functionality is
@@ -452,860 +452,860 @@ New major features in this release to support the MongoDB 2.2 release:
 
 - Support for the aggregation framework through the aggregate() helper.
 - Support for read preferences and read preference tags (See:
-  http://docs.mongodb.org/manual/applications/replication/#replica-set-read-preference)
+	http://docs.mongodb.org/manual/applications/replication/#replica-set-read-preference)
 
 Known issues (to be addressed before 1.3.0):
 
 - Authentication has not been implemented it, so this release will only work
-  for installations without authentication enabled.
+	for installations without authentication enabled.
 - Support for connections to multiple mongos nodes is not implemented yet.
 - It has not been tested on anything but Linux.
 
 The rest of the standard changelog:
 
 ** Bug
-    * [PHP-293] - listCollections 
-    * [PHP-300] - execute crashes with array() as argument
-    * [PHP-354] - CLONE - "couldn't send query: Broken pipe" when using forked processes in 1.2.9
-    * [PHP-373] - Overriding batchInsert
-    * [PHP-429] - MongoDB::selectCollection() causes Segmentation fault
-    * [PHP-433] - GridFS safe option overwritten
-    * [PHP-436] - MongGridFS::storeUpload() breaks on HTML5 multiple file upload
-    * [PHP-445] - Cannot use mongo.default_host with Mongo constructor options
-    * [PHP-446] - Uncaught exception 'MongoCursorException' with message 'couldn't send query: ' when find()ing items on an empty collection
-    * [PHP-454] - Memory leak when many inserts
-    * Note: More might have been fixed, but those issues need to be verified
-      first.
+		* [PHP-293] - listCollections
+		* [PHP-300] - execute crashes with array() as argument
+		* [PHP-354] - CLONE - "couldn't send query: Broken pipe" when using forked processes in 1.2.9
+		* [PHP-373] - Overriding batchInsert
+		* [PHP-429] - MongoDB::selectCollection() causes Segmentation fault
+		* [PHP-433] - GridFS safe option overwritten
+		* [PHP-436] - MongGridFS::storeUpload() breaks on HTML5 multiple file upload
+		* [PHP-445] - Cannot use mongo.default_host with Mongo constructor options
+		* [PHP-446] - Uncaught exception 'MongoCursorException' with message 'couldn't send query: ' when find()ing items on an empty collection
+		* [PHP-454] - Memory leak when many inserts
+		* Note: More might have been fixed, but those issues need to be verified
+			first.
 
 ** Improvement
-    * [PHP-270] - ext/mongo classes should return meaningful results from Reflection API
-    * [PHP-389] - Support setting query flags (opts)
-    * [PHP-403] - bson_encode and bson_decode should trigger warnings for non-document BSON objects
+		* [PHP-270] - ext/mongo classes should return meaningful results from Reflection API
+		* [PHP-389] - Support setting query flags (opts)
+		* [PHP-403] - bson_encode and bson_decode should trigger warnings for non-document BSON objects
 
 ** New Feature
-    * [PHP-79] - GridFS stream wrapper
-    * [PHP-117] - Implement findAndModify
-    * [PHP-280] - Allow MongoLog to log to Pear Log module
+		* [PHP-79] - GridFS stream wrapper
+		* [PHP-117] - Implement findAndModify
+		* [PHP-280] - Allow MongoLog to log to Pear Log module
 
 ** Question
-    * [PHP-333] - MongoGridFSCursor::key
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.12</release>
-    <api>1.2.12</api>
-   </version>
-   <date>2012-07-24</date>
-   <time>10:51:00</time>
-   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
-   <notes>
+		* [PHP-333] - MongoGridFSCursor::key
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.12</release>
+		<api>1.2.12</api>
+	 </version>
+	 <date>2012-07-24</date>
+	 <time>10:51:00</time>
+	 <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+	 <notes>
 ** Bug
-    * [PHP-443] - Add zend_parse_parameters_none for PHP 5.2 builds 
-    * [PHP-444] - Undeprecate getSlaveOkay()/setSlaveOkay() on Mongo, MongoDB
-      and MongoCollection; and getSlave() on Mongo.
+		* [PHP-443] - Add zend_parse_parameters_none for PHP 5.2 builds
+		* [PHP-444] - Undeprecate getSlaveOkay()/setSlaveOkay() on Mongo, MongoDB
+			and MongoCollection; and getSlave() on Mongo.
 
 ** Improvement
-    * [PHP-442] - Fixed a typo in "MongoBinData::__construct(): The default
-      value for type will change to 0 in the future"
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.11</release>
-    <api>1.2.11</api>
-   </version>
-   <date>2012-07-19</date>
-   <notes>
+		* [PHP-442] - Fixed a typo in "MongoBinData::__construct(): The default
+			value for type will change to 0 in the future"
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.11</release>
+		<api>1.2.11</api>
+	 </version>
+	 <date>2012-07-19</date>
+	 <notes>
 ** Bug
-    * [PHP-207] - setSlaveOkay not supported for GridFS queries
-    * [PHP-266] - segfault when connection string refers to unknown replica set member
-    * [PHP-269] - Mongo::__construct should only throw MongoConnectionException
-    * [PHP-331] - PHP segfaults when master changes
-    * [PHP-339] - Seg fault on insert timeout
-    * [PHP-359] - getPID() does not return expected PID when called on custom MongoID object
-    * [PHP-368] - uploadDate is missing in the file property of the MongoGridFSFile class.
-    * [PHP-369] - GridFS segfaults when iterating with an _id field set in the result object
-    * [PHP-372] - Error codes not being passed to MongoGridFSException
-    * [PHP-382] - When 'replicaSet' option is used, authentication calls are being sent to the arbiter server
-    * [PHP-384] - Segfault for GridFS with long_as_object option
-    * [PHP-388] - Cursors don't get closed after limit() is exhausted
-    * [PHP-391] - The driver crashes when there are more than FD_SETSIZE open file descriptors.
-    * [PHP-392] - Arbiter in the seed list acts wonky
-    * [PHP-394] - Crashes &amp; mem leaks
-    * [PHP-397] - Endless loop on non-existing file
-    * [PHP-402] - MongoCollection::validate(true) doesn't set the correct scan-all flag.
-    * [PHP-408] - MongoBinData custom type is returned as -128
-    * [PHP-413] - Authentication with wrong password.. prints the password!
-    * [PHP-417] - MongoDBRef::isRef() returns null in some cases it should return false
-    * [PHP-420] - MongoDB::drop() doesn't warn about arguments
-    * [PHP-431] - PHP driver throws tons of NOTICE messages
-    * [PHP-434] - Mongo::connect() doesn't validate the object
-    * [PHP-435] - 1.2.11 doesn't build with PHP5.2
+		* [PHP-207] - setSlaveOkay not supported for GridFS queries
+		* [PHP-266] - segfault when connection string refers to unknown replica set member
+		* [PHP-269] - Mongo::__construct should only throw MongoConnectionException
+		* [PHP-331] - PHP segfaults when master changes
+		* [PHP-339] - Seg fault on insert timeout
+		* [PHP-359] - getPID() does not return expected PID when called on custom MongoID object
+		* [PHP-368] - uploadDate is missing in the file property of the MongoGridFSFile class.
+		* [PHP-369] - GridFS segfaults when iterating with an _id field set in the result object
+		* [PHP-372] - Error codes not being passed to MongoGridFSException
+		* [PHP-382] - When 'replicaSet' option is used, authentication calls are being sent to the arbiter server
+		* [PHP-384] - Segfault for GridFS with long_as_object option
+		* [PHP-388] - Cursors don't get closed after limit() is exhausted
+		* [PHP-391] - The driver crashes when there are more than FD_SETSIZE open file descriptors.
+		* [PHP-392] - Arbiter in the seed list acts wonky
+		* [PHP-394] - Crashes &amp; mem leaks
+		* [PHP-397] - Endless loop on non-existing file
+		* [PHP-402] - MongoCollection::validate(true) doesn't set the correct scan-all flag.
+		* [PHP-408] - MongoBinData custom type is returned as -128
+		* [PHP-413] - Authentication with wrong password.. prints the password!
+		* [PHP-417] - MongoDBRef::isRef() returns null in some cases it should return false
+		* [PHP-420] - MongoDB::drop() doesn't warn about arguments
+		* [PHP-431] - PHP driver throws tons of NOTICE messages
+		* [PHP-434] - Mongo::connect() doesn't validate the object
+		* [PHP-435] - 1.2.11 doesn't build with PHP5.2
 
 ** Improvement
-    * [PHP-389] - Support setting query flags (opts)
-    * [PHP-428] - Coverage statistics
-    * [PHP-430] - Deprecate "old ways" which will be removed in 2.0.0
+		* [PHP-389] - Support setting query flags (opts)
+		* [PHP-428] - Coverage statistics
+		* [PHP-430] - Deprecate "old ways" which will be removed in 2.0.0
 
 ** Task
-    * [PHP-405] - Migrate PHPUnit tests to phpt
-   </notes>
-  </release>
+		* [PHP-405] - Migrate PHPUnit tests to phpt
+	 </notes>
+	</release>
 
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.10</release>
-    <api>1.2.10</api>
-   </version>
-   <date>2012-04-06</date>
-   <notes>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.10</release>
+		<api>1.2.10</api>
+	 </version>
+	 <date>2012-04-06</date>
+	 <notes>
 ** Bug
-    * [PHP-329] - MongoCursorException with Apache while master steps down
-    * [PHP-335] - 1.2.8/1.2.9 don't compile with PHP &lt; 5.3
-    * [PHP-337] - failover with replicaset
-    * [PHP-340] - MongoCursorException - could not determine master
-    * [PHP-343] - PHP segfaults when adding a file to GridFS after upgrade to 1.2.9
-    * [PHP-344] - Segmentation Fault on $grid->storeFile('foo', $bar)
-    * [PHP-346] - getGridFS followed by storeBytes hangs request indefinitely
-    * [PHP-349] - MongoCursorTimeoutException causes connections not to close
-    * [PHP-351] - php driver doest close connection , when catch cursor timed out exception.
-    * [PHP-353] - Iterator key not set when _id field is not requested
-    * [PHP-361] - Mongo::getHosts() segfaults (at least when not connecting to a replica set)
+		* [PHP-329] - MongoCursorException with Apache while master steps down
+		* [PHP-335] - 1.2.8/1.2.9 don't compile with PHP &lt; 5.3
+		* [PHP-337] - failover with replicaset
+		* [PHP-340] - MongoCursorException - could not determine master
+		* [PHP-343] - PHP segfaults when adding a file to GridFS after upgrade to 1.2.9
+		* [PHP-344] - Segmentation Fault on $grid->storeFile('foo', $bar)
+		* [PHP-346] - getGridFS followed by storeBytes hangs request indefinitely
+		* [PHP-349] - MongoCursorTimeoutException causes connections not to close
+		* [PHP-351] - php driver doest close connection , when catch cursor timed out exception.
+		* [PHP-353] - Iterator key not set when _id field is not requested
+		* [PHP-361] - Mongo::getHosts() segfaults (at least when not connecting to a replica set)
 
 ** Improvement
-    * [PHP-352] - Return only one element after "iterator_to_array()" if exclude "_id" from field list
-   </notes>
-  </release>
+		* [PHP-352] - Return only one element after "iterator_to_array()" if exclude "_id" from field list
+	 </notes>
+	</release>
 
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.9</release>
-    <api>1.2.9</api>
-   </version>
-   <date>2012-02-23</date>
-   <notes>
-   BUG FIXES
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.9</release>
+		<api>1.2.9</api>
+	 </version>
+	 <date>2012-02-23</date>
+	 <notes>
+	 BUG FIXES
 
-   * ZTS compile fixes
-   * Re-package due to bug in PEAR/PECL packaging system
-   </notes>
-  </release>
+	 * ZTS compile fixes
+	 * Re-package due to bug in PEAR/PECL packaging system
+	 </notes>
+	</release>
 
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.8</release>
-    <api>1.2.8</api>
-   </version>
-   <date>2012-02-22</date>
-   <notes>
-   BUG FIXES
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.8</release>
+		<api>1.2.8</api>
+	 </version>
+	 <date>2012-02-22</date>
+	 <notes>
+	 BUG FIXES
 
-   * PHP-306 - MongoID::__set_state does not work
-   * PHP-307 - getHosts() not working with 1.2.7
-   * PHP-311 - Apache httpd segfault with PHP mongo 1.2.7
-   * PHP-312 - Seg fault with curl POST + mongo replicaset close
-   * PHP-313 - Kill cursor can be called on a different connection than the one the cursor was created on
-   * PHP-319 - Issues when the the driver tests for other connections to close if it find a "bad connection".
-   * PHP-320 - GridFS doesn't check for correct insertion of file-meta-document
-   * PHP-325 - mongo-php-driver abort with SEGV
-   </notes>
-  </release>
+	 * PHP-306 - MongoID::__set_state does not work
+	 * PHP-307 - getHosts() not working with 1.2.7
+	 * PHP-311 - Apache httpd segfault with PHP mongo 1.2.7
+	 * PHP-312 - Seg fault with curl POST + mongo replicaset close
+	 * PHP-313 - Kill cursor can be called on a different connection than the one the cursor was created on
+	 * PHP-319 - Issues when the the driver tests for other connections to close if it find a "bad connection".
+	 * PHP-320 - GridFS doesn't check for correct insertion of file-meta-document
+	 * PHP-325 - mongo-php-driver abort with SEGV
+	 </notes>
+	</release>
 
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.7</release>
-    <api>1.2.7</api>
-   </version>
-   <date>2012-01-05</date>
-   <notes>
-   BUG FIXES
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.7</release>
+		<api>1.2.7</api>
+	 </version>
+	 <date>2012-01-05</date>
+	 <notes>
+	 BUG FIXES
 
-   * PHP-204: ClusteredCursor::query not throwing an Exception
-   * PHP-262: Added persistent replicaSet container
-   * PHP-277: Remove cursor from list on cursor reset
-   * PHP-279: Make accessing connected property quiet
-   * PHP-286: Try ping on another connection when one fails
-   * PHP-300: Fixed segfault when execute() is given array() as argument.
-   * Make mongoLog settings thread safe.
-   * Fixed memory leaks
-   * Fixed issues with connection pooling
+	 * PHP-204: ClusteredCursor::query not throwing an Exception
+	 * PHP-262: Added persistent replicaSet container
+	 * PHP-277: Remove cursor from list on cursor reset
+	 * PHP-279: Make accessing connected property quiet
+	 * PHP-286: Try ping on another connection when one fails
+	 * PHP-300: Fixed segfault when execute() is given array() as argument.
+	 * Make mongoLog settings thread safe.
+	 * Fixed memory leaks
+	 * Fixed issues with connection pooling
 
-   NEW FEATURES
+	 NEW FEATURES
 
-   * PHP-233: Added the continueOnError flag to batch_insert().
-   * PHP-268: Add slave buckets
-   * PHP-272: Randomly choose slaves from a given bucket
-   </notes>
-  </release>
+	 * PHP-233: Added the continueOnError flag to batch_insert().
+	 * PHP-268: Add slave buckets
+	 * PHP-272: Randomly choose slaves from a given bucket
+	 </notes>
+	</release>
 
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.6</release>
-    <api>1.2.6</api>
-   </version>
-   <date>2011-09-30</date>
-   <notes>
-    BUG FIXES
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.6</release>
+		<api>1.2.6</api>
+	 </version>
+	 <date>2011-09-30</date>
+	 <notes>
+		BUG FIXES
 
-    * Patched connection closing code (Carlos Rodriguez)
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.5</release>
-    <api>1.2.5</api>
-   </version>
-   <date>2011-09-15</date>
-   <notes>
-     ENHANCEMENTS
+		* Patched connection closing code (Carlos Rodriguez)
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.5</release>
+		<api>1.2.5</api>
+	 </version>
+	 <date>2011-09-15</date>
+	 <notes>
+		 ENHANCEMENTS
 
-     * Add connection information to cursor exceptions, see
-     MongoCursorException::getHost.
+		 * Add connection information to cursor exceptions, see
+		 MongoCursorException::getHost.
 
-     * Allow metadata to be sent using MongoGridFS::storeUpload.
+		 * Allow metadata to be sent using MongoGridFS::storeUpload.
 
-     * Connections are now fork-safe.
+		 * Connections are now fork-safe.
 
-     * Removed username/password from connection URI parse exception message.
+		 * Removed username/password from connection URI parse exception message.
 
-     * Slight optimization of receiving database responses.
+		 * Slight optimization of receiving database responses.
 
-     BUG FIXES
+		 BUG FIXES
 
-     * Fixed replica set master determination with authentication enabled (which
-     would cause "invalid command" errors and segmentation faults).
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.4</release>
-    <api>1.2.4</api>
-   </version>
-   <date>2011-08-23</date>
-   <notes>
-     ENHANCEMENTS
+		 * Fixed replica set master determination with authentication enabled (which
+		 would cause "invalid command" errors and segmentation faults).
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.4</release>
+		<api>1.2.4</api>
+	 </version>
+	 <date>2011-08-23</date>
+	 <notes>
+		 ENHANCEMENTS
 
-     * Added MongoLog::SERVER logging.
+		 * Added MongoLog::SERVER logging.
 
-     BUG FIXES
+		 BUG FIXES
 
-     * Fixed compile for OS X.
+		 * Fixed compile for OS X.
 
-     * Fixed segfault with authentication on.
+		 * Fixed segfault with authentication on.
 
-     * Fixed "_isSelf not found" error.
+		 * Fixed "_isSelf not found" error.
 
-     * Allow non-replica-set connections to reconnect.
+		 * Allow non-replica-set connections to reconnect.
 
-     * Do not sleep for 0ms before initial query attempt (Hiroaki Kubota)
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.3</release>
-    <api>1.2.3</api>
-   </version>
-   <date>2011-08-15</date>
-   <notes>
-     ENHANCEMENTS
+		 * Do not sleep for 0ms before initial query attempt (Hiroaki Kubota)
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.3</release>
+		<api>1.2.3</api>
+	 </version>
+	 <date>2011-08-15</date>
+	 <notes>
+		 ENHANCEMENTS
 
-     * Now compatible with PHP 5.4.
+		 * Now compatible with PHP 5.4.
 
-     * Added MongoPool class for pool-related functionality:
-     - MongoPool::info() for pool information (equivalent to Mongo::poolDebug())
-     - MongoPool::setSize() to set max pool size (equivalent to Mongo::setPoolSize())
-     - MongoPool::getSize() to get max pool size (equivalent to Mongo::getPoolSize())
+		 * Added MongoPool class for pool-related functionality:
+		 - MongoPool::info() for pool information (equivalent to Mongo::poolDebug())
+		 - MongoPool::setSize() to set max pool size (equivalent to Mongo::setPoolSize())
+		 - MongoPool::getSize() to get max pool size (equivalent to Mongo::getPoolSize())
 
-     * Added MongoLog class for logging. Logging defaults to off, but log level
-     and what should be logged (e.g., io activity or replica set status) can be
-     tuned.
+		 * Added MongoLog class for logging. Logging defaults to off, but log level
+		 and what should be logged (e.g., io activity or replica set status) can be
+		 tuned.
 
-     * Creating new instances of MongoId is faster.
+		 * Creating new instances of MongoId is faster.
 
-     BUG FIXES
+		 BUG FIXES
 
-     * New connections created for replica sets now propegate custom timeouts set
-     on the original connection.
+		 * New connections created for replica sets now propegate custom timeouts set
+		 on the original connection.
 
-     * Fix for replica set authentication. Connecting to a replica set with
-     "mongodb://user:pass@host" syntax would lose authentication info.
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.2</release>
-    <api>1.2.2</api>
-   </version>
-   <date>2011-07-21</date>
-   <notes>
-    Retry queries when safe to do so (minimizing exceptions on failover).
-    Block for "timeout" milliseconds when a connection pool is empty.
-    Fix a segfault affecting authentication to a single server.
-    Fix a segfault affecting deserialization of data larger than 4MB.
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.1</release>
-    <api>1.2.1</api>
-   </version>
-   <date>2011-07-07</date>
-   <notes>
-    More aggressive connection pool cleanup.
-    Fix replicaSet => false regression (1.2.0 would use a replica set connection
-    if replicaSet=>false was specified).
-    OS X Lion compile
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.2.0</release>
-    <api>1.2.0</api>
-   </version>
-   <date>2011-06-30</date>
-   <notes>
-    Uses nearest slave for reads with replica set connections.
-    Connection pooling
-    Autodetection of max BSON object size
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.1.4</release>
-    <api>1.1.4</api>
-   </version>
-   <date>2011-02-07</date>
-   <notes>
-    Fix MongoTimestamp serialization
-    Throw exception when an empty collection name is given
-    Be more paranoid about recv errors
-    Automatically reset query state after running explain()
-    Hack around some mongos command oddities
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.1.3</release>
-    <api>1.1.3</api>
-   </version>
-   <date>2011-01-06</date>
-   <notes>
-    Fixed non-persistent connection regression.
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.1.2</release>
-    <api>1.1.2</api>
-   </version>
-   <date>2011-01-05</date>
-   <notes>
-    Fixed PECL packaging.
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.1.1</release>
-    <api>1.1.1</api>
-   </version>
-   <date>2011-01-05</date>
-   <notes>
-    Fixed replica set persistent connection bug (PHP-184).
-    Make logging build use PHP logs.
-    Eliminate sharedFixture from test suite (PHP-180).
-    Made MongoTimestamp handle 64-bit integers correctly (PHP-179).
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.1.0</release>
-    <api>1.1.0</api>
-   </version>
-   <date>2010-12-08</date>
-   <notes>
-    Replica set reads can be distributed to slaves.  This can be done by calling
-    setSlaveOkay on a connection, database, or collection.  You can see the slave
-    that will be used with Mongo::getSlave and see/refresh the set status with
-    Mongo::getHosts.You can now see the server used for a query with
-    MongoCursor::info.
-    Added mongo.no_id php.ini option.
-    Better exception is thrown when the database is corrupt.
-    Fixed MongoDB::createCollection parameter parsing on 64-bit machines.
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.0.11</release>
-    <api>1.0.11</api>
-   </version>
-   <date>2010-11-5</date>
-   <notes>
-    Better replica set connection error handling
-    Added MongoCursor::batchSize()
-    Added mongo.allow_empty_keys option
-    Added unique codes for all MongoExceptions and MongoCursorExceptions
-    Added MongoId::getPID() and MongoId::getInc() methods
-    Added $id field to MongoId so that json_encode turns it into {$id:...}
-    Fixed cursor timeout bug
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.0.10</release>
-    <api>1.0.10</api>
-   </version>
-   <date>2010-09-29</date>
-   <notes>
-    Make reconnection more aggressive
-    Fix cursor killing bug
-    Exception codes match database error codes
-    Fixed bindata types on 64-bit systems
-    Added query state and cursor id fields to MongoCursor::info
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.0.9</release>
-    <api>1.0.9</api>
-   </version>
-   <date>2010-08-06</date>
-   <notes>
-    Added 64-bit integer handling: see docs MongoInt32, MongoInt64, and ini
-    options (Derick Rethans)
-    Replica set support
-    Added support for domain sockets
-    w and fsync options are customizable per operation
-    Added MongoCollection::ASCENDING and DESCENDING constants
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.0.8</release>
-    <api>1.0.8</api>
-   </version>
-   <date>2010-06-28</date>
-   <notes>
-    Added w and wtimeout.  GridFS: added get, put, and delete methods, index
-    checks on all methods, added fields param to GridFS::findOne.  Fixed some
-    error messages (authentication and BSON deserialization) and handling (for
-    large messages and field names passed as integers).  Fixed a couple of double
-    frees and an incorrect cursor boundry condition.  Added MongoId::__set_state
-    and MongoId::getHostname (to see the hostname hashed for unique ids).
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.0.7</release>
-    <api>1.0.7</api>
-   </version>
-   <date>2010-04-28</date>
-   <notes>
-    The bug fix release!  A zillion bugfixes and the new static
-    MongoCursor::$timeout property for setting a default timeout for requests.
-    Bug fixes include count error handling, fixing double frees with BSON errors
-    and ensureIndex, a mutex fix for FreeBSD, catching socket connection errors
-    (William Volkman), database commands propagate exceptions, and cursor killing
-    is more efficient.
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.0.6</release>
-    <api>1.0.6</api>
-   </version>
-   <date>2010-03-24</date>
-   <notes>
-    Allow MongoCollection::ensureIndex to create 2D indexes.
-    Added MongoCursor::fields().
-    Fixed for big endian machines.
-    Removed debug statements.
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.0.5</release>
-    <api>1.0.5</api>
-   </version>
-   <date>2010-03-16</date>
-   <notes>
-    Mutex fixes (especially on Windows) and improvements (failures throw exceptions).
-    New Cursor::info() function, which gives the query, fields, namespace, limit, and
-    skip (by Cesar Rodas)
-    Added safe option for remove, update, batch, and gridfs insert methods.
-    Added keyf option for MongoCollection::group: pass a MongoCode instance as the
-    grouping key to use keyf.
-    Added comparison handlers for MongoId, allowing you to use, for example, in_array
-    with MongoIds.
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.0.4</release>
-    <api>1.0.4</api>
-   </version>
-   <date>2010-02-25</date>
-   <notes>
-    Authenticate with any DB (not just admin) on login: "mongodb://username:password@host/db"
-    Connection timeout option, see doc for Mongo::__construct
-    Throws exception for non-UTF8 strings
-    Added Mongo::listDBs function
-    Added MongoCursor::addOption for $min and $max queries
-    Tailable cursors fixed
-    MongoDate segfault fix
-    NEW - a bunch of mutex/threading stuff... if this doesn't work with your OS's
-    threading library, please file a bug!
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.0.3</release>
-    <api>1.0.3</api>
-   </version>
-   <date>2010-01-07</date>
-   <notes>
-    Fix Apache segfault
-    Cursor timeout
-    Faster array encoding
-   </notes>
-  </release>
-  <release>
-   <stability>
-    <release>stable</release>
-    <api>stable</api>
-   </stability>
-   <version>
-    <release>1.0.2</release>
-    <api>1.0.2</api>
-   </version>
-   <date>2009-12-17</date>
-   <notes>
-    Better Mongo::__construct parameters
-    Getters for Mongo, MongoDB, and MongoCollection
-    MongoId::getTimestamp
-    MongoCollection::ensureIndex takes dropDups and safe opts
-   </notes>
-  </release>
-   <release>
-     <stability>
-       <release>stable</release>
-       <api>stable</api>
-     </stability>
-     <version>
-       <release>1.0.1</release>
-       <api>1.0.1</api>
-     </version>
-     <date>2009-11-19</date>
-     <notes>
-       Big-endian support
-       MongoCollection::update can affect multiple documents
-       MongoCursor::count uses limit and skip, optionally
-       MongoDBRef supports $db
-       MongoMinKey and MongoMax Key
-       Cursor::immortal
-       Constants for binary types
-       MongoDB::authenticate
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>stable</release>
-       <api>stable</api>
-     </stability>
-     <version>
-       <release>1.0.0</release>
-       <api>1.0.0</api>
-     </version>
-     <date>2009-09-29</date>
-     <notes>
-       Safe insert
-       Configurable special character
-       Error methods are on MongoDB, not Mongo
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>beta</release>
-       <api>beta</api>
-     </stability>
-     <version>
-       <release>0.9.5</release>
-       <api>0.9.5</api>
-     </version>
-     <date>2009-08-20</date>
-     <notes>
-       Unbreak backwards compatibility
-       Arrays are saved as arrays only if they have ascending numeric indices, otherwise they're saved as objects
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>beta</release>
-       <api>beta</api>
-     </stability>
-     <version>
-       <release>0.9.4</release>
-       <api>0.9.4</api>
-     </version>
-     <date>2009-08-18</date>
-     <notes>
-       Objects can be stored/retrieved
-       MongoCursor - errors throws exceptions, added snapshot() and $slaveOkay
-       MongoCollection::listCollections() returns collections
-       Long decoding support
-       Bug fixes
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>beta</release>
-       <api>beta</api>
-     </stability>
-     <version>
-       <release>0.9.3</release>
-       <api>0.9.3</api>
-     </version>
-     <date>2009-07-10</date>
-     <notes>
-       added slaveOkay(), tailable(), and logReplay() to MongoCursor
-       empty array() defaults to array type, added MongoEmptyObj
-       MongoId serialize/unserialize
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>beta</release>
-       <api>beta</api>
-     </stability>
-     <version>
-       <release>0.9.2</release>
-       <api>0.9.2</api>
-     </version>
-     <date>2009-06-17</date>
-     <notes>
-       Optimizations, bug fixes
-       Windows build
-       5.1 compatible
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>alpha</release>
-       <api>alpha</api>
-     </stability>
-     <version>
-       <release>0.9.1</release>
-       <api>0.9.1</api>
-     </version>
-     <date>2009-05-28</date>
-     <notes>
-       Code cleanup
-       Speed improvement
-       Windows work
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>alpha</release>
-       <api>alpha</api>
-     </stability>
-     <version>
-       <release>0.9.0</release>
-       <api>0.9.0</api>
-     </version>
-     <date>2009-05-19</date>
-     <notes>
-       Added classes
-       5.3 compatible
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>alpha</release>
-       <api>alpha</api>
-     </stability>
-     <version>
-       <release>0.8.4</release>
-       <api>0.8.4</api>
-     </version>
-     <date>2009-04-09</date>
-     <notes>
-       Removed all config dependencies
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>alpha</release>
-       <api>alpha</api>
-     </stability>
-     <version>
-       <release>0.8.3</release>
-       <api>0.8.2</api>
-     </version>
-     <date>2009-03-17</date>
-     <notes>
-       Added Code type
-       Improved config
-       Paired connections
-       Fixed some memory leaks
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>alpha</release>
-       <api>alpha</api>
-     </stability>
-     <version>
-       <release>0.8.2</release>
-       <api>0.8.1</api>
-     </version>
-     <date>2009-03-09</date>
-     <notes>
-       Reorganized source tree
-       Better config
-       API improvements
-       OID string fix
-     </notes>
-   </release>
-   <release>
-     <stability>
-       <release>alpha</release>
-       <api>alpha</api>
-     </stability>
-     <version>
-       <release>0.8.1</release>
-       <api>0.8.1</api>
-     </version>
-     <date>2009-03-04</date>
-     <notes>
-       Persistent connections
-       Better authentication
-       MongoId, MongoDate, MongoRegex, and MongoBinData types
-       Batch insert
-     </notes>
-   </release>
-   <release>
-     <version>
-       <release>0.8.0</release>
-       <api>0.8.0</api>
-     </version>
-     <stability>
-       <release>alpha</release>
-       <api>alpha</api>
-     </stability>
-     <date>2009-02-24</date>
-     <license>Apache License</license>
-     <notes>Initial release.
-       Basic connection and interaction capabilities.</notes>
-   </release>
+		 * Fix for replica set authentication. Connecting to a replica set with
+		 "mongodb://user:pass@host" syntax would lose authentication info.
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.2</release>
+		<api>1.2.2</api>
+	 </version>
+	 <date>2011-07-21</date>
+	 <notes>
+		Retry queries when safe to do so (minimizing exceptions on failover).
+		Block for "timeout" milliseconds when a connection pool is empty.
+		Fix a segfault affecting authentication to a single server.
+		Fix a segfault affecting deserialization of data larger than 4MB.
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.1</release>
+		<api>1.2.1</api>
+	 </version>
+	 <date>2011-07-07</date>
+	 <notes>
+		More aggressive connection pool cleanup.
+		Fix replicaSet => false regression (1.2.0 would use a replica set connection
+		if replicaSet=>false was specified).
+		OS X Lion compile
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.2.0</release>
+		<api>1.2.0</api>
+	 </version>
+	 <date>2011-06-30</date>
+	 <notes>
+		Uses nearest slave for reads with replica set connections.
+		Connection pooling
+		Autodetection of max BSON object size
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.1.4</release>
+		<api>1.1.4</api>
+	 </version>
+	 <date>2011-02-07</date>
+	 <notes>
+		Fix MongoTimestamp serialization
+		Throw exception when an empty collection name is given
+		Be more paranoid about recv errors
+		Automatically reset query state after running explain()
+		Hack around some mongos command oddities
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.1.3</release>
+		<api>1.1.3</api>
+	 </version>
+	 <date>2011-01-06</date>
+	 <notes>
+		Fixed non-persistent connection regression.
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.1.2</release>
+		<api>1.1.2</api>
+	 </version>
+	 <date>2011-01-05</date>
+	 <notes>
+		Fixed PECL packaging.
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.1.1</release>
+		<api>1.1.1</api>
+	 </version>
+	 <date>2011-01-05</date>
+	 <notes>
+		Fixed replica set persistent connection bug (PHP-184).
+		Make logging build use PHP logs.
+		Eliminate sharedFixture from test suite (PHP-180).
+		Made MongoTimestamp handle 64-bit integers correctly (PHP-179).
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.1.0</release>
+		<api>1.1.0</api>
+	 </version>
+	 <date>2010-12-08</date>
+	 <notes>
+		Replica set reads can be distributed to slaves.	This can be done by calling
+		setSlaveOkay on a connection, database, or collection.	You can see the slave
+		that will be used with Mongo::getSlave and see/refresh the set status with
+		Mongo::getHosts.You can now see the server used for a query with
+		MongoCursor::info.
+		Added mongo.no_id php.ini option.
+		Better exception is thrown when the database is corrupt.
+		Fixed MongoDB::createCollection parameter parsing on 64-bit machines.
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.0.11</release>
+		<api>1.0.11</api>
+	 </version>
+	 <date>2010-11-5</date>
+	 <notes>
+		Better replica set connection error handling
+		Added MongoCursor::batchSize()
+		Added mongo.allow_empty_keys option
+		Added unique codes for all MongoExceptions and MongoCursorExceptions
+		Added MongoId::getPID() and MongoId::getInc() methods
+		Added $id field to MongoId so that json_encode turns it into {$id:...}
+		Fixed cursor timeout bug
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.0.10</release>
+		<api>1.0.10</api>
+	 </version>
+	 <date>2010-09-29</date>
+	 <notes>
+		Make reconnection more aggressive
+		Fix cursor killing bug
+		Exception codes match database error codes
+		Fixed bindata types on 64-bit systems
+		Added query state and cursor id fields to MongoCursor::info
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.0.9</release>
+		<api>1.0.9</api>
+	 </version>
+	 <date>2010-08-06</date>
+	 <notes>
+		Added 64-bit integer handling: see docs MongoInt32, MongoInt64, and ini
+		options (Derick Rethans)
+		Replica set support
+		Added support for domain sockets
+		w and fsync options are customizable per operation
+		Added MongoCollection::ASCENDING and DESCENDING constants
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.0.8</release>
+		<api>1.0.8</api>
+	 </version>
+	 <date>2010-06-28</date>
+	 <notes>
+		Added w and wtimeout.	GridFS: added get, put, and delete methods, index
+		checks on all methods, added fields param to GridFS::findOne.	Fixed some
+		error messages (authentication and BSON deserialization) and handling (for
+		large messages and field names passed as integers).	Fixed a couple of double
+		frees and an incorrect cursor boundry condition.	Added MongoId::__set_state
+		and MongoId::getHostname (to see the hostname hashed for unique ids).
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.0.7</release>
+		<api>1.0.7</api>
+	 </version>
+	 <date>2010-04-28</date>
+	 <notes>
+		The bug fix release!	A zillion bugfixes and the new static
+		MongoCursor::$timeout property for setting a default timeout for requests.
+		Bug fixes include count error handling, fixing double frees with BSON errors
+		and ensureIndex, a mutex fix for FreeBSD, catching socket connection errors
+		(William Volkman), database commands propagate exceptions, and cursor killing
+		is more efficient.
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.0.6</release>
+		<api>1.0.6</api>
+	 </version>
+	 <date>2010-03-24</date>
+	 <notes>
+		Allow MongoCollection::ensureIndex to create 2D indexes.
+		Added MongoCursor::fields().
+		Fixed for big endian machines.
+		Removed debug statements.
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.0.5</release>
+		<api>1.0.5</api>
+	 </version>
+	 <date>2010-03-16</date>
+	 <notes>
+		Mutex fixes (especially on Windows) and improvements (failures throw exceptions).
+		New Cursor::info() function, which gives the query, fields, namespace, limit, and
+		skip (by Cesar Rodas)
+		Added safe option for remove, update, batch, and gridfs insert methods.
+		Added keyf option for MongoCollection::group: pass a MongoCode instance as the
+		grouping key to use keyf.
+		Added comparison handlers for MongoId, allowing you to use, for example, in_array
+		with MongoIds.
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.0.4</release>
+		<api>1.0.4</api>
+	 </version>
+	 <date>2010-02-25</date>
+	 <notes>
+		Authenticate with any DB (not just admin) on login: "mongodb://username:password@host/db"
+		Connection timeout option, see doc for Mongo::__construct
+		Throws exception for non-UTF8 strings
+		Added Mongo::listDBs function
+		Added MongoCursor::addOption for $min and $max queries
+		Tailable cursors fixed
+		MongoDate segfault fix
+		NEW - a bunch of mutex/threading stuff... if this doesn't work with your OS's
+		threading library, please file a bug!
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.0.3</release>
+		<api>1.0.3</api>
+	 </version>
+	 <date>2010-01-07</date>
+	 <notes>
+		Fix Apache segfault
+		Cursor timeout
+		Faster array encoding
+	 </notes>
+	</release>
+	<release>
+	 <stability>
+		<release>stable</release>
+		<api>stable</api>
+	 </stability>
+	 <version>
+		<release>1.0.2</release>
+		<api>1.0.2</api>
+	 </version>
+	 <date>2009-12-17</date>
+	 <notes>
+		Better Mongo::__construct parameters
+		Getters for Mongo, MongoDB, and MongoCollection
+		MongoId::getTimestamp
+		MongoCollection::ensureIndex takes dropDups and safe opts
+	 </notes>
+	</release>
+	 <release>
+		 <stability>
+			 <release>stable</release>
+			 <api>stable</api>
+		 </stability>
+		 <version>
+			 <release>1.0.1</release>
+			 <api>1.0.1</api>
+		 </version>
+		 <date>2009-11-19</date>
+		 <notes>
+			 Big-endian support
+			 MongoCollection::update can affect multiple documents
+			 MongoCursor::count uses limit and skip, optionally
+			 MongoDBRef supports $db
+			 MongoMinKey and MongoMax Key
+			 Cursor::immortal
+			 Constants for binary types
+			 MongoDB::authenticate
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>stable</release>
+			 <api>stable</api>
+		 </stability>
+		 <version>
+			 <release>1.0.0</release>
+			 <api>1.0.0</api>
+		 </version>
+		 <date>2009-09-29</date>
+		 <notes>
+			 Safe insert
+			 Configurable special character
+			 Error methods are on MongoDB, not Mongo
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>beta</release>
+			 <api>beta</api>
+		 </stability>
+		 <version>
+			 <release>0.9.5</release>
+			 <api>0.9.5</api>
+		 </version>
+		 <date>2009-08-20</date>
+		 <notes>
+			 Unbreak backwards compatibility
+			 Arrays are saved as arrays only if they have ascending numeric indices, otherwise they're saved as objects
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>beta</release>
+			 <api>beta</api>
+		 </stability>
+		 <version>
+			 <release>0.9.4</release>
+			 <api>0.9.4</api>
+		 </version>
+		 <date>2009-08-18</date>
+		 <notes>
+			 Objects can be stored/retrieved
+			 MongoCursor - errors throws exceptions, added snapshot() and $slaveOkay
+			 MongoCollection::listCollections() returns collections
+			 Long decoding support
+			 Bug fixes
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>beta</release>
+			 <api>beta</api>
+		 </stability>
+		 <version>
+			 <release>0.9.3</release>
+			 <api>0.9.3</api>
+		 </version>
+		 <date>2009-07-10</date>
+		 <notes>
+			 added slaveOkay(), tailable(), and logReplay() to MongoCursor
+			 empty array() defaults to array type, added MongoEmptyObj
+			 MongoId serialize/unserialize
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>beta</release>
+			 <api>beta</api>
+		 </stability>
+		 <version>
+			 <release>0.9.2</release>
+			 <api>0.9.2</api>
+		 </version>
+		 <date>2009-06-17</date>
+		 <notes>
+			 Optimizations, bug fixes
+			 Windows build
+			 5.1 compatible
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>alpha</release>
+			 <api>alpha</api>
+		 </stability>
+		 <version>
+			 <release>0.9.1</release>
+			 <api>0.9.1</api>
+		 </version>
+		 <date>2009-05-28</date>
+		 <notes>
+			 Code cleanup
+			 Speed improvement
+			 Windows work
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>alpha</release>
+			 <api>alpha</api>
+		 </stability>
+		 <version>
+			 <release>0.9.0</release>
+			 <api>0.9.0</api>
+		 </version>
+		 <date>2009-05-19</date>
+		 <notes>
+			 Added classes
+			 5.3 compatible
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>alpha</release>
+			 <api>alpha</api>
+		 </stability>
+		 <version>
+			 <release>0.8.4</release>
+			 <api>0.8.4</api>
+		 </version>
+		 <date>2009-04-09</date>
+		 <notes>
+			 Removed all config dependencies
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>alpha</release>
+			 <api>alpha</api>
+		 </stability>
+		 <version>
+			 <release>0.8.3</release>
+			 <api>0.8.2</api>
+		 </version>
+		 <date>2009-03-17</date>
+		 <notes>
+			 Added Code type
+			 Improved config
+			 Paired connections
+			 Fixed some memory leaks
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>alpha</release>
+			 <api>alpha</api>
+		 </stability>
+		 <version>
+			 <release>0.8.2</release>
+			 <api>0.8.1</api>
+		 </version>
+		 <date>2009-03-09</date>
+		 <notes>
+			 Reorganized source tree
+			 Better config
+			 API improvements
+			 OID string fix
+		 </notes>
+	 </release>
+	 <release>
+		 <stability>
+			 <release>alpha</release>
+			 <api>alpha</api>
+		 </stability>
+		 <version>
+			 <release>0.8.1</release>
+			 <api>0.8.1</api>
+		 </version>
+		 <date>2009-03-04</date>
+		 <notes>
+			 Persistent connections
+			 Better authentication
+			 MongoId, MongoDate, MongoRegex, and MongoBinData types
+			 Batch insert
+		 </notes>
+	 </release>
+	 <release>
+		 <version>
+			 <release>0.8.0</release>
+			 <api>0.8.0</api>
+		 </version>
+		 <stability>
+			 <release>alpha</release>
+			 <api>alpha</api>
+		 </stability>
+		 <date>2009-02-24</date>
+		 <license>Apache License</license>
+		 <notes>Initial release.
+			 Basic connection and interaction capabilities.</notes>
+	 </release>
  </changelog>
 </package>
 <!--

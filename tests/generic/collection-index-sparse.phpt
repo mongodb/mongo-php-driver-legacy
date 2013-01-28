@@ -33,11 +33,11 @@ echo "\n";
 $db->people->drop();
 ?>
 --EXPECT--
-Name: Jim; Title: 
+Name: Jim; Title:
 Name: Bones; Title: Doctor
 
 Name: Bones; Title: Doctor
 
-Name: Jim; Title: 
+Name: Jim; Title:
 Name: Bones; Title: Doctor
 

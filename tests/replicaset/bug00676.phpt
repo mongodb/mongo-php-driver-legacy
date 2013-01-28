@@ -13,10 +13,10 @@ $oSemafor->w = 42;
 $oSemafor->wtimeout = 3000;
 
 try{
-        $time = microtime(true);
-        $x = $oSemafor->insert(array('createts' => microtime(true)), array('safe' => true));
+				$time = microtime(true);
+				$x = $oSemafor->insert(array('createts' => microtime(true)), array('safe' => true));
 } catch(MongoCursorException $e){
-    var_dump($e->getMessage(), $e->getCode());
+		var_dump($e->getMessage(), $e->getCode());
 }
 ?>
 --EXPECTF--

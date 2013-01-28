@@ -7,7 +7,7 @@ MongoCursor::setReadPreference errors [3]
 <?php
 $host = hostname();
 $port = port();
-$db   = dbname();
+$db	 = dbname();
 
 $baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
 
@@ -20,6 +20,6 @@ var_dump($rp);
 --EXPECTF--
 Warning: MongoCursor::setReadPreference(): You can't use read preference tags with a read preference of PRIMARY in %smongocursor-setreadpreference_error-003.php on line %d
 array(1) {
-  ["type"]=>
-  string(7) "primary"
+	["type"]=>
+	string(7) "primary"
 }

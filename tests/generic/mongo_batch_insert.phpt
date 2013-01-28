@@ -39,35 +39,35 @@ foreach ($c as $item) {
 ?>
 --EXPECTF--
 array(3) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "4cb4ab6d7addf98506010001"
-  }
-  ["id"]=>
-  int(1)
-  ["desc"]=>
-  string(3) "ONE"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+		["$id"]=>
+		string(24) "4cb4ab6d7addf98506010001"
+	}
+	["id"]=>
+	int(1)
+	["desc"]=>
+	string(3) "ONE"
 }
 array(3) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "4cb4ab6d7addf98506010002"
-  }
-  ["id"]=>
-  int(2)
-  ["desc"]=>
-  string(3) "TWO"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+		["$id"]=>
+		string(24) "4cb4ab6d7addf98506010002"
+	}
+	["id"]=>
+	int(2)
+	["desc"]=>
+	string(3) "TWO"
 }
 array(3) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "4cb4ab6d7addf98506010004"
-  }
-  ["id"]=>
-  int(4)
-  ["desc"]=>
-  string(4) "FOUR"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+		["$id"]=>
+		string(24) "4cb4ab6d7addf98506010004"
+	}
+	["id"]=>
+	int(4)
+	["desc"]=>
+	string(4) "FOUR"
 }

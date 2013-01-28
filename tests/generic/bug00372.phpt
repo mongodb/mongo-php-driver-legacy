@@ -31,21 +31,21 @@ $GridFS->ensureIndex(array('filename'=>1),array('unique'=>true));
 
 #Save first test.txt
 try{
-    $GridFS->storeBytes('1234567890',array('filename'=>'test.txt'));
+		$GridFS->storeBytes('1234567890',array('filename'=>'test.txt'));
 }catch (MongoGridFSException $e) {
-    echo "error message: ".$e->getMessage()."\n";
-    echo "error code: ".$e->getCode()."\n";
+		echo "error message: ".$e->getMessage()."\n";
+		echo "error code: ".$e->getCode()."\n";
 }
 
 #Save second test.txt
 try{
-    $GridFS->storeBytes('1234567890',array('filename'=>'test.txt'));
+		$GridFS->storeBytes('1234567890',array('filename'=>'test.txt'));
 }catch (MongoGridFSException $e) {
-    echo "error message: ".$e->getMessage()."\n";
-    echo "error code: ".$e->getCode()."\n";
+		echo "error message: ".$e->getMessage()."\n";
+		echo "error code: ".$e->getCode()."\n";
 }
 ?>
 --EXPECTF--
-error message: Could not store file: %s:%d: E11000 duplicate key error index: phpunit.test_prefix.files.$filename_1  dup key: { : "test.txt" }
+error message: Could not store file: %s:%d: E11000 duplicate key error index: phpunit.test_prefix.files.$filename_1	dup key: { : "test.txt" }
 error code: 11000
 

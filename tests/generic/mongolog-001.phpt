@@ -11,8 +11,8 @@ error_reporting(E_ALL);
 $numNotices = 0;
 
 function handleNotice($errno, $errstr) {
-    global $numNotices;
-    ++$numNotices;
+		global $numNotices;
+		++$numNotices;
 }
 
 set_error_handler('handleNotice', E_NOTICE);

@@ -8,10 +8,10 @@ Test for PHP-426: Connection pool not paying attention to authentication when us
 require_once dirname(__FILE__) . "/../utils.inc";
 
 function get_user($m, $username) {
-    $db = $m->selectDB(dbname());
-    $c = $db->selectCollection("system.users");
+		$db = $m->selectDB(dbname());
+		$c = $db->selectCollection("system.users");
 
-    return $c->findOne(array("user" => $username));
+		return $c->findOne(array("user" => $username));
 }
 
 
@@ -35,50 +35,50 @@ var_dump(get_user($m, username()));
 ?>
 --EXPECTF--
 object(Mongo)#%d (4) {
-  ["connected"]=>
-  bool(true)
-  ["status"]=>
-  NULL
-  ["server":protected]=>
-  NULL
-  ["persistent":protected]=>
-  NULL
+	["connected"]=>
+	bool(true)
+	["status"]=>
+	NULL
+	["server":protected]=>
+	NULL
+	["persistent":protected]=>
+	NULL
 }
 array(4) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
-  }
-  ["user"]=>
-  string(%d) "%s"
-  ["readOnly"]=>
-  bool(false)
-  ["pwd"]=>
-  string(32) "%s"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+		["$id"]=>
+		string(24) "%s"
+	}
+	["user"]=>
+	string(%d) "%s"
+	["readOnly"]=>
+	bool(false)
+	["pwd"]=>
+	string(32) "%s"
 }
 string(%d) "%s"
 No candidate servers found
 object(Mongo)#%d (4) {
-  ["connected"]=>
-  bool(true)
-  ["status"]=>
-  NULL
-  ["server":protected]=>
-  NULL
-  ["persistent":protected]=>
-  NULL
+	["connected"]=>
+	bool(true)
+	["status"]=>
+	NULL
+	["server":protected]=>
+	NULL
+	["persistent":protected]=>
+	NULL
 }
 array(4) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
-  }
-  ["user"]=>
-  string(%d) "%s"
-  ["readOnly"]=>
-  bool(false)
-  ["pwd"]=>
-  string(32) "%s"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+		["$id"]=>
+		string(24) "%s"
+	}
+	["user"]=>
+	string(%d) "%s"
+	["readOnly"]=>
+	bool(false)
+	["pwd"]=>
+	string(32) "%s"
 }

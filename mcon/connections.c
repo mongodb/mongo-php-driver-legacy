@@ -1,17 +1,17 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *	Copyright 2009-2012 10gen, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *	http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
  */
 #include <string.h>
 #include "types.h"
@@ -43,8 +43,8 @@
 #include <string.h>
 #include <errno.h>
 
-#define INT_32  4
-#define FLAGS   0
+#define INT_32	4
+#define FLAGS	 0
 
 #define MONGO_REPLY_FLAG_QUERY_FAILURE 0x02
 
@@ -90,25 +90,25 @@ static int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *h
 /* This function does the actual connecting */
 int mongo_connection_connect(char *host, int port, int timeout, char **error_message)
 {
-	struct sockaddr*   sa;
+	struct sockaddr*	 sa;
 	struct sockaddr_in si;
-	socklen_t          sn;
-	int                family;
-	struct timeval     tval;
-	int                connected;
-	int                status;
-	int                tmp_socket;
+	socklen_t					sn;
+	int								family;
+	struct timeval		 tval;
+	int								connected;
+	int								status;
+	int								tmp_socket;
 
 #ifdef WIN32
-	WORD       version;
-	WSADATA    wsaData;
-	int        size, error;
-	u_long     no = 0;
+	WORD			 version;
+	WSADATA		wsaData;
+	int				size, error;
+	u_long		 no = 0;
 	const char yes = 1;
 #else
 	struct sockaddr_un su;
-	uint               size;
-	int                yes = 1;
+	uint							 size;
+	int								yes = 1;
 #endif
 
 	*error_message = NULL;
@@ -322,11 +322,11 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
  * is set and must be freed */
 static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mcon_str *packet, char **data_buffer, char **error_message)
 {
-	int            read;
-	uint32_t       data_size;
-	char           reply_buffer[MONGO_REPLY_HEADER_SIZE];
-	uint32_t       flags; /* To check for query reply status */
-	char          *recv_error_message;
+	int						read;
+	uint32_t			 data_size;
+	char					 reply_buffer[MONGO_REPLY_HEADER_SIZE];
+	uint32_t			 flags; /* To check for query reply status */
+	char					*recv_error_message;
 
 	/* Send and wait for reply */
 	mongo_io_send(con->socket, packet->d, packet->l, error_message);
@@ -398,9 +398,9 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
  */
 int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, char **error_message)
 {
-	mcon_str      *packet;
+	mcon_str			*packet;
 	struct timeval start, end;
-	char          *data_buffer;
+	char					*data_buffer;
 
 	gettimeofday(&start, NULL);
 	if ((con->last_ping + manager->ping_interval) > start.tv_sec) {
@@ -436,19 +436,19 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
  * 1: when is master was run and worked
  * 2: when is master wasn't run due to the time-out limit
  * 3: when it all worked, but we need to remove the seed host (due to its name
- *    not being what the server thought it is) - in that case, the server in
- *    the last argument is changed
+ *		not being what the server thought it is) - in that case, the server in
+ *		the last argument is changed
  */
 int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
 {
-	mcon_str      *packet;
-	char          *data_buffer;
-	char          *set = NULL;      /* For replicaset in return */
-	char          *hosts, *ptr, *string;
-	unsigned char  ismaster = 0, secondary = 0, arbiter = 0;
-	char          *connected_name, *we_think_we_are;
+	mcon_str			*packet;
+	char					*data_buffer;
+	char					*set = NULL;			/* For replicaset in return */
+	char					*hosts, *ptr, *string;
+	unsigned char	ismaster = 0, secondary = 0, arbiter = 0;
+	char					*connected_name, *we_think_we_are;
 	struct timeval now;
-	int            retval = 1;
+	int						retval = 1;
 
 	gettimeofday(&now, NULL);
 	if ((con->last_ismaster + manager->ismaster_interval) > now.tv_sec) {
@@ -584,12 +584,12 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
  */
 int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, char **error_message)
 {
-	mcon_str      *packet;
-	int32_t        max_bson_size = 0;
-	char          *data_buffer;
-	char          *ptr;
-	char          *tags;
-	char          *msg; /* If set and its value is "isdbgrid", it signals we connected to a mongos */
+	mcon_str			*packet;
+	int32_t				max_bson_size = 0;
+	char					*data_buffer;
+	char					*ptr;
+	char					*tags;
+	char					*msg; /* If set and its value is "isdbgrid", it signals we connected to a mongos */
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: start");
 	packet = bson_create_ismaster_packet(con);
@@ -625,7 +625,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	con->tags = NULL;
 	if (bson_find_field_as_document(ptr, "tags", (char**) &tags)) {
 		char *it, *name, *value;
-		int   length;
+		int	 length;
 
 		it = tags;
 
@@ -652,11 +652,11 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
  */
 char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *con, char **error_message)
 {
-	mcon_str      *packet;
-	char          *data_buffer;
-	char          *ptr;
-	char          *nonce;
-	char          *retval = NULL;
+	mcon_str			*packet;
+	char					*data_buffer;
+	char					*ptr;
+	char					*nonce;
+	char					*retval = NULL;
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "getnonce: start");
 	packet = bson_create_getnonce_packet(con);
@@ -691,13 +691,13 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
  */
 int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, char *database, char *username, char *password, char *nonce, char **error_message)
 {
-	mcon_str      *packet;
-	char          *data_buffer, *errmsg;
-	double         ok;
-	char          *ptr;
-	char          *salted;
-	int            length;
-	char          *hash, *key;
+	mcon_str			*packet;
+	char					*data_buffer, *errmsg;
+	double				 ok;
+	char					*ptr;
+	char					*salted;
+	int						length;
+	char					*hash, *key;
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: start");
 

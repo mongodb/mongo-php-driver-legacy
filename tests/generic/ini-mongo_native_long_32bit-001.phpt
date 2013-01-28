@@ -16,9 +16,9 @@ ini_set('mongo.native_long', true);
 $coll->insert(array('int64' => new MongoInt64('9223372036854775807')));
 
 try {
-    $coll->findOne();
+		$coll->findOne();
 } catch (Exception $e) {
-    printf("%s: %s\n", get_class($e), $e->getMessage());
+		printf("%s: %s\n", get_class($e), $e->getMessage());
 }
 ?>
 --EXPECT--

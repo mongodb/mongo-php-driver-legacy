@@ -7,7 +7,7 @@ MongoClient::setReadPreference errors [4]
 <?php
 $host = hostname();
 $port = port();
-$db   = dbname();
+$db	 = dbname();
 
 $baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
 
@@ -20,14 +20,14 @@ var_dump($rp);
 --EXPECTF--
 Warning: MongoClient::setReadPreference(): You can't use read preference tags with a read preference of PRIMARY in %smongoclient-setreadpreference_error-004.php on line %d
 array(2) {
-  ["type"]=>
-  string(9) "secondary"
-  ["tagsets"]=>
-  array(1) {
-    [0]=>
-    array(1) {
-      ["foo"]=>
-      string(3) "bar"
-    }
-  }
+	["type"]=>
+	string(9) "secondary"
+	["tagsets"]=>
+	array(1) {
+		[0]=>
+		array(1) {
+			["foo"]=>
+			string(3) "bar"
+		}
+	}
 }

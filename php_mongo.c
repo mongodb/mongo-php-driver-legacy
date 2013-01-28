@@ -1,17 +1,17 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *	Copyright 2009-2012 10gen, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *	http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -36,24 +36,24 @@
 #include "mcon/manager.h"
 
 extern zend_object_handlers mongo_default_handlers,
-  mongo_id_handlers;
+	mongo_id_handlers;
 
 /** Classes */
 extern zend_class_entry *mongo_ce_CursorException,
-  *mongo_ce_ResultException;
+	*mongo_ce_ResultException;
 
 zend_class_entry *mongo_ce_ConnectionException,
-  *mongo_ce_CursorTOException,
-  *mongo_ce_GridFSException,
-  *mongo_ce_Exception,
-  *mongo_ce_MaxKey,
-  *mongo_ce_MinKey;
+	*mongo_ce_CursorTOException,
+	*mongo_ce_GridFSException,
+	*mongo_ce_Exception,
+	*mongo_ce_MaxKey,
+	*mongo_ce_MinKey;
 
 /** Resources */
 int le_pconnection,
-  le_pserver,
-  le_prs,
-  le_cursor_list;
+	le_pserver,
+	le_prs,
+	le_cursor_list;
 
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
@@ -67,33 +67,33 @@ extern HANDLE cursor_mutex;
 #endif
 
 zend_function_entry mongo_functions[] = {
-  PHP_FE(bson_encode, NULL)
-  PHP_FE(bson_decode, NULL)
-  { NULL, NULL, NULL }
+	PHP_FE(bson_encode, NULL)
+	PHP_FE(bson_decode, NULL)
+	{ NULL, NULL, NULL }
 };
 
 /* {{{ mongo_module_entry
  */
 zend_module_entry mongo_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
-  STANDARD_MODULE_HEADER,
+	STANDARD_MODULE_HEADER,
 #endif
-  PHP_MONGO_EXTNAME,
-  mongo_functions,
-  PHP_MINIT(mongo),
-  PHP_MSHUTDOWN(mongo),
-  PHP_RINIT(mongo),
-  NULL,
-  PHP_MINFO(mongo),
-  PHP_MONGO_VERSION,
+	PHP_MONGO_EXTNAME,
+	mongo_functions,
+	PHP_MINIT(mongo),
+	PHP_MSHUTDOWN(mongo),
+	PHP_RINIT(mongo),
+	NULL,
+	PHP_MINFO(mongo),
+	PHP_MONGO_VERSION,
 #if ZEND_MODULE_API_NO >= 20060613
-  PHP_MODULE_GLOBALS(mongo),
-  PHP_GINIT(mongo),
-  PHP_GSHUTDOWN(mongo),
-  NULL,
-  STANDARD_MODULE_PROPERTIES_EX
+	PHP_MODULE_GLOBALS(mongo),
+	PHP_GINIT(mongo),
+	PHP_GSHUTDOWN(mongo),
+	NULL,
+	STANDARD_MODULE_PROPERTIES_EX
 #else
-  STANDARD_MODULE_PROPERTIES
+	STANDARD_MODULE_PROPERTIES
 #endif
 };
 /* }}} */
@@ -146,79 +146,79 @@ PHP_INI_END()
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(mongo) {
-  zend_class_entry max_key, min_key;
+	zend_class_entry max_key, min_key;
 
 #if ZEND_MODULE_API_NO < 20060613
-  ZEND_INIT_MODULE_GLOBALS(mongo, mongo_init_globals, NULL);
+	ZEND_INIT_MODULE_GLOBALS(mongo, mongo_init_globals, NULL);
 #endif /* ZEND_MODULE_API_NO < 20060613 */
 
-  REGISTER_INI_ENTRIES();
+	REGISTER_INI_ENTRIES();
 /*
-  le_pconnection = zend_register_list_destructors_ex(NULL, mongo_util_pool_shutdown, PHP_CONNECTION_RES_NAME, module_number);
-  le_pserver = zend_register_list_destructors_ex(NULL, mongo_util_server_shutdown, PHP_SERVER_RES_NAME, module_number);
-  le_prs = zend_register_list_destructors_ex(NULL, mongo_util_rs_shutdown, PHP_RS_RES_NAME, module_number);
+	le_pconnection = zend_register_list_destructors_ex(NULL, mongo_util_pool_shutdown, PHP_CONNECTION_RES_NAME, module_number);
+	le_pserver = zend_register_list_destructors_ex(NULL, mongo_util_server_shutdown, PHP_SERVER_RES_NAME, module_number);
+	le_prs = zend_register_list_destructors_ex(NULL, mongo_util_rs_shutdown, PHP_RS_RES_NAME, module_number);
 */
-  le_cursor_list = zend_register_list_destructors_ex(NULL, php_mongo_cursor_list_pfree, PHP_CURSOR_LIST_RES_NAME, module_number);
+	le_cursor_list = zend_register_list_destructors_ex(NULL, php_mongo_cursor_list_pfree, PHP_CURSOR_LIST_RES_NAME, module_number);
 
-  mongo_init_MongoClient(TSRMLS_C);
-  mongo_init_Mongo(TSRMLS_C);
-  mongo_init_MongoDB(TSRMLS_C);
-  mongo_init_MongoCollection(TSRMLS_C);
-  mongo_init_MongoCursor(TSRMLS_C);
+	mongo_init_MongoClient(TSRMLS_C);
+	mongo_init_Mongo(TSRMLS_C);
+	mongo_init_MongoDB(TSRMLS_C);
+	mongo_init_MongoCollection(TSRMLS_C);
+	mongo_init_MongoCursor(TSRMLS_C);
 
-  mongo_init_MongoGridFS(TSRMLS_C);
-  mongo_init_MongoGridFSFile(TSRMLS_C);
-  mongo_init_MongoGridFSCursor(TSRMLS_C);
+	mongo_init_MongoGridFS(TSRMLS_C);
+	mongo_init_MongoGridFSFile(TSRMLS_C);
+	mongo_init_MongoGridFSCursor(TSRMLS_C);
 
-  mongo_init_MongoId(TSRMLS_C);
-  mongo_init_MongoCode(TSRMLS_C);
-  mongo_init_MongoRegex(TSRMLS_C);
-  mongo_init_MongoDate(TSRMLS_C);
-  mongo_init_MongoBinData(TSRMLS_C);
-  mongo_init_MongoDBRef(TSRMLS_C);
+	mongo_init_MongoId(TSRMLS_C);
+	mongo_init_MongoCode(TSRMLS_C);
+	mongo_init_MongoRegex(TSRMLS_C);
+	mongo_init_MongoDate(TSRMLS_C);
+	mongo_init_MongoBinData(TSRMLS_C);
+	mongo_init_MongoDBRef(TSRMLS_C);
 
-  mongo_init_MongoExceptions(TSRMLS_C);
-  mongo_init_MongoResultException(TSRMLS_C);
+	mongo_init_MongoExceptions(TSRMLS_C);
+	mongo_init_MongoResultException(TSRMLS_C);
 
-  mongo_init_MongoTimestamp(TSRMLS_C);
-  mongo_init_MongoInt32(TSRMLS_C);
-  mongo_init_MongoInt64(TSRMLS_C);
+	mongo_init_MongoTimestamp(TSRMLS_C);
+	mongo_init_MongoInt32(TSRMLS_C);
+	mongo_init_MongoInt64(TSRMLS_C);
 
-  mongo_init_MongoLog(TSRMLS_C);
+	mongo_init_MongoLog(TSRMLS_C);
 
 	/* Deprecated, but we will keep it for now */
 	mongo_init_MongoPool(TSRMLS_C);
 
-  /*
-   * MongoMaxKey and MongoMinKey are completely non-interactive: they have no
-   * method, fields, or constants.
-   */
-  INIT_CLASS_ENTRY(max_key, "MongoMaxKey", NULL);
-  mongo_ce_MaxKey = zend_register_internal_class(&max_key TSRMLS_CC);
-  INIT_CLASS_ENTRY(min_key, "MongoMinKey", NULL);
-  mongo_ce_MinKey = zend_register_internal_class(&min_key TSRMLS_CC);
+	/*
+	 * MongoMaxKey and MongoMinKey are completely non-interactive: they have no
+	 * method, fields, or constants.
+	 */
+	INIT_CLASS_ENTRY(max_key, "MongoMaxKey", NULL);
+	mongo_ce_MaxKey = zend_register_internal_class(&max_key TSRMLS_CC);
+	INIT_CLASS_ENTRY(min_key, "MongoMinKey", NULL);
+	mongo_ce_MinKey = zend_register_internal_class(&min_key TSRMLS_CC);
 
 
-  // make mongo objects uncloneable
-  memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-  mongo_default_handlers.clone_obj = NULL;
+	// make mongo objects uncloneable
+	memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+	mongo_default_handlers.clone_obj = NULL;
 
-  // add compare_objects for MongoId
-  memcpy(&mongo_id_handlers, &mongo_default_handlers, sizeof(zend_object_handlers));
-  mongo_id_handlers.compare_objects = php_mongo_compare_ids;
+	// add compare_objects for MongoId
+	memcpy(&mongo_id_handlers, &mongo_default_handlers, sizeof(zend_object_handlers));
+	mongo_id_handlers.compare_objects = php_mongo_compare_ids;
 
-  // start random number generator
-  srand(time(0));
+	// start random number generator
+	srand(time(0));
 
 #ifdef WIN32
-  cursor_mutex = CreateMutex(NULL, FALSE, NULL);
-  if (cursor_mutex == NULL) {
-    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
-    return FAILURE;
-  }
+	cursor_mutex = CreateMutex(NULL, FALSE, NULL);
+	if (cursor_mutex == NULL) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
+		return FAILURE;
+	}
 #endif
 
-  return SUCCESS;
+	return SUCCESS;
 }
 
 
@@ -226,67 +226,67 @@ PHP_MINIT_FUNCTION(mongo) {
  */
 static PHP_GINIT_FUNCTION(mongo)
 {
-  // on windows, the max length is 256.  linux doesn't have a limit, but it will
-  // fill in the first 256 chars of hostname even if the actual hostname is
-  // longer.  if you can't get a unique character in the first 256 chars of your
-  // hostname, you're doing it wrong.
-  int len, win_max = 256;
-  char *hostname, host_start[256];
-  register ulong hash;
+	// on windows, the max length is 256.	linux doesn't have a limit, but it will
+	// fill in the first 256 chars of hostname even if the actual hostname is
+	// longer.	if you can't get a unique character in the first 256 chars of your
+	// hostname, you're doing it wrong.
+	int len, win_max = 256;
+	char *hostname, host_start[256];
+	register ulong hash;
 
-  mongo_globals->default_host = "localhost";
-  mongo_globals->default_port = 27017;
-  mongo_globals->request_id = 3;
-  mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
-  mongo_globals->cmd_char = "$";
-  mongo_globals->utf8 = 1;
+	mongo_globals->default_host = "localhost";
+	mongo_globals->default_port = 27017;
+	mongo_globals->request_id = 3;
+	mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
+	mongo_globals->cmd_char = "$";
+	mongo_globals->utf8 = 1;
 
-  mongo_globals->inc = 0;
-  mongo_globals->response_num = 0;
-  mongo_globals->errmsg = 0;
+	mongo_globals->inc = 0;
+	mongo_globals->response_num = 0;
+	mongo_globals->errmsg = 0;
 
-  mongo_globals->max_send_size = 64 * 1024 * 1024;
-  mongo_globals->pool_size = -1;
+	mongo_globals->max_send_size = 64 * 1024 * 1024;
+	mongo_globals->pool_size = -1;
 
-  hostname = host_start;
-  // from the gnu manual:
-  //     gethostname stores the beginning of the host name in name even if the
-  //     host name won't entirely fit. For some purposes, a truncated host name
-  //     is good enough. If it is, you can ignore the error code.
-  // so we'll ignore the error code.
-  // returns 0-terminated hostname.
-  gethostname(hostname, win_max);
-  len = strlen(hostname);
+	hostname = host_start;
+	// from the gnu manual:
+	//		 gethostname stores the beginning of the host name in name even if the
+	//		 host name won't entirely fit. For some purposes, a truncated host name
+	//		 is good enough. If it is, you can ignore the error code.
+	// so we'll ignore the error code.
+	// returns 0-terminated hostname.
+	gethostname(hostname, win_max);
+	len = strlen(hostname);
 
-  hash = 5381;
+	hash = 5381;
 
-  /* from zend_hash.h */
-  /* variant with the hash unrolled eight times */
-  for (; len >= 8; len -= 8) {
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-    hash = ((hash << 5) + hash) + *hostname++;
-  }
+	/* from zend_hash.h */
+	/* variant with the hash unrolled eight times */
+	for (; len >= 8; len -= 8) {
+		hash = ((hash << 5) + hash) + *hostname++;
+		hash = ((hash << 5) + hash) + *hostname++;
+		hash = ((hash << 5) + hash) + *hostname++;
+		hash = ((hash << 5) + hash) + *hostname++;
+		hash = ((hash << 5) + hash) + *hostname++;
+		hash = ((hash << 5) + hash) + *hostname++;
+		hash = ((hash << 5) + hash) + *hostname++;
+		hash = ((hash << 5) + hash) + *hostname++;
+	}
 
-  switch (len) {
-  case 7: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
-  case 6: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
-  case 5: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
-  case 4: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
-  case 3: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
-  case 2: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
-  case 1: hash = ((hash << 5) + hash) + *hostname++; break;
-  case 0: break;
-  }
+	switch (len) {
+	case 7: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+	case 6: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+	case 5: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+	case 4: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+	case 3: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+	case 2: hash = ((hash << 5) + hash) + *hostname++; /* fallthrough... */
+	case 1: hash = ((hash << 5) + hash) + *hostname++; break;
+	case 0: break;
+	}
 
-  mongo_globals->machine = hash;
+	mongo_globals->machine = hash;
 
-  mongo_globals->ts_inc = 0;
+	mongo_globals->ts_inc = 0;
 
 #if PHP_VERSION_ID >= 50300
 	mongo_globals->log_callback_info = empty_fcall_info;
@@ -307,17 +307,17 @@ PHP_GSHUTDOWN_FUNCTION(mongo)
 /* {{{ PHP_MSHUTDOWN_FUNCTION
  */
 PHP_MSHUTDOWN_FUNCTION(mongo) {
-  UNREGISTER_INI_ENTRIES();
+	UNREGISTER_INI_ENTRIES();
 
 #if WIN32
-  // 0 is failure
-  if (CloseHandle(cursor_mutex) == 0) {
-    php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
-    return FAILURE;
-  }
+	// 0 is failure
+	if (CloseHandle(cursor_mutex) == 0) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
+		return FAILURE;
+	}
 #endif
 
-  return SUCCESS;
+	return SUCCESS;
 }
 /* }}} */
 
@@ -337,46 +337,46 @@ PHP_RINIT_FUNCTION(mongo)
 /* {{{ PHP_MINFO_FUNCTION
  */
 PHP_MINFO_FUNCTION(mongo) {
-  php_info_print_table_start();
+	php_info_print_table_start();
 
-  php_info_print_table_header(2, "MongoDB Support", "enabled");
-  php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
+	php_info_print_table_header(2, "MongoDB Support", "enabled");
+	php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
 
-  php_info_print_table_end();
+	php_info_print_table_end();
 
-  DISPLAY_INI_ENTRIES();
+	DISPLAY_INI_ENTRIES();
 }
 /* }}} */
 
 static void mongo_init_MongoExceptions(TSRMLS_D) {
-  zend_class_entry e, conn, e2, ctoe;
+	zend_class_entry e, conn, e2, ctoe;
 
-  INIT_CLASS_ENTRY(e, "MongoException", NULL);
+	INIT_CLASS_ENTRY(e, "MongoException", NULL);
 
 #if ZEND_MODULE_API_NO >= 20060613
-  mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
+	mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
 #else
-  mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(), NULL TSRMLS_CC);
+	mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(), NULL TSRMLS_CC);
 #endif /* ZEND_MODULE_API_NO >= 20060613 */
 
-  mongo_init_CursorExceptions(TSRMLS_C);
+	mongo_init_CursorExceptions(TSRMLS_C);
 
-  INIT_CLASS_ENTRY(ctoe, "MongoCursorTimeoutException", NULL);
-  mongo_ce_CursorTOException = zend_register_internal_class_ex(&ctoe, mongo_ce_CursorException, NULL TSRMLS_CC);
+	INIT_CLASS_ENTRY(ctoe, "MongoCursorTimeoutException", NULL);
+	mongo_ce_CursorTOException = zend_register_internal_class_ex(&ctoe, mongo_ce_CursorException, NULL TSRMLS_CC);
 
-  INIT_CLASS_ENTRY(conn, "MongoConnectionException", NULL);
-  mongo_ce_ConnectionException = zend_register_internal_class_ex(&conn, mongo_ce_Exception, NULL TSRMLS_CC);
+	INIT_CLASS_ENTRY(conn, "MongoConnectionException", NULL);
+	mongo_ce_ConnectionException = zend_register_internal_class_ex(&conn, mongo_ce_Exception, NULL TSRMLS_CC);
 
-  INIT_CLASS_ENTRY(e2, "MongoGridFSException", NULL);
-  mongo_ce_GridFSException = zend_register_internal_class_ex(&e2, mongo_ce_Exception, NULL TSRMLS_CC);
+	INIT_CLASS_ENTRY(e2, "MongoGridFSException", NULL);
+	mongo_ce_GridFSException = zend_register_internal_class_ex(&e2, mongo_ce_Exception, NULL TSRMLS_CC);
 }
 
 /* Shared helper functions */
 static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *ztagset TSRMLS_DC)
 {
-	HashTable  *tagset = HASH_OF(ztagset);
-	zval      **tag;
-	int         item_count = 1, fail = 0;
+	HashTable	*tagset = HASH_OF(ztagset);
+	zval			**tag;
+	int				 item_count = 1, fail = 0;
 	mongo_read_preference_tagset *tmp_ts = calloc(1, sizeof(mongo_read_preference_tagset));
 
 	zend_hash_internal_pointer_reset(tagset);
@@ -389,15 +389,15 @@ static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *
 			uint key_len;
 			ulong num_key;
 
-            switch (zend_hash_get_current_key_ex(tagset, &key, &key_len, &num_key, 0, NULL)) {
-                case HASH_KEY_IS_LONG:
+						switch (zend_hash_get_current_key_ex(tagset, &key, &key_len, &num_key, 0, NULL)) {
+								case HASH_KEY_IS_LONG:
 					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tag %d in tagset %d has no string key", item_count, tagset_id);
 					fail = 1;
-                    break;
-                case HASH_KEY_IS_STRING:
+										break;
+								case HASH_KEY_IS_STRING:
 					mongo_read_preference_add_tag(tmp_ts, key, Z_STRVAL_PP(tag));
-                    break;
-            }
+										break;
+						}
 
 		}
 		item_count++;
@@ -411,12 +411,12 @@ static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *
 }
 
 /* Returns an array of key=>value pairs, per tagset, from a
- * mongo_read_preference.  This maps to the structure on how mongos expects
+ * mongo_read_preference.	This maps to the structure on how mongos expects
  * them */
 zval *php_mongo_make_tagsets(mongo_read_preference *rp)
 {
 	zval *tagsets, *tagset;
-	int   i, j;
+	int	 i, j;
 
 	if (!rp->tagset_count) {
 		return NULL;
@@ -448,19 +448,19 @@ zval *php_mongo_make_tagsets(mongo_read_preference *rp)
 
 void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
 {
-  zval *tagsets = php_mongo_make_tagsets(rp);
+	zval *tagsets = php_mongo_make_tagsets(rp);
 
-  if (!tagsets) {
-    return;
-  }
+	if (!tagsets) {
+		return;
+	}
 
-  add_assoc_zval_ex(return_value, "tagsets", sizeof("tagsets"), tagsets);
+	add_assoc_zval_ex(return_value, "tagsets", sizeof("tagsets"), tagsets);
 }
 
 int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC)
 {
 	zval **tagset;
-	int    item_count = 1;
+	int		item_count = 1;
 	mongo_read_preference_tagset *tagset_tmp;
 
 	/* Empty out what we had - this means that if it fails, the read preference

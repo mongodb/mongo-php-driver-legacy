@@ -11,10 +11,10 @@ $db = $mongo->selectDB(dbname());
 $gridfs = $db->getGridFS();
 
 try {
-    $gridfs->storeFile('/does/not/exist');
-    var_dump(false);
+		$gridfs->storeFile('/does/not/exist');
+		var_dump(false);
 } catch (MongoGridFSException $e) {
-    var_dump(true);
+		var_dump(true);
 }
 --EXPECT--
 bool(true)

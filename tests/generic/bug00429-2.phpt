@@ -10,9 +10,9 @@ $mongo = new_mongo();
 $db = $mongo->selectDB(dbname());
 
 class foo {
-    function __toString() {
-        return "foo";
-    }
+		function __toString() {
+				return "foo";
+		}
 }
 $f = new foo;
 $m = new MongoCollection($db, $f);
@@ -29,22 +29,22 @@ var_dump($col1);
 <?php exit(0);?>
 --EXPECTF--
 object(MongoCollection)#4 (2) {
-  ["w"]=>
-  int(1)
-  ["wtimeout"]=>
-  int(10000)
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
 }
 object(MongoCollection)#5 (2) {
-  ["w"]=>
-  int(1)
-  ["wtimeout"]=>
-  int(10000)
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
 }
 object(MongoCollection)#6 (2) {
-  ["w"]=>
-  int(1)
-  ["wtimeout"]=>
-  int(10000)
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
 }
 ===DONE===
 

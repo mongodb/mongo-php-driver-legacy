@@ -20,22 +20,22 @@ $collection->find();
 <?php exit(0);?>
 --EXPECTF--
 object(MongoCollection)#%d (2) {
-  ["w"]=>
-  int(1)
-  ["wtimeout"]=>
-  int(10000)
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
 }
 object(MongoCollection)#%d (2) {
-  ["w"]=>
-  int(1)
-  ["wtimeout"]=>
-  int(10000)
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
 }
 object(MongoCollection)#%d (2) {
-  ["w"]=>
-  int(1)
-  ["wtimeout"]=>
-  int(10000)
+	["w"]=>
+	int(1)
+	["wtimeout"]=>
+	int(10000)
 }
 ===DONE===
 

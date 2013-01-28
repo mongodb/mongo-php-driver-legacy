@@ -23,33 +23,33 @@ var_dump( iterator_to_array( $c->find( array(), array( '_id' => 0 ) ) ) );
 --EXPECT--
 int(0)
 array(1) {
-  ["value"]=>
-  string(3) "ONE"
+	["value"]=>
+	string(3) "ONE"
 }
 int(1)
 array(1) {
-  ["value"]=>
-  string(3) "TWO"
+	["value"]=>
+	string(3) "TWO"
 }
 int(2)
 array(1) {
-  ["value"]=>
-  string(5) "THREE"
+	["value"]=>
+	string(5) "THREE"
 }
 array(3) {
-  [0]=>
-  array(1) {
-    ["value"]=>
-    string(3) "ONE"
-  }
-  [1]=>
-  array(1) {
-    ["value"]=>
-    string(3) "TWO"
-  }
-  [2]=>
-  array(1) {
-    ["value"]=>
-    string(5) "THREE"
-  }
+	[0]=>
+	array(1) {
+		["value"]=>
+		string(3) "ONE"
+	}
+	[1]=>
+	array(1) {
+		["value"]=>
+		string(3) "TWO"
+	}
+	[2]=>
+	array(1) {
+		["value"]=>
+		string(5) "THREE"
+	}
 }

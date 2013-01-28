@@ -25,15 +25,15 @@ echo "DONE\n";
 ?>
 --EXPECTF--
 array(5) {
-  ["updatedExisting"]=>
-  bool(true)
-  ["n"]=>
-  int(1)
-  ["connectionId"]=>
-  int(%d)
-  ["err"]=>
-  NULL
-  ["ok"]=>
-  float(1)
+	["updatedExisting"]=>
+	bool(true)
+	["n"]=>
+	int(1)
+	["connectionId"]=>
+	int(%d)
+	["err"]=>
+	NULL
+	["ok"]=>
+	float(1)
 }
 DONE

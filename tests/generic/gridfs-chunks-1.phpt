@@ -6,7 +6,7 @@ GridFS: Testing issues with chunks and reading too much
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
 $conn = mongo();
-$db   = $conn->selectDb(dbname());
+$db	 = $conn->selectDb(dbname());
 $grid = $db->getGridFs('wrapper');
 
 // delete any previous results

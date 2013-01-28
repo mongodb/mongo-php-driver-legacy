@@ -20,9 +20,9 @@ var_dump($result['int64']);
 ini_set('mongo.native_long', true);
 ini_set('mongo.long_as_object', false);
 try {
-    $coll->findOne();
+		$coll->findOne();
 } catch (Exception $e) {
-    printf("%s: %s\n", get_class($e), $e->getMessage());
+		printf("%s: %s\n", get_class($e), $e->getMessage());
 }
 
 ini_set('mongo.native_long', false);

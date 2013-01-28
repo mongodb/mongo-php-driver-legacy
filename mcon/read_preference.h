@@ -1,17 +1,17 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *	Copyright 2009-2012 10gen, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *	http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
  */
 #ifndef __MCON_READ_PREFERENCE_H__
 #define __MCON_READ_PREFERENCE_H__
@@ -19,19 +19,19 @@
 #include "types.h"
 #include "collection.h"
 
-#define MONGO_RP_FIRST               0x00
+#define MONGO_RP_FIRST							 0x00
 
-#define MONGO_RP_PRIMARY             0x00
-#define MONGO_RP_PRIMARY_PREFERRED   0x01
-#define MONGO_RP_SECONDARY           0x02
+#define MONGO_RP_PRIMARY						 0x00
+#define MONGO_RP_PRIMARY_PREFERRED	 0x01
+#define MONGO_RP_SECONDARY					 0x02
 #define MONGO_RP_SECONDARY_PREFERRED 0x03
-#define MONGO_RP_NEAREST             0x04
+#define MONGO_RP_NEAREST						 0x04
 
-#define MONGO_RP_LAST                0x04
+#define MONGO_RP_LAST								0x04
 
 
 /* TODO: Needs to be a setting through the connection string/options */
-#define MONGO_RP_CUTOFF  15
+#define MONGO_RP_CUTOFF	15
 
 typedef int (mongo_connection_sort_t)(const void *a, const void *b);
 

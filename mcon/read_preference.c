@@ -1,17 +1,17 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *	Copyright 2009-2012 10gen, Inc.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *	http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
  */
 #include "collection.h"
 #include "types.h"
@@ -50,7 +50,7 @@ static void mongo_print_connection_info(mongo_con_manager *manager, mongo_connec
 	);
 	for (i = 0; i < con->tag_count; i++) {
 		mongo_manager_log(manager, MLOG_RS, level,
-			"  - tag: %s", con->tags[i]
+			"	- tag: %s", con->tags[i]
 		);
 	}
 }
@@ -65,11 +65,11 @@ void mongo_print_connection_iterate_wrapper(mongo_con_manager *manager, void *el
 char *mongo_read_preference_type_to_name(int type)
 {
 	switch (type) {
-		case MONGO_RP_PRIMARY:             return "primary";
-		case MONGO_RP_PRIMARY_PREFERRED:   return "primaryPreferred";
-		case MONGO_RP_SECONDARY:           return "secondary";
+		case MONGO_RP_PRIMARY:						 return "primary";
+		case MONGO_RP_PRIMARY_PREFERRED:	 return "primaryPreferred";
+		case MONGO_RP_SECONDARY:					 return "secondary";
 		case MONGO_RP_SECONDARY_PREFERRED: return "secondaryPreferred";
-		case MONGO_RP_NEAREST:             return "nearest";
+		case MONGO_RP_NEAREST:						 return "nearest";
 	}
 	return "unknown";
 }
@@ -166,7 +166,7 @@ static int candidate_matches_tags(mongo_con_manager *manager, mongo_connection *
 
 static mcon_collection* mongo_filter_candidates_by_tagset(mongo_con_manager *manager, mcon_collection *candidates, mongo_read_preference_tagset *tagset)
 {
-	int              i;
+	int							i;
 	mcon_collection *tmp;
 
 	tmp = mcon_init_collection(sizeof(mongo_connection*));
@@ -180,7 +180,7 @@ static mcon_collection* mongo_filter_candidates_by_tagset(mongo_con_manager *man
 
 char *mongo_read_preference_squash_tagset(mongo_read_preference_tagset *tagset)
 {
-	int    i;
+	int		i;
 	struct mcon_str str = { 0 };
 
 	for (i = 0; i < tagset->tag_count; i++) {
@@ -194,10 +194,10 @@ char *mongo_read_preference_squash_tagset(mongo_read_preference_tagset *tagset)
 
 static mcon_collection *mongo_filter_candidates_by_replicaset_name(mongo_con_manager *manager, mcon_collection *candidates, mongo_servers *servers)
 {
-	int              i;
+	int							i;
 	mcon_collection *filtered;
-	char            *candidate_hash;
-	char            *candidate_replsetname;
+	char						*candidate_hash;
+	char						*candidate_replsetname;
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting to servers with same replicaset name");
 	filtered = mcon_init_collection(sizeof(mongo_connection*));
@@ -228,9 +228,9 @@ static mcon_collection *mongo_filter_candidates_by_replicaset_name(mongo_con_man
 
 static mcon_collection *mongo_filter_candidates_by_seed(mongo_con_manager *manager, mcon_collection *candidates, mongo_servers *servers)
 {
-	int              i, j;
+	int							i, j;
 	mcon_collection *filtered;
-	char            *server_hash;
+	char						*server_hash;
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by seeded/discovered servers");
 	filtered = mcon_init_collection(sizeof(mongo_connection*));
@@ -253,8 +253,8 @@ static mcon_collection *mongo_filter_candidates_by_seed(mongo_con_manager *manag
 
 static mcon_collection *mongo_filter_candidates_by_credentials(mongo_con_manager *manager, mcon_collection *candidates, mongo_servers *servers)
 {
-	int              i;
-	char            *db, *username, *auth_hash, *hashed = NULL;
+	int							i;
+	char						*db, *username, *auth_hash, *hashed = NULL;
 	mcon_collection *filtered;
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "limiting by credentials");
@@ -301,7 +301,7 @@ skip:
 }
 mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, mongo_servers *servers)
 {
-	int              i;
+	int							i;
 	mcon_collection *all, *filtered;
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "finding candidate servers");
@@ -444,7 +444,7 @@ mcon_collection *mongo_sort_servers(mongo_con_manager *manager, mcon_collection 
 mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp)
 {
 	mcon_collection *filtered;
-	int              i, nearest_ping;
+	int							i, nearest_ping;
 
 	filtered = mcon_init_collection(sizeof(mongo_connection*));
 

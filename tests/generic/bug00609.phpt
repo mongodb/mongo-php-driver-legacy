@@ -14,7 +14,7 @@ var_dump($retval);
 ?>
 --EXPECTF--
 object(MongoId)#%d (1) {
-  ["$id"]=>
-  string(24) "%s"
+	["$id"]=>
+	string(24) "%s"
 }
 

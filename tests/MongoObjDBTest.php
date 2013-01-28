@@ -5,146 +5,146 @@
  */
 class MongoObjDBTest extends PHPUnit_Framework_TestCase
 {
-    /**
-     * @var    Mongo
-     * @access protected
-     */
-    protected $object;
+		/**
+		 * @var		Mongo
+		 * @access protected
+		 */
+		protected $object;
 
-    /**
-     * Sets up the fixture, for example, opens a network connection.
-     * This method is called before a test is executed.
-     *
-     * @access protected
-     */
-    public function setUp() {
-      ini_set('mongo.objects', 1);
-      $m = new Mongo();
-      $this->object = $m->selectDB("phpunit");
-    }
+		/**
+		 * Sets up the fixture, for example, opens a network connection.
+		 * This method is called before a test is executed.
+		 *
+		 * @access protected
+		 */
+		public function setUp() {
+			ini_set('mongo.objects', 1);
+			$m = new Mongo();
+			$this->object = $m->selectDB("phpunit");
+		}
 
-    public function tearDown() {
-      ini_set('mongo.objects', 0);
-    }
+		public function tearDown() {
+			ini_set('mongo.objects', 0);
+		}
 
-    public function testDBDrop() {
-        $r = $this->object->drop();
-        $this->assertEquals(true, (bool)$r['ok'], json_encode($r));
-    }
+		public function testDBDrop() {
+				$r = $this->object->drop();
+				$this->assertEquals(true, (bool)$r['ok'], json_encode($r));
+		}
 
-    public function testRepair() {
-      $r = $this->object->repair();
-      $this->assertEquals(true, (bool)$r['ok'], json_encode($r));
-    }
+		public function testRepair() {
+			$r = $this->object->repair();
+			$this->assertEquals(true, (bool)$r['ok'], json_encode($r));
+		}
 
-    public function testCreateCollection() {
-        $ns = $this->object->selectCollection('system.namespaces');
-        $this->object->drop('z');
-        $this->object->drop('zz');
-        $this->object->drop('zzz');
+		public function testCreateCollection() {
+				$ns = $this->object->selectCollection('system.namespaces');
+				$this->object->drop('z');
+				$this->object->drop('zz');
+				$this->object->drop('zzz');
 
-        $this->object->createCollection('z');
-        $obj = $ns->findOne((object)array('name' => 'phpunit.z'));
-        $this->assertNotNull($obj);
+				$this->object->createCollection('z');
+				$obj = $ns->findOne((object)array('name' => 'phpunit.z'));
+				$this->assertNotNull($obj);
 
-        $c = $this->object->createCollection('zz', true, 100);
-        $obj = $ns->findOne((object)array('name' => 'phpunit.zz'));
-        $this->assertNotNull($obj);
+				$c = $this->object->createCollection('zz', true, 100);
+				$obj = $ns->findOne((object)array('name' => 'phpunit.zz'));
+				$this->assertNotNull($obj);
 
-        for($i=0;$i<100;$i++) {
-            $c->insert((object)array('x' => $i));
-        }
-        $this->assertLessThan(100, $c->count());
+				for($i=0;$i<100;$i++) {
+						$c->insert((object)array('x' => $i));
+				}
+				$this->assertLessThan(100, $c->count());
 
-        $c = $this->object->createCollection('zzz', true, 1000, 5);
-        $obj = $ns->findOne((object)array('name' => 'phpunit.zzz'));
-        $this->assertNotNull($obj);
+				$c = $this->object->createCollection('zzz', true, 1000, 5);
+				$obj = $ns->findOne((object)array('name' => 'phpunit.zzz'));
+				$this->assertNotNull($obj);
 
-        for($i=0;$i<10;$i++) {
-            $c->insert((object)array('x' => $i));
-        }
-        $this->assertEquals(5, $c->count());
-    }
+				for($i=0;$i<10;$i++) {
+						$c->insert((object)array('x' => $i));
+				}
+				$this->assertEquals(5, $c->count());
+		}
 
-    public function testListCollections() {
-        $ns = $this->object->selectCollection('system.namespaces');
+		public function testListCollections() {
+				$ns = $this->object->selectCollection('system.namespaces');
 
-        for($i=0;$i<10;$i++) {
-            $c = $this->object->selectCollection("x$i");
-            $c->insert((object)array("foo" => "bar"), array("safe" => true));
-        }
+				for($i=0;$i<10;$i++) {
+						$c = $this->object->selectCollection("x$i");
+						$c->insert((object)array("foo" => "bar"), array("safe" => true));
+				}
 
-        $list = $this->object->listCollections();
-        for($i=0;$i<10;$i++) {
-            $this->assertTrue($list[$i] instanceof MongoCollection);
-            if (!preg_match("/5\.1\../", phpversion())) {
-              $this->assertTrue(in_array("phpunit.x$i", $list));
-            }
-        }
-    }
+				$list = $this->object->listCollections();
+				for($i=0;$i<10;$i++) {
+						$this->assertTrue($list[$i] instanceof MongoCollection);
+						if (!preg_match("/5\.1\../", phpversion())) {
+							$this->assertTrue(in_array("phpunit.x$i", $list));
+						}
+				}
+		}
 
 
-    public function testCreateDBRef() {
-        $arr = (object)array('_id' => new MongoId());
-        $ref = $this->object->createDBRef('foo.bar', $arr);
-        $this->assertNotNull($ref);
-        $this->assertTrue(is_array($ref));
+		public function testCreateDBRef() {
+				$arr = (object)array('_id' => new MongoId());
+				$ref = $this->object->createDBRef('foo.bar', $arr);
+				$this->assertNotNull($ref);
+				$this->assertTrue(is_array($ref));
 
-        $arr = (object)array('_id' => 1);
-        $ref = $this->object->createDBRef('foo.bar', $arr);
-        $this->assertNotNull($ref);
-        $this->assertTrue(is_array($ref));
+				$arr = (object)array('_id' => 1);
+				$ref = $this->object->createDBRef('foo.bar', $arr);
+				$this->assertNotNull($ref);
+				$this->assertTrue(is_array($ref));
 
-        $ref = $this->object->createDBRef('foo.bar', new MongoId());
-        $this->assertNotNull($ref);
-        $this->assertTrue(is_array($ref));
+				$ref = $this->object->createDBRef('foo.bar', new MongoId());
+				$this->assertNotNull($ref);
+				$this->assertTrue(is_array($ref));
 
-        $id = new MongoId();
-        $ref = $this->object->createDBRef('foo.bar', (object)array('_id' => $id, 'y' => 3));
-        $this->assertNotNull($ref);
-        $this->assertEquals((string)$id, (string)$ref['$id']);
-    }
+				$id = new MongoId();
+				$ref = $this->object->createDBRef('foo.bar', (object)array('_id' => $id, 'y' => 3));
+				$this->assertNotNull($ref);
+				$this->assertEquals((string)$id, (string)$ref['$id']);
+		}
 
-    public function testGetDBRef() {
-        $c = $this->object->selectCollection('foo');
-        $c->drop();
-        for($i=0;$i<50;$i++) {
-            $c->insert((object)array('x' => rand()), array("safe" => true));
-        }
-        $obj = $c->findOne();
+		public function testGetDBRef() {
+				$c = $this->object->selectCollection('foo');
+				$c->drop();
+				for($i=0;$i<50;$i++) {
+						$c->insert((object)array('x' => rand()), array("safe" => true));
+				}
+				$obj = $c->findOne();
 
-        $ref = $this->object->createDBRef('foo', $obj);
-        $obj2 = $this->object->getDBRef($ref);
+				$ref = $this->object->createDBRef('foo', $obj);
+				$obj2 = $this->object->getDBRef($ref);
 
-        $this->assertNotNull($obj2);
-        $this->assertEquals($obj['x'], $obj2['x']);
-    }
+				$this->assertNotNull($obj2);
+				$this->assertEquals($obj['x'], $obj2['x']);
+		}
 
-    public function testDBCommand() {
-        $x = $this->object->command(array());
-        $this->assertEquals(0, strpos($x['errmsg'], "no such cmd"), json_encode($x));
-        $this->assertEquals((bool)$x['ok'], false);
+		public function testDBCommand() {
+				$x = $this->object->command(array());
+				$this->assertEquals(0, strpos($x['errmsg'], "no such cmd"), json_encode($x));
+				$this->assertEquals((bool)$x['ok'], false);
 
-        $created = $this->object->createCollection("system.profile", true, 5000);
+				$created = $this->object->createCollection("system.profile", true, 5000);
 
-        $this->object->command(array('profile' => 0));
-        $x = $this->object->command(array('profile' => 1));
-        $this->assertEquals($x['was'], 0, json_encode($x));
-        $this->assertEquals((bool)$x['ok'], true, json_encode($x));
-    }
+				$this->object->command(array('profile' => 0));
+				$x = $this->object->command(array('profile' => 1));
+				$this->assertEquals($x['was'], 0, json_encode($x));
+				$this->assertEquals((bool)$x['ok'], true, json_encode($x));
+		}
 
-    public function testCreateRef() {
-        $ref = MongoDBRef::create("x", "y");
-        $this->assertEquals('x', $ref['$ref']);
-        $this->assertEquals('y', $ref['$id']);
-    }
+		public function testCreateRef() {
+				$ref = MongoDBRef::create("x", "y");
+				$this->assertEquals('x', $ref['$ref']);
+				$this->assertEquals('y', $ref['$id']);
+		}
 
-    public function testIsRef() {
-        $this->assertFalse(MongoDBRef::isRef((object)array()));
-        $this->assertFalse(MongoDBRef::isRef((object)array('$ns' => 'foo', '$id' => 'bar')));
+		public function testIsRef() {
+				$this->assertFalse(MongoDBRef::isRef((object)array()));
+				$this->assertFalse(MongoDBRef::isRef((object)array('$ns' => 'foo', '$id' => 'bar')));
 
-        $ref = (object)array('$ref' => 'blog.posts', '$id' => new MongoId('cb37544b9dc71e4ac3116c00'));
-        $this->assertTrue(MongoDBRef::isRef($ref));
-    }
+				$ref = (object)array('$ref' => 'blog.posts', '$id' => new MongoId('cb37544b9dc71e4ac3116c00'));
+				$this->assertTrue(MongoDBRef::isRef($ref));
+		}
 }
 ?>

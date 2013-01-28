@@ -5,7 +5,7 @@ MongoCursor::setReadPreference (first setReadPreference, then slaveOkay) [2]
 --FILE--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
-$mentions = array(); 
+$mentions = array();
 require_once dirname(__FILE__) . "/../utils.inc";
 
 $m = mongo();

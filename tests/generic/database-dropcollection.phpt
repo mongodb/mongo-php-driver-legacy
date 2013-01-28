@@ -24,8 +24,8 @@ var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
 ?>
 --EXPECTF--
 array(1) {
-  ["name"]=>
-  string(19) "phpunit.dropcoltest"
+	["name"]=>
+	string(19) "phpunit.dropcoltest"
 }
 NULL
 NULL

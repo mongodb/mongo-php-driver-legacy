@@ -9,7 +9,7 @@ memory_limit=1G
 <?php
 require_once dirname(__FILE__) . "/../utils.inc";
 $conn = Mongo();
-$db   = $conn->selectDb('phpunit');
+$db	 = $conn->selectDb('phpunit');
 $grid = $db->getGridFs('wrapper');
 
 // delete any previous results
@@ -18,7 +18,7 @@ $grid->drop();
 // dummy file
 $bytes = "";
 for ($i=0; $i < 1024*1024; $i++) {
-    $bytes .= sha1(rand(1, 1000000000));
+		$bytes .= sha1(rand(1, 1000000000));
 }
 $sha = sha1($bytes);
 $grid->storeBytes($bytes, array("filename" => "demo.txt"), array('safe' => true));
@@ -40,7 +40,7 @@ $tmp = "";
 $i=0;
 while (!feof($fp)) {
 	$s = 500000; // request 500k, but never more than 8192 is read
-    $t = fread($fp, $s);
+		$t = fread($fp, $s);
 	$i += strlen($t);
 }
 

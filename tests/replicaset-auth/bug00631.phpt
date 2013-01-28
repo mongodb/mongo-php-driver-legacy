@@ -10,12 +10,12 @@ require_once dirname(__FILE__) . "/../utils.inc";
 
 function queryMongoDB($connstr, $dbname, $collectionname, $fieldname)
 {
-    $m = new MongoClient($connstr, array('replicaSet' => true)); #just specify it as true instead of actual replica set. Either way the bug is reproduced.
-    $db = $m->selectDB($dbname);
-    $collection = $db->selectCollection($collectionname);
-    $cursor = $collection->find();
-    foreach ($cursor as $document) {
-    }
+		$m = new MongoClient($connstr, array('replicaSet' => true)); #just specify it as true instead of actual replica set. Either way the bug is reproduced.
+		$db = $m->selectDB($dbname);
+		$collection = $db->selectCollection($collectionname);
+		$cursor = $collection->find();
+		foreach ($cursor as $document) {
+		}
 }
 
 #MongoLog::setLevel(MongoLog::ALL); // all log levels

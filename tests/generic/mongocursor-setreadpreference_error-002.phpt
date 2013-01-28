@@ -7,10 +7,10 @@ MongoCursor::setReadPreference errors [2]
 <?php
 $host = hostname();
 $port = port();
-$db   = dbname();
+$db	 = dbname();
 
 function myerror($errno, $errstr) {
-    var_dump($errno, $errstr);
+		var_dump($errno, $errstr);
 }
 set_error_handler("myerror", E_RECOVERABLE_ERROR);
 $baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
@@ -44,8 +44,8 @@ string(%d) "Argument 2 passed to MongoCursor::setReadPreference() must be %s arr
 
 Warning: MongoCursor::setReadPreference() expects parameter 2 to be array, integer given in %s on line %d
 array(1) {
-  ["type"]=>
-  string(7) "primary"
+	["type"]=>
+	string(7) "primary"
 }
 ---
 int(4096)
@@ -53,58 +53,58 @@ string(%d) "Argument 2 passed to MongoCursor::setReadPreference() must be %s arr
 
 Warning: MongoCursor::setReadPreference() expects parameter 2 to be array, string given in %s on line %d
 array(1) {
-  ["type"]=>
-  string(7) "primary"
+	["type"]=>
+	string(7) "primary"
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tagset 1 needs to contain an array of 0 or more tags in %s on line %d
 array(1) {
-  ["type"]=>
-  string(9) "secondary"
+	["type"]=>
+	string(9) "secondary"
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %s on line %d
 array(1) {
-  ["type"]=>
-  string(9) "secondary"
+	["type"]=>
+	string(9) "secondary"
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tag 2 in tagset 1 needs to contain a string in %s on line %d
 array(1) {
-  ["type"]=>
-  string(9) "secondary"
+	["type"]=>
+	string(9) "secondary"
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tag 1 in tagset 1 needs to contain a string in %s on line %d
 array(1) {
-  ["type"]=>
-  string(9) "secondary"
+	["type"]=>
+	string(9) "secondary"
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tag 1 in tagset 2 needs to contain a string in %s on line %d
 array(2) {
-  ["type"]=>
-  string(9) "secondary"
-  ["tagsets"]=>
-  array(1) {
-    [0]=>
-    array(1) {
-      ["bar"]=>
-      string(3) "foo"
-    }
-  }
+	["type"]=>
+	string(9) "secondary"
+	["tagsets"]=>
+	array(1) {
+		[0]=>
+		array(1) {
+			["bar"]=>
+			string(3) "foo"
+		}
+	}
 }
 ---
 
 Warning: MongoCursor::setReadPreference(): Tag 1 in tagset 1 has no string key in %s on line %d
 array(1) {
-  ["type"]=>
-  string(9) "secondary"
+	["type"]=>
+	string(9) "secondary"
 }
 ---
 ==DONE==

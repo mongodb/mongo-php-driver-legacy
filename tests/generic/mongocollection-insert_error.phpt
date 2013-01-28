@@ -15,16 +15,16 @@ $c = $m->phpunit->col;
 $c->drop();
 
 // insert requires an array or object
-$c->insert(); 
+$c->insert();
 var_dump($c->findOne());
 $c->drop();
-$c->insert('hi'); 
+$c->insert('hi');
 var_dump($c->findOne());
 $c->drop();
-$c->insert(10); 
+$c->insert(10);
 var_dump($c->findOne());
 $c->drop();
-$c->insert(false); 
+$c->insert(false);
 var_dump($c->findOne());
 $c->drop();
 
@@ -41,7 +41,7 @@ var_dump($c->findOne());
 $c->drop();
 
 // 2nd parameter should be array of options
-$c->insert(array('yo'=>'ho'), true); 
+$c->insert(array('yo'=>'ho'), true);
 var_dump($c->findOne());
 $c->drop();
 
@@ -68,34 +68,34 @@ NULL
 Warning: MongoCollection::insert() expects parameter 1 to be an array or object in %smongocollection-insert_error.php on line %d
 NULL
 array(4) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
-  }
-  [0]=>
-  string(3) "foo"
-  [1]=>
-  string(3) "bar"
-  [2]=>
-  string(3) "baz"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+		["$id"]=>
+		string(24) "%s"
+	}
+	[0]=>
+	string(3) "foo"
+	[1]=>
+	string(3) "bar"
+	[2]=>
+	string(3) "baz"
 }
 array(2) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
-  }
-  ["hello"]=>
-  string(13) "Hello, World!"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+		["$id"]=>
+		string(24) "%s"
+	}
+	["hello"]=>
+	string(13) "Hello, World!"
 }
 array(2) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
-  }
-  ["yo"]=>
-  string(2) "ho"
+	["_id"]=>
+	object(MongoId)#%d (1) {
+		["$id"]=>
+		string(24) "%s"
+	}
+	["yo"]=>
+	string(2) "ho"
 }
 Some Exception Message is expected
