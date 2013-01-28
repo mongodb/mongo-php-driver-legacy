@@ -230,7 +230,8 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	convert_to_long(timeout_p);
 	timeout = Z_LVAL_P(timeout_p);
 
-	/* Overwrite the timeout if MongoCursor::$timeout and we passed in a socketTimeoutMS in the connection string */
+	/* Overwrite the timeout if MongoCursor::$timeout is the default and we
+	 * passed in socketTimeoutMS in the connection string */
 	if (timeout == PHP_MONGO_DEFAULT_SOCKET_TIMEOUT && link->servers->options.socketTimeoutMS > 0) {
 		timeout = link->servers->options.socketTimeoutMS;
 	}

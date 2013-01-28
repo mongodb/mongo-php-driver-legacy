@@ -317,7 +317,8 @@ PHP_METHOD(MongoCursor, __construct) {
   convert_to_long(timeout);
   cursor->timeout = Z_LVAL_P(timeout);
 
-	/* Overwrite the timeout if MongoCursor::$timeout and we passed in a socketTimeoutMS in the connection string */
+	/* Overwrite the timeout if MongoCursor::$timeout is the default and we
+	 * passed in socketTimeoutMS in the connection string */
 	if (cursor->timeout == PHP_MONGO_DEFAULT_SOCKET_TIMEOUT && link->servers->options.socketTimeoutMS > 0) {
 		cursor->timeout = link->servers->options.socketTimeoutMS;
 	}
