@@ -1815,6 +1815,11 @@ static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
 {
 	zval **tmpvalue;
 
+	if (Z_TYPE_P(document) != IS_ARRAY) {
+		zend_throw_exception(mongo_ce_ResultException, strdup("Unknown error executing command (empty document returned)"), 0 TSRMLS_CC);
+		return FAILURE;
+	}
+
 	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
 		if ((Z_TYPE_PP(tmpvalue) == IS_LONG && Z_LVAL_PP(tmpvalue) < 1) || (Z_TYPE_PP(tmpvalue) == IS_DOUBLE && Z_DVAL_PP(tmpvalue) < 1)) {
 			zval **tmp, *exception;
