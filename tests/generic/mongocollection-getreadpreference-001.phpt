@@ -1,38 +1,33 @@
 --TEST--
-MongoCollection::getReadPreference [1]
+MongoCollection::getReadPreference() returns read preferences
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
-$host = hostname();
-$port = port();
-$db   = dbname();
 
-$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", $host, $port, $db);
+$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", hostname(), port(), dbname());
 
-$a = array(
-	'primary',
-	'secondary',
+$modes = array(
+    'primary',
+    'secondary',
 );
 
-$b = array(
-	'',
-	'&readPreferenceTags=dc:west',
-	'&readPreferenceTags=dc:west,use:reporting',
-	'&readPreferenceTags=',
-	'&readPreferenceTags=dc:west,use:reporting&readPreferenceTags=dc:east',
+$tagParams = array(
+    '',
+    '&readPreferenceTags=dc:west',
+    '&readPreferenceTags=dc:west,use:reporting',
+    '&readPreferenceTags=',
+    '&readPreferenceTags=dc:west,use:reporting&readPreferenceTags=dc:east',
 );
 
-foreach ($a as $value) {
-	foreach ($b as $tags) {
-		$m = new mongo($baseString . $value . $tags, array( 'connect' => false ) );
-		$d = $m->phpunit;
-		$c = $d->test;
-		$rp = $c->getReadPreference();
-		var_dump($rp);
-		echo "---\n";
-	}
+foreach ($modes as $mode) {
+    foreach ($tagParams as $tagParam) {
+        $m = new MongoClient($baseString . $mode . $tagParam, array('connect' => false));
+        $rp = $m->phpunit->test->getReadPreference();
+        var_dump($rp);
+        echo "---\n";
+    }
 }
 ?>
 --EXPECT--

@@ -561,9 +561,14 @@ void mongo_read_preference_tagset_dtor(mongo_read_preference_tagset *tagset)
 {
 	int i;
 
+	if (tagset->tag_count == 0) {
+		return;
+	}
+
 	for (i = 0; i < tagset->tag_count; i++) {
 		free(tagset->tags[i]);
 	}
+	tagset->tag_count = 0;
 	free(tagset->tags);
 	free(tagset);
 }
@@ -571,6 +576,10 @@ void mongo_read_preference_tagset_dtor(mongo_read_preference_tagset *tagset)
 void mongo_read_preference_dtor(mongo_read_preference *rp)
 {
 	int i;
+
+	if (rp->tagset_count == 0) {
+		return;
+	}
 
 	for (i = 0; i < rp->tagset_count; i++) {
 		mongo_read_preference_tagset_dtor(rp->tagsets[i]);

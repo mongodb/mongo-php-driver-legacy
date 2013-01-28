@@ -1,36 +1,31 @@
 --TEST--
-Mongo::setReadPreference [2]
+MongoClient::setReadPreference() should set tags
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
-$host = hostname();
-$port = port();
-$db   = dbname();
 
-$baseString = sprintf("mongodb://%s:%d/%s", $host, $port, $db);
-
-$a = array(
-	/* no tagsets */
-	array(),
-	/* one tag set */
-	array( array( 'dc' => 'east' ) ),
-	array( array( 'dc' => 'east', 'use' => 'reporting' ) ),
-	array( array() ),
-	/* two tag sets */
-	array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ) ),
-	/* two tag sets + empty one*/
-	array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ), array() ),
+$tagsets = array(
+    /* no tagsets */
+    array(),
+    /* one tag set */
+    array( array( 'dc' => 'east' ) ),
+    array( array( 'dc' => 'east', 'use' => 'reporting' ) ),
+    array( array() ),
+    /* two tag sets */
+    array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ) ),
+    /* two tag sets + empty one */
+    array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ), array() ),
 );
 
-foreach ($a as $value) {
-	$m = new mongo($baseString);
-	$m->setReadPreference(Mongo::RP_SECONDARY, $value);
-	$rp = $m->getReadPreference();
-	var_dump($rp);
+foreach ($tagsets as $tagset) {
+    $m = new_mongo();
+    $m->setReadPreference(Mongo::RP_SECONDARY, $tagset);
+    $rp = $m->getReadPreference();
+    var_dump($rp);
 
-	echo "---\n";
+    echo "---\n";
 }
 ?>
 --EXPECT--

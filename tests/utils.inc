@@ -3,7 +3,6 @@
 function m(&$dsn, &$port, &$db, &$opts = array()) {
     $dsn  = "";
     $port = "27017";
-    $opts = $opts ? $opts : array();
 
     $type = $_ENV["MONGO_SERVER"];
 

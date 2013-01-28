@@ -1,42 +1,29 @@
 --TEST--
-MongoCollection::setReadPreference [1]
+MongoCollection::setReadPreference() should set read preference mode
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
-$host = hostname();
-$port = port();
-$db   = dbname();
 
-$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", $host, $port, $db);
-
-$a = array(
-	'primary',
-	'primaryPreferred',
-	'secondary',
-	'secondaryPreferred',
-	'nearest'
-);
-$b = array(
-	Mongo::RP_PRIMARY,
-	Mongo::RP_PRIMARY_PREFERRED,
-	Mongo::RP_SECONDARY,
-	Mongo::RP_SECONDARY_PREFERRED,
-	Mongo::RP_NEAREST
+$modes = array(
+    Mongo::RP_PRIMARY,
+    Mongo::RP_PRIMARY_PREFERRED,
+    Mongo::RP_SECONDARY,
+    Mongo::RP_SECONDARY_PREFERRED,
+    Mongo::RP_NEAREST
 );
 
-foreach ($a as $value) {
-	$c = new mongo($baseString . $value);
-	$d = $c->phpunit;
-	$m = $d->test;
-	echo $value, "\n\n";
-	foreach ($b as $newRP) {
-		$m->setReadPreference($newRP);
-		$rp = $m->getReadPreference();
-		echo $rp["type"], "\n";
-	}
-	echo "---\n";
+foreach (array_values($modes) as $mode) {
+    $m = new_mongo(null, true, true, array('readPreference' => $mode));
+    $c = $m->phpunit->test;
+    echo $mode, "\n\n";
+    foreach (array_values($modes) as $newMode) {
+        $c->setReadPreference($newMode);
+        $rp = $c->getReadPreference();
+        echo $rp["type"], "\n";
+    }
+    echo "---\n";
 }
 ?>
 --EXPECT--
