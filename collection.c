@@ -339,12 +339,12 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 		if (zend_hash_find(HASH_P(options), "wtimeout", strlen("wtimeout")+1, (void **)&wtimeout_pp) == SUCCESS) {
 			convert_to_long(*wtimeout_pp);
 			add_assoc_long(cmd, "wtimeout", Z_LVAL_PP(wtimeout_pp));
-			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d from options", Z_LVAL_PP(wtimeout_pp));
+			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d (from options array)", Z_LVAL_PP(wtimeout_pp));
 		} else {
 			wtimeout = zend_read_property(mongo_ce_Collection, coll, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
 			convert_to_long(wtimeout);
 			add_assoc_long(cmd, "wtimeout", Z_LVAL_P(wtimeout));
-			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d from MongoCollection property", Z_LVAL_P(wtimeout));
+			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d (from collection property)", Z_LVAL_P(wtimeout));
 		}
 	}
 

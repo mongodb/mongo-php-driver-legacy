@@ -52,7 +52,7 @@ echo "-----\n";
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=4
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: append_getlasterror: added fsync=1
 IO      FINE: getting reply
 IO      FINE: getting cursor header
@@ -78,7 +78,7 @@ array(4) {
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=4
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: append_getlasterror: added fsync=1
 IO      FINE: getting reply
 IO      FINE: getting cursor header
@@ -88,7 +88,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=4500
+IO      FINE: append_getlasterror: added wtimeout=4500 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body

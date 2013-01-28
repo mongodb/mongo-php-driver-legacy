@@ -132,7 +132,7 @@ PARSE   INFO: - Found option 'w': 2
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=2
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -141,7 +141,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=2
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -174,7 +174,7 @@ PARSE   INFO: - Found option 'w': 'allDCs'
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -184,7 +184,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -197,7 +197,7 @@ IO      FINE: is_gle_op: no
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -210,7 +210,7 @@ IO      FINE: is_gle_op: no
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -224,7 +224,7 @@ PARSE   INFO: - Found option 'w': 'majority'
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -233,7 +233,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -245,7 +245,7 @@ IO      FINE: is_gle_op: no
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -257,7 +257,7 @@ IO      FINE: is_gle_op: no
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
-IO      FINE: append_getlasterror: added wtimeout=10000
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
