@@ -15,10 +15,11 @@
  */
 #ifndef __MCON_IO_H__
 #define __MCON_IO_H__
+#include "types.h"
 
 int mongo_io_wait_with_timeout(int sock, int to, char **error_message);
 int mongo_io_send(int sock, char *packet, int total, char **error_message);
-int mongo_io_recv_header(int sock, char *reply_buffer, int size, char **error_message);
-int mongo_io_recv_data(int sock, void *dest, int size, char **error_message);
+int mongo_io_recv_header(int sock, mongo_server_options *options, char *reply_buffer, int size, char **error_message);
+int mongo_io_recv_data(int sock, int timeout, void *dest, int size, char **error_message);
 
 #endif
