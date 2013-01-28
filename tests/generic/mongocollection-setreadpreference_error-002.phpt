@@ -11,7 +11,7 @@ function myerror($errno, $errstr) {
 }
 set_error_handler("myerror", E_RECOVERABLE_ERROR);
 
-$a = array(
+$tagsets = array(
     42,
     "string",
     array( 42 ),
@@ -22,10 +22,10 @@ $a = array(
     array( array( 'foo' ), array( 42 ) ),
 );
 
-foreach ($a as $value) {
+foreach ($tagsets as $tagset) {
     $m = new_mongo();
     $c = $m->phpunit->test;
-    $c->setReadPreference(MongoClient::RP_SECONDARY, $value);
+    $c->setReadPreference(MongoClient::RP_SECONDARY, $tagset);
     $rp = $c->getReadPreference();
     var_dump($rp);
 

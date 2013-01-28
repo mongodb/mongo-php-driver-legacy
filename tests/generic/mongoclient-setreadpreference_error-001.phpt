@@ -6,11 +6,11 @@ MongoClient::setReadPreference() error setting invalid read preference mode
 <?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
 
-$b = array("blaat", 42, true, 3.14);
+$modes = array("blaat", 42, true, 3.14);
 
-foreach ($b as $newRP) {
+foreach ($modes as $mode) {
     $m = new_mongo(null, true, true, array('readPreference' => MongoClient::RP_PRIMARY_PREFERRED));
-    $m->setReadPreference($newRP);
+    $m->setReadPreference($mode);
     $rp = $m->getReadPreference();
     echo $rp["type"], "\n";
 }
