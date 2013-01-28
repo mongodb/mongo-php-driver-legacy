@@ -32,17 +32,17 @@
 #include "read_preference.h"
 
 /* Helpers */
-static int authenticate_connection(mongo_con_manager *manager, mongo_connection *con, char *database, char *username, char *password, char **error_message)
+static int authenticate_connection(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char **error_message)
 {
 	char *nonce;
 	int   retval = 0;
 
-	nonce = mongo_connection_getnonce(manager, con, error_message);
+	nonce = mongo_connection_getnonce(manager, con, options, error_message);
 	if (!nonce) {
 		return 0;
 	}
 
-	retval = mongo_connection_authenticate(manager, con, database, username, password, nonce, error_message);
+	retval = mongo_connection_authenticate(manager, con, options, database, username, password, nonce, error_message);
 	free(nonce);
 
 	return retval;
@@ -63,14 +63,14 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 			/* Do authentication if requested */
 			if (server->db && server->username && server->password) {
 				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
-				if (!authenticate_connection(manager, con, server->db, server->username, server->password, error_message)) {
+				if (!authenticate_connection(manager, con, options, server->db, server->username, server->password, error_message)) {
 					mongo_connection_destroy(manager, con);
 					con = NULL;
 					goto bailout;
 				}
 			}
 			/* Do the ping */
-			if (!mongo_connection_ping(manager, con, error_message)) {
+			if (!mongo_connection_ping(manager, con, options, error_message)) {
 				mongo_connection_destroy(manager, con);
 				con = NULL;
 				goto bailout;
@@ -80,7 +80,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 		}
 	} else if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
 		/* Do the ping */
-		if (!mongo_connection_ping(manager, con, error_message)) {
+		if (!mongo_connection_ping(manager,  con, options, error_message)) {
 			mongo_manager_connection_deregister(manager, con);
 			con = NULL;
 			goto bailout;
@@ -117,7 +117,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 			continue;
 		}
 		
-		res = mongo_connection_ismaster(manager, con, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
+		res = mongo_connection_ismaster(manager, con, &servers->options, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
 		switch (res) {
 			case 0:
 				/* Something is wrong with the connection, we need to remove
