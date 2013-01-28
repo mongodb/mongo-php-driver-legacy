@@ -8,12 +8,12 @@ MongoClient::getReadPreference() returns read preferences
 
 $baseString = sprintf("mongodb://%s:%d/%s?readPreference=", hostname(), port(), dbname());
 
-$a = array(
+$modes = array(
     'primary',
     'secondary',
 );
 
-$b = array(
+$tagParams = array(
     '',
     '&readPreferenceTags=dc:west',
     '&readPreferenceTags=dc:west,use:reporting',
@@ -21,9 +21,9 @@ $b = array(
     '&readPreferenceTags=dc:west,use:reporting&readPreferenceTags=dc:east',
 );
 
-foreach ($a as $value) {
-    foreach ($b as $tags) {
-        $m = new MongoClient($baseString . $value . $tags, array('connect' => false));
+foreach ($modes as $mode) {
+    foreach ($tagParams as $tagParam) {
+        $m = new MongoClient($baseString . $mode . $tagParam, array('connect' => false));
         $rp = $m->getReadPreference();
         var_dump($rp);
         echo "---\n";

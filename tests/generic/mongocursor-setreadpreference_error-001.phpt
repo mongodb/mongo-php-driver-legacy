@@ -6,12 +6,12 @@ MongoCursor::setReadPreference() error setting invalid read preference mode
 <?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
 
-$b = array("blaat", 42, true, 3.14);
+$modes = array("blaat", 42, true, 3.14);
 
-foreach ($b as $newRP) {
+foreach ($modes as $mode) {
     $m = new_mongo(null, true, true, array('readPreference' => MongoClient::RP_PRIMARY_PREFERRED));
     $c = $m->phpunit->test->find();
-    $c->setReadPreference($newRP);
+    $c->setReadPreference($mode);
     $rp = $c->getReadPreference();
     echo $rp["type"], "\n";
 }

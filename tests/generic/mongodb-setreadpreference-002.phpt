@@ -6,7 +6,7 @@ MongoDB::setReadPreference() should set tags
 <?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
 
-$a = array(
+$tagsets = array(
     /* no tagsets */
     array(),
     /* one tag set */
@@ -19,10 +19,10 @@ $a = array(
     array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ), array() ),
 );
 
-foreach ($a as $value) {
+foreach ($tagsets as $tagset) {
     $m = new_mongo();
     $db = $m->phpunit;
-    $db->setReadPreference(Mongo::RP_SECONDARY, $value);
+    $db->setReadPreference(Mongo::RP_SECONDARY, $tagset);
     $rp = $db->getReadPreference();
     var_dump($rp);
 

@@ -6,7 +6,7 @@ MongoClient::setReadPreference() should set tags
 <?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
 <?php
 
-$a = array(
+$tagsets = array(
     /* no tagsets */
     array(),
     /* one tag set */
@@ -19,9 +19,9 @@ $a = array(
     array( array( 'dc' => 'east', 'use' => 'reporting' ), array( 'dc' => 'west' ), array() ),
 );
 
-foreach ($a as $value) {
+foreach ($tagsets as $tagset) {
     $m = new_mongo();
-    $m->setReadPreference(Mongo::RP_SECONDARY, $value);
+    $m->setReadPreference(Mongo::RP_SECONDARY, $tagset);
     $rp = $m->getReadPreference();
     var_dump($rp);
 
