@@ -39,7 +39,7 @@ Parsing mongodb://node1,node2
 - Found tag 'dc': 'sf'
 - Found option 'readPreferenceTags': ''
 - Found option 'w': 'default'
-- Found option 'wTimeout': 200
+- Found option 'wTimeout' ('wTimeoutMS'): 200
 
 Try the tagset option as a string
 
@@ -54,4 +54,4 @@ Parsing mongodb://node1,node2
 - Found tag 'dc': 'sf'
 - Found tag 'important': 'A'
 - Found option 'w': 'default'
-- Found option 'wTimeout': 200
+- Found option 'wTimeout' ('wTimeoutMS'): 200
