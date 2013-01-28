@@ -454,8 +454,10 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	}
 
 	if (strcasecmp(option_name, "socketTimeoutMS") == 0) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'socketTimeoutMS': %d", atoi(option_value));
-		servers->options.socketTimeoutMS = atoi(option_value);
+		int value = atoi(option_value);
+
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'socketTimeoutMS': %d", value);
+		servers->options.socketTimeoutMS = value;
 		return 0;
 	}
 
