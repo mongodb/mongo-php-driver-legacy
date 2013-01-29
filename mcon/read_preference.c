@@ -92,6 +92,8 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 
 		if (connection_pid != current_pid) {
 			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "filter_connections: skipping %s as it doesn't match the current pid (%d)", ptr->connection->hash, current_pid);
+		} else if (!ptr->connection->alive) {
+			mongo_manager_log(manager, MLOG_RS, MLOG_WARN, "filter_connections: skipping %s as I don't think its alive", ptr->connection->hash);
 		} else if (ptr->connection->connection_type & types) {
 			mongo_print_connection_info(manager, ptr->connection, MLOG_FINE);
 			mcon_collection_add(col, ptr->connection);

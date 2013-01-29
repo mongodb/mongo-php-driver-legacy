@@ -36,6 +36,7 @@
 #include "util/pool.h"
 
 #include "mcon/types.h"
+#include "mcon/connections.h"
 #include "mcon/read_preference.h"
 #include "mcon/parse.h"
 #include "mcon/manager.h"
@@ -531,7 +532,7 @@ PHP_METHOD(MongoClient, close)
 static int close_connection(mongo_con_manager *manager, mongo_connection *connection)
 {
 	if (connection) {
-		mongo_manager_connection_deregister(manager, connection);
+		mongo_connection_close(manager, connection);
 		return 1;
 	} else {
 		return 0;

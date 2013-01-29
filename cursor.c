@@ -17,6 +17,7 @@
 #include <zend_interfaces.h>
 #include <zend_exceptions.h>
 #include "mcon/io.h"
+#include "mcon/connections.h"
 #include "mcon/manager.h"
 #include "mcon/utils.h"
 
@@ -1064,7 +1065,7 @@ int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
 {
 	mongo_connection *connection = cursor->connection;
 
-	mongo_manager_connection_deregister(MonGlo(manager), connection);
+	mongo_connection_close(MonGlo(manager), connection);
 	cursor->dead = 1;
 
 	return FAILURE;
