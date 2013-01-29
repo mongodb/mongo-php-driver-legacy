@@ -7,7 +7,7 @@ Test for PHP-667: Off-by-one error in BSON deserialization of pre-epoch dates
 require_once dirname(__FILE__) . "/../utils.inc";
 
 $m = new_mongo();
-$c = $m->selectCollection('phpunit', 'php_999');
+$c = $m->selectCollection(dbname(), 'bug667');
 $c->drop();
 
 $mongoDate = new MongoDate(strtotime('1900-01-01 America/New_York'));
