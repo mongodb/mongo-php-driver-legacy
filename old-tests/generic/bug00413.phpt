@@ -14,16 +14,19 @@ $db   = dbname();
 
 try {
     $m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", "", $pass, $host, $port, $db));
+    var_dump("Failed");
 } catch (Exception $e) {
     echo $e->getMessage(), "\n";
 }
 try {
     $m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", $user, "", $host, $port, $db));
+    var_dump("Failed");
 } catch (Exception $e) {
     echo $e->getMessage(), "\n";
 }
 try {
-    $m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", $user, $pass, $host, $port, $db));
+    $m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", $user . "bogus", $pass, $host, $port, $db));
+    var_dump("Failed");
 } catch (Exception $e) {
     echo $e->getMessage(), "\n";
 }
@@ -31,4 +34,4 @@ try {
 --EXPECTF--
 Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth fails
 Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth fails
-Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth fails
+Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth%s
