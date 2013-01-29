@@ -10,7 +10,7 @@ $m = new_mongo();
 $oSemafor = $m->selectDb(dbname())->semafor;
 $oSemafor->drop();
 $oSemafor->w = 42;
-$oSemafor->wtimeout = 3000;
+$oSemafor->wtimeout = 30;
 
 try{
         $time = microtime(true);
