@@ -1026,9 +1026,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC) {
 
       object_init_ex(value, mongo_ce_Date);
 
-			usec = ((((long) (d*1000)) % 1000000) + 1000000) % 1000000;
+			usec = (long) ((((d*1000) % 1000000) + 1000000) % 1000000);
 
-			zend_update_property_long(mongo_ce_Date, value, "sec", strlen("sec"), (long) (d/1000) - (d < 0 && usec) TSRMLS_CC);
+			zend_update_property_long(mongo_ce_Date, value, "sec", strlen("sec"), (long) ((d/1000) - (d < 0 && usec)) TSRMLS_CC);
 			zend_update_property_long(mongo_ce_Date, value, "usec", strlen("usec"), usec TSRMLS_CC);
 
       break;
