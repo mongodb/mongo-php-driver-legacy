@@ -152,8 +152,8 @@ int mongo_connection_connect(char *host, int port, int timeout, char **error_mes
 #endif
 
 	/* TODO: Move this to within the loop & use real timeout setting */
-	/* connection timeout: set in ms (current default 1000 secs) */
-	tval.tv_sec = timeout <= 0 ? 1000 : timeout / 1000;
+	/* connection timeout: set in ms (current default 1 sec) */
+	tval.tv_sec = timeout <= 0 ? 1 : timeout / 1000;
 	tval.tv_usec = timeout <= 0 ? 0 : (timeout % 1000) * 1000;
 
 	/* get addresses */
