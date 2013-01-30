@@ -110,6 +110,7 @@ typedef struct _mongo_connection
 	int    tag_count;
 	char **tags;
 	char  *hash; /* Duplicate of the hash that the manager knows this connection as */
+	int    alive;
 	mongo_connection_deregister_callback *cleanup_list;
 } mongo_connection;
 

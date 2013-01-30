@@ -17,6 +17,7 @@
 #include <zend_interfaces.h>
 #include <zend_exceptions.h>
 #include "mcon/io.h"
+#include "mcon/connections.h"
 #include "mcon/manager.h"
 #include "mcon/utils.h"
 
@@ -164,6 +165,7 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
  * Returns 0 on failure or an int indicating the number of bytes read */
 static int get_cursor_body(int sock, mongo_cursor *cursor, char **error_message TSRMLS_DC)
 {
+	mongoclient *client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting cursor body");
 
 	if (cursor->buf.start) {
@@ -175,7 +177,7 @@ static int get_cursor_body(int sock, mongo_cursor *cursor, char **error_message 
 	cursor->buf.pos = cursor->buf.start;
 
 	/* finish populating cursor */
-	return mongo_io_recv_data(sock, cursor->buf.pos, cursor->recv.length, error_message);
+	return mongo_io_recv_data(sock, client->servers->options.socketTimeoutMS, cursor->buf.pos, cursor->recv.length, error_message);
 }
 
 /* Cursor helper function */
@@ -1063,7 +1065,7 @@ int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
 {
 	mongo_connection *connection = cursor->connection;
 
-	mongo_manager_connection_deregister(MonGlo(manager), connection);
+	mongo_connection_close(MonGlo(manager), connection);
 	cursor->dead = 1;
 
 	return FAILURE;

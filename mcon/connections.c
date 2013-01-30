@@ -255,20 +255,73 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, options->connectTimeoutMS, error_message);
 	if (tmp->socket == -1) {
 		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error while creating connection for %s:%d: %s", server_def->host, server_def->port, *error_message);
-		free(tmp);
-		return NULL;
+		return tmp;
 	}
 
 	/* We call get_server_flags to the maxBsonObjectSize data */
-	mongo_connection_get_server_flags(manager, tmp, (char**) &error_message);
+	mongo_connection_get_server_flags(manager, tmp, options, (char**) &error_message);
 
+	/* Do authentication if requested */
+	if (server_def->db && (server_def->username || server_def->password)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_reconnect: authenticating %s", tmp->hash);
+		if (!mongo_authenticate_connection(manager, tmp, options, server_def->db, server_def->username, server_def->password, error_message)) {
+			mongo_connection_close(manager, tmp);
+			return tmp;
+		}
+	}
+
+	tmp->alive = 1;
 	return tmp;
 }
 
+mongo_connection *mongo_connection_reconnect(mongo_con_manager *manager, mongo_connection *tmp, mongo_server_def *server_def, mongo_server_options *options, char **error_message)
+{
+	tmp->last_reqid = rand();
+	tmp->connection_type = MONGO_NODE_STANDALONE;
+
+	/* Connect */
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_reconnect: creating new connection for %s:%d", server_def->host, server_def->port);
+	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, options->connectTimeoutMS, error_message);
+	if (tmp->socket == -1) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_reconnect: error while creating connection for %s:%d: %s", server_def->host, server_def->port, *error_message);
+		return tmp;
+	}
+
+	/* We call get_server_flags to the maxBsonObjectSize data */
+	mongo_connection_get_server_flags(manager, tmp, options, (char**) &error_message);
+
+	/* Do authentication if requested */
+	if (server_def->db && (server_def->username || server_def->password)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_reconnect: authenticating %s", tmp->hash);
+		if (!mongo_authenticate_connection(manager, tmp, options, server_def->db, server_def->username, server_def->password, error_message)) {
+			mongo_connection_close(manager, tmp);
+			return tmp;
+		}
+	}
+
+	tmp->alive = 1;
+	return tmp;
+}
+
+/* DO NOT USE ME. ONLY FOR MSHUTDOWN */
 void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 {
-	int current_pid, connection_pid;
 	int i;
+	mongo_connection_close(manager, con);
+	for (i = 0; i < con->tag_count; i++) {
+		free(con->tags[i]);
+	}
+	free(con->tags);
+	free(con->hash);
+	free(con);
+}
+void mongo_connection_close(mongo_con_manager *manager, mongo_connection *con)
+{
+	int current_pid, connection_pid;
+
+	if (!con->alive) {
+		return;
+	}
 
 	current_pid = getpid();
 	connection_pid = mongo_server_hash_to_pid(con->hash);
@@ -287,9 +340,6 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 		shutdown(con->socket, SHUT_RDWR);
 		close(con->socket);
 #endif
-		for (i = 0; i < con->tag_count; i++) {
-			free(con->tags[i]);
-		}
 		if (con->cleanup_list) {
 			mongo_connection_deregister_callback *ptr = con->cleanup_list;
 			mongo_connection_deregister_callback *prev;
@@ -310,9 +360,7 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 			} while(1);
 			con->cleanup_list = NULL;
 		}
-		free(con->tags);
-		free(con->hash);
-		free(con);
+		con->alive = 0;
 	}
 }
 
@@ -320,7 +368,7 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 
 /* Returns 1 if it worked, and 0 if it didn't. If 0 is returned, *error_message
  * is set and must be freed */
-static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mcon_str *packet, char **data_buffer, char **error_message)
+static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mcon_str *packet, char **data_buffer, char **error_message)
 {
 	int            read;
 	uint32_t       data_size;
@@ -331,7 +379,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	/* Send and wait for reply */
 	mongo_io_send(con->socket, packet->d, packet->l, error_message);
 	mcon_str_ptr_dtor(packet);
-	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
+	read = mongo_io_recv_header(con->socket, options, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
 	if (read == -1) {
 		*error_message = malloc(256);
 		snprintf(*error_message, 256, "send_package: error reading from socket: %s", recv_error_message);
@@ -362,7 +410,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 
 	/* Read data */
 	*data_buffer = malloc(data_size + 1);
-	if (!mongo_io_recv_data(con->socket, *data_buffer, data_size, error_message)) {
+	if (!mongo_io_recv_data(con->socket, options->socketTimeoutMS, *data_buffer, data_size, error_message)) {
 		return 0;
 	}
 
@@ -396,11 +444,12 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
  */
-int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, char **error_message)
+int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
 	struct timeval start, end;
 	char          *data_buffer;
+	int            retval = 1;
 
 	gettimeofday(&start, NULL);
 	if ((con->last_ping + manager->ping_interval) > start.tv_sec) {
@@ -409,12 +458,27 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
 	}
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_ping: pinging %s", con->hash);
-	packet = bson_create_ping_packet(con);
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
-		return 0;
+
+
+	if (!con->alive) {
+		con = mongo_connection_reconnect(manager, con, server, options, error_message);
+		if (!con->alive) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "ismaster: the server seems to still be down, skipping");
+			retval = 2;
+			goto failed;
+		}
 	}
-	gettimeofday(&end, NULL);
+
+
+	packet = bson_create_ping_packet(con);
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
+		retval = 0;
+		goto failed;
+	}
 	free(data_buffer);
+
+failed:
+	gettimeofday(&end, NULL);
 
 	con->last_ping = end.tv_sec;
 	con->ping_ms = (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
@@ -424,7 +488,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_ping: last pinged at %ld; time: %dms", con->last_ping, con->ping_ms);
 
-	return 1;
+	return retval;
 }
 
 /**
@@ -439,7 +503,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
  *    not being what the server thought it is) - in that case, the server in
  *    the last argument is changed
  */
-int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
+int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
 {
 	mcon_str      *packet;
 	char          *data_buffer;
@@ -457,9 +521,17 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	}
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: start");
-	packet = bson_create_ismaster_packet(con);
 
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+	if (!con->alive) {
+		con = mongo_connection_reconnect(manager, con, server, options, error_message);
+		if (!con->alive) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "ismaster: the server seems to still be down, skipping");
+			return 2;
+		}
+	}
+
+	packet = bson_create_ismaster_packet(con);
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;
 	}
 
@@ -582,7 +654,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
  */
-int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, char **error_message)
+int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
 	int32_t        max_bson_size = 0;
@@ -594,7 +666,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: start");
 	packet = bson_create_ismaster_packet(con);
 
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;
 	}
 
@@ -650,7 +722,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
  *
  * Returns the nonsense when it worked, or NULL if it didn't.
  */
-char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *con, char **error_message)
+char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
 	char          *data_buffer;
@@ -661,7 +733,7 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "getnonce: start");
 	packet = bson_create_getnonce_packet(con);
 
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return NULL;
 	}
 
@@ -689,7 +761,7 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
  *
  * Returns 1 when it worked, or 0 when it didn't - with the error_message set.
  */
-int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, char *database, char *username, char *password, char *nonce, char **error_message)
+int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char *nonce, char **error_message)
 {
 	mcon_str      *packet;
 	char          *data_buffer, *errmsg;
@@ -722,7 +794,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	free(hash);
 	free(key);
 
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		free(data_buffer);
 		return 0;
 	}
