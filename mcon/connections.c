@@ -260,7 +260,7 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 	}
 
 	/* We call get_server_flags to the maxBsonObjectSize data */
-	mongo_connection_get_server_flags(manager, tmp, (char**) &error_message);
+	mongo_connection_get_server_flags(manager, tmp, options, (char**) &error_message);
 
 	return tmp;
 }
@@ -320,7 +320,7 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 
 /* Returns 1 if it worked, and 0 if it didn't. If 0 is returned, *error_message
  * is set and must be freed */
-static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mcon_str *packet, char **data_buffer, char **error_message)
+static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mcon_str *packet, char **data_buffer, char **error_message)
 {
 	int            read;
 	uint32_t       data_size;
@@ -331,7 +331,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	/* Send and wait for reply */
 	mongo_io_send(con->socket, packet->d, packet->l, error_message);
 	mcon_str_ptr_dtor(packet);
-	read = mongo_io_recv_header(con->socket, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
+	read = mongo_io_recv_header(con->socket, options, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
 	if (read == -1) {
 		*error_message = malloc(256);
 		snprintf(*error_message, 256, "send_package: error reading from socket: %s", recv_error_message);
@@ -362,7 +362,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 
 	/* Read data */
 	*data_buffer = malloc(data_size + 1);
-	if (!mongo_io_recv_data(con->socket, *data_buffer, data_size, error_message)) {
+	if (!mongo_io_recv_data(con->socket, options, *data_buffer, data_size, error_message)) {
 		return 0;
 	}
 
@@ -396,7 +396,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
  */
-int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, char **error_message)
+int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
 	struct timeval start, end;
@@ -410,7 +410,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_ping: pinging %s", con->hash);
 	packet = bson_create_ping_packet(con);
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;
 	}
 	gettimeofday(&end, NULL);
@@ -439,7 +439,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, cha
  *    not being what the server thought it is) - in that case, the server in
  *    the last argument is changed
  */
-int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
+int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
 {
 	mcon_str      *packet;
 	char          *data_buffer;
@@ -459,7 +459,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: start");
 	packet = bson_create_ismaster_packet(con);
 
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;
 	}
 
@@ -582,7 +582,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
  *
  * Returns 1 when it worked, and 0 when an error was encountered.
  */
-int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, char **error_message)
+int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
 	int32_t        max_bson_size = 0;
@@ -594,7 +594,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: start");
 	packet = bson_create_ismaster_packet(con);
 
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;
 	}
 
@@ -650,7 +650,7 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
  *
  * Returns the nonsense when it worked, or NULL if it didn't.
  */
-char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *con, char **error_message)
+char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
 	char          *data_buffer;
@@ -661,7 +661,7 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "getnonce: start");
 	packet = bson_create_getnonce_packet(con);
 
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return NULL;
 	}
 
@@ -689,7 +689,7 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
  *
  * Returns 1 when it worked, or 0 when it didn't - with the error_message set.
  */
-int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, char *database, char *username, char *password, char *nonce, char **error_message)
+int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char *nonce, char **error_message)
 {
 	mcon_str      *packet;
 	char          *data_buffer, *errmsg;
@@ -722,7 +722,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	free(hash);
 	free(key);
 
-	if (!mongo_connect_send_packet(manager, con, packet, &data_buffer, error_message)) {
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		free(data_buffer);
 		return 0;
 	}
