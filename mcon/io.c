@@ -150,7 +150,7 @@ int mongo_io_recv_header(int sock, mongo_server_options *options, char *reply_bu
 	return status;
 }
 
-int mongo_io_recv_data(int sock, int timeout, void *dest, int size, char **error_message)
+int mongo_io_recv_data(int sock, mongo_server_options *options, void *dest, int size, char **error_message)
 {
 	int num = 1, received = 0;
 
@@ -158,7 +158,7 @@ int mongo_io_recv_data(int sock, int timeout, void *dest, int size, char **error
 	while (received < size && num > 0) {
 		int len = 4096 < (size - received) ? 4096 : size - received;
 
-		if (mongo_io_wait_with_timeout(sock, timeout, error_message) != 0) {
+		if (mongo_io_wait_with_timeout(sock, options->socketTimeoutMS, error_message) != 0) {
 			/* We don't care which failure it was, it just failed */
 			return 0;
 		}

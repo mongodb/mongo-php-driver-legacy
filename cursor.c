@@ -176,7 +176,7 @@ static int get_cursor_body(int sock, mongo_cursor *cursor, char **error_message 
 	cursor->buf.pos = cursor->buf.start;
 
 	/* finish populating cursor */
-	return mongo_io_recv_data(sock, client->servers->options.socketTimeoutMS, cursor->buf.pos, cursor->recv.length, error_message);
+	return mongo_io_recv_data(sock, &client->servers->options, cursor->buf.pos, cursor->recv.length, error_message);
 }
 
 /* Cursor helper function */
