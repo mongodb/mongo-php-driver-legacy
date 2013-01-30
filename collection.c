@@ -687,6 +687,7 @@ PHP_METHOD(MongoCollection, batchInsert) {
   PHP_MONGO_GET_COLLECTION(getThis());
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
+		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
 
