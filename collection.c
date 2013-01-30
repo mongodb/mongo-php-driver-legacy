@@ -23,6 +23,7 @@
 #include "mongo_types.h"
 #include "db.h"
 #include "mcon/manager.h"
+#include "mcon/connections.h"
 #include "mcon/io.h"
 
 extern zend_class_entry *mongo_ce_MongoClient,
@@ -537,7 +538,7 @@ static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_conn
 	orig_error_handling = MONGO_ERROR_G(error_handling);
 	MONGO_ERROR_G(error_handling) = EH_NORMAL;
 
-	mongo_manager_connection_deregister(manager, connection);
+	mongo_connection_close(manager, connection);
 
 	MONGO_ERROR_G(error_handling) = orig_error_handling;
 }
