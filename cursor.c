@@ -190,7 +190,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 
 	status = get_cursor_header(sock, cursor, (char**) &error_message TSRMLS_CC);
 	if (status == -1 || status > 0) {
-		mongo_cursor_throw(cursor->connection, status TSRMLS_CC, error_message);
+		mongo_cursor_throw(cursor->connection, status TSRMLS_CC, "%s", error_message);
 		free(error_message);
 		return FAILURE;
 	}
@@ -400,7 +400,7 @@ PHP_METHOD(MongoCursor, hasNext) {
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
 		efree(buf.start);
 
-		mongo_cursor_throw(cursor->connection, 1 TSRMLS_CC, error_message);
+		mongo_cursor_throw(cursor->connection, 1 TSRMLS_CC, "%s", error_message);
 		free(error_message);
 		mongo_util_cursor_failed(cursor TSRMLS_CC);
 		return;
@@ -1242,7 +1242,7 @@ PHP_METHOD(MongoCursor, next) {
 				snprintf(error_message, Z_STRLEN_PP(err) + 2 + Z_STRLEN_PP(wnote) + 1, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote));
 			}
 
-      exception = mongo_cursor_throw(cursor->connection, code TSRMLS_CC, error_message);
+      exception = mongo_cursor_throw(cursor->connection, code TSRMLS_CC, "%s", error_message);
 			free(error_message);
       zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current TSRMLS_CC);
       zval_ptr_dtor(&cursor->current);
