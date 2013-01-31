@@ -12,4 +12,3 @@ try {
     die("skip " . $e->getMessage());
 }
 
-
