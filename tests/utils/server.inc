@@ -28,6 +28,10 @@ class MongoShellServer {
         return $this->verifyWrite("initBridge($port,$delay)");
     }
 
+    public function makeStandalone($port = 30000) {
+        return $this->verifyWrite("initStandalone($port)");
+    }
+
     public function killMaster() {
         return $this->verifyWrite("killMaster()");
     }
@@ -79,6 +83,19 @@ class MongoShellServer {
         return $host;
     }
 
+
+    public function getCredentials() {
+        require dirname(__FILE__) . "/cfg.inc";
+        return array(
+            "admin" => $SUPER_USER,
+            "user"  => $NORMAL_USER,
+        );
+    }
+
+    public function getStandaloneConfig() {
+        $host = $this->verifyWrite("getStandaloneConfig()");
+        return $host;
+    }
 
     public function close() {
         if ($this->fp) {
@@ -163,6 +180,18 @@ function new_mongo_standalone() {
     $dsn = MongoShellServer::getStandaloneInfo();
     return new MongoClient($dsn);
 }
+
+function old_mongo_standalone() {
+    return mongo_standalone();
+}
+function mongo_standalone() {
+    $dsn = MongoShellServer::getStandaloneInfo();
+    return new Mongo($dsn);
+}
+function new_mongo_standalone() {
+    $dsn = MongoShellServer::getStandaloneInfo();
+    return new MongoClient($dsn);
+}
 function dbname() {
     return "test";
 }
@@ -221,12 +250,4 @@ $config = MongoShellServer::getReplicaSetInfo();
 list($REPLICASET_SECONDARY, $REPLICASET_SECONDARY_PORT) = explode(":", $config["hosts"][2]);
 list($REPLICASET_PRIMARY, $REPLICASET_PRIMARY_PORT) = explode(":", $config["hosts"][0]);
  */
-
-list($REPLICASET_SECONDARY, $REPLICASET_SECONDARY_PORT) = array("localhost", 28002);
-list($REPLICASET_PRIMARY, $REPLICASET_PRIMARY_PORT) = array("localhost", 28000);
-
-list($STANDALONE_HOSTNAME, $STANDALONE_PORT) = array("localhost", 30000);
-
-
-
 
