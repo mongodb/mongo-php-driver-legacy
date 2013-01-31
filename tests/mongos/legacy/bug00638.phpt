@@ -1,12 +1,13 @@
 --TEST--
 Test for PHP-612: Ensure correct $readPreference modes are set on cursor for mongos
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$cfg = MongoShellServer::getShardInfo();
+$m = new MongoClient($cfg[0]);
 
 $m->setReadPreference(MongoClient::RP_PRIMARY);
 $cursor = $m->selectCollection('phpunit', 'c')->find();
