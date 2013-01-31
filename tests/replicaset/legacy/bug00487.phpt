@@ -4,7 +4,7 @@ Test for PHP-487: Connect to replicaset member using standalone connection
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $m = new Mongo("$REPLICASET_SECONDARY:$REPLICASET_SECONDARY_PORT");
 

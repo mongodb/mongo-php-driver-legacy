@@ -1,12 +1,12 @@
 --TEST--
 Test for PHP-639: MongoCursor::slaveOkay() has no effect (method)
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/replicaset.inc"; ?>
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
 --FILE--
 <?php
 $mentions = array(); 
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $m = mongo();
 $db = $m->selectDB(dbname());

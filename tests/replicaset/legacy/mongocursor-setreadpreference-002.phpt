@@ -1,12 +1,12 @@
 --TEST--
 MongoCursor::setReadPreference (first setReadPreference, then slaveOkay) [2]
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/replicaset.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/replicaset.inc"; ?>
 <?php
 $mentions = array(); 
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $m = mongo();
 $db = $m->selectDB(dbname());

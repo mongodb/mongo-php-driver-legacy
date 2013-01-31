@@ -4,7 +4,7 @@ Test for PHP-605: Safe write operations return NULL instead of a boolean.
 <?php require_once __DIR__ . "/skipif.inc"; ?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $m = mongo();
 $c = $m->selectDb(dbname())->bug605;

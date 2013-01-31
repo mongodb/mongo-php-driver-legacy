@@ -1,7 +1,7 @@
 --TEST--
 mongo.is_master_interval
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/replicaset.inc"; ?>
 --INI--
 mongo.is_master_interval=93
 --FILE--
@@ -19,7 +19,7 @@ set_error_handler('error_handler');
 MongoLog::setModule(MongoLog::CON);
 MongoLog::setLevel(MongoLog::FINE);
 
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $mongo = mongo();
 

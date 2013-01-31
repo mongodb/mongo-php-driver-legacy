@@ -7,7 +7,7 @@ Test for PHP-647: Queries should not be sent to recovering secondaries
 mongo.is_master_interval=1
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $m = mongo();
 $m->setReadPreference(MongoClient::RP_SECONDARY_PREFERRED);

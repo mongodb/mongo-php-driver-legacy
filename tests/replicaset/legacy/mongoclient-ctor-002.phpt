@@ -9,7 +9,7 @@ if (ini_get("mongo.default_host") == hostname() && ini_get("mongo.default_port")
 ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $host = hostname();
 $port = port();
