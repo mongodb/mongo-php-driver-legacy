@@ -1,14 +1,15 @@
 --TEST--
 Test for PHP-489: ismaster() crashes for standalone servers
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 MongoLog::setLevel(MongoLog::WARNING);
 MongoLog::setModule(MongoLog::CON);
+$dsn = MongoShellServer::getStandaloneInfo();
 try {
-    $m = new Mongo(hostname(), array("replicaSet" => true));
+    $m = new Mongo($dsn, array("replicaSet" => true));
 } catch(MongoConnectionException $e) {
     var_dump($e->getMessage());
 }

@@ -1,10 +1,10 @@
 --TEST--
 Test for PHP-522: Setting per-insert options.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc";?>
+<?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 MongoLog::setModule( MongoLog::IO );
 MongoLog::setLevel( MongoLog::FINE );
 set_error_handler( 'error' );
@@ -13,7 +13,7 @@ function error( $a, $b, $c )
 	echo $b, "\n";
 }
 
-$m = mongo();
+$m = mongo_standalone();
 $c = $m->selectCollection( dbname(), "php-522_error" );
 
 try {

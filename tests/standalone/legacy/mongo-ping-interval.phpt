@@ -1,7 +1,7 @@
 --TEST--
 mongo.ping_interval
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --INI--
 mongo.ping_interval=103
 --FILE--
@@ -19,9 +19,9 @@ set_error_handler('error_handler');
 MongoLog::setModule(MongoLog::CON);
 MongoLog::setLevel(MongoLog::FINE);
 
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$mongo = mongo();
+$mongo = mongo_standalone();
 
 $coll1 = $mongo->selectCollection(dbname(), 'query');
 $coll1->drop();
