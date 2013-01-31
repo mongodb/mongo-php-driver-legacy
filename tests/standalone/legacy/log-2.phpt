@@ -1,10 +1,10 @@
 --TEST--
 Test for MongoLog (connection only)
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 function error_handler($code, $message)
 {
 	echo $message, "\n";

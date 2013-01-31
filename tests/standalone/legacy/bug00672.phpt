@@ -1,11 +1,11 @@
 --TEST--
 Test for PHP-672: MongoGridFSFile::write() leaks memory
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$mongo = new_mongo();
+require_once "tests/utils/server.inc";
+$mongo = new_mongo_standalone();
 $gridfs = $mongo->files->getGridFS();
 $i = 0;
 foreach(glob(dirname(__FILE__) . "/*") as $file) {

@@ -1,17 +1,17 @@
 --TEST--
 Test for PHP-485: Update (and other methods) in safemode crash under certain conditions.
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
+require_once "tests/utils/server.inc";
 // Connect to mongo
-$m = mongo();
+$m = mongo_standalone();
 $collection = $m->selectCollection(dbname(), 'crash');
 $collection->drop();
 
 // Load the problem record.
-$arrayData = file_get_contents(dirname(__FILE__) . '/../generic/bug00485-data.txt');
+$arrayData = file_get_contents("tests/data-files/bug00485-data.txt");
 $doc = unserialize($arrayData);
 
 $collection->insert( $doc );
