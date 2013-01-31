@@ -556,7 +556,7 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
 		/* TODO: Figure out what to do on FAIL
 		mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
 		mongo_manager_log(manager, MLOG_IO, MLOG_WARN, "do_safe_op: sending data failed, removing connection %s", connection->hash);
-		mongo_cursor_throw(connection, 16 TSRMLS_CC, error_message);
+		mongo_cursor_throw(connection, 16 TSRMLS_CC, "%s", error_message);
 		connection_deregister_wrapper(manager, connection TSRMLS_CC);
 
 		free(error_message);    
@@ -596,7 +596,7 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
     zval **code;
     int status = zend_hash_find(Z_ARRVAL_P(return_value), "n", strlen("n")+1, (void**)&code);
 
-		mongo_cursor_throw(cursor->connection, (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC, Z_STRVAL_PP(err));
+		mongo_cursor_throw(cursor->connection, (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC, "%s", Z_STRVAL_PP(err));
 
     cursor->connection = NULL;
     zval_ptr_dtor(&cursor_z);
