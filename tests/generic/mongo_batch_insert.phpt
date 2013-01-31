@@ -4,8 +4,8 @@ Test for PHP-233: support keep_going flag.
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$db = new MongoDB(mongo(), "phpunit");
+require_once "tests/utils/server.inc";
+$db = new MongoDB(mongo_standalone(), "phpunit");
 $object = $db->selectCollection('c');
 $object->drop();
 

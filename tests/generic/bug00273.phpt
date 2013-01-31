@@ -1,11 +1,11 @@
 --TEST--
 Test for PHP-273: MongoCollection::distinct() basic tests
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+$m = mongo_standalone();
 $db = $m->selectDB(dbname());
 $db->dropCollection("addresses");
 $c = $db->addresses;

@@ -4,8 +4,8 @@ Database: Dropping collections (name-as-string)
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$a = mongo();
+require_once "tests/utils/server.inc";
+$a = mongo_standalone();
 $d = $a->selectDb("phpunit");
 $c = $d->selectCollection("dropcoltest");
 $ns = $d->selectCollection('system.namespaces');

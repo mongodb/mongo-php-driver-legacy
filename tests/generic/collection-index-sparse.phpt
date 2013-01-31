@@ -4,7 +4,7 @@ Indexes: Sparse
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 $m = Mongo();
 $db = $m->phpunit;
 

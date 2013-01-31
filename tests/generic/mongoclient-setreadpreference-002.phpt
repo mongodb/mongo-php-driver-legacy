@@ -3,7 +3,7 @@ MongoClient::setReadPreference() should set tags
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
 $tagsets = array(
@@ -20,7 +20,7 @@ $tagsets = array(
 );
 
 foreach ($tagsets as $tagset) {
-    $m = new_mongo();
+    $m = new_mongo_standalone();
     $m->setReadPreference(Mongo::RP_SECONDARY, $tagset);
     $rp = $m->getReadPreference();
     var_dump($rp);

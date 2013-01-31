@@ -4,7 +4,7 @@ Test for PHP-616: GridFS: deleting files by ID
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
     $m = mongo("phpunit");
 	$mdb = $m->selectDB("phpunit");
 	$mdb->dropCollection("fs.files");

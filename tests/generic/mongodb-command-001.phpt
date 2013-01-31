@@ -4,7 +4,7 @@ MongoDB::command()
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
 $m = mongo("admin");
 $db = $m->selectDb("admin");

@@ -1,17 +1,17 @@
 --TEST--
 MongoGridFS::put() with empty file
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$mongo = mongo();
+require_once "tests/utils/server.inc";
+$mongo = mongo_standalone();
 $db = $mongo->selectDB(dbname());
 
 $gridfs = $db->getGridFS();
 $gridfs->drop();
 
-$gridfs->put('tests/empty');
+$gridfs->put('tests/data-files/empty');
 
 $file = $gridfs->findOne();
 

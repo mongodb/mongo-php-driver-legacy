@@ -4,8 +4,8 @@ Test for PHP-361: Mongo::getHosts() segfaults when not connecting to a replica s
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+$m = mongo_standalone();
 
 $hosts = $m->getHosts();
 if ($hosts && is_array($hosts)) {

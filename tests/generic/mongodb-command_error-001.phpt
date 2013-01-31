@@ -4,9 +4,9 @@ MongoDB::command() with unsupported database command
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $db = $m->selectDb('phpunit');
 $retval = $db->command(array());
 var_dump($retval["errmsg"], $retval["bad cmd"], $retval["ok"]);

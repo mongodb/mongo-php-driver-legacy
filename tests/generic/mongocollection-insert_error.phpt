@@ -9,8 +9,8 @@ Invalid options for ->insert() do not throw exception
 Test for giving improper arguments to the function
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+$m = mongo_standalone();
 $c = $m->phpunit->col;
 $c->drop();
 

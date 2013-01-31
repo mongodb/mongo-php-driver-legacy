@@ -4,9 +4,9 @@ Test for PHP-333: GridFS find's key.
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
+require_once "tests/utils/server.inc";
 $db_name = dbname();
-$m = mongo();
+$m = mongo_standalone();
 $mdb = $m->selectDB($db_name);
 $mdb->dropCollection("fs.files");
 $mdb->dropCollection("fs.chunks");

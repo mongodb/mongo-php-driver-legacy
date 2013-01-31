@@ -4,8 +4,8 @@ MongoCollection::getName()
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+$m = mongo_standalone();
 
 $c = $m->phpunit->col;
 // testing an unneeded parameter
