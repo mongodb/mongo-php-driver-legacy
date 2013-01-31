@@ -44,5 +44,12 @@ function restartMaster() {
 }
 
 function initShard() {
+    if (shardTest) {
+        return;
+    }
     shardTest = new ShardingTest( {name: "SHARDING", shards: 3, rs: {nodes: 3}, numReplicas: 3, nopreallocj: true, mongos: 2});
 }
+function getShardConfig() {
+    return [shardTest.s0.host,shardTest.s1.host];
+}
+
