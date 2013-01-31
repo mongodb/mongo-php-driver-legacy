@@ -4,7 +4,7 @@ Test for PHP-685: wtimeout option is not supported per-query
 <?php require_once dirname(__FILE__) . "/skipif.inc" ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $m = new_mongo();
 

@@ -4,7 +4,7 @@ Test for PHP-611: Segfault when no candidate servers found.
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $hostname = hostname();
 $opts = array(

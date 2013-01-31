@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-397: Endless loop on non-existing file.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/replicaset.inc"; ?>
 <?php exit("skip test requires authentication on a replicaset.."); ?>
 --FILE--
 <?php
