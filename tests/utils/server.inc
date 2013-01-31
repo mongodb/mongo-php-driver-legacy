@@ -32,6 +32,10 @@ class MongoShellServer {
         return $this->verifyWrite("initStandalone($port)");
     }
 
+    public function makeBridge($port = 30000, $delay = 1000) {
+        return $this->verifyWrite("initBridge($port,$delay)");
+    }
+
     public function killMaster() {
         return $this->verifyWrite("killMaster()");
     }

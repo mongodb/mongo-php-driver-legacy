@@ -103,6 +103,13 @@ function getBridgeConfig() {
 function getShardConfig() {
     return [shardTest.s0.host,shardTest.s1.host];
 }
+function getBridgeConfig() {
+    return bridgeTest.host;
+}
+
+function getShardConfig() {
+    return [shardTest.s0.host,shardTest.s1.host];
+}
 
 function killMaster() {
     replTest.stopMaster();
