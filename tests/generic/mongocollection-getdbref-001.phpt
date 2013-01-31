@@ -1,12 +1,12 @@
 --TEST--
 MongoCollection::getDBRef()
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once "tests/utils/standalone.inc";?>
 <?php if (isauth()) { die("skip The test suite doesn't support two databases at the moment"); } ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$mongo = mongo();
+require_once "tests/utils/server.inc";
+$mongo = mongo_standalone();
 
 $coll1 = $mongo->selectCollection(dbname(), 'dbref');
 $coll1->drop();

@@ -4,8 +4,8 @@ Test for PHP-389: Setting arbitrary flags.
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+$m = mongo_standalone();
 $c = $m->phpunit->test;
 
 /* Tailable */

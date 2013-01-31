@@ -4,8 +4,8 @@ Test for PHP-353: Iterating over a MongoCursor without _id field should not crea
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
-$d = mongo();
+require_once "tests/utils/server.inc";
+$d = mongo_standalone();
 $c = $d->phpunit->collection;
 $c->drop();
 

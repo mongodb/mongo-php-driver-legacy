@@ -4,7 +4,7 @@ GridFS: Testing memory usage
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 $conn = Mongo();
 $db   = $conn->selectDb('phpunit');
 $grid = $db->getGridFs('wrapper');

@@ -3,7 +3,7 @@ MongoCursor::setReadPreference() should set read preference mode
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
 $modes = array(

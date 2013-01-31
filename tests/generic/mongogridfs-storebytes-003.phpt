@@ -1,11 +1,11 @@
 --TEST--
 MongoGridFS::storeBytes() with arbitrary values
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$mongo = mongo();
+require_once "tests/utils/server.inc";
+$mongo = mongo_standalone();
 $db = $mongo->selectDB(dbname());
 
 $bytes = chr(0) . '4g7' . chr(255) . chr(127) . chr(128) . chr(0);

@@ -3,10 +3,10 @@ MongoDB::setReadPreference() error setting tag sets for primary read preference 
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
-$m = new_mongo();
+$m = new_mongo_standalone();
 $db = $m->phpunit;
 $db->setReadPreference(MongoClient::RP_PRIMARY, array( array( 'foo' => 'bar' ) ) );
 $rp = $db->getReadPreference();

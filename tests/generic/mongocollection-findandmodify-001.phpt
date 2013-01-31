@@ -4,9 +4,9 @@ MongoCollection::findAndModify() helper
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $col = $m->selectDB(dbname())->jobs;
 
 $col->remove();

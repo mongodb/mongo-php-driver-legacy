@@ -117,9 +117,9 @@ function mongo() {
 function old_mongo() {
     return mongo();
 }
-function new_mongo() {
+function new_mongo($unused = null, $unused = null, $unused = null, $options = array()) {
     $config = MongoShellServer::getReplicaSetInfo();
-    return new MongoClient($config["dsn"], array("replicaSet" => $config["rsname"]));
+    return new MongoClient($config["dsn"], array("replicaSet" => $config["rsname"])+$options);
 }
 
 function old_mongo_standalone() {

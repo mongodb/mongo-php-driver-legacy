@@ -1,11 +1,11 @@
 --TEST--
 MongoTimestamp insertion
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$mongo = mongo();
+require_once "tests/utils/server.inc";
+$mongo = mongo_standalone();
 $coll = $mongo->selectCollection('phpunit', 'mongotimestamp');
 $coll->drop();
 

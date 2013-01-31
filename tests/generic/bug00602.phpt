@@ -4,9 +4,9 @@ Test for PHP-602: No longer possible to get field information from $cursor->info
 <?php require_once __DIR__ . "/skipif.inc"; ?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $c = $m->selectDb(dbname())->bug602;
 $c->remove();
 $c->insert( array( 'test' => 'one' ) );

@@ -4,12 +4,12 @@ Test for killing cursors when they haven't been exhausted.
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 set_error_handler('foo');function foo($code, $message) { echo $message, "\n"; }
 MongoLog::setLevel(MongoLog::WARNING);
 MongoLog::setModule(MongoLog::IO);
-$m = mongo();
+$m = mongo_standalone();
 $d = $m->phpunit;
 $c = $d->killcursors;
 $c->drop();

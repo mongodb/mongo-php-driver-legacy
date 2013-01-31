@@ -5,7 +5,7 @@ Test for MongoLog with callback (>= PHP 5.3).
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 function f($module, $log, $m) {
     var_dump($module, $log, $m);
@@ -18,7 +18,7 @@ MongoLog::setLevel(MongoLog::FINE);
 var_dump(MongoLog::setCallback("f"));
 
 
-$mongo = mongo();
+$mongo = mongo_standalone();
 
 
 var_dump(MongoLog::getCallback());

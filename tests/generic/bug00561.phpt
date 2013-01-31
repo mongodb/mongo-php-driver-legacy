@@ -4,7 +4,7 @@ Test for PHP-561: Handle empty database name better
 <?php require_once __DIR__ . "/skipif.inc"; ?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 MongoLog::setModule( MongoLog::PARSE );
 MongoLog::setLevel( MongoLog::INFO );

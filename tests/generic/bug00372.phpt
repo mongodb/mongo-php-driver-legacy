@@ -17,7 +17,7 @@ PHP mongo driver: 1.3.0dev (16th Apr 2012)
 -----------------------------------------------------------*/
 
 #Connect to GridFS
-require_once dirname(__FILE__) ."/../utils.inc";
+require_once "tests/utils/server.inc";
 $db = 'phpunit';
 $m = new_mongo($db);
 $prefix = 'test_prefix';

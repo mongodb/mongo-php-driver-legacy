@@ -3,10 +3,10 @@ Test for PHP-687: MongoDate usec not decoded correctly on 32-bit platform
 --SKIPIF--
 <?php require_once dirname(__FILE__) . '/skipif.inc'; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . '/../utils.inc'; ?>
 <?php
+require_once "tests/utils/server.inc";
 
-$m = new_mongo();
+$m = new_mongo_standalone();
 $c = $m->selectCollection(dbname(), 'bug687');
 $c->drop();
 

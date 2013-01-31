@@ -1,11 +1,11 @@
 --TEST--
 MongoGridFSFile::getBytes() returns all file data from all chunks
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$mongo = mongo();
+require_once "tests/utils/server.inc";
+$mongo = mongo_standalone();
 $db = $mongo->selectDB(dbname());
 
 $gridfs = $db->getGridFS();

@@ -4,9 +4,9 @@ Test for PHP-635: The second argument to MongoCursor::__construct() always gets 
 <?php require_once __DIR__ . "/skipif.inc"; ?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $collection = $m->selectDb(dbname())->bug635;
 var_dump($collection);
  

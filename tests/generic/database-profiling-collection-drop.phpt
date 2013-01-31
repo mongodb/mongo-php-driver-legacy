@@ -4,8 +4,8 @@ Database: Profiling (turning on and off)
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$a = mongo();
+require_once "tests/utils/server.inc";
+$a = mongo_standalone();
 $d = $a->selectDb("phpunit");
 $ns = $d->selectCollection('system.namespaces');
 
