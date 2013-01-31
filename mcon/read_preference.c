@@ -24,7 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 /* Helpers */
 char *mongo_connection_type(int type)
