@@ -36,7 +36,7 @@ foreach ( $strings as $string )
 	$demo = $m->selectDB(dbname());
 	try
 	{
-		$demo->wtimeout = 1000;
+		$demo->wtimeout = 100;
 		$demo->test->remove();
 	}
 	catch ( Exception $e )
@@ -49,7 +49,7 @@ foreach ( $strings as $string )
 		try
 		{
 			$demo->w = $test;
-			$demo->wtimeout = 1000;
+			$demo->wtimeout = 100;
 			$demo->test->insert( array( '_id' => $key ) );
 		}
 		catch ( Exception $e )
@@ -115,7 +115,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=2
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -124,7 +124,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=7
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -134,7 +134,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -143,7 +143,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -157,7 +157,7 @@ PARSE   INFO: - Found option 'w': 2
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=2
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -173,7 +173,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=2
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -182,7 +182,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=2
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -191,7 +191,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=7
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -201,7 +201,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -210,7 +210,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -224,7 +224,7 @@ PARSE   INFO: - Found option 'w': 'allDCs'
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -241,7 +241,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -251,7 +251,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=2
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -260,7 +260,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=7
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -270,7 +270,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -279,7 +279,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -293,7 +293,7 @@ PARSE   INFO: - Found option 'w': 'majority'
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -309,7 +309,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -318,7 +318,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=2
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -327,7 +327,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=7
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -337,7 +337,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
@@ -346,7 +346,7 @@ IO      FINE: getting cursor body
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
-IO      FINE: append_getlasterror: added wtimeout=1000 (from collection property)
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
