@@ -41,16 +41,14 @@ traces.0
 .svn
 \#*
 
-tests/anotherfile
-tests/MongoRunner.php
-tests/unit
-tests/*/*.diff
-tests/*/*.exp
-tests/*/*.log
-tests/*/*.out
-tests/*/*.mem
-tests/*/*.php
-tests/*/*.sh
+
+*.diff
+*.exp
+*.log
+*.out
+*.mem
+*.php
+*.sh
 tmp-php.ini
 
 tests/mongo-test-cfg.inc
