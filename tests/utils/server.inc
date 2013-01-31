@@ -10,6 +10,10 @@ class MongoShellServer {
         $this->fp = $fp;
     }
 
+    public function makeShard($mongos = 4) {
+        return $this->verifyWrite("initShard($mongos)");
+    }
+
     public function makeReplicaset($members = 4, $port = 28000) {
         return $this->verifyWrite("initRS($members,$port)");
     }
@@ -54,6 +58,11 @@ class MongoShellServer {
         return self::prettifyRSInfo($config);
     }
 
+    public function getShardConfig() {
+        $json = $this->verifyWrite("getShardConfig()");
+        return json_decode($json);
+    }
+
     public function getStandaloneConfig() {
         $host = $this->verifyWrite("getStandaloneConfig()");
         return $host;
@@ -84,6 +93,13 @@ class MongoShellServer {
             return $config;
         }
         return self::prettifyRSInfo($config);
+    }
+
+    public static function getShardInfo() {
+        $o = new self;
+        $config = $o->getShardConfig();
+        $o->close();
+        return $config;
     }
 
     public static function getStandaloneInfo() {
