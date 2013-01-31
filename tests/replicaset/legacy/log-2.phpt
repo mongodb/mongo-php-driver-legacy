@@ -1,10 +1,10 @@
 --TEST--
 Test for MongoLog (connection only)
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require "tests/utils/replicaset.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 function error_handler($code, $message)
 {
 	echo $message, "\n";
