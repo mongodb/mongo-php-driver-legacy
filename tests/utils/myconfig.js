@@ -1,6 +1,7 @@
 var replTest ;
 var standaloneTest ;
 var shardTest ;
+var bridgeTest ;
 function initRS(servers, port) {
     if (replTest) {
         return;
@@ -23,11 +24,30 @@ function initStandalone(port) {
     }
     standaloneTest = startMongodTest(port);
 }
+function initShard() {
+    if (shardTest) {
+        return;
+    }
+    shardTest = new ShardingTest( {name: "SHARDING", shards: 3, rs: {nodes: 3}, numReplicas: 3, nopreallocj: true, mongos: 2});
+}
+function initBridge(port, delay) {
+    if (bridgeTest) {
+        return;
+    }
+    bridgeTest = startMongoProgram( "mongobridge", "--port", allocatePorts(1)[0], "--dest", "localhost:" + port, "--delay", delay ? delay : 300 );
+}
 function getStandaloneConfig() {
     return standaloneTest.host;
 }
 function getReplicaSetConfig() {
     return replTest.getReplSetConfig()
+}
+function getBridgeConfig() {
+    return bridgeTest.host;
+}
+
+function getShardConfig() {
+    return [shardTest.s0.host,shardTest.s1.host];
 }
 
 function killMaster() {
@@ -42,14 +62,3 @@ function restartMaster() {
     conn = replTest.liveNodes.slaves[1]
     ReplSetTest.awaitRSClientHosts(conn, replTest, replTest.nodes)
 }
-
-function initShard() {
-    if (shardTest) {
-        return;
-    }
-    shardTest = new ShardingTest( {name: "SHARDING", shards: 3, rs: {nodes: 3}, numReplicas: 3, nopreallocj: true, mongos: 2});
-}
-function getShardConfig() {
-    return [shardTest.s0.host,shardTest.s1.host];
-}
-
