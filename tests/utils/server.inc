@@ -92,11 +92,6 @@ class MongoShellServer {
         );
     }
 
-    public function getStandaloneConfig() {
-        $host = $this->verifyWrite("getStandaloneConfig()");
-        return $host;
-    }
-
     public function close() {
         if ($this->fp) {
             fwrite($this->fp, "quit\n");
