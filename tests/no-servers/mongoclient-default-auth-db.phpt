@@ -4,9 +4,13 @@ Test for PHP-498: Check default database for authentication
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../debug.inc";
-require_once dirname(__FILE__) . "/../utils.inc";
-
+function errorCallBack($c, $m)
+{
+	echo $m, "\n";
+}
+MongoLog::setModule(MongoLog::ALL);
+MongoLog::setLevel(MongoLog::ALL);
+set_error_handler('errorCallBack');
 $dsns = array(
 	"mongodb://admin:admin@whisky",
 	"mongodb://foo:bar@localhost/?replicaSet=seta",
