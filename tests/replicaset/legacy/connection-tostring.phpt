@@ -1,11 +1,11 @@
 --TEST--
 Connection strings: toString.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/replicaset.inc"; ?>
 <?php exit("skip This test doesn't make whole lot of sense"); ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $cstring = "$REPLICASET_SECONDARY:$REPLICASET_SECONDARY_PORT,$REPLICASET_PRIMARY:$REPLICASET_PRIMARY_PORT";
 

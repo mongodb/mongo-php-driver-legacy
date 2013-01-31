@@ -6,7 +6,7 @@ Test for PHP-612: Impossible to provide a list of tagsets to the readPreferenceT
 error_reporting=-1
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 $rp = array(
     "replicaSet"         => "RS",
     "connect"            => false,

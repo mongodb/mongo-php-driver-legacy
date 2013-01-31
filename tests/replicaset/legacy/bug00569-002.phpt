@@ -1,10 +1,10 @@
 --TEST--
 Test for PHP-569: MongoClient: Checking permutations to trigger GLE.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc";?>
+<?php require_once "tests/utils/replicaset.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 MongoLog::setModule( MongoLog::IO );
 MongoLog::setLevel( MongoLog::FINE );
 set_error_handler('foo'); function foo($a, $b) { echo $b, "\n"; };

@@ -4,7 +4,7 @@ Test for PHP-500: MongoCollection insert, update and remove no longer return boo
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
+require_once "tests/utils/server.inc";
 // Connect to mongo
 $m = mongo();
 $c = $m->selectCollection(dbname(), 'crash');
