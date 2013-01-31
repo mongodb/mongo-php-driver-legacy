@@ -1,10 +1,10 @@
 --TEST--
 MongoCollection::findAndModify() helper
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $m = mongo();
 $col = $m->selectDB(dbname())->jobs;

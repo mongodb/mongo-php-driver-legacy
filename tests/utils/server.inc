@@ -84,3 +84,14 @@ class MongoShellServer {
     }
 }
 
+function mongo() {
+    $config = MongoShellServer::getReplicaSetInfo();
+    return new Mongo($config["dsn"], array("replicaSet" => $config["rsname"]));
+}
+function new_mongo() {
+    $config = MongoShellServer::getReplicaSetInfo();
+    return new MongoClient($config["dsn"], array("replicaSet" => $config["rsname"]));
+}
+function dbname() {
+    return "test";
+}
