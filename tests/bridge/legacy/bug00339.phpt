@@ -1,11 +1,13 @@
 --TEST--
 Test for PHP-339: Segfault on insert timeout.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/bridge.inc" ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+
+$dsn = MongoShellServer::getBridgeInfo();
+$m = new MongoClient($dsn);
 $c = $m->selectDB(dbname())->selectCollection("collection");
 
 try {
@@ -19,7 +21,7 @@ try {
 ===DONE===
 --EXPECTF--
 string(27) "MongoCursorTimeoutException"
-string(%d) "cursor timed out (timeout: 1, time left: 0:1000, status: 0)"
+string(%d) "%Scursor timed out (timeout: 1, time left: 0:1000, status: 0)"
 array(2) {
   ["foo"]=>
   int(%d)

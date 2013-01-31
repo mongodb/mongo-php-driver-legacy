@@ -22,6 +22,10 @@ class MongoShellServer {
         return $this->verifyWrite("initStandalone($port)");
     }
 
+    public function makeBridge($port = 30000, $delay = 1000) {
+        return $this->verifyWrite("initBridge($port,$delay)");
+    }
+
     public function killMaster() {
         return $this->verifyWrite("killMaster()");
     }
@@ -68,6 +72,12 @@ class MongoShellServer {
         return $host;
     }
 
+    public function getBridgeConfig() {
+        $host = $this->verifyWrite("getBridgeConfig()");
+        return $host;
+    }
+
+
     public function close() {
         if ($this->fp) {
             fwrite($this->fp, "quit\n");
@@ -79,6 +89,7 @@ class MongoShellServer {
     public function __destruct() {
         return $this->close();
     }
+
 
     public static function getReplicaSetInfo() {
         /* If we are in the context of a REDIRECTTEST we have _ENV set */
@@ -108,6 +119,14 @@ class MongoShellServer {
         $o->close();
         return trim($config);
     }
+
+    public static function getBridgeInfo() {
+        $o = new self;
+        $config = $o->getBridgeConfig();
+        $o->close();
+        return trim($config);
+    }
+
 
     protected static function prettifyRSInfo($config) {
         $rsname = $config["_id"];
@@ -206,7 +225,7 @@ function printLogs($module = MongoLog::ALL, $level = MongoLog::ALL, $containing 
 $config = MongoShellServer::getReplicaSetInfo();
 list($REPLICASET_SECONDARY, $REPLICASET_SECONDARY_PORT) = explode(":", $config["hosts"][2]);
 list($REPLICASET_PRIMARY, $REPLICASET_PRIMARY_PORT) = explode(":", $config["hosts"][0]);
-*/
+ */
 
 list($REPLICASET_SECONDARY, $REPLICASET_SECONDARY_PORT) = array("localhost", 28002);
 list($REPLICASET_PRIMARY, $REPLICASET_PRIMARY_PORT) = array("localhost", 28000);
