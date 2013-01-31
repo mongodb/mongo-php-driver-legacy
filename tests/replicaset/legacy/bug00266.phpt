@@ -1,11 +1,12 @@
 --TEST--
 Test for PHP-266: segfault when connection string refers to unknown replica set member.
 --SKIPIF--
-<?php require_once "tests/utils/replicaset.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 <?php if (!$STANDALONE_HOSTNAME) { exit("skip Needs a standalone server too"); } ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/cfg.inc"; ?>
 <?php
+require_once "tests/utils/server.inc";
+
 $host = hostname();
 $port = port();
 $ip   = gethostbyname($host);
