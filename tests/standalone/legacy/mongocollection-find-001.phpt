@@ -16,9 +16,9 @@ set_error_handler('error_handler');
 MongoLog::setLevel(MongoLog::ALL);
 MongoLog::setModule(MongoLog::ALL);
 
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$mongo = mongo();
+$mongo = mongo_standalone();
 $mongo->safe = true;
 $mongo->setReadPreference(Mongo::RP_SECONDARY);
 

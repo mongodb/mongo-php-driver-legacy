@@ -1,16 +1,16 @@
 --TEST--
 Test for PHP-569: Checking for w in the connection string.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc";?>
+<?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 MongoLog::setModule( MongoLog::IO | MongoLog::PARSE );
 MongoLog::setLevel( MongoLog::FINE | MongoLog::INFO );
 set_error_handler('foo'); function foo($a, $b) { echo $b, "\n"; };
 
-$hostname = hostname();
-$port = port();
+$hostname = standalone_hostname();
+$port = standalone_port();
 
 $strings = array(
 	"mongodb://$hostname:$port/?w=0",

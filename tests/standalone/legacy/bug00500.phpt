@@ -1,12 +1,13 @@
 --TEST--
 Test for PHP-500: MongoCollection insert, update and remove no longer return booleans.
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
+require_once "tests/utils/server.inc";
+
 // Connect to mongo
-$m = mongo();
+$m = mongo_standalone();
 $c = $m->selectCollection(dbname(), 'crash');
 $c->drop();
 

@@ -16,7 +16,7 @@ set_error_handler('error_handler');
 MongoLog::setLevel(MongoLog::ALL);
 MongoLog::setModule(MongoLog::ALL);
 
-//require_once dirname(__FILE__) . "/../utils.inc";
+//require_once "tests/utils/server.inc";
 
 $mongo = new Mongo("mongodb://%s:%d,%s:%d/?replicaSet=seta");
 $mongo->safe = true;
