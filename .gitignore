@@ -49,6 +49,7 @@ traces.0
 *.mem
 *.php
 *.sh
+php.ini
 tmp-php.ini
 
 tests/mongo-test-cfg.inc
