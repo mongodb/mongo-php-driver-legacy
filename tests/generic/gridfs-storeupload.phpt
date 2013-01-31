@@ -16,9 +16,9 @@ Content-Type: text/plain-file1
 -----------------------------20896060251896012921717172737
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $gridfs = $m->selectDB(dbname())->getGridFS();
 try {
     $retval = $gridfs->storeUpload("file1");

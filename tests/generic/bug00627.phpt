@@ -4,9 +4,9 @@ Test for PHP-627: MongoConnection::aggregate() breaks on single pipeline operato
 <?php require_once __DIR__ . "/skipif.inc"; ?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $c = $m->selectCollection(dbname(), 'bug627');
 $c->drop();
 

@@ -7,7 +7,7 @@ GridFS: Testing memory usage
 memory_limit=1G
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 $conn = Mongo();
 $db   = $conn->selectDb('phpunit');
 $grid = $db->getGridFs('wrapper');

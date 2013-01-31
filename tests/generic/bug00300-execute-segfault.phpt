@@ -4,8 +4,8 @@ Test for PHP-300: execute crashes with array() as argument.
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+$m = mongo_standalone();
 $db = $m->phpunit;
 $db->execute(array());
 ?>

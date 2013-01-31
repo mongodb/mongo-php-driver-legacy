@@ -9,9 +9,9 @@ shard in a "raw" array field.
 <?php require_once dirname(__FILE__) . '/skipif_mongos.inc'; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $c = $m->selectCollection('phpunit', 'col');
 $c->insert(array('x' => 1), array('safe' => true));
 

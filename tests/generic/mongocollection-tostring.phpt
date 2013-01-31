@@ -6,8 +6,8 @@ Test implicit and explicit __toString
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+$m = mongo_standalone();
 $c = $m->phpunit->col;
 echo "This is collection $c\n";
 echo "This is collection ".$c->__toString()."\n";

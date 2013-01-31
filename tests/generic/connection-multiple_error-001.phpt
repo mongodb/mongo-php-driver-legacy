@@ -3,9 +3,9 @@ Connection strings: Test unconnectable host names without replicaset name
 --SKIPIF--
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
-$port = port();
+$port = standalone_port();
 
 if ($port != "27017") {
     die("skip this tests attempts to connect to the standard port");
@@ -13,7 +13,7 @@ if ($port != "27017") {
 ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
 /* We forget to specify the replicaset name */
 $d = new Mongo("mongodb://foofas:234,foofas:5345");

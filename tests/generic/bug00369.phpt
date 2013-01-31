@@ -4,8 +4,8 @@ Test for PHP-369: Segfaults with iterating over GridFS with an _id set.
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
-$mongo = mongo();
+require_once "tests/utils/server.inc";
+$mongo = mongo_standalone();
 
 class CursorWrapper implements Iterator
 {

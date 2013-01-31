@@ -1,12 +1,12 @@
 --TEST--
 Test for PHP-473: Sort by field "0" (zero char, ASCII 0x30) does not work.
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc" ?>
+<?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 
 $db = $m->selectDB(dbname());
 $coll = $db->test_sort;

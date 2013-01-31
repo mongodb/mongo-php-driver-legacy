@@ -3,7 +3,7 @@ MongoCollection::setReadPreference() error setting invalid tag sets
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
 function myerror($errno, $errstr) {
@@ -23,7 +23,7 @@ $tagsets = array(
 );
 
 foreach ($tagsets as $tagset) {
-    $m = new_mongo();
+    $m = new_mongo_standalone();
     $c = $m->phpunit->test;
     $c->setReadPreference(MongoClient::RP_SECONDARY, $tagset);
     $rp = $c->getReadPreference();

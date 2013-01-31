@@ -8,8 +8,8 @@ mongo.native_long=1
 mongo.long_as_object=0
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+$m = mongo_standalone();
 
 $m->phpunit->dropCollection( 'fs.files' );
 $m->phpunit->dropCollection( 'fs.chunks' );

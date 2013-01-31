@@ -1,18 +1,18 @@
 --TEST--
 Test for PHP-585: GridFS incorrectly reports w=1 as w=0
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = new_mongo();
+$m = new_mongo_standalone();
 var_dump(get_class($m));
 $gridfs = $m->selectDb(dbname())->getGridFS();
 var_dump($gridfs->w);
 
 
-$m = mongo();
+$m = mongo_standalone();
 var_dump(get_class($m));
 $gridfs = $m->selectDb(dbname())->getGridFS();
 

@@ -3,7 +3,7 @@ MongoClient::setReadPreference() should clear existing tags
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
 $m = new_mongo(null, true, true, array(

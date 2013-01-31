@@ -4,7 +4,7 @@ GridFS: Testing minor memory issue
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 $conn = Mongo();
 $db   = $conn->phpunit;
 

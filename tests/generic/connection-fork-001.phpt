@@ -5,9 +5,9 @@ Test for forking and connection management [1]
 <?php if (!function_exists("pcntl_fork")) { exit("skip Requires ext/pcntl"); }?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 
 $col = $m->selectDb("phpunit")->fork;
 

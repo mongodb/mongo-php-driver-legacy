@@ -4,8 +4,8 @@ MongoCursor::tailable().
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$mongo = mongo();
+require_once "tests/utils/server.inc";
+$mongo = mongo_standalone();
 $d = $mongo->selectDb(dbname());
 $c = $d->capped;
 $c->drop();

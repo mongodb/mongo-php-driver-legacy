@@ -3,9 +3,9 @@ Connection strings: Test unconnectable host names
 --SKIPIF--
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
-$port = port();
+$port = standalone_port();
 
 if ($port != "27017") {
     die("skip this tests attempts to connect to the standard port");
@@ -13,7 +13,7 @@ if ($port != "27017") {
 ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
 /* Two random names */
 $d = new Mongo("mongodb://foofas:234,foofas:5345/demo?replicaSet=seta");
