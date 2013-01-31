@@ -84,9 +84,14 @@ class MongoShellServer {
     }
 }
 
+/* BC Layer for old tests */
+
 function mongo() {
     $config = MongoShellServer::getReplicaSetInfo();
     return new Mongo($config["dsn"], array("replicaSet" => $config["rsname"]));
+}
+function old_mongo() {
+    return mongo();
 }
 function new_mongo() {
     $config = MongoShellServer::getReplicaSetInfo();
@@ -95,3 +100,47 @@ function new_mongo() {
 function dbname() {
     return "test";
 }
+function hostname() {
+    $config = MongoShellServer::getReplicaSetInfo();
+    list($host, $port) = explode(":", $config["hosts"][0]);
+    return $host;
+}
+function port() {
+    $config = MongoShellServer::getReplicaSetInfo();
+    list($host, $port) = explode(":", $config["hosts"][0]);
+    return $port;
+}
+function rsname() {
+    $config = MongoShellServer::getReplicaSetInfo();
+    return $config["rsname"];
+}
+function logCallback($module, $level, $message)
+{
+    global $_LOG_CALLBACK_REGEX;
+
+    if ($_LOG_CALLBACK_REGEX) {
+        if (preg_match($_LOG_CALLBACK_REGEX, $message)) {
+            echo $message, "\n";
+        }
+    } else {
+        echo $message, "\n";
+    }
+}
+
+function printLogs($module = MongoLog::ALL, $level = MongoLog::ALL, $containing = null)
+{
+    global $_LOG_CALLBACK_REGEX;
+
+    MongoLog::setModule($module);
+    MongoLog::setLevel($level);
+
+    if ($containing) {
+        $_LOG_CALLBACK_REGEX = $containing;
+    }
+    MongoLog::setCallback("logCallback");
+}
+
+$config = MongoShellServer::getReplicaSetInfo();
+list($REPLICASET_SECONDARY, $REPLICASET_SECONDARY_PORT) = explode(":", $config["hosts"][2]);
+list($REPLICASET_PRIMARY, $REPLICASET_PRIMARY_PORT) = explode(":", $config["hosts"][0]);
+
