@@ -1,5 +1,6 @@
 <?php
 require_once "tests/utils/server.inc";
+require "tests/utils/cfg.inc";
 
 function t() {
     static $last;
@@ -28,7 +29,7 @@ do {
         echo "Making Authenticated Standalone.... ";
         t();
         $standalone = microtime(true);
-        $server->makeStandalone(30100, true);
+        $server->makeStandalone(30100, true, $SUPER_USER, $NORMAL_USER);
         sprintf("DONE (%.2f secs)\n", t());
         var_dump($server->getStandaloneConfig(true));
 
@@ -50,7 +51,7 @@ do {
         var_dump($server->getReplicaSetConfig());
 
         echo "Making Authenticated ReplicaSet.... ";
-        $server->makeReplicaset(4, 30300, dirname(__FILE__) . "/keyFile");
+        $server->makeReplicaset(4, 30300, dirname(__FILE__) . "/keyFile", $SUPER_USER, $NORMAL_USER);
         printf("DONE (%.2f secs)\n", t());
         var_dump($server->getReplicaSetConfig(true));
 

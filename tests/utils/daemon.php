@@ -1,12 +1,5 @@
 <?php
-define("DEBUG", false);
-$TIMEOUT = 60;
-$MARKER  = "COMMAND DONE";
-$QUIT    = "Sorry Matt Damon, we're out of time";
-$SHELL   = "/Users/bjori/Sources/mongo/mongo/mongo";
-###$SHELL   = "/Users/bjori/Sources/mongo/mongo-2.2/mongo";
-$JSFILE  = dirname(__FILE__) . "/myconfig.js";
-$SHELL_PARAMS = "--nodb --norc --shell $JSFILE";
+require dirname(__FILE__) . "/cfg.inc";
 
 function d($msg) {
     if (DEBUG) {
