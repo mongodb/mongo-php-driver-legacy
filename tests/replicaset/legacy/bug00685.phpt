@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-685: wtimeout option is not supported per-query
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc" ?>
+<?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-586: GridFS should only do one GLE
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
