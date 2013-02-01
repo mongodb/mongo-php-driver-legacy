@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-680: mongo_read_preference_dtor() will segfault if invoked twice
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php require_once "tests/utils/server.inc"; ?>
 <?php

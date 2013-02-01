@@ -5,7 +5,7 @@ This test skips mongos because its validate() results contain only a top-level
 "validate" field, which collects the shard results, and grouped results for each
 shard in a "raw" array field.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 <?php require_once dirname(__FILE__) . '/skipif_mongos.inc'; ?>
 --FILE--
 <?php

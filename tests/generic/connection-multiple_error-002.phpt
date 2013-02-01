@@ -1,7 +1,7 @@
 --TEST--
 Connection strings: Test unconnectable host names
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc"; ?>
 <?php
 require "tests/utils/server.inc";
 
