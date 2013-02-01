@@ -5,8 +5,8 @@ Test for PHP-487: Connect to replicaset member using standalone connection
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-
-$m = new Mongo("$REPLICASET_SECONDARY:$REPLICASET_SECONDARY_PORT");
+$cfg = MongoShellServer::getReplicasetInfo();
+$m = new Mongo($cfg["hosts"][2]);
 
 try {
     $c = $m->selectDb(dbname())->test;

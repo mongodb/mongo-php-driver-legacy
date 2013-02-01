@@ -7,11 +7,12 @@ Test for PHP-464: Re-implement ->connected (var_dump())
 <?php
 
 require_once "tests/utils/server.inc";
+$cfg = MongoShellServer::getStandaloneInfo();
 
-$m = new Mongo($STANDALONE_HOSTNAME, array("connect" => false));
+$m = new Mongo($cfg, array("connect" => false));
 var_dump($m, $m->connected);
 
-$m = new Mongo("$STANDALONE_HOSTNAME:$STANDALONE_PORT");
+$m = new Mongo($cfg);
 var_dump($m, $m->connected);
 ?>
 --EXPECTF--
