@@ -1,28 +1,48 @@
 var replTest ;
+var replTestAuth ;
 var standaloneTest ;
+var standaloneTestAuth ;
 var shardTest ;
+var shardTestAuth ;
 var bridgeTest ;
-function initRS(servers, port) {
-    if (replTest) {
+
+function initRS(servers, port, keyFile) {
+    if ((keyFile && replTestAuth) || (!keyFile && replTest)) {
         return;
     }
-    replTest = new ReplSetTest( {name: "REPLICASET", nodes: servers ? servers : 3, "startPort": port ? port : 28000 } );
-    replTest.startSet({"nojournal" : "", "nopreallocj": "", "quiet": "", "logpath" : "/tmp/php-mongodb-driver-logs-rs", "logappend": ""})
-    cfg = replTest.getReplSetConfig()
+    retval = new ReplSetTest( {name: "REPLICASET", nodes: servers ? servers : 3, "startPort": port ? port : 28000 } );
+    opts = {"nojournal" : "", "nopreallocj": "", "quiet": "", "logpath" : "/tmp/php-mongodb-driver-logs-rs", "logappend": ""};
+    if (keyFile) {
+        opts.keyFile = keyFile;
+    }
+
+    retval.startSet(opts)
+    cfg = retval.getReplSetConfig()
     cfg.members[0].priority = 42
-    replTest.initiate(cfg)
-    /*
-    for(i=1; i<=servers; i++) {
-        replTest.add();
+    retval.initiate(cfg)
+    retval.awaitReplication()
+
+    if (keyFile) {
+        retval.getMaster().getDB("admin").addUser("root", "password")
+        retval.getMaster().getDB("admin").auth("root", "password")
+        retval.getMaster().getDB("test").addUser("username", "difficult to remember password")
+        replTestAuth = retval;
+    } else {
+        replTest = retval;
     }
-    */
-    replTest.awaitReplication()
+    return retval;
 }
-function initStandalone(port) {
-    if (standaloneTest) {
+function initStandalone(port,auth) {
+    if ((auth && standaloneTestAuth) || (!auth && standaloneTest)) {
         return;
     }
-    standaloneTest = startMongodTest(port);
+
+    port = port | 27000;
+    opts = {}
+    if (auth) {
+        opts.auth = "";
+    }
+    retval = startMongodTest(port, false, false, opts);
     assert.soon( function() {
         try {
             conn = new Mongo("127.0.0.1:" + port);
@@ -30,9 +50,17 @@ function initStandalone(port) {
         } catch( e ) {
             printjson( e )
         }
-        standaloneTest = null;
         return false;
     }, "unable to connect to mongo program on port " + port, 600 * 1000);
+    if (auth) {
+        retval.getDB("admin").addUser("root", "password")
+        retval.getDB("admin").auth("root", "password")
+        retval.getDB("test").addUser("username", "difficult to remember password")
+        standaloneTestAuth = retval;
+    } else {
+        standaloneTest = retval;
+    }
+    return retval;
 
 }
 function initShard() {
@@ -50,14 +78,18 @@ function initBridge(port, delay) {
     }
     bridgeTest = startMongoProgram( "mongobridge", "--port", allocatePorts(1)[0], "--dest", "localhost:" + port, "--delay", delay ? delay : 300 );
 }
-function getStandaloneConfig() {
-    if (standaloneTest) {
-        return standaloneTest.host;
+
+
+
+
+function getStandaloneConfig(auth) {
+    if (auth) {
+        return standaloneTestAuth ? standaloneTestAuth.host : null;
     }
-    return null;
+    return standaloneTest ? standaloneTest.host : null;
 }
-function getReplicaSetConfig() {
-    return replTest.getReplSetConfig()
+function getReplicaSetConfig(auth) {
+    return auth ? replTestAuth.getReplSetConfig() : replTest.getReplSetConfig()
 }
 function getBridgeConfig() {
     return bridgeTest.host;

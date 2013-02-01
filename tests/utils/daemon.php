@@ -139,7 +139,7 @@ do {
 } while(true);
 echo "Closing stuff!\n";
 
-fclose($conn);
+@fclose($conn);
 fclose($IO[0]);
 fclose($IO[1]);
 fclose($socket);
