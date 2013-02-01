@@ -14,12 +14,14 @@ class MongoShellServer {
         return $this->verifyWrite("initShard($mongos)");
     }
 
-    public function makeReplicaset($members = 4, $port = 28000) {
-        return $this->verifyWrite("initRS($members,$port)");
+    public function makeReplicaset($members = 4, $port = 28000, $auth = false) {
+        $auth = json_encode($auth);
+        return $this->verifyWrite("initRS($members,$port,$auth)");
     }
 
-    public function makeStandalone($port = 30000) {
-        return $this->verifyWrite("initStandalone($port)");
+    public function makeStandalone($port = 30000, $auth = false) {
+        $auth = json_encode($auth);
+        return $this->verifyWrite("initStandalone($port, $auth)");
     }
 
     public function makeBridge($port = 30000, $delay = 1000) {
@@ -55,8 +57,9 @@ class MongoShellServer {
         return false;
     }
 
-    public function getReplicaSetConfig() {
-        $config = json_decode($this->verifyWrite("getReplicaSetConfig()"), true);
+    public function getReplicaSetConfig($auth = false) {
+        $auth = json_encode($auth);
+        $config = json_decode($this->verifyWrite("getReplicaSetConfig($auth)"), true);
         return self::prettifyRSInfo($config);
     }
 
@@ -65,8 +68,9 @@ class MongoShellServer {
         return json_decode($json);
     }
 
-    public function getStandaloneConfig() {
-        $host = $this->verifyWrite("getStandaloneConfig()");
+    public function getStandaloneConfig($auth = false) {
+        $auth = json_encode($auth);
+        $host = $this->verifyWrite("getStandaloneConfig($auth)");
         return $host;
     }
 
@@ -89,19 +93,12 @@ class MongoShellServer {
     }
 
 
-    public static function getReplicaSetInfo() {
-        /* If we are in the context of a REDIRECTTEST we have _ENV set */
-        if (isset($_ENV["REPLICASET"])) {
-            $config = json_decode($_ENV["REPLICASET"], true);
-        } else {
-            /* Otherwise we are running this in a standalone mode and need to bootstrap the replicaset on-demand */
-            $o = new self;
-            $o->makeReplicaset(4, 28000);
-            $config = $o->getReplicaSetConfig();
-            $o->close();
-            return $config;
-        }
-        return self::prettifyRSInfo($config);
+    public static function getReplicaSetInfo($auth = false) {
+        $o = new self;
+        $o->makeReplicaset(4, 28000);
+        $config = $o->getReplicaSetConfig($auth);
+        $o->close();
+        return $config;
     }
 
     public static function getShardInfo() {
@@ -111,9 +108,9 @@ class MongoShellServer {
         return $config;
     }
 
-    public static function getStandaloneInfo() {
+    public static function getStandaloneInfo($auth = false) {
         $o = new self;
-        $config = $o->getStandaloneConfig();
+        $config = $o->getStandaloneConfig($auth);
         $o->close();
         return trim($config);
     }

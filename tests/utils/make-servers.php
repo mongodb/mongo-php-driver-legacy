@@ -21,25 +21,38 @@ do {
         t();
         $standalone = microtime(true);
         $server->makeStandalone(30000);
-        sprintf("DONE (%2f secs)\n", t());
+        sprintf("DONE (%.2f secs)\n", t());
         var_dump($server->getStandaloneConfig());
+
+
+        echo "Making Authenticated Standalone.... ";
+        t();
+        $standalone = microtime(true);
+        $server->makeStandalone(30100, true);
+        sprintf("DONE (%.2f secs)\n", t());
+        var_dump($server->getStandaloneConfig(true));
 
 
         echo "Making Bridge.... ";
         $server->makeBridge(30000, 1000);
-        printf("DONE (%2f secs)\n", t());
+        printf("DONE (%.2f secs)\n", t());
         var_dump($server->getBridgeConfig());
 
 
         echo "Making shard.... ";
         $server->makeShard(2);
-        printf("DONE (%2f secs)\n", t());
+        printf("DONE (%.2f secs)\n", t());
         var_dump($server->getShardConfig());
 
         echo "Making ReplicaSet.... ";
-        $server->makeReplicaset(4, 28000);
-        printf("DONE (%2f secs)\n", t());
+        $server->makeReplicaset(4, 30200);
+        printf("DONE (%.2f secs)\n", t());
         var_dump($server->getReplicaSetConfig());
+
+        echo "Making Authenticated ReplicaSet.... ";
+        $server->makeReplicaset(4, 30300, dirname(__FILE__) . "/keyFile");
+        printf("DONE (%.2f secs)\n", t());
+        var_dump($server->getReplicaSetConfig(true));
 
         $server->close();
     } catch(Exception $e) {
