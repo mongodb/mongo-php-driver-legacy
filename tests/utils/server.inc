@@ -3,7 +3,7 @@
 class MongoShellServer {
     protected $fp;
     public function __construct() {
-        $fp = fsockopen("localhost", 8000, $errno, $errstr, 2);
+        $fp = @fsockopen("localhost", 8000, $errno, $errstr, 2);
         if (!$fp) {
             throw new Exception($errstr, $errno);
         }

@@ -1,0 +1,7 @@
+servers:
+	$(PHP_EXECUTABLE) tests/utils/make-servers.php
+
+stop-servers:
+	$(PHP_EXECUTABLE) tests/utils/teardown-servers.php
+
+
