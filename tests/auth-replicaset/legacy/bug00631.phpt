@@ -1,7 +1,6 @@
 --TEST--
 Test for PHP-631: One replica set, but two different db/user/passwords
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc";?>
 <?php exit("skip Manual test - needs two users on two different databases"); ?>
 --FILE--
 <?php
