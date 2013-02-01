@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-487: Connect to replicaset member using standalone connection
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

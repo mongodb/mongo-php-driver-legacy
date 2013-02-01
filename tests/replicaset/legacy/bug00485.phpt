@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-485: Update (and other methods) in safemode crash under certain conditions.
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-605: Safe write operations return NULL instead of a boolean.
 --SKIPIF--
-<?php require_once __DIR__ . "/skipif.inc"; ?>
+<?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

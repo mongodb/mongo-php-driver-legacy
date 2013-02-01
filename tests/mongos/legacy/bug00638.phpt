@@ -40,7 +40,7 @@ $cursor = $m->selectCollection('phpunit', 'c')->find();
 $cursor->explain();
 $info = $cursor->info();
 var_dump(MongoClient::RP_NEAREST === $info['query']['$readPreference']['mode']);
-
+?>
 --EXPECT--
 bool(true)
 bool(true)

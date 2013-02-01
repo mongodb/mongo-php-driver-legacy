@@ -1,7 +1,7 @@
 --TEST--
 Mongo::__construct() and $options
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc"; ?>"
+<?php require_once "tests/utils/replicaset.inc" ?>
 <?php
 if (ini_get("mongo.default_host") == hostname() && ini_get("mongo.default_port") == port()) {
     exit("SKIP This test is meaningless when connecting to localhost:27017");
