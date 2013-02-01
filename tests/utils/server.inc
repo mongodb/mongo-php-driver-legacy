@@ -28,8 +28,9 @@ class MongoShellServer {
         return $this->verifyWrite("initBridge($port,$delay)");
     }
 
-    public function makeStandalone($port = 30000) {
-        return $this->verifyWrite("initStandalone($port)");
+    public function makeStandalone($port = 30000, $auth = false) {
+        $auth = json_encode($auth);
+        return $this->verifyWrite("initStandalone($port, $auth)");
     }
 
     public function makeBridge($port = 30000, $delay = 1000) {
