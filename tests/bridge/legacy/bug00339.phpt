@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-339: Segfault on insert timeout.
 --SKIPIF--
+<?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
 <?php require_once "tests/utils/bridge.inc" ?>
 --FILE--
 <?php
