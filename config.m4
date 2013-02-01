@@ -13,6 +13,7 @@ if test "$PHP_MONGO" != "no"; then
   PHP_ADD_BUILD_DIR([$ext_builddir/mcon], 1)
   PHP_ADD_INCLUDE([$ext_builddir/mcon])
   PHP_ADD_INCLUDE([$ext_srcdir/mcon])
+  PHP_ADD_MAKEFILE_FRAGMENT([$ext_srcdir/Makefile.servers])
 
   dnl call acinclude func to check endian-ness
   PHP_C_BIGENDIAN
