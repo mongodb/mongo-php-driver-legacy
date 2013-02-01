@@ -3,7 +3,7 @@ MongoCollection::getSlaveOkay()
 --DESCRIPTION--
 Test both true and false for slave_okay attribute
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

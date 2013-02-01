@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-667: Off-by-one error in BSON deserialization of pre-epoch dates
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

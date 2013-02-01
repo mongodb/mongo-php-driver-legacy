@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-602: No longer possible to get field information from $cursor->info().
 --SKIPIF--
-<?php require_once __DIR__ . "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

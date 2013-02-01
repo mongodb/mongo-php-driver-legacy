@@ -1,7 +1,7 @@
 --TEST--
 MongoCollection::insert()
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 <?php die("skip unfixed bug"); ?>
 --XFAIL--
 Invalid options for ->insert() do not throw exception

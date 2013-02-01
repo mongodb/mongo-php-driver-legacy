@@ -1,7 +1,7 @@
 --TEST--
 MongoCollection::findAndModify() helper
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require "tests/utils/server.inc";

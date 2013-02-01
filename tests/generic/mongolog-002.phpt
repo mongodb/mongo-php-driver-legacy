@@ -2,7 +2,7 @@
 Test for MongoLog with callback (>= PHP 5.3).
 --SKIPIF--
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
