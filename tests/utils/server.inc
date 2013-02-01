@@ -36,9 +36,7 @@ class MongoShellServer {
 
     protected function verifyWrite($command) {
         $md5 = md5($command);
-        fwrite($this->fp, "print('$md5')\n");
-        fwrite($this->fp, $command . "\n");
-        fwrite($this->fp, "print('$md5')\n");
+        fwrite($this->fp, "print('$md5')\n$command\nprint('$md5')\n");
         $retval = "";
         $verified = false;
         while(!feof($this->fp)) {
