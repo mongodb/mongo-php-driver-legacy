@@ -14,7 +14,8 @@ set_error_handler('error_handler');
 
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::ALL);
-$m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
+$dsn = MongoShellServer::getStandaloneInfo();
+$m = new Mongo("mongodb://$dsn");
 ?>
 --EXPECTF--
 PARSE   INFO: Parsing mongodb://%s:%d
@@ -33,23 +34,23 @@ CON     INFO: is_ping: last pinged at %d; time: %dms
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
+REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: filter_connections: done
 REPLSET FINE: limiting by seeded/discovered servers
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
+REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: limiting by seeded/discovered servers: done
 REPLSET FINE: limiting by credentials
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;-;X;%d
+REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: 0, hash: %s:%d;-;X;%d
 REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
+REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
 REPLSET FINE: selecting near servers: nearest is %dms
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
+REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: selecting near server: done
 REPLSET INFO: pick server: random element 0
-REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: %d, hash: %s:%d;-;X;%d
+REPLSET INFO: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;-;X;%d. in Unknown on line 0
 

@@ -14,7 +14,8 @@ set_error_handler('error_handler');
 
 MongoLog::setModule(MongoLog::PARSE);
 MongoLog::setLevel(MongoLog::ALL);
-$m = new Mongo("mongodb://$REPLICASET_PRIMARY:$REPLICASET_PRIMARY_PORT", array("replicaSet" => $REPLICASET_NAME));
+$config = MongoShellServer::getReplicasetInfo();
+$m = new Mongo("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
 ?>
 --EXPECTF--
 PARSE   INFO: Parsing mongodb://%s:%d

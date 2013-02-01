@@ -14,7 +14,10 @@ set_error_handler('error_handler');
 
 MongoLog::setModule(MongoLog::CON);
 MongoLog::setLevel(MongoLog::ALL);
-$m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
+
+
+$host = MongoShellServer::getStandaloneInfo();
+$m = new Mongo($host);
 ?>
 --EXPECTF--
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
