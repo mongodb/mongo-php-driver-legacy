@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-627: MongoConnection::aggregate() breaks on single pipeline operator argument
 --SKIPIF--
-<?php require_once __DIR__ . "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

@@ -1,7 +1,7 @@
 --TEST--
 Mongo::listDBs()
 --SKIPIF--
-<?php require dirname(__FILE__) . '/skipif.inc'; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require "tests/utils/server.inc";

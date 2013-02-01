@@ -1,7 +1,7 @@
 --TEST--
 MongGridFS::storeUpload() uploading one file
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc"; ?>
 --INI--
 file_uploads=1
 upload_max_filesize=1024

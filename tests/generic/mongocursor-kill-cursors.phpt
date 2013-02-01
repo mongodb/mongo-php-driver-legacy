@@ -1,7 +1,7 @@
 --TEST--
 Test for killing cursors when they haven't been exhausted.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

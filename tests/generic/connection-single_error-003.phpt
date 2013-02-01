@@ -1,7 +1,7 @@
 --TEST--
 Connection strings: Unconnectable host/port (3)
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc"; ?>
 <?php
 require "tests/utils/server.inc";
 
