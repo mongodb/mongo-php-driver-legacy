@@ -14,7 +14,8 @@ set_error_handler('error_handler');
 
 MongoLog::setModule(MongoLog::PARSE);
 MongoLog::setLevel(MongoLog::ALL);
-$m = new Mongo("mongodb://$STANDALONE_HOSTNAME:$STANDALONE_PORT");
+$dsn = MongoShellServer::getStandaloneInfo();
+$m = new Mongo("mongodb://$dsn");
 ?>
 --EXPECTF--
 PARSE   INFO: Parsing mongodb://%s:%d

@@ -35,6 +35,10 @@ MongoLog::setLevel(MongoLog::NONE);
 --EXPECTF--
 LEFT: 93
 LEFT: 93
+LEFT: 93
+LEFT: 93
 ---
+LEFT: 73
+LEFT: 73
 LEFT: 73
 LEFT: 73
