@@ -1,5 +1,8 @@
 <?php
 require_once "tests/utils/server.inc";
+mkdir("/data/db", 0777, true);
+var_dump(stat("/data"));
+var_dump(glob("/*"));
 
 function t() {
     static $last;
