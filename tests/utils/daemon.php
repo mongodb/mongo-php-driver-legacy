@@ -1,5 +1,5 @@
 <?php
-define("DEBUG", false);
+define("DEBUG", true);
 $TIMEOUT = 60;
 $MARKER  = "COMMAND DONE";
 $QUIT    = "Sorry Matt Damon, we're out of time";
@@ -15,6 +15,8 @@ $QUIT    = "Sorry Matt Damon, we're out of time";
 if (!file_exists($SHELL)) {
     throw new Exception("the \$SHELL variable isn't set properly: $SHELL");
 }
+
+    var_dump($SHELL);
 ###$SHELL   = "/Users/bjori/Sources/mongo/mongo-2.2/mongo";
 $JSFILE  = dirname(__FILE__) . "/myconfig.js";
 $SHELL_PARAMS = "--nodb --norc --shell $JSFILE";
