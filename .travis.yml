@@ -8,7 +8,7 @@ services:
   - mongodb
 
 env:
-  - SKIP_SLOW_TESTS=yes NO_INTERACTION=1 REPORT_EXIT_STATUS=1
+  - SKIP_SLOW_TESTS=yes NO_INTERACTION=1 REPORT_EXIT_STATUS=1 I_AM_TRAVIS=1 MONGO_SERVER_STANDALONE=yes
 
 before_script:
   - sudo mkdir -p /data/db
