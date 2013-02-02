@@ -8,6 +8,7 @@
  *      SKIP_MONGO_SERVER_[SERVER_TYPE]=yes
  */
 require_once "tests/utils/server.inc";
+require "tests/utils/cfg.inc";
 
 function t() {
     static $last;

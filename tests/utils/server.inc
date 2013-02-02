@@ -14,18 +14,22 @@ class MongoShellServer {
         return $this->verifyWrite("initShard($mongos)");
     }
 
-    public function makeReplicaset($members = 4, $port = 28000, $auth = false) {
+    public function makeReplicaset($members = 4, $port = 28000, $auth = false, $root = array(), $user = array()) {
         if ($auth) {
             // Git doesn't store permissions, but mongod needs this to be strict
             chmod($auth, 0700);
         }
         $auth = json_encode($auth);
-        return $this->verifyWrite("initRS($members,$port,$auth)");
+        $root = json_encode($root);
+        $user = json_encode($user);
+        return $this->verifyWrite("initRS($members,$port,$auth, $root, $user)");
     }
 
-    public function makeStandalone($port = 30000, $auth = false) {
+    public function makeStandalone($port = 30000, $auth = false, $root = array(), $user = array()) {
         $auth = json_encode($auth);
-        return $this->verifyWrite("initStandalone($port, $auth)");
+        $root = json_encode($root);
+        $user = json_encode($user);
+        return $this->verifyWrite("initStandalone($port, $auth, $root, $user)");
     }
 
     public function makeBridge($port = 30000, $delay = 1000) {
@@ -97,6 +101,15 @@ class MongoShellServer {
     }
 
 
+    public function getCredentials() {
+        require dirname(__FILE__) . "/cfg.inc.template";
+        include @dirname(__FILE__) . "/cfg.inc";
+        return array(
+            "admin" => $SUPER_USER,
+            "user"  => $NORMAL_USER,
+        );
+    }
+
     public function close() {
         if ($this->fp) {
             fwrite($this->fp, "quit\n");
@@ -143,9 +156,6 @@ class MongoShellServer {
     protected static function prettifyRSInfo($config) {
         $rsname = $config["_id"];
         $hosts  = array();
-        if (!isset($config["members"])) {
-            var_dump($config);
-        }
         foreach($config["members"] as $k => $v) {
             $hosts[] = $v["host"];
         }
@@ -158,7 +168,12 @@ class MongoShellServer {
     }
 }
 
+
+
+
+
 /* BC Layer for old tests */
+/* FIXME: This should be removed at some point */
 
 function mongo() {
     $config = MongoShellServer::getReplicaSetInfo();
@@ -235,16 +250,4 @@ function printLogs($module = MongoLog::ALL, $level = MongoLog::ALL, $containing 
     }
     MongoLog::setCallback("logCallback");
 }
-
-/*
-$config = MongoShellServer::getReplicaSetInfo();
-list($REPLICASET_SECONDARY, $REPLICASET_SECONDARY_PORT) = explode(":", $config["hosts"][2]);
-list($REPLICASET_PRIMARY, $REPLICASET_PRIMARY_PORT) = explode(":", $config["hosts"][0]);
- */
-
-list($REPLICASET_SECONDARY, $REPLICASET_SECONDARY_PORT) = array("localhost", 28002);
-list($REPLICASET_PRIMARY, $REPLICASET_PRIMARY_PORT) = array("localhost", 28000);
-
-list($STANDALONE_HOSTNAME, $STANDALONE_PORT) = array("localhost", 30000);
-
 

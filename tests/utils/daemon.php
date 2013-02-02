@@ -1,20 +1,5 @@
 <?php
-define("DEBUG", false);
-$TIMEOUT = 60;
-$MARKER  = "COMMAND DONE";
-$QUIT    = "Sorry Matt Damon, we're out of time";
-$retval = shell_exec("which mongo");
-$SHELL = trim($retval);
-
-@include dirname(__FILE__) . "/cfg.inc";
-
-if (!file_exists($SHELL)) {
-    throw new Exception("the \$SHELL variable isn't set properly: $SHELL");
-}
-
-
-$JSFILE  = dirname(__FILE__) . "/myconfig.js";
-$SHELL_PARAMS = "--nodb --norc --shell $JSFILE";
+require dirname(__FILE__) . "/cfg.inc";
 
 function d($msg) {
     if (DEBUG) {
