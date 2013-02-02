@@ -48,7 +48,8 @@ traces.0
 *.out
 *.mem
 *.php
-tests/*.sh
+tests/*/*/*.sh
+tests/*/*.sh
 php.ini
 tmp-php.ini
 
