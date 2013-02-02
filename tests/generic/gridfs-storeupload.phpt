@@ -1,7 +1,7 @@
 --TEST--
 MongGridFS::storeUpload() uploading one file
 --SKIPIF--
-<?php require "tests/utils/standalone.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --INI--
 file_uploads=1
 upload_max_filesize=1024
@@ -16,7 +16,7 @@ Content-Type: text/plain-file1
 -----------------------------20896060251896012921717172737
 --FILE--
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/server.inc";
 
 $m = mongo_standalone();
 $gridfs = $m->selectDB(dbname())->getGridFS();
