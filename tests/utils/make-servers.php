@@ -35,7 +35,9 @@ do {
 
 
         echo "Making Bridge.... ";
-        $server->makeBridge(30000, 1000);
+        $sc = $server->getStandaloneConfig();
+        list($shost, $sport) = explode(":", trim($sc));
+        $server->makeBridge($sport, 1000);
         printf("DONE (%.2f secs)\n", t());
         var_dump($server->getBridgeConfig());
 

@@ -10,11 +10,16 @@ function initRS(servers, port, keyFile, root, user) {
     if ((keyFile && replTestAuth) || (!keyFile && replTest)) {
         return;
     }
-    retval = new ReplSetTest( {name: "REPLICASET", nodes: servers ? servers : 3, "startPort": port ? port : 28000 } );
+    testopts = {name: "REPLICASET", nodes: servers ? servers : 3, "startPort": port ? port : 28000 };
     opts = {"nojournal" : "", "nopreallocj": "", "quiet": "", "logpath" : "/tmp/php-mongodb-driver-logs-rs", "logappend": ""};
+
+
     if (keyFile) {
+        testopts.name = "REPLICASET-AUTH";
         opts.keyFile = keyFile;
     }
+
+    retval = new ReplSetTest( testopts );
 
     retval.startSet(opts)
     cfg = retval.getReplSetConfig()
@@ -92,7 +97,7 @@ function getReplicaSetConfig(auth) {
     return auth ? replTestAuth.getReplSetConfig() : replTest.getReplSetConfig()
 }
 function getBridgeConfig() {
-    return bridgeTest.host;
+    return bridgeTest ? bridgeTest.host : null;
 }
 
 function getShardConfig() {
