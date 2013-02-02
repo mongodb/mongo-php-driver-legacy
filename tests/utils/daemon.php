@@ -9,7 +9,7 @@ $QUIT    = "Sorry Matt Damon, we're out of time";
 
 #if (!file_exists($SHELL)) {
     $retval = shell_exec("which mongo");
-    $SHELL = trim($SHELL);
+    $SHELL = trim($retval);
 #}
 
 if (!file_exists($SHELL)) {
