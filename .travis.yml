@@ -10,12 +10,16 @@ services:
 env:
   - SKIP_SLOW_TESTS=yes
   - NO_INTERACTION=1
+#  - REPORT_EXIT_STATUS=1 # So travis can determin properly a broken build
 
 before_script:
   - sudo mkdir -p /data/db
   - sudo chown -R travis /data/
   - ./.travis.scripts/compile.sh
   - make servers
+
+after_failure:
+  - ./.travis.scripts/failed.sh
 
 notifications:
   email:
