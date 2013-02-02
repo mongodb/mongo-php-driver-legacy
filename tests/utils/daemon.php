@@ -1,5 +1,5 @@
 <?php
-define("DEBUG", true);
+define("DEBUG", false);
 $TIMEOUT = 60;
 $MARKER  = "COMMAND DONE";
 $QUIT    = "Sorry Matt Damon, we're out of time";
