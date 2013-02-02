@@ -22,7 +22,12 @@ do {
         $standalone = microtime(true);
         $server->makeStandalone(30000);
         sprintf("DONE (%.2f secs)\n", t());
-        var_dump($server->getStandaloneConfig());
+        $str = $server->getStandaloneConfig();
+        // Travis fail fast
+        if (strlen($str) == 5) {
+            var_dump($str);
+            exit(2);
+        }
 
 
         echo "Making Authenticated Standalone.... ";
