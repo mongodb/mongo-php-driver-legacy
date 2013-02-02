@@ -15,6 +15,10 @@ class MongoShellServer {
     }
 
     public function makeReplicaset($members = 4, $port = 28000, $auth = false) {
+        if ($auth) {
+            // Git doesn't store permissions, but mongod needs this to be strict
+            chmod($auth, 0700);
+        }
         $auth = json_encode($auth);
         return $this->verifyWrite("initRS($members,$port,$auth)");
     }
@@ -58,24 +62,37 @@ class MongoShellServer {
     }
 
     public function getReplicaSetConfig($auth = false) {
-        $auth = json_encode($auth);
-        $config = json_decode($this->verifyWrite("getReplicaSetConfig($auth)"), true);
+        $authjs = json_encode($auth);
+        $config = json_decode($this->verifyWrite("getReplicaSetConfig($authjs)"), true);
+        if (!$config) {
+            throw new Exception(($auth ? "Authenticated " : "") . "Replicaset not initialized");
+        }
         return self::prettifyRSInfo($config);
     }
 
     public function getShardConfig() {
         $json = $this->verifyWrite("getShardConfig()");
-        return json_decode($json);
+        $retval = json_decode($json);
+        if (!$retval) {
+            throw new Exception("Mongos not initialized");
+        }
+        return $retval;
     }
 
     public function getStandaloneConfig($auth = false) {
         $auth = json_encode($auth);
         $host = $this->verifyWrite("getStandaloneConfig($auth)");
+        if (!$host) {
+            throw new Exception(($auth ? "Authenticated " : "") . "Standalone server not initialized");
+        }
         return $host;
     }
 
     public function getBridgeConfig() {
         $host = $this->verifyWrite("getBridgeConfig()");
+        if (!$host) {
+            throw new Exception("Mongobridge server not initialized");
+        }
         return $host;
     }
 
@@ -126,6 +143,9 @@ class MongoShellServer {
     protected static function prettifyRSInfo($config) {
         $rsname = $config["_id"];
         $hosts  = array();
+        if (!isset($config["members"])) {
+            var_dump($config);
+        }
         foreach($config["members"] as $k => $v) {
             $hosts[] = $v["host"];
         }
