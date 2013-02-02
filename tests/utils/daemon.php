@@ -3,14 +3,14 @@ define("DEBUG", false);
 $TIMEOUT = 60;
 $MARKER  = "COMMAND DONE";
 $QUIT    = "Sorry Matt Damon, we're out of time";
-$SHELL   = "/Users/bjori/Sources/mongo/mongo/mongo";
+//$SHELL   = "/Users/bjori/Sources/mongo/mongo/mongo";
 
 @include dirname(__FILE__) . "/cfg.inc";
 
-if (!file_exists($SHELL)) {
+#if (!file_exists($SHELL)) {
     $retval = shell_exec("which mongo");
     $SHELL = trim($SHELL);
-}
+#}
 
 if (!file_exists($SHELL)) {
     throw new Exception("the \$SHELL variable isn't set properly: $SHELL");
