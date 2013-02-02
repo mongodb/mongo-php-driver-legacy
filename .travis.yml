@@ -11,10 +11,10 @@ env:
   - SKIP_SLOW_TESTS=yes
 
 before_script:
-  - ./.travis.scripts/compile.sh
-  - make servers
   - sudo mkdir -p /data/db
   - sudo chown -R travis /data/
+  - ./.travis.scripts/compile.sh
+  - make servers
 
 notifications:
   email:
