@@ -7,7 +7,7 @@ Manual test for memory leaks and aborted connections.
 require_once "tests/utils/server.inc";
 
 $s = new MongoShellServer;
-$cfg = $s->getReplicaSetConfig();
+$cfg = $s->getReplicaSetConfig(true);
 $creds = $s->getCredentials();
 
 $opts = array(

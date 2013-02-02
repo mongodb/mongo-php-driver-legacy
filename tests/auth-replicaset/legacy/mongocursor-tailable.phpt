@@ -8,7 +8,7 @@ MongoCursor::tailable().
 require_once "tests/utils/server.inc";
 
 $s = new MongoShellServer;
-$cfg = $s->getReplicaSetConfig();
+$cfg = $s->getReplicaSetConfig(true);
 $creds = $s->getCredentials();
 
 $opts = array(

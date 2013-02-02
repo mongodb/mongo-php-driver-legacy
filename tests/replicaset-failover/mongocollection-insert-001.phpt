@@ -21,7 +21,9 @@ for($i = 0; $i < 10; $i++) {
     }
 }
 $i++;
+echo "Killing master\n";
 $server->killMaster();
+echo "Master killed\n";
 try {
     $coll->insert(array("doc" => $i));
     echo "That query should have failed\n";
@@ -48,6 +50,8 @@ for($i=0;$i<60; $i++) {
 --CLEAN--
 <?php require_once "tests/utils/fix-master.inc"; ?>
 --EXPECTF--
+Killing master
+Master killed
 string(%d) "%s:%d: socket has been closed"
 int(-1)
 string(%d) "%s:%d: Broken pipe"
