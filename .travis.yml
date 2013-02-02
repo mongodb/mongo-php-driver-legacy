@@ -4,6 +4,9 @@ php:
   - 5.4
 #  - 5.3
 
+services:
+  - mongodb
+
 env:
   - SKIP_SLOW_TESTS=yes
 
