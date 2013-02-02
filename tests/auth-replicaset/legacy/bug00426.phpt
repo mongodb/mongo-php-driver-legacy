@@ -14,7 +14,7 @@ function get_user($m, $username) {
 }
 
 $s = new MongoShellServer;
-$cfg = $s->getReplicaSetConfig();
+$cfg = $s->getReplicaSetConfig(true);
 $creds = $s->getCredentials();
 
 $opts = array(
@@ -60,7 +60,7 @@ array(4) {
   ["pwd"]=>
   string(32) "%s"
 }
-Failed to connect to: %s:%d: Authentication failed on database 'admin' with username 'root': auth fails; Failed to connect to: %s:%d: Authentication failed on database 'admin' with username 'root': auth fails; Failed to connect to: %s:%d: Authentication failed on database 'admin' with username 'root': auth fails; Failed to connect to: anden.local:30203: Authentication failed on database 'admin' with username 'root': auth fails
+Failed to connect to: %s:%d: Authentication failed on database 'admin' with username 'root': auth fails; Failed to connect to: %s:%d: Authentication failed on database 'admin' with username 'root': auth fails; Failed to connect to: %s:%d: Authentication failed on database 'admin' with username 'root': auth fails; Failed to connect to: %s:%d: Authentication failed on database 'admin' with username 'root': auth fails
 object(MongoClient)#%d (4) {
   ["connected"]=>
   bool(true)

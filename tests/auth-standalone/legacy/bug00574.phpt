@@ -31,5 +31,5 @@ echo "DONE\n";
 ?>
 --EXPECTF--
 Deprecated: Function MongoDB::authenticate() is deprecated in %sbug00574.php on line %d
-anden.local:30303: unauthorized for query on test2.collection
+%s:%d: unauthorized for query on test2.collection
 DONE
