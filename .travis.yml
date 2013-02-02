@@ -9,6 +9,7 @@ services:
 
 env:
   - SKIP_SLOW_TESTS=yes
+  - NO_INTERACTION=1
 
 before_script:
   - sudo mkdir -p /data/db
