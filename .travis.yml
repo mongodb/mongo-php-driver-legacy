@@ -13,6 +13,8 @@ env:
 before_script:
   - ./.travis.scripts/compile.sh
   - make servers
+  - sudo mkdir -p /data/db
+  - sudo chown -R travis /data/
 
 notifications:
   email:
