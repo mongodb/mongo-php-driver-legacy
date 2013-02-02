@@ -52,7 +52,7 @@ traces.0
 php.ini
 tmp-php.ini
 
-tests/mongo-test-cfg.inc
+tests/utils/cfg.inc
 
 .coverage
 coverage
