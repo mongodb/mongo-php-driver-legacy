@@ -33,6 +33,7 @@ do {
         }
 
 
+        exit(0);
         echo "Making Authenticated Standalone.... ";
         t();
         $standalone = microtime(true);
@@ -42,11 +43,14 @@ do {
 
 
         echo "Making Bridge.... ";
+        echo "doen't work in travis, mongobridge is not installed by default\n";
+        /*
         $sc = $server->getStandaloneConfig();
         list($shost, $sport) = explode(":", trim($sc));
         $server->makeBridge($sport, 1000);
         printf("DONE (%.2f secs)\n", t());
         var_dump($server->getBridgeConfig());
+         */
 
 
         echo "Making shard.... ";
