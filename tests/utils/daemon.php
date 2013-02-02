@@ -99,9 +99,9 @@ do {
                 if ($r) {
                     foreach($r as $reader) {
                         if ($reader === $IO[1]) {
-                            //d("Can read from shell");
+                            d("Can read from shell");
                             $line = fgets($reader);
-                            //d("Read '$line'");
+                            d("Read '$line'");
                             $success = fwrite($conn, $line);
                             if (!$success) {
                                 break 2;
