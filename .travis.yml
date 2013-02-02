@@ -10,7 +10,7 @@ services:
 env:
   - SKIP_SLOW_TESTS=yes
   - NO_INTERACTION=1
-#  - REPORT_EXIT_STATUS=1 # So travis can determin properly a broken build
+  - REPORT_EXIT_STATUS=1 # So travis can determin properly a broken build
 
 before_script:
   - sudo mkdir -p /data/db
