@@ -3,10 +3,9 @@ require_once "tests/utils/server.inc";
 
 try {
     $server = new MongoShellServer;
-    $server->getBridgeConfig();
+    $retval = $server->getReplicaSetConfig(true);
     $server->close();
 } catch(Exception $e) {
-    die("skip " . $e->getMessage());
+    exit("skip " . $e->getMessage());
 }
-
 
