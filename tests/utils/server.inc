@@ -89,9 +89,10 @@ class MongoShellServer {
     }
 
     public function getStandaloneConfig($auth = false) {
-        $auth = json_encode($auth);
-        $host = $this->verifyWrite("getStandaloneConfig($auth)");
-        if (!$host) {
+        $jsauth = json_encode($auth);
+        $host = $this->verifyWrite("getStandaloneConfig($jsauth)");
+        $host = trim($host);
+        if ($host == "null") {
             throw new Exception(($auth ? "Authenticated " : "") . "Standalone server not initialized");
         }
         return $host;
@@ -107,7 +108,8 @@ class MongoShellServer {
 
 
     public function getCredentials() {
-        require dirname(__FILE__) . "/cfg.inc";
+        require dirname(__FILE__) . "/cfg.inc.template";
+        @include dirname(__FILE__) . "/cfg.inc";
         return array(
             "admin" => $SUPER_USER,
             "user"  => $NORMAL_USER,

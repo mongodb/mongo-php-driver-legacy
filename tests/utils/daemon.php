@@ -1,20 +1,6 @@
 <?php
-define("DEBUG", false);
-$TIMEOUT = 60;
-$MARKER  = "COMMAND DONE";
-$QUIT    = "Sorry Matt Damon, we're out of time";
-$retval = shell_exec("which mongo");
-$SHELL = trim($retval);
-
+require dirname(__FILE__) . "/cfg.inc.template";
 @include dirname(__FILE__) . "/cfg.inc";
-
-if (!file_exists($SHELL)) {
-    throw new Exception("the \$SHELL variable isn't set properly: $SHELL");
-}
-
-
-$JSFILE  = dirname(__FILE__) . "/myconfig.js";
-$SHELL_PARAMS = "--nodb --norc --shell $JSFILE";
 
 function d($msg) {
     if (DEBUG) {
@@ -35,6 +21,9 @@ $descriptorspec = array(
     2 => array("file", "/tmp/error-output.txt", "a"),
 );
 
+if (!file_exists($SHELL)) {
+    throw new Exception("I cannot find '$SHELL', did you set the \$SHELL varaible correctly?");
+}
 $process = proc_open("$SHELL $SHELL_PARAMS", $descriptorspec, $IO, dirname($SHELL));
 if (!$process) {
     echo "Can't execute '$SHELL $SHELL_PARAMS'\n";
