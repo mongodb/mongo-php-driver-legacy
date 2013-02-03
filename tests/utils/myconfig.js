@@ -11,7 +11,7 @@ function initRS(servers, port, keyFile, root, user) {
         return;
     }
     testopts = {name: "REPLICASET", nodes: servers ? servers : 3, "startPort": port ? port : 28000 };
-    opts = {"nojournal" : "", "nopreallocj": "", "quiet": "", "logpath" : "/tmp/php-mongodb-driver-logs-rs", "logappend": ""};
+    opts = {"nojournal" : "", "nopreallocj": "", "quiet": "", "logpath" : "/dev/null"};
 
 
     if (keyFile) {
@@ -72,7 +72,7 @@ function initShard() {
     if (shardTest) {
         return;
     }
-    shardTest = new ShardingTest( {name: "SHARDING", shards: 2, rs: {nodes: 3, "logpath" : "/tmp/php-mongodb-driver-logs-shard-rs", "logappend": "" }, numReplicas: 2, nopreallocj: true, mongos: 2, other: { mongosOptions: {"logpath" : "/tmp/php-mongodb-driver-logs-shard", "logappend": ""}}});
+    shardTest = new ShardingTest( {name: "SHARDING", shards: 2, rs: {nodes: 3, "logpath" : "/dev/null" }, numReplicas: 2, nopreallocj: true, mongos: 2, other: { mongosOptions: {"logpath" : "/dev/null"}}});
     ReplSetTest.awaitRSClientHosts( shardTest.s, shardTest.rs0.getSecondaries(), { ok : true, secondary : true });
     ReplSetTest.awaitRSClientHosts( shardTest.s, shardTest.rs1.getSecondaries(), { ok : true, secondary : true });
     ReplSetTest.awaitRSClientHosts( shardTest.s, shardTest.rs1.getPrimary(), { ok : true, ismaster : true });
