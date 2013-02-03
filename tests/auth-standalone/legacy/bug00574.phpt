@@ -7,7 +7,7 @@ Test for PHP-574: Problems with auth-switch and wrong credentials
 require_once "tests/utils/server.inc";
 
 $s = new MongoShellServer;
-$cfg = $s->getReplicasetConfig(true);
+$host = $s->getStandaloneConfig(true);
 $creds = $s->getCredentials();
 
 $opts = array(
@@ -15,7 +15,7 @@ $opts = array(
     "username" => $creds["user"]->username,
     "password" => $creds["user"]->password,
 );
-$m = new MongoClient($cfg["dsn"], $opts);
+$m = new MongoClient($host, $opts);
 $db = $m->test2;
 $db->authenticate('user2', 'user2' );
 $collection = $db->collection;
