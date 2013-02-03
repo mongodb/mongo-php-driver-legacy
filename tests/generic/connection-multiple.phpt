@@ -2,7 +2,7 @@
 Connection strings: Test multiple host names with/without port
 --SKIPIF--
 <?php
-require_once "tests/utils/server.inc";
+require_once "tests/utils/standalone.inc";
 
 $port = standalone_port();
 

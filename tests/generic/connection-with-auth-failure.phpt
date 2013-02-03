@@ -1,5 +1,7 @@
 --TEST--
 Connection strings: unsuccesfull authentication
+--SKIPIF--
+<?php require_once "tests/utils/auth-standalone.inc" ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
