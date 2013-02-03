@@ -1,5 +1,7 @@
 <?php
-define("DEBUG", false);
+if (!defined("DEBUG")) {
+    define("DEBUG", false);
+}
 
 $mongo = trim(shell_exec("which mongo"));
 $SHELL   = $mongo;
