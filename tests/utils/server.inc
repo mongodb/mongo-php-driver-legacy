@@ -97,6 +97,7 @@ class MongoShellServer {
 
     public function getBridgeConfig() {
         $host = $this->verifyWrite("getBridgeConfig()");
+        $host = trim($host);
         if (!$host) {
             throw new Exception("Mongobridge server not initialized");
         }
