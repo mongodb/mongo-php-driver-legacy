@@ -29,7 +29,7 @@ CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (rea
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 275
+CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 <<<<<<< HEAD
 CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
@@ -39,13 +39,13 @@ CON     FINE: get_server_flags: added tag use:accounting
 >>>>>>> Fix tests
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 17
+CON     FINE: send_packet: data_size: %d
 CON     INFO: is_ping: last pinged at %d; time: 0ms
 CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
 CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 275
+CON     FINE: send_packet: data_size: %d
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
 CON     INFO: ismaster: set name: REPLICASET, ismaster: 1, secondary: 0, is_arbiter: 0
@@ -60,7 +60,7 @@ CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 275
+CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 <<<<<<< HEAD
 CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
@@ -70,33 +70,33 @@ CON     FINE: get_server_flags: added tag use:reporting
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 >>>>>>> Fix tests
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 17
+CON     FINE: send_packet: data_size: %d
 CON     INFO: is_ping: last pinged at %d; time: 0ms
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 275
+CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 17
+CON     FINE: send_packet: data_size: %d
 CON     INFO: is_ping: last pinged at %d; time: 0ms
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 275
+CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 17
+CON     FINE: send_packet: data_size: %d
 CON     INFO: is_ping: last pinged at %d; time: 0ms
 CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
 CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 275
+CON     FINE: send_packet: data_size: %d
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
 CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
@@ -114,7 +114,7 @@ CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
 CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 275
+CON     FINE: send_packet: data_size: %d
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
 CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
@@ -132,7 +132,7 @@ CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
 CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 275
+CON     FINE: send_packet: data_size: %d
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
 CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
