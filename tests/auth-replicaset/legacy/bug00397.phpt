@@ -1,14 +1,23 @@
 --TEST--
 Test for PHP-397: Endless loop on non-existing file.
 --SKIPIF--
-<?php require_once "tests/utils/replicaset.inc"; ?>
-<?php exit("skip test requires authentication on a replicaset.."); ?>
+<?php require_once "tests/utils/auth-replicaset.inc"; ?>
 --FILE--
 <?php
-$m = new Mongo("mongodb://user:user@primary.local:27001/phpunit-auth", array("replicaSet" => "foobar"));
+require_once "tests/utils/server.inc";
+$s = new MongoShellServer;
+$cfg = $s->getReplicaSetConfig(true);
+$creds = $s->getCredentials();
+
+$opts = array(
+    "db" => "admin",
+    "username" => $creds["admin"]->username,
+    "password" => $creds["admin"]->password,
+);
+$m = new Mongo($cfg["dsn"], $opts+array("readPreference" => MongoClient::RP_SECONDARY_PREFERRED));
+
 $db = $m->selectDB("phpunit-unit");
 $c = $db->selectCollection("example");
-$c->setSlaveOkay(true);
 
 $n = new MongoGridFs($db);
 $b = new MongoGridFsFile($n, array("bar.txt", "length" => 42, "_id" => new MongoId("asdfasdf")));
