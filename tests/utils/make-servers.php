@@ -51,9 +51,7 @@ function makeServer($SERVERS, $server, $bit) {
         break;
     case REPLICASET_AUTH:
         $retval = $server->makeReplicaset(4, 30300, dirname(__FILE__) . "/keyFile");
-        var_dump($retval);
         $cfg = $server->getReplicaSetConfig(true);
-        var_dump($cfg);
         $dsn = $cfg["dsn"];
         break;
     default:
