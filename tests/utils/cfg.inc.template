@@ -1,7 +1,9 @@
 <?php
 define("DEBUG", false);
 
-$SHELL   = "/usr/bin/mongo";"
+$mongo = trim(shell_exec("which mongo"));
+$SHELL   = $mongo;
+
 
 /* You probably don't want to change this */
 $SUPER_USER  = (object)array("username" => "root", "password" => "complicated password");

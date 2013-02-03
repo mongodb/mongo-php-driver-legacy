@@ -1,5 +1,6 @@
 <?php
-require dirname(__FILE__) . "/cfg.inc";
+require dirname(__FILE__) . "/cfg.inc.template";
+@include dirname(__FILE__) . "/cfg.inc";
 
 function d($msg) {
     if (DEBUG) {
@@ -20,6 +21,9 @@ $descriptorspec = array(
     2 => array("file", "/tmp/error-output.txt", "a"),
 );
 
+if (!file_exists($SHELL)) {
+    throw new Exception("I cannot find '$SHELL', did you set the \$SHELL varaible correctly?");
+}
 $process = proc_open("$SHELL $SHELL_PARAMS", $descriptorspec, $IO, dirname($SHELL));
 if (!$process) {
     echo "Can't execute '$SHELL $SHELL_PARAMS'\n";
