@@ -1,4 +1,5 @@
 #!/bin/bash
+df -h
 phpize
 ./configure --quiet
 make all install
