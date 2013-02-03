@@ -14,21 +14,23 @@ class MongoShellServer {
         return $this->verifyWrite("initShard($mongos)");
     }
 
-    public function makeReplicaset($members = 4, $port = 28000, $auth = false, $root = array(), $user = array()) {
+    public function makeReplicaset($members = 4, $port = 28000, $auth = false) {
         if ($auth) {
             // Git doesn't store permissions, but mongod needs this to be strict
             chmod($auth, 0700);
         }
         $auth = json_encode($auth);
-        $root = json_encode($root);
-        $user = json_encode($user);
+        $creds = $this->getCredentials();
+        $root = json_encode($creds["admin"]);
+        $user = json_encode($creds["user"]);
         return $this->verifyWrite("initRS($members,$port,$auth, $root, $user)");
     }
 
-    public function makeStandalone($port = 30000, $auth = false, $root = array(), $user = array()) {
+    public function makeStandalone($port = 30000, $auth = false) {
+        $creds = $this->getCredentials();
         $auth = json_encode($auth);
-        $root = json_encode($root);
-        $user = json_encode($user);
+        $root = json_encode($creds["admin"]);
+        $user = json_encode($creds["user"]);
         return $this->verifyWrite("initStandalone($port, $auth, $root, $user)");
     }
 
