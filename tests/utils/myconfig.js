@@ -123,3 +123,19 @@ function restartMaster() {
     conn = replTest.liveNodes.slaves[1]
     ReplSetTest.awaitRSClientHosts(conn, replTest, replTest.nodes)
 }
+
+
+
+function addStandaloneUser(loginuser, newuser) {
+    return _addUser(standaloneTestAuth, loginuser, newuser);
+}
+function addReplicasetUser(loginuser, newuser) {
+    return _addUser(replTestAuth.getMaster(), loginuser, newuser);
+}
+function _addUser(conn, login, newuser) {
+    conn.getDB(login.db).auth(login.username, login.password)
+    return conn.getDB(newuser.db).addUser(newuser.username, newuser.password)
+}
+
+
+

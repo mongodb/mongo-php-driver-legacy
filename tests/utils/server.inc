@@ -105,6 +105,39 @@ class MongoShellServer {
     }
 
 
+    public function addStandaloneUser($db, $username, $password) {
+        $data   = $this->_prepAddUser($db, $username, $password);
+        $retval = $this->verifyWrite("addStandaloneUser({$data["adminjs"]}, {$data["userjs"]})");
+        return $retval;
+    }
+
+    public function addReplicasetUser($db, $username, $password) {
+        $data   = $this->_prepAddUser($db, $username, $password);
+        $retval = $this->verifyWrite("addReplicasetUser({$data["adminjs"]}, {$data["userjs"]})");
+        return $retval;
+    }
+
+    public function _prepAddUser($db, $username, $password) {
+        $creds = $this->getCredentials();
+        $admin = $creds["admin"];
+        $admin->db = "admin";
+
+        $newuser = (object)array(
+            "db"       => $db,
+            "username" => $username,
+            "password" => $password,
+        );
+
+
+        $adminjs = json_encode($admin);
+        $userjs  = json_encode($newuser);
+
+        return array(
+            "adminjs" => $adminjs,
+            "userjs"  => $userjs,
+        );
+    }
+
     public function getCredentials() {
         require dirname(__FILE__) . "/cfg.inc.template";
         @include dirname(__FILE__) . "/cfg.inc";

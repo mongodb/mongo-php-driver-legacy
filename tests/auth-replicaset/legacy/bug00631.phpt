@@ -1,11 +1,15 @@
 --TEST--
 Test for PHP-631: One replica set, but two different db/user/passwords
 --SKIPIF--
-<?php exit("skip Manual test - needs two users on two different databases"); ?>
+<?php require_once "tests/utils/auth-replicaset.inc" ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
+$s = new MongoShellServer;
+$s->addReplicasetUser("testuno", "username1", "password1");
+$s->addReplicasetUser("testdos", "username2", "password2");
+$cfg = $s->getReplicaSetConfig(true);
 
 function queryMongoDB($connstr, $dbname, $collectionname, $fieldname)
 {
@@ -15,13 +19,21 @@ function queryMongoDB($connstr, $dbname, $collectionname, $fieldname)
     $cursor = $collection->find();
     foreach ($cursor as $document) {
     }
+    echo "I'm a survivor\n";
 }
 
 #MongoLog::setLevel(MongoLog::ALL); // all log levels
 #MongoLog::setModule(MongoLog::ALL); // all parts of the driver
 
-queryMongoDB("mongodb://foo:foopassword@primaryauth,secondaryauth/foo", "foo", "foocollection", "fieldinfoocollection");
+$dsn = "mongodb://username1:password1@" . $cfg["dsn"] . "/testuno";
+queryMongoDB($dsn, "testuno", "foocollection", "fieldinfoocollection");
 #Step 2: connect and query to bar db: This would fail randomly with message
-queryMongoDB("mongodb://bar:barpassword@primaryauth,secondaryauth/bar", "bar", "barcollection", "fieldinbarcollection.");
+
+
+$dsn = "mongodb://username2:password2@" . $cfg["dsn"] . "/testdos";
+queryMongoDB($dsn, "testdos", "barcollection", "fieldinbarcollection.");
 ?>
 --EXPECTF--
+I'm a survivor
+I'm a survivor
+
