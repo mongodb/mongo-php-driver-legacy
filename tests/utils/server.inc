@@ -20,12 +20,18 @@ class MongoShellServer {
             chmod($auth, 0700);
         }
         $auth = json_encode($auth);
-        return $this->verifyWrite("initRS($members,$port,$auth)");
+        $creds = $this->getCredentials();
+        $root = json_encode($creds["admin"]);
+        $user = json_encode($creds["user"]);
+        return $this->verifyWrite("initRS($members,$port,$auth, $root, $user)");
     }
 
     public function makeStandalone($port = 30000, $auth = false) {
+        $creds = $this->getCredentials();
         $auth = json_encode($auth);
-        return $this->verifyWrite("initStandalone($port, $auth)");
+        $root = json_encode($creds["admin"]);
+        $user = json_encode($creds["user"]);
+        return $this->verifyWrite("initStandalone($port, $auth, $root, $user)");
     }
 
     public function makeBridge($port = 30000, $delay = 1000) {
