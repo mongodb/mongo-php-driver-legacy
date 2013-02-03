@@ -20,7 +20,7 @@ function initRS(servers, port, keyFile) {
     }
 
     if (servers % 2 == 0) {
-        testopts.servers++;
+        testopts.nodes++;
     }
     retval = new ReplSetTest( testopts );
 
@@ -28,7 +28,7 @@ function initRS(servers, port, keyFile) {
     cfg = retval.getReplSetConfig()
     cfg.members[0].priority = 42
     if (servers % 2 == 0) {
-        cfg.members[servers-1].arbiterOnly = true;
+        cfg.members[servers].arbiterOnly = true;
     }
 
     retval.initiate(cfg)
