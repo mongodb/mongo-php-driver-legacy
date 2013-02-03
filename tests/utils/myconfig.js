@@ -19,11 +19,18 @@ function initRS(servers, port, keyFile, root, user) {
         opts.keyFile = keyFile;
     }
 
+    if (servers % 2 == 0) {
+        testopts.servers++;
+    }
     retval = new ReplSetTest( testopts );
 
     retval.startSet(opts)
     cfg = retval.getReplSetConfig()
     cfg.members[0].priority = 42
+    if (servers % 2 == 0) {
+        cfg.members[servers-1].arbiterOnly = true;
+    }
+
     retval.initiate(cfg)
     retval.awaitReplication()
 
