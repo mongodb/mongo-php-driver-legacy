@@ -132,6 +132,10 @@ function restartMaster() {
 }
 
 
+function setDBDir(dbdir) {
+    MongoRunner.dataDir = dbdir;
+    MongoRunner.dataPath = dbdir;
+}
 
 function addStandaloneUser(loginuser, newuser) {
     return _addUser(standaloneTestAuth, loginuser, newuser);
