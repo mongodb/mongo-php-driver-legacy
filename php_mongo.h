@@ -22,15 +22,14 @@
 #include "mcon/types.h"
 #include "mcon/read_preference.h"
 
-// resource names
+/* resource names */
 #define PHP_CONNECTION_RES_NAME "mongo connection"
 #define PHP_SERVER_RES_NAME "mongo server info"
 #define PHP_CURSOR_LIST_RES_NAME "cursor list"
 
-
 #ifndef zend_parse_parameters_none
-#define zend_parse_parameters_none()    \
-        zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
+# define zend_parse_parameters_none() \
+	zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
 #endif
 
 #ifndef Z_UNSET_ISREF_P
@@ -39,47 +38,47 @@
 
 #ifndef ZVAL_COPY_VALUE
 #define ZVAL_COPY_VALUE(z, v) \
-    do { \
-        (z)->value = (v)->value; \
-        Z_TYPE_P(z) = Z_TYPE_P(v); \
-    } while (0)
+	do { \
+		(z)->value = (v)->value; \
+		Z_TYPE_P(z) = Z_TYPE_P(v); \
+	} while (0)
 #endif
 
 #ifndef INIT_PZVAL_COPY
-#define INIT_PZVAL_COPY(z, v)                   \
-    do {                                        \
-        ZVAL_COPY_VALUE(z, v);                  \
-        Z_SET_REFCOUNT_P(z, 1);                 \
-        Z_UNSET_ISREF_P(z);                     \
-    } while (0)
+# define INIT_PZVAL_COPY(z, v) \
+	do { \
+		ZVAL_COPY_VALUE(z, v); \
+		Z_SET_REFCOUNT_P(z, 1); \
+		Z_UNSET_ISREF_P(z); \
+	} while (0)
 #endif
 
 #ifndef MAKE_COPY_ZVAL
-#define MAKE_COPY_ZVAL(ppzv, pzv)   \
-    INIT_PZVAL_COPY(pzv, *(ppzv));  \
-    zval_copy_ctor((pzv));
+# define MAKE_COPY_ZVAL(ppzv, pzv) \
+	INIT_PZVAL_COPY(pzv, *(ppzv)); \
+	zval_copy_ctor((pzv));
 #endif
 
 #ifdef WIN32
-#  ifndef int64_t
-     typedef __int64 int64_t;
-#  endif
+# ifndef int64_t
+typedef __int64 int64_t;
+# endif
 #endif
 
 #ifndef Z_ADDREF_P
-#  define Z_ADDREF_P(pz)                (pz)->refcount++
+# define Z_ADDREF_P(pz)                (pz)->refcount++
 #endif
 
 #ifndef Z_ADDREF_PP
-#  define Z_ADDREF_PP(ppz)               Z_ADDREF_P(*(ppz))
+# define Z_ADDREF_PP(ppz)               Z_ADDREF_P(*(ppz))
 #endif
 
 #ifndef Z_DELREF_P
-#  define Z_DELREF_P(pz)                (pz)->refcount--
+# define Z_DELREF_P(pz)                (pz)->refcount--
 #endif
 
 #ifndef Z_SET_REFCOUNT_P
-#  define Z_SET_REFCOUNT_P(pz, rc)      (pz)->refcount = (rc)
+# define Z_SET_REFCOUNT_P(pz, rc)      (pz)->refcount = (rc)
 #endif
 
 #define INT_32 4
@@ -87,7 +86,7 @@
 #define DOUBLE_64 8
 #define BYTE_8 1
 
-// db ops
+/* db ops */
 #define OP_REPLY 1
 #define OP_MSG 1000
 #define OP_UPDATE 2001
@@ -98,7 +97,7 @@
 #define OP_DELETE 2006
 #define OP_KILL_CURSORS 2007
 
-// cursor flags
+/* cursor flags */
 #define CURSOR_NOT_FOUND 1
 #define CURSOR_ERR 2
 
@@ -110,14 +109,14 @@
 #define PHP_MONGO_DEFAULT_WTIMEOUT 10000
 #define PHP_MONGO_DEFAULT_SOCKET_TIMEOUT 30000L
 
-// if _id field should be added
+/* if _id field should be added */
 #define PREP 1
 #define NO_PREP 0
 
 #define NOISY 0
 #define QUIET 1
 
-// duplicate strings
+/* duplicate strings */
 #define DUP 1
 #define NO_DUP 0
 
@@ -150,9 +149,9 @@
 #endif
 
 #if ZEND_MODULE_API_NO > 20060613
-#define MONGO_E_DEPRECATED E_DEPRECATED
+# define MONGO_E_DEPRECATED E_DEPRECATED
 #else
-#define MONGO_E_DEPRECATED E_STRICT
+# define MONGO_E_DEPRECATED E_STRICT
 #endif
 
 #define MUST_BE_ARRAY_OR_OBJECT(num, arg) do { \
@@ -183,49 +182,48 @@
 #endif
 
 #if ZEND_MODULE_API_NO >= 20060613
-// normal, nice method
-#define MONGO_METHOD_BASE(classname, name) zim_##classname##_##name
+/* normal, nice method */
+# define MONGO_METHOD_BASE(classname, name) zim_##classname##_##name
 #else
-// gah!  wtf, php 5.1?
-#define MONGO_METHOD_BASE(classname, name) zif_##classname##_##name
-#endif /* ZEND_MODULE_API_NO >= 20060613 */
+/* gah!  wtf, php 5.1? */
+# define MONGO_METHOD_BASE(classname, name) zif_##classname##_##name
+#endif
 
 #define MONGO_METHOD_HELPER(classname, name, retval, thisptr, num, param) \
-  PUSH_PARAM(param); PUSH_PARAM((void*)num);				\
-  PUSH_EO_PARAM();							\
-  MONGO_METHOD_BASE(classname, name)(num, retval, NULL, thisptr, 0 TSRMLS_CC); \
-  POP_EO_PARAM();			\
-  POP_PARAM(); POP_PARAM();
+	PUSH_PARAM(param); PUSH_PARAM((void*)num);				\
+	PUSH_EO_PARAM();							\
+	MONGO_METHOD_BASE(classname, name)(num, retval, NULL, thisptr, 0 TSRMLS_CC); \
+	POP_EO_PARAM();			\
+	POP_PARAM(); POP_PARAM();
 
 /* push parameters, call function, pop parameters */
 #define MONGO_METHOD(classname, name, retval, thisptr)			\
-  MONGO_METHOD_BASE(classname, name)(0, retval, NULL, thisptr, 0 TSRMLS_CC);
+	MONGO_METHOD_BASE(classname, name)(0, retval, NULL, thisptr, 0 TSRMLS_CC);
 
 #define MONGO_METHOD1(classname, name, retval, thisptr, param1)		\
-  MONGO_METHOD_HELPER(classname, name, retval, thisptr, 1, param1);
+	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 1, param1);
 
 #define MONGO_METHOD2(classname, name, retval, thisptr, param1, param2)	\
-  PUSH_PARAM(param1);							\
-  MONGO_METHOD_HELPER(classname, name, retval, thisptr, 2, param2);	\
-  POP_PARAM();
+	PUSH_PARAM(param1);							\
+	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 2, param2);	\
+	POP_PARAM();
 
 #define MONGO_METHOD3(classname, name, retval, thisptr, param1, param2, param3) \
-  PUSH_PARAM(param1); PUSH_PARAM(param2);				\
-  MONGO_METHOD_HELPER(classname, name, retval, thisptr, 3, param3);	\
-  POP_PARAM(); POP_PARAM();
+	PUSH_PARAM(param1); PUSH_PARAM(param2);				\
+	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 3, param3);	\
+	POP_PARAM(); POP_PARAM();
 
 #define MONGO_METHOD4(classname, name, retval, thisptr, param1, param2, param3, param4) \
-  PUSH_PARAM(param1); PUSH_PARAM(param2); PUSH_PARAM(param3);		\
-  MONGO_METHOD_HELPER(classname, name, retval, thisptr, 4, param4);	\
-  POP_PARAM(); POP_PARAM(); POP_PARAM();
+	PUSH_PARAM(param1); PUSH_PARAM(param2); PUSH_PARAM(param3);		\
+	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 4, param4);	\
+	POP_PARAM(); POP_PARAM(); POP_PARAM();
 
 #define MONGO_METHOD5(classname, name, retval, thisptr, param1, param2, param3, param4, param5) \
-  PUSH_PARAM(param1); PUSH_PARAM(param2); PUSH_PARAM(param3); PUSH_PARAM(param4); \
-  MONGO_METHOD_HELPER(classname, name, retval, thisptr, 5, param5);	\
-  POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
+	PUSH_PARAM(param1); PUSH_PARAM(param2); PUSH_PARAM(param3); PUSH_PARAM(param4); \
+	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 5, param5);	\
+	POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
 #define MONGO_CMD(retval, thisptr) MONGO_METHOD1(MongoDB, command, retval, thisptr, data)
-
 
 #define HASH_P(a) (Z_TYPE_P(a) == IS_ARRAY ? Z_ARRVAL_P(a) : Z_OBJPROP_P(a))
 #define HASH_PP(a) (Z_TYPE_PP(a) == IS_ARRAY ? Z_ARRVAL_PP(a) : Z_OBJPROP_PP(a))
@@ -233,7 +231,7 @@
 #define IS_SCALAR_P(a) (Z_TYPE_P(a) != IS_ARRAY && Z_TYPE_P(a) != IS_OBJECT)
 #define IS_SCALAR_PP(a) (Z_TYPE_PP(a) != IS_ARRAY && Z_TYPE_PP(a) != IS_OBJECT)
 
-// TODO: this should be expanded to handle long_as_object being set
+/* TODO: this should be expanded to handle long_as_object being set */
 #define Z_NUMVAL_P(variable, value)                                     \
   ((Z_TYPE_P(variable) == IS_LONG && Z_LVAL_P(variable) == value) ||    \
    (Z_TYPE_P(variable) == IS_DOUBLE && Z_DVAL_P(variable) == value))
@@ -242,32 +240,28 @@
    (Z_TYPE_PP(variable) == IS_DOUBLE && Z_DVAL_PP(variable) == value))
 
 #if ZEND_MODULE_API_NO >= 20100525
-#define init_properties(intern) object_properties_init(&intern->std, class_type)
+# define init_properties(intern) object_properties_init(&intern->std, class_type)
 #else
-#define init_properties(intern) {                                      \
+# define init_properties(intern) {                                     \
 	zval *tmp;                                                         \
-	zend_hash_copy(intern->std.properties,                             \
-    &class_type->default_properties, (copy_ctor_func_t) zval_add_ref,  \
-    (void *) &tmp, sizeof(zval *));                                    \
+	zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *)); \
 }
 #endif
 
 #define PHP_MONGO_OBJ_NEW(mongo_obj)                    \
-  zend_object_value retval;                             \
-  mongo_obj *intern;                                    \
-                                                        \
-  intern = (mongo_obj*)emalloc(sizeof(mongo_obj));               \
-  memset(intern, 0, sizeof(mongo_obj));                          \
-                                                                 \
-  zend_object_std_init(&intern->std, class_type TSRMLS_CC);      \
-  init_properties(intern);                                       \
-                                                                 \
-  retval.handle = zend_objects_store_put(intern,                 \
-     (zend_objects_store_dtor_t) zend_objects_destroy_object,    \
-     php_##mongo_obj##_free, NULL TSRMLS_CC);                    \
-  retval.handlers = &mongo_default_handlers;                     \
-                                                                 \
-  return retval;
+	zend_object_value retval;                           \
+	mongo_obj *intern;                                  \
+	                                                    \
+	intern = (mongo_obj*)emalloc(sizeof(mongo_obj));               \
+	memset(intern, 0, sizeof(mongo_obj));                          \
+	                                                               \
+	zend_object_std_init(&intern->std, class_type TSRMLS_CC);      \
+	init_properties(intern);                                       \
+	                                                               \
+	retval.handle = zend_objects_store_put(intern,(zend_objects_store_dtor_t) zend_objects_destroy_object, php_##mongo_obj##_free, NULL TSRMLS_CC); \
+	retval.handlers = &mongo_default_handlers;                     \
+	                                                               \
+	return retval;
 
 #define RS_PRIMARY 1
 #define RS_SECONDARY 2
@@ -281,162 +275,164 @@ typedef struct {
 
 #define MONGO_CURSOR 1
 
-
 typedef struct {
-  int length;
-  int request_id;
-  int response_to;
-  int op;
+	int length;
+	int request_id;
+	int response_to;
+	int op;
 } mongo_msg_header;
 
 typedef struct {
-  char *start;
-  char *pos;
-  char *end;
+	char *start;
+	char *pos;
+	char *end;
 } buffer;
 
-#define CREATE_MSG_HEADER(rid, rto, opcode)     \
-  header.length = 0;                            \
-  header.request_id = rid;                      \
-  header.response_to = rto;                     \
-  header.op = opcode;
+#define CREATE_MSG_HEADER(rid, rto, opcode) \
+	header.length = 0; \
+	header.request_id = rid; \
+	header.response_to = rto; \
+	header.op = opcode;
 
-#define CREATE_RESPONSE_HEADER(buf, ns, rto, opcode)    \
-  CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode); \
-  APPEND_HEADER_NS(buf, ns, 0);
+#define CREATE_RESPONSE_HEADER(buf, ns, rto, opcode) \
+	CREATE_MSG_HEADER(MonGlo(request_id)++, rto, opcode); \
+	APPEND_HEADER_NS(buf, ns, 0);
 
-#define CREATE_HEADER_WITH_OPTS(buf, ns, opcode, opts)  \
-  CREATE_MSG_HEADER(MonGlo(request_id)++, 0, opcode);   \
-  APPEND_HEADER_NS(buf, ns, opts);
+#define CREATE_HEADER_WITH_OPTS(buf, ns, opcode, opts) \
+	CREATE_MSG_HEADER(MonGlo(request_id)++, 0, opcode); \
+	APPEND_HEADER_NS(buf, ns, opts);
 
-#define CREATE_HEADER(buf, ns, opcode)          \
-  CREATE_RESPONSE_HEADER(buf, ns, 0, opcode);
+#define CREATE_HEADER(buf, ns, opcode) \
+	CREATE_RESPONSE_HEADER(buf, ns, 0, opcode);
 
-
-#define APPEND_HEADER(buf, opts) buf->pos += INT_32;     \
-  php_mongo_serialize_int(buf, header.request_id);     \
-  php_mongo_serialize_int(buf, header.response_to);    \
-  php_mongo_serialize_int(buf, header.op);             \
-  php_mongo_serialize_int(buf, opts);
-
-
-#define APPEND_HEADER_NS(buf, ns, opts)                         \
-  APPEND_HEADER(buf, opts);                                     \
-  php_mongo_serialize_ns(buf, ns TSRMLS_CC);
+#define APPEND_HEADER(buf, opts) buf->pos += INT_32; \
+	php_mongo_serialize_int(buf, header.request_id); \
+	php_mongo_serialize_int(buf, header.response_to); \
+	php_mongo_serialize_int(buf, header.op); \
+	php_mongo_serialize_int(buf, opts);
 
 
-#define MONGO_CHECK_INITIALIZED(member, class_name)                     \
-  if (!(member)) {                                                      \
-    zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
-    RETURN_FALSE;                                                       \
-  }
+#define APPEND_HEADER_NS(buf, ns, opts) \
+	APPEND_HEADER(buf, opts); \
+	php_mongo_serialize_ns(buf, ns TSRMLS_CC);
 
-#define MONGO_CHECK_INITIALIZED_STRING(member, class_name)              \
-  if (!(member)) {                                                      \
-    zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
-    RETURN_STRING("", 1);                                               \
-  }
 
-#define PHP_MONGO_GET_LINK(obj)                                         \
-  link = (mongoclient*)zend_object_store_get_object((obj) TSRMLS_CC);    \
-  MONGO_CHECK_INITIALIZED(link->servers, Mongo);
+#define MONGO_CHECK_INITIALIZED(member, class_name) \
+	if (!(member)) { \
+		zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
+		RETURN_FALSE; \
+	}
 
-#define PHP_MONGO_GET_DB(obj)                                           \
-  db = (mongo_db*)zend_object_store_get_object((obj) TSRMLS_CC);        \
-  MONGO_CHECK_INITIALIZED(db->name, MongoDB);
+#define MONGO_CHECK_INITIALIZED_STRING(member, class_name) \
+	if (!(member)) { \
+		zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
+		RETURN_STRING("", 1); \
+	}
 
-#define PHP_MONGO_GET_COLLECTION(obj)                                   \
-  c = (mongo_collection*)zend_object_store_get_object((obj) TSRMLS_CC); \
-  MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+#define PHP_MONGO_GET_LINK(obj) \
+	link = (mongoclient*)zend_object_store_get_object((obj) TSRMLS_CC); \
+	MONGO_CHECK_INITIALIZED(link->servers, Mongo);
 
-#define PHP_MONGO_GET_CURSOR(obj)                                       \
-  cursor = (mongo_cursor*)zend_object_store_get_object((obj) TSRMLS_CC); \
-  MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
+#define PHP_MONGO_GET_DB(obj) \
+	db = (mongo_db*)zend_object_store_get_object((obj) TSRMLS_CC); \
+	MONGO_CHECK_INITIALIZED(db->name, MongoDB);
+
+#define PHP_MONGO_GET_COLLECTION(obj) \
+	c = (mongo_collection*)zend_object_store_get_object((obj) TSRMLS_CC); \
+	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+
+#define PHP_MONGO_GET_CURSOR(obj) \
+	cursor = (mongo_cursor*)zend_object_store_get_object((obj) TSRMLS_CC); \
+	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
 #define PHP_MONGO_CHECK_EXCEPTION() if (EG(exception)) { return; }
-#define PHP_MONGO_CHECK_EXCEPTION1(arg1)                        \
-  if (EG(exception)) {                                          \
-    zval_ptr_dtor(arg1);                                        \
-    return;                                                     \
-  }
-#define PHP_MONGO_CHECK_EXCEPTION2(arg1, arg2)                  \
-  if (EG(exception)) {                                          \
-    zval_ptr_dtor(arg1);                                        \
-    zval_ptr_dtor(arg2);                                        \
-    return;                                                     \
-  }
-#define PHP_MONGO_CHECK_EXCEPTION3(arg1, arg2, arg3)            \
-  if (EG(exception)) {                                          \
-    zval_ptr_dtor(arg1);                                        \
-    zval_ptr_dtor(arg2);                                        \
-    zval_ptr_dtor(arg3);                                        \
-    return;                                                     \
-  }
-#define PHP_MONGO_CHECK_EXCEPTION4(arg1, arg2, arg3, arg4)      \
-  if (EG(exception)) {                                          \
-    zval_ptr_dtor(arg1);                                        \
-    zval_ptr_dtor(arg2);                                        \
-    zval_ptr_dtor(arg3);                                        \
-    zval_ptr_dtor(arg4);                                        \
-    return;                                                     \
-  }
 
-#define PHP_MONGO_SERIALIZE_KEY(type)                           \
-  php_mongo_set_type(buf, type);                                \
-  php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC); \
-  if (EG(exception)) {                                          \
-    return ZEND_HASH_APPLY_STOP;                                \
-  }
+#define PHP_MONGO_CHECK_EXCEPTION1(arg1) \
+	if (EG(exception)) { \
+		zval_ptr_dtor(arg1); \
+		return; \
+	}
+
+#define PHP_MONGO_CHECK_EXCEPTION2(arg1, arg2) \
+	if (EG(exception)) { \
+		zval_ptr_dtor(arg1); \
+		zval_ptr_dtor(arg2); \
+	return; \
+	}
+
+#define PHP_MONGO_CHECK_EXCEPTION3(arg1, arg2, arg3) \
+	if (EG(exception)) { \
+		zval_ptr_dtor(arg1); \
+		zval_ptr_dtor(arg2); \
+		zval_ptr_dtor(arg3); \
+		return; \
+	}
+
+#define PHP_MONGO_CHECK_EXCEPTION4(arg1, arg2, arg3, arg4) \
+	if (EG(exception)) { \
+		zval_ptr_dtor(arg1); \
+		zval_ptr_dtor(arg2); \
+		zval_ptr_dtor(arg3); \
+		zval_ptr_dtor(arg4); \
+		return; \
+	}
+
+#define PHP_MONGO_SERIALIZE_KEY(type) \
+	php_mongo_set_type(buf, type); \
+	php_mongo_serialize_key(buf, name, name_len, prep TSRMLS_CC); \
+	if (EG(exception)) { \
+		return ZEND_HASH_APPLY_STOP; \
+	}
 
 
 #define REPLY_HEADER_LEN 36
 
 typedef struct {
-  zend_object std;
+	zend_object std;
 
 	/* Connection */
 	mongo_connection *connection;
 	zval *resource;
 
-  // collection namespace
-  char *ns;
+	/* collection namespace */
+	char *ns;
 
-  // fields to send
-  zval *query;
-  zval *fields;
-  int limit;
-  int batch_size;
-  int skip;
-  int opts;
+	/* fields to send */
+	zval *query;
+	zval *fields;
+	int limit;
+	int batch_size;
+	int skip;
+	int opts;
 
-  char special;
-  int timeout;
+	char special;
+	int timeout;
 
-  mongo_msg_header send;
-  mongo_msg_header recv;
+	mongo_msg_header send;
+	mongo_msg_header recv;
 
-  // response fields
-  int flag;
-  int start;
-  // number of results used
-  int at;
-  // number results returned
-  int num;
-  // results
-  buffer buf;
+	/* response fields */
+	int flag;
+	int start;
+	/* number of results used */
+	int at;
+	/* number results returned */
+	int num;
+	/* results */
+	buffer buf;
 
-  // cursor_id indicates if there are more results to fetch.  If cursor_id is 0,
-  // the cursor is "dead."  If cursor_id != 0, server is set to the server that
-  // was queried, so a get_more doesn't try to fetch results from the wrong
-  // server.  server just points to a member of link, so it should never need to
-  // be freed.
-  int64_t cursor_id;
+	/* cursor_id indicates if there are more results to fetch.  If cursor_id
+	 * is 0, the cursor is "dead."  If cursor_id != 0, server is set to the
+	 * server that was queried, so a get_more doesn't try to fetch results
+	 * from the wrong server.  server just points to a member of link, so it
+	 * should never need to be freed. */
+	int64_t cursor_id;
 
-  zend_bool started_iterating;
-  zend_bool persist;
+	zend_bool started_iterating;
+	zend_bool persist;
 
-  zval *current;
-  int retry;
+	zval *current;
+	int retry;
 
 	mongo_read_preference read_pref;
 
@@ -445,7 +441,7 @@ typedef struct {
 } mongo_cursor;
 
 /*
- * unfortunately, cursors can be freed before or after link is destroyed, so
+ * Unfortunately, cursors can be freed before or after link is destroyed, so
  * we can't actually depend on having a link to the database.  So, we're
  * going to keep a separate list of link ids associated with cursor ids.
  *
@@ -456,37 +452,37 @@ typedef struct {
  * cursors for that link.
  */
 typedef struct _cursor_node {
-  int64_t cursor_id;
-  int socket;
+	int64_t cursor_id;
+	int socket;
 
-  struct _cursor_node *next;
-  struct _cursor_node *prev;
+	struct _cursor_node *next;
+	struct _cursor_node *prev;
 } cursor_node;
 
 typedef struct {
-  zend_object std;
-  char *id;
+	zend_object std;
+	char *id;
 } mongo_id;
 
 
 typedef struct {
-  zend_object std;
-  zval *link;
-  zval *name;
+	zend_object std;
+	zval *link;
+	zval *name;
 
 	mongo_read_preference read_pref;
 } mongo_db;
 
 typedef struct {
-  zend_object std;
+	zend_object std;
 
-  // parent database
-  zval *parent;
-  zval *link;
+	/* parent database */
+	zval *parent;
+	zval *link;
 
-  // names
-  zval *name;
-  zval *ns;
+	/* names */
+	zval *name;
+	zval *ns;
 
 	mongo_read_preference read_pref;
 } mongo_collection;
@@ -494,11 +490,10 @@ typedef struct {
 
 #define BUF_REMAINING (buf->end-buf->pos)
 
-#define CREATE_BUF(buf, size)                   \
-  buf.start = (char*)emalloc(size);             \
-  buf.pos = buf.start;                          \
-  buf.end = buf.start + size;
-
+#define CREATE_BUF(buf, size) \
+	buf.start = (char*)emalloc(size); \
+	buf.pos = buf.start; \
+	buf.end = buf.start + size;
 
 PHP_MINIT_FUNCTION(mongo);
 PHP_MSHUTDOWN_FUNCTION(mongo);
@@ -506,8 +501,8 @@ PHP_RINIT_FUNCTION(mongo);
 PHP_MINFO_FUNCTION(mongo);
 
 /*
- * serialization functions
- */
+* serialization functions
+*/
 PHP_FUNCTION(bson_encode);
 PHP_FUNCTION(bson_decode);
 
@@ -515,32 +510,27 @@ PHP_FUNCTION(bson_decode);
 /*
  * Mutex macros
  */
-
 #ifdef WIN32
-#define LOCK(lk) {                              \
-    int ret = -1;                               \
-    int tries = 0;                              \
-                                                \
-    while (tries++ < 3 && ret != 0) {                 \
-      ret = WaitForSingleObject(lk##_mutex, 5000);    \
-      if (ret != 0) {                                 \
-        if (ret == WAIT_TIMEOUT) {                    \
-          continue;                                   \
-        }                                             \
-        else {                                                          \
-          break;                                                        \
-        }                                                               \
-      }                                                                 \
-    }                                                                   \
-  }
-#define UNLOCK(lk) ReleaseMutex(lk##_mutex);
+# define LOCK(lk) { \
+	int ret = -1; \
+	int tries = 0; \
+	\
+	while (tries++ < 3 && ret != 0) { \
+		ret = WaitForSingleObject(lk##_mutex, 5000); \
+		if (ret != 0) { \
+			if (ret == WAIT_TIMEOUT) { \
+				continue; \
+			} else { \
+				break; \
+			} \
+		} \
+	} \
+}
+# define UNLOCK(lk) ReleaseMutex(lk##_mutex);
 #else
-#define LOCK(lk) pthread_mutex_lock(&lk##_mutex);
-#define UNLOCK(lk) pthread_mutex_unlock(&lk##_mutex);
+# define LOCK(lk) pthread_mutex_lock(&lk##_mutex);
+# define UNLOCK(lk) pthread_mutex_unlock(&lk##_mutex);
 #endif
-
-
-
 
 void mongo_init_MongoDB(TSRMLS_D);
 void mongo_init_MongoCollection(TSRMLS_D);
@@ -567,27 +557,28 @@ void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp);
 int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preference, HashTable *tags TSRMLS_DC);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
-// php.ini options
-char *default_host;
-int default_port;
-int request_id;
-int chunk_size;
-// $ alternative
-char *cmd_char;
-int utf8;
-int native_long;
-int long_as_object;
-int allow_empty_keys;
+	/* php.ini options */
+	char *default_host;
+	int default_port;
+	int request_id;
+	int chunk_size;
 
-// _id generation helpers
-int inc, pid, machine;
+	/* $ alternative */
+	char *cmd_char;
+	int utf8;
+	int native_long;
+	int long_as_object;
+	int allow_empty_keys;
 
-// timestamp generation helper
-int ts_inc;
-char *errmsg;
-int response_num;
-int max_send_size;
-int pool_size;
+	/* _id generation helpers */
+	int inc, pid, machine;
+
+	/* timestamp generation helper */
+	int ts_inc;
+	char *errmsg;
+	int response_num;
+	int max_send_size;
+	int pool_size;
 
 	long log_level;
 	long log_module;
