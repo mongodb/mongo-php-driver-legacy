@@ -11,6 +11,7 @@ class MongoShellServer {
     }
 
     public function makeShard($mongos = 4) {
+        $this->setDBDIR();
         return $this->verifyWrite("initShard($mongos)");
     }
 
@@ -23,6 +24,7 @@ class MongoShellServer {
         $creds = $this->getCredentials();
         $root = json_encode($creds["admin"]);
         $user = json_encode($creds["user"]);
+        $this->setDBDIR();
         return $this->verifyWrite("initRS($members,$port,$auth, $root, $user)");
     }
 
@@ -31,6 +33,7 @@ class MongoShellServer {
         $auth = json_encode($auth);
         $root = json_encode($creds["admin"]);
         $user = json_encode($creds["user"]);
+        $this->setDBDIR();
         return $this->verifyWrite("initStandalone($port, $auth, $root, $user)");
     }
 
@@ -136,6 +139,22 @@ class MongoShellServer {
             "adminjs" => $adminjs,
             "userjs"  => $userjs,
         );
+    }
+
+    public function setDBDIR() {
+        require dirname(__FILE__) . "/cfg.inc.template";
+        @include dirname(__FILE__) . "/cfg.inc";
+        $dbdirjs = json_encode($DBDIR);
+        $retval = $this->verifyWrite("setDBDIR($dbdirjs)");
+        return $retval;
+
+    }
+
+    public function getDBDIR($json = false) {
+        require dirname(__FILE__) . "/cfg.inc.template";
+        @include dirname(__FILE__) . "/cfg.inc";
+
+        return $json ? json_encode($DBDIR) : $DBDIR;
     }
 
     public function getCredentials() {

@@ -138,4 +138,8 @@ function _addUser(conn, login, newuser) {
 }
 
 
+function setDBDir(dbdir) {
+    MongoRunner.dataDir = dbdir;
+    MongoRunner.dataPath = dbdir;
+}
 
