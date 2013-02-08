@@ -583,7 +583,7 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
 
 	MONGO_METHOD(MongoCursor, getNext, return_value, cursor_z);
 
-	if (EG(exception) || (Z_TYPE_P(return_value) ==IS_BOOL && Z_BVAL_P(return_value) == 0)) {
+	if (EG(exception) || (Z_TYPE_P(return_value) == IS_BOOL && Z_BVAL_P(return_value) == 0)) {
 		cursor->connection = NULL;
 		zval_ptr_dtor(&cursor_z);
 		return;

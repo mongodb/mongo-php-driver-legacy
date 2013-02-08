@@ -260,8 +260,8 @@ int php_mongo_serialize_element(const char *name, zval **data, buffer *buf, int 
 
 				php_mongo_serialize_bytes(buf, id->id, OID_SIZE);
 			}
-			else if (clazz == mongo_ce_Date) {
 			/* MongoDate */
+			else if (clazz == mongo_ce_Date) {
 				PHP_MONGO_SERIALIZE_KEY(BSON_DATE);
 				php_mongo_serialize_date(buf, *data TSRMLS_CC);
 			}
@@ -661,7 +661,8 @@ static int insert_helper(buffer *buf, zval *doc, int max TSRMLS_DC)
 	/* throw exception if serialization crapped out */
 	if (EG(exception) || FAILURE == result) {
 		return FAILURE;
-	} else if (0 == result) { /* return if there were 0 elements */
+	} else if (0 == result) {
+		/* return if there were 0 elements */
 		zend_throw_exception_ex(mongo_ce_Exception, 4 TSRMLS_CC, "no elements in doc");
 		return FAILURE;
 	}
@@ -1187,11 +1188,13 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			/* max and min keys are used only for sharding, and
 			 * cannot be resaved to the database at the moment
 			 */
+			/* MongoMinKey (0) */
 			case BSON_MINKEY: {
 				object_init_ex(value, mongo_ce_MinKey);
 				break;
 			}
 
+			/* MongoMinKey (127) */
 			case BSON_MAXKEY: {
 				object_init_ex(value, mongo_ce_MaxKey);
 				break;

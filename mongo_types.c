@@ -349,7 +349,7 @@ PHP_METHOD(MongoId, getPID)
 
 	for (i = 8; i > 6; i--) {
 		int x;
-		
+
 		x = ((int)id->id[i] < 0) ? 256 + id->id[i] : id->id[i];
 		pid = (pid * 256) + x;
 	}
