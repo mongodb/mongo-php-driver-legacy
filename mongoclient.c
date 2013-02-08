@@ -18,7 +18,7 @@
 #include <errno.h>
 
 #ifndef WIN32
-#include <sys/types.h>
+# include <sys/types.h>
 #endif
 
 #include <php.h>
@@ -53,10 +53,8 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_MongoClient;
 
-extern zend_class_entry *mongo_ce_DB,
-  *mongo_ce_Cursor,
-  *mongo_ce_Exception,
-  *mongo_ce_ConnectionException;
+extern zend_class_entry *mongo_ce_DB, *mongo_ce_Cursor, *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_ConnectionException;
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, server)
@@ -103,7 +101,7 @@ static zend_function_entry mongo_methods[] = {
 	PHP_ME(MongoClient, getHosts, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
-{ NULL, NULL, NULL }
+	{ NULL, NULL, NULL }
 };
 
 /* {{{ php_mongoclient_free
@@ -411,6 +409,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 			switch (zend_hash_get_current_key_ex(Z_ARRVAL_P(options), &opt_key, &opt_key_len, &num_key, 0, &pos)) {
 				case HASH_KEY_IS_STRING: {
 					int error = 0;
+
 					error = mongo_store_option_wrapper(link->manager, link->servers, opt_key, opt_entry, (char **)&error_message);
 
 					switch (error) {
@@ -524,7 +523,7 @@ PHP_METHOD(MongoClient, close)
 	if (error_message) {
 		free(error_message);
 	}
-  RETURN_TRUE;
+	RETURN_TRUE;
 }
 /* }}} */
 
@@ -674,7 +673,7 @@ PHP_METHOD(MongoClient, selectCollection)
 	zval *db_name, *coll_name, *temp_db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &db, &db_len, &coll, &coll_len) == FAILURE) {
-	return;
+		return;
 	}
 
 	MAKE_STD_ZVAL(db_name);
@@ -760,38 +759,37 @@ PHP_METHOD(MongoClient, dropDB)
 }
 /* }}} */
 
-
 /* {{{ MongoClient->listDBs
  */
-PHP_METHOD(MongoClient, listDBs) {
-  zval *admin, *data, *db;
+PHP_METHOD(MongoClient, listDBs)
+{
+	zval *admin, *data, *db;
 
-  MAKE_STD_ZVAL(admin);
-  ZVAL_STRING(admin, "admin", 1);
+	MAKE_STD_ZVAL(admin);
+	ZVAL_STRING(admin, "admin", 1);
 
-  MAKE_STD_ZVAL(db);
+	MAKE_STD_ZVAL(db);
 
-  MONGO_METHOD1(MongoClient, selectDB, db, getThis(), admin);
+	MONGO_METHOD1(MongoClient, selectDB, db, getThis(), admin);
 
-  zval_ptr_dtor(&admin);
+	zval_ptr_dtor(&admin);
 
-  MAKE_STD_ZVAL(data);
-  array_init(data);
-  add_assoc_long(data, "listDatabases", 1);
+	MAKE_STD_ZVAL(data);
+	array_init(data);
+	add_assoc_long(data, "listDatabases", 1);
 
-  MONGO_CMD(return_value, db);
+	MONGO_CMD(return_value, db);
 
-  zval_ptr_dtor(&data);
-  zval_ptr_dtor(&db);
+	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&db);
 }
 /* }}} */
-
 
 /* {{{ MongoClient->getHosts
  */
 PHP_METHOD(MongoClient, getHosts)
 {
-	mongoclient             *link;
+	mongoclient            *link;
 	mongo_con_manager_item *item;
 
 	PHP_MONGO_GET_LINK(getThis());
@@ -822,7 +820,6 @@ PHP_METHOD(MongoClient, getHosts)
 	}
 }
 /* }}} */
-
 
 /* {{{ proto static array Mongo::getConnections(void)
    Returns an array of all open connections, and information about each of the servers */

@@ -16,6 +16,6 @@
 #ifndef MONGO_GRIDFS_STREAM_H
 #define MONGO_GRIDFS_STREAM_H
 
-PHPAPI php_stream * gridfs_stream_init(zval * file_object TSRMLS_DC);
+PHPAPI php_stream* gridfs_stream_init(zval * file_object TSRMLS_DC);
 
 #endif /* MONGO_GRIDFS_STREAM_H */
