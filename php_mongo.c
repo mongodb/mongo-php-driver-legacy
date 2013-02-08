@@ -28,6 +28,7 @@
 #include "mongoclient.h"
 #include "mongo.h"
 #include "cursor.h"
+#include "result_exception.h"
 #include "mongo_types.h"
 
 #include "util/log.h"
@@ -156,7 +157,6 @@ PHP_MINIT_FUNCTION(mongo)
 	mongo_init_MongoDBRef(TSRMLS_C);
 
 	mongo_init_MongoExceptions(TSRMLS_C);
-	mongo_init_MongoResultException(TSRMLS_C);
 
 	mongo_init_MongoTimestamp(TSRMLS_C);
 	mongo_init_MongoInt32(TSRMLS_C);
@@ -344,6 +344,8 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 
 	INIT_CLASS_ENTRY(e2, "MongoGridFSException", NULL);
 	mongo_ce_GridFSException = zend_register_internal_class_ex(&e2, mongo_ce_Exception, NULL TSRMLS_CC);
+
+	mongo_init_MongoResultException(TSRMLS_C);
 }
 
 /* Shared helper functions */
