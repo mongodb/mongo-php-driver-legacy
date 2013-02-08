@@ -66,6 +66,7 @@ extern zend_class_entry *mongo_ce_Id, *mongo_ce_MongoClient, *mongo_ce_DB;
 extern zend_class_entry *mongo_ce_Collection, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_ConnectionException;
 extern zend_class_entry *mongo_ce_CursorTOException;
+extern zend_class_entry *mongo_ce_CursorException;
 
 extern int le_pconnection, le_cursor_list;
 
@@ -1499,33 +1500,6 @@ static zend_function_entry MongoCursor_methods[] = {
 
 	{NULL, NULL, NULL}
 };
-
-
-PHP_METHOD(MongoCursorException, getHost)
-{
-	zval *h;
-
-	h = zend_read_property(mongo_ce_CursorException, getThis(), "host", strlen("host"), NOISY TSRMLS_CC);
-
-	RETURN_ZVAL(h, 1, 0);
-}
-
-static zend_function_entry cursor_exception_methods[] = {
-	PHP_ME(MongoCursorException, getHost, NULL, ZEND_ACC_PUBLIC)
-
-	{NULL, NULL, NULL}
-};
-
-void mongo_init_CursorExceptions(TSRMLS_D)
-{
-	zend_class_entry ce;
-
-	INIT_CLASS_ENTRY(ce, "MongoCursorException", cursor_exception_methods);
-	mongo_ce_CursorException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
-
-	zend_declare_property_null(mongo_ce_CursorException, "host", strlen("host"), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_long(mongo_ce_CursorException, "fd", strlen("fd"), 0, ZEND_ACC_PRIVATE TSRMLS_CC);
-}
 
 zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char *format, ...)
 {

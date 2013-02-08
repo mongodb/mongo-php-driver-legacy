@@ -28,6 +28,7 @@
 #include "mongoclient.h"
 #include "mongo.h"
 #include "cursor.h"
+#include "cursor_exception.h"
 #include "result_exception.h"
 #include "mongo_types.h"
 
@@ -334,7 +335,7 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 
 	mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
 
-	mongo_init_CursorExceptions(TSRMLS_C);
+	mongo_init_MongoCursorException(TSRMLS_C);
 
 	INIT_CLASS_ENTRY(ctoe, "MongoCursorTimeoutException", NULL);
 	mongo_ce_CursorTOException = zend_register_internal_class_ex(&ctoe, mongo_ce_CursorException, NULL TSRMLS_CC);
