@@ -61,4 +61,3 @@ PHP_METHOD(MongoTimestamp, __construct);
 PHP_METHOD(MongoTimestamp, __toString);
 
 #endif
-

@@ -27,9 +27,8 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 zend_class_entry *mongo_ce_Mongo;
 
-extern zend_class_entry *mongo_ce_MongoClient,
-	*mongo_ce_DB,
-	*mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_DB;
+extern zend_class_entry *mongo_ce_Exception;
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, server)
@@ -132,7 +131,8 @@ PHP_METHOD(Mongo, setSlaveOkay)
 }
 
 
-static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC) {
+static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC)
+{
 	zval *db_name, *db;
 	MAKE_STD_ZVAL(db_name);
 	ZVAL_STRING(db_name, "admin", 1);
@@ -159,37 +159,35 @@ static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC) 
 	zval_ptr_dtor(&db);
 }
 
-/* {{{ Mongo->lastError()
-*/
-PHP_METHOD(Mongo, lastError) {
+/* {{{ Mongo->lastError() */
+PHP_METHOD(Mongo, lastError)
+{
 	run_err(LAST_ERROR, return_value, getThis() TSRMLS_CC);
 }
 /* }}} */
 
-
-/* {{{ Mongo->prevError()
-*/
-PHP_METHOD(Mongo, prevError) {
+/* {{{ Mongo->prevError() */
+PHP_METHOD(Mongo, prevError)
+{
 	run_err(PREV_ERROR, return_value, getThis() TSRMLS_CC);
 }
 /* }}} */
 
-
-/* {{{ Mongo->resetError()
-*/
-PHP_METHOD(Mongo, resetError) {
+/* {{{ Mongo->resetError() */
+PHP_METHOD(Mongo, resetError)
+{
 	run_err(RESET_ERROR, return_value, getThis() TSRMLS_CC);
 }
 /* }}} */
-/* {{{ Mongo->forceError()
-*/
-PHP_METHOD(Mongo, forceError) {
+
+/* {{{ Mongo->forceError() */
+PHP_METHOD(Mongo, forceError)
+{
 	run_err(FORCE_ERROR, return_value, getThis() TSRMLS_CC);
 }
 /* }}} */
 
-/* {{{ Mongo->connectUtil
- */
+/* {{{ Mongo->connectUtil */
 PHP_METHOD(Mongo, connectUtil)
 {
 	mongoclient *link;
@@ -199,6 +197,7 @@ PHP_METHOD(Mongo, connectUtil)
 }
 /* }}} */
 
+/* {{{ Mongo->switchSlave */
 PHP_METHOD(Mongo, switchSlave)
 {
 	zim_Mongo_getSlave(INTERNAL_FUNCTION_PARAM_PASSTHRU);

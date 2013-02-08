@@ -85,15 +85,13 @@ PHP_METHOD(MongoCursor, reset);
 PHP_METHOD(MongoCursor, count);
 PHP_METHOD(MongoCursor, info);
 
-#define PREITERATION_SETUP                                              \
-  PHP_MONGO_GET_CURSOR(getThis());                                      \
-                                                                        \
-  if (cursor->started_iterating) {                                      \
-    zend_throw_exception(mongo_ce_CursorException,                      \
-                         "cannot modify cursor after beginning iteration.", 0 \
-                         TSRMLS_CC);                                    \
-    return;                                                             \
-  }
+#define PREITERATION_SETUP \
+	PHP_MONGO_GET_CURSOR(getThis()); \
+	\
+	if (cursor->started_iterating) { \
+		zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC); \
+		return; \
+	}
 
 PHP_METHOD(MongoCursorException, getHost);
 
