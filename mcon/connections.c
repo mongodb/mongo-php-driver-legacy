@@ -242,7 +242,15 @@ error:
 
 mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_server_def *server_def, mongo_server_options *options, char **error_message)
 {
+	char *hash;
 	mongo_connection *tmp;
+
+	/* We need to make sure this server definition isn't blacklisted (could be known to be bad node or down) */
+	hash = mongo_server_create_hash(server_def);
+	if (mongo_manager_connection_blacklist_search(manager, hash)) {
+		free(hash);
+		return NULL;
+	}
 
 	/* Init struct */
 	tmp = malloc(sizeof(mongo_connection));
@@ -254,6 +262,7 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_create: creating new connection for %s:%d", server_def->host, server_def->port);
 	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, options->connectTimeoutMS, error_message);
 	if (tmp->socket == -1) {
+		mongo_manager_connection_blacklist_add(manager, hash);
 		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error while creating connection for %s:%d: %s", server_def->host, server_def->port, *error_message);
 		free(tmp);
 		return NULL;
@@ -262,6 +271,7 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 	/* We call get_server_flags to the maxBsonObjectSize data */
 	mongo_connection_get_server_flags(manager, tmp, options, (char**) &error_message);
 
+	free(hash);
 	return tmp;
 }
 

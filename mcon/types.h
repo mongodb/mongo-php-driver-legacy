@@ -90,6 +90,12 @@ typedef unsigned __int64 uint64_t;
 #define MONGO_DEFAULT_MAX_DOCUMENT_SIZE (16 * 1024 * 1024)
 #define MONGO_DEFAULT_MAX_MESSAGE_SIZE  (32 * 1024 * 1024)
 
+
+/* FIXME: This should be dynamic.. Although mongod doesn't allow more then 12
+ * replicaset members, there is nothing preventing us from connecting to 20 mongos' */
+#define MAX_SERVERS_LIMIT   16
+
+
 typedef int (mongo_cleanup_t)(void *callback_data);
 
 typedef struct _mongo_connection_deregister_callback
@@ -134,6 +140,8 @@ typedef void (mongo_log_callback_t)(int module, int level, void *context, char *
 typedef struct _mongo_con_manager
 {
 	mongo_con_manager_item *connections;
+	char                   *blacklist[MAX_SERVERS_LIMIT]; /* TODO: We only support 16 servers at the moment anyway */
+	long                    blacklist_count;
 
 	/* context and callback function that is used to send logging information
 	 * through */
@@ -185,7 +193,7 @@ typedef struct _mongo_server_options
 typedef struct _mongo_servers
 {
 	int                   count;
-	mongo_server_def     *server[16]; /* TODO: Make this dynamic */
+	mongo_server_def     *server[MAX_SERVERS_LIMIT]; /* TODO: Make this dynamic */
 
 	/* flags and options */
 	mongo_server_options  options;

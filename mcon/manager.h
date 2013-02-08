@@ -33,6 +33,9 @@ mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manag
 void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connection *con);
 int mongo_manager_connection_deregister(mongo_con_manager *manager, mongo_connection *con);
 int mongo_deregister_callback_from_connection(mongo_connection *connection, void *cursor);
+/* Connection blacklisting */
+void mongo_manager_connection_blacklist_add(mongo_con_manager *manager, char *hash);
+int mongo_manager_connection_blacklist_search(mongo_con_manager *manager, char *hash);
 
 /* Logging */
 void mongo_log_null(int module, int level, void *context, char *format, va_list arg);

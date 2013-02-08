@@ -147,7 +147,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					mongo_connection *new_con;
 					char *con_error_message = NULL;
 
-					/* Create a temp server definition to create a new connection */
+					/* Create a temp server definition to create a new connection on-demand if we didn't have one already */
 					tmp_def = calloc(1, sizeof(mongo_server_def));
 					tmp_def->username = servers->server[i]->username ? strdup(servers->server[i]->username) : NULL;
 					tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;
@@ -206,7 +206,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	int i;
 	int found_connected_server = 0;
 
-	/* Create a connection to every of the servers in the seed list */
+	/* Create a connection to every all the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
 		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
@@ -546,6 +546,7 @@ mongo_con_manager *mongo_init(void)
 	tmp = malloc(sizeof(mongo_con_manager));
 	memset(tmp, 0, sizeof(mongo_con_manager));
 
+	tmp->blacklist_count = 0;
 	tmp->log_context = NULL;
 	tmp->log_function = mongo_log_null;
 
@@ -557,10 +558,47 @@ mongo_con_manager *mongo_init(void)
 
 void mongo_deinit(mongo_con_manager *manager)
 {
+	int i;
 	if (manager->connections) {
 		/* Does this recursively for all cons */
 		destroy_manager_item(manager, manager->connections);
 	}
+	for(i=0; i<manager->blacklist_count; i++) {
+		free(manager->blacklist[i]);
+	}
 
 	free(manager);
 }
+
+
+void mongo_manager_connection_blacklist_add(mongo_con_manager *manager, char *hash)
+{
+	if (manager->blacklist_count > MAX_SERVERS_LIMIT) {
+		return;
+	}
+
+	manager->blacklist[manager->blacklist_count++] = hash;
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "Added %s to BLACKLIST", hash);
+}
+
+int mongo_manager_connection_blacklist_search(mongo_con_manager *manager, char *hash)
+{
+	int i;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "Checking if %s is BLACKLIST", hash);
+	if (manager->blacklist_count == 0) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "BLACKLIST empty");
+		return 0;
+	}
+
+	for (i=0; i<manager->blacklist_count; i++) {
+		if (strcmp(manager->blacklist[i], hash) == 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "%s IS BLACKLIST", hash);
+			return 1;
+		}
+	}
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "...nope");
+	return 0;
+}
+
