@@ -33,6 +33,7 @@
 #include "connection_exception.h"
 #include "cursor_exception.h"
 #include "cursor_timeout_exception.h"
+#include "gridfs_exception.h"
 #include "result_exception.h"
 
 #include "mongo_types.h"
@@ -47,8 +48,8 @@ extern zend_object_handlers mongo_default_handlers, mongo_id_handlers;
 /** Classes */
 extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
 extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_GridFSException;
 
-zend_class_entry *mongo_ce_GridFSException;
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
 
 /** Resources */
@@ -334,16 +335,11 @@ PHP_MINFO_FUNCTION(mongo)
 
 static void mongo_init_MongoExceptions(TSRMLS_D)
 {
-	zend_class_entry e2;
-
 	mongo_init_MongoException(TSRMLS_C);
 	mongo_init_MongoConnectionException(TSRMLS_C);
 	mongo_init_MongoCursorException(TSRMLS_C);
 	mongo_init_MongoCursorTimeoutException(TSRMLS_C);
-
-	INIT_CLASS_ENTRY(e2, "MongoGridFSException", NULL);
-	mongo_ce_GridFSException = zend_register_internal_class_ex(&e2, mongo_ce_Exception, NULL TSRMLS_CC);
-
+	mongo_init_MongoGridFSException(TSRMLS_C);
 	mongo_init_MongoResultException(TSRMLS_C);
 }
 
