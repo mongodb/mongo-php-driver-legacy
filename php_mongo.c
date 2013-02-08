@@ -67,9 +67,7 @@ zend_function_entry mongo_functions[] = {
 /* {{{ mongo_module_entry
  */
 zend_module_entry mongo_module_entry = {
-#if ZEND_MODULE_API_NO >= 20010901
 	STANDARD_MODULE_HEADER,
-#endif
 	PHP_MONGO_EXTNAME,
 	mongo_functions,
 	PHP_MINIT(mongo),
@@ -78,15 +76,11 @@ zend_module_entry mongo_module_entry = {
 	NULL,
 	PHP_MINFO(mongo),
 	PHP_MONGO_VERSION,
-#if ZEND_MODULE_API_NO >= 20060613
 	PHP_MODULE_GLOBALS(mongo),
 	PHP_GINIT(mongo),
 	PHP_GSHUTDOWN(mongo),
 	NULL,
 	STANDARD_MODULE_PROPERTIES_EX
-#else
-	STANDARD_MODULE_PROPERTIES
-#endif
 };
 /* }}} */
 
@@ -140,10 +134,6 @@ PHP_INI_END()
 PHP_MINIT_FUNCTION(mongo)
 {
 	zend_class_entry max_key, min_key;
-
-#if ZEND_MODULE_API_NO < 20060613
-	ZEND_INIT_MODULE_GLOBALS(mongo, mongo_init_globals, NULL);
-#endif
 
 	REGISTER_INI_ENTRIES();
 	le_cursor_list = zend_register_list_destructors_ex(NULL, php_mongo_cursor_list_pfree, PHP_CURSOR_LIST_RES_NAME, module_number);
@@ -342,11 +332,7 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 
 	INIT_CLASS_ENTRY(e, "MongoException", NULL);
 
-#if ZEND_MODULE_API_NO >= 20060613
 	mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
-#else
-	mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(), NULL TSRMLS_CC);
-#endif
 
 	mongo_init_CursorExceptions(TSRMLS_C);
 
