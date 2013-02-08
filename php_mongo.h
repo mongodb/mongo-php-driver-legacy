@@ -638,7 +638,7 @@ extern zend_module_entry mongo_module_entry;
  * 24: (unused)
  * 25: Option with no string key
  *
- * MongoCursorTOException:
+ * MongoCursorTimeoutException:
  * 80: timeout exception
  *
  * MongoCursorException:

@@ -37,6 +37,7 @@ typedef __int64 int64_t;
 #include "collection.h"
 #include "mongo_types.h"
 #include "util/log.h"
+#include "cursor_timeout_exception.h"
 
 #if WIN32
 HANDLE cursor_mutex;
@@ -65,8 +66,8 @@ static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 extern zend_class_entry *mongo_ce_Id, *mongo_ce_MongoClient, *mongo_ce_DB;
 extern zend_class_entry *mongo_ce_Collection, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_ConnectionException;
-extern zend_class_entry *mongo_ce_CursorTOException;
 extern zend_class_entry *mongo_ce_CursorException;
+extern zend_class_entry *mongo_ce_CursorTimeoutException;
 
 extern int le_pconnection, le_cursor_list;
 
@@ -1517,7 +1518,7 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 	 * choose mongo_ce_CursorException for everything but status 80, which is a
 	 * cursor timeout instead. */
 	if (code == 80) {
-		exception_ce = mongo_ce_CursorTOException;
+		exception_ce = mongo_ce_CursorTimeoutException;
 	} else {
 		exception_ce = mongo_ce_CursorException;
 	}
