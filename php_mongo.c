@@ -28,6 +28,7 @@
 #include "mongoclient.h"
 #include "mongo.h"
 #include "cursor.h"
+#include "connection_exception.h"
 #include "cursor_exception.h"
 #include "cursor_timeout_exception.h"
 #include "result_exception.h"
@@ -42,8 +43,8 @@ extern zend_object_handlers mongo_default_handlers, mongo_id_handlers;
 
 /** Classes */
 extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
+extern zend_class_entry *mongo_ce_ConnectionException;
 
-zend_class_entry *mongo_ce_ConnectionException;
 zend_class_entry *mongo_ce_GridFSException, *mongo_ce_Exception;
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
 
@@ -330,17 +331,15 @@ PHP_MINFO_FUNCTION(mongo)
 
 static void mongo_init_MongoExceptions(TSRMLS_D)
 {
-	zend_class_entry e, conn, e2;
+	zend_class_entry e, e2;
 
 	INIT_CLASS_ENTRY(e, "MongoException", NULL);
 
 	mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
 
+	mongo_init_MongoConnectionException(TSRMLS_C);
 	mongo_init_MongoCursorException(TSRMLS_C);
 	mongo_init_MongoCursorTimeoutException(TSRMLS_C);
-
-	INIT_CLASS_ENTRY(conn, "MongoConnectionException", NULL);
-	mongo_ce_ConnectionException = zend_register_internal_class_ex(&conn, mongo_ce_Exception, NULL TSRMLS_CC);
 
 	INIT_CLASS_ENTRY(e2, "MongoGridFSException", NULL);
 	mongo_ce_GridFSException = zend_register_internal_class_ex(&e2, mongo_ce_Exception, NULL TSRMLS_CC);

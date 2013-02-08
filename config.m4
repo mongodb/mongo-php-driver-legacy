@@ -5,7 +5,7 @@ PHP_MONGO_CFLAGS="-I@ext_builddir@/util"
 
 if test "$PHP_MONGO" != "no"; then
   AC_DEFINE(HAVE_MONGO, 1, [Whether you have Mongo extension])
-  PHP_NEW_EXTENSION(mongo, php_mongo.c mongo.c mongoclient.c mongo_types.c bson.c cursor.c collection.c db.c gridfs.c gridfs_stream.c cursor_exception.c cursor_timeout_exception.c result_exception.c util/hash.c util/log.c util/pool.c mcon/bson_helpers.c mcon/collection.c mcon/connections.c mcon/io.c mcon/manager.c mcon/mini_bson.c mcon/parse.c mcon/read_preference.c mcon/str.c mcon/utils.c, $ext_shared,, $PHP_MONGO_CFLAGS)
+  PHP_NEW_EXTENSION(mongo, php_mongo.c mongo.c mongoclient.c mongo_types.c bson.c cursor.c collection.c db.c gridfs.c gridfs_stream.c connection_exception.c cursor_exception.c cursor_timeout_exception.c result_exception.c util/hash.c util/log.c util/pool.c mcon/bson_helpers.c mcon/collection.c mcon/connections.c mcon/io.c mcon/manager.c mcon/mini_bson.c mcon/parse.c mcon/read_preference.c mcon/str.c mcon/utils.c, $ext_shared,, $PHP_MONGO_CFLAGS)
 
   PHP_ADD_BUILD_DIR([$ext_builddir/util], 1)
   PHP_ADD_INCLUDE([$ext_builddir/util])
