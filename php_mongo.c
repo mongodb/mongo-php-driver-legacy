@@ -29,12 +29,12 @@
 #include "mongo.h"
 #include "cursor.h"
 
-#include "exception.h"
-#include "connection_exception.h"
-#include "cursor_exception.h"
-#include "cursor_timeout_exception.h"
-#include "gridfs_exception.h"
-#include "result_exception.h"
+#include "exceptions/exception.h"
+#include "exceptions/connection_exception.h"
+#include "exceptions/cursor_exception.h"
+#include "exceptions/cursor_timeout_exception.h"
+#include "exceptions/gridfs_exception.h"
+#include "exceptions/result_exception.h"
 
 #include "mongo_types.h"
 

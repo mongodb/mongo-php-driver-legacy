@@ -37,7 +37,7 @@ typedef __int64 int64_t;
 #include "collection.h"
 #include "mongo_types.h"
 #include "util/log.h"
-#include "cursor_timeout_exception.h"
+#include "exceptions/cursor_timeout_exception.h"
 
 #if WIN32
 HANDLE cursor_mutex;
