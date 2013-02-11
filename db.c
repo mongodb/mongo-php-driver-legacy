@@ -23,7 +23,7 @@
 #include "db.h"
 #include "collection.h"
 #include "cursor.h"
-#include "gridfs.h"
+#include "gridfs/gridfs.h"
 #include "types/code.h"
 #include "types/db_ref.h"
 #include "mcon/manager.h"

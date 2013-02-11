@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-#ifndef MONGO_GRIDFS_H
-#define MONGO_GRIDFS_H
+#ifndef __GRIDFS_GRIDFS_H__
+#define __GRIDFS_GRIDFS_H__
 
 PHP_METHOD(MongoGridFS, __construct);
 PHP_METHOD(MongoGridFS, drop);
@@ -28,14 +28,6 @@ PHP_METHOD(MongoGridFS, get);
 PHP_METHOD(MongoGridFS, put);
 PHP_METHOD(MongoGridFS, delete);
 
-PHP_METHOD(MongoGridFSFile, __construct);
-PHP_METHOD(MongoGridFSFile, getFilename);
-PHP_METHOD(MongoGridFSFile, getSize);
-PHP_METHOD(MongoGridFSFile, write);
-PHP_METHOD(MongoGridFSFile, getBytes);
+void php_mongo_ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC);
 
-PHP_METHOD(MongoGridFSCursor, __construct);
-PHP_METHOD(MongoGridFSCursor, getNext);
-PHP_METHOD(MongoGridFSCursor, current);
-
-#endif /* MONGO_GRIDFS_H */
+#endif
