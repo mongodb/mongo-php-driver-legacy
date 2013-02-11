@@ -26,10 +26,5 @@ void mongo_init_MongoException(TSRMLS_D)
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "MongoException", NULL);
-#if ZEND_MODULE_API_NO >= 20060613
 	mongo_ce_Exception = zend_register_internal_class_ex(&ce, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
-#else
-	mongo_ce_Exception = zend_register_internal_class_ex(&ce, (zend_class_entry*)zend_exception_get_default(), NULL TSRMLS_CC);
-#endif
-
 }
