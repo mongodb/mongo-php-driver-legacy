@@ -28,6 +28,14 @@
 #include "mongoclient.h"
 #include "mongo.h"
 #include "cursor.h"
+
+#include "exceptions/exception.h"
+#include "exceptions/connection_exception.h"
+#include "exceptions/cursor_exception.h"
+#include "exceptions/cursor_timeout_exception.h"
+#include "exceptions/gridfs_exception.h"
+#include "exceptions/result_exception.h"
+
 #include "mongo_types.h"
 
 #include "util/log.h"
@@ -39,9 +47,9 @@ extern zend_object_handlers mongo_default_handlers, mongo_id_handlers;
 
 /** Classes */
 extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
+extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_GridFSException;
 
-zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_CursorTOException;
-zend_class_entry *mongo_ce_GridFSException, *mongo_ce_Exception;
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
 
 /** Resources */
@@ -156,7 +164,6 @@ PHP_MINIT_FUNCTION(mongo)
 	mongo_init_MongoDBRef(TSRMLS_C);
 
 	mongo_init_MongoExceptions(TSRMLS_C);
-	mongo_init_MongoResultException(TSRMLS_C);
 
 	mongo_init_MongoTimestamp(TSRMLS_C);
 	mongo_init_MongoInt32(TSRMLS_C);
@@ -328,22 +335,12 @@ PHP_MINFO_FUNCTION(mongo)
 
 static void mongo_init_MongoExceptions(TSRMLS_D)
 {
-	zend_class_entry e, conn, e2, ctoe;
-
-	INIT_CLASS_ENTRY(e, "MongoException", NULL);
-
-	mongo_ce_Exception = zend_register_internal_class_ex(&e, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
-
-	mongo_init_CursorExceptions(TSRMLS_C);
-
-	INIT_CLASS_ENTRY(ctoe, "MongoCursorTimeoutException", NULL);
-	mongo_ce_CursorTOException = zend_register_internal_class_ex(&ctoe, mongo_ce_CursorException, NULL TSRMLS_CC);
-
-	INIT_CLASS_ENTRY(conn, "MongoConnectionException", NULL);
-	mongo_ce_ConnectionException = zend_register_internal_class_ex(&conn, mongo_ce_Exception, NULL TSRMLS_CC);
-
-	INIT_CLASS_ENTRY(e2, "MongoGridFSException", NULL);
-	mongo_ce_GridFSException = zend_register_internal_class_ex(&e2, mongo_ce_Exception, NULL TSRMLS_CC);
+	mongo_init_MongoException(TSRMLS_C);
+	mongo_init_MongoConnectionException(TSRMLS_C);
+	mongo_init_MongoCursorException(TSRMLS_C);
+	mongo_init_MongoCursorTimeoutException(TSRMLS_C);
+	mongo_init_MongoGridFSException(TSRMLS_C);
+	mongo_init_MongoResultException(TSRMLS_C);
 }
 
 /* Shared helper functions */
