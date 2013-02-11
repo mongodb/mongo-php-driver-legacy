@@ -44,11 +44,11 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 static int get_limit(mongo_cursor *cursor);
 static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC);
-#if ZEND_MODULE_API_NO >= 20090115
+#if PHP_VERSION_ID >= 50300
 static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key);
 #else
 static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key);
-#endif /* ZEND_MODULE_API_NO >= 20090115 */
+#endif
 static int is_utf8(const char *s, int len);
 static int insert_helper(buffer *buf, zval *doc, int max TSRMLS_DC);
 
@@ -104,7 +104,7 @@ int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC)
 			num++;
 		}
 
-#if ZEND_MODULE_API_NO >= 20090115
+#if PHP_VERSION_ID >= 50300
 		zend_hash_apply_with_arguments(hash TSRMLS_CC, (apply_func_args_t)apply_func_args_wrapper, 3, buf, prep, &num);
 #else
 		zend_hash_apply_with_arguments(hash, (apply_func_args_t)apply_func_args_wrapper, 4, buf, prep, &num TSRMLS_CC);
@@ -116,7 +116,7 @@ int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC)
 	return EG(exception) ? FAILURE : num;
 }
 
-#if ZEND_MODULE_API_NO >= 20090115
+#if PHP_VERSION_ID >= 50300
 static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key)
 #else
 static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key)
@@ -125,7 +125,7 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
 	buffer *buf = va_arg(args, buffer*);
 	int prep = va_arg(args, int);
 	int *num = va_arg(args, int*);
-#if ZEND_MODULE_API_NO < 20090115
+#if ZTS && PHP_VERSION_ID < 50300
 	void ***tsrm_ls = va_arg(args, void***);
 #endif
 
@@ -1373,12 +1373,8 @@ PHP_FUNCTION(bson_encode)
 		}
 
 		default:
-#if ZEND_MODULE_API_NO >= 20060613
-		zend_throw_exception(zend_exception_get_default(TSRMLS_C), "couldn't serialize element", 0 TSRMLS_CC);
-#else
-		zend_throw_exception(zend_exception_get_default(), "couldn't serialize element", 0 TSRMLS_CC);
-#endif
-		return;
+			zend_throw_exception(zend_exception_get_default(TSRMLS_C), "couldn't serialize element", 0 TSRMLS_CC);
+			return;
 	}
 }
 

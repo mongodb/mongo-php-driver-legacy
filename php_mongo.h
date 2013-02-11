@@ -136,7 +136,7 @@ typedef __int64 int64_t;
 # define MONGO_ARGINFO_STATIC static
 #endif
 
-#if ZEND_MODULE_API_NO >= 20090115
+#if PHP_VERSION_ID >= 50300
 # define PUSH_PARAM(arg) zend_vm_stack_push(arg TSRMLS_CC)
 # define POP_PARAM() (void)zend_vm_stack_pop(TSRMLS_C)
 # define PUSH_EO_PARAM()
@@ -148,7 +148,7 @@ typedef __int64 int64_t;
 # define POP_EO_PARAM() (void)zend_ptr_stack_pop(&EG(argument_stack))
 #endif
 
-#if ZEND_MODULE_API_NO > 20060613
+#if PHP_VERSION_ID >= 50300
 # define MONGO_E_DEPRECATED E_DEPRECATED
 #else
 # define MONGO_E_DEPRECATED E_STRICT
@@ -181,13 +181,7 @@ typedef __int64 int64_t;
 } while(0);
 #endif
 
-#if ZEND_MODULE_API_NO >= 20060613
-/* normal, nice method */
-# define MONGO_METHOD_BASE(classname, name) zim_##classname##_##name
-#else
-/* gah!  wtf, php 5.1? */
-# define MONGO_METHOD_BASE(classname, name) zif_##classname##_##name
-#endif
+#define MONGO_METHOD_BASE(classname, name) zim_##classname##_##name
 
 #define MONGO_METHOD_HELPER(classname, name, retval, thisptr, num, param) \
 	PUSH_PARAM(param); PUSH_PARAM((void*)num);				\
@@ -239,7 +233,7 @@ typedef __int64 int64_t;
   ((Z_TYPE_PP(variable) == IS_LONG && Z_LVAL_PP(variable) == value) ||  \
    (Z_TYPE_PP(variable) == IS_DOUBLE && Z_DVAL_PP(variable) == value))
 
-#if ZEND_MODULE_API_NO >= 20100525
+#if PHP_VERSION_ID >= 50400
 # define init_properties(intern) object_properties_init(&intern->std, class_type)
 #else
 # define init_properties(intern) {                                     \
