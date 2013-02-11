@@ -59,11 +59,7 @@ PHP_METHOD(MongoCollection, __construct)
 
 	/* check for empty collection name */
 	if (name_len == 0) {
-#if ZEND_MODULE_API_NO >= 20060613
 		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
-#else
-		zend_throw_exception_ex(zend_exception_get_default(), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
-#endif
 		return;
 	}
 
