@@ -36,7 +36,6 @@ typedef __int64 int64_t;
 #include "gridfs_stream.h"
 #include "collection.h"
 #include "cursor.h"
-#include "mongo_types.h"
 #include "db.h"
 
 extern zend_class_entry *mongo_ce_BinData, *mongo_ce_GridFS;

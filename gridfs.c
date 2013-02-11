@@ -27,7 +27,8 @@ typedef __int64 int64_t;
 #include "gridfs_stream.h"
 #include "collection.h"
 #include "cursor.h"
-#include "mongo_types.h"
+#include "types/date.h"
+#include "types/id.h"
 #include "db.h"
 
 #include "ext/standard/php_smart_str.h"
