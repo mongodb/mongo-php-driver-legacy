@@ -312,6 +312,7 @@ PHP_RINIT_FUNCTION(mongo)
 {
 	MonGlo(log_level) = 0;
 	MonGlo(log_module) = 0;
+	MonGlo(inc) = rand() & 0xFFFFFF;
 
 	return SUCCESS;
 }
