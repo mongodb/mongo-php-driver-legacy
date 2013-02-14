@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-#ifndef MONGO_GRIDFS_STREAM_H
-#define MONGO_GRIDFS_STREAM_H
+#ifndef __TYPES_INT32_H__
+#define __TYPES_INT32_H__
 
-PHPAPI php_stream* gridfs_stream_init(zval * file_object TSRMLS_DC);
+PHP_METHOD(MongoInt32, __construct);
+PHP_METHOD(MongoInt32, __toString);
 
-#endif /* MONGO_GRIDFS_STREAM_H */
+#endif

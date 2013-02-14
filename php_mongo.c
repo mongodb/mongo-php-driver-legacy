@@ -36,7 +36,7 @@
 #include "exceptions/gridfs_exception.h"
 #include "exceptions/result_exception.h"
 
-#include "mongo_types.h"
+#include "types/id.h"
 
 #include "util/log.h"
 #include "util/pool.h"

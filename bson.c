@@ -25,7 +25,7 @@
 
 #include "php_mongo.h"
 #include "bson.h"
-#include "mongo_types.h"
+#include "types/id.h"
 
 extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_Code,
