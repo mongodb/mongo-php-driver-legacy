@@ -35,7 +35,6 @@ typedef __int64 int64_t;
 #include "db.h"
 #include "cursor.h"
 #include "collection.h"
-#include "mongo_types.h"
 #include "util/log.h"
 #include "exceptions/cursor_timeout_exception.h"
 

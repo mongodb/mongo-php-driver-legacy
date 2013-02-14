@@ -29,7 +29,6 @@
 #include "mongoclient.h"
 #include "db.h"
 #include "cursor.h"
-#include "mongo_types.h"
 #include "bson.h"
 
 #include "util/log.h"
