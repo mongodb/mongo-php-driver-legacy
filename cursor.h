@@ -95,8 +95,6 @@ PHP_METHOD(MongoCursor, info);
 
 PHP_METHOD(MongoCursorException, getHost);
 
-void mongo_init_CursorExceptions(TSRMLS_D);
-
 /**
  * Throw a MongoCursorException with the given code and message.
  * Uses the server to fill in information about the connection that cause the

@@ -529,7 +529,6 @@ PHP_FUNCTION(bson_decode);
 void mongo_init_MongoDB(TSRMLS_D);
 void mongo_init_MongoCollection(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);
-void mongo_init_MongoResultException(TSRMLS_D);
 
 void mongo_init_MongoGridFS(TSRMLS_D);
 void mongo_init_MongoGridFSFile(TSRMLS_D);
@@ -639,7 +638,7 @@ extern zend_module_entry mongo_module_entry;
  * 24: (unused)
  * 25: Option with no string key
  *
- * MongoCursorTOException:
+ * MongoCursorTimeoutException:
  * 80: timeout exception
  *
  * MongoCursorException:

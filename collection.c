@@ -26,12 +26,10 @@
 #include "mcon/io.h"
 
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_DB, *mongo_ce_Cursor;
-extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception, *mongo_ce_ResultException;
 
 extern int le_pconnection, le_connection;
 extern zend_object_handlers mongo_default_handlers;
-
-zend_class_entry *mongo_ce_ResultException;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
@@ -1623,18 +1621,6 @@ PHP_METHOD(MongoCollection, __get)
 }
 /* }}} */
 
-/* {{{ proto array MongoResultException::getDocument(void)
- * Returns the full result document from mongodb */
-PHP_METHOD(MongoResultException, getDocument)
-{
-	zval *h;
-
-	h = zend_read_property(mongo_ce_ResultException, getThis(), "document", strlen("document"), NOISY TSRMLS_CC);
-
-	RETURN_ZVAL(h, 1, 0);
-}
-/* }}} */
-
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, database, MongoDB, 0)
@@ -1744,9 +1730,6 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregate, 0, 0, 1)
 	ZEND_ARG_INFO(0, ...)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_getdocument, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
 static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
@@ -1777,11 +1760,6 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, group, arginfo_group, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, distinct, arginfo_distinct, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, aggregate, arginfo_aggregate, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
-};
-
-static zend_function_entry MongoResultException_methods[] = {
-	PHP_ME(MongoResultException, getDocument, arginfo_getdocument, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
@@ -1865,14 +1843,4 @@ void mongo_init_MongoCollection(TSRMLS_D) {
 
 	zend_declare_property_long(mongo_ce_Collection, "w", strlen("w"), 1, ZEND_ACC_PUBLIC TSRMLS_CC);
 	zend_declare_property_long(mongo_ce_Collection, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_WTIMEOUT, ZEND_ACC_PUBLIC TSRMLS_CC);
-}
-
-void mongo_init_MongoResultException(TSRMLS_D)
-{
-	zend_class_entry ce;
-
-	INIT_CLASS_ENTRY(ce, "MongoResultException", MongoResultException_methods);
-	mongo_ce_ResultException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
-
-	zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC TSRMLS_CC);
 }
