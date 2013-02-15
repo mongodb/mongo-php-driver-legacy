@@ -397,6 +397,8 @@ PHP_METHOD(MongoCursor, hasNext)
 		return;
 	}
 
+	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_INFO, "Sending: Get more data");
+
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
 		efree(buf.start);
 
@@ -1035,6 +1037,8 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 		efree(buf.start);
 		return FAILURE;
 	}
+
+	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_INFO, "Sending: query");
 
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {
