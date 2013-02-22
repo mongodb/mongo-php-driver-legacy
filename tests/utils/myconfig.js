@@ -132,7 +132,7 @@ function restartMaster() {
 }
 
 
-function setDBDir(dbdir) {
+function setDBDIR(dbdir) {
     MongoRunner.dataDir = dbdir;
     MongoRunner.dataPath = dbdir;
 }
