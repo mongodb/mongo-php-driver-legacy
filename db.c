@@ -293,40 +293,60 @@ PHP_METHOD(MongoDB, repair)
 
 PHP_METHOD(MongoDB, createCollection)
 {
-	zval *collection, *data, *temp;
+	zval *data = NULL, *temp, *options = NULL;
+	char *collection;
+	int   collection_len;
 	zend_bool capped = 0;
 	long size = 0, max = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|bll", &collection, &capped, &size, &max) == FAILURE) {
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "s|bll", &collection, &collection_len, &capped, &size, &max) == SUCCESS) {
+		MAKE_STD_ZVAL(data);
+		array_init(data);
+
+		add_assoc_stringl(data, "create", collection, collection_len, 1);
+
+		if (size) {
+			add_assoc_long(data, "size", size);
+		}
+
+		if (capped) {
+			add_assoc_bool(data, "capped", 1);
+			if (max) {
+				add_assoc_long(data, "max", max);
+			}
+		}
+
+	} else if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &collection, &collection_len, &options) == SUCCESS) {
+		zval *tmp_copy;
+
+		/* We create a new array here, instead of just tagging "create" =>
+		 * <name> at the end of the array. This is because MongoDB wants the
+		 * name of the command as first element in the array. */
+		MAKE_STD_ZVAL(data);
+		array_init(data);
+		add_assoc_stringl(data, "create", collection, collection_len, 1);
+		if (options) {
+			zend_hash_merge(Z_ARRVAL_P(data), Z_ARRVAL_P(options), (copy_ctor_func_t) zval_add_ref, (void *) &tmp_copy, sizeof(zval *), 0);
+		}
+	} else {
+
 		return;
 	}
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	convert_to_string(collection);
-	add_assoc_zval(data, "create", collection);
-	zval_add_ref(&collection);
-
-	if (size) {
-		add_assoc_long(data, "size", size);
-	}
-
-	if (capped) {
-		add_assoc_bool(data, "capped", 1);
-		if (max) {
-			add_assoc_long(data, "max", max);
-		}
-	}
-
 	MAKE_STD_ZVAL(temp);
-	MONGO_CMD(temp, getThis());
+	MONGO_METHOD1(MongoDB, command, temp, getThis(), data);
 	zval_ptr_dtor(&temp);
 
 	zval_ptr_dtor(&data);
 
 	if (!EG(exception)) {
+		zval *zcollection;
+
 		/* get the collection we just created */
-		MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), collection);
+		MAKE_STD_ZVAL(zcollection);
+		ZVAL_STRINGL(zcollection, collection, collection_len, 1);
+		MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), zcollection);
+		zval_ptr_dtor(&zcollection);
 	}
 }
 
