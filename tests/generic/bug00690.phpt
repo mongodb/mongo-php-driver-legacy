@@ -1,10 +1,10 @@
 --TEST--
 Test for PHP-690: Percentage symbol is not escaped in error messages
 --SKIPIF--
-<?php require_once dirname(__FILE__) . '/skipif.inc'; ?>
+<?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
-<?php require_once dirname(__FILE__) . '/../utils.inc'; ?>
 <?php
+require_once "tests/utils/server.inc";
 $m = new_mongo();
 $c = $m->selectCollection(dbname(), 'bug690');
 $c->drop();

@@ -1,10 +1,10 @@
 --TEST--
 Mongo::listDBs()
 --SKIPIF--
-<?php require dirname(__FILE__) . '/skipif.inc'; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) ."/../utils.inc";
+require "tests/utils/server.inc";
 
 $m = mongo("admin");
 $dbs = $m->listDBs();

@@ -1,9 +1,9 @@
 --TEST--
 MongoCursor::getReadPreference() inherits value from parent
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
 // Set before MongoCursor is instantiated

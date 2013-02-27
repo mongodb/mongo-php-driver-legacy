@@ -1,17 +1,17 @@
 --TEST--
 Test for PHP-507: Chunks are not removed completely when using the justOne option with MongoGridFS::remove
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc";?>
+<?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $dataSize = 3*256*1024;
 
 $data = str_repeat("x", $dataSize);
 
 
-$m = mongo();
+$m = mongo_standalone();
 $db = $m->selectDB(dbname());
 
 $db->selectCollection('PHP507.files')->drop();

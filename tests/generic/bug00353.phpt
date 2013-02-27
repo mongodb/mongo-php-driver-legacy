@@ -1,11 +1,11 @@
 --TEST--
 Test for PHP-353: Iterating over a MongoCursor without _id field should not create an empty string.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
-$d = mongo();
+require_once "tests/utils/server.inc";
+$d = mongo_standalone();
 $c = $d->phpunit->collection;
 $c->drop();
 

@@ -1,17 +1,17 @@
 --TEST--
 MongoDB::authenticate()
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc";?>
-<?php if (!isauth()) { die("skip Requires authenticated environment"); } ?>
+<?php require_once "tests/utils/standalone.inc";?>
+<?php die("skip requires authenticated enviornment") ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $host = hostname();
-$port = port();
+$port = standalone_port();
 $dbname = dbname();
-$username = username();
-$password = password();
+$username = "";
+$password = "";
 
 $m = new mongo("$host:$port");
 $db = $m->selectDB(dbname());

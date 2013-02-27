@@ -1,12 +1,12 @@
 --TEST--
 Test for PHP-635: The second argument to MongoCursor::__construct() always gets converted to a string.
 --SKIPIF--
-<?php require_once __DIR__ . "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once __DIR__ . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $collection = $m->selectDb(dbname())->bug635;
 var_dump($collection);
  

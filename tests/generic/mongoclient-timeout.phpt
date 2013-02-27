@@ -1,10 +1,10 @@
 --TEST--
 Test for database timeout option.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 $m = mongo("admin");
 $d = $m->selectDb('admin');
 

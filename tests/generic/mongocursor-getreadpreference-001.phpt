@@ -1,12 +1,12 @@
 --TEST--
 MongoCursor::getReadPreference() returns read preferences
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
-$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", hostname(), port(), dbname());
+$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", hostname(), standalone_port(), dbname());
 
 $modes = array(
     'primary',

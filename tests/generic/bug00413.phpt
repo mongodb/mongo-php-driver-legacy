@@ -1,15 +1,14 @@
 --TEST--
 Test for PHP-413: Connection strings: unsuccesfull authentication.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
+require_once "tests/utils/server.inc";
 $host = hostname();
-$port = port();
-$user = username();
-$pass = password();
-$pass .= "bogus";
+$port = standalone_port();
+$user = "A";
+$pass = "wrong password";
 $db   = dbname();
 
 try {
@@ -33,5 +32,5 @@ try {
 ?>
 --EXPECTF--
 Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth fails
-Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth fails
+Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth%s
 Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth%s

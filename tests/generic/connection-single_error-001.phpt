@@ -1,18 +1,18 @@
 --TEST--
 Connection strings: Incorrect connection string (1)
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc"; ?>
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
-$port = port();
+$port = standalone_port();
 if ($port != "27017") {
     die("skip this tests attempts to connect to the standard port");
 }
 ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
 $d = new Mongo("http://foofas:5345");
 var_dump($b->connected);

@@ -1,12 +1,12 @@
 --TEST--
 Connection strings: read preferences [1]
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
-$host = hostname();
-$port = port();
+require_once "tests/utils/server.inc";
+$host = standalone_hostname();
+$port = standalone_port();
 $db   = dbname();
 
 $baseString = sprintf("mongodb://%s:%d/%s?readPreference=", $host, $port, $db);

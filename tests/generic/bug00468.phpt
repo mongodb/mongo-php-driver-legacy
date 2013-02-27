@@ -1,13 +1,13 @@
 --TEST--
 Test for PHP-468: Undefined behavior calling MongoGridFSFile::write() without a filename.
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $grid = $m->selectDB(dbname())->getGridFS();
 $id = $grid->storeBytes('foo');
 $file = $grid->get($id);

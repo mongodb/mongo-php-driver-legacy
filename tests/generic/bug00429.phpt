@@ -1,11 +1,11 @@
 --TEST--
 Test for PHP-429: MongoDB::selectCollection() causes Segmentation fault.
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once "tests/utils/standalone.inc";?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc";
+<?php require_once "tests/utils/server.inc";
 
-$mongo = new_mongo();
+$mongo = new_mongo_standalone();
 $database = $mongo->selectDB(dbname());
 
 $collection = $database->selectCollection("test");
