@@ -503,9 +503,9 @@ PHP_METHOD(MongoDB, getDBRef)
 
 PHP_METHOD(MongoDB, execute)
 {
-	zval *code = 0, *args = 0, *zdata;
+	zval *code = NULL, *args = NULL, *options = NULL, *zdata;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &code, &args) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|aa", &code, &args, &options) == FAILURE) {
 		return;
 	}
 
@@ -539,6 +539,16 @@ PHP_METHOD(MongoDB, execute)
 	array_init(zdata);
 	add_assoc_zval(zdata, "$eval", code);
 	add_assoc_zval(zdata, "args", args);
+	/* Check whether we have nolock as an option */
+	if (options) {
+		zval **nolock;
+	
+		if (zend_hash_find(HASH_P(options), "nolock", strlen("nolock") + 1, (void**) &nolock) == SUCCESS) {
+			convert_to_boolean_ex(nolock);
+			zval_add_ref(nolock);
+			add_assoc_zval(zdata, "nolock", *nolock);
+		}
+	}
 
 	MONGO_METHOD1(MongoDB, command, return_value, getThis(), zdata);
 
