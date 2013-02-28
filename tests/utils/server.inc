@@ -179,7 +179,6 @@ class MongoShellServer {
 
     public static function getReplicaSetInfo($auth = false) {
         $o = new self;
-        $o->makeReplicaset(4, 28000);
         $config = $o->getReplicaSetConfig($auth);
         $o->close();
         return $config;
