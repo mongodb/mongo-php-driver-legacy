@@ -1,10 +1,12 @@
 <?php
+include "tests/utils/cfg.inc";
 $fp = fsockopen("localhost", 8000, $errno, $errstr, 2);
 if (!$fp) {
     throw new Exception($errstr, $errno);
 }
-fwrite($fp, "Sorry Matt Damon, we're out of time\n");
+fwrite($fp, $QUIT);
 fflush($fp);
+echo "Waiting for everything to spin down again..\n";
 echo stream_get_contents($fp);
 fflush($fp);
 fclose($fp);

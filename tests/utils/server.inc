@@ -2,8 +2,9 @@
 
 class MongoShellServer {
     protected $fp;
+    protected $log = "";
     public function __construct() {
-        $fp = @fsockopen("localhost", 8000, $errno, $errstr, 2);
+        $fp = fsockopen("localhost", 8000, $errno, $errstr, 2);
         if (!$fp) {
             throw new Exception($errstr, $errno);
         }
@@ -41,15 +42,6 @@ class MongoShellServer {
         return $this->verifyWrite("initBridge($port,$delay)");
     }
 
-    public function makeStandalone($port = 30000, $auth = false) {
-        $auth = json_encode($auth);
-        return $this->verifyWrite("initStandalone($port, $auth)");
-    }
-
-    public function makeBridge($port = 30000, $delay = 1000) {
-        return $this->verifyWrite("initBridge($port,$delay)");
-    }
-
     public function killMaster() {
         return $this->verifyWrite("killMaster()");
     }
@@ -60,11 +52,11 @@ class MongoShellServer {
 
     protected function verifyWrite($command) {
         $md5 = md5($command);
-        fwrite($this->fp, "print('$md5')\n$command\nprint('$md5')\n");
+        $r = fwrite($this->fp, "print('$md5')\n$command\nprint('$md5')\n");
         $retval = "";
         $verified = false;
         while(!feof($this->fp)) {
-            $line = fgets($this->fp);
+            $this->log .= $line = fgets($this->fp);
             if (trim($line) == $md5) {
                 if ($verified) {
                     return $retval;
@@ -102,7 +94,7 @@ class MongoShellServer {
         $host = $this->verifyWrite("getStandaloneConfig($jsauth)");
         $host = trim($host);
         if ($host == "null") {
-            throw new Exception(($auth ? "Authenticated " : "") . "Standalone server not initialized");
+            throw new DebugException(($auth ? "Authenticated " : "") . "Standalone server not initialized", $this->log);
         }
         return $host;
     }
@@ -151,8 +143,7 @@ class MongoShellServer {
     }
 
     public function setDBDIR() {
-        require dirname(__FILE__) . "/cfg.inc.template";
-        @include dirname(__FILE__) . "/cfg.inc";
+        include dirname(__FILE__) . "/cfg.inc";
         $dbdirjs = json_encode($DBDIR);
         $retval = $this->verifyWrite("setDBDIR($dbdirjs)");
         return $retval;
@@ -160,15 +151,13 @@ class MongoShellServer {
     }
 
     public function getDBDIR($json = false) {
-        require dirname(__FILE__) . "/cfg.inc.template";
-        @include dirname(__FILE__) . "/cfg.inc";
+        include dirname(__FILE__) . "/cfg.inc";
 
         return $json ? json_encode($DBDIR) : $DBDIR;
     }
 
     public function getCredentials() {
-        require dirname(__FILE__) . "/cfg.inc.template";
-        @include dirname(__FILE__) . "/cfg.inc";
+        include dirname(__FILE__) . "/cfg.inc";
         return array(
             "admin" => $SUPER_USER,
             "user"  => $NORMAL_USER,
@@ -236,6 +225,20 @@ class MongoShellServer {
     }
 }
 
+class DebugException extends Exception {
+    public function __construct($msg, $log) {
+        parent::__construct($msg);
+        $this->log = $log;
+    }
+    function getMongoDLog() {
+        return $this->log;
+    }
+}
+
+
+
+
+
 /* BC Layer for old tests */
 
 function mongo() {
@@ -248,18 +251,6 @@ function old_mongo() {
 function new_mongo($unused = null, $unused = null, $unused = null, $options = array()) {
     $config = MongoShellServer::getReplicaSetInfo();
     return new MongoClient($config["dsn"], array("replicaSet" => $config["rsname"])+$options);
-}
-
-function old_mongo_standalone() {
-    return mongo_standalone();
-}
-function mongo_standalone() {
-    $dsn = MongoShellServer::getStandaloneInfo();
-    return new Mongo($dsn);
-}
-function new_mongo_standalone() {
-    $dsn = MongoShellServer::getStandaloneInfo();
-    return new MongoClient($dsn);
 }
 
 function old_mongo_standalone() {

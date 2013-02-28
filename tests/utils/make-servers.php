@@ -7,8 +7,11 @@
  * To bootup all exception a specific type of server set
  *      SKIP_MONGO_SERVER_[SERVER_TYPE]=yes
  */
+if (!file_exists("tests/utils/cfg.inc")) {
+    echo "Please copy tests/utils/cfg.inc.template to tests/utils/cfg.inc\n";
+    exit(112);
+}
 require_once "tests/utils/server.inc";
-require "tests/utils/cfg.inc.template";
 include "tests/utils/cfg.inc";
 
 function t() {
@@ -94,6 +97,7 @@ function makeDaemon() {
     $pid = pcntl_fork();
     if ($pid > 0) {
         sleep(1);
+        echo "Daemon running..\n";
         return;
     }
     if (!$pid) {
@@ -106,6 +110,7 @@ function makeDaemon() {
 try {
     $server = new MongoShellServer;
 } catch(Exception $e) {
+    echo "Does't look like the daemon is up and running.. Starting it now\n";
     makeDaemon();
     try {
         $server = new MongoShellServer;
@@ -117,7 +122,17 @@ try {
 
 foreach($SERVERS as $k => $bit) {
     if ($BOOTSTRAP & $bit) {
-        makeServer(array_flip($SERVERS), $server, $bit);
+        try {
+            makeServer(array_flip($SERVERS), $server, $bit);
+        } catch(DebugException $e) {
+            echo $e->getMessage(), "\n";
+            $filename = tempnam(sys_get_temp_dir(), "MONGO-PHP-TESTS");
+            file_put_contents($filename, $e->getMongoDLog());
+            echo "Debug log from mongod writter to $filename\n";
+            $server->close();
+            include "tests/utils/teardown-servers.php";
+            exit(113);
+        }
     }
 }
 
