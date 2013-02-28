@@ -27,5 +27,5 @@ notifications:
     - bjori@php.net
 
 # Run PHPs run-tests.php 
-script: make test
+script: REPORT_EXIT_STATUS=1 make test
 #script: ./sapi/cli/php run-tests.php -g "FAIL,XFAIL,BORK,WARN,LEAK,SKIP"
