@@ -102,7 +102,6 @@ do {
                             $buf = trim(fgets($reader));
                             if ($buf == $QUIT) {
                                 fwrite($conn, "I resign!\n");
-                                fclose($conn);
                                 break 4;
                             }
                             if ($buf == "quit") {
@@ -141,10 +140,14 @@ do {
 } while(true);
 echo "Closing stuff!\n";
 
-@fclose($conn);
+// Make sure we have shutdown all we want
+$cmd = 'shutdownEverything();';
+fwrite($IO[0], $cmd. "\n");
+
 fclose($IO[0]);
 fclose($IO[1]);
 fclose($socket);
 proc_close($process);
+fclose($conn);
 
 

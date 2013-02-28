@@ -148,4 +148,21 @@ function _addUser(conn, login, newuser) {
     return conn.getDB(newuser.db).addUser(newuser.username, newuser.password)
 }
 
+function shutdownEverything() {
+    if (typeof standaloneTest != "undefined") {
+        MongoRunner.stopMongod(standaloneTest.port);
+    }
+    if (typeof standaloneTestAuth != "undefined") {
+        MongoRunner.stopMongod(standaloneTestAuth.port);
+    }
+    if (typeof replTest != "undefined") {
+        replTest.stopSet();
+    }
+    if (typeof replTestAuth != "undefined") {
+        replTestAuth.stopSet();
+    }
+    if (typeof shardTest != "undefined") {
+        shardTest.stop();
+    }
+}
 
