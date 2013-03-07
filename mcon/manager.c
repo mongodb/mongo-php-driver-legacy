@@ -207,7 +207,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	int i;
 	int found_connected_server = 0;
 
-	/* Create a connection to every all the servers in the seed list */
+	/* Create a connection to all of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
 		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
@@ -560,11 +560,12 @@ mongo_con_manager *mongo_init(void)
 void mongo_deinit(mongo_con_manager *manager)
 {
 	int i;
+
 	if (manager->connections) {
 		/* Does this recursively for all cons */
 		destroy_manager_item(manager, manager->connections);
 	}
-	for(i=0; i<manager->blacklist_count; i++) {
+	for(i = 0; i < manager->blacklist_count; i++) {
 		free(manager->blacklist[i]);
 	}
 
@@ -575,31 +576,32 @@ void mongo_deinit(mongo_con_manager *manager)
 void mongo_manager_connection_blacklist_add(mongo_con_manager *manager, char *hash)
 {
 	if (manager->blacklist_count > MAX_SERVERS_LIMIT) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "Blacklist full, not adding %s", hash);
 		return;
 	}
 
 	manager->blacklist[manager->blacklist_count++] = hash;
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "Added %s to BLACKLIST", hash);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "Added %s to blacklist", hash);
 }
 
 int mongo_manager_connection_blacklist_search(mongo_con_manager *manager, char *hash)
 {
 	int i;
 
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "Checking if %s is BLACKLIST", hash);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "Checking if %s is in blacklist", hash);
 	if (manager->blacklist_count == 0) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "BLACKLIST empty");
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "blacklist empty");
 		return 0;
 	}
 
-	for (i=0; i<manager->blacklist_count; i++) {
+	for (i = 0; i < manager->blacklist_count; i++) {
 		if (strcmp(manager->blacklist[i], hash) == 0) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "%s IS BLACKLIST", hash);
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "%s is blacklisted", hash);
 			return 1;
 		}
 	}
 
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "...nope");
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "Hash '%s' not in connection blacklist", hash);
 	return 0;
 }
 
