@@ -201,7 +201,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 		return FAILURE;
 	}
 
-	if (0 == get_cursor_body(sock, cursor, (char **) &error_message TSRMLS_CC)) {
+	if ( get_cursor_body(sock, cursor, (char **) &error_message TSRMLS_CC) == 0) {
 #ifdef WIN32
 		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "WSA error getting database response %s (%d)", error_message, WSAGetLastError());
 #else
