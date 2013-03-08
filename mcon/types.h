@@ -86,6 +86,8 @@ typedef unsigned __int64 uint64_t;
 #define MLOG_NONE    0
 #define MLOG_ALL    31 /* Must be the bit sum of all above */
 
+/* Defaults */
+#define MONGO_DEFAULT_MAX_MESSAGE_SIZE (16 * 1024 * 1024)
 
 typedef int (mongo_cleanup_t)(void *callback_data);
 
@@ -106,7 +108,8 @@ typedef struct _mongo_connection
 	int    last_reqid;
 	int    socket;
 	int    connection_type; /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
-	int    max_bson_size; /* Store per connection, as it can actually differ */
+	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
+	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
 	int    tag_count;
 	char **tags;
 	char  *hash; /* Duplicate of the hash that the manager knows this connection as */

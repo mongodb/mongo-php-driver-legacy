@@ -228,7 +228,6 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->response_num = 0;
 	mongo_globals->errmsg = 0;
 
-	mongo_globals->max_send_size = 64 * 1024 * 1024;
 	mongo_globals->pool_size = -1;
 
 	hostname = host_start;
