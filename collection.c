@@ -39,7 +39,7 @@ zend_class_entry *mongo_ce_Collection = NULL;
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
 static int is_gle_op(zval *options, int default_do_gle TSRMLS_DC);
 static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
-static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC);
+static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max_document_size, int max_message_size TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
 
 PHP_METHOD(MongoCollection, __construct)
@@ -212,7 +212,7 @@ PHP_METHOD(MongoCollection, validate)
  * This should probably be split into two methods... right now appends the
  * getlasterror query to the buffer and alloc & inits the cursor zval.
  */
-static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_DC)
+static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	zval *cmd_ns_z, *cmd, *cursor_z, *temp, *timeout_p;
 	char *cmd_ns, *w_str = NULL;
@@ -385,7 +385,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
 	cursor->query = cmd;
 
 	/* append the query */
-	response = php_mongo_write_query(buf, cursor TSRMLS_CC);
+	response = php_mongo_write_query(buf, cursor, max_document_size, max_message_size TSRMLS_CC);
 	zval_ptr_dtor(&cmd_ns_z);
 
 	if (FAILURE == response) {
@@ -444,7 +444,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 	}
 
 	if (is_gle_op(options, link->servers->options.default_w TSRMLS_CC)) {
-		zval *cursor = append_getlasterror(getThis(), buf, options TSRMLS_CC);
+		zval *cursor = append_getlasterror(getThis(), buf, options, connection->max_bson_size, connection->max_message_size TSRMLS_CC);
 		if (cursor) {
 			do_safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
 			retval = -1;
@@ -638,7 +638,7 @@ PHP_METHOD(MongoCollection, insert)
 	}
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
-	if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a, connection->max_bson_size TSRMLS_CC)) {
+	if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
 		efree(buf.start);
 		zval_ptr_dtor(&options);
 		RETURN_FALSE;
@@ -684,7 +684,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
-	if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), bit_opts, docs, connection->max_bson_size TSRMLS_CC) == FAILURE) {
+	if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), bit_opts, docs, connection->max_bson_size, connection->max_message_size TSRMLS_CC) == FAILURE) {
 		efree(buf.start);
 		return;
 	}
@@ -861,7 +861,7 @@ PHP_METHOD(MongoCollection, update)
 	}
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
-	if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, newobj TSRMLS_CC)) {
+	if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, newobj, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
 		efree(buf.start);
 		zval_ptr_dtor(&options);
 		return;
@@ -926,7 +926,7 @@ PHP_METHOD(MongoCollection, remove)
 	}
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
-	if (FAILURE == php_mongo_write_delete(&buf, Z_STRVAL_P(c->ns), flags, criteria TSRMLS_CC)) {
+	if (FAILURE == php_mongo_write_delete(&buf, Z_STRVAL_P(c->ns), flags, criteria, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
 		efree(buf.start);
 		zval_ptr_dtor(&options);
 		zval_ptr_dtor(&criteria);
