@@ -55,6 +55,7 @@ function initStandalone(port,auth) {
         opts.auth = "";
     }
     retval = startMongodTest(port, false, false, opts);
+    retval.port = port;
     assert.soon( function() {
         try {
             conn = new Mongo("127.0.0.1:" + port);
@@ -88,7 +89,9 @@ function initBridge(port, delay) {
     if (bridgeTest) {
         return;
     }
-    bridgeTest = startMongoProgram( "mongobridge", "--port", allocatePorts(1)[0], "--dest", "localhost:" + port, "--delay", delay ? delay : 300 );
+    var bridgePort = allocatePorts(1)[0];
+    bridgeTest = startMongoProgram( "mongobridge", "--port", bridgePort, "--dest", "localhost:" + port, "--delay", delay ? delay : 300 );
+    bridgeTest.port = bridgePort;
 }
 
 
@@ -148,12 +151,15 @@ function _addUser(conn, login, newuser) {
     return conn.getDB(newuser.db).addUser(newuser.username, newuser.password)
 }
 
-function shutdownEverything() {
+function shutdownEverything(callback) {
     if (typeof standaloneTest != "undefined") {
         MongoRunner.stopMongod(standaloneTest.port);
     }
     if (typeof standaloneTestAuth != "undefined") {
         MongoRunner.stopMongod(standaloneTestAuth.port);
+    }
+    if (typeof bridgeTest != "undefined") {
+        MongoRunner.stopMongod(bridgeTest.port);
     }
     if (typeof replTest != "undefined") {
         replTest.stopSet();
@@ -163,6 +169,9 @@ function shutdownEverything() {
     }
     if (typeof shardTest != "undefined") {
         shardTest.stop();
+    }
+    if (typeof callback == "function") {
+        callback();
     }
 }
 

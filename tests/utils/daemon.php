@@ -141,13 +141,34 @@ do {
 echo "Closing stuff!\n";
 
 // Make sure we have shutdown all we want
-$cmd = 'shutdownEverything();';
-fwrite($IO[0], $cmd. "\n");
+$cmd = sprintf("shutdownEverything(function(){ print(%s); });\n", json_encode($MARKER));
+d($cmd);
+fwrite($IO[0], $cmd);
+fflush($IO[0]);
+$c = 0;
+do {
+    $w = $e = null;
+    $r = array($IO[1]);
+    if (!stream_select($r, $w, $e, 10)) {
+        echo "Can't read the hello world from the shell.. timed out\n";
+        exit(3);
+    }
+
+    $line = fgets($r[0]);
+    if (trim($line) == $MARKER) {
+        d("Read marker successfully");
+        break;
+    }
+    d("Got '" . trim($line). "' from shell");
+    if ($c > 100) {
+        echo "Bailing out, can't seem to be able to make sense of the shell!\n";
+        printf("Does '%s' with the arguments '%s' make sense?\n", $SHELL, $SHELL_PARAMS);
+        exit(3);
+    }
+} while(1);
 
 fclose($IO[0]);
 fclose($IO[1]);
 fclose($socket);
 proc_close($process);
 fclose($conn);
-
-
