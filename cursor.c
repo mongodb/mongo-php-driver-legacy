@@ -72,8 +72,6 @@ extern int le_pconnection, le_cursor_list;
 
 extern zend_object_handlers mongo_default_handlers;
 
-zend_class_entry *mongo_ce_CursorException;
-
 ZEND_EXTERN_MODULE_GLOBALS(mongo);
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
