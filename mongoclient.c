@@ -579,6 +579,7 @@ PHP_METHOD(MongoClient, selectDB)
 	char *db;
 	int db_len;
 	mongoclient *link;
+	int free_this_ptr = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &db, &db_len) == FAILURE) {
 		return;
@@ -605,6 +606,7 @@ PHP_METHOD(MongoClient, selectDB)
 		if (link->servers->server[0]->username && link->servers->server[0]->password) {
 			zval       *new_link;
 			mongoclient *tmp_link;
+			int i;
 		
 			if (strcmp(link->servers->server[0]->db, "admin") == 0) {
 				mongo_manager_log(
@@ -625,9 +627,14 @@ PHP_METHOD(MongoClient, selectDB)
 
 				tmp_link->manager = link->manager;
 				tmp_link->servers = calloc(1, sizeof(mongo_servers));
-				mongo_servers_copy(tmp_link->servers, link->servers, MONGO_SERVER_COPY_NONE);
+				mongo_servers_copy(tmp_link->servers, link->servers, MONGO_SERVER_COPY_CREDENTIALS);
+				/* We assume the previous credentials will work on this database too, or if authSource is set, authenticate against that db */
+				for (i = 0; i < tmp_link->servers->count; i++) {
+					tmp_link->servers->server[i]->db = strdup(db);
+				}
 
 				this_ptr = new_link;
+				free_this_ptr = 1;
 			}
 		}
 	}
@@ -636,6 +643,9 @@ PHP_METHOD(MongoClient, selectDB)
 	MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), name);
 
 	zval_ptr_dtor(&name);
+	if (free_this_ptr) {
+		zval_ptr_dtor(&this_ptr);
+	}
 }
 /* }}} */
 

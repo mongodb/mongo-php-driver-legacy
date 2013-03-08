@@ -769,6 +769,7 @@ PHP_METHOD(MongoDB, authenticate)
 	/* Update all the servers */
 	for (i = 0; i < link->servers->count; i++) {
 		link->servers->server[i]->db = strdup(Z_STRVAL_P(db->name));
+		link->servers->server[i]->authdb = strdup(Z_STRVAL_P(db->name));
 		link->servers->server[i]->username = strdup(username);
 		link->servers->server[i]->password = strdup(password);
 	}
@@ -786,6 +787,8 @@ PHP_METHOD(MongoDB, authenticate)
 		for (i = 0; i < link->servers->count; i++) {
 			free(link->servers->server[i]->db);
 			link->servers->server[i]->db = NULL;
+			free(link->servers->server[i]->authdb);
+			link->servers->server[i]->authdb = NULL;
 			free(link->servers->server[i]->username);
 			link->servers->server[i]->username = NULL;
 			free(link->servers->server[i]->password);
