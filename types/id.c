@@ -184,7 +184,7 @@ PHP_METHOD(MongoId, __construct)
 	zval *id = 0, *str = 0;
 	mongo_id *this_id = (mongo_id*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &id) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z!", &id) == FAILURE) {
 		return;
 	}
 
@@ -196,6 +196,10 @@ PHP_METHOD(MongoId, __construct)
 	if (id && Z_TYPE_P(id) == IS_STRING && Z_STRLEN_P(id) == 24) {
 		int i;
 
+		if (strspn(Z_STRVAL_P(id), "0123456789abcdefABCDEF") != 24) {
+			zend_throw_exception(mongo_ce_Exception, "ID must be valid hex characters", 18 TSRMLS_CC);
+			return;
+		}
 		for (i = 0; i < 12;i++) {
 			char digit1 = Z_STRVAL_P(id)[i * 2], digit2 = Z_STRVAL_P(id)[i * 2 + 1];
 
@@ -220,6 +224,9 @@ PHP_METHOD(MongoId, __construct)
 
 		str = zend_read_property(mongo_ce_Id, id, "$id", strlen("$id"), NOISY TSRMLS_CC);
 		zend_update_property(mongo_ce_Id, getThis(), "$id", strlen("$id"), str TSRMLS_CC);
+	} else if (id) {
+		zend_throw_exception(mongo_ce_Exception, "Invalid object ID", 19 TSRMLS_CC);
+		return;
 	} else {
 		generate_id(this_id->id TSRMLS_CC);
 
