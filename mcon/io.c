@@ -160,13 +160,13 @@ int mongo_io_recv_data(int sock, mongo_server_options *options, void *dest, int 
 
 		if (mongo_io_wait_with_timeout(sock, options->socketTimeoutMS, error_message) != 0) {
 			/* We don't care which failure it was, it just failed */
-			return 0;
+			return -1;
 		}
 		// windows gives a WSAEFAULT if you try to get more bytes
 		num = recv(sock, (char*)dest, len, 0);
 
 		if (num < 0) {
-			return 0;
+			return -1;
 		}
 
 		dest = (char*)dest + num;
