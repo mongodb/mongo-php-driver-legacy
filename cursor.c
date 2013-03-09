@@ -156,7 +156,7 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 }
 
 /* Reads a cursors body
- * Returns 0 on failure or an int indicating the number of bytes read */
+ * Returns -1 on failure or an int indicating the number of bytes read */
 static int get_cursor_body(int sock, mongo_cursor *cursor, char **error_message TSRMLS_DC)
 {
 	mongoclient *client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
@@ -199,7 +199,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 		return FAILURE;
 	}
 
-	if ( get_cursor_body(sock, cursor, (char **) &error_message TSRMLS_CC) == 0) {
+	if (get_cursor_body(sock, cursor, (char **) &error_message TSRMLS_CC) == FAILURE) {
 #ifdef WIN32
 		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "WSA error getting database response %s (%d)", error_message, WSAGetLastError());
 #else
