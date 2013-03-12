@@ -123,10 +123,15 @@ typedef struct _mongo_connection
 	mongo_connection_deregister_callback *cleanup_list;
 } mongo_connection;
 
+typedef struct _mongo_connection_blacklist
+{
+	time_t last_ping;
+} mongo_connection_blacklist;
+
 typedef struct _mongo_con_manager_item
 {
 	char                           *hash;
-	mongo_connection               *connection;
+	void                           *data;
 	struct _mongo_con_manager_item *next;
 } mongo_con_manager_item;
 
@@ -140,8 +145,7 @@ typedef void (mongo_log_callback_t)(int module, int level, void *context, char *
 typedef struct _mongo_con_manager
 {
 	mongo_con_manager_item *connections;
-	char                   *blacklist[MAX_SERVERS_LIMIT]; /* TODO: We only support 16 servers at the moment anyway */
-	long                    blacklist_count;
+	mongo_con_manager_item *blacklist;
 
 	/* context and callback function that is used to send logging information
 	 * through */
@@ -154,6 +158,8 @@ typedef struct _mongo_con_manager
 	long                    ping_interval;      /* default:  5 seconds */
 	long                    ismaster_interval;  /* default: 15 seconds */
 } mongo_con_manager;
+
+typedef void (mongo_con_manager_item_destroy_t)(mongo_con_manager *manager, void *item);
 
 typedef struct _mongo_read_preference_tagset
 {
