@@ -620,6 +620,8 @@ extern zend_module_entry mongo_module_entry;
  * 15: Reading from slaves won't work without using the replicaSet option on connect
  * 16: No server found for reads
  * 17: The MongoCollection object has not been correctly initialized by its constructor
+ * 18: ID must be valid hex characters
+ * 19: Invalid object ID
  *
  * MongoConnectionException:
  * 0: connection to <host> failed: <errmsg>
