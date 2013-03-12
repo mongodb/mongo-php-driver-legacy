@@ -240,17 +240,9 @@ error:
 	return -1;
 }
 
-mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_server_def *server_def, mongo_server_options *options, char **error_message)
+mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash, mongo_server_def *server_def, mongo_server_options *options, char **error_message)
 {
-	char *hash;
 	mongo_connection *tmp;
-
-	/* We need to make sure this server definition isn't blacklisted (could be known to be bad node or down) */
-	hash = mongo_server_create_hash(server_def);
-	if (mongo_manager_connection_blacklist_search(manager, hash)) {
-		free(hash);
-		return NULL;
-	}
 
 	/* Init struct */
 	tmp = malloc(sizeof(mongo_connection));
@@ -258,12 +250,17 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 	tmp->last_reqid = rand();
 	tmp->connection_type = MONGO_NODE_STANDALONE;
 
+	/* Store hash */
+	tmp->hash = strdup(hash);
+
 	/* Connect */
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_create: creating new connection for %s:%d", server_def->host, server_def->port);
 	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, options->connectTimeoutMS, error_message);
 	if (tmp->socket == -1) {
-		mongo_manager_connection_blacklist_add(manager, hash);
+		/* Can't establish a connection, blacklist it so we don't have to retry in the near future */
+		mongo_manager_blacklist_register(manager, tmp);
 		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error while creating connection for %s:%d: %s", server_def->host, server_def->port, *error_message);
+		free(tmp->hash);
 		free(tmp);
 		return NULL;
 	}
@@ -271,35 +268,39 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, mongo_serv
 	/* We call get_server_flags to the maxBsonObjectSize data */
 	mongo_connection_get_server_flags(manager, tmp, options, (char**) &error_message);
 
-	free(hash);
 	return tmp;
 }
 
-void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
+void mongo_connection_destroy(mongo_con_manager *manager, void *data)
 {
 	int current_pid, connection_pid;
 	int i;
+	mongo_connection *con = (mongo_connection *)data;
 
 	current_pid = getpid();
 	connection_pid = mongo_server_hash_to_pid(con->hash);
 
 	/* Only close the connection if it matches the current PID */
-	if (current_pid != connection_pid) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_connection_destroy: The process pid (%d) for %s doesn't match the connection pid (%d).", current_pid, con->hash, connection_pid);
-	} else {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_connection_destroy: Closing socket for %s.", con->hash);
+	if (current_pid == connection_pid) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_connection_destroy: Destroying connection object for %s", con->hash);
+
+		if (con->socket != -1) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_connection_destroy: Closing socket for %s.", con->hash);
 
 #ifdef WIN32
-		shutdown(con->socket, SD_BOTH);
-		closesocket(con->socket);
-		WSACleanup();
+			shutdown(con->socket, SD_BOTH);
+			closesocket(con->socket);
+			WSACleanup();
 #else
-		shutdown(con->socket, SHUT_RDWR);
-		close(con->socket);
+			shutdown(con->socket, SHUT_RDWR);
+			close(con->socket);
 #endif
-		for (i = 0; i < con->tag_count; i++) {
-			free(con->tags[i]);
+			for (i = 0; i < con->tag_count; i++) {
+				free(con->tags[i]);
+			}
+			free(con->tags);
 		}
+
 		if (con->cleanup_list) {
 			mongo_connection_deregister_callback *ptr = con->cleanup_list;
 			mongo_connection_deregister_callback *prev;
@@ -320,9 +321,10 @@ void mongo_connection_destroy(mongo_con_manager *manager, mongo_connection *con)
 			} while(1);
 			con->cleanup_list = NULL;
 		}
-		free(con->tags);
 		free(con->hash);
 		free(con);
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_connection_destroy: The process pid (%d) for %s doesn't match the connection pid (%d).", current_pid, con->hash, connection_pid);
 	}
 }
 
@@ -401,6 +403,15 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	return 1;
 }
 
+int mongo_connection_ping_check(mongo_con_manager *manager, int last_ping, struct timeval *start)
+{
+	gettimeofday(start, NULL);
+	if ((last_ping + manager->ping_interval) > start->tv_sec) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: skipping: last ran at %ld, now: %ld, time left: %ld", last_ping, start->tv_sec, last_ping + manager->ping_interval - start->tv_sec);
+		return 0;
+	}
+	return 1;
+}
 /**
  * Sends a ping command to the server and stores the result.
  *
@@ -412,12 +423,10 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, mon
 	struct timeval start, end;
 	char          *data_buffer;
 
-	gettimeofday(&start, NULL);
-	if ((con->last_ping + manager->ping_interval) > start.tv_sec) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "is_ping: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_ping, start.tv_sec, con->last_ping + manager->ping_interval - start.tv_sec);
-		return 2;
+	/* If we haven't hit the ping_interval yet, then there is no need to do a roundtrip to the server */
+	if (!mongo_connection_ping_check(manager, con->last_ping, &start)) {
+		return 1;
 	}
-
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "is_ping: pinging %s", con->hash);
 	packet = bson_create_ping_packet(con);
 	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
