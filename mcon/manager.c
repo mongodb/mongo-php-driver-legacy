@@ -631,8 +631,6 @@ void mongo_blacklist_destroy(mongo_con_manager *manager, void *data)
 
 void mongo_deinit(mongo_con_manager *manager)
 {
-	int i;
-
 	if (manager->connections) {
 		/* Does this recursively for all cons */
 		destroy_manager_item(manager, manager->connections, mongo_connection_destroy);
