@@ -28,6 +28,7 @@
 #include "mongoclient.h"
 #include "mongo.h"
 #include "cursor.h"
+#include "io_stream.h"
 
 #include "exceptions/exception.h"
 #include "exceptions/connection_exception.h"
@@ -284,6 +285,14 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->manager = mongo_init();
 	TSRMLS_SET_CTX(mongo_globals->manager->log_context);
 	mongo_globals->manager->log_function = php_mcon_log_wrapper;
+	mongo_globals->manager->log_function = php_mcon_log_wrapper;
+#if MONGO_PHP_STREAMS
+	mongo_globals->manager->connect     = php_mongo_io_stream_connect;
+	mongo_globals->manager->recv_header = php_mongo_io_stream_read;
+	mongo_globals->manager->recv_data   = php_mongo_io_stream_read;
+	mongo_globals->manager->send        = php_mongo_io_stream_send;
+	mongo_globals->manager->close       = php_mongo_io_stream_close;
+#endif
 }
 /* }}} */
 
