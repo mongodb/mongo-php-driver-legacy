@@ -447,7 +447,7 @@ typedef struct {
  */
 typedef struct _cursor_node {
 	int64_t cursor_id;
-	int socket;
+	void *socket;
 
 	struct _cursor_node *next;
 	struct _cursor_node *prev;

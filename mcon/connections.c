@@ -51,6 +51,8 @@
 
 #define MONGO_REPLY_FLAG_QUERY_FAILURE 0x02
 
+static void mongo_close_socket(int socket, int why);
+
 /* Helper functions */
 int mongo_connection_get_reqid(mongo_connection *con)
 {
@@ -91,7 +93,7 @@ static int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *h
 }
 
 /* This function does the actual connecting */
-int mongo_connection_connect(char *host, int port, int timeout, char **error_message)
+void* mongo_connection_connect(mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	struct sockaddr*   sa;
 	struct sockaddr_in si;
@@ -125,19 +127,19 @@ int mongo_connection_connect(char *host, int port, int timeout, char **error_mes
 	error = WSAStartup(version, &wsaData);
 
 	if (error != 0) {
-		return -1;
+		return NULL;
 	}
 
 	/* create socket */
 	tmp_socket = socket(family, SOCK_STREAM, 0);
 	if (tmp_socket == INVALID_SOCKET) {
 		*error_message = strdup(strerror(errno));
-		return -1;
+		return NULL;
 	}
 
 #else
 	/* domain socket */
-	if (port == 0) {
+	if (server->port == 0) {
 		family = AF_UNIX;
 		sa = (struct sockaddr*)(&su);
 		sn = sizeof(su);
@@ -150,17 +152,17 @@ int mongo_connection_connect(char *host, int port, int timeout, char **error_mes
 	/* create socket */
 	if ((tmp_socket = socket(family, SOCK_STREAM, 0)) == -1) {
 		*error_message = strdup(strerror(errno));
-		return -1;
+		return NULL;
 	}
 #endif
 
 	/* TODO: Move this to within the loop & use real timeout setting */
 	/* connection timeout: set in ms (current default 1 sec) */
-	tval.tv_sec = timeout <= 0 ? 1 : timeout / 1000;
-	tval.tv_usec = timeout <= 0 ? 0 : (timeout % 1000) * 1000;
+	tval.tv_sec = options->connectTimeoutMS <= 0 ? 1 : options->connectTimeoutMS / 1000;
+	tval.tv_usec = options->connectTimeoutMS <= 0 ? 0 : (options->connectTimeoutMS % 1000) * 1000;
 
 	/* get addresses */
-	if (mongo_util_connect__sockaddr(sa, family, host, port, error_message) == 0) {
+	if (mongo_util_connect__sockaddr(sa, family, server->host, server->port, error_message) == 0) {
 		goto error;
 	}
 
@@ -198,7 +200,7 @@ int mongo_connection_connect(char *host, int port, int timeout, char **error_mes
 
 			if (select(tmp_socket+1, &rset, &wset, &eset, &tval) == 0) {
 				*error_message = malloc(256);
-				snprintf(*error_message, 256, "Timed out after %d ms", timeout);
+				snprintf(*error_message, 256, "Timed out after %d ms", options->connectTimeoutMS);
 				goto error;
 			}
 
@@ -230,18 +232,27 @@ int mongo_connection_connect(char *host, int port, int timeout, char **error_mes
 	fcntl(tmp_socket, F_SETFL, FLAGS);
 #endif
 
-	return tmp_socket;
+	return (void *) (long) tmp_socket;
 
 error:
+	mongo_close_socket(tmp_socket, MONGO_CLOSE_BROKEN);
+	return NULL;
+}
+
+static void mongo_close_socket(int socket, int why)
+{
 #ifdef WIN32
-	shutdown((tmp_socket), 2);
-	closesocket(tmp_socket);
+	shutdown(socket, SD_BOTH);
+	closesocket(socket);
 	WSACleanup();
 #else
-	shutdown((tmp_socket), 2);
-	close(tmp_socket);
+	shutdown(socket, SHUT_RDWR);
+	close(socket);
 #endif
-	return -1;
+}
+void mongo_connection_close(mongo_connection *con, int why)
+{
+	return mongo_close_socket((int) (long) con->consocket, why);
 }
 
 mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash, mongo_server_def *server_def, mongo_server_options *options, char **error_message)
@@ -259,13 +270,8 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 
 	/* Connect */
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_create: creating new connection for %s:%d", server_def->host, server_def->port);
-#if MONGO_PHP_STREAMS
-	tmp->socket = manager->stream_connect(manager, server_def, options, error_message);
-#else
-	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, options->connectTimeoutMS, error_message);
-#endif
-	if (tmp->socket == -1) {
-		/* Can't establish a connection, blacklist it so we don't have to retry in the near future */
+	tmp->consocket = manager->connect(server_def, options, error_message);
+	if (!tmp->consocket) {
 		mongo_manager_blacklist_register(manager, tmp);
 		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error while creating connection for %s:%d: %s", server_def->host, server_def->port, *error_message);
 		free(tmp->hash);
@@ -279,7 +285,7 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 	return tmp;
 }
 
-void mongo_connection_destroy(mongo_con_manager *manager, void *data)
+void mongo_connection_destroy(mongo_con_manager *manager, void *data, int why)
 {
 	int current_pid, connection_pid;
 	int i;
@@ -292,45 +298,40 @@ void mongo_connection_destroy(mongo_con_manager *manager, void *data)
 	if (current_pid == connection_pid) {
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_connection_destroy: Destroying connection object for %s", con->hash);
 
-		if (con->socket != -1) {
+		if (con->consocket) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_connection_destroy: Closing socket for %s.", con->hash);
 
-#ifdef WIN32
-			shutdown(con->socket, SD_BOTH);
-			closesocket(con->socket);
-			WSACleanup();
-#else
-			shutdown(con->socket, SHUT_RDWR);
-			close(con->socket);
-#endif
+			manager->close(con->consocket, why);
+			con->consocket = NULL;
+
 			for (i = 0; i < con->tag_count; i++) {
 				free(con->tags[i]);
 			}
 			free(con->tags);
-		}
 
-		if (con->cleanup_list) {
-			mongo_connection_deregister_callback *ptr = con->cleanup_list;
-			mongo_connection_deregister_callback *prev;
-			do {
-				if (ptr->callback_data) {
-					ptr->mongo_cleanup_cb(ptr->callback_data);
-				}
+			if (con->cleanup_list) {
+				mongo_connection_deregister_callback *ptr = con->cleanup_list;
+				mongo_connection_deregister_callback *prev;
+				do {
+					if (ptr->callback_data) {
+						ptr->mongo_cleanup_cb(ptr->callback_data);
+					}
 
-				if (!ptr->next) {
-					free(ptr);
-					ptr = NULL;
-					break;
-				}
-				prev = ptr;
-				ptr = ptr->next;
-				free(prev);
-				prev = NULL;
-			} while(1);
-			con->cleanup_list = NULL;
+					if (!ptr->next) {
+						free(ptr);
+						ptr = NULL;
+						break;
+					}
+					prev = ptr;
+					ptr = ptr->next;
+					free(prev);
+					prev = NULL;
+				} while(1);
+				con->cleanup_list = NULL;
+			}
+			free(con->hash);
+			free(con);
 		}
-		free(con->hash);
-		free(con);
 	} else {
 		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_connection_destroy: The process pid (%d) for %s doesn't match the connection pid (%d).", current_pid, con->hash, connection_pid);
 	}
@@ -349,17 +350,9 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	char          *recv_error_message;
 
 	/* Send and wait for reply */
-#if MONGO_PHP_STREAMS
-	manager->stream_write(con, options, packet->d, packet->l, error_message);
-#else
-	mongo_io_send(con->socket, packet->d, packet->l, error_message);
-#endif
+	manager->send(con, options, packet->d, packet->l, error_message);
 	mcon_str_ptr_dtor(packet);
-#if MONGO_PHP_STREAMS
-	read = manager->stream_read(con, options, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
-#else
-	read = mongo_io_recv_header(con->socket, options, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
-#endif
+	read = manager->recv_header(con, options, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
 	if (read == -1) {
 		*error_message = malloc(256);
 		snprintf(*error_message, 256, "send_package: error reading from socket: %s", recv_error_message);
@@ -390,11 +383,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 
 	/* Read data */
 	*data_buffer = malloc(data_size + 1);
-#if MONGO_PHP_STREAMS
-	if (manager->stream_read(con, options, *data_buffer, data_size, error_message) <= 0) {
-#else
-	if (mongo_io_recv_data(con->socket, options, *data_buffer, data_size, error_message) <= 0) {
-#endif
+	if (manager->recv_data(con, options, *data_buffer, data_size, error_message) <= 0) {
 		return 0;
 	}
 

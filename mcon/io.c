@@ -102,14 +102,14 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
  *
  * On failure, the calling function is responsible for disconnecting
  */
-int mongo_io_send(int sock, char *packet, int total, char **error_message)
+int mongo_io_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int sent = 0, status = 1;
 
-	while (sent < total && status > 0) {
-		int len = 4096 < (total - sent) ? 4096 : total - sent;
+	while (sent < size && status > 0) {
+		int len = 4096 < (size - sent) ? 4096 : size - sent;
 
-		status = send(sock, (const char*)packet + sent, len, 0);
+		status = send((int) (long)con->consocket, (const char*)data + sent, len, 0);
 
 		if (status == -1) {
 			*error_message = strdup(strerror(errno));
@@ -130,15 +130,15 @@ int mongo_io_send(int sock, char *packet, int total, char **error_message)
  *
  * On failure, the calling function is responsible for disconnecting
  */
-int mongo_io_recv_header(int sock, mongo_server_options *options, char *reply_buffer, int size, char **error_message)
+int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
-	int status = mongo_io_wait_with_timeout(sock, options->socketTimeoutMS, error_message);
+	int status = mongo_io_wait_with_timeout((int) (long)con->consocket, options ? options->socketTimeoutMS : 0, error_message);
 
 	if (status != 0) {
 		/* We don't care which failure it was, it just failed and the error_message has been set */
 		return -1;
 	}
-	status = recv(sock, reply_buffer, size, 0);
+	status = recv((int) (long) con->consocket, data, size, 0);
 
 	if (status == -1) {
 		*error_message = strdup(strerror(errno));
@@ -150,7 +150,7 @@ int mongo_io_recv_header(int sock, mongo_server_options *options, char *reply_bu
 	return status;
 }
 
-int mongo_io_recv_data(int sock, mongo_server_options *options, void *dest, int size, char **error_message)
+int mongo_io_recv_data(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int num = 1, received = 0;
 
@@ -158,18 +158,18 @@ int mongo_io_recv_data(int sock, mongo_server_options *options, void *dest, int 
 	while (received < size && num > 0) {
 		int len = 4096 < (size - received) ? 4096 : size - received;
 
-		if (mongo_io_wait_with_timeout(sock, options->socketTimeoutMS, error_message) != 0) {
+		if (mongo_io_wait_with_timeout((int) (long) con->consocket, options->socketTimeoutMS, error_message) != 0) {
 			/* We don't care which failure it was, it just failed */
 			return -1;
 		}
 		// windows gives a WSAEFAULT if you try to get more bytes
-		num = recv(sock, (char*)dest, len, 0);
+		num = recv((int) (long)con->consocket, (char*)data, len, 0);
 
 		if (num < 0) {
 			return -1;
 		}
 
-		dest = (char*)dest + num;
+		data = (char*)data + num;
 		received += num;
 	}
 	return received;

@@ -451,7 +451,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 		} else {
 			retval = 0;
 		}
-	} else if (mongo_io_send(connection->socket, buf->start, buf->pos - buf->start, (char **) &error_message) == -1) {
+	} else if (link->manager->send(connection, &link->servers->options, buf->start, buf->pos - buf->start, (char **) &error_message) == -1) {
 		/* TODO: Find out what to do with the error message here */
 		free(error_message);
 		retval = 0;
@@ -549,7 +549,7 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
 
 	cursor->connection = connection;
 
-	if (-1 == mongo_io_send(connection->socket, buf->start, buf->pos - buf->start, (char **) &error_message)) {
+	if (-1 == manager->send(connection, NULL, buf->start, buf->pos - buf->start, (char **) &error_message)) {
 		/* TODO: Figure out what to do on FAIL
 		mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
 		mongo_manager_log(manager, MLOG_IO, MLOG_WARN, "do_safe_op: sending data failed, removing connection %s", connection->hash);
