@@ -31,7 +31,8 @@
 #include "parse.h"
 #include "read_preference.h"
 
-void mongo_blacklist_destroy(mongo_con_manager *manager, void *data);
+/* Forwards declarations */
+static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data);
 
 /* Helpers */
 static int authenticate_connection(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char **error_message)
@@ -625,7 +626,7 @@ mongo_con_manager *mongo_init(void)
 	return tmp;
 }
 
-void mongo_blacklist_destroy(mongo_con_manager *manager, void *data)
+static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data)
 {
 	mongo_connection_blacklist *con = (mongo_connection_blacklist *)data;
 	free(con);
