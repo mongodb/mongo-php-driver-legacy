@@ -437,6 +437,14 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 		}
 	}
 
+#if !MONGO_PHP_STREAMS
+		if (link->servers->options.ssl) {
+			zend_throw_exception(mongo_ce_ConnectionException, "SSL support is only available when compiled against PHP Streams", 26 TSRMLS_CC);
+			return;
+		}
+#endif
+
+
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_BVAL_P(slave_okay)) {
 		if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {

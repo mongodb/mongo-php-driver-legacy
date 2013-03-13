@@ -638,6 +638,7 @@ extern zend_module_entry mongo_module_entry;
  * 23: Logical error (conflicting options)
  * 24: (unused)
  * 25: Option with no string key
+ * 26: SSL support is only available when compiled against PHP Streams
  *
  * MongoCursorTimeoutException:
  * 80: timeout exception
