@@ -111,9 +111,13 @@ REPLSET INFO:   - tag: dc:west
 REPLSET INFO:   - tag: use:accounting
 ===DONE===
 
+Notice: CON     FINE: mongo_connection_destroy: Destroying connection object for %s:%d;%s;X;%d in Unknown on line 0
+
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;%s;X;%d. in Unknown on line 0
 
 Notice: CON     INFO: freeing connection %s:%d;%s;X;%d in Unknown on line 0
+
+Notice: CON     FINE: mongo_connection_destroy: Destroying connection object for %s:%d;%s;X;%d in Unknown on line 0
 
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;%s;X;%d. in Unknown on line 0
 
