@@ -76,7 +76,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
 static void make_special(mongo_cursor *);
-static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC);
+static void kill_cursor(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
 
@@ -103,6 +103,7 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 	/* set a timeout */
 	if (cursor->timeout && cursor->timeout > 0) {
         /*
+         * FIXME: STREAMS: do something with timeout?
 		status = mongo_io_wait_with_timeout(sock, cursor->timeout, error_message);
 		if (status != 0) {
 			return status;
@@ -110,11 +111,7 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
         */
 	}
 
-#if MONGO_PHP_STREAMS
-	status = MonGlo(manager)->stream_read(con, NULL, buf, REPLY_HEADER_LEN, error_message);
-#else
-	status = recv(con->socket, buf, REPLY_HEADER_LEN, FLAGS);
-#endif
+	status = MonGlo(manager)->recv_header(con, NULL, buf, REPLY_HEADER_LEN, error_message);
 	/* socket has been closed */
 	if (status == 0) {
 		*error_message = strdup("socket has been closed");
@@ -177,17 +174,12 @@ static int get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **e
 	cursor->buf.pos = cursor->buf.start;
 
 	/* finish populating cursor */
-#if MONGO_PHP_STREAMS
-	return MonGlo(manager)->stream_read(con, &client->servers->options, cursor->buf.pos, cursor->recv.length, error_message);
-#else
-	return mongo_io_recv_data(con->socket, &client->servers->options, cursor->buf.pos, cursor->recv.length, error_message);
-#endif
+	return MonGlo(manager)->recv_data(con, &client->servers->options, cursor->buf.pos, cursor->recv.length, error_message);
 }
 
 /* Cursor helper function */
 int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 {
-	int          sock;
 	unsigned int status;
 	char        *error_message = NULL;
 
@@ -405,11 +397,7 @@ PHP_METHOD(MongoCursor, hasNext)
 		return;
 	}
 
-#if MONGO_PHP_STREAMS
-	if (MonGlo(manager)->stream_write(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
-#else
-	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
-#endif
+	if (MonGlo(manager)->send(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		efree(buf.start);
 
 		mongo_cursor_throw(cursor->connection, 1 TSRMLS_CC, "%s", error_message);
@@ -1048,11 +1036,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 		return FAILURE;
 	}
 
-#if MONGO_PHP_STREAMS
-	if (link->manager->stream_write(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
-#else
-	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
-#endif
+	if (link->manager->send(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {
 			mongo_cursor_throw(cursor->connection, 14 TSRMLS_CC, "couldn't send query: %s", error_message);
 			free(error_message);
@@ -1551,7 +1535,8 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 		/* Add properties */
 		if (code != 80) {
 			zend_update_property_string(exception_ce, e, "host", strlen("host"), host TSRMLS_CC);
-			zend_update_property_long(exception_ce, e, "fd", strlen("fd"), connection->socket TSRMLS_CC);
+			/* FIXME: STREAMS: What is the point of this anyway? */
+			/*zend_update_property_long(exception_ce, e, "fd", strlen("fd"), *((int*)connection->consocket) TSRMLS_CC); */
 		}
 
 		free(host);
@@ -1588,12 +1573,12 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC)
 				}
 
 
-				if (current->cursor_id == cursor->cursor_id && cursor->connection != NULL && current->socket == cursor->connection->socket) {
+				if (current->cursor_id == cursor->cursor_id && cursor->connection != NULL && current->socket == cursor->connection->consocket) {
 					/* If the cursor_id is 0, the db is out of results anyway */
 					if (current->cursor_id == 0) {
 						php_mongo_free_cursor_node(current, le);
 					} else {
-						kill_cursor(current, le TSRMLS_CC);
+						kill_cursor(current, cursor->connection, le TSRMLS_CC);
 
 						/*
 						 * if the connection is closed before the cursor is
@@ -1632,7 +1617,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
 	new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
 	new_node->cursor_id = cursor->cursor_id;
 	if (cursor->connection) {
-		new_node->socket = cursor->connection->socket;
+		new_node->socket = cursor->connection->consocket;
 	} else {
 		new_node->socket = 0;
 	}
@@ -1661,7 +1646,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
 			 * If we find the current cursor in the cursor list, we don't need
 			 * another dtor for it so unlock the mutex & return.
 			 */
-			if (current->cursor_id == cursor->cursor_id && current->socket == cursor->connection->socket) {
+			if (current->cursor_id == cursor->cursor_id && current->socket == cursor->connection->consocket) {
 				pefree(new_node, 1);
 				UNLOCK(cursor);
 				return 0;
@@ -1752,7 +1737,7 @@ void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le)
 }
 
 /* tell db to destroy its cursor */
-static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC)
+static void kill_cursor(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC)
 {
 	char quickbuf[128];
 	buffer buf;
@@ -1772,8 +1757,8 @@ static void kill_cursor(cursor_node *node, zend_rsrc_list_entry *le TSRMLS_DC)
 
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", node->cursor_id);
 
-	if (!mongo_io_send(node->socket, buf.start, buf.pos - buf.start, (char**) &error_message)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %lld on socket %d: %s", (long long int) node->cursor_id, node->socket, error_message);
+	if (!MonGlo(manager)->send(con, NULL, buf.start, buf.pos - buf.start, (char**) &error_message)) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %lld: %s", (long long int) node->cursor_id, error_message);
 		free(error_message);
 	}
 

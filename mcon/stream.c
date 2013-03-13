@@ -16,6 +16,7 @@
 
 #include "stream.h"
 #include "types.h"
+#include "utils.h"
 
 #include "php.h"
 #include "config.h"
@@ -23,63 +24,64 @@
 #include "/Users/bjori/.apps/5.4/include/php/main/php_network.h"
 
 
-php_stream* php_mongo_stream_connect(mongo_con_manager *manager, mongo_server_options *options, mongo_server_def *server, char **error_message)
+void* php_mongo_stream_connect(mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	int errcode;
-	char *errstr;
-	const char *mode = strdup("rwb");
-	char *persistent_id = NULL;
-	php_stream *stream = php_stream_xport_create("sslv3://localhost:27017", strlen("sslv3://localhost:27017"), 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, NULL, NULL, NULL, &errstr, &errcode);
-	php_stream_context *context = php_stream_context_alloc(TSRMLS_C);
+	const char *mode = "rwb";
+	php_stream *stream;
+	char *hash = mongo_server_create_hash(server);
+	zend_rsrc_list_entry *le;
+	
+	stream = php_stream_xport_create("tcp://localhost:27017", strlen("tcp://localhost:27017"), 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, NULL, NULL, error_message, &errcode);
+
+	free(hash);
+
 	/*
-	stream = php_stream_alloc_rel(&php_openssl_socket_ops, sslsock, persistent_id, "r+")
-
-	stream = php_stream_fopen_from_fd_rel(tmp_socket, mode, persistent_id);
-	{
-		php_openssl_netstream_data_t sslstream = (php_openssl_netstream_data_t *)stream->abstract;
-		stream->abstract = sslstream;
-	}
-	*/
-
+	 * FIXME: STREAMS: When we start supporting certificates, validation and stuff we need stream contexts..
+	 * php_stream_context *context = php_stream_context_alloc(TSRMLS_C);
+	 * php_stream_context_set(stream, context);
+	 *
+	 */
 
 	if (!stream) {
-		printf("ERROR: %s (%d)", errstr, errcode);
-		exit(42);
-	}
-	//php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_TLS_CLIENT, NULL TSRMLS_CC);
-	php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC);
-	/*
-	php_stream_context_set(stream, context);
-	if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_TLS_CLIENT, NULL TSRMLS_CC) < 0 ||
-		printf("Failed setting up stuff");
-	} else {
-		printf("Everything cool");
+		return NULL;
 	}
 
-	php_stream_context_set(stream, NULL);
-	*/
+	php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_TLS_CLIENT, NULL TSRMLS_CC);
+	php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC);
+
+	/* Avoid a weird leak warning in debug mode when freeing the stream */
+#if ZEND_DEBUG
+	stream->__exposed = 1;
+#endif
 	return stream;
-	/*
-	{
-		php_netstream_data_t *sock = (php_openssl_netstream_data_t*)stream->abstract;
-		return sock->s.socket;
-	}
-	*/
+
 }
 int php_mongo_stream_read(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
-	int retval = php_stream_read(con->socket, (char *) data, size);
-	printf("READ: Got retval: %d\nData:%s\nsize: %d\n\n", retval, data, size);
+	int retval = php_stream_read(con->consocket, (char *) data, size);
+	printf("READ: Got retval: %d\nData:%s\nsize: %d\n\n", retval, (char *)data, size);
 
 	return retval;
 }
-int php_mongo_stream_write(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
+int php_mongo_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
-	int retval =  php_stream_write(con->socket, (char *) data, size);
-	printf("WRITE: Got retval: %d\nData:%s\nsize: %d\n\n", retval, data, size);
+	int retval =  php_stream_write(con->consocket, (char *) data, size);
+	printf("WRITE: Got retval: %d\nData:%s\nsize: %d\n\n", retval, (char *)data, size);
 
 	return retval;
 }
 
+void php_mongo_stream_close(mongo_connection *con, int why)
+{
+	if (why == MONGO_CLOSE_BROKEN) {
+		if (con->consocket) {
+			php_stream_free(con->consocket, PHP_STREAM_FREE_CLOSE_PERSISTENT | PHP_STREAM_FREE_RSRC_DTOR);
+		}
+	} else if (why == MONGO_CLOSE_SHUTDOWN) {
+		/* No need to do anything, it was freed from the persistent_list */
+		//php_stream_close(con->consocket);
+	}
+}
 
 
