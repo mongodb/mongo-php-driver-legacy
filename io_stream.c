@@ -15,8 +15,8 @@
  */
 
 #include "io_stream.h"
-#include "types.h"
-#include "utils.h"
+#include "mcon/types.h"
+#include "mcon/utils.h"
 
 #include "php.h"
 #include "config.h"
@@ -26,13 +26,20 @@
 
 void* php_mongo_io_stream_connect(mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
+	char *errmsg;
 	int errcode;
 	const char *mode = "rwb";
 	php_stream *stream;
 	char *hash = mongo_server_create_hash(server);
 	zend_rsrc_list_entry *le;
+	struct timeval ctimeout = {0};
+
+	if (options->connectTimeoutMS) {
+		ctimeout.tv_sec = options->connectTimeoutMS / 1000;
+		ctimeout.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
+	}
 	
-	stream = php_stream_xport_create("tcp://localhost:27017", strlen("tcp://localhost:27017"), 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, NULL, NULL, error_message, &errcode);
+	stream = php_stream_xport_create("tcp://localhost:27017", strlen("tcp://localhost:27017"), 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, NULL, &errmsg, &errcode);
 
 	free(hash);
 
@@ -44,11 +51,31 @@ void* php_mongo_io_stream_connect(mongo_server_def *server, mongo_server_options
 	 */
 
 	if (!stream) {
+		*error_message = strdup(errmsg);
 		return NULL;
 	}
 
-	php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_TLS_CLIENT, NULL TSRMLS_CC);
-	php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC);
+	if (options->ssl) {
+		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_TLS_CLIENT, NULL TSRMLS_CC) < 0
+			|| php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0) {
+			/* Setting up crypto failed. Thats only OK if we only preferred it */
+			if (options->ssl == MONGO_SSL_PREFER) {
+				php_stream_xport_crypto_enable(stream, 0 TSRMLS_CC);
+			} else {
+				*error_message = strdup("Can't connect over SSL, is mongod running with SSL?");
+				php_stream_close(stream);
+				return NULL;
+			}
+		}
+	}
+
+	if (options->socketTimeoutMS) {
+		struct timeval rtimeout = {0};
+		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
+		rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
+		php_stream_set_option(stream, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
+	}
+
 
 	/* Avoid a weird leak warning in debug mode when freeing the stream */
 #if ZEND_DEBUG
