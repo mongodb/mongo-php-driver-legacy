@@ -104,6 +104,11 @@ typedef unsigned __int64 uint64_t;
 #define MONGO_CLOSE_SHUTDOWN 1 /* In our shutdown procedures */
 #define MONGO_CLOSE_BROKEN 2   /* The connection is unusable */
 
+/* Enable/Disable SSL */
+#define MONGO_SSL_DISABLE 0
+#define MONGO_SSL_ENABLE 1
+#define MONGO_SSL_PREFER 2
+
 typedef int (mongo_cleanup_t)(void *callback_data);
 
 typedef struct _mongo_connection_deregister_callback
@@ -223,6 +228,7 @@ typedef struct _mongo_server_options
 	int   default_w;        /* The number specifies the number of replica nodes */
 	char *default_wstring;  /* If the value for "w" is a string, then it means a getLastError error-mode */
 	int   default_wtimeout; /* How many milliseconds to wait for replication to "w" nodes */
+	int   ssl;              /* If we should be using SSL */
 } mongo_server_options;
 
 typedef struct _mongo_servers
