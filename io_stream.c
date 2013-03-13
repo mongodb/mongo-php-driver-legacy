@@ -38,17 +38,11 @@ void* php_mongo_io_stream_connect(mongo_server_def *server, mongo_server_options
 		ctimeout.tv_sec = options->connectTimeoutMS / 1000;
 		ctimeout.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
 	}
-	
-	stream = php_stream_xport_create("tcp://localhost:27017", strlen("tcp://localhost:27017"), 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, NULL, &errmsg, &errcode);
+
+	stream = php_stream_xport_create("tcp://localhost:27017", strlen("tcp://localhost:27017"), 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
+	php_stream_notify_progress_init(stream->context, 0, 0);
 
 	free(hash);
-
-	/*
-	 * FIXME: STREAMS: When we start supporting certificates, validation and stuff we need stream contexts..
-	 * php_stream_context *context = php_stream_context_alloc(TSRMLS_C);
-	 * php_stream_context_set(stream, context);
-	 *
-	 */
 
 	if (!stream) {
 		*error_message = strdup(errmsg);
@@ -89,6 +83,9 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	int retval = php_stream_read(con->consocket, (char *) data, size);
 	printf("READ: Got retval: %d\nData:%s\nsize: %d\n\n", retval, (char *)data, size);
 
+	if (options && options->ctx) {
+		php_stream_notify_progress_increment((php_stream_context *)options->ctx, retval, size);
+	}
 	return retval;
 }
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)

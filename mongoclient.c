@@ -24,6 +24,7 @@
 #include <php.h>
 #include <zend_exceptions.h>
 #include "ext/standard/php_smart_str.h"
+#include "ext/standard/file.h"
 
 #include "php_mongo.h"
 #include "mongoclient.h"
@@ -343,6 +344,8 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	zend_bool     connect = 1;
 	zval         *options = 0;
 	zval         *slave_okay = 0;
+	zval         *zcontext = NULL;
+	php_stream_context *context = NULL;
 	mongoclient  *link;
 	zval        **opt_entry;
 	char         *opt_key;
@@ -352,7 +355,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	ulong         num_key;
 	HashPosition  pos;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/", &server, &server_len, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/r!", &server, &server_len, &options, &zcontext) == FAILURE) {
 		zval *object = getThis();
 		ZVAL_NULL(object);
 		return;
@@ -438,11 +441,19 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	}
 
 #if !MONGO_PHP_STREAMS
-		if (link->servers->options.ssl) {
-			zend_throw_exception(mongo_ce_ConnectionException, "SSL support is only available when compiled against PHP Streams", 26 TSRMLS_CC);
-			return;
-		}
+	if (link->servers->options.ssl) {
+		zend_throw_exception(mongo_ce_ConnectionException, "SSL support is only available when compiled against PHP Streams", 26 TSRMLS_CC);
+		return;
+	}
+	if (zcontext) {
+		zend_throw_exception(mongo_ce_ConnectionException, "Stream context support only available when compiled against PHP Streams", 27 TSRMLS_CC);
+		return;
+	}
 #endif
+	if (zcontext) {
+		context = php_stream_context_from_zval(zcontext, PHP_FILE_NO_DEFAULT_CONTEXT);
+		link->servers->options.ctx = context;
+	}
 
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
