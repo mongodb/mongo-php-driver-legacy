@@ -92,7 +92,7 @@ zend_class_entry *mongo_ce_Cursor = NULL;
  * -1 on failure, but not critical enough to throw an exception
  * 1.. on failure, and throw an exception. The return value is the error code
  */
-static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error_message TSRMLS_DC)
+static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC)
 {
 	int status = 0;
 	int num_returned = 0;
@@ -102,13 +102,19 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 
 	/* set a timeout */
 	if (cursor->timeout && cursor->timeout > 0) {
+        /*
 		status = mongo_io_wait_with_timeout(sock, cursor->timeout, error_message);
 		if (status != 0) {
 			return status;
 		}
+        */
 	}
 
-	status = recv(sock, buf, REPLY_HEADER_LEN, FLAGS);
+#if MONGO_PHP_STREAMS
+	status = MonGlo(manager)->stream_read(con, NULL, buf, REPLY_HEADER_LEN, error_message);
+#else
+	status = recv(con->socket, buf, REPLY_HEADER_LEN, FLAGS);
+#endif
 	/* socket has been closed */
 	if (status == 0) {
 		*error_message = strdup("socket has been closed");
@@ -157,7 +163,7 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 
 /* Reads a cursors body
  * Returns -1 on failure or an int indicating the number of bytes read */
-static int get_cursor_body(int sock, mongo_cursor *cursor, char **error_message TSRMLS_DC)
+static int get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC)
 {
 	mongoclient *client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting cursor body");
@@ -171,7 +177,11 @@ static int get_cursor_body(int sock, mongo_cursor *cursor, char **error_message 
 	cursor->buf.pos = cursor->buf.start;
 
 	/* finish populating cursor */
-	return mongo_io_recv_data(sock, &client->servers->options, cursor->buf.pos, cursor->recv.length, error_message);
+#if MONGO_PHP_STREAMS
+	return MonGlo(manager)->stream_read(con, &client->servers->options, cursor->buf.pos, cursor->recv.length, error_message);
+#else
+	return mongo_io_recv_data(con->socket, &client->servers->options, cursor->buf.pos, cursor->recv.length, error_message);
+#endif
 }
 
 /* Cursor helper function */
@@ -182,9 +192,8 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 	char        *error_message = NULL;
 
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting reply");
-	sock = cursor->connection->socket;
 
-	status = get_cursor_header(sock, cursor, (char**) &error_message TSRMLS_CC);
+	status = get_cursor_header(cursor->connection, cursor, (char**) &error_message TSRMLS_CC);
 	if (status == -1 || status > 0) {
 		mongo_cursor_throw(cursor->connection, status TSRMLS_CC, "%s", error_message);
 		free(error_message);
@@ -199,7 +208,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 		return FAILURE;
 	}
 
-	if (get_cursor_body(sock, cursor, (char **) &error_message TSRMLS_CC) == FAILURE) {
+	if (get_cursor_body(cursor->connection, cursor, (char **) &error_message TSRMLS_CC) == FAILURE) {
 #ifdef WIN32
 		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "WSA error getting database response %s (%d)", error_message, WSAGetLastError());
 #else
@@ -396,7 +405,11 @@ PHP_METHOD(MongoCursor, hasNext)
 		return;
 	}
 
+#if MONGO_PHP_STREAMS
+	if (MonGlo(manager)->stream_write(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
+#else
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
+#endif
 		efree(buf.start);
 
 		mongo_cursor_throw(cursor->connection, 1 TSRMLS_CC, "%s", error_message);
@@ -1035,7 +1048,11 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 		return FAILURE;
 	}
 
+#if MONGO_PHP_STREAMS
+	if (link->manager->stream_write(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
+#else
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
+#endif
 		if (error_message) {
 			mongo_cursor_throw(cursor->connection, 14 TSRMLS_CC, "couldn't send query: %s", error_message);
 			free(error_message);

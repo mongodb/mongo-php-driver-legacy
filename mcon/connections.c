@@ -43,6 +43,9 @@
 #include <string.h>
 #include <errno.h>
 
+#include "config.h"
+
+
 #define INT_32  4
 #define FLAGS   0
 
@@ -226,6 +229,7 @@ int mongo_connection_connect(char *host, int port, int timeout, char **error_mes
 #else
 	fcntl(tmp_socket, F_SETFL, FLAGS);
 #endif
+
 	return tmp_socket;
 
 error:
@@ -255,7 +259,11 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 
 	/* Connect */
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_create: creating new connection for %s:%d", server_def->host, server_def->port);
+#if MONGO_PHP_STREAMS
+	tmp->socket = manager->stream_connect(manager, server_def, options, error_message);
+#else
 	tmp->socket = mongo_connection_connect(server_def->host, server_def->port, options->connectTimeoutMS, error_message);
+#endif
 	if (tmp->socket == -1) {
 		/* Can't establish a connection, blacklist it so we don't have to retry in the near future */
 		mongo_manager_blacklist_register(manager, tmp);
@@ -341,9 +349,17 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	char          *recv_error_message;
 
 	/* Send and wait for reply */
+#if MONGO_PHP_STREAMS
+	manager->stream_write(con, options, packet->d, packet->l, error_message);
+#else
 	mongo_io_send(con->socket, packet->d, packet->l, error_message);
+#endif
 	mcon_str_ptr_dtor(packet);
+#if MONGO_PHP_STREAMS
+	read = manager->stream_read(con, options, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
+#else
 	read = mongo_io_recv_header(con->socket, options, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
+#endif
 	if (read == -1) {
 		*error_message = malloc(256);
 		snprintf(*error_message, 256, "send_package: error reading from socket: %s", recv_error_message);
@@ -374,7 +390,11 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 
 	/* Read data */
 	*data_buffer = malloc(data_size + 1);
+#if MONGO_PHP_STREAMS
+	if (manager->stream_read(con, options, *data_buffer, data_size, error_message) <= 0) {
+#else
 	if (mongo_io_recv_data(con->socket, options, *data_buffer, data_size, error_message) <= 0) {
+#endif
 		return 0;
 	}
 
