@@ -480,6 +480,7 @@ void *mongo_manager_find_by_hash(mongo_con_manager *manager, mongo_con_manager_i
 	}
 	return NULL;
 }
+
 mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manager, char *hash)
 {
 	return mongo_manager_find_by_hash(manager, manager->connections, hash);
@@ -514,6 +515,7 @@ mongo_con_manager_item *mongo_manager_register(mongo_con_manager *manager, mongo
 	}
 	return new;
 }
+
 void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connection *con)
 {
 	mongo_manager_register(manager, &manager->connections, con, con->hash);
