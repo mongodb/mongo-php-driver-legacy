@@ -48,7 +48,7 @@ static void mongo_print_connection_info(mongo_con_manager *manager, mongo_connec
 	mongo_manager_log(manager, MLOG_RS, level,
 		"- connection: type: %s, socket: %d, ping: %d, hash: %s",
 		mongo_connection_type(con->connection_type),
-		con->socket,
+		42,/* FIXME: STREAMS: Maybe we do need a union here..  con->socket, */
 		con->ping_ms,
 		con->hash
 	);
