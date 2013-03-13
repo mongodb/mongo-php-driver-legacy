@@ -304,7 +304,6 @@ void mongo_connection_destroy(mongo_con_manager *manager, void *data, int why)
 
 		if (con->consocket) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_connection_destroy: Closing socket for %s.", con->hash);
-
 			manager->close(con->consocket, why);
 			con->consocket = NULL;
 
