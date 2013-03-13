@@ -97,6 +97,7 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 	int status = 0;
 	int num_returned = 0;
 	char buf[REPLY_HEADER_LEN];
+	mongoclient *client;
 
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting cursor header");
 
@@ -111,7 +112,8 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
         */
 	}
 
-	status = MonGlo(manager)->recv_header(con, NULL, buf, REPLY_HEADER_LEN, error_message);
+	client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
+	status = client->manager->recv_header(con, NULL, buf, REPLY_HEADER_LEN, error_message);
 	/* socket has been closed */
 	if (status == 0) {
 		*error_message = strdup("socket has been closed");
@@ -362,6 +364,7 @@ PHP_METHOD(MongoCursor, hasNext)
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	char *error_message = NULL;
 	zval *temp;
+	mongoclient *client;
 
 	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
 
@@ -397,7 +400,8 @@ PHP_METHOD(MongoCursor, hasNext)
 		return;
 	}
 
-	if (MonGlo(manager)->send(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
+	client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
+	if (client->manager->send(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		efree(buf.start);
 
 		mongo_cursor_throw(cursor->connection, 1 TSRMLS_CC, "%s", error_message);

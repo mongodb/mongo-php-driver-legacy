@@ -17,6 +17,8 @@
 #include "io_stream.h"
 #include "mcon/types.h"
 #include "mcon/utils.h"
+#include "mcon/manager.h"
+#include "php_mongo.h"
 
 #include "php.h"
 #include "config.h"
@@ -24,7 +26,7 @@
 #include "/Users/bjori/.apps/5.4/include/php/main/php_network.h"
 
 
-void* php_mongo_io_stream_connect(mongo_server_def *server, mongo_server_options *options, char **error_message)
+void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	char *errmsg;
 	int errcode;
@@ -54,13 +56,18 @@ void* php_mongo_io_stream_connect(mongo_server_def *server, mongo_server_options
 			|| php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0) {
 			/* Setting up crypto failed. Thats only OK if we only preferred it */
 			if (options->ssl == MONGO_SSL_PREFER) {
+				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Failed establishing SSL for %s:%d", server->host, server->port);
 				php_stream_xport_crypto_enable(stream, 0 TSRMLS_CC);
 			} else {
 				*error_message = strdup("Can't connect over SSL, is mongod running with SSL?");
 				php_stream_close(stream);
 				return NULL;
 			}
+		} else {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Establish SSL for %s:%d", server->host, server->port);
 		}
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Not establishing SSL for %s:%d", server->host, server->port);
 	}
 
 	if (options->socketTimeoutMS) {
@@ -104,6 +111,15 @@ void php_mongo_io_stream_close(mongo_connection *con, int why)
 	} else if (why == MONGO_CLOSE_SHUTDOWN) {
 		/* No need to do anything, it was freed from the persistent_list */
 		//php_stream_close(con->consocket);
+	}
+}
+void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *con)
+{
+	zend_rsrc_list_entry *le;
+
+	/* When we fork we need to unregister the parents hash so we don't accidentally destroy it */
+	if (zend_hash_find(&EG(persistent_list), con->hash, strlen(con->hash), (void*) &le) == SUCCESS) {
+		zend_hash_del(&EG(persistent_list), con->hash, strlen(con->hash));
 	}
 }
 

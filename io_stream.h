@@ -24,10 +24,11 @@
 #include "/Users/bjori/.apps/5.4/include/php/main/php_network.h"
 
 
-void* php_mongo_io_stream_connect(mongo_server_def *server, mongo_server_options *options, char **error_message);
+void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message);
 int php_mongo_io_stream_read     (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 int php_mongo_io_stream_send     (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 void php_mongo_io_stream_close   (mongo_connection *con, int why);
+void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *con);
 
 #endif
 
