@@ -34,7 +34,6 @@
 
 
 #include "config.h"
-#include "stream.h"
 
 /* Forwards declarations */
 static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data);
@@ -634,12 +633,6 @@ mongo_con_manager *mongo_init(void)
 	tmp->recv_data   = mongo_io_recv_data;
 	tmp->send        = mongo_io_send;
 	tmp->close       = mongo_connection_close;
-
-	tmp->connect     = php_mongo_stream_connect;
-	tmp->recv_header = php_mongo_stream_read;
-	tmp->recv_data   = php_mongo_stream_read;
-	tmp->send        = php_mongo_stream_send;
-	tmp->close       = php_mongo_stream_close;
 
 	return tmp;
 }

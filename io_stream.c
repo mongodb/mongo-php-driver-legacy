@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "stream.h"
+#include "io_stream.h"
 #include "types.h"
 #include "utils.h"
 
@@ -24,7 +24,7 @@
 #include "/Users/bjori/.apps/5.4/include/php/main/php_network.h"
 
 
-void* php_mongo_stream_connect(mongo_server_def *server, mongo_server_options *options, char **error_message)
+void* php_mongo_io_stream_connect(mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	int errcode;
 	const char *mode = "rwb";
@@ -57,14 +57,14 @@ void* php_mongo_stream_connect(mongo_server_def *server, mongo_server_options *o
 	return stream;
 
 }
-int php_mongo_stream_read(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
+int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int retval = php_stream_read(con->consocket, (char *) data, size);
 	printf("READ: Got retval: %d\nData:%s\nsize: %d\n\n", retval, (char *)data, size);
 
 	return retval;
 }
-int php_mongo_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
+int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int retval =  php_stream_write(con->consocket, (char *) data, size);
 	printf("WRITE: Got retval: %d\nData:%s\nsize: %d\n\n", retval, (char *)data, size);
@@ -72,7 +72,7 @@ int php_mongo_stream_send(mongo_connection *con, mongo_server_options *options, 
 	return retval;
 }
 
-void php_mongo_stream_close(mongo_connection *con, int why)
+void php_mongo_io_stream_close(mongo_connection *con, int why)
 {
 	if (why == MONGO_CLOSE_BROKEN) {
 		if (con->consocket) {
