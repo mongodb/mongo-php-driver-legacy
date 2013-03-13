@@ -565,14 +565,15 @@ int mongo_manager_deregister(mongo_con_manager *manager, mongo_con_manager_item 
 
 	return 0;
 }
+
 int mongo_manager_connection_deregister(mongo_con_manager *manager, mongo_connection *con)
 {
 	return mongo_manager_deregister(manager, &manager->connections, con->hash, con, mongo_connection_destroy);
 }
 
-int mongo_manager_blacklist_deregister(mongo_con_manager *manager, mongo_connection_blacklist *con, char *hash)
+int mongo_manager_blacklist_deregister(mongo_con_manager *manager, mongo_connection_blacklist *blacklist_item, char *hash)
 {
-	return mongo_manager_deregister(manager, &manager->blacklist, hash, con, mongo_blacklist_destroy);
+	return mongo_manager_deregister(manager, &manager->blacklist, hash, blacklist_item, mongo_blacklist_destroy);
 }
 
 /* Logging */
@@ -634,10 +635,11 @@ static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data)
 void mongo_deinit(mongo_con_manager *manager)
 {
 	if (manager->connections) {
-		/* Does this recursively for all cons */
+		/* Does this iteratively for all connections */
 		destroy_manager_item(manager, manager->connections, mongo_connection_destroy);
 	}
 	if (manager->blacklist) {
+		/* Does this iteratively for all blacklist items */
 		destroy_manager_item(manager, manager->blacklist, mongo_blacklist_destroy);
 	}
 
