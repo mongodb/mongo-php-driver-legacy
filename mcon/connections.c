@@ -280,7 +280,11 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 	}
 
 	/* We call get_server_flags to the maxBsonObjectSize data */
-	mongo_connection_get_server_flags(manager, tmp, options, (char**) &error_message);
+	if (!mongo_connection_get_server_flags(manager, tmp, options, error_message)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", server_def->host, server_def->port, *error_message);
+		free(tmp);
+		return NULL;
+	}
 
 	return tmp;
 }
