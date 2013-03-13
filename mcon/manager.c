@@ -353,6 +353,10 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
 	collection = mongo_select_nearest_servers(manager, collection, &servers->read_pref);
+	if (!collection) {
+		*error_message = strdup("No server near us");
+		goto bailout;
+	}
 	con = mongo_pick_server_from_set(manager, collection, &servers->read_pref);
 
 bailout:
