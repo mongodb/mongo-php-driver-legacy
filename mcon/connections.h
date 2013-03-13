@@ -18,8 +18,9 @@
 
 #include "types.h"
 #include "str.h"
-
-struct timeval;
+#ifndef WIN32
+# include <sys/time.h>
+#endif
 
 mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash, mongo_server_def *server_def, mongo_server_options *options, char **error_message);
 
