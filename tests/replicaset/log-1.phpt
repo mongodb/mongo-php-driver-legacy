@@ -108,9 +108,13 @@ REPLSET INFO: - connection: type: PRIMARY, socket: 3, ping: 0, hash: %s:%d;%s;X;
 REPLSET INFO:   - tag: dc:west
 REPLSET INFO:   - tag: use:accounting
 
+Notice: CON     FINE: mongo_connection_destroy: Destroying connection object for %s:%d;%s;X;%d in Unknown on line 0
+
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;%s;X;%d. in Unknown on line 0
 
 Notice: CON     INFO: freeing connection %s:%d;%s;X;%d in Unknown on line 0
+
+Notice: CON     FINE: mongo_connection_destroy: Destroying connection object for %s:%d;%s;X;%d in Unknown on line 0
 
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;%s;X;%d. in Unknown on line 0
 
