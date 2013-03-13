@@ -93,7 +93,7 @@ static int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *h
 }
 
 /* This function does the actual connecting */
-void* mongo_connection_connect(mongo_server_def *server, mongo_server_options *options, char **error_message)
+void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	struct sockaddr*   sa;
 	struct sockaddr_in si;
@@ -270,7 +270,7 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 
 	/* Connect */
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_create: creating new connection for %s:%d", server_def->host, server_def->port);
-	tmp->consocket = manager->connect(server_def, options, error_message);
+	tmp->consocket = manager->connect(manager, server_def, options, error_message);
 	if (!tmp->consocket) {
 		mongo_manager_blacklist_register(manager, tmp);
 		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error while creating connection for %s:%d: %s", server_def->host, server_def->port, *error_message);
@@ -339,6 +339,10 @@ void mongo_connection_destroy(mongo_con_manager *manager, void *data, int why)
 	} else {
 		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_connection_destroy: The process pid (%d) for %s doesn't match the connection pid (%d).", current_pid, con->hash, connection_pid);
 	}
+}
+void mongo_connection_forget(mongo_con_manager *manager, mongo_connection *con)
+{
+	/* FIXME: Should we remove it from our connection registry ? */
 }
 
 #define MONGO_REPLY_HEADER_SIZE 36

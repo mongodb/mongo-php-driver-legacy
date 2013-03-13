@@ -637,6 +637,7 @@ mongo_con_manager *mongo_init(void)
 	tmp->recv_data   = mongo_io_recv_data;
 	tmp->send        = mongo_io_send;
 	tmp->close       = mongo_connection_close;
+	tmp->forget      = mongo_connection_forget;
 
 	return tmp;
 }
