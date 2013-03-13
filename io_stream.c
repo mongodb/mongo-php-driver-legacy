@@ -81,17 +81,16 @@ void* php_mongo_io_stream_connect(mongo_server_def *server, mongo_server_options
 int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int retval = php_stream_read(con->consocket, (char *) data, size);
-	printf("READ: Got retval: %d\nData:%s\nsize: %d\n\n", retval, (char *)data, size);
 
 	if (options && options->ctx) {
 		php_stream_notify_progress_increment((php_stream_context *)options->ctx, retval, size);
 	}
+
 	return retval;
 }
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int retval =  php_stream_write(con->consocket, (char *) data, size);
-	printf("WRITE: Got retval: %d\nData:%s\nsize: %d\n\n", retval, (char *)data, size);
 
 	return retval;
 }
