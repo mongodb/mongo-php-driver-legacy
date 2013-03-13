@@ -31,6 +31,12 @@ typedef unsigned __int64 uint64_t;
 #else
 # include <stdint.h>
 #endif
+#include "config.h"
+#if MONGO_PHP_STREAMS
+#include "php.h"
+#include "/Users/bjori/.apps/5.4/include/php/main/php_streams.h"
+#include "/Users/bjori/.apps/5.4/include/php/main/php_network.h"
+#endif
 
 #define MONGO_CON_TYPE_STANDALONE 1
 #define MONGO_CON_TYPE_MULTIPLE   2
@@ -113,7 +119,11 @@ typedef struct _mongo_connection
 	int    ping_ms;
 	int    last_ismaster; /* The timestamp when ismaster/get_server_flags was called last */
 	int    last_reqid;
+#if MONGO_PHP_STREAMS
+	php_stream *socket;
+#else
 	int    socket;
+#endif
 	int    connection_type; /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
 	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
 	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
@@ -142,6 +152,15 @@ typedef void (mongo_log_callback_t)(int module, int level, void *context, char *
 #define MONGO_MANAGER_DEFAULT_MASTER_INTERVAL   15
 #define MONGO_MANAGER_DEFAULT_MASTER_INTERVAL_S "15"
 
+#if MONGO_PHP_STREAMS
+struct _mongo_con_manager;
+struct _mongo_server_options;
+struct _mongo_server_def;
+typedef php_stream* (mongo_stream_connect) (struct _mongo_con_manager *manager, struct _mongo_server_options *options, struct _mongo_server_def *server, char **error_message);
+typedef int (mongo_stream_read)            (mongo_connection *con, struct _mongo_server_options *options, void *data, int size, char **error_message);
+typedef int (mongo_stream_write)           (mongo_connection *con, struct _mongo_server_options *options, void *data, int size, char **error_message);
+#endif
+
 typedef struct _mongo_con_manager
 {
 	mongo_con_manager_item *connections;
@@ -157,6 +176,13 @@ typedef struct _mongo_con_manager
 	 * is also used for the get_server_flags function. */
 	long                    ping_interval;      /* default:  5 seconds */
 	long                    ismaster_interval;  /* default: 15 seconds */
+
+#if MONGO_PHP_STREAMS
+	mongo_stream_connect   *stream_connect;
+	mongo_stream_read      *stream_read;
+	mongo_stream_write     *stream_write;
+#endif
+
 } mongo_con_manager;
 
 typedef void (mongo_con_manager_item_destroy_t)(mongo_con_manager *manager, void *item);

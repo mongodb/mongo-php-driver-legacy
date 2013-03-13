@@ -74,8 +74,14 @@ zend_function_entry mongo_functions[] = {
 
 /* {{{ mongo_module_entry
  */
+static const zend_module_dep mongo_deps[] = {
+	ZEND_MOD_REQUIRED("openssl")
+	ZEND_MOD_END
+};
 zend_module_entry mongo_module_entry = {
-	STANDARD_MODULE_HEADER,
+	STANDARD_MODULE_HEADER_EX,
+	NULL,
+	mongo_deps,
 	PHP_MONGO_EXTNAME,
 	mongo_functions,
 	PHP_MINIT(mongo),

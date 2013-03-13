@@ -30,6 +30,8 @@
 #include "collection.h"
 #include "parse.h"
 #include "read_preference.h"
+#include "config.h"
+#include "stream.h"
 
 /* Forwards declarations */
 static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data);
@@ -620,6 +622,12 @@ mongo_con_manager *mongo_init(void)
 
 	tmp->log_context = NULL;
 	tmp->log_function = mongo_log_null;
+
+#if MONGO_PHP_STREAMS
+	tmp->stream_connect  = php_mongo_stream_connect;
+	tmp->stream_read  = php_mongo_stream_read;
+	tmp->stream_write = php_mongo_stream_write;
+#endif
 
 	tmp->ping_interval = MONGO_MANAGER_DEFAULT_PING_INTERVAL;
 	tmp->ismaster_interval = MONGO_MANAGER_DEFAULT_MASTER_INTERVAL;
