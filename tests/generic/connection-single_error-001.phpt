@@ -14,11 +14,11 @@ if ($port != "27017") {
 <?php
 require "tests/utils/server.inc";
 
-$d = new Mongo("http://foofas:5345");
+$d = @new Mongo("http://foofas:5345");
 var_dump($b->connected);
 ?>
 --EXPECTF--
-Fatal error: Uncaught exception 'MongoConnectionException' with message 'Failed to connect to: http:0: No such file or directory' in %sconnection-single_error-001.php:%d
+Fatal error: Uncaught exception 'MongoConnectionException' with message 'Failed to connect to: http:0: %s' in %sconnection-single_error-001.php:%d
 Stack trace:
 #0 %sconnection-single_error-001.php(4): Mongo->__construct('http://foofas:5...')
 #1 {main}
