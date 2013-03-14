@@ -30,10 +30,8 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 {
 	char *errmsg;
 	int errcode;
-	const char *mode = "rwb";
 	php_stream *stream;
 	char *hash = mongo_server_create_hash(server);
-	zend_rsrc_list_entry *le;
 	struct timeval ctimeout = {0};
 	char *dsn;
 	int dsn_len;
