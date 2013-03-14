@@ -104,7 +104,7 @@ if test "$PHP_COVERAGE" = "yes"; then
 fi
 
 PHP_ARG_ENABLE(streams,  Build with PHP streams support,
-[  --enable-streams    Mongo: Build with PHP streams wrapper support], no, no)
+[  --disable-streams         Mongo: Build with PHP streams wrapper support], yes, no)
 
 if test "$PHP_STREAMS" = "yes"; then
   AC_DEFINE(MONGO_PHP_STREAMS, 1, [Make mongodb streams])
