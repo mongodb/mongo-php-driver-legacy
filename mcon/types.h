@@ -87,7 +87,8 @@ typedef unsigned __int64 uint64_t;
 #define MLOG_ALL    31 /* Must be the bit sum of all above */
 
 /* Defaults */
-#define MONGO_DEFAULT_MAX_MESSAGE_SIZE (16 * 1024 * 1024)
+#define MONGO_DEFAULT_MAX_DOCUMENT_SIZE (16 * 1024 * 1024)
+#define MONGO_DEFAULT_MAX_MESSAGE_SIZE  (32 * 1024 * 1024)
 
 typedef int (mongo_cleanup_t)(void *callback_data);
 
