@@ -22,8 +22,8 @@
 
 #include "php.h"
 #include "config.h"
-#include "/Users/bjori/.apps/5.4/include/php/main/php_streams.h"
-#include "/Users/bjori/.apps/5.4/include/php/main/php_network.h"
+#include "main/php_streams.h"
+#include "main/php_network.h"
 
 
 void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
