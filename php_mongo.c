@@ -342,6 +342,11 @@ PHP_MINFO_FUNCTION(mongo)
 
 	php_info_print_table_header(2, "MongoDB Support", "enabled");
 	php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
+#if MONGO_PHP_STREAMS
+	php_info_print_table_row(2, "SSL Support", "enabled");
+#else
+	php_info_print_table_row(2, "SSL Support", "disabled");
+#endif
 
 	php_info_print_table_end();
 
