@@ -14,11 +14,11 @@ if ($port != "27017") {
 <?php
 require "tests/utils/server.inc";
 
-$d = new Mongo("mongodb://foofas:5345");
+$d = @new Mongo("mongodb://foofas:5345");
 var_dump($b->connected);
 ?>
 --EXPECTF--
-Fatal error: Uncaught exception 'MongoConnectionException' with message 'Failed to connect to: foofas:5345: Couldn't get host info for foofas' in %sconnection-single_error-003.php:%d
+Fatal error: Uncaught exception 'MongoConnectionException' with message '%s' in %sconnection-single_error-003.php:%d
 Stack trace:
 #0 %sconnection-single_error-003.php(%d): Mongo->__construct('mongodb://foofa...')
 #1 {main}

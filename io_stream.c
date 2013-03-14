@@ -35,19 +35,24 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	char *hash = mongo_server_create_hash(server);
 	zend_rsrc_list_entry *le;
 	struct timeval ctimeout = {0};
+	char *dsn;
+	int dsn_len;
+
+	dsn_len = spprintf(&dsn, 0, "tcp://%s:%d", server->host, server->port);
 
 	if (options->connectTimeoutMS) {
 		ctimeout.tv_sec = options->connectTimeoutMS / 1000;
 		ctimeout.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
 	}
 
-	stream = php_stream_xport_create("tcp://localhost:27017", strlen("tcp://localhost:27017"), 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
-	php_stream_notify_progress_init(stream->context, 0, 0);
-
+	stream = php_stream_xport_create(dsn, dsn_len + 1, 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
+	efree(dsn);
 	free(hash);
 
 	if (!stream) {
+		/* error_message will be free()d, but errmsg was allocated by PHP and needs efree() */
 		*error_message = strdup(errmsg);
+		efree(errmsg);
 		return NULL;
 	}
 
@@ -70,6 +75,8 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Not establishing SSL for %s:%d", server->host, server->port);
 	}
 
+	php_stream_notify_progress_init(stream->context, 0, 0);
+
 	if (options->socketTimeoutMS) {
 		struct timeval rtimeout = {0};
 		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
@@ -87,13 +94,27 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 }
 int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
-	int retval = php_stream_read(con->consocket, (char *) data, size);
+	int num = 1, received = 0;
 
-	if (options && options->ctx) {
-		php_stream_notify_progress_increment((php_stream_context *)options->ctx, retval, size);
+	// this can return FAILED if there is just no more data from db
+	while (received < size && num > 0) {
+		int len = 4096 < (size - received) ? 4096 : size - received;
+
+		num = php_stream_read(con->consocket, (char *) data, len);
+
+		if (num < 0) {
+			return -1;
+		}
+
+		data = (char*)data + num;
+		received += num;
 	}
 
-	return retval;
+	if (options && options->ctx) {
+		php_stream_notify_progress_increment((php_stream_context *)options->ctx, received, size);
+	}
+
+	return received;
 }
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
