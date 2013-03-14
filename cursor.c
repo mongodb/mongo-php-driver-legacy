@@ -1540,7 +1540,7 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 		if (code != 80) {
 			zend_update_property_string(exception_ce, e, "host", strlen("host"), host TSRMLS_CC);
 			/* FIXME: STREAMS: What is the point of this anyway? */
-			/*zend_update_property_long(exception_ce, e, "fd", strlen("fd"), *((int*)connection->consocket) TSRMLS_CC); */
+			/*zend_update_property_long(exception_ce, e, "fd", strlen("fd"), *((int*)connection->socket) TSRMLS_CC); */
 		}
 
 		free(host);
@@ -1577,7 +1577,7 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC)
 				}
 
 
-				if (current->cursor_id == cursor->cursor_id && cursor->connection != NULL && current->socket == cursor->connection->consocket) {
+				if (current->cursor_id == cursor->cursor_id && cursor->connection != NULL && current->socket == cursor->connection->socket) {
 					/* If the cursor_id is 0, the db is out of results anyway */
 					if (current->cursor_id == 0) {
 						php_mongo_free_cursor_node(current, le);
@@ -1621,7 +1621,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
 	new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
 	new_node->cursor_id = cursor->cursor_id;
 	if (cursor->connection) {
-		new_node->socket = cursor->connection->consocket;
+		new_node->socket = cursor->connection->socket;
 	} else {
 		new_node->socket = 0;
 	}
@@ -1650,7 +1650,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
 			 * If we find the current cursor in the cursor list, we don't need
 			 * another dtor for it so unlock the mutex & return.
 			 */
-			if (current->cursor_id == cursor->cursor_id && current->socket == cursor->connection->consocket) {
+			if (current->cursor_id == cursor->cursor_id && current->socket == cursor->connection->socket) {
 				pefree(new_node, 1);
 				UNLOCK(cursor);
 				return 0;
