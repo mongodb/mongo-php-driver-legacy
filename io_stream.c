@@ -98,7 +98,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	while (received < size && num > 0) {
 		int len = 4096 < (size - received) ? 4096 : size - received;
 
-		num = php_stream_read(con->consocket, (char *) data, len);
+		num = php_stream_read(con->socket, (char *) data, len);
 
 		if (num < 0) {
 			return -1;
@@ -116,7 +116,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 }
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
-	int retval =  php_stream_write(con->consocket, (char *) data, size);
+	int retval =  php_stream_write(con->socket, (char *) data, size);
 
 	return retval;
 }
@@ -124,12 +124,12 @@ int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *option
 void php_mongo_io_stream_close(mongo_connection *con, int why)
 {
 	if (why == MONGO_CLOSE_BROKEN) {
-		if (con->consocket) {
-			php_stream_free(con->consocket, PHP_STREAM_FREE_CLOSE_PERSISTENT | PHP_STREAM_FREE_RSRC_DTOR);
+		if (con->socket) {
+			php_stream_free(con->socket, PHP_STREAM_FREE_CLOSE_PERSISTENT | PHP_STREAM_FREE_RSRC_DTOR);
 		}
 	} else if (why == MONGO_CLOSE_SHUTDOWN) {
 		/* No need to do anything, it was freed from the persistent_list */
-		//php_stream_close(con->consocket);
+		//php_stream_close(con->socket);
 	}
 }
 void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *con)
@@ -138,9 +138,9 @@ void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *co
 
 	/* When we fork we need to unregister the parents hash so we don't accidentally destroy it */
 	if (zend_hash_find(&EG(persistent_list), con->hash, strlen(con->hash) + 1, (void*) &le) == SUCCESS) {
-		((php_stream *)con->consocket)->in_free = 1;
+		((php_stream *)con->socket)->in_free = 1;
 		zend_hash_del(&EG(persistent_list), con->hash, strlen(con->hash) + 1);
-		((php_stream *)con->consocket)->in_free = 0;
+		((php_stream *)con->socket)->in_free = 0;
 	}
 }
 

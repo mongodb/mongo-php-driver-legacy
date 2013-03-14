@@ -124,7 +124,7 @@ typedef struct _mongo_connection
 	int    ping_ms;
 	int    last_ismaster; /* The timestamp when ismaster/get_server_flags was called last */
 	int    last_reqid;
-	void  *consocket;
+	void  *socket;
 	int    connection_type; /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
 	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
 	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
