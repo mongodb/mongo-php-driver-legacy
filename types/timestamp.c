@@ -16,7 +16,7 @@
 #include <php.h>
 #include "php_mongo.h"
 
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_Timestamp = NULL;
 

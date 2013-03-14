@@ -40,7 +40,7 @@ extern zend_class_entry *mongo_ce_BinData,
   *mongo_ce_Int32,
   *mongo_ce_Int64;
 
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static int get_limit(mongo_cursor *cursor);
 static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC);

@@ -21,7 +21,7 @@
 #include "log.h"
 
 zend_class_entry *mongo_ce_Log;
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static long set_value(char *setting, zval *return_value TSRMLS_DC);
 static void get_value(char *setting, zval *return_value TSRMLS_DC);

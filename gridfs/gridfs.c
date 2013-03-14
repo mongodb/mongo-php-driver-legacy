@@ -27,7 +27,7 @@
 #include "types/date.h"
 #include "types/id.h"
 
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 extern zend_class_entry *mongo_ce_BinData;
 extern zend_class_entry *mongo_ce_Collection;
