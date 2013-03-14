@@ -36,4 +36,4 @@ try {
 --EXPECTF--
 This document should be just too large: document fragment is too large: 16777252, max: 16777216
 This document should just fit: it fit!
-Batch insert with 4 documents: current batch size is 50331681 bytes, max is 48000000
+Batch insert with 4 documents: current batch size is too large: 50331681, max: 48000000
