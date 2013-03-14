@@ -245,6 +245,7 @@ PHP_METHOD(MongoGridFSFile, getBytes)
 	}
 
 	str = (char*)emalloc(len + 1);
+	str = memset(str, 0, len + 1);
 	str_ptr = str;
 
 	if (apply_to_cursor(cursor, copy_bytes, &str, len + 1 TSRMLS_CC) == FAILURE) {
@@ -297,7 +298,10 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
 	if (EG(exception)) {
 		return FAILURE;
 	}
-
+    
+	if (Z_TYPE_P(next) == IS_NULL) {
+		return FAILURE;
+	}
 	while (Z_TYPE_P(next) == IS_ARRAY) {
 		zval **zdata;
 
