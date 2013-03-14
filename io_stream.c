@@ -139,8 +139,10 @@ void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *co
 	zend_rsrc_list_entry *le;
 
 	/* When we fork we need to unregister the parents hash so we don't accidentally destroy it */
-	if (zend_hash_find(&EG(persistent_list), con->hash, strlen(con->hash), (void*) &le) == SUCCESS) {
-		zend_hash_del(&EG(persistent_list), con->hash, strlen(con->hash));
+	if (zend_hash_find(&EG(persistent_list), con->hash, strlen(con->hash) + 1, (void*) &le) == SUCCESS) {
+		((php_stream *)con->consocket)->in_free = 1;
+		zend_hash_del(&EG(persistent_list), con->hash, strlen(con->hash) + 1);
+		((php_stream *)con->consocket)->in_free = 0;
 	}
 }
 
