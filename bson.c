@@ -52,6 +52,20 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
 static int is_utf8(const char *s, int len);
 static int insert_helper(buffer *buf, zval *doc, int max TSRMLS_DC);
 
+/* The position is not increased, we are just filling in the first 4 bytes with
+ * the size.  */
+static int php_mongo_serialize_size(char *start, buffer *buf, int max_size TSRMLS_DC)
+{
+	int total = MONGO_32((buf->pos - start));
+
+	if (buf->pos - start > max_size) {
+		zend_throw_exception_ex(mongo_ce_Exception, 3 TSRMLS_CC, "document fragment is too large: %d, max: %d", buf->pos - start, max_size);
+		return FAILURE;
+	}
+	memcpy(start, &total, INT_32);
+	return SUCCESS;
+}
+
 
 static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC)
 {
@@ -81,7 +95,7 @@ static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC)
 
 
 /* serialize a zval */
-int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC)
+int zval_to_bson(buffer *buf, HashTable *hash, int prep, int max_document_size TSRMLS_DC)
 {
 	uint start;
 	int num = 0;
@@ -112,7 +126,7 @@ int zval_to_bson(buffer *buf, HashTable *hash, int prep TSRMLS_DC)
 	}
 
 	php_mongo_serialize_null(buf);
-	php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
+	php_mongo_serialize_size(buf->start + start, buf, max_document_size TSRMLS_CC);
 	return EG(exception) ? FAILURE : num;
 }
 
@@ -229,7 +243,7 @@ int php_mongo_serialize_element(const char *name, zval **data, buffer *buf, int 
 
 			/* serialize */
 			PHP_MONGO_SERIALIZE_KEY(BSON_ARRAY);
-			num = zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP TSRMLS_CC);
+			num = zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP, MONGO_DEFAULT_MAX_DOCUMENT_SIZE TSRMLS_CC);
 			if (EG(exception)) {
 				return ZEND_HASH_APPLY_STOP;
 			}
@@ -312,7 +326,7 @@ int php_mongo_serialize_element(const char *name, zval **data, buffer *buf, int 
 				/* go through the k/v pairs and serialize them */
 				PHP_MONGO_SERIALIZE_KEY(BSON_OBJECT);
 
-				zval_to_bson(buf, hash, NO_PREP TSRMLS_CC);
+				zval_to_bson(buf, hash, NO_PREP, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
 				if (EG(exception)) {
 					return ZEND_HASH_APPLY_STOP;
 				}
@@ -431,13 +445,13 @@ void php_mongo_serialize_code(buffer *buf, zval *code TSRMLS_DC)
 	php_mongo_serialize_string(buf, Z_STRVAL_P(zid), Z_STRLEN_P(zid));
 	/* scope */
 	zid = zend_read_property(mongo_ce_Code, code, "scope", 5, NOISY TSRMLS_CC);
-	zval_to_bson(buf, HASH_P(zid), NO_PREP TSRMLS_CC);
+	zval_to_bson(buf, HASH_P(zid), NO_PREP, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
 	if (EG(exception)) {
 		return;
 	}
 
 	/* get total size */
-	php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
+	php_mongo_serialize_size(buf->start + start, buf, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
 }
 
 /*
@@ -639,24 +653,10 @@ void php_mongo_serialize_ns(buffer *buf, char *str TSRMLS_DC)
 }
 
 
-/* The position is not increased, we are just filling in the first 4 bytes with
- * the size.  */
-int php_mongo_serialize_size(char *start, buffer *buf TSRMLS_DC)
-{
-	int total = MONGO_32((buf->pos - start));
-
-	if (buf->pos - start > 16000000) {
-		zend_throw_exception_ex(mongo_ce_Exception, 3 TSRMLS_CC, "insert too large: %d, max: 16000000", buf->pos - start);
-		return FAILURE;
-	}
-	memcpy(start, &total, INT_32);
-	return SUCCESS;
-}
-
-static int insert_helper(buffer *buf, zval *doc, int max TSRMLS_DC)
+static int insert_helper(buffer *buf, zval *doc, int max_document_size TSRMLS_DC)
 {
 	int start = buf->pos - buf->start;
-	int result = zval_to_bson(buf, HASH_P(doc), PREP TSRMLS_CC);
+	int result = zval_to_bson(buf, HASH_P(doc), PREP, max_document_size TSRMLS_CC);
 
 	/* throw exception if serialization crapped out */
 	if (EG(exception) || FAILURE == result) {
@@ -668,29 +668,29 @@ static int insert_helper(buffer *buf, zval *doc, int max TSRMLS_DC)
 	}
 
 	/* throw an exception if the doc was too big */
-	if (buf->pos - (buf->start + start) > max) {
-		zend_throw_exception_ex(mongo_ce_Exception, 5 TSRMLS_CC, "size of BSON doc is %d bytes, max is %d", buf->pos - (buf->start + start), max);
+	if (buf->pos - (buf->start + start) > max_document_size) {
+		zend_throw_exception_ex(mongo_ce_Exception, 5 TSRMLS_CC, "size of BSON doc is %d bytes, max is %d", buf->pos - (buf->start + start), max_document_size);
 		return FAILURE;
 	}
 
-	return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
+	return php_mongo_serialize_size(buf->start + start, buf, max_document_size TSRMLS_CC);
 }
 
-int php_mongo_write_insert(buffer *buf, char *ns, zval *doc, int max TSRMLS_DC)
+int php_mongo_write_insert(buffer *buf, char *ns, zval *doc, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 	int start = buf->pos - buf->start;
 
 	CREATE_HEADER(buf, ns, OP_INSERT);
 
-	if (FAILURE == insert_helper(buf, doc, max TSRMLS_CC)) {
+	if (FAILURE == insert_helper(buf, doc, max_document_size TSRMLS_CC)) {
 		return FAILURE;
 	}
 
-	return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
+	return php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC);
 }
 
-int php_mongo_write_batch_insert(buffer *buf, char *ns, int flags, zval *docs, int max TSRMLS_DC)
+int php_mongo_write_batch_insert(buffer *buf, char *ns, int flags, zval *docs, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	int start = buf->pos - buf->start, count = 0;
 	HashPosition pointer;
@@ -708,7 +708,8 @@ int php_mongo_write_batch_insert(buffer *buf, char *ns, int flags, zval *docs, i
 			continue;
 		}
 
-		if (FAILURE == insert_helper(buf, *doc, max TSRMLS_CC) || buf->pos - buf->start >= MonGlo(max_send_size)) {
+		if (FAILURE == insert_helper(buf, *doc, max_document_size TSRMLS_CC) || buf->pos - buf->start >= max_message_size) {
+			zend_throw_exception_ex(mongo_ce_Exception, 5 TSRMLS_CC, "current batch size is too large: %d, max: %d", buf->pos - buf->start, max_message_size);
 			return FAILURE;
 		}
 
@@ -722,15 +723,15 @@ int php_mongo_write_batch_insert(buffer *buf, char *ns, int flags, zval *docs, i
 	}
 
 	/* this is a hard limit in the db server (util/messages.cpp) */
-	if (buf->pos - (buf->start + start) > 16000000) {
-		zend_throw_exception_ex(mongo_ce_Exception, 3 TSRMLS_CC, "insert too large: %d, max: 16000000", buf->pos - (buf->start + start));
+	if (buf->pos - (buf->start + start) > max_message_size) {
+		zend_throw_exception_ex(mongo_ce_Exception, 3 TSRMLS_CC, "insert too large: %d, max: %d", buf->pos - (buf->start + start), max_message_size);
 		return FAILURE;
 	}
 
-	return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
+	return php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC);
 }
 
-int php_mongo_write_update(buffer *buf, char *ns, int flags, zval *criteria, zval *newobj TSRMLS_DC)
+int php_mongo_write_update(buffer *buf, char *ns, int flags, zval *criteria, zval *newobj, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 	int start = buf->pos - buf->start;
@@ -740,18 +741,18 @@ int php_mongo_write_update(buffer *buf, char *ns, int flags, zval *criteria, zva
 	php_mongo_serialize_int(buf, flags);
 
 	if (
-		zval_to_bson(buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE ||
+		zval_to_bson(buf, HASH_P(criteria), NO_PREP, max_document_size TSRMLS_CC) == FAILURE ||
 		EG(exception) ||
-		zval_to_bson(buf, HASH_P(newobj), NO_PREP TSRMLS_CC) == FAILURE ||
+		zval_to_bson(buf, HASH_P(newobj), NO_PREP, max_document_size TSRMLS_CC) == FAILURE ||
 		EG(exception) /* Having this twice does make sense, as zval_to_bson can thrown an exception */
 	) {
 		return FAILURE;
 	}
 
-	return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
+	return php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC);
 }
 
-int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria TSRMLS_DC)
+int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 	int start = buf->pos - buf->start;
@@ -760,11 +761,11 @@ int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria TSRM
 
 	php_mongo_serialize_int(buf, flags);
 
-	if (zval_to_bson(buf, HASH_P(criteria), NO_PREP TSRMLS_CC) == FAILURE || EG(exception)) {
+	if (zval_to_bson(buf, HASH_P(criteria), NO_PREP, max_document_size TSRMLS_CC) == FAILURE || EG(exception)) {
 		return FAILURE;
 	}
 
-	return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
+	return php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC);
 }
 
 /*
@@ -779,7 +780,7 @@ int php_mongo_write_delete(buffer *buf, char *ns, int flags, zval *criteria TSRM
  *  - fields
  *
  */
-int php_mongo_write_query(buffer *buf, mongo_cursor *cursor TSRMLS_DC)
+int php_mongo_write_query(buffer *buf, mongo_cursor *cursor, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 	int start = buf->pos - buf->start;
@@ -790,19 +791,19 @@ int php_mongo_write_query(buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 	php_mongo_serialize_int(buf, cursor->skip);
 	php_mongo_serialize_int(buf, get_limit(cursor));
 
-	if (zval_to_bson(buf, HASH_P(cursor->query), NO_PREP TSRMLS_CC) == FAILURE || EG(exception)) {
+	if (zval_to_bson(buf, HASH_P(cursor->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE || EG(exception)) {
 		return FAILURE;
 	}
 	if (cursor->fields && zend_hash_num_elements(HASH_P(cursor->fields)) > 0) {
-		if (zval_to_bson(buf, HASH_P(cursor->fields), NO_PREP TSRMLS_CC) == FAILURE || EG(exception)) {
+		if (zval_to_bson(buf, HASH_P(cursor->fields), NO_PREP, max_document_size TSRMLS_CC) == FAILURE || EG(exception)) {
 			return FAILURE;
 		}
 	}
 
-	return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
+	return php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC);
 }
 
-int php_mongo_write_kill_cursors(buffer *buf, int64_t cursor_id TSRMLS_DC)
+int php_mongo_write_kill_cursors(buffer *buf, int64_t cursor_id, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 
@@ -813,7 +814,7 @@ int php_mongo_write_kill_cursors(buffer *buf, int64_t cursor_id TSRMLS_DC)
 	php_mongo_serialize_int(buf, 1);
 	/* cursor ids */
 	php_mongo_serialize_long(buf, cursor_id);
-	return php_mongo_serialize_size(buf->start, buf TSRMLS_CC);
+	return php_mongo_serialize_size(buf->start, buf, max_message_size TSRMLS_CC);
 }
 
 /*
@@ -836,7 +837,7 @@ int php_mongo_write_get_more(buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 	php_mongo_serialize_int(buf, get_limit(cursor));
 	php_mongo_serialize_long(buf, cursor->cursor_id);
 
-	return php_mongo_serialize_size(buf->start + start, buf TSRMLS_CC);
+	return php_mongo_serialize_size(buf->start + start, buf, cursor->connection->max_message_size TSRMLS_CC);
 }
 
 
@@ -1365,7 +1366,7 @@ PHP_FUNCTION(bson_encode)
 		/* fallthrough for a normal obj */
 		case IS_ARRAY: {
 			CREATE_BUF(buf, INITIAL_BUF_SIZE);
-			zval_to_bson(&buf, HASH_P(z), 0 TSRMLS_CC);
+			zval_to_bson(&buf, HASH_P(z), 0, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
 
 			RETVAL_STRINGL(buf.start, buf.pos-buf.start, 1);
 			efree(buf.start);

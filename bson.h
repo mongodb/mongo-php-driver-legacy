@@ -48,8 +48,6 @@
 	buf.start = buf.pos = b;                    \
 	buf.end = b+n;
 
-int php_mongo_serialize_size(char *start, buffer *buf TSRMLS_DC);
-
 /* driver */
 int php_mongo_serialize_element(const char*, zval**, buffer*, int TSRMLS_DC);
 
@@ -72,13 +70,13 @@ void php_mongo_serialize_bytes(buffer*, char*, int);
 void php_mongo_serialize_key(buffer*, const char*, int, int TSRMLS_DC);
 void php_mongo_serialize_ns(buffer*, char* TSRMLS_DC);
 
-int php_mongo_write_insert(buffer*, char*, zval*, int max TSRMLS_DC);
-int php_mongo_write_batch_insert(buffer*, char*, int flags, zval*, int max TSRMLS_DC);
-int php_mongo_write_query(buffer*, mongo_cursor* TSRMLS_DC);
+int php_mongo_write_insert(buffer*, char*, zval*, int max_document_size, int max_message_size TSRMLS_DC);
+int php_mongo_write_batch_insert(buffer*, char*, int flags, zval*, int max_document_size, int max_message_size TSRMLS_DC);
+int php_mongo_write_query(buffer*, mongo_cursor*, int max_document_size, int max_message_size TSRMLS_DC);
 int php_mongo_write_get_more(buffer*, mongo_cursor* TSRMLS_DC);
-int php_mongo_write_delete(buffer*, char*, int, zval* TSRMLS_DC);
-int php_mongo_write_update(buffer*, char*, int, zval*, zval* TSRMLS_DC);
-int php_mongo_write_kill_cursors(buffer*, int64_t TSRMLS_DC);
+int php_mongo_write_delete(buffer*, char*, int, zval*, int max_document_size, int max_message_size TSRMLS_DC);
+int php_mongo_write_update(buffer*, char*, int, zval*, zval*, int max_document_size, int max_message_size TSRMLS_DC);
+int php_mongo_write_kill_cursors(buffer*, int64_t, int max_message_size TSRMLS_DC);
 
 #define php_mongo_set_type(buf, type) php_mongo_serialize_byte(buf, (char)type)
 #define php_mongo_serialize_null(buf) php_mongo_serialize_byte(buf, (char)0)
@@ -86,7 +84,7 @@ int php_mongo_write_kill_cursors(buffer*, int64_t TSRMLS_DC);
 
 int resize_buf(buffer*, int);
 
-int zval_to_bson(buffer*, HashTable*, int TSRMLS_DC);
+int zval_to_bson(buffer*, HashTable*, int, int max_document_size TSRMLS_DC);
 char* bson_to_zval(char*, HashTable* TSRMLS_DC);
 
 /**

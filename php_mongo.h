@@ -570,7 +570,6 @@ ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	int ts_inc;
 	char *errmsg;
 	int response_num;
-	int max_send_size;
 	int pool_size;
 
 	long log_level;

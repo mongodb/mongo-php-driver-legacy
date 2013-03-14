@@ -585,7 +585,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
-	int32_t        max_bson_size = 0;
+	int32_t        max_bson_size = 0, max_message_size = 0;
 	char          *data_buffer;
 	char          *ptr;
 	char          *tags;
@@ -610,6 +610,17 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 		 * default to 4MB */
 		con->max_bson_size = 4194304;
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: can't find maxBsonObjectSize, defaulting to %d", con->max_bson_size);
+	}
+
+	/* Find max message size */
+	if (bson_find_field_as_int32(ptr, "maxMessageSizeBytes", &max_message_size)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: setting maxMessageSizeBytes to %d", max_message_size);
+		con->max_message_size = max_message_size;
+	} else {
+		/* This seems to be a pre-2.4 MongoDB installation, where we need to
+		 * default to two times the max BSON size */
+		con->max_message_size = 2 * con->max_bson_size;
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: can't find maxMessageSizeBytes, defaulting to %d", con->max_message_size);
 	}
 
 	/* Find msg and whether it contains "isdbgrid" */
