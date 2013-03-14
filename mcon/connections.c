@@ -252,7 +252,7 @@ static void mongo_close_socket(int socket, int why)
 }
 void mongo_connection_close(mongo_connection *con, int why)
 {
-	mongo_close_socket((int) (long) con->consocket, why);
+	mongo_close_socket((int) (long) con->socket, why);
 }
 
 mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash, mongo_server_def *server_def, mongo_server_options *options, char **error_message)
@@ -270,10 +270,10 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 
 	/* Connect */
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_create: creating new connection for %s:%d", server_def->host, server_def->port);
-	tmp->consocket = manager->connect(manager, server_def, options, error_message);
-	if (!tmp->consocket) {
-		mongo_manager_blacklist_register(manager, tmp);
+	tmp->socket = manager->connect(manager, server_def, options, error_message);
+	if (!tmp->socket) {
 		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error while creating connection for %s:%d: %s", server_def->host, server_def->port, *error_message);
+		mongo_manager_blacklist_register(manager, tmp);
 		free(tmp->hash);
 		free(tmp);
 		return NULL;
@@ -302,10 +302,10 @@ void mongo_connection_destroy(mongo_con_manager *manager, void *data, int why)
 	if (current_pid == connection_pid) {
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_connection_destroy: Destroying connection object for %s", con->hash);
 
-		if (con->consocket) {
+		if (con->socket) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "mongo_connection_destroy: Closing socket for %s.", con->hash);
-			manager->close(con->consocket, why);
-			con->consocket = NULL;
+			manager->close(con, why);
+			con->socket = NULL;
 
 			for (i = 0; i < con->tag_count; i++) {
 				free(con->tags[i]);
