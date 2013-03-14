@@ -34,8 +34,6 @@ typedef unsigned __int64 uint64_t;
 #include "config.h"
 
 #include "php.h"
-#include "/Users/bjori/.apps/5.4/include/php/main/php_streams.h"
-#include "/Users/bjori/.apps/5.4/include/php/main/php_network.h"
 
 #define MONGO_CON_TYPE_STANDALONE 1
 #define MONGO_CON_TYPE_MULTIPLE   2
