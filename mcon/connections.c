@@ -252,7 +252,7 @@ static void mongo_close_socket(int socket, int why)
 }
 void mongo_connection_close(mongo_connection *con, int why)
 {
-	return mongo_close_socket((int) (long) con->consocket, why);
+	mongo_close_socket((int) (long) con->consocket, why);
 }
 
 mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash, mongo_server_def *server_def, mongo_server_options *options, char **error_message)
