@@ -396,6 +396,8 @@ PHP_METHOD(MongoCursor, hasNext)
 		return;
 	}
 
+	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_INFO, "Sending: Get more data");
+
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
 		efree(buf.start);
 
@@ -464,13 +466,28 @@ PHP_METHOD(MongoCursor, limit)
 	long l;
 	mongo_cursor *cursor;
 
-	PREITERATION_SETUP;
+	PHP_MONGO_GET_CURSOR(getThis());
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
 		return;
 	}
 
-	cursor->limit = l;
+	/* We can set the limit in a few cases: */
+	if (!cursor->started_iterating) {
+		/* If the cursor hasn't start iteration yet */
+		cursor->limit = l;
+	} else if (cursor->cursor_id) {
+		/* If the cursor has not been exhausted yet */
+		if (l >= 0) {
+			/* as long as the number is positive */
+			cursor->limit = cursor->at + l;
+		} else {
+			zend_throw_exception(mongo_ce_CursorException, "Cannot set a negative limit after the cursor started iterating.", 0 TSRMLS_CC);
+		}
+	} else {
+		zend_throw_exception(mongo_ce_CursorException, "Cannot modify limit after cursor has been exhausted.", 0 TSRMLS_CC);
+	}
+
 	RETVAL_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
@@ -1034,6 +1051,8 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 		efree(buf.start);
 		return FAILURE;
 	}
+
+	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_INFO, "Sending: query");
 
 	if (mongo_io_send(cursor->connection->socket, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {
