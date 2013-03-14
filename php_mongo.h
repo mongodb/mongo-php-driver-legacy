@@ -280,7 +280,6 @@ typedef struct {
 	char *start;
 	char *pos;
 	char *end;
-	long max_size;
 } buffer;
 
 #define CREATE_MSG_HEADER(rid, rto, opcode) \

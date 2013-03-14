@@ -243,7 +243,7 @@ int php_mongo_serialize_element(const char *name, zval **data, buffer *buf, int 
 
 			/* serialize */
 			PHP_MONGO_SERIALIZE_KEY(BSON_ARRAY);
-			num = zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
+			num = zval_to_bson(buf, Z_ARRVAL_PP(data), NO_PREP, MONGO_DEFAULT_MAX_DOCUMENT_SIZE TSRMLS_CC);
 			if (EG(exception)) {
 				return ZEND_HASH_APPLY_STOP;
 			}
@@ -709,7 +709,7 @@ int php_mongo_write_batch_insert(buffer *buf, char *ns, int flags, zval *docs, i
 		}
 
 		if (FAILURE == insert_helper(buf, *doc, max_document_size TSRMLS_CC) || buf->pos - buf->start >= max_message_size) {
-			zend_throw_exception_ex(mongo_ce_Exception, 5 TSRMLS_CC, "current batch size is %d bytes, max is %d", buf->pos - buf->start, max_message_size);
+			zend_throw_exception_ex(mongo_ce_Exception, 5 TSRMLS_CC, "current batch size is too large: %d, max: %d", buf->pos - buf->start, max_message_size);
 			return FAILURE;
 		}
 
