@@ -14,14 +14,15 @@
  *  limitations under the License.
  */
 
-#ifndef __MCON_STREAM_H__
-#define __MCON_STREAM_H__
+#ifndef __IO_STREAM_H__
+#define __IO_STREAM_H__
 
-#include "types.h"
 #include "config.h"
 #include "php.h"
-#include "/Users/bjori/.apps/5.4/include/php/main/php_streams.h"
-#include "/Users/bjori/.apps/5.4/include/php/main/php_network.h"
+#include "main/php_streams.h"
+#include "main/php_network.h"
+
+#include "mcon/types.h"
 
 
 void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message);
