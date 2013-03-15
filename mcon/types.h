@@ -90,6 +90,12 @@ typedef unsigned __int64 uint64_t;
 #define MONGO_DEFAULT_MAX_DOCUMENT_SIZE (16 * 1024 * 1024)
 #define MONGO_DEFAULT_MAX_MESSAGE_SIZE  (32 * 1024 * 1024)
 
+
+/* FIXME: This should be dynamic.. Although mongod doesn't allow more then 12
+ * replicaset members, there is nothing preventing us from connecting to 20 mongos' */
+#define MAX_SERVERS_LIMIT   16
+
+
 typedef int (mongo_cleanup_t)(void *callback_data);
 
 typedef struct _mongo_connection_deregister_callback
@@ -117,10 +123,15 @@ typedef struct _mongo_connection
 	mongo_connection_deregister_callback *cleanup_list;
 } mongo_connection;
 
+typedef struct _mongo_connection_blacklist
+{
+	time_t last_ping;
+} mongo_connection_blacklist;
+
 typedef struct _mongo_con_manager_item
 {
 	char                           *hash;
-	mongo_connection               *connection;
+	void                           *data;
 	struct _mongo_con_manager_item *next;
 } mongo_con_manager_item;
 
@@ -134,6 +145,7 @@ typedef void (mongo_log_callback_t)(int module, int level, void *context, char *
 typedef struct _mongo_con_manager
 {
 	mongo_con_manager_item *connections;
+	mongo_con_manager_item *blacklist;
 
 	/* context and callback function that is used to send logging information
 	 * through */
@@ -146,6 +158,8 @@ typedef struct _mongo_con_manager
 	long                    ping_interval;      /* default:  5 seconds */
 	long                    ismaster_interval;  /* default: 15 seconds */
 } mongo_con_manager;
+
+typedef void (mongo_con_manager_item_destroy_t)(mongo_con_manager *manager, void *item);
 
 typedef struct _mongo_read_preference_tagset
 {
@@ -190,7 +204,7 @@ typedef struct _mongo_server_options
 typedef struct _mongo_servers
 {
 	int                   count;
-	mongo_server_def     *server[16]; /* TODO: Make this dynamic */
+	mongo_server_def     *server[MAX_SERVERS_LIMIT]; /* TODO: Make this dynamic */
 
 	/* flags and options */
 	mongo_server_options  options;

@@ -90,13 +90,14 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "filter_connections: adding connections:");
 	while (ptr) {
-		connection_pid = mongo_server_hash_to_pid(ptr->connection->hash);
+		mongo_connection *con = (mongo_connection *) ptr->data;
+		connection_pid = mongo_server_hash_to_pid(con->hash);
 
 		if (connection_pid != current_pid) {
-			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "filter_connections: skipping %s as it doesn't match the current pid (%d)", ptr->connection->hash, current_pid);
-		} else if (ptr->connection->connection_type & types) {
-			mongo_print_connection_info(manager, ptr->connection, MLOG_FINE);
-			mcon_collection_add(col, ptr->connection);
+			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "filter_connections: skipping %s as it doesn't match the current pid (%d)", con->hash, current_pid);
+		} else if (con->connection_type & types) {
+			mongo_print_connection_info(manager, con, MLOG_FINE);
+			mcon_collection_add(col, con);
 		}
 		ptr = ptr->next;
 	}

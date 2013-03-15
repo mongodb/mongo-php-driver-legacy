@@ -71,9 +71,13 @@ CON     FINE: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
 CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
 
+Notice: CON     FINE: mongo_connection_destroy: Destroying connection object for %s:%d;%s;X;%d in Unknown on line 0
+
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;%s;X;%d. in Unknown on line 0
 
 Notice: CON     INFO: freeing connection %s:%d;%s;X;%d in Unknown on line 0
+
+Notice: CON     FINE: mongo_connection_destroy: Destroying connection object for %s:%d;%s;X;%d in Unknown on line 0
 
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;%s;X;%d. in Unknown on line 0
 
