@@ -101,17 +101,6 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting cursor header");
 
-	/* set a timeout */
-	if (cursor->timeout && cursor->timeout > 0) {
-        /*
-         * FIXME: STREAMS: do something with timeout?
-		status = mongo_io_wait_with_timeout(sock, cursor->timeout, error_message);
-		if (status != 0) {
-			return status;
-		}
-        */
-	}
-
 	client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
 	status = client->manager->recv_header(con, NULL, buf, REPLY_HEADER_LEN, error_message);
 	/* socket has been closed */
