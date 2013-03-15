@@ -227,7 +227,8 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 
 	tmp = malloc(sizeof(mongo_server_def));
 	memset(tmp, 0, sizeof(mongo_server_def));
-	tmp->username = tmp->password = tmp->db = NULL;
+	tmp->username = tmp->password = tmp->db = tmp->authdb = NULL;
+	tmp->mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR; /* MONGODB-CR is the default authentication mechanism */
 	tmp->port = 27017;
 
 	tmp->host = mcon_strndup(host_start, host_end - host_start);
@@ -362,6 +363,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			 * value before setting it anyway. */
 			if (!servers->server[i]->db) {
 				servers->server[i]->db = strdup("admin");
+				/* Admin users always authenticate on the admin db, even when using other databases */
+				servers->server[i]->authdb = strdup("admin");
 			}
 		}
 		return 0;
@@ -381,11 +384,48 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		for (i = 0; i < servers->count; i++) {
 			if (servers->server[i]->db) {
 				free(servers->server[i]->db);
+				/* Free the authdb too as it defaulted to 'admin' when no db was passed as the connection string */
+				free(servers->server[i]->authdb);
+				servers->server[i]->authdb = NULL;
 			}
 			servers->server[i]->db = strdup(option_value);
 		}
 		return 0;
 	}
+	if (strcasecmp(option_name, "authSource") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authSource': '%s'", option_value);
+		for (i = 0; i < servers->count; i++) {
+			if (servers->server[i]->authdb) {
+				free(servers->server[i]->authdb);
+			}
+			servers->server[i]->authdb = strdup(option_value);
+		}
+		return 0;
+	}
+	if (strcasecmp(option_name, "authMechanism") == 0) {
+		int mechanism;
+
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authMechanism': '%s'", option_value);
+		if (strcasecmp(option_value, "MONGODB-CR") == 0) {
+			mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
+		} else if (strcasecmp(option_value, "GSSAPI") == 0) {
+			/* FIXME: GSSAPI isn't implemented yet */
+			mechanism = MONGO_AUTH_MECHANISM_GSSAPI;
+			*error_message = strdup("The authMechanism 'GSSAPI' is currently not supported. Only MONGODB-CR is available.");
+			return 3;
+		} else {
+			int len = strlen(option_value) + sizeof("The authMechanism '' does not exist.");
+
+			*error_message = malloc(len + 1);
+			snprintf(*error_message, len, "The authMechanism '%s' does not exist.", option_value);
+			return 3;
+		}
+		for (i = 0; i < servers->count; i++) {
+			servers->server[i]->mechanism = mechanism;
+		}
+		return 0;
+	}
+
 	if (strcasecmp(option_name, "slaveOkay") == 0) {
 		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
@@ -539,8 +579,8 @@ int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *server
 void static mongo_server_def_dump(mongo_con_manager *manager, mongo_server_def *server_def)
 {
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO,
-		"- host: %s; port: %d; username: %s, password: %s, database: %s",
-		server_def->host, server_def->port, server_def->username, server_def->password, server_def->db);
+		"- host: %s; port: %d; username: %s, password: %s, database: %s, auth source: %s, mechanism: %d",
+		server_def->host, server_def->port, server_def->username, server_def->password, server_def->db, server_def->authdb, server_def->mechanism);
 }
 
 void mongo_servers_dump(mongo_con_manager *manager, mongo_servers *servers)
@@ -567,7 +607,8 @@ void mongo_servers_dump(mongo_con_manager *manager, mongo_servers *servers)
 /* Cloning */
 static void mongo_server_def_copy(mongo_server_def *to, mongo_server_def *from, int flags)
 {
-	to->host = to->repl_set_name = to->db = to->username = to->password = NULL;
+	to->host = to->repl_set_name = to->db = to->authdb = to->username = to->password = NULL;
+	to->mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
 	if (from->host) {
 		to->host = strdup(from->host);
 	}
@@ -580,12 +621,16 @@ static void mongo_server_def_copy(mongo_server_def *to, mongo_server_def *from, 
 		if (from->db) {
 			to->db = strdup(from->db);
 		}
+		if (from->authdb) {
+			to->authdb = strdup(from->authdb);
+		}
 		if (from->username) {
 			to->username = strdup(from->username);
 		}
 		if (from->password) {
 			to->password = strdup(from->password);
 		}
+		to->mechanism = from->mechanism;
 	}
 }
 
@@ -627,6 +672,9 @@ void mongo_server_def_dtor(mongo_server_def *server_def)
 	}
 	if (server_def->db) {
 		free(server_def->db);
+	}
+	if (server_def->authdb) {
+		free(server_def->authdb);
 	}
 	if (server_def->username) {
 		free(server_def->username);

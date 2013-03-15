@@ -63,7 +63,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 			/* Do authentication if requested */
 			if (server->db && server->username && server->password) {
 				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
-				if (!authenticate_connection(manager, con, options, server->db, server->username, server->password, error_message)) {
+				if (!authenticate_connection(manager, con, options, server->authdb ? server->authdb : server->db, server->username, server->password, error_message)) {
 					mongo_connection_destroy(manager, con);
 					con = NULL;
 					goto bailout;
@@ -153,6 +153,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;
 					tmp_def->repl_set_name = servers->server[i]->repl_set_name ? strdup(servers->server[i]->repl_set_name) : NULL;
 					tmp_def->db = servers->server[i]->db ? strdup(servers->server[i]->db) : NULL;
+					tmp_def->authdb = servers->server[i]->authdb ? strdup(servers->server[i]->authdb) : NULL;
 					tmp_def->host = mcon_strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
 					tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
 					
