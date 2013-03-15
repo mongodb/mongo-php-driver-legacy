@@ -61,6 +61,9 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		{
 			/* Setting up crypto failed. Thats only OK if we only preferred it */
 			if (options->ssl == MONGO_SSL_PREFER) {
+				/* FIXME: We can't actually get here because we reject setting this optino to prefer in mcon/parse.c
+				 * This is however probably what we need to do in the future when mongod starts actually supporting this! :)
+				 */
 				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Failed establishing SSL for %s:%d", server->host, server->port);
 				php_stream_xport_crypto_enable(stream, 0 TSRMLS_CC);
 			} else {
