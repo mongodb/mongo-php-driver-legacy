@@ -41,7 +41,7 @@ typedef __int64 int64_t;
 extern zend_class_entry *mongo_ce_BinData, *mongo_ce_GridFS;
 extern zend_class_entry *mongo_ce_GridFSFile, *mongo_ce_GridFSException;
 
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC);
 static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC);

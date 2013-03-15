@@ -32,7 +32,7 @@ extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception, *mongo_ce_ResultExc
 extern int le_pconnection, le_connection;
 extern zend_object_handlers mongo_default_handlers;
 
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_Collection = NULL;
 
