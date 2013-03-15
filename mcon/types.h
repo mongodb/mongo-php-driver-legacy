@@ -124,7 +124,7 @@ typedef struct _mongo_connection
 	int    ping_ms;
 	int    last_ismaster; /* The timestamp when ismaster/get_server_flags was called last */
 	int    last_reqid;
-	void  *socket;
+	void  *socket;           /* void* so we can support different "socket" backends */
 	int    connection_type; /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
 	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
 	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
@@ -228,7 +228,7 @@ typedef struct _mongo_con_manager
 	int   (*recv_data)   (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 	int   (*send)        (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 	void  (*close)       (mongo_connection *con, int why);
-	void  (*forget)     (struct _mongo_con_manager *manager, mongo_connection *con);
+	void  (*forget)      (struct _mongo_con_manager *manager, mongo_connection *con);
 
 } mongo_con_manager;
 

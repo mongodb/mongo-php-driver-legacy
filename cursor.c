@@ -1539,8 +1539,6 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 		/* Add properties */
 		if (code != 80) {
 			zend_update_property_string(exception_ce, e, "host", strlen("host"), host TSRMLS_CC);
-			/* FIXME: STREAMS: What is the point of this anyway? */
-			/*zend_update_property_long(exception_ce, e, "fd", strlen("fd"), *((int*)connection->socket) TSRMLS_CC); */
 		}
 
 		free(host);
