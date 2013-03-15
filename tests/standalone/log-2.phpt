@@ -29,6 +29,8 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     INFO: is_ping: last pinged at %d; time: %dms
 
+Notice: CON     FINE: mongo_connection_destroy: Destroying connection object for %s:%d;-;X;%d in Unknown on line 0
+
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;-;X;%d. in Unknown on line 0
 
 Notice: CON     INFO: freeing connection %s:%d;-;X;%d in Unknown on line 0
