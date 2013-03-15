@@ -103,10 +103,10 @@ if test "$PHP_COVERAGE" = "yes"; then
   CXXFLAGS="$CXXFLAGS -O0 -fprofile-arcs -ftest-coverage"
 fi
 
-PHP_ARG_ENABLE(streams,  Build with PHP streams support,
-[  --disable-streams         Mongo: Build with PHP streams wrapper support], yes, no)
+PHP_ARG_ENABLE(mongo-streams,  Build with PHP streams support,
+[  --disable-mongo-streams   Mongo: Build with PHP streams wrapper support], yes, no)
 
-if test "$PHP_STREAMS" = "yes"; then
-  AC_DEFINE(MONGO_PHP_STREAMS, 1, [Make mongodb streams])
+if test "$PHP_MONGO_STREAMS" = "yes"; then
+  AC_DEFINE(MONGO_PHP_STREAMS, 1, [Make PHP MongoDB use PHP streams])
 fi
 
