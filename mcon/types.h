@@ -156,14 +156,19 @@ typedef struct _mongo_read_preference
 	mongo_read_preference_tagset **tagsets;
 } mongo_read_preference;
 
+#define MONGO_AUTH_MECHANISM_MONGODB_CR 1
+#define MONGO_AUTH_MECHANISM_GSSAPI     2
+
 typedef struct _mongo_server_def
 {
 	char *host;
 	int   port;
 	char *repl_set_name;
 	char *db;
+	char *authdb;
 	char *username;
 	char *password;
+	int   mechanism;
 } mongo_server_def;
 
 /* NOTE: when making changes, update mongo_parse_init, mongo_servers_copy and mongo_servers_dtor */
