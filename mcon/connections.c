@@ -92,7 +92,14 @@ static int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *h
 	return 1;
 }
 
-/* This function does the actual connecting */
+/**
+* This function does the actual connecting
+* The results of this function are stored in mongo_connection->socket,
+* which is a void* to be able to store various different backends
+* (f.e. the PHP io_streams stores a php_stream*)
+*
+* Returns an integer (masquerading as a void*) on success, NULL on failure.
+*/
 void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	struct sockaddr*   sa;
@@ -250,6 +257,7 @@ static void mongo_close_socket(int socket, int why)
 	close(socket);
 #endif
 }
+
 void mongo_connection_close(mongo_connection *con, int why)
 {
 	mongo_close_socket((int) (long) con->socket, why);
@@ -339,6 +347,7 @@ void mongo_connection_destroy(mongo_con_manager *manager, void *data, int why)
 		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_connection_destroy: The process pid (%d) for %s doesn't match the connection pid (%d).", current_pid, con->hash, connection_pid);
 	}
 }
+
 void mongo_connection_forget(mongo_con_manager *manager, mongo_connection *con)
 {
 	/* FIXME: Should we remove it from our connection registry ? */
@@ -428,6 +437,7 @@ int mongo_connection_ping_check(mongo_con_manager *manager, int last_ping, struc
 	}
 	return 1;
 }
+
 /**
  * Sends a ping command to the server and stores the result.
  *

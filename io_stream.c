@@ -55,8 +55,10 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	}
 
 	if (options->ssl) {
-		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_TLS_CLIENT, NULL TSRMLS_CC) < 0
-			|| php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0) {
+		if (
+			(php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_TLS_CLIENT, NULL TSRMLS_CC) < 0) ||
+			(php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0))
+		{
 			/* Setting up crypto failed. Thats only OK if we only preferred it */
 			if (options->ssl == MONGO_SSL_PREFER) {
 				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Failed establishing SSL for %s:%d", server->host, server->port);
@@ -90,11 +92,12 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	return stream;
 
 }
+
 int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int num = 1, received = 0;
 
-	// this can return FAILED if there is just no more data from db
+	/* this can return FAILED if there is just no more data from db */
 	while (received < size && num > 0) {
 		int len = 4096 < (size - received) ? 4096 : size - received;
 
@@ -114,6 +117,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 
 	return received;
 }
+
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int retval =  php_stream_write(con->socket, (char *) data, size);
@@ -129,9 +133,9 @@ void php_mongo_io_stream_close(mongo_connection *con, int why)
 		}
 	} else if (why == MONGO_CLOSE_SHUTDOWN) {
 		/* No need to do anything, it was freed from the persistent_list */
-		//php_stream_close(con->socket);
 	}
 }
+
 void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *con)
 {
 	zend_rsrc_list_entry *le;
@@ -143,5 +147,3 @@ void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *co
 		((php_stream *)con->socket)->in_free = 0;
 	}
 }
-
-

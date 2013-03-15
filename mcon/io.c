@@ -154,7 +154,7 @@ int mongo_io_recv_data(mongo_connection *con, mongo_server_options *options, voi
 {
 	int num = 1, received = 0;
 
-	// this can return FAILED if there is just no more data from db
+	/* this can return FAILED if there is just no more data from db */
 	while (received < size && num > 0) {
 		int len = 4096 < (size - received) ? 4096 : size - received;
 
