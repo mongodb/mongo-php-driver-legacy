@@ -23,7 +23,7 @@
 
 void mcon_str_add(mcon_str *xs, char *str, int f)
 {
-	return mcon_str_addl(xs, str, strlen(str), f);
+	mcon_str_addl(xs, str, strlen(str), f);
 }
 
 void mcon_str_addl(mcon_str *xs, char *str, int le, int f)

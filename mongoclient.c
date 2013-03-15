@@ -48,7 +48,7 @@ static int close_connection(mongo_con_manager *manager, mongo_connection *connec
 zend_object_handlers mongo_default_handlers;
 zend_object_handlers mongoclient_handlers;
 
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_MongoClient;
 
