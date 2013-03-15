@@ -29,11 +29,11 @@
   <email>jmikola@php.net</email>
   <active>yes</active>
  </developer>
- <date>2013-01-31</date>
- <time>11:55:32</time>
+ <date>2013-03-26</date>
+ <time>09:37:52</time>
  <version>
-  <release>1.3.4</release>
-  <api>1.3.4</api>
+  <release>1.3.6</release>
+  <api>1.3.6</api>
  </version>
  <stability>
   <release>stable</release>
@@ -41,49 +41,8 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-** Bug
-    * [PHP-355] - PHP 1.2/1.3 Driver does not honour connection 'timeout'
-    * [PHP-356] - PHP 1.3.0dev does not honor connection timeout
-    * [PHP-366] - PHP Mongo's driver has no effects on Mongo Cursor timeout 
-    * [PHP-385] - GridFS::storeFile with a string argument for 2Gb files
-    * [PHP-457] - Setting batchSize and sorting returns incorrect number of records
-    * [PHP-491] - Forking and connection handling still fails
-    * [PHP-539] - Exception when w - on MongoCollection - is set greater than 2
-    * [PHP-585] - GridFS incorrectly reports w=1 as w=0
-    * [PHP-586] - GridFS should only do one GLE
-    * [PHP-592] - Unable to switch to new PRIMARY
-    * [PHP-609] - MongoGridFS::put no returning MongoId despite inserting file 
-    * [PHP-613] - sort out timeout vs wtimeout mess
-    * [PHP-630] - Seg faults on OS X
-    * [PHP-650] - Segmentation fault when using findAndModify()
-    * [PHP-661] - GridFS memory leaks
-    * [PHP-667] - Off-by-one error in BSON deserialization of pre-epoch dates
-    * [PHP-668] - setReadPreference() should allow empty $tags array for primary mode
-    * [PHP-670] - Remove misplaced MongoId in getIndexInfo() expected ouput docs
-    * [PHP-672] - MongoGridFSFile::write() leaks memory
-    * [PHP-673] - Failing tests on mongod 2.3
-    * [PHP-676] - Collection level write concern overwritten by deprecated "safe" option
-    * [PHP-679] - setReadPreference() should clear out existing tags if none are provided
-    * [PHP-680] - mongo_read_preference_dtor() will segfault if invoked twice
-    * [PHP-681] - setReadPreference() should not modify read preferences if an error occurs
-    * [PHP-682] - Remove redundant MongoGridFSCursor::key() implementation
-    * [PHP-683] - Add support for the connectTimeoutMS connection parameter
-    * [PHP-687] - MongoDate usec not properly decoded on 32-bit platform
-    * [PHP-688] - Default connect() timeout is 1000 _seconds_, not milliseconds
-    * [PHP-690] - Percentage symbol is not escaped in error message about duplicate entries
-    * [PHP-691] - Memory leak during master failover
-
-** New Feature
-    * [PHP-684] - Support socketTimeoutMs
-    * [PHP-685] - wtimeout option is not supported per-query
-
-** Task
-    * [PHP-479] - Fix all compiler warnings
-    * [PHP-658] - Add error codes for GridFSExceptions througout gridfs.c
-    * [PHP-666] - Update read preference documentation
-    * [PHP-669] - Document that setReadPreference() will raise a warning if tags are specified with primary mode
-    * [PHP-671] - Document array return value for ensureIndex when using write preferences
-    * [PHP-689] - Tiny test fixes
+** Improvement
+    * [PHP-535] - Run commands on Replication Secondaries
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -191,6 +150,81 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <date>2013-03-15</date>
+   <time>11:28:32</time>
+   <version>
+    <release>1.3.5</release>
+    <api>1.3.5</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Improvement
+    * [PHP-665] - Add support for MongoDB 2.4 auth source
+   </notes>
+  </release>
+  <release>
+   <date>2013-01-31</date>
+   <time>11:55:32</time>
+   <version>
+    <release>1.3.4</release>
+    <api>1.3.4</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-355] - PHP 1.2/1.3 Driver does not honour connection 'timeout'
+    * [PHP-356] - PHP 1.3.0dev does not honor connection timeout
+    * [PHP-366] - PHP Mongo's driver has no effects on Mongo Cursor timeout 
+    * [PHP-385] - GridFS::storeFile with a string argument for 2Gb files
+    * [PHP-457] - Setting batchSize and sorting returns incorrect number of records
+    * [PHP-491] - Forking and connection handling still fails
+    * [PHP-539] - Exception when w - on MongoCollection - is set greater than 2
+    * [PHP-585] - GridFS incorrectly reports w=1 as w=0
+    * [PHP-586] - GridFS should only do one GLE
+    * [PHP-592] - Unable to switch to new PRIMARY
+    * [PHP-609] - MongoGridFS::put no returning MongoId despite inserting file 
+    * [PHP-613] - sort out timeout vs wtimeout mess
+    * [PHP-630] - Seg faults on OS X
+    * [PHP-650] - Segmentation fault when using findAndModify()
+    * [PHP-661] - GridFS memory leaks
+    * [PHP-667] - Off-by-one error in BSON deserialization of pre-epoch dates
+    * [PHP-668] - setReadPreference() should allow empty $tags array for primary mode
+    * [PHP-670] - Remove misplaced MongoId in getIndexInfo() expected ouput docs
+    * [PHP-672] - MongoGridFSFile::write() leaks memory
+    * [PHP-673] - Failing tests on mongod 2.3
+    * [PHP-676] - Collection level write concern overwritten by deprecated "safe" option
+    * [PHP-679] - setReadPreference() should clear out existing tags if none are provided
+    * [PHP-680] - mongo_read_preference_dtor() will segfault if invoked twice
+    * [PHP-681] - setReadPreference() should not modify read preferences if an error occurs
+    * [PHP-682] - Remove redundant MongoGridFSCursor::key() implementation
+    * [PHP-683] - Add support for the connectTimeoutMS connection parameter
+    * [PHP-687] - MongoDate usec not properly decoded on 32-bit platform
+    * [PHP-688] - Default connect() timeout is 1000 _seconds_, not milliseconds
+    * [PHP-690] - Percentage symbol is not escaped in error message about duplicate entries
+    * [PHP-691] - Memory leak during master failover
+
+** New Feature
+    * [PHP-684] - Support socketTimeoutMs
+    * [PHP-685] - wtimeout option is not supported per-query
+
+** Task
+    * [PHP-479] - Fix all compiler warnings
+    * [PHP-658] - Add error codes for GridFSExceptions througout gridfs.c
+    * [PHP-666] - Update read preference documentation
+    * [PHP-669] - Document that setReadPreference() will raise a warning if tags are specified with primary mode
+    * [PHP-671] - Document array return value for ensureIndex when using write preferences
+    * [PHP-689] - Tiny test fixes
+   </notes>
+  </release>
   <release>
    <date>2013-01-16</date>
    <time>14:42:32</time>
