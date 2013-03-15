@@ -13,7 +13,6 @@ if (PHP_MONGO != "no") {
   ADD_SOURCES(configure_module_dirname + "/mcon", "bson_helpers.c collection.c connections.c io.c manager.c mini_bson.c parse.c read_preference.c str.c utils.c", "mongo");
 
   AC_DEFINE('HAVE_MONGO', 1);
-
 }
 
 if (PHP_MONGO_STREAMS != "no") {

@@ -18,8 +18,8 @@
 #include "types.h"
 
 int mongo_io_wait_with_timeout(int sock, int to, char **error_message);
-int mongo_io_send       (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
+int mongo_io_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
-int mongo_io_recv_data  (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
+int mongo_io_recv_data(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 
 #endif
