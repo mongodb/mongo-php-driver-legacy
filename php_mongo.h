@@ -639,7 +639,7 @@ extern zend_module_entry mongo_module_entry;
  * 24: (unused)
  * 25: Option with no string key
  * 26: SSL support is only available when compiled against PHP Streams
- * 27: Stream context support only available when compiled against PHP Streams
+ * 27: Driver options are only available when compiled against PHP Streams
  *
  * MongoCursorTimeoutException:
  * 80: timeout exception
