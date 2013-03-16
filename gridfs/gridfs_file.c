@@ -299,7 +299,7 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
 		return FAILURE;
 	}
     
-	if (Z_TYPE_P(next) == IS_NULL) {
+	if (Z_TYPE_P(next) != IS_ARRAY) {
 		return FAILURE;
 	}
 	while (Z_TYPE_P(next) == IS_ARRAY) {
