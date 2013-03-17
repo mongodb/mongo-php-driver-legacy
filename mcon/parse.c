@@ -343,10 +343,9 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		if (strcasecmp(option_value, "MONGODB-CR") == 0) {
 			mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
 		} else if (strcasecmp(option_value, "GSSAPI") == 0) {
-			/* FIXME: GSSAPI isn't implemented yet */
 			mechanism = MONGO_AUTH_MECHANISM_GSSAPI;
-			*error_message = strdup("The authMechanism 'GSSAPI' is currently not supported. Only MONGODB-CR is available.");
-			return 3;
+		} else if (strcasecmp(option_value, "PLAIN") == 0) {
+			mechanism = MONGO_AUTH_MECHANISM_PLAIN;
 		} else {
 			int len = strlen(option_value) + sizeof("The authMechanism '' does not exist.");
 

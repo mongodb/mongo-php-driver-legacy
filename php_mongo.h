@@ -671,6 +671,8 @@ extern zend_module_entry mongo_module_entry;
  * 25: Option with no string key
  * 26: SSL support is only available when compiled against PHP Streams
  * 27: Driver options are only available when compiled against PHP Streams
+ * 28: GSSAPI authentication mechanism is only available when compiled against PHP Streams
+ * 29: Plain authentication mechanism is only available when compiled against PHP Streams
  * 31: Unknown failure doing io_stream_read.
  * 32: When the remote server closes the connection in io_stream_read.
  * 72: Could not retrieve connection

@@ -18,12 +18,25 @@
 #include "mcon/types.h"
 #include "mcon/utils.h"
 #include "mcon/manager.h"
+#include "mcon/connections.h"
 #include "php_mongo.h"
 
 #include <php.h>
 #include <main/php_streams.h>
 #include <main/php_network.h>
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#else
+# if WIN32
+#  include "config-w32.h"
+# endif
+#endif
+
+#if HAVE_MONGO_SASL
+#include <sasl/sasl.h>
+#include <sasl/saslutil.h>
+#endif
 
 void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
@@ -227,6 +240,181 @@ void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *co
 		zend_hash_del(&EG(persistent_list), con->hash, strlen(con->hash) + 1);
 		((php_stream *)con->socket)->in_free = 0;
 	}
+}
+
+#if HAVE_MONGO_SASL
+int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
+{
+	if (result < 0) {
+		spprintf(error_message, 0, "Authentication error: %s", sasl_errdetail(conn));
+		return 1;
+	}
+
+	return 0;
+}
+
+sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char **out_payload, int *out_payload_len, int32_t *conversation_id, char **error_message)
+{
+	const char *raw_payload;
+	char encoded_payload[4096];
+	unsigned int raw_payload_len, encoded_payload_len;
+	int result;
+	char *mechanism_list = "GSSAPI";
+	const char *mechanism_selected;
+	sasl_interact_t *client_interact=NULL;
+
+	result = sasl_client_start(conn, mechanism_list, &client_interact, &raw_payload, &raw_payload_len, &mechanism_selected);
+	if (is_sasl_failure(conn, result, error_message)) {
+		return NULL;
+	}
+
+	/* TODO: Deal with interactions, if any, when mongod starts supporting such mechanisms */
+
+	if (result != SASL_CONTINUE) {
+		*error_message = strdup("Could not negotiate SASL mechanism");
+		return NULL;
+	}
+
+	mechanism_selected = "GSSAPI";
+
+	result = sasl_encode64(raw_payload, raw_payload_len, encoded_payload, sizeof(encoded_payload), &encoded_payload_len);
+	if (is_sasl_failure(conn, result, error_message)) {
+		return NULL;
+	}
+
+	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, (char *)mechanism_selected, encoded_payload, encoded_payload_len + 1, out_payload, out_payload_len, conversation_id, error_message)) {
+		free(out_payload);
+		*error_message = strdup("saslStart failed miserably");
+		return NULL;
+	}
+
+	return conn;
+}
+
+int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char *step_payload, int step_payload_len, int32_t conversation_id, char **error_message) {
+	int result;
+	sasl_interact_t *client_interact=NULL;
+
+	do {
+		char base_payload[4096], payload[4096];
+		unsigned int base_payload_len, payload_len;
+		unsigned char done;
+		const char *out;
+		unsigned int outlen;
+
+		result = sasl_decode64(step_payload, step_payload_len, base_payload, sizeof(base_payload), &base_payload_len);
+		if (is_sasl_failure(conn, result, error_message)) {
+			return result;
+		}
+
+		result = sasl_client_step(conn, (const char *)base_payload, base_payload_len, &client_interact, &out, &outlen);
+		if (is_sasl_failure(conn, result, error_message)) {
+			return result;
+		}
+
+		/* TODO : Deal with interaction */
+
+		if (result == SASL_OK) {
+			/* We are all done */
+			break;
+		}
+
+		result = sasl_encode64(out, outlen, payload, sizeof(base_payload), &payload_len);
+		if (is_sasl_failure(conn, result, error_message)) {
+			return result;
+		}
+
+		if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, conversation_id, payload, payload_len + 1, &step_payload, &step_payload_len, &done, (char **)&error_message)) {
+			*error_message = strdup("saslStart failed miserably");
+			return result;
+		}
+	} while (result == SASL_INTERACT || result == SASL_CONTINUE);
+
+	return result;
+}
+
+int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
+{
+	int result;
+	char *initpayload;
+	int initpayload_len;
+	sasl_conn_t *conn;
+	int32_t conversation_id;
+
+	result = sasl_client_new("mongodb", server_def->host, NULL, NULL, NULL, 0, &conn);
+
+	if (result != SASL_OK) {
+		sasl_dispose(&conn);
+		sasl_client_done();
+		*error_message = strdup("Could not initialize a client exchange (SASL) to MongoDB");
+		return 0;
+	}
+
+	conn = php_mongo_saslstart(manager, con, options, server_def, conn, &initpayload, &initpayload_len, &conversation_id, error_message);
+	if (!conn) {
+		sasl_dispose(&conn);
+		sasl_client_done();
+		/* error message populate by php_mongo_saslstart() */
+		return 0;
+	}
+
+	php_mongo_saslcontinue(manager, con, options, server_def, conn, initpayload, initpayload_len, conversation_id, error_message);
+
+	free(initpayload);
+	sasl_dispose(&conn);
+	sasl_client_done();
+
+	return 1;
+}
+
+int php_mongo_io_authenticate_plain(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
+{
+	char step_payload[4096];
+	char *out, *plain;
+	char *mechanism = "PLAIN";
+	unsigned int step_payload_len, plain_len;
+	int outlen;
+	int32_t step_conversation_id;
+	int result;
+
+	plain_len = spprintf(&plain, 0, "%c%s%c%s", '\0', server_def->username, '\0', server_def->password);
+
+	result = sasl_encode64(plain, plain_len, step_payload, sizeof(step_payload), &step_payload_len);
+	if (result != SASL_OK) {
+		*error_message = strdup("SASL authentication: Could not base64 encode payload");
+		efree(plain);
+		return 0;
+	}
+	efree(plain);
+
+	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, mechanism, step_payload, step_payload_len + 1, &out, &outlen, &step_conversation_id, error_message)) {
+		return 0;
+	}
+	free(out);
+
+	return 1;
+}
+#endif
+
+int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
+{
+	/* Use the mcon implementation of MongoDB-CR (default) */
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_CR) {
+		return mongo_connection_authenticate(manager, con, options, server_def, error_message);
+	}
+#if HAVE_MONGO_SASL
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_GSSAPI) {
+		return php_mongo_io_authenticate_gssapi(manager, con, options, server_def, error_message);
+	}
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_PLAIN) {
+		return php_mongo_io_authenticate_plain(manager, con, options, server_def, error_message);
+	}
+	*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR, GSSAPI and PLAIN is supported by this build");
+#else
+	*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR is supported by this build");
+#endif
+
+	return 0;
 }
 
 /*

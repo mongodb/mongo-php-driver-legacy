@@ -50,6 +50,13 @@ static mcon_str *create_simple_header(mongo_connection *con, char *ns)
 	return str;
 }
 
+void bson_add_int32(mcon_str *str, char *fieldname, int32_t v)
+{
+	mcon_str_addl(str, "\x10", 1, 0);
+	mcon_str_addl(str, fieldname, strlen(fieldname) + 1, 0);
+	mcon_serialize_int32(str, v);
+}
+
 void bson_add_long(mcon_str *str, char *fieldname, int64_t v)
 {
 	mcon_str_addl(str, "\x12", 1, 0);
@@ -57,13 +64,18 @@ void bson_add_long(mcon_str *str, char *fieldname, int64_t v)
 	mcon_serialize_int64(str, v);
 }
 
-void bson_add_string(mcon_str *str, char *fieldname, char *string)
+void bson_add_stringl(mcon_str *str, char *fieldname, char *string, int len)
 {
 	mcon_str_addl(str, "\x02", 1, 0);
-	mcon_str_addl(str, fieldname, strlen(fieldname) + 1, 0);
-	mcon_serialize_int(str, strlen(string) + 1);
+	mcon_str_addl(str, fieldname, strlen(fieldname)+1, 0);
+	mcon_serialize_int(str, len);
 	mcon_str_add(str, string, 0);
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
+}
+
+void bson_add_string(mcon_str *str, char *fieldname, char *string)
+{
+	bson_add_stringl(str, fieldname, string, strlen(string) + 1);
 }
 
 mcon_str *bson_create_ping_packet(mongo_connection *con)
@@ -161,6 +173,70 @@ mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *database,
 	((int*) str->d)[0] = str->l;
 	return str;
 }
+
+/* { saslStart: 1, mechanism: String, payload: BinaryOrString, autoAuthorize : 1 } */
+mcon_str *bson_create_saslstart_packet(mongo_connection *con, char *database, char *mechanism, char *payload, int payload_len)
+{
+	struct mcon_str *str;
+	char  *ns;
+	int    hdr, length;
+
+	/* We use the $external database to construct the namespace */
+	length = strlen(database) + 5 + 1;
+	ns = malloc(length);
+	snprintf(ns, length, "%s.$cmd", database);
+	str = create_simple_header(con, ns);
+	free(ns);
+
+	hdr = str->l;
+	mcon_serialize_int(str, 0); /* We need to fill this with the length */
+	bson_add_long(str, "saslStart", 1);
+	if (mechanism) {
+		bson_add_string(str, "mechanism", mechanism);
+		bson_add_stringl(str, "payload", (char *)payload, payload_len);
+		bson_add_long(str, "autoAuthorize", 1);
+	} else {
+		bson_add_string(str, "mechanism", "What-Do-You-Support?");
+		bson_add_string(str, "payload", "");
+		bson_add_long(str, "autoAuthorize", 1);
+	}
+	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
+
+	/* Set length */
+	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+
+	((int*) str->d)[0] = str->l;
+	return str;
+}
+
+mcon_str *bson_create_saslcontinue_packet(mongo_connection *con, int32_t conversation_id, char *payload, int payload_len)
+{
+	struct mcon_str *str;
+	char  *ns;
+	int    hdr, length;
+
+	/* We use the $external database to construct the namespace */
+	length = 9 + 5 + 1;
+	ns = malloc(length);
+	snprintf(ns, length, "$external.$cmd");
+	str = create_simple_header(con, ns);
+	free(ns);
+
+	hdr = str->l;
+	mcon_serialize_int(str, 0); /* We need to fill this with the length */
+	bson_add_long(str, "saslContinue", 1);
+
+	bson_add_int32(str, "conversationId", conversation_id);
+	bson_add_stringl(str, "payload", (char *)payload, payload_len);
+	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
+
+	/* Set length */
+	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+
+	((int*) str->d)[0] = str->l;
+	return str;
+}
+
 
 /* Field reading functionality */
 /* - helpers */
@@ -349,6 +425,29 @@ int bson_find_field_as_int32(char *buffer, char *field, int32_t *data)
 
 	if (tmp) {
 		*data = ((int32_t*)tmp)[0];
+		return 1;
+	}
+	return 0;
+}
+
+int bson_find_field_as_int64(char *buffer, char *field, int64_t *data)
+{
+	char *tmp = (char*) bson_find_field(buffer, field, BSON_INT64);
+
+	if (tmp) {
+		*data = ((int64_t*)tmp)[0];
+		return 1;
+	}
+	return 0;
+}
+
+int bson_find_field_as_stringl(char *buffer, char *field, char **data, int32_t *length, int duplicate)
+{
+	char* tmp = bson_find_field(buffer, field, BSON_STRING);
+
+	if (tmp) {
+		*length = ((int32_t*)tmp)[0];
+		*data = duplicate ? strdup(tmp + 4) : tmp + 4; /* int32 for length */
 		return 1;
 	}
 	return 0;

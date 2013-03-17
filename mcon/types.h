@@ -181,6 +181,7 @@ typedef struct _mongo_read_preference
 
 #define MONGO_AUTH_MECHANISM_MONGODB_CR 1
 #define MONGO_AUTH_MECHANISM_GSSAPI     2
+#define MONGO_AUTH_MECHANISM_PLAIN      3
 
 typedef struct _mongo_server_def
 {
@@ -244,7 +245,7 @@ typedef struct _mongo_con_manager
 	int   (*send)        (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 	void  (*close)       (mongo_connection *con, int why);
 	void  (*forget)      (struct _mongo_con_manager *manager, mongo_connection *con);
-
+	int   (*authenticate)(struct _mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message);
 } mongo_con_manager;
 
 typedef void (mongo_con_manager_item_destroy_t)(mongo_con_manager *manager, void *item, int why);

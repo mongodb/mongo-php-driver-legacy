@@ -36,22 +36,6 @@
 static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data, int why);
 
 /* Helpers */
-static int authenticate_connection(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char **error_message)
-{
-	char *nonce;
-	int   retval = 0;
-
-	nonce = mongo_connection_getnonce(manager, con, options, error_message);
-	if (!nonce) {
-		return 0;
-	}
-
-	retval = mongo_connection_authenticate(manager, con, options, database, username, password, nonce, error_message);
-	free(nonce);
-
-	return retval;
-}
-
 static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, int connection_flags, char **error_message)
 {
 	char *hash;
@@ -111,14 +95,11 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	con = mongo_connection_create(manager, hash, server, options, error_message);
 	if (con) {
 		/* Do authentication if requested */
-		if (server->db && server->username && server->password) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
-			if (!authenticate_connection(manager, con, options, server->authdb ? server->authdb : server->db, server->username, server->password, error_message)) {
+			if (!manager->authenticate(manager, con, options, server, error_message)) {
 				mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
 				free(hash);
 				return NULL;
 			}
-		}
 		/* Do the first-time ping to record the latency of the connection */
 		if (mongo_connection_ping(manager, con, options, error_message)) {
 			/* Register the connection on successful pinging */
@@ -200,6 +181,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					tmp_def->authdb = servers->server[i]->authdb ? strdup(servers->server[i]->authdb) : NULL;
 					tmp_def->host = mcon_strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
 					tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
+					tmp_def->mechanism = servers->server[i]->mechanism;
 					
 					/* Create a hash so that we can check whether we already have a
 					 * connection for this server definition. If we don't create
@@ -659,6 +641,7 @@ mongo_con_manager *mongo_init(void)
 	tmp->send        = mongo_io_send;
 	tmp->close       = mongo_connection_close;
 	tmp->forget      = mongo_connection_forget;
+	tmp->authenticate= mongo_connection_authenticate;
 
 	return tmp;
 }

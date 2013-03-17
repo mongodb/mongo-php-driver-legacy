@@ -720,8 +720,38 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
 
 /* Authenticates a connection
  *
- * Returns 1 when it worked, or 0 when it didn't - with the error_message set. */
-int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char *nonce, char **error_message)
+ * Returns 1 when it worked, 2 when no need, or 0 when it didn't - with the error_message set. */
+int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
+{
+	char *nonce;
+	int   retval = 0;
+
+	if (!server_def->db || !server_def->username || !server_def->password) {
+		return 2;
+	}
+
+	if (server_def->mechanism != MONGO_AUTH_MECHANISM_MONGODB_CR) {
+		*error_message = strdup("Only MongoDB-CR authentication mechanism is supported by this build");
+		return 0;
+	}
+
+	nonce = mongo_connection_getnonce(manager, con, options, error_message);
+	if (!nonce) {
+		return 0;
+	}
+
+	retval = mongo_connection_authenticate_mongodb_cr(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, server_def->password, nonce, error_message);
+	free(nonce);
+
+	return retval;
+}
+
+/**
+ * Authenticates a connection
+ *
+ * Returns 1 when it worked, or 0 when it didn't - with the error_message set.
+ */
+int mongo_connection_authenticate_mongodb_cr(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char *nonce, char **error_message)
 {
 	mcon_str      *packet;
 	char          *data_buffer, *errmsg;
@@ -781,6 +811,112 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	return 1;
 }
 
+int mongo_connection_authenticate_saslstart(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char *mechanism, char *payload, unsigned int payload_len, char **out_payload, int *out_payload_len, int32_t *out_conversation_id, char **error_message)
+{
+	mcon_str      *packet;
+	char          *data_buffer;
+	char          *ptr;
+	char          *smechanism;
+	double         ok;
+	char          *errmsg;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_authenticate_sasl: Starting SASL authentication process to '%s'", con->hash);
+
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_CR) {
+		*error_message = strdup("Invalid authentication mechanism. Expected SASL mechanism, got MongoDB-CR");
+		return 0;
+	}
+
+	packet = bson_create_saslstart_packet(con, server_def->authdb, mechanism, payload, payload_len);
+
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
+		return 0;
+	}
+
+	/* Find data fields */
+	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	if (bson_find_field_as_double(ptr, "ok", &ok)) {
+		if (ok > 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "SASL request successful");
+		} else {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "SASL request failed");
+			if (bson_find_field_as_string(ptr, "errmsg", &errmsg)) {
+				*error_message = malloc(256);
+				snprintf(*error_message, 256, "SASL Authentication failed on database '%s': %s", server_def->db, errmsg);
+			} else {
+				*error_message = "SASL Authentication failed";
+			}
+			if (bson_find_field_as_document(ptr, "supportedMechanisms", (char**) &smechanism)) {
+				/* TODO: Retrieve a list of supportedMechanisms and return it somehow */
+			}
+
+			free(data_buffer);
+			return 0;
+		}
+	}
+
+	if (bson_find_field_as_int32(ptr, "conversationId", out_conversation_id)) {
+		bson_find_field_as_stringl(ptr, "payload", out_payload, out_payload_len, 1);
+	}
+	free(data_buffer);
+
+	return 1;
+}
+
+int mongo_connection_authenticate_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, int32_t conversation_id, char *payload, int payload_len, char **out_payload, int *out_payload_len, unsigned char *done, char **error_message)
+{
+	mcon_str      *packet;
+	char          *data_buffer;
+	char          *ptr;
+	double         ok;
+	char          *errmsg;
+	int32_t       out_conversation_id;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_authenticate_saslcontinue: continuing SASL authentication to '%s'", con->hash);
+
+	packet = bson_create_saslcontinue_packet(con, conversation_id, payload, payload_len);
+
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
+		return 0;
+	}
+
+	/* Find data fields */
+	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	if (bson_find_field_as_double(ptr, "ok", &ok)) {
+		if (ok > 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "SASL continue successful");
+		} else {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "SASL continue failed");
+			if (bson_find_field_as_string(ptr, "errmsg", &errmsg)) {
+				int errlen = strlen("SASL Authentication failed on database '':") + strlen(server_def->db) + strlen(errmsg);
+				*error_message = malloc(errlen);
+				snprintf(*error_message, errlen, "SASL Authentication failed on database '%s': %s", server_def->db, errmsg);
+			} else {
+				int errlen = strlen("SASL Authentication failed on database ''") + strlen(server_def->db);
+				*error_message = malloc(errlen);
+				snprintf(*error_message, errlen, "SASL Authentication failed on database '%s'", server_def->db);
+			}
+
+			free(data_buffer);
+			return 0;
+		}
+	}
+
+	if (bson_find_field_as_int32(ptr, "conversationId", &out_conversation_id)) {
+		if (out_conversation_id != conversation_id) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "SASL continue failed: Got wrong conversation_id back! Expected %d but got %d", conversation_id, out_conversation_id);
+			free(data_buffer);
+			return 0;
+		}
+		bson_find_field_as_stringl(ptr, "payload", out_payload, out_payload_len, 0);
+		bson_find_field_as_bool(ptr, "done", done);
+	}
+	free(data_buffer);
+
+	return (int)ok;
+}
 /*
  * Local variables:
  * tab-width: 4
