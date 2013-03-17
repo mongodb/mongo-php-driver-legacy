@@ -112,7 +112,6 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 		/* Do authentication if requested */
 		if (server->db && server->username && server->password) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
-			if (!authenticate_connection(manager, con, options, server->db, server->username, server->password, error_message)) {
 			if (!authenticate_connection(manager, con, options, server->authdb ? server->authdb : server->db, server->username, server->password, error_message)) {
 				mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
 				free(hash);
