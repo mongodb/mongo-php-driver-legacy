@@ -1,12 +1,12 @@
 --TEST--
 MongoCollection::setReadPreference() error changing read preference mode to primary with tag sets
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
-$m = new_mongo();
+$m = new_mongo_standalone();
 $c = $m->phpunit->test;
 $c->setReadPreference(MongoClient::RP_SECONDARY, array( array( 'foo' => 'bar' ) ) );
 $c->setReadPreference(MongoClient::RP_PRIMARY, array( array( 'foo' => 'bar' ) ) );

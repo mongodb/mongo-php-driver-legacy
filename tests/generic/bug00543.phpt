@@ -1,10 +1,10 @@
 --TEST--
 Test for PHP-543: Mongo::connect() should return a bool value.
 --SKIPIF--
-<?php require dirname( __FILE__ ) . "/skipif.inc" ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require dirname( __FILE__ ) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $m = mongo(null, true, true, array( 'connect' => false ) );
 var_dump($m->connect());

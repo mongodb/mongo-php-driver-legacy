@@ -1,12 +1,12 @@
 --TEST--
 MongoID: Test getting the getTimestamp.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
+require_once "tests/utils/server.inc";
 // Connect
-$m = mongo();
+$m = mongo_standalone();
 // Select the DB
 $db = $m->phpunit;
 // Select a collection 

@@ -1,10 +1,10 @@
 --TEST--
 GridFS: Test for basic stream wrapper support
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 $conn = Mongo("admin");
 $db   = $conn->selectDb('admin');
 $grid = $db->getGridFs('wrapper');

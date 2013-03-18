@@ -1,7 +1,7 @@
 --TEST--
 MongoCollection::insert()
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 <?php die("skip unfixed bug"); ?>
 --XFAIL--
 Invalid options for ->insert() do not throw exception
@@ -9,8 +9,8 @@ Invalid options for ->insert() do not throw exception
 Test for giving improper arguments to the function
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+$m = mongo_standalone();
 $c = $m->phpunit->col;
 $c->drop();
 

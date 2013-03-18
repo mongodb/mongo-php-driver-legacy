@@ -1,14 +1,14 @@
 --TEST--
 Test for forking and connection management [2]
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 <?php if (!function_exists("pcntl_fork")) { exit("skip Requires ext/pcntl"); }?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 //require_once dirname(__FILE__) . "/../debug.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 
 $col = $m->selectDb("phpunit")->fork;
 

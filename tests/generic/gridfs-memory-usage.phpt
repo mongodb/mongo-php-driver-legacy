@@ -1,10 +1,10 @@
 --TEST--
 GridFS: Testing memory usage
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 $conn = Mongo();
 $db   = $conn->selectDb('phpunit');
 $grid = $db->getGridFs('wrapper');

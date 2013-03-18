@@ -4,10 +4,10 @@ MongoBinData insertion with default type
 This test expects an E_DEPRECATED notice because the default type will change in
 version 2.0 of the extension (see: https://jira.mongodb.org/browse/PHP-407).
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc";?>
+<?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 error_reporting(-1);
 
 $numNotices = 0;
@@ -19,7 +19,7 @@ function handleNotice($errno, $errstr) {
 
 set_error_handler('handleNotice', E_DEPRECATED);
 
-$mongo = mongo();
+$mongo = mongo_standalone();
 $coll = $mongo->selectCollection(dbname(), 'mongobindata');
 $coll->drop();
 

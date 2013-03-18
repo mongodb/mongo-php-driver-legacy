@@ -1,21 +1,20 @@
 --TEST--
 Connection strings: Test single host name with/without port
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/standalone.inc";
 
-$port = port();
+$port = standalone_port();
 if ($port != "27017") {
     die("skip this test attempts to connect to the standard port");
 }
 ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $hostname = hostname();
-$port     = port();
+$port     = standalone_port();
 
 $a = new Mongo($hostname);
 var_dump($a instanceof Mongo);
