@@ -31,12 +31,9 @@ CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-<<<<<<< HEAD
 CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
 CON     FINE: get_server_flags: added tag dc:west
 CON     FINE: get_server_flags: added tag use:accounting
-=======
->>>>>>> Fix tests
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
@@ -62,13 +59,9 @@ CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-<<<<<<< HEAD
 CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
 CON     FINE: get_server_flags: added tag dc:east
 CON     FINE: get_server_flags: added tag use:reporting
-=======
-CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
->>>>>>> Fix tests
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     INFO: is_ping: last pinged at %d; time: 0ms
