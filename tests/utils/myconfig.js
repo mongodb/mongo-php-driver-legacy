@@ -6,7 +6,7 @@ var shardTest ;
 var shardTestAuth ;
 var bridgeTest ;
 
-function initRS(servers, port, keyFile) {
+function initRS(servers, port, keyFile, root, user) {
     if ((keyFile && replTestAuth) || (!keyFile && replTest)) {
         return;
     }
@@ -35,16 +35,16 @@ function initRS(servers, port, keyFile) {
     retval.awaitReplication()
 
     if (keyFile) {
-        retval.getMaster().getDB("admin").addUser("root", "password")
-        retval.getMaster().getDB("admin").auth("root", "password")
-        retval.getMaster().getDB("test").addUser("username", "difficult to remember password")
+        retval.getMaster().getDB("admin").addUser(root.username, root.password)
+        retval.getMaster().getDB("admin").auth(root.username, root.password)
+        retval.getMaster().getDB("test").addUser(user.username, user.password)
         replTestAuth = retval;
     } else {
         replTest = retval;
     }
     return retval;
 }
-function initStandalone(port,auth) {
+function initStandalone(port,auth,root,user) {
     if ((auth && standaloneTestAuth) || (!auth && standaloneTest)) {
         return;
     }
@@ -66,9 +66,9 @@ function initStandalone(port,auth) {
         return false;
     }, "unable to connect to mongo program on port " + port, 600 * 1000);
     if (auth) {
-        retval.getDB("admin").addUser("root", "password")
-        retval.getDB("admin").auth("root", "password")
-        retval.getDB("test").addUser("username", "difficult to remember password")
+        retval.getDB("admin").addUser(root.username, root.password)
+        retval.getDB("admin").auth(root.username, root.password)
+        retval.getDB("test").addUser(user.username, user.password)
         standaloneTestAuth = retval;
     } else {
         standaloneTest = retval;
