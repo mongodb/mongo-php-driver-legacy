@@ -1,12 +1,12 @@
 --TEST--
 MongoCollection::aggregate() basic tests
 --SKIPIF--
-<?php $needs = "2.1.0"; require dirname( __FILE__ ) . "/skipif.inc" ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require dirname( __FILE__ ) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $c = $m->selectDB("phpunit")->selectCollection("article");
 $c->drop();
 $data = array (

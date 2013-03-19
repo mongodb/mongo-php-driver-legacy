@@ -1,11 +1,10 @@
 --TEST--
 Connection strings: Test multiple host names with/without port
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/standalone.inc";
 
-$port = port();
+$port = standalone_port();
 
 if ($port != "27017") {
     die("skip this tests attempts to connect to the standard port");
@@ -13,10 +12,10 @@ if ($port != "27017") {
 ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $hostname = hostname();
-$port = port();
+$port = standalone_port();
 $ip = gethostbyname($hostname);
 
 $a = new Mongo("$hostname,$ip");

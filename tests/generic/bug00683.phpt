@@ -1,10 +1,10 @@
 --TEST--
 Test for PHP-683: Add support for the connectTimeoutMS connection parameter.
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc" ?>
+<?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 printLogs(MongoLog::ALL, MongoLog::ALL, "/(Found option.*imeout*)|Replacing/");
 echo "timeout only\n";

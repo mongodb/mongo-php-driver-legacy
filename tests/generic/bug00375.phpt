@@ -1,12 +1,12 @@
 --TEST--
 Test for PHP-375: GridFS segfaults when there are more chunks than expected
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = new_mongo();
+$m = new_mongo_standalone();
 $gridfs = $m->selectDb(dbname())->getGridfs();
 $gridfs->remove();
 

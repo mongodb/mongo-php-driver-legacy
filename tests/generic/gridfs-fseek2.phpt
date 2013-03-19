@@ -1,10 +1,10 @@
 --TEST--
 GridFS: Testing fseek and fread (2)
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 function readRange($fp, $seek, $length = false)
 {
 	fseek($fp, $seek, SEEK_SET);
@@ -29,9 +29,9 @@ $m = Mongo();
 $db = $m->selectDb('phpunit');
 $grid = $db->getGridFS('wrapper');
 $grid->drop();
-$grid->storeFile('tests/brighton-save.osm');
+$grid->storeFile('tests/data-files/gridfs-fseek2-data.txt');
 
-$file = $grid->findOne(array('filename' => 'tests/brighton-save.osm'));
+$file = $grid->findOne(array('filename' => 'tests/data-files/gridfs-fseek2-data.txt'));
 echo $file->file['chunkSize'], "\n";
 $fp = $file->getResource();
 
@@ -43,7 +43,7 @@ echo md5(readRange($fp, 819300, false)), "\n";
 echo md5(readRange($fp, 819300, false)), "\n";
 echo md5(readRange($fp, 819300, false)), "\n";
 $second = readRange($fp, 819300, false);
-echo md5_file('tests/brighton-save.osm'), "\n";
+echo md5_file('tests/data-files/gridfs-fseek2-data.txt'), "\n";
 echo md5($first . $second), "\n";
 ?>
 --EXPECT--

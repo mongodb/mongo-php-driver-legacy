@@ -1,12 +1,12 @@
 --TEST--
 Test for PHP-522: Checking error conditions in insert options
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc";?>
+<?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = mongo_standalone();
 $c = $m->selectCollection( dbname(), "php-522_error" );
 
 var_dump( $c->insert( array( 'test' => 1 ), array( 'fsync' => M_PI, 'safe' => M_PI, 'timeout' => "foo" ) ) );

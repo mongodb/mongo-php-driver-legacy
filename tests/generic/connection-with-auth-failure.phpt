@@ -1,16 +1,15 @@
 --TEST--
 Connection strings: unsuccesfull authentication
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/auth-standalone.inc" ?>
 --FILE--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php
+require_once "tests/utils/server.inc";
 try {
     $host = hostname();
-    $port = port();
-    $user = username();
-    $pass = password();
-    $pass .= "bogus";
+    $port = standalone_port();
+    $user = "wrong username";
+    $pass = "failed password";
     $db   = dbname();
 
     $m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", $user, $pass, $host, $port, $db));
@@ -19,4 +18,4 @@ try {
 }
 ?>
 --EXPECTF--
-Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth fails
+Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth%S

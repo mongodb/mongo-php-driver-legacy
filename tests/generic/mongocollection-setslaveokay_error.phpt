@@ -3,11 +3,11 @@ MongoCollection::setSlaveOkay()
 --DESCRIPTION--
 Test for a value that cannot convert to boolean
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$m = mongo();
+require_once "tests/utils/server.inc";
+$m = mongo_standalone();
 $c = $m->phpunit->col;
 var_dump($c->setSlaveOkay(array('error')));
 ?>
