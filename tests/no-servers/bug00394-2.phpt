@@ -2,10 +2,10 @@
 Test for PHP-394: Crashes and mem leaks.
 --SKIPIF--
 <?php if (version_compare(PHP_VERSION, "5.4.0", "ge")) { exit("skip This test requires PHP version prior to PHP5.4"); }?>
-<?php require_once dirname(__FILE__) ."/skipif.inc" ?>
+<?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 class dummy {}
 

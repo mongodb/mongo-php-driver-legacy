@@ -25,7 +25,7 @@ function readRange($fp, $seek, $length = false)
 	return $data;
 }
 
-$m = Mongo();
+$m = new_mongo_standalone();
 $db = $m->selectDb('phpunit');
 $grid = $db->getGridFS('wrapper');
 $grid->drop();

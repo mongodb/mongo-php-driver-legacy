@@ -5,7 +5,7 @@ Test for PHP-616: GridFS: deleting files by ID
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-    $m = mongo("phpunit");
+    $m = mongo_standalone("phpunit");
 	$mdb = $m->selectDB("phpunit");
 	$mdb->dropCollection("fs.files");
 	$mdb->dropCollection("fs.chunks");

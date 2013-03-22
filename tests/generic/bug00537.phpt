@@ -1,8 +1,12 @@
 --TEST--
-Test for PHP-537: 
+Test for PHP-537: Support for server-side configrable document and message size
+--SKIP--
+<?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-$m = new MongoClient;
+require_once "tests/utils/server.inc";
+$nfo = MongoShellServer::getStandaloneInfo();
+$m = new MongoClient($nfo);
 $c = $m->phpunit->test;
 
 echo "This document should be just too large: ";

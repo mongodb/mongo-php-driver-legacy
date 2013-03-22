@@ -5,7 +5,7 @@ Test for PHP-690: Percentage symbol is not escaped in error messages
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-$m = new_mongo();
+$m = new_mongo_standalone();
 $c = $m->selectCollection(dbname(), 'bug690');
 $c->drop();
 

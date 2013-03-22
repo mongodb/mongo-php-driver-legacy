@@ -6,7 +6,7 @@ Test for PHP-543: Mongo::connect() should return a bool value.
 <?php
 require_once "tests/utils/server.inc";
 
-$m = mongo(null, true, true, array( 'connect' => false ) );
+$m = mongo_standalone(null, true, true, array( 'connect' => false ) );
 var_dump($m->connect());
 
 try
