@@ -44,6 +44,8 @@ mongo_servers* mongo_parse_init(void)
 	servers->options.default_w = -1;
 	servers->options.default_wstring = NULL;
 	servers->options.default_wtimeout = -1;
+	servers->options.ssl = MONGO_SSL_DISABLE;
+	servers->options.ctx = NULL;
 
 	return servers;
 }
@@ -540,6 +542,31 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 
+	if (strcasecmp(option_name, "ssl") == 0) {
+		int value = 0;
+		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+			value = MONGO_SSL_ENABLE;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': true");
+		} else if (strcasecmp(option_value, "false") == 0 || *option_value == '0') {
+			value = MONGO_SSL_DISABLE;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': false");
+		} else if (strcasecmp(option_value, "prefer") == 0 || atoi(option_value) == MONGO_SSL_PREFER) {
+			/* FIXME: MongoDB doesn't support "connection promotion" to SSL at the moment, so we can't support this option properly */
+			value = MONGO_SSL_PREFER;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': prefer");
+			*error_message = strdup("SSL=prefer is currently not supported by mongod");
+			return 3;
+		} else {
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': '%s'", option_name);
+			*error_message = strdup("SSL can only be 'true' or 'false'");
+			return 3;
+		}
+
+		servers->options.ssl = value;
+		return 0;
+	}
+
+
 	*error_message = malloc(256);
 	snprintf(*error_message, 256, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
@@ -656,6 +683,12 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	to->options.default_wtimeout = from->options.default_wtimeout;
 	if (from->options.default_wstring) {
 		to->options.default_wstring = strdup(from->options.default_wstring);
+	}
+
+	to->options.ssl = from->options.ssl;
+
+	if (from->options.ctx) {
+		memcpy(to->options.ctx, from->options.ctx, sizeof(void *));
 	}
 
 	mongo_read_preference_copy(&from->read_pref, &to->read_pref);

@@ -24,6 +24,7 @@
 #include <php.h>
 #include <zend_exceptions.h>
 #include "ext/standard/php_smart_str.h"
+#include "ext/standard/file.h"
 
 #include "php_mongo.h"
 #include "mongoclient.h"
@@ -329,7 +330,9 @@ int mongo_store_option_wrapper(mongo_con_manager *manager, mongo_servers *server
 }
 /* }}} */
 
-/* {{{ MongoClient->__construct
+/* {{{ proto MongoClient MongoClient->__construct([string connection_string [, array mongo_options [, array driver_options]]])
+ * Creates a new MongoClient object for mongo[d|s]. mongo_options are the same options as the connection_string, while
+ * driver_options is additional PHP MongoDB options, like stream context and callbacks.
  */
 PHP_METHOD(MongoClient, __construct)
 {
@@ -343,6 +346,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	zend_bool     connect = 1;
 	zval         *options = 0;
 	zval         *slave_okay = 0;
+	zval         *zdoptions = NULL;
 	mongoclient  *link;
 	zval        **opt_entry;
 	char         *opt_key;
@@ -352,7 +356,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	ulong         num_key;
 	HashPosition  pos;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/", &server, &server_len, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/a!/", &server, &server_len, &options, &zdoptions) == FAILURE) {
 		zval *object = getThis();
 		ZVAL_NULL(object);
 		return;
@@ -436,6 +440,27 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 			}
 		}
 	}
+
+#if !MONGO_PHP_STREAMS
+	if (link->servers->options.ssl) {
+		zend_throw_exception(mongo_ce_ConnectionException, "SSL support is only available when compiled against PHP Streams", 26 TSRMLS_CC);
+		return;
+	}
+	if (zdoptions) {
+		zend_throw_exception(mongo_ce_ConnectionException, "Driver options are only available when compiled against PHP Streams", 27 TSRMLS_CC);
+		return;
+	}
+#endif
+	if (zdoptions) {
+		/* Possibly add more indexes in the future, like "log_queries", "log_commands", "log_failures", "log_metadata"... */
+		zval **zcontext;
+
+		if (zend_hash_find(Z_ARRVAL_P(zdoptions), "context", strlen("context") + 1, (void**)&zcontext) == SUCCESS) {
+			link->servers->options.ctx = php_stream_context_from_zval(*zcontext, PHP_FILE_NO_DEFAULT_CONTEXT);
+			mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "Found Stream context");
+		}
+	}
+
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_BVAL_P(slave_okay)) {
