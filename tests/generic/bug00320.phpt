@@ -5,7 +5,7 @@ Test for PHP-320: GridFS transaction issues with storeFile().
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-$m = new_mongo("phpunit");
+$m = new_mongo_standalone("phpunit");
 	$mdb = $m->selectDB("phpunit");
 	$mdb->dropCollection("fs.files");
 	$mdb->dropCollection("fs.chunks");

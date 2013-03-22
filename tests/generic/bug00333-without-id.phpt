@@ -5,7 +5,7 @@ Test for PHP-333: GridFS find's key without returning _id.
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-$m = mongo("phpunit");
+$m = mongo_standalone("phpunit");
 $mdb = $m->selectDB("phpunit");
 $mdb->dropCollection("fs.files");
 $mdb->dropCollection("fs.chunks");

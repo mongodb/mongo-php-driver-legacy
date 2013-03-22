@@ -5,8 +5,8 @@ Connection strings: with database name
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-mongo("phpunit");
-mongo("bar/baz");
-mongo("/");
+mongo_standalone("phpunit");
+mongo_standalone("bar/baz");
+mongo_standalone("/");
 ?>
 --EXPECTF--

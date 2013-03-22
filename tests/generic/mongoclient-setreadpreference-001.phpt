@@ -15,7 +15,7 @@ $modes = array(
 );
 
 foreach (array_values($modes) as $mode) {
-    $m = new_mongo(null, true, true, array('readPreference' => $mode));
+    $m = new_mongo_standalone(null, true, true, array('readPreference' => $mode));
     echo $mode, "\n\n";
     foreach (array_values($modes) as $newMode) {
         $m->setReadPreference($newMode);

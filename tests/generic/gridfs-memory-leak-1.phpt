@@ -5,7 +5,7 @@ GridFS: Testing minor memory issue
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-$conn = Mongo();
+$conn = new_mongo_standalone();
 $db   = $conn->phpunit;
 
 $grid = $db->getGridFS();

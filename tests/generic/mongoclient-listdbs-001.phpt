@@ -6,7 +6,7 @@ Mongo::listDBs()
 <?php
 require "tests/utils/server.inc";
 
-$m = mongo("admin");
+$m = mongo_standalone("admin");
 $dbs = $m->listDBs();
 var_dump($dbs['ok']);
 var_dump(isset($dbs['totalSize']));

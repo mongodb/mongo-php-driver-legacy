@@ -1,10 +1,10 @@
 --TEST--
 Test for PHP-554: MongoId should not get constructed when passing in an invalid ID.
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $valid = array(
     str_repeat("abcdef123456", 2),

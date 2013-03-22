@@ -5,7 +5,7 @@ GridFS: getting files by ID
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-    $m = mongo("phpunit");
+    $m = mongo_standalone("phpunit");
     $db = $m->selectDB("phpunit");
     $db->dropCollection("fs.files");
     $db->dropCollection("fs.chunks");

@@ -1,11 +1,11 @@
 --TEST--
 Database: Create collection (errors)
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$a = mongo();
+require_once "tests/utils/server.inc";
+$a = mongo_standalone();
 $d = $a->selectDb("phpunit");
 $ns = $d->selectCollection('system.namespaces');
 

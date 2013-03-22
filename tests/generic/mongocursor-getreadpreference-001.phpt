@@ -6,7 +6,7 @@ MongoCursor::getReadPreference() returns read preferences
 <?php require_once "tests/utils/server.inc"; ?>
 <?php
 
-$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", hostname(), standalone_port(), dbname());
+$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", standalone_hostname(), standalone_port(), dbname());
 
 $modes = array(
     'primary',

@@ -6,7 +6,7 @@ MongoDB::command()
 <?php
 require "tests/utils/server.inc";
 
-$m = mongo("admin");
+$m = mongo_standalone("admin");
 $db = $m->selectDb("admin");
 
 $status = $db->command(array('serverStatus' => 1));
