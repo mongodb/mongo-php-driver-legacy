@@ -514,13 +514,14 @@ mongo_con_manager_item *mongo_manager_register(mongo_con_manager *manager, mongo
 	if (!*ptr) { /* No connections at all yet */
 		*ptr = new;
 	} else {
+		mongo_con_manager_item *item = *ptr;
 		/* Existing connections, so find the last one */
 		do {
-			if (!(*ptr)->next) {
-				(*ptr)->next = new;
+			if (!item->next) {
+				item->next = new;
 				break;
 			}
-			*ptr = (*ptr)->next;
+			item = item->next;
 		} while (1);
 	}
 	return new;
@@ -546,20 +547,21 @@ void mongo_manager_blacklist_register(mongo_con_manager *manager, mongo_connecti
 int mongo_manager_deregister(mongo_con_manager *manager, mongo_con_manager_item **ptr, char *hash, void *con, mongo_con_manager_item_destroy_t cleanup_cb)
 {
 	mongo_con_manager_item *prev = NULL;
+	mongo_con_manager_item *item = *ptr;
 
 	/* Remove from manager */
 	/* - if there are no connections, simply return false */
-	if (!*ptr) {
+	if (!item) {
 		return 0;
 	}
 	/* Loop over existing connections and compare hashes */
 	do {
 		/* The connection is the one we're looking for */
-		if (strcmp((*ptr)->hash, hash) == 0) {
+		if (strcmp((item)->hash, hash) == 0) {
 			if (prev == NULL) { /* It's the first one in the list... */
-				*ptr = (*ptr)->next;
+				*ptr = item->next;
 			} else {
-				prev->next = (*ptr)->next;
+				prev->next = item->next;
 			}
 			/* Free structures */
 			cleanup_cb(manager, con, MONGO_CLOSE_BROKEN);
@@ -569,9 +571,9 @@ int mongo_manager_deregister(mongo_con_manager *manager, mongo_con_manager_item 
 		}
 
 		/* Next iteration */
-		prev = *ptr;
-		*ptr = (*ptr)->next;
-	} while (*ptr);
+		prev = item;
+		item = item->next;
+	} while (item);
 
 	return 0;
 }
