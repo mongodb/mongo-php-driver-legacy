@@ -5,7 +5,7 @@ Indexes: Sparse
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-$m = Mongo();
+$m = new_mongo_standalone();
 $db = $m->phpunit;
 
 $db->people->drop();

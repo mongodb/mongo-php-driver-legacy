@@ -5,7 +5,7 @@ Test for PHP-413: Connection strings: unsuccesfull authentication.
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-$host = hostname();
+$host = standalone_hostname();
 $port = standalone_port();
 $user = "A";
 $pass = "wrong password";

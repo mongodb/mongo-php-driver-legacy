@@ -1,11 +1,11 @@
 --TEST--
 Test for PHP-490: "nolock" option in MongoDB::execute method
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$c = new_mongo();
+require_once "tests/utils/server.inc";
+$c = new_mongo_standalone();
 $db = $c->selectDb(dbname());
 
 $func = 

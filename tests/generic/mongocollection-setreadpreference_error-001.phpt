@@ -9,7 +9,7 @@ MongoCollection::setReadPreference() error setting invalid read preference mode
 $modes = array("blaat", 42, true, 3.14);
 
 foreach ($modes as $mode) {
-    $m = new_mongo(null, true, true, array('readPreference' => MongoClient::RP_PRIMARY_PREFERRED));
+    $m = new_mongo_standalone(null, true, true, array('readPreference' => MongoClient::RP_PRIMARY_PREFERRED));
     $c = $m->phpunit->test;
     $c->setReadPreference($mode);
     $rp = $c->getReadPreference();

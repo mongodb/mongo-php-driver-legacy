@@ -53,6 +53,8 @@ REPLSET FINE: selecting near server: done
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 
+Notice: CON     FINE: mongo_connection_destroy: Destroying connection object for %s:%d;-;X;%d in Unknown on line 0
+
 Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;-;X;%d. in Unknown on line 0
 
 Notice: CON     INFO: freeing connection %s:%d;-;X;%d in Unknown on line 0

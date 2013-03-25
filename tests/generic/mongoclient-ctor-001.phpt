@@ -11,7 +11,7 @@ if (ini_get("mongo.default_host") == hostname() && ini_get("mongo.default_port")
 <?php
 require_once "tests/utils/server.inc";
 
-$host = hostname();
+$host = standalone_hostname();
 $port = standalone_port();
 ini_set("mongo.default_host", $host);
 ini_set("mongo.default_port", $port);
