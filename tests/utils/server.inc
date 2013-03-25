@@ -247,7 +247,7 @@ function mongo() {
 function old_mongo() {
     return mongo();
 }
-function new_mongo($unused = null, $unused = null, $unused = null, $options = array()) {
+function new_mongo($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $config = MongoShellServer::getReplicaSetInfo();
     return new MongoClient($config["dsn"], array("replicaSet" => $config["rsname"])+$options);
 }
@@ -255,11 +255,11 @@ function new_mongo($unused = null, $unused = null, $unused = null, $options = ar
 function old_mongo_standalone() {
     return mongo_standalone();
 }
-function mongo_standalone($unused = null, $unused = null, $unused = null, $options = array()) {
+function mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $dsn = MongoShellServer::getStandaloneInfo();
     return new Mongo($dsn, $options);
 }
-function new_mongo_standalone($unused = null, $unused = null, $unused = null, $options = array()) {
+function new_mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $dsn = MongoShellServer::getStandaloneInfo();
     return new MongoClient($dsn, $options);
 }

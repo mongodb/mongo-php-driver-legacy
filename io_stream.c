@@ -43,7 +43,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		ctimeout.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
 	}
 
-	stream = php_stream_xport_create(dsn, dsn_len + 1, 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
+	stream = php_stream_xport_create(dsn, dsn_len, 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
 	efree(dsn);
 	free(hash);
 
