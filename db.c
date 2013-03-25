@@ -51,6 +51,64 @@ void php_mongo_connection_force_primary(mongo_cursor *cursor)
 	cursor->force_primary = 1;
 }
 
+static int php_mongo_command_supports_rp(zval *cmd)
+{
+	HashPosition pos;
+	char *str;
+	uint str_len;
+	long type;
+	ulong idx;
+
+	if (Z_TYPE_P(cmd) != IS_ARRAY) {
+		return 0;
+	}
+
+	zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(cmd), &pos);
+	type = zend_hash_get_current_key_ex(Z_ARRVAL_P(cmd), &str, &str_len, &idx, 0, &pos);
+	if (type != HASH_KEY_IS_STRING) {
+		return 0;
+	}
+
+	/* Commands in MongoDB are case-sensitive */
+	if (str_len == 6) {
+		if (strcmp(str, "count") == 0 || strcmp(str, "group") == 0) {
+			return 1;
+		}
+		return 0;
+	}
+	if (str_len == 8) {
+		if (strcmp(str, "dbStats") == 0 || strcmp(str, "geoNear") == 0 || strcmp(str, "geoWalk") == 0) {
+			return 1;
+		}
+		return 0;
+	}
+	if (str_len == 9) {
+		if (strcmp(str, "distinct") == 0) {
+			return 1;
+		}
+		return 0;
+	}
+	if (str_len == 10) {
+		if (strcmp(str, "aggregate") == 0 || strcmp(str, "collStats") == 0 || strcmp(str, "geoSearch") == 0) {
+			return 1;
+		}
+
+		if (strcmp(str, "mapreduce") == 0) {
+			zval **value = NULL;
+			if (zend_hash_find(Z_ARRVAL_P(cmd), "out", 4, (void **)&value) == SUCCESS) {
+				if (Z_TYPE_PP(value) == IS_STRING) {
+					if (strcmp(Z_STRVAL_PP(value), "inline") == 0) {
+						return 1;
+					}
+				}
+			}
+		}
+		return 0;
+	}
+
+	return 0;
+}
+
 /* {{{ MongoDB::__construct
  */
 PHP_METHOD(MongoDB, __construct)
@@ -659,9 +717,13 @@ PHP_METHOD(MongoDB, command)
 	 * collection.c/append_getlasterror. The Cursor creation should be done
 	 * through an init method. */
 	PHP_MONGO_GET_LINK(db->link);
-	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
-	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
-	php_mongo_connection_force_primary(cursor_tmp);
+	if (php_mongo_command_supports_rp(cmd)) {
+		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "command supports Read Preferences");
+	} else {
+		cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
+		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
+		php_mongo_connection_force_primary(cursor_tmp);
+	}
 
 	/* query */
 	MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
