@@ -35,6 +35,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	struct timeval ctimeout = {0};
 	char *dsn;
 	int dsn_len;
+	TSRMLS_FETCH();
 
 	dsn_len = spprintf(&dsn, 0, "tcp://%s:%d", server->host, server->port);
 
@@ -99,6 +100,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int num = 1, received = 0;
+	TSRMLS_FETCH();
 
 	/* this can return FAILED if there is just no more data from db */
 	while (received < size && num > 0) {
@@ -123,13 +125,18 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
-	int retval =  php_stream_write(con->socket, (char *) data, size);
+	int retval;
+	TSRMLS_FETCH();
+
+	retval = php_stream_write(con->socket, (char *) data, size);
 
 	return retval;
 }
 
 void php_mongo_io_stream_close(mongo_connection *con, int why)
 {
+	TSRMLS_FETCH();
+
 	if (why == MONGO_CLOSE_BROKEN) {
 		if (con->socket) {
 			php_stream_free(con->socket, PHP_STREAM_FREE_CLOSE_PERSISTENT | PHP_STREAM_FREE_RSRC_DTOR);
@@ -142,6 +149,7 @@ void php_mongo_io_stream_close(mongo_connection *con, int why)
 void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *con)
 {
 	zend_rsrc_list_entry *le;
+	TSRMLS_FETCH();
 
 	/* When we fork we need to unregister the parents hash so we don't accidentally destroy it */
 	if (zend_hash_find(&EG(persistent_list), con->hash, strlen(con->hash) + 1, (void*) &le) == SUCCESS) {
