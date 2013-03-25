@@ -1748,7 +1748,7 @@ static void kill_cursor(cursor_node *node, mongo_connection *con, zend_rsrc_list
 
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", node->cursor_id);
 
-	if (!MonGlo(manager)->send(con, NULL, buf.start, buf.pos - buf.start, (char**) &error_message)) {
+	if (MonGlo(manager)->send(con, NULL, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %lld: %s", (long long int) node->cursor_id, error_message);
 		free(error_message);
 	}
