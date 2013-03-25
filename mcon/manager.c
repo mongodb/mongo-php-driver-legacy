@@ -30,9 +30,13 @@
 #include "collection.h"
 #include "parse.h"
 #include "read_preference.h"
+#include "io.h"
+
+
+#include "config.h"
 
 /* Forwards declarations */
-static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data);
+static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data, int why);
 
 /* Helpers */
 static int authenticate_connection(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char **error_message)
@@ -109,7 +113,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 		if (server->db && server->username && server->password) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
 			if (!authenticate_connection(manager, con, options, server->db, server->username, server->password, error_message)) {
-				mongo_connection_destroy(manager, con);
+				mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
 				free(hash);
 				return NULL;
 			}
@@ -120,7 +124,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 			mongo_manager_connection_register(manager, con);
 		} else {
 			/* Or kill it and reset the return value if the ping somehow failed */
-			mongo_connection_destroy(manager, con);
+			mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
 			con = NULL;
 		}
 	}
@@ -349,6 +353,10 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
 	collection = mongo_select_nearest_servers(manager, collection, &servers->read_pref);
+	if (!collection) {
+		*error_message = strdup("No server near us");
+		goto bailout;
+	}
 	con = mongo_pick_server_from_set(manager, collection, &servers->read_pref);
 
 bailout:
@@ -466,7 +474,7 @@ static void destroy_manager_item(mongo_con_manager *manager, mongo_con_manager_i
 	if (item->next) {
 		destroy_manager_item(manager, item->next, cleanup_cb);
 	}
-	cleanup_cb(manager, item->data);
+	cleanup_cb(manager, item->data, MONGO_CLOSE_SHUTDOWN);
 	free_manager_item(manager, item);
 }
 
@@ -553,7 +561,7 @@ int mongo_manager_deregister(mongo_con_manager *manager, mongo_con_manager_item 
 				prev->next = (*ptr)->next;
 			}
 			/* Free structures */
-			cleanup_cb(manager, con);
+			cleanup_cb(manager, con, MONGO_CLOSE_BROKEN);
 
 			/* Woo! */
 			return 1;
@@ -624,10 +632,17 @@ mongo_con_manager *mongo_init(void)
 	tmp->ping_interval = MONGO_MANAGER_DEFAULT_PING_INTERVAL;
 	tmp->ismaster_interval = MONGO_MANAGER_DEFAULT_MASTER_INTERVAL;
 
+	tmp->connect     = mongo_connection_connect;
+	tmp->recv_header = mongo_io_recv_header;
+	tmp->recv_data   = mongo_io_recv_data;
+	tmp->send        = mongo_io_send;
+	tmp->close       = mongo_connection_close;
+	tmp->forget      = mongo_connection_forget;
+
 	return tmp;
 }
 
-static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data)
+static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data, int why)
 {
 	mongo_connection_blacklist *con = (mongo_connection_blacklist *)data;
 	free(con);

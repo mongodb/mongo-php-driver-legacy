@@ -48,7 +48,7 @@ static void mongo_print_connection_info(mongo_con_manager *manager, mongo_connec
 	mongo_manager_log(manager, MLOG_RS, level,
 		"- connection: type: %s, socket: %d, ping: %d, hash: %s",
 		mongo_connection_type(con->connection_type),
-		con->socket,
+		42,/* FIXME: STREAMS: Maybe we do need a union here..  con->socket, */
 		con->ping_ms,
 		con->hash
 	);
@@ -95,6 +95,7 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 
 		if (connection_pid != current_pid) {
 			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "filter_connections: skipping %s as it doesn't match the current pid (%d)", con->hash, current_pid);
+			manager->forget(manager, con);
 		} else if (con->connection_type & types) {
 			mongo_print_connection_info(manager, con, MLOG_FINE);
 			mcon_collection_add(col, con);

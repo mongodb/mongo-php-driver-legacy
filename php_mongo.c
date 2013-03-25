@@ -28,6 +28,7 @@
 #include "mongoclient.h"
 #include "mongo.h"
 #include "cursor.h"
+#include "io_stream.h"
 
 #include "exceptions/exception.h"
 #include "exceptions/connection_exception.h"
@@ -74,8 +75,14 @@ zend_function_entry mongo_functions[] = {
 
 /* {{{ mongo_module_entry
  */
+static const zend_module_dep mongo_deps[] = {
+	ZEND_MOD_REQUIRED("openssl")
+	ZEND_MOD_END
+};
 zend_module_entry mongo_module_entry = {
-	STANDARD_MODULE_HEADER,
+	STANDARD_MODULE_HEADER_EX,
+	NULL,
+	mongo_deps,
 	PHP_MONGO_EXTNAME,
 	mongo_functions,
 	PHP_MINIT(mongo),
@@ -278,6 +285,15 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->manager = mongo_init();
 	TSRMLS_SET_CTX(mongo_globals->manager->log_context);
 	mongo_globals->manager->log_function = php_mcon_log_wrapper;
+
+#if MONGO_PHP_STREAMS
+	mongo_globals->manager->connect     = php_mongo_io_stream_connect;
+	mongo_globals->manager->recv_header = php_mongo_io_stream_read;
+	mongo_globals->manager->recv_data   = php_mongo_io_stream_read;
+	mongo_globals->manager->send        = php_mongo_io_stream_send;
+	mongo_globals->manager->close       = php_mongo_io_stream_close;
+	mongo_globals->manager->forget      = php_mongo_io_stream_forget;
+#endif
 }
 /* }}} */
 
@@ -326,6 +342,11 @@ PHP_MINFO_FUNCTION(mongo)
 
 	php_info_print_table_header(2, "MongoDB Support", "enabled");
 	php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
+#if MONGO_PHP_STREAMS
+	php_info_print_table_row(2, "SSL Support", "enabled");
+#else
+	php_info_print_table_row(2, "SSL Support", "disabled");
+#endif
 
 	php_info_print_table_end();
 
