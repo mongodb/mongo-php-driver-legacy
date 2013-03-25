@@ -5,7 +5,8 @@ GridFS: Testing memory usage
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-$conn = Mongo();
+$dsn = MongoShellServer::getStandaloneInfo();
+$conn = new MongoClient($dsn);
 $db   = $conn->selectDb('phpunit');
 $grid = $db->getGridFs('wrapper');
 
