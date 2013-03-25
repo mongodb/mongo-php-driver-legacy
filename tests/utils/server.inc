@@ -255,13 +255,13 @@ function new_mongo($unused = null, $unused = null, $unused = null, $options = ar
 function old_mongo_standalone() {
     return mongo_standalone();
 }
-function mongo_standalone() {
+function mongo_standalone($unused = null, $unused = null, $unused = null, $options = array()) {
     $dsn = MongoShellServer::getStandaloneInfo();
-    return new Mongo($dsn);
+    return new Mongo($dsn, $options);
 }
-function new_mongo_standalone() {
+function new_mongo_standalone($unused = null, $unused = null, $unused = null, $options = array()) {
     $dsn = MongoShellServer::getStandaloneInfo();
-    return new MongoClient($dsn);
+    return new MongoClient($dsn, $options);
 }
 function dbname() {
     return "test";
