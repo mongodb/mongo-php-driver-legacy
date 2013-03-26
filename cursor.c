@@ -1637,7 +1637,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
 			 * If we find the current cursor in the cursor list, we don't need
 			 * another dtor for it so unlock the mutex & return.
 			 */
-			if (current->cursor_id == cursor->cursor_id && current->socket == cursor->connection->socket) {
+			if (current->cursor_id == cursor->cursor_id && cursor->connection && current->socket == cursor->connection->socket) {
 				pefree(new_node, 1);
 				UNLOCK(cursor);
 				return 0;
