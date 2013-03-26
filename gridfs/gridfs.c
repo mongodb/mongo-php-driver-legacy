@@ -83,12 +83,7 @@ PHP_METHOD(MongoGridFS, __construct)
 		return;
 	}
 
-	if (!files) {
-		MAKE_STD_ZVAL(files);
-		ZVAL_STRING(files, "fs.files", 1);
-		MAKE_STD_ZVAL(chunks);
-		ZVAL_STRING(chunks, "fs.chunks", 1);
-	} else {
+	if (files) {
 		zval *temp_file;
 		char *temp;
 
@@ -105,6 +100,11 @@ PHP_METHOD(MongoGridFS, __construct)
 		spprintf(&temp, 0, "%s.files", Z_STRVAL_P(files));
 		ZVAL_STRING(temp_file, temp, 0);
 		files = temp_file;
+	} else {
+		MAKE_STD_ZVAL(files);
+		ZVAL_STRING(files, "fs.files", 1);
+		MAKE_STD_ZVAL(chunks);
+		ZVAL_STRING(chunks, "fs.chunks", 1);
 	}
 
 	/* create files collection */
