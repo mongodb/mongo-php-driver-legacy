@@ -2,6 +2,7 @@
 Test for PHP-667: Off-by-one error in BSON deserialization of pre-epoch dates
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
+<?php if (PHP_INT_SIZE == 4) { die("skip strtotime() doesn't support that timestamp on 32bit"); } ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
