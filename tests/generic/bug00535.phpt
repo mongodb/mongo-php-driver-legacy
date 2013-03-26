@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-535: Run commands on Replication Secondaries
 --SKIPIF--
-<?php ?>
+<?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
 function dbname() {
