@@ -29,11 +29,11 @@
   <email>jmikola@php.net</email>
   <active>yes</active>
  </developer>
- <date>2013-03-15</date>
- <time>11:28:32</time>
+ <date>2013-03-26</date>
+ <time>09:37:52</time>
  <version>
-  <release>1.3.5</release>
-  <api>1.3.5</api>
+  <release>1.3.6</release>
+  <api>1.3.6</api>
  </version>
  <stability>
   <release>stable</release>
@@ -42,7 +42,7 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Improvement
-    * [PHP-665] - Add support for MongoDB 2.4 auth source
+    * [PHP-535] - Run commands on Replication Secondaries
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
@@ -111,6 +111,23 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+  <release>
+   <date>2013-03-15</date>
+   <time>11:28:32</time>
+   <version>
+    <release>1.3.5</release>
+    <api>1.3.5</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Improvement
+    * [PHP-665] - Add support for MongoDB 2.4 auth source
+   </notes>
+  </release>
   <release>
    <date>2013-01-31</date>
    <time>11:55:32</time>
