@@ -1292,7 +1292,7 @@ void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 
 PHP_METHOD(MongoCursor, count)
 {
-	zval *db_z, *coll, *query;
+	zval *db_z, *coll, *query = NULL;
 	mongo_cursor *cursor;
 	mongo_collection *c;
 	mongo_db *db;
@@ -1332,7 +1332,8 @@ PHP_METHOD(MongoCursor, count)
 			query = *inner_query;
 			zval_add_ref(&query);
 		}
-	} else {
+	}
+	if (!query) {
 		MAKE_STD_ZVAL(query);
 		array_init(query);
 	}
