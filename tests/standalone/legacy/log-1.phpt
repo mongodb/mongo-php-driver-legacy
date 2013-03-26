@@ -23,6 +23,7 @@ PARSE   INFO: - Found node: %s:%d
 PARSE   INFO: - Connection type: STANDALONE
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     INFO: connection_create: creating new connection for %s:%d
+CON     INFO: stream_connect: Not establishing SSL for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
@@ -41,7 +42,7 @@ REPLSET FINE: limiting by seeded/discovered servers
 REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: limiting by seeded/discovered servers: done
 REPLSET FINE: limiting by credentials
-REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: 0, hash: %s:%d;-;X;%d
+REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
 REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d

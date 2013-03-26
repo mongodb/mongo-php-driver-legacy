@@ -114,6 +114,9 @@ function getShardConfig() {
     return [shardTest.s0.host,shardTest.s1.host];
 }
 function getBridgeConfig() {
+    if (typeof bridgeTest == "undefined") {
+        return null;
+    }
     return bridgeTest.host;
 }
 

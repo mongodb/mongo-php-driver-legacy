@@ -44,7 +44,7 @@ REPLSET FINE: limiting by seeded/discovered servers
 REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: limiting by seeded/discovered servers: done
 REPLSET FINE: limiting by credentials
-REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: 0, hash: %s:%d;-;X;%d
+REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
 REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d

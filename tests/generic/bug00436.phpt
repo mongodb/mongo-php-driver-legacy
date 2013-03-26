@@ -26,9 +26,10 @@ Content-Type: text/plain-file3
 -----------------------------20896060251896012921717172737--
 --FILE--
 <?php
-require_once "tests/utils/server.inc";
-$m = mongo_standalone();
+require_once dirname(__FILE__) . "/../utils/server.inc";
+$m = new_mongo_standalone();
 $gridfs = $m->test->getGridFS();
+$gridfs->drop();
 try {
     $retval = $gridfs->storeUpload("multifiles");
     var_dump($retval);
