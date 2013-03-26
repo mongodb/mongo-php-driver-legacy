@@ -111,8 +111,6 @@
    <file role="src" name="gridfs.h"/>
    <file role="src" name="gridfs_stream.c"/>
    <file role="src" name="gridfs_stream.h"/>
-   <file role="src" name="util/hash.c"/>
-   <file role="src" name="util/hash.h"/>
    <file role="src" name="util/log.c"/>
    <file role="src" name="util/log.h"/>
    <file role="src" name="util/pool.c"/>
