@@ -83,7 +83,7 @@ PHP_METHOD(MongoGridFS, __construct)
 		return;
 	}
 
-	if (!files && !chunks) {
+	if (!files) {
 		MAKE_STD_ZVAL(files);
 		ZVAL_STRING(files, "fs.files", 1);
 		MAKE_STD_ZVAL(chunks);
