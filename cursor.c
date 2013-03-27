@@ -36,6 +36,7 @@ typedef __int64 int64_t;
 #include "cursor.h"
 #include "collection.h"
 #include "util/log.h"
+#include "log_stream.h"
 #include "exceptions/cursor_timeout_exception.h"
 
 #if WIN32
@@ -388,6 +389,9 @@ PHP_METHOD(MongoCursor, hasNext)
 		efree(buf.start);
 		return;
 	}
+#if MONGO_PHP_STREAMS
+	php_log_stream_getmore(cursor->connection, cursor TSRMLS_CC);
+#endif
 
 	client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
 	if (client->manager->send(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
@@ -1028,6 +1032,9 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 		efree(buf.start);
 		return FAILURE;
 	}
+#if MONGO_PHP_STREAMS
+	php_log_stream_query(cursor->connection, cursor TSRMLS_CC);
+#endif
 
 	if (link->manager->send(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {
@@ -1746,6 +1753,9 @@ static void kill_cursor(cursor_node *node, mongo_connection *con, zend_rsrc_list
 	buf.end = buf.start + 128;
 
 	php_mongo_write_kill_cursors(&buf, node->cursor_id, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
+#if MONGO_PHP_STREAMS
+	php_log_stream_killcursor(con, node->cursor_id TSRMLS_CC);
+#endif
 
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", node->cursor_id);
 

@@ -25,6 +25,7 @@
 #include "db.h"
 #include "mcon/manager.h"
 #include "mcon/io.h"
+#include "log_stream.h"
 
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_DB, *mongo_ce_Cursor;
 extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception, *mongo_ce_ResultException;
@@ -39,7 +40,7 @@ zend_class_entry *mongo_ce_Collection = NULL;
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
 static int is_gle_op(zval *options, int default_do_gle TSRMLS_DC);
 static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
-static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max_document_size, int max_message_size TSRMLS_DC);
+static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
 
 PHP_METHOD(MongoCollection, __construct)
@@ -212,7 +213,7 @@ PHP_METHOD(MongoCollection, validate)
  * This should probably be split into two methods... right now appends the
  * getlasterror query to the buffer and alloc & inits the cursor zval.
  */
-static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max_document_size, int max_message_size TSRMLS_DC)
+static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC)
 {
 	zval *cmd_ns_z, *cmd, *cursor_z, *temp, *timeout_p;
 	char *cmd_ns, *w_str = NULL;
@@ -221,6 +222,8 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max
 	mongo_db *db = (mongo_db*)zend_object_store_get_object(c->parent TSRMLS_CC);
 	int response, w = 0, fsync = 0, timeout = -1;
 	mongoclient *link = (mongoclient*) zend_object_store_get_object(c->link TSRMLS_CC);
+	int max_document_size = connection->max_bson_size;
+	int max_message_size = connection->max_message_size;
 
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror");
 
@@ -388,6 +391,10 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max
 	response = php_mongo_write_query(buf, cursor, max_document_size, max_message_size TSRMLS_CC);
 	zval_ptr_dtor(&cmd_ns_z);
 
+#if MONGO_PHP_STREAMS
+	php_log_stream_query(connection, cursor TSRMLS_CC);
+#endif
+
 	if (FAILURE == response) {
 		return 0;
 	}
@@ -444,7 +451,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 	}
 
 	if (is_gle_op(options, link->servers->options.default_w TSRMLS_CC)) {
-		zval *cursor = append_getlasterror(getThis(), buf, options, connection->max_bson_size, connection->max_message_size TSRMLS_CC);
+		zval *cursor = append_getlasterror(getThis(), buf, options, connection TSRMLS_CC);
 		if (cursor) {
 			do_safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
 			retval = -1;
@@ -644,6 +651,10 @@ PHP_METHOD(MongoCollection, insert)
 		RETURN_FALSE;
 	}
 
+#if MONGO_PHP_STREAMS
+	php_log_stream_insert(connection, a, options TSRMLS_CC);
+#endif
+
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -689,6 +700,10 @@ PHP_METHOD(MongoCollection, batchInsert)
 		efree(buf.start);
 		return;
 	}
+#if MONGO_PHP_STREAMS
+	php_log_stream_batchinsert(connection, docs, bit_opts, options TSRMLS_CC);
+#endif
+
 
 	RETVAL_TRUE;
 
@@ -868,6 +883,11 @@ PHP_METHOD(MongoCollection, update)
 		return;
 	}
 
+#if MONGO_PHP_STREAMS
+	php_log_stream_update(connection, c->ns, criteria, newobj, options, bit_opts TSRMLS_CC);
+#endif
+
+
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -933,6 +953,10 @@ PHP_METHOD(MongoCollection, remove)
 		zval_ptr_dtor(&criteria);
 		return;
 	}
+#if MONGO_PHP_STREAMS
+	php_log_stream_delete(connection, c->ns, criteria, options, flags TSRMLS_CC);
+#endif
+
 
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
