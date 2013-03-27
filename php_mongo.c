@@ -76,7 +76,7 @@ zend_function_entry mongo_functions[] = {
 /* {{{ mongo_module_entry
  */
 static const zend_module_dep mongo_deps[] = {
-	ZEND_MOD_REQUIRED("openssl")
+	ZEND_MOD_OPTIONAL("openssl")
 	ZEND_MOD_END
 };
 zend_module_entry mongo_module_entry = {
