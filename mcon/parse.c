@@ -44,6 +44,8 @@ mongo_servers* mongo_parse_init(void)
 	servers->options.default_w = -1;
 	servers->options.default_wstring = NULL;
 	servers->options.default_wtimeout = -1;
+	servers->options.default_fsync = 0;
+	servers->options.default_journal = 0;
 	servers->options.ssl = MONGO_SSL_DISABLE;
 	servers->options.ctx = NULL;
 
@@ -542,6 +544,26 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 
+	if (strcasecmp(option_name, "fsync") == 0) {
+		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+			servers->options.default_fsync = 1;
+		} else {
+			servers->options.default_fsync = 0;
+		}
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'fsync': %d", servers->options.default_fsync);
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "journal") == 0) {
+		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+			servers->options.default_journal = 1;
+		} else {
+			servers->options.default_journal = 0;
+		}
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'journal': %d", servers->options.default_journal);
+		return 0;
+	}
+
 	if (strcasecmp(option_name, "ssl") == 0) {
 		int value = 0;
 		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
@@ -684,6 +706,8 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	if (from->options.default_wstring) {
 		to->options.default_wstring = strdup(from->options.default_wstring);
 	}
+	to->options.default_fsync = from->options.default_fsync;
+	to->options.default_journal = from->options.default_journal;
 
 	to->options.ssl = from->options.ssl;
 

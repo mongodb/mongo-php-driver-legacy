@@ -191,6 +191,8 @@ typedef struct _mongo_server_options
 	int   default_w;        /* The number specifies the number of replica nodes */
 	char *default_wstring;  /* If the value for "w" is a string, then it means a getLastError error-mode */
 	int   default_wtimeout; /* How many milliseconds to wait for replication to "w" nodes */
+	int   default_fsync;    /* 1/0 send fsync=1 by default or not */
+	int   default_journal;  /* 1/0 send j=1 by default or not */
 	int   ssl;              /* If we should be using SSL */
 	void *ctx;              /* Arbitrary implementation dependent options (MongoDB-PHP uses this for stream context) */
 } mongo_server_options;
