@@ -371,7 +371,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 		return -1;
 	}
 	mcon_str_ptr_dtor(packet);
-	read = manager->recv_header(con, options, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
+	read = manager->recv_header(con, options, options->socketTimeoutMS, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
 	if (read == -1) {
 		*error_message = malloc(256);
 		snprintf(*error_message, 256, "send_package: error reading from socket: %s", recv_error_message);
@@ -402,7 +402,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 
 	/* Read data */
 	*data_buffer = malloc(data_size + 1);
-	if (manager->recv_data(con, options, *data_buffer, data_size, error_message) <= 0) {
+	if (manager->recv_data(con, options, options->socketTimeoutMS, *data_buffer, data_size, error_message) <= 0) {
 		free(data_buffer);
 		return 0;
 	}
