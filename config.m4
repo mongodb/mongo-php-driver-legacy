@@ -5,7 +5,7 @@ PHP_MONGO_CFLAGS="-I@ext_builddir@/util"
 
 if test "$PHP_MONGO" != "no"; then
   AC_DEFINE(HAVE_MONGO, 1, [Whether you have Mongo extension])
-  PHP_NEW_EXTENSION(mongo, php_mongo.c mongo.c mongoclient.c bson.c cursor.c collection.c db.c io_stream.c gridfs/gridfs.c gridfs/gridfs_cursor.c gridfs/gridfs_file.c gridfs/gridfs_stream.c exceptions/exception.c exceptions/connection_exception.c exceptions/cursor_exception.c exceptions/cursor_timeout_exception.c exceptions/gridfs_exception.c exceptions/result_exception.c types/bin_data.c types/code.c types/date.c types/db_ref.c types/id.c types/int32.c types/int64.c types/regex.c types/timestamp.c util/hash.c util/log.c util/pool.c mcon/bson_helpers.c mcon/collection.c mcon/connections.c mcon/io.c mcon/manager.c mcon/mini_bson.c mcon/parse.c mcon/read_preference.c mcon/str.c mcon/utils.c, $ext_shared,, $PHP_MONGO_CFLAGS)
+  PHP_NEW_EXTENSION(mongo, php_mongo.c mongo.c mongoclient.c bson.c cursor.c collection.c db.c io_stream.c gridfs/gridfs.c gridfs/gridfs_cursor.c gridfs/gridfs_file.c gridfs/gridfs_stream.c exceptions/exception.c exceptions/connection_exception.c exceptions/cursor_exception.c exceptions/cursor_timeout_exception.c exceptions/gridfs_exception.c exceptions/result_exception.c types/bin_data.c types/code.c types/date.c types/db_ref.c types/id.c types/int32.c types/int64.c types/regex.c types/timestamp.c util/log.c util/pool.c mcon/bson_helpers.c mcon/collection.c mcon/connections.c mcon/io.c mcon/manager.c mcon/mini_bson.c mcon/parse.c mcon/read_preference.c mcon/str.c mcon/utils.c, $ext_shared,, $PHP_MONGO_CFLAGS)
 
   PHP_ADD_BUILD_DIR([$ext_builddir/util], 1)
   PHP_ADD_INCLUDE([$ext_builddir/util])
