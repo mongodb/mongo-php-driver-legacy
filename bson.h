@@ -100,6 +100,12 @@ void mongo_buf_init(char *dest);
  */
 void mongo_buf_append(char *dest, char *piece);
 
+/**
+ * Returns the actual limit to send over the wire, based on batch size, current position, and user limit
+ */
+int mongo_get_limit(mongo_cursor *cursor);
+
+
 #if PHP_C_BIGENDIAN
 /* Reverse the bytes in an int, wheeee stupid byte tricks */
 # define BYTE1_32(b) ((b & 0xff000000) >> 24)
