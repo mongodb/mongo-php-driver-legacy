@@ -97,10 +97,18 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 
 }
 
-int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
+int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message)
 {
 	int num = 1, received = 0;
 	TSRMLS_FETCH();
+
+	if (timeout > 0 && options->socketTimeoutMS != timeout) {
+		struct timeval rtimeout = {0};
+		rtimeout.tv_sec = timeout / 1000;
+		rtimeout.tv_usec = (timeout % 1000) * 1000;
+
+		php_stream_set_option(con->socket, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
+	}
 
 	/* this can return FAILED if there is just no more data from db */
 	while (received < size && num > 0) {
@@ -118,6 +126,13 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 
 	if (options && options->ctx) {
 		php_stream_notify_progress_increment((php_stream_context *)options->ctx, received, size);
+	}
+	if (timeout > 0 && options->socketTimeoutMS != timeout) {
+		struct timeval rtimeout = {0};
+		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
+		rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
+
+		php_stream_set_option(con->socket, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
 	}
 
 	return received;

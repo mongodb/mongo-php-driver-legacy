@@ -102,7 +102,7 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting cursor header");
 
 	client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
-	status = client->manager->recv_header(con, NULL, buf, REPLY_HEADER_LEN, error_message);
+	status = client->manager->recv_header(con, &client->servers->options, cursor->timeout, buf, REPLY_HEADER_LEN, error_message);
 	/* socket has been closed */
 	if (status == 0) {
 		*error_message = strdup("socket has been closed");
@@ -165,7 +165,7 @@ static int get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **e
 	cursor->buf.pos = cursor->buf.start;
 
 	/* finish populating cursor */
-	return MonGlo(manager)->recv_data(con, &client->servers->options, cursor->buf.pos, cursor->recv.length, error_message);
+	return MonGlo(manager)->recv_data(con, &client->servers->options, cursor->timeout, cursor->buf.pos, cursor->recv.length, error_message);
 }
 
 /* Cursor helper function */

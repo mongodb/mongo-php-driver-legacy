@@ -224,8 +224,8 @@ typedef struct _mongo_con_manager
 
 	/* IO callbacks, either using the 'native mcon' or external hooks (i.e. PHP Streams) */
 	void* (*connect)     (struct _mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message);
-	int   (*recv_header) (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
-	int   (*recv_data)   (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
+	int   (*recv_header) (mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message);
+	int   (*recv_data)   (mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message);
 	int   (*send)        (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 	void  (*close)       (mongo_connection *con, int why);
 	void  (*forget)      (struct _mongo_con_manager *manager, mongo_connection *con);
