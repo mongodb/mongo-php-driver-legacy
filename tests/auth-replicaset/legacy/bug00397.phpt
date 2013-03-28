@@ -20,7 +20,7 @@ $db = $m->selectDB("phpunit-unit");
 $c = $db->selectCollection("example");
 
 $n = new MongoGridFs($db);
-$b = new MongoGridFsFile($n, array("bar.txt", "length" => 42, "_id" => new MongoId("asdfasdf")));
+$b = new MongoGridFsFile($n, array("bar.txt", "length" => 42, "_id" => new MongoId()));
 
 try {
     $b->getBytes();
