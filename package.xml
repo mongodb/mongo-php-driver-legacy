@@ -91,51 +91,91 @@
    <file role="src" name="config.w32" />
    <file role="doc" name="README.md"/>
    <file role="doc" name="LICENSE.md"/>
-   <file role="src" name="php_mongo.c"/>
-   <file role="src" name="php_mongo.h"/>
-   <file role="src" name="mongo.c"/>
-   <file role="src" name="mongo.h"/>
-   <file role="src" name="mongoclient.c"/>
-   <file role="src" name="mongoclient.h"/>
-   <file role="src" name="mongo_types.c"/>
-   <file role="src" name="mongo_types.h"/>
    <file role="src" name="bson.c"/>
    <file role="src" name="bson.h"/>
    <file role="src" name="collection.c"/>
    <file role="src" name="collection.h"/>
-   <file role="src" name="db.c"/>
-   <file role="src" name="db.h"/>
+   <file role="src" name="config.h"/>
    <file role="src" name="cursor.c"/>
    <file role="src" name="cursor.h"/>
-   <file role="src" name="gridfs.c"/>
-   <file role="src" name="gridfs.h"/>
-   <file role="src" name="gridfs_stream.c"/>
-   <file role="src" name="gridfs_stream.h"/>
+   <file role="src" name="db.c"/>
+   <file role="src" name="db.h"/>
+   <file role="src" name="io_stream.c"/>
+   <file role="src" name="io_stream.h"/>
+   <file role="src" name="mongo.c"/>
+   <file role="src" name="mongo.h"/>
+   <file role="src" name="mongoclient.c"/>
+   <file role="src" name="mongoclient.h"/>
+   <file role="src" name="php_mongo.c"/>
+   <file role="src" name="php_mongo.h"/>
+
+   <file role="src" name="exceptions/connection_exception.c"/>
+   <file role="src" name="exceptions/connection_exception.h"/>
+   <file role="src" name="exceptions/cursor_exception.c"/>
+   <file role="src" name="exceptions/cursor_exception.h"/>
+   <file role="src" name="exceptions/cursor_timeout_exception.c"/>
+   <file role="src" name="exceptions/cursor_timeout_exception.h"/>
+   <file role="src" name="exceptions/exception.c"/>
+   <file role="src" name="exceptions/exception.h"/>
+   <file role="src" name="exceptions/gridfs_exception.c"/>
+   <file role="src" name="exceptions/gridfs_exception.h"/>
+   <file role="src" name="exceptions/result_exception.c"/>
+   <file role="src" name="exceptions/result_exception.h"/>
+
+   <file role="src" name="gridfs/gridfs.c"/>
+   <file role="src" name="gridfs/gridfs.h"/>
+   <file role="src" name="gridfs/gridfs_cursor.c"/>
+   <file role="src" name="gridfs/gridfs_cursor.h"/>
+   <file role="src" name="gridfs/gridfs_file.c"/>
+   <file role="src" name="gridfs/gridfs_file.h"/>
+   <file role="src" name="gridfs/gridfs_stream.c"/>
+   <file role="src" name="gridfs/gridfs_stream.h"/>
+
+   <file role="src" name="mcon/bson_helpers.c"/>
+   <file role="src" name="mcon/bson_helpers.h"/>
+   <file role="src" name="mcon/collection.c"/>
+   <file role="src" name="mcon/collection.h"/>
+   <file role="src" name="mcon/connections.c"/>
+   <file role="src" name="mcon/connections.h"/>
+   <file role="src" name="mcon/io.c"/>
+   <file role="src" name="mcon/io.h"/>
+   <file role="src" name="mcon/manager.c"/>
+   <file role="src" name="mcon/manager.h"/>
+   <file role="src" name="mcon/mini_bson.c"/>
+   <file role="src" name="mcon/mini_bson.h"/>
+   <file role="src" name="mcon/parse.c"/>
+   <file role="src" name="mcon/parse.h"/>
+   <file role="src" name="mcon/read_preference.c"/>
+   <file role="src" name="mcon/read_preference.h"/>
+   <file role="src" name="mcon/str.c"/>
+   <file role="src" name="mcon/str.h"/>
+   <file role="src" name="mcon/types.h"/>
+   <file role="src" name="mcon/utils.c"/>
+   <file role="src" name="mcon/utils.h"/>
+
+   <file role="src" name="types/bin_data.c"/>
+   <file role="src" name="types/bin_data.h"/>
+   <file role="src" name="types/code.c"/>
+   <file role="src" name="types/code.h"/>
+   <file role="src" name="types/date.c"/>
+   <file role="src" name="types/date.h"/>
+   <file role="src" name="types/db_ref.c"/>
+   <file role="src" name="types/db_ref.h"/>
+   <file role="src" name="types/id.c"/>
+   <file role="src" name="types/id.h"/>
+   <file role="src" name="types/int32.c"/>
+   <file role="src" name="types/int32.h"/>
+   <file role="src" name="types/int64.c"/>
+   <file role="src" name="types/int64.h"/>
+   <file role="src" name="types/regex.c"/>
+   <file role="src" name="types/regex.h"/>
+   <file role="src" name="types/timestamp.c"/>
+   <file role="src" name="types/timestamp.h"/>
+
    <file role="src" name="util/log.c"/>
    <file role="src" name="util/log.h"/>
    <file role="src" name="util/pool.c"/>
    <file role="src" name="util/pool.h"/>
-   <file role="src" name="mcon/bson_helpers.h"/>
-   <file role="src" name="mcon/collection.h"/>
-   <file role="src" name="mcon/connections.h"/>
-   <file role="src" name="mcon/io.h"/>
-   <file role="src" name="mcon/manager.h"/>
-   <file role="src" name="mcon/mini_bson.h"/>
-   <file role="src" name="mcon/parse.h"/>
-   <file role="src" name="mcon/read_preference.h"/>
-   <file role="src" name="mcon/str.h"/>
-   <file role="src" name="mcon/types.h"/>
-   <file role="src" name="mcon/utils.h"/>
-   <file role="src" name="mcon/bson_helpers.c"/>
-   <file role="src" name="mcon/collection.c"/>
-   <file role="src" name="mcon/connections.c"/>
-   <file role="src" name="mcon/io.c"/>
-   <file role="src" name="mcon/manager.c"/>
-   <file role="src" name="mcon/mini_bson.c"/>
-   <file role="src" name="mcon/parse.c"/>
-   <file role="src" name="mcon/read_preference.c"/>
-   <file role="src" name="mcon/str.c"/>
-   <file role="src" name="mcon/utils.c"/>
   </dir>
  </contents>
  <dependencies>
