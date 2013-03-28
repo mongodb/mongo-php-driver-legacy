@@ -911,7 +911,7 @@ PHP_METHOD(MongoGridFS, remove)
 	php_mongo_ensure_gridfs_index(&temp, chunks TSRMLS_CC);
 	zval_dtor(&temp);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|za", &criteria, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|za/", &criteria, &options) == FAILURE) {
 		return;
 	}
 
@@ -933,8 +933,6 @@ PHP_METHOD(MongoGridFS, remove)
 	if (!options) {
 		MAKE_STD_ZVAL(options);
 		array_init(options);
-	} else {
-		zval_add_ref(&options);
 	}
 
 	/* { _id : 1 } */
