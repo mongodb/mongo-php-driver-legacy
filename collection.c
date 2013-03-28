@@ -392,7 +392,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 	zval_ptr_dtor(&cmd_ns_z);
 
 #if MONGO_PHP_STREAMS
-	php_log_stream_query(connection, cursor TSRMLS_CC);
+	mongo_log_stream_query(connection, cursor TSRMLS_CC);
 #endif
 
 	if (FAILURE == response) {
@@ -652,7 +652,7 @@ PHP_METHOD(MongoCollection, insert)
 	}
 
 #if MONGO_PHP_STREAMS
-	php_log_stream_insert(connection, a, options TSRMLS_CC);
+	mongo_log_stream_insert(connection, a, options TSRMLS_CC);
 #endif
 
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
@@ -701,7 +701,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 		return;
 	}
 #if MONGO_PHP_STREAMS
-	php_log_stream_batchinsert(connection, docs, options, bit_opts TSRMLS_CC);
+	mongo_log_stream_batchinsert(connection, docs, options, bit_opts TSRMLS_CC);
 #endif
 
 
@@ -884,7 +884,7 @@ PHP_METHOD(MongoCollection, update)
 	}
 
 #if MONGO_PHP_STREAMS
-	php_log_stream_update(connection, c->ns, criteria, newobj, options, bit_opts TSRMLS_CC);
+	mongo_log_stream_update(connection, c->ns, criteria, newobj, options, bit_opts TSRMLS_CC);
 #endif
 
 
@@ -954,7 +954,7 @@ PHP_METHOD(MongoCollection, remove)
 		return;
 	}
 #if MONGO_PHP_STREAMS
-	php_log_stream_delete(connection, c->ns, criteria, options, flags TSRMLS_CC);
+	mongo_log_stream_delete(connection, c->ns, criteria, options, flags TSRMLS_CC);
 #endif
 
 
