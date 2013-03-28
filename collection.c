@@ -699,7 +699,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 	buffer buf;
 	int bit_opts = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|z", &docs, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|z/", &docs, &options) == FAILURE) {
 		return;
 	}
 
@@ -711,6 +711,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 		zval **continue_on_error = NULL;
 
 		zend_hash_find(HASH_P(options), "continueOnError", strlen("continueOnError") + 1, (void**)&continue_on_error);
+		convert_to_boolean_ex(continue_on_error);
 		bit_opts = (continue_on_error ? Z_BVAL_PP(continue_on_error) : 0) << 0;
 	}
 
