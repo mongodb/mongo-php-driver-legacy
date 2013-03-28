@@ -171,7 +171,7 @@ array(5) {
 log_query
 array(5) {
   ["hash"]=>
-  string(27) "%s:%d;-;X;%d"
+  string(%s) "%s:%d;-;X;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
