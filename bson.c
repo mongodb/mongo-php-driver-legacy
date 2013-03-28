@@ -28,17 +28,17 @@
 #include "types/id.h"
 
 extern zend_class_entry *mongo_ce_BinData,
-  *mongo_ce_Code,
-  *mongo_ce_Date,
-  *mongo_ce_Id,
-  *mongo_ce_Regex,
-  *mongo_ce_Timestamp,
-  *mongo_ce_MinKey,
-  *mongo_ce_MaxKey,
-  *mongo_ce_Exception,
-  *mongo_ce_CursorException,
-  *mongo_ce_Int32,
-  *mongo_ce_Int64;
+	*mongo_ce_Code,
+	*mongo_ce_Date,
+	*mongo_ce_Id,
+	*mongo_ce_Regex,
+	*mongo_ce_Timestamp,
+	*mongo_ce_MinKey,
+	*mongo_ce_MaxKey,
+	*mongo_ce_Exception,
+	*mongo_ce_CursorException,
+	*mongo_ce_Int32,
+	*mongo_ce_Int64;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 

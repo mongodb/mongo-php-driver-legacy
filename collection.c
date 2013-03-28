@@ -1467,46 +1467,46 @@ PHP_METHOD(MongoCollection, aggregate)
  * Returns a list of distinct values for the given key across a collection */
 PHP_METHOD(MongoCollection, distinct)
 {
-    char *key;
-    int key_len;
-    zval *data, **values, *tmp, *query = NULL;
+	char *key;
+	int key_len;
+	zval *data, **values, *tmp, *query = NULL;
 	mongo_collection *c;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &key, &key_len, &query) == FAILURE) {
-        return;
-    }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &key, &key_len, &query) == FAILURE) {
+		return;
+	}
 
 	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
-    MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
 
-    MAKE_STD_ZVAL(data);
-    array_init(data);
+	MAKE_STD_ZVAL(data);
+	array_init(data);
 
-    add_assoc_zval(data, "distinct", c->name);
-    zval_add_ref(&c->name);
-    add_assoc_stringl(data, "key", key, key_len, 1);
+	add_assoc_zval(data, "distinct", c->name);
+	zval_add_ref(&c->name);
+	add_assoc_stringl(data, "key", key, key_len, 1);
 
-    if (query) {
-        add_assoc_zval(data, "query", query);
-        zval_add_ref(&query);
-    }
+	if (query) {
+		add_assoc_zval(data, "query", query);
+		zval_add_ref(&query);
+	}
 
-    MAKE_STD_ZVAL(tmp);
-    MONGO_CMD(tmp, c->parent);
+	MAKE_STD_ZVAL(tmp);
+	MONGO_CMD(tmp, c->parent);
 
-    if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values") + 1, (void **)&values) == SUCCESS) {
+	if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values") + 1, (void **)&values) == SUCCESS) {
 #ifdef array_init_size
-        array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
+		array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
 #else
-        array_init(return_value);
+		array_init(return_value);
 #endif
-        zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
-    } else {
-        RETVAL_FALSE;
-    }
+		zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+	} else {
+		RETVAL_FALSE;
+	}
 
-    zval_ptr_dtor(&data);
-    zval_ptr_dtor(&tmp);
+	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&tmp);
 }
 /* }}} */
 

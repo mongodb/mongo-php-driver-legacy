@@ -382,15 +382,15 @@ static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *
 			uint key_len;
 			ulong num_key;
 
-            switch (zend_hash_get_current_key_ex(tagset, &key, &key_len, &num_key, 0, NULL)) {
-                case HASH_KEY_IS_LONG:
+			switch (zend_hash_get_current_key_ex(tagset, &key, &key_len, &num_key, 0, NULL)) {
+				case HASH_KEY_IS_LONG:
 					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tag %d in tagset %d has no string key", item_count, tagset_id);
 					fail = 1;
-                    break;
-                case HASH_KEY_IS_STRING:
+					break;
+				case HASH_KEY_IS_STRING:
 					mongo_read_preference_add_tag(tmp_ts, key, Z_STRVAL_PP(tag));
-                    break;
-            }
+					break;
+			}
 
 		}
 		item_count++;

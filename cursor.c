@@ -660,18 +660,18 @@ PHP_METHOD(MongoCursor, partial)
 /* {{{ MongoCursor::timeout
  */
 PHP_METHOD(MongoCursor, timeout) {
-  long timeout;
-  mongo_cursor *cursor;
+	long timeout;
+	mongo_cursor *cursor;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timeout) == FAILURE) {
-    return;
-  }
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timeout) == FAILURE) {
+		return;
+	}
 
-  PHP_MONGO_GET_CURSOR(getThis());
+	PHP_MONGO_GET_CURSOR(getThis());
 
-  cursor->timeout = timeout;
+	cursor->timeout = timeout;
 
-  RETURN_ZVAL(getThis(), 1, 0);
+	RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
 
