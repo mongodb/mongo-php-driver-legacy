@@ -27,6 +27,8 @@ echo "Info:\n";
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::INFO);
 $m = new Mongo("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
+MongoLog::setModule(0);
+MongoLog::setLevel(0);
 ?>
 --EXPECTF--
 Warnings:
@@ -64,12 +66,4 @@ PARSE   INFO: - Switching connection type: REPLSET
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;%s;X;%d
-
-Notice: CON     INFO: freeing connection %s:%d;%s;X;%d in Unknown on line 0
-
-Notice: CON     INFO: freeing connection %s:%d;%s;X;%d in Unknown on line 0
-
-Notice: CON     INFO: freeing connection %s:%d;%s;X;%d in Unknown on line 0
-
-Notice: CON     INFO: freeing connection %s:%d;%s;X;%d in Unknown on line 0
 
