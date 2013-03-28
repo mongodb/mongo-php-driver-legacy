@@ -130,9 +130,9 @@ int mongo_io_send(mongo_connection *con, mongo_server_options *options, void *da
  *
  * On failure, the calling function is responsible for disconnecting
  */
-int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
+int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message)
 {
-	int status = mongo_io_wait_with_timeout((int) (long)con->socket, options ? options->socketTimeoutMS : 0, error_message);
+	int status = mongo_io_wait_with_timeout((int) (long)con->socket, timeout ? timeout : options->socketTimeoutMS, error_message);
 
 	if (status != 0) {
 		/* We don't care which failure it was, it just failed and the error_message has been set */
@@ -150,7 +150,7 @@ int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, v
 	return status;
 }
 
-int mongo_io_recv_data(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
+int mongo_io_recv_data(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message)
 {
 	int num = 1, received = 0;
 
@@ -158,7 +158,7 @@ int mongo_io_recv_data(mongo_connection *con, mongo_server_options *options, voi
 	while (received < size && num > 0) {
 		int len = 4096 < (size - received) ? 4096 : size - received;
 
-		if (mongo_io_wait_with_timeout((int) (long) con->socket, options->socketTimeoutMS, error_message) != 0) {
+		if (mongo_io_wait_with_timeout((int) (long) con->socket, timeout ? timeout : options->socketTimeoutMS, error_message) != 0) {
 			/* We don't care which failure it was, it just failed */
 			return -1;
 		}
