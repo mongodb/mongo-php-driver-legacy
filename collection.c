@@ -921,7 +921,7 @@ PHP_METHOD(MongoCollection, remove)
 	buffer buf;
 	int retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &criteria, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|za/", &criteria, &options) == FAILURE) {
 		return;
 	}
 	MUST_BE_ARRAY_OR_OBJECT(1, criteria);
@@ -933,38 +933,24 @@ PHP_METHOD(MongoCollection, remove)
 		zval_add_ref(&criteria);
 	}
 
-	if (options && !IS_SCALAR_P(options)) {
+	if (options) {
 		zval **just_one;
 
 		if (zend_hash_find(HASH_P(options), "justOne", strlen("justOne") + 1, (void**)&just_one) == SUCCESS) {
+			convert_to_boolean_ex(just_one);
 			flags = Z_BVAL_PP(just_one);
 		}
-
-		zval_add_ref(&options);
-	} else {
-		zval *opts;
-
-		if (options && IS_SCALAR_P(options)) {
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
-			flags = Z_BVAL_P(options);
-		}
-
-		MAKE_STD_ZVAL(opts);
-		array_init(opts);
-		options = opts;
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
-		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
 	if (FAILURE == php_mongo_write_delete(&buf, Z_STRVAL_P(c->ns), flags, criteria, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
 		efree(buf.start);
-		zval_ptr_dtor(&options);
 		zval_ptr_dtor(&criteria);
 		return;
 	}
@@ -979,7 +965,6 @@ PHP_METHOD(MongoCollection, remove)
 	}
 
 	efree(buf.start);
-	zval_ptr_dtor(&options);
 	zval_ptr_dtor(&criteria);
 }
 
