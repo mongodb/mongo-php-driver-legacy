@@ -42,7 +42,7 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 {
 	/* No socket timeout.. But we default to 1 second for historical reasons */
 	if (to < 1) {
-		to = 10000;
+		to = 1000;
 	}
 	while (1) {
 		int status;
