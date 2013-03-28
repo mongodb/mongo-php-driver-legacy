@@ -1839,3 +1839,11 @@ void mongo_init_MongoCursor(TSRMLS_D)
 	zend_declare_property_long(mongo_ce_Cursor, "timeout", strlen("timeout"), PHP_MONGO_DEFAULT_SOCKET_TIMEOUT, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

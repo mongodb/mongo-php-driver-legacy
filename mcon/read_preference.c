@@ -622,3 +622,12 @@ void mongo_read_preference_replace(mongo_read_preference *from, mongo_read_prefe
 	mongo_read_preference_dtor(to);
 	mongo_read_preference_copy(from, to);
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

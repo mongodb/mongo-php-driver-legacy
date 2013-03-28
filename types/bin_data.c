@@ -74,3 +74,12 @@ void mongo_init_MongoBinData(TSRMLS_D)
 	zend_declare_class_constant_long(mongo_ce_BinData, "MD5", strlen("MD5"), 0x05 TSRMLS_CC);
 	zend_declare_class_constant_long(mongo_ce_BinData, "CUSTOM", strlen("CUSTOM"), 0x80 TSRMLS_CC);
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

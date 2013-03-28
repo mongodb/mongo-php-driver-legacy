@@ -42,3 +42,12 @@
 void mcon_serialize_int(struct mcon_str *str, int num);
 void mcon_serialize_int32(struct mcon_str *str, int num);
 void mcon_serialize_int64(struct mcon_str *str, int64_t num);
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

@@ -28,3 +28,12 @@ void mongo_init_MongoException(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoException", NULL);
 	mongo_ce_Exception = zend_register_internal_class_ex(&ce, (zend_class_entry*)zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

@@ -55,3 +55,12 @@ PHP_METHOD(MongoDB, forceError);
 PHP_METHOD(MongoDB, authenticate);
 
 #endif /* MONGO_DB_H */
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

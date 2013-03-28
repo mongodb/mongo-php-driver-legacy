@@ -58,3 +58,12 @@ void mongo_init_MongoInt32(TSRMLS_D)
 
 	zend_declare_property_string(mongo_ce_Int32, "value", strlen("value"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

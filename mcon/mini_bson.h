@@ -36,3 +36,12 @@ int bson_array_find_next_string(char **buffer, char **field, char **data);
 int bson_array_find_next_embedded_doc(char **buffer);
 
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

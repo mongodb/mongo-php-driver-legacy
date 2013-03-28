@@ -234,3 +234,12 @@ void php_mcon_log_wrapper(int module, int level, void *context, char *format, va
 		free(tmp);
 	}
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

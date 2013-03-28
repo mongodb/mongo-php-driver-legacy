@@ -31,3 +31,12 @@ int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *option
 void php_mongo_io_stream_close(mongo_connection *con, int why);
 void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *con);
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

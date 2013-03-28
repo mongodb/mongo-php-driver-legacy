@@ -30,3 +30,12 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags);
 void mongo_server_def_dtor(mongo_server_def *server_def);
 void mongo_servers_dtor(mongo_servers *servers);
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */
