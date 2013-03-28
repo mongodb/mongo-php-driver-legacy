@@ -522,14 +522,15 @@ static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_
 
 		/* Check for "fsync" in options array */
 		if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp) == SUCCESS) {
-			convert_to_boolean(*fsync_pp);
+			convert_to_boolean_ex(fsync_pp);
 			if (Z_BVAL_PP(fsync_pp)) {
 				gle_op = 1;
 			}
 		}
+
 		/* Check for "j" in options array */
 		if (zend_hash_find(HASH_P(options), "j", strlen("j") + 1, (void**)&journal_pp) == SUCCESS) {
-			convert_to_boolean(*journal_pp);
+			convert_to_boolean_ex(journal_pp);
 			if (Z_BVAL_PP(journal_pp)) {
 				gle_op = 1;
 			}
