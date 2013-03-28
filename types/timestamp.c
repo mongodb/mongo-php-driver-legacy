@@ -70,3 +70,12 @@ void mongo_init_MongoTimestamp(TSRMLS_D)
 	zend_declare_property_long(mongo_ce_Timestamp, "sec", strlen("sec"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 	zend_declare_property_long(mongo_ce_Timestamp, "inc", strlen("inc"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

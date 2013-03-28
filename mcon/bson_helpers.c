@@ -37,3 +37,12 @@ void mcon_serialize_int64(struct mcon_str *str, int64_t num)
 
 	mcon_str_addl(str, (char*) &i, 8, 0);
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

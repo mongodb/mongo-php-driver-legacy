@@ -58,3 +58,12 @@ void mcon_str_free(mcon_str *s)
 		free(s->d);
 	}
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

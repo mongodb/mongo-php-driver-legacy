@@ -43,3 +43,12 @@ void mongo_log_null(int module, int level, void *context, char *format, va_list 
 void mongo_log_printf(int module, int level, void *context, char *format, va_list arg);
 void mongo_manager_log(mongo_con_manager *manager, int module, int level, char *format, ...);
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

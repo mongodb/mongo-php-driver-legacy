@@ -33,3 +33,12 @@ void php_mongo_log(const int module, const int level TSRMLS_DC, const char *form
 void php_mcon_log_wrapper(int module, int level, void *context, char *format, va_list arg);
 
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

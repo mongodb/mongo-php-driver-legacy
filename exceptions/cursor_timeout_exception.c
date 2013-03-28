@@ -30,3 +30,12 @@ void mongo_init_MongoCursorTimeoutException(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoCursorTimeoutException", NULL);
 	mongo_ce_CursorTimeoutException = zend_register_internal_class_ex(&ce, mongo_ce_CursorException, NULL TSRMLS_CC);
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

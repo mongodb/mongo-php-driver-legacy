@@ -529,3 +529,12 @@ int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preferenc
 
 	return 1;
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

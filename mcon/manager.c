@@ -682,3 +682,11 @@ void mongo_deinit(mongo_con_manager *manager)
 	free(manager);
 }
 
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

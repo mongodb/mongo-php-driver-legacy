@@ -143,3 +143,12 @@ void php_mongo_free_cursor_node(cursor_node*, zend_rsrc_list_entry*);
 void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
 
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

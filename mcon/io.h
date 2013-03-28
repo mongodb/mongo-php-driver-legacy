@@ -23,3 +23,12 @@ int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, i
 int mongo_io_recv_data(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message);
 
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

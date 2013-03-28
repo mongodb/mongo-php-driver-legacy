@@ -1405,3 +1405,12 @@ void mongo_buf_append(char *dest, char *piece)
 	int pos = strlen(dest);
 	memcpy(dest + pos, piece, strlen(piece) + 1);
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */
