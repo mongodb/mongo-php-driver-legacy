@@ -1011,9 +1011,13 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 	mongo_read_preference_dtor(&rp);
 
 	/* Throw exception in case we have no connection */
-	if (!cursor->connection && error_message) {
-		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
-		free(error_message);
+	if (!cursor->connection) {
+		if (error_message) {
+			zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
+			free(error_message);
+		} else {
+			zend_throw_exception(mongo_ce_ConnectionException, "Could not retrieve connection", 72 TSRMLS_CC);
+		}
 		return FAILURE;
 	}
 
