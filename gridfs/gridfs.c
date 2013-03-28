@@ -1010,7 +1010,7 @@ PHP_METHOD(MongoGridFS, storeUpload)
 	}
 
 	h = PG(http_globals)[TRACK_VARS_FILES];
-	if (zend_hash_find(Z_ARRVAL_P(h), filename, file_len + 1, (void**)&file) == FAILURE) {
+	if (zend_hash_find(Z_ARRVAL_P(h), filename, file_len + 1, (void**)&file) == FAILURE || Z_TYPE_PP(file) != IS_ARRAY) {
 		zend_throw_exception_ex(mongo_ce_GridFSException, 11 TSRMLS_CC, "could not find uploaded file %s", filename);
 		return;
 	}
