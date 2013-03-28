@@ -1268,9 +1268,8 @@ static int is_utf8(const char *s, int len)
 	return 1;
 }
 
-/*
- * Takes any type of PHP var and turns it into BSON
- */
+/* {{{ proto string bson_encode(mixed document)
+   Takes any type of PHP var and turns it into BSON */
 PHP_FUNCTION(bson_encode)
 {
 	zval *z;
@@ -1377,11 +1376,11 @@ PHP_FUNCTION(bson_encode)
 			return;
 	}
 }
+/* }}} */
 
-/*
- * Takes a serialized BSON object and turns it into a PHP array.
- * This only deserializes entire documents!
- */
+/* {{{ proto array bson_decode(string bson)
+   Takes a serialized BSON object and turns it into a PHP array.
+   This only deserializes entire documents! */
 PHP_FUNCTION(bson_decode)
 {
 	char *str;
@@ -1394,6 +1393,7 @@ PHP_FUNCTION(bson_decode)
 	array_init(return_value);
 	bson_to_zval(str, HASH_P(return_value) TSRMLS_CC);
 }
+/* }}} */
 
 void mongo_buf_init(char *dest)
 {
