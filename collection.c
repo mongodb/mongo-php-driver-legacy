@@ -1596,23 +1596,24 @@ PHP_METHOD(MongoCollection, __get)
 	/* This is a little trickier than the getters in Mongo and MongoDB... we
 	 * need to combine the current collection name with the parameter passed
 	 * in, get the parent db, then select the new collection from it. */
-	zval *name, *full_name;
-	char *full_name_s;
+	zval *full_name;
+	char *full_name_s, *name;
+	int name_len;
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &name) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
 		return;
 	}
 
 	/* If this is "db", return the parent database.  This can't actually be a
 	 * property of the obj because apache does weird things on object
 	 * destruction that will cause the link to be destroyed twice. */
-	if (strcmp(Z_STRVAL_P(name), "db") == 0) {
+	if (strcmp(name, "db") == 0) {
 		RETURN_ZVAL(c->parent, 1, 0);
 	}
 
-	spprintf(&full_name_s, 0, "%s.%s", Z_STRVAL_P(c->name), Z_STRVAL_P(name));
+	spprintf(&full_name_s, 0, "%s.%s", Z_STRVAL_P(c->name), name);
 	MAKE_STD_ZVAL(full_name);
 	ZVAL_STRING(full_name, full_name_s, 0);
 
