@@ -885,17 +885,23 @@ PHP_METHOD(MongoCollection, update)
 			bit_opts |= Z_BVAL_PP(multiple) << 1;
 		}
 
+		Z_ADDREF_P(options);
+	} else {
+		MAKE_STD_ZVAL(options);
+		array_init(options);
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
+		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
 	if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, newobj, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
 		efree(buf.start);
+		zval_ptr_dtor(&options);
 		return;
 	}
 
@@ -910,6 +916,7 @@ PHP_METHOD(MongoCollection, update)
 	}
 
 	efree(buf.start);
+	zval_ptr_dtor(&options);
 }
 
 PHP_METHOD(MongoCollection, remove)
@@ -940,11 +947,16 @@ PHP_METHOD(MongoCollection, remove)
 			convert_to_boolean_ex(just_one);
 			flags = Z_BVAL_PP(just_one);
 		}
+		Z_ADDREF_P(options);
+	} else {
+		MAKE_STD_ZVAL(options);
+		array_init(options);
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
+		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
 
@@ -952,6 +964,7 @@ PHP_METHOD(MongoCollection, remove)
 	if (FAILURE == php_mongo_write_delete(&buf, Z_STRVAL_P(c->ns), flags, criteria, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
 		efree(buf.start);
 		zval_ptr_dtor(&criteria);
+		zval_ptr_dtor(&options);
 		return;
 	}
 #if MONGO_PHP_STREAMS
@@ -966,6 +979,7 @@ PHP_METHOD(MongoCollection, remove)
 
 	efree(buf.start);
 	zval_ptr_dtor(&criteria);
+	zval_ptr_dtor(&options);
 }
 
 PHP_METHOD(MongoCollection, ensureIndex)
@@ -1239,7 +1253,7 @@ PHP_METHOD(MongoCollection, save)
 	zval *a, *options = 0;
 	zval **id;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &a, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a/", &a, &options) == FAILURE) {
 		return;
 	}
 	MUST_BE_ARRAY_OR_OBJECT(1, a);
@@ -1247,8 +1261,6 @@ PHP_METHOD(MongoCollection, save)
 	if (!options) {
 		MAKE_STD_ZVAL(options);
 		array_init(options);
-	} else {
-		zval_add_ref(&options);
 	}
 
 	if (zend_hash_find(HASH_P(a), "_id", 4, (void**)&id) == SUCCESS) {
