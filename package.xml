@@ -68,73 +68,83 @@
    <file role="src" name="php_mongo.c"/>
    <file role="src" name="php_mongo.h"/>
 
-   <file role="src" name="exceptions/connection_exception.c"/>
-   <file role="src" name="exceptions/connection_exception.h"/>
-   <file role="src" name="exceptions/cursor_exception.c"/>
-   <file role="src" name="exceptions/cursor_exception.h"/>
-   <file role="src" name="exceptions/cursor_timeout_exception.c"/>
-   <file role="src" name="exceptions/cursor_timeout_exception.h"/>
-   <file role="src" name="exceptions/exception.c"/>
-   <file role="src" name="exceptions/exception.h"/>
-   <file role="src" name="exceptions/gridfs_exception.c"/>
-   <file role="src" name="exceptions/gridfs_exception.h"/>
-   <file role="src" name="exceptions/result_exception.c"/>
-   <file role="src" name="exceptions/result_exception.h"/>
+   <dir baseinstalldir="/" name="exceptions">
+    <file role="src" name="connection_exception.c"/>
+    <file role="src" name="connection_exception.h"/>
+    <file role="src" name="cursor_exception.c"/>
+    <file role="src" name="cursor_exception.h"/>
+    <file role="src" name="cursor_timeout_exception.c"/>
+    <file role="src" name="cursor_timeout_exception.h"/>
+    <file role="src" name="exception.c"/>
+    <file role="src" name="exception.h"/>
+    <file role="src" name="gridfs_exception.c"/>
+    <file role="src" name="gridfs_exception.h"/>
+    <file role="src" name="result_exception.c"/>
+    <file role="src" name="result_exception.h"/>
+   </dir>
 
-   <file role="src" name="gridfs/gridfs.c"/>
-   <file role="src" name="gridfs/gridfs.h"/>
-   <file role="src" name="gridfs/gridfs_cursor.c"/>
-   <file role="src" name="gridfs/gridfs_cursor.h"/>
-   <file role="src" name="gridfs/gridfs_file.c"/>
-   <file role="src" name="gridfs/gridfs_file.h"/>
-   <file role="src" name="gridfs/gridfs_stream.c"/>
-   <file role="src" name="gridfs/gridfs_stream.h"/>
+   <dir baseinstalldir="/" name="gridfs">
+    <file role="src" name="gridfs.c"/>
+    <file role="src" name="gridfs.h"/>
+    <file role="src" name="gridfs_cursor.c"/>
+    <file role="src" name="gridfs_cursor.h"/>
+    <file role="src" name="gridfs_file.c"/>
+    <file role="src" name="gridfs_file.h"/>
+    <file role="src" name="gridfs_stream.c"/>
+    <file role="src" name="gridfs_stream.h"/>
+   </dir>
 
-   <file role="src" name="mcon/bson_helpers.c"/>
-   <file role="src" name="mcon/bson_helpers.h"/>
-   <file role="src" name="mcon/collection.c"/>
-   <file role="src" name="mcon/collection.h"/>
-   <file role="src" name="mcon/connections.c"/>
-   <file role="src" name="mcon/connections.h"/>
-   <file role="src" name="mcon/io.c"/>
-   <file role="src" name="mcon/io.h"/>
-   <file role="src" name="mcon/manager.c"/>
-   <file role="src" name="mcon/manager.h"/>
-   <file role="src" name="mcon/mini_bson.c"/>
-   <file role="src" name="mcon/mini_bson.h"/>
-   <file role="src" name="mcon/parse.c"/>
-   <file role="src" name="mcon/parse.h"/>
-   <file role="src" name="mcon/read_preference.c"/>
-   <file role="src" name="mcon/read_preference.h"/>
-   <file role="src" name="mcon/str.c"/>
-   <file role="src" name="mcon/str.h"/>
-   <file role="src" name="mcon/types.h"/>
-   <file role="src" name="mcon/utils.c"/>
-   <file role="src" name="mcon/utils.h"/>
+   <dir baseinstalldir="/" name="mcon">
+    <file role="src" name="bson_helpers.c"/>
+    <file role="src" name="bson_helpers.h"/>
+    <file role="src" name="collection.c"/>
+    <file role="src" name="collection.h"/>
+    <file role="src" name="connections.c"/>
+    <file role="src" name="connections.h"/>
+    <file role="src" name="io.c"/>
+    <file role="src" name="io.h"/>
+    <file role="src" name="manager.c"/>
+    <file role="src" name="manager.h"/>
+    <file role="src" name="mini_bson.c"/>
+    <file role="src" name="mini_bson.h"/>
+    <file role="src" name="parse.c"/>
+    <file role="src" name="parse.h"/>
+    <file role="src" name="read_preference.c"/>
+    <file role="src" name="read_preference.h"/>
+    <file role="src" name="str.c"/>
+    <file role="src" name="str.h"/>
+    <file role="src" name="types.h"/>
+    <file role="src" name="utils.c"/>
+    <file role="src" name="utils.h"/>
+   </dir>
 
-   <file role="src" name="types/bin_data.c"/>
-   <file role="src" name="types/bin_data.h"/>
-   <file role="src" name="types/code.c"/>
-   <file role="src" name="types/code.h"/>
-   <file role="src" name="types/date.c"/>
-   <file role="src" name="types/date.h"/>
-   <file role="src" name="types/db_ref.c"/>
-   <file role="src" name="types/db_ref.h"/>
-   <file role="src" name="types/id.c"/>
-   <file role="src" name="types/id.h"/>
-   <file role="src" name="types/int32.c"/>
-   <file role="src" name="types/int32.h"/>
-   <file role="src" name="types/int64.c"/>
-   <file role="src" name="types/int64.h"/>
-   <file role="src" name="types/regex.c"/>
-   <file role="src" name="types/regex.h"/>
-   <file role="src" name="types/timestamp.c"/>
-   <file role="src" name="types/timestamp.h"/>
+   <dir baseinstalldir="/" name="types">
+    <file role="src" name="bin_data.c"/>
+    <file role="src" name="bin_data.h"/>
+    <file role="src" name="code.c"/>
+    <file role="src" name="code.h"/>
+    <file role="src" name="date.c"/>
+    <file role="src" name="date.h"/>
+    <file role="src" name="db_ref.c"/>
+    <file role="src" name="db_ref.h"/>
+    <file role="src" name="id.c"/>
+    <file role="src" name="id.h"/>
+    <file role="src" name="int32.c"/>
+    <file role="src" name="int32.h"/>
+    <file role="src" name="int64.c"/>
+    <file role="src" name="int64.h"/>
+    <file role="src" name="regex.c"/>
+    <file role="src" name="regex.h"/>
+    <file role="src" name="timestamp.c"/>
+    <file role="src" name="timestamp.h"/>
+   </dir>
 
-   <file role="src" name="util/log.c"/>
-   <file role="src" name="util/log.h"/>
-   <file role="src" name="util/pool.c"/>
-   <file role="src" name="util/pool.h"/>
+   <dir baseinstalldir="/" name="util">
+    <file role="src" name="log.c"/>
+    <file role="src" name="log.h"/>
+    <file role="src" name="pool.c"/>
+    <file role="src" name="pool.h"/>
+   </dir>
   </dir>
  </contents>
  <dependencies>
