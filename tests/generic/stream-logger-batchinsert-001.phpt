@@ -30,9 +30,10 @@ $docs = array();
 foreach(range(0, 200) as $i) {
     $docs[] = array("example" => "document", "with" => "some", "fields" => "in it", "rand" => $i);
 }
-$mc->phpunit->jobs->batchinsert($docs, array("continueOnError" => 2));
+$opts = array("continueOnError" => 2);
+$mc->phpunit->jobs->batchinsert($docs, $opts);
 $cursor = $mc->phpunit->jobs->drop();
-
+var_dump($opts);
 
 ?>
 --EXPECTF--
@@ -52,7 +53,11 @@ array(5) {
 int(201)
 array(1) {
   ["flags"]=>
-  int(2)
+  int(1)
+}
+array(1) {
+  ["continueOnError"]=>
+  bool(true)
 }
 array(1) {
   ["continueOnError"]=>
