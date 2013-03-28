@@ -1,11 +1,16 @@
 <?php
+# Enable to debug test-suite meltdown
+# Should not be enabled unless you know what you are doing
 if (!defined("DEBUG")) {
     define("DEBUG", false);
 }
 
+# Path to your mongo shell. The shell is used to launch mongod If you have
+# multiple MongoDBs versions installed, you can change between the version used
+# by using the shell belonging to the version you want to test against
 $mongo = trim(shell_exec("which mongo"));
 $SHELL = $mongo;
-$DBDIR = "/data/db";
+$DBDIR = "/data/db/";
 
 
 /* You probably don't want to change this */
