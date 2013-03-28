@@ -38,7 +38,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 zend_class_entry *mongo_ce_Collection = NULL;
 
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
-static int is_gle_op(zval *options, mongo_server_options *soptions TSRMLS_DC);
+static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC);
 static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
@@ -483,16 +483,16 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 }
 
 
-static int is_gle_op(zval *options, mongo_server_options *soptions TSRMLS_DC)
+static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC)
 {
 	zval **gle_pp = 0, **fsync_pp = 0;
 	int    gle_op = 0;
 
 	/* First we check for the global (connection string) default */
-	if (soptions->default_w != -1) {
-		gle_op = soptions->default_w;
+	if (server_options->default_w != -1) {
+		gle_op = server_options->default_w;
 	}
-	if (soptions->default_fsync || soptions->default_journal) {
+	if (server_options->default_fsync || server_options->default_journal) {
 		gle_op = 1;
 	}
 
