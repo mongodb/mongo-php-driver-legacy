@@ -8,24 +8,18 @@ services:
   - mongodb
 
 env:
-  - SKIP_SLOW_TESTS=yes NO_INTERACTION=1 REPORT_EXIT_STATUS=1 I_AM_TRAVIS=1 MONGO_SERVER_STANDALONE=yes MONGO_SERVER_REPLICASET=yes MONGO_SERVER_MONGOS=yes
+  - REPORT_EXIT_STATUS=1
 
 before_script:
   - sudo mkdir -p /data/db
   - sudo chown -R travis /data/
   - ./.travis.scripts/compile.sh
-  - make servers
-
-after_failure:
-  - ./.travis.scripts/failed.sh
-
-after_script:
-   - ./.travis.scripts/failed.sh
+  - MONGO_SERVER_STANDALONE=yes MONGO_SERVER_REPLICASET=yes MONGO_SERVER_MONGOS=yes make servers
 
 notifications:
   email:
     - bjori@php.net
 
 # Run PHPs run-tests.php 
-script: SKIP_SLOW_TESTS=yes NO_INTERACTION=1 REPORT_EXIT_STATUS=1 make test
-#script: ./sapi/cli/php run-tests.php -g "FAIL,XFAIL,BORK,WARN,LEAK,SKIP"
+script: REPORT_EXIT_STATUS=1 make test TESTS="-q -x --show-diff -g 'FAIL,XFAIL,BORK,WARN,LEAK,SKIP'"
+
