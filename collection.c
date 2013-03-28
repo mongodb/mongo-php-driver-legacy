@@ -701,7 +701,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 		return;
 	}
 #if MONGO_PHP_STREAMS
-	php_log_stream_batchinsert(connection, docs, bit_opts, options TSRMLS_CC);
+	php_log_stream_batchinsert(connection, docs, options, bit_opts TSRMLS_CC);
 #endif
 
 
