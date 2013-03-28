@@ -56,10 +56,12 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	}
 
 	if (options->ssl) {
-		if (
-			(php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_TLS_CLIENT, NULL TSRMLS_CC) < 0) ||
-			(php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0))
-		{
+		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_TLS_CLIENT, NULL TSRMLS_CC) < 0) {
+			*error_message = strdup("Cannot setup SSL, is ext/openssl loaded?");
+			php_stream_close(stream);
+			return NULL;
+		}
+		if (php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0) {
 			/* Setting up crypto failed. Thats only OK if we only preferred it */
 			if (options->ssl == MONGO_SSL_PREFER) {
 				/* FIXME: We can't actually get here because we reject setting this optino to prefer in mcon/parse.c
