@@ -866,48 +866,36 @@ PHP_METHOD(MongoCollection, update)
 	int bit_opts = 0;
 	int retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &criteria, &newobj, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|a/", &criteria, &newobj, &options) == FAILURE) {
 		return;
 	}
 	MUST_BE_ARRAY_OR_OBJECT(1, criteria);
 	MUST_BE_ARRAY_OR_OBJECT(2, newobj);
 
-	if (options && !IS_SCALAR_P(options)) {
+	if (options) {
 		zval **upsert = 0, **multiple = 0;
 
-		zend_hash_find(HASH_P(options), "upsert", strlen("upsert") + 1, (void**)&upsert);
-		bit_opts = (upsert ? Z_BVAL_PP(upsert) : 0) << 0;
-
-		zend_hash_find(HASH_P(options), "multiple", strlen("multiple") + 1, (void**)&multiple);
-		bit_opts |= (multiple ? Z_BVAL_PP(multiple) : 0) << 1;
-
-		zval_add_ref(&options);
-	} else {
-		zval *opts;
-
-		if (options && IS_SCALAR_P(options)) {
-			zend_bool upsert = options ? Z_BVAL_P(options) : 0;
-
-			bit_opts = upsert << 0;
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
+		if (zend_hash_find(HASH_P(options), "upsert", strlen("upsert") + 1, (void**)&upsert) == SUCCESS) {
+			convert_to_boolean_ex(upsert);
+			bit_opts |= Z_BVAL_PP(upsert) << 0;
 		}
 
-		MAKE_STD_ZVAL(opts);
-		array_init(opts);
-		options = opts;
+		if (zend_hash_find(HASH_P(options), "multiple", strlen("multiple") + 1, (void**)&multiple) == SUCCESS) {
+			convert_to_boolean_ex(multiple);
+			bit_opts |= Z_BVAL_PP(multiple) << 1;
+		}
+
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
-		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
 	if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, newobj, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
 		efree(buf.start);
-		zval_ptr_dtor(&options);
 		return;
 	}
 
@@ -922,7 +910,6 @@ PHP_METHOD(MongoCollection, update)
 	}
 
 	efree(buf.start);
-	zval_ptr_dtor(&options);
 }
 
 PHP_METHOD(MongoCollection, remove)
