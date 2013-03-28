@@ -15,28 +15,14 @@ to your _php.ini_ file.
 
 ## Documentation
 
-See [the PHP manual](http://us.php.net/manual/en/book.mongo.php).
+See [the PHP manual](http://php.net/mongo).
 
 ## Testing
 
 The tests are not available as part of the PECL package, but they are available 
 on [Github](http://www.github.com/mongodb/mongo-php-driver/tree/master/tests).  
-To run the test, you'll have to configure the tests/mongo-test-cfg.inc file
-(copy the tests/mongo-test-cfg.inc.template to tests/mongo-test-cfg.inc and edit it).
-By default, the tests will be executed in several different environments;
-(currently:)
-* Replicaset (without authentication)
-* Standalone
 
-If you are not running any of these environments, you can disable these runs by
-adjusting the configuration file.
-
-
-Once you have filled out the configuration template, run the following command to
-launch the test suite.
-
-    $ make test
-
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to run and create new tests.
 
 ## Credits
 

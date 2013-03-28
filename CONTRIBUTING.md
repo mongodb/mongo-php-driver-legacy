@@ -6,8 +6,8 @@ driver.
 
 ## Current branches
 
-* 1.2 is the current release branch/stable branch (bugfix only)
-* master is the development branch for new features (to become 1.3)
+* 1.3 is the current stable branch, critical fixes only allowed here
+* master is the development branch for new features (to become 1.4)
 
 
 ## Github
@@ -24,78 +24,71 @@ All *new* development happens in master (i.e. new features, BC changes, ..).
 
 ## Running the tests
 
-To execute the "tests/generic/" tests in a specific mongod environment you can
-export `MONGO_SERVER` environment variable to overwrite the default environment
-(standalone):
+To run the test, you'll have to configure the tests/utils/cfg.inc file (copy
+the [tests/utils/cfg.inc.template](tests/utils/cfg.inc.template) to
+tests/mongo-test-cfg.inc and edit it).
 
-    MONGO_SERVER=REPLICASET_AUTH php run-tests.php tests/generic/mongo-listdbs-001.phpt
+The testing framework bootstraps mongod environments (standalone, replicaset,
+sharding, authentication...) with the help of the mongo shell utility, on
+non-standard ports, so there is no need to worry about overwriting your local
+environment.
 
-If you export the variable, remember to unset it later - otherwise the test
-suite may not be executed correctly in the environment you expect it to.
+To boot up the environment run:
+
+    $ make servers
+
+And to tear it down again, after running the tests, run:
+
+    $ make stop-servers
+
+If you'd only like to bootup (and run) specific set of setups you can enable
+individual setups by defining an environment variable called
+MONGO_SERVER_[STANDALONE|REPLICASET|MONGOS]=yes before executing 'make servers'.
+
+And finally, to execute the tests run:
+
+    $ make test
 
 
 ## Writing tests
 
-The tests/utils.inc file has several helper functions to ease running the same
-test case in several different environment at once (i.e. via 'make tests').
-
-Testscases in the generic/ folder are executed in all configured environments
-(see tests/mongo-test-cfg.inc), the testcases in the replicaset/ folder only
-when replicaset environment is available, the testcases in standalone-auth/
-only in Standalone (with auth enabled) environment and so on and on.
-
-The most important helper function is the mongo() function, which out of the
-box will return a Mongo object configured for the current environment.
-
-When writing testcases for the Mongo construct, using the helper function won't
-give you much as it abstracts the logic of connecting to servers and doesn't
-provide a whole lot of room for custom options.  This is however easily
-achieved by using the other helper functions such as hostname(), port(),
-username() etc etc. These will return back the configured values for the
-currently being executed environment.
-
-If you need to do the same "trick" over and over again in a testcase, it is
-probably worth writing a helper function for it in tests/utils.inc.
+All tests 
 
 
-## Test template
+## Test template for a Standalone MongoDB
     --TEST--
     Test for PHP-XYZ: The ticket title
     --SKIPIF--
-    <?php /* Minimum mongod requirement $needs = "2.2.0"; */ ?>
-    <?php require dirname(__FILE__) ."/skipif.inc"; ?>
+    <?php require_once "tests/utils/standalone.inc"; ?>
     --FILE--
     <?php
-    $cn = "PHP-XYZ";
-    require_once dirname(__FILE__) . "/../utils.inc";
+    require_once "tests/utils/server.inc";
 
-    $m = mongo();
-    $c = $m->selectCollection(dbname(), $cn);
+    $host = MongoShellServer::getStandaloneInfo();
+    $mc = new MongoClient($host);
 
     /** Write your test code here **/
     ?>
     ===DONE===
     <?php exit(0); ?>
-    --CLEAN--
-    <?php $c = "PHP-XYZ"; require dirname(__FILE__) ."/clean.inc"; ?>
     --EXPECTF--
     ** Expected output here **
     ===DONE===
 
 Some notes about the template:
 
-* The dirname() is for PHP 5.2 compatibility.
-* Setting the $needs variable verifies minimum mongod requirements
-* skipif.inc checks if the extension is loaded and general sanity
-* utils.inc is `require_once` as skipif.inc requires that file too
-* If $cn is set, that collection in the dbname() database will be dropped
-  before the test runs
-* mongo() will return a connected Mongo object according to the envrionment or test folder
 * Please use a collection named after the ticket number (for easier tracking)
 * The exit(0); statement allows you to run the testcase standalone from
   the command line (without running it via run-tests.php) and see what is going
   on without being flooded with hundred of lines from the --EXPECTF-- section.
-* The --CLEAN-- section is to drop the collection name assigned to $cn 
+* Other available skipif tests:
+ * standalone.inc (MongoShellServer::getStandaloneInfo())
+ * auth-standalone.inc (MongoShellServer::getStandaloneInfo(true))
+ * replicaset.inc (MongoShellServer::getReplicasetInfo())
+ * auth-replicaset.inc (MongoShellServer::getReplicasetInfo(true))
+ * replicaset-failover.inc (MongoShellServer::getReplicasetInfo(true))
+ * bridge.inc (MongoShellServer::getBridgeInfo())
+ * mongos.inc (MongoShellServer::getShardInfo())
 
 
 ## Code coverage
