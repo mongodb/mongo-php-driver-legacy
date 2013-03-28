@@ -30,5 +30,5 @@ void php_log_stream_update(mongo_connection *connection, zval *ns, zval *criteri
 void php_log_stream_delete(mongo_connection *connection, zval *ns, zval *criteria, zval *options, int flags TSRMLS_DC);
 void php_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC);
 void php_log_stream_killcursor(mongo_connection *connection, int cursor_id TSRMLS_DC);
-void php_log_stream_batchinsert(mongo_connection *connection, zval *docs, int flags, zval *options TSRMLS_DC);
+void php_log_stream_batchinsert(mongo_connection *connection, zval *docs, zval *options, int flags TSRMLS_DC);
 #endif
