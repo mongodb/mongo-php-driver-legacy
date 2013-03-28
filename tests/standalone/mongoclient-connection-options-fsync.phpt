@@ -1,5 +1,5 @@
 --TEST--
-MongoClient Connection string arguments (fsync) over standalone server
+Connection strings: Test fsync over standalone server
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--

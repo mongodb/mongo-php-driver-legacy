@@ -1,5 +1,5 @@
 --TEST--
-MongoClient Connection string arguments (fsync) over mongos
+Connection strings: Test fsync over mongos
 --SKIPIF--
 <?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
