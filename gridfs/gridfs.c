@@ -71,6 +71,8 @@ typedef struct {
 static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
 static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options TSRMLS_DC);
 
+/* {{{ proto MongoGridFS::__construct(MongoDB db [, string prefix = "fs.files" [, string chunks = "fs.chunks"]])
+   Creates a new MongoGridFS object */
 PHP_METHOD(MongoGridFS, __construct)
 {
 	zval *zdb, *files = 0, *chunks = 0, *zchunks;
@@ -138,6 +140,7 @@ PHP_METHOD(MongoGridFS, __construct)
 	zval_ptr_dtor(&files);
 	zval_ptr_dtor(&chunks);
 }
+/* }}} */
 
 void php_mongo_ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC)
 {
@@ -160,6 +163,8 @@ void php_mongo_ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC)
 	zval_ptr_dtor(&options);
 }
 
+/* {{{ proto array MongoGridFS::drop()
+   Drops the files and chunks collections */
 PHP_METHOD(MongoGridFS, drop)
 {
 	zval *temp;
@@ -171,7 +176,10 @@ PHP_METHOD(MongoGridFS, drop)
 
 	MONGO_METHOD(MongoCollection, drop, return_value, getThis());
 }
+/* }}} */
 
+/* {{{ proto MongoGridFSCursor MongoGridFS::find([array|object query = array() [, array fields = array()]])
+   Queries for files */
 PHP_METHOD(MongoGridFS, find)
 {
 	zval temp;
@@ -208,7 +216,7 @@ PHP_METHOD(MongoGridFS, find)
 	zval_ptr_dtor(&zquery);
 	zval_ptr_dtor(&zfields);
 }
-
+/* }}} */
 
 static int get_chunk_size(zval *array TSRMLS_DC)
 {
@@ -392,13 +400,8 @@ static void cleanup_stale_chunks(INTERNAL_FUNCTION_PARAMETERS, zval *cleanup_ids
 	RETVAL_FALSE;
 }
 
-/*
- * Stores an array of bytes that may not have a filename, such as data from a
- * socket or stream.
- *
- * Still somewhat limited atm, as the string has to fit in memory.  It would be
- * better if it could take a fh or something.
- */
+/* {{{ proto mixed MongoGridFS::storeBytes(string bytes [, array|object metadata = array() [, array options = array()]])
+   Stores a string of bytes in the database */
 PHP_METHOD(MongoGridFS, storeBytes)
 {
 	char *bytes = 0;
@@ -528,6 +531,7 @@ cleanup_on_failure:
 	zval_ptr_dtor(&options);
 	zval_ptr_dtor(&cleanup_ids);
 }
+/* }}} */
 
 /* add extra fields required for files:
  * - filename
@@ -620,6 +624,8 @@ static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int
 	return zretval;
 }
 
+/* {{{ proto mixed MongoGridFS::storeFile(string|resource filename [, array metadata = array() [, array options = array()]])
+   Stores a file in the database */
 PHP_METHOD(MongoGridFS, storeFile)
 {
 	zval *fh, *extra = 0, *options = 0;
@@ -850,7 +856,11 @@ cleanup_on_failure:
 
 	zval_ptr_dtor(&options);
 }
+/* }}} */
 
+/* {{{ proto MongoGridFSFile MongoGridFS::findOne([array|string query = array() [, array|object fields = array()]])
+   Returns a single file matching the criteria. If $query is a string, it will
+   be used to match documents by the filename field, which may not be unique. */
 PHP_METHOD(MongoGridFS, findOne)
 {
 	zval *zquery = 0, *zfields = 0, *file;
@@ -900,7 +910,11 @@ PHP_METHOD(MongoGridFS, findOne)
 	zval_ptr_dtor(&zquery);
 	zval_ptr_dtor(&zfields);
 }
+/* }}} */
 
+/* {{{ proto mixed MongoGridFS::remove([array|string criteria = array() [, array options = array()]])
+   Removes files and corresponding chunks. If $query is a string, it will be
+   used to match documents by the filename field, which may not be unique. */
 PHP_METHOD(MongoGridFS, remove)
 {
 	zval *criteria = 0, *options = 0, *zfields, *zcursor, *chunks, *next, temp;
@@ -998,7 +1012,11 @@ PHP_METHOD(MongoGridFS, remove)
 	zval_ptr_dtor(&criteria);
 	zval_ptr_dtor(&options);
 }
+/* }}} */
 
+/* {{{ proto mixed MongoGridFS::storeUpload(string name [, array|string metadata = array()])
+   Stores an uploaded file in the database. If $metadata is a string, it will be
+   used as the filename field for the stored file. */
 PHP_METHOD(MongoGridFS, storeUpload)
 {
 	zval *extra = 0, *h, **file, **temp, **name = 0, *extra_param = 0;
@@ -1087,10 +1105,14 @@ PHP_METHOD(MongoGridFS, storeUpload)
 		zend_throw_exception(mongo_ce_GridFSException, "tmp_name was not a string or an array", 13 TSRMLS_CC);
 	}
 }
+/* }}} */
 
 /*
  * New GridFS API
  */
+
+/* {{{ proto bool MongoGridFS::delete(mixed id)
+   Delete a file from the database */
 PHP_METHOD(MongoGridFS, delete)
 {
 	zval *id, *criteria;
@@ -1109,7 +1131,10 @@ PHP_METHOD(MongoGridFS, delete)
 
 	zval_ptr_dtor(&criteria);
 }
+/* }}} */
 
+/* {{{ proto MongoGridFSFile MongoGridFS::get(mixed id)
+   Retrieve a file from the database */
 PHP_METHOD(MongoGridFS, get)
 {
 	zval *id, *criteria;
@@ -1127,11 +1152,15 @@ PHP_METHOD(MongoGridFS, get)
 
 	zval_ptr_dtor(&criteria);
 }
+/* }}} */
 
+/* {{{ proto mixed MongoGridFS::put(string|resource filename [, array metadata = array() [, array options = array()]])
+   Stores a file in the database */
 PHP_METHOD(MongoGridFS, put)
 {
 	MONGO_METHOD_BASE(MongoGridFS, storeFile)(ZEND_NUM_ARGS(), return_value, NULL, getThis(), 0 TSRMLS_CC);
 }
+/* }}} */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_find, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)

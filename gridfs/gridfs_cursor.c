@@ -29,6 +29,8 @@ extern zend_class_entry *mongo_ce_GridFSFile;
 
 zend_class_entry *mongo_ce_GridFSCursor = NULL;
 
+/* {{{ proto MongoGridFSCursor::__construct(MongoGridFS gridfs, resource connection, string ns, array query, array fields)
+   Creates a new MongoGridFSCursor object */
 PHP_METHOD(MongoGridFSCursor, __construct)
 {
 	zval temp;
@@ -44,13 +46,19 @@ PHP_METHOD(MongoGridFSCursor, __construct)
 
 	MONGO_METHOD4(MongoCursor, __construct, &temp, getThis(), connection, ns, query, fields);
 }
+/* }}} */
 
+/* {{{ proto MongoGridFSFile MongoGridFSCursor::getNext()
+   Return the next file to which this cursor points, and advance the cursor */
 PHP_METHOD(MongoGridFSCursor, getNext)
 {
 	MONGO_METHOD(MongoCursor, next, return_value, getThis());
 	MONGO_METHOD(MongoGridFSCursor, current, return_value, getThis());
 }
+/* }}} */
 
+/* {{{ proto MongoGridFSFile MongoGridFSCursor::current()
+   Returns the current file */
 PHP_METHOD(MongoGridFSCursor, current)
 {
 	zval temp;
@@ -73,6 +81,7 @@ PHP_METHOD(MongoGridFSCursor, current)
 	MONGO_METHOD3(MongoGridFSFile, __construct, &temp, return_value, gridfs, cursor->current, flags);
 	zval_ptr_dtor(&flags);
 }
+/* }}} */
 
 static zend_function_entry MongoGridFSCursor_methods[] = {
 	PHP_ME(MongoGridFSCursor, __construct, NULL, ZEND_ACC_PUBLIC)

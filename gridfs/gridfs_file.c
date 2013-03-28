@@ -36,6 +36,8 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
 static int copy_bytes(void *to, char *from, int len);
 static int copy_file(void *to, char *from, int len);
 
+/* {{{ proto MongoGridFSFile::__construct(MongoGridFS gridfs, array file)
+   Creates a new MongoGridFSFile object */
 PHP_METHOD(MongoGridFSFile, __construct)
 {
 	zval *gridfs = 0, *file = 0;
@@ -52,7 +54,10 @@ PHP_METHOD(MongoGridFSFile, __construct)
 	zend_update_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), file TSRMLS_CC);
 	zend_update_property_long(mongo_ce_GridFSFile, getThis(), "flags", strlen("flags"), flags TSRMLS_CC);
 }
+/* }}} */
 
+/* {{{ proto string MongoGridFSFile::getFilename()
+   Returns this file's filename */
 PHP_METHOD(MongoGridFSFile, getFilename)
 {
 	zval *file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
@@ -62,7 +67,10 @@ PHP_METHOD(MongoGridFSFile, getFilename)
 	}
 	RETURN_NULL();
 }
+/* }}} */
 
+/* {{{ proto int MongoGridFSFile::getSize()
+   Returns this file's size */
 PHP_METHOD(MongoGridFSFile, getSize)
 {
 	zval *file = zend_read_property(mongo_ce_GridFSFile, getThis(), "file", strlen("file"), NOISY TSRMLS_CC);
@@ -72,7 +80,10 @@ PHP_METHOD(MongoGridFSFile, getSize)
 	}
 	RETURN_NULL();
 }
+/* }}} */
 
+/* {{{ proto int MongoGridFSFile::write([string filename = null])
+   Writes this file to the filesystem */
 PHP_METHOD(MongoGridFSFile, write)
 {
 	char *filename = 0;
@@ -162,7 +173,10 @@ PHP_METHOD(MongoGridFSFile, write)
 
 	RETURN_LONG(total);
 }
+/* }}} */
 
+/* {{{ proto stream MongoGridFSFile::getResource()
+   Returns a resource that can be used to read the stored file */
 PHP_METHOD(MongoGridFSFile, getResource)
 {
 	php_stream * stream;
@@ -175,7 +189,10 @@ PHP_METHOD(MongoGridFSFile, getResource)
 
 	php_stream_to_zval(stream, return_value);
 }
+/* }}} */
 
+/* {{{ proto string MongoGridFSFile::getBytes()
+   Returns this file's contents as a string of bytes */
 PHP_METHOD(MongoGridFSFile, getBytes)
 {
 	zval *file, *gridfs, *chunks, *query, *cursor, *sort, *temp;
@@ -264,6 +281,7 @@ PHP_METHOD(MongoGridFSFile, getBytes)
 
 	RETURN_STRINGL(str_ptr, len, 0);
 }
+/* }}} */
 
 static int copy_bytes(void *to, char *from, int len)
 {
