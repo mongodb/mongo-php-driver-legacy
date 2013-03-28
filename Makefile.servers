@@ -8,3 +8,5 @@ daemon:
 	$(PHP_EXECUTABLE) tests/utils/daemon.php &
 	sleep 3
 
+findphp:
+	@echo $(PHP_EXECUTABLE)
