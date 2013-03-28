@@ -41,7 +41,8 @@ zval *php_log_get_server_info(mongo_connection *connection)
 
 	return retval;
 }
-void php_log_stream_insert(mongo_connection *connection, zval *document, zval *options TSRMLS_DC)
+
+void mongo_log_stream_insert(mongo_connection *connection, zval *document, zval *options TSRMLS_DC)
 {
 	zval **callback;
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
@@ -58,7 +59,7 @@ void php_log_stream_insert(mongo_connection *connection, zval *document, zval *o
 		args[2] = &options;
 
 		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, 3, args, 0, NULL TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call mongodb log_insert");
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call stream context callback function 'log_insert' for 'mongodb' context option");
 		}
 
 		if (retval) {
@@ -68,7 +69,7 @@ void php_log_stream_insert(mongo_connection *connection, zval *document, zval *o
 	}
 }
 
-void php_log_stream_query(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC)
+void mongo_log_stream_query(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC)
 {
 	zval **callback;
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
@@ -95,7 +96,7 @@ void php_log_stream_query(mongo_connection *connection, mongo_cursor *cursor TSR
 
 
 		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, 3, args, 0, NULL TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call mongodb log_query");
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call stream context callback function 'log_query' for 'mongodb' context option");
 		}
 
 		if (retval) {
@@ -106,7 +107,7 @@ void php_log_stream_query(mongo_connection *connection, mongo_cursor *cursor TSR
 	}
 }
 
-void php_log_stream_update(mongo_connection *connection, zval *ns, zval *criteria, zval *newobj, zval *options, int flags TSRMLS_DC)
+void mongo_log_stream_update(mongo_connection *connection, zval *ns, zval *criteria, zval *newobj, zval *options, int flags TSRMLS_DC)
 {
 	zval **callback;
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
@@ -132,7 +133,7 @@ void php_log_stream_update(mongo_connection *connection, zval *ns, zval *criteri
 
 
 		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, 5, args, 0, NULL TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call mongodb log_update");
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call stream context callback function 'log_update' for 'mongodb' context option");
 		}
 
 		if (retval) {
@@ -143,7 +144,7 @@ void php_log_stream_update(mongo_connection *connection, zval *ns, zval *criteri
 	}
 }
 
-void php_log_stream_delete(mongo_connection *connection, zval *ns, zval *criteria, int flags, zval *options TSRMLS_DC)
+void mongo_log_stream_delete(mongo_connection *connection, zval *ns, zval *criteria, int flags, zval *options TSRMLS_DC)
 {
 	zval **callback;
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
@@ -168,7 +169,7 @@ void php_log_stream_delete(mongo_connection *connection, zval *ns, zval *criteri
 
 
 		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, 4, args, 0, NULL TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call mongodb log_delete");
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call stream context callback function 'log_delete' for 'mongodb' context option");
 		}
 
 		if (retval) {
@@ -179,7 +180,7 @@ void php_log_stream_delete(mongo_connection *connection, zval *ns, zval *criteri
 	}
 }
 
-void php_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC)
+void mongo_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC)
 {
 	zval **callback;
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
@@ -202,7 +203,7 @@ void php_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor T
 
 
 		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, 2, args, 0, NULL TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call mongodb log_getmore");
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call stream context callback function 'log_getmore' for 'mongodb' context option");
 		}
 
 		if (retval) {
@@ -213,7 +214,7 @@ void php_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor T
 	}
 }
 
-void php_log_stream_killcursor(mongo_connection *connection, int cursor_id TSRMLS_DC)
+void mongo_log_stream_killcursor(mongo_connection *connection, int cursor_id TSRMLS_DC)
 {
 	zval **callback;
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
@@ -235,7 +236,7 @@ void php_log_stream_killcursor(mongo_connection *connection, int cursor_id TSRML
 
 
 		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, 2, args, 0, NULL TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call mongodb log_killcursor");
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call stream context callback function 'log_killcursor' for 'mongodb' context option");
 		}
 
 		if (retval) {
@@ -246,7 +247,7 @@ void php_log_stream_killcursor(mongo_connection *connection, int cursor_id TSRML
 	}
 }
 
-void php_log_stream_batchinsert(mongo_connection *connection, zval *docs, zval *options, int flags TSRMLS_DC)
+void mongo_log_stream_batchinsert(mongo_connection *connection, zval *docs, zval *options, int flags TSRMLS_DC)
 {
 	zval **callback;
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
@@ -270,7 +271,7 @@ void php_log_stream_batchinsert(mongo_connection *connection, zval *docs, zval *
 		args[3] = &options;
 
 		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, 4, args, 0, NULL TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call mongodb log_batchinsert");
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call stream context callback function 'log_batchinsert' for 'mongodb' context option");
 		}
 
 		if (retval) {
