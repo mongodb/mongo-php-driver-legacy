@@ -433,7 +433,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	}
 
 	if (strcasecmp(option_name, "slaveOkay") == 0) {
-		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
 			if (servers->read_pref.type != MONGO_RP_PRIMARY || servers->read_pref.tagset_count) {
 				/* the server already has read preferences configured, but we're still
@@ -568,10 +568,10 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 	if (strcasecmp(option_name, "ssl") == 0) {
 		int value = 0;
-		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			value = MONGO_SSL_ENABLE;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': true");
-		} else if (strcasecmp(option_value, "false") == 0 || *option_value == '0') {
+		} else if (strcasecmp(option_value, "false") == 0 || strcmp(option_value, "0") == 0) {
 			value = MONGO_SSL_DISABLE;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': false");
 		} else if (strcasecmp(option_value, "prefer") == 0 || atoi(option_value) == MONGO_SSL_PREFER) {
