@@ -42,7 +42,6 @@ extern zend_class_entry *mongo_ce_BinData,
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
-static int get_limit(mongo_cursor *cursor);
 static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC);
 #if PHP_VERSION_ID >= 50300
 static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key);
@@ -789,7 +788,7 @@ int php_mongo_write_query(buffer *buf, mongo_cursor *cursor, int max_document_si
 	cursor->send.request_id = header.request_id;
 
 	php_mongo_serialize_int(buf, cursor->skip);
-	php_mongo_serialize_int(buf, get_limit(cursor));
+	php_mongo_serialize_int(buf, mongo_get_limit(cursor));
 
 	if (zval_to_bson(buf, HASH_P(cursor->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE || EG(exception)) {
 		return FAILURE;
@@ -834,14 +833,14 @@ int php_mongo_write_get_more(buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 	CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
 	cursor->send.request_id = header.request_id;
 
-	php_mongo_serialize_int(buf, get_limit(cursor));
+	php_mongo_serialize_int(buf, mongo_get_limit(cursor));
 	php_mongo_serialize_long(buf, cursor->cursor_id);
 
 	return php_mongo_serialize_size(buf->start + start, buf, cursor->connection->max_message_size TSRMLS_CC);
 }
 
 
-static int get_limit(mongo_cursor *cursor)
+int mongo_get_limit(mongo_cursor *cursor)
 {
 	int lim_at;
 

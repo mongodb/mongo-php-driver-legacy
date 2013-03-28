@@ -25,6 +25,7 @@
 #include "db.h"
 #include "mcon/manager.h"
 #include "mcon/io.h"
+#include "log_stream.h"
 
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_DB, *mongo_ce_Cursor;
 extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception, *mongo_ce_ResultException;
@@ -37,9 +38,9 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 zend_class_entry *mongo_ce_Collection = NULL;
 
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
-static int is_gle_op(zval *options, int default_do_gle TSRMLS_DC);
+static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC);
 static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
-static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max_document_size, int max_message_size TSRMLS_DC);
+static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
 
 PHP_METHOD(MongoCollection, __construct)
@@ -212,15 +213,17 @@ PHP_METHOD(MongoCollection, validate)
  * This should probably be split into two methods... right now appends the
  * getlasterror query to the buffer and alloc & inits the cursor zval.
  */
-static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max_document_size, int max_message_size TSRMLS_DC)
+static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC)
 {
 	zval *cmd_ns_z, *cmd, *cursor_z, *temp, *timeout_p;
 	char *cmd_ns, *w_str = NULL;
 	mongo_cursor *cursor;
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
 	mongo_db *db = (mongo_db*)zend_object_store_get_object(c->parent TSRMLS_CC);
-	int response, w = 0, fsync = 0, timeout = -1;
+	int response, w = 0, fsync = 0, journal = 0, timeout = -1;
 	mongoclient *link = (mongoclient*) zend_object_store_get_object(c->link TSRMLS_CC);
+	int max_document_size = connection->max_bson_size;
+	int max_message_size = connection->max_message_size;
 
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror");
 
@@ -233,6 +236,10 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max
 	if (timeout == PHP_MONGO_DEFAULT_SOCKET_TIMEOUT && link->servers->options.socketTimeoutMS > 0) {
 		timeout = link->servers->options.socketTimeoutMS;
 	}
+
+    /* Get the default value for journalling */
+	fsync = link->servers->options.default_fsync;
+	journal = link->servers->options.default_journal;
 
 	/* Read the default_* properties from the link */
 	if (link->servers->options.default_w != -1) {
@@ -261,7 +268,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max
 
 	/* Fetch all the options from the options array*/
 	if (options && !IS_SCALAR_P(options)) {
-		zval **w_pp = NULL, **fsync_pp, **timeout_pp;
+		zval **w_pp = NULL, **fsync_pp, **timeout_pp, **journal_pp;
 
 		/* First we try "w", and if that is not found we check for "safe" */
 		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**) &w_pp) == SUCCESS) {
@@ -302,19 +309,24 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max
 		if (SUCCESS == zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**) &fsync_pp)) {
 			convert_to_boolean(*fsync_pp);
 			fsync = Z_BVAL_PP(fsync_pp);
+		}
 
-			/* fsync forces "w" to be atleast 1, so don't touch it if it's
-			 * already set to something else above while parsing "w" (and
-			 * "safe") */
-			if (fsync && w == 0) {
-				w = 1;
-			}
+		if (zend_hash_find(HASH_P(options), "j", strlen("j") + 1, (void**) &journal_pp) == SUCCESS) {
+			convert_to_boolean(*journal_pp);
+			journal = Z_BVAL_PP(journal_pp);
 		}
 
 		if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**) &timeout_pp)) {
 			convert_to_long(*timeout_pp);
 			timeout = Z_LVAL_PP(timeout_pp);
 		}
+	}
+
+	/* fsync forces "w" to be atleast 1, so don't touch it if it's
+	 * already set to something else above while parsing "w" (and
+	 * "safe") */
+	if (fsync && w == 0) {
+		w = 1;
 	}
 
 	/* get "db.$cmd" zval */
@@ -356,6 +368,11 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max
 		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added fsync=1");
 	}
 
+	if (journal) {
+		add_assoc_bool(cmd, "journal", 1);
+		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added journal=1");
+	}
+
 	/* get cursor */
 	MAKE_STD_ZVAL(cursor_z);
 	object_init_ex(cursor_z, mongo_ce_Cursor);
@@ -387,6 +404,10 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, int max
 	/* append the query */
 	response = php_mongo_write_query(buf, cursor, max_document_size, max_message_size TSRMLS_CC);
 	zval_ptr_dtor(&cmd_ns_z);
+
+#if MONGO_PHP_STREAMS
+	php_log_stream_query(connection, cursor TSRMLS_CC);
+#endif
 
 	if (FAILURE == response) {
 		return 0;
@@ -443,8 +464,8 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 		return 0;
 	}
 
-	if (is_gle_op(options, link->servers->options.default_w TSRMLS_CC)) {
-		zval *cursor = append_getlasterror(getThis(), buf, options, connection->max_bson_size, connection->max_message_size TSRMLS_CC);
+	if (is_gle_op(options, &link->servers->options TSRMLS_CC)) {
+		zval *cursor = append_getlasterror(getThis(), buf, options, connection TSRMLS_CC);
 		if (cursor) {
 			do_safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
 			retval = -1;
@@ -462,17 +483,22 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 }
 
 
-static int is_gle_op(zval *options, int default_do_gle TSRMLS_DC)
+static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC)
 {
 	zval **gle_pp = 0, **fsync_pp = 0;
 	int    gle_op = 0;
 
 	/* First we check for the global (connection string) default */
-	if (default_do_gle != -1) {
-		gle_op = default_do_gle;
+	if (server_options->default_w != -1) {
+		gle_op = server_options->default_w;
 	}
+	if (server_options->default_fsync || server_options->default_journal) {
+		gle_op = 1;
+	}
+
 	/* Then we check the options array that could overwrite the default */
 	if (options && Z_TYPE_P(options) == IS_ARRAY) {
+		zval **journal_pp;
 
 		/* First we try "w", and if that is not found we check for "safe" */
 		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**) &gle_pp) == FAILURE) {
@@ -496,8 +522,16 @@ static int is_gle_op(zval *options, int default_do_gle TSRMLS_DC)
 
 		/* Check for "fsync" in options array */
 		if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp) == SUCCESS) {
-			/* Check for bool/int value of 1 */
-			if ((Z_TYPE_PP(fsync_pp) == IS_LONG || Z_TYPE_PP(fsync_pp) == IS_BOOL) && Z_LVAL_PP(fsync_pp) == 1) {
+			convert_to_boolean_ex(fsync_pp);
+			if (Z_BVAL_PP(fsync_pp)) {
+				gle_op = 1;
+			}
+		}
+
+		/* Check for "j" in options array */
+		if (zend_hash_find(HASH_P(options), "j", strlen("j") + 1, (void**)&journal_pp) == SUCCESS) {
+			convert_to_boolean_ex(journal_pp);
+			if (Z_BVAL_PP(journal_pp)) {
 				gle_op = 1;
 			}
 		}
@@ -644,6 +678,10 @@ PHP_METHOD(MongoCollection, insert)
 		RETURN_FALSE;
 	}
 
+#if MONGO_PHP_STREAMS
+	php_log_stream_insert(connection, a, options TSRMLS_CC);
+#endif
+
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -689,6 +727,10 @@ PHP_METHOD(MongoCollection, batchInsert)
 		efree(buf.start);
 		return;
 	}
+#if MONGO_PHP_STREAMS
+	php_log_stream_batchinsert(connection, docs, bit_opts, options TSRMLS_CC);
+#endif
+
 
 	RETVAL_TRUE;
 
@@ -868,6 +910,11 @@ PHP_METHOD(MongoCollection, update)
 		return;
 	}
 
+#if MONGO_PHP_STREAMS
+	php_log_stream_update(connection, c->ns, criteria, newobj, options, bit_opts TSRMLS_CC);
+#endif
+
+
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -933,6 +980,10 @@ PHP_METHOD(MongoCollection, remove)
 		zval_ptr_dtor(&criteria);
 		return;
 	}
+#if MONGO_PHP_STREAMS
+	php_log_stream_delete(connection, c->ns, criteria, options, flags TSRMLS_CC);
+#endif
+
 
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
