@@ -23,5 +23,7 @@ notifications:
     - bjori@php.net
 
 # Run PHPs run-tests.php 
-script: REPORT_EXIT_STATUS=1 TEST_PHP_EXECUTABLE=`which php` TEST_PHP_CGI_EXECUTABLE=`which php-cgi` php run-tests.php -q -x --show-diff -g 'FAIL,XFAIL,BORK,WARN,LEAK,SKIP'
+script:
+  - MYPHP=`make findphp` 
+  - REPORT_EXIT_STATUS=1 TEST_PHP_EXECUTABLE=$MYPHP $MYPHP run-tests.php -n -d extension=modules/mongo.so -q -x --show-diff -g 'FAIL,XFAIL,BORK,WARN,LEAK,SKIP'
 
