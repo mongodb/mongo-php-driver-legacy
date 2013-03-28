@@ -1,5 +1,5 @@
 --TEST--
-MongoClient Connection string arguments (journal) over standalone server
+Connection strings: Test journal over standalone server
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
