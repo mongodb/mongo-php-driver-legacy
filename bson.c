@@ -226,7 +226,7 @@ int php_mongo_serialize_element(const char *name, zval **data, buffer *buf, int 
 			PHP_MONGO_SERIALIZE_KEY(BSON_STRING);
 
 			/* if this is not a valid string, stop */
-			if (MonGlo(utf8) && !is_utf8(Z_STRVAL_PP(data), Z_STRLEN_PP(data))) {
+			if (!is_utf8(Z_STRVAL_PP(data), Z_STRLEN_PP(data))) {
 				zend_throw_exception_ex(mongo_ce_Exception, 12 TSRMLS_CC, "non-utf8 string: %s", Z_STRVAL_PP(data));
 				return ZEND_HASH_APPLY_STOP;
 			}
