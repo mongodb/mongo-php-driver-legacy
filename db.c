@@ -467,7 +467,10 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 		/* check that the ns is valid and not an index (contains $) */
 		if (
 			zend_hash_find(HASH_P(next), "name", 5, (void**)&collection) == FAILURE ||
-			strchr(Z_STRVAL_PP(collection), '$')
+			(
+				Z_TYPE_PP(collection) == IS_STRING &&
+				strchr(Z_STRVAL_PP(collection), '$')
+			)
 		) {
 			zval_ptr_dtor(&next);
 			MAKE_STD_ZVAL(next);

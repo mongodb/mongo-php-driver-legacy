@@ -121,6 +121,7 @@ PHP_METHOD(MongoGridFSFile, write)
 	if (!filename) {
 		zval **temp;
 		if (zend_hash_find(HASH_P(file), "filename", strlen("filename") + 1, (void**) &temp) == SUCCESS) {
+			convert_to_string_ex(temp);
 			filename = Z_STRVAL_PP(temp);
 		} else {
 			zend_throw_exception(mongo_ce_GridFSException, "Cannot find filename", 15 TSRMLS_CC);

@@ -1829,6 +1829,7 @@ static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
 			long code;
 
 			if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void **) &tmp) == SUCCESS) {
+				convert_to_string_ex(tmp);
 				message = Z_STRVAL_PP(tmp);
 			} else {
 				message = strdup("Unknown error executing command");
