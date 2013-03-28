@@ -144,7 +144,7 @@ void mongo_log_stream_update(mongo_connection *connection, zval *ns, zval *crite
 	}
 }
 
-void mongo_log_stream_delete(mongo_connection *connection, zval *ns, zval *criteria, int flags, zval *options TSRMLS_DC)
+void mongo_log_stream_delete(mongo_connection *connection, zval *ns, zval *criteria, zval *options, int flags TSRMLS_DC)
 {
 	zval **callback;
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
