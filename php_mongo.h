@@ -558,7 +558,6 @@ ZEND_BEGIN_MODULE_GLOBALS(mongo)
 
 	/* $ alternative */
 	char *cmd_char;
-	int utf8;
 	int native_long;
 	int long_as_object;
 	int allow_empty_keys;
