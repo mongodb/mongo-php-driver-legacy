@@ -104,9 +104,8 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 
 	client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
 	status = client->manager->recv_header(con, &client->servers->options, cursor->timeout, buf, REPLY_HEADER_LEN, error_message);
-	/* socket has been closed */
-	if (status == 0) {
-		*error_message = strdup("socket has been closed");
+	/* Read failed, error message populated by recv_header */
+	if (status == -1) {
 		return -1;
 	} else if (status < INT_32*4) {
 		*error_message = strdup("couldn't get response header");

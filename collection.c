@@ -601,9 +601,8 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
 	ZVAL_NULL(errmsg);
 
 	if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
+		mongo_util_cursor_failed(cursor TSRMLS_CC);
 		zval_ptr_dtor(&errmsg);
-		cursor->connection = NULL;
-		zval_ptr_dtor(&cursor_z);
 		return;
 	}
 	zval_ptr_dtor(&errmsg);
