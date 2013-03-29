@@ -282,3 +282,44 @@ void mongo_log_stream_batchinsert(mongo_connection *connection, zval *docs, zval
 	}
 }
 
+void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC)
+{
+	zval **callback;
+	php_stream_context *context = ((php_stream *)connection->socket)->context;
+
+	if (context && php_stream_context_get_option(context, "mongodb", "log_response_header", &callback) == SUCCESS) {
+		zval **args[3];
+		zval *server, *info;
+		zval *retval = NULL;
+
+		server = php_log_get_server_info(connection);
+
+		MAKE_STD_ZVAL(info);
+		array_init(info);
+
+		add_assoc_long(info, "send_request_id", cursor->send.request_id);
+		add_assoc_long(info, "cursor_id", cursor->cursor_id);
+		add_assoc_long(info, "recv_request_id", cursor->recv.request_id);
+		add_assoc_long(info, "recv_response_to", cursor->recv.response_to);
+		add_assoc_long(info, "recv_op", cursor->recv.op);
+		add_assoc_long(info, "flag", cursor->flag);
+		add_assoc_long(info, "start", cursor->start);
+		/*add_assoc_long(info, "global_response_num", MonGlo(response_num)); */
+
+		args[0] = &server;
+		args[1] = &cursor->query;
+		args[2] = &info;
+
+
+		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, 3, args, 0, NULL TSRMLS_CC)) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call stream context callback function 'log_response_header' for 'mongodb' context option");
+		}
+
+		if (retval) {
+			zval_ptr_dtor(&retval);
+		}
+		zval_ptr_dtor(args[0]);
+		zval_ptr_dtor(&info);
+	}
+}
+
