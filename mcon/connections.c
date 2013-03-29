@@ -518,35 +518,26 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 
 	/* We find out whether the machine we connected too, is actually the
 	 * one we thought we were connecting too */
-	if (!bson_find_field_as_string(ptr, "me", &connected_name)) {
-		struct mcon_str *tmp;
-
-		mcon_str_ptr_init(tmp);
-		mcon_str_add(tmp, "Host does not seem to be a replicaset member (", 0);
-		mcon_str_add(tmp, mongo_server_hash_to_server(con->hash), 1);
-		mcon_str_add(tmp, ")", 0);
-
-		*error_message = strdup(tmp->d);
-		mcon_str_ptr_dtor(tmp);
-
-		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, *error_message);
-		free(data_buffer);
-		return 0;
-	}
-
-	we_think_we_are = mongo_server_hash_to_server(con->hash);
-	if (strcmp(connected_name, we_think_we_are) == 0) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: the server name matches what we thought it'd be (%s).", we_think_we_are);
+	/* MongoDB 1.8.x doesn't have the "me" field.
+	 * The replicaset verification is done next step (setName).
+	 */
+	if (bson_find_field_as_string(ptr, "me", &connected_name)) {
+		we_think_we_are = mongo_server_hash_to_server(con->hash);
+		if (strcmp(connected_name, we_think_we_are) == 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: the server name matches what we thought it'd be (%s).", we_think_we_are);
+		} else {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "ismaster: the server name (%s) did not match with what we thought it'd be (%s).", connected_name, we_think_we_are);
+			/* We reset the name as the server responded with a different name than
+			 * what we thought it was */
+			free(server->host);
+			server->host = mcon_strndup(connected_name, strchr(connected_name, ':') - connected_name);
+			server->port = atoi(strchr(connected_name, ':') + 1);
+			retval = 3;
+		}
+		free(we_think_we_are);
 	} else {
-		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "ismaster: the server name (%s) did not match with what we thought it'd be (%s).", connected_name, we_think_we_are);
-		/* We reset the name as the server responded with a different name than
-		 * what we thought it was */
-		free(server->host);
-		server->host = mcon_strndup(connected_name, strchr(connected_name, ':') - connected_name);
-		server->port = atoi(strchr(connected_name, ':') + 1);
-		retval = 3;
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Can't find 'me' in ismaster response, possibly not a replicaset (%s)", mongo_server_hash_to_server(con->hash));
 	}
-	free(we_think_we_are);
 
 	/* Do replica set name test */
 	bson_find_field_as_string(ptr, "setName", &set);
