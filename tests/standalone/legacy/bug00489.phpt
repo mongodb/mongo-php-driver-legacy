@@ -17,9 +17,9 @@ echo "I'm alive!\n";
 ?>
 ==DONE==
 --EXPECTF--
-Notice: CON     WARN: Host does not seem to be a replicaset member (%s:%d) in %s on line %d
+Notice: CON     WARN: Can't find 'me' in ismaster response, possibly not a replicaset (%s:%d) in %s on line %d
 
-Notice: CON     WARN: discover_topology: ismaster return with an error for %s:%d: [Host does not seem to be a replicaset member (%s:%d)] in %s on line %d
+Notice: CON     WARN: discover_topology: ismaster return with an error for %s:%d: [Not a replicaset member] in %s on line %d
 string(26) "No candidate servers found"
 I'm alive!
 ==DONE==
