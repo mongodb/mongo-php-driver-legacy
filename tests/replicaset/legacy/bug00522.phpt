@@ -34,7 +34,7 @@ echo "-----\n";
 
 try {
 	$c->w = 2;
-	$retval = $c->insert( array( 'test' => 1 ), array( 'fsync' => false, 'safe' => 1, 'timeout' => M_PI ) );
+	$retval = $c->insert( array( 'test' => 1 ), array( 'fsync' => false, 'safe' => 1, 'timeout' => M_PI * 100 ) );
 	var_dump($retval["ok"]);
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
