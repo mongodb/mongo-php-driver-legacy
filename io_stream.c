@@ -132,9 +132,18 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 				if (zend_hash_find(Z_ARRVAL_P(metadata), "timed_out", sizeof("timed_out"), (void**)&tmp) == SUCCESS) {
 					convert_to_boolean_ex(tmp);
 					if (Z_BVAL_PP(tmp)) {
+						struct timeval rtimeout = {0};
+
+						if (timeout > 0 && options->socketTimeoutMS != timeout) {
+							rtimeout.tv_sec = timeout / 1000;
+							rtimeout.tv_usec = (timeout % 1000) * 1000;
+						} else {
+							rtimeout.tv_sec = options->socketTimeoutMS / 1000;
+							rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
+						}
 						*error_message = malloc(256);
-						snprintf(*error_message, 256, "Read timed out after reading %d bytes", num);
-						return 0;
+						snprintf(*error_message, 256, "Read timed out after reading %d bytes, waited for %d seconds and %d ms", num, rtimeout.tv_sec, rtimeout.tv_usec);
+						return -1;
 					}
 				}
 			}
