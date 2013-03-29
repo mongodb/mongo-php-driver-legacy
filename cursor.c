@@ -108,7 +108,8 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 	if (status == -1) {
 		return -1;
 	} else if (status < INT_32*4) {
-		*error_message = strdup("couldn't get response header");
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "couldn't get full response header, got %d bytes but expected atleast %d", status, INT_32*4);
 		return 4;
 	}
 
