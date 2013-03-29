@@ -17,6 +17,7 @@ before_script:
   - sudo chown -R travis /data/
   - ./.travis.scripts/compile.sh
   - MONGO_SERVER_STANDALONE=yes MONGO_SERVER_REPLICASET=yes MONGO_SERVER_MONGOS=yes make servers
+  - sudo apt-get install gdb
 
 notifications:
   email:
@@ -25,5 +26,6 @@ notifications:
 # Run PHPs run-tests.php 
 script:
   - MYPHP=`make findphp` 
+  - cat ./.travis.scripts/script.gdb | gdb --args $MYPHP tests/replicaset/legacy/bug00522.phpt
   - REPORT_EXIT_STATUS=1 TEST_PHP_EXECUTABLE=$MYPHP $MYPHP run-tests.php -n -d extension=modules/mongo.so -q -x --show-diff -g 'FAIL,XFAIL,BORK,WARN,LEAK,SKIP'
 
