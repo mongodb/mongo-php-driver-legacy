@@ -43,7 +43,7 @@ echo "-----\n";
 
 try {
 	$c->w = 2;
-	$retval = $c->insert( array( 'test' => 1 ), array( 'fsync' => "yesplease", 'safe' => 4, 'timeout' => M_PI * 1000 ) );
+	$retval = $c->insert( array( 'test' => 1 ), array( 'fsync' => "yesplease", 'safe' => 5, 'timeout' => M_PI * 1000 ) );
 	var_dump($retval["ok"]);
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
@@ -88,13 +88,12 @@ float(1)
 -----
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
-IO      FINE: append_getlasterror: added w=4
+IO      FINE: append_getlasterror: added w=5
 IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: append_getlasterror: added fsync=1
 IO      FINE: getting reply
 IO      FINE: getting cursor header
-IO      FINE: getting cursor body
-float(1)
+%s:%d: Read timed out after reading 0 bytes, waited for 3 seconds and 141000 ms
 -----
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
