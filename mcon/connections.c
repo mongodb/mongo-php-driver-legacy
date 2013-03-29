@@ -368,7 +368,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	/* Send and wait for reply */
 	if (manager->send(con, options, packet->d, packet->l, error_message) == -1) {
 		mcon_str_ptr_dtor(packet);
-		return -1;
+		return 0;
 	}
 	mcon_str_ptr_dtor(packet);
 	read = manager->recv_header(con, options, options->socketTimeoutMS, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
