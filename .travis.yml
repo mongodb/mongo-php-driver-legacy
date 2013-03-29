@@ -17,11 +17,13 @@ before_script:
   - sudo chown -R travis /data/
   - ./.travis.scripts/compile.sh
   - MONGO_SERVER_STANDALONE=yes MONGO_SERVER_REPLICASET=yes MONGO_SERVER_MONGOS=yes make servers
+  - sudo apt-get install gdb
 
 notifications:
   email:
     - bjori@php.net
 
+#  - cat ./.travis.scripts/script.gdb | gdb --args $MYPHP `find ...core`
 # Run PHPs run-tests.php 
 script:
   - MYPHP=`make findphp` 
