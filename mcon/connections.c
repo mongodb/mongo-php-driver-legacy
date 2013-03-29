@@ -403,7 +403,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	/* Read data */
 	*data_buffer = malloc(data_size + 1);
 	if (manager->recv_data(con, options, options->socketTimeoutMS, *data_buffer, data_size, error_message) <= 0) {
-		free(data_buffer);
+		free(*data_buffer);
 		return 0;
 	}
 
@@ -426,7 +426,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 			*error_message = strdup("send_package: the query returned an unknown error");
 		}
 
-		free(data_buffer);
+		free(*data_buffer);
 		return 0;
 	}
 
