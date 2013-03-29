@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-522: Setting per-insert options.
 --SKIPIF--
-<?php require_once "tests/utils/replication.inc";?>
+<?php require_once "tests/utils/replicaset.inc";?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
