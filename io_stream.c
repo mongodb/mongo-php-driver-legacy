@@ -143,10 +143,12 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 						}
 						*error_message = malloc(256);
 						snprintf(*error_message, 256, "Read timed out after reading %d bytes, waited for %d seconds and %d ms", num, rtimeout.tv_sec, rtimeout.tv_usec);
+						zval_ptr_dtor(&metadata);
 						return -1;
 					}
 				}
 			}
+			zval_ptr_dtor(&metadata);
 		}
 
 		data = (char*)data + num;
