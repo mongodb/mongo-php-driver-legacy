@@ -134,6 +134,10 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 	cursor->start            = MONGO_32(*(int*)(buf + INT_32*5 + INT_64));
 	num_returned             = MONGO_32(*(int*)(buf + INT_32*6 + INT_64));
 
+#if MONGO_PHP_STREAMS
+	mongo_log_stream_response_header(con, cursor TSRMLS_CC);
+#endif
+
 	/* TODO: find out what this does */
 	if (cursor->recv.response_to > MonGlo(response_num)) {
 		MonGlo(response_num) = cursor->recv.response_to;
