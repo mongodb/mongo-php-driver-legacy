@@ -38,7 +38,7 @@ CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
-CON     INFO: is_ping: last pinged at %d; time: 0ms
+CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
 CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
 CON     INFO: ismaster: start
@@ -65,7 +65,7 @@ CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
-CON     INFO: is_ping: last pinged at %d; time: 0ms
+CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
@@ -77,7 +77,7 @@ CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
-CON     INFO: is_ping: last pinged at %d; time: 0ms
+CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
@@ -89,7 +89,7 @@ CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
-CON     INFO: is_ping: last pinged at %d; time: 0ms
+CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
 CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
 CON     INFO: ismaster: start
