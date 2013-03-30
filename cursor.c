@@ -1078,10 +1078,10 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 
 int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
 {
-	mongo_connection *connection = cursor->connection;
 
-	mongo_manager_connection_deregister(MonGlo(manager), connection);
+	mongo_manager_connection_deregister(MonGlo(manager), cursor->connection);
 	cursor->dead = 1;
+	cursor->connection = NULL;
 
 	return FAILURE;
 }

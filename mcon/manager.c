@@ -565,7 +565,11 @@ int mongo_manager_deregister(mongo_con_manager *manager, mongo_con_manager_item 
 				prev->next = item->next;
 			}
 			/* Free structures */
-			cleanup_cb(manager, con, MONGO_CLOSE_BROKEN);
+			if (cleanup_cb) {
+				cleanup_cb(manager, con, MONGO_CLOSE_BROKEN);
+			}
+			free(item->hash);
+			free(item);
 
 			/* Woo! */
 			return 1;
