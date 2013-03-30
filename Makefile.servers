@@ -4,4 +4,6 @@ servers:
 stop-servers:
 	$(PHP_EXECUTABLE) tests/utils/teardown-servers.php
 
+findphp:
+	@echo $(PHP_EXECUTABLE)
 

@@ -17,6 +17,9 @@ MongoLog::setLevel(MongoLog::ALL);
 
 $config = MongoShellServer::getReplicasetInfo();
 $m = new Mongo("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
+
+MongoLog::setModule(0);
+MongoLog::setLevel(0);
 ?>
 --EXPECTF--
 PARSE   INFO: Parsing mongodb://%s:%d
@@ -26,13 +29,12 @@ PARSE   INFO: - Found option 'replicaSet': '%s'
 PARSE   INFO: - Switching connection type: REPLSET
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 CON     INFO: connection_create: creating new connection for %s:%d
+CON     INFO: stream_connect: Not establishing SSL for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
-CON     FINE: get_server_flags: added tag dc:west
-CON     FINE: get_server_flags: added tag use:accounting
 CON     INFO: is_ping: pinging %s:%d;%s;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
@@ -54,33 +56,36 @@ CON     FINE: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
+CON     INFO: stream_connect: Not establishing SSL for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
-CON     FINE: get_server_flags: added tag dc:east
-CON     FINE: get_server_flags: added tag use:reporting
 CON     INFO: is_ping: pinging %s:%d;%s;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     INFO: is_ping: last pinged at %d; time: 0ms
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
+CON     INFO: stream_connect: Not establishing SSL for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
+CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     INFO: is_ping: last pinged at %d; time: 0ms
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
+CON     INFO: stream_connect: Not establishing SSL for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
+CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
@@ -159,21 +164,3 @@ REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPL
 REPLSET FINE: selecting near server: done
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;X;%d
-
-Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;REPLICASET;X;%d. in Unknown on line 0
-
-Notice: CON     INFO: freeing connection %s:%d;REPLICASET;X;%d in Unknown on line 0
-
-Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;REPLICASET;X;%d. in Unknown on line 0
-
-Notice: CON     INFO: freeing connection %s:%d;REPLICASET;X;%d in Unknown on line 0
-
-Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;REPLICASET;X;%d. in Unknown on line 0
-
-Notice: CON     INFO: freeing connection %s:%d;REPLICASET;X;%d in Unknown on line 0
-
-Notice: CON     FINE: mongo_connection_destroy: Destroying connection object for %s:%d;%s;X;%d in Unknown on line 0
-
-Notice: CON     FINE: mongo_connection_destroy: Closing socket for %s:%d;REPLICASET;X;%d. in Unknown on line 0
-
-Notice: CON     INFO: freeing connection %s:%d;REPLICASET;X;%d in Unknown on line 0
