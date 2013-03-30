@@ -29,6 +29,8 @@ MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::INFO);
 $dsn = MongoShellServer::getStandaloneInfo();
 $m = new Mongo("mongodb://$dsn");
+MongoLog::setModule(0);
+MongoLog::setLevel(0);
 ?>
 --EXPECTF--
 Warnings:
@@ -61,4 +63,3 @@ CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;X;%d
 
-Notice: CON     INFO: freeing connection %s:%d;-;X;%d in Unknown on line 0

@@ -136,6 +136,7 @@ int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, i
 
 	if (status != 0) {
 		/* We don't care which failure it was, it just failed and the error_message has been set */
+		*error_message = strdup("Timed out waiting for header data");
 		return -1;
 	}
 	status = recv((int) (long) con->socket, data, size, 0);

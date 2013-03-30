@@ -326,7 +326,9 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 			mcon_str_addl(messages, ":", 1, 0);
 			mcon_str_add_int(messages, servers->server[i]->port);
 			mcon_str_addl(messages, ": ", 2, 0);
-			mcon_str_add(messages, con_error_message, 1); /* Also frees con_error_message */
+			if (con_error_message) {
+				mcon_str_add(messages, con_error_message, 1); /* Also frees con_error_message */
+			}
 		}
 	}
 
@@ -563,7 +565,11 @@ int mongo_manager_deregister(mongo_con_manager *manager, mongo_con_manager_item 
 				prev->next = item->next;
 			}
 			/* Free structures */
-			cleanup_cb(manager, con, MONGO_CLOSE_BROKEN);
+			if (cleanup_cb) {
+				cleanup_cb(manager, con, MONGO_CLOSE_BROKEN);
+			}
+			free(item->hash);
+			free(item);
 
 			/* Woo! */
 			return 1;
