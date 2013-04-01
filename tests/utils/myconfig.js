@@ -54,6 +54,8 @@ function initStandalone(port,auth,root,user) {
     if (auth) {
         opts.auth = "";
     }
+
+    opts.dbpath = MongoRunner.dataPath + port;
     retval = startMongodTest(port, false, false, opts);
     retval.port = port;
     assert.soon( function() {
