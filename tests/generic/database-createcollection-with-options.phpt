@@ -8,7 +8,7 @@ require_once "tests/utils/server.inc";
 $dsn = MongoShellServer::getStandaloneInfo();
 
 $a = new MongoClient($dsn);
-$d = $a->selectDb(dbname());
+$d = $a->selectDb("phpunit");
 $ns = $d->selectCollection('system.namespaces');
 
 // cleanup

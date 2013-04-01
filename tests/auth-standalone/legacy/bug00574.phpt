@@ -30,6 +30,8 @@ catch ( Exception $e )
 echo "DONE\n";
 ?>
 --EXPECTF--
-Deprecated: Function MongoDB::authenticate() is deprecated in %sbug00574.php on line %d
-%s:%d: unauthorized for query on test2.collection
+Deprecated: Function MongoDB::authenticate() is deprecated in %s on line %d
+
+Warning: MongoDB::authenticate(): You can't authenticate an already authenticated connection. in %s on line %d
+Failed to connect to: %s:%d: Authentication failed on database 'test2' with username 'user': auth fails
 DONE
