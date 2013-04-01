@@ -30,7 +30,10 @@ if (!$process) {
 }
 
 stream_set_write_buffer($IO[0], 0);
-stream_set_read_buffer($IO[1], 0);
+/* Added in 5.3.3 */
+if (function_exists("stream_set_read_buffer")) {
+    stream_set_read_buffer($IO[1], 0);
+}
 
 // Say hi to the shell and read it back so we know everything is working
 $cmd = "print(" . json_encode($MARKER) . ")\n\n\n\n";
