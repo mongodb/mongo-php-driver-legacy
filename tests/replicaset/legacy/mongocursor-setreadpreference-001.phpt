@@ -1,9 +1,9 @@
 --TEST--
 MongoCursor::setReadPreference [1]
 --SKIPIF--
+<?php if (version_compare(phpversion(), "5.3.0", "lt")) exit("skip setCallback and closures are 5.3+"); ?>
 <?php require_once "tests/utils/replicaset.inc"; ?>
 --FILE--
-<?php require_once "tests/utils/replicaset.inc"; ?>
 <?php
 $mentions = array(); 
 require_once "tests/utils/server.inc";
