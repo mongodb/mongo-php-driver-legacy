@@ -114,12 +114,17 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 	}
 
 	status = recv(sock, buf, REPLY_HEADER_LEN, FLAGS);
-	/* socket has been closed */
 	if (status == 0) {
+		/* socket has been closed */
 		*error_message = strdup("socket has been closed");
 		return -1;
+	}
+	else if (status == -1) {
+		*error_message = strdup("recv failed");
+		return -1;
 	} else if (status < INT_32*4) {
-		*error_message = strdup("couldn't get response header");
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "couldn't get full response header, got %d bytes but expected atleast %d", status, INT_32*4);
 		return 4;
 	}
 
@@ -1062,10 +1067,10 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC) {
 
 int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
 {
-	mongo_connection *connection = cursor->connection;
 
-	mongo_manager_connection_deregister(MonGlo(manager), connection);
+	mongo_manager_connection_deregister(MonGlo(manager), cursor->connection);
 	cursor->dead = 1;
+	cursor->connection = NULL;
 
 	return FAILURE;
 }
