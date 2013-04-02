@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-684: Add support for socketTimeoutMS
 --SKIPIF--
+<?php if (version_compare(phpversion(), "5.3.0", "lt")) exit("skip setCallback and closures are 5.3+"); ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php

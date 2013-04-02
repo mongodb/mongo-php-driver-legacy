@@ -1,6 +1,7 @@
 --TEST--
 MongoGridFS::put() throws exception for nonexistent file
 --SKIPIF--
+<?php if (version_compare(phpversion(), "5.3.0", "lt")) exit("skip 5.2 seems to get a different exception"); ?>
 <?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php

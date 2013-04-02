@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-426: Connection pool not paying attention to authentication when using replicaSet=true
 --SKIPIF--
+<?php if (version_compare(phpversion(), "5.3.0", "lt")) exit("skip The connected property is 5.3+"); ?>
 <?php require_once "tests/utils/auth-replicaset.inc" ?>
 --FILE--
 <?php
