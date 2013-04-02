@@ -104,12 +104,12 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 
 	client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
 	status = client->manager->recv_header(con, &client->servers->options, cursor->timeout, buf, REPLY_HEADER_LEN, error_message);
-	/* socket has been closed */
-	if (status == 0) {
-		*error_message = strdup("socket has been closed");
+	/* Read failed, error message populated by recv_header */
+	if (status == -1) {
 		return -1;
 	} else if (status < INT_32*4) {
-		*error_message = strdup("couldn't get response header");
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "couldn't get full response header, got %d bytes but expected atleast %d", status, INT_32*4);
 		return 4;
 	}
 
@@ -133,6 +133,10 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 	cursor->cursor_id        = MONGO_64(*(int64_t*)(buf + INT_32*5));
 	cursor->start            = MONGO_32(*(int*)(buf + INT_32*5 + INT_64));
 	num_returned             = MONGO_32(*(int*)(buf + INT_32*6 + INT_64));
+
+#if MONGO_PHP_STREAMS
+	mongo_log_stream_response_header(con, cursor TSRMLS_CC);
+#endif
 
 	/* TODO: find out what this does */
 	if (cursor->recv.response_to > MonGlo(response_num)) {
@@ -1074,10 +1078,10 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 
 int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
 {
-	mongo_connection *connection = cursor->connection;
 
-	mongo_manager_connection_deregister(MonGlo(manager), connection);
+	mongo_manager_connection_deregister(MonGlo(manager), cursor->connection);
 	cursor->dead = 1;
+	cursor->connection = NULL;
 
 	return FAILURE;
 }
