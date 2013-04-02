@@ -437,6 +437,7 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 	if ((connection = mongo_get_read_write_connection(link->manager, link->servers, connection_flags, (char **) &error_message)) == NULL) {
 		if (error_message) {
 			mongo_cursor_throw(NULL, 16 TSRMLS_CC, "Couldn't get connection: %s", error_message);
+			free(error_message);
 		} else {
 			mongo_cursor_throw(NULL, 16 TSRMLS_CC, "Couldn't get connection");
 		}
