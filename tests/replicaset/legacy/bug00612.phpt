@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-612: Impossible to provide a list of tagsets to the readPreferenceTags options
 --SKIPIF--
+<?php if (version_compare(phpversion(), "5.3.0", "lt")) exit("skip setCallback and closures are 5.3+"); ?>
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --INI--
 error_reporting=-1

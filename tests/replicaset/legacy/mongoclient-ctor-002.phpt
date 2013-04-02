@@ -54,9 +54,9 @@ object(Mongo)#%d (4) {
   bool(false)
   ["status"]=>
   NULL
-  ["server":protected]=>
+  ["server%S:protected%S]=>
   NULL
-  ["persistent":protected]=>
+  ["persistent%S:protected%S]=>
   NULL
 }
 All done

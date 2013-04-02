@@ -7,6 +7,10 @@ version 2.0 of the extension (see: https://jira.mongodb.org/browse/PHP-407).
 <?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
+/* 5.2 */
+if (!defined("E_DEPRECATED")) {
+    define("E_DEPRECATED", E_STRICT);
+}
 require_once "tests/utils/server.inc";
 error_reporting(-1);
 
