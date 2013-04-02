@@ -58,6 +58,6 @@ string(23) "The world is not enough"
 string(23) "The world is not enough"
 string(23) "The world is not enough"
 string(20) "MongoCursorException"
-string(%d) "%s:%d: socket has been closed"
+string(%d) "%s:%d: Remote server has closed the connection?"
 int(-1)
 
