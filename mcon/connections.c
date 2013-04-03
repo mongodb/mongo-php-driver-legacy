@@ -363,7 +363,6 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	uint32_t       data_size;
 	char           reply_buffer[MONGO_REPLY_HEADER_SIZE];
 	uint32_t       flags; /* To check for query reply status */
-	char          *recv_error_message;
 
 	/* Send and wait for reply */
 	if (manager->send(con, options, packet->d, packet->l, error_message) == -1) {
@@ -371,11 +370,9 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 		return 0;
 	}
 	mcon_str_ptr_dtor(packet);
-	read = manager->recv_header(con, options, options->socketTimeoutMS, reply_buffer, MONGO_REPLY_HEADER_SIZE, &recv_error_message);
-	if (read == -1) {
-		*error_message = malloc(256);
-		snprintf(*error_message, 256, "send_package: error reading from socket: %s", recv_error_message);
-		free(recv_error_message);
+	read = manager->recv_header(con, options, options->socketTimeoutMS, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
+	if (read < 0) {
+		/* Error already populated */
 		return 0;
 	}
 

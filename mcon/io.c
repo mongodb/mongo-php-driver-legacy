@@ -145,7 +145,7 @@ int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, i
 		*error_message = strdup(strerror(errno));
 		return -1;
 	} else if (status == 0) {
-		*error_message = strdup("The socket is closed");
+		*error_message = strdup("The socket was closed by remote host");
 		return -1;
 	}
 	return status;
