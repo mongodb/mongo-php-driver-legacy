@@ -368,6 +368,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   MONGO_METHOD2(MongoCursor, __construct, temp, cursor_z, c->link, cmd_ns_z);
   zval_ptr_dtor(&temp);
   if (EG(exception)) {
+    zval_ptr_dtor(&cursor_z);
     zval_ptr_dtor(&cmd_ns_z);
     return 0;
   }
@@ -392,6 +393,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options TSRMLS_D
   zval_ptr_dtor(&cmd_ns_z);
 
   if (FAILURE == response) {
+    zval_ptr_dtor(&cursor_z);
     return 0;
   }
 
@@ -570,13 +572,14 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
 	ZVAL_NULL(errmsg);
 
   if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
-	  /* TODO: Figure out what to do on FAIL
-    mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
+      /* php_mongo_get_reply() throws exceptions */
+      mongo_manager_connection_deregister(manager, connection);
 
-    zval_ptr_dtor(&errmsg);
-    cursor->connection = NULL;
-    zval_ptr_dtor(&cursor_z);
-		return;
+      zval_ptr_dtor(&errmsg);
+      cursor->connection = NULL;
+      zval_ptr_dtor(&cursor_z);
+      zval_ptr_dtor(&errmsg);
+      return;
   }
   zval_ptr_dtor(&errmsg);
 
