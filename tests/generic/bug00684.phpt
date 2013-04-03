@@ -1,18 +1,21 @@
 --TEST--
 Test for PHP-684: Add support for socketTimeoutMS
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc" ?>
+<?php if (version_compare(phpversion(), "5.3.0", "lt")) exit("skip setCallback and closures are 5.3+"); ?>
+<?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
+
+$dsn = MongoShellServer::getStandaloneInfo();
 
 printLogs(MongoLog::ALL, MongoLog::ALL, "/timeout/i");
 
 echo "socketTimeoutMS (option)\n";
-$m = new_mongo(null, true, true, array("socketTimeoutMS" => 1, "connect" => false));
+$m = new MongoClient($dsn, array("socketTimeoutMS" => 1, "connect" => false));
 
 echo "sockettimeoutms lowercased (option)\n";
-$m = new_mongo(null, true, true, array("socketTimeoutMS" => 2, "connect" => false));
+$m = new MongoClient($dsn, array("socketTimeoutMS" => 2, "connect" => false));
 
 echo "socketTimeoutMS (string)\n";
 $m = new MongoClient("localhost/?socketTimeoutMS=42", array("connect" => false));

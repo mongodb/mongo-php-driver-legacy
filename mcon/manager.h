@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,10 @@ mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manag
 void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connection *con);
 int mongo_manager_connection_deregister(mongo_con_manager *manager, mongo_connection *con);
 int mongo_deregister_callback_from_connection(mongo_connection *connection, void *cursor);
+/* Connection blacklisting */
+mongo_connection_blacklist *mongo_manager_blacklist_find_by_hash(mongo_con_manager *manager, char *hash);
+void mongo_manager_blacklist_register(mongo_con_manager *manager, mongo_connection *con);
+int mongo_manager_blacklist_deregister(mongo_con_manager *manager, mongo_connection_blacklist *con, char *hash);
 
 /* Logging */
 void mongo_log_null(int module, int level, void *context, char *format, va_list arg);

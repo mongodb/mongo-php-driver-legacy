@@ -1,12 +1,12 @@
 --TEST--
 GridFS: Testing fseek and fread
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
+<?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$conn = mongo();
+require_once "tests/utils/server.inc";
+$conn = mongo_standalone();
 $db   = $conn->selectDb('phpunit');
 $grid = $db->getGridFs('wrapper');
 

@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 #include "types.h"
 
 int mongo_io_wait_with_timeout(int sock, int to, char **error_message);
-int mongo_io_send(int sock, char *packet, int total, char **error_message);
-int mongo_io_recv_header(int sock, mongo_server_options *options, char *reply_buffer, int size, char **error_message);
-int mongo_io_recv_data(int sock, mongo_server_options *options, void *dest, int size, char **error_message);
+int mongo_io_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
+int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message);
+int mongo_io_recv_data(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message);
 
 #endif

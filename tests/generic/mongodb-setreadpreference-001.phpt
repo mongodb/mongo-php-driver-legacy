@@ -1,9 +1,9 @@
 --TEST--
 MongoDB::setReadPreference() should set read preference mode
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
 $modes = array(
@@ -15,7 +15,7 @@ $modes = array(
 );
 
 foreach (array_values($modes) as $mode) {
-    $m = new_mongo(null, true, true, array('readPreference' => $mode));
+    $m = new_mongo_standalone(null, true, true, array('readPreference' => $mode));
     $db = $m->phpunit;
     echo $mode, "\n\n";
     foreach (array_values($modes) as $newMode) {

@@ -1,11 +1,11 @@
 --TEST--
 GridFS: Testing minor memory issue
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$conn = Mongo();
+require_once "tests/utils/server.inc";
+$conn = new_mongo_standalone();
 $db   = $conn->phpunit;
 
 $grid = $db->getGridFS();

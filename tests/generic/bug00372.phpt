@@ -3,7 +3,7 @@ Test for PHP-372: Error codes not being passed to MongoGridFSException.
 --CREDITS--
 Alex Yam
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 /*-----------------------------------------------------------
@@ -17,9 +17,9 @@ PHP mongo driver: 1.3.0dev (16th Apr 2012)
 -----------------------------------------------------------*/
 
 #Connect to GridFS
-require_once dirname(__FILE__) ."/../utils.inc";
+require_once "tests/utils/server.inc";
 $db = 'phpunit';
-$m = new_mongo($db);
+$m = new_mongo_standalone($db);
 $prefix = 'test_prefix';
 $GridFS = $m->selectDB($db)->getGridFS($prefix);
 

@@ -1,11 +1,11 @@
 --TEST--
 Test for PHP-508: Change BSON ID generation to use random "increment".
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc";?>
+<?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$m = new_mongo();
+require_once "tests/utils/server.inc";
+$m = new_mongo_standalone();
 $c = $m->selectDB(dbname())->test;
 $c->drop();
 

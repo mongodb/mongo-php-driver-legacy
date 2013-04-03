@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 #include "mongoclient.h"
 #include "mongo.h"
 #include "cursor.h"
+#include "io_stream.h"
 
 #include "exceptions/exception.h"
 #include "exceptions/connection_exception.h"
@@ -74,8 +75,18 @@ zend_function_entry mongo_functions[] = {
 
 /* {{{ mongo_module_entry
  */
+static const zend_module_dep mongo_deps[] = {
+	ZEND_MOD_OPTIONAL("openssl")
+#if PHP_VERSION_ID >= 50300
+	ZEND_MOD_END
+#else /* 5.2 */
+	{ NULL, NULL, NULL, 0 }
+#endif
+};
 zend_module_entry mongo_module_entry = {
-	STANDARD_MODULE_HEADER,
+	STANDARD_MODULE_HEADER_EX,
+	NULL,
+	mongo_deps,
 	PHP_MONGO_EXTNAME,
 	mongo_functions,
 	PHP_MINIT(mongo),
@@ -126,7 +137,6 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_ENTRY("mongo.default_port", "27017", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals)
 	STD_PHP_INI_ENTRY("mongo.chunk_size", "262144", PHP_INI_ALL, OnUpdateLong, chunk_size, zend_mongo_globals, mongo_globals)
 	STD_PHP_INI_ENTRY("mongo.cmd", "$", PHP_INI_ALL, OnUpdateStringUnempty, cmd_char, zend_mongo_globals, mongo_globals)
-	STD_PHP_INI_ENTRY("mongo.utf8", "1", PHP_INI_ALL, OnUpdateLong, utf8, zend_mongo_globals, mongo_globals)
 	STD_PHP_INI_ENTRY("mongo.native_long", "0", PHP_INI_ALL, OnUpdateLong, native_long, zend_mongo_globals, mongo_globals)
 	STD_PHP_INI_ENTRY("mongo.long_as_object", "0", PHP_INI_ALL, OnUpdateLong, long_as_object, zend_mongo_globals, mongo_globals)
 	STD_PHP_INI_ENTRY("mongo.allow_empty_keys", "0", PHP_INI_ALL, OnUpdateLong, allow_empty_keys, zend_mongo_globals, mongo_globals)
@@ -222,13 +232,11 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->request_id = 3;
 	mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
 	mongo_globals->cmd_char = "$";
-	mongo_globals->utf8 = 1;
 
 	mongo_globals->inc = 0;
 	mongo_globals->response_num = 0;
 	mongo_globals->errmsg = 0;
 
-	mongo_globals->max_send_size = 64 * 1024 * 1024;
 	mongo_globals->pool_size = -1;
 
 	hostname = host_start;
@@ -279,6 +287,15 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->manager = mongo_init();
 	TSRMLS_SET_CTX(mongo_globals->manager->log_context);
 	mongo_globals->manager->log_function = php_mcon_log_wrapper;
+
+#if MONGO_PHP_STREAMS
+	mongo_globals->manager->connect     = php_mongo_io_stream_connect;
+	mongo_globals->manager->recv_header = php_mongo_io_stream_read;
+	mongo_globals->manager->recv_data   = php_mongo_io_stream_read;
+	mongo_globals->manager->send        = php_mongo_io_stream_send;
+	mongo_globals->manager->close       = php_mongo_io_stream_close;
+	mongo_globals->manager->forget      = php_mongo_io_stream_forget;
+#endif
 }
 /* }}} */
 
@@ -327,6 +344,11 @@ PHP_MINFO_FUNCTION(mongo)
 
 	php_info_print_table_header(2, "MongoDB Support", "enabled");
 	php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
+#if MONGO_PHP_STREAMS
+	php_info_print_table_row(2, "SSL Support", "enabled");
+#else
+	php_info_print_table_row(2, "SSL Support", "disabled");
+#endif
 
 	php_info_print_table_end();
 
@@ -362,15 +384,15 @@ static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *
 			uint key_len;
 			ulong num_key;
 
-            switch (zend_hash_get_current_key_ex(tagset, &key, &key_len, &num_key, 0, NULL)) {
-                case HASH_KEY_IS_LONG:
+			switch (zend_hash_get_current_key_ex(tagset, &key, &key_len, &num_key, 0, NULL)) {
+				case HASH_KEY_IS_LONG:
 					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Tag %d in tagset %d has no string key", item_count, tagset_id);
 					fail = 1;
-                    break;
-                case HASH_KEY_IS_STRING:
+					break;
+				case HASH_KEY_IS_STRING:
 					mongo_read_preference_add_tag(tmp_ts, key, Z_STRVAL_PP(tag));
-                    break;
-            }
+					break;
+			}
 
 		}
 		item_count++;

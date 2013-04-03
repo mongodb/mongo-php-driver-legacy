@@ -1,11 +1,11 @@
 --TEST--
 Database: Enumerating collections
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) ."/../utils.inc";
-$a = mongo();
+require_once "tests/utils/server.inc";
+$a = mongo_standalone();
 $d = $a->selectDb(dbname());
 
 $d->listcol->drop();

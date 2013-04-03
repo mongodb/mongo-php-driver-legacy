@@ -1,11 +1,11 @@
 --TEST--
 Indexes: Sparse
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$m = Mongo();
+require_once "tests/utils/server.inc";
+$m = new_mongo_standalone();
 $db = $m->phpunit;
 
 $db->people->drop();

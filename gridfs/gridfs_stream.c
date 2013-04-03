@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ typedef __int64 int64_t;
 extern zend_class_entry *mongo_ce_BinData, *mongo_ce_GridFS;
 extern zend_class_entry *mongo_ce_GridFSFile, *mongo_ce_GridFSException;
 
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC);
 static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC);

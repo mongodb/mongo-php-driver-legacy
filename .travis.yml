@@ -1,0 +1,31 @@
+language: php
+
+php:
+  - 5.5
+  - 5.4
+  - 5.3
+#  - 5.2
+
+services:
+  - mongodb
+
+env:
+  - REPORT_EXIT_STATUS=1
+
+before_script:
+  - sudo mkdir -p /data/db
+  - sudo chown -R travis /data/
+  - ./.travis.scripts/compile.sh
+  - MONGO_SERVER_STANDALONE=yes MONGO_SERVER_REPLICASET=yes MONGO_SERVER_MONGOS=yes make servers
+  - sudo apt-get install gdb
+
+notifications:
+  email:
+    - bjori@php.net
+
+#  - cat ./.travis.scripts/script.gdb | gdb --args $MYPHP `find ...core`
+# Run PHPs run-tests.php 
+script:
+  - MYPHP=`make findphp` 
+  - REPORT_EXIT_STATUS=1 TEST_PHP_EXECUTABLE=$MYPHP $MYPHP run-tests.php -n -d extension=modules/mongo.so -q -x --show-diff -g 'FAIL,XFAIL,BORK,WARN,LEAK,SKIP'
+

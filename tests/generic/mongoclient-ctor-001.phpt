@@ -1,18 +1,18 @@
 --TEST--
 Mongo::__construct() and INI options
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc"; ?>
 <?php
-if (ini_get("mongo.default_host") == hostname() && ini_get("mongo.default_port") == port()) {
+if (ini_get("mongo.default_host") == hostname() && ini_get("mongo.default_port") == standalone_port()) {
     exit("SKIP This test is meaningless when connecting to localhost:27017");
 }
 ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$host = hostname();
-$port = port();
+$host = standalone_hostname();
+$port = standalone_port();
 ini_set("mongo.default_host", $host);
 ini_set("mongo.default_port", $port);
 

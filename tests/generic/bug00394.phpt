@@ -1,10 +1,10 @@
 --TEST--
 Test for PHP-394: Crashes and mem leaks.
 --SKIPIF--
-<?php require_once dirname(__FILE__) . "/skipif.inc" ?>
+<?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
 $x = new Mongo(array());
 var_dump($x);

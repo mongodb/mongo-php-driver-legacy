@@ -1,11 +1,12 @@
 --TEST--
 MongoGridFS::put() throws exception for nonexistent file
 --SKIPIF--
-<?php require dirname(__FILE__) . "/skipif.inc";?>
+<?php if (version_compare(phpversion(), "5.3.0", "lt")) exit("skip 5.2 seems to get a different exception"); ?>
+<?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$mongo = mongo();
+require_once "tests/utils/server.inc";
+$mongo = mongo_standalone();
 $db = $mongo->selectDB(dbname());
 
 $gridfs = $db->getGridFS();

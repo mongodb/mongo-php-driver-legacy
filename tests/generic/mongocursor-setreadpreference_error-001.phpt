@@ -1,15 +1,15 @@
 --TEST--
 MongoCursor::setReadPreference() error setting invalid read preference mode
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
 $modes = array("blaat", 42, true, 3.14);
 
 foreach ($modes as $mode) {
-    $m = new_mongo(null, true, true, array('readPreference' => MongoClient::RP_PRIMARY_PREFERRED));
+    $m = new_mongo_standalone(null, true, true, array('readPreference' => MongoClient::RP_PRIMARY_PREFERRED));
     $c = $m->phpunit->test->find();
     $c->setReadPreference($mode);
     $rp = $c->getReadPreference();

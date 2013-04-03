@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,6 +49,64 @@ static void clear_exception(zval* return_value TSRMLS_DC);
 void php_mongo_connection_force_primary(mongo_cursor *cursor)
 {
 	cursor->force_primary = 1;
+}
+
+static int php_mongo_command_supports_rp(zval *cmd)
+{
+	HashPosition pos;
+	char *str;
+	uint str_len;
+	long type;
+	ulong idx;
+
+	if (Z_TYPE_P(cmd) != IS_ARRAY) {
+		return 0;
+	}
+
+	zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(cmd), &pos);
+	type = zend_hash_get_current_key_ex(Z_ARRVAL_P(cmd), &str, &str_len, &idx, 0, &pos);
+	if (type != HASH_KEY_IS_STRING) {
+		return 0;
+	}
+
+	/* Commands in MongoDB are case-sensitive */
+	if (str_len == 6) {
+		if (strcmp(str, "count") == 0 || strcmp(str, "group") == 0) {
+			return 1;
+		}
+		return 0;
+	}
+	if (str_len == 8) {
+		if (strcmp(str, "dbStats") == 0 || strcmp(str, "geoNear") == 0 || strcmp(str, "geoWalk") == 0) {
+			return 1;
+		}
+		return 0;
+	}
+	if (str_len == 9) {
+		if (strcmp(str, "distinct") == 0) {
+			return 1;
+		}
+		return 0;
+	}
+	if (str_len == 10) {
+		if (strcmp(str, "aggregate") == 0 || strcmp(str, "collStats") == 0 || strcmp(str, "geoSearch") == 0) {
+			return 1;
+		}
+
+		if (strcmp(str, "mapreduce") == 0) {
+			zval **value = NULL;
+			if (zend_hash_find(Z_ARRVAL_P(cmd), "out", 4, (void **)&value) == SUCCESS) {
+				if (Z_TYPE_PP(value) == IS_STRING) {
+					if (strcmp(Z_STRVAL_PP(value), "inline") == 0) {
+						return 1;
+					}
+				}
+			}
+		}
+		return 0;
+	}
+
+	return 0;
 }
 
 /* {{{ MongoDB::__construct
@@ -409,7 +467,10 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 		/* check that the ns is valid and not an index (contains $) */
 		if (
 			zend_hash_find(HASH_P(next), "name", 5, (void**)&collection) == FAILURE ||
-			strchr(Z_STRVAL_PP(collection), '$')
+			(
+				Z_TYPE_PP(collection) == IS_STRING &&
+				strchr(Z_STRVAL_PP(collection), '$')
+			)
 		) {
 			zval_ptr_dtor(&next);
 			MAKE_STD_ZVAL(next);
@@ -659,9 +720,13 @@ PHP_METHOD(MongoDB, command)
 	 * collection.c/append_getlasterror. The Cursor creation should be done
 	 * through an init method. */
 	PHP_MONGO_GET_LINK(db->link);
-	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
-	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
-	php_mongo_connection_force_primary(cursor_tmp);
+	if (php_mongo_command_supports_rp(cmd)) {
+		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "command supports Read Preferences");
+	} else {
+		cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
+		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
+		php_mongo_connection_force_primary(cursor_tmp);
+	}
 
 	/* query */
 	MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
@@ -769,6 +834,7 @@ PHP_METHOD(MongoDB, authenticate)
 	/* Update all the servers */
 	for (i = 0; i < link->servers->count; i++) {
 		link->servers->server[i]->db = strdup(Z_STRVAL_P(db->name));
+		link->servers->server[i]->authdb = strdup(Z_STRVAL_P(db->name));
 		link->servers->server[i]->username = strdup(username);
 		link->servers->server[i]->password = strdup(password);
 	}
@@ -786,6 +852,8 @@ PHP_METHOD(MongoDB, authenticate)
 		for (i = 0; i < link->servers->count; i++) {
 			free(link->servers->server[i]->db);
 			link->servers->server[i]->db = NULL;
+			free(link->servers->server[i]->authdb);
+			link->servers->server[i]->authdb = NULL;
 			free(link->servers->server[i]->username);
 			link->servers->server[i]->username = NULL;
 			free(link->servers->server[i]->password);

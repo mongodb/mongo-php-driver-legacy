@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,6 +44,10 @@ mongo_servers* mongo_parse_init(void)
 	servers->options.default_w = -1;
 	servers->options.default_wstring = NULL;
 	servers->options.default_wtimeout = -1;
+	servers->options.default_fsync = 0;
+	servers->options.default_journal = 0;
+	servers->options.ssl = MONGO_SSL_DISABLE;
+	servers->options.ctx = NULL;
 
 	return servers;
 }
@@ -227,7 +231,8 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 
 	tmp = malloc(sizeof(mongo_server_def));
 	memset(tmp, 0, sizeof(mongo_server_def));
-	tmp->username = tmp->password = tmp->db = NULL;
+	tmp->username = tmp->password = tmp->db = tmp->authdb = NULL;
+	tmp->mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR; /* MONGODB-CR is the default authentication mechanism */
 	tmp->port = 27017;
 
 	tmp->host = mcon_strndup(host_start, host_end - host_start);
@@ -362,6 +367,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			 * value before setting it anyway. */
 			if (!servers->server[i]->db) {
 				servers->server[i]->db = strdup("admin");
+				/* Admin users always authenticate on the admin db, even when using other databases */
+				servers->server[i]->authdb = strdup("admin");
 			}
 		}
 		return 0;
@@ -381,11 +388,48 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		for (i = 0; i < servers->count; i++) {
 			if (servers->server[i]->db) {
 				free(servers->server[i]->db);
+				/* Free the authdb too as it defaulted to 'admin' when no db was passed as the connection string */
+				free(servers->server[i]->authdb);
+				servers->server[i]->authdb = NULL;
 			}
 			servers->server[i]->db = strdup(option_value);
 		}
 		return 0;
 	}
+	if (strcasecmp(option_name, "authSource") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authSource': '%s'", option_value);
+		for (i = 0; i < servers->count; i++) {
+			if (servers->server[i]->authdb) {
+				free(servers->server[i]->authdb);
+			}
+			servers->server[i]->authdb = strdup(option_value);
+		}
+		return 0;
+	}
+	if (strcasecmp(option_name, "authMechanism") == 0) {
+		int mechanism;
+
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authMechanism': '%s'", option_value);
+		if (strcasecmp(option_value, "MONGODB-CR") == 0) {
+			mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
+		} else if (strcasecmp(option_value, "GSSAPI") == 0) {
+			/* FIXME: GSSAPI isn't implemented yet */
+			mechanism = MONGO_AUTH_MECHANISM_GSSAPI;
+			*error_message = strdup("The authMechanism 'GSSAPI' is currently not supported. Only MONGODB-CR is available.");
+			return 3;
+		} else {
+			int len = strlen(option_value) + sizeof("The authMechanism '' does not exist.");
+
+			*error_message = malloc(len + 1);
+			snprintf(*error_message, len, "The authMechanism '%s' does not exist.", option_value);
+			return 3;
+		}
+		for (i = 0; i < servers->count; i++) {
+			servers->server[i]->mechanism = mechanism;
+		}
+		return 0;
+	}
+
 	if (strcasecmp(option_name, "slaveOkay") == 0) {
 		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
@@ -500,6 +544,51 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 
+	if (strcasecmp(option_name, "fsync") == 0) {
+		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+			servers->options.default_fsync = 1;
+		} else {
+			servers->options.default_fsync = 0;
+		}
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'fsync': %d", servers->options.default_fsync);
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "journal") == 0) {
+		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+			servers->options.default_journal = 1;
+		} else {
+			servers->options.default_journal = 0;
+		}
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'journal': %d", servers->options.default_journal);
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "ssl") == 0) {
+		int value = 0;
+		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+			value = MONGO_SSL_ENABLE;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': true");
+		} else if (strcasecmp(option_value, "false") == 0 || *option_value == '0') {
+			value = MONGO_SSL_DISABLE;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': false");
+		} else if (strcasecmp(option_value, "prefer") == 0 || atoi(option_value) == MONGO_SSL_PREFER) {
+			/* FIXME: MongoDB doesn't support "connection promotion" to SSL at the moment, so we can't support this option properly */
+			value = MONGO_SSL_PREFER;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': prefer");
+			*error_message = strdup("SSL=prefer is currently not supported by mongod");
+			return 3;
+		} else {
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': '%s'", option_name);
+			*error_message = strdup("SSL can only be 'true' or 'false'");
+			return 3;
+		}
+
+		servers->options.ssl = value;
+		return 0;
+	}
+
+
 	*error_message = malloc(256);
 	snprintf(*error_message, 256, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
@@ -539,8 +628,8 @@ int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *server
 void static mongo_server_def_dump(mongo_con_manager *manager, mongo_server_def *server_def)
 {
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO,
-		"- host: %s; port: %d; username: %s, password: %s, database: %s",
-		server_def->host, server_def->port, server_def->username, server_def->password, server_def->db);
+		"- host: %s; port: %d; username: %s, password: %s, database: %s, auth source: %s, mechanism: %d",
+		server_def->host, server_def->port, server_def->username, server_def->password, server_def->db, server_def->authdb, server_def->mechanism);
 }
 
 void mongo_servers_dump(mongo_con_manager *manager, mongo_servers *servers)
@@ -567,7 +656,8 @@ void mongo_servers_dump(mongo_con_manager *manager, mongo_servers *servers)
 /* Cloning */
 static void mongo_server_def_copy(mongo_server_def *to, mongo_server_def *from, int flags)
 {
-	to->host = to->repl_set_name = to->db = to->username = to->password = NULL;
+	to->host = to->repl_set_name = to->db = to->authdb = to->username = to->password = NULL;
+	to->mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
 	if (from->host) {
 		to->host = strdup(from->host);
 	}
@@ -580,12 +670,16 @@ static void mongo_server_def_copy(mongo_server_def *to, mongo_server_def *from, 
 		if (from->db) {
 			to->db = strdup(from->db);
 		}
+		if (from->authdb) {
+			to->authdb = strdup(from->authdb);
+		}
 		if (from->username) {
 			to->username = strdup(from->username);
 		}
 		if (from->password) {
 			to->password = strdup(from->password);
 		}
+		to->mechanism = from->mechanism;
 	}
 }
 
@@ -612,6 +706,14 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	if (from->options.default_wstring) {
 		to->options.default_wstring = strdup(from->options.default_wstring);
 	}
+	to->options.default_fsync = from->options.default_fsync;
+	to->options.default_journal = from->options.default_journal;
+
+	to->options.ssl = from->options.ssl;
+
+	if (from->options.ctx) {
+		memcpy(to->options.ctx, from->options.ctx, sizeof(void *));
+	}
 
 	mongo_read_preference_copy(&from->read_pref, &to->read_pref);
 }
@@ -627,6 +729,9 @@ void mongo_server_def_dtor(mongo_server_def *server_def)
 	}
 	if (server_def->db) {
 		free(server_def->db);
+	}
+	if (server_def->authdb) {
+		free(server_def->authdb);
 	}
 	if (server_def->username) {
 		free(server_def->username);

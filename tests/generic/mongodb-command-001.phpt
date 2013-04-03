@@ -1,12 +1,12 @@
 --TEST--
 MongoDB::command()
 --SKIPIF--
-<?php require dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require dirname(__FILE__) . "/../utils.inc";
+require "tests/utils/server.inc";
 
-$m = mongo("admin");
+$m = mongo_standalone("admin");
 $db = $m->selectDb("admin");
 
 $status = $db->command(array('serverStatus' => 1));

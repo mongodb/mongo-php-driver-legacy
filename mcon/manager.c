@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,6 +30,13 @@
 #include "collection.h"
 #include "parse.h"
 #include "read_preference.h"
+#include "io.h"
+
+
+#include "config.h"
+
+/* Forwards declarations */
+static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data, int why);
 
 /* Helpers */
 static int authenticate_connection(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char **error_message)
@@ -52,41 +59,76 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 {
 	char *hash;
 	mongo_connection *con = NULL;
+	mongo_connection_blacklist *blacklist = NULL;
 
 	hash = mongo_server_create_hash(server);
-	con = mongo_manager_connection_find_by_hash(manager, hash);
-	if (!con && !(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
-		con = mongo_connection_create(manager, server, options, error_message);
-		if (con) {
-			/* Store hash */
-			con->hash = strdup(hash);
-			/* Do authentication if requested */
-			if (server->db && server->username && server->password) {
-				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
-				if (!authenticate_connection(manager, con, options, server->db, server->username, server->password, error_message)) {
-					mongo_connection_destroy(manager, con);
-					con = NULL;
-					goto bailout;
-				}
-			}
-			/* Do the ping */
-			if (!mongo_connection_ping(manager, con, options, error_message)) {
-				mongo_connection_destroy(manager, con);
-				con = NULL;
-				goto bailout;
-			}
-			/* Register the connection */
-			mongo_manager_connection_register(manager, con);
-		}
-	} else if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
-		/* Do the ping */
-		if (!mongo_connection_ping(manager,  con, options, error_message)) {
-			mongo_manager_connection_deregister(manager, con);
+
+	/* See if a connection is in our blacklist to short-circut trying to connect
+	 * to a node that is known to be down. This is done so we don't waste
+	 * precious time in connecting to unreachable nodes */
+	blacklist = mongo_manager_blacklist_find_by_hash(manager, hash);
+	if (blacklist) {
+		struct timeval start;
+		/* It is blacklisted, but it may have been a long time again and chances are
+		 * we should give it another try */
+		if (mongo_connection_ping_check(manager, blacklist->last_ping, &start)) {
+			/* The connection is blacklisted, but we've reached our ping interval
+			 * so lets remove the blacklisting and pretend we didn't know about it
+			 */
+			mongo_manager_blacklist_deregister(manager, blacklist, hash);
 			con = NULL;
-			goto bailout;
+		} else {
+			/* Otherwise short-circut the connection attempt, and say we failed right away */
+			free(hash);
+			return NULL;
 		}
 	}
-bailout:
+
+	con = mongo_manager_connection_find_by_hash(manager, hash);
+
+	/* If we aren't about to (re-)connect then all we care about if it was a known connection or not */
+	if (connection_flags & MONGO_CON_FLAG_DONT_CONNECT) {
+		free(hash);
+		return con;
+	}
+
+	/* If we found a valid connection check if we need to ping it */
+	if (con) {
+		/* Do the ping, if needed */
+		if (!mongo_connection_ping(manager,  con, options, error_message)) {
+			/* If the ping failed, deregister the connection */
+			mongo_manager_connection_deregister(manager, con);
+			/* Set the return value to NULL, as the connection is broken and has been removed */
+			con = NULL;
+		}
+
+		free(hash);
+		return con;
+	}
+
+	/* Since we didn't find an existing connection, lets make one! */
+	con = mongo_connection_create(manager, hash, server, options, error_message);
+	if (con) {
+		/* Do authentication if requested */
+		if (server->db && server->username && server->password) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
+			if (!authenticate_connection(manager, con, options, server->authdb ? server->authdb : server->db, server->username, server->password, error_message)) {
+				mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
+				free(hash);
+				return NULL;
+			}
+		}
+		/* Do the first-time ping to record the latency of the connection */
+		if (mongo_connection_ping(manager, con, options, error_message)) {
+			/* Register the connection on successful pinging */
+			mongo_manager_connection_register(manager, con);
+		} else {
+			/* Or kill it and reset the return value if the ping somehow failed */
+			mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
+			con = NULL;
+		}
+	}
+
 	free(hash);
 	return con;
 }
@@ -147,12 +189,13 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					mongo_connection *new_con;
 					char *con_error_message = NULL;
 
-					/* Create a temp server definition to create a new connection */
+					/* Create a temp server definition to create a new connection on-demand if we didn't have one already */
 					tmp_def = calloc(1, sizeof(mongo_server_def));
 					tmp_def->username = servers->server[i]->username ? strdup(servers->server[i]->username) : NULL;
 					tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;
 					tmp_def->repl_set_name = servers->server[i]->repl_set_name ? strdup(servers->server[i]->repl_set_name) : NULL;
 					tmp_def->db = servers->server[i]->db ? strdup(servers->server[i]->db) : NULL;
+					tmp_def->authdb = servers->server[i]->authdb ? strdup(servers->server[i]->authdb) : NULL;
 					tmp_def->host = mcon_strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
 					tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
 					
@@ -206,7 +249,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	int i;
 	int found_connected_server = 0;
 
-	/* Create a connection to every of the servers in the seed list */
+	/* Create a connection to all of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
 		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
@@ -310,6 +353,10 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
 	collection = mongo_select_nearest_servers(manager, collection, &servers->read_pref);
+	if (!collection) {
+		*error_message = strdup("No server near us");
+		goto bailout;
+	}
 	con = mongo_pick_server_from_set(manager, collection, &servers->read_pref);
 
 bailout:
@@ -407,20 +454,6 @@ mongo_connection *mongo_get_read_write_connection_with_callback(mongo_con_manage
 /* Connection management */
 
 /* - Helpers */
-mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manager, char *hash)
-{
-	mongo_con_manager_item *ptr = manager->connections;
-
-	while (ptr) {
-		if (strcmp(ptr->hash, hash) == 0) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "found connection %s (looking for %s)", ptr->hash, hash);
-			return ptr->connection;
-		}
-		ptr = ptr->next;
-	}
-	return NULL;
-}
-
 static mongo_con_manager_item *create_new_manager_item(void)
 {
 	mongo_con_manager_item *tmp = malloc(sizeof(mongo_con_manager_item));
@@ -436,73 +469,126 @@ static void free_manager_item(mongo_con_manager *manager, mongo_con_manager_item
 	free(item);
 }
 
-static void destroy_manager_item(mongo_con_manager *manager, mongo_con_manager_item *item)
+static void destroy_manager_item(mongo_con_manager *manager, mongo_con_manager_item *item, mongo_con_manager_item_destroy_t cleanup_cb)
 {
 	if (item->next) {
-		destroy_manager_item(manager, item->next);
+		destroy_manager_item(manager, item->next, cleanup_cb);
 	}
-	mongo_connection_destroy(manager, item->connection);
+	cleanup_cb(manager, item->data, MONGO_CLOSE_SHUTDOWN);
 	free_manager_item(manager, item);
 }
 
-void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connection *con)
+void *mongo_manager_find_by_hash(mongo_con_manager *manager, mongo_con_manager_item *ptr, char *hash)
 {
-	mongo_con_manager_item *ptr = manager->connections;
+	while (ptr) {
+		if (strcmp(ptr->hash, hash) == 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "found connection %s (looking for %s)", ptr->hash, hash);
+			return ptr->data;
+		}
+		ptr = ptr->next;
+	}
+	return NULL;
+}
+
+mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manager, char *hash)
+{
+	return mongo_manager_find_by_hash(manager, manager->connections, hash);
+}
+
+mongo_connection_blacklist *mongo_manager_blacklist_find_by_hash(mongo_con_manager *manager, char *hash)
+{
+	return mongo_manager_find_by_hash(manager, manager->blacklist, hash);
+}
+
+mongo_con_manager_item *mongo_manager_register(mongo_con_manager *manager, mongo_con_manager_item **ptr, void *con, char *hash)
+{
 	mongo_con_manager_item *new;
 
 	/* Setup new entry */
 	new = create_new_manager_item();
-	new->hash = strdup(con->hash);
-	new->connection = con;
+	new->data = con;
+	new->hash = strdup(hash);
 	new->next = NULL;
 
-	if (!ptr) { /* No connections at all yet */
-		manager->connections = new;
+	if (!*ptr) { /* No connections at all yet */
+		*ptr = new;
 	} else {
+		mongo_con_manager_item *item = *ptr;
 		/* Existing connections, so find the last one */
 		do {
-			if (!ptr->next) {
-				ptr->next = new;
+			if (!item->next) {
+				item->next = new;
 				break;
 			}
-			ptr = ptr->next;
+			item = item->next;
 		} while (1);
 	}
+	return new;
 }
 
-int mongo_manager_connection_deregister(mongo_con_manager *manager, mongo_connection *con)
+void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connection *con)
 {
-	mongo_con_manager_item *ptr = manager->connections;
+	mongo_manager_register(manager, &manager->connections, con, con->hash);
+}
+
+void mongo_manager_blacklist_register(mongo_con_manager *manager, mongo_connection *data)
+{
+	struct timeval start;
+	mongo_connection_blacklist *blacklist;
+
+	blacklist = malloc(sizeof(mongo_connection_blacklist));
+	memset(blacklist, 0, sizeof(mongo_connection_blacklist));
+	gettimeofday(&start, NULL);
+	blacklist->last_ping = start.tv_sec;
+	mongo_manager_register(manager, &manager->blacklist, blacklist, data->hash);
+}
+
+int mongo_manager_deregister(mongo_con_manager *manager, mongo_con_manager_item **ptr, char *hash, void *con, mongo_con_manager_item_destroy_t cleanup_cb)
+{
 	mongo_con_manager_item *prev = NULL;
+	mongo_con_manager_item *item = *ptr;
 
 	/* Remove from manager */
 	/* - if there are no connections, simply return false */
-	if (!ptr) {
+	if (!item) {
 		return 0;
 	}
 	/* Loop over existing connections and compare hashes */
 	do {
 		/* The connection is the one we're looking for */
-		if (strcmp(ptr->hash, con->hash) == 0) {
+		if (strcmp((item)->hash, hash) == 0) {
 			if (prev == NULL) { /* It's the first one in the list... */
-				manager->connections = ptr->next;
+				*ptr = item->next;
 			} else {
-				prev->next = ptr->next;
+				prev->next = item->next;
 			}
 			/* Free structures */
-			mongo_connection_destroy(manager, con);
-			free_manager_item(manager, ptr);
+			if (cleanup_cb) {
+				cleanup_cb(manager, con, MONGO_CLOSE_BROKEN);
+			}
+			free(item->hash);
+			free(item);
 
 			/* Woo! */
 			return 1;
 		}
 
 		/* Next iteration */
-		prev = ptr;
-		ptr = ptr->next;
-	} while (ptr);
+		prev = item;
+		item = item->next;
+	} while (item);
 
 	return 0;
+}
+
+int mongo_manager_connection_deregister(mongo_con_manager *manager, mongo_connection *con)
+{
+	return mongo_manager_deregister(manager, &manager->connections, con->hash, con, mongo_connection_destroy);
+}
+
+int mongo_manager_blacklist_deregister(mongo_con_manager *manager, mongo_connection_blacklist *blacklist_item, char *hash)
+{
+	return mongo_manager_deregister(manager, &manager->blacklist, hash, blacklist_item, mongo_blacklist_destroy);
 }
 
 /* Logging */
@@ -552,15 +638,33 @@ mongo_con_manager *mongo_init(void)
 	tmp->ping_interval = MONGO_MANAGER_DEFAULT_PING_INTERVAL;
 	tmp->ismaster_interval = MONGO_MANAGER_DEFAULT_MASTER_INTERVAL;
 
+	tmp->connect     = mongo_connection_connect;
+	tmp->recv_header = mongo_io_recv_header;
+	tmp->recv_data   = mongo_io_recv_data;
+	tmp->send        = mongo_io_send;
+	tmp->close       = mongo_connection_close;
+	tmp->forget      = mongo_connection_forget;
+
 	return tmp;
+}
+
+static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data, int why)
+{
+	mongo_connection_blacklist *con = (mongo_connection_blacklist *)data;
+	free(con);
 }
 
 void mongo_deinit(mongo_con_manager *manager)
 {
 	if (manager->connections) {
-		/* Does this recursively for all cons */
-		destroy_manager_item(manager, manager->connections);
+		/* Does this iteratively for all connections */
+		destroy_manager_item(manager, manager->connections, mongo_connection_destroy);
+	}
+	if (manager->blacklist) {
+		/* Does this iteratively for all blacklist items */
+		destroy_manager_item(manager, manager->blacklist, mongo_blacklist_destroy);
 	}
 
 	free(manager);
 }
+

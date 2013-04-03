@@ -1,6 +1,6 @@
 // log.c
 /**
- *  Copyright 2009-2011 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include "log.h"
 
 zend_class_entry *mongo_ce_Log;
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static long set_value(char *setting, zval *return_value TSRMLS_DC);
 static void get_value(char *setting, zval *return_value TSRMLS_DC);
@@ -31,10 +31,10 @@ static void userland_callback(int module, int level, char *message TSRMLS_DC);
 
 
 static zend_function_entry mongo_log_methods[] = {
-  PHP_ME(MongoLog, setLevel, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(MongoLog, getLevel, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(MongoLog, setModule, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-  PHP_ME(MongoLog, getModule, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	PHP_ME(MongoLog, setLevel, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	PHP_ME(MongoLog, getLevel, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	PHP_ME(MongoLog, setModule, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	PHP_ME(MongoLog, getModule, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 #if PHP_VERSION_ID >= 50300
 	PHP_ME(MongoLog, setCallback, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(MongoLog, getCallback, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
@@ -43,48 +43,48 @@ static zend_function_entry mongo_log_methods[] = {
 };
 
 void mongo_init_MongoLog(TSRMLS_D) {
-  zend_class_entry ce;
+	zend_class_entry ce;
 
-  INIT_CLASS_ENTRY(ce, "MongoLog", mongo_log_methods);
-  mongo_ce_Log = zend_register_internal_class(&ce TSRMLS_CC);
+	INIT_CLASS_ENTRY(ce, "MongoLog", mongo_log_methods);
+	mongo_ce_Log = zend_register_internal_class(&ce TSRMLS_CC);
 
-  zend_declare_class_constant_long(mongo_ce_Log, "NONE", strlen("NONE"), MLOG_NONE TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "NONE", strlen("NONE"), MLOG_NONE TSRMLS_CC);
 
-  zend_declare_class_constant_long(mongo_ce_Log, "WARNING", strlen("WARNING"), MLOG_WARN TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "INFO", strlen("INFO"), MLOG_INFO TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "FINE", strlen("FINE"), MLOG_FINE TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "WARNING", strlen("WARNING"), MLOG_WARN TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "INFO", strlen("INFO"), MLOG_INFO TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "FINE", strlen("FINE"), MLOG_FINE TSRMLS_CC);
 
-  zend_declare_class_constant_long(mongo_ce_Log, "RS", strlen("RS"), MLOG_RS TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "POOL", strlen("POOL"), MLOG_RS TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "PARSE", strlen("PARSE"), MLOG_PARSE TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "CON", strlen("CON"), MLOG_CON TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "IO", strlen("IO"), MLOG_IO TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "SERVER", strlen("SERVER"), MLOG_SERVER TSRMLS_CC);
-  zend_declare_class_constant_long(mongo_ce_Log, "ALL", strlen("ALL"), MLOG_ALL TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "RS", strlen("RS"), MLOG_RS TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "POOL", strlen("POOL"), MLOG_RS TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "PARSE", strlen("PARSE"), MLOG_PARSE TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "CON", strlen("CON"), MLOG_CON TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "IO", strlen("IO"), MLOG_IO TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "SERVER", strlen("SERVER"), MLOG_SERVER TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_Log, "ALL", strlen("ALL"), MLOG_ALL TSRMLS_CC);
 
-  zend_declare_property_long(mongo_ce_Log, "level", strlen("level"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
-  zend_declare_property_long(mongo_ce_Log, "module", strlen("module"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
-  zend_declare_property_long(mongo_ce_Log, "callback", strlen("callback"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
+	zend_declare_property_long(mongo_ce_Log, "level", strlen("level"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
+	zend_declare_property_long(mongo_ce_Log, "module", strlen("module"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
+	zend_declare_property_long(mongo_ce_Log, "callback", strlen("callback"), 0, ZEND_ACC_PRIVATE|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
 static long set_value(char *setting, zval *return_value TSRMLS_DC) {
-  long value;
+	long value;
 
-  if (zend_parse_parameters(1 TSRMLS_CC, "l", &value) == FAILURE) {
-    return 0;
-  }
+	if (zend_parse_parameters(1 TSRMLS_CC, "l", &value) == FAILURE) {
+		return 0;
+	}
 
-  zend_update_static_property_long(mongo_ce_Log, setting, strlen(setting), value TSRMLS_CC);
+	zend_update_static_property_long(mongo_ce_Log, setting, strlen(setting), value TSRMLS_CC);
 
-  return value;
+	return value;
 }
 
 static void get_value(char *setting, zval *return_value TSRMLS_DC) {
-  zval *value;
+	zval *value;
 
-  value = zend_read_static_property(mongo_ce_Log, setting, strlen(setting), NOISY TSRMLS_CC);
+	value = zend_read_static_property(mongo_ce_Log, setting, strlen(setting), NOISY TSRMLS_CC);
 
-  ZVAL_LONG(return_value, Z_LVAL_P(value));
+	ZVAL_LONG(return_value, Z_LVAL_P(value));
 }
 
 PHP_METHOD(MongoLog, setLevel)

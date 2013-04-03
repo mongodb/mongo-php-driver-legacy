@@ -1,12 +1,15 @@
 --TEST--
 Test for PHP-667: Off-by-one error in BSON deserialization of pre-epoch dates
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
+<?php if (PHP_INT_SIZE == 4) { die("skip strtotime() doesn't support that timestamp on 32bit"); } ?>
+--INI--
+date.timezone=UTC
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
 
-$m = new_mongo();
+$m = new_mongo_standalone();
 $c = $m->selectCollection(dbname(), 'bug667');
 $c->drop();
 

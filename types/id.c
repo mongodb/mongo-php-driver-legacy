@@ -18,7 +18,7 @@
 #include "php_mongo.h"
 #include "bson.h"
 
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 extern zend_class_entry *mongo_ce_Exception;
 

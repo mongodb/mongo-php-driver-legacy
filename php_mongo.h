@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1
 
-#define PHP_MONGO_VERSION "1.3.4"
+#define PHP_MONGO_VERSION "1.4.0dev"
 #define PHP_MONGO_EXTNAME "mongo"
 
 #include "mcon/types.h"
@@ -447,7 +447,7 @@ typedef struct {
  */
 typedef struct _cursor_node {
 	int64_t cursor_id;
-	int socket;
+	void *socket;
 
 	struct _cursor_node *next;
 	struct _cursor_node *prev;
@@ -558,7 +558,6 @@ ZEND_BEGIN_MODULE_GLOBALS(mongo)
 
 	/* $ alternative */
 	char *cmd_char;
-	int utf8;
 	int native_long;
 	int long_as_object;
 	int allow_empty_keys;
@@ -570,7 +569,6 @@ ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	int ts_inc;
 	char *errmsg;
 	int response_num;
-	int max_send_size;
 	int pool_size;
 
 	long log_level;
@@ -639,6 +637,9 @@ extern zend_module_entry mongo_module_entry;
  * 23: Logical error (conflicting options)
  * 24: (unused)
  * 25: Option with no string key
+ * 26: SSL support is only available when compiled against PHP Streams
+ * 27: Driver options are only available when compiled against PHP Streams
+ * 72: Could not retrieve connection
  *
  * MongoCursorTimeoutException:
  * 80: timeout exception

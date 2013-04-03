@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include <php.h>
 #include <zend_exceptions.h>
 #include "ext/standard/php_smart_str.h"
+#include "ext/standard/file.h"
 
 #include "php_mongo.h"
 #include "mongoclient.h"
@@ -48,7 +49,7 @@ static int close_connection(mongo_con_manager *manager, mongo_connection *connec
 zend_object_handlers mongo_default_handlers;
 zend_object_handlers mongoclient_handlers;
 
-ZEND_EXTERN_MODULE_GLOBALS(mongo);
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_MongoClient;
 
@@ -329,7 +330,9 @@ int mongo_store_option_wrapper(mongo_con_manager *manager, mongo_servers *server
 }
 /* }}} */
 
-/* {{{ MongoClient->__construct
+/* {{{ proto MongoClient MongoClient->__construct([string connection_string [, array mongo_options [, array driver_options]]])
+ * Creates a new MongoClient object for mongo[d|s]. mongo_options are the same options as the connection_string, while
+ * driver_options is additional PHP MongoDB options, like stream context and callbacks.
  */
 PHP_METHOD(MongoClient, __construct)
 {
@@ -343,6 +346,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	zend_bool     connect = 1;
 	zval         *options = 0;
 	zval         *slave_okay = 0;
+	zval         *zdoptions = NULL;
 	mongoclient  *link;
 	zval        **opt_entry;
 	char         *opt_key;
@@ -352,7 +356,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	ulong         num_key;
 	HashPosition  pos;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/", &server, &server_len, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!a!/a!/", &server, &server_len, &options, &zdoptions) == FAILURE) {
 		zval *object = getThis();
 		ZVAL_NULL(object);
 		return;
@@ -437,6 +441,27 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 		}
 	}
 
+#if !MONGO_PHP_STREAMS
+	if (link->servers->options.ssl) {
+		zend_throw_exception(mongo_ce_ConnectionException, "SSL support is only available when compiled against PHP Streams", 26 TSRMLS_CC);
+		return;
+	}
+	if (zdoptions) {
+		zend_throw_exception(mongo_ce_ConnectionException, "Driver options are only available when compiled against PHP Streams", 27 TSRMLS_CC);
+		return;
+	}
+#endif
+	if (zdoptions) {
+		/* Possibly add more indexes in the future, like "log_queries", "log_commands", "log_failures", "log_metadata"... */
+		zval **zcontext;
+
+		if (zend_hash_find(Z_ARRVAL_P(zdoptions), "context", strlen("context") + 1, (void**)&zcontext) == SUCCESS) {
+			link->servers->options.ctx = php_stream_context_from_zval(*zcontext, PHP_FILE_NO_DEFAULT_CONTEXT);
+			mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "Found Stream context");
+		}
+	}
+
+
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_BVAL_P(slave_okay)) {
 		if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {
@@ -497,7 +522,7 @@ PHP_METHOD(MongoClient, close)
 			while (ptr) {
 				current = ptr;
 				ptr = ptr->next;
-				close_connection(link->manager, current->connection);
+				close_connection(link->manager, (mongo_connection *)current->data);
 				count++;
 			}
 
@@ -579,6 +604,7 @@ PHP_METHOD(MongoClient, selectDB)
 	char *db;
 	int db_len;
 	mongoclient *link;
+	int free_this_ptr = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &db, &db_len) == FAILURE) {
 		return;
@@ -605,6 +631,7 @@ PHP_METHOD(MongoClient, selectDB)
 		if (link->servers->server[0]->username && link->servers->server[0]->password) {
 			zval       *new_link;
 			mongoclient *tmp_link;
+			int i;
 		
 			if (strcmp(link->servers->server[0]->db, "admin") == 0) {
 				mongo_manager_log(
@@ -625,9 +652,14 @@ PHP_METHOD(MongoClient, selectDB)
 
 				tmp_link->manager = link->manager;
 				tmp_link->servers = calloc(1, sizeof(mongo_servers));
-				mongo_servers_copy(tmp_link->servers, link->servers, MONGO_SERVER_COPY_NONE);
+				mongo_servers_copy(tmp_link->servers, link->servers, MONGO_SERVER_COPY_CREDENTIALS);
+				/* We assume the previous credentials will work on this database too, or if authSource is set, authenticate against that db */
+				for (i = 0; i < tmp_link->servers->count; i++) {
+					tmp_link->servers->server[i]->db = strdup(db);
+				}
 
 				this_ptr = new_link;
+				free_this_ptr = 1;
 			}
 		}
 	}
@@ -636,6 +668,9 @@ PHP_METHOD(MongoClient, selectDB)
 	MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), name);
 
 	zval_ptr_dtor(&name);
+	if (free_this_ptr) {
+		zval_ptr_dtor(&this_ptr);
+	}
 }
 /* }}} */
 
@@ -800,21 +835,22 @@ PHP_METHOD(MongoClient, getHosts)
 		zval *infoz;
 		char *host;
 		int   port;
+		mongo_connection *con = (mongo_connection*) item->data;
 
 		MAKE_STD_ZVAL(infoz);
 		array_init(infoz);
 
-		mongo_server_split_hash(item->connection->hash, (char**) &host, (int*) &port, NULL, NULL, NULL, NULL, NULL);
+		mongo_server_split_hash(con->hash, (char**) &host, (int*) &port, NULL, NULL, NULL, NULL, NULL);
 		add_assoc_string(infoz, "host", host, 1);
 		add_assoc_long(infoz, "port", port);
 		free(host);
 
 		add_assoc_long(infoz, "health", 1);
-		add_assoc_long(infoz, "state", item->connection->connection_type == MONGO_NODE_PRIMARY ? 1 : (item->connection->connection_type == MONGO_NODE_SECONDARY ? 2 : 0));
-		add_assoc_long(infoz, "ping", item->connection->ping_ms);
-		add_assoc_long(infoz, "lastPing", item->connection->last_ping);
+		add_assoc_long(infoz, "state", con->connection_type == MONGO_NODE_PRIMARY ? 1 : (con->connection_type == MONGO_NODE_SECONDARY ? 2 : 0));
+		add_assoc_long(infoz, "ping", con->ping_ms);
+		add_assoc_long(infoz, "lastPing", con->last_ping);
 
-		add_assoc_zval(return_value, item->connection->hash, infoz);
+		add_assoc_zval(return_value, con->hash, infoz);
 		item = item->next;
 	}
 }
@@ -837,6 +873,7 @@ PHP_METHOD(MongoClient, getConnections)
 		zval *entry, *server, *connection, *tags;
 		char *host, *repl_set_name, *database, *username, *auth_hash;
 		int port, pid, i;
+		mongo_connection *con = (mongo_connection*) ptr->data;
 
 		MAKE_STD_ZVAL(entry);
 		array_init(entry);
@@ -851,7 +888,7 @@ PHP_METHOD(MongoClient, getConnections)
 		array_init(tags);
 
 		/* Grab server information */
-		mongo_server_split_hash(ptr->connection->hash, &host, &port, &repl_set_name, &database, &username, &auth_hash, &pid);
+		mongo_server_split_hash(con->hash, &host, &port, &repl_set_name, &database, &username, &auth_hash, &pid);
 
 		add_assoc_string(server, "host", host, 1);
 		free(host);
@@ -875,20 +912,20 @@ PHP_METHOD(MongoClient, getConnections)
 		add_assoc_long(server, "pid", pid);
 
 		/* Grab connection info */
-		add_assoc_long(connection, "last_ping", ptr->connection->last_ping);
-		add_assoc_long(connection, "last_ismaster", ptr->connection->last_ismaster);
-		add_assoc_long(connection, "ping_ms", ptr->connection->ping_ms);
-		add_assoc_long(connection, "connection_type", ptr->connection->connection_type);
-		add_assoc_string(connection, "connection_type_desc", mongo_connection_type(ptr->connection->connection_type), 1);
-		add_assoc_long(connection, "max_bson_size", ptr->connection->max_bson_size);
-		add_assoc_long(connection, "tag_count", ptr->connection->tag_count);
-		for (i = 0; i < ptr->connection->tag_count; i++) {
-			add_next_index_string(tags, ptr->connection->tags[i], 1);
+		add_assoc_long(connection, "last_ping", con->last_ping);
+		add_assoc_long(connection, "last_ismaster", con->last_ismaster);
+		add_assoc_long(connection, "ping_ms", con->ping_ms);
+		add_assoc_long(connection, "connection_type", con->connection_type);
+		add_assoc_string(connection, "connection_type_desc", mongo_connection_type(con->connection_type), 1);
+		add_assoc_long(connection, "max_bson_size", con->max_bson_size);
+		add_assoc_long(connection, "tag_count", con->tag_count);
+		for (i = 0; i < con->tag_count; i++) {
+			add_next_index_string(tags, con->tags[i], 1);
 		}
 		add_assoc_zval(connection, "tags", tags);
 
 		/* Top level elements */
-		add_assoc_string(entry, "hash", ptr->connection->hash, 1);
+		add_assoc_string(entry, "hash", con->hash, 1);
 		add_assoc_zval(entry, "server", server);
 		add_assoc_zval(entry, "connection", connection);
 		add_next_index_zval(return_value, entry);

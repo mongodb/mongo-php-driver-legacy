@@ -1,0 +1,12 @@
+servers: daemon
+	$(PHP_EXECUTABLE) tests/utils/make-servers.php
+
+stop-servers:
+	$(PHP_EXECUTABLE) tests/utils/teardown-servers.php
+
+daemon:
+	$(PHP_EXECUTABLE) tests/utils/daemon.php &
+	sleep 3
+
+findphp:
+	@echo $(PHP_EXECUTABLE)

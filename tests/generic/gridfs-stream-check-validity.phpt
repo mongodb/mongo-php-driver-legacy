@@ -1,14 +1,15 @@
 --TEST--
 GridFS: Testing file validity
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 <?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
+<?php require_once "tests/utils/standalone.inc" ?>
 --INI--
 memory_limit=1G
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$conn = Mongo();
+require_once "tests/utils/server.inc";
+$dsn = MongoShellServer::getStandaloneInfo();
+$conn = new MongoClient($dsn);
 $db   = $conn->selectDb('phpunit');
 $grid = $db->getGridFs('wrapper');
 

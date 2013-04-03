@@ -1,20 +1,20 @@
 --TEST--
 MongoCursor::getReadPreference() inherits value from parent
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
-<?php require_once dirname(__FILE__) . "/../utils.inc"; ?>
+<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
 // Set before MongoCursor is instantiated
-$m = new_mongo(null, true, true, array('readPreference' => MongoClient::RP_SECONDARY_PREFERRED));
+$m = new_mongo_standalone(null, true, true, array('readPreference' => MongoClient::RP_SECONDARY_PREFERRED));
 $col = $m->phpunit->test;
 $col->setReadPreference(Mongo::RP_PRIMARY_PREFERRED);
 $c = $col->find();
 var_dump($c->getReadPreference());
 
 // Set after MongoCursor is instantiated
-$m = new_mongo(null, true, true, array('readPreference' => MongoClient::RP_SECONDARY_PREFERRED));
+$m = new_mongo_standalone(null, true, true, array('readPreference' => MongoClient::RP_SECONDARY_PREFERRED));
 $col = $m->phpunit->test;
 $c = $col->find();
 $col->setReadPreference(Mongo::RP_PRIMARY_PREFERRED);

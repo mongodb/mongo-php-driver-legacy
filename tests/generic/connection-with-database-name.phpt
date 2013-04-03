@@ -1,12 +1,12 @@
 --TEST--
 Connection strings: with database name
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-mongo("phpunit");
-mongo("bar/baz");
-mongo("/");
+require_once "tests/utils/server.inc";
+mongo_standalone("phpunit");
+mongo_standalone("bar/baz");
+mongo_standalone("/");
 ?>
 --EXPECTF--

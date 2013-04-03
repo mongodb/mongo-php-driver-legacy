@@ -1,12 +1,13 @@
 --TEST--
 Test for PHP-619: Connection failure
 --SKIPIF--
-<?php require_once dirname(__FILE__). "/skipif.inc"; ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
+require_once "tests/utils/server.inc";
+$dsn = MongoShellServer::getStandaloneInfo();
 
-$m = new MongoClient(hostname(), array("db" => dbname()));
+$m = new MongoClient($dsn, array("db" => dbname()));
 ?>
 I'm Alive
 ==DONE==

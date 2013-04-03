@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2012 10gen, Inc.
+ *  Copyright 2009-2013 10gen, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 void mcon_str_add(mcon_str *xs, char *str, int f)
 {
-	return mcon_str_addl(xs, str, strlen(str), f);
+	mcon_str_addl(xs, str, strlen(str), f);
 }
 
 void mcon_str_addl(mcon_str *xs, char *str, int le, int f)

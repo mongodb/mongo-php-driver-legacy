@@ -1,12 +1,14 @@
 --TEST--
 Database: Create collection with options array
 --SKIPIF--
-<?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
+<?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require_once dirname(__FILE__) . "/../utils.inc";
-$a = mongo();
-$d = $a->selectDb(dbname());
+require_once "tests/utils/server.inc";
+$dsn = MongoShellServer::getStandaloneInfo();
+
+$a = new MongoClient($dsn);
+$d = $a->selectDb("phpunit");
 $ns = $d->selectCollection('system.namespaces');
 
 // cleanup
