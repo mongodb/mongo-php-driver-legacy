@@ -118,8 +118,7 @@ static signed int get_cursor_header(int sock, mongo_cursor *cursor, char **error
 		/* socket has been closed */
 		*error_message = strdup("socket has been closed");
 		return -1;
-	}
-	else if (status == -1) {
+	} else if (status == -1) {
 		*error_message = strdup("recv failed");
 		return -1;
 	} else if (status < INT_32*4) {
