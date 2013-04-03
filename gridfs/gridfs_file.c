@@ -244,8 +244,7 @@ PHP_METHOD(MongoGridFSFile, getBytes)
 		return;
 	}
 
-	str = (char*)emalloc(len + 1);
-	str = memset(str, 0, len + 1);
+	str = (char *)ecalloc(len + 1, sizeof(char *));
 	str_ptr = str;
 
 	if (apply_to_cursor(cursor, copy_bytes, &str, len + 1 TSRMLS_CC) == FAILURE) {
