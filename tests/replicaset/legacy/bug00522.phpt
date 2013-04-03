@@ -68,7 +68,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: append_getlasterror: added fsync=1
 IO      FINE: getting reply
 IO      FINE: getting cursor header
-%s:%d: Read timed out after reading 0 bytes, waited for 0 seconds and 1000 ms
+%s:%d: Read timed out after reading 0 bytes, waited for 0.001000 seconds
 -----
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
@@ -77,7 +77,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: append_getlasterror: added fsync=1
 IO      FINE: getting reply
 IO      FINE: getting cursor header
-%s:%d: Read timed out after reading 0 bytes, waited for 0 seconds and 1000 ms
+%s:%d: Read timed out after reading 0 bytes, waited for 0.001000 seconds
 -----
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
@@ -93,7 +93,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: append_getlasterror: added fsync=1
 IO      FINE: getting reply
 IO      FINE: getting cursor header
-%s:%d: Read timed out after reading 0 bytes, waited for 3 seconds and 141000 ms
+%s:%d: Read timed out after reading 0 bytes, waited for 3.141000 seconds
 -----
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror

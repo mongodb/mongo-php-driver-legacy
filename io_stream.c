@@ -142,7 +142,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 							rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
 						}
 						*error_message = malloc(256);
-						snprintf(*error_message, 256, "Read timed out after reading %d bytes, waited for %d seconds and %d ms", num, rtimeout.tv_sec, rtimeout.tv_usec);
+						snprintf(*error_message, 256, "Read timed out after reading %d bytes, waited for %d.%06d seconds", num, rtimeout.tv_sec, rtimeout.tv_usec);
 						zval_ptr_dtor(&metadata);
 						return -1;
 					}
