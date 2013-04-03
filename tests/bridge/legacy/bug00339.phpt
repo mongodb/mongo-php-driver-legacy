@@ -18,11 +18,19 @@ try {
     var_dump(get_class($e), $e->getMessage());
     var_dump($foo);
 }
+try {
+    $foo = array("foo" => "bar");
+    $c->insert($foo, array("safe" => true));
+    $result = $c->findOne(array("_id" => $foo["_id"]));
+    var_dump($result);
+} catch(Exception $e) {
+    printf("FAILED %s: %s\n", get_class($e), $e->getMessage());
+}
 ?>
 ===DONE===
 --EXPECTF--
 string(27) "MongoCursorTimeoutException"
-string(%d) "%Scursor timed out (timeout: 1, time left: 0:1000, status: 0)"
+string(%d) "%s:%d: Read timed out after reading 0 bytes, waited for 0 seconds and 1000 ms"
 array(2) {
   ["foo"]=>
   int(%d)
@@ -31,6 +39,15 @@ array(2) {
     ["$id"]=>
     string(24) "%s"
   }
+}
+array(2) {
+  ["_id"]=>
+  object(MongoId)#%d (1) {
+    ["$id"]=>
+    string(24) "%s"
+  }
+  ["foo"]=>
+  string(%d) "bar"
 }
 ===DONE===
 

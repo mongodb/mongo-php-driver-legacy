@@ -39,8 +39,14 @@ function makeServer($SERVERS, $server, $bit) {
     case STANDALONE_BRIDGE:
         $sc = $server->getStandaloneConfig();
         list($shost, $sport) = explode(":", trim($sc));
-        $server->makeBridge($sport, 1000);
-        $dsn = $server->getBridgeConfig();
+        try {
+            $server->makeBridge($sport, 1000);
+            $dsn = $server->getBridgeConfig();
+        } catch(DebugException $e) {
+            printf("(%s) %s - Still continuing though, you probably don't have 'mongobridge' installed\n", get_class($e), $e->getMessage());
+            //printf("%s\n", $e->getMongoDLog());
+            return 0;
+        }
         break;
     case MONGOS:
         $retval = $server->makeShard(2);
