@@ -104,9 +104,9 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 
 	client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
 	status = client->manager->recv_header(con, &client->servers->options, cursor->timeout, buf, REPLY_HEADER_LEN, error_message);
-	/* Read failed, error message populated by recv_header */
-	if (status == -1) {
-		return -1;
+	if (status < 0) {
+		/* Read failed, error message populated by recv_header */
+		return abs(status);
 	} else if (status < INT_32*4) {
 		*error_message = malloc(256);
 		snprintf(*error_message, 256, "couldn't get full response header, got %d bytes but expected atleast %d", status, INT_32*4);
@@ -155,7 +155,7 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 }
 
 /* Reads a cursors body
- * Returns -1 on failure or an int indicating the number of bytes read */
+ * Returns -1 on failure, -2 on timeout, -3 on EOF, or an int indicating the number of bytes read */
 static int get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC)
 {
 	mongoclient *client = (mongoclient*)zend_object_store_get_object(cursor->resource TSRMLS_CC);
@@ -196,7 +196,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 		return FAILURE;
 	}
 
-	if (get_cursor_body(cursor->connection, cursor, (char **) &error_message TSRMLS_CC) == FAILURE) {
+	if (get_cursor_body(cursor->connection, cursor, (char **) &error_message TSRMLS_CC) < 0) {
 #ifdef WIN32
 		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "WSA error getting database response %s (%d)", error_message, WSAGetLastError());
 #else
@@ -1526,6 +1526,9 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 	 * choose mongo_ce_CursorException for everything but status 80, which is a
 	 * cursor timeout instead. */
 	if (code == 80) {
+		exception_ce = mongo_ce_CursorTimeoutException;
+	} else if(code == 2) {
+		/* code=2 comes from recv_header() (abs()) recv_data() stream handlers */
 		exception_ce = mongo_ce_CursorTimeoutException;
 	} else {
 		exception_ce = mongo_ce_CursorException;
