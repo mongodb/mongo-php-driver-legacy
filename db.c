@@ -769,41 +769,6 @@ zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database,
 	return cursor_zval;
 }
 
-zval* mongo_db_cmd(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
-{
-	zval temp_ret, *response, *cursor_zval;
-	mongo_cursor *cursor = 0;
-	int exception = 0;
-
-	/* Create a cursor */
-	cursor_zval = mongo_db__create_fake_cursor(connection, database, cmd TSRMLS_CC);
-	cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
-	cursor->connection = connection;
-
-	/* Need to call this after setting cursor->link, reset checks that
-	 * cursor->link != 0 */
-	MONGO_METHOD(MongoCursor, reset, &temp_ret, cursor_zval);
-
-	MAKE_STD_ZVAL(response);
-	ZVAL_NULL(response);
-
-	MONGO_METHOD(MongoCursor, getNext, response, cursor_zval);
-	if (EG(exception)) {
-		zend_clear_exception(TSRMLS_C);
-		exception = 1;
-	}
-
-	cursor->connection = 0;
-	zval_ptr_dtor(&cursor_zval);
-
-	if (exception || IS_SCALAR_P(response)) {
-		zval_ptr_dtor(&response);
-		return 0;
-	}
-
-	return response;
-}
-
 
 PHP_METHOD(MongoDB, authenticate)
 {
