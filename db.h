@@ -24,11 +24,6 @@ zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
 zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC);
 
 /**
- * Run the given database command on the given server.
- */
-zval* mongo_db_cmd(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC);
-
-/**
  * Switch to primary connection
  */
 void php_mongo_connection_force_primary(mongo_cursor *cursor);
