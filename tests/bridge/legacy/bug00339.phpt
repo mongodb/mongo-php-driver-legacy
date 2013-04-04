@@ -30,7 +30,7 @@ try {
 ===DONE===
 --EXPECTF--
 string(27) "MongoCursorTimeoutException"
-string(%d) "%s:%d: Read timed out after reading 0 bytes, waited for 0 seconds and 1000 ms"
+string(%d) "%s:%d: Read timed out after reading 0 bytes, waited for 0.001000 seconds"
 array(2) {
   ["foo"]=>
   int(%d)
