@@ -292,8 +292,10 @@ static int parse_read_preference_tags(mongo_con_manager *manager, mongo_servers 
 			end = strchr(start, ',');
 			colon = strchr(start, ':');
 			if (!colon) {
-				*error_message = malloc(256 + strlen(start));
-				snprintf(*error_message, 256 + strlen(start), "Error while trying to parse tags: No separator for '%s'", start);
+				int len = strlen(start) + sizeof("Error while trying to parse tags: No separator for ''");
+
+				*error_message = malloc(len + 1);
+				snprintf(*error_message, len, "Error while trying to parse tags: No separator for '%s'", start);
 				mongo_read_preference_tagset_dtor(tmp_ts);
 				return 3;
 			}
