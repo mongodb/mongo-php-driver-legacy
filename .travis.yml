@@ -21,7 +21,7 @@ before_script:
 
 notifications:
   email:
-    - bjori@php.net
+    - driver-php@10gen.com
 
 #  - cat ./.travis.scripts/script.gdb | gdb --args $MYPHP `find ...core`
 # Run PHPs run-tests.php 
