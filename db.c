@@ -682,9 +682,11 @@ PHP_METHOD(MongoDB, command)
 	cmd_ns = get_cmd_ns(Z_STRVAL_P(db->name), Z_STRLEN_P(db->name));
 	ZVAL_STRING(ns, cmd_ns, 0);
 
-	/* create cursor */
+	/* create cursor, with RP inherited from us */
 	MAKE_STD_ZVAL(cursor);
 	object_init_ex(cursor, mongo_ce_Cursor);
+	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
+	mongo_read_preference_replace(&db->read_pref, &cursor_tmp->read_pref);
 	MAKE_STD_ZVAL(temp);
 	ZVAL_NULL(temp);
 
@@ -723,7 +725,6 @@ PHP_METHOD(MongoDB, command)
 	if (php_mongo_command_supports_rp(cmd)) {
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "command supports Read Preferences");
 	} else {
-		cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
 		php_mongo_connection_force_primary(cursor_tmp);
 	}
