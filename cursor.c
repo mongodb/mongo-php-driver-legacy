@@ -1330,6 +1330,7 @@ PHP_METHOD(MongoCursor, count)
 	MAKE_STD_ZVAL(coll);
 	object_init_ex(coll, mongo_ce_Collection);
 	c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
+	mongo_read_preference_replace(&cursor->read_pref, &c->read_pref);
 	MAKE_STD_ZVAL(c->ns);
 	ZVAL_STRING(c->ns, estrdup(cursor->ns), 0);
 	MAKE_STD_ZVAL(c->name);
