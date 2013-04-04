@@ -1527,7 +1527,7 @@ zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char 
 	 * cursor timeout instead. */
 	if (code == 80) {
 		exception_ce = mongo_ce_CursorTimeoutException;
-	} else if(code == 2) {
+	} else if (code == 2) {
 		/* code=2 comes from recv_header() (abs()) recv_data() stream handlers */
 		exception_ce = mongo_ce_CursorTimeoutException;
 	} else {
