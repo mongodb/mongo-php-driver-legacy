@@ -155,6 +155,14 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 						return -1;
 					}
 				}
+				if (zend_hash_find(Z_ARRVAL_P(metadata), "eof", sizeof("eof"), (void**)&tmp) == SUCCESS) {
+					convert_to_boolean_ex(tmp);
+					if (Z_BVAL_PP(tmp)) {
+						*error_message = strdup("Remote server has closed the connection");
+						zval_ptr_dtor(&metadata);
+						return -1;
+					}
+				}
 			}
 			zval_ptr_dtor(&metadata);
 		}
