@@ -317,7 +317,7 @@ int mongo_store_option_wrapper(mongo_con_manager *manager, mongo_servers *server
 			zend_hash_move_forward_ex(Z_ARRVAL_PP(option_value), &pos)
 		) {
 			convert_to_string_ex(opt_entry);
-			error = mongo_store_option(manager, servers, option_name, Z_STRVAL_PP(opt_entry), (char **) &error_message);
+			error = mongo_store_option(manager, servers, option_name, Z_STRVAL_PP(opt_entry), error_message);
 			if (error) {
 				return error;
 			}
