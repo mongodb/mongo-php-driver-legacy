@@ -72,7 +72,7 @@ function initRS(servers, port, keyFile, root, user) {
     // Apply server configuration options, if available
     if (typeof serverOpts !== 'undefined') {
         for (var i = 0; i < servers; i++) {
-            Object.extend(cfg.members[i], serverOpts[i]);
+            cfg.members[i] = Object.extend(cfg.members[i], serverOpts[i]);
         }
     }
 
