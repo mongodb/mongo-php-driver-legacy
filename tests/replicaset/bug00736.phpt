@@ -15,9 +15,8 @@ $mc = new MongoClient($rs['dsn'], array(
 
 echo "MongoClient constructed with empty tag set fallback\n";
 
-$c = $mc->selectCollection(dbname(), 'bug736');
-$c->insert(array('x' => 1));
-var_dump($c->findOne() !== null);
+$c = $mc->selectCollection(dbname(), 'fixtures');
+var_dump($c->findOne());
 
 $mc = new MongoClient($rs['dsn'], array(
     'replicaSet' => $rs['rsname'],
@@ -27,21 +26,41 @@ $mc = new MongoClient($rs['dsn'], array(
 
 echo "MongoClient constructed without empty tag set fallback\n";
 
-$c = $mc->selectCollection(dbname(), 'bug736');
+$c = $mc->selectCollection(dbname(), 'fixtures');
 
 try {
-    $doc = $c->findOne();
+    echo "Finding one (should fail, we don't have that tag)\n";
+    var_dump($c->findOne());
 } catch (MongoConnectionException $e) {
     printf("error message: %s\n", $e->getMessage());
 }
 
+echo "Secondary read, killing that tag\n";
 $c->setReadPreference(MongoClient::RP_SECONDARY_PREFERRED, array());
-var_dump($c->findOne() !== null);
+var_dump($c->findOne());
 
 ?>
---EXPECT--
+--EXPECTF--
 MongoClient constructed with empty tag set fallback
-bool(true)
+array(2) {
+  ["_id"]=>
+  object(MongoId)#6 (1) {
+    ["$id"]=>
+    string(24) "%s"
+  }
+  ["example"]=>
+  string(8) "document"
+}
 MongoClient constructed without empty tag set fallback
+Finding one (should fail, we don't have that tag)
 error message: No candidate servers found
-bool(true)
+Secondary read, killing that tag
+array(2) {
+  ["_id"]=>
+  object(MongoId)#7 (1) {
+    ["$id"]=>
+    string(24) "%s"
+  }
+  ["example"]=>
+  string(8) "document"
+}

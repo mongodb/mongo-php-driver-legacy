@@ -22,7 +22,7 @@ void mongo_init_MongoClient(TSRMLS_D);
 void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc);
 
 /* Helper for connecting the servers */
-mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC);
+mongo_connection *php_mongo_connect(mongoclient *link, int flags TSRMLS_DC);
 HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC);
 
 #if PHP_VERSION_ID >= 50400

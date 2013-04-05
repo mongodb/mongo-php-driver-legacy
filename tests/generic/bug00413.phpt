@@ -13,24 +13,27 @@ $db   = dbname();
 
 try {
     $m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", "", $pass, $host, $port, $db));
-    var_dump("Failed");
+    echo "got a MongoClient object\n";
+    $m->$db->collection->findOne();
 } catch (Exception $e) {
     echo $e->getMessage(), "\n";
 }
 try {
     $m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", $user, "", $host, $port, $db));
-    var_dump("Failed");
+    echo "got a MongoClient object\n";
+    $m->$db->collection->findOne();
 } catch (Exception $e) {
     echo $e->getMessage(), "\n";
 }
 try {
     $m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", $user . "bogus", $pass, $host, $port, $db));
-    var_dump("Failed");
+    echo "got a MongoClient object\n";
+    $m->$db->collection->findOne();
 } catch (Exception $e) {
     echo $e->getMessage(), "\n";
 }
 ?>
 --EXPECTF--
-Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth fails
-Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth%s
-Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth%s
+Failed to connect to: %s:%d: Authentication failed on database 'test' with username '': auth fails
+Failed to connect to: %s:%d: Authentication failed on database 'test' with username 'A': auth fails
+Failed to connect to: %s:%d: Authentication failed on database 'test' with username 'Abogus': auth fails
