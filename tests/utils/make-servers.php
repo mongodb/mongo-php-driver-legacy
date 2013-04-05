@@ -54,12 +54,24 @@ function makeServer($SERVERS, $server, $bit) {
         $dsn = join(",", $cfg);
         break;
     case REPLICASET:
-        $server->makeReplicaset(4, 30200);
+        $members = array(
+            array('tags' => array('server' => '0', 'dc' => 'ny')),
+            array('tags' => array('server' => '1', 'dc' => 'ny')),
+            array('tags' => array('server' => '2', 'dc' => 'sf')),
+            array('tags' => array('server' => '3', 'dc' => 'sf')),
+        );
+        $server->makeReplicaset($members, 30200);
         $cfg = $server->getReplicaSetConfig();
         $dsn = $cfg["dsn"];
         break;
     case REPLICASET_AUTH:
-        $retval = $server->makeReplicaset(4, 30300, dirname(__FILE__) . "/keyFile");
+        $members = array(
+            array('tags' => array('server' => '0', 'dc' => 'ny')),
+            array('tags' => array('server' => '1', 'dc' => 'ny')),
+            array('tags' => array('server' => '2', 'dc' => 'sf')),
+            array('tags' => array('server' => '3', 'dc' => 'sf')),
+        );
+        $retval = $server->makeReplicaset($members, 30300, dirname(__FILE__) . "/keyFile");
         $cfg = $server->getReplicaSetConfig(true);
         $dsn = $cfg["dsn"];
         break;
