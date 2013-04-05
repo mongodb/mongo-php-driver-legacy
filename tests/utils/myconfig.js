@@ -12,11 +12,15 @@ var bridgeTest;
  * If the number of servers is even, an additional member will be added to the
  * set as an arbiter process.
  *
- * @param int    servers Number of replica set nodes
- * @param int    port    Starting port for replica set nodes
- * @param string keyFile Path to private key file (activates auth if present)
- * @param object root    Object with username/password fields for "admin" DB user
- * @param object user    Object with username/password fields for "test" DB user
+ * If the server parameter is an array, its length will determine the number of
+ * nodes in the replica set. Additionally, each element is expected to be an
+ * object with configuration options for the node (e.g. tags).
+ *
+ * @param int|array servers Number of servers, or array of server config options
+ * @param int       port    Starting port for replica set nodes
+ * @param string    keyFile Path to private key file (activates auth if present)
+ * @param object    root    Object with username/password fields for "admin" DB user
+ * @param object    user    Object with username/password fields for "test" DB user
  * @return ReplSetTest
  */
 function initRS(servers, port, keyFile, root, user) {
@@ -26,6 +30,12 @@ function initRS(servers, port, keyFile, root, user) {
     // Do not reitinialize a replica set
     if ((keyFile && replTestAuth) || (!keyFile && replTest)) {
         return (keyFile ? replTestAuth : replTest);
+    }
+
+    // Save serverOpts before extracting servers from the array's length
+    if (Array.isArray(servers)) {
+        var serverOpts = servers;
+        servers = servers.length;
     }
 
     var addArbiter = (servers % 2 == 0);
@@ -57,6 +67,13 @@ function initRS(servers, port, keyFile, root, user) {
 
     if (addArbiter) {
         cfg.members[servers].arbiterOnly = true;
+    }
+
+    // Apply server configuration options, if available
+    if (typeof serverOpts !== 'undefined') {
+        for (var i = 0; i < servers; i++) {
+            Object.extend(cfg.members[i], serverOpts[i]);
+        }
     }
 
     retval.initiate(cfg);
