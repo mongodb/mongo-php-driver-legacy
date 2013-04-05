@@ -43,19 +43,29 @@ REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;%s;X;%d
+REPLSET FINE:   - tag: dc:%s
+REPLSET FINE:   - tag: server:%d
 REPLSET FINE: filter_connections: done
 REPLSET FINE: limiting to servers with same replicaset name
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;%s;X;%d
+REPLSET FINE:   - tag: dc:%s
+REPLSET FINE:   - tag: server:%d
 REPLSET FINE: limiting to servers with same replicaset name: done
 REPLSET FINE: limiting by credentials
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;%s;X;%d
+REPLSET FINE:   - tag: dc:%s
+REPLSET FINE:   - tag: server:%d
 REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;%s;X;%d
+REPLSET FINE:   - tag: dc:%s
+REPLSET FINE:   - tag: server:%d
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
 REPLSET FINE: selecting near servers: nearest is 0ms
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;%s;X;%d
+REPLSET FINE:   - tag: dc:%s
+REPLSET FINE:   - tag: server:%d
 REPLSET FINE: selecting near server: done
 Info:
 PARSE   INFO: Parsing mongodb://%s:%d
@@ -66,4 +76,5 @@ PARSE   INFO: - Switching connection type: REPLSET
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;%s;X;%d
-
+REPLSET INFO:   - tag: dc:%s
+REPLSET INFO:   - tag: server:%d
