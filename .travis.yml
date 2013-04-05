@@ -4,7 +4,7 @@ php:
   - 5.5
   - 5.4
   - 5.3
-#  - 5.2
+  - 5.2
 
 services:
   - mongodb
@@ -21,11 +21,12 @@ before_script:
 
 notifications:
   email:
-    - bjori@php.net
+    - driver-php@10gen.com
 
 #  - cat ./.travis.scripts/script.gdb | gdb --args $MYPHP `find ...core`
 # Run PHPs run-tests.php 
 script:
-  - MYPHP=`make findphp` 
-  - REPORT_EXIT_STATUS=1 TEST_PHP_EXECUTABLE=$MYPHP $MYPHP run-tests.php -n -d extension=modules/mongo.so -q -x --show-diff -g 'FAIL,XFAIL,BORK,WARN,LEAK,SKIP'
+  - MYPHP=`make findphp`
+  - MODULES=`pwd`/modules/
+  - SHOW_ONLY_GROUPS="FAIL,XFAIL,BORK,WARN,LEAK,SKIP" REPORT_EXIT_STATUS=1 TEST_PHP_EXECUTABLE=$MYPHP $MYPHP run-tests.php -n -d extension_dir=$MODULES -d extension=mongo.so -q -x --show-diff
 
