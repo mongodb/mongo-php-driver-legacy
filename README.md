@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mongodb/mongo-php-driver.png?branch=master)](https://travis-ci.org/mongodb/mongo-php-driver)
+
 ## Installation
 
 To install:
