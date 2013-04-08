@@ -80,6 +80,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 		} else {
 			/* Otherwise short-circut the connection attempt, and say we failed right away */
 			free(hash);
+			*error_message = strdup("Previous connection attempts failed, server blacklisted");
 			return NULL;
 		}
 	}
@@ -302,7 +303,6 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	mongo_connection *con = NULL;
 	mongo_connection *tmp;
 	mcon_collection  *collection = NULL;
-	char             *con_error_message = NULL;
 	mongo_read_preference tmp_rp; /* We only support NEAREST for MULTIPLE right now */
 	int i;
 	int found_connected_server = 0;
@@ -312,6 +312,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
+		char *con_error_message = NULL;
 		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
 		if (tmp) {
