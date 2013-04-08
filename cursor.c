@@ -933,7 +933,7 @@ int mongo_cursor_mark_dead(void *callback_data)
 }
 
 /* Adds the $readPreference option to the query objects */
-void mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
+void mongo_apply_mongos_rp(mongo_cursor *cursor)
 {
 	zval *query, *rp, *tags;
 	char *type;
@@ -1030,7 +1030,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 
 	/* Apply read preference query option, but only if we have a MongoS connection */
 	if (cursor->connection->connection_type == MONGO_NODE_MONGOS) {
-		mongo_apply_mongos_rp(cursor, link);
+		mongo_apply_mongos_rp(cursor);
 	}
 
 	/* Create query buffer */
