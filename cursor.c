@@ -935,7 +935,7 @@ int mongo_cursor_mark_dead(void *callback_data)
 /* Adds the $readPreference option to the query objects */
 void mongo_apply_mongos_rp(mongo_cursor *cursor)
 {
-	zval *query, *rp, *tags;
+	zval *rp, *tags;
 	char *type;
 
 	/* Older mongos don't like $readPreference, so don't apply it
