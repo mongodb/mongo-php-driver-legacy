@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-735: Commands should inherit read preferences from MongoDB and MongoCollection objects
 --SKIPIF--
+<?php if (!version_compare(phpversion(), "5.3", '>=')) exit("skip >= PHP 5.3 needed\n"); ?>
 <?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
 <?php
