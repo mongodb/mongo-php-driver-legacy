@@ -933,38 +933,37 @@ int mongo_cursor_mark_dead(void *callback_data)
 }
 
 /* Adds the $readPreference option to the query objects */
-void mongo_apply_mongos_rp(mongo_cursor *cursor, mongoclient *link)
+void mongo_apply_mongos_rp(mongo_cursor *cursor)
 {
-	zval *query, *rp, *tags;
+	zval *rp, *tags;
 	char *type;
 
 	/* Older mongos don't like $readPreference, so don't apply it
 	 * when we want the default behaviour anyway */
-	if (link->servers->read_pref.type == MONGO_RP_PRIMARY) {
+	if (cursor->read_pref.type == MONGO_RP_PRIMARY) {
 		return;
 	}
-	if (link->servers->read_pref.type == MONGO_RP_SECONDARY_PREFERRED) {
+	if (cursor->read_pref.type == MONGO_RP_SECONDARY_PREFERRED) {
 		/* If there aren't any tags, don't add $readPreference, the slaveOkay
 		 * flag is enough This gives us improved compatability with older
 		 * mongos */
-		if (link->servers->read_pref.tagset_count == 0) {
+		if (cursor->read_pref.tagset_count == 0) {
 			return;
 		}
 	}
 
-	type = mongo_read_preference_type_to_name(link->servers->read_pref.type);
+	type = mongo_read_preference_type_to_name(cursor->read_pref.type);
 	MAKE_STD_ZVAL(rp);
 	array_init(rp);
 	add_assoc_string(rp, "mode", type, 1);
 
-	tags = php_mongo_make_tagsets(&link->servers->read_pref);
+	tags = php_mongo_make_tagsets(&cursor->read_pref);
 	if (tags) {
 		add_assoc_zval(rp, "tags", tags);
 	}
 
 	make_special(cursor);
-	query = cursor->query;
-	add_assoc_zval(query, "$readPreference", rp);
+	add_assoc_zval(cursor->query, "$readPreference", rp);
 }
 
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
@@ -1031,7 +1030,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 
 	/* Apply read preference query option, but only if we have a MongoS connection */
 	if (cursor->connection->connection_type == MONGO_NODE_MONGOS) {
-		mongo_apply_mongos_rp(cursor, link);
+		mongo_apply_mongos_rp(cursor);
 	}
 
 	/* Create query buffer */
@@ -1331,6 +1330,7 @@ PHP_METHOD(MongoCursor, count)
 	MAKE_STD_ZVAL(coll);
 	object_init_ex(coll, mongo_ce_Collection);
 	c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
+	mongo_read_preference_replace(&cursor->read_pref, &c->read_pref);
 	MAKE_STD_ZVAL(c->ns);
 	ZVAL_STRING(c->ns, estrdup(cursor->ns), 0);
 	MAKE_STD_ZVAL(c->name);

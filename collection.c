@@ -1235,7 +1235,7 @@ PHP_METHOD(MongoCollection, count)
 	MAKE_STD_ZVAL(response);
 	ZVAL_NULL(response);
 
-	MONGO_CMD(response, c->parent);
+	MONGO_CMD_WITH_RP(response, c->parent, c);
 
 	zval_ptr_dtor(&data);
 
@@ -1497,7 +1497,7 @@ PHP_METHOD(MongoCollection, aggregate)
 	}
 	efree(argv);
 
-	MONGO_CMD(return_value, c->parent);
+	MONGO_CMD_WITH_RP(return_value, c->parent, c);
 
 	zval_ptr_dtor(&data);
 }
@@ -1533,7 +1533,7 @@ PHP_METHOD(MongoCollection, distinct)
 	}
 
 	MAKE_STD_ZVAL(tmp);
-	MONGO_CMD(tmp, c->parent);
+	MONGO_CMD_WITH_RP(tmp, c->parent, c);
 
 	if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values") + 1, (void **)&values) == SUCCESS) {
 #ifdef array_init_size
@@ -1623,7 +1623,7 @@ PHP_METHOD(MongoCollection, group)
 	array_init(data);
 	add_assoc_zval(data, "group", group);
 
-	MONGO_CMD(return_value, c->parent);
+	MONGO_CMD_WITH_RP(return_value, c->parent, c);
 
 	zval_ptr_dtor(&data);
 	zval_ptr_dtor(&reduce);

@@ -162,7 +162,7 @@ array(5) {
   ["limit"]=>
   int(-1)
   ["options"]=>
-  int(0)
+  int(4)
   ["cursor_id"]=>
   int(0)
 }
