@@ -248,7 +248,9 @@ function getShardConfig() {
  * Stop replica set primary.
  */
 function killMaster() {
-    replTest.stopMaster();
+    // Step down for 5seconds, and prevent elections for 6 seconds so we can do some tests without primary
+    printjson(replTest.getMaster().getDB("admin")._adminCommand({ replSetStepDown: 5, force: true }));
+    printjson(replTest.getMaster().getDB("admin")._adminCommand({ replSetFreeze: 6 }));
 }
 
 /**
@@ -262,9 +264,8 @@ function killRS() {
  * Restart replica set primary.
  */
 function restartMaster() {
-    replTest.start(0, {remember: true}, true);
-    var conn = replTest.liveNodes.slaves[1];
-    ReplSetTest.awaitRSClientHosts(conn, replTest, replTest.nodes)
+    // Just wait until we get a master
+    printjson(replTest.getMaster());
 }
 
 /**
