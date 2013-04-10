@@ -11,9 +11,10 @@ class MongoShellServer {
         $this->fp = $fp;
     }
 
-    public function makeShard($mongos = 4) {
+    public function makeShard($mongos = 4, $replicaset_options = array()) {
         $this->setDBDIR();
-        return $this->verifyWrite("initShard($mongos)");
+        $replicaset_options = json_encode($replicaset_options);
+        return $this->verifyWrite("initShard($mongos, $replicaset_options)");
     }
 
     public function makeReplicaset($members = 4, $port = 28000, $auth = false) {
@@ -85,7 +86,7 @@ class MongoShellServer {
         $json = $this->verifyWrite("getShardConfig()");
         $retval = json_decode($json);
         if (!$retval) {
-            throw new Exception("Mongos not initialized");
+            throw new DebugException("Mongos not initialized", $this->log);
         }
         return $retval;
     }
