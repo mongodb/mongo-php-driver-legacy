@@ -152,29 +152,57 @@ function initStandalone(port, auth, root, user) {
  *
  * @return ShardingTest
  */
-function initShard() {
+function initShard(mongoscount, rsOptions) {
+    mongoscount = typeof mongoscount !== 'undefined' ? mongoscount : 3;
+    rsOptions = typeof rsOptions !== 'undefined' ? rsOptions : [];
+
+    printjson(rsOptions);
     // Do not reitinialize a sharded cluster
     if (shardTest) {
         return shardTest;
     }
 
+    rs = {
+        "nodes": 3,
+        "logpath": "/dev/null",
+        "oplogSize": 10
+    }
+
     shardTest = new ShardingTest({
         "name": "SHARDING",
         "shards": 2,
-        "rs": {
-            "nodes": 3,
-            "logpath": "/dev/null",
-            "oplogSize": 10
-        },
+        "rs": rs,
         "numReplicas": 2,
         "nopreallocj": true,
-        "mongos": 2,
+        "mongos": mongoscount,
         "other": {
             "mongosOptions": {
                 "logpath": "/dev/null"
             }
         }
     });
+
+    print("About to add options");
+    if (typeof rsOptions !== 'undefined') {
+        cfg = shardTest.rs0.getReplSetConfig();
+        for (var i = 0; i < rsOptions[0].length; i++) {
+            cfg.members[i] = Object.extend(cfg.members[i], rsOptions[0][i]);
+        }
+        cfg.version = 3;
+        try {
+            shardTest.rs0.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
+            /* Will close all the open connections, we don't care */
+        } catch(ex) {}
+
+        cfg = shardTest.rs1.getReplSetConfig();
+        for (var i = 0; i < rsOptions[1].length; i++) {
+            cfg.members[i] = Object.extend(cfg.members[i], rsOptions[1][i]);
+        }
+        cfg.version = 3;
+        print("The new config is:");
+        printjson(cfg);
+        shardTest.rs1.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
+    }
 
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs0.getSecondaries(), { ok : true, secondary : true });
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs1.getSecondaries(), { ok : true, secondary : true });

@@ -49,7 +49,19 @@ function makeServer($SERVERS, $server, $bit) {
         }
         break;
     case MONGOS:
-        $retval = $server->makeShard(2);
+        $rsmembers = array(
+            /* Shard 0 */ array(
+                /* Member 0 */ array('tags' => array('server' => '0', 'dc' => 'ny')),
+                array('tags' => array('server' => '1', 'dc' => 'ny')),
+                array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
+            ),
+            /* Shard 1 */ array(
+                /* Member 0 */ array('tags' => array('server' => '0', 'dc' => 'ny')),
+                array('tags' => array('server' => '1', 'dc' => 'ny', 'theOtherShard' => 'doesntHaveThisTag')),
+                array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
+            ),
+        );
+        $retval = $server->makeShard(2, $rsmembers);
         $cfg = $server->getShardConfig();
         $dsn = join(",", $cfg);
         break;
