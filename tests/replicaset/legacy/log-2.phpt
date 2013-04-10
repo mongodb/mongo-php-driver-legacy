@@ -45,7 +45,7 @@ CON     INFO: ismaster: set name: REPLICASET, ismaster: 1, secondary: 0, is_arbi
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
+CON     INFO: found host: %s:%d (passive)
 CON     INFO: ismaster: last ran at %d
 CON     FINE: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
@@ -102,7 +102,7 @@ CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbi
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
+CON     INFO: found host: %s:%d (passive)
 CON     INFO: ismaster: last ran at %d
 CON     FINE: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
@@ -120,7 +120,7 @@ CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbi
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
+CON     INFO: found host: %s:%d (passive)
 CON     INFO: ismaster: last ran at %d
 CON     FINE: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
@@ -138,7 +138,7 @@ CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbi
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
+CON     INFO: found host: %s:%d (passive)
 CON     INFO: ismaster: last ran at %d
 CON     FINE: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
