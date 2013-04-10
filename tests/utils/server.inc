@@ -21,12 +21,13 @@ class MongoShellServer {
             // Git doesn't store permissions, but mongod needs this to be strict
             chmod($auth, 0700);
         }
+        $members = json_encode($members);
         $auth = json_encode($auth);
         $creds = $this->getCredentials();
         $root = json_encode($creds["admin"]);
         $user = json_encode($creds["user"]);
         $this->setDBDIR();
-        return $this->verifyWrite("initRS($members,$port,$auth, $root, $user)");
+        return $this->verifyWrite("initRS($members, $port, $auth, $root, $user)");
     }
 
     public function makeStandalone($port = 30000, $auth = false) {

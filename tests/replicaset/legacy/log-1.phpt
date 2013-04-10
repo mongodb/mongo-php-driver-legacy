@@ -35,6 +35,8 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
+CON     FINE: get_server_flags: added tag dc:%s
+CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;%s;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
@@ -62,6 +64,8 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
+CON     FINE: get_server_flags: added tag dc:%s
+CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;%s;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
@@ -74,6 +78,8 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
+CON     FINE: get_server_flags: added tag dc:%s
+CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
@@ -86,6 +92,8 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
+CON     FINE: get_server_flags: added tag dc:%s
+CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
@@ -148,19 +156,31 @@ REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE:   - tag: dc:%s
+REPLSET FINE:   - tag: server:%d
 REPLSET FINE: filter_connections: done
 REPLSET FINE: limiting to servers with same replicaset name
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE:   - tag: dc:%s
+REPLSET FINE:   - tag: server:%d
 REPLSET FINE: limiting to servers with same replicaset name: done
 REPLSET FINE: limiting by credentials
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE:   - tag: dc:%s
+REPLSET FINE:   - tag: server:%d
 REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE:   - tag: dc:%s
+REPLSET FINE:   - tag: server:%d
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
 REPLSET FINE: selecting near servers: nearest is 0ms
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE:   - tag: dc:%s
+REPLSET FINE:   - tag: server:%d
 REPLSET FINE: selecting near server: done
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;X;%d
+REPLSET INFO:   - tag: dc:%s
+REPLSET INFO:   - tag: server:%d
