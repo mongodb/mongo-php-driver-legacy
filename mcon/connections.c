@@ -491,7 +491,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	mcon_str      *packet;
 	char          *data_buffer;
 	char          *set = NULL;      /* For replicaset in return */
-	char          *hosts, *ptr, *string;
+	char          *hosts, *passives, *ptr, *string;
 	unsigned char  ismaster = 0, secondary = 0, arbiter = 0;
 	char          *connected_name, *we_think_we_are;
 	struct timeval now;
@@ -583,17 +583,29 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	bson_find_field_as_bool(ptr, "secondary", &secondary);
 	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
 
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: set name: %s, ismaster: %d, secondary: %d, is_arbiter: %d", set, ismaster, secondary, arbiter);
+
 	/* Find all hosts */
 	bson_find_field_as_array(ptr, "hosts", &hosts);
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: set name: %s, ismaster: %d, secondary: %d, is_arbiter: %d", set, ismaster, secondary, arbiter);
+	bson_find_field_as_array(ptr, "passives", &passives);
 	*nr_hosts = 0;
 
+	/* Iterate over the "hosts" document */
 	ptr = hosts;
 	while (bson_array_find_next_string(&ptr, NULL, &string)) {
 		(*nr_hosts)++;
 		*found_hosts = realloc(*found_hosts, (*nr_hosts) * sizeof(char*));
 		(*found_hosts)[*nr_hosts-1] = strdup(string);
 		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "found host: %s", string);
+	}
+
+	/* Iterate over the "passives" document (priority=0) */
+	ptr = passives;
+	while (bson_array_find_next_string(&ptr, NULL, &string)) {
+		(*nr_hosts)++;
+		*found_hosts = realloc(*found_hosts, (*nr_hosts) * sizeof(char*));
+		(*found_hosts)[*nr_hosts-1] = strdup(string);
+		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "found host: %s (passive)", string);
 	}
 
 	/* Set connection type depending on flags */

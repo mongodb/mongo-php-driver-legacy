@@ -57,7 +57,7 @@ function makeServer($SERVERS, $server, $bit) {
         $members = array(
             array('tags' => array('server' => '0', 'dc' => 'ny')),
             array('tags' => array('server' => '1', 'dc' => 'ny')),
-            array('tags' => array('server' => '2', 'dc' => 'sf')),
+            array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
             array('tags' => array('server' => '3', 'dc' => 'sf')),
         );
         $server->makeReplicaset($members, 30200);
@@ -68,7 +68,7 @@ function makeServer($SERVERS, $server, $bit) {
         $members = array(
             array('tags' => array('server' => '0', 'dc' => 'ny')),
             array('tags' => array('server' => '1', 'dc' => 'ny')),
-            array('tags' => array('server' => '2', 'dc' => 'sf')),
+            array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
             array('tags' => array('server' => '3', 'dc' => 'sf')),
         );
         $retval = $server->makeReplicaset($members, 30300, dirname(__FILE__) . "/keyFile");
