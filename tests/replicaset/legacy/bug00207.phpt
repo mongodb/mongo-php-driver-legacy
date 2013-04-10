@@ -6,8 +6,6 @@ Test for PHP-207: setSlaveOkay not supported for GridFS queries
 <?php
 require_once "tests/utils/server.inc";
 
-// FIXME: How on earth can we verify the data came from secondaries?
-// The only way I found so far was to watch mongotop :)
 $m = mongo("phpunit");
 $db = $m->selectDB("phpunit");
 $db->dropCollection("fs.files");
@@ -17,7 +15,7 @@ $gridfs = $db->getGridFS();
 
 for($i=0; $i<5; $i++) {
     // Since we will be reading from slave in a second, it is nice to know that the file is there
-    $safe = array("safe" => 1, "w" => 2);
+    $safe = array("safe" => 1, "w" => "majority");
     try {
         $ok = $gridfs->storeFile(__FILE__, array( "_id" => "slaveOkayFile-$i"), $safe);
     } catch(Exception $e) {
@@ -26,6 +24,7 @@ for($i=0; $i<5; $i++) {
     var_dump($ok);
 }
 $bytes = strlen(file_get_contents(__FILE__));
+sleep(1);
 
 $cursor = $gridfs->find()->slaveOkay(true);
 var_dump($cursor->count());
