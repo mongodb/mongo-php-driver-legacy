@@ -388,7 +388,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	}
 
 	if (strcasecmp(option_name, "fsync") == 0) {
-		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			servers->options.default_fsync = 1;
 		} else {
 			servers->options.default_fsync = 0;
@@ -398,7 +398,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	}
 
 	if (strcasecmp(option_name, "journal") == 0) {
-		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			servers->options.default_journal = 1;
 		} else {
 			servers->options.default_journal = 0;
