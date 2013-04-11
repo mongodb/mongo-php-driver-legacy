@@ -125,6 +125,13 @@ function makeDaemon() {
     }
 }
 
+if (!is_dir($DBDIR)) {
+    if (!mkdir($DBDIR, 0700, true)) {
+        echo "Error creating database directory: $DBDIR\n";
+        exit(2);
+    }
+}
+
 try {
     $server = new MongoShellServer;
 } catch(Exception $e) {
