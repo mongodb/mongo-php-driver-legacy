@@ -50,15 +50,12 @@ Setting flag #1
 %s:%d: tailable cursor requested on non capped collection
 Setting flag #2
 Setting flag #3
-
-Warning: MongoCursor::setFlag(): The CURSOR_FLAG_OPLOG_REPLAY(3) and CURSOR_FLAG_EXHAUST(6) flags are not supported. in %sbug00389.php on line %d
-
-Warning: Invalid argument supplied for foreach() in %sbug00389.php on line %d
+%s:%d: no ts field in query
 Setting flag #4
 Setting flag #5
 Setting flag #6
 
-Warning: MongoCursor::setFlag(): The CURSOR_FLAG_OPLOG_REPLAY(3) and CURSOR_FLAG_EXHAUST(6) flags are not supported. in %sbug00389.php on line %d
+Warning: MongoCursor::setFlag(): The CURSOR_FLAG_EXHAUST(6) flag is not supported in %sbug00389.php on line %d
 
 Warning: Invalid argument supplied for foreach() in %sbug00389.php on line %d
 Setting flag #7

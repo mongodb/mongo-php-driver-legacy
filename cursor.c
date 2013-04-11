@@ -585,11 +585,10 @@ PHP_METHOD(MongoCursor, setFlag)
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|b", &bit, &set) == FAILURE) {
 		return;
 	}
-	/* Prevent bit 3 (CURSOR_FLAG_OPLOG_REPLAY) and bit 6 (CURSOR_FLAG_EXHAUST) from
-	 * being set. The first because it's an internal flag, and the second because
-	 * the driver can't handle this at the moment. */
-	if (bit == 3 || bit == 6) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The CURSOR_FLAG_OPLOG_REPLAY(3) and CURSOR_FLAG_EXHAUST(6) flags are not supported.");
+	/* Prevent bit 6 (CURSOR_FLAG_EXHAUST) from being set. This is because the
+	 * driver can't handle this at the moment. */
+	if (bit == 6) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The CURSOR_FLAG_EXHAUST(6) flag is not supported");
 		return;
 	}
 	set_cursor_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1 << bit, set);
