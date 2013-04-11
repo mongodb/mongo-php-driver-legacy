@@ -318,8 +318,10 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
 	}
     
 	if (Z_TYPE_P(next) != IS_ARRAY) {
+		zval_ptr_dtor(&next);
 		return FAILURE;
 	}
+
 	while (Z_TYPE_P(next) == IS_ARRAY) {
 		zval **zdata;
 
