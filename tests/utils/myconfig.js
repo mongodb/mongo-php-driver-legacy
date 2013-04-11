@@ -156,7 +156,6 @@ function initShard(mongoscount, rsOptions) {
     mongoscount = typeof mongoscount !== 'undefined' ? mongoscount : 3;
     rsOptions = typeof rsOptions !== 'undefined' ? rsOptions : [];
 
-    printjson(rsOptions);
     // Do not reitinialize a sharded cluster
     if (shardTest) {
         return shardTest;
@@ -182,7 +181,6 @@ function initShard(mongoscount, rsOptions) {
         }
     });
 
-    print("About to add options");
     if (typeof rsOptions !== 'undefined') {
         cfg = shardTest.rs0.getReplSetConfig();
         for (var i = 0; i < rsOptions[0].length; i++) {
@@ -199,8 +197,6 @@ function initShard(mongoscount, rsOptions) {
             cfg.members[i] = Object.extend(cfg.members[i], rsOptions[1][i]);
         }
         cfg.version = 3;
-        print("The new config is:");
-        printjson(cfg);
         shardTest.rs1.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
     }
 
