@@ -121,7 +121,7 @@ array(5) {
   int(0)
 }
 string(20) "MongoCursorException"
-string(58) "%s:%d: Remote server has closed the connection"
+string(%d) "%s:%d: Remote server has closed the connection"
 int(3)
 Doing secondary read
 array(5) {
