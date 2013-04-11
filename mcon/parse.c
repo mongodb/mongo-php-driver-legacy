@@ -327,6 +327,124 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 {
 	int i;
 
+	if (strcasecmp(option_name, "authMechanism") == 0) {
+		int mechanism;
+
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authMechanism': '%s'", option_value);
+		if (strcasecmp(option_value, "MONGODB-CR") == 0) {
+			mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
+		} else if (strcasecmp(option_value, "GSSAPI") == 0) {
+			/* FIXME: GSSAPI isn't implemented yet */
+			mechanism = MONGO_AUTH_MECHANISM_GSSAPI;
+			*error_message = strdup("The authMechanism 'GSSAPI' is currently not supported. Only MONGODB-CR is available.");
+			return 3;
+		} else {
+			int len = strlen(option_value) + sizeof("The authMechanism '' does not exist.");
+
+			*error_message = malloc(len + 1);
+			snprintf(*error_message, len, "The authMechanism '%s' does not exist.", option_value);
+			return 3;
+		}
+		for (i = 0; i < servers->count; i++) {
+			servers->server[i]->mechanism = mechanism;
+		}
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "authSource") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authSource': '%s'", option_value);
+		for (i = 0; i < servers->count; i++) {
+			if (servers->server[i]->authdb) {
+				free(servers->server[i]->authdb);
+			}
+			servers->server[i]->authdb = strdup(option_value);
+		}
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "connectTimeoutMS") == 0) {
+		int value = atoi(option_value);
+
+		if (servers->options.connectTimeoutMS) {
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Replacing previously set value for 'connectTimeoutMS' (%d)", servers->options.connectTimeoutMS);
+		}
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'connectTimeoutMS': %d", value);
+		servers->options.connectTimeoutMS = value;
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "db") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'db': '%s'", option_value);
+		for (i = 0; i < servers->count; i++) {
+			if (servers->server[i]->db) {
+				free(servers->server[i]->db);
+				/* Free the authdb too as it defaulted to 'admin' when no db was passed as the connection string */
+				free(servers->server[i]->authdb);
+				servers->server[i]->authdb = NULL;
+			}
+			servers->server[i]->db = strdup(option_value);
+		}
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "fsync") == 0) {
+		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
+			servers->options.default_fsync = 1;
+		} else {
+			servers->options.default_fsync = 0;
+		}
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'fsync': %d", servers->options.default_fsync);
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "journal") == 0) {
+		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
+			servers->options.default_journal = 1;
+		} else {
+			servers->options.default_journal = 0;
+		}
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'journal': %d", servers->options.default_journal);
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "password") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'password': '%s'", option_value);
+		for (i = 0; i < servers->count; i++) {
+			if (servers->server[i]->password) {
+				free(servers->server[i]->password);
+			}
+			servers->server[i]->password = strdup(option_value);
+		}
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "readPreference") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'readPreference': '%s'", option_value);
+		if (strcasecmp(option_value, "primary") == 0) {
+			servers->read_pref.type = MONGO_RP_PRIMARY;
+		} else if (strcasecmp(option_value, "primaryPreferred") == 0) {
+			servers->read_pref.type = MONGO_RP_PRIMARY_PREFERRED;
+		} else if (strcasecmp(option_value, "secondary") == 0) {
+			servers->read_pref.type = MONGO_RP_SECONDARY;
+		} else if (strcasecmp(option_value, "secondaryPreferred") == 0) {
+			servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
+		} else if (strcasecmp(option_value, "nearest") == 0) {
+			servers->read_pref.type = MONGO_RP_NEAREST;
+		} else {
+			int len = strlen(option_value) + sizeof("The readPreference value '' is not supported.");
+
+			*error_message = malloc(len + 1);
+			snprintf(*error_message, len, "The readPreference value '%s' is not supported.", option_value);
+			return 3;
+		}
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "readPreferenceTags") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'readPreferenceTags': '%s'", option_value);
+		return parse_read_preference_tags(manager, servers, option_value, error_message);
+	}
+
 	if (strcasecmp(option_name, "replicaSet") == 0) {
 		if (servers->options.repl_set_name) {
 			/* Free the already existing one */
@@ -357,83 +475,9 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		}
 		return 0;
 	}
-	if (strcasecmp(option_name, "username") == 0) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'username': '%s'", option_value);
-		for (i = 0; i < servers->count; i++) {
-			if (servers->server[i]->username) {
-				free(servers->server[i]->username);
-			}
-			servers->server[i]->username = strdup(option_value);
-			/* Use "admin" as the default db if none selected yet. It is okay
-			 * if it is set in a later option, as we first always free the
-			 * value before setting it anyway. */
-			if (!servers->server[i]->db) {
-				servers->server[i]->db = strdup("admin");
-				/* Admin users always authenticate on the admin db, even when using other databases */
-				servers->server[i]->authdb = strdup("admin");
-			}
-		}
-		return 0;
-	}
-	if (strcasecmp(option_name, "password") == 0) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'password': '%s'", option_value);
-		for (i = 0; i < servers->count; i++) {
-			if (servers->server[i]->password) {
-				free(servers->server[i]->password);
-			}
-			servers->server[i]->password = strdup(option_value);
-		}
-		return 0;
-	}
-	if (strcasecmp(option_name, "db") == 0) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'db': '%s'", option_value);
-		for (i = 0; i < servers->count; i++) {
-			if (servers->server[i]->db) {
-				free(servers->server[i]->db);
-				/* Free the authdb too as it defaulted to 'admin' when no db was passed as the connection string */
-				free(servers->server[i]->authdb);
-				servers->server[i]->authdb = NULL;
-			}
-			servers->server[i]->db = strdup(option_value);
-		}
-		return 0;
-	}
-	if (strcasecmp(option_name, "authSource") == 0) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authSource': '%s'", option_value);
-		for (i = 0; i < servers->count; i++) {
-			if (servers->server[i]->authdb) {
-				free(servers->server[i]->authdb);
-			}
-			servers->server[i]->authdb = strdup(option_value);
-		}
-		return 0;
-	}
-	if (strcasecmp(option_name, "authMechanism") == 0) {
-		int mechanism;
-
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authMechanism': '%s'", option_value);
-		if (strcasecmp(option_value, "MONGODB-CR") == 0) {
-			mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
-		} else if (strcasecmp(option_value, "GSSAPI") == 0) {
-			/* FIXME: GSSAPI isn't implemented yet */
-			mechanism = MONGO_AUTH_MECHANISM_GSSAPI;
-			*error_message = strdup("The authMechanism 'GSSAPI' is currently not supported. Only MONGODB-CR is available.");
-			return 3;
-		} else {
-			int len = strlen(option_value) + sizeof("The authMechanism '' does not exist.");
-
-			*error_message = malloc(len + 1);
-			snprintf(*error_message, len, "The authMechanism '%s' does not exist.", option_value);
-			return 3;
-		}
-		for (i = 0; i < servers->count; i++) {
-			servers->server[i]->mechanism = mechanism;
-		}
-		return 0;
-	}
 
 	if (strcasecmp(option_name, "slaveOkay") == 0) {
-		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
+		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
 			if (servers->read_pref.type != MONGO_RP_PRIMARY || servers->read_pref.tagset_count) {
 				/* the server already has read preferences configured, but we're still
@@ -451,30 +495,37 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': false");
 		return 0;
 	}
-	if (strcasecmp(option_name, "readPreference") == 0) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'readPreference': '%s'", option_value);
-		if (strcasecmp(option_value, "primary") == 0) {
-			servers->read_pref.type = MONGO_RP_PRIMARY;
-		} else if (strcasecmp(option_value, "primaryPreferred") == 0) {
-			servers->read_pref.type = MONGO_RP_PRIMARY_PREFERRED;
-		} else if (strcasecmp(option_value, "secondary") == 0) {
-			servers->read_pref.type = MONGO_RP_SECONDARY;
-		} else if (strcasecmp(option_value, "secondaryPreferred") == 0) {
-			servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
-		} else if (strcasecmp(option_value, "nearest") == 0) {
-			servers->read_pref.type = MONGO_RP_NEAREST;
-		} else {
-			int len = strlen(option_value) + sizeof("The readPreference value '' is not supported.");
 
-			*error_message = malloc(len + 1);
-			snprintf(*error_message, len, "The readPreference value '%s' is not supported.", option_value);
-			return 3;
-		}
+	if (strcasecmp(option_name, "socketTimeoutMS") == 0) {
+		int value = atoi(option_value);
+
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'socketTimeoutMS': %d", value);
+		servers->options.socketTimeoutMS = value;
 		return 0;
 	}
-	if (strcasecmp(option_name, "readPreferenceTags") == 0) {
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'readPreferenceTags': '%s'", option_value);
-		return parse_read_preference_tags(manager, servers, option_value, error_message);
+
+	if (strcasecmp(option_name, "ssl") == 0) {
+		int value = 0;
+		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
+			value = MONGO_SSL_ENABLE;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': true");
+		} else if (strcasecmp(option_value, "false") == 0 || strcmp(option_value, "0") == 0) {
+			value = MONGO_SSL_DISABLE;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': false");
+		} else if (strcasecmp(option_value, "prefer") == 0 || atoi(option_value) == MONGO_SSL_PREFER) {
+			/* FIXME: MongoDB doesn't support "connection promotion" to SSL at the moment, so we can't support this option properly */
+			value = MONGO_SSL_PREFER;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': prefer");
+			*error_message = strdup("SSL=prefer is currently not supported by mongod");
+			return 3;
+		} else {
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': '%s'", option_name);
+			*error_message = strdup("SSL can only be 'true' or 'false'");
+			return 3;
+		}
+
+		servers->options.ssl = value;
+		return 0;
 	}
 
 	if (strcasecmp(option_name, "timeout") == 0) {
@@ -488,22 +539,22 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 
-	if (strcasecmp(option_name, "connectTimeoutMS") == 0) {
-		int value = atoi(option_value);
-
-		if (servers->options.connectTimeoutMS) {
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Replacing previously set value for 'connectTimeoutMS' (%d)", servers->options.connectTimeoutMS);
+	if (strcasecmp(option_name, "username") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'username': '%s'", option_value);
+		for (i = 0; i < servers->count; i++) {
+			if (servers->server[i]->username) {
+				free(servers->server[i]->username);
+			}
+			servers->server[i]->username = strdup(option_value);
+			/* Use "admin" as the default db if none selected yet. It is okay
+			 * if it is set in a later option, as we first always free the
+			 * value before setting it anyway. */
+			if (!servers->server[i]->db) {
+				servers->server[i]->db = strdup("admin");
+				/* Admin users always authenticate on the admin db, even when using other databases */
+				servers->server[i]->authdb = strdup("admin");
+			}
 		}
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'connectTimeoutMS': %d", value);
-		servers->options.connectTimeoutMS = value;
-		return 0;
-	}
-
-	if (strcasecmp(option_name, "socketTimeoutMS") == 0) {
-		int value = atoi(option_value);
-
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'socketTimeoutMS': %d", value);
-		servers->options.socketTimeoutMS = value;
 		return 0;
 	}
 
@@ -545,51 +596,6 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		servers->options.default_wtimeout = value;
 		return 0;
 	}
-
-	if (strcasecmp(option_name, "fsync") == 0) {
-		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
-			servers->options.default_fsync = 1;
-		} else {
-			servers->options.default_fsync = 0;
-		}
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'fsync': %d", servers->options.default_fsync);
-		return 0;
-	}
-
-	if (strcasecmp(option_name, "journal") == 0) {
-		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
-			servers->options.default_journal = 1;
-		} else {
-			servers->options.default_journal = 0;
-		}
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'journal': %d", servers->options.default_journal);
-		return 0;
-	}
-
-	if (strcasecmp(option_name, "ssl") == 0) {
-		int value = 0;
-		if (strcasecmp(option_value, "true") == 0 || *option_value == '1') {
-			value = MONGO_SSL_ENABLE;
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': true");
-		} else if (strcasecmp(option_value, "false") == 0 || *option_value == '0') {
-			value = MONGO_SSL_DISABLE;
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': false");
-		} else if (strcasecmp(option_value, "prefer") == 0 || atoi(option_value) == MONGO_SSL_PREFER) {
-			/* FIXME: MongoDB doesn't support "connection promotion" to SSL at the moment, so we can't support this option properly */
-			value = MONGO_SSL_PREFER;
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': prefer");
-			*error_message = strdup("SSL=prefer is currently not supported by mongod");
-			return 3;
-		} else {
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': '%s'", option_name);
-			*error_message = strdup("SSL can only be 'true' or 'false'");
-			return 3;
-		}
-
-		servers->options.ssl = value;
-		return 0;
-	}
-
 
 	*error_message = malloc(256);
 	snprintf(*error_message, 256, "- Found unknown connection string option '%s' with value '%s'", option_name, option_value);
