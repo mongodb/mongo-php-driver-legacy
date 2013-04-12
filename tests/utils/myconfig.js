@@ -23,7 +23,7 @@ var bridgeTest;
  * @param object    user    Object with username/password fields for "test" DB user
  * @return ReplSetTest
  */
-function initRS(servers, port, keyFile, root, user) {
+function initRS(servers, port, settings, keyFile, root, user) {
     servers = typeof servers !== 'undefined' ? servers : 3;
     port = typeof port !== 'undefined' ? port : 28000;
 
@@ -74,6 +74,7 @@ function initRS(servers, port, keyFile, root, user) {
         for (var i = 0; i < servers; i++) {
             cfg.members[i] = Object.extend(cfg.members[i], serverOpts[i]);
         }
+        cfg.settings = settings;
     }
 
     retval.initiate(cfg);
@@ -152,7 +153,7 @@ function initStandalone(port, auth, root, user) {
  *
  * @return ShardingTest
  */
-function initShard(mongoscount, rsOptions) {
+function initShard(mongoscount, rsOptions, rsSettings) {
     mongoscount = typeof mongoscount !== 'undefined' ? mongoscount : 3;
     rsOptions = typeof rsOptions !== 'undefined' ? rsOptions : [];
 
@@ -186,6 +187,7 @@ function initShard(mongoscount, rsOptions) {
         for (var i = 0; i < rsOptions[0].length; i++) {
             cfg.members[i] = Object.extend(cfg.members[i], rsOptions[0][i]);
         }
+        cfg.settings = rsSettings[0];
         cfg.version = 3;
         try {
             shardTest.rs0.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
@@ -196,8 +198,11 @@ function initShard(mongoscount, rsOptions) {
         for (var i = 0; i < rsOptions[1].length; i++) {
             cfg.members[i] = Object.extend(cfg.members[i], rsOptions[1][i]);
         }
+        cfg.settings = rsSettings[1];
         cfg.version = 3;
-        shardTest.rs1.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
+        try {
+            shardTest.rs1.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
+        } catch(ex) {}
     }
 
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs0.getSecondaries(), { ok : true, secondary : true });
