@@ -30,5 +30,6 @@ var_dump(get_class($e), $e->getMessage());
 ?>
 ===DONE===
 --EXPECT--
+string(20) "MongoGridFSException"
+string(27) "error reading chunk of file"
 ===DONE===
-
