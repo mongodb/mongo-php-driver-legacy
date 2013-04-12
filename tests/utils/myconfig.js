@@ -284,6 +284,13 @@ function killMaster() {
     printjson(replTest.getMaster().getDB("admin")._adminCommand({ replSetStepDown: 5, force: true }));
     printjson(replTest.getMaster().getDB("admin")._adminCommand({ replSetFreeze: 6 }));
 }
+function putSecondariesIntoMaintenance(yesorno) {
+    slaves = replTest.liveNodes.slaves;
+    slaves.forEach(function(slave) {
+        slave.getDB("admin").adminCommand({ replSetMaintenance: yesorno });
+    });
+}
+
 
 /**
  * Stop replica set.
