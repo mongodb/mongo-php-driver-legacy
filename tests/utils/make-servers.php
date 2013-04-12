@@ -83,26 +83,9 @@ function makeServer($SERVERS, $server, $bit) {
         $dsn = join(",", $cfg);
         break;
     case REPLICASET:
-        $members = array(
-            array('tags' => array('server' => '0', 'dc' => 'ny')),
-            array('tags' => array('server' => '1', 'dc' => 'ny')),
-            array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
-            array('tags' => array('server' => '3', 'dc' => 'sf')),
-        );
-        $settings = array(
-            "getLastErrorModes" => array(
-                "AnyDC" => array("dc" => 1),
-                "AllDC" => array("dc" => 2),
-                "ALL"   => array("server" => 4),
-            ),
-        );
-        $server->makeReplicaset($members, 30200, $settings);
-        $cfg = $server->getReplicaSetConfig();
-        $dsn = $cfg["dsn"];
-        break;
     case REPLICASET_AUTH:
         $members = array(
-            array('tags' => array('server' => '0', 'dc' => 'ny')),
+            array('tags' => array('server' => '0', 'dc' => 'ny'), "priority" => 42),
             array('tags' => array('server' => '1', 'dc' => 'ny')),
             array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
             array('tags' => array('server' => '3', 'dc' => 'sf')),
@@ -114,9 +97,19 @@ function makeServer($SERVERS, $server, $bit) {
                 "ALL"   => array("server" => 4),
             ),
         );
-        $retval = $server->makeReplicaset($members, 30300, $settings, dirname(__FILE__) . "/keyFile");
-        $cfg = $server->getReplicaSetConfig(true);
-        $dsn = $cfg["dsn"];
+
+        switch($bit) {
+        case REPLICASET:
+            $server->makeReplicaset($members, 30200, $settings);
+            $cfg = $server->getReplicaSetConfig();
+            $dsn = $cfg["dsn"];
+            break;
+        case REPLICASET_AUTH:
+            $retval = $server->makeReplicaset($members, 30300, $settings, dirname(__FILE__) . "/keyFile");
+            $cfg = $server->getReplicaSetConfig(true);
+            $dsn = $cfg["dsn"];
+            break;
+        }
         break;
     default:
         var_dump("No idea what to do about $bit");

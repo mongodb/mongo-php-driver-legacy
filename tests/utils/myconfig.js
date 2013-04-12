@@ -62,9 +62,6 @@ function initRS(servers, port, settings, keyFile, root, user) {
     retval.startSet(nodeOpts);
     var cfg = retval.getReplSetConfig();
 
-    // Give the first member highest priority
-    cfg.members[0].priority = 42;
-
     if (addArbiter) {
         cfg.members[servers].arbiterOnly = true;
     }
