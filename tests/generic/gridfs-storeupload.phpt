@@ -20,6 +20,7 @@ require_once dirname(__FILE__) . "/../utils/server.inc";
 
 $m = new_mongo_standalone();
 $gridfs = $m->selectDB(dbname())->getGridFS();
+$gridfs->remove();
 try {
     $retval = $gridfs->storeUpload("file1");
     var_dump($retval);
