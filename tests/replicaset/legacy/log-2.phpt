@@ -27,7 +27,7 @@ CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
+CON     FINE: get_server_flags: %s maxMessageSizeBytes %s
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
@@ -56,7 +56,7 @@ CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
+CON     FINE: get_server_flags: %s maxMessageSizeBytes %s
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
@@ -70,7 +70,7 @@ CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
+CON     FINE: get_server_flags: %s maxMessageSizeBytes %s
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
@@ -84,7 +84,7 @@ CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: setting maxMessageSizeBytes to 48000000
+CON     FINE: get_server_flags: %s maxMessageSizeBytes %s
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
