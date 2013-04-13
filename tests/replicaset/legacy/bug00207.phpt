@@ -6,8 +6,22 @@ Test for PHP-207: setSlaveOkay not supported for GridFS queries
 <?php
 require_once "tests/utils/server.inc";
 
-$m = mongo("phpunit");
-$db = $m->selectDB("phpunit");
+function log_query($server, $query, $cursor_options) {
+    echo $server["type"] == 2 ?  "Hit the primary\n" : "Hit a secondary\n";
+}
+$ctx = stream_context_create(
+    array(
+        "mongodb" => array(
+            "log_query" => "log_query",
+        )
+    )
+);
+
+$cfg = MongoShellServer::getReplicasetInfo();
+$m = new MongoClient($cfg["dsn"], array("replicaSet" => $cfg["rsname"]), array("context" => $ctx));
+
+
+$db = $m->selectDB(dbname());
 $db->dropCollection("fs.files");
 $db->dropCollection("fs.chunks");
 
@@ -24,25 +38,51 @@ for($i=0; $i<5; $i++) {
     var_dump($ok);
 }
 $bytes = strlen(file_get_contents(__FILE__));
-sleep(1);
 
+$db = $m->selectDB(dbname());
+$gridfs = $db->getGridFS();
 $cursor = $gridfs->find()->slaveOkay(true);
+#var_dump($m->getConnections());
 var_dump($cursor->count());
+
 foreach($cursor as $file) {
-    var_dump($file->file["_id"]);
 }
 ?>
 ===DONE===
 --EXPECTF--
-string(%d) "%s"
-string(%d) "%s"
-string(%d) "%s"
-string(%d) "%s"
-string(%d) "%s"
-int(5)
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
 string(15) "slaveOkayFile-0"
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
 string(15) "slaveOkayFile-1"
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
 string(15) "slaveOkayFile-2"
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
 string(15) "slaveOkayFile-3"
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
+Hit the primary
 string(15) "slaveOkayFile-4"
+Hit a secondary
+int(5)
+Hit a secondary
 ===DONE===
