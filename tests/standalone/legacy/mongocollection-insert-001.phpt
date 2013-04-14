@@ -53,7 +53,7 @@ CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: is_ping: pinging %s:%d;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
-CON     WARN: is_ping: last pinged at %d; time: 0ms
+CON     WARN: is_ping: last pinged at %d; time: %dms
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
@@ -64,7 +64,7 @@ CON     FINE: get_server_flags: added tag use:reporting
 CON     FINE: is_ping: pinging %s:%d;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
-CON     WARN: is_ping: last pinged at %d; time: 0ms
+CON     WARN: is_ping: last pinged at %d; time: %dms
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     INFO: ismaster: start
@@ -89,7 +89,7 @@ CON     FINE: get_server_flags: added tag use:accounting
 CON     FINE: is_ping: pinging %s:%d;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
-CON     WARN: is_ping: last pinged at %d; time: 0ms
+CON     WARN: is_ping: last pinged at %d; time: %dms
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     INFO: ismaster: start
@@ -131,7 +131,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -176,7 +176,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -226,7 +226,7 @@ REPLSET FINE:   - tag: dc:west
 REPLSET FINE:   - tag: use:accounting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -277,7 +277,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -322,7 +322,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -371,7 +371,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -416,7 +416,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -465,7 +465,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -510,7 +510,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -559,7 +559,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -604,7 +604,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -653,7 +653,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
@@ -698,7 +698,7 @@ REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: 4, ping: 0, hash: %s:%d;X;%d
 REPLSET FINE:   - tag: dc:east
 REPLSET FINE:   - tag: use:reporting
