@@ -100,6 +100,19 @@ class MongoShellServer {
         return $host;
     }
 
+    public function getServerVersion($which = "STANDALONE") {
+        switch($which) {
+        case "STANDALONE":
+            $buildinfo = $this->verifyWrite("getBuildInfo()");
+            break;
+        default:
+            throw new Exception("Getting the server version for $which isn't implemented yet, fix it!");
+        }
+
+        $buildinfo = json_decode($buildinfo, true);
+        return $buildinfo["version"];
+    }
+
     public function getBridgeConfig() {
         $host = $this->verifyWrite("getBridgeConfig()");
         $host = trim($host);
@@ -236,6 +249,9 @@ class DebugException extends Exception {
 }
 
 
+function getServerVersion($mc = null) {
+    $mc->selectDB(dbname())->command(array('buildinfo'=>true));
+}
 
 
 
