@@ -339,3 +339,7 @@ function shutdownEverything(callback) {
         callback();
     }
 }
+
+function getBuildInfo() {
+    return standaloneTest.adminCommand({buildinfo: 1})
+}

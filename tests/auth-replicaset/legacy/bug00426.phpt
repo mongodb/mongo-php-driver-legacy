@@ -62,7 +62,7 @@ array(4) {
   ["pwd"]=>
   string(32) "%s"
 }
-Failed to connect to: %s:%d: Authentication failed on database 'admin' with username 'root': auth fails%s
+No candidate servers found
 object(MongoClient)#%d (4) {
   ["connected"]=>
   bool(true)
