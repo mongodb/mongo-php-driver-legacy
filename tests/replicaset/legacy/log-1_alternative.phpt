@@ -175,7 +175,7 @@ REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
+REPLSET FINE: selecting near servers: nearest is %dms
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;X;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d

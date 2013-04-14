@@ -42,8 +42,7 @@ $bytes = strlen(file_get_contents(__FILE__));
 $db = $m->selectDB(dbname());
 $gridfs = $db->getGridFS();
 $cursor = $gridfs->find()->slaveOkay(true);
-#var_dump($m->getConnections());
-var_dump($cursor->count());
+$cursor->count();
 
 foreach($cursor as $file) {
 }
@@ -83,6 +82,5 @@ Hit the primary
 Hit the primary
 string(15) "slaveOkayFile-4"
 Hit a secondary
-int(5)
 Hit a secondary
 ===DONE===
