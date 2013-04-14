@@ -74,7 +74,7 @@ CON     INFO: forcing primary for command
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
@@ -92,48 +92,7 @@ REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
-REPLSET FINE: finding candidate servers
-REPLSET FINE: - all servers
-REPLSET FINE: filter_connections: adding connections:
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
-REPLSET FINE: filter_connections: done
-REPLSET FINE: sorting servers by priority and ping time
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
-REPLSET FINE: sorting servers: done
-REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is %dms
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
-REPLSET FINE: selecting near server: done
-REPLSET FINE: pick server: random element 0
-REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
----
-CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
-CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
-REPLSET FINE: finding candidate servers
-REPLSET FINE: - all servers
-REPLSET FINE: filter_connections: adding connections:
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
-REPLSET FINE: filter_connections: done
-REPLSET FINE: sorting servers by priority and ping time
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
-REPLSET FINE: sorting servers: done
-REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is %dms
-REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
-REPLSET FINE: selecting near server: done
-REPLSET FINE: pick server: random element 0
-REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
-CON     INFO: forcing primary for getlasterror
-CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
-CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
@@ -155,7 +114,7 @@ IO      FINE: getting cursor body
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
@@ -174,7 +133,7 @@ CON     INFO: forcing primary for getlasterror
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
@@ -196,7 +155,7 @@ IO      FINE: getting cursor body
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
@@ -215,7 +174,48 @@ CON     INFO: forcing primary for getlasterror
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
+REPLSET FINE: finding candidate servers
+REPLSET FINE: - all servers
+REPLSET FINE: filter_connections: adding connections:
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
+REPLSET FINE: filter_connections: done
+REPLSET FINE: sorting servers by priority and ping time
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
+REPLSET FINE: sorting servers: done
+REPLSET FINE: selecting near servers
+REPLSET FINE: selecting near servers: nearest is %dms
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
+REPLSET FINE: selecting near server: done
+REPLSET FINE: pick server: random element 0
+REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
+---
+CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
+CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
+CON     FINE: is_ping: pinging %s:%d;X;%d
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
+REPLSET FINE: finding candidate servers
+REPLSET FINE: - all servers
+REPLSET FINE: filter_connections: adding connections:
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
+REPLSET FINE: filter_connections: done
+REPLSET FINE: sorting servers by priority and ping time
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
+REPLSET FINE: sorting servers: done
+REPLSET FINE: selecting near servers
+REPLSET FINE: selecting near servers: nearest is %dms
+REPLSET FINE: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
+REPLSET FINE: selecting near server: done
+REPLSET FINE: pick server: random element 0
+REPLSET INFO: - connection: type: STANDALONE, socket: 3, ping: 0, hash: %s:%d;X;%d
+CON     INFO: forcing primary for getlasterror
+CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
+CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
+CON     FINE: is_ping: pinging %s:%d;X;%d
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
