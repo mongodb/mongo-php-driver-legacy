@@ -36,7 +36,7 @@ MongoLog::setLevel(0);
 Warnings:
 Fine:
 CON     FINE: found connection %s:%d;-;X;%d (looking for %s:%d;-;X;%d)
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
