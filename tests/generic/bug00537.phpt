@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-537: Support for server-side configrable document and message size
 --SKIPIF--
+<?php $needs = "2.4.0"; ?>
 <?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
