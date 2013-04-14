@@ -69,7 +69,7 @@ array(5) {
   ["max_bson_size"]=>
   int(16777216)
   ["max_message_size"]=>
-  int(48000000)
+  int(%d)
   ["request_id"]=>
   int(%d)
 }
@@ -100,7 +100,7 @@ array(5) {
   ["max_bson_size"]=>
   int(16777216)
   ["max_message_size"]=>
-  int(48000000)
+  int(%d)
   ["request_id"]=>
   int(%d)
 }
@@ -132,7 +132,7 @@ array(5) {
   ["max_bson_size"]=>
   int(16777216)
   ["max_message_size"]=>
-  int(48000000)
+  int(%d)
   ["request_id"]=>
   int(%d)
 }
