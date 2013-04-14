@@ -22,6 +22,7 @@ $opts = array(
     "db" => "admin",
     "username" => $creds["admin"]->username,
     "password" => $creds["admin"]->password,
+    "replicaSet" => true,
 );
 $m = new MongoClient($cfg["dsn"], $opts+array("readPreference" => MongoClient::RP_SECONDARY_PREFERRED));
 var_dump($m);
