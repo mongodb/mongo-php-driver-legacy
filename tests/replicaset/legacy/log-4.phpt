@@ -34,10 +34,10 @@ MongoLog::setLevel(0);
 Warnings:
 Fine:
 CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;%s;X;%d
 CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers

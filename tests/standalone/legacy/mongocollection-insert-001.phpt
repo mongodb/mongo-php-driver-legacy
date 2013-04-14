@@ -144,24 +144,24 @@ CON     INFO: forcing primary for command
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -188,24 +188,24 @@ REPLSET INFO:   - tag: use:reporting
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -245,24 +245,24 @@ Inserting 0
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -290,24 +290,24 @@ CON     INFO: forcing primary for getlasterror
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 5
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -339,24 +339,24 @@ Inserting 1
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 4
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 4
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 4
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 14
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 14
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 14
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -384,24 +384,24 @@ CON     INFO: forcing primary for getlasterror
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 4
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 4
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 4
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 14
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 14
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 14
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -433,24 +433,24 @@ Inserting 2
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 3
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 3
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 3
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 13
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 13
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 13
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -478,24 +478,24 @@ CON     INFO: forcing primary for getlasterror
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 3
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 3
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 3
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 13
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 13
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 13
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -527,24 +527,24 @@ Inserting 3
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 2
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 2
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 2
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 12
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 12
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 12
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -572,24 +572,24 @@ CON     INFO: forcing primary for getlasterror
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 2
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 2
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: 2
+CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 12
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 12
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 12
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -621,24 +621,24 @@ Inserting 4
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: 1
+CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: 1
+CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: 1
+CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: 11
+CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: 11
+CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: 11
+CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
@@ -666,24 +666,24 @@ CON     INFO: forcing primary for getlasterror
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (write)
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: 1
+CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: 1
+CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     FINE: is_ping: pinging %s:%d;X;%d
-CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: 1
+CON     FINE: is_ping: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: 11
+CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: 11
+CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 CON     FINE: discover_topology: checking ismaster for %s:%d;X;%d
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
-CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: 11
+CON     FINE: ismaster: skipping: last ran at %d, now: 1349169600, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
