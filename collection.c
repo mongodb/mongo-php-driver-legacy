@@ -101,7 +101,7 @@ PHP_METHOD(MongoCollection, __construct)
 /* }}} */
 
 /* {{{ proto string MongoCollection::__toString()
-   Returns the full namespace name for this collection */
+   Returns the full namespace for this collection (includes database name) */
 PHP_METHOD(MongoCollection, __toString)
 {
 	mongo_collection *c;
@@ -134,7 +134,7 @@ PHP_METHOD(MongoCollection, getSlaveOkay)
 /* }}} */
 
 /* {{{ proto bool MongoCollection::setSlaveOkay([bool slave_okay = true])
-   Sets the slaveOkay bit for this collection, returns the previous value */
+   Sets the slaveOkay flag for this collection and returns the previous value */
 PHP_METHOD(MongoCollection, setSlaveOkay)
 {
 	zend_bool slave_okay = 1;
@@ -152,7 +152,8 @@ PHP_METHOD(MongoCollection, setSlaveOkay)
 /* }}} */
 
 /* {{{ proto array MongoCollection::getReadPreference()
-   Returns the current ReadPreference + ReadPreferenceTags settings as an array */
+   Returns an array describing the read preference for this collection. Tag sets
+   will be included if available. */
 PHP_METHOD(MongoCollection, getReadPreference)
 {
 	mongo_collection *c;
@@ -165,7 +166,7 @@ PHP_METHOD(MongoCollection, getReadPreference)
 /* }}} */
 
 /* {{{ proto bool MongoCollection::setReadPreference(string read_preference [, array tags ])
-   Sets a read preference to be used for all read queries. */
+   Sets the read preference for this collection */
 PHP_METHOD(MongoCollection, setReadPreference)
 {
 	char *read_preference;
@@ -188,7 +189,7 @@ PHP_METHOD(MongoCollection, setReadPreference)
 /* }}} */
 
 /* {{{ proto array MongoCollection::drop()
-   Drops the current collection, returns the database response as array */
+   Drops the current collection and returns the database response */
 PHP_METHOD(MongoCollection, drop)
 {
 	zval *data;
@@ -208,7 +209,8 @@ PHP_METHOD(MongoCollection, drop)
 /* }}} */
 
 /* {{{ proto array MongoCollection::validate([bool scan_data])
-   Validates the current collection, optionally including the data, returning the db response */
+   Validates the current collection, optionally include the data, and returns
+   the database response */
 PHP_METHOD(MongoCollection, validate)
 {
 	zval *data;
@@ -662,7 +664,9 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
 
 
 /* {{{ proto bool|array MongoCollection::insert(array|object document [, array options])
-   Insert an document into the collection, returning the db response (when using WriteConcerncs) */
+   Insert a document into the collection and return the database response if
+   the write concern is >= 1. Otherwise, boolean true is returned if the
+   document is not empty. */
 PHP_METHOD(MongoCollection, insert)
 {
 	zval *a, *options = 0;
@@ -723,7 +727,9 @@ PHP_METHOD(MongoCollection, insert)
 /* }}} */
 
 /* {{{ proto bool|array MongoCollection::batchInsert(array documents [, array options])
-   Inserts a an array of documents, returning the db response (when using WriteConcerns) */
+   Insert an array of documents and return the database response if the write
+   concern is >= 1. Otherwise, a boolean value is returned indicating whether
+   the batch was successfully sent. */
 PHP_METHOD(MongoCollection, batchInsert)
 {
 	zval *docs, *options = NULL;
@@ -775,7 +781,8 @@ PHP_METHOD(MongoCollection, batchInsert)
 /* }}} */
 
 /* {{{ proto array MongoCollection::find([array|object criteria [, array|object return_fields]])
-   Query the database based on $criteria, optionally only returning $return_fields */
+   Query this collection for documents matching $criteria and use $return_fields
+   as the projection. Return a MongoCursor for the result set. */
 PHP_METHOD(MongoCollection, find)
 {
 	zval *query = 0, *fields = 0;
@@ -811,7 +818,8 @@ PHP_METHOD(MongoCollection, find)
 /* }}} */
 
 /* {{{ proto array MongoCollection::findOne([array|object criteria [, array|object return_fields]])
-   Return the first document that matches $criteria, optionally only returning the $return_fields */
+   Return the first document that matches $criteria and use $return_fields as
+   the projection. NULL will be returned if no document matches. */
 PHP_METHOD(MongoCollection, findOne)
 {
 	zval *query = 0, *fields = 0, *cursor;
@@ -897,8 +905,10 @@ PHP_METHOD(MongoCollection, findAndModify)
 }
 /* }}} */
 
-/* {{{ proto bool|array MongoCollection::update(arraay|object criteria, array|object $newobj [, array options])
-   Update a document matching $criteria, with $newobj, returning the db results */
+/* {{{ proto bool|array MongoCollection::update(array|object criteria, array|object $newobj [, array options])
+   Update one or more documents matching $criteria with $newobj and return the
+   database response if the write concern is >= 1. Otherwise, boolean true is
+   returned. */
 PHP_METHOD(MongoCollection, update)
 {
 	zval *criteria, *newobj, *options = 0;
@@ -963,7 +973,7 @@ PHP_METHOD(MongoCollection, update)
 /* }}} */
 
 /* {{{ proto bool|array MongoCollection::remove([array|object criteria [array options]])
-   Remove documents matching $criteria */
+   Remove one or more documents matching $criteria */
 PHP_METHOD(MongoCollection, remove)
 {
 	zval *criteria = 0, *options = 0;
@@ -1029,7 +1039,7 @@ PHP_METHOD(MongoCollection, remove)
 /* }}} */
 
 /* {{{ proto bool MongoCollection::ensureIndex(mixed keys [, array options])
-   Attempt to create the $keys index if it does not already exist */
+   Create the $keys index if it does not already exist */
 PHP_METHOD(MongoCollection, ensureIndex)
 {
 	zval *keys, *options = 0, *db, *system_indexes, *collection, *data, *key_str;
@@ -1213,7 +1223,7 @@ PHP_METHOD(MongoCollection, deleteIndexes)
 /* }}} */
 
 /* {{{ proto MongoCollection::getIndexInfo()
-   Gets all indexes created for this collection */
+   Get all indexes for this collection */
 PHP_METHOD(MongoCollection, getIndexInfo)
 {
 	zval *collection, *i_str, *query, *cursor, *next;
@@ -1259,7 +1269,7 @@ PHP_METHOD(MongoCollection, getIndexInfo)
 /* }}} */
 
 /* {{{ proto MongoCollection::count([array criteria [, int limit [, int skip]]])
-   Count all documents matching $criteria, optionally skipping $limit and $limiting */
+   Count all documents matching $criteria with an optional limit and/or skip */
 PHP_METHOD(MongoCollection, count)
 {
 	zval *response, *data, *query=0;
@@ -1310,7 +1320,10 @@ PHP_METHOD(MongoCollection, count)
 /* }}} */
 
 /* {{{ proto mixed MongoCollection::save(array|object document [, array options])
-   Inserts $document to the current collection. If WriteConcern is enabled, returnt the GLE */
+   Saves $document to this collection. An upsert will be used if the document's
+   _id is set; otherwise, it will be inserted. Return the database response if
+   the write concern is >= 1. Otherwise, boolean true is returned if the
+   document is not empty. */
 PHP_METHOD(MongoCollection, save)
 {
 	zval *a, *options = 0;
@@ -1365,7 +1378,7 @@ PHP_METHOD(MongoCollection, createDBRef)
 /* }}} */
 
 /* {{{ proto array MongoCollection::getDBRef(array dbref)
-   Expands and retrieves the documented pointed to by the dbref */
+   Retrieves the document referenced by $dbref */
 PHP_METHOD(MongoCollection, getDBRef)
 {
 	zval *ref;
@@ -1396,7 +1409,7 @@ static char *replace_dots(char *key, int key_len, char *position)
 }
 
 /* {{{ proto protected static string MongoCollection::toIndexString(array|string keys)
-   Creates an actual index string */
+   Converts $keys to an identifying string for an index */
 PHP_METHOD(MongoCollection, toIndexString)
 {
 	zval *zkeys;
@@ -1512,7 +1525,10 @@ PHP_METHOD(MongoCollection, toIndexString)
 /* }}} */
 
 /* {{{ proto array MongoCollection::aggregate(array pipeline, [, array op [, ...]])
-   Wrapper for the aggregate runCommand. Either one array of ops (a pipeline), or a variable number of op arguments */
+   Wrapper for aggregate command. The pipeline may be specified as a single
+   array of operations or a variable number of operation arguments. Returns the
+   database response for the command. Aggregation results will be stored in the
+   "result" key of the response. */
 PHP_METHOD(MongoCollection, aggregate)
 {
 	zval ***argv, *pipeline, *data, *tmp;
@@ -1572,7 +1588,9 @@ PHP_METHOD(MongoCollection, aggregate)
 
 
 /* {{{ proto array MongoCollection::distinct(string key [, array query])
- * Returns a list of distinct values for the given key across a collection */
+   Wrapper for distinct command. Returns a list of distinct values for the given
+   key across a collection. An optional $query may be applied to filter the
+   documents considered. */
 PHP_METHOD(MongoCollection, distinct)
 {
 	char *key;
@@ -1619,7 +1637,8 @@ PHP_METHOD(MongoCollection, distinct)
 /* }}} */
 
 /* {{{ proto array MongoCollection::group(mixed keys, array initial, MongoCode reduce [, array options])
-   Similar to SQL GROUP BY */
+   Wrapper for group command. Returns the database response for the command.
+   Aggregation results will be stored in the "retval" key of the response. */
 PHP_METHOD(MongoCollection, group)
 {
 	zval *key, *initial, *options = 0, *group, *data, *reduce;
@@ -1698,7 +1717,9 @@ PHP_METHOD(MongoCollection, group)
 /* }}} */
 
 /* {{{ proto MongoCollection MongoCollection::__get(string name)
-   Returns a different collection */
+   Appends this collection name with a period and $name and returns a new
+   MongoCollection for the combined string. This is used to allow for concisely
+   selecting collections with dotted names. */
 PHP_METHOD(MongoCollection, __get)
 {
 	/* This is a little trickier than the getters in Mongo and MongoDB... we
