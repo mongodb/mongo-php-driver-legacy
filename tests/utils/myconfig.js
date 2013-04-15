@@ -88,6 +88,8 @@ function initRS(servers, port, keyFile, root, user) {
         replTest = retval;
     }
 
+    retval.getMaster().getDB("test").fixtures.insert({example: "document"});
+
     return retval;
 }
 
@@ -141,6 +143,7 @@ function initStandalone(port, auth, root, user) {
         standaloneTest = retval;
     }
 
+    retval.getDB("test").fixtures.insert({example: "document"});
     return retval;
 }
 
@@ -176,6 +179,8 @@ function initShard() {
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs0.getSecondaries(), { ok : true, secondary : true });
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs1.getSecondaries(), { ok : true, secondary : true });
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs1.getPrimary(), { ok : true, ismaster : true });
+    shardTest.rs0.getMaster().getDB("test").fixtures.insert({example: "document"});
+    shardTest.rs1.getMaster().getDB("test").fixtures.insert({example: "document"});
 
     return shardTest;
 }
