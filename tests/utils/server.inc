@@ -11,26 +11,26 @@ class MongoShellServer {
         $this->fp = $fp;
     }
 
-    public function makeShard($mongos = 4, $replicaset_options = array(), $replicaset_settings = array()) {
+    public function makeShard($mongos = 4, $rsOptions = array(), $rsSettings = array()) {
         $this->setDBDIR();
-        $replicaset_options = json_encode($replicaset_options);
-        $replicaset_settings = json_encode($replicaset_settings);
-        return $this->verifyWrite("initShard($mongos, $replicaset_options, $replicaset_settings)");
+        $rsOptions = json_encode($rsOptions);
+        $rsSettings = json_encode($rsSettings);
+        return $this->verifyWrite("initShard($mongos, $rsOptions, $rsSettings)");
     }
 
-    public function makeReplicaset($members = 4, $port = 28000, $options, $auth = false) {
+    public function makeReplicaset($members = 4, $port = 28000, $rsSettings, $auth = false) {
         if ($auth) {
             // Git doesn't store permissions, but mongod needs this to be strict
             chmod($auth, 0700);
         }
         $members = json_encode($members);
-        $options = json_encode($options);
+        $rsSettings = json_encode($rsSettings);
         $auth = json_encode($auth);
         $creds = $this->getCredentials();
         $root = json_encode($creds["admin"]);
         $user = json_encode($creds["user"]);
         $this->setDBDIR();
-        return $this->verifyWrite("initRS($members, $port, $options, $auth, $root, $user)");
+        return $this->verifyWrite("initRS($members, $port, $rsSettings, $auth, $root, $user)");
     }
 
     public function makeStandalone($port = 30000, $auth = false) {
@@ -79,7 +79,7 @@ class MongoShellServer {
         $authjs = json_encode($auth);
         $config = json_decode($this->verifyWrite("getReplicaSetConfig($authjs)"), true);
         if (!$config) {
-            throw new Exception(($auth ? "Authenticated " : "") . "Replicaset not initialized");
+            throw new DebugException(($auth ? "Authenticated " : "") . "Replicaset not initialized", $this->log);
         }
         return self::prettifyRSInfo($config);
     }
