@@ -23,7 +23,7 @@ var bridgeTest;
  * @param object    user    Object with username/password fields for "test" DB user
  * @return ReplSetTest
  */
-function initRS(servers, port, settings, keyFile, root, user) {
+function initRS(servers, port, rsSettings, keyFile, root, user) {
     servers = typeof servers !== 'undefined' ? servers : 3;
     port = typeof port !== 'undefined' ? port : 28000;
 
@@ -71,7 +71,7 @@ function initRS(servers, port, settings, keyFile, root, user) {
         for (var i = 0; i < servers; i++) {
             cfg.members[i] = Object.extend(cfg.members[i], serverOpts[i]);
         }
-        cfg.settings = settings;
+        cfg.settings = rsSettings;
     }
 
     retval.initiate(cfg);
@@ -185,6 +185,7 @@ function initShard(mongoscount, rsOptions, rsSettings) {
             cfg.members[i] = Object.extend(cfg.members[i], rsOptions[0][i]);
         }
         cfg.settings = rsSettings[0];
+        // Version isn't set yet so we can't just ++ it
         cfg.version = 3;
         try {
             shardTest.rs0.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
