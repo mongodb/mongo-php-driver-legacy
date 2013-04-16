@@ -272,8 +272,10 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	if (connection_flags & MONGO_CON_FLAG_WRITE) {
 		mongo_read_preference tmp_rp;
 
-		mongo_read_preference_copy(&servers->read_pref, &tmp_rp);
 		tmp_rp.type = MONGO_RP_PRIMARY;
+		tmp_rp.tagsets = NULL;
+		tmp_rp.tagset_count = 0;
+
 		collection = mongo_find_candidate_servers(manager, &tmp_rp, servers);
 		mongo_read_preference_dtor(&tmp_rp);
 	} else {
