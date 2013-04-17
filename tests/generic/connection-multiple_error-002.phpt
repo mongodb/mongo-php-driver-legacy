@@ -1,9 +1,9 @@
 --TEST--
 Connection strings: Test unconnectable host names
 --SKIPIF--
-<?php require "tests/utils/standalone.inc"; ?>
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/standalone.inc";
+require_once "tests/utils/server.inc";
 
 $port = standalone_port();
 
@@ -13,7 +13,7 @@ if ($port != "27017") {
 ?>
 --FILE--
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/server.inc";
 
 /* Two random names */
 $d = @new Mongo("mongodb://foofas:234,foofas:5345/demo?replicaSet=seta");

@@ -1,9 +1,9 @@
 --TEST--
 Connection strings: Unconnectable host/port (3)
 --SKIPIF--
-<?php require "tests/utils/standalone.inc"; ?>
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/standalone.inc";
+require_once "tests/utils/server.inc";
 
 $port = standalone_port();
 if ($port != "27017") {
@@ -12,7 +12,7 @@ if ($port != "27017") {
 ?>
 --FILE--
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/server.inc";
 
 $d = @new Mongo("mongodb://foofas:5345");
 var_dump($b->connected);
