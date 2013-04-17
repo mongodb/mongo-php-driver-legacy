@@ -357,3 +357,12 @@ static int gridfs_option(php_stream *stream, int option, int value, void *ptrpar
 	return ret;
 }
 /* }}} */
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

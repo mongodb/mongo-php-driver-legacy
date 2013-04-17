@@ -20,3 +20,12 @@ PHP_METHOD(MongoInt64, __construct);
 PHP_METHOD(MongoInt64, __toString);
 
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

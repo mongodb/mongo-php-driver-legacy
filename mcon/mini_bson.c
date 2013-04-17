@@ -391,3 +391,12 @@ int bson_array_find_next_embedded_doc(char **buffer)
 	bson_get_current(*buffer, &read_field, &read_type);
 	return read_type == BSON_DOCUMENT;
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

@@ -702,3 +702,12 @@ extern zend_module_entry mongo_module_entry;
  * 20: Chunk larger then chunksize
  * 21: Unexpected chunk format
  */
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

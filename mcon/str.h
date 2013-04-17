@@ -33,3 +33,12 @@ void mcon_str_add_int(mcon_str *xs, int i);
 void mcon_str_free(mcon_str *s);
 
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

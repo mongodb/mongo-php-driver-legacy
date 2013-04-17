@@ -58,3 +58,12 @@ char *mongo_util_md5_hex(char *hash, int hash_length);
 char *mcon_strndup(char *str, size_t n);
 
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

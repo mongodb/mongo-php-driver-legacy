@@ -59,3 +59,12 @@ void mongo_read_preference_replace(mongo_read_preference *from, mongo_read_prefe
 /* Debug helpers */
 void mongo_print_connection_iterate_wrapper(mongo_con_manager *manager, void *elem);
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */
