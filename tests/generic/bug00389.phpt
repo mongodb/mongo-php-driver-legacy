@@ -6,7 +6,12 @@ Test for PHP-389: Setting arbitrary flags.
 <?php
 require_once "tests/utils/server.inc";
 $m = mongo_standalone();
-$c = $m->phpunit->test;
+
+/* Ensure the collection actually exists. If not, the oplogReplay flag will not
+ * cause an "no ts field in query" error on the server.
+ */
+$m->phpunit->createCollection('bug00389');
+$c = $m->phpunit->bug00389;
 
 /* Tailable */
 try {
