@@ -110,15 +110,15 @@ Putting all secondaries into recovery mode
 These should throw exception as we haven't detected that the server is in recovery mode yet
 Server type: SECONDARY (4)
 string(20) "MongoCursorException"
-string(71) "not master or secondary; cannot currently read from this replSet member"
+string(%d) "%s: not master or secondary; cannot currently read from this replSet member"
 int(13436)
 Server type: SECONDARY (4)
 string(20) "MongoCursorException"
-string(71) "not master or secondary; cannot currently read from this replSet member"
+string(%d) "%s: not master or secondary; cannot currently read from this replSet member"
 int(13436)
 Server type: SECONDARY (4)
 string(20) "MongoCursorException"
-string(71) "not master or secondary; cannot currently read from this replSet member"
+string(%d) "%s: not master or secondary; cannot currently read from this replSet member"
 int(13436)
 This should hit the primary as all secondaries are in recovery
 Server type: PRIMARY (2)
