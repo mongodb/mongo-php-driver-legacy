@@ -19,15 +19,13 @@ $mc = new MongoClient($rs["dsn"], array("replicaSet" => $rs["rsname"], "readPref
 $i = "random";
 $mc->selectDb(dbname())->recoverymode->insert(array("doc" => $i, "w" => "majority"));
 
-
+// Lower the ismaster interval to make sure we pick up on the change
+ini_set("mongo.is_master_interval", 1);
 
 echo "Putting all secondaries into recovery mode\n";
-$server->putSecondariesIntoMaintenance(true);
+$server->setMaintenanceForSecondaries(true);
+sleep(3);
 
-
-// Lower the ismaster interval to make sure we pick up on the change
-ini_set("mongo.is_master_interval", 3);
-sleep(4);
 echo "We should have detected that the servers are in maintenence mode now\n";
 echo "This should hit the primary as all secondaries are in recovery\n";
 for($i=0; $i < 10; $i++) {
@@ -37,9 +35,11 @@ for($i=0; $i < 10; $i++) {
         var_dump($e->getMessage(), $e->getCode());
     }
 }
+
 echo "Enabling all secondaries again\n";
-$server->putSecondariesIntoMaintenance(false);
-sleep(4);
+$server->setMaintenanceForSecondaries(false);
+sleep(3);
+
 echo "This should hit secondaries as they are no longer in recovery\n";
 for($i=0; $i < 10; $i++) {
     try {
@@ -52,7 +52,7 @@ for($i=0; $i < 10; $i++) {
 // Increase the interval so we don't notice the change until we hit the servers
 ini_set("mongo.is_master_interval", 50);
 echo "Putting all secondaries into recovery mode\n";
-$server->putSecondariesIntoMaintenance(true);
+$server->setMaintenanceForSecondaries(true);
 
 echo "These should throw exception as we haven't detected that the server is in recovery mode yet\n";
 /* Once per secondary */
@@ -63,6 +63,7 @@ for($i=0; $i < 3; $i++) {
         var_dump(get_class($e), $e->getMessage(), $e->getCode());
     }
 }
+
 echo "This should hit the primary as all secondaries are in recovery\n";
 for($i=0; $i < 10; $i++) {
     try {
@@ -73,12 +74,12 @@ for($i=0; $i < 10; $i++) {
 }
 
 echo "Enabling all secondaries again\n";
-$server->putSecondariesIntoMaintenance(false);
+$server->setMaintenanceForSecondaries(false);
 echo "Everything should be in its original state now\n";
 
 ?>
 --CLEAN--
-<?php require_once "tests/utils/fix-master.inc"; ?>
+<?php require_once "tests/utils/fix-secondaries.inc"; ?>
 --EXPECTF--
 Server type: PRIMARY (2)
 Putting all secondaries into recovery mode
