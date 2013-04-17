@@ -23,7 +23,7 @@ var bridgeTest;
  * @param object    user    Object with username/password fields for "test" DB user
  * @return ReplSetTest
  */
-function initRS(servers, port, keyFile, root, user) {
+function initRS(servers, port, rsSettings, keyFile, root, user) {
     servers = typeof servers !== 'undefined' ? servers : 3;
     port = typeof port !== 'undefined' ? port : 28000;
 
@@ -62,9 +62,6 @@ function initRS(servers, port, keyFile, root, user) {
     retval.startSet(nodeOpts);
     var cfg = retval.getReplSetConfig();
 
-    // Give the first member highest priority
-    cfg.members[0].priority = 42;
-
     if (addArbiter) {
         cfg.members[servers].arbiterOnly = true;
     }
@@ -74,6 +71,7 @@ function initRS(servers, port, keyFile, root, user) {
         for (var i = 0; i < servers; i++) {
             cfg.members[i] = Object.extend(cfg.members[i], serverOpts[i]);
         }
+        cfg.settings = rsSettings;
     }
 
     retval.initiate(cfg);
@@ -152,29 +150,58 @@ function initStandalone(port, auth, root, user) {
  *
  * @return ShardingTest
  */
-function initShard() {
+function initShard(mongoscount, rsOptions, rsSettings) {
+    mongoscount = typeof mongoscount !== 'undefined' ? mongoscount : 3;
+    rsOptions = typeof rsOptions !== 'undefined' ? rsOptions : [];
+
     // Do not reitinialize a sharded cluster
     if (shardTest) {
         return shardTest;
     }
 
+    rs = {
+        "nodes": 3,
+        "logpath": "/dev/null",
+        "oplogSize": 10
+    }
+
     shardTest = new ShardingTest({
         "name": "SHARDING",
         "shards": 2,
-        "rs": {
-            "nodes": 3,
-            "logpath": "/dev/null",
-            "oplogSize": 10
-        },
+        "rs": rs,
         "numReplicas": 2,
         "nopreallocj": true,
-        "mongos": 2,
+        "mongos": mongoscount,
         "other": {
             "mongosOptions": {
                 "logpath": "/dev/null"
             }
         }
     });
+
+    if (typeof rsOptions !== 'undefined') {
+        cfg = shardTest.rs0.getReplSetConfig();
+        for (var i = 0; i < rsOptions[0].length; i++) {
+            cfg.members[i] = Object.extend(cfg.members[i], rsOptions[0][i]);
+        }
+        cfg.settings = rsSettings[0];
+        // Version isn't set yet so we can't just ++ it
+        cfg.version = 3;
+        try {
+            shardTest.rs0.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
+            /* Will close all the open connections, we don't care */
+        } catch(ex) {}
+
+        cfg = shardTest.rs1.getReplSetConfig();
+        for (var i = 0; i < rsOptions[1].length; i++) {
+            cfg.members[i] = Object.extend(cfg.members[i], rsOptions[1][i]);
+        }
+        cfg.settings = rsSettings[1];
+        cfg.version = 3;
+        try {
+            shardTest.rs1.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
+        } catch(ex) {}
+    }
 
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs0.getSecondaries(), { ok : true, secondary : true });
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs1.getSecondaries(), { ok : true, secondary : true });

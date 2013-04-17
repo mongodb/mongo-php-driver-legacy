@@ -49,30 +49,62 @@ function makeServer($SERVERS, $server, $bit) {
         }
         break;
     case MONGOS:
-        $retval = $server->makeShard(2);
+        $rsmembers = array(
+            /* Shard 0 */ array(
+                array('tags' => array('server' => '0', 'dc' => 'ny')),
+                array('tags' => array('server' => '1', 'dc' => 'ny')),
+                array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
+            ),
+            /* Shard 1 */ array(
+                array('tags' => array('server' => '0', 'dc' => 'ny')),
+                array('tags' => array('server' => '1', 'dc' => 'ny', 'theOtherShard' => 'doesntHaveThisTag')),
+                array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
+            ),
+        );
+        $rssettings = array(
+            array(
+                "getLastErrorModes" => array(
+                    "AnyDC" => array("dc" => 1),
+                    "AllDC" => array("dc" => 2),
+                    "ALL"   => array("server" => 3),
+                ),
+            ),
+            array(
+                "getLastErrorModes" => array(
+                    "AnyDC" => array("dc" => 1),
+                    "AllDC" => array("dc" => 2),
+                    "ALL"   => array("server" => 3),
+                    "Broken" => array("theOtherShard" => 1),
+                ),
+            )
+        );
+        $retval = $server->makeShard(2, $rsmembers, $rssettings);
         $cfg = $server->getShardConfig();
         $dsn = join(",", $cfg);
         break;
     case REPLICASET:
-        $members = array(
-            array('tags' => array('server' => '0', 'dc' => 'ny')),
-            array('tags' => array('server' => '1', 'dc' => 'ny')),
-            array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
-            array('tags' => array('server' => '3', 'dc' => 'sf')),
-        );
-        $server->makeReplicaset($members, 30200);
-        $cfg = $server->getReplicaSetConfig();
-        $dsn = $cfg["dsn"];
-        break;
     case REPLICASET_AUTH:
         $members = array(
-            array('tags' => array('server' => '0', 'dc' => 'ny')),
+            array('tags' => array('server' => '0', 'dc' => 'ny'), "priority" => 42),
             array('tags' => array('server' => '1', 'dc' => 'ny')),
             array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
             array('tags' => array('server' => '3', 'dc' => 'sf')),
         );
-        $retval = $server->makeReplicaset($members, 30300, dirname(__FILE__) . "/keyFile");
-        $cfg = $server->getReplicaSetConfig(true);
+        $settings = array(
+            "getLastErrorModes" => array(
+                "AnyDC" => array("dc" => 1),
+                "AllDC" => array("dc" => 2),
+                "ALL"   => array("server" => 4),
+            ),
+        );
+
+        if ($bit == REPLICASET) {
+            $server->makeReplicaset($members, 30200, $settings);
+            $cfg = $server->getReplicaSetConfig();
+        } else { /* REPLICASET_AUTH */
+            $retval = $server->makeReplicaset($members, 30300, $settings, dirname(__FILE__) . "/keyFile");
+            $cfg = $server->getReplicaSetConfig(true);
+        }
         $dsn = $cfg["dsn"];
         break;
     default:

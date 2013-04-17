@@ -11,23 +11,26 @@ class MongoShellServer {
         $this->fp = $fp;
     }
 
-    public function makeShard($mongos = 4) {
+    public function makeShard($mongos = 4, $rsOptions = array(), $rsSettings = array()) {
         $this->setDBDIR();
-        return $this->verifyWrite("initShard($mongos)");
+        $rsOptions = json_encode($rsOptions);
+        $rsSettings = json_encode($rsSettings);
+        return $this->verifyWrite("initShard($mongos, $rsOptions, $rsSettings)");
     }
 
-    public function makeReplicaset($members = 4, $port = 28000, $auth = false) {
+    public function makeReplicaset($members = 4, $port = 28000, $rsSettings, $auth = false) {
         if ($auth) {
             // Git doesn't store permissions, but mongod needs this to be strict
             chmod($auth, 0700);
         }
         $members = json_encode($members);
+        $rsSettings = json_encode($rsSettings);
         $auth = json_encode($auth);
         $creds = $this->getCredentials();
         $root = json_encode($creds["admin"]);
         $user = json_encode($creds["user"]);
         $this->setDBDIR();
-        return $this->verifyWrite("initRS($members, $port, $auth, $root, $user)");
+        return $this->verifyWrite("initRS($members, $port, $rsSettings, $auth, $root, $user)");
     }
 
     public function makeStandalone($port = 30000, $auth = false) {
@@ -76,7 +79,7 @@ class MongoShellServer {
         $authjs = json_encode($auth);
         $config = json_decode($this->verifyWrite("getReplicaSetConfig($authjs)"), true);
         if (!$config) {
-            throw new Exception(($auth ? "Authenticated " : "") . "Replicaset not initialized");
+            throw new DebugException(($auth ? "Authenticated " : "") . "Replicaset not initialized", $this->log);
         }
         return self::prettifyRSInfo($config);
     }
@@ -85,7 +88,7 @@ class MongoShellServer {
         $json = $this->verifyWrite("getShardConfig()");
         $retval = json_decode($json);
         if (!$retval) {
-            throw new Exception("Mongos not initialized");
+            throw new DebugException("Mongos not initialized", $this->log);
         }
         return $retval;
     }
