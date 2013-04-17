@@ -105,7 +105,7 @@ PHP_METHOD(Mongo, getSlave)
 	mongo_connection *con;
 
 	PHP_MONGO_GET_LINK(getThis());
-	con = php_mongo_connect(link TSRMLS_CC);
+	con = php_mongo_connect(link, MONGO_CON_FLAG_READ TSRMLS_CC);
 	if (!con) {
 		/* We have to return here, as otherwise the exception doesn't trigger
 		 * before we return the hash at the end. */
@@ -193,7 +193,7 @@ PHP_METHOD(Mongo, connectUtil)
 	mongoclient *link;
 
 	PHP_MONGO_GET_LINK(getThis());
-	php_mongo_connect(link TSRMLS_CC);
+	php_mongo_connect(link, MONGO_CON_FLAG_READ TSRMLS_CC);
 }
 /* }}} */
 

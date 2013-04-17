@@ -272,7 +272,7 @@ void mongo_init_MongoClient(TSRMLS_D)
 }
 
 /* {{{ Helper for connecting the servers */
-mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC)
+mongo_connection *php_mongo_connect(mongoclient *link, int flags TSRMLS_DC)
 {
 	mongo_connection *con;
 	char *error_message = NULL;
@@ -280,17 +280,18 @@ mongo_connection *php_mongo_connect(mongoclient *link TSRMLS_DC)
 	/* We don't care about the result so although we assign it to a var, we
 	 * only do that to handle errors and return it so that the calling function
 	 * knows whether a connection could be obtained or not. */
-	con = mongo_get_read_write_connection(link->manager, link->servers, MONGO_CON_FLAG_READ, (char **) &error_message);
-	if (!con) {
-		if (error_message) {
-			zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
-			free(error_message);
-		} else {
-			zend_throw_exception(mongo_ce_ConnectionException, "Unknown error obtaining connection", 72 TSRMLS_CC);
-		}
-		return NULL;
+	con = mongo_get_read_write_connection(link->manager, link->servers, flags, (char **) &error_message);
+	if (con) {
+		return con;
 	}
-	return con;
+
+	if (error_message) {
+		zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
+		free(error_message);
+	} else {
+		zend_throw_exception(mongo_ce_ConnectionException, "Unknown error obtaining connection", 72 TSRMLS_CC);
+	}
+	return NULL;
 }
 /* }}} */
 
@@ -478,7 +479,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	}
 
 	if (connect) {
-		php_mongo_connect(link TSRMLS_CC);
+		php_mongo_connect(link, MONGO_CON_FLAG_READ|MONGO_CON_FLAG_DONT_FILTER TSRMLS_CC);
 	}
 }
 /* }}} */
@@ -491,7 +492,7 @@ PHP_METHOD(MongoClient, connect)
 	mongoclient *link;
 
 	PHP_MONGO_GET_LINK(getThis());
-	RETURN_BOOL(php_mongo_connect(link TSRMLS_CC) != NULL);
+	RETURN_BOOL(php_mongo_connect(link, MONGO_CON_FLAG_READ TSRMLS_CC) != NULL);
 }
 /* }}} */
 
