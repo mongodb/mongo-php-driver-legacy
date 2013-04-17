@@ -50,8 +50,17 @@ class MongoShellServer {
         return $this->verifyWrite("killMaster()");
     }
 
+    public function setMaintenanceForSecondaries($maintenance) {
+        $maintenance = json_encode((boolean) $maintenance);
+        return $this->verifyWrite("setMaintenanceForSecondaries($maintenance)");
+    }
+
     public function restartMaster() {
         return $this->verifyWrite("restartMaster()");
+    }
+
+    public function awaitSecondaryNodes() {
+        return $this->verifyWrite("awaitSecondaryNodes()");
     }
 
     protected function verifyWrite($command) {

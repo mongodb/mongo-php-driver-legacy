@@ -57,4 +57,4 @@ var_dump($a->__toString());
 %s:%d,[%d.%d.%d.%d:%d]
 %s:%d,[%d.%d.%d.%d:%d]
 
-string(%s) "[localhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhosta:27018],%s:%d"
+string(%d) "[localhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhostalocalhosta:27018],%s:%d"

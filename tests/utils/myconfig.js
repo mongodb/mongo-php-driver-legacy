@@ -286,6 +286,30 @@ function killMaster() {
 }
 
 /**
+ * Set maintenance mode for all secondaries
+ */
+function setMaintenanceForSecondaries(maintenance) {
+    replTest.getMaster(); // Wait for a primary to be selected
+    var slaves = replTest.liveNodes.slaves;
+    slaves.forEach(function(slave) {
+        var isMaster = slave.getDB("admin").runCommand({ismaster: 1});
+        var arbiter = isMaster['arbiterOnly'] == undefined ? false : isMaster['arbiterOnly'];
+        if (!arbiter) {
+            slave.getDB("admin").adminCommand({ replSetMaintenance: maintenance });
+        }
+    });
+
+    /* If we set secondaries to maintenance mode, wait for them to become
+     * unhealthy. Otherwise, wait for healthy secondaries.
+     */
+    if (maintenance) {
+        awaitUnhealthySecondaryNodes();
+    } else {
+        awaitSecondaryNodes();
+    }
+}
+
+/**
  * Stop replica set.
  */
 function killRS() {
@@ -299,6 +323,36 @@ function restartMaster() {
     // Just wait until we get a master
     printjson(replTest.getMaster());
 }
+
+/**
+ * Wait until all secondaries are healthy
+ */
+function awaitSecondaryNodes() {
+    printjson(replTest.awaitSecondaryNodes());
+}
+
+/**
+ * Wait until all secondaries are not healthy
+ */
+function awaitUnhealthySecondaryNodes() {
+    var timeout = 60000;
+
+    replTest.getMaster(); // Wait for a primary to be selected.
+
+    assert.soon(function() {
+        replTest.getMaster(); // Reload who the current slaves are.
+        var slaves = replTest.liveNodes.slaves;
+        var ready = true;
+        slaves.forEach(function(slave) {
+            var isMaster = slave.getDB("admin").runCommand({ismaster: 1});
+            var arbiter = isMaster['arbiterOnly'] == undefined ? false : isMaster['arbiterOnly'];
+            if (!arbiter) {
+                ready = ready && !isMaster['secondary'];
+            }
+        });
+        return ready;
+    }, "Awaiting unhealthy secondaries", 60000);
+};
 
 /**
  * Set MongoRunner dataDir and dataPath properties.
