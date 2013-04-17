@@ -29,7 +29,7 @@ var_dump($response);
 --EXPECTF--
 array(2) {
   ["retval"]=>
-  string(%s) "%s"
+  string(%d) "%s"
   ["ok"]=>
   float(1)
 }

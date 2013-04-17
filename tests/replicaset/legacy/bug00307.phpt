@@ -19,7 +19,7 @@ var_dump($host);
 NULL
 array(6) {
   ["host"]=>
-  string(%s) "%s"
+  string(%d) "%s"
   ["port"]=>
   int(%d)
   ["health"]=>

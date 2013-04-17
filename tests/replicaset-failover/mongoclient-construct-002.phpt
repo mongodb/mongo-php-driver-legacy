@@ -94,7 +94,7 @@ Master killed
 Attempting insert
 array(5) {
   ["hash"]=>
-  string(%s) "%s:%d;REPLICASET;X;%d"
+  string(%d) "%s:%d;REPLICASET;X;%d"
   ["type"]=>
   int(2)
   ["max_bson_size"]=>
