@@ -16,5 +16,5 @@ try {
 
 ?>
 --EXPECTF--
-string(%s) "%s:%d: timeout"
+string(%d) "%s:%d: timeout"
 int(4)

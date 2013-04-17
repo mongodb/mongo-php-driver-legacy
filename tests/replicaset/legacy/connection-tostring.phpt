@@ -14,4 +14,4 @@ var_dump($a->__toString());
 
 ?>
 --EXPECTF--
-string(%s) "[%s:%d],%s:%d""
+string(%d) "[%s:%d],%s:%d""
