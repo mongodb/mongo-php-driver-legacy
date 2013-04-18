@@ -277,7 +277,7 @@ PHP_METHOD(MongoCursor, __construct)
 				} else {
 					zval_ptr_dtor(&empty);
 					zval_ptr_dtor(&fields);
-					zend_throw_exception(mongo_ce_Exception, "field names must be strings", 0 TSRMLS_CC);
+					zend_throw_exception(mongo_ce_Exception, "field names must be strings", 8 TSRMLS_CC);
 					return;
 				}
 			} else {
