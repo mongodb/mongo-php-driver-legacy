@@ -8,7 +8,6 @@ mongo.is_master_interval=95
 <?php
 
 function handleNotice($code, $message) {
-    echo $message . "\n";
     if (preg_match('/ismaster:.*left: (\d+)/', $message, $m)) {
         echo "LEFT: {$m[1]}\n";
     }
