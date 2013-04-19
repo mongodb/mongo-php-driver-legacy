@@ -1437,6 +1437,7 @@ PHP_METHOD(MongoCollection, toIndexString)
 
 			switch (key_type) {
 				case HASH_KEY_IS_STRING: {
+				case HASH_KEY_IS_LONG:
 					len += key_len;
 
 					if (Z_TYPE_PP(data) == IS_STRING) {
@@ -1447,13 +1448,6 @@ PHP_METHOD(MongoCollection, toIndexString)
 
 					break;
 				}
-
-				case HASH_KEY_IS_LONG:
-					convert_to_string(*data);
-
-					len += Z_STRLEN_PP(data);
-					len += 2;
-					break;
 
 				default:
 					continue;
@@ -1478,10 +1472,10 @@ PHP_METHOD(MongoCollection, toIndexString)
 			if (key_type == HASH_KEY_IS_LONG) {
 				key_len = spprintf(&key, 0, "%ld", index);
 				key_len += 1;
+			} else {
+				/* copy str, replacing '.' with '_' */
+				position = replace_dots(key, key_len-1, position);
 			}
-
-			/* copy str, replacing '.' with '_' */
-			position = replace_dots(key, key_len-1, position);
 
 			*(position)++ = '_';
 
