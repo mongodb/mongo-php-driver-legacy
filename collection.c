@@ -716,6 +716,9 @@ PHP_METHOD(MongoCollection, insert)
 	mongo_log_stream_insert(connection, a, options TSRMLS_CC);
 #endif
 
+	/* retval == -1 means a GLE response was received, so send_message() has
+	 * either set return_value or thrown an exception via do_safe_op().
+	 */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -780,6 +783,9 @@ PHP_METHOD(MongoCollection, batchInsert)
 	mongo_log_stream_batchinsert(connection, docs, options, bit_opts TSRMLS_CC);
 #endif
 
+	/* retval == -1 means a GLE response was received, so send_message() has
+	 * either set return_value or thrown an exception via do_safe_op().
+	 */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -971,7 +977,9 @@ PHP_METHOD(MongoCollection, update)
 	mongo_log_stream_update(connection, c->ns, criteria, newobj, options, bit_opts TSRMLS_CC);
 #endif
 
-
+	/* retval == -1 means a GLE response was received, so send_message() has
+	 * either set return_value or thrown an exception via do_safe_op().
+	 */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -1036,7 +1044,9 @@ PHP_METHOD(MongoCollection, remove)
 	mongo_log_stream_delete(connection, c->ns, criteria, options, flags TSRMLS_CC);
 #endif
 
-
+	/* retval == -1 means a GLE response was received, so send_message() has
+	 * either set return_value or thrown an exception via do_safe_op().
+	 */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
