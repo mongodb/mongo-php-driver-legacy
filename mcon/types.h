@@ -16,12 +16,12 @@
 #ifndef __MCON_TYPES_H__
 #define __MCON_TYPES_H__
 
-#include <time.h>
 #include <stdarg.h>
 
 /* Windows compatibility */
 #ifdef WIN32
-#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 typedef __int32 int32_t;
 typedef unsigned __int32 uint32_t;
 typedef __int64 int64_t;
@@ -31,6 +31,14 @@ typedef unsigned __int64 uint64_t;
 #define va_copy(d,s) ((void)((d) = (s)))
 #else
 # include <stdint.h>
+# include <netinet/in.h>
+# include <netinet/tcp.h>
+# include <fcntl.h>
+# include <netdb.h>
+# include <sys/un.h>
+# include <sys/socket.h>
+# include <unistd.h>
+# include <sys/time.h>
 #endif
 
 #define MONGO_CON_TYPE_STANDALONE 1
