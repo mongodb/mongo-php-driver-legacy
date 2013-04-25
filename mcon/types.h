@@ -31,9 +31,6 @@ typedef unsigned __int64 uint64_t;
 #else
 # include <stdint.h>
 #endif
-#include "config.h"
-
-#include "php.h"
 
 #define MONGO_CON_TYPE_STANDALONE 1
 #define MONGO_CON_TYPE_MULTIPLE   2
