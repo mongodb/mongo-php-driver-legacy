@@ -754,7 +754,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 
 		if (zend_hash_find(HASH_P(options), "continueOnError", strlen("continueOnError") + 1, (void**)&continue_on_error) == SUCCESS) {
 			convert_to_boolean_ex(continue_on_error);
-			bit_opts = Z_BVAL_PP(continue_on_error);
+			bit_opts = Z_BVAL_PP(continue_on_error) << 0;
 		}
 
 		Z_ADDREF_P(options);
