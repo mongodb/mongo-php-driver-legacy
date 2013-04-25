@@ -61,6 +61,8 @@
    <file role="src" name="db.h"/>
    <file role="src" name="io_stream.c"/>
    <file role="src" name="io_stream.h"/>
+   <file role="src" name="log_stream.c"/>
+   <file role="src" name="log_stream.h"/>
    <file role="src" name="mongo.c"/>
    <file role="src" name="mongo.h"/>
    <file role="src" name="mongoclient.c"/>
