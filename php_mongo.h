@@ -19,6 +19,14 @@
 #define PHP_MONGO_VERSION "1.4.0beta1"
 #define PHP_MONGO_EXTNAME "mongo"
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#else
+# if WIN32
+#  include "config-w32.h"
+# endif
+#endif
+
 #include "mcon/types.h"
 #include "mcon/read_preference.h"
 

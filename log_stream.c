@@ -21,11 +21,9 @@
 #include "php_mongo.h"
 #include "bson.h"
 
-#include "php.h"
-#include "config.h"
-#include "main/php_streams.h"
-#include "main/php_network.h"
-
+#include <php.h>
+#include <main/php_streams.h>
+#include <main/php_network.h>
 
 zval *php_log_get_server_info(mongo_connection *connection)
 {
