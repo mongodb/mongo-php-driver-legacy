@@ -717,8 +717,7 @@ PHP_METHOD(MongoCollection, insert)
 #endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
-	 * either set return_value or thrown an exception via do_safe_op().
-	 */
+	 * either set return_value or thrown an exception via do_safe_op(). */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -747,7 +746,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 	}
 
 	/*
-	 * Options are only supported in the new-style, ie: an array of "name
+	 * Options are only supported in the new-style, ie: an array of "named
 	 * parameters": array("continueOnError" => true);
 	 */
 	if (options) {
@@ -784,8 +783,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 #endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
-	 * either set return_value or thrown an exception via do_safe_op().
-	 */
+	 * either set return_value or thrown an exception via do_safe_op(). */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -978,8 +976,7 @@ PHP_METHOD(MongoCollection, update)
 #endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
-	 * either set return_value or thrown an exception via do_safe_op().
-	 */
+	 * either set return_value or thrown an exception via do_safe_op(). */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -1045,8 +1042,7 @@ PHP_METHOD(MongoCollection, remove)
 #endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
-	 * either set return_value or thrown an exception via do_safe_op().
-	 */
+	 * either set return_value or thrown an exception via do_safe_op(). */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
