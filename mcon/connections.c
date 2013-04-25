@@ -43,9 +43,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include "config.h"
-
-
 #define INT_32  4
 #define FLAGS   0
 
