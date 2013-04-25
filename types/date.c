@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 #include <php.h>
-#include "php_mongo.h"
+#include "../php_mongo.h"
 
 zend_class_entry *mongo_ce_Date = NULL;
 

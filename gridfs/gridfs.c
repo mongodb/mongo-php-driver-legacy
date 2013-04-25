@@ -17,15 +17,15 @@
 #include <zend_exceptions.h>
 #include "ext/standard/php_smart_str.h"
 
-#include "php_mongo.h"
-#include "collection.h"
+#include "../php_mongo.h"
+#include "../collection.h"
 #include "cursor.h"
-#include "db.h"
-#include "gridfs/gridfs_cursor.h"
-#include "gridfs/gridfs_file.h"
-#include "types/bin_data.h"
-#include "types/date.h"
-#include "types/id.h"
+#include "../db.h"
+#include "gridfs_cursor.h"
+#include "gridfs_file.h"
+#include "../types/bin_data.h"
+#include "../types/date.h"
+#include "../types/id.h"
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 

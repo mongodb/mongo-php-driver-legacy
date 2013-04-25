@@ -15,10 +15,10 @@
  */
 #include <php.h>
 #include <zend_exceptions.h>
-#include "php_mongo.h"
-#include "mongoclient.h"
-#include "db.h"
-#include "collection.h"
+#include "../php_mongo.h"
+#include "../mongoclient.h"
+#include "../db.h"
+#include "../collection.h"
 
 extern zend_class_entry *mongo_ce_DB, *mongo_ce_Exception;
 

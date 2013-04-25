@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 #include <php.h>
-#include "php_mongo.h"
+#include "../php_mongo.h"
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 

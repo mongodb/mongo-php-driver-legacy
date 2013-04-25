@@ -16,10 +16,10 @@
 #include <php.h>
 #include <zend_exceptions.h>
 
-#include "php_mongo.h"
-#include "cursor.h"
-#include "gridfs/gridfs_cursor.h"
-#include "gridfs/gridfs_file.h"
+#include "../php_mongo.h"
+#include "../cursor.h"
+#include "gridfs_cursor.h"
+#include "gridfs_file.h"
 
 extern zend_class_entry *mongo_ce_Cursor;
 extern zend_class_entry *mongo_ce_Exception;
