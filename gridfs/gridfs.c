@@ -19,7 +19,7 @@
 
 #include "../php_mongo.h"
 #include "../collection.h"
-#include "cursor.h"
+#include "../cursor.h"
 #include "../db.h"
 #include "gridfs_cursor.h"
 #include "gridfs_file.h"
