@@ -73,9 +73,9 @@ zend_function_entry mongo_functions[] = {
  */
 static const zend_module_dep mongo_deps[] = {
 	ZEND_MOD_OPTIONAL("openssl")
-#if PHP_VERSION_ID >= 50300
+#if PHP_VERSION_ID >= 50307
 	ZEND_MOD_END
-#else /* 5.2 */
+#else /* pre-5.3.7 */
 	{ NULL, NULL, NULL, 0 }
 #endif
 };
