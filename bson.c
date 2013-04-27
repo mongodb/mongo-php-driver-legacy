@@ -1243,6 +1243,18 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				return 0;
 			}
 		}
+		
+		/* merge the same key($set) value */
+		if ((strcmp(name, "$set") == 0) && zend_symtable_exists(result, name, strlen(name)+1) == 1) {
+		    zval **exist_value;
+
+		    if (zend_symtable_find(result, name, strlen(name)+1, (void**)&exist_value) == SUCCESS) {
+		        if (Z_TYPE_P(value) == IS_ARRAY && Z_TYPE_PP(exist_value) == IS_ARRAY) {
+		            php_array_merge(Z_ARRVAL_PP(exist_value), Z_ARRVAL_P(value), 0 TSRMLS_CC);
+		            continue;
+		        }
+		    }
+		}
 
 		zend_symtable_update(result, name, strlen(name) + 1, &value, sizeof(zval*), NULL);
 	}
