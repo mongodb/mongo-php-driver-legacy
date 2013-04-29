@@ -152,8 +152,7 @@ PHP_METHOD(MongoCollection, setSlaveOkay)
 /* }}} */
 
 /* {{{ proto array MongoCollection::getReadPreference()
-   Returns an array describing the read preference for this collection. Tag sets
-   will be included if available. */
+   Returns an array describing the read preference for this collection. Tag sets will be included if available. */
 PHP_METHOD(MongoCollection, getReadPreference)
 {
 	mongo_collection *c;
@@ -209,8 +208,7 @@ PHP_METHOD(MongoCollection, drop)
 /* }}} */
 
 /* {{{ proto array MongoCollection::validate([bool scan_data])
-   Validates the current collection, optionally include the data, and returns
-   the database response */
+   Validates the current collection, optionally include the data, and returns the database response */
 PHP_METHOD(MongoCollection, validate)
 {
 	zval *data;
@@ -234,10 +232,8 @@ PHP_METHOD(MongoCollection, validate)
 }
 /* }}} */
 
-/*
- * This should probably be split into two methods... right now appends the
- * getlasterror query to the buffer and alloc & inits the cursor zval.
- */
+/* This should probably be split into two methods... right now appends the
+ * getlasterror query to the buffer and alloc & inits the cursor zval. */
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC)
 {
 	zval *cmd_ns_z, *cmd, *cursor_z, *temp, *timeout_p;
@@ -291,7 +287,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 		}
 	}
 
-	/* Fetch all the options from the options array*/
+	/* Fetch all the options from the options array */
 	if (options && !IS_SCALAR_P(options)) {
 		zval **w_pp = NULL, **fsync_pp, **timeout_pp, **journal_pp;
 
@@ -364,7 +360,8 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 	array_init(cmd);
 	add_assoc_long(cmd, "getlasterror", 1);
 
-	/* if we have either a string, or w > 1, then we need to add "w" and perhaps "wtimeout" to GLE */
+	/* if we have either a string, or w > 1, then we need to add "w" and
+	 * perhaps "wtimeout" to GLE */
 	if (w_str || w > 1) {
 		zval *wtimeout, **wtimeout_pp;
 
@@ -414,10 +411,10 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 
 	cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
 
-	/* Make sure the "getLastError" also gets send to a primary. */
-	/* This should be refactored alongside with the getLastError redirection in
-	 * db.c/MongoDB::command. The Cursor creation should be done through
-	 * an init method otherwise a connection have to be requested twice. */
+	/* Make sure the "getLastError" also gets send to a primary. This should
+	 * be refactored alongside with the getLastError redirection in
+	 * db.c/MongoDB::command. The Cursor creation should be done through an
+	 * init method otherwise a connection have to be requested twice. */
 	mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for getlasterror");
 	php_mongo_connection_force_primary(cursor);
 
@@ -444,8 +441,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 }
 
 /* Returns a connection for the operation.
- * Connection flags (connection_flags) are MONGO_CON_TYPE_READ and MONGO_CON_TYPE_WRITE.
- */
+ * Connection flags (connection_flags) are MONGO_CON_TYPE_READ and MONGO_CON_TYPE_WRITE. */
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC)
 {
 	mongoclient *link;
@@ -575,8 +571,7 @@ static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_
 # define MONGO_ERROR_G PG
 #endif
 
-/*
- * This wrapper temporarily turns off the exception throwing bit if it has been
+/* This wrapper temporarily turns off the exception throwing bit if it has been
  * set (by calling mongo_cursor_throw() before). We can't call
  * mongo_cursor_throw after deregister as it frees up bits of memory that
  * mongo_cursor_throw uses to construct its error message.
@@ -585,14 +580,13 @@ static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_
  * handler is used on the PHP side, the notice would never been shown because
  * the exception bubbles up before the notice can actually be shown. By turning
  * the error handling mode to EH_NORMAL temporarily, we circumvent this
- * problem.
- */
+ * problem. */
 static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_connection *connection TSRMLS_DC)
 {
 	int orig_error_handling;
 
-	/* Save EG/PG(error_handling) so that we can show log messages when we
-	 * have already thrown an exception */
+	/* Save EG/PG(error_handling) so that we can show log messages when we have
+	 * already thrown an exception */
 	orig_error_handling = MONGO_ERROR_G(error_handling);
 	MONGO_ERROR_G(error_handling) = EH_NORMAL;
 
@@ -612,8 +606,6 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
 	cursor->connection = connection;
 
 	if (-1 == manager->send(connection, NULL, buf->start, buf->pos - buf->start, (char **) &error_message)) {
-		/* TODO: Figure out what to do on FAIL
-		mongo_util_link_failed(cursor->link, server TSRMLS_CC); */
 		mongo_manager_log(manager, MLOG_IO, MLOG_WARN, "do_safe_op: sending data failed, removing connection %s", connection->hash);
 		mongo_cursor_throw(connection, 16 TSRMLS_CC, "%s", error_message);
 		connection_deregister_wrapper(manager, connection TSRMLS_CC);
@@ -745,10 +737,8 @@ PHP_METHOD(MongoCollection, batchInsert)
 		return;
 	}
 
-	/*
-	 * Options are only supported in the new-style, ie: an array of "named
-	 * parameters": array("continueOnError" => true);
-	 */
+	/* Options are only supported in the new-style, ie: an array of "named
+	 * parameters": array("continueOnError" => true); */
 	if (options) {
 		zval **continue_on_error = NULL;
 
@@ -1573,8 +1563,7 @@ PHP_METHOD(MongoCollection, aggregate)
 
 	/* If the single array argument contains a zeroth index, consider it an
 	 * array of pipeline operators. Otherwise, assume it is a single pipeline
-	 * operator and allow it to be wrapped in an array.
-	 */
+	 * operator and allow it to be wrapped in an array. */
 	if (argc == 1 && zend_hash_index_exists(Z_ARRVAL_PP(argv[0]), 0)) {
 		Z_ADDREF_PP(*argv);
 		add_assoc_zval(data, "pipeline", **argv);

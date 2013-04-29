@@ -291,9 +291,7 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC)
  *
  * $db->command(array(filemd5 => $fileId, "root" => $ns));
  *
- * adds the response to zfile as the "md5" field.
- *
- */
+ * adds the response to zfile as the "md5" field. */
 static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC)
 {
 	if (!zend_hash_exists(HASH_P(zfile), "md5", strlen("md5") + 1)) {
@@ -320,10 +318,8 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC)
 		/* make sure there wasn't an error */
 		if (!EG(exception) && zend_hash_find(HASH_P(response), "md5", strlen("md5") + 1, (void**)&md5) == SUCCESS) {
 			add_assoc_zval(zfile, "md5", *md5);
-			/*
-			 * Increment the refcount so it isn't cleaned up at the end of this
-			 * method
-			 */
+			/* Increment the refcount so it isn't cleaned up at the end of this
+			 * method */
 			zval_add_ref(md5);
 		}
 
@@ -443,7 +439,7 @@ PHP_METHOD(MongoGridFS, storeBytes)
 		add_assoc_long(zfile, "length", bytes_len);
 	}
 
-	// options
+	/* options */
 	if (!options) {
 		zval *opts;
 		MAKE_STD_ZVAL(opts);
@@ -537,8 +533,7 @@ cleanup_on_failure:
  * - filename
  * - upload date
  * - length
- * these fields are only added if the user hasn't defined them.
- */
+ * these fields are only added if the user hasn't defined them. */
 static int setup_file_fields(zval *zfile, char *filename, int length TSRMLS_DC)
 {
 	zval temp;
@@ -575,8 +570,7 @@ static int setup_file_fields(zval *zfile, char *filename, int length TSRMLS_DC)
  *
  * Clean up should leave:
  * - 1 ref to zid
- * - buf
- */
+ * - buf */
 static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options  TSRMLS_DC) {
 	zval temp;
 	zval *zchunk, *zbin, *zretval = NULL;
@@ -843,8 +837,9 @@ PHP_METHOD(MongoGridFS, storeFile)
 cleanup_on_failure:
 	/* remove all inserted chunks and main file document */
 	if (revert) {
-		/* Cleanup any created chunks from the chunks collection */
-		/* If the insert into the files collection fails, it fails - and nothing to cleanup there anyway */
+		/* Cleanup any created chunks from the chunks collection. If the insert
+		 * into the files collection fails, it fails - and nothing to cleanup
+		 * there anyway */
 		cleanup_stale_chunks(INTERNAL_FUNCTION_PARAM_PASSTHRU, cleanup_ids);
 		gridfs_rewrite_cursor_exception(TSRMLS_C);
 		RETVAL_FALSE;

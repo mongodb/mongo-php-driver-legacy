@@ -337,9 +337,8 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
 
 		/* This copies the next chunk -> *to
 		 * Due to a talent I have for not reading directions, older versions of
-		 * the driver store files as raw bytes, not MongoBinData.  So, we'll
-		 * check for and handle both cases.
-		 */
+		 * the driver store files as raw bytes, not MongoBinData. So, we'll
+		 * check for and handle both cases. */
 		if (Z_TYPE_PP(zdata) == IS_STRING) {
 			/* raw bytes */
 			if (total + Z_STRLEN_PP(zdata) > max) {
@@ -380,7 +379,7 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
 	}
 	zval_ptr_dtor(&next);
 
-	// return the number of bytes copied
+	/* return the number of bytes copied */
 	return total;
 }
 

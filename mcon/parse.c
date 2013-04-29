@@ -129,8 +129,9 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 			pos++;
 		} while (*pos != '\0');
 
-		/* We are now either at the end of the string, or at / where the dbname starts.
-		 * We still have to add the last parser host/port combination though: */
+		/* We are now either at the end of the string, or at / where the dbname
+		 * starts.  We still have to add the last parser host/port combination
+		 * though: */
 		mongo_add_parsed_server_addr(manager, servers, host_start, host_end ? host_end : pos, port_start);
 	} else if (*pos == '/') {
 		host_start = pos;
@@ -143,8 +144,9 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 		 */
 		last_slash = strrchr(pos, '/');
 
-		/* The last component of the path *could* be a database name.
-		 * The rule is; if the last component has a dot, we use the full string since "host_start" as host */
+		/* The last component of the path *could* be a database name.  The rule
+		 * is; if the last component has a dot, we use the full string since
+		 * "host_start" as host */
 		if (strchr(last_slash, '.')) {
 			host_end = host_start + strlen(host_start);
 		} else {
@@ -245,8 +247,11 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 }
 
 /* Processes a single option/value pair.
- * Returns 0 if it worked, 1 if either name or value was missing, 2 if the option didn't exist, 3 on logic errors
- */
+ * Returns:
+ * 0 if it worked
+ * 1 if either name or value was missing
+ * 2 if the option didn't exist
+ * 3 on logic errors */
 int static mongo_process_option(mongo_con_manager *manager, mongo_servers *servers, char *name, char *value, char *pos, char **error_message)
 {
 	char *tmp_name;
@@ -320,9 +325,12 @@ static int parse_read_preference_tags(mongo_con_manager *manager, mongo_servers 
 }
 
 /* Sets server options.
- * Returns 0 if it worked, 2 if the option didn't exist, 3 on logical errors.
- * On logical errors, the error_message will be populated with the reason.
- */
+ * Returns:
+ * 0 if it worked
+ * 2 if the option didn't exist
+ * 3 on logical errors.
+ *
+ * On logical errors, the error_message will be populated with the reason. */
 int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char *option_name, char *option_value, char **error_message)
 {
 	int i;
@@ -460,7 +468,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 				servers->options.repl_set_name = strdup(option_value);
 				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': '%s'", option_value);
 
-				/* Associate the given replica set name with all the server definitions from the seed */
+				/* Associate the given replica set name with all the server
+				 * definitions from the seed */
 				for (i = 0; i < servers->count; i++) {
 					if (servers->server[i]->repl_set_name) {
 						free(servers->server[i]->repl_set_name);
@@ -480,13 +489,14 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
 			if (servers->read_pref.type != MONGO_RP_PRIMARY || servers->read_pref.tagset_count) {
-				/* the server already has read preferences configured, but we're still
-				 * trying to set slave okay. The spec says that's an error */
+				/* The server already has read preferences configured, but
+				 * we're still trying to set slave okay. The spec says that's
+				 * an error */
 				*error_message = strdup("You can not use both slaveOkay and read-preferences. Please switch to read-preferences.");
 				return 3;
 			} else {
-				/* Old style option, that needs to be removed. For now, spec dictates
-				 * it needs to be ReadPreference=SECONDARY_PREFERRED */
+				/* Old style option, that needs to be removed. For now, spec
+				 * dictates it needs to be ReadPreference=SECONDARY_PREFERRED */
 				servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
 			}
 			return 0;
@@ -513,7 +523,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			value = MONGO_SSL_DISABLE;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': false");
 		} else if (strcasecmp(option_value, "prefer") == 0 || atoi(option_value) == MONGO_SSL_PREFER) {
-			/* FIXME: MongoDB doesn't support "connection promotion" to SSL at the moment, so we can't support this option properly */
+			/* FIXME: MongoDB doesn't support "connection promotion" to SSL at
+			 * the moment, so we can't support this option properly */
 			value = MONGO_SSL_PREFER;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': prefer");
 			*error_message = strdup("SSL=prefer is currently not supported by mongod");
@@ -551,7 +562,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			 * value before setting it anyway. */
 			if (!servers->server[i]->db) {
 				servers->server[i]->db = strdup("admin");
-				/* Admin users always authenticate on the admin db, even when using other databases */
+				/* Admin users always authenticate on the admin db, even when
+				 * using other databases */
 				servers->server[i]->authdb = strdup("admin");
 			}
 		}

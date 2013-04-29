@@ -1,4 +1,3 @@
-// log.c
 /**
  *  Copyright 2009-2013 10gen, Inc.
  *

@@ -332,9 +332,9 @@ int mongo_store_option_wrapper(mongo_con_manager *manager, mongo_servers *server
 /* }}} */
 
 /* {{{ proto MongoClient MongoClient->__construct([string connection_string [, array mongo_options [, array driver_options]]])
- * Creates a new MongoClient object for mongo[d|s]. mongo_options are the same options as the connection_string, while
- * driver_options is additional PHP MongoDB options, like stream context and callbacks.
- */
+   Creates a new MongoClient object for mongo[d|s]. mongo_options are the same
+   options as the connection_string, while driver_options is additional PHP
+   MongoDB options, like stream context and callbacks. */
 PHP_METHOD(MongoClient, __construct)
 {
 	php_mongo_ctor(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
@@ -453,7 +453,8 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	}
 #endif
 	if (zdoptions) {
-		/* Possibly add more indexes in the future, like "log_queries", "log_commands", "log_failures", "log_metadata"... */
+		/* Possibly add more indexes in the future, like "log_queries",
+		 * "log_commands", "log_failures", "log_metadata"... */
 		zval **zcontext;
 
 		if (zend_hash_find(Z_ARRVAL_P(zdoptions), "context", strlen("context") + 1, (void**)&zcontext) == SUCCESS) {
@@ -466,7 +467,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_BVAL_P(slave_okay)) {
 		if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {
-			/* the server already has read preferences configured, but we're still
+			/* The server already has read preferences configured, but we're still
 			 * trying to set slave okay. The spec says that's an error, so we
 			 * throw an exception with code 23 (defined in php_mongo.h) */
 			zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 23 TSRMLS_CC);
@@ -654,7 +655,9 @@ PHP_METHOD(MongoClient, selectDB)
 				tmp_link->manager = link->manager;
 				tmp_link->servers = calloc(1, sizeof(mongo_servers));
 				mongo_servers_copy(tmp_link->servers, link->servers, MONGO_SERVER_COPY_CREDENTIALS);
-				/* We assume the previous credentials will work on this database too, or if authSource is set, authenticate against that db */
+				/* We assume the previous credentials will work on this
+				 * database too, or if authSource is set, authenticate against
+				 * that database */
 				for (i = 0; i < tmp_link->servers->count; i++) {
 					tmp_link->servers->server[i]->db = strdup(db);
 				}

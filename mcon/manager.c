@@ -63,22 +63,23 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 
 	hash = mongo_server_create_hash(server);
 
-	/* See if a connection is in our blacklist to short-circut trying to connect
-	 * to a node that is known to be down. This is done so we don't waste
-	 * precious time in connecting to unreachable nodes */
+	/* See if a connection is in our blacklist to short-circut trying to
+	 * connect to a node that is known to be down. This is done so we don't
+	 * waste precious time in connecting to unreachable nodes */
 	blacklist = mongo_manager_blacklist_find_by_hash(manager, hash);
 	if (blacklist) {
 		struct timeval start;
-		/* It is blacklisted, but it may have been a long time again and chances are
-		 * we should give it another try */
+		/* It is blacklisted, but it may have been a long time again and
+		 * chances are we should give it another try */
 		if (mongo_connection_ping_check(manager, blacklist->last_ping, &start)) {
-			/* The connection is blacklisted, but we've reached our ping interval
-			 * so lets remove the blacklisting and pretend we didn't know about it
-			 */
+			/* The connection is blacklisted, but we've reached our ping
+			 * interval so lets remove the blacklisting and pretend we didn't
+			 * know about it */
 			mongo_manager_blacklist_deregister(manager, blacklist, hash);
 			con = NULL;
 		} else {
-			/* Otherwise short-circut the connection attempt, and say we failed right away */
+			/* Otherwise short-circut the connection attempt, and say we failed
+			 * right away */
 			free(hash);
 			*error_message = strdup("Previous connection attempts failed, server blacklisted");
 			return NULL;
@@ -87,7 +88,8 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 
 	con = mongo_manager_connection_find_by_hash(manager, hash);
 
-	/* If we aren't about to (re-)connect then all we care about if it was a known connection or not */
+	/* If we aren't about to (re-)connect then all we care about if it was a
+	 * known connection or not */
 	if (connection_flags & MONGO_CON_FLAG_DONT_CONNECT) {
 		free(hash);
 		return con;
@@ -99,7 +101,8 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 		if (!mongo_connection_ping(manager,  con, options, error_message)) {
 			/* If the ping failed, deregister the connection */
 			mongo_manager_connection_deregister(manager, con);
-			/* Set the return value to NULL, as the connection is broken and has been removed */
+			/* Set the return value to NULL, as the connection is broken and
+			 * has been removed */
 			con = NULL;
 		}
 
@@ -190,7 +193,8 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					mongo_connection *new_con;
 					char *con_error_message = NULL;
 
-					/* Create a temp server definition to create a new connection on-demand if we didn't have one already */
+					/* Create a temp server definition to create a new
+					 * connection on-demand if we didn't have one already */
 					tmp_def = calloc(1, sizeof(mongo_server_def));
 					tmp_def->username = servers->server[i]->username ? strdup(servers->server[i]->username) : NULL;
 					tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;

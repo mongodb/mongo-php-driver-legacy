@@ -72,9 +72,8 @@ typedef unsigned __int64 uint64_t;
 #define MONGO_STATE_ROLLBACK      0x09
 #define MONGO_STATE_REMOVED       0x0a
 
-/*
- * Constants for the logging framework
- */
+/* Constants for the logging framework */
+
 /* Levels */
 #define MLOG_WARN    1
 #define MLOG_INFO    2
@@ -95,8 +94,9 @@ typedef unsigned __int64 uint64_t;
 #define MONGO_DEFAULT_MAX_MESSAGE_SIZE  (32 * 1024 * 1024)
 
 
-/* FIXME: This should be dynamic.. Although mongod doesn't allow more then 12
- * replicaset members, there is nothing preventing us from connecting to 20 mongos' */
+/* FIXME: This should be dynamic. Although mongod doesn't allow more then 12
+ * replicaset members, there is nothing preventing us from connecting to 20
+ * mongos' */
 #define MAX_SERVERS_LIMIT   16
 
 /* To track why we are closing a connection */
@@ -121,17 +121,17 @@ typedef struct _mongo_connection_deregister_callback
  * parameters to identify a unique connection. */
 typedef struct _mongo_connection
 {
-	time_t last_ping; /* The timestamp when ping was called last */
+	time_t last_ping;        /* The timestamp when ping was called last */
 	int    ping_ms;
-	int    last_ismaster; /* The timestamp when ismaster/get_server_flags was called last */
+	int    last_ismaster;    /* The timestamp when ismaster/get_server_flags was called last */
 	int    last_reqid;
 	void  *socket;           /* void* so we can support different "socket" backends */
-	int    connection_type; /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
+	int    connection_type;  /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
 	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
 	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
 	int    tag_count;
 	char **tags;
-	char  *hash; /* Duplicate of the hash that the manager knows this connection as */
+	char  *hash;             /* Duplicate of the hash that the manager knows this connection as */
 	mongo_connection_deregister_callback *cleanup_list;
 } mongo_connection;
 
@@ -162,7 +162,7 @@ typedef struct _mongo_read_preference_tagset
 
 typedef struct _mongo_read_preference
 {
-	int                            type; /* MONGO_RP_* */
+	int                            type;         /* MONGO_RP_* */
 	int                            tagset_count; /* The number of tag sets in this RP */
 	mongo_read_preference_tagset **tagsets;
 } mongo_read_preference;
@@ -219,9 +219,9 @@ typedef struct _mongo_con_manager
 	void                   *log_context;
 	mongo_log_callback_t   *log_function;
 
-	/* ping/ismaster will not be called more often than the amount of seconds that
-	 * is configured with ping_interval/ismaster_interval. The ismaster interval
-	 * is also used for the get_server_flags function. */
+	/* ping/ismaster will not be called more often than the amount of seconds
+	 * that is configured with ping_interval/ismaster_interval. The ismaster
+	 * interval is also used for the get_server_flags function. */
 	long                    ping_interval;      /* default:  5 seconds */
 	long                    ismaster_interval;  /* default: 15 seconds */
 
