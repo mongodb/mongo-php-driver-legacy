@@ -786,8 +786,8 @@ PHP_METHOD(MongoDB, authenticate)
 	PHP_MONGO_GET_DB(getThis());
 	PHP_MONGO_GET_LINK(db->link);
 
-	/* First we check whether the link already has database/username/password set. If
-	 * so, we can't re-authenticate and bailout. */
+	/* First we check whether the link already has database/username/password
+	 * set. If so, we can't re-authenticate and bailout. */
 	if (
 		link->servers->server[0]->db ||
 		link->servers->server[0]->username ||

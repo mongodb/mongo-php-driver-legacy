@@ -43,8 +43,7 @@ char *mongo_server_create_hashed_password(char *username, char *password)
 /* Hash format is:
  * - HOST:PORT;-;X;PID (with the - being the replica set name and the X a placeholder for credentials)
  * or:
- * - HOST:PORT;REPLSETNAME;DB/USERNAME/md5(PID,PASSWORD,USERNAME);PID
- */
+ * - HOST:PORT;REPLSETNAME;DB/USERNAME/md5(PID,PASSWORD,USERNAME);PID */
 
 /* Creates a unique hash for a server def with some info from the server config,
  * but also with the PID to make sure forking works */

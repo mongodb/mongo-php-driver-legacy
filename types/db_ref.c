@@ -27,8 +27,7 @@ zend_class_entry *mongo_ce_DBRef = NULL;
 /* {{{ MongoDBRef::create()
  *
  * DB refs are of the form:
- * array( '$ref' => <collection>, '$id' => <id>[, $db => <dbname>] )
- */
+ * array( '$ref' => <collection>, '$id' => <id>[, $db => <dbname>] ) */
 PHP_METHOD(MongoDBRef, create)
 {
 	zval *zns, *zid, *zdb = 0;

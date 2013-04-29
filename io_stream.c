@@ -63,9 +63,10 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		if (php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0) {
 			/* Setting up crypto failed. Thats only OK if we only preferred it */
 			if (options->ssl == MONGO_SSL_PREFER) {
-				/* FIXME: We can't actually get here because we reject setting this optino to prefer in mcon/parse.c
-				 * This is however probably what we need to do in the future when mongod starts actually supporting this! :)
-				 */
+				/* FIXME: We can't actually get here because we reject setting
+				 * this option to prefer in mcon/parse.c. This is however
+				 * probably what we need to do in the future when mongod starts
+				 * actually supporting this! :) */
 				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Failed establishing SSL for %s:%d", server->host, server->port);
 				php_stream_xport_crypto_enable(stream, 0 TSRMLS_CC);
 			} else {
@@ -123,7 +124,8 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 		num = php_stream_read(con->socket, (char *) data, len);
 
 		if (num < 0) {
-			/* Doesn't look like this can happen, php_sockop_read overwrites the failure from recv() to return 0 */
+			/* Doesn't look like this can happen, php_sockop_read overwrites
+			 * the failure from recv() to return 0 */
 			*error_message = strdup("Read from socket failed");
 			return -1;
 		}
@@ -213,7 +215,8 @@ void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *co
 	zend_rsrc_list_entry *le;
 	TSRMLS_FETCH();
 
-	/* When we fork we need to unregister the parents hash so we don't accidentally destroy it */
+	/* When we fork we need to unregister the parents hash so we don't
+	 * accidentally destroy it */
 	if (zend_hash_find(&EG(persistent_list), con->hash, strlen(con->hash) + 1, (void*) &le) == SUCCESS) {
 		((php_stream *)con->socket)->in_free = 1;
 		zend_hash_del(&EG(persistent_list), con->hash, strlen(con->hash) + 1);

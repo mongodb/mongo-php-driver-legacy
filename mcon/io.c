@@ -36,8 +36,7 @@
  * Returns:
  * 0 on success
  * -1 on failure, but not critical enough to throw an exception
- * 1.. on failure, and throw an exception. The return value is the error code
- */
+ * 1.. on failure, and throw an exception. The return value is the error code */
 int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 {
 	/* No socket timeout.. But we default to 1 second for historical reasons */
@@ -92,16 +91,15 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 
 	return 0;
 }
-/*
- * Low-level send function.
+
+/* Low-level send function.
  *
  * Goes through the buffer sending 4K byte batches.
  * On failure, sets errmsg to errno string and returns -1.
  * On success, returns number of bytes sent.
  * Does not attempt to reconnect nor throw any exceptions.
  *
- * On failure, the calling function is responsible for disconnecting
- */
+ * On failure, the calling function is responsible for disconnecting */
 int mongo_io_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int sent = 0, status = 1;
@@ -121,15 +119,13 @@ int mongo_io_send(mongo_connection *con, mongo_server_options *options, void *da
 	return sent;
 }
 
-/*
- * Low-level receive functions.
+/* Low-level receive functions.
  *
  * On failure, sets errmsg to errno string and returns -1.
  * On success, returns number of bytes read.
  * Does not attempt to reconnect nor throw any exceptions.
  *
- * On failure, the calling function is responsible for disconnecting
- */
+ * On failure, the calling function is responsible for disconnecting */
 int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message)
 {
 	int status = mongo_io_wait_with_timeout((int) (long)con->socket, timeout ? timeout : options->socketTimeoutMS, error_message);

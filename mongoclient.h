@@ -31,9 +31,7 @@ zval *mongo_read_property(zval *object, zval *member, int type, const zend_liter
 zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
 #endif
 
-/*
- * MongoClient class
- */
+/* MongoClient class */
 PHP_METHOD(MongoClient, __construct);
 PHP_METHOD(MongoClient, getConnections);
 PHP_METHOD(MongoClient, connect);
