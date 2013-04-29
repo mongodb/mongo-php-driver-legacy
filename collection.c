@@ -1334,7 +1334,7 @@ PHP_METHOD(MongoCollection, count)
 		RETVAL_ZVAL(*n, 1, 0);
 		zval_ptr_dtor(&response);
 	} else {
-		RETURN_ZVAL(response, 0, 0);
+		RETURN_ZVAL(response, 0, 1);
 	}
 }
 /* }}} */
