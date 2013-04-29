@@ -57,7 +57,7 @@ try {
      * exception. Fix the expected output once PHP-781 is resolved.
      */
     $coll->count();
-} catch (MongoCursorException $e) {
+} catch (MongoException $e) {
     var_dump($e->getMessage(), $e->getCode());
 }
 
@@ -101,6 +101,8 @@ int(13435)
 
 Testing primary count
 Bit 2 (SlaveOk) is not set
+string(%d) "Cannot run command count(): not master"
+int(20)
 
 ----
 
