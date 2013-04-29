@@ -24,20 +24,6 @@
 #include "bson_helpers.h"
 #include "mini_bson.h"
 
-#ifdef WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <sys/un.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <sys/time.h>
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

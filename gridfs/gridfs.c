@@ -13,13 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-#include <php.h>
-#include <zend_exceptions.h>
+#include "php.h"
+#include "php_globals.h"
+#include "zend_exceptions.h"
 #include "ext/standard/php_smart_str.h"
 
 #include "../php_mongo.h"
 #include "../collection.h"
-#include "cursor.h"
+#include "../cursor.h"
 #include "../db.h"
 #include "gridfs_cursor.h"
 #include "gridfs_file.h"

@@ -7,7 +7,7 @@ ARG_ENABLE("mongo-streams", "Mongo: Build with PHP streams wrapper support", "ye
 if (PHP_MONGO != "no") {
   EXTENSION('mongo', 'php_mongo.c mongo.c mongoclient.c bson.c cursor.c collection.c db.c io_stream.c log_stream.c');
   ADD_SOURCES(configure_module_dirname + "/exceptions", "exception.c connection_exception.c cursor_exception.c cursor_timeout_exception.c gridfs_exception.c result_exception.c", "mongo");
-  ADD_SOURCES(configure_module_dirname + "/gridfs", "gridfs.c gridfs_cursor.c gridfs_file.c gridfs_stream.c");
+  ADD_SOURCES(configure_module_dirname + "/gridfs", "gridfs.c gridfs_cursor.c gridfs_file.c gridfs_stream.c", "mongo");
   ADD_SOURCES(configure_module_dirname + "/types", "bin_data.c code.c date.c db_ref.c id.c int32.c int64.c regex.c timestamp.c", "mongo");
   ADD_SOURCES(configure_module_dirname + "/util", "log.c pool.c", "mongo");
   ADD_SOURCES(configure_module_dirname + "/mcon", "bson_helpers.c collection.c connections.c io.c manager.c mini_bson.c parse.c read_preference.c str.c utils.c", "mongo");
