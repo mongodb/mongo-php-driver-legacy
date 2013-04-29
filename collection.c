@@ -992,7 +992,7 @@ PHP_METHOD(MongoCollection, update)
 PHP_METHOD(MongoCollection, remove)
 {
 	zval *criteria = 0, *options = 0;
-	int flags = 0;
+	int bit_opts = 0;
 	mongo_collection *c;
 	mongo_connection *connection;
 	buffer buf;
@@ -1015,7 +1015,7 @@ PHP_METHOD(MongoCollection, remove)
 
 		if (zend_hash_find(HASH_P(options), "justOne", strlen("justOne") + 1, (void**)&just_one) == SUCCESS) {
 			convert_to_boolean_ex(just_one);
-			flags = Z_BVAL_PP(just_one);
+			bit_opts = Z_BVAL_PP(just_one) << 0;
 		}
 		Z_ADDREF_P(options);
 	} else {
@@ -1031,14 +1031,14 @@ PHP_METHOD(MongoCollection, remove)
 	}
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
-	if (FAILURE == php_mongo_write_delete(&buf, Z_STRVAL_P(c->ns), flags, criteria, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
+	if (FAILURE == php_mongo_write_delete(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
 		efree(buf.start);
 		zval_ptr_dtor(&criteria);
 		zval_ptr_dtor(&options);
 		return;
 	}
 #if MONGO_PHP_STREAMS
-	mongo_log_stream_delete(connection, c->ns, criteria, options, flags TSRMLS_CC);
+	mongo_log_stream_delete(connection, c->ns, criteria, options, bit_opts TSRMLS_CC);
 #endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
