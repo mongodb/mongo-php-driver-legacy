@@ -638,6 +638,7 @@ extern zend_module_entry mongo_module_entry;
  * 17: The MongoCollection object has not been correctly initialized by its constructor
  * 18: ID must be valid hex characters
  * 19: Invalid object ID
+ * 20: Cannot run command count(): (error message from MongoDB)
  *
  * MongoConnectionException:
  * 0: connection to <host> failed: <errmsg>

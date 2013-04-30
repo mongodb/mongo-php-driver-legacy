@@ -1334,7 +1334,15 @@ PHP_METHOD(MongoCollection, count)
 		RETVAL_ZVAL(*n, 1, 0);
 		zval_ptr_dtor(&response);
 	} else {
-		RETURN_ZVAL(response, 0, 0);
+		zval **errmsg;
+
+		/* The command failed, try to find an error message */
+		if (zend_hash_find(HASH_P(response), "errmsg", strlen("errmsg") + 1 , (void**)&errmsg) == SUCCESS) {
+			zend_throw_exception_ex(mongo_ce_Exception, 20, "Cannot run command count(): %s", Z_STRVAL_PP(errmsg) TSRMLS_CC);
+		} else {
+			zend_throw_exception(mongo_ce_Exception, "Cannot run command count()", 20 TSRMLS_CC);
+		}
+		zval_ptr_dtor(&response);
 	}
 }
 /* }}} */
