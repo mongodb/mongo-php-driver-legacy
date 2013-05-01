@@ -81,6 +81,8 @@ Hit the primary
 Hit the primary
 Hit the primary
 string(15) "slaveOkayFile-4"
+
+%s: Function MongoCursor::slaveOkay() is deprecated in %sbug00207.php on line %d
 Hit a secondary
 Hit a secondary
 ===DONE===
