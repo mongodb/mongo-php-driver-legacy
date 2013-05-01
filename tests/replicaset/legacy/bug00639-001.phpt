@@ -47,12 +47,17 @@ $info = $cursor->info();
 echo "connection type: ", $info['connection_type_desc'], "\n";
 ?>
 --EXPECTF--
+%s: Function MongoCursor::slaveOkay() is deprecated in %sbug00639-001.php on line %d
 pick server: random element %d while ignoring the primary
 - connection: type: SECONDARY, socket: %d, ping: %d, hash: %s
 connection type: SECONDARY
+
+%s: Function MongoCursor::slaveOkay() is deprecated in %sbug00639-001.php on line %d
 pick server: random element %d
 - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s
 connection type: PRIMARY
+
+%s: Function MongoCursor::slaveOkay() is deprecated in %sbug00639-001.php on line %d
 pick server: random element %d while ignoring the primary
 - connection: type: SECONDARY, socket: %d, ping: %d, hash: %s
 connection type: SECONDARY
