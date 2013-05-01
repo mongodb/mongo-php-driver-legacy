@@ -1324,7 +1324,7 @@ PHP_METHOD(MongoCollection, count)
 
 		/* The command failed, try to find an error message */
 		if (zend_hash_find(HASH_P(response), "errmsg", strlen("errmsg") + 1 , (void**)&errmsg) == SUCCESS) {
-			zend_throw_exception_ex(mongo_ce_Exception, 20, "Cannot run command count(): %s", Z_STRVAL_PP(errmsg) TSRMLS_CC);
+			zend_throw_exception_ex(mongo_ce_Exception, 20 TSRMLS_CC, "Cannot run command count(): %s", Z_STRVAL_PP(errmsg));
 		} else {
 			zend_throw_exception(mongo_ce_Exception, "Cannot run command count()", 20 TSRMLS_CC);
 		}
