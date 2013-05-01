@@ -75,14 +75,11 @@ static int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *h
 	return 1;
 }
 
-/**
-* This function does the actual connecting
-* The results of this function are stored in mongo_connection->socket,
-* which is a void* to be able to store various different backends
-* (f.e. the PHP io_streams stores a php_stream*)
-*
-* Returns an integer (masquerading as a void*) on success, NULL on failure.
-*/
+/* This function does the actual connecting The results of this function are
+ * stored in mongo_connection->socket, which is a void* to be able to store
+ * various different backends (f.e. the PHP io_streams stores a php_stream*)
+ *
+ * Returns an integer (masquerading as a void*) on success, NULL on failure. */
 void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	struct sockaddr*   sa;
@@ -423,11 +420,9 @@ int mongo_connection_ping_check(mongo_con_manager *manager, int last_ping, struc
 	return 1;
 }
 
-/**
- * Sends a ping command to the server and stores the result.
+/* Sends a ping command to the server and stores the result.
  *
- * Returns 1 when it worked, and 0 when an error was encountered.
- */
+ * Returns 1 when it worked, and 0 when an error was encountered. */
 int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
@@ -457,8 +452,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, mon
 	return 1;
 }
 
-/**
- * Sends an ismaster command to the server and returns an array of new
+/* Sends an ismaster command to the server and returns an array of new
  * connectable nodes
  *
  * Returns:
@@ -467,8 +461,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, mon
  * 2: when is master wasn't run due to the time-out limit
  * 3: when it all worked, but we need to remove the seed host (due to its name
  *    not being what the server thought it is) - in that case, the server in
- *    the last argument is changed
- */
+ *    the last argument is changed */
 int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
 {
 	mcon_str      *packet;
@@ -499,8 +492,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	/* We find out whether the machine we connected too, is actually the
 	 * one we thought we were connecting too */
 	/* MongoDB 1.8.x doesn't have the "me" field.
-	 * The replicaset verification is done next step (setName).
-	 */
+	 * The replicaset verification is done next step (setName). */
 	if (bson_find_field_as_string(ptr, "me", &connected_name)) {
 		we_think_we_are = mongo_server_hash_to_server(con->hash);
 		if (strcmp(connected_name, we_think_we_are) == 0) {
@@ -610,11 +602,9 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	return retval;
 }
 
-/**
- * Sends an ismaster command to the server to find server flags
+/* Sends an ismaster command to the server to find server flags
  *
- * Returns 1 when it worked, and 0 when an error was encountered.
- */
+ * Returns 1 when it worked, and 0 when an error was encountered. */
 int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
@@ -689,11 +679,9 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	return 1;
 }
 
-/**
- * Sends a getnonce command to the server for authentication
+/* Sends a getnonce command to the server for authentication
  *
- * Returns the nonsense when it worked, or NULL if it didn't.
- */
+ * Returns the nonsense when it worked, or NULL if it didn't. */
 char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
@@ -728,11 +716,9 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
 	return retval;
 }
 
-/**
- * Authenticates a connection
+/* Authenticates a connection
  *
- * Returns 1 when it worked, or 0 when it didn't - with the error_message set.
- */
+ * Returns 1 when it worked, or 0 when it didn't - with the error_message set. */
 int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char *nonce, char **error_message)
 {
 	mcon_str      *packet;

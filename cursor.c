@@ -548,9 +548,8 @@ PHP_METHOD(MongoCursor, dead)
 /* }}} */
 
 /* {{{ Cursor flags
- * Sets or unsets the flag <flag>. With mode = -1, the arguments are parsed.
- * Otherwise the mode should contain 0 for unsetting and 1 for setting the flag.
- */
+   Sets or unsets the flag <flag>. With mode = -1, the arguments are parsed.
+   Otherwise the mode should contain 0 for unsetting and 1 for setting the flag. */
 static inline void set_cursor_flag(INTERNAL_FUNCTION_PARAMETERS, int flag, int mode)
 {
 	zend_bool z = 1;
@@ -693,7 +692,7 @@ PHP_METHOD(MongoCursor, getReadPreference)
 }
 
 /* {{{ MongoCursor::setReadPreference(string read_preference [, array tags ])
- * Sets a read preference to be used for all read queries.*/
+   Sets a read preference to be used for all read queries.*/
 PHP_METHOD(MongoCursor, setReadPreference)
 {
 	char *read_preference;
@@ -988,8 +987,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 	}
 
 	/* If we had a connection we need to remove it from the callback map before
-	 * we assign it another connection
-	 */
+	 * we assign it another connection. */
 	if (cursor->connection) {
 		mongo_deregister_callback_from_connection(cursor->connection, cursor);
 	}
@@ -1000,7 +998,8 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 	 * read preference." */
 	cursor->opts = cursor->opts | (cursor->read_pref.type != MONGO_RP_PRIMARY ? CURSOR_FLAG_SLAVE_OKAY : 0);
 
-	/* store the link's read preference to backup, and overwrite with the cursors's read preferences */
+	/* store the link's read preference to backup, and overwrite with the
+	 * cursors's read preferences */
 	mongo_read_preference_copy(&link->servers->read_pref, &rp);
 	mongo_read_preference_replace(&cursor->read_pref, &link->servers->read_pref);
 
@@ -1027,7 +1026,8 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 		return FAILURE;
 	}
 
-	/* Apply read preference query option, but only if we have a MongoS connection */
+	/* Apply read preference query option, but only if we have a MongoS
+	 * connection */
 	if (cursor->connection->connection_type == MONGO_NODE_MONGOS) {
 		mongo_apply_mongos_rp(cursor);
 	}
@@ -1254,8 +1254,7 @@ PHP_METHOD(MongoCursor, next)
 			 *
 			 * Note: We need to mark the cursor as failed _after_ prepping the
 			 * exception, otherwise the exception won't include the servername
-			 * it hit for example.
-			 */
+			 * it hit for example. */
 			if (code == 10107 || code == 13435 || code == 13436 || code == 10054 || code == 10056 || code == 10058) {
 				mongo_util_cursor_failed(cursor TSRMLS_CC);
 			}
@@ -1604,18 +1603,18 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC)
 					} else {
 						kill_cursor(current, cursor->connection, le TSRMLS_CC);
 
-						/*
-						 * if the connection is closed before the cursor is
-						 * destroyed, the cursor might try to fetch more results
-						 * with disasterous consequences.  Thus, the cursor_id is
-						 * set to 0, so no more results will be fetched.
+						/* If the connection is closed before the cursor is
+						 * destroyed, the cursor might try to fetch more
+						 * results with disasterous consequences.  Thus, the
+						 * cursor_id is set to 0, so no more results will be
+						 * fetched.
 						 *
-						 * this might not be the most elegant solution, since you
-						 * could fetch 100 results, get the first one, close the
-						 * connection, get 99 more, and suddenly not be able to get
-						 * any more.  Not sure if there's a better one, though. I
-						 * guess the user can call dead() on the cursor.
-						*/
+						 * This might not be the most elegant solution, since
+						 * you could fetch 100 results, get the first one,
+						 * close the connection, get 99 more, and suddenly not
+						 * be able to get any more.  Not sure if there's a
+						 * better one, though. I guess the user can call dead()
+						 * on the cursor. */
 						cursor->cursor_id = 0;
 					}
 					/* only one cursor to be freed */
@@ -1666,10 +1665,8 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
 		}
 
 		do {
-			/*
-			 * If we find the current cursor in the cursor list, we don't need
-			 * another dtor for it so unlock the mutex & return.
-			 */
+			/* If we find the current cursor in the cursor list, we don't need
+			 * another dtor for it so unlock the mutex & return. */
 			if (current->cursor_id == cursor->cursor_id && cursor->connection && current->socket == cursor->connection->socket) {
 				pefree(new_node, 1);
 				UNLOCK(cursor);
@@ -1680,10 +1677,8 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
 			current = current->next;
 		} while (current);
 
-		/*
-		 * we didn't find the cursor.  add it to the list. (prev is pointing to the
-		 * tail of the list, current is pointing to null.
-		 */
+		/* We didn't find the cursor so we add it to the list. prev is pointing
+		 * to the tail of the list, current is pointing to null. */
 		prev->next = new_node;
 		new_node->prev = prev;
 	} else {
@@ -1760,7 +1755,7 @@ void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le)
 	pefree(node, 1);
 }
 
-/* tell db to destroy its cursor */
+/* Tell the database to destroy its cursor */
 static void kill_cursor(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC)
 {
 	char quickbuf[128];
@@ -1789,7 +1784,7 @@ static void kill_cursor(cursor_node *node, mongo_connection *con, zend_rsrc_list
 		free(error_message);
 	}
 
-	/* free this cursor/link pair */
+	/* Free this cursor/link pair */
 	php_mongo_free_cursor_node(node, le);
 }
 

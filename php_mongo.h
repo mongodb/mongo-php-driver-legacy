@@ -452,17 +452,15 @@ typedef struct {
 	int dead;
 } mongo_cursor;
 
-/*
- * Unfortunately, cursors can be freed before or after link is destroyed, so
- * we can't actually depend on having a link to the database.  So, we're
- * going to keep a separate list of link ids associated with cursor ids.
+/* Unfortunately, cursors can be freed before or after link is destroyed, so we
+ * can't actually depend on having a link to the database. So, we're going to
+ * keep a separate list of link ids associated with cursor ids.
  *
- * When a cursor is to be freed, we try to find this cursor in the list.  If
+ * When a cursor is to be freed, we try to find this cursor in the list. If
  * it's there, kill it.  If not, the db connection is probably already dead.
  *
  * When a connection is killed, we sweep through the list and kill all the
- * cursors for that link.
- */
+ * cursors for that link. */
 typedef struct _cursor_node {
 	int64_t cursor_id;
 	void *socket;
@@ -512,16 +510,12 @@ PHP_MSHUTDOWN_FUNCTION(mongo);
 PHP_RINIT_FUNCTION(mongo);
 PHP_MINFO_FUNCTION(mongo);
 
-/*
-* serialization functions
-*/
+/* Serialization functions */
 PHP_FUNCTION(bson_encode);
 PHP_FUNCTION(bson_decode);
 
 
-/*
- * Mutex macros
- */
+/* Mutex macros */
 #ifdef WIN32
 # define LOCK(lk) { \
 	int ret = -1; \

@@ -180,24 +180,22 @@ PHP_MINIT_FUNCTION(mongo)
 	/* Deprecated, but we will keep it for now */
 	mongo_init_MongoPool(TSRMLS_C);
 
-	/*
-	 * MongoMaxKey and MongoMinKey are completely non-interactive: they have
-	 * no method, fields, or constants.
-	 */
+	/* MongoMaxKey and MongoMinKey are completely non-interactive: they have no
+	 * method, fields, or constants.  */
 	INIT_CLASS_ENTRY(max_key, "MongoMaxKey", NULL);
 	mongo_ce_MaxKey = zend_register_internal_class(&max_key TSRMLS_CC);
 	INIT_CLASS_ENTRY(min_key, "MongoMinKey", NULL);
 	mongo_ce_MinKey = zend_register_internal_class(&min_key TSRMLS_CC);
 
-	/* make mongo objects uncloneable */
+	/* Make mongo objects uncloneable */
 	memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 	mongo_default_handlers.clone_obj = NULL;
 
-	/* add compare_objects for MongoId */
+	/* Add compare_objects for MongoId */
 	memcpy(&mongo_id_handlers, &mongo_default_handlers, sizeof(zend_object_handlers));
 	mongo_id_handlers.compare_objects = php_mongo_compare_ids;
 
-	/* start random number generator */
+	/* Start random number generator */
 	srand(time(0));
 
 #ifdef WIN32
@@ -451,8 +449,7 @@ void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
 /* Applies an array of tagsets to the read preference. This function clears the
  * read preference before adding tagsets. If an error is encountered adding a
  * tagset, the read preference will again be cleared to avoid being left in an
- * inconsistent state.
- */
+ * inconsistent state. */
 static int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC)
 {
 	zval **tagset;
@@ -486,8 +483,7 @@ static int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets T
 }
 
 /* Sets read preference mode and tagsets. If an error is encountered, the read
- * preference will not be changed.
- */
+ * preference will not be changed. */
 int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preference, HashTable *tags TSRMLS_DC)
 {
 	mongo_read_preference tmp_rp;

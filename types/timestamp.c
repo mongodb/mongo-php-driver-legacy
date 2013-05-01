@@ -20,9 +20,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_Timestamp = NULL;
 
-/*
- * Timestamp is 4 bytes of seconds since epoch and 4 bytes of increment.
- */
+/* Timestamp is 4 bytes of seconds since epoch and 4 bytes of increment. */
 PHP_METHOD(MongoTimestamp, __construct)
 {
 	long sec = 0, inc = 0;
@@ -42,9 +40,7 @@ PHP_METHOD(MongoTimestamp, __construct)
 	zend_update_property_long(mongo_ce_Timestamp, getThis(), "inc", strlen("inc"), inc TSRMLS_CC);
 }
 
-/*
- * Just convert the seconds field to a string.
- */
+/* Just convert the seconds field to a string. */
 PHP_METHOD(MongoTimestamp, __toString)
 {
 	char *str;

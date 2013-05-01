@@ -21,9 +21,7 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 
 void mongo_init_Mongo(TSRMLS_D);
 
-/*
- * Mongo class
- */
+/* Mongo class */
 PHP_METHOD(Mongo, __construct);
 PHP_METHOD(Mongo, connectUtil);
 PHP_METHOD(Mongo, getSlaveOkay);

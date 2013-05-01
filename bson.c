@@ -864,14 +864,12 @@ int mongo_get_limit(mongo_cursor *cursor)
 
 char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 {
-	/*
-	* buf_start is used for debugging
-	*
-	* If the deserializer runs into bson it can't parse, it will dump the bytes
-	* to that point.
-	*
-	* We lose buf's position as we iterate, so we need buf_start to save it.
-	*/
+	/* buf_start is used for debugging
+	 *
+	 * If the deserializer runs into bson it can't parse, it will dump the
+	 * bytes to that point.
+	 *
+	 * We lose buf's position as we iterate, so we need buf_start to save it. */
 	char *buf_start = buf;
 	unsigned char type;
 
@@ -975,8 +973,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				 *
 				 * There is an infinitesimally small chance that the first four
 				 * bytes will happen to be the length of the rest of the
-				 * string.  In this case, the data will be corrupted.
-				 */
+				 * string.  In this case, the data will be corrupted. */
 				if ((int)type == 2) {
 					int len2 = MONGO_32(*(int*)buf);
 
@@ -1136,8 +1133,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			 *   - ns + \0
 			 *   - 12 bytes MongoId
 			 * This converts the deprecated, old-style db ref type
-			 * into the new type (array('$ref' => ..., $id => ...)).
-			 */
+			 * into the new type (array('$ref' => ..., $id => ...)). */
 			case BSON_DBREF: {
 				int ns_len;
 				char *ns;
@@ -1174,8 +1170,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			/* MongoTimestamp (17)
 			 * 8 bytes total:
 			 *  - sec: 4 bytes
-			 *  - inc: 4 bytes
-			 */
+			 *  - inc: 4 bytes */
 			case BSON_TIMESTAMP: {
 				object_init_ex(value, mongo_ce_Timestamp);
 				zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), MONGO_32(*(int*)buf) TSRMLS_CC);
@@ -1186,8 +1181,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			}
 
 			/* max and min keys are used only for sharding, and
-			 * cannot be resaved to the database at the moment
-			 */
+			 * cannot be resaved to the database at the moment */
 			/* MongoMinKey (0) */
 			case BSON_MINKEY: {
 				object_init_ex(value, mongo_ce_MinKey);
@@ -1208,8 +1202,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				 *
 				 * We can't dump any more of the buffer, unfortunately, because we
 				 * don't keep track of the size.  Besides, if it is corrupt, the
-				 * size might be messed up, too.
-				 */
+				 * size might be messed up, too. */
 				char *msg, *pos, *template;
 				int i, width, len;
 				unsigned char t = type;
@@ -1379,8 +1372,7 @@ PHP_FUNCTION(bson_encode)
 /* }}} */
 
 /* {{{ proto array bson_decode(string bson)
-   Takes a serialized BSON object and turns it into a PHP array.
-   This only deserializes entire documents! */
+   Takes a serialized BSON object and turns it into a PHP array. This only deserializes entire documents! */
 PHP_FUNCTION(bson_decode)
 {
 	char *str;
