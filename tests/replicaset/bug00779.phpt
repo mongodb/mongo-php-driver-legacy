@@ -27,7 +27,7 @@ $coll = $mc->selectCollection(dbname(), 'bug00779');
 
 echo "Testing primary query with MongoCursor::setReadPreference()\n";
 $cursor = $coll->find();
-$cursor->setReadPreference(\MongoClient::RP_PRIMARY);
+$cursor->setReadPreference(MongoClient::RP_PRIMARY);
 try {
     iterator_to_array($cursor);
 } catch (MongoCursorException $e) {
@@ -65,7 +65,7 @@ echo "\n----\n";
 
 echo "\nTesting non-primary query with MongoCursor::setReadPreference()\n";
 $cursor = $coll->find();
-$cursor->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
+$cursor->setReadPreference(MongoClient::RP_SECONDARY_PREFERRED);
 iterator_to_array($cursor);
 
 echo "\nTesting non-primary query with MongoCursor::setFlag()\n";
@@ -74,7 +74,7 @@ $cursor->setFlag(2);
 iterator_to_array($cursor);
 
 echo "\nTesting non-primary query with MongoCollection::setReadPreference()\n";
-$coll->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
+$coll->setReadPreference(MongoClient::RP_SECONDARY_PREFERRED);
 $cursor = $coll->find();
 iterator_to_array($cursor);
 
