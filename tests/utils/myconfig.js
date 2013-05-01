@@ -42,24 +42,30 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
 
     var testOpts = {
         "name": keyFile ? "REPLICASET-AUTH" : "REPLICASET",
+        "useHostname": false,
+        "useHostName": false,
         "nodes": servers + (addArbiter ? 1 : 0),
         "startPort": port
     };
 
-    var nodeOpts = {
-        "nojournal" : "",
-        "nopreallocj": "",
-        "quiet": "",
-        "logpath" : "/dev/null",
-        "oplogSize": 10
-    };
-
-    if (keyFile) {
-        nodeOpts.keyFile = keyFile;
-    }
-
     var retval = new ReplSetTest(testOpts);
-    retval.startSet(nodeOpts);
+    print("Now setting logpath");
+    for ( var i = 0; i < retval.numNodes; i++ ) {
+        retval.nodeOptions[ "n" + i ] = Object.merge(retval.nodeOptions[ "n" + i ], {
+            "nojournal" : "",
+            "nopreallocj": "",
+            "quiet": "",
+            "oplogSize": 10,
+            "logpath": "/tmp/NODE." + (keyFile ? "-AUTH" : "") + i
+        });
+        if (keyFile) {
+            retval.nodeOptions[ "n" + i ].keyFile = keyFile;
+        }
+
+        printjson(retval.nodeOptions["n" + i]);
+    }
+    print("Finish setting logpath");
+    retval.startSet();
     var cfg = retval.getReplSetConfig();
 
     if (addArbiter) {
@@ -161,12 +167,16 @@ function initShard(mongoscount, rsOptions, rsSettings) {
 
     rs = {
         "nodes": 3,
-        "logpath": "/dev/null",
+        "logpath": "/tmp/NODE.RS",
+        "useHostname": false,
+        "useHostName": false,
         "oplogSize": 10
     }
 
     shardTest = new ShardingTest({
         "name": "SHARDING",
+        "useHostname": false,
+        "useHostName": false,
         "shards": 2,
         "rs": rs,
         "numReplicas": 2,
