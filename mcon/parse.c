@@ -248,6 +248,7 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 
 /* Processes a single option/value pair.
  * Returns:
+ * -1 if it worked, but the option really shouldn't be used
  * 0 if it worked
  * 1 if either name or value was missing
  * 2 if the option didn't exist
@@ -499,11 +500,11 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 				 * dictates it needs to be ReadPreference=SECONDARY_PREFERRED */
 				servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
 			}
-			return 0;
+			return -1;
 		}
 
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': false");
-		return 0;
+		return -1;
 	}
 
 	if (strcasecmp(option_name, "socketTimeoutMS") == 0) {
@@ -547,7 +548,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		}
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'timeout' ('connectTimeoutMS'): %d", value);
 		servers->options.connectTimeoutMS = value;
-		return 0;
+		return -1;
 	}
 
 	if (strcasecmp(option_name, "username") == 0) {
