@@ -185,7 +185,7 @@ static int get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **e
 }
 
 /* Cursor helper function */
-int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
+int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 {
 	unsigned int status;
 	char        *error_message = NULL;
@@ -216,10 +216,6 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 		free(error_message);
 		return FAILURE;
 	}
-
-	/* If no catastrophic error has happened yet, we're fine, set errmsg to
-	 * null */
-	ZVAL_NULL(errmsg);
 
 	return SUCCESS;
 }
@@ -405,7 +401,6 @@ PHP_METHOD(MongoCursor, hasNext)
 	int size;
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	char *error_message = NULL;
-	zval *temp;
 	mongoclient *client;
 
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
@@ -459,16 +454,12 @@ PHP_METHOD(MongoCursor, hasNext)
 
 	efree(buf.start);
 
-	MAKE_STD_ZVAL(temp);
-	ZVAL_NULL(temp);
-
-	if (php_mongo_get_reply(cursor, temp TSRMLS_CC) != SUCCESS) {
+	if (php_mongo_get_reply(cursor TSRMLS_CC) != SUCCESS) {
+		/* php_mongo_get_reply() throws exceptions */
 		free(error_message);
 		mongo_util_cursor_failed(cursor TSRMLS_CC);
 		return;
 	}
-
-	zval_ptr_dtor(&temp);
 
 	if (have_error_flags(cursor)) {
 		RETURN_TRUE;
@@ -1008,7 +999,6 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 {
 	mongo_cursor *cursor;
 	buffer buf;
-	zval *errmsg;
 	char *error_message;
 	mongoclient *link;
 	mongo_read_preference rp;
@@ -1096,14 +1086,10 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 
 	efree(buf.start);
 
-	MAKE_STD_ZVAL(errmsg);
-	ZVAL_NULL(errmsg);
-	if (php_mongo_get_reply(cursor, errmsg TSRMLS_CC) == FAILURE) {
-		zval_ptr_dtor(&errmsg);
+	if (php_mongo_get_reply(cursor TSRMLS_CC) == FAILURE) {
+		/* php_mongo_get_reply() throws exceptions */
 		return mongo_util_cursor_failed(cursor TSRMLS_CC);
 	}
-
-	zval_ptr_dtor(&errmsg);
 
 	/* we've got something to kill, make a note */
 	if (cursor->cursor_id != 0) {
@@ -1116,7 +1102,6 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 
 int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
 {
-
 	mongo_manager_connection_deregister(MonGlo(manager), cursor->connection);
 	cursor->dead = 1;
 	cursor->connection = NULL;

@@ -19,7 +19,7 @@
 void php_mongo_cursor_free(void *object TSRMLS_DC);
 
 /* Tries to read the reply from the database */
-int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC);
+int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC);
 
 /* Queries the database. Returns SUCCESS or FAILURE. */
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC);

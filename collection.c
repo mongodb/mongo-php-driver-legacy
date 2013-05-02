@@ -669,7 +669,7 @@ static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_conn
 
 static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC)
 {
-	zval *errmsg, **err;
+	zval **err;
 	mongo_cursor *cursor;
 	char *error_message;
 
@@ -689,18 +689,13 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 	}
 
 	/* get reply */
-	MAKE_STD_ZVAL(errmsg);
-	ZVAL_NULL(errmsg);
-
-	if (FAILURE == php_mongo_get_reply(cursor, errmsg TSRMLS_CC)) {
+	if (FAILURE == php_mongo_get_reply(cursor TSRMLS_CC)) {
 		/* php_mongo_get_reply() throws exceptions */
 		mongo_manager_connection_deregister(manager, connection);
 		cursor->connection = NULL;
 		zval_ptr_dtor(&cursor_z);
-		zval_ptr_dtor(&errmsg);
 		return;
 	}
-	zval_ptr_dtor(&errmsg);
 
 	cursor->started_iterating = 1;
 
