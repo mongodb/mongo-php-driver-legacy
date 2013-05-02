@@ -27,6 +27,7 @@ $response = $database->execute($command);
 var_dump($response);
 ?>
 --EXPECTF--
+%s: MongoClient::__construct(): The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead in %s on line %d
 array(2) {
   ["retval"]=>
   string(%d) "%s"
