@@ -28,6 +28,8 @@ var_dump($opts, $m);
 echo "All done\n";
 ?>
 --EXPECTF--
+%s: Mongo::__construct(): The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead in %s on line %d
+
 Notice: Array to string conversion in %smongoclient-ctor-002.php on line %d
 
 Notice: Array to string conversion in %smongoclient-ctor-002.php on line %d

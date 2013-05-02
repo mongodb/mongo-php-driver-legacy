@@ -417,6 +417,13 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 					error = mongo_store_option_wrapper(link->manager, link->servers, opt_key, opt_entry, (char **)&error_message);
 
 					switch (error) {
+						case -1: /* Deprecated options */
+							if (strcasecmp(opt_key, "slaveOkay") == 0) {
+								php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'slaveOkay' option is deprecated. Please switch to read-preferences");
+							} else if (strcasecmp(opt_key, "timeout") == 0) {
+								php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead");
+							}
+							break;
 						case 4: /* Special options parameters, invalid for URL parsing - only possiblity is 'connect' for now */
 							if (strcasecmp(opt_key, "connect") == 0) {
 								convert_to_boolean_ex(opt_entry);
