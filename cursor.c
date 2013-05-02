@@ -786,22 +786,20 @@ PHP_METHOD(MongoCursor, sort)
 }
 /* }}} */
 
-/* {{{ MongoCursor->hint
- */
+/* {{{ proto MongoCursor MongoCursor::hint(mixed index)
+   Hint the index, by name or fields, to use for the query. */
 PHP_METHOD(MongoCursor, hint)
 {
-	zval *hint, *fields;
+	zval *hint, *index;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &fields) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &index) == FAILURE) {
 		return;
 	}
-	MUST_BE_ARRAY_OR_OBJECT(1, fields);
-
 
 	MAKE_STD_ZVAL(hint);
 	ZVAL_STRING(hint, "$hint", 1);
 
-	MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), hint, fields);
+	MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), hint, index);
 
 	zval_ptr_dtor(&hint);
 }
