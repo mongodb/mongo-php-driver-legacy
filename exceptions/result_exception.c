@@ -23,7 +23,7 @@ extern zend_class_entry *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_ResultException;
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_getdocument, 0, 0, 0)
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getdocument, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoResultException_methods[] = {
