@@ -52,6 +52,7 @@ PHP_METHOD(MongoCode, __construct)
 PHP_METHOD(MongoCode, __toString)
 {
 	zval *zode = zend_read_property(mongo_ce_Code, getThis(), "code", strlen("code"), NOISY TSRMLS_CC);
+	convert_to_string_ex(&zode);
 
 	RETURN_STRING(Z_STRVAL_P(zode), 1);
 }
