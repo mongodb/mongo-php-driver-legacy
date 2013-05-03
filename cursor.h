@@ -96,7 +96,7 @@ PHP_METHOD(MongoCursorException, getHost);
 /* Throw a MongoCursorException with the given code and message.  Uses the
  * server to fill in information about the connection that cause the exception.
  * Does nothing if an exception has already been thrown. */
-zval* mongo_cursor_throw(mongo_connection *connection, int code TSRMLS_DC, char *format, ...);
+zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *connection, int code TSRMLS_DC, char *format, ...);
 
 /* The cursor_list
  *

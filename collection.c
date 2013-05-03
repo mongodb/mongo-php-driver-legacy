@@ -30,6 +30,7 @@
 
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_DB, *mongo_ce_Cursor;
 extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception, *mongo_ce_ResultException;
+extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_WriteConcernException;
 
 extern int le_pconnection, le_connection;
 extern zend_object_handlers mongo_default_handlers;
@@ -44,7 +45,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
 static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
-static int php_mongo_trigger_error_on_gle(zval *document TSRMLS_DC);
+static int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document TSRMLS_DC);
 
 /* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
    Initializes a new MongoCollection */
@@ -528,10 +529,10 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 	/* TODO: Fix better error message */
 	if ((connection = mongo_get_read_write_connection(link->manager, link->servers, connection_flags, (char **) &error_message)) == NULL) {
 		if (error_message) {
-			mongo_cursor_throw(NULL, 16 TSRMLS_CC, "Couldn't get connection: %s", error_message);
+			mongo_cursor_throw(mongo_ce_CursorException, NULL, 16 TSRMLS_CC, "Couldn't get connection: %s", error_message);
 			free(error_message);
 		} else {
-			mongo_cursor_throw(NULL, 16 TSRMLS_CC, "Couldn't get connection");
+			mongo_cursor_throw(mongo_ce_CursorException, NULL, 16 TSRMLS_CC, "Couldn't get connection");
 		}
 		return 0;
 	}
@@ -680,7 +681,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 
 	if (-1 == manager->send(connection, NULL, buf->start, buf->pos - buf->start, (char **) &error_message)) {
 		mongo_manager_log(manager, MLOG_IO, MLOG_WARN, "do_gle_op: sending data failed, removing connection %s", connection->hash);
-		mongo_cursor_throw(connection, 16 TSRMLS_CC, "%s", error_message);
+		mongo_cursor_throw(mongo_ce_CursorException, connection, 16 TSRMLS_CC, "%s", error_message);
 		connection_deregister_wrapper(manager, connection TSRMLS_CC);
 
 		free(error_message);
@@ -710,7 +711,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 	}
 
 	/* Check if either the GLE command or the previous write operation failed */
-	php_mongo_trigger_error_on_gle(return_value TSRMLS_CC);
+	php_mongo_trigger_error_on_gle(cursor->connection, return_value TSRMLS_CC);
 
 	cursor->connection = NULL;
 	zval_ptr_dtor(&cursor_z);
@@ -2019,7 +2020,7 @@ static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
 	return SUCCESS;
 }
 
-static int php_mongo_trigger_error_on_gle(zval *document TSRMLS_DC)
+static int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document TSRMLS_DC)
 {
 	zval **tmp;
 
@@ -2049,8 +2050,8 @@ static int php_mongo_trigger_error_on_gle(zval *document TSRMLS_DC)
 			code = 0;
 		}
 
-		exception = zend_throw_exception(mongo_ce_WriteConcernException, message, code TSRMLS_CC);
-		zend_update_property(mongo_ce_WriteConcernException, exception, "document", strlen("document"), return_value TSRMLS_CC);
+		exception = mongo_cursor_throw(mongo_ce_WriteConcernException, connection, code TSRMLS_CC, "%s", message);
+		zend_update_property(mongo_ce_WriteConcernException, exception, "document", strlen("document"), document TSRMLS_CC);
 
 		return FAILURE;
 	}
