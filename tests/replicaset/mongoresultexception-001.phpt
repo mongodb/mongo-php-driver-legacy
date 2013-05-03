@@ -8,7 +8,7 @@ require_once 'tests/utils/server.inc';
 
 MongoLog::setModule(MongoLog::IO);
 MongoLog::setLevel(MongoLog::ALL);
-set_error_handler( function( $a, $b ) { echo $b, "\n"; } );
+function foo($c, $m) { echo $m, "\n"; } set_error_handler('foo');
 
 $rs = MongoShellServer::getReplicasetInfo();
 $mc = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname']));

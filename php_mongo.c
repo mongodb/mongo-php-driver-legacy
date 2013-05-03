@@ -431,6 +431,7 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 	mongo_init_MongoCursorTimeoutException(TSRMLS_C);
 	mongo_init_MongoGridFSException(TSRMLS_C);
 	mongo_init_MongoResultException(TSRMLS_C);
+	mongo_init_MongoWriteConcernException(TSRMLS_C);
 }
 
 /* {{{ Creating & freeing Mongo type objects */

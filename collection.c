@@ -44,6 +44,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
 static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
+static int php_mongo_trigger_error_on_gle(zval *document TSRMLS_DC);
 
 /* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
    Initializes a new MongoCollection */
@@ -682,7 +683,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 		mongo_cursor_throw(connection, 16 TSRMLS_CC, "%s", error_message);
 		connection_deregister_wrapper(manager, connection TSRMLS_CC);
 
-		free(error_message);    
+		free(error_message);
 		cursor->connection = NULL;
 		zval_ptr_dtor(&cursor_z);
 		return;
@@ -701,20 +702,15 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 
 	MONGO_METHOD(MongoCursor, getNext, return_value, cursor_z);
 
+	/* MongoCursor::getNext() threw an exception */
 	if (EG(exception) || (Z_TYPE_P(return_value) == IS_BOOL && Z_BVAL_P(return_value) == 0)) {
 		cursor->connection = NULL;
 		zval_ptr_dtor(&cursor_z);
 		return;
-	} else if (zend_hash_find(Z_ARRVAL_P(return_value), "errmsg", strlen("errmsg") + 1, (void**)&err) == SUCCESS && Z_TYPE_PP(err) == IS_STRING) {
-		zval **code;
-		int status = zend_hash_find(Z_ARRVAL_P(return_value), "n", strlen("n") + 1, (void**)&code);
-
-		mongo_cursor_throw(cursor->connection, (status == SUCCESS ? Z_LVAL_PP(code) : 0) TSRMLS_CC, "%s", Z_STRVAL_PP(err));
-
-		cursor->connection = NULL;
-		zval_ptr_dtor(&cursor_z);
-		return;
 	}
+
+	/* Check if either the GLE command or the previous write operation failed */
+	php_mongo_trigger_error_on_gle(return_value TSRMLS_CC);
 
 	cursor->connection = NULL;
 	zval_ptr_dtor(&cursor_z);
@@ -2023,6 +2019,44 @@ static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
 	return SUCCESS;
 }
 
+static int php_mongo_trigger_error_on_gle(zval *document TSRMLS_DC)
+{
+	zval **tmp;
+
+	/* Check if the GLE command itself failed */
+	if (php_mongo_trigger_error_on_command_failure(document TSRMLS_CC) == FAILURE) {
+		return FAILURE;
+	}
+
+	/* If the previous write operation failed, the GLE document will have its
+	 * err field populated with a non-empty string. */
+	if (zend_hash_find(Z_ARRVAL_P(document), "err", strlen("err") + 1, (void**)&tmp) == SUCCESS && Z_TYPE_PP(tmp) == IS_STRING) {
+		zval *exception;
+		char *message;
+		long code;
+
+		if (Z_STRLEN_PP(tmp) == 0) {
+			return SUCCESS;
+		}
+
+		message = Z_STRVAL_PP(tmp);
+
+		/* GLE may re-use the code field for the write operation error code */
+		if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &tmp) == SUCCESS) {
+			convert_to_long_ex(tmp);
+			code = Z_LVAL_PP(tmp);
+		} else {
+			code = 0;
+		}
+
+		exception = zend_throw_exception(mongo_ce_WriteConcernException, message, code TSRMLS_CC);
+		zend_update_property(mongo_ce_WriteConcernException, exception, "document", strlen("document"), return_value TSRMLS_CC);
+
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
 
 /* {{{ php_mongo_collection_new
  */
