@@ -2015,7 +2015,7 @@ static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
 			}
 
 			exception = zend_throw_exception(mongo_ce_ResultException, message, code TSRMLS_CC);
-			zend_update_property(mongo_ce_Exception, exception, "document", strlen("document"), document TSRMLS_CC);
+			zend_update_property(mongo_ce_ResultException, exception, "document", strlen("document"), document TSRMLS_CC);
 
 			return FAILURE;
 		}
