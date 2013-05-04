@@ -23,21 +23,31 @@ extern zend_class_entry *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_ResultException;
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getdocument, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
 static zend_function_entry MongoResultException_methods[] = {
-	PHP_ME(MongoResultException, getDocument, arginfo_getdocument, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoResultException, getDocument, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoResultException, getHost, NULL, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
-/* {{{ proto array MongoResultException::getDocument(void)
- * Returns the full result document from mongodb */
+/* {{{ proto array MongoResultException::getDocument()
+ * Returns the full result document from MongoDB */
 PHP_METHOD(MongoResultException, getDocument)
 {
 	zval *h;
 
 	h = zend_read_property(mongo_ce_ResultException, getThis(), "document", strlen("document"), NOISY TSRMLS_CC);
+
+	RETURN_ZVAL(h, 1, 0);
+}
+/* }}} */
+
+/* {{{ proto string MongoCursorException::getHost()
+   Get the host related to this exception */
+PHP_METHOD(MongoResultException, getHost)
+{
+	zval *h;
+
+	h = zend_read_property(mongo_ce_ResultException, getThis(), "host", strlen("host"), NOISY TSRMLS_CC);
 
 	RETURN_ZVAL(h, 1, 0);
 }
@@ -51,6 +61,7 @@ void mongo_init_MongoResultException(TSRMLS_D)
 	mongo_ce_ResultException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
 
 	zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED  TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_ResultException, "host", strlen("host"), ZEND_ACC_PRIVATE TSRMLS_CC);
 }
 
 /*

@@ -19,6 +19,7 @@
 void mongo_init_MongoResultException(TSRMLS_D);
 
 PHP_METHOD(MongoResultException, getDocument);
+PHP_METHOD(MongoResultException, getHost);
 
 #endif
 

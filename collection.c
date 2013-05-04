@@ -26,6 +26,7 @@
 #include "db.h"
 #include "mcon/manager.h"
 #include "mcon/io.h"
+#include "mcon/utils.h"
 #include "log_stream.h"
 
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_DB, *mongo_ce_Cursor;
@@ -43,7 +44,7 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC);
 static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
-static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
+static int php_mongo_trigger_error_on_command_failure(mongo_connection *connection, zval *document TSRMLS_DC);
 static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
 static int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document TSRMLS_DC);
 
@@ -934,7 +935,9 @@ PHP_METHOD(MongoCollection, findAndModify)
 
 	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	if (php_mongo_trigger_error_on_command_failure(retval TSRMLS_CC) == SUCCESS) {
+	/* TODO: If we can get the command's connection, we can use it when throwing
+	 * an exception on command failure instead of passing NULL. */
+	if (php_mongo_trigger_error_on_command_failure(NULL, retval TSRMLS_CC) == SUCCESS) {
 		if (zend_hash_find(Z_ARRVAL_P(retval), "value", strlen("value") + 1, (void **)&values) == SUCCESS) {
 			/* We may wind up with a NULL here if there simply aren't any results */
 			if (Z_TYPE_PP(values) == IS_ARRAY) {
@@ -1982,7 +1985,7 @@ static void php_mongo_collection_free(void *object TSRMLS_DC)
 	}
 }
 
-static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
+static int php_mongo_trigger_error_on_command_failure(mongo_connection *connection, zval *document TSRMLS_DC)
 {
 	zval **tmpvalue;
 
@@ -2011,7 +2014,17 @@ static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
 				code = 0;
 			}
 
-			exception = zend_throw_exception(mongo_ce_ResultException, message, code TSRMLS_CC);
+			if (connection) {
+				char *host;
+
+				host = mongo_server_hash_to_server(connection->hash);
+				exception = zend_throw_exception_ex(mongo_ce_ResultException, code TSRMLS_CC, "%s: %s", host, message);
+				zend_update_property_string(mongo_ce_ResultException, exception, "host", strlen("host"), host TSRMLS_CC);
+				free(host);
+			} else {
+				exception = zend_throw_exception(mongo_ce_ResultException, message, code TSRMLS_CC);
+			}
+
 			zend_update_property(mongo_ce_ResultException, exception, "document", strlen("document"), document TSRMLS_CC);
 
 			return FAILURE;
@@ -2025,7 +2038,7 @@ static int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *do
 	zval **tmp;
 
 	/* Check if the GLE command itself failed */
-	if (php_mongo_trigger_error_on_command_failure(document TSRMLS_CC) == FAILURE) {
+	if (php_mongo_trigger_error_on_command_failure(connection, document TSRMLS_CC) == FAILURE) {
 		return FAILURE;
 	}
 
