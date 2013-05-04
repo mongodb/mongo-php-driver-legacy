@@ -28,6 +28,8 @@ static zend_function_entry MongoCursorException_methods[] = {
 	{NULL, NULL, NULL}
 };
 
+/* {{{ proto string MongoCursorException::getHost()
+   Get the host related to this exception */
 PHP_METHOD(MongoCursorException, getHost)
 {
 	zval *h;
