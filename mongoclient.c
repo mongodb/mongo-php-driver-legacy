@@ -277,10 +277,10 @@ void mongo_init_MongoClient(TSRMLS_D)
 	zend_declare_class_constant_string(mongo_ce_MongoClient, "RP_NEAREST", strlen("RP_NEAREST"), "nearest" TSRMLS_CC);
 
 	/* Mongo fields */
-	zend_declare_property_bool(mongo_ce_MongoClient, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_null(mongo_ce_MongoClient, "status", strlen("status"), ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_null(mongo_ce_MongoClient, "server", strlen("server"), ZEND_ACC_PROTECTED TSRMLS_CC);
-	zend_declare_property_null(mongo_ce_MongoClient, "persistent", strlen("persistent"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_bool(mongo_ce_MongoClient, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_MongoClient, "status", strlen("status"), ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED  TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_MongoClient, "server", strlen("server"), ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED  TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_MongoClient, "persistent", strlen("persistent"), ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED  TSRMLS_CC);
 }
 
 /* {{{ Helper for connecting the servers */
