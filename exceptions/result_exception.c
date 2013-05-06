@@ -23,9 +23,12 @@ extern zend_class_entry *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_ResultException;
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry MongoResultException_methods[] = {
-	PHP_ME(MongoResultException, getDocument, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoResultException, getHost, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoResultException, getDocument, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoResultException, getHost, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 

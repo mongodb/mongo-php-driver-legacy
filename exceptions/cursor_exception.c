@@ -23,8 +23,11 @@ extern zend_class_entry *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_CursorException;
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry MongoCursorException_methods[] = {
-	PHP_ME(MongoCursorException, getHost, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCursorException, getHost, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
