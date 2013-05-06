@@ -190,6 +190,7 @@ PHP_MINIT_FUNCTION(mongo)
 	/* Make mongo objects uncloneable */
 	memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 	mongo_default_handlers.clone_obj = NULL;
+	mongo_default_handlers.read_property = mongo_read_property;
 
 	/* Add compare_objects for MongoId */
 	memcpy(&mongo_id_handlers, &mongo_default_handlers, sizeof(zend_object_handlers));
