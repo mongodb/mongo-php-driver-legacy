@@ -1030,7 +1030,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				} else {
 					if (MonGlo(native_long)) {
 #if SIZEOF_LONG == 4
-						zend_throw_exception_ex(mongo_ce_CursorException, 1 TSRMLS_CC, "Can not natively represent the long %llu on this platform", (int64_t)MONGO_64(*((int64_t*)buf)));
+						zend_throw_exception_ex(mongo_ce_CursorException, 23 TSRMLS_CC, "Can not natively represent the long %llu on this platform", (int64_t)MONGO_64(*((int64_t*)buf)));
 						zval_ptr_dtor(&value);
 						return 0;
 #else

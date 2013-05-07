@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-792: Memory leak while reading an INT64 on a 32bit platform with native_long enabled.
 --SKIPIF--
+<?php if (4 !== PHP_INT_SIZE) { die('skip Only for 32-bit platform'); } ?>
 <?php require "tests/utils/standalone.inc";?>
 --INI--
 report_memleaks=1
@@ -22,8 +23,10 @@ try
 	var_dump( $c->findOne( array( "_id" => 1 ) ) );
 } catch(Exception $e)
 {
+	echo $e->getCode(), "\n";
 	echo $e->getMessage(), "\n";
 }
 ?>
 --EXPECT--
+23
 Can not natively represent the long 8237468276182323423 on this platform
