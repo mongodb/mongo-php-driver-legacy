@@ -934,7 +934,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 
 				if (INVALID_STRING_LEN(len)) {
 					zval_ptr_dtor(&value);
-					zend_throw_exception_ex(mongo_ce_CursorException, 0 TSRMLS_CC, "invalid string length for key \"%s\": %d", name, len);
+					zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "invalid string length for key \"%s\": %d", name, len);
 					return 0;
 				}
 				buf += INT_32;
@@ -961,7 +961,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 
 				if (INVALID_STRING_LEN(len)) {
 					zval_ptr_dtor(&value);
-					zend_throw_exception_ex(mongo_ce_CursorException, 1 TSRMLS_CC, "invalid binary length for key \"%s\": %d", name, len);
+					zend_throw_exception_ex(mongo_ce_CursorException, 22 TSRMLS_CC, "invalid binary length for key \"%s\": %d", name, len);
 					return 0;
 				}
 				buf += INT_32;
@@ -1098,7 +1098,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				code_len = MONGO_32(*(int*)buf);
 				if (INVALID_STRING_LEN(code_len)) {
 					zval_ptr_dtor(&value);
-					zend_throw_exception_ex(mongo_ce_CursorException, 2 TSRMLS_CC, "invalid code length for key \"%s\": %d", name, code_len);
+					zend_throw_exception_ex(mongo_ce_CursorException, 24 TSRMLS_CC, "invalid code length for key \"%s\": %d", name, code_len);
 					return 0;
 				}
 				buf += INT_32;
