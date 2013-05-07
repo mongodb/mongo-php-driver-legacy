@@ -42,6 +42,7 @@ static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_
 static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
+static char *to_index_string(zval *zkeys);
 
 /* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
    Initializes a new MongoCollection */
@@ -1027,7 +1028,7 @@ PHP_METHOD(MongoCollection, remove)
    Create the $keys index if it does not already exist */
 PHP_METHOD(MongoCollection, ensureIndex)
 {
-	zval *keys, *options = 0, *db, *system_indexes, *collection, *data, *key_str;
+	zval *keys, *options = 0, *db, *system_indexes, *collection, *data;
 	mongo_collection *c;
 	zend_bool done_name = 0;
 
@@ -1108,22 +1109,21 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	}
 
 	if (!done_name) {
-		/* turn keys into a string */
-		MAKE_STD_ZVAL(key_str);
-		ZVAL_NULL(key_str);
+		char *key_str;
+		int   key_str_len;
 
-		MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
+		key_str = to_index_string(keys);
+		key_str_len = strlen(key_str);
 
-		if (Z_STRLEN_P(key_str) > MAX_INDEX_NAME_LEN) {
+		if (key_str_len > MAX_INDEX_NAME_LEN) {
 			zval_ptr_dtor(&data);
-			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_P(key_str), MAX_INDEX_NAME_LEN);
-			zval_ptr_dtor(&key_str);
+			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", key_str_len, MAX_INDEX_NAME_LEN);
+			efree(key_str);
 			zval_ptr_dtor(&options);
 			return;
 		}
 
-		add_assoc_zval(data, "name", key_str);
-		zval_add_ref(&key_str);
+		add_assoc_stringl(data, "name", key_str, key_str_len, 0);
 	}
 
 	MONGO_METHOD2(MongoCollection, insert, return_value, collection, data, options);
@@ -1133,10 +1133,6 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	zval_ptr_dtor(&system_indexes);
 	zval_ptr_dtor(&collection);
 	zval_ptr_dtor(&keys);
-
-	if (!done_name) {
-		zval_ptr_dtor(&key_str);
-	}
 }
 /* }}} */
 
@@ -1144,15 +1140,15 @@ PHP_METHOD(MongoCollection, ensureIndex)
    Remove the $keys index */
 PHP_METHOD(MongoCollection, deleteIndex)
 {
-	zval *keys, *key_str, *data;
+	zval *keys, *data;
+	char *key_str;
 	mongo_collection *c;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &keys) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(key_str);
-	MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
+	key_str = to_index_string(keys);
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
@@ -1160,11 +1156,12 @@ PHP_METHOD(MongoCollection, deleteIndex)
 	array_init(data);
 	add_assoc_zval(data, "deleteIndexes", c->name);
 	zval_add_ref(&c->name);
-	add_assoc_zval(data, "index", key_str);
+	add_assoc_string(data, "index", key_str, 0);
 
 	MONGO_CMD(return_value, c->parent);
 
 	zval_ptr_dtor(&data);
+	efree(key_str);
 }
 /* }}} */
 
@@ -1382,17 +1379,10 @@ static char *replace_dots(char *key, int key_len, char *position)
 	return position;
 }
 
-/* {{{ proto protected static string MongoCollection::toIndexString(array|string keys)
-   Converts $keys to an identifying string for an index */
-PHP_METHOD(MongoCollection, toIndexString)
+static char *to_index_string(zval *zkeys)
 {
-	zval *zkeys;
 	char *name, *position;
 	int len = 0;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zkeys) == FAILURE) {
-		return;
-	}
 
 	if (Z_TYPE_P(zkeys) == IS_ARRAY || Z_TYPE_P(zkeys) == IS_OBJECT) {
 		HashTable *hindex = HASH_P(zkeys);
@@ -1492,9 +1482,30 @@ PHP_METHOD(MongoCollection, toIndexString)
 		*(position) = '\0';
 	} else {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The key needs to be either a string or an array");
+		return NULL;
+	}
+
+	return name;
+}
+
+/* {{{ proto protected static string MongoCollection::toIndexString(array|string keys)
+   Converts $keys to an identifying string for an index */
+PHP_METHOD(MongoCollection, toIndexString)
+{
+	zval *zkeys;
+	char *key_str;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zkeys) == FAILURE) {
 		return;
 	}
-	RETURN_STRING(name, 0)
+
+	key_str = to_index_string(zkeys);
+
+	if (key_str) {
+		RETVAL_STRING(key_str, 0);
+	} else {
+		return;
+	}
 }
 /* }}} */
 
@@ -1861,7 +1872,7 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, save, arginfo_insert, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, createDBRef, arginfo_createDBRef, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, getDBRef, arginfo_getDBRef, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCollection, toIndexString, arginfo_toIndexString, ZEND_ACC_PROTECTED|ZEND_ACC_STATIC)
+	PHP_ME(MongoCollection, toIndexString, arginfo_toIndexString, ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED|ZEND_ACC_STATIC)
 	PHP_ME(MongoCollection, group, arginfo_group, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, distinct, arginfo_distinct, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, aggregate, arginfo_aggregate, ZEND_ACC_PUBLIC)

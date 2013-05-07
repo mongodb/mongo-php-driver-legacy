@@ -12,5 +12,7 @@ class MyCollection extends MongoCollection
 var_dump(MyCollection::toIndexString(null));
 ?>
 --EXPECTF--
+Deprecated: Function MongoCollection::toIndexString() is deprecated in %smongocollection-toindexstring-broken.php on line 6
+
 %s: MongoCollection::toIndexString(): The key needs to be either a string or an array in %smongocollection-toindexstring-broken.php on line 6
 NULL
