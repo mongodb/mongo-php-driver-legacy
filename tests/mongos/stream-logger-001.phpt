@@ -82,8 +82,7 @@ array(5) {
   int(%d)
 }
 bool(true)
-array(0) {
-}
+NULL
 
 
 log_query

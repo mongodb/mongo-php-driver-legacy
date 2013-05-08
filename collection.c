@@ -373,7 +373,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added w=%d", w);
 		}
 
-		if (zend_hash_find(HASH_P(options), "wtimeout", strlen("wtimeout") + 1, (void **)&wtimeout_pp) == SUCCESS) {
+		if (options && zend_hash_find(HASH_P(options), "wtimeout", strlen("wtimeout") + 1, (void **)&wtimeout_pp) == SUCCESS) {
 			convert_to_long(*wtimeout_pp);
 			add_assoc_long(cmd, "wtimeout", Z_LVAL_PP(wtimeout_pp));
 			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d (from options array)", Z_LVAL_PP(wtimeout_pp));
@@ -672,35 +672,15 @@ PHP_METHOD(MongoCollection, insert)
 	}
 	MUST_BE_ARRAY_OR_OBJECT(1, a);
 
-	/* old boolean options */
-	if (options && !IS_SCALAR_P(options)) {
-		zval_add_ref(&options);
-	} else {
-		zval *opts;
-
-		MAKE_STD_ZVAL(opts);
-		array_init(opts);
-
-		if (options && IS_SCALAR_P(options)) {
-			int safe = Z_BVAL_P(options);
-
-			add_assoc_bool(opts, "safe", safe);
-		}
-
-		options = opts;
-	}
-
 	PHP_MONGO_GET_COLLECTION(getThis());
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
-		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
 	if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
 		efree(buf.start);
-		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
 
@@ -716,7 +696,6 @@ PHP_METHOD(MongoCollection, insert)
 	}
 
 	efree(buf.start);
-	zval_ptr_dtor(&options);
 }
 /* }}} */
 
