@@ -368,6 +368,7 @@ PHP_METHOD(MongoDB, createCollection)
 		}
 
 		if (capped) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "This method now accepts arguments as an options array instead of the three optional arguments for capped, size and max elements");
 			add_assoc_bool(data, "capped", 1);
 			if (max) {
 				add_assoc_long(data, "max", max);
@@ -948,9 +949,6 @@ ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_createCollection, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, collection_name)
-	ZEND_ARG_INFO(0, capped)
-	ZEND_ARG_INFO(0, capped_size)
-	ZEND_ARG_INFO(0, max_elements)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_dropCollection, 0, ZEND_RETURN_VALUE, 1)

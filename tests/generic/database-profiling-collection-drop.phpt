@@ -9,7 +9,7 @@ $a = mongo_standalone();
 $d = $a->selectDb("phpunit");
 $ns = $d->selectCollection('system.namespaces');
 
-$sp = $d->createCollection("system.profile", true, 5000);
+$sp = $d->createCollection("system.profile", array('size' => 5000, 'capped' => true));
 
 var_dump($ns->findOne(array('name' => 'phpunit.system.profile')));
 
