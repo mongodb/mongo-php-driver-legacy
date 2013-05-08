@@ -28,7 +28,7 @@ void mongo_log_stream_query(mongo_connection *connection, mongo_cursor *cursor T
 void mongo_log_stream_update(mongo_connection *connection, zval *ns, zval *criteria, zval *newobj, zval *options, int flags TSRMLS_DC);
 void mongo_log_stream_delete(mongo_connection *connection, zval *ns, zval *criteria, zval *options, int flags TSRMLS_DC);
 void mongo_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC);
-void mongo_log_stream_killcursor(mongo_connection *connection, int cursor_id TSRMLS_DC);
+void mongo_log_stream_killcursor(mongo_connection *connection, int64_t cursor_id TSRMLS_DC);
 void mongo_log_stream_batchinsert(mongo_connection *connection, zval *docs, zval *options, int flags TSRMLS_DC);
 void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC);
 #endif

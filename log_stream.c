@@ -212,7 +212,7 @@ void mongo_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor
 	}
 }
 
-void mongo_log_stream_killcursor(mongo_connection *connection, int cursor_id TSRMLS_DC)
+void mongo_log_stream_killcursor(mongo_connection *connection, int64_t cursor_id TSRMLS_DC)
 {
 	zval **callback;
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
