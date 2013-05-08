@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-629
+Test for PHP-629: Missing support for passing the username/password in the $options array
 --SKIPIF--
 <?php require_once "tests/utils/auth-replicaset.inc" ?>
 --FILE--

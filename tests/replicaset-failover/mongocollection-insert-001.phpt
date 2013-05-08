@@ -1,5 +1,5 @@
 --TEST--
-MongoClient::insert()#001 during failover
+MongoClient::insert() during failover (1)
 --SKIPIF--
 <?php require_once "tests/utils/replicaset-failover.inc" ?>
 --FILE--

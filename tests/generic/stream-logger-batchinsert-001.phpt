@@ -1,5 +1,5 @@
 --TEST--
-Stream Logger: log_batchinsert() #001
+Stream Logger: log_batchinsert() (1)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--

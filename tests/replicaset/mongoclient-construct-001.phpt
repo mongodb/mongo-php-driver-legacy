@@ -1,5 +1,5 @@
 --TEST--
-MongoClient::__construct()#001 Connecting to replicaset
+MongoClient::__construct(): Connecting to replicaset (1)
 --SKIPIF--
 <?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
