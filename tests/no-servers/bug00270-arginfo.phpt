@@ -112,11 +112,8 @@ MongoDB
     1: backup_original_files (optional)
   Method selectCollection expects 1 parameters
     0: collection_name
-  Method createCollection expects 4 parameters
+  Method createCollection expects 1 parameters
     0: collection_name
-    1: capped (optional)
-    2: capped_size (optional)
-    3: max_elements (optional)
   Method dropCollection expects 1 parameters
     0: collection_name
   Method listCollections expects 1 parameters

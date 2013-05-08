@@ -7,7 +7,7 @@ Database: Profiling (turning on and off)
 require_once "tests/utils/server.inc";
 $a = mongo_standalone();
 $d = $a->selectDb("phpunit");
-$sp = $d->createCollection("system.profile", true, 5000);
+$sp = $d->createCollection("system.profile", array('capped' => true, 'size' => 5000));
 
 $prev = $d->setProfilingLevel(MongoDB::PROFILING_ON);
 $level = $d->getProfilingLevel();
