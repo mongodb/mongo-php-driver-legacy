@@ -1,5 +1,5 @@
 --TEST--
-MongoClient::__construct()#002 Connecting to replicaset using only one node
+MongoClient::__construct(): Connecting to replicaset using only one node (2)
 --SKIPIF--
 <?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--

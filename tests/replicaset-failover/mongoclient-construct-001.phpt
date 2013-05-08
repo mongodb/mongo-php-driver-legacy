@@ -1,5 +1,5 @@
 --TEST--
-MongoClient::__construct()#001 during failover
+MongoClient::__construct() during failover (1)
 --SKIPIF--
 <?php require_once "tests/utils/replicaset-failover.inc" ?>
 --FILE--

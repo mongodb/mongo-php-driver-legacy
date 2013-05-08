@@ -1,5 +1,5 @@
 --TEST--
-Stream Logger: log_killcursor() #001
+Stream Logger: log_killcursor() (1)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--

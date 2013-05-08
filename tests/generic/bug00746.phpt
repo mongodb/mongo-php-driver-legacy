@@ -1,5 +1,5 @@
 --TEST--
-PHP-746: The getBytes method may return random data in particular conditions.
+Test for PHP-746: The getBytes method may return random data in particular conditions.
 --SKIPIF--
 <?php require "tests/utils/standalone.inc";?>
 --FILE--

@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-407 MongoBinData should default to 0, not 2.
+Test for PHP-407: MongoBinData should default to 0, not 2.
 --SKIPIF--
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--

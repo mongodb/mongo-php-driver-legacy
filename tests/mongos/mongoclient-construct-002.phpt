@@ -1,5 +1,5 @@
 --TEST--
-MongoClient::__construct()#001 Connecting to multiple mongos
+MongoClient::__construct(): Connecting to multiple mongos (2)
 --SKIPIF--
 <?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
