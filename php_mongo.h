@@ -679,7 +679,10 @@ extern zend_module_entry mongo_module_entry;
  * 18: Trying to get more, but cannot find server
  * 19: max number of retries exhausted, couldn't send query
  * 20: something exceptional has happened, and the cursor is now dead
+ * 21: invalid string length for key "%s"
+ * 22: invalid binary length for key "%s"
  * 23: Can not natively represent the long %llu on this platform
+ * 24: invalid code length for key "%s"
  * various: database error
  *
  * MongoGridFSException:
