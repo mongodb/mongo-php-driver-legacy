@@ -42,7 +42,7 @@ static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_
 static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
-static char *to_index_string(zval *zkeys);
+static char *to_index_string(zval *zkeys TSRMLS_DC);
 
 /* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
    Initializes a new MongoCollection */
@@ -1152,7 +1152,13 @@ PHP_METHOD(MongoCollection, ensureIndex)
 		char *key_str;
 		int   key_str_len;
 
-		key_str = to_index_string(keys);
+		key_str = to_index_string(keys TSRMLS_CC);
+		if (!key_str) {
+			zval_ptr_dtor(&data);
+			zval_ptr_dtor(&options);
+			return;
+		}
+
 		key_str_len = strlen(key_str);
 
 		if (key_str_len > MAX_INDEX_NAME_LEN) {
@@ -1188,7 +1194,7 @@ PHP_METHOD(MongoCollection, deleteIndex)
 		return;
 	}
 
-	key_str = to_index_string(keys);
+	key_str = to_index_string(keys TSRMLS_CC);
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
@@ -1196,7 +1202,7 @@ PHP_METHOD(MongoCollection, deleteIndex)
 	array_init(data);
 	add_assoc_zval(data, "deleteIndexes", c->name);
 	zval_add_ref(&c->name);
-	add_assoc_string(data, "index", key_str, 0);
+	add_assoc_string(data, "index", key_str, 1);
 
 	MONGO_CMD(return_value, c->parent);
 
@@ -1419,7 +1425,7 @@ static char *replace_dots(char *key, int key_len, char *position)
 	return position;
 }
 
-static char *to_index_string(zval *zkeys)
+static char *to_index_string(zval *zkeys TSRMLS_DC)
 {
 	char *name, *position;
 	int len = 0;
@@ -1539,7 +1545,7 @@ PHP_METHOD(MongoCollection, toIndexString)
 		return;
 	}
 
-	key_str = to_index_string(zkeys);
+	key_str = to_index_string(zkeys TSRMLS_CC);
 
 	if (key_str) {
 		RETVAL_STRING(key_str, 0);
