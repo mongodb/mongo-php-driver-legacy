@@ -1096,49 +1096,30 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	add_assoc_zval(data, "key", keys);
 	zval_add_ref(&keys);
 
-	/* In ye olden days, "options" only had one option: unique.  So, if we're
-	 * parsing old-school code, "unique" is a boolean. In ye new days,
-	 * "options" is an array. */
 	if (options) {
-		if (IS_SCALAR_P(options)) {
-			/* Old style (scalar) */
-			zval *opts;
+		zval temp, **safe_pp, **fsync_pp, **timeout_pp, **name;
 
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Passing scalar values for the options parameter is deprecated and will be removed in the near future");
-			/* Assumes the person correctly passed in a boolean. If they passed
-			 * in a string or something, it won't work and maybe they'll read
-			 * the docs */
-			add_assoc_bool(data, "unique", Z_BVAL_P(options));
+		zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 
-			MAKE_STD_ZVAL(opts);
-			array_init(opts);
-			options = opts;
-		} else {
-			/* New style (array) */
-			zval temp, **safe_pp, **fsync_pp, **timeout_pp, **name;
-
-			zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
-
-			if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**)&safe_pp) == SUCCESS) {
-				zend_hash_del(HASH_P(data), "safe", strlen("safe") + 1);
-			}
-			if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp) == SUCCESS) {
-				zend_hash_del(HASH_P(data), "fsync", strlen("fsync") + 1);
-			}
-			if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout_pp) == SUCCESS) {
-				zend_hash_del(HASH_P(data), "timeout", strlen("timeout") + 1);
-			}
-
-			if (zend_hash_find(HASH_P(options), "name", strlen("name") + 1, (void**)&name) == SUCCESS) {
-				if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
-					zval_ptr_dtor(&data);
-					zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
-					return;
-				}
-				done_name = 1;
-			}
-			zval_add_ref(&options);
+		if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**)&safe_pp) == SUCCESS) {
+			zend_hash_del(HASH_P(data), "safe", strlen("safe") + 1);
 		}
+		if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp) == SUCCESS) {
+			zend_hash_del(HASH_P(data), "fsync", strlen("fsync") + 1);
+		}
+		if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout_pp) == SUCCESS) {
+			zend_hash_del(HASH_P(data), "timeout", strlen("timeout") + 1);
+		}
+
+		if (zend_hash_find(HASH_P(options), "name", strlen("name") + 1, (void**)&name) == SUCCESS) {
+			if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
+				zval_ptr_dtor(&data);
+				zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
+				return;
+			}
+			done_name = 1;
+		}
+		zval_add_ref(&options);
 	} else {
 		zval *opts;
 
