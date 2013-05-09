@@ -67,9 +67,11 @@ IO      FINE: is_gle_op: no
 IO      FINE: is_gle_op: no
 
 - Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 - Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: getting reply
@@ -105,9 +107,11 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
 - Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 - Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: getting reply
@@ -149,9 +153,11 @@ IO      FINE: getting cursor body
 %s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 - Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: getting reply
@@ -193,9 +199,11 @@ IO      FINE: getting cursor body
 %s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 - Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
@@ -243,9 +251,11 @@ IO      FINE: getting cursor body
 %s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 - Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'

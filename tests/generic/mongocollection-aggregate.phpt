@@ -38,7 +38,7 @@ $data = array (
       'foo' => 5,
     ),
 );
-$d = $c->insert($data, array("safe" => true));
+$d = $c->insert($data, array("w" => true));
 
 $ops = array(
     array(

@@ -31,7 +31,7 @@ $col->insert(array(
      "priority" => 2,
      "tasks" => array( "run marketing report", "email report" )
     ),
-    array("safe" => true)
+    array("w" => true)
 );
 
 
