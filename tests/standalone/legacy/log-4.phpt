@@ -16,19 +16,19 @@ echo "Warnings:\n";
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::WARNING);
 $dsn = MongoShellServer::getStandaloneInfo();
-$m = new Mongo("mongodb://$dsn");
+$m = new MongoClient("mongodb://$dsn");
 
 echo "Fine:\n";
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::FINE);
 $dsn = MongoShellServer::getStandaloneInfo();
-$m = new Mongo("mongodb://$dsn");
+$m = new MongoClient("mongodb://$dsn");
 
 echo "Info:\n";
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::INFO);
 $dsn = MongoShellServer::getStandaloneInfo();
-$m = new Mongo("mongodb://$dsn");
+$m = new MongoClient("mongodb://$dsn");
 MongoLog::setModule(0);
 MongoLog::setLevel(0);
 ?>

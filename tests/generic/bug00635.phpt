@@ -17,13 +17,13 @@ var_dump(is_object($collection));
 --EXPECTF--
 object(MongoCollection)#%d (%d) {
   ["w"]=>
-  int(0)
+  int(1)
   ["wtimeout"]=>
   int(10000)
 }
 object(MongoCollection)#%d (%d) {
   ["w"]=>
-  int(0)
+  int(1)
   ["wtimeout"]=>
   int(10000)
 }
