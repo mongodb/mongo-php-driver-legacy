@@ -591,7 +591,9 @@ static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_
 
 		/* First we try "w", and if that is not found we check for "safe" */
 		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**) &gle_pp) == FAILURE) {
-			zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &gle_pp);
+			if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &gle_pp) == SUCCESS) {
+				php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
+			}
 		}
 		/* After that, gle_pp is either still NULL, or set to something if one of
 		 * the options was found */
@@ -1147,6 +1149,9 @@ PHP_METHOD(MongoCollection, ensureIndex)
 
 		if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**)&safe_pp) == SUCCESS) {
 			zend_hash_del(HASH_P(data), "safe", strlen("safe") + 1);
+		}
+		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**)&safe_pp) == SUCCESS) {
+			zend_hash_del(HASH_P(data), "w", strlen("w") + 1);
 		}
 		if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp) == SUCCESS) {
 			zend_hash_del(HASH_P(data), "fsync", strlen("fsync") + 1);

@@ -21,7 +21,7 @@ $m = new_mongo_standalone("phpunit");
 	echo "######################################\n";
 	echo "# Saving files to GridFS\n";
 	echo "######################################\n";
-	$options = array( 'safe' => true );
+	$options = array( 'w' => true );
 	for ($i = 0; $i < 3; $i++) {
 		try {
 			$new_saved_file_object_id = $GridFS->storeFile($temporary_file_name, array( '_id' => "file{$i}"), $options);
@@ -61,7 +61,7 @@ error code: 11000
 error message: Could not store file: %s:%d: E11000 duplicate key error index: phpunit.fs.files.$filename_1  dup key: { : "/tmp/GridFS_test.txt" }
 error code: 11000
 array(1) {
-  ["safe"]=>
+  ["w"]=>
   bool(true)
 }
 

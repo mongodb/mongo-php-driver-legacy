@@ -31,9 +31,9 @@ var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
 var_dump( $c->update( array( '_id' => 'yeah' ), array( 'value' => array( '$set' => 'yes!' ) ) ) );
 var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
 
-var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ), array( 'safe' => true ) ) );
-var_dump( $c->update( array( '_id' => 'yeah' ), array( 'value' => array( '$set' => 'yes!' ) ), array( 'safe' => true ) ) );
-var_dump( $c->remove( array( '_id' => 'yeah' ), array( 'safe' => true ) ) );
+var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ), array( 'w' => true ) ) );
+var_dump( $c->update( array( '_id' => 'yeah' ), array( 'value' => array( '$set' => 'yes!' ) ), array( 'w' => true ) ) );
+var_dump( $c->remove( array( '_id' => 'yeah' ), array( 'w' => true ) ) );
 ?>
 --EXPECTF--
 %s: %s: The Mongo class is deprecated, please use the MongoClient class in %sserver.inc on line %d
