@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-522_error: Checking error conditions in insert options
+Test for PHP-522: Checking error conditions in insert options
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc";?>
 --FILE--

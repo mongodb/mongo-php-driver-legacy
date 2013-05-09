@@ -1,5 +1,5 @@
 --TEST--
-Connection strings: read preferences [1]
+Connection strings: read preferences (1)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--

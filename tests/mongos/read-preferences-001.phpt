@@ -1,5 +1,5 @@
 --TEST--
-Read Preferences over mongos #001
+Read Preferences over mongos (1)
 --SKIPIF--
 <?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
