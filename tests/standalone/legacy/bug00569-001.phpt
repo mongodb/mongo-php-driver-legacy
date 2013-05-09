@@ -42,6 +42,7 @@ foreach ( $tests as $key => $test )
 }
 ?>
 --EXPECTF--
+%s: The Mongo class is deprecated, please use the MongoClient class
 IO      FINE: is_gle_op: no
 
 Running test 0, with options: []:

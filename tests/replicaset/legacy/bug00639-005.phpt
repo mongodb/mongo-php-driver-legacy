@@ -48,6 +48,8 @@ $info = $cursor->info();
 echo "connection type: ", $info['connection_type_desc'], "\n";
 ?>
 --EXPECTF--
+%s: %s: The Mongo class is deprecated, please use the MongoClient class in %sserver.inc on line %d
+
 Deprecated: Function Mongo::setSlaveOkay() is deprecated in %s
 pick server: random element %d while ignoring the primary
 - connection: type: SECONDARY, socket: %d, ping: %d, hash: %s

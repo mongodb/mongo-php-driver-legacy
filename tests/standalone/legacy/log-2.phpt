@@ -17,7 +17,7 @@ MongoLog::setLevel(MongoLog::ALL);
 
 
 $host = MongoShellServer::getStandaloneInfo();
-$m = new Mongo($host);
+$m = new MongoClient($host);
 
 MongoLog::setModule(0);
 MongoLog::setLevel(0);

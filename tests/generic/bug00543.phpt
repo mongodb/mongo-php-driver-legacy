@@ -11,7 +11,7 @@ var_dump($m->connect());
 
 try
 {
-	$m = new Mongo("mongodb://totallynonsense/", array( 'connect' => false ) );
+	$m = new MongoClient("mongodb://totallynonsense/", array( 'connect' => false ) );
 	var_dump(@$m->connect());
 }
 catch ( Exception $e )

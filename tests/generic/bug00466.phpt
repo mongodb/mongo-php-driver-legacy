@@ -5,8 +5,8 @@ Test for PHP-466: Seed list of 1 replicaset member, and one standalone, with arr
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::ALL);
 function foo($c, $m) { echo $m, "\n"; } set_error_handler('foo');
-$m = new Mongo("mongodb://whisky:13000", array( "connect" => false, "replicaSet" => true ));
-$m = new Mongo("mongodb://whisky:13000", array( "connect" => false, "replicaSet" => 'seta' ));
+$m = new MongoClient("mongodb://whisky:13000", array( "connect" => false, "replicaSet" => true ));
+$m = new MongoClient("mongodb://whisky:13000", array( "connect" => false, "replicaSet" => 'seta' ));
 ?>
 --EXPECTF--
 PARSE   INFO: Parsing mongodb://whisky:13000

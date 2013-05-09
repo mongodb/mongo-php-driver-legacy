@@ -54,7 +54,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 zend_class_entry *mongo_ce_MongoClient;
 
 extern zend_class_entry *mongo_ce_DB, *mongo_ce_Cursor, *mongo_ce_Exception;
-extern zend_class_entry *mongo_ce_ConnectionException;
+extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Mongo;
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, server)
@@ -222,6 +222,10 @@ zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC)
 {
 	zend_object_value retval;
 	mongoclient *intern;
+
+	if (class_type == mongo_ce_Mongo) {
+		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The Mongo class is deprecated, please use the MongoClient class");
+	}
 
 	intern = (mongoclient*)emalloc(sizeof(mongoclient));
 	memset(intern, 0, sizeof(mongoclient));

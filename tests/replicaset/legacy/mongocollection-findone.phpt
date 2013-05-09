@@ -7,7 +7,7 @@ MongoCollection::findOne() with setSlaveOkay().
 require_once "tests/utils/server.inc";
 $cfg = MongoShellServer::getReplicasetInfo();
 
-$mongoConnection = new Mongo($cfg["hosts"][0] . "," . $cfg["hosts"][1], array('replicaSet' => rsname()));
+$mongoConnection = new MongoClient($cfg["hosts"][0] . "," . $cfg["hosts"][1], array('replicaSet' => rsname()));
 $dbname = dbname();
 $db = $mongoConnection->$dbname;
 $db->setSlaveOkay();

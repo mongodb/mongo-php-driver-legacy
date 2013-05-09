@@ -270,23 +270,23 @@ function getServerVersion($mc = null) {
 /* BC Layer for old tests */
 
 function mongo() {
-    $config = MongoShellServer::getReplicaSetInfo();
-    return new Mongo($config["dsn"], array("replicaSet" => $config["rsname"]));
+    return new_mongo();
 }
 function old_mongo() {
-    return mongo();
+    $config = MongoShellServer::getReplicaSetInfo();
+    return new Mongo($config["dsn"], array("replicaSet" => $config["rsname"]));
 }
 function new_mongo($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $config = MongoShellServer::getReplicaSetInfo();
     return new MongoClient($config["dsn"], array("replicaSet" => $config["rsname"])+$options);
 }
 
-function old_mongo_standalone() {
-    return mongo_standalone();
-}
-function mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
+function old_mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $dsn = MongoShellServer::getStandaloneInfo();
     return new Mongo($dsn, $options);
+}
+function mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
+    return new_mongo_standalone();
 }
 function new_mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $dsn = MongoShellServer::getStandaloneInfo();
