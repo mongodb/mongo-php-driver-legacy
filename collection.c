@@ -1155,6 +1155,9 @@ PHP_METHOD(MongoCollection, deleteIndex)
 	}
 
 	key_str = to_index_string(keys TSRMLS_CC);
+	if (!key_str) {
+		return;
+	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
