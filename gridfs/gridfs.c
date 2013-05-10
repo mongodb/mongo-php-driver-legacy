@@ -72,11 +72,11 @@ typedef struct {
 static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
 static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options TSRMLS_DC);
 
-/* {{{ proto MongoGridFS::__construct(MongoDB db [, string prefix = "fs.files" [, string chunks = "fs.chunks"]])
+/* {{{ proto MongoGridFS::__construct(MongoDB db [, string prefix = "fs"])
    Creates a new MongoGridFS object */
 PHP_METHOD(MongoGridFS, __construct)
 {
-	zval *zdb, *files = 0, *chunks = 0, *zchunks;
+	zval *zdb, *files = NULL, *chunks = NULL, *zchunks;
 	zval *z_w = NULL;
 
 	/* chunks is deprecated */
@@ -84,6 +84,10 @@ PHP_METHOD(MongoGridFS, __construct)
 		zval *object = getThis();
 		ZVAL_NULL(object);
 		return;
+	}
+
+	if (chunks) {
+		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'chunks' argument is deprecated and ignored");
 	}
 
 	if (files) {
