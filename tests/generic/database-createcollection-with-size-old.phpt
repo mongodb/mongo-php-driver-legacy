@@ -1,5 +1,5 @@
 --TEST--
-Database: Create collection with max size
+Database: Create collection with max size (old)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
@@ -17,7 +17,7 @@ var_dump($ns->findOne(array('name' => 'phpunit.create-col1')));
 // * even though we're only setting this to 100, it allocates 1 extent, so we
 //   can fit 4096, not 100, bytes of data in the collection.
 
-$c = $d->createCollection('create-col1', array('size' => 100, 'capped' => true));
+$c = $d->createCollection('create-col1', true, 100);
 var_dump($ns->findOne(array('name' => 'phpunit.create-col1')));
 
 // test cap
@@ -29,6 +29,8 @@ var_dump($c->count() < 100);
 ?>
 --EXPECTF--
 NULL
+
+%s: MongoDB::createCollection(): This method now accepts arguments as an options array instead of the three optional arguments for capped, size and max elements in %sdatabase-createcollection-with-size-old.php on line %d
 array(2) {
   ["name"]=>
   string(19) "phpunit.create-col1"
