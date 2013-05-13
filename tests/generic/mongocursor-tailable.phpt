@@ -28,5 +28,6 @@ for ( $i = 0; $i < 12; $i++ )
 }
 echo microtime( true ) - $start > 2 ? "AWAIT DATA WAITED\n" : "NO WAITING\n";
 ?>
---EXPECT--
+--EXPECTF--
+%s: MongoDB::createCollection(): This method now accepts arguments as an options array instead of the three optional arguments for capped, size and max elements in %smongocursor-tailable.php on line %d
 AWAIT DATA WAITED
