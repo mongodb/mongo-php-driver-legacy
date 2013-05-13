@@ -142,13 +142,13 @@ zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 		member = &tmp_member;
 	}
 
-	property_info = zend_get_property_info(Z_OBJCE_P(object), member, 1);
+	property_info = zend_get_property_info(Z_OBJCE_P(object), member, 1 TSRMLS_CC);
 
 	if (property_info && property_info->flags & ZEND_ACC_DEPRECATED) {
 		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
 	}
 
-	if (instanceof_function(Z_OBJCE_P(object), mongo_ce_MongoClient) && strcmp(Z_STRVAL_P(member), "connected") == 0) {
+	if (instanceof_function(Z_OBJCE_P(object), mongo_ce_MongoClient TSRMLS_CC) && strcmp(Z_STRVAL_P(member), "connected") == 0) {
 		char *error_message = NULL;
 		mongoclient *obj = (mongoclient *)zend_objects_get_address(object TSRMLS_CC);
 		mongo_connection *conn = mongo_get_read_write_connection(obj->manager, obj->servers, MONGO_CON_FLAG_READ|MONGO_CON_FLAG_DONT_CONNECT, (char**) &error_message);
