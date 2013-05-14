@@ -103,6 +103,10 @@ MongoDB
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method getWriteConcern expects 0 parameters
+  Method setWriteConcern expects 2 parameters
+    0: w
+    1: wtimeout (optional)
   Method getProfilingLevel expects 0 parameters
   Method setProfilingLevel expects 1 parameters
     0: level
@@ -154,6 +158,10 @@ MongoCollection
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method getWriteConcern expects 0 parameters
+  Method setWriteConcern expects 2 parameters
+    0: w
+    1: wtimeout (optional)
   Method drop expects 0 parameters
   Method validate expects 1 parameters
     0: validate (optional)

@@ -6,7 +6,7 @@ Public Properties should be Read Only
 <?php
 require_once "tests/utils/server.inc";
 
-$d = new MongoDate(strtotime("2010-01-15 00:00:00"));
+$d = new MongoDate("1263513600");
 $d->sec = 123;
 $d->usec = 400;
 var_dump($d);
@@ -175,9 +175,9 @@ object(MongoGridFS)#%d (5) {
     ["wtimeout"]=>
     int(10000)
   }
-  ["filesName":protected]=>
+  ["filesName%s]=>
   string(8) "fs.files"
-  ["chunksName":protected]=>
+  ["chunksName%s]=>
   string(9) "fs.chunks"
 }
 ===DONE==

@@ -47,7 +47,7 @@ foreach ( $strings as $string )
 		echo "\n- Setting w property to $test:\n";
 		try
 		{
-			$demo->w = $test;
+			$demo->setWriteConcern($test);
 			$demo->test->insert( array( '_id' => $key ) );
 		}
 		catch ( Exception $e )
