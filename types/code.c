@@ -18,7 +18,8 @@
 
 zend_class_entry *mongo_ce_Code = NULL;
 
-/* {{{ MongoCode::__construct(string)
+/* {{{ MongoCode::__construct(string code[, array scope])
+ * Creates a new MongoCode object
  */
 PHP_METHOD(MongoCode, __construct)
 {
@@ -69,10 +70,11 @@ void mongo_init_MongoCode(TSRMLS_D)
 {
 	zend_class_entry ce;
 	INIT_CLASS_ENTRY(ce, "MongoCode", MongoCode_methods);
+	ce.create_object = php_mongo_type_object_new;
 	mongo_ce_Code = zend_register_internal_class(&ce TSRMLS_CC);
 
-	zend_declare_property_string(mongo_ce_Code, "code", strlen("code"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_null(mongo_ce_Code, "scope", strlen("scope"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_string(mongo_ce_Code, "code", strlen("code"), "", ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_Code, "scope", strlen("scope"), ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY  TSRMLS_CC);
 }
 
 /*

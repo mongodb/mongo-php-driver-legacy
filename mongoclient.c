@@ -146,6 +146,13 @@ void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC)
 	if (property_info && property_info->flags & ZEND_ACC_DEPRECATED) {
 		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
 	}
+	if (property_info && property_info->flags & MONGO_ACC_READ_ONLY) {
+		/* If its the object itself that is updating the property, then its OK */
+		if (EG(scope) != Z_OBJCE_P(object)) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is read-only", Z_STRVAL_P(member));
+			return;
+		}
+	}
 
 #if PHP_VERSION_ID >= 50400
 	(zend_get_std_object_handlers())->write_property(object, member, value, key TSRMLS_CC);

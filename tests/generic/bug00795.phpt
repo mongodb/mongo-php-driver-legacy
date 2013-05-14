@@ -14,7 +14,5 @@ $m->code = new stdclass;
 var_dump((string)$m);
 ?>
 --EXPECTF--
-Object of class stdClass could not be converted to string
-
-Notice: Object of class stdClass to string conversion in %sbug00795.php on line %d
-string(6) "Object"
+%s: The 'code' property is read-only in %s on line %d
+string(4) "bacd"
