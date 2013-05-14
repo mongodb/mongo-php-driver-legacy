@@ -400,9 +400,9 @@ void mongo_init_MongoGridFSFile(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoGridFSFile", MongoGridFSFile_methods);
 	mongo_ce_GridFSFile = zend_register_internal_class(&ce TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFSFile, "file", strlen("file"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFSFile, "file", strlen("file"), ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFSFile, "gridfs", strlen("gridfs"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFSFile, "gridfs", strlen("gridfs"), ZEND_ACC_PROTECTED|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*
