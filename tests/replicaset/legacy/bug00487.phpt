@@ -25,6 +25,7 @@ $c->findOne();
 ?>
 ===DONE===
 --EXPECTF--
+%s: %s(): The Mongo class is deprecated, please use the MongoClient class in %sbug00487.php on line %d
 string(%d) "%s:%d: not master and slaveOk=false"
 
 %s: Function Mongo::setSlaveOkay() is deprecated in %s on line %d

@@ -11,16 +11,22 @@ var_dump(get_class($m));
 $gridfs = $m->selectDb(dbname())->getGridFS();
 var_dump($gridfs->w);
 
-
 $m = mongo_standalone();
 var_dump(get_class($m));
 $gridfs = $m->selectDb(dbname())->getGridFS();
+var_dump($gridfs->w);
 
+$m = old_mongo_standalone();
+var_dump(get_class($m));
+$gridfs = $m->selectDb(dbname())->getGridFS();
 var_dump($gridfs->w);
 ?>
 --EXPECTF--
 string(11) "MongoClient"
 int(1)
-string(5) "Mongo"
+string(11) "MongoClient"
 int(1)
 
+%s: %s(): The Mongo class is deprecated, please use the MongoClient class in %sserver.inc on line %d
+string(5) "Mongo"
+int(1)

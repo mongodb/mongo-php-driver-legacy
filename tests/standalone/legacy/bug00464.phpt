@@ -9,14 +9,14 @@ Test for PHP-464: Re-implement ->connected (var_dump())
 require_once "tests/utils/server.inc";
 $cfg = MongoShellServer::getStandaloneInfo();
 
-$m = new Mongo($cfg, array("connect" => false));
+$m = new MongoClient($cfg, array("connect" => false));
 var_dump($m, $m->connected);
 
-$m = new Mongo($cfg);
+$m = new MongoClient($cfg);
 var_dump($m, $m->connected);
 ?>
 --EXPECTF--
-object(Mongo)#%d (%d) {
+object(MongoClient)#%d (%d) {
   ["connected"]=>
   bool(false)
   ["status"]=>
@@ -27,7 +27,7 @@ object(Mongo)#%d (%d) {
   NULL
 }
 bool(false)
-object(Mongo)#%d (%d) {
+object(MongoClient)#%d (%d) {
   ["connected"]=>
   bool(true)
   ["status"]=>
