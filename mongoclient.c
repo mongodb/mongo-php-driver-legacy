@@ -150,6 +150,11 @@ void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC)
 		/* If its the object itself that is updating the property, then its OK */
 		if (EG(scope) != Z_OBJCE_P(object)) {
 			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is read-only", Z_STRVAL_P(member));
+			if (member == &tmp_member) {
+				zval_dtor(member);
+			}
+
+			/* Disallow the property write */
 			return;
 		}
 	}
