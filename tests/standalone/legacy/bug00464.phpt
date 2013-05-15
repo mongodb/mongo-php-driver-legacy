@@ -16,6 +16,7 @@ $m = new MongoClient($cfg);
 var_dump($m, $m->connected);
 ?>
 --EXPECTF--
+%s: The 'connected' property is deprecated in %s on line %d
 object(MongoClient)#%d (%d) {
   ["connected"]=>
   bool(false)
@@ -27,6 +28,8 @@ object(MongoClient)#%d (%d) {
   NULL
 }
 bool(false)
+
+%s: The 'connected' property is deprecated in %s on line %d
 object(MongoClient)#%d (%d) {
   ["connected"]=>
   bool(true)
