@@ -283,7 +283,7 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC)
 		/* create an id for the file */
 		MAKE_STD_ZVAL(zid);
 		object_init_ex(zid, mongo_ce_Id);
-		MONGO_METHOD(MongoId, __construct, &temp, zid);
+		php_mongo_mongoid_populate(zid, NULL TSRMLS_CC);
 
 		add_assoc_zval(zfile, "_id", zid);
 	} else {
