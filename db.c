@@ -650,7 +650,7 @@ PHP_METHOD(MongoDB, execute)
 
 			MAKE_STD_ZVAL(obj);
 			object_init_ex(obj, mongo_ce_Code);
-			MONGO_METHOD1(MongoCode, __construct, return_value, obj, code);
+			php_mongo_mongocode_populate(obj, Z_STRVAL_P(code), Z_STRLEN_P(code), NULL TSRMLS_CC);
 			code = obj;
 		} else { /* This is broken code */
 			php_error_docref(NULL TSRMLS_CC, E_ERROR, "The argument is neither an object of MongoCode or a string");
