@@ -41,6 +41,7 @@
 #include "mcon/manager.h"
 
 extern zend_object_handlers mongo_default_handlers, mongo_id_handlers;
+zend_object_handlers mongo_type_object_handlers;
 
 /** Classes */
 extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
@@ -191,10 +192,16 @@ PHP_MINIT_FUNCTION(mongo)
 	memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 	mongo_default_handlers.clone_obj = NULL;
 	mongo_default_handlers.read_property = mongo_read_property;
+	mongo_default_handlers.write_property = mongo_write_property;
+
+	/* Mongo type objects */
+	memcpy(&mongo_type_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+	mongo_type_object_handlers.write_property = mongo_write_property;
 
 	/* Add compare_objects for MongoId */
 	memcpy(&mongo_id_handlers, &mongo_default_handlers, sizeof(zend_object_handlers));
 	mongo_id_handlers.compare_objects = php_mongo_compare_ids;
+	mongo_default_handlers.write_property = mongo_write_property;
 
 	/* Start random number generator */
 	srand(time(0));
@@ -360,6 +367,21 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 	mongo_init_MongoGridFSException(TSRMLS_C);
 	mongo_init_MongoResultException(TSRMLS_C);
 }
+
+/* {{{ Creating & freeing Mongo type objects */
+void php_mongo_type_object_free(void *object TSRMLS_DC)
+{
+	mongo_type_object *mto = (mongo_type_object*)object;
+
+	zend_object_std_dtor(&mto->std TSRMLS_CC);
+
+	efree(mto);
+}
+
+zend_object_value php_mongo_type_object_new(zend_class_entry *class_type TSRMLS_DC) {
+	PHP_MONGO_TYPE_OBJ_NEW(mongo_type_object);
+}
+/* }}} */
 
 /* Shared helper functions */
 static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *ztagset TSRMLS_DC)

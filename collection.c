@@ -188,6 +188,55 @@ PHP_METHOD(MongoCollection, setReadPreference)
 }
 /* }}} */
 
+/* {{{ bool MongoCollection::getWriteConcern()
+   Get the MongoCollection WriteConcern */
+PHP_METHOD(MongoCollection, getWriteConcern)
+{
+	zval *write_concern, *wtimeout;
+
+	if (zend_parse_parameters_none()) {
+		return;
+	}
+
+	write_concern = zend_read_property(mongo_ce_DB, getThis(), "w", strlen("w"), 0 TSRMLS_CC);
+	wtimeout      = zend_read_property(mongo_ce_DB, getThis(), "wtimeout", strlen("wtimeout"), 0 TSRMLS_CC);
+	Z_ADDREF_P(write_concern);
+	Z_ADDREF_P(wtimeout);
+
+	array_init(return_value);
+	add_assoc_zval(return_value, "w", write_concern);
+	add_assoc_zval(return_value, "wtimeout", wtimeout);
+}
+/* }}} */
+
+/* {{{ bool MongoCollection::setWriteConcern(mixed w [, int wtimeout])
+   Sets the MongoCollection WriteConcern */
+PHP_METHOD(MongoCollection, setWriteConcern)
+{
+	zval *write_concern;
+	long  wtimeout;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|l", &write_concern, &wtimeout) == FAILURE) {
+		return;
+	}
+
+	if (Z_TYPE_P(write_concern) == IS_LONG) {
+		zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), 3 TSRMLS_CC);
+	} else if (Z_TYPE_P(write_concern) == IS_STRING) {
+		zend_update_property_stringl(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_STRVAL_P(write_concern), Z_STRLEN_P(write_concern) TSRMLS_CC);
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "expects parameter 1 to be an string or integer, %s given", zend_get_type_by_const(Z_TYPE_P(write_concern)));
+		RETURN_FALSE;
+	}
+
+	if (ZEND_NUM_ARGS() > 1) {
+		zend_update_property_long(mongo_ce_Collection, getThis(), "wtimeout", strlen("wtimeout"), wtimeout TSRMLS_CC);
+	}
+
+	RETURN_TRUE;
+}
+/* }}} */
+
 /* {{{ proto array MongoCollection::drop()
    Drops the current collection and returns the database response */
 PHP_METHOD(MongoCollection, drop)
@@ -1773,6 +1822,14 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_R
 	ZEND_ARG_ARRAY_INFO(0, tags, 0) /* Yes, this should be an array */
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getWriteConcern, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setWriteConcern, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, w)
+	ZEND_ARG_INFO(0, wtimeout)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_validate, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, validate)
 ZEND_END_ARG_INFO()
@@ -1864,6 +1921,8 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoCollection, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCollection, getWriteConcern, arginfo_getWriteConcern, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCollection, setWriteConcern, arginfo_setWriteConcern, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, drop, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, validate, arginfo_validate, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, insert, arginfo_insert, ZEND_ACC_PUBLIC)
