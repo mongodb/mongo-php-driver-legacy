@@ -36,7 +36,8 @@ foreach ( $strings as $string )
 	$demo = $m->selectDB(dbname());
 	try
 	{
-		$demo->wtimeout = 100;
+		$wc = $demo->getWriteConcern();
+		$demo->setWriteConcern($wc["w"], 100);
 		$demo->test->remove();
 	}
 	catch ( Exception $e )
@@ -48,8 +49,7 @@ foreach ( $strings as $string )
 		echo "\n- Setting w property to $test:\n";
 		try
 		{
-			$demo->w = $test;
-			$demo->wtimeout = 100;
+			$demo->setWriteConcern($test, 100);
 			$demo->test->insert( array( '_id' => $key ) );
 		}
 		catch ( Exception $e )

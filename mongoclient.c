@@ -126,6 +126,51 @@ static void php_mongoclient_free(void *object TSRMLS_DC)
 /* }}} */
 
 #if PHP_VERSION_ID >= 50400
+void mongo_write_property(zval *object, zval *member, zval *value, const zend_literal *key TSRMLS_DC)
+#else
+void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC)
+#endif
+{
+	zval tmp_member;
+	zend_property_info *property_info;
+
+	if (member->type != IS_STRING) {
+		tmp_member = *member;
+		zval_copy_ctor(&tmp_member);
+		convert_to_string(&tmp_member);
+		member = &tmp_member;
+	}
+
+	property_info = zend_get_property_info(Z_OBJCE_P(object), member, 1 TSRMLS_CC);
+
+	if (property_info && property_info->flags & ZEND_ACC_DEPRECATED) {
+		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
+	}
+	if (property_info && property_info->flags & MONGO_ACC_READ_ONLY) {
+		/* If its the object itself that is updating the property, then its OK */
+		if (EG(scope) != Z_OBJCE_P(object)) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is read-only", Z_STRVAL_P(member));
+			if (member == &tmp_member) {
+				zval_dtor(member);
+			}
+
+			/* Disallow the property write */
+			return;
+		}
+	}
+
+#if PHP_VERSION_ID >= 50400
+	(zend_get_std_object_handlers())->write_property(object, member, value, key TSRMLS_CC);
+#else
+	(zend_get_std_object_handlers())->write_property(object, member, value TSRMLS_CC);
+#endif
+
+	if (member == &tmp_member) {
+		zval_dtor(member);
+	}
+}
+
+#if PHP_VERSION_ID >= 50400
 zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC)
 #else
 zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
@@ -260,6 +305,7 @@ void mongo_init_MongoClient(TSRMLS_D)
 	memcpy(&mongoclient_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 	mongoclient_handlers.clone_obj = NULL;
 	mongoclient_handlers.read_property = mongo_read_property;
+	mongoclient_handlers.write_property = mongo_write_property;
 #if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3
 	mongoclient_handlers.get_debug_info = mongo_get_debug_info;
 #endif

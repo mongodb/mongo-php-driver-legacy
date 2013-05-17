@@ -1199,10 +1199,10 @@ void mongo_init_MongoGridFS(TSRMLS_D)
 	ce.create_object = php_mongo_collection_new;
 	mongo_ce_GridFS = zend_register_internal_class_ex(&ce, mongo_ce_Collection, "MongoCollection" TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFS, "chunks", strlen("chunks"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFS, "chunks", strlen("chunks"), ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFS, "filesName", strlen("filesName"), ZEND_ACC_PROTECTED TSRMLS_CC);
-	zend_declare_property_null(mongo_ce_GridFS, "chunksName", strlen("chunksName"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFS, "filesName", strlen("filesName"), ZEND_ACC_PROTECTED|MONGO_ACC_READ_ONLY TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFS, "chunksName", strlen("chunksName"), ZEND_ACC_PROTECTED|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

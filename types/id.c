@@ -369,7 +369,7 @@ void mongo_init_MongoId(TSRMLS_D)
 
 	mongo_ce_Id = zend_register_internal_class(&id TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_Id, "$id", strlen("$id"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_Id, "$id", strlen("$id"), ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*
