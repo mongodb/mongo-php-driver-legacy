@@ -366,38 +366,47 @@ PHP_METHOD(MongoDB, setProfilingLevel)
 
 PHP_METHOD(MongoDB, drop)
 {
-	zval *data;
+	zval *cmd, *retval;
+	mongo_db *db;
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_long(data, "dropDatabase", 1);
+	PHP_MONGO_GET_DB(getThis());
 
-	MONGO_CMD(return_value, getThis());
-	zval_ptr_dtor(&data);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_long(cmd, "dropcmdbase", 1);
+
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
+
+	zval_ptr_dtor(&cmd);
+	RETURN_ZVAL(retval, 0, 1);
 }
 
 PHP_METHOD(MongoDB, repair)
 {
 	zend_bool cloned=0, original=0;
-	zval *data;
+	zval *cmd, *retval;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|bb", &cloned, &original) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_long(data, "repairDatabase", 1);
-	add_assoc_bool(data, "preserveClonedFilesOnFailure", cloned);
-	add_assoc_bool(data, "backupOriginalFiles", original);
+	PHP_MONGO_GET_DB(getThis());
 
-	MONGO_CMD(return_value, getThis());
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_long(cmd, "repaircmdbase", 1);
+	add_assoc_bool(cmd, "preserveClonedFilesOnFailure", cloned);
+	add_assoc_bool(cmd, "backupOriginalFiles", original);
 
-	zval_ptr_dtor(&data);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
+
+	zval_ptr_dtor(&cmd);
+	RETVAL_ZVAL(retval, 0, 1);
 }
 
 
@@ -929,18 +938,21 @@ static void clear_exception(zval* return_value TSRMLS_DC)
 }
 
 
-static void run_err(char *cmd, zval *return_value, zval *db TSRMLS_DC)
+static void run_err(char *cmd, zval *return_value, zval *dbobj TSRMLS_DC)
 {
-	zval *data;
+	zval *command, *retval;
+	mongo_db *db;
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_long(data, cmd, 1);
+	MAKE_STD_ZVAL(command);
+	array_init(command);
+	add_assoc_long(command, cmd, 1);
 
-	MONGO_CMD(return_value, db);
+	PHP_MONGO_GET_DB(dbobj);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), command, NULL TSRMLS_CC);
 	clear_exception(return_value TSRMLS_CC);
 
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&command);
+	RETVAL_ZVAL(retval, 0, 1);
 }
 
 /* {{{ MongoDB->lastError()

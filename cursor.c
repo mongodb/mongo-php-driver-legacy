@@ -1317,79 +1317,66 @@ void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 
 PHP_METHOD(MongoCursor, count)
 {
-	zval *db_z, *coll, *query = NULL;
-	mongo_cursor *cursor;
-	mongo_collection *c;
-	mongo_db *db;
 	zend_bool all = 0;
+	zval *response, *cmd, **n;
+	mongo_cursor *cursor;
+	mongoclient *link;
+	char *cname, *dbname;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &all) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_CURSOR(getThis());
+	PHP_MONGO_GET_LINK(cursor->resource);
+	cname = estrdup(cursor->ns + (strchr(cursor->ns, '.') - cursor->ns) + 1);
+	dbname = estrndup(cursor->ns, strchr(cursor->ns, '.') - cursor->ns);
 
-	/* fake a MongoDB object */
-	MAKE_STD_ZVAL(db_z);
-	object_init_ex(db_z, mongo_ce_DB);
-	db = (mongo_db*)zend_object_store_get_object(db_z TSRMLS_CC);
-	db->link = cursor->resource;
-	MAKE_STD_ZVAL(db->name);
-	ZVAL_STRING(db->name, estrndup(cursor->ns, strchr(cursor->ns, '.') - cursor->ns), 0);
-
-	/* fake a MongoCollection object */
-	MAKE_STD_ZVAL(coll);
-	object_init_ex(coll, mongo_ce_Collection);
-	c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
-	mongo_read_preference_replace(&cursor->read_pref, &c->read_pref);
-	MAKE_STD_ZVAL(c->ns);
-	ZVAL_STRING(c->ns, estrdup(cursor->ns), 0);
-	MAKE_STD_ZVAL(c->name);
-	ZVAL_STRING(c->name, estrdup(cursor->ns + (strchr(cursor->ns, '.') - cursor->ns) + 1), 0);
-	c->parent = db_z;
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_string(cmd, "count", cname, 0);
 
 	if (cursor->query) {
 		zval **inner_query = 0;
 
 		if (!cursor->special) {
-			query = cursor->query;
-			zval_add_ref(&query);
+			add_assoc_zval(cmd, "query", cursor->query);
+			zval_add_ref(&cursor->query);
 		} else if (zend_hash_find(HASH_P(cursor->query), "$query", strlen("$query") + 1, (void**)&inner_query) == SUCCESS) {
-			query = *inner_query;
-			zval_add_ref(&query);
+			add_assoc_zval(cmd, "query", *inner_query);
 		}
-	}
-	if (!query) {
-		MAKE_STD_ZVAL(query);
-		array_init(query);
 	}
 
 	if (all) {
-		zval *limit_z, *skip_z;
-
-		MAKE_STD_ZVAL(limit_z);
-		MAKE_STD_ZVAL(skip_z);
-
-		ZVAL_LONG(limit_z, cursor->limit);
-		ZVAL_LONG(skip_z, cursor->skip);
-
-		MONGO_METHOD3(MongoCollection, count, return_value, coll, query, limit_z, skip_z);
-
-		zval_ptr_dtor(&limit_z);
-		zval_ptr_dtor(&skip_z);
-	} else {
-		MONGO_METHOD1(MongoCollection, count, return_value, coll, query);
+		add_assoc_long(cmd, "limit", cursor->limit);
+		add_assoc_long(cmd, "skip", cursor->skip);
 	}
 
-	zval_ptr_dtor(&query);
+	response = php_mongodb_runcommand(cursor->resource, &cursor->read_pref, dbname, strlen(dbname), cmd, NULL TSRMLS_CC);
+	zval_ptr_dtor(&cmd);
+	efree(dbname);
 
-	c->parent = 0;
-	zend_objects_store_del_ref(coll TSRMLS_CC);
-	zval_ptr_dtor(&coll);
+	if (EG(exception) || Z_TYPE_P(response) != IS_ARRAY) {
+		zval_ptr_dtor(&response);
+		return;
+	}
 
-	db->link = 0;
-	zend_objects_store_del_ref(db_z TSRMLS_CC);
-	zval_ptr_dtor(&db_z);
+	/* FIXME: Refactor into php_mongodb_count() */
+	if (zend_hash_find(HASH_P(response), "n", 2, (void**)&n) == SUCCESS) {
+		convert_to_long(*n);
+		RETVAL_ZVAL(*n, 1, 0);
+		zval_ptr_dtor(&response);
+	} else {
+		zval **errmsg;
+
+		/* The command failed, try to find an error message */
+		if (zend_hash_find(HASH_P(response), "errmsg", strlen("errmsg") + 1 , (void**)&errmsg) == SUCCESS) {
+			zend_throw_exception_ex(mongo_ce_Exception, 20 TSRMLS_CC, "Cannot run command count(): %s", Z_STRVAL_PP(errmsg));
+		} else {
+			zend_throw_exception(mongo_ce_Exception, "Cannot run command count()", 20 TSRMLS_CC);
+		}
+		zval_ptr_dtor(&response);
+	}
 }
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
