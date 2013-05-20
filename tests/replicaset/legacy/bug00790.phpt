@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-685: wtimeout option is not supported per-query
+Test for PHP-790: MongoCollection write operation wtimeout option inconsistent with connection string wTimeoutMS option
 --SKIPIF--
 <?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
@@ -11,7 +11,7 @@ $m = new_mongo();
 $start = time();
 
 try {
-    $m->selectDb(dbname())->test->insert(array("random" => "data"), array("wtimeout" => 1, "w" => 7));
+    $m->selectDb(dbname())->test->insert(array("random" => "data"), array("wTimeoutMS" => 1, "w" => 7));
 } catch(MongoCursorException $e) {
     var_dump($e->getMessage(), $e->getCode());
 }
