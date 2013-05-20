@@ -42,8 +42,8 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
 
     var testOpts = {
         "name": keyFile ? "REPLICASET-AUTH" : "REPLICASET",
-        "useHostname": false,
-        "useHostName": false,
+        "useHostname": true,
+        "useHostName": true,
         "nodes": servers + (addArbiter ? 1 : 0),
         "startPort": port
     };
@@ -168,15 +168,15 @@ function initShard(mongoscount, rsOptions, rsSettings) {
     rs = {
         "nodes": 3,
         "logpath": "/tmp/NODE.RS",
-        "useHostname": false,
-        "useHostName": false,
+        "useHostname": true,
+        "useHostName": true,
         "oplogSize": 10
     }
 
     shardTest = new ShardingTest({
         "name": "SHARDING",
-        "useHostname": false,
-        "useHostName": false,
+        "useHostname": true,
+        "useHostName": true,
         "shards": 2,
         "rs": rs,
         "numReplicas": 2,
