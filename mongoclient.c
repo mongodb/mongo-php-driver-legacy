@@ -866,25 +866,29 @@ PHP_METHOD(MongoClient, dropDB)
  */
 PHP_METHOD(MongoClient, listDBs)
 {
-	zval *admin, *data, *db;
+	zval *admin, *cmd, *zdb, *retval;
+	mongo_db *db;
 
 	MAKE_STD_ZVAL(admin);
 	ZVAL_STRING(admin, "admin", 1);
 
-	MAKE_STD_ZVAL(db);
+	MAKE_STD_ZVAL(zdb);
 
-	MONGO_METHOD1(MongoClient, selectDB, db, getThis(), admin);
+	MONGO_METHOD1(MongoClient, selectDB, zdb, getThis(), admin);
 
+	PHP_MONGO_GET_DB(zdb);
 	zval_ptr_dtor(&admin);
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_long(data, "listDatabases", 1);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_long(cmd, "listDatabases", 1);
 
-	MONGO_CMD(return_value, db);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	zval_ptr_dtor(&data);
-	zval_ptr_dtor(&db);
+	zval_ptr_dtor(&cmd);
+	zval_ptr_dtor(&zdb);
+
+	RETVAL_ZVAL(retval, 0, 1);
 }
 /* }}} */
 
