@@ -403,27 +403,28 @@ PHP_METHOD(MongoDB, repair)
 
 PHP_METHOD(MongoDB, createCollection)
 {
-	zval *data = NULL, *temp, *options = NULL;
+	zval *cmd = NULL, *temp, *options = NULL;
 	char *collection;
 	int   collection_len;
 	zend_bool capped = 0;
 	long size = 0, max = 0;
+	mongo_db *db;
 
 	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "s|bll", &collection, &collection_len, &capped, &size, &max) == SUCCESS) {
-		MAKE_STD_ZVAL(data);
-		array_init(data);
+		MAKE_STD_ZVAL(cmd);
+		array_init(cmd);
 
-		add_assoc_stringl(data, "create", collection, collection_len, 1);
+		add_assoc_stringl(cmd, "create", collection, collection_len, 1);
 
 		if (size) {
-			add_assoc_long(data, "size", size);
+			add_assoc_long(cmd, "size", size);
 		}
 
 		if (capped) {
 			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "This method now accepts arguments as an options array instead of the three optional arguments for capped, size and max elements");
-			add_assoc_bool(data, "capped", 1);
+			add_assoc_bool(cmd, "capped", 1);
 			if (max) {
-				add_assoc_long(data, "max", max);
+				add_assoc_long(cmd, "max", max);
 			}
 		}
 
@@ -433,22 +434,23 @@ PHP_METHOD(MongoDB, createCollection)
 		/* We create a new array here, instead of just tagging "create" =>
 		 * <name> at the end of the array. This is because MongoDB wants the
 		 * name of the command as first element in the array. */
-		MAKE_STD_ZVAL(data);
-		array_init(data);
-		add_assoc_stringl(data, "create", collection, collection_len, 1);
+		MAKE_STD_ZVAL(cmd);
+		array_init(cmd);
+		add_assoc_stringl(cmd, "create", collection, collection_len, 1);
 		if (options) {
-			zend_hash_merge(Z_ARRVAL_P(data), Z_ARRVAL_P(options), (copy_ctor_func_t) zval_add_ref, (void *) &tmp_copy, sizeof(zval *), 0);
+			zend_hash_merge(Z_ARRVAL_P(cmd), Z_ARRVAL_P(options), (copy_ctor_func_t) zval_add_ref, (void *) &tmp_copy, sizeof(zval *), 0);
 		}
 	} else {
 
 		return;
 	}
 
-	MAKE_STD_ZVAL(temp);
-	MONGO_METHOD1(MongoDB, command, temp, getThis(), data);
-	zval_ptr_dtor(&temp);
+	PHP_MONGO_GET_DB(getThis());
 
-	zval_ptr_dtor(&data);
+	temp = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options TSRMLS_CC);
+
+	zval_ptr_dtor(&cmd);
+	zval_ptr_dtor(&temp);
 
 	if (!EG(exception)) {
 		zval *zcollection;
@@ -638,7 +640,9 @@ PHP_METHOD(MongoDB, getDBRef)
 
 PHP_METHOD(MongoDB, execute)
 {
-	zval *code = NULL, *args = NULL, *options = NULL, *zdata;
+	zval *code = NULL, *args = NULL, *options = NULL;
+	zval *cmd, *retval;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|aa", &code, &args, &options) == FAILURE) {
 		return;
@@ -670,10 +674,10 @@ PHP_METHOD(MongoDB, execute)
 	}
 
 	/* create { $eval : code, args : [] } */
-	MAKE_STD_ZVAL(zdata);
-	array_init(zdata);
-	add_assoc_zval(zdata, "$eval", code);
-	add_assoc_zval(zdata, "args", args);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_zval(cmd, "$eval", code);
+	add_assoc_zval(cmd, "args", args);
 	/* Check whether we have nolock as an option */
 	if (options) {
 		zval **nolock;
@@ -681,13 +685,15 @@ PHP_METHOD(MongoDB, execute)
 		if (zend_hash_find(HASH_P(options), "nolock", strlen("nolock") + 1, (void**) &nolock) == SUCCESS) {
 			convert_to_boolean_ex(nolock);
 			zval_add_ref(nolock);
-			add_assoc_zval(zdata, "nolock", *nolock);
+			add_assoc_zval(cmd, "nolock", *nolock);
 		}
 	}
 
-	MONGO_METHOD1(MongoDB, command, return_value, getThis(), zdata);
+	PHP_MONGO_GET_DB(getThis());
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options TSRMLS_CC);
 
-	zval_ptr_dtor(&zdata);
+	zval_ptr_dtor(&cmd);
+	RETURN_ZVAL(retval, 0, 1);
 }
 
 static char *get_cmd_ns(char *db, int db_len)
