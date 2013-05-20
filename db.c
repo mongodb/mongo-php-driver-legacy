@@ -329,21 +329,23 @@ PHP_METHOD(MongoDB, getProfilingLevel)
 PHP_METHOD(MongoDB, setProfilingLevel)
 {
 	long level;
-	zval *data, *cmd_return;
+	zval *command, *cmd_return;
 	zval **ok;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &level) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_long(data, "profile", level);
+	PHP_MONGO_GET_DB(getThis());
 
-	MAKE_STD_ZVAL(cmd_return);
-	MONGO_CMD(cmd_return, getThis());
+	MAKE_STD_ZVAL(command);
+	array_init(command);
+	add_assoc_long(command, "profile", level);
 
-	zval_ptr_dtor(&data);
+	cmd_return = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), command, NULL TSRMLS_CC);
+
+	zval_ptr_dtor(&command);
 
 	if (EG(exception)) {
 		zval_ptr_dtor(&cmd_return);
@@ -714,11 +716,8 @@ static char *get_cmd_ns(char *db, int db_len)
 
 PHP_METHOD(MongoDB, command)
 {
-	zval limit, *temp, *cmd, *cursor, *ns, *options = 0;
+	zval *cmd, *retval, *options = NULL;
 	mongo_db *db;
-	mongoclient *link;
-	char *cmd_ns;
-	mongo_cursor *cursor_tmp;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {
 		return;
@@ -728,20 +727,42 @@ PHP_METHOD(MongoDB, command)
 
 	PHP_MONGO_GET_DB(getThis());
 
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options TSRMLS_CC);
+	RETVAL_ZVAL(retval, 0, 1);
+}
+
+zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options TSRMLS_DC)
+{
+	zval limit, *temp, *cursor, *ns, *retval;
+	mongo_cursor *cursor_tmp;
+	mongoclient *link;
+	char *cmd_ns;
+
+	if (
+		dbname_len == 0 ||
+		strchr(dbname, ' ') != 0 || strchr(dbname, '.') != 0 || strchr(dbname, '\\') != 0 ||
+		strchr(dbname, '/') != 0 || strchr(dbname, '$') != 0
+	) {
+		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", dbname);
+		return NULL;
+	}
+
+	link = (mongoclient*)zend_object_store_get_object(zmongoclient TSRMLS_CC);
+
 	/* create db.$cmd */
 	MAKE_STD_ZVAL(ns);
-	cmd_ns = get_cmd_ns(Z_STRVAL_P(db->name), Z_STRLEN_P(db->name));
+	cmd_ns = get_cmd_ns(dbname, dbname_len);
 	ZVAL_STRING(ns, cmd_ns, 0);
 
 	/* create cursor, with RP inherited from us */
 	MAKE_STD_ZVAL(cursor);
 	object_init_ex(cursor, mongo_ce_Cursor);
 	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
-	mongo_read_preference_replace(&db->read_pref, &cursor_tmp->read_pref);
+	mongo_read_preference_replace(read_preferences, &cursor_tmp->read_pref);
 	MAKE_STD_ZVAL(temp);
 	ZVAL_NULL(temp);
 
-	MONGO_METHOD3(MongoCursor, __construct, temp, cursor, db->link, ns, cmd);
+	MONGO_METHOD3(MongoCursor, __construct, temp, cursor, zmongoclient, ns, cmd);
 
 	zval_ptr_dtor(&ns);
 	zval_ptr_dtor(&temp);
@@ -772,7 +793,10 @@ PHP_METHOD(MongoDB, command)
 	/* This should be refactored alongside with the getLastError redirection in
 	 * collection.c/append_getlasterror. The Cursor creation should be done
 	 * through an init method. */
-	PHP_MONGO_GET_LINK(db->link);
+	if (!link->servers) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoClient object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return NULL;
+	}
 	if (php_mongo_command_supports_rp(cmd)) {
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "command supports Read Preferences");
 	} else {
@@ -781,11 +805,14 @@ PHP_METHOD(MongoDB, command)
 	}
 
 	/* query */
-	MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
-	clear_exception(return_value TSRMLS_CC);
+	MAKE_STD_ZVAL(retval);
+	MONGO_METHOD(MongoCursor, getNext, retval, cursor);
+	clear_exception(retval TSRMLS_CC);
 
 	zend_objects_store_del_ref(cursor TSRMLS_CC);
 	zval_ptr_dtor(&cursor);
+
+	return retval;
 }
 
 zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
