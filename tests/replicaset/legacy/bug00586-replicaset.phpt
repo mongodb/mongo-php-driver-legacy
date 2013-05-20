@@ -27,7 +27,10 @@ try {
 } catch(MongoGridFSException $e) {
     var_dump($e->getMessage(), $e->getCode());
 }
+?>
 --EXPECTF--
 bool(true)
+
+%s: MongoGridFS::storeFile(): The 'wtimeout' option is deprecated, please use 'wTimeoutMS' instead in %sbug00586-replicaset.php on line %d
 string(%d) "Could not store file: %s:%d: timeout"
 int(4)
