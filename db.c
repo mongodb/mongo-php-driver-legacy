@@ -377,7 +377,7 @@ PHP_METHOD(MongoDB, drop)
 
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);
-	add_assoc_long(cmd, "dropcmdbase", 1);
+	add_assoc_long(cmd, "dropDatabase", 1);
 
 	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
@@ -399,7 +399,7 @@ PHP_METHOD(MongoDB, repair)
 
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);
-	add_assoc_long(cmd, "repaircmdbase", 1);
+	add_assoc_long(cmd, "repairDatabase", 1);
 	add_assoc_bool(cmd, "preserveClonedFilesOnFailure", cloned);
 	add_assoc_bool(cmd, "backupOriginalFiles", original);
 
