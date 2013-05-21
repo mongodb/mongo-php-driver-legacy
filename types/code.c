@@ -28,21 +28,22 @@ PHP_METHOD(MongoCode, __construct)
 	int code_len;
 	zval *zcope = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a/!", &code, &code_len, &zcope) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a/", &code, &code_len, &zcope) == FAILURE) {
 		return;
 	}
 
-	php_mongo_mongocode_populate(getThis(), code, code_len, zcope TSRMLS_CC);
+	php_mongocode_populate(getThis(), code, code_len, zcope TSRMLS_CC);
 }
 /* }}} */
 
-int php_mongo_mongocode_populate(zval *mongocode_object, char *code, int code_len, zval *scope TSRMLS_DC) {
+int php_mongocode_populate(zval *mongocode_object, char *code, int code_len, zval *scope TSRMLS_DC)
+{
 	zend_update_property_stringl(mongo_ce_Code, mongocode_object, "code", strlen("code"), code, code_len TSRMLS_CC);
 
 	if (scope) {
 		if (Z_TYPE_P(scope) != IS_ARRAY) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "'scope' argument of MongoCode is expected to be array, %s given", zend_get_type_by_const(Z_TYPE_P(scope)));
-			return FAILURE;
+			return 0;
 		}
 
 		zend_update_property(mongo_ce_Code, mongocode_object, "scope", strlen("scope"), scope TSRMLS_CC);
@@ -56,7 +57,7 @@ int php_mongo_mongocode_populate(zval *mongocode_object, char *code, int code_le
 		zval_ptr_dtor(&tmp);
 	}
 
-	return SUCCESS;
+	return 1;
 }
 
 /* {{{ MongoCode::__toString()
