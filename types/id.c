@@ -344,6 +344,7 @@ int php_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_ui
 	tmp_id = php_mongo_mongoid_to_hex(this_id->id);
 	*(serialized_length) = strlen(tmp_id);
 	*(serialized_data) = (unsigned char*)tmp_id;
+
 	return SUCCESS;
 }
 

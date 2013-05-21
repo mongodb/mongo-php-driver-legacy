@@ -329,7 +329,7 @@ PHP_METHOD(MongoDB, getProfilingLevel)
 PHP_METHOD(MongoDB, setProfilingLevel)
 {
 	long level;
-	zval *command, *cmd_return;
+	zval *cmd, *cmd_return;
 	zval **ok;
 	mongo_db *db;
 
@@ -339,13 +339,13 @@ PHP_METHOD(MongoDB, setProfilingLevel)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	MAKE_STD_ZVAL(command);
-	array_init(command);
-	add_assoc_long(command, "profile", level);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_long(cmd, "profile", level);
 
-	cmd_return = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), command, NULL TSRMLS_CC);
+	cmd_return = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	zval_ptr_dtor(&command);
+	zval_ptr_dtor(&cmd);
 
 	if (EG(exception)) {
 		zval_ptr_dtor(&cmd_return);
