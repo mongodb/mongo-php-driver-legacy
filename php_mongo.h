@@ -16,7 +16,7 @@
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1
 
-#define PHP_MONGO_VERSION "1.4.0"
+#define PHP_MONGO_VERSION "1.4.1dev"
 #define PHP_MONGO_EXTNAME "mongo"
 
 #ifdef HAVE_CONFIG_H
