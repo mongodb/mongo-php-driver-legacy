@@ -225,18 +225,6 @@ typedef __int64 int64_t;
 	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 5, param5);	\
 	POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
-#define MONGO_CMD(retval, thisptr) MONGO_METHOD1(MongoDB, command, retval, thisptr, data)
-#define MONGO_CMD_WITH_RP(retval, thisptr, collection) \
-	do { \
-		mongo_db *db = (mongo_db*)zend_object_store_get_object(collection->parent TSRMLS_CC); \
-		mongo_read_preference rp; \
-		mongo_read_preference_copy(&db->read_pref, &rp); \
-		mongo_read_preference_replace(&collection->read_pref, &db->read_pref); \
-		MONGO_METHOD1(MongoDB, command, retval, thisptr, data) \
-		mongo_read_preference_replace(&rp, &db->read_pref); \
-		mongo_read_preference_dtor(&rp); \
-	} while(0);
-
 #define HASH_P(a) (Z_TYPE_P(a) == IS_ARRAY ? Z_ARRVAL_P(a) : Z_OBJPROP_P(a))
 #define HASH_PP(a) (Z_TYPE_PP(a) == IS_ARRAY ? Z_ARRVAL_PP(a) : Z_OBJPROP_PP(a))
 
