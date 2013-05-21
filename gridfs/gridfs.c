@@ -264,7 +264,6 @@ static long setup_file(FILE *fp, char *filename TSRMLS_DC)
 
 static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC)
 {
-	zval temp;
 	zval *zid = 0;
 	zval **zzid = 0;
 

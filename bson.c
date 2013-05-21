@@ -68,7 +68,7 @@ static int php_mongo_serialize_size(char *start, buffer *buf, int max_size TSRML
 
 static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC)
 {
-	zval temp, **data, *newid;
+	zval **data, *newid;
 
 	/* if _id field doesn't exist, add it */
 	if (zend_hash_find(array, "_id", 4, (void**)&data) == FAILURE) {

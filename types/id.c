@@ -258,7 +258,7 @@ void php_mongo_mongoid_populate(zval *this_ptr, zval *id TSRMLS_DC)
  */
 PHP_METHOD(MongoId, __set_state)
 {
-	zval temp, *state, **id;
+	zval *state, **id;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &state) == FAILURE) {
 		return;
@@ -349,7 +349,7 @@ int php_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_ui
 
 int php_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned char* p, zend_uint datalen, zend_unserialize_data* var_hash TSRMLS_DC)
 {
-	zval temp, *str;
+	zval *str;
 
 	MAKE_STD_ZVAL(str);
 	ZVAL_STRINGL(str, (const char*)p, 24, 1);
