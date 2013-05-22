@@ -652,6 +652,8 @@ extern zend_module_entry mongo_module_entry;
  * 25: Option with no string key
  * 26: SSL support is only available when compiled against PHP Streams
  * 27: Driver options are only available when compiled against PHP Streams
+ * 31: Unknown failure doing io_stream_read.
+ * 32: When the remote server closes the connection in io_stream_read.
  * 72: Could not retrieve connection
  *
  * MongoCursorTimeoutException:
@@ -683,7 +685,7 @@ extern zend_module_entry mongo_module_entry;
  * 22: invalid binary length for key "%s"
  * 23: Can not natively represent the long %llu on this platform
  * 24: invalid code length for key "%s"
- * various: database error
+ * 28: recv_header() (abs()) recv_data() stream handlers error (timeout)
  *
  * MongoGridFSException:
  * 0: 

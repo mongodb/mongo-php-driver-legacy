@@ -118,7 +118,7 @@ array(5) {
 }
 string(20) "MongoCursorException"
 string(%d) "%s:%d: Remote server has closed the connection"
-int(3)
+int(32)
 Doing secondary read
 array(5) {
   ["hash"]=>
