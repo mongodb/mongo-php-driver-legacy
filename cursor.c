@@ -77,7 +77,8 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
 static void make_special(mongo_cursor *);
-static void kill_cursor(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC);
+void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC);
+static void kill_cursor_le(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
 
@@ -1599,7 +1600,7 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC)
 					if (current->cursor_id == 0) {
 						php_mongo_free_cursor_node(current, le);
 					} else {
-						kill_cursor(current, cursor->connection, le TSRMLS_CC);
+						kill_cursor_le(current, cursor->connection, le TSRMLS_CC);
 
 						/* If the connection is closed before the cursor is
 						 * destroyed, the cursor might try to fetch more
@@ -1753,34 +1754,39 @@ void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le)
 	pefree(node, 1);
 }
 
-/* Tell the database to destroy its cursor */
-static void kill_cursor(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC)
+void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC)
 {
 	char quickbuf[128];
 	buffer buf;
 	char *error_message;
 
+	buf.pos = quickbuf;
+	buf.start = buf.pos;
+	buf.end = buf.start + 128;
+
+	php_mongo_write_kill_cursors(&buf, cursor_id, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
+#if MONGO_PHP_STREAMS
+	mongo_log_stream_killcursor(con, cursor_id TSRMLS_CC);
+#endif
+
+	if (MonGlo(manager)->send(con, NULL, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %lld: %s", (long long int) cursor_id, error_message);
+		free(error_message);
+	}
+}
+
+/* Tell the database to destroy its cursor */
+static void kill_cursor_le(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC)
+{
 	/* If the cursor_id is 0, the db is out of results anyway. */
 	if (node->cursor_id == 0) {
 		php_mongo_free_cursor_node(node, le);
 		return;
 	}
 
-	buf.pos = quickbuf;
-	buf.start = buf.pos;
-	buf.end = buf.start + 128;
-
-	php_mongo_write_kill_cursors(&buf, node->cursor_id, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
-#if MONGO_PHP_STREAMS
-	mongo_log_stream_killcursor(con, node->cursor_id TSRMLS_CC);
-#endif
-
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", node->cursor_id);
 
-	if (MonGlo(manager)->send(con, NULL, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %lld: %s", (long long int) node->cursor_id, error_message);
-		free(error_message);
-	}
+	php_mongo_kill_cursor(con, node->cursor_id);
 
 	/* Free this cursor/link pair */
 	php_mongo_free_cursor_node(node, le);
