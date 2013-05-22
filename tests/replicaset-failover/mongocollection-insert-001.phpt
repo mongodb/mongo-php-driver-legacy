@@ -53,7 +53,7 @@ for($i=0;$i<60; $i++) {
 Killing master
 Master killed
 string(%d) "%s:%d: Remote server has closed the connection"
-int(3)
+int(32)
 string(51) "Couldn't get connection: No candidate servers found"
 int(16)
 string(51) "Couldn't get connection: No candidate servers found"

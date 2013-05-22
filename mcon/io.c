@@ -133,16 +133,16 @@ int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, i
 	if (status != 0) {
 		/* We don't care which failure it was, it just failed and the error_message has been set */
 		*error_message = strdup("Timed out waiting for header data");
-		return -1;
+		return -80;
 	}
 	status = recv((int) (long) con->socket, data, size, 0);
 
 	if (status == -1) {
 		*error_message = strdup(strerror(errno));
-		return -1;
+		return -31;
 	} else if (status == 0) {
 		*error_message = strdup("The socket was closed by remote host");
-		return -1;
+		return -32;
 	}
 	return status;
 }
@@ -157,13 +157,13 @@ int mongo_io_recv_data(mongo_connection *con, mongo_server_options *options, int
 
 		if (mongo_io_wait_with_timeout((int) (long) con->socket, timeout ? timeout : options->socketTimeoutMS, error_message) != 0) {
 			/* We don't care which failure it was, it just failed */
-			return -1;
+			return -31;
 		}
 		// windows gives a WSAEFAULT if you try to get more bytes
 		num = recv((int) (long)con->socket, (char*)data, len, 0);
 
 		if (num < 0) {
-			return -1;
+			return -31;
 		}
 
 		data = (char*)data + num;

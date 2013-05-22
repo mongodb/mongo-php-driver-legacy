@@ -100,9 +100,9 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 }
 
 /* Returns the bytes read on success
- * Returns -1 on unknown failure
- * Returns -2 on timeout
- * Returns -3 when remote server closes the connection
+ * Returns -31 on unknown failure
+ * Returns -80 on timeout
+ * Returns -32 when remote server closes the connection
  */
 int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message)
 {
@@ -127,7 +127,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 			/* Doesn't look like this can happen, php_sockop_read overwrites
 			 * the failure from recv() to return 0 */
 			*error_message = strdup("Read from socket failed");
-			return -1;
+			return -31;
 		}
 
 		/* It *may* have failed. It also may simply have no data */
@@ -154,7 +154,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 						*error_message = malloc(256);
 						snprintf(*error_message, 256, "Read timed out after reading %d bytes, waited for %d.%06d seconds", num, rtimeout.tv_sec, rtimeout.tv_usec);
 						zval_ptr_dtor(&metadata);
-						return -2;
+						return -80;
 					}
 				}
 				if (zend_hash_find(Z_ARRVAL_P(metadata), "eof", sizeof("eof"), (void**)&tmp) == SUCCESS) {
@@ -162,7 +162,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 					if (Z_BVAL_PP(tmp)) {
 						*error_message = strdup("Remote server has closed the connection");
 						zval_ptr_dtor(&metadata);
-						return -3;
+						return -32;
 					}
 				}
 			}
