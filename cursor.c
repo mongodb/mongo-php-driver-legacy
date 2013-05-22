@@ -79,6 +79,7 @@ static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRML
 static void make_special(mongo_cursor *);
 void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC);
 static void kill_cursor_le(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC);
+static int handle_error(mongo_cursor *cursor);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
 
@@ -426,9 +427,8 @@ PHP_METHOD(MongoCursor, hasNext)
 	}
 	/* if cursor_id != 0, server should stay the same */
 
-	if (cursor->flag & 1) {
-		mongo_cursor_throw(cursor->connection, 2 TSRMLS_CC, "cursor not found");
-		return;
+	if (handle_error(cursor)) {
+		RETURN_FALSE;
 	}
 
 	/* sometimes we'll have a cursor_id but there won't be any more results */
@@ -1156,13 +1156,87 @@ int mongo_cursor__should_retry(mongo_cursor *cursor)
 	return 1;
 }
 
+/* Returns 1 when an error was found and *handled*, and it returns 0 if no error
+ * situation has ocurred on the cursor */
+static int handle_error(mongo_cursor *cursor)
+{
+	zval **err = NULL, **wnote = NULL;
+	char *error_message = NULL;
+
+	/* check for $err */
+	if (
+		cursor->current && (
+			zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err") + 1, (void**)&err) == SUCCESS ||
+			/* getLastError can return an error here */
+			(zend_hash_find(Z_ARRVAL_P(cursor->current), "err", strlen("err") + 1, (void**)&err) == SUCCESS && Z_TYPE_PP(err) == IS_STRING)
+		)
+	) {
+		zval **code_z, *exception;
+		/* default error code */
+		int code = 4;
+
+		if (zend_hash_find(Z_ARRVAL_P(cursor->current), "code", strlen("code") + 1, (void**)&code_z) == SUCCESS) {
+			/* check for not master */
+			if (Z_TYPE_PP(code_z) == IS_LONG) {
+				code = Z_LVAL_PP(code_z);
+			} else if (Z_TYPE_PP(code_z) == IS_DOUBLE) {
+				code = (int)Z_DVAL_PP(code_z);
+			}
+		}
+
+		error_message = strdup(Z_STRVAL_PP(err));
+
+		/* We check for additional information as well, in the "wnote" property */
+		if (
+			(zend_hash_find(Z_ARRVAL_P(cursor->current), "wnote", strlen("wnote") + 1, (void**) &wnote) == SUCCESS) &&
+			(Z_TYPE_PP(wnote) == IS_STRING)
+		) {
+			free(error_message);
+			error_message = malloc(Z_STRLEN_PP(err) + 2 + Z_STRLEN_PP(wnote) + 1);
+			snprintf(error_message, Z_STRLEN_PP(err) + 2 + Z_STRLEN_PP(wnote) + 1, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote));
+		}
+
+		exception = mongo_cursor_throw(cursor->connection, code TSRMLS_CC, "%s", error_message);
+		free(error_message);
+		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current TSRMLS_CC);
+		zval_ptr_dtor(&cursor->current);
+		cursor->current = 0;
+
+		/* We check for "not master" error codes. The source of those codes
+		 * is at https://github.com/mongodb/mongo/blob/master/docs/errors.md
+		 *
+		 * We should kill the connection so the next request doesn't do the
+		 * same wrong thing.
+		 *
+		 * Note: We need to mark the cursor as failed _after_ prepping the
+		 * exception, otherwise the exception won't include the servername
+		 * it hit for example. */
+		if (code == 10107 || code == 13435 || code == 13436 || code == 10054 || code == 10056 || code == 10058) {
+			mongo_util_cursor_failed(cursor TSRMLS_CC);
+		}
+
+		return 1;
+	}
+
+	if (cursor->flag & (1 << 0)) {
+		mongo_cursor_throw(cursor->connection, 2 TSRMLS_CC, "cursor not found");
+		return 1;
+	}
+
+	if (cursor->flag & (1 << 1)) {
+		mongo_cursor_throw(cursor->connection, 2 TSRMLS_CC, "query failure");
+		return 1;
+	}
+
+	return 0;
+}
+
 /* {{{ MongoCursor->next
  */
 PHP_METHOD(MongoCursor, next)
 {
 	zval has_next;
 	mongo_cursor *cursor;
-	char *error_message = NULL;
 
 	PHP_MONGO_GET_CURSOR(getThis());
 	MONGO_CURSOR_CHECK_DEAD;
@@ -1193,8 +1267,6 @@ PHP_METHOD(MongoCursor, next)
 
 	/* we got more results */
 	if (cursor->at < cursor->num) {
-		zval **err = NULL, **wnote = NULL;
-
 		MAKE_STD_ZVAL(cursor->current);
 		array_init(cursor->current);
 		cursor->buf.pos = bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
@@ -1208,56 +1280,7 @@ PHP_METHOD(MongoCursor, next)
 		/* increment cursor position */
 		cursor->at++;
 
-		/* check for $err */
-		if (
-			zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err") + 1, (void**)&err) == SUCCESS ||
-			/* getLastError can return an error here */
-			(zend_hash_find(Z_ARRVAL_P(cursor->current), "err", strlen("err") + 1, (void**)&err) == SUCCESS && Z_TYPE_PP(err) == IS_STRING)
-		) {
-			zval **code_z, *exception;
-			/* default error code */
-			int code = 4;
-
-			if (zend_hash_find(Z_ARRVAL_P(cursor->current), "code", strlen("code") + 1, (void**)&code_z) == SUCCESS) {
-				/* check for not master */
-				if (Z_TYPE_PP(code_z) == IS_LONG) {
-					code = Z_LVAL_PP(code_z);
-				} else if (Z_TYPE_PP(code_z) == IS_DOUBLE) {
-					code = (int)Z_DVAL_PP(code_z);
-				}
-			}
-
-			error_message = strdup(Z_STRVAL_PP(err));
-
-			/* We check for additional information as well, in the "wnote" property */
-			if (
-				(zend_hash_find(Z_ARRVAL_P(cursor->current), "wnote", strlen("wnote") + 1, (void**) &wnote) == SUCCESS) &&
-				(Z_TYPE_PP(wnote) == IS_STRING)
-			) {
-				free(error_message);
-				error_message = malloc(Z_STRLEN_PP(err) + 2 + Z_STRLEN_PP(wnote) + 1);
-				snprintf(error_message, Z_STRLEN_PP(err) + 2 + Z_STRLEN_PP(wnote) + 1, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote));
-			}
-
-			exception = mongo_cursor_throw(cursor->connection, code TSRMLS_CC, "%s", error_message);
-			free(error_message);
-			zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current TSRMLS_CC);
-			zval_ptr_dtor(&cursor->current);
-			cursor->current = 0;
-
-			/* We check for "not master" error codes. The source of those codes
-			 * is at https://github.com/mongodb/mongo/blob/master/docs/errors.md
-			 *
-			 * We should kill the connection so the next request doesn't do the
-			 * same wrong thing.
-			 *
-			 * Note: We need to mark the cursor as failed _after_ prepping the
-			 * exception, otherwise the exception won't include the servername
-			 * it hit for example. */
-			if (code == 10107 || code == 13435 || code == 13436 || code == 10054 || code == 10056 || code == 10058) {
-				mongo_util_cursor_failed(cursor TSRMLS_CC);
-			}
-
+		if (handle_error(cursor)) {
 			RETURN_FALSE;
 		}
 	}
