@@ -41,7 +41,7 @@ char *mongo_server_create_hashed_password(char *username, char *password)
 }
 
 /* Hash format is:
- * - HOST:PORT;-;X;PID (with the - being the replica set name and the X a placeholder for credentials)
+ * - HOST:PORT;-;.;PID (with the - being the replica set name and the . a placeholder for credentials)
  * or:
  * - HOST:PORT;REPLSETNAME;DB/USERNAME/md5(PID,PASSWORD,USERNAME);PID */
 
@@ -81,7 +81,7 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 		sprintf(tmp + strlen(tmp), "%s/%s/%s;", server_def->db, server_def->username, hash);
 		free(hash);
 	} else {
-		sprintf(tmp + strlen(tmp), "X;");
+		sprintf(tmp + strlen(tmp), ".;");
 	}
 	sprintf(tmp + strlen(tmp), "%d", getpid());
 
@@ -120,7 +120,7 @@ int mongo_server_split_hash(char *hash, char **host, int *port, char **repl_set_
 
 	/* Find the database and username */
 	ptr = strchr(ptr, ';') + 1;
-	if (ptr[0] != 'X') {
+	if (ptr[0] != '.') {
 		if (database) {
 			*database = mcon_strndup(ptr, strchr(ptr, '/') - ptr);
 		}

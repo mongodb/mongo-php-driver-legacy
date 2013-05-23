@@ -31,7 +31,7 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
-CON     INFO: is_ping: pinging %s:%d;-;X;%d
+CON     INFO: is_ping: pinging %s:%d;-;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     INFO: is_ping: last pinged at %d; time: %dms
