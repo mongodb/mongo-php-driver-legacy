@@ -79,6 +79,7 @@ static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRML
 static void make_special(mongo_cursor *);
 void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC);
 static void kill_cursor_le(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC);
+static int have_error_flags(mongo_cursor *cursor);
 static int handle_error(mongo_cursor *cursor);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
@@ -377,6 +378,7 @@ PHP_METHOD(MongoCursor, hasNext)
 		}
 		RETURN_FALSE;
 	}
+
 	if (cursor->at < cursor->num) {
 		RETURN_TRUE;
 	} else if (cursor->cursor_id == 0) {
@@ -422,15 +424,15 @@ PHP_METHOD(MongoCursor, hasNext)
 
 	zval_ptr_dtor(&temp);
 
+	if (have_error_flags(cursor)) {
+		RETURN_TRUE;
+	}
+
 	if (cursor->cursor_id == 0) {
 		mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
 	}
+
 	/* if cursor_id != 0, server should stay the same */
-
-	if (handle_error(cursor)) {
-		RETURN_FALSE;
-	}
-
 	/* sometimes we'll have a cursor_id but there won't be any more results */
 	if (cursor->at >= cursor->num) {
 		RETURN_FALSE;
@@ -1156,6 +1158,21 @@ int mongo_cursor__should_retry(mongo_cursor *cursor)
 	return 1;
 }
 
+/* Returns 1 when an error was found and it returns 0 if no error
+ * situation has ocurred on the cursor */
+static int have_error_flags(mongo_cursor *cursor)
+{
+	if (cursor->flag & (1 << 0)) {
+		return 1;
+	}
+
+	if (cursor->flag & (1 << 1)) {
+		return 1;
+	}
+
+	return 0;
+}
+
 /* Returns 1 when an error was found and *handled*, and it returns 0 if no error
  * situation has ocurred on the cursor */
 static int handle_error(mongo_cursor *cursor)
@@ -1219,7 +1236,7 @@ static int handle_error(mongo_cursor *cursor)
 	}
 
 	if (cursor->flag & (1 << 0)) {
-		mongo_cursor_throw(cursor->connection, 2 TSRMLS_CC, "cursor not found");
+		mongo_cursor_throw(cursor->connection, 16336 TSRMLS_CC, "could not find cursor over collection %s", cursor->ns);
 		return 1;
 	}
 
@@ -1260,8 +1277,12 @@ PHP_METHOD(MongoCursor, next)
 	if (EG(exception)) {
 		return;
 	}
+
 	if (!Z_BVAL(has_next)) {
 		/* we're out of results */
+		if (handle_error(cursor)) {
+			RETURN_FALSE;
+		}
 		RETURN_NULL();
 	}
 
