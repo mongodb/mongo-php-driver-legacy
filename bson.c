@@ -68,14 +68,14 @@ static int php_mongo_serialize_size(char *start, buffer *buf, int max_size TSRML
 
 static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC)
 {
-	zval temp, **data, *newid;
+	zval **data, *newid;
 
 	/* if _id field doesn't exist, add it */
 	if (zend_hash_find(array, "_id", 4, (void**)&data) == FAILURE) {
 		/* create new MongoId */
 		MAKE_STD_ZVAL(newid);
 		object_init_ex(newid, mongo_ce_Id);
-		MONGO_METHOD(MongoId, __construct, &temp, newid);
+		php_mongo_mongoid_populate(newid, NULL TSRMLS_CC);
 
 		/* add to obj */
 		zend_hash_add(array, "_id", 4, &newid, sizeof(zval*), NULL);
@@ -895,6 +895,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 		switch(type) {
 			case BSON_OID: {
 				mongo_id *this_id;
+				char *tmp_id;
 				zval *str = 0;
 
 				object_init_ex(value, mongo_ce_Id);
@@ -903,9 +904,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				this_id->id = estrndup(buf, OID_SIZE);
 
 				MAKE_STD_ZVAL(str);
-				ZVAL_NULL(str);
 
-				MONGO_METHOD(MongoId, __toString, str, value);
+				tmp_id = php_mongo_mongoid_to_hex(this_id->id);
+				ZVAL_STRING(str, tmp_id, 0);
 				zend_update_property(mongo_ce_Id, value, "$id", strlen("$id"), str TSRMLS_CC);
 				zval_ptr_dtor(&str);
 
