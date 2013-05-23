@@ -686,6 +686,7 @@ extern zend_module_entry mongo_module_entry;
  * 23: Can not natively represent the long %llu on this platform
  * 24: invalid code length for key "%s"
  * 28: recv_header() (abs()) recv_data() stream handlers error (timeout)
+ * 29: Unknown query/get_more failure
  *
  * MongoGridFSException:
  * 0: 
