@@ -54,6 +54,12 @@ static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define CURSOR_FLAG_EXHAUST      64 /* Not implemented */
 #define CURSOR_FLAG_PARTIAL     128
 
+/* OP_REPLY flags */
+#define MONGO_OP_REPLY_CURSOR_NOT_FOUND     1
+#define MONGO_OP_REPLY_QUERY_FAILURE        2
+#define MONGO_OP_REPLY_SHARD_CONFIG_STALE   4
+#define MONGO_OP_REPLY_AWAIT_CAPABLE        8
+
 /* Macro to check whether a cursor is dead, and if so, bailout */
 #define MONGO_CURSOR_CHECK_DEAD \
 	if (cursor->dead) { \
@@ -1162,11 +1168,11 @@ int mongo_cursor__should_retry(mongo_cursor *cursor)
  * situation has ocurred on the cursor */
 static int have_error_flags(mongo_cursor *cursor)
 {
-	if (cursor->flag & (1 << 0)) {
+	if (cursor->flag & MONGO_OP_REPLY_CURSOR_NOT_FOUND) {
 		return 1;
 	}
 
-	if (cursor->flag & (1 << 1)) {
+	if (cursor->flag & MONGO_OP_REPLY_QUERY_FAILURE) {
 		return 1;
 	}
 
@@ -1235,12 +1241,12 @@ static int handle_error(mongo_cursor *cursor)
 		return 1;
 	}
 
-	if (cursor->flag & (1 << 0)) {
+	if (cursor->flag & MONGO_OP_REPLY_CURSOR_NOT_FOUND) {
 		mongo_cursor_throw(cursor->connection, 16336 TSRMLS_CC, "could not find cursor over collection %s", cursor->ns);
 		return 1;
 	}
 
-	if (cursor->flag & (1 << 1)) {
+	if (cursor->flag & MONGO_OP_REPLY_QUERY_FAILURE) {
 		mongo_cursor_throw(cursor->connection, 2 TSRMLS_CC, "query failure");
 		return 1;
 	}
