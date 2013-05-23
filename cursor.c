@@ -1289,9 +1289,7 @@ PHP_METHOD(MongoCursor, next)
 
 	if (!Z_BVAL(has_next)) {
 		/* we're out of results */
-		if (handle_error(cursor TSRMLS_CC)) {
-			RETURN_FALSE;
-		}
+		handle_error(cursor TSRMLS_CC);
 		RETURN_NULL();
 	}
 
@@ -1311,7 +1309,7 @@ PHP_METHOD(MongoCursor, next)
 		cursor->at++;
 
 		if (handle_error(cursor TSRMLS_CC)) {
-			RETURN_FALSE;
+			RETURN_NULL();
 		}
 	}
 
