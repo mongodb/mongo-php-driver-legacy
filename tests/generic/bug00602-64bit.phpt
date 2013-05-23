@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-602: No longer possible to get field information from $cursor->info().
 --SKIPIF--
+<?php if (8 !== PHP_INT_SIZE) { die('skip Only for 64-bit platform'); } ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php

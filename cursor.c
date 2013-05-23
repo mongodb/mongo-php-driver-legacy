@@ -847,7 +847,9 @@ PHP_METHOD(MongoCursor, info)
 		char *host;
 		int   port;
 
+#if SIZEOF_LONG == 8
 		add_assoc_long(return_value, "id", (long)cursor->cursor_id);
+#endif
 		add_assoc_long(return_value, "at", cursor->at);
 		add_assoc_long(return_value, "numReturned", cursor->num);
 		add_assoc_string(return_value, "server", cursor->connection->hash, 1);
