@@ -86,7 +86,7 @@ static void make_special(mongo_cursor *);
 void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC);
 static void kill_cursor_le(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC);
 static int have_error_flags(mongo_cursor *cursor);
-static int handle_error(mongo_cursor *cursor);
+static int handle_error(mongo_cursor *cursor TSRMLS_DC);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
 
@@ -1181,7 +1181,7 @@ static int have_error_flags(mongo_cursor *cursor)
 
 /* Returns 1 when an error was found and *handled*, and it returns 0 if no error
  * situation has ocurred on the cursor */
-static int handle_error(mongo_cursor *cursor)
+static int handle_error(mongo_cursor *cursor TSRMLS_DC)
 {
 	zval **err = NULL, **wnote = NULL;
 	char *error_message = NULL;
@@ -1286,7 +1286,7 @@ PHP_METHOD(MongoCursor, next)
 
 	if (!Z_BVAL(has_next)) {
 		/* we're out of results */
-		if (handle_error(cursor)) {
+		if (handle_error(cursor TSRMLS_CC)) {
 			RETURN_FALSE;
 		}
 		RETURN_NULL();
@@ -1307,7 +1307,7 @@ PHP_METHOD(MongoCursor, next)
 		/* increment cursor position */
 		cursor->at++;
 
-		if (handle_error(cursor)) {
+		if (handle_error(cursor TSRMLS_CC)) {
 			RETURN_FALSE;
 		}
 	}
@@ -1834,7 +1834,7 @@ static void kill_cursor_le(cursor_node *node, mongo_connection *con, zend_rsrc_l
 
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", node->cursor_id);
 
-	php_mongo_kill_cursor(con, node->cursor_id);
+	php_mongo_kill_cursor(con, node->cursor_id TSRMLS_CC);
 
 	/* Free this cursor/link pair */
 	php_mongo_free_cursor_node(node, le);
