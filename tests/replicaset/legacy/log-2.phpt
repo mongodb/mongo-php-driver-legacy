@@ -30,12 +30,12 @@ CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
-CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
+CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     INFO: is_ping: last pinged at %d; time: %dms
-CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
+CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;.;%d
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
@@ -48,7 +48,7 @@ CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d (passive)
 CON     INFO: ismaster: last ran at %d
 CON     FINE: discover_topology: ismaster worked
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
@@ -59,7 +59,7 @@ CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
-CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
+CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     INFO: is_ping: last pinged at %d; time: %dms
@@ -73,7 +73,7 @@ CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
-CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
+CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     INFO: is_ping: last pinged at %d; time: %dms
@@ -87,12 +87,12 @@ CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
-CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
+CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     INFO: is_ping: last pinged at %d; time: %dms
-CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
+CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;.;%d
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
@@ -105,12 +105,12 @@ CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d (passive)
 CON     INFO: ismaster: last ran at %d
 CON     FINE: discover_topology: ismaster worked
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;.;%d
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
@@ -123,12 +123,12 @@ CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d (passive)
 CON     INFO: ismaster: last ran at %d
 CON     FINE: discover_topology: ismaster worked
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;.;%d
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
@@ -141,8 +141,8 @@ CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d (passive)
 CON     INFO: ismaster: last ran at %d
 CON     FINE: discover_topology: ismaster worked
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
 
