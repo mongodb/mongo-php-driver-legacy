@@ -71,7 +71,7 @@ $mc->phpunit->jobs->remove(array("_id" => $obj["_id"]));
 log_insert
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -88,7 +88,7 @@ NULL
 log_query
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -123,7 +123,7 @@ array(5) {
 log_query
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -170,7 +170,7 @@ array(5) {
 log_query
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -212,7 +212,7 @@ array(5) {
 log_update
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -255,7 +255,7 @@ array(2) {
 log_query
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -286,7 +286,7 @@ array(5) {
 log_delete
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -316,7 +316,7 @@ array(2) {
 log_query
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>

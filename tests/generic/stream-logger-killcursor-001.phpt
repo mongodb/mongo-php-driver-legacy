@@ -50,7 +50,7 @@ $cursor = $mc->phpunit->jobs->drop();
 log_killcursor
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(1)
   ["max_bson_size"]=>
