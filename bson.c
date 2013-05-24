@@ -1015,36 +1015,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			}
 
 			case BSON_LONG: {
-				if (MonGlo(long_as_object)) {
-					char *buffer;
-
-#ifdef WIN32
-					spprintf(&buffer, 0, "%I64d", (int64_t)MONGO_64(*((int64_t*)buf)));
-#else
-					spprintf(&buffer, 0, "%lld", (long long int)MONGO_64(*((int64_t*)buf)));
-#endif
-					object_init_ex(value, mongo_ce_Int64);
-
-					zend_update_property_string(mongo_ce_Int64, value, "value", strlen("value"), buffer TSRMLS_CC);
-
-					efree(buffer);
-				} else {
-					if (MonGlo(native_long)) {
-#if SIZEOF_LONG == 4
-						zend_throw_exception_ex(mongo_ce_CursorException, 23 TSRMLS_CC, "Can not natively represent the long %llu on this platform", (int64_t)MONGO_64(*((int64_t*)buf)));
-						zval_ptr_dtor(&value);
-						return 0;
-#else
-# if SIZEOF_LONG == 8
-						ZVAL_LONG(value, (long)MONGO_64(*((int64_t*)buf)));
-# else
-#  error The PHP number size is neither 4 or 8 bytes; no clue what to do with that!
-# endif
-#endif
-					} else {
-						ZVAL_DOUBLE(value, (double)MONGO_64(*((int64_t*)buf)));
-					}
-				}
+				php_mongo_handle_int64(&value, MONGO_64(*((int64_t*)buf)));
 				buf += INT_64;
 				break;
 			}
@@ -1398,6 +1369,40 @@ void mongo_buf_append(char *dest, char *piece)
 {
 	int pos = strlen(dest);
 	memcpy(dest + pos, piece, strlen(piece) + 1);
+}
+
+void php_mongo_handle_int64(zval **value, int64_t nr)
+{
+	if (MonGlo(long_as_object)) {
+		char *buffer;
+
+#ifdef WIN32
+		spprintf(&buffer, 0, "%I64d", (int64_t)nr);
+#else
+		spprintf(&buffer, 0, "%lld", (long long int)nr);
+#endif
+		object_init_ex(*value, mongo_ce_Int64);
+
+		zend_update_property_string(mongo_ce_Int64, *value, "value", strlen("value"), buffer TSRMLS_CC);
+
+		efree(buffer);
+	} else {
+		if (MonGlo(native_long)) {
+#if SIZEOF_LONG == 4
+			zend_throw_exception_ex(mongo_ce_CursorException, 23 TSRMLS_CC, "Can not natively represent the long %llu on this platform", (int64_t)nr);
+			zval_ptr_dtor(value);
+			return;
+#else
+# if SIZEOF_LONG == 8
+			ZVAL_LONG(*value, (long)nr);
+# else
+#  error The PHP number size is neither 4 or 8 bytes; no clue what to do with that!
+# endif
+#endif
+		} else {
+			ZVAL_DOUBLE(*value, (double)nr);
+		}
+	}
 }
 
 /*
