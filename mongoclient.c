@@ -54,7 +54,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 zend_class_entry *mongo_ce_MongoClient;
 
 extern zend_class_entry *mongo_ce_DB, *mongo_ce_Cursor, *mongo_ce_Exception;
-extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Mongo;
+extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Mongo, *mongo_ce_Int64;
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, server)
@@ -86,11 +86,9 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_dropDB, 0, ZEND_RETURN_VALUE
 	ZEND_ARG_INFO(0, MongoDB_object_OR_database_name)
 ZEND_END_ARG_INFO()
 
-#if SIZEOF_LONG == 8
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_killCursor, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, cursor_id)
 ZEND_END_ARG_INFO()
-#endif
 
 static zend_function_entry mongo_methods[] = {
 	PHP_ME(MongoClient, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
@@ -106,9 +104,7 @@ static zend_function_entry mongo_methods[] = {
 	PHP_ME(MongoClient, listDBs, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, getHosts, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-#if SIZEOF_LONG == 8
 	PHP_ME(MongoClient, killCursor, arginfo_killCursor, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-#endif
 
 	{ NULL, NULL, NULL }
 };
@@ -1017,8 +1013,7 @@ PHP_METHOD(MongoClient, getConnections)
 }
 /* }}} */
 
-#if SIZEOF_LONG == 8
-/* {{{ proto static array MongoClient::killCursor(string server_hash, int id)
+/* {{{ proto static array MongoClient::killCursor(string server_hash, int|MongoInt64 id)
    Kills the cursor on the server with the specified id */
 PHP_METHOD(MongoClient, killCursor)
 {
@@ -1026,16 +1021,24 @@ PHP_METHOD(MongoClient, killCursor)
 	int   hash_len;
 	long cursor_id;
 	mongo_connection *con;
+	zval *int64_id = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &hash, &hash_len, &cursor_id) == FAILURE) {
-		return;
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "sO", &hash, &hash_len, &int64_id, mongo_ce_Int64) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &hash, &hash_len, &cursor_id) == FAILURE) {
+			return;
+		}
 	}
 
 	con = mongo_manager_connection_find_by_hash(MonGlo(manager), hash);
-	php_mongo_kill_cursor(con, cursor_id);
+	if (int64_id) {
+		zval *z_int64 = zend_read_property(mongo_ce_Int64, int64_id, "value", strlen("value"), NOISY TSRMLS_CC);
+
+		php_mongo_kill_cursor(con, atoll(Z_STRVAL_P(z_int64)));
+	} else {
+		php_mongo_kill_cursor(con, cursor_id);
+	}
 }
 /* }}} */
-#endif
 
 /*
  * Local variables:

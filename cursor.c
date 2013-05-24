@@ -84,7 +84,6 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
 static void make_special(mongo_cursor *);
-void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC);
 static void kill_cursor_le(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC);
 static int have_error_flags(mongo_cursor *cursor);
 static int handle_error(mongo_cursor *cursor TSRMLS_DC);

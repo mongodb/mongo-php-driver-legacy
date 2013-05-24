@@ -1,11 +1,11 @@
 --TEST--
-Test for PHP-755: Support CursorNotFound query flag
+Test for PHP-755: Support CursorNotFound query flag (long as object)
 --SKIPIF--
-<?php if (8 !== PHP_INT_SIZE) { die('skip Only for 64-bit platform'); } ?>
 <?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+ini_set('mongo.long_as_object', 1);
 
 $host = MongoShellServer::getShardInfo();
 $mc = new MongoClient($host[0]);

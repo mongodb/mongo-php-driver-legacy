@@ -39,6 +39,9 @@ int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC);
  * struggling db with retries.  */
 int mongo_cursor__should_retry(mongo_cursor *cursor);
 
+/* Kills a cursor on the server */
+void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC);
+
 PHP_METHOD(MongoCursor, __construct);
 PHP_METHOD(MongoCursor, getNext);
 PHP_METHOD(MongoCursor, hasNext);
