@@ -1195,13 +1195,10 @@ static int handle_error(mongo_cursor *cursor TSRMLS_DC)
 		/* default error code */
 		int code = 4;
 
+		/* check for error code */
 		if (zend_hash_find(Z_ARRVAL_P(cursor->current), "code", strlen("code") + 1, (void**)&code_z) == SUCCESS) {
-			/* check for not master */
-			if (Z_TYPE_PP(code_z) == IS_LONG) {
-				code = Z_LVAL_PP(code_z);
-			} else if (Z_TYPE_PP(code_z) == IS_DOUBLE) {
-				code = (int)Z_DVAL_PP(code_z);
-			}
+			convert_to_long_ex(code_z);
+			code = Z_LVAL_PP(code_z);
 		}
 
 		error_message = strdup(Z_STRVAL_PP(err));
