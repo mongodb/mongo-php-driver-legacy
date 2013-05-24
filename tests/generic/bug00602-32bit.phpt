@@ -6,6 +6,7 @@ Test for PHP-602: No longer possible to get field information from $cursor->info
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+ini_set('mongo.long_as_object', 1);
 
 $m = mongo_standalone();
 $c = $m->selectDb(dbname())->bug602;
@@ -43,7 +44,7 @@ array(8) {
   ["started_iterating"]=>
   bool(false)
 }
-array(14) {
+array(15) {
   ["ns"]=>
   string(%d) "%s.bug602"
   ["limit"]=>
@@ -62,6 +63,11 @@ array(14) {
   }
   ["started_iterating"]=>
   bool(true)
+  ["id"]=>
+  object(MongoInt64)#%d (1) {
+    ["value"]=>
+    string(%d) "%d"
+  }
   ["at"]=>
   int(1)
   ["numReturned"]=>
