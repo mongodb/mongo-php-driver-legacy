@@ -467,7 +467,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	mcon_str      *packet;
 	char          *data_buffer;
 	char          *set = NULL;      /* For replicaset in return */
-	char          *hosts, *passives, *ptr, *string;
+	char          *hosts, *passives = NULL, *ptr, *string;
 	unsigned char  ismaster = 0, secondary = 0, arbiter = 0;
 	char          *connected_name, *we_think_we_are;
 	struct timeval now;
@@ -575,12 +575,14 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	}
 
 	/* Iterate over the "passives" document (priority=0) */
-	ptr = passives;
-	while (bson_array_find_next_string(&ptr, NULL, &string)) {
-		(*nr_hosts)++;
-		*found_hosts = realloc(*found_hosts, (*nr_hosts) * sizeof(char*));
-		(*found_hosts)[*nr_hosts-1] = strdup(string);
-		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "found host: %s (passive)", string);
+	if (passives) {
+		ptr = passives;
+		while (bson_array_find_next_string(&ptr, NULL, &string)) {
+			(*nr_hosts)++;
+			*found_hosts = realloc(*found_hosts, (*nr_hosts) * sizeof(char*));
+			(*found_hosts)[*nr_hosts-1] = strdup(string);
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "found host: %s (passive)", string);
+		}
 	}
 
 	/* Set connection type depending on flags */
