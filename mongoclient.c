@@ -1033,9 +1033,9 @@ PHP_METHOD(MongoClient, killCursor)
 	if (int64_id) {
 		zval *z_int64 = zend_read_property(mongo_ce_Int64, int64_id, "value", strlen("value"), NOISY TSRMLS_CC);
 
-		php_mongo_kill_cursor(con, atoll(Z_STRVAL_P(z_int64)));
+		php_mongo_kill_cursor(con, atoll(Z_STRVAL_P(z_int64)) TSRMLS_CC);
 	} else {
-		php_mongo_kill_cursor(con, cursor_id);
+		php_mongo_kill_cursor(con, cursor_id TSRMLS_CC);
 	}
 }
 /* }}} */

@@ -1015,7 +1015,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			}
 
 			case BSON_LONG: {
-				php_mongo_handle_int64(&value, MONGO_64(*((int64_t*)buf)));
+				php_mongo_handle_int64(&value, MONGO_64(*((int64_t*)buf)) TSRMLS_CC);
 				buf += INT_64;
 				break;
 			}
@@ -1371,7 +1371,7 @@ void mongo_buf_append(char *dest, char *piece)
 	memcpy(dest + pos, piece, strlen(piece) + 1);
 }
 
-void php_mongo_handle_int64(zval **value, int64_t nr)
+void php_mongo_handle_int64(zval **value, int64_t nr TSRMLS_DC)
 {
 	if (MonGlo(long_as_object)) {
 		char *buffer;
