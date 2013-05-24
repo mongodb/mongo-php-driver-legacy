@@ -87,8 +87,8 @@ function makeServer($SERVERS, $server, $bit) {
         $members = array(
             array('tags' => array('server' => '0', 'dc' => 'ny'), "priority" => 42),
             array('tags' => array('server' => '1', 'dc' => 'ny')),
-            array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
-            array('tags' => array('server' => '3', 'dc' => 'sf')),
+            array('tags' => array('server' => '2', 'dc' => 'sf')),
+            array('tags' => array('server' => '3', 'dc' => 'sf'), "priority" => 0),
         );
         $settings = array(
             "getLastErrorModes" => array(
@@ -102,6 +102,11 @@ function makeServer($SERVERS, $server, $bit) {
             $server->makeReplicaset($members, 30200, $settings);
             $cfg = $server->getReplicaSetConfig();
         } else { /* REPLICASET_AUTH */
+            /* Remove the passive server from auth replicasets.
+             * We need to have one replicaset without a passive server, see 
+             * PHP-829 */
+            unset($members[3]);
+            $settings["getLastErrorModes"]["ALL"]["server"]--;
             $retval = $server->makeReplicaset($members, 30300, $settings, dirname(__FILE__) . "/keyFile");
             $cfg = $server->getReplicaSetConfig(true);
         }

@@ -69,12 +69,6 @@ authentication failed
 Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth fails
 authentication failed
 Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth fails
-authentication failed
-Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth fails
-authentication failed
-Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth fails
-discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
-discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
