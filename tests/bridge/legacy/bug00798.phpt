@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-798: socketTimeoutMS
 --SKIPIF--
-<?php require_once "tests/utils/standalone.inc";?>
+<?php require_once "tests/utils/bridge.inc";?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
