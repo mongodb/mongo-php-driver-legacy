@@ -62,6 +62,8 @@ Mongo
   Method listDBs expects 0 parameters
   Method getHosts expects 0 parameters
   Method close expects 0 parameters
+  Method killCursor expects 1 parameters
+    0: cursor_id
 
 MongoClient
   Method __construct expects 2 parameters
@@ -86,6 +88,8 @@ MongoClient
   Method listDBs expects 0 parameters
   Method getHosts expects 0 parameters
   Method close expects 0 parameters
+  Method killCursor expects 1 parameters
+    0: cursor_id
 
 MongoDB
   Method __construct expects 2 parameters

@@ -59,6 +59,7 @@ PHP_METHOD(MongoClient, forceError);
 PHP_METHOD(MongoClient, close);
 PHP_METHOD(MongoClient, listDBs);
 PHP_METHOD(MongoClient, getHosts);
+PHP_METHOD(MongoClient, killCursor);
 
 #endif
 
