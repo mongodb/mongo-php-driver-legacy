@@ -6,6 +6,7 @@ Test for PHP-602: No longer possible to get field information from $cursor->info
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+ini_set('mongo.native_long', 1);
 
 $m = mongo_standalone();
 $c = $m->selectDb(dbname())->bug602;
