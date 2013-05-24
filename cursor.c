@@ -845,15 +845,13 @@ PHP_METHOD(MongoCursor, info)
 	if (cursor->started_iterating) {
 		char *host;
 		int   port;
+		zval *id_value;
 
-		{
-			zval *id_value;
+		MAKE_STD_ZVAL(id_value);
+		ZVAL_NULL(id_value);
+		php_mongo_handle_int64(&id_value, cursor->cursor_id);
+		add_assoc_zval(return_value, "id", id_value);
 
-			MAKE_STD_ZVAL(id_value);
-			ZVAL_NULL(id_value);
-			php_mongo_handle_int64(&id_value, cursor->cursor_id);
-			add_assoc_zval(return_value, "id", id_value);
-		}
 		add_assoc_long(return_value, "at", cursor->at);
 		add_assoc_long(return_value, "numReturned", cursor->num);
 		add_assoc_string(return_value, "server", cursor->connection->hash, 1);
