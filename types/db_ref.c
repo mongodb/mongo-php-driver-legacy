@@ -84,11 +84,11 @@ PHP_METHOD(MongoDBRef, isRef)
  */
 PHP_METHOD(MongoDBRef, get)
 {
-	zval *db, *ref, *collection, *query;
+	zval *zdb, *ref, *collection, *query;
 	zval **ns, **id, **dbname;
 	zend_bool alloced_db = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &db, mongo_ce_DB, &ref) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &zdb, mongo_ce_DB, &ref) == FAILURE) {
 		return;
 	}
 
@@ -126,7 +126,7 @@ PHP_METHOD(MongoDBRef, get)
 			MONGO_METHOD1(MongoClient, selectDB, new_db_z, temp_db->link, *dbname);
 
 			/* make the new db the current one */
-			db = new_db_z;
+			zdb = new_db_z;
 
 			/* so we can dtor this later */
 			alloced_db = 1;
@@ -135,7 +135,7 @@ PHP_METHOD(MongoDBRef, get)
 
 	/* get the collection */
 	MAKE_STD_ZVAL(collection);
-	MONGO_METHOD1(MongoDB, selectCollection, collection, db, *ns);
+	MONGO_METHOD1(MongoDB, selectCollection, collection, zdb, *ns);
 
 	/* query for the $id */
 	MAKE_STD_ZVAL(query);
@@ -150,7 +150,7 @@ PHP_METHOD(MongoDBRef, get)
 	zval_ptr_dtor(&collection);
 	zval_ptr_dtor(&query);
 	if (alloced_db) {
-		zval_ptr_dtor(&db);
+		zval_ptr_dtor(&zdb);
 	}
 }
 /* }}} */
