@@ -133,7 +133,7 @@
    <file role="src" name="bson.h"/>
    <file role="src" name="collection.c"/>
    <file role="src" name="collection.h"/>
-   <file role="src" name="config.h"/>
+   <file role="src" name="config-w32.h"/>
    <file role="src" name="cursor.c"/>
    <file role="src" name="cursor.h"/>
    <file role="src" name="db.c"/>
