@@ -87,10 +87,13 @@ PHP_METHOD(MongoDBRef, get)
 	zval *zdb, *ref, *collection, *query;
 	zval **ns, **id, **dbname;
 	zend_bool alloced_db = 0;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &zdb, mongo_ce_DB, &ref) == FAILURE) {
 		return;
 	}
+		
+	PHP_MONGO_GET_DB(zdb);
 
 	if (
 		IS_SCALAR_P(ref) ||
@@ -107,8 +110,6 @@ PHP_METHOD(MongoDBRef, get)
 
 	/* if this reference contains a db name, we have to switch dbs */
 	if (zend_hash_find(HASH_P(ref), "$db", strlen("$db") + 1, (void**)&dbname) == SUCCESS) {
-		mongo_db *temp_db = (mongo_db*)zend_object_store_get_object(db TSRMLS_CC);
-
 		/* just to be paranoid, make sure dbname is a string */
 		if (Z_TYPE_PP(dbname) != IS_STRING) {
 			zend_throw_exception(mongo_ce_Exception, "MongoDBRef::get: $db field must be a string", 11 TSRMLS_CC);
@@ -117,13 +118,13 @@ PHP_METHOD(MongoDBRef, get)
 
 		/* if the name in the $db field doesn't match the current db, make up
 		 * a new db */
-		if (strcmp(Z_STRVAL_PP(dbname), Z_STRVAL_P(temp_db->name)) != 0) {
+		if (strcmp(Z_STRVAL_PP(dbname), Z_STRVAL_P(db->name)) != 0) {
 			zval *new_db_z;
 
 			MAKE_STD_ZVAL(new_db_z);
 			ZVAL_NULL(new_db_z);
 
-			MONGO_METHOD1(MongoClient, selectDB, new_db_z, temp_db->link, *dbname);
+			MONGO_METHOD1(MongoClient, selectDB, new_db_z, db->link, *dbname);
 
 			/* make the new db the current one */
 			zdb = new_db_z;
