@@ -28,10 +28,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "types.h"
+#include <poll.h>
 
 
 /* Wait on socket availability with a timeout
- * TODO: Port to use poll() instead of select().
  *
  * Returns:
  * 0 on success
@@ -44,19 +44,12 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 		to = 1000;
 	}
 	while (1) {
+		struct pollfd fds[1];
 		int status;
-		struct timeval timeout;
-		fd_set readfds, exceptfds;
 
-		FD_ZERO(&readfds);
-		FD_SET(sock, &readfds);
-		FD_ZERO(&exceptfds);
-		FD_SET(sock, &exceptfds);
-
-		timeout.tv_sec = to / 1000 ;
-		timeout.tv_usec = (to % 1000) * 1000;
-
-		status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
+		fds[0].fd = sock;
+		fds[0].events = POLLIN | POLLHUP | POLLERR;
+		status = poll(fds, 1, to);
 
 		if (status == -1) {
 			/* on EINTR, retry - this resets the timeout however to its full length */
@@ -68,25 +61,21 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 			return 13;
 		}
 
-		if (FD_ISSET(sock, &exceptfds)) {
-			*error_message = strdup("Exceptional condition on socket");
-			return 17;
-		}
-
-		if (status == 0 && !FD_ISSET(sock, &readfds)) {
+		if (status == 0) {
 			*error_message = malloc(256);
 			snprintf(
 				*error_message, 256,
-				"cursor timed out (timeout: %d, time left: %ld:%ld, status: %d)",
-				to, (long) timeout.tv_sec, (long) timeout.tv_usec, status
+				"cursor timed out (timeout: %d, status: %d)",
+				to, status
 			);
 			return 80;
 		}
 
-		/* if our descriptor is ready break out */
-		if (FD_ISSET(sock, &readfds)) {
-			break;
+		if (status > 0 && !(fds[0].revents & POLLIN)) {
+			*error_message = strdup("Exceptional condition on socket");
+			return 17;
 		}
+		break;
 	}
 
 	return 0;
