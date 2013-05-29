@@ -63,7 +63,7 @@ var_dump(time()-$t > 3);
 --EXPECTF--
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;REPLICASET;X;%d"
+  string(%d) "%s:%d;REPLICASET;.;%d"
   ["type"]=>
   int(2)
   ["max_bson_size"]=>
@@ -94,7 +94,7 @@ Master killed
 Attempting insert
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;REPLICASET;X;%d"
+  string(%d) "%s:%d;REPLICASET;.;%d"
   ["type"]=>
   int(2)
   ["max_bson_size"]=>
@@ -126,7 +126,7 @@ int(32)
 Doing secondary read
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;REPLICASET;X;%d"
+  string(%d) "%s:%d;REPLICASET;.;%d"
   ["type"]=>
   int(4)
   ["max_bson_size"]=>
