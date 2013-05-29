@@ -65,7 +65,7 @@ PHP_METHOD(MongoGridFSCursor, current)
 	zval *gridfs;
 	zval *flags;
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->resource, MongoGridFSCursor);
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoGridFSCursor);
 
 	if (!cursor->current) {
 		RETURN_NULL();
@@ -97,7 +97,7 @@ void mongo_init_MongoGridFSCursor(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoGridFSCursor", MongoGridFSCursor_methods);
 	mongo_ce_GridFSCursor = zend_register_internal_class_ex(&ce, mongo_ce_Cursor, "MongoCursor" TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFSCursor, "gridfs", strlen("gridfs"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFSCursor, "gridfs", strlen("gridfs"), ZEND_ACC_PROTECTED|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

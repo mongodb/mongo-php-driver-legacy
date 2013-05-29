@@ -100,6 +100,7 @@ void mongo_buf_append(char *dest, char *piece);
  * position, and user limit */
 int mongo_get_limit(mongo_cursor *cursor);
 
+void php_mongo_handle_int64(zval **value, int64_t nr TSRMLS_DC);
 
 #if PHP_C_BIGENDIAN
 /* Reverse the bytes in an int, wheeee stupid byte tricks */

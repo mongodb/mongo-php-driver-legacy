@@ -18,6 +18,8 @@
 
 PHP_METHOD(MongoCode, __construct);
 PHP_METHOD(MongoCode, __toString);
+/* Returns 1 on success, 0 on failure and raises a warning */
+int php_mongocode_populate(zval *mongocode_object, char *code, int code_len, zval *scope TSRMLS_DC);
 
 #endif
 

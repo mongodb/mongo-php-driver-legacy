@@ -47,10 +47,12 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setPoolSize, 0, ZEND_RETURN_
 ZEND_END_ARG_INFO()
 
 static zend_function_entry mongo_methods[] = {
+	/* Deprecated, but done through a check in php_mongoclient_new so that we
+	 * can control the deprecation message */
 	PHP_ME(Mongo, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
 
 	/* All these methods only exist in Mongo, and no longer in MongoClient */
-	PHP_ME(Mongo, connectUtil, arginfo_no_parameters, ZEND_ACC_PROTECTED)
+	PHP_ME(Mongo, connectUtil, arginfo_no_parameters, ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, lastError, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
@@ -65,7 +67,6 @@ static zend_function_entry mongo_methods[] = {
 
 	{ NULL, NULL, NULL }
 };
-
 
 void mongo_init_Mongo(TSRMLS_D)
 {

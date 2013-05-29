@@ -25,6 +25,13 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc);
 mongo_connection *php_mongo_connect(mongoclient *link, int flags TSRMLS_DC);
 HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC);
 
+
+#if PHP_VERSION_ID >= 50400
+void mongo_write_property(zval *object, zval *member, zval *value, const zend_literal *key TSRMLS_DC);
+#else
+void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC);
+#endif
+
 #if PHP_VERSION_ID >= 50400
 zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC);
 #else
@@ -52,6 +59,7 @@ PHP_METHOD(MongoClient, forceError);
 PHP_METHOD(MongoClient, close);
 PHP_METHOD(MongoClient, listDBs);
 PHP_METHOD(MongoClient, getHosts);
+PHP_METHOD(MongoClient, killCursor);
 
 #endif
 
