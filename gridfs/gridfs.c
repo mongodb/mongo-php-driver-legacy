@@ -264,7 +264,6 @@ static long setup_file(FILE *fp, char *filename TSRMLS_DC)
 
 static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC)
 {
-	zval temp;
 	zval *zid = 0;
 	zval **zzid = 0;
 
@@ -283,7 +282,7 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC)
 		/* create an id for the file */
 		MAKE_STD_ZVAL(zid);
 		object_init_ex(zid, mongo_ce_Id);
-		MONGO_METHOD(MongoId, __construct, &temp, zid);
+		php_mongo_mongoid_populate(zid, NULL TSRMLS_CC);
 
 		add_assoc_zval(zfile, "_id", zid);
 	} else {
@@ -300,25 +299,27 @@ static zval* setup_extra(zval *zfile, zval *extra TSRMLS_DC)
 static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC)
 {
 	if (!zend_hash_exists(HASH_P(zfile), "md5", strlen("md5") + 1)) {
-		zval *data = 0, *response = 0, **md5 = 0;
-
+		zval *cmd = 0, *response = 0, **md5 = 0;
+		mongo_db *db = (mongo_db*)zend_object_store_get_object(c->parent TSRMLS_CC);
 		/* get the prefix */
 		int prefix_len = strchr(Z_STRVAL_P(c->name), '.') - Z_STRVAL_P(c->name);
 		char *prefix = estrndup(Z_STRVAL_P(c->name), prefix_len);
 
+		if (!db->name) {
+			zend_throw_exception(mongo_ce_Exception, "The MongoGridFS object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+			return;
+		}
+
 		/* create command */
-		MAKE_STD_ZVAL(data);
-		array_init(data);
+		MAKE_STD_ZVAL(cmd);
+		array_init(cmd);
 
-		add_assoc_zval(data, "filemd5", zid);
+		add_assoc_zval(cmd, "filemd5", zid);
 		zval_add_ref(&zid);
-		add_assoc_stringl(data, "root", prefix, prefix_len, 0);
-
-		MAKE_STD_ZVAL(response);
-		ZVAL_NULL(response);
+		add_assoc_stringl(cmd, "root", prefix, prefix_len, 0);
 
 		/* run command */
-		MONGO_CMD(response, c->parent);
+		response = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
 		/* make sure there wasn't an error */
 		if (!EG(exception) && zend_hash_find(HASH_P(response), "md5", strlen("md5") + 1, (void**)&md5) == SUCCESS) {
@@ -332,7 +333,7 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC)
 		if (!EG(exception)) {
 			zval_ptr_dtor(&response);
 		}
-		zval_ptr_dtor(&data);
+		zval_ptr_dtor(&cmd);
 	}
 }
 
@@ -414,9 +415,11 @@ PHP_METHOD(MongoGridFS, storeBytes)
 	zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
 	zval *cleanup_ids;
 	zval *chunk_id = NULL;
-
+	mongo_db *db;
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
 	MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
+	PHP_MONGO_GET_DB(c->parent);
 
 	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 	php_mongo_ensure_gridfs_index(&temp, chunks TSRMLS_CC);
@@ -477,18 +480,15 @@ PHP_METHOD(MongoGridFS, storeBytes)
 
 	/* Run GLE, just to ensure all the data has been written */
 	{
-		zval *data, *gle_retval;
+		zval *cmd, *gle_retval;
 
-		MAKE_STD_ZVAL(data);
-		array_init(data);
+		MAKE_STD_ZVAL(cmd);
+		array_init(cmd);
 
-		add_assoc_long(data, "getlasterror", 1);
-
-		MAKE_STD_ZVAL(gle_retval);
-		ZVAL_NULL(gle_retval);
+		add_assoc_long(cmd, "getlasterror", 1);
 
 		/* run command */
-		MONGO_CMD(gle_retval, c->parent);
+		gle_retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
 		if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
 			zval **err;
@@ -498,7 +498,7 @@ PHP_METHOD(MongoGridFS, storeBytes)
 				/* Intentionally not returning, the exception is checked a line later */
 			}
 		}
-		zval_ptr_dtor(&data);
+		zval_ptr_dtor(&cmd);
 		zval_ptr_dtor(&gle_retval);
 
 		if (EG(exception)) {
@@ -541,8 +541,6 @@ cleanup_on_failure:
  * these fields are only added if the user hasn't defined them. */
 static int setup_file_fields(zval *zfile, char *filename, int length TSRMLS_DC)
 {
-	zval temp;
-
 	/* filename */
 	if (filename && !zend_hash_exists(HASH_P(zfile), "filename", strlen("filename") + 1)) {
 		add_assoc_stringl(zfile, "filename", filename, strlen(filename), DUP);
@@ -551,9 +549,12 @@ static int setup_file_fields(zval *zfile, char *filename, int length TSRMLS_DC)
 	/* uploadDate */
 	if (!zend_hash_exists(HASH_P(zfile), "uploadDate", strlen("uploadDate") + 1)) {
 		zval *upload_date;
+		long sec, usec;
+
 		MAKE_STD_ZVAL(upload_date);
 		object_init_ex(upload_date, mongo_ce_Date);
-		MONGO_METHOD(MongoDate, __construct, &temp, upload_date);
+		php_mongo_mongodate_make_now(&sec, &usec);
+		php_mongo_mongodate_populate(upload_date, sec, usec TSRMLS_CC);
 
 		add_assoc_zval(zfile, "uploadDate", upload_date);
 	}
@@ -638,8 +639,10 @@ PHP_METHOD(MongoGridFS, storeFile)
 	zval *zid = 0, *zfile = 0, *chunks = 0;
 	zval *cleanup_ids;
 
+	mongo_db *db;
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(c->ns, MongoGridFS);
+	PHP_MONGO_GET_DB(c->parent);
 	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
 	php_mongo_ensure_gridfs_index(&temp, chunks TSRMLS_CC);
@@ -763,18 +766,15 @@ PHP_METHOD(MongoGridFS, storeFile)
 
 		/* Run GLE, just to ensure all the data has been written */
 		{
-			zval *data, *gle_retval;
+			zval *cmd, *gle_retval;
 
-			MAKE_STD_ZVAL(data);
-			array_init(data);
+			MAKE_STD_ZVAL(cmd);
+			array_init(cmd);
 
-			add_assoc_long(data, "getlasterror", 1);
-
-			MAKE_STD_ZVAL(gle_retval);
-			ZVAL_NULL(gle_retval);
+			add_assoc_long(cmd, "getlasterror", 1);
 
 			/* run command */
-			MONGO_CMD(gle_retval, c->parent);
+			gle_retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
 			if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
 				zval **err;
@@ -784,7 +784,7 @@ PHP_METHOD(MongoGridFS, storeFile)
 					/* Intentionally not returning, the exception is checked a line later */
 				}
 			}
-			zval_ptr_dtor(&data);
+			zval_ptr_dtor(&cmd);
 			zval_ptr_dtor(&gle_retval);
 			if (EG(exception)) {
 				revert = 1;
@@ -1199,10 +1199,10 @@ void mongo_init_MongoGridFS(TSRMLS_D)
 	ce.create_object = php_mongo_collection_new;
 	mongo_ce_GridFS = zend_register_internal_class_ex(&ce, mongo_ce_Collection, "MongoCollection" TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFS, "chunks", strlen("chunks"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFS, "chunks", strlen("chunks"), ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFS, "filesName", strlen("filesName"), ZEND_ACC_PROTECTED TSRMLS_CC);
-	zend_declare_property_null(mongo_ce_GridFS, "chunksName", strlen("chunksName"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFS, "filesName", strlen("filesName"), ZEND_ACC_PROTECTED|MONGO_ACC_READ_ONLY TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFS, "chunksName", strlen("chunksName"), ZEND_ACC_PROTECTED|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

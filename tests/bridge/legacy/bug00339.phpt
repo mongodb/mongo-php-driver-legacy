@@ -13,7 +13,7 @@ $c = $m->selectDB(dbname())->selectCollection("collection");
 
 try {
     $foo = array("foo" => time());
-    $result = $c->insert($foo, array("safe" => true, "timeout" => 1));
+    $result = $c->insert($foo, array("w" => true, "socketTimeoutMS" => 1));
 } catch(Exception $e) {
     var_dump(get_class($e), $e->getMessage());
     var_dump($foo);

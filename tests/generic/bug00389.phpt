@@ -51,6 +51,8 @@ for ( $i = 1; $i < 11; $i++ )
 ?>
 --EXPECTF--
 %s:%d: tailable cursor requested on non capped collection
+
+%s: Function MongoCursor::slaveOkay() is deprecated in %sbug00389.php on line %d
 Setting flag #1
 %s:%d: tailable cursor requested on non capped collection
 Setting flag #2

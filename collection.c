@@ -42,6 +42,7 @@ static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_
 static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
+static char *to_index_string(zval *zkeys TSRMLS_DC);
 
 /* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
    Initializes a new MongoCollection */
@@ -187,23 +188,75 @@ PHP_METHOD(MongoCollection, setReadPreference)
 }
 /* }}} */
 
+/* {{{ bool MongoCollection::getWriteConcern()
+   Get the MongoCollection WriteConcern */
+PHP_METHOD(MongoCollection, getWriteConcern)
+{
+	zval *write_concern, *wtimeout;
+
+	if (zend_parse_parameters_none()) {
+		return;
+	}
+
+	write_concern = zend_read_property(mongo_ce_DB, getThis(), "w", strlen("w"), 0 TSRMLS_CC);
+	wtimeout      = zend_read_property(mongo_ce_DB, getThis(), "wtimeout", strlen("wtimeout"), 0 TSRMLS_CC);
+	Z_ADDREF_P(write_concern);
+	Z_ADDREF_P(wtimeout);
+
+	array_init(return_value);
+	add_assoc_zval(return_value, "w", write_concern);
+	add_assoc_zval(return_value, "wtimeout", wtimeout);
+}
+/* }}} */
+
+/* {{{ bool MongoCollection::setWriteConcern(mixed w [, int wtimeout])
+   Sets the MongoCollection WriteConcern */
+PHP_METHOD(MongoCollection, setWriteConcern)
+{
+	zval *write_concern;
+	long  wtimeout;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|l", &write_concern, &wtimeout) == FAILURE) {
+		return;
+	}
+
+	if (Z_TYPE_P(write_concern) == IS_LONG) {
+		zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), 3 TSRMLS_CC);
+	} else if (Z_TYPE_P(write_concern) == IS_STRING) {
+		zend_update_property_stringl(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_STRVAL_P(write_concern), Z_STRLEN_P(write_concern) TSRMLS_CC);
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "expects parameter 1 to be an string or integer, %s given", zend_get_type_by_const(Z_TYPE_P(write_concern)));
+		RETURN_FALSE;
+	}
+
+	if (ZEND_NUM_ARGS() > 1) {
+		zend_update_property_long(mongo_ce_Collection, getThis(), "wtimeout", strlen("wtimeout"), wtimeout TSRMLS_CC);
+	}
+
+	RETURN_TRUE;
+}
+/* }}} */
+
 /* {{{ proto array MongoCollection::drop()
    Drops the current collection and returns the database response */
 PHP_METHOD(MongoCollection, drop)
 {
-	zval *data;
+	zval *cmd, *retval;
 	mongo_collection *c;
+	mongo_db *db;
 
 	PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_DB(c->parent);
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_zval(data, "drop", c->name);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_zval(cmd, "drop", c->name);
 	zval_add_ref(&c->name);
 
-	MONGO_CMD(return_value, c->parent);
+	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&cmd);
+	RETURN_ZVAL(retval, 0, 1);
 }
 /* }}} */
 
@@ -211,24 +264,27 @@ PHP_METHOD(MongoCollection, drop)
    Validates the current collection, optionally include the data, and returns the database response */
 PHP_METHOD(MongoCollection, validate)
 {
-	zval *data;
+	zval *cmd, *retval;
 	zend_bool scan_data = 0;
 	mongo_collection *c;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &scan_data) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_DB(c->parent);
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_string(data, "validate", Z_STRVAL_P(c->name), 1);
-	add_assoc_bool(data, "full", scan_data);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_string(cmd, "validate", Z_STRVAL_P(c->name), 1);
+	add_assoc_bool(cmd, "full", scan_data);
 
-	MONGO_CMD(return_value, c->parent);
+	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&cmd);
+	RETURN_ZVAL(retval, 0, 1);
 }
 /* }}} */
 
@@ -288,7 +344,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 	}
 
 	/* Fetch all the options from the options array */
-	if (options && !IS_SCALAR_P(options)) {
+	if (options && IS_ARRAY_OR_OBJECT_P(options)) {
 		zval **w_pp = NULL, **fsync_pp, **timeout_pp, **journal_pp;
 
 		/* First we try "w", and if that is not found we check for "safe" */
@@ -337,7 +393,11 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 			journal = Z_BVAL_PP(journal_pp);
 		}
 
-		if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**) &timeout_pp)) {
+		if (SUCCESS == zend_hash_find(HASH_P(options), "socketTimeoutMS", strlen("socketTimeoutMS") + 1, (void**) &timeout_pp)) {
+			convert_to_long(*timeout_pp);
+			timeout = Z_LVAL_PP(timeout_pp);
+		} else if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**) &timeout_pp)) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead");
 			convert_to_long(*timeout_pp);
 			timeout = Z_LVAL_PP(timeout_pp);
 		}
@@ -378,6 +438,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 			add_assoc_long(cmd, "wtimeout", Z_LVAL_PP(wtimeout_pp));
 			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d (wTimeoutMS from options array)", Z_LVAL_PP(wtimeout_pp));
 		} else if (options && zend_hash_find(HASH_P(options), "wtimeout", strlen("wtimeout") + 1, (void **)&wtimeout_pp) == SUCCESS) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'wtimeout' option is deprecated, please use 'wTimeoutMS' instead");
 			convert_to_long(*wtimeout_pp);
 			add_assoc_long(cmd, "wtimeout", Z_LVAL_PP(wtimeout_pp));
 			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d (wtimeout from options array)", Z_LVAL_PP(wtimeout_pp));
@@ -837,8 +898,9 @@ PHP_METHOD(MongoCollection, findOne)
 PHP_METHOD(MongoCollection, findAndModify)
 {
 	zval *query, *update = 0, *fields = 0, *options = 0;
-	zval *data, *tmpretval, **values;
+	zval *cmd, *retval, **values;
 	mongo_collection *c;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a!|a!a!a!", &query, &update, &fields, &options) == FAILURE) {
 		return;
@@ -846,37 +908,36 @@ PHP_METHOD(MongoCollection, findAndModify)
 
 	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+	PHP_MONGO_GET_DB(c->parent);
 
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
 
-	add_assoc_zval(data, "findandmodify", c->name);
+	add_assoc_zval(cmd, "findandmodify", c->name);
 	zval_add_ref(&c->name);
 
 	if (query && zend_hash_num_elements(Z_ARRVAL_P(query)) > 0) {
-		add_assoc_zval(data, "query", query);
+		add_assoc_zval(cmd, "query", query);
 		zval_add_ref(&query);
 	}
 	if (update && zend_hash_num_elements(Z_ARRVAL_P(update)) > 0) {
-		add_assoc_zval(data, "update", update);
+		add_assoc_zval(cmd, "update", update);
 		zval_add_ref(&update);
 	}
 	if (fields && zend_hash_num_elements(Z_ARRVAL_P(fields)) > 0) {
-		add_assoc_zval(data, "fields", fields);
+		add_assoc_zval(cmd, "fields", fields);
 		zval_add_ref(&fields);
 	}
 	if (options && zend_hash_num_elements(Z_ARRVAL_P(options)) > 0) {
 		zval temp;
-		zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
+		zend_hash_merge(HASH_P(cmd), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 	}
 
-	MAKE_STD_ZVAL(tmpretval);
-	ZVAL_NULL(tmpretval);
-	MONGO_CMD(tmpretval, c->parent);
+	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	if (php_mongo_trigger_error_on_command_failure(tmpretval TSRMLS_CC) == SUCCESS) {
-		if (zend_hash_find(Z_ARRVAL_P(tmpretval), "value", strlen("value") + 1, (void **)&values) == SUCCESS) {
+	if (php_mongo_trigger_error_on_command_failure(retval TSRMLS_CC) == SUCCESS) {
+		if (zend_hash_find(Z_ARRVAL_P(retval), "value", strlen("value") + 1, (void **)&values) == SUCCESS) {
 			array_init(return_value);
 			/* We may wind up with a NULL here if there simply aren't any results */
 			if (Z_TYPE_PP(values) == IS_ARRAY) {
@@ -887,8 +948,8 @@ PHP_METHOD(MongoCollection, findAndModify)
 		RETVAL_FALSE;
 	}
 
-	zval_ptr_dtor(&data);
-	zval_ptr_dtor(&tmpretval);
+	zval_ptr_dtor(&cmd);
+	zval_ptr_dtor(&retval);
 }
 /* }}} */
 
@@ -1031,7 +1092,7 @@ PHP_METHOD(MongoCollection, remove)
    Create the $keys index if it does not already exist */
 PHP_METHOD(MongoCollection, ensureIndex)
 {
-	zval *keys, *options = 0, *db, *system_indexes, *collection, *data, *key_str;
+	zval *keys, *options = 0, *db, *system_indexes, *collection, *data;
 	mongo_collection *c;
 	zend_bool done_name = 0;
 
@@ -1112,22 +1173,27 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	}
 
 	if (!done_name) {
-		/* turn keys into a string */
-		MAKE_STD_ZVAL(key_str);
-		ZVAL_NULL(key_str);
+		char *key_str;
+		int   key_str_len;
 
-		MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
-
-		if (Z_STRLEN_P(key_str) > MAX_INDEX_NAME_LEN) {
+		key_str = to_index_string(keys TSRMLS_CC);
+		if (!key_str) {
 			zval_ptr_dtor(&data);
-			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_P(key_str), MAX_INDEX_NAME_LEN);
-			zval_ptr_dtor(&key_str);
 			zval_ptr_dtor(&options);
 			return;
 		}
 
-		add_assoc_zval(data, "name", key_str);
-		zval_add_ref(&key_str);
+		key_str_len = strlen(key_str);
+
+		if (key_str_len > MAX_INDEX_NAME_LEN) {
+			zval_ptr_dtor(&data);
+			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", key_str_len, MAX_INDEX_NAME_LEN);
+			efree(key_str);
+			zval_ptr_dtor(&options);
+			return;
+		}
+
+		add_assoc_stringl(data, "name", key_str, key_str_len, 0);
 	}
 
 	MONGO_METHOD2(MongoCollection, insert, return_value, collection, data, options);
@@ -1137,10 +1203,6 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	zval_ptr_dtor(&system_indexes);
 	zval_ptr_dtor(&collection);
 	zval_ptr_dtor(&keys);
-
-	if (!done_name) {
-		zval_ptr_dtor(&key_str);
-	}
 }
 /* }}} */
 
@@ -1148,27 +1210,35 @@ PHP_METHOD(MongoCollection, ensureIndex)
    Remove the $keys index */
 PHP_METHOD(MongoCollection, deleteIndex)
 {
-	zval *keys, *key_str, *data;
+	zval *keys, *cmd, *retval;
+	char *key_str;
 	mongo_collection *c;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &keys) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(key_str);
-	MONGO_METHOD1(MongoCollection, toIndexString, key_str, NULL, keys);
+	key_str = to_index_string(keys TSRMLS_CC);
+	if (!key_str) {
+		return;
+	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_DB(c->parent);
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_zval(data, "deleteIndexes", c->name);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_zval(cmd, "deleteIndexes", c->name);
 	zval_add_ref(&c->name);
-	add_assoc_zval(data, "index", key_str);
+	add_assoc_string(cmd, "index", key_str, 1);
 
-	MONGO_CMD(return_value, c->parent);
+	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&cmd);
+	efree(key_str);
+
+	RETVAL_ZVAL(retval, 0, 1);
 }
 /* }}} */
 
@@ -1176,19 +1246,23 @@ PHP_METHOD(MongoCollection, deleteIndex)
    Removes all indexes for this collection */
 PHP_METHOD(MongoCollection, deleteIndexes)
 {
-	zval *data;
+	zval *cmd, *retval;
 	mongo_collection *c;
+	mongo_db *db;
+
 	PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_DB(c->parent);
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
 
-	add_assoc_string(data, "deleteIndexes", Z_STRVAL_P(c->name), 1);
-	add_assoc_string(data, "index", "*", 1);
+	add_assoc_string(cmd, "deleteIndexes", Z_STRVAL_P(c->name), 1);
+	add_assoc_string(cmd, "index", "*", 1);
 
-	MONGO_CMD(return_value, c->parent);
+	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&cmd);
+	RETURN_ZVAL(retval, 0, 1);
 }
 /* }}} */
 
@@ -1242,37 +1316,36 @@ PHP_METHOD(MongoCollection, getIndexInfo)
    Count all documents matching $criteria with an optional limit and/or skip */
 PHP_METHOD(MongoCollection, count)
 {
-	zval *response, *data, *query=0;
+	zval *response, *cmd, *query=0;
 	long limit = 0, skip = 0;
 	zval **n;
 	mongo_collection *c;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zll", &query, &limit, &skip) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_DB(c->parent);
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_string(data, "count", Z_STRVAL_P(c->name), 1);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_string(cmd, "count", Z_STRVAL_P(c->name), 1);
 	if (query) {
-		add_assoc_zval(data, "query", query);
+		add_assoc_zval(cmd, "query", query);
 		zval_add_ref(&query);
 	}
 	if (limit) {
-		add_assoc_long(data, "limit", limit);
+		add_assoc_long(cmd, "limit", limit);
 	}
 	if (skip) {
-		add_assoc_long(data, "skip", skip);
+		add_assoc_long(cmd, "skip", skip);
 	}
 
-	MAKE_STD_ZVAL(response);
-	ZVAL_NULL(response);
+	response = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	MONGO_CMD_WITH_RP(response, c->parent, c);
-
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&cmd);
 
 	if (EG(exception) || Z_TYPE_P(response) != IS_ARRAY) {
 		zval_ptr_dtor(&response);
@@ -1386,17 +1459,10 @@ static char *replace_dots(char *key, int key_len, char *position)
 	return position;
 }
 
-/* {{{ proto protected static string MongoCollection::toIndexString(array|string keys)
-   Converts $keys to an identifying string for an index */
-PHP_METHOD(MongoCollection, toIndexString)
+static char *to_index_string(zval *zkeys TSRMLS_DC)
 {
-	zval *zkeys;
 	char *name, *position;
 	int len = 0;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zkeys) == FAILURE) {
-		return;
-	}
 
 	if (Z_TYPE_P(zkeys) == IS_ARRAY || Z_TYPE_P(zkeys) == IS_OBJECT) {
 		HashTable *hindex = HASH_P(zkeys);
@@ -1496,9 +1562,30 @@ PHP_METHOD(MongoCollection, toIndexString)
 		*(position) = '\0';
 	} else {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The key needs to be either a string or an array");
+		return NULL;
+	}
+
+	return name;
+}
+
+/* {{{ proto protected static string MongoCollection::toIndexString(array|string keys)
+   Converts $keys to an identifying string for an index */
+PHP_METHOD(MongoCollection, toIndexString)
+{
+	zval *zkeys;
+	char *key_str;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zkeys) == FAILURE) {
 		return;
 	}
-	RETURN_STRING(name, 0)
+
+	key_str = to_index_string(zkeys TSRMLS_CC);
+
+	if (key_str) {
+		RETVAL_STRING(key_str, 0);
+	} else {
+		return;
+	}
 }
 /* }}} */
 
@@ -1509,14 +1596,16 @@ PHP_METHOD(MongoCollection, toIndexString)
    "result" key of the response. */
 PHP_METHOD(MongoCollection, aggregate)
 {
-	zval ***argv, *pipeline, *data, *tmp;
+	zval ***argv, *pipeline, *cmd, *retval, *tmp;
 	int argc, i;
 	mongo_collection *c;
+	mongo_db *db;
 
 	zpp_var_args(argv, argc);
 
 	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+	PHP_MONGO_GET_DB(c->parent);
 
 	for (i = 0; i < argc; i++) {
 		tmp = *argv[i];
@@ -1527,10 +1616,10 @@ PHP_METHOD(MongoCollection, aggregate)
 		}
 	}
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
 
-	add_assoc_zval(data, "aggregate", c->name);
+	add_assoc_zval(cmd, "aggregate", c->name);
 	zval_add_ref(&c->name);
 
 	/* If the single array argument contains a zeroth index, consider it an
@@ -1538,7 +1627,7 @@ PHP_METHOD(MongoCollection, aggregate)
 	 * operator and allow it to be wrapped in an array. */
 	if (argc == 1 && zend_hash_index_exists(Z_ARRVAL_PP(argv[0]), 0)) {
 		Z_ADDREF_PP(*argv);
-		add_assoc_zval(data, "pipeline", **argv);
+		add_assoc_zval(cmd, "pipeline", **argv);
 	} else {
 		MAKE_STD_ZVAL(pipeline);
 		array_init(pipeline);
@@ -1553,13 +1642,15 @@ PHP_METHOD(MongoCollection, aggregate)
 				RETURN_FALSE;
 			}
 		}
-		add_assoc_zval(data, "pipeline", pipeline);
+		add_assoc_zval(cmd, "pipeline", pipeline);
 	}
 	efree(argv);
 
-	MONGO_CMD_WITH_RP(return_value, c->parent, c);
+	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&cmd);
+
+	RETVAL_ZVAL(retval, 0, 1);
 }
 /* }}} */
 
@@ -1572,8 +1663,9 @@ PHP_METHOD(MongoCollection, distinct)
 {
 	char *key;
 	int key_len;
-	zval *data, **values, *tmp, *query = NULL;
+	zval *cmd, **values, *tmp, *query = NULL;
 	mongo_collection *c;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &key, &key_len, &query) == FAILURE) {
 		return;
@@ -1581,21 +1673,21 @@ PHP_METHOD(MongoCollection, distinct)
 
 	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+	PHP_MONGO_GET_DB(c->parent);
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
 
-	add_assoc_zval(data, "distinct", c->name);
+	add_assoc_zval(cmd, "distinct", c->name);
 	zval_add_ref(&c->name);
-	add_assoc_stringl(data, "key", key, key_len, 1);
+	add_assoc_stringl(cmd, "key", key, key_len, 1);
 
 	if (query) {
-		add_assoc_zval(data, "query", query);
+		add_assoc_zval(cmd, "query", query);
 		zval_add_ref(&query);
 	}
 
-	MAKE_STD_ZVAL(tmp);
-	MONGO_CMD_WITH_RP(tmp, c->parent, c);
+	tmp = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
 	if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values") + 1, (void **)&values) == SUCCESS) {
 #ifdef array_init_size
@@ -1608,7 +1700,7 @@ PHP_METHOD(MongoCollection, distinct)
 		RETVAL_FALSE;
 	}
 
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&cmd);
 	zval_ptr_dtor(&tmp);
 }
 /* }}} */
@@ -1618,9 +1710,13 @@ PHP_METHOD(MongoCollection, distinct)
    Aggregation results will be stored in the "retval" key of the response. */
 PHP_METHOD(MongoCollection, group)
 {
-	zval *key, *initial, *options = 0, *group, *data, *reduce;
+	zval *key, *initial, *options = 0, *group, *cmd, *reduce;
+	zval *retval;
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	mongo_db *db;
+
 	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+	PHP_MONGO_GET_DB(c->parent);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|z", &key, &initial, &reduce, &options) == FAILURE) {
 		return;
@@ -1648,7 +1744,7 @@ PHP_METHOD(MongoCollection, group)
 
 	if (Z_TYPE_P(key) == IS_OBJECT && Z_OBJCE_P(key) == mongo_ce_Code) {
 		add_assoc_zval(group, "$keyf", key);
-	} else if (!IS_SCALAR_P(key)) {
+	} else if (IS_ARRAY_OR_OBJECT_P(key)) {
 		add_assoc_zval(group, "key", key);
 	} else {
 		zval_ptr_dtor(&group);
@@ -1682,14 +1778,16 @@ PHP_METHOD(MongoCollection, group)
 	add_assoc_zval(group, "initial", initial);
 	zval_add_ref(&initial);
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_zval(data, "group", group);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_zval(cmd, "group", group);
 
-	MONGO_CMD_WITH_RP(return_value, c->parent, c);
+	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&cmd);
 	zval_ptr_dtor(&reduce);
+
+	RETURN_ZVAL(retval, 0, 1);
 }
 /* }}} */
 
@@ -1755,6 +1853,14 @@ ZEND_END_ARG_INFO()
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, read_preference)
 	ZEND_ARG_ARRAY_INFO(0, tags, 0) /* Yes, this should be an array */
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getWriteConcern, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setWriteConcern, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, w)
+	ZEND_ARG_INFO(0, wtimeout)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_validate, 0, ZEND_RETURN_VALUE, 0)
@@ -1848,6 +1954,8 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoCollection, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCollection, getWriteConcern, arginfo_getWriteConcern, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCollection, setWriteConcern, arginfo_setWriteConcern, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, drop, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, validate, arginfo_validate, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, insert, arginfo_insert, ZEND_ACC_PUBLIC)
@@ -1865,7 +1973,7 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, save, arginfo_insert, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, createDBRef, arginfo_createDBRef, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, getDBRef, arginfo_getDBRef, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCollection, toIndexString, arginfo_toIndexString, ZEND_ACC_PROTECTED|ZEND_ACC_STATIC)
+	PHP_ME(MongoCollection, toIndexString, arginfo_toIndexString, ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED|ZEND_ACC_STATIC)
 	PHP_ME(MongoCollection, group, arginfo_group, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, distinct, arginfo_distinct, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, aggregate, arginfo_aggregate, ZEND_ACC_PUBLIC)

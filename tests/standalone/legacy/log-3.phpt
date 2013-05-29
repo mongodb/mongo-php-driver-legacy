@@ -15,7 +15,7 @@ set_error_handler('error_handler');
 MongoLog::setModule(MongoLog::PARSE);
 MongoLog::setLevel(MongoLog::ALL);
 $dsn = MongoShellServer::getStandaloneInfo();
-$m = new Mongo("mongodb://$dsn");
+$m = new MongoClient("mongodb://$dsn");
 ?>
 --EXPECTF--
 PARSE   INFO: Parsing mongodb://%s:%d

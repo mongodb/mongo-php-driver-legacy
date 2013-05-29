@@ -16,7 +16,7 @@
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1
 
-#define PHP_MONGO_VERSION "1.4.1dev"
+#define PHP_MONGO_VERSION "1.5.0dev"
 #define PHP_MONGO_EXTNAME "mongo"
 
 #ifdef HAVE_CONFIG_H
@@ -225,23 +225,12 @@ typedef __int64 int64_t;
 	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 5, param5);	\
 	POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
-#define MONGO_CMD(retval, thisptr) MONGO_METHOD1(MongoDB, command, retval, thisptr, data)
-#define MONGO_CMD_WITH_RP(retval, thisptr, collection) \
-	do { \
-		mongo_db *db = (mongo_db*)zend_object_store_get_object(collection->parent TSRMLS_CC); \
-		mongo_read_preference rp; \
-		mongo_read_preference_copy(&db->read_pref, &rp); \
-		mongo_read_preference_replace(&collection->read_pref, &db->read_pref); \
-		MONGO_METHOD1(MongoDB, command, retval, thisptr, data) \
-		mongo_read_preference_replace(&rp, &db->read_pref); \
-		mongo_read_preference_dtor(&rp); \
-	} while(0);
-
 #define HASH_P(a) (Z_TYPE_P(a) == IS_ARRAY ? Z_ARRVAL_P(a) : Z_OBJPROP_P(a))
 #define HASH_PP(a) (Z_TYPE_PP(a) == IS_ARRAY ? Z_ARRVAL_PP(a) : Z_OBJPROP_PP(a))
 
-#define IS_SCALAR_P(a) (Z_TYPE_P(a) != IS_ARRAY && Z_TYPE_P(a) != IS_OBJECT)
-#define IS_SCALAR_PP(a) (Z_TYPE_PP(a) != IS_ARRAY && Z_TYPE_PP(a) != IS_OBJECT)
+#define IS_SCALAR_P(a) (Z_TYPE_P(a) == IS_NULL || Z_TYPE_P(a) == IS_LONG || Z_TYPE_P(a) == IS_DOUBLE || Z_TYPE_P(a) == IS_BOOL || Z_TYPE_P(a) == IS_STRING)
+#define IS_SCALAR_PP(a) (Z_TYPE_PP(a) == IS_NULL || Z_TYPE_PP(a) == IS_LONG || Z_TYPE_PP(a) == IS_DOUBLE || Z_TYPE_PP(a) == IS_BOOL || Z_TYPE_PP(a) == IS_STRING)
+#define IS_ARRAY_OR_OBJECT_P(a) (Z_TYPE_P(a) == IS_ARRAY || Z_TYPE_P(a) == IS_OBJECT)
 
 /* TODO: this should be expanded to handle long_as_object being set */
 #define Z_NUMVAL_P(variable, value)                                     \
@@ -260,6 +249,21 @@ typedef __int64 int64_t;
 }
 #endif
 
+#define PHP_MONGO_TYPE_OBJ_NEW(mongo_obj)                    \
+	zend_object_value retval;                           \
+	mongo_obj *intern;                                  \
+	                                                    \
+	intern = (mongo_obj*)emalloc(sizeof(mongo_obj));               \
+	memset(intern, 0, sizeof(mongo_obj));                          \
+	                                                               \
+	zend_object_std_init(&intern->std, class_type TSRMLS_CC);      \
+	init_properties(intern);                                       \
+	                                                               \
+	retval.handle = zend_objects_store_put(intern,(zend_objects_store_dtor_t) zend_objects_destroy_object, php_##mongo_obj##_free, NULL TSRMLS_CC); \
+	retval.handlers = &mongo_type_object_handlers;                     \
+	                                                               \
+	return retval;
+
 #define PHP_MONGO_OBJ_NEW(mongo_obj)                    \
 	zend_object_value retval;                           \
 	mongo_obj *intern;                                  \
@@ -275,8 +279,19 @@ typedef __int64 int64_t;
 	                                                               \
 	return retval;
 
+zend_object_value php_mongo_type_object_new(zend_class_entry *class_type TSRMLS_DC);
+void php_mongo_type_object_free(void *object TSRMLS_DC);
+
 #define RS_PRIMARY 1
 #define RS_SECONDARY 2
+
+
+/* Used in our _write_property() handler to mark properties are userland Read Only */
+#define MONGO_ACC_READ_ONLY 0x10000000
+
+typedef struct {
+	zend_object std;
+} mongo_type_object;
 
 typedef struct {
 	zend_object std;

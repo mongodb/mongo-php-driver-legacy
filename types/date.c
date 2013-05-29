@@ -15,45 +15,46 @@
  */
 #include <php.h>
 #include "../php_mongo.h"
+#include "date.h"
 
 zend_class_entry *mongo_ce_Date = NULL;
+
+void php_mongo_mongodate_make_now(long *sec, long *usec)
+{
+#ifdef WIN32
+	*sec = (long) time(0);
+#else
+	struct timeval time;
+
+	gettimeofday(&time, NULL);
+	*sec = time.tv_sec;
+	*usec = (time.tv_usec / 1000) * 1000;
+#endif
+}
 
 /* {{{ MongoDate::__construct
  */
 PHP_METHOD(MongoDate, __construct)
 {
-	long arg1 = 0, arg2 = 0;
+	long sec = 0, usec = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &arg1, &arg2) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &sec, &usec) == FAILURE) {
 		return;
 	}
 
-	switch (ZEND_NUM_ARGS()) {
-		case 2:
-			zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), arg2 TSRMLS_CC);
-			/* fallthrough */
-
-		case 1:
-			zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), arg1 TSRMLS_CC);
-			/* usec is already 0, if not set above */
-			break;
-
-		case 0: {
-#ifdef WIN32
-			time_t sec = time(0);
-			zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
-			zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), 0 TSRMLS_CC);
-#else
-			struct timeval time;
-			gettimeofday(&time, NULL);
-
-			zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), time.tv_sec TSRMLS_CC);
-			zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), (time.tv_usec / 1000) * 1000 TSRMLS_CC);
-#endif
-		}
+	if (ZEND_NUM_ARGS() == 0) {
+		php_mongo_mongodate_make_now(&sec, &usec);
 	}
+
+	php_mongo_mongodate_populate(getThis(), sec, usec TSRMLS_CC);
 }
 /* }}} */
+
+void php_mongo_mongodate_populate(zval *mongocode_object, long sec, long usec TSRMLS_DC)
+{
+	zend_update_property_long(mongo_ce_Date, mongocode_object, "usec", strlen("usec"), usec TSRMLS_CC);
+	zend_update_property_long(mongo_ce_Date, mongocode_object, "sec", strlen("sec"), sec TSRMLS_CC);
+}
 
 
 /* {{{ MongoDate::__toString()
@@ -84,10 +85,11 @@ void mongo_init_MongoDate(TSRMLS_D)
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "MongoDate", MongoDate_methods);
+	ce.create_object = php_mongo_type_object_new;
 	mongo_ce_Date = zend_register_internal_class(&ce TSRMLS_CC);
 
-	zend_declare_property_long(mongo_ce_Date, "sec", strlen("sec"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_long(mongo_ce_Date, "usec", strlen("usec"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_long(mongo_ce_Date, "sec", strlen("sec"), 0, ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
+	zend_declare_property_long(mongo_ce_Date, "usec", strlen("usec"), 0, ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

@@ -54,7 +54,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 zend_class_entry *mongo_ce_MongoClient;
 
 extern zend_class_entry *mongo_ce_DB, *mongo_ce_Cursor, *mongo_ce_Exception;
-extern zend_class_entry *mongo_ce_ConnectionException;
+extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Mongo, *mongo_ce_Int64;
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, server)
@@ -86,6 +86,10 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_dropDB, 0, ZEND_RETURN_VALUE
 	ZEND_ARG_INFO(0, MongoDB_object_OR_database_name)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_killCursor, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, cursor_id)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry mongo_methods[] = {
 	PHP_ME(MongoClient, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, getConnections, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
@@ -100,6 +104,7 @@ static zend_function_entry mongo_methods[] = {
 	PHP_ME(MongoClient, listDBs, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, getHosts, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, killCursor, arginfo_killCursor, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 
 	{ NULL, NULL, NULL }
 };
@@ -126,14 +131,13 @@ static void php_mongoclient_free(void *object TSRMLS_DC)
 /* }}} */
 
 #if PHP_VERSION_ID >= 50400
-zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC)
+void mongo_write_property(zval *object, zval *member, zval *value, const zend_literal *key TSRMLS_DC)
 #else
-zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
+void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC)
 #endif
 {
-	zval *retval;
 	zval tmp_member;
-	mongoclient *obj;
+	zend_property_info *property_info;
 
 	if (member->type != IS_STRING) {
 		tmp_member = *member;
@@ -142,10 +146,63 @@ zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 		member = &tmp_member;
 	}
 
-	obj = (mongoclient *)zend_objects_get_address(object TSRMLS_CC);
-	if (strcmp(Z_STRVAL_P(member), "connected") == 0) {
+	property_info = zend_get_property_info(Z_OBJCE_P(object), member, 1 TSRMLS_CC);
+
+	if (property_info && property_info->flags & ZEND_ACC_DEPRECATED) {
+		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
+	}
+	if (property_info && property_info->flags & MONGO_ACC_READ_ONLY) {
+		/* If its the object itself that is updating the property, then its OK */
+		if (EG(scope) != Z_OBJCE_P(object)) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is read-only", Z_STRVAL_P(member));
+			if (member == &tmp_member) {
+				zval_dtor(member);
+			}
+
+			/* Disallow the property write */
+			return;
+		}
+	}
+
+#if PHP_VERSION_ID >= 50400
+	(zend_get_std_object_handlers())->write_property(object, member, value, key TSRMLS_CC);
+#else
+	(zend_get_std_object_handlers())->write_property(object, member, value TSRMLS_CC);
+#endif
+
+	if (member == &tmp_member) {
+		zval_dtor(member);
+	}
+}
+
+#if PHP_VERSION_ID >= 50400
+zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC)
+#else
+zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
+#endif
+{
+	zval *retval;
+	zval tmp_member;
+	zend_property_info *property_info;
+
+	if (member->type != IS_STRING) {
+		tmp_member = *member;
+		zval_copy_ctor(&tmp_member);
+		convert_to_string(&tmp_member);
+		member = &tmp_member;
+	}
+
+	property_info = zend_get_property_info(Z_OBJCE_P(object), member, 1 TSRMLS_CC);
+
+	if (property_info && property_info->flags & ZEND_ACC_DEPRECATED) {
+		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
+	}
+
+	if (instanceof_function(Z_OBJCE_P(object), mongo_ce_MongoClient TSRMLS_CC) && strcmp(Z_STRVAL_P(member), "connected") == 0) {
 		char *error_message = NULL;
+		mongoclient *obj = (mongoclient *)zend_objects_get_address(object TSRMLS_CC);
 		mongo_connection *conn = mongo_get_read_write_connection(obj->manager, obj->servers, MONGO_CON_FLAG_READ|MONGO_CON_FLAG_DONT_CONNECT, (char**) &error_message);
+
 		ALLOC_INIT_ZVAL(retval);
 		Z_SET_REFCOUNT_P(retval, 0);
 		ZVAL_BOOL(retval, conn ? 1 : 0);
@@ -163,6 +220,7 @@ zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 	if (member == &tmp_member) {
 		zval_dtor(member);
 	}
+
 	return retval;
 }
 
@@ -223,6 +281,10 @@ zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC)
 	zend_object_value retval;
 	mongoclient *intern;
 
+	if (class_type == mongo_ce_Mongo) {
+		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The Mongo class is deprecated, please use the MongoClient class");
+	}
+
 	intern = (mongoclient*)emalloc(sizeof(mongoclient));
 	memset(intern, 0, sizeof(mongoclient));
 
@@ -248,6 +310,7 @@ void mongo_init_MongoClient(TSRMLS_D)
 	memcpy(&mongoclient_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 	mongoclient_handlers.clone_obj = NULL;
 	mongoclient_handlers.read_property = mongo_read_property;
+	mongoclient_handlers.write_property = mongo_write_property;
 #if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3
 	mongoclient_handlers.get_debug_info = mongo_get_debug_info;
 #endif
@@ -265,10 +328,10 @@ void mongo_init_MongoClient(TSRMLS_D)
 	zend_declare_class_constant_string(mongo_ce_MongoClient, "RP_NEAREST", strlen("RP_NEAREST"), "nearest" TSRMLS_CC);
 
 	/* Mongo fields */
-	zend_declare_property_bool(mongo_ce_MongoClient, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_null(mongo_ce_MongoClient, "status", strlen("status"), ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_null(mongo_ce_MongoClient, "server", strlen("server"), ZEND_ACC_PROTECTED TSRMLS_CC);
-	zend_declare_property_null(mongo_ce_MongoClient, "persistent", strlen("persistent"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_bool(mongo_ce_MongoClient, "connected", strlen("connected"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_MongoClient, "status", strlen("status"), ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED  TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_MongoClient, "server", strlen("server"), ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED  TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_MongoClient, "persistent", strlen("persistent"), ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED  TSRMLS_CC);
 }
 
 /* {{{ Helper for connecting the servers */
@@ -808,25 +871,29 @@ PHP_METHOD(MongoClient, dropDB)
  */
 PHP_METHOD(MongoClient, listDBs)
 {
-	zval *admin, *data, *db;
+	zval *admin, *cmd, *zdb, *retval;
+	mongo_db *db;
 
 	MAKE_STD_ZVAL(admin);
 	ZVAL_STRING(admin, "admin", 1);
 
-	MAKE_STD_ZVAL(db);
+	MAKE_STD_ZVAL(zdb);
 
-	MONGO_METHOD1(MongoClient, selectDB, db, getThis(), admin);
+	MONGO_METHOD1(MongoClient, selectDB, zdb, getThis(), admin);
 
+	PHP_MONGO_GET_DB(zdb);
 	zval_ptr_dtor(&admin);
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_long(data, "listDatabases", 1);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_long(cmd, "listDatabases", 1);
 
-	MONGO_CMD(return_value, db);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
-	zval_ptr_dtor(&data);
-	zval_ptr_dtor(&db);
+	zval_ptr_dtor(&cmd);
+	zval_ptr_dtor(&zdb);
+
+	RETVAL_ZVAL(retval, 0, 1);
 }
 /* }}} */
 
@@ -942,6 +1009,33 @@ PHP_METHOD(MongoClient, getConnections)
 		add_next_index_zval(return_value, entry);
 
 		ptr = ptr->next;
+	}
+}
+/* }}} */
+
+/* {{{ proto static array MongoClient::killCursor(string server_hash, int|MongoInt64 id)
+   Kills the cursor on the server with the specified id */
+PHP_METHOD(MongoClient, killCursor)
+{
+	char *hash;
+	int   hash_len;
+	long cursor_id;
+	mongo_connection *con;
+	zval *int64_id = NULL;
+
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "sO", &hash, &hash_len, &int64_id, mongo_ce_Int64) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &hash, &hash_len, &cursor_id) == FAILURE) {
+			return;
+		}
+	}
+
+	con = mongo_manager_connection_find_by_hash(MonGlo(manager), hash);
+	if (int64_id) {
+		zval *z_int64 = zend_read_property(mongo_ce_Int64, int64_id, "value", strlen("value"), NOISY TSRMLS_CC);
+
+		php_mongo_kill_cursor(con, atoll(Z_STRVAL_P(z_int64)) TSRMLS_CC);
+	} else {
+		php_mongo_kill_cursor(con, cursor_id TSRMLS_CC);
 	}
 }
 /* }}} */

@@ -50,7 +50,7 @@ void mongo_init_MongoResultException(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoResultException", MongoResultException_methods);
 	mongo_ce_ResultException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED  TSRMLS_CC);
 }
 
 /*

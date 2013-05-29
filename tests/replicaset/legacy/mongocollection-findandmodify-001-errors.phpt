@@ -6,7 +6,7 @@ MongoCollection::findAndModify() helper
 <?php
 require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = new_mongo();
 $col = $m->selectDB(dbname())->jobs;
 
 $col->remove();

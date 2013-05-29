@@ -16,7 +16,7 @@ MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::ALL);
 
 $config = MongoShellServer::getReplicasetInfo();
-$m = new Mongo("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
+$m = new MongoClient("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
 
 MongoLog::setModule(0);
 MongoLog::setLevel(0);

@@ -1,11 +1,11 @@
 --TEST--
-Test for PHP-233: support keep_going flag.
+Test for PHP-233: support keep_going (continueOnError) flag
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-$db = new MongoDB(mongo_standalone(), "phpunit");
+$db = new MongoDB(new_mongo_standalone(), "phpunit");
 $object = $db->selectCollection('c');
 $object->drop();
 
@@ -30,7 +30,12 @@ $doc4 = array(
 	'desc' => "FOUR",
 );
 
-$object->batchInsert(array($doc1, $doc2, $doc3, $doc4), array('continueOnError' => true));
+try {
+	$object->batchInsert(array($doc1, $doc2, $doc3, $doc4), array('continueOnError' => true));
+} catch (MongoException $e) {
+	echo $e->getCode(), "\n";
+	echo $e->getMessage(), "\n";
+}
 
 $c = $object->find();
 foreach ($c as $item) {
@@ -38,6 +43,8 @@ foreach ($c as $item) {
 }
 ?>
 --EXPECTF--
+11000
+%s:%d: E11000 duplicate key error index: %s.c.$_id_  dup key: { : ObjectId('4cb4ab6d7addf98506010002') }
 array(3) {
   ["_id"]=>
   object(MongoId)#%d (1) {
