@@ -242,6 +242,10 @@ PHP_METHOD(MongoCursor, __construct)
 	MUST_BE_ARRAY_OR_OBJECT(3, zquery);
 	MUST_BE_ARRAY_OR_OBJECT(4, zfields);
 
+	cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	link = (mongoclient*)zend_object_store_get_object(zlink TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(link->manager, MongoClient);
+
 	/* if query or fields weren't passed, make them default to an empty array */
 	MAKE_STD_ZVAL(empty);
 	object_init(empty);
@@ -254,9 +258,6 @@ PHP_METHOD(MongoCursor, __construct)
 	if (!zfields) {
 		zfields = empty;
 	}
-
-	cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	link = (mongoclient*)zend_object_store_get_object(zlink TSRMLS_CC);
 
 	/* db connection */
 	cursor->zmongoclient = zlink;
