@@ -573,8 +573,14 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 	if (strcasecmp(option_name, "w") == 0) {
 		/* Rough check to see whether this is a numeric string or not */
-		if ((option_value[0] >= '0' && option_value[0] <= '9') || option_value[0] == '-') {
-			servers->options.default_w = atoi(option_value);
+		char *endptr;
+		long tmp_value;
+		
+		tmp_value = strtol(option_value, &endptr, 10);
+		/* If no invalid character is found (endptr == 0), we consider the
+		 * option value as a number */
+		if (!*endptr) {
+			servers->options.default_w = tmp_value;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': %d", servers->options.default_w);
 			if (servers->options.default_w < 0) {
 				*error_message = strdup("The value of 'w' needs to be 0 or higher (or a string).");
