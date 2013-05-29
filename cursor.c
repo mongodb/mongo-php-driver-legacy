@@ -111,7 +111,7 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting cursor header");
 
-	client = (mongoclient*)zend_object_store_get_object(cursor->zmongoclient TSRMLS_CC);
+	PHP_MONGO_GET_MONGOCLIENT_FROM_CURSOR(cursor);
 	status = client->manager->recv_header(con, &client->servers->options, cursor->timeout, buf, REPLY_HEADER_LEN, error_message);
 	if (status < 0) {
 		/* Read failed, error message populated by recv_header */
@@ -167,7 +167,9 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
  * Returns -31 on failure, -80 on timeout, -32 on EOF, or an int indicating the number of bytes read */
 static int get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC)
 {
-	mongoclient *client = (mongoclient*)zend_object_store_get_object(cursor->zmongoclient TSRMLS_CC);
+	mongoclient *client;
+		
+	PHP_MONGO_GET_MONGOCLIENT_FROM_CURSOR(cursor);
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting cursor body");
 
 	if (cursor->buf.start) {
@@ -407,7 +409,8 @@ PHP_METHOD(MongoCursor, hasNext)
 	mongo_log_stream_getmore(cursor->connection, cursor TSRMLS_CC);
 #endif
 
-	client = (mongoclient*)zend_object_store_get_object(cursor->zmongoclient TSRMLS_CC);
+	PHP_MONGO_GET_MONGOCLIENT_FROM_CURSOR(cursor);
+
 	if (client->manager->send(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		efree(buf.start);
 
