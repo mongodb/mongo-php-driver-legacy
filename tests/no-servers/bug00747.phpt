@@ -1,5 +1,7 @@
 --TEST--
 Test for PHP-747: Improve numeric check for write concern option
+--SKIPIF--
+<?php if (version_compare(phpversion(), "5.3.0", "lt")) exit("skip setCallback and closures are 5.3+"); ?>
 --FILE--
 <?php
 include 'tests/utils/server.inc';
