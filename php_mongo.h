@@ -369,7 +369,10 @@ typedef struct {
 
 #define PHP_MONGO_GET_CURSOR(obj) \
 	cursor = (mongo_cursor*)zend_object_store_get_object((obj) TSRMLS_CC); \
-	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
+
+#define PHP_MONGO_GET_MONGOCLIENT_FROM_CURSOR(cursor) \
+	client = (mongoclient*)zend_object_store_get_object((cursor)->zmongoclient TSRMLS_CC);
 
 #define PHP_MONGO_CHECK_EXCEPTION() if (EG(exception)) { return; }
 
@@ -418,7 +421,7 @@ typedef struct {
 
 	/* Connection */
 	mongo_connection *connection;
-	zval *resource;
+	zval *zmongoclient;
 
 	/* collection namespace */
 	char *ns;
