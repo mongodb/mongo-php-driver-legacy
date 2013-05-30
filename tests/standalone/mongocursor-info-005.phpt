@@ -6,6 +6,8 @@ MongoCursor::info() (64bit, native_long=0, long_as_object=0)
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+ini_set('mongo.native_long', 0);
+ini_set('mongo.long_as_object', 0);
 
 $host = MongoShellServer::getShardInfo();
 $mc = new MongoClient($host[0]);
@@ -23,5 +25,5 @@ echo gettype($info['id']), "\n";
 var_dump($info['id']);
 ?>
 --EXPECTF--
-integer
-int(%d)
+double
+float(%f)
