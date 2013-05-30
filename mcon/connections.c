@@ -253,6 +253,12 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 	tmp->last_reqid = rand();
 	tmp->connection_type = MONGO_NODE_STANDALONE;
 
+	/* Default server options */
+	/* MongoDB pre-1.8; Spec says default to 4 MB */
+	tmp->max_bson_size = 4194304;
+	/* MongoDB pre-2.4; Spec says default to 2 * the maxBsonSize */
+	tmp->max_message_size = 2 * tmp->max_bson_size;
+
 	/* Store hash */
 	tmp->hash = strdup(hash);
 
@@ -263,13 +269,6 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error while creating connection for %s:%d: %s", server_def->host, server_def->port, *error_message);
 		mongo_manager_blacklist_register(manager, tmp);
 		free(tmp->hash);
-		free(tmp);
-		return NULL;
-	}
-
-	/* We call get_server_flags to the maxBsonObjectSize data */
-	if (!mongo_connection_get_server_flags(manager, tmp, options, error_message)) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", server_def->host, server_def->port, *error_message);
 		free(tmp);
 		return NULL;
 	}
@@ -631,9 +630,6 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: setting maxBsonObjectSize to %d", max_bson_size);
 		con->max_bson_size = max_bson_size;
 	} else {
-		/* This seems to be a pre-1.8 MongoDB installation, where we need to
-		 * default to 4MB */
-		con->max_bson_size = 4194304;
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: can't find maxBsonObjectSize, defaulting to %d", con->max_bson_size);
 	}
 
@@ -642,9 +638,6 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: setting maxMessageSizeBytes to %d", max_message_size);
 		con->max_message_size = max_message_size;
 	} else {
-		/* This seems to be a pre-2.4 MongoDB installation, where we need to
-		 * default to two times the max BSON size */
-		con->max_message_size = 2 * con->max_bson_size;
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: can't find maxMessageSizeBytes, defaulting to %d", con->max_message_size);
 	}
 
