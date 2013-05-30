@@ -523,7 +523,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 	MAKE_STD_ZVAL(next);
 	MONGO_METHOD(MongoCursor, getNext, next, cursor);
 
-	while (!IS_SCALAR_P(next)) {
+	while (IS_ARRAY_OR_OBJECT_P(next)) {
 		zval *c, *zname;
 		zval **collection;
 		char *name, *first_dot, *system;

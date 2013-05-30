@@ -344,7 +344,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 	}
 
 	/* Fetch all the options from the options array */
-	if (options && !IS_SCALAR_P(options)) {
+	if (options && IS_ARRAY_OR_OBJECT_P(options)) {
 		zval **w_pp = NULL, **fsync_pp, **timeout_pp, **journal_pp;
 
 		/* First we try "w", and if that is not found we check for "safe" */
@@ -1744,7 +1744,7 @@ PHP_METHOD(MongoCollection, group)
 
 	if (Z_TYPE_P(key) == IS_OBJECT && Z_OBJCE_P(key) == mongo_ce_Code) {
 		add_assoc_zval(group, "$keyf", key);
-	} else if (!IS_SCALAR_P(key)) {
+	} else if (IS_ARRAY_OR_OBJECT_P(key)) {
 		add_assoc_zval(group, "key", key);
 	} else {
 		zval_ptr_dtor(&group);
