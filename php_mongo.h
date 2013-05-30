@@ -651,6 +651,7 @@ extern zend_module_entry mongo_module_entry;
  * 18: ID must be valid hex characters
  * 19: Invalid object ID
  * 20: Cannot run command count(): (error message from MongoDB)
+ * 21: Namespace field is invalid.
  *
  * MongoConnectionException:
  * 0: connection to <host> failed: <errmsg>

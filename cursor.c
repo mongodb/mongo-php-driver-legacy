@@ -224,8 +224,8 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 	return SUCCESS;
 }
 
-/* {{{ MongoCursor->__construct
- */
+/* {{{ MongoCursor->__construct(MongoClient connection, string ns [, array query [, array fields]])
+   Constructs a MongoCursor */
 PHP_METHOD(MongoCursor, __construct)
 {
 	zval *zlink = 0, *zquery = 0, *zfields = 0, *empty, *timeout;
@@ -237,6 +237,21 @@ PHP_METHOD(MongoCursor, __construct)
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os|zz", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zquery, &zfields) == FAILURE) {
 		return;
+	}
+
+	cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	link = (mongoclient*)zend_object_store_get_object(zlink TSRMLS_CC);
+
+	/* Validate namespace */
+	{
+		char *dot;
+
+		dot = strchr(ns, '.');
+
+		if (ns_len < 3 || dot == NULL || ns[0] == '.' || ns[ns_len-1] == '.') {
+			mongo_cursor_throw(NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
+			return;
+		}
 	}
 
 	MUST_BE_ARRAY_OR_OBJECT(3, zquery);
