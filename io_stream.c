@@ -341,7 +341,7 @@ int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connectio
 	sasl_conn_t *conn;
 	int32_t conversation_id;
 
-	result = sasl_client_new("mongodb", server_def->host, NULL, NULL, NULL, 0, &conn);
+	result = sasl_client_new(options->PLACEHOLDER, server_def->host, NULL, NULL, NULL, 0, &conn);
 
 	if (result != SASL_OK) {
 		sasl_dispose(&conn);

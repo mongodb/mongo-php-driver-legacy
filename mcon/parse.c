@@ -47,6 +47,7 @@ mongo_servers* mongo_parse_init(void)
 	servers->options.default_fsync = 0;
 	servers->options.default_journal = 0;
 	servers->options.ssl = MONGO_SSL_DISABLE;
+	servers->options.PLACEHOLDER = strdup("mongodb");
 	servers->options.ctx = NULL;
 
 	return servers;
@@ -485,6 +486,13 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 
+	if (strcasecmp(option_name, "PLACEHOLDER") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'PLACEHOLDER': '%s'", option_value);
+		free(servers->options.PLACEHOLDER);
+		servers->options.PLACEHOLDER = strdup(option_value);
+		return 0;
+	}
+
 	if (strcasecmp(option_name, "slaveOkay") == 0) {
 		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
@@ -724,6 +732,9 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	if (from->options.repl_set_name) {
 		to->options.repl_set_name = strdup(from->options.repl_set_name);
 	}
+	if (from->options.PLACEHOLDER) {
+		to->options.PLACEHOLDER = strdup(from->options.PLACEHOLDER);
+	}
 
 	to->options.connectTimeoutMS = from->options.connectTimeoutMS;
 
@@ -777,6 +788,9 @@ void mongo_servers_dtor(mongo_servers *servers)
 	}
 	if (servers->options.repl_set_name) {
 		free(servers->options.repl_set_name);
+	}
+	if (servers->options.PLACEHOLDER) {
+		free(servers->options.PLACEHOLDER);
 	}
 	if (servers->options.default_wstring) {
 		free(servers->options.default_wstring);
