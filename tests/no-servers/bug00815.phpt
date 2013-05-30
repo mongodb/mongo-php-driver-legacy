@@ -13,7 +13,7 @@ class MyDB extends MongoDB {
 $db = new MyDB;
 
 try {
-	$c = new MongoCursor(new MyMongoClient, "test");
+	$c = new MongoCursor(new MyMongoClient, "foo.test");
 } catch (MongoException $e) {
 	var_dump($e->getCode());
 	var_dump($e->getMessage());
