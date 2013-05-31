@@ -5,8 +5,9 @@ MongoCursor::info() (64bit, native_long=1, long_as_object=0)
 <?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
 <?php
-ini_set('mongo.native_long', 1);
 require_once "tests/utils/server.inc";
+ini_set('mongo.native_long', 1);
+ini_set('mongo.long_as_object', 0);
 
 $host = MongoShellServer::getShardInfo();
 $mc = new MongoClient($host[0]);

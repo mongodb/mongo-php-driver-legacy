@@ -6,6 +6,7 @@ MongoCursor::info() (64bit, native_long=0, long_as_object=1)
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+ini_set('mongo.native_long', 0);
 ini_set('mongo.long_as_object', 1);
 
 $host = MongoShellServer::getShardInfo();
