@@ -36,7 +36,12 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	int dsn_len;
 	TSRMLS_FETCH();
 
-	dsn_len = spprintf(&dsn, 0, "tcp://%s:%d", server->host, server->port);
+	if (server->host[0] == '/') {
+		dsn_len = spprintf(&dsn, 0, "unix://%s", server->host);
+	} else {
+		dsn_len = spprintf(&dsn, 0, "tcp://%s:%d", server->host, server->port);
+	}
+
 
 	if (options->connectTimeoutMS) {
 		ctimeout.tv_sec = options->connectTimeoutMS / 1000;
