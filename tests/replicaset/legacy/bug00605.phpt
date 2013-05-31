@@ -27,7 +27,6 @@ var_dump( $c->insert( array( 'test' => 'two' ), array( 'w' => 0 ) ) );
 var_dump( $c->insert( array( 'test' => 'two' ), array( 'w' => 1 ) ) );
 ?>
 --EXPECTF--
-%s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %sbug00605.php on line %d
 array(5) {
   ["n"]=>
   int(0)
@@ -45,6 +44,8 @@ array(5) {
   ["ok"]=>
   float(1)
 }
+
+%s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %sbug00605.php on line %d
 array(5) {
   ["n"]=>
   int(0)

@@ -22,7 +22,7 @@ var_dump($retval["name"]);
 
 // test cap
 for ($i = 0; $i < 10; $i++) {
-    $c->insert(array('x' => $i), array("safe" => true));
+    $c->insert(array('x' => $i), array("w" => true));
 }
 foreach($c->find() as $res) {
     var_dump($res["x"]);
