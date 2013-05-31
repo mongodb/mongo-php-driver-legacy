@@ -376,6 +376,16 @@ PHP_MINFO_FUNCTION(mongo)
 	php_info_print_table_row(2, "SSL Support", "disabled");
 #endif
 
+	php_info_print_table_colspan_header(2, "Supported Authentication Mechanisms");
+	php_info_print_table_row(2, "MONGODB-CR (default)", "enabled");
+#if HAVE_MONGO_SASL
+	php_info_print_table_row(2, "GSSAPI (Kerberos)", "enabled");
+	php_info_print_table_row(2, "PLAIN", "enabled");
+#else
+	php_info_print_table_row(2, "GSSAPI (Kerberos)", "disabled");
+	php_info_print_table_row(2, "PLAIN", "disabled");
+#endif
+
 	php_info_print_table_end();
 
 	DISPLAY_INI_ENTRIES();
