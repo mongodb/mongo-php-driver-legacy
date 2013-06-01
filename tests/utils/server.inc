@@ -102,6 +102,17 @@ class MongoShellServer {
         return $retval;
     }
 
+    public function getUnixStandaloneConfig() {
+        $jsauth = json_encode(false);
+        $host = $this->verifyWrite("getStandaloneConfig($jsauth)");
+        $host = trim($host);
+        if ($host == "null") {
+            throw new DebugException(($auth ? "Authenticated " : "") . "Standalone server not initialized", $this->log);
+        }
+        list($hostname, $port) = explode(":", $host);
+
+        return "/tmp/mongodb-$port.sock";
+    }
     public function getStandaloneConfig($auth = false) {
         $jsauth = json_encode($auth);
         $host = $this->verifyWrite("getStandaloneConfig($jsauth)");
@@ -220,6 +231,13 @@ class MongoShellServer {
     public static function getStandaloneInfo($auth = false) {
         $o = new self;
         $config = $o->getStandaloneConfig($auth);
+        $o->close();
+        return trim($config);
+    }
+
+    public static function getUnixStandaloneInfo() {
+        $o = new self;
+        $config = $o->getUnixStandaloneConfig();
         $o->close();
         return trim($config);
     }
