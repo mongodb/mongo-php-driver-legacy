@@ -1,5 +1,5 @@
 --TEST--
-MongoClient::__construct()#001 Connecting to standalone server over Unix Domain Sockets
+Test for PHP-846: Connecting to standalone server over Unix Domain sockets
 --SKIPIF--
 <?php require_once "tests/utils/unix-standalone.inc" ?>
 --FILE--
