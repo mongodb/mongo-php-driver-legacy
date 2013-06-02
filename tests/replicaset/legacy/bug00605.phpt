@@ -44,6 +44,8 @@ array(5) {
   ["ok"]=>
   float(1)
 }
+
+%s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %sbug00605.php on line %d
 array(5) {
   ["n"]=>
   int(0)

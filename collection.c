@@ -39,7 +39,7 @@ zend_class_entry *mongo_ce_Collection = NULL;
 
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
 static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC);
-static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
+static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
 static char *to_index_string(zval *zkeys TSRMLS_DC);
@@ -345,31 +345,31 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 
 	/* Fetch all the options from the options array */
 	if (options && IS_ARRAY_OR_OBJECT_P(options)) {
-		zval **w_pp = NULL, **fsync_pp, **timeout_pp, **journal_pp;
+		zval **gle_pp = NULL, **fsync_pp, **timeout_pp, **journal_pp;
 
 		/* First we try "w", and if that is not found we check for "safe" */
-		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**) &w_pp) == SUCCESS) {
-			switch (Z_TYPE_PP(w_pp)) {
+		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**) &gle_pp) == SUCCESS) {
+			switch (Z_TYPE_PP(gle_pp)) {
 				case IS_STRING:
-					w_str = Z_STRVAL_PP(w_pp);
+					w_str = Z_STRVAL_PP(gle_pp);
 					break;
 				case IS_BOOL:
 				case IS_LONG:
-					w = Z_LVAL_PP(w_pp); /* This is actually "wrong" for bools, but it works */
+					w = Z_LVAL_PP(gle_pp); /* This is actually "wrong" for bools, but it works */
 					break;
 				default:
 					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'w' option either needs to be a integer or string");
 			}
-		} else if(zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &w_pp) == SUCCESS) {
-			switch (Z_TYPE_PP(w_pp)) {
+		} else if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &gle_pp) == SUCCESS) {
+			switch (Z_TYPE_PP(gle_pp)) {
 				case IS_STRING:
-					w_str = Z_STRVAL_PP(w_pp);
+					w_str = Z_STRVAL_PP(gle_pp);
 					break;
 				case IS_LONG:
-					w = Z_LVAL_PP(w_pp);
+					w = Z_LVAL_PP(gle_pp);
 					break;
 				case IS_BOOL:
-					if (Z_BVAL_PP(w_pp)) {
+					if (Z_BVAL_PP(gle_pp)) {
 						/* If we already provided Write Concern, do not overwrite it with w=1 */
 						if (!(w > 1 || w_str)) {
 							w = 1;
@@ -556,7 +556,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 	if (is_gle_op(options, &link->servers->options TSRMLS_CC)) {
 		zval *cursor = append_getlasterror(getThis(), buf, options, connection TSRMLS_CC);
 		if (cursor) {
-			do_safe_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
+			do_gle_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
 			retval = -1;
 		} else {
 			retval = 0;
@@ -591,7 +591,9 @@ static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_
 
 		/* First we try "w", and if that is not found we check for "safe" */
 		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**) &gle_pp) == FAILURE) {
-			zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &gle_pp);
+			if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &gle_pp) == SUCCESS) {
+				php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
+			}
 		}
 		/* After that, gle_pp is either still NULL, or set to something if one of
 		 * the options was found */
@@ -660,7 +662,7 @@ static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_conn
 	MONGO_ERROR_G(error_handling) = orig_error_handling;
 }
 
-static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC)
+static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC)
 {
 	zval *errmsg, **err;
 	mongo_cursor *cursor;
@@ -671,7 +673,7 @@ static void do_safe_op(mongo_con_manager *manager, mongo_connection *connection,
 	cursor->connection = connection;
 
 	if (-1 == manager->send(connection, NULL, buf->start, buf->pos - buf->start, (char **) &error_message)) {
-		mongo_manager_log(manager, MLOG_IO, MLOG_WARN, "do_safe_op: sending data failed, removing connection %s", connection->hash);
+		mongo_manager_log(manager, MLOG_IO, MLOG_WARN, "do_gle_op: sending data failed, removing connection %s", connection->hash);
 		mongo_cursor_throw(connection, 16 TSRMLS_CC, "%s", error_message);
 		connection_deregister_wrapper(manager, connection TSRMLS_CC);
 
@@ -754,7 +756,7 @@ PHP_METHOD(MongoCollection, insert)
 #endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
-	 * either set return_value or thrown an exception via do_safe_op(). */
+	 * either set return_value or thrown an exception via do_gle_op(). */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -817,7 +819,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 #endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
-	 * either set return_value or thrown an exception via do_safe_op(). */
+	 * either set return_value or thrown an exception via do_gle_op(). */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -1010,7 +1012,7 @@ PHP_METHOD(MongoCollection, update)
 #endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
-	 * either set return_value or thrown an exception via do_safe_op(). */
+	 * either set return_value or thrown an exception via do_gle_op(). */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -1076,7 +1078,7 @@ PHP_METHOD(MongoCollection, remove)
 #endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
-	 * either set return_value or thrown an exception via do_safe_op(). */
+	 * either set return_value or thrown an exception via do_gle_op(). */
 	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
 	if (retval != -1) {
 		RETVAL_BOOL(retval);
@@ -1141,12 +1143,15 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	zval_add_ref(&keys);
 
 	if (options) {
-		zval temp, **safe_pp, **fsync_pp, **timeout_pp, **name;
+		zval temp, **gle_pp, **fsync_pp, **timeout_pp, **name;
 
 		zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 
-		if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**)&safe_pp) == SUCCESS) {
+		if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**)&gle_pp) == SUCCESS) {
 			zend_hash_del(HASH_P(data), "safe", strlen("safe") + 1);
+		}
+		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**)&gle_pp) == SUCCESS) {
+			zend_hash_del(HASH_P(data), "w", strlen("w") + 1);
 		}
 		if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp) == SUCCESS) {
 			zend_hash_del(HASH_P(data), "fsync", strlen("fsync") + 1);

@@ -20,7 +20,7 @@ try {
 }
 try {
     $foo = array("foo" => "bar");
-    $c->insert($foo, array("safe" => true));
+    $c->insert($foo, array("w" => true));
     $result = $c->findOne(array("_id" => $foo["_id"]));
     var_dump($result);
 } catch(Exception $e) {

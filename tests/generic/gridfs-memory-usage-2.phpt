@@ -22,7 +22,7 @@ for ($i=0; $i < 1024*1024; $i++) {
     $bytes .= sha1(rand(1, 1000000000));
 }
 $sha = sha1($bytes);
-$grid->storeBytes($bytes, array("filename" => "demo.txt"), array('safe' => true));
+$grid->storeBytes($bytes, array("filename" => "demo.txt"), array('w' => true));
 
 $memory = memory_get_usage();
 echo $memory, "\n";

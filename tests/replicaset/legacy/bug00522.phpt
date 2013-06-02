@@ -79,6 +79,7 @@ IO      FINE: getting reply
 IO      FINE: getting cursor header
 %s:%d: Read timed out after reading 0 bytes, waited for 0.001000 seconds
 -----
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: getting reply
@@ -86,6 +87,7 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 float(1)
 -----
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=5
@@ -95,6 +97,7 @@ IO      FINE: getting reply
 IO      FINE: getting cursor header
 %s:%d: Read timed out after reading 0 bytes, waited for 3.141000 seconds
 -----
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'

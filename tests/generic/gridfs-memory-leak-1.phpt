@@ -10,7 +10,7 @@ $db   = $conn->phpunit;
 
 $grid = $db->getGridFS();
 
-$grid->storeBytes('some thing', array('filename' => '1.txt'), array('safe' => true));
+$grid->storeBytes('some thing', array('filename' => '1.txt'), array('w' => true));
 
 echo "No memory leak";
 --EXPECT--
