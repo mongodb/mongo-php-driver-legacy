@@ -483,7 +483,13 @@ PHP_METHOD(MongoCursor, getNext)
 		ZVAL_NULL(return_value);
 		return;
 	}
-	MONGO_METHOD(MongoCursor, current, return_value, getThis());
+	MONGO_CURSOR_CHECK_DEAD;
+
+	if (cursor->current) {
+		RETURN_ZVAL(cursor->current, 1, 0);
+	} else {
+		RETURN_NULL();
+	}
 }
 /* }}} */
 
