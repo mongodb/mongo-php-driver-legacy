@@ -500,10 +500,15 @@ PHP_METHOD(MongoCursor, limit)
 		return;
 	}
 
-	cursor->limit = l;
+	php_mongo_cursor_set_limit(cursor, l);
 	RETVAL_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
+
+void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit)
+{
+	cursor->limit = limit;
+}
 
 /* {{{ MongoCursor::batchSize
  */
