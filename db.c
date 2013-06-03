@@ -748,7 +748,7 @@ PHP_METHOD(MongoDB, command)
 
 zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options TSRMLS_DC)
 {
-	zval limit, *temp, *cursor, *ns, *retval;
+	zval *temp, *cursor, *ns, *retval;
 	mongo_cursor *cursor_tmp;
 	mongoclient *link;
 	char *cmd_ns;
@@ -785,9 +785,7 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 	ZVAL_NULL(temp);
 
 	// limit
-	Z_TYPE(limit) = IS_LONG;
-	Z_LVAL(limit) = -1;
-	MONGO_METHOD1(MongoCursor, limit, temp, cursor, &limit);
+	php_mongo_cursor_set_limit(cursor_tmp, -1);
 
 	zval_ptr_dtor(&temp);
 
