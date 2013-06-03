@@ -30,11 +30,11 @@
   <active>yes</active>
  </developer>
 
- <date>2013-05-21</date>
+ <date>2013-06-03</date>
  <time>10:21:23</time>
  <version>
-  <release>1.4.0</release>
-  <api>1.4.0</api>
+  <release>1.4.1</release>
+  <api>1.4.1</api>
  </version>
  <stability>
   <release>stable</release>
@@ -42,85 +42,22 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-** Improvement
-    * [PHP-303] - Support the autoIndexId option for createCollection
-    * [PHP-316] - When using replica sets and setSlaveOkay queries slow if a secondary is down...
-    * [PHP-371] - Replication connection string hangs for quite some time when a machine that is listed is physically down
-    * [PHP-490] - "nolock" option in MongoDB::execute method
-    * [PHP-537] - Update limits according to default (16MB) or server info (maxMessageSizeBytes)
-    * [PHP-572] - Add support for "journal" and "fsync" connection string options
-    * [PHP-610] - Remove the mongo.utf8 setting
-    * [PHP-651] - Slow connection to the replica set with one member down
-    * [PHP-686] - Constant attempt to reconnect to a down server takes too long
-    * [PHP-744] - Support the oplog_replay query flag
-    * [PHP-775] - MongoCursor->hint() can't hint on a index by name
-    * [PHP-790] - MongoCollection write operation wtimeout option inconsistent with connection string wTimeoutMS option
-
-** New Feature
-    * [PHP-664] - Add support for SSL and certificate validation
-
 ** Bug
-    * [PHP-296] - Many of the zend_hash_find calls for options etc do not check or convert correctly for datatype issues.
-    * [PHP-447] - Inconsistent error for unsupported database commands on mongod and mongos
-    * [PHP-508] - Change BSON ID generation to use random "increment"
-    * [PHP-554] - MongoId should not get constructed when passing in an invalid ID.
-    * [PHP-653] - is_master() failing with mongodb &lt;= 1.8.3
-    * [PHP-675] - Test for PHP-511 broken
-    * [PHP-693] - MongoCursor timeout not used when reading data
-    * [PHP-696] - mongo_io_wait_with_timeout() waits 10 seconds instead of one for "no socket timeout"
-    * [PHP-698] - Segmentation Fault - in mongo_deregister_callback_from_connection when calling MongoClient->close()
-    * [PHP-704] - Incorrect failure checks for stream reads
-    * [PHP-707] - Replication with 1.8 does not work
-    * [PHP-715] - Crash in PHP driver on Apache
-    * [PHP-717] - (Almost) All tests leak and has a unconditional jump
-    * [PHP-718] - ZTS Broken in master
-    * [PHP-723] - Possibly invalid read in MongoCollection getter
-    * [PHP-731] - Memory leak during failover
-    * [PHP-732] - Improve error message during failover
-    * [PHP-734] - Possible segfaults when error_message is not set
-    * [PHP-735] - Queries/commands to mongos should inherit read preferences from MongoDB and MongoCollection objects
-    * [PHP-736] - MongoClient connection fails if RP tags match nothing 
-    * [PHP-737] - Missing RP tags parse error message using MongoClient options array
-    * [PHP-741] - Passive replicaset members (priority=0) not used for secondary reads
-    * [PHP-746] - The getBytes method may return random data in particular conditions.
-    * [PHP-751] - When a secondary goes into recovery mode, we should disconnect from it
-    * [PHP-759] - Write operations apply ReadPreferenceTags when finding primary
-    * [PHP-770] - Missing error code for "field names must be strings" MongoException
-    * [PHP-776] - MongoCollection::batchInsert() with empty options array segfaults
-    * [PHP-779] - Cannot read from secondaries when connecting directly (standalone connection)
-    * [PHP-781] - MongoCollection::count() should not leak, and throw exception instead of returning GLE document
-    * [PHP-792] - Memory leak while reading an INT64 on a 32bit platform with native_long enabled
-    * [PHP-795] - MongoCode segfaults when internal 'code' property is modified
-    * [PHP-800] - Error codes for some errors in bson.c are re-used.
+    * [PHP-814] - Passing in invalid MongoDB to MongoDBRef::get() segfaults
+    * [PHP-816] - MongoCursor doesn't validate the namespace
+    * [PHP-827] - Segfault on connect when database name starts with an X
+    * [PHP-829] - Crash when connecting to replicaSet without passive hosts
+    * [PHP-846] - Connecting to Unix Domain sockets is impossible
 
-** Deprecated Functionality
-    * [PHP-780] - Deprecate slaveOkay &amp; timeout URI options
-    * [PHP-793] - Add deprecation notice to non-array options for MongoDB::createCollection
-    * [PHP-801] - Deprecate boolean options to MongoCollection::insert()
-    * [PHP-802] - Deprecate boolean options to MongoCollection::ensureIndex()
-    * [PHP-805] - Deprecate (for real) the "chunks" option in MongoGridFS::__construc
+** Improvement
+    * [PHP-747] - Improve numeric check for write concern option
+    * [PHP-755] - Support CursorNotFound query flag
+    * [PHP-756] - Support QueryFailure query response flag
 
 ** Task
-    * [PHP-314] - Improve connection string documentation/pooling
-    * [PHP-437] - Update ZEND_MODULE_API_NO to use PHP_VERSION_ID to be more clear
-    * [PHP-475] - Create functional phpt tests for read preference exceptions
-    * [PHP-496] - Added a few examples to MongoDB::runCommand() for more examples
-    * [PHP-542] - Put all exception classes into their own file(s)
-    * [PHP-563] - Strongly advise users not to create immortal MongoCursors
-    * [PHP-674] - Remove mention of OSX/Windows GitHub downloads from documentation 
-    * [PHP-694] - Split out types and gridfs classes into their own files.
-    * [PHP-695] - Remove mention of PHPUnit from documentation
-    * [PHP-702] - DOC - Support the autoIndexId option for createCollection
-    * [PHP-725] - Re-organise option parsing in mcon/parse.c
-    * [PHP-738] - Add replica set tags to test suite
-    * [PHP-745] - Add Replicaset Tags to sharding test suite
-    * [PHP-748] - Add vim modelines
-    * [PHP-749] - Improve fragile checks for max_message_size in tests
-    * [PHP-767] - Create prototypes for GridFS classes
-    * [PHP-768] - Create prototypes for MongoCollection class
-    * [PHP-771] - Time expectations mongo.is_master_interval test are fragile
-    * [PHP-788] - Document journal/fsync MongoClient connection options 
-    * [PHP-789] - Document fsync, j, and wtimeout options for MongoCollection write operations 
+    * [PHP-551] - Update "writes" documentation to cover all WriteConcerns arguments (from the connection string) as well.
+    * [PHP-836] - Fix more for-type tests after finding with hash_find
+    * [PHP-839] - Look at inclusion of config-w32.h and config.h in package
  </notes>
 
  <contents>
@@ -241,6 +178,102 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+
+  <release>
+   <date>2013-05-21</date>
+   <time>10:21:23</time>
+   <version>
+    <release>1.4.0</release>
+    <api>1.4.0</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Improvement
+    * [PHP-303] - Support the autoIndexId option for createCollection
+    * [PHP-316] - When using replica sets and setSlaveOkay queries slow if a secondary is down...
+    * [PHP-371] - Replication connection string hangs for quite some time when a machine that is listed is physically down
+    * [PHP-490] - "nolock" option in MongoDB::execute method
+    * [PHP-537] - Update limits according to default (16MB) or server info (maxMessageSizeBytes)
+    * [PHP-572] - Add support for "journal" and "fsync" connection string options
+    * [PHP-610] - Remove the mongo.utf8 setting
+    * [PHP-651] - Slow connection to the replica set with one member down
+    * [PHP-686] - Constant attempt to reconnect to a down server takes too long
+    * [PHP-744] - Support the oplog_replay query flag
+    * [PHP-775] - MongoCursor->hint() can't hint on a index by name
+    * [PHP-790] - MongoCollection write operation wtimeout option inconsistent with connection string wTimeoutMS option
+
+** New Feature
+    * [PHP-664] - Add support for SSL and certificate validation
+
+** Bug
+    * [PHP-296] - Many of the zend_hash_find calls for options etc do not check or convert correctly for datatype issues.
+    * [PHP-447] - Inconsistent error for unsupported database commands on mongod and mongos
+    * [PHP-508] - Change BSON ID generation to use random "increment"
+    * [PHP-554] - MongoId should not get constructed when passing in an invalid ID.
+    * [PHP-653] - is_master() failing with mongodb &lt;= 1.8.3
+    * [PHP-675] - Test for PHP-511 broken
+    * [PHP-693] - MongoCursor timeout not used when reading data
+    * [PHP-696] - mongo_io_wait_with_timeout() waits 10 seconds instead of one for "no socket timeout"
+    * [PHP-698] - Segmentation Fault - in mongo_deregister_callback_from_connection when calling MongoClient->close()
+    * [PHP-704] - Incorrect failure checks for stream reads
+    * [PHP-707] - Replication with 1.8 does not work
+    * [PHP-715] - Crash in PHP driver on Apache
+    * [PHP-717] - (Almost) All tests leak and has a unconditional jump
+    * [PHP-718] - ZTS Broken in master
+    * [PHP-723] - Possibly invalid read in MongoCollection getter
+    * [PHP-731] - Memory leak during failover
+    * [PHP-732] - Improve error message during failover
+    * [PHP-734] - Possible segfaults when error_message is not set
+    * [PHP-735] - Queries/commands to mongos should inherit read preferences from MongoDB and MongoCollection objects
+    * [PHP-736] - MongoClient connection fails if RP tags match nothing 
+    * [PHP-737] - Missing RP tags parse error message using MongoClient options array
+    * [PHP-741] - Passive replicaset members (priority=0) not used for secondary reads
+    * [PHP-746] - The getBytes method may return random data in particular conditions.
+    * [PHP-751] - When a secondary goes into recovery mode, we should disconnect from it
+    * [PHP-759] - Write operations apply ReadPreferenceTags when finding primary
+    * [PHP-770] - Missing error code for "field names must be strings" MongoException
+    * [PHP-776] - MongoCollection::batchInsert() with empty options array segfaults
+    * [PHP-779] - Cannot read from secondaries when connecting directly (standalone connection)
+    * [PHP-781] - MongoCollection::count() should not leak, and throw exception instead of returning GLE document
+    * [PHP-792] - Memory leak while reading an INT64 on a 32bit platform with native_long enabled
+    * [PHP-795] - MongoCode segfaults when internal 'code' property is modified
+    * [PHP-800] - Error codes for some errors in bson.c are re-used.
+
+** Deprecated Functionality
+    * [PHP-780] - Deprecate slaveOkay &amp; timeout URI options
+    * [PHP-793] - Add deprecation notice to non-array options for MongoDB::createCollection
+    * [PHP-801] - Deprecate boolean options to MongoCollection::insert()
+    * [PHP-802] - Deprecate boolean options to MongoCollection::ensureIndex()
+    * [PHP-805] - Deprecate (for real) the "chunks" option in MongoGridFS::__construc
+
+** Task
+    * [PHP-314] - Improve connection string documentation/pooling
+    * [PHP-437] - Update ZEND_MODULE_API_NO to use PHP_VERSION_ID to be more clear
+    * [PHP-475] - Create functional phpt tests for read preference exceptions
+    * [PHP-496] - Added a few examples to MongoDB::runCommand() for more examples
+    * [PHP-542] - Put all exception classes into their own file(s)
+    * [PHP-563] - Strongly advise users not to create immortal MongoCursors
+    * [PHP-674] - Remove mention of OSX/Windows GitHub downloads from documentation 
+    * [PHP-694] - Split out types and gridfs classes into their own files.
+    * [PHP-695] - Remove mention of PHPUnit from documentation
+    * [PHP-702] - DOC - Support the autoIndexId option for createCollection
+    * [PHP-725] - Re-organise option parsing in mcon/parse.c
+    * [PHP-738] - Add replica set tags to test suite
+    * [PHP-745] - Add Replicaset Tags to sharding test suite
+    * [PHP-748] - Add vim modelines
+    * [PHP-749] - Improve fragile checks for max_message_size in tests
+    * [PHP-767] - Create prototypes for GridFS classes
+    * [PHP-768] - Create prototypes for MongoCollection class
+    * [PHP-771] - Time expectations mongo.is_master_interval test are fragile
+    * [PHP-788] - Document journal/fsync MongoClient connection options 
+    * [PHP-789] - Document fsync, j, and wtimeout options for MongoCollection write operations 
+   </notes>
+  </release>
+
   <release>
    <date>2013-05-10</date>
    <time>13:45:11</time>
