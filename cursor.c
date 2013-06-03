@@ -327,7 +327,7 @@ PHP_METHOD(MongoCursor, __construct)
 	zval_add_ref(&zquery);
 
 	/* reset iteration pointer, just in case */
-	MONGO_METHOD(MongoCursor, reset, return_value, getThis());
+	mongo_util_cursor_reset(cursor TSRMLS_CC);
 
 	cursor->at = 0;
 	cursor->num = 0;
@@ -894,11 +894,11 @@ PHP_METHOD(MongoCursor, info)
 PHP_METHOD(MongoCursor, explain)
 {
 	int temp_limit;
-	zval *explain, *yes, *temp = 0;
+	zval *explain, *yes;
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
-	MONGO_METHOD(MongoCursor, reset, return_value, getThis());
+	mongo_util_cursor_reset(cursor TSRMLS_CC);
 
 	/* make explain use a hard limit */
 	temp_limit = cursor->limit;
@@ -922,10 +922,7 @@ PHP_METHOD(MongoCursor, explain)
 	cursor->limit = temp_limit;
 	zend_hash_del(HASH_P(cursor->query), "$explain", strlen("$explain") + 1);
 
-	MAKE_STD_ZVAL(temp);
-	ZVAL_NULL(temp);
-	MONGO_METHOD(MongoCursor, reset, temp, getThis());
-	zval_ptr_dtor(&temp);
+	mongo_util_cursor_reset(cursor TSRMLS_CC);
 }
 /* }}} */
 
@@ -940,7 +937,7 @@ PHP_METHOD(MongoCursor, doQuery)
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
 	do {
-		MONGO_METHOD(MongoCursor, reset, return_value, getThis());
+		mongo_util_cursor_reset(cursor TSRMLS_CC);
 		if (mongo_cursor__do_query(getThis(), return_value TSRMLS_CC) == SUCCESS || EG(exception)) {
 			return;
 		}
@@ -1348,7 +1345,10 @@ PHP_METHOD(MongoCursor, next)
  */
 PHP_METHOD(MongoCursor, rewind)
 {
-	MONGO_METHOD(MongoCursor, reset, return_value, getThis());
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
+
+	mongo_util_cursor_reset(cursor TSRMLS_CC);
 	MONGO_METHOD(MongoCursor, next, return_value, getThis());
 }
 /* }}} */
