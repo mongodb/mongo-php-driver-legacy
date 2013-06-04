@@ -1422,13 +1422,18 @@ PHP_METHOD(MongoCollection, createDBRef)
 {
 	zval *obj;
 	mongo_collection *c;
+	mongo_db *db;
+	zval *retval;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &obj) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
-	MONGO_METHOD2(MongoDB, createDBRef, return_value, c->parent, c->name, obj);
+	PHP_MONGO_GET_DB(c->parent);
+
+	retval = php_mongo_dbref_create(obj, Z_STRVAL_P(c->ns), Z_STRVAL_P(db->name));
+	RETURN_ZVAL(retval, 0, 1);
 }
 /* }}} */
 

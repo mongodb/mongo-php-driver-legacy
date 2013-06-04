@@ -16,6 +16,8 @@
 #ifndef __TYPES_DB_REF_H__
 #define __TYPES_DB_REF_H__
 
+zval *php_mongo_dbref_create(zval *zid, char *ns, char *db);
+
 PHP_METHOD(MongoDBRef, create);
 PHP_METHOD(MongoDBRef, isRef);
 PHP_METHOD(MongoDBRef, get);
