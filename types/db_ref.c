@@ -19,8 +19,9 @@
 #include "../mongoclient.h"
 #include "../db.h"
 #include "../collection.h"
+#include "db_ref.h"
 
-extern zend_class_entry *mongo_ce_DB, *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_DB, *mongo_ce_Id, *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_DBRef = NULL;
 
@@ -30,29 +31,54 @@ zend_class_entry *mongo_ce_DBRef = NULL;
  * array( '$ref' => <collection>, '$id' => <id>[, $db => <dbname>] ) */
 PHP_METHOD(MongoDBRef, create)
 {
-	zval *zns, *zid, *zdb = 0;
+	char *ns, *db = NULL;
+	int ns_len, db_len = 0;
+	zval *zid, *retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &zns, &zid, &zdb) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|s", &ns, &ns_len, &zid, &db, &db_len) == FAILURE) {
 		return;
 	}
 
-	array_init(return_value);
+	retval = php_mongo_dbref_create(zid, ns, db);
+	RETURN_ZVAL(retval, 0, 1);
+}
+
+zval *php_mongo_dbref_create(zval *zid, char *ns, char *db)
+{
+	zval *retval;
+
+	if (Z_TYPE_P(zid) == IS_OBJECT && instanceof_function(Z_OBJCE_P(zid), mongo_ce_Id TSRMLS_CC)) {
+		convert_to_string_ex(&zid);
+	} else if (Z_TYPE_P(zid) == IS_ARRAY || Z_TYPE_P(zid) == IS_OBJECT) {
+		zval **tmpval;
+
+		if (zend_hash_find(HASH_P(zid), "_id", 4, (void**)&tmpval) == SUCCESS) {
+			return php_mongo_dbref_create(*tmpval, ns, db);
+		} else {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot find _id key in the %s", zend_get_type_by_const(Z_TYPE_P(zid)));
+			return NULL;
+		}
+	} else if (Z_TYPE_P(zid) == IS_RESOURCE) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Don't know what to do with a resource type");
+		return NULL;
+	}
+
+	MAKE_STD_ZVAL(retval);
+	array_init(retval);
 
 	/* add collection name */
-	convert_to_string(zns);
-	add_assoc_zval(return_value, "$ref", zns);
-	zval_add_ref(&zns);
+	add_assoc_string(retval, "$ref", ns, 1);
 
 	/* add id field */
-	add_assoc_zval(return_value, "$id", zid);
+	add_assoc_zval(retval, "$id", zid);
 	zval_add_ref(&zid);
 
 	/* if we got a database name, add that, too */
-	if (zdb) {
-		convert_to_string(zdb);
-		add_assoc_zval(return_value, "$db", zdb);
-		zval_add_ref(&zdb);
+	if (db) {
+		add_assoc_string(retval, "$db", db, 1);
 	}
+
+	return retval;
 }
 /* }}} */
 
