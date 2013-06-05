@@ -1013,8 +1013,8 @@ PHP_METHOD(MongoClient, getConnections)
 }
 /* }}} */
 
-/* {{{ proto static array MongoClient::killCursor(string server_hash, int|MongoInt64 id)
-   Kills the cursor on the server with the specified id */
+/* {{{ proto static bool MongoClient::killCursor(string server_hash, int|MongoInt64 id)
+   Attempts to kill the cursor on the server with the specified ID, returns whether it was tried or not */
 PHP_METHOD(MongoClient, killCursor)
 {
 	char *hash;
@@ -1030,6 +1030,12 @@ PHP_METHOD(MongoClient, killCursor)
 	}
 
 	con = mongo_manager_connection_find_by_hash(MonGlo(manager), hash);
+
+	if (!con) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "A connection with hash '%s' does not exist", hash);
+		RETURN_FALSE;
+	}
+
 	if (int64_id) {
 		zval *z_int64 = zend_read_property(mongo_ce_Int64, int64_id, "value", strlen("value"), NOISY TSRMLS_CC);
 
@@ -1037,6 +1043,7 @@ PHP_METHOD(MongoClient, killCursor)
 	} else {
 		php_mongo_kill_cursor(con, cursor_id TSRMLS_CC);
 	}
+	RETURN_TRUE;
 }
 /* }}} */
 
