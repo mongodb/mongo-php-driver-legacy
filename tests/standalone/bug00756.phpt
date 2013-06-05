@@ -12,7 +12,7 @@ $c = $mc->selectCollection(dbname(), 'php756');
 $c->drop();
 $c->insert(array('test'=>42));
 
-$r = $c->find( array( 'foo' => array( '$geoNear' => array( 5, 5 ) ) ) );
+$r = $c->find( array( 'foo' => array( '$near' => array( 5, 5 ) ) ) );
 
 try {
 	foreach( $r as $f)
@@ -26,4 +26,4 @@ try {
 ?>
 --EXPECTF--
 int(13038)
-string(%d) "%s:%d: can't find any special indices: 2d (needs index), 2dsphere (needs index),  for: { foo: { $geoNear: [ 5, 5 ] } }"
+string(%d) "%s:%d: can't find %s for: { foo: { $near: [ 5, 5 ] } }"

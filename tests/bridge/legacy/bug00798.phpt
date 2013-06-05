@@ -19,5 +19,5 @@ try {
 }
 ?>
 --EXPECTF--
-2
+80
 %s:%d: Read timed out after reading %d bytes, waited for 0.100000 seconds
