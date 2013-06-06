@@ -627,7 +627,7 @@ PHP_METHOD(MongoDB, createDBRef)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	retval = php_mongo_dbref_create(obj, ns, Z_STRVAL_P(db->name));
+	retval = php_mongo_dbref_create(obj, ns, Z_STRVAL_P(db->name) TSRMLS_CC);
 
 	RETURN_ZVAL(retval, 0, 1);
 }
