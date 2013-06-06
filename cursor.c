@@ -224,6 +224,30 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 	return SUCCESS;
 }
 
+/* Returns 1 on success, and 0 (raising an exception) on failure */
+int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value)
+{
+	zval *query;
+
+	if (cursor->started_iterating) {
+		mongo_cursor_throw(cursor->connection, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
+		return 0;
+	}
+
+	make_special(cursor);
+	query = cursor->query;
+	add_assoc_zval(query, key, value);
+	zval_add_ref(&value);
+
+	return 1;
+}
+
+void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit)
+{
+	cursor->limit = limit;
+}
+
+
 /* {{{ MongoCursor->__construct(MongoClient connection, string ns [, array query [, array fields]])
    Constructs a MongoCursor */
 PHP_METHOD(MongoCursor, __construct)
@@ -511,11 +535,6 @@ PHP_METHOD(MongoCursor, limit)
 }
 /* }}} */
 
-void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit)
-{
-	cursor->limit = limit;
-}
-
 /* {{{ MongoCursor::batchSize
  */
 PHP_METHOD(MongoCursor, batchSize)
@@ -770,24 +789,6 @@ PHP_METHOD(MongoCursor, addOption)
 	}
 }
 /* }}} */
-/* Returns 1 on success, and 0 (raising an exception) on failure */
-int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value)
-{
-	zval *query;
-
-	if (cursor->started_iterating) {
-		mongo_cursor_throw(cursor->connection, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
-		return 0;
-	}
-
-	make_special(cursor);
-	query = cursor->query;
-	add_assoc_zval(query, key, value);
-	zval_add_ref(&value);
-
-	return 1;
-}
-
 
 /* {{{ MongoCursor::snapshot
  */
@@ -1354,6 +1355,7 @@ PHP_METHOD(MongoCursor, next)
 PHP_METHOD(MongoCursor, rewind)
 {
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
 	mongo_util_cursor_reset(cursor TSRMLS_CC);
