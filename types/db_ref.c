@@ -39,11 +39,11 @@ PHP_METHOD(MongoDBRef, create)
 		return;
 	}
 
-	retval = php_mongo_dbref_create(zid, ns, db);
+	retval = php_mongo_dbref_create(zid, ns, db TSRMLS_CC);
 	RETURN_ZVAL(retval, 0, 1);
 }
 
-zval *php_mongo_dbref_create(zval *zid, char *ns, char *db)
+zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC)
 {
 	zval *retval;
 
@@ -53,7 +53,7 @@ zval *php_mongo_dbref_create(zval *zid, char *ns, char *db)
 		zval **tmpval;
 
 		if (zend_hash_find(HASH_P(zid), "_id", 4, (void**)&tmpval) == SUCCESS) {
-			return php_mongo_dbref_create(*tmpval, ns, db);
+			return php_mongo_dbref_create(*tmpval, ns, db TSRMLS_CC);
 		} else {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot find _id key in the %s", zend_get_type_by_const(Z_TYPE_P(zid)));
 			return NULL;

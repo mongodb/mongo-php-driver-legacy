@@ -225,7 +225,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 }
 
 /* Returns 1 on success, and 0 (raising an exception) on failure */
-int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value)
+int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value TSRMLS_DC)
 {
 	zval *query;
 
@@ -784,7 +784,7 @@ PHP_METHOD(MongoCursor, addOption)
 	PHP_MONGO_GET_CURSOR(getThis());
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
-	if (php_mongo_cursor_add_option(cursor, key, value)) {
+	if (php_mongo_cursor_add_option(cursor, key, value TSRMLS_CC)) {
 		RETURN_ZVAL(getThis(), 1, 0);
 	}
 }
@@ -801,7 +801,7 @@ PHP_METHOD(MongoCursor, snapshot)
 	MAKE_STD_ZVAL(yes);
 	ZVAL_TRUE(yes);
 
-	if (php_mongo_cursor_add_option(cursor, "$snapshot", yes)) {
+	if (php_mongo_cursor_add_option(cursor, "$snapshot", yes TSRMLS_CC)) {
 		RETVAL_ZVAL(getThis(), 1, 0);
 	}
 
@@ -823,7 +823,7 @@ PHP_METHOD(MongoCursor, sort)
 	MUST_BE_ARRAY_OR_OBJECT(1, fields);
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
-	if (php_mongo_cursor_add_option(cursor, "$orderby", fields)) {
+	if (php_mongo_cursor_add_option(cursor, "$orderby", fields TSRMLS_CC)) {
 		RETURN_ZVAL(getThis(), 1, 0);
 	}
 }
@@ -841,7 +841,7 @@ PHP_METHOD(MongoCursor, hint)
 	}
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
-	if (php_mongo_cursor_add_option(cursor, "$hint", index)) {
+	if (php_mongo_cursor_add_option(cursor, "$hint", index TSRMLS_CC)) {
 		RETURN_ZVAL(getThis(), 1, 0);
 	}
 }
@@ -918,7 +918,7 @@ PHP_METHOD(MongoCursor, explain)
 	MAKE_STD_ZVAL(yes);
 	ZVAL_TRUE(yes);
 
-	if (!php_mongo_cursor_add_option(cursor, "$explain", yes)) {
+	if (!php_mongo_cursor_add_option(cursor, "$explain", yes TSRMLS_CC)) {
 		zval_ptr_dtor(&yes);
 		return;
 	}
