@@ -1418,6 +1418,7 @@ PHP_METHOD(MongoCursor, count)
 			zval_add_ref(&cursor->query);
 		} else if (zend_hash_find(HASH_P(cursor->query), "$query", strlen("$query") + 1, (void**)&inner_query) == SUCCESS) {
 			add_assoc_zval(cmd, "query", *inner_query);
+			zval_add_ref(inner_query);
 		}
 	}
 
