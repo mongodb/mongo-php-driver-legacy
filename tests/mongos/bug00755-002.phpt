@@ -6,6 +6,7 @@ Test for PHP-755: Support CursorNotFound query flag (64bit, native)
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+ini_set('mongo.native_long', 1);
 
 $host = MongoShellServer::getShardInfo();
 $mc = new MongoClient($host[0]);
