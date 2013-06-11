@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-294: Workaround for sending commands to secondaries
 --SKIPIF--
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once 'tests/utils/replicaset.inc' ?>
 --FILE--
 <?php

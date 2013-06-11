@@ -128,9 +128,13 @@ int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, i
 
 	if (status == -1) {
 		*error_message = strdup(strerror(errno));
-		return -31;
+		if (errno == ECONNRESET) {
+			return -32;
+		} else {
+			return -31;
+		}
 	} else if (status == 0) {
-		*error_message = strdup("The socket was closed by remote host");
+		*error_message = strdup("Remote server has closed the connection");
 		return -32;
 	}
 	return status;

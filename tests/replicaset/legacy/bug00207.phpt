@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-207: setSlaveOkay not supported for GridFS queries
 --SKIPIF--
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/replicaset.inc"; ?>
 --FILE--
 <?php
