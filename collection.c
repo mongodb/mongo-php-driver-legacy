@@ -15,6 +15,7 @@
  */
 #include <php.h>
 #include <zend_exceptions.h>
+#include <ext/standard/php_smart_str.h>
 
 #include "php_mongo.h"
 #include "collection.h"
@@ -42,7 +43,7 @@ static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_
 static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
-static char *to_index_string(zval *zkeys TSRMLS_DC);
+static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
 
 /* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
    Initializes a new MongoCollection */
@@ -1181,14 +1182,12 @@ PHP_METHOD(MongoCollection, ensureIndex)
 		char *key_str;
 		int   key_str_len;
 
-		key_str = to_index_string(keys TSRMLS_CC);
+		key_str = to_index_string(keys, &key_str_len TSRMLS_CC);
 		if (!key_str) {
 			zval_ptr_dtor(&data);
 			zval_ptr_dtor(&options);
 			return;
 		}
-
-		key_str_len = strlen(key_str);
 
 		if (key_str_len > MAX_INDEX_NAME_LEN) {
 			zval_ptr_dtor(&data);
@@ -1217,6 +1216,7 @@ PHP_METHOD(MongoCollection, deleteIndex)
 {
 	zval *keys, *cmd, *retval;
 	char *key_str;
+	int   key_str_len;
 	mongo_collection *c;
 	mongo_db *db;
 
@@ -1224,7 +1224,7 @@ PHP_METHOD(MongoCollection, deleteIndex)
 		return;
 	}
 
-	key_str = to_index_string(keys TSRMLS_CC);
+	key_str = to_index_string(keys, &key_str_len TSRMLS_CC);
 	if (!key_str) {
 		return;
 	}
@@ -1450,127 +1450,88 @@ PHP_METHOD(MongoCollection, getDBRef)
 }
 /* }}} */
 
-static char *replace_dots(char *key, int key_len, char *position)
+static void replace_dots(char *key, int key_len)
 {
 	int i;
 
 	for (i = 0; i < key_len; i++) {
 		if (key[i] == '.') {
-			*(position)++ = '_';
-		} else {
-			*(position)++ = key[i];
+			key[i] = '_';
 		}
 	}
-	return position;
 }
 
-static char *to_index_string(zval *zkeys TSRMLS_DC)
+static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC)
 {
-	char *name, *position;
-	int len = 0;
+	smart_str str = { NULL };
 
-	if (Z_TYPE_P(zkeys) == IS_ARRAY || Z_TYPE_P(zkeys) == IS_OBJECT) {
-		HashTable *hindex = HASH_P(zkeys);
-		HashPosition pointer;
-		zval **data;
-		char *key;
-		uint key_len, first = 1, key_type;
-		ulong index;
+	switch (Z_TYPE_P(zkeys)) {
+		case IS_ARRAY:
+		case IS_OBJECT: {
+			HashTable *hindex = HASH_P(zkeys);
+			HashPosition pointer;
+			zval **data;
+			char *key;
+			uint key_len, first = 1, key_type;
+			ulong index;
 
-		for (
-			zend_hash_internal_pointer_reset_ex(hindex, &pointer);
-			zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
-			zend_hash_move_forward_ex(hindex, &pointer)
-		) {
-			key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
+			for (
+				zend_hash_internal_pointer_reset_ex(hindex, &pointer);
+				zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
+				zend_hash_move_forward_ex(hindex, &pointer)
+			) {
+				if (!first) {
+					smart_str_appendc(&str, '_');
+				}
+				first = 0;
 
-			switch (key_type) {
-				case HASH_KEY_IS_STRING: {
-					len += key_len;
+				key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
 
-					if (Z_TYPE_PP(data) == IS_STRING) {
-						len += Z_STRLEN_PP(data) + 1;
-					} else {
-						len += Z_LVAL_PP(data) == 1 ? 2 : 3;
-					}
+				switch (key_type) {
+					case HASH_KEY_IS_STRING:
+						smart_str_appendl(&str, key, key_len - 1);
+						break;
 
-					break;
+					case HASH_KEY_IS_LONG:
+						smart_str_append_long(&str, index);
+						break;
+
+					default:
+						continue;
 				}
 
-				case HASH_KEY_IS_LONG:
-					convert_to_string(*data);
+				smart_str_appendc(&str, '_');
 
-					len += Z_STRLEN_PP(data);
-					len += 2;
-					break;
-
-				default:
-					continue;
-			}
-		}
-
-		name = (char*)emalloc(len + 1);
-		position = name;
-
-		for (
-			zend_hash_internal_pointer_reset_ex(hindex, &pointer);
-			zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
-			zend_hash_move_forward_ex(hindex, &pointer)
-		) {
-			if (!first) {
-				*(position)++ = '_';
-			}
-			first = 0;
-
-			key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
-
-			if (key_type == HASH_KEY_IS_LONG) {
-				key_len = spprintf(&key, 0, "%ld", index);
-				key_len += 1;
-			}
-
-			/* copy str, replacing '.' with '_' */
-			position = replace_dots(key, key_len-1, position);
-
-			*(position)++ = '_';
-
-			if (Z_TYPE_PP(data) == IS_STRING) {
-				memcpy(position, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
-				position += Z_STRLEN_PP(data);
-			} else {
-				if (Z_LVAL_PP(data) != 1) {
-					*(position)++ = '-';
+				switch (Z_TYPE_PP(data)) {
+					case IS_STRING:
+						smart_str_appendl(&str, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
+						break;
+					case IS_LONG:
+						smart_str_append_long(&str, Z_LVAL_PP(data) != 1 ? -1 : 1);
+						break;
 				}
-				*(position)++ = '1';
 			}
+		} break;
 
-			if (key_type == HASH_KEY_IS_LONG) {
-				efree(key);
-			}
-		}
-		*(position) = 0;
-	} else if (Z_TYPE_P(zkeys) == IS_STRING) {
-		int len;
+		case IS_STRING: {
+			smart_str_appendl(&str, Z_STRVAL_P(zkeys), Z_STRLEN_P(zkeys));
+			smart_str_appendl(&str, "_1", 2);
+		} break;
 
-		convert_to_string(zkeys);
-
-		len = Z_STRLEN_P(zkeys);
-
-		name = (char*)emalloc(len + 3);
-		position = name;
-
-		/* copy str, replacing '.' with '_' */
-		position = replace_dots(Z_STRVAL_P(zkeys), Z_STRLEN_P(zkeys), position);
-
-		*(position)++ = '_';
-		*(position)++ = '1';
-		*(position) = '\0';
-	} else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The key needs to be either a string or an array");
-		return NULL;
+		default:
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "The key needs to be either a string or an array");
+			return NULL;
 	}
 
-	return name;
+	smart_str_0(&str);
+
+	replace_dots(str.c, str.len);
+
+	if (key_len) {
+		*key_len = str.len;
+	}
+
+	return str.c;
 }
 
 /* {{{ proto protected static string MongoCollection::toIndexString(array|string keys)
@@ -1579,12 +1540,13 @@ PHP_METHOD(MongoCollection, toIndexString)
 {
 	zval *zkeys;
 	char *key_str;
+	int   key_str_len;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zkeys) == FAILURE) {
 		return;
 	}
 
-	key_str = to_index_string(zkeys TSRMLS_CC);
+	key_str = to_index_string(zkeys, &key_str_len TSRMLS_CC);
 
 	if (key_str) {
 		RETVAL_STRING(key_str, 0);
