@@ -651,7 +651,12 @@ void php_mongo_serialize_ns(buffer *buf, char *str TSRMLS_DC)
 	}
 }
 
-
+/* Returns:
+ *  0 on success,
+ * -1 when an exception in zval_to_bson was thrown
+ * -2 when there were no elements
+ * -3 when a fragment or document was too large
+ * An exception is also thrown when the return value is not 0 */
 static int insert_helper(buffer *buf, zval *doc, int max_document_size TSRMLS_DC)
 {
 	int start = buf->pos - buf->start;
@@ -659,20 +664,20 @@ static int insert_helper(buffer *buf, zval *doc, int max_document_size TSRMLS_DC
 
 	/* throw exception if serialization crapped out */
 	if (EG(exception) || FAILURE == result) {
-		return FAILURE;
+		return -1;
 	} else if (0 == result) {
 		/* return if there were 0 elements */
 		zend_throw_exception_ex(mongo_ce_Exception, 4 TSRMLS_CC, "no elements in doc");
-		return FAILURE;
+		return -2;
 	}
 
 	/* throw an exception if the doc was too big */
 	if (buf->pos - (buf->start + start) > max_document_size) {
 		zend_throw_exception_ex(mongo_ce_Exception, 5 TSRMLS_CC, "size of BSON doc is %d bytes, max is %d", buf->pos - (buf->start + start), max_document_size);
-		return FAILURE;
+		return -3;
 	}
 
-	return php_mongo_serialize_size(buf->start + start, buf, max_document_size TSRMLS_CC);
+	return (php_mongo_serialize_size(buf->start + start, buf, max_document_size TSRMLS_CC) == SUCCESS) ? 0 : -3;
 }
 
 int php_mongo_write_insert(buffer *buf, char *ns, zval *doc, int max_document_size, int max_message_size TSRMLS_DC)
@@ -682,7 +687,7 @@ int php_mongo_write_insert(buffer *buf, char *ns, zval *doc, int max_document_si
 
 	CREATE_HEADER(buf, ns, OP_INSERT);
 
-	if (FAILURE == insert_helper(buf, doc, max_document_size TSRMLS_CC)) {
+	if (insert_helper(buf, doc, max_document_size TSRMLS_CC) != 0) {
 		return FAILURE;
 	}
 
@@ -707,7 +712,12 @@ int php_mongo_write_batch_insert(buffer *buf, char *ns, int flags, zval *docs, i
 			continue;
 		}
 
-		if (FAILURE == insert_helper(buf, *doc, max_document_size TSRMLS_CC) || buf->pos - buf->start >= max_message_size) {
+		if (insert_helper(buf, *doc, max_document_size TSRMLS_CC) != 0) {
+			/* An exception has already been thrown */
+			return FAILURE;
+		}
+
+		if (buf->pos - buf->start >= max_message_size) {
 			zend_throw_exception_ex(mongo_ce_Exception, 5 TSRMLS_CC, "current batch size is too large: %d, max: %d", buf->pos - buf->start, max_message_size);
 			return FAILURE;
 		}
