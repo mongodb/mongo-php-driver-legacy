@@ -895,7 +895,7 @@ PHP_METHOD(MongoCollection, findOne)
 }
 /* }}} */
 
-/* {{{ proto array MongoCollection::findAndModify(array query [, array update[, array fields [, array options]]])
+/* {{{ proto array MongoCollection::findAndModify(array query [, array update [, array fields [, array options]]])
    Atomically update and return a document */
 PHP_METHOD(MongoCollection, findAndModify)
 {
@@ -940,11 +940,14 @@ PHP_METHOD(MongoCollection, findAndModify)
 
 	if (php_mongo_trigger_error_on_command_failure(retval TSRMLS_CC) == SUCCESS) {
 		if (zend_hash_find(Z_ARRVAL_P(retval), "value", strlen("value") + 1, (void **)&values) == SUCCESS) {
-			array_init(return_value);
 			/* We may wind up with a NULL here if there simply aren't any results */
 			if (Z_TYPE_PP(values) == IS_ARRAY) {
+				array_init(return_value);
 				zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
 			}
+			/* If it's not an array, we should return NULL, which is the
+			 * *default* return value and without "RETVAL_NULL" we simply do
+			 * nothing */
 		}
 	} else {
 		RETVAL_FALSE;
