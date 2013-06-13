@@ -4,8 +4,11 @@ MongoCollection::toIndexString
 <?php require_once dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
 <?php
-
-ini_set('error_reporting', E_ALL & ~E_DEPRECATED);
+if (version_compare( phpversion(), '5.3', '<' )) {
+	ini_set('error_reporting', E_ALL & ~E_STRICT);
+} else {
+	ini_set('error_reporting', E_ALL & ~E_DEPRECATED);
+}
 
 class MyCollection extends MongoCollection
 {
