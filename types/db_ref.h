@@ -16,6 +16,12 @@
 #ifndef __TYPES_DB_REF_H__
 #define __TYPES_DB_REF_H__
 
+/* Creates a DBRef array('$id' => zid, '$ref' => ns [, '$db' => db])
+ * Note that zid needs to be a zval as $id can be a string/int/float
+ * If an array/object is passed in we'll try to locate _id key and use that
+ */
+zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC);
+
 PHP_METHOD(MongoDBRef, create);
 PHP_METHOD(MongoDBRef, isRef);
 PHP_METHOD(MongoDBRef, get);

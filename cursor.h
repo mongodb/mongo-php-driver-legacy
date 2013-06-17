@@ -42,6 +42,11 @@ int mongo_cursor__should_retry(mongo_cursor *cursor);
 /* Kills a cursor on the server */
 void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC);
 
+/* Set Cursor limit */
+void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit);
+/* Set a Cursor Option */
+int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value TSRMLS_DC);
+
 PHP_METHOD(MongoCursor, __construct);
 PHP_METHOD(MongoCursor, getNext);
 PHP_METHOD(MongoCursor, hasNext);

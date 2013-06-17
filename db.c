@@ -616,23 +616,20 @@ PHP_METHOD(MongoDB, getCollectionNames)
 
 PHP_METHOD(MongoDB, createDBRef)
 {
-	zval *ns, *obj;
-	zval **id;
+	char *ns;
+	int ns_len;
+	zval *obj, *retval = NULL;
+	mongo_db *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &ns, &obj) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &ns, &ns_len, &obj) == FAILURE) {
 		return;
 	}
 
-	if (Z_TYPE_P(obj) == IS_ARRAY || Z_TYPE_P(obj) == IS_OBJECT) {
-		if (zend_hash_find(HASH_P(obj), "_id", 4, (void**)&id) == SUCCESS) {
-			MONGO_METHOD2(MongoDBRef, create, return_value, NULL, ns, *id);
-			return;
-		} else if (Z_TYPE_P(obj) == IS_ARRAY) {
-			return;
-		}
-	}
+	PHP_MONGO_GET_DB(getThis());
 
-	MONGO_METHOD2(MongoDBRef, create, return_value, NULL, ns, obj);
+	retval = php_mongo_dbref_create(obj, ns, Z_STRVAL_P(db->name) TSRMLS_CC);
+
+	RETURN_ZVAL(retval, 0, 1);
 }
 
 PHP_METHOD(MongoDB, getDBRef)
@@ -748,7 +745,7 @@ PHP_METHOD(MongoDB, command)
 
 zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options TSRMLS_DC)
 {
-	zval limit, *temp, *cursor, *ns, *retval;
+	zval *temp, *cursor, *ns, *retval;
 	mongo_cursor *cursor_tmp;
 	mongoclient *link;
 	char *cmd_ns;
@@ -785,9 +782,7 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 	ZVAL_NULL(temp);
 
 	// limit
-	Z_TYPE(limit) = IS_LONG;
-	Z_LVAL(limit) = -1;
-	MONGO_METHOD1(MongoCursor, limit, temp, cursor, &limit);
+	php_mongo_cursor_set_limit(cursor_tmp, -1);
 
 	zval_ptr_dtor(&temp);
 

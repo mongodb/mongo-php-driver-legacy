@@ -224,6 +224,30 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 	return SUCCESS;
 }
 
+/* Returns 1 on success, and 0 (raising an exception) on failure */
+int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value TSRMLS_DC)
+{
+	zval *query;
+
+	if (cursor->started_iterating) {
+		mongo_cursor_throw(cursor->connection, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
+		return 0;
+	}
+
+	make_special(cursor);
+	query = cursor->query;
+	add_assoc_zval(query, key, value);
+	zval_add_ref(&value);
+
+	return 1;
+}
+
+void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit)
+{
+	cursor->limit = limit;
+}
+
+
 /* {{{ MongoCursor->__construct(MongoClient connection, string ns [, array query [, array fields]])
    Constructs a MongoCursor */
 PHP_METHOD(MongoCursor, __construct)
@@ -327,7 +351,7 @@ PHP_METHOD(MongoCursor, __construct)
 	zval_add_ref(&zquery);
 
 	/* reset iteration pointer, just in case */
-	MONGO_METHOD(MongoCursor, reset, return_value, getThis());
+	mongo_util_cursor_reset(cursor TSRMLS_CC);
 
 	cursor->at = 0;
 	cursor->num = 0;
@@ -483,7 +507,13 @@ PHP_METHOD(MongoCursor, getNext)
 		ZVAL_NULL(return_value);
 		return;
 	}
-	MONGO_METHOD(MongoCursor, current, return_value, getThis());
+	MONGO_CURSOR_CHECK_DEAD;
+
+	if (cursor->current) {
+		RETURN_ZVAL(cursor->current, 1, 0);
+	} else {
+		RETURN_NULL();
+	}
 }
 /* }}} */
 
@@ -500,7 +530,7 @@ PHP_METHOD(MongoCursor, limit)
 		return;
 	}
 
-	cursor->limit = l;
+	php_mongo_cursor_set_limit(cursor, l);
 	RETVAL_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
@@ -745,50 +775,36 @@ PHP_METHOD(MongoCursor, addOption)
 {
 	char *key;
 	int key_len;
-	zval *query, *value;
+	zval *value;
 	mongo_cursor *cursor;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &key, &key_len, &value) == FAILURE) {
 		return;
 	}
-
-	cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	PHP_MONGO_GET_CURSOR(getThis());
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
-	if (cursor->started_iterating) {
-		MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
-
-		mongo_cursor_throw(cursor->connection, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
-		return;
+	if (php_mongo_cursor_add_option(cursor, key, value TSRMLS_CC)) {
+		RETURN_ZVAL(getThis(), 1, 0);
 	}
-
-	make_special(cursor);
-	query = cursor->query;
-	add_assoc_zval(query, key, value);
-	zval_add_ref(&value);
-
-	RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
-
 
 /* {{{ MongoCursor::snapshot
  */
 PHP_METHOD(MongoCursor, snapshot)
 {
-	zval *snapshot, *yes;
-
+	zval *yes;
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
-	MAKE_STD_ZVAL(snapshot);
-	ZVAL_STRING(snapshot, "$snapshot", 1);
 	MAKE_STD_ZVAL(yes);
 	ZVAL_TRUE(yes);
 
-	MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), snapshot, yes);
+	if (php_mongo_cursor_add_option(cursor, "$snapshot", yes TSRMLS_CC)) {
+		RETVAL_ZVAL(getThis(), 1, 0);
+	}
 
-	zval_ptr_dtor(&snapshot);
 	zval_ptr_dtor(&yes);
 }
 /* }}} */
@@ -798,19 +814,18 @@ PHP_METHOD(MongoCursor, snapshot)
  */
 PHP_METHOD(MongoCursor, sort)
 {
-	zval *orderby, *fields;
+	zval *fields;
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &fields) == FAILURE) {
 		return;
 	}
 	MUST_BE_ARRAY_OR_OBJECT(1, fields);
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
-	MAKE_STD_ZVAL(orderby);
-	ZVAL_STRING(orderby, "$orderby", 1);
-
-	MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), orderby, fields);
-
-	zval_ptr_dtor(&orderby);
+	if (php_mongo_cursor_add_option(cursor, "$orderby", fields TSRMLS_CC)) {
+		RETURN_ZVAL(getThis(), 1, 0);
+	}
 }
 /* }}} */
 
@@ -818,18 +833,17 @@ PHP_METHOD(MongoCursor, sort)
    Hint the index, by name or fields, to use for the query. */
 PHP_METHOD(MongoCursor, hint)
 {
-	zval *hint, *index;
+	zval *index;
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &index) == FAILURE) {
 		return;
 	}
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
-	MAKE_STD_ZVAL(hint);
-	ZVAL_STRING(hint, "$hint", 1);
-
-	MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), hint, index);
-
-	zval_ptr_dtor(&hint);
+	if (php_mongo_cursor_add_option(cursor, "$hint", index TSRMLS_CC)) {
+		RETURN_ZVAL(getThis(), 1, 0);
+	}
 }
 /* }}} */
 
@@ -889,11 +903,11 @@ PHP_METHOD(MongoCursor, info)
 PHP_METHOD(MongoCursor, explain)
 {
 	int temp_limit;
-	zval *explain, *yes, *temp = 0;
+	zval *yes;
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
-	MONGO_METHOD(MongoCursor, reset, return_value, getThis());
+	mongo_util_cursor_reset(cursor TSRMLS_CC);
 
 	/* make explain use a hard limit */
 	temp_limit = cursor->limit;
@@ -901,14 +915,14 @@ PHP_METHOD(MongoCursor, explain)
 		cursor->limit *= -1;
 	}
 
-	MAKE_STD_ZVAL(explain);
-	ZVAL_STRING(explain, "$explain", 1);
 	MAKE_STD_ZVAL(yes);
 	ZVAL_TRUE(yes);
 
-	MONGO_METHOD2(MongoCursor, addOption, return_value, getThis(), explain, yes);
+	if (!php_mongo_cursor_add_option(cursor, "$explain", yes TSRMLS_CC)) {
+		zval_ptr_dtor(&yes);
+		return;
+	}
 
-	zval_ptr_dtor(&explain);
 	zval_ptr_dtor(&yes);
 
 	MONGO_METHOD(MongoCursor, getNext, return_value, getThis());
@@ -917,10 +931,7 @@ PHP_METHOD(MongoCursor, explain)
 	cursor->limit = temp_limit;
 	zend_hash_del(HASH_P(cursor->query), "$explain", strlen("$explain") + 1);
 
-	MAKE_STD_ZVAL(temp);
-	ZVAL_NULL(temp);
-	MONGO_METHOD(MongoCursor, reset, temp, getThis());
-	zval_ptr_dtor(&temp);
+	mongo_util_cursor_reset(cursor TSRMLS_CC);
 }
 /* }}} */
 
@@ -935,7 +946,7 @@ PHP_METHOD(MongoCursor, doQuery)
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
 	do {
-		MONGO_METHOD(MongoCursor, reset, return_value, getThis());
+		mongo_util_cursor_reset(cursor TSRMLS_CC);
 		if (mongo_cursor__do_query(getThis(), return_value TSRMLS_CC) == SUCCESS || EG(exception)) {
 			return;
 		}
@@ -1343,7 +1354,11 @@ PHP_METHOD(MongoCursor, next)
  */
 PHP_METHOD(MongoCursor, rewind)
 {
-	MONGO_METHOD(MongoCursor, reset, return_value, getThis());
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
+
+	mongo_util_cursor_reset(cursor TSRMLS_CC);
 	MONGO_METHOD(MongoCursor, next, return_value, getThis());
 }
 /* }}} */

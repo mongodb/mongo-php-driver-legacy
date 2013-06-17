@@ -872,9 +872,8 @@ PHP_METHOD(MongoCollection, find)
    the projection. NULL will be returned if no document matches. */
 PHP_METHOD(MongoCollection, findOne)
 {
-	zval *query = 0, *fields = 0, *cursor;
-	zval temp;
-	zval *limit = &temp;
+	zval *query = 0, *fields = 0, *zcursor;
+	mongo_cursor *cursor;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
 		return;
@@ -882,16 +881,16 @@ PHP_METHOD(MongoCollection, findOne)
 	MUST_BE_ARRAY_OR_OBJECT(1, query);
 	MUST_BE_ARRAY_OR_OBJECT(2, fields);
 
-	MAKE_STD_ZVAL(cursor);
-	MONGO_METHOD_BASE(MongoCollection, find)(ZEND_NUM_ARGS(), cursor, NULL, getThis(), 0 TSRMLS_CC);
-	PHP_MONGO_CHECK_EXCEPTION1(&cursor);
+	MAKE_STD_ZVAL(zcursor);
+	MONGO_METHOD_BASE(MongoCollection, find)(ZEND_NUM_ARGS(), zcursor, NULL, getThis(), 0 TSRMLS_CC);
+	PHP_MONGO_CHECK_EXCEPTION1(&zcursor);
 
-	ZVAL_LONG(limit, -1);
-	MONGO_METHOD1(MongoCursor, limit, cursor, cursor, limit);
-	MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
+	PHP_MONGO_GET_CURSOR(zcursor);
+	php_mongo_cursor_set_limit(cursor, -1);
+	MONGO_METHOD(MongoCursor, getNext, return_value, zcursor);
 
-	zend_objects_store_del_ref(cursor TSRMLS_CC);
-	zval_ptr_dtor(&cursor);
+	zend_objects_store_del_ref(zcursor TSRMLS_CC);
+	zval_ptr_dtor(&zcursor);
 }
 /* }}} */
 
@@ -1423,13 +1422,18 @@ PHP_METHOD(MongoCollection, createDBRef)
 {
 	zval *obj;
 	mongo_collection *c;
+	mongo_db *db;
+	zval *retval;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &obj) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
-	MONGO_METHOD2(MongoDB, createDBRef, return_value, c->parent, c->name, obj);
+	PHP_MONGO_GET_DB(c->parent);
+
+	retval = php_mongo_dbref_create(obj, Z_STRVAL_P(c->ns), Z_STRVAL_P(db->name) TSRMLS_CC);
+	RETURN_ZVAL(retval, 0, 1);
 }
 /* }}} */
 
