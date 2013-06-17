@@ -181,6 +181,7 @@ typedef struct _mongo_read_preference
 
 #define MONGO_AUTH_MECHANISM_MONGODB_CR 1
 #define MONGO_AUTH_MECHANISM_GSSAPI     2
+#define MONGO_AUTH_MECHANISM_PLAIN      3
 
 typedef struct _mongo_server_def
 {
@@ -207,6 +208,7 @@ typedef struct _mongo_server_options
 	int   default_fsync;    /* 1/0 send fsync=1 by default or not */
 	int   default_journal;  /* 1/0 send j=1 by default or not */
 	int   ssl;              /* If we should be using SSL */
+	char *gssapiServiceName;/* Service Principal Name (Kerberos) */
 	void *ctx;              /* Arbitrary implementation dependent options (MongoDB-PHP uses this for stream context) */
 } mongo_server_options;
 
@@ -244,7 +246,7 @@ typedef struct _mongo_con_manager
 	int   (*send)        (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 	void  (*close)       (mongo_connection *con, int why);
 	void  (*forget)      (struct _mongo_con_manager *manager, mongo_connection *con);
-
+	int   (*authenticate)(struct _mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message);
 } mongo_con_manager;
 
 typedef void (mongo_con_manager_item_destroy_t)(mongo_con_manager *manager, void *item, int why);

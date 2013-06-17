@@ -33,7 +33,10 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, mon
 int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server);
 int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message);
 char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message);
-int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char *nonce, char **error_message);
+int mongo_connection_authenticate_mongodb_cr(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char *nonce, char **error_message);
+int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message);
+int mongo_connection_authenticate_saslstart(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char *mechanism, char *payload, unsigned int payload_len, char **out_payload, int *out_payload_len, int32_t *out_conversation_id, char **error_message);
+int mongo_connection_authenticate_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, int32_t conversation_id, char *payload, int payload_len, char **out_payload, int *out_payload_len, unsigned char *done, char **error_message);
 void mongo_connection_destroy(mongo_con_manager *manager, void *con, int why);
 void mongo_connection_forget(mongo_con_manager *manager, mongo_connection *con);
 

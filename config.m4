@@ -117,3 +117,33 @@ if test "$PHP_MONGO_STREAMS" = "yes"; then
   AC_DEFINE(MONGO_PHP_STREAMS, 1, [Make PHP MongoDB use PHP streams])
 fi
 
+PHP_ARG_WITH(mongo-sasl, Build with Cyrus SASL support,
+[  --with-mongo-sasl[=DIR]     Mongo: Include Cyrus SASL support], no, no)
+
+if test "$PHP_MONGO_SASL" != "no"; then
+  AC_MSG_CHECKING(for SASL)
+  for i in $PHP_MONGO_SASL /usr /usr/local; do
+    if test -f $i/include/sasl/sasl.h; then
+      MONGO_SASL_DIR=$i
+      AC_MSG_RESULT(found in $i)
+      break
+    fi
+  done
+
+  if test -z "$MONGO_SASL_DIR"; then
+    AC_MSG_RESULT(not found)
+    AC_MSG_ERROR([sasl.h not found!])
+  fi
+
+  PHP_CHECK_LIBRARY(sasl2, sasl_version,
+  [
+    PHP_ADD_INCLUDE($MONGO_SASL_DIR)
+    PHP_ADD_LIBRARY_WITH_PATH(sasl2, $MONGO_SASL_DIR/$PHP_LIBDIR, MONGO_SHARED_LIBADD)
+    AC_DEFINE(HAVE_MONGO_SASL, 1, [MONGO SASL support])
+  ], [
+    AC_MSG_ERROR([MONGO SASL check failed. Please check config.log for more information.])
+  ], [
+    -L$MONGO_SASL_DIR/$PHP_LIBDIR
+  ])
+  PHP_SUBST(MONGO_SHARED_LIBADD)
+fi
