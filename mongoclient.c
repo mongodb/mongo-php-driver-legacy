@@ -517,11 +517,20 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 		zend_throw_exception(mongo_ce_ConnectionException, "SSL support is only available when compiled against PHP Streams", 26 TSRMLS_CC);
 		return;
 	}
+	if (link->servers->server[0].mechanism == MONGO_AUTH_MECHANISM_GSSAPI) {
+		zend_throw_exception(mongo_ce_ConnectionException, "GSSAPI authentication mechanism is only available when compiled against PHP Streams", 28 TSRMLS_CC);
+		return;
+	}
+	if (link->servers->server[0].mechanism == MONGO_AUTH_MECHANISM_PLAIN) {
+		zend_throw_exception(mongo_ce_ConnectionException, "Plain authentication mechanism is only available when compiled against PHP Streams", 29 TSRMLS_CC);
+		return;
+	}
 	if (zdoptions) {
 		zend_throw_exception(mongo_ce_ConnectionException, "Driver options are only available when compiled against PHP Streams", 27 TSRMLS_CC);
 		return;
 	}
 #endif
+
 	if (zdoptions) {
 		/* Possibly add more indexes in the future, like "log_queries",
 		 * "log_commands", "log_failures", "log_metadata"... */

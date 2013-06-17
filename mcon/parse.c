@@ -47,6 +47,7 @@ mongo_servers* mongo_parse_init(void)
 	servers->options.default_fsync = 0;
 	servers->options.default_journal = 0;
 	servers->options.ssl = MONGO_SSL_DISABLE;
+	servers->options.gssapiServiceName = strdup("mongodb");
 	servers->options.ctx = NULL;
 
 	return servers;
@@ -343,10 +344,9 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		if (strcasecmp(option_value, "MONGODB-CR") == 0) {
 			mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
 		} else if (strcasecmp(option_value, "GSSAPI") == 0) {
-			/* FIXME: GSSAPI isn't implemented yet */
 			mechanism = MONGO_AUTH_MECHANISM_GSSAPI;
-			*error_message = strdup("The authMechanism 'GSSAPI' is currently not supported. Only MONGODB-CR is available.");
-			return 3;
+		} else if (strcasecmp(option_value, "PLAIN") == 0) {
+			mechanism = MONGO_AUTH_MECHANISM_PLAIN;
 		} else {
 			int len = strlen(option_value) + sizeof("The authMechanism '' does not exist.");
 
@@ -483,6 +483,13 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			servers->options.con_type = MONGO_CON_TYPE_REPLSET;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Switching connection type: REPLSET");
 		}
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "gssapiServiceName") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'gssapiServiceName': '%s'", option_value);
+		free(servers->options.gssapiServiceName);
+		servers->options.gssapiServiceName = strdup(option_value);
 		return 0;
 	}
 
@@ -725,6 +732,9 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	if (from->options.repl_set_name) {
 		to->options.repl_set_name = strdup(from->options.repl_set_name);
 	}
+	if (from->options.gssapiServiceName) {
+		to->options.gssapiServiceName = strdup(from->options.gssapiServiceName);
+	}
 
 	to->options.connectTimeoutMS = from->options.connectTimeoutMS;
 
@@ -778,6 +788,9 @@ void mongo_servers_dtor(mongo_servers *servers)
 	}
 	if (servers->options.repl_set_name) {
 		free(servers->options.repl_set_name);
+	}
+	if (servers->options.gssapiServiceName) {
+		free(servers->options.gssapiServiceName);
 	}
 	if (servers->options.default_wstring) {
 		free(servers->options.default_wstring);

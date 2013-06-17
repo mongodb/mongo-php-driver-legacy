@@ -39,6 +39,17 @@
 #include "util/pool.h"
 
 #include "mcon/manager.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#else
+# if WIN32
+#  include "config-w32.h"
+# endif
+#endif
+
+#if HAVE_MONGO_SASL
+#include <sasl/sasl.h>
+#endif
 
 extern zend_object_handlers mongo_default_handlers, mongo_id_handlers;
 zend_object_handlers mongo_type_object_handlers;
@@ -214,6 +225,14 @@ PHP_MINIT_FUNCTION(mongo)
 	}
 #endif
 
+#if HAVE_MONGO_SASL
+	/* We need to bootstrap cyrus-sasl once per process */
+	if (sasl_client_init(NULL) != SASL_OK) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not initialize SASL library");
+		return FAILURE;
+	}
+#endif
+
 	return SUCCESS;
 }
 
@@ -297,6 +316,7 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->manager->send        = php_mongo_io_stream_send;
 	mongo_globals->manager->close       = php_mongo_io_stream_close;
 	mongo_globals->manager->forget      = php_mongo_io_stream_forget;
+	mongo_globals->manager->authenticate= php_mongo_io_stream_authenticate;
 #endif
 }
 /* }}} */
@@ -318,6 +338,10 @@ PHP_MSHUTDOWN_FUNCTION(mongo)
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
 		return FAILURE;
 	}
+#endif
+
+#if HAVE_MONGO_SASL
+	sasl_client_done();
 #endif
 
 	return SUCCESS;
@@ -350,6 +374,16 @@ PHP_MINFO_FUNCTION(mongo)
 	php_info_print_table_row(2, "SSL Support", "enabled");
 #else
 	php_info_print_table_row(2, "SSL Support", "disabled");
+#endif
+
+	php_info_print_table_colspan_header(2, "Supported Authentication Mechanisms");
+	php_info_print_table_row(2, "MONGODB-CR (default)", "enabled");
+#if HAVE_MONGO_SASL
+	php_info_print_table_row(2, "GSSAPI (Kerberos)", "enabled");
+	php_info_print_table_row(2, "PLAIN", "enabled");
+#else
+	php_info_print_table_row(2, "GSSAPI (Kerberos)", "disabled");
+	php_info_print_table_row(2, "PLAIN", "disabled");
 #endif
 
 	php_info_print_table_end();
