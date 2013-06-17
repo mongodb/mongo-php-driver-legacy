@@ -371,7 +371,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	/* Parse the server specification
 	 * Default to the mongo.default_host & mongo.default_port INI options */
 	link->servers = mongo_parse_init();
-	if (server) {
+	if (server_len) {
 		error = mongo_parse_server_spec(link->manager, link->servers, server, (char **)&error_message);
 		if (error) {
 			zend_throw_exception(mongo_ce_ConnectionException, error_message, 20 + error TSRMLS_CC);
