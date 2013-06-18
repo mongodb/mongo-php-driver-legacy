@@ -1,6 +1,7 @@
 --TEST--
 Stream Logger: log_getmore() (1)
 --SKIPIF--
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
