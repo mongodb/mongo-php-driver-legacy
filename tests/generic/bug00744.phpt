@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-744: Support the oplog_replay query flag
 --SKIPIF--
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/generic.inc" ?>
 --FILE--
 <?php

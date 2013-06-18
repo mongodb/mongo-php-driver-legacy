@@ -48,3 +48,7 @@ William Volkman
 Derick Rethans
 
 * Implemented `MongoInt32`, `MongoInt64` and related _php.ini_ options.
+
+Taneli Leppä
+
+* Provided a patch for PHP-706 to swap out select() for poll().
