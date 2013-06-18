@@ -472,6 +472,7 @@ static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_c
 	if (EG(exception)) {
 		zval_ptr_dtor(&cursor_z);
 		zval_ptr_dtor(&cmd_ns_z);
+		zval_ptr_dtor(&cmd);
 		return 0;
 	}
 
