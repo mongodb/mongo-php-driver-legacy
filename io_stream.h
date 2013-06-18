@@ -17,9 +17,9 @@
 #ifndef __IO_STREAM_H__
 #define __IO_STREAM_H__
 
-#include "php.h"
-#include "main/php_streams.h"
-#include "main/php_network.h"
+#include <php.h>
+#include <main/php_streams.h>
+#include <main/php_network.h>
 
 #include "mcon/types.h"
 
