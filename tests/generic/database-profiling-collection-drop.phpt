@@ -8,6 +8,8 @@ require_once "tests/utils/server.inc";
 $a = mongo_standalone();
 $d = $a->selectDb("phpunit");
 $ns = $d->selectCollection('system.namespaces');
+// Make sure it didn't exist from possibly previous bad runs
+$d->dropCollection('system.profile');
 
 $sp = $d->createCollection("system.profile", array('size' => 5000, 'capped' => true));
 
