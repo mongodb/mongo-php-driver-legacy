@@ -565,8 +565,8 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 /* }}} */
 
 
-/* {{{ MongoClient->connect
- */
+/* {{{ proto bool MongoClient->connect(void)
+   Runs topology discovery, establishes connections to all MongoDBs if not connected already */
 PHP_METHOD(MongoClient, connect)
 {
 	mongoclient *link;
@@ -651,8 +651,8 @@ static void stringify_server(mongo_server_def *server, smart_str *str)
 }
 
 
-/* {{{ MongoClient->__toString()
- */
+/* {{{ proto string MongoClient->__toString(void)
+   Returns comma seperated list of servers we try to use */
 PHP_METHOD(MongoClient, __toString)
 {
 	smart_str str = { 0 };
@@ -677,8 +677,8 @@ PHP_METHOD(MongoClient, __toString)
 /* }}} */
 
 
-/* {{{ MongoClient->selectDB()
- */
+/* {{{ proto MongoDB MongoClient->selectDB(string dbname)
+   Returns a new MongoDB object for the specified database name */
 PHP_METHOD(MongoClient, selectDB)
 {
 	zval temp, *name;
@@ -758,8 +758,8 @@ PHP_METHOD(MongoClient, selectDB)
 /* }}} */
 
 
-/* {{{ Mongo::__get
- */
+/* {{{ proto MongoDB MongoClient::__get(string dbname)
+   Returns a new MongoDB object for the specified database name */
 PHP_METHOD(MongoClient, __get)
 {
 	zval *name;
@@ -781,8 +781,8 @@ PHP_METHOD(MongoClient, __get)
 /* }}} */
 
 
-/* {{{ Mongo::selectCollection()
- */
+/* {{{ proto MongoCollection MongoClient::selectCollection(string dbname, string collection_name)
+   Returns a new MongoCollection for the specified database and collection names */
 PHP_METHOD(MongoClient, selectCollection)
 {
 	char *db, *coll;
@@ -812,8 +812,8 @@ PHP_METHOD(MongoClient, selectCollection)
 /* }}} */
 
 
-/* {{{ array Mongo::getReadPreference()
- * Returns the currently set read preference.*/
+/* {{{ proto array MongoClient::getReadPreference(void)
+   Returns the currently set read preference.*/
 PHP_METHOD(MongoClient, getReadPreference)
 {
 	mongoclient *link;
@@ -826,8 +826,8 @@ PHP_METHOD(MongoClient, getReadPreference)
 /* }}} */
 
 
-/* {{{ Mongo::setReadPreference(string read_preference [, array tags ])
- * Sets a read preference to be used for all read queries.*/
+/* {{{ proto bool MongoClient::setReadPreference(string read_preference [, array tags ])
+   Sets a read preference to be used for all read queries.*/
 PHP_METHOD(MongoClient, setReadPreference)
 {
 	char *read_preference;
@@ -850,8 +850,8 @@ PHP_METHOD(MongoClient, setReadPreference)
 /* }}} */
 
 
-/* {{{ Mongo::dropDB()
- */
+/* {{{ proto array MongoClient::dropDB(void)
+   Returns the results of the 'dropDatabase' command */
 PHP_METHOD(MongoClient, dropDB)
 {
 	zval *db, *temp_db;
@@ -864,7 +864,7 @@ PHP_METHOD(MongoClient, dropDB)
 		MAKE_STD_ZVAL(temp_db);
 		ZVAL_NULL(temp_db);
 
-		/* reusing db param from Mongo::drop call */
+		/* reusing db param from MongoClient::drop call */
 		MONGO_METHOD_BASE(MongoClient, selectDB)(1, temp_db, NULL, getThis(), 0 TSRMLS_CC);
 		db = temp_db;
 	} else {
@@ -876,8 +876,8 @@ PHP_METHOD(MongoClient, dropDB)
 }
 /* }}} */
 
-/* {{{ MongoClient->listDBs
- */
+/* {{{ proto array MongoClient->listDBs(void)
+   Returns the results of the 'listDatabases' command, executed on the 'admin' database */
 PHP_METHOD(MongoClient, listDBs)
 {
 	zval *admin, *cmd, *zdb, *retval;
@@ -906,8 +906,8 @@ PHP_METHOD(MongoClient, listDBs)
 }
 /* }}} */
 
-/* {{{ MongoClient->getHosts
- */
+/* {{{ proto array MongoClient->getHosts(void)
+   Returns an array per connection with connection info */
 PHP_METHOD(MongoClient, getHosts)
 {
 	mongoclient            *link;
@@ -943,7 +943,7 @@ PHP_METHOD(MongoClient, getHosts)
 }
 /* }}} */
 
-/* {{{ proto static array Mongo::getConnections(void)
+/* {{{ proto static array MongoClient::getConnections(void)
    Returns an array of all open connections, and information about each of the servers */
 PHP_METHOD(MongoClient, getConnections)
 {
