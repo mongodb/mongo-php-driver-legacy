@@ -410,6 +410,9 @@ int mongo_deregister_callback_from_connection(mongo_connection *connection, void
 /* API interface to fetch a connection */
 mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
+	if (!manager || !servers) {
+		return NULL;
+	}
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->options.con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
