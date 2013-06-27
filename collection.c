@@ -1396,6 +1396,8 @@ PHP_METHOD(MongoCollection, save)
 	if (!options) {
 		MAKE_STD_ZVAL(options);
 		array_init(options);
+	} else {
+		Z_ADDREF_P(options);
 	}
 
 	if (zend_hash_find(HASH_P(a), "_id", 4, (void**)&id) == SUCCESS) {
