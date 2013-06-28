@@ -235,8 +235,25 @@ PHP_MINIT_FUNCTION(mongo)
 
 #if MONGO_PHP_STREAMS
 	REGISTER_LONG_CONSTANT("MONGO_STREAMS", 1, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_STREAMS", 1, CONST_PERSISTENT);
 #else
 	REGISTER_LONG_CONSTANT("MONGO_STREAMS", 0, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_STREAMS", 0, CONST_PERSISTENT);
+#endif
+
+#if MONGO_PHP_STREAMS && HAVE_OPENSSL_EXT
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_SSL", 1, CONST_PERSISTENT);
+#else
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_SSL", 0, CONST_PERSISTENT);
+#endif
+
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_MONGODB_CR", 1, CONST_PERSISTENT);
+#if HAVE_MONGO_SASL
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_GSSAPI", 1, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_PLAIN", 1, CONST_PERSISTENT);
+#else
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_GSSAPI", 0, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_PLAIN", 0, CONST_PERSISTENT);
 #endif
 
 	return SUCCESS;
@@ -377,11 +394,15 @@ PHP_MINFO_FUNCTION(mongo)
 	php_info_print_table_header(2, "MongoDB Support", "enabled");
 	php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
 #if MONGO_PHP_STREAMS
-	php_info_print_table_row(2, "SSL Support", "enabled");
 	php_info_print_table_row(2, "Streams Support", "enabled");
 #else
-	php_info_print_table_row(2, "SSL Support", "disabled");
 	php_info_print_table_row(2, "Streams Support", "disabled");
+#endif
+
+#if MONGO_PHP_STREAMS && HAVE_OPENSSL_EXT
+	php_info_print_table_row(2, "SSL Support", "enabled");
+#else
+	php_info_print_table_row(2, "SSL Support", "disabled");
 #endif
 
 	php_info_print_table_colspan_header(2, "Supported Authentication Mechanisms");
