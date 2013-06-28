@@ -85,21 +85,26 @@ void mongo_init_Mongo(TSRMLS_D)
 #endif
 }
 
-/* {{{ Mongo->__construct
-*/
+/* {{{ proto Mongo Mongo->__construct([string connection_string [, array mongo_options [, array driver_options]]])
+   Constructs a deprecated Mongo object */
 PHP_METHOD(Mongo, __construct)
 {
 	php_mongo_ctor(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
 }
 /* }}} */
 
+/* {{{ proto bool Mongo->getSlaveOkay(void)
+   Returns whether or not the slaveOkay bit is set */
 PHP_METHOD(Mongo, getSlaveOkay)
 {
 	mongoclient *link;
 	PHP_MONGO_GET_LINK(getThis());
 	RETURN_BOOL(link->servers->read_pref.type != MONGO_RP_PRIMARY);
 }
+/* }}} */
 
+/* {{{ proto string Mongo->getSlave(void)
+   Returns the hash of random secondary, probably the one we'll be using for slaveOkay queries */
 PHP_METHOD(Mongo, getSlave)
 {
 	mongoclient *link;
@@ -115,7 +120,10 @@ PHP_METHOD(Mongo, getSlave)
 
 	RETURN_STRING(con->hash, 1);
 }
+/* }}} */
 
+/* {{{ proto bool Mongo->getSlaveOkay([bool enable=true])
+   Sets ReadPreferences to SECONDARY_PREFERRED, returns the old slaveOkay setting */
 PHP_METHOD(Mongo, setSlaveOkay)
 {
 	zend_bool slave_okay = 1;
@@ -130,6 +138,7 @@ PHP_METHOD(Mongo, setSlaveOkay)
 	RETVAL_BOOL(link->servers->read_pref.type != MONGO_RP_PRIMARY);
 	link->servers->read_pref.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
+/* }}} */
 
 
 static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC)
