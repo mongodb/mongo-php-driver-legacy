@@ -400,6 +400,12 @@ int mongo_deregister_callback_from_connection(mongo_connection *connection, void
 /* API interface to fetch a connection */
 mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
+	/* In some cases we won't actually have a manager or servers initialized, for example when extending PHP objects without calling the constructor,
+	 * and then var_dump() it or access the properties, for example the "connected" property */
+	if (!manager || !servers) {
+		return NULL;
+	}
+
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->options.con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
