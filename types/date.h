@@ -19,6 +19,8 @@
 PHP_METHOD(MongoDate, __construct);
 PHP_METHOD(MongoDate, __toString);
 
+void php_mongo_date_init(zval *value, int64_t datetime);
+
 #endif
 
 /*
