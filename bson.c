@@ -1063,16 +1063,11 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 
 			case BSON_DATE: {
 				int64_t d = MONGO_64(*((int64_t*)buf));
-				long usec;
 
 				buf += INT_64;
 
 				object_init_ex(value, mongo_ce_Date);
-
-				usec = (long) ((((d*1000) % 1000000) + 1000000) % 1000000);
-
-				zend_update_property_long(mongo_ce_Date, value, "sec", strlen("sec"), (long) ((d/1000) - (d < 0 && usec)) TSRMLS_CC);
-				zend_update_property_long(mongo_ce_Date, value, "usec", strlen("usec"), usec TSRMLS_CC);
+				php_mongo_date_init(value, d);
 
 				break;
 			}
