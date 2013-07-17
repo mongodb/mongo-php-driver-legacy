@@ -24,7 +24,7 @@ typedef struct {
 	int64_t     datetime;
 } mongo_date;
 
-void php_mongo_date_init(zval *value, int64_t datetime)
+void php_mongo_date_init(zval *value, int64_t datetime TSRMLS_DC)
 {
 	mongo_date *date;
 	long        sec, usec;
@@ -105,7 +105,12 @@ PHP_METHOD(MongoDate, __toString)
 	sec   = (int64_t) ((date->datetime/1000) - (date->datetime < 0 && usec));
 	dusec = (double) usec / 1000000;
 
-	spprintf(&str, 0, "%.8f %lld", dusec, sec);
+#ifdef WIN32
+	spprintf(&str, 0, "%.8f %I64d", dusec, (int64_t) sec);
+#else
+	spprintf(&str, 0, "%.8f %lld", dusec, (long long int) sec);
+#endif
+
 	RETURN_STRING(str, 0);
 }
 /* }}} */
