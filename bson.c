@@ -25,6 +25,7 @@
 
 #include "php_mongo.h"
 #include "bson.h"
+#include "types/date.h"
 #include "types/id.h"
 
 extern zend_class_entry *mongo_ce_BinData,
@@ -1067,7 +1068,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				buf += INT_64;
 
 				object_init_ex(value, mongo_ce_Date);
-				php_mongo_date_init(value, d);
+				php_mongo_date_init(value, d TSRMLS_CC);
 
 				break;
 			}
