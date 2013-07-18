@@ -177,14 +177,17 @@ static int candidate_matches_tags(mongo_con_manager *manager, mongo_connection *
 	}
 }
 
-static mcon_collection* mongo_filter_candidates_by_tagset(mongo_con_manager *manager, mcon_collection *candidates, mongo_read_preference_tagset *tagset)
+static mcon_collection* mongo_filter_candidates_by_tagset(mongo_con_manager *manager, mcon_collection *candidates, mongo_read_preference_tagset *tagset, int rp_type)
 {
 	int              i;
 	mcon_collection *tmp;
 
 	tmp = mcon_init_collection(sizeof(mongo_connection*));
 	for (i = 0; i < candidates->count; i++) {
-		if (candidate_matches_tags(manager, (mongo_connection *) candidates->data[i], tagset)) {
+		if (rp_type == MONGO_RP_PRIMARY_PREFERRED && (((mongo_connection *) candidates->data[i])->connection_type == MONGO_NODE_PRIMARY)) {
+			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "candidate_matches_tags: added primary regardless of tags: %s", ((mongo_connection *) candidates->data[i])->hash);
+			mcon_collection_add(tmp, candidates->data[i]);
+		} else if (candidate_matches_tags(manager, (mongo_connection *) candidates->data[i], tagset)) {
 			mcon_collection_add(tmp, candidates->data[i]);
 		}
 	}
@@ -312,6 +315,7 @@ skip:
 
 	return filtered;
 }
+
 mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, mongo_servers *servers)
 {
 	int              i;
@@ -340,7 +344,7 @@ mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_
 			char *tmp_ts = mongo_read_preference_squash_tagset(rp->tagsets[i]);
 
 			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "checking tagset: %s", tmp_ts);
-			filtered = mongo_filter_candidates_by_tagset(manager, all, rp->tagsets[i]);
+			filtered = mongo_filter_candidates_by_tagset(manager, all, rp->tagsets[i], rp->type);
 			mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "tagset %s matched %d candidates", tmp_ts, filtered->count);
 			free(tmp_ts);
 
