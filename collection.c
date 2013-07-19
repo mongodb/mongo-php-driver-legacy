@@ -59,9 +59,12 @@ PHP_METHOD(MongoCollection, __construct)
 		return;
 	}
 
-	/* check for empty collection name */
-	if (name_len == 0) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
+	/* check for empty and invalid collection names */
+	if (
+		name_len == 0 ||
+		memchr(name_str, '\0', name_len) != 0
+	) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
 		return;
 	}
 
