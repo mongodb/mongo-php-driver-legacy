@@ -84,7 +84,7 @@ static int prep_obj_for_db(buffer *buf, HashTable *array TSRMLS_DC)
 		data = &newid;
 	}
 
-	php_mongo_serialize_element("_id", data, buf, 0 TSRMLS_CC);
+	php_mongo_serialize_element("_id", 3, data, buf, 0 TSRMLS_CC);
 	if (EG(exception)) {
 		return FAILURE;
 	}
@@ -143,7 +143,7 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
 #endif
 
 	if (key->nKeyLength) {
-		return php_mongo_serialize_element(key->arKey, (zval**)data, buf, prep TSRMLS_CC);
+		return php_mongo_serialize_element(key->arKey, key->nKeyLength - 1, (zval**)data, buf, prep TSRMLS_CC);
 	} else {
 		long current = key->h;
 		int pos = 29, negative = 0;
@@ -175,14 +175,12 @@ static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend
 			name[pos--] = '-';
 		}
 
-		return php_mongo_serialize_element(name + pos + 1, (zval**)data, buf, prep TSRMLS_CC);
+		return php_mongo_serialize_element(name + pos + 1, strlen(name + pos + 1), (zval**)data, buf, prep TSRMLS_CC);
 	}
 }
 
-int php_mongo_serialize_element(const char *name, zval **data, buffer *buf, int prep TSRMLS_DC)
+int php_mongo_serialize_element(const char *name, int name_len, zval **data, buffer *buf, int prep TSRMLS_DC)
 {
-	int name_len = strlen(name);
-
 	if (prep && strcmp(name, "_id") == 0) {
 		return ZEND_HASH_APPLY_KEEP;
 	}
@@ -603,6 +601,11 @@ void php_mongo_serialize_key(buffer *buf, const char *str, int str_len, int prep
 
 	if (BUF_REMAINING <= str_len + 1) {
 		resize_buf(buf, str_len + 1);
+	}
+
+	if (memchr(str, '\0', str_len) != NULL) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "'\\0' not allowed in key: %s\\0...", str);
+		return;
 	}
 
 	if (prep && (strchr(str, '.') != 0)) {
