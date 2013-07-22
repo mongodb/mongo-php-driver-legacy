@@ -127,10 +127,10 @@ PHP_METHOD(MongoDB, __construct)
 
 	if (
 		name_len == 0 ||
-		strchr(name, ' ') != 0 || strchr(name, '.') != 0 || strchr(name, '\\') != 0 ||
-		strchr(name, '/') != 0 || strchr(name, '$') != 0
+		memchr(name, ' ', name_len) != 0 || memchr(name, '.', name_len) != 0 || memchr(name, '\\', name_len) != 0 ||
+		memchr(name, '/', name_len) != 0 || memchr(name, '$', name_len) != 0 || memchr(name, '\0', name_len) != 0
 	) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name);
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name);
 		return;
 	}
 
