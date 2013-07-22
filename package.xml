@@ -30,11 +30,11 @@
   <active>yes</active>
  </developer>
 
- <date>2013-06-03</date>
+ <date>2013-07-22</date>
  <time>10:21:23</time>
  <version>
-  <release>1.4.1</release>
-  <api>1.4.1</api>
+  <release>1.4.2</release>
+  <api>1.4.2</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,21 +43,11 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-814] - Passing in invalid MongoDB to MongoDBRef::get() segfaults
-    * [PHP-816] - MongoCursor doesn't validate the namespace
-    * [PHP-827] - Segfault on connect when database name starts with an X
-    * [PHP-829] - Crash when connecting to replicaSet without passive hosts
-    * [PHP-846] - Connecting to Unix Domain sockets is impossible
-
-** Improvement
-    * [PHP-747] - Improve numeric check for write concern option
-    * [PHP-755] - Support CursorNotFound query flag
-    * [PHP-756] - Support QueryFailure query response flag
-
-** Task
-    * [PHP-551] - Update "writes" documentation to cover all WriteConcerns arguments (from the connection string) as well.
-    * [PHP-836] - Fix more for-type tests after finding with hash_find
-    * [PHP-839] - Look at inclusion of config-w32.h and config.h in package
+    * [PHP-706] - Busy loop when a file descriptors exceed 1024
+    * [PHP-850] - Conditional jump on empty server name to MongoClient
+    * [PHP-853] - MongoCollection::batchInsert() exceptions can obscure BSON encoding exceptions
+    * [PHP-858] - Crash when extending Mongo and MongoClient classes and not calling its constructor
+    * [PHP-872] - Driver should prevent \0 characters in keys, collection and database names
  </notes>
 
  <contents>
@@ -178,6 +168,38 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+
+  <release>
+   <date>2013-06-03</date>
+   <time>10:21:23</time>
+   <version>
+    <release>1.4.1</release>
+    <api>1.4.1</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-814] - Passing in invalid MongoDB to MongoDBRef::get() segfaults
+    * [PHP-816] - MongoCursor doesn't validate the namespace
+    * [PHP-827] - Segfault on connect when database name starts with an X
+    * [PHP-829] - Crash when connecting to replicaSet without passive hosts
+    * [PHP-846] - Connecting to Unix Domain sockets is impossible
+
+** Improvement
+    * [PHP-747] - Improve numeric check for write concern option
+    * [PHP-755] - Support CursorNotFound query flag
+    * [PHP-756] - Support QueryFailure query response flag
+
+** Task
+    * [PHP-551] - Update "writes" documentation to cover all WriteConcerns arguments (from the connection string) as well.
+    * [PHP-836] - Fix more for-type tests after finding with hash_find
+    * [PHP-839] - Look at inclusion of config-w32.h and config.h in package
+   </notes>
+  </release>
 
   <release>
    <date>2013-05-21</date>
