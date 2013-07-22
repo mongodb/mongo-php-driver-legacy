@@ -28,8 +28,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "types.h"
-#include <poll.h>
 
+#ifndef WIN32
+#include <poll.h>
 
 /* Wait on socket availability with a timeout
  *
@@ -80,6 +81,64 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 
 	return 0;
 }
+#else
+
+/* Win32 doesn't have a working poll(), so we use the old select() branch. */
+int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
+{
+	/* No socket timeout.. But we default to 1 second for historical reasons */
+	if (to < 1) {
+		to = 1000;
+	}
+	while (1) {
+		int status;
+		struct timeval timeout;
+		fd_set readfds, exceptfds;
+
+		FD_ZERO(&readfds);
+		FD_SET(sock, &readfds);
+		FD_ZERO(&exceptfds);
+		FD_SET(sock, &exceptfds);
+
+		timeout.tv_sec = to / 1000 ;
+		timeout.tv_usec = (to % 1000) * 1000;
+
+		status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
+
+		if (status == -1) {
+			/* on EINTR, retry - this resets the timeout however to its full length */
+			if (errno == EINTR) {
+				continue;
+			}
+
+			*error_message = strdup(strerror(errno));
+			return 13;
+		}
+
+		if (FD_ISSET(sock, &exceptfds)) {
+			*error_message = strdup("Exceptional condition on socket");
+			return 17;
+		}
+
+		if (status == 0 && !FD_ISSET(sock, &readfds)) {
+			*error_message = malloc(256);
+			snprintf(
+				*error_message, 256,
+				"cursor timed out (timeout: %d, time left: %ld:%ld, status: %d)",
+				to, (long) timeout.tv_sec, (long) timeout.tv_usec, status
+			);
+			return 80;
+		}
+
+		/* if our descriptor is ready break out */
+		if (FD_ISSET(sock, &readfds)) {
+			break;
+		}
+	}
+
+	return 0;
+}
+#endif
 
 /* Low-level send function.
  *
@@ -128,11 +187,15 @@ int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, i
 
 	if (status == -1) {
 		*error_message = strdup(strerror(errno));
+#ifndef WIN32
 		if (errno == ECONNRESET) {
 			return -32;
 		} else {
 			return -31;
 		}
+#else
+		return -31;
+#endif
 	} else if (status == 0) {
 		*error_message = strdup("Remote server has closed the connection");
 		return -32;
