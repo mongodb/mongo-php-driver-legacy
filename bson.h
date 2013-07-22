@@ -49,7 +49,7 @@
 	buf.end = b+n;
 
 /* driver */
-int php_mongo_serialize_element(const char*, zval**, buffer*, int TSRMLS_DC);
+int php_mongo_serialize_element(const char* name, int name_len, zval**, buffer*, int TSRMLS_DC);
 
 /* objects */
 void php_mongo_serialize_date(buffer*, zval* TSRMLS_DC);

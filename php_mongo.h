@@ -632,7 +632,7 @@ extern zend_module_entry mongo_module_entry;
  * MongoException:
  * 0: The <class> object has not been correctly initialized by its constructor
  * 1: zero-length keys are not allowed, did you use $ with double quotes?
- * 2: '.' not allowed in key: <key>
+ * 2: characters not allowed in key: <key>
  * 3: insert too large: <size>, max: 16000000
  * 4: no elements in doc
  * 5: size of BSON doc is <size> bytes, max 4MB

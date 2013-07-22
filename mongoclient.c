@@ -691,8 +691,13 @@ PHP_METHOD(MongoClient, selectDB)
 		return;
 	}
 
+	if (memchr(db, '\0', db_len) != NULL) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "'\\0' not allowed in database names: %s\\0...", db);
+		return;
+	}
+
 	MAKE_STD_ZVAL(name);
-	ZVAL_STRING(name, db, 1);
+	ZVAL_STRINGL(name, db, db_len, 1);
 
 	PHP_MONGO_GET_LINK(getThis());
 
@@ -771,7 +776,7 @@ PHP_METHOD(MongoClient, __get)
 	}
 
 	MAKE_STD_ZVAL(name);
-	ZVAL_STRING(name, str, 1);
+	ZVAL_STRINGL(name, str, str_len, 1);
 
 	/* select this db */
 	MONGO_METHOD1(MongoClient, selectDB, return_value, getThis(), name);
@@ -794,7 +799,7 @@ PHP_METHOD(MongoClient, selectCollection)
 	}
 
 	MAKE_STD_ZVAL(db_name);
-	ZVAL_STRING(db_name, db, 1);
+	ZVAL_STRINGL(db_name, db, db_len, 1);
 
 	MAKE_STD_ZVAL(temp_db);
 	MONGO_METHOD1(MongoClient, selectDB, temp_db, getThis(), db_name);
@@ -802,7 +807,7 @@ PHP_METHOD(MongoClient, selectCollection)
 	PHP_MONGO_CHECK_EXCEPTION1(&temp_db);
 
 	MAKE_STD_ZVAL(coll_name);
-	ZVAL_STRING(coll_name, coll, 1);
+	ZVAL_STRINGL(coll_name, coll, coll_len, 1);
 
 	MONGO_METHOD1(MongoDB, selectCollection, return_value, temp_db, coll_name);
 
