@@ -40,6 +40,6 @@ $c->findOne();
 ?>
 --EXPECTF--
 pick server: the primary
-- connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;.;%d
+- connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   - tag: dc:ny
   - tag: server:0
