@@ -26,7 +26,7 @@ function printMsgs($a, $b, $msg)
 		$show = true;
 	}
 
-	if ($show) {
+	if (preg_match( '/added primary regardless/', $msg) || $show) {
 		echo $msg, "\n";
 	}
 }
@@ -39,6 +39,7 @@ $c->findOne();
 
 ?>
 --EXPECTF--
+candidate_matches_tags: added primary regardless of tags: %s:%d;REPLICASET;.;%d
 pick server: the primary
 - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   - tag: dc:ny
