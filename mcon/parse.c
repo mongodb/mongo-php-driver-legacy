@@ -343,6 +343,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authMechanism': '%s'", option_value);
 		if (strcasecmp(option_value, "MONGODB-CR") == 0) {
 			mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
+		} else if (strcasecmp(option_value, "MONGODB-X509") == 0) {
+			mechanism = MONGO_AUTH_MECHANISM_MONGODB_X509;
 		} else if (strcasecmp(option_value, "GSSAPI") == 0) {
 			mechanism = MONGO_AUTH_MECHANISM_GSSAPI;
 		} else if (strcasecmp(option_value, "PLAIN") == 0) {

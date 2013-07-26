@@ -768,37 +768,36 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	char *nonce;
 	int   retval = 0;
 
-	if (!server_def->db || !server_def->username || !server_def->password) {
-		return 2;
-	}
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_CR) {
+		if (!server_def->db || !server_def->username || !server_def->password) {
+			return 2;
+		}
 
-	if (server_def->mechanism != MONGO_AUTH_MECHANISM_MONGODB_CR) {
-		*error_message = strdup("Only MongoDB-CR authentication mechanism is supported by this build");
+		nonce = mongo_connection_getnonce(manager, con, options, error_message);
+		if (!nonce) {
+			return 0;
+		}
+
+		retval = mongo_connection_authenticate_mongodb_cr(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, server_def->password, nonce, error_message);
+		free(nonce);
+	} else if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_X509) {
+		retval = mongo_connection_authenticate_mongodb_x509(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, error_message);
+	} else {
+		*error_message = strdup("Only MongoDB-CR and MONGODB-X509 authentication mechanisms is supported by this build");
 		return 0;
 	}
-
-	nonce = mongo_connection_getnonce(manager, con, options, error_message);
-	if (!nonce) {
-		return 0;
-	}
-
-	retval = mongo_connection_authenticate_mongodb_cr(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, server_def->password, nonce, error_message);
-	free(nonce);
 
 	return retval;
 }
 
 /**
- * Authenticates a connection
+ * Authenticates a connection using MONGODB-CR
  *
  * Returns 1 when it worked, or 0 when it didn't - with the error_message set.
  */
 int mongo_connection_authenticate_mongodb_cr(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char *nonce, char **error_message)
 {
 	mcon_str      *packet;
-	char          *data_buffer, *errmsg;
-	double         ok;
-	char          *ptr;
 	char          *salted;
 	int            length;
 	char          *hash, *key;
@@ -821,10 +820,39 @@ int mongo_connection_authenticate_mongodb_cr(mongo_con_manager *manager, mongo_c
 	free(salted);
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "authenticate: key=md5(%s%s%s) = %s", nonce, username, hash, key);
 
-	packet = bson_create_authenticate_packet(con, database, username, nonce, key);
+	/* BC: Do not send MONGODB-CR as mechanism, won't work on older mongod */
+	packet = bson_create_authenticate_packet(con, NULL, database, username, nonce, key);
 
 	free(hash);
 	free(key);
+
+	return mongo_connection_authenticate_cmd(manager, con, options, database, username, packet, error_message);
+}
+
+/**
+ * Authenticates a connection using MONGODB-X509
+ *
+ * Returns 1 when it worked, or 0 when it didn't - with the error_message set.
+ */
+int mongo_connection_authenticate_mongodb_x509(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char **error_message)
+{
+	mcon_str      *packet;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate (X509): start");
+
+	packet = bson_create_authenticate_packet(con, "MONGODB-X509", database, username, NULL, NULL);
+
+	return mongo_connection_authenticate_cmd(manager, con, options, database, username, packet, error_message);
+}
+
+/** Sends the db.authenticate() command packet
+ *
+ * Returns 1 when it worked, 2 when no need, or 0 when it didn't - with the error_message set. */
+int mongo_connection_authenticate_cmd(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, mcon_str *packet, char **error_message)
+{
+	char          *data_buffer, *errmsg;
+	double         ok;
+	char          *ptr;
 
 	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;

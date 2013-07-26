@@ -402,6 +402,11 @@ int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connectio
 	if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_CR) {
 		return mongo_connection_authenticate(manager, con, options, server_def, error_message);
 	}
+	/* Use the mcon implementation of MongoDB-X509 */
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_X509) {
+		return mongo_connection_authenticate(manager, con, options, server_def, error_message);
+	}
+
 #if HAVE_MONGO_SASL
 	if (server_def->mechanism == MONGO_AUTH_MECHANISM_GSSAPI) {
 		return php_mongo_io_authenticate_gssapi(manager, con, options, server_def, error_message);
