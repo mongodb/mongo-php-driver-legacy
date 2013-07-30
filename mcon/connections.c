@@ -254,6 +254,11 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 	tmp->connection_type = MONGO_NODE_STANDALONE;
 
 	/* Default server options */
+	/* If we don't know the version, assume 1.8.0 */
+	tmp->version.major = 1;
+	tmp->version.minor = 8;
+	tmp->version.mini  = 0;
+	tmp->version.build = 0;
 	/* MongoDB pre-1.8; Spec says default to 4 MB */
 	tmp->max_bson_size = 4194304;
 	/* MongoDB pre-2.4; Spec says default to 2 * the maxBsonSize */
@@ -667,6 +672,50 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: added tag %s", con->tags[con->tag_count]);
 			con->tag_count++;
 		}
+	}
+
+	free(data_buffer);
+
+	return 1;
+}
+
+/* Sends an buildInfo command to the server to find server version
+ *
+ * Returns 1 when it worked, and 0 when an error was encountered. */
+int mongo_connection_get_server_version(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
+{
+	mcon_str      *packet;
+	char          *data_buffer;
+	char          *ptr;
+	char          *version_array;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_version: start");
+	packet = bson_create_buildinfo_packet(con);
+
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
+		return 0;
+	}
+
+	/* Find data fields */
+	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	/* Find read preferences tags */
+	if (bson_find_field_as_array(ptr, "versionArray", (char**) &version_array)) {
+		char *it, *name;
+
+		it = version_array;
+
+		if (bson_array_find_next_int32(&it, &name, &con->version.major)) {
+			if (bson_array_find_next_int32(&it, &name, &con->version.minor)) {
+				if (bson_array_find_next_int32(&it, &name, &con->version.mini)) {
+					if (bson_array_find_next_int32(&it, &name, &con->version.build)) {
+						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_version: server version: %d.%d.%d (%d)", con->version.major, con->version.minor, con->version.mini, con->version.build);
+					}
+				}
+			}
+		}
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "get_server_flags: can't find version information, defaulting to %d.%d.%d (%d)", con->version.major, con->version.minor, con->version.mini, con->version.build);
 	}
 
 	free(data_buffer);

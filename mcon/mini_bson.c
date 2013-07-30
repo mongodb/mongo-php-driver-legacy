@@ -112,6 +112,23 @@ mcon_str *bson_create_ismaster_packet(mongo_connection *con)
 	return str;
 }
 
+mcon_str *bson_create_buildinfo_packet(mongo_connection *con)
+{
+	struct mcon_str *str = create_simple_header(con, NULL);
+	int    hdr;
+
+	hdr = str->l;
+	mcon_serialize_int(str, 0); /* We need to fill this with the length */
+	bson_add_long(str, "buildInfo", 1);
+	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
+
+	/* Set length */
+	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+
+	((int*) str->d)[0] = str->l;
+	return str;
+}
+
 mcon_str *bson_create_rs_status_packet(mongo_connection *con)
 {
 	struct mcon_str *str = create_simple_header(con, NULL);
@@ -473,6 +490,23 @@ int bson_array_find_next_string(char **buffer, char **field, char **data)
 	return_data = bson_get_current(*buffer, &read_field, &read_type);
 	if (read_type == BSON_STRING) {
 		*data = (char*) return_data + 4;
+		if (field) {
+			*field = strdup(read_field);
+		}
+	}
+	*buffer = bson_next(*buffer);
+	return *buffer == NULL ? 0 : 1;
+}
+
+int bson_array_find_next_int32(char **buffer, char **field, int32_t *data)
+{
+	char *read_field;
+	int   read_type;
+	void *return_data;
+
+	return_data = bson_get_current(*buffer, &read_field, &read_type);
+	if (read_type == BSON_INT32) {
+		*data = ((int32_t*) return_data)[0];
 		if (field) {
 			*field = strdup(read_field);
 		}

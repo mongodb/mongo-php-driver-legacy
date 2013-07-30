@@ -962,7 +962,7 @@ PHP_METHOD(MongoClient, getConnections)
 
 	array_init(return_value);
 	while (ptr) {
-		zval *entry, *server, *connection, *tags;
+		zval *entry, *server, *connection, *tags, *version;
 		char *host, *repl_set_name, *database, *username, *auth_hash;
 		int port, pid, i;
 		mongo_connection *con = (mongo_connection*) ptr->data;
@@ -1002,6 +1002,15 @@ PHP_METHOD(MongoClient, getConnections)
 			free(auth_hash);
 		}
 		add_assoc_long(server, "pid", pid);
+		
+		/* Add server version as array */
+		MAKE_STD_ZVAL(version);
+		array_init(version);
+		add_assoc_long(version, "major", con->version.major);
+		add_assoc_long(version, "minor", con->version.minor);
+		add_assoc_long(version, "mini",  con->version.mini);
+		add_assoc_long(version, "build", con->version.build);
+		add_assoc_zval(server, "version", version);
 
 		/* Grab connection info */
 		add_assoc_long(connection, "last_ping", con->last_ping);

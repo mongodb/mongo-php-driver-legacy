@@ -139,6 +139,12 @@ typedef struct _mongo_connection
 	int    last_reqid;
 	void  *socket;           /* void* so we can support different "socket" backends */
 	int    connection_type;  /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
+	struct {
+		int32_t major;
+		int32_t minor;
+		int32_t mini;
+		int32_t build;
+	} version;
 	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
 	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
 	int    tag_count;
