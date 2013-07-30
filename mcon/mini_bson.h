@@ -20,6 +20,7 @@
 
 mcon_str *bson_create_ping_packet(mongo_connection *con);
 mcon_str *bson_create_ismaster_packet(mongo_connection *con);
+mcon_str *bson_create_buildinfo_packet(mongo_connection *con);
 mcon_str *bson_create_rs_status_packet(mongo_connection *con);
 mcon_str *bson_create_getnonce_packet(mongo_connection *con);
 mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *database, char *username, char *nonce, char *key);
@@ -37,6 +38,7 @@ int bson_find_field_as_string(char *buffer, char *field, char **data);
 int bson_find_field_as_stringl(char *buffer, char *field, char **data, int32_t *length, int duplicate);
 
 int bson_array_find_next_string(char **buffer, char **field, char **data);
+int bson_array_find_next_int32(char **buffer, char **field, int32_t *data);
 int bson_array_find_next_embedded_doc(char **buffer);
 
 #endif

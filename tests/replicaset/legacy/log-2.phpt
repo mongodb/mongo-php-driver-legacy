@@ -24,6 +24,10 @@ MongoLog::setLevel(0);
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
+CON     INFO: get_server_version: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: %d
+CON     INFO: get_server_version: server version: %d.%d.%d (%d)
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
@@ -53,6 +57,10 @@ CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICAS
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
+CON     INFO: get_server_version: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: %d
+CON     INFO: get_server_version: server version: %d.%d.%d (%d)
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
@@ -67,6 +75,10 @@ CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
+CON     INFO: get_server_version: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: %d
+CON     INFO: get_server_version: server version: %d.%d.%d (%d)
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
@@ -81,6 +93,10 @@ CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
+CON     INFO: get_server_version: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: %d
+CON     INFO: get_server_version: server version: %d.%d.%d (%d)
 CON     INFO: get_server_flags: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
