@@ -962,24 +962,13 @@ PHP_METHOD(MongoCollection, findAndModify)
 }
 /* }}} */
 
-/* {{{ proto bool|array MongoCollection::update(array|object criteria, array|object $newobj [, array options])
-   Update one or more documents matching $criteria with $newobj and return the
-   database response if the write concern is >= 1. Otherwise, boolean true is
-   returned. */
-PHP_METHOD(MongoCollection, update)
-{
-	zval *criteria, *newobj, *options = 0;
-	mongo_collection *c;
-	mongo_connection *connection;
-	buffer buf;
-	int bit_opts = 0;
-	int retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|a/", &criteria, &newobj, &options) == FAILURE) {
-		return;
-	}
-	MUST_BE_ARRAY_OR_OBJECT(1, criteria);
-	MUST_BE_ARRAY_OR_OBJECT(2, newobj);
+static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval *criteria, zval *newobj, zval *options, zval *return_value TSRMLS_DC)
+{
+	int bit_opts = 0;
+	int retval = 1;
+	buffer buf;
+	mongo_connection *connection;
 
 	if (options) {
 		zval **upsert = 0, **multiple = 0;
@@ -999,8 +988,6 @@ PHP_METHOD(MongoCollection, update)
 		MAKE_STD_ZVAL(options);
 		array_init(options);
 	}
-
-	PHP_MONGO_GET_COLLECTION(getThis());
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
 		zval_ptr_dtor(&options);
@@ -1027,6 +1014,26 @@ PHP_METHOD(MongoCollection, update)
 
 	efree(buf.start);
 	zval_ptr_dtor(&options);
+}
+
+/* {{{ proto bool|array MongoCollection::update(array|object criteria, array|object $newobj [, array options])
+   Update one or more documents matching $criteria with $newobj and return the
+   database response if the write concern is >= 1. Otherwise, boolean true is
+   returned. */
+PHP_METHOD(MongoCollection, update)
+{
+	zval *criteria, *newobj, *options = 0;
+	mongo_collection *c;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|a/", &criteria, &newobj, &options) == FAILURE) {
+		return;
+	}
+
+	MUST_BE_ARRAY_OR_OBJECT(1, criteria);
+	MUST_BE_ARRAY_OR_OBJECT(2, newobj);
+
+	PHP_MONGO_GET_COLLECTION(getThis());
+	php_mongocollection_update(this_ptr, c, criteria, newobj, options, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -1390,6 +1397,7 @@ PHP_METHOD(MongoCollection, save)
 {
 	zval *a, *options = 0;
 	zval **id;
+	mongo_collection *c;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a/", &a, &options) == FAILURE) {
 		return;
@@ -1413,7 +1421,8 @@ PHP_METHOD(MongoCollection, save)
 
 		add_assoc_bool(options, "upsert", 1);
 
-		MONGO_METHOD3(MongoCollection, update, return_value, getThis(), criteria, a, options);
+		PHP_MONGO_GET_COLLECTION(getThis());
+		php_mongocollection_update(this_ptr, c, criteria, a, options, return_value TSRMLS_CC);
 
 		zval_ptr_dtor(&criteria);
 		zval_ptr_dtor(&options);
