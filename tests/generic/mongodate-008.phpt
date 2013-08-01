@@ -71,9 +71,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(0)
   ["usec"]=>
-  int(81234)
+  int(81000)
 }
-0.08123400 0
+0.08100000 0
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(0)
@@ -87,9 +87,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(0)
   ["usec"]=>
-  int(801234)
+  int(801000)
 }
-0.80123400 0
+0.80100000 0
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(0)
@@ -103,9 +103,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(0)
   ["usec"]=>
-  int(8001234)
+  int(8001000)
 }
-8.00123400 0
+0.00100000 8
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(8)
@@ -119,9 +119,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1000)
   ["usec"]=>
-  int(81234)
+  int(81000)
 }
-0.08123400 -1000
+0.08100000 -1000
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1000)
@@ -135,9 +135,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1000)
   ["usec"]=>
-  int(801234)
+  int(801000)
 }
-0.80123400 -1000
+0.80100000 -1000
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1000)
@@ -151,9 +151,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1000)
   ["usec"]=>
-  int(8001234)
+  int(8001000)
 }
-8.00123400 -1000
+0.00100000 -992
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-992)
@@ -167,9 +167,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1000)
   ["usec"]=>
-  int(-81234)
+  int(-81000)
 }
--0.08123400 -1000
+0.91900000 -1001
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1001)
@@ -183,9 +183,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1000)
   ["usec"]=>
-  int(-801234)
+  int(-801000)
 }
--0.80123400 -1000
+0.19900000 -1001
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1001)
@@ -199,9 +199,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1000)
   ["usec"]=>
-  int(-8001234)
+  int(-8001000)
 }
--8.00123400 -1000
+0.99900000 -1009
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(-1009)
@@ -215,9 +215,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(1000)
   ["usec"]=>
-  int(81234)
+  int(81000)
 }
-0.08123400 1000
+0.08100000 1000
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(1000)
@@ -231,9 +231,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(1000)
   ["usec"]=>
-  int(801234)
+  int(801000)
 }
-0.80123400 1000
+0.80100000 1000
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(1000)
@@ -247,9 +247,9 @@ object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(1000)
   ["usec"]=>
-  int(8001234)
+  int(8001000)
 }
-8.00123400 1000
+0.00100000 1008
 object(MongoDate)#%d (%d) {
   ["sec"]=>
   int(1008)

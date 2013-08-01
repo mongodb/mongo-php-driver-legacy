@@ -17,12 +17,38 @@
 #include "../php_mongo.h"
 
 zend_class_entry *mongo_ce_Date = NULL;
+zend_object_handlers mongo_date_handlers;
+
+typedef struct {
+	zend_object std;
+	int64_t     datetime;
+} mongo_date;
+
+void php_mongo_date_init(zval *value, int64_t datetime TSRMLS_DC)
+{
+	mongo_date *date;
+	long        sec, usec;
+
+	date = (mongo_date*) zend_object_store_get_object(value TSRMLS_CC);
+
+	/* Store untouched full datetimestamp */
+	date->datetime = datetime;
+	
+	/* Store it as properties too */
+	usec = (long) ((((datetime * 1000) % 1000000) + 1000000) % 1000000);
+	sec  = (long) ((datetime/1000) - (datetime < 0 && usec));
+
+	zend_update_property_long(mongo_ce_Date, value, "sec", strlen("sec"), sec TSRMLS_CC);
+	zend_update_property_long(mongo_ce_Date, value, "usec", strlen("usec"), usec TSRMLS_CC);
+}
 
 /* {{{ MongoDate::__construct
  */
 PHP_METHOD(MongoDate, __construct)
 {
 	long arg1 = 0, arg2 = 0;
+	mongo_date *date;
+	int64_t internal_date = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ll", &arg1, &arg2) == FAILURE) {
 		return;
@@ -30,12 +56,14 @@ PHP_METHOD(MongoDate, __construct)
 
 	switch (ZEND_NUM_ARGS()) {
 		case 2:
-			zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), arg2 TSRMLS_CC);
+			zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), (arg2 / 1000) * 1000 TSRMLS_CC);
+			internal_date += (arg2 / 1000);
 			/* fallthrough */
 
 		case 1:
 			zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), arg1 TSRMLS_CC);
 			/* usec is already 0, if not set above */
+			internal_date += (arg1 * 1000);
 			break;
 
 		case 0: {
@@ -43,15 +71,20 @@ PHP_METHOD(MongoDate, __construct)
 			time_t sec = time(0);
 			zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), sec TSRMLS_CC);
 			zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), 0 TSRMLS_CC);
+			internal_date = sec * 1000;
 #else
 			struct timeval time;
 			gettimeofday(&time, NULL);
 
 			zend_update_property_long(mongo_ce_Date, getThis(), "sec", strlen("sec"), time.tv_sec TSRMLS_CC);
 			zend_update_property_long(mongo_ce_Date, getThis(), "usec", strlen("usec"), (time.tv_usec / 1000) * 1000 TSRMLS_CC);
+			internal_date = (time.tv_sec * 1000) + (time.tv_usec / 1000);
 #endif
 		}
 	}
+
+	date = (mongo_date*) zend_object_store_get_object(getThis() TSRMLS_CC);
+	date->datetime = internal_date;
 }
 /* }}} */
 
@@ -60,14 +93,24 @@ PHP_METHOD(MongoDate, __construct)
  */
 PHP_METHOD(MongoDate, __toString)
 {
-	zval *zsec = zend_read_property( mongo_ce_Date, getThis(), "sec", strlen("sec"), NOISY TSRMLS_CC );
-	long sec = Z_LVAL_P( zsec );
-	zval *zusec = zend_read_property( mongo_ce_Date, getThis(), "usec", strlen("usec"), NOISY TSRMLS_CC );
-	long usec = Z_LVAL_P( zusec );
-	double dusec = (double)usec/1000000;
-	char *str;
+	mongo_date *date;
+	int64_t     sec;
+	int64_t     usec;
+	double      dusec;
+	char       *str;
 
-	spprintf(&str, 0, "%.8f %ld", dusec, sec);
+	date = (mongo_date*) zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	usec  = (int64_t) ((((date->datetime * 1000) % 1000000) + 1000000) % 1000000);
+	sec   = (int64_t) ((date->datetime/1000) - (date->datetime < 0 && usec));
+	dusec = (double) usec / 1000000;
+
+#ifdef WIN32
+	spprintf(&str, 0, "%.8f %I64d", dusec, (int64_t) sec);
+#else
+	spprintf(&str, 0, "%.8f %lld", dusec, (long long int) sec);
+#endif
+
 	RETURN_STRING(str, 0);
 }
 /* }}} */
@@ -79,12 +122,43 @@ static zend_function_entry MongoDate_methods[] = {
 	{ NULL, NULL, NULL }
 };
 
+/* {{{ php_mongo_date_free
+ */
+static void php_mongo_date_free(void *object TSRMLS_DC)
+{
+	mongo_date *date = (mongo_date*)object;
+
+	zend_object_std_dtor(&date->std TSRMLS_CC);
+
+	efree(date);
+}
+/* }}} */
+
+static zend_object_value php_mongodate_new(zend_class_entry *class_type TSRMLS_DC)
+{
+	zend_object_value retval;
+	mongo_date *intern;
+
+	intern = (mongo_date*)emalloc(sizeof(mongo_date));
+	memset(intern, 0, sizeof(mongo_date));
+
+	zend_object_std_init(&intern->std, class_type TSRMLS_CC);
+	init_properties(intern);
+
+	retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t) zend_objects_destroy_object, php_mongo_date_free, NULL TSRMLS_CC);
+	retval.handlers = &mongo_date_handlers;
+
+	return retval;
+}
+
 void mongo_init_MongoDate(TSRMLS_D)
 {
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "MongoDate", MongoDate_methods);
+	ce.create_object = php_mongodate_new;
 	mongo_ce_Date = zend_register_internal_class(&ce TSRMLS_CC);
+	memcpy(&mongo_date_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 
 	zend_declare_property_long(mongo_ce_Date, "sec", strlen("sec"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 	zend_declare_property_long(mongo_ce_Date, "usec", strlen("usec"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
