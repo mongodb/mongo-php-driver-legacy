@@ -282,6 +282,19 @@ typedef __int64 int64_t;
 zend_object_value php_mongo_type_object_new(zend_class_entry *class_type TSRMLS_DC);
 void php_mongo_type_object_free(void *object TSRMLS_DC);
 
+#if PHP_VERSION_ID >= 50400
+void mongo_write_property(zval *object, zval *member, zval *value, const zend_literal *key TSRMLS_DC);
+#else
+void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC);
+#endif
+
+#if PHP_VERSION_ID >= 50400
+zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC);
+#else
+zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
+#endif
+
+
 #define RS_PRIMARY 1
 #define RS_SECONDARY 2
 

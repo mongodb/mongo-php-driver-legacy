@@ -26,18 +26,6 @@ mongo_connection *php_mongo_connect(mongoclient *link, int flags TSRMLS_DC);
 HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC);
 
 
-#if PHP_VERSION_ID >= 50400
-void mongo_write_property(zval *object, zval *member, zval *value, const zend_literal *key TSRMLS_DC);
-#else
-void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC);
-#endif
-
-#if PHP_VERSION_ID >= 50400
-zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC);
-#else
-zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
-#endif
-
 /* MongoClient class */
 PHP_METHOD(MongoClient, __construct);
 PHP_METHOD(MongoClient, getConnections);
