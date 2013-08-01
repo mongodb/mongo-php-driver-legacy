@@ -16,13 +16,24 @@ array(1) {
     ["hash"]=>
     string(%d) "%s:%d;-;.;%d"
     ["server"]=>
-    array(3) {
+    array(4) {
       ["host"]=>
       string(%d) "%s"
       ["port"]=>
       int(%d)
       ["pid"]=>
       int(%d)
+      ["version"]=>
+      array(4) {
+        ["major"]=>
+        int(%d)
+        ["minor"]=>
+        int(%d)
+        ["mini"]=>
+        int(%d)
+        ["build"]=>
+        int(%d)
+      }
     }
     ["connection"]=>
     array(8) {

@@ -94,12 +94,21 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	/* Since we didn't find an existing connection, lets make one! */
 	con = mongo_connection_create(manager, hash, server, options, error_message);
 	if (con) {
+		/* When we make a connection, we need to figure out the server version it is */
+		if (!mongo_connection_get_server_version(manager, con, options, error_message)) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_version: error while getting the server version %s:%d: %s", server->host, server->port, *error_message);
+			mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
+			free(hash);
+			return NULL;
+		}
+
 		/* Do authentication if requested */
 		if (!manager->authenticate(manager, con, options, server, error_message)) {
 			mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
 			free(hash);
 			return NULL;
 		}
+
 		/* We call get_server_flags to the maxBsonObjectSize data */
 		if (!mongo_connection_get_server_flags(manager, con, options, error_message)) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", server->host, server->port, *error_message);
