@@ -214,6 +214,7 @@ PHP_MINIT_FUNCTION(mongo)
 
 	return SUCCESS;
 }
+/* }}} */
 
 /* {{{ PHP_GINIT_FUNCTION
  */
