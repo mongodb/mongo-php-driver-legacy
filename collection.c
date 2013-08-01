@@ -902,7 +902,7 @@ PHP_METHOD(MongoCollection, findAndModify)
    returned. */
 PHP_METHOD(MongoCollection, update)
 {
-	zval *criteria, *newobj, *options = 0;
+	zval *criteria, *newobj, *options = NULL;
 	mongo_collection *c;
 	mongo_connection *connection;
 	buffer buf;
@@ -1308,7 +1308,7 @@ PHP_METHOD(MongoCollection, count)
    document is not empty. */
 PHP_METHOD(MongoCollection, save)
 {
-	zval *a, *options = 0;
+	zval *a, *options = NULL;
 	zval **id;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a/", &a, &options) == FAILURE) {
@@ -1333,6 +1333,7 @@ PHP_METHOD(MongoCollection, save)
 
 		add_assoc_bool(options, "upsert", 1);
 
+		Z_ADDREF_P(options);
 		MONGO_METHOD3(MongoCollection, update, return_value, getThis(), criteria, a, options);
 
 		zval_ptr_dtor(&criteria);
