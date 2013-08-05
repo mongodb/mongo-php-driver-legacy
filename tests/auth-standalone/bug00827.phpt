@@ -25,5 +25,5 @@ echo "DONE\n";
 ?>
 --EXPECTF--
 71
-Failed to connect to: %s:%d: Authentication failed on database 'Xanadu' with username '%s': auth fails
+Failed to connect to: %s:%d: Authentication failed on database 'Xanadu' with username '%s': auth %s
 DONE
