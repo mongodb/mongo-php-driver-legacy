@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-320: GridFS transaction issues with storeFile().
 --SKIPIF--
+<?php if (version_compare(PHP_VERSION, "5.3.0", "lt")) { exit("skip doesn't work on 5.2"); }?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
