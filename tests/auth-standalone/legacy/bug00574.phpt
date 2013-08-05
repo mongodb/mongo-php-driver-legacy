@@ -33,5 +33,5 @@ echo "DONE\n";
 %s: Function MongoDB::authenticate() is deprecated in %s on line %d
 
 Warning: MongoDB::authenticate(): You can't authenticate an already authenticated connection. in %s on line %d
-Failed to connect to: %s:%d: Authentication failed on database 'test2' with username 'user': auth fails
+Failed to connect to: %s:%d: Authentication failed on database 'test2' with username 'user': auth %s
 DONE
