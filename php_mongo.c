@@ -248,6 +248,7 @@ PHP_MINIT_FUNCTION(mongo)
 #endif
 
 	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_MONGODB_CR", 1, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_MONGODB_X509", 1, CONST_PERSISTENT);
 #if HAVE_MONGO_SASL
 	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_GSSAPI", 1, CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_PLAIN", 1, CONST_PERSISTENT);
@@ -407,6 +408,7 @@ PHP_MINFO_FUNCTION(mongo)
 
 	php_info_print_table_colspan_header(2, "Supported Authentication Mechanisms");
 	php_info_print_table_row(2, "MONGODB-CR (default)", "enabled");
+	php_info_print_table_row(2, "MONGODB-X509", "enabled");
 #if HAVE_MONGO_SASL
 	php_info_print_table_row(2, "GSSAPI (Kerberos)", "enabled");
 	php_info_print_table_row(2, "PLAIN", "enabled");

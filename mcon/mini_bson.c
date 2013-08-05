@@ -163,7 +163,7 @@ mcon_str *bson_create_getnonce_packet(mongo_connection *con)
 	return str;
 }
 
-mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *database, char *username, char *nonce, char *key)
+mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *mechanism, char *database, char *username, char *nonce, char *key)
 {
 	struct mcon_str *str;
 	char  *ns;
@@ -180,8 +180,17 @@ mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *database,
 	mcon_serialize_int(str, 0); /* We need to fill this with the length */
 	bson_add_long(str, "authenticate", 1);
 	bson_add_string(str, "user", username);
-	bson_add_string(str, "nonce", nonce);
-	bson_add_string(str, "key", key);
+
+	/* MONGODB_X509 doesn't use nonce or key */
+	if (nonce) {
+		bson_add_string(str, "nonce", nonce);
+	}
+	if (key) {
+		bson_add_string(str, "key", key);
+	}
+	if (mechanism) {
+		bson_add_string(str, "mechanism", mechanism);
+	}
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
 
 	/* Set length */

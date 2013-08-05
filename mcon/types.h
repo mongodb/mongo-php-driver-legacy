@@ -185,9 +185,10 @@ typedef struct _mongo_read_preference
 	mongo_read_preference_tagset **tagsets;
 } mongo_read_preference;
 
-#define MONGO_AUTH_MECHANISM_MONGODB_CR 1
-#define MONGO_AUTH_MECHANISM_GSSAPI     2
-#define MONGO_AUTH_MECHANISM_PLAIN      3
+#define MONGO_AUTH_MECHANISM_MONGODB_CR   1
+#define MONGO_AUTH_MECHANISM_GSSAPI       2
+#define MONGO_AUTH_MECHANISM_PLAIN        3
+#define MONGO_AUTH_MECHANISM_MONGODB_X509 4
 
 typedef struct _mongo_server_def
 {
