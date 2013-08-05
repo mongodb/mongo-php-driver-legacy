@@ -42,4 +42,4 @@ try {
 --EXPECTF--
 string(20) "MongoCursorException"
 int(16336)
-string(%d) "%s:%d: could not find cursor in cache for id %d over collection %s.php755"
+string(%d) "%s:%d: could not find cursor %s %s.php755"

@@ -26,7 +26,6 @@ ini_set("mongo.is_master_interval", 1);
 echo "Putting all secondaries into recovery mode\n";
 $server->setMaintenanceForSecondaries(true);
 sleep(3);
-$server->setMaintenanceForSecondaries(true);
 
 echo "We should have detected that the servers are in maintenence mode now\n";
 echo "This should hit the primary as all secondaries are in recovery\n";
