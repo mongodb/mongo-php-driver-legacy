@@ -346,6 +346,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 	/* If we don't have a connected server then there is no point in continueing */
 	if (!found_connected_server && (connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
+		mcon_str_ptr_dtor(messages);
 		return NULL;
 	}
 
