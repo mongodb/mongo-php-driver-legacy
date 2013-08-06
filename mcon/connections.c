@@ -705,10 +705,10 @@ int mongo_connection_get_server_version(mongo_con_manager *manager, mongo_connec
 
 		it = version_array;
 
-		if (bson_array_find_next_int32(&it, &name, &con->version.major)) {
-			if (bson_array_find_next_int32(&it, &name, &con->version.minor)) {
-				if (bson_array_find_next_int32(&it, &name, &con->version.mini)) {
-					if (bson_array_find_next_int32(&it, &name, &con->version.build)) {
+		if (bson_array_find_next_int32(&it, NULL, &con->version.major)) {
+			if (bson_array_find_next_int32(&it, NULL, &con->version.minor)) {
+				if (bson_array_find_next_int32(&it, NULL, &con->version.mini)) {
+					if (bson_array_find_next_int32(&it, NULL, &con->version.build)) {
 						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_version: server version: %d.%d.%d (%d)", con->version.major, con->version.minor, con->version.mini, con->version.build);
 					}
 				}
