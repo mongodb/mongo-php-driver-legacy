@@ -32,7 +32,7 @@ array(1) {
         ["mini"]=>
         int(%d)
         ["build"]=>
-        int(%d)
+        int(%i)
       }
     }
     ["connection"]=>
