@@ -29,6 +29,8 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
+CON     FINE: get_server_flags: got replicaset name: REPLICASET
+CON     INFO: get_server_flags: found server type: PRIMARY
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
@@ -42,7 +44,6 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
-CON     INFO: ismaster: set name: REPLICASET, ismaster: 1, secondary: 0, is_arbiter: 0
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
@@ -58,6 +59,7 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
+CON     INFO: get_server_flags: found server type: SECONDARY
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
@@ -72,6 +74,7 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
+CON     INFO: get_server_flags: found server type: SECONDARY
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
@@ -86,6 +89,7 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
 CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
+CON     INFO: get_server_flags: found server type: SECONDARY
 CON     FINE: get_server_flags: added tag dc:%s
 CON     FINE: get_server_flags: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
@@ -99,25 +103,6 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
-CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d (passive)
-CON     INFO: ismaster: last ran at %d
-CON     FINE: discover_topology: ismaster worked
-CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
-CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
-CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
-CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
-CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;.;%d
-CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
-CON     INFO: ismaster: start
-CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: %d
-CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
-CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
-CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
@@ -135,7 +120,23 @@ CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
-CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
+CON     INFO: found host: %s:%d
+CON     INFO: found host: %s:%d
+CON     INFO: found host: %s:%d
+CON     INFO: found host: %s:%d (passive)
+CON     INFO: ismaster: last ran at %d
+CON     FINE: discover_topology: ismaster worked
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;.;%d
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     INFO: ismaster: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: %d
+CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
+CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
