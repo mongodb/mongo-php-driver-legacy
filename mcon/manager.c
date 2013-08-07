@@ -102,14 +102,6 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 			return NULL;
 		}
 
-		/* We call get_server_flags to the maxBsonObjectSize data */
-		if (!mongo_connection_get_server_flags(manager, con, options, error_message)) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", server->host, server->port, *error_message);
-			mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
-			free(hash);
-			return NULL;
-		}
-
 		/* Do authentication if requested */
 		/* Note: Arbiters don't contain any data, including auth stuff, so you cannot authenticate on an arbiter */
 		if (con->connection_type != MONGO_NODE_ARBITER) {
@@ -161,6 +153,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 			continue;
 		}
 		
+		/* Run ismaster, if needed, to extract server flags - and fetch the other known hosts */
 		res = mongo_connection_ismaster(manager, con, &servers->options, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
 		switch (res) {
 			case 0:
@@ -213,6 +206,13 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					if (!mongo_manager_connection_find_by_hash(manager, tmp_hash)) {
 						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
 						new_con = mongo_get_connection_single(manager, tmp_def, &servers->options, MONGO_CON_FLAG_WRITE, (char **) &con_error_message);
+
+						if (!mongo_connection_get_server_flags(manager, new_con, &servers->options, &con_error_message)) {
+							mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, error_message);
+							mongo_connection_destroy(manager, new_con, MONGO_CLOSE_BROKEN);
+							new_con = NULL;
+						}
+
 						if (new_con) {
 							servers->server[servers->count] = tmp_def;
 							servers->count++;
@@ -258,7 +258,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
 		if (tmp) {
-			found_connected_server = 1;
+			found_connected_server++;
 		} else if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 			free(con_error_message);
@@ -332,8 +332,17 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
 		if (tmp) {
-			found_connected_server = 1;
-		} else if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
+			found_connected_server++;
+
+			/* Run ismaster, if needed, to extract server flags */
+			if (!mongo_connection_get_server_flags(manager, tmp, &servers->options, &con_error_message)) {
+				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", &servers->server[i]->host, &servers->server[i]->port, con_error_message);
+				mongo_connection_destroy(manager, tmp, MONGO_CLOSE_BROKEN);
+				tmp = NULL;
+				found_connected_server--;
+			}
+		}
+		if (!tmp && !(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 			if (messages->l) {
 				mcon_str_addl(messages, "; ", 2, 0);
