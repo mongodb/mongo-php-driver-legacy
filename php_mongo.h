@@ -564,21 +564,21 @@ int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preferenc
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	/* php.ini options */
 	char *default_host;
-	int default_port;
-	int request_id;
+	long default_port;
+	long request_id;
 	int chunk_size;
 
 	/* $ alternative */
 	char *cmd_char;
-	int native_long;
-	int long_as_object;
-	int allow_empty_keys;
+	long native_long;
+	long long_as_object;
+	long allow_empty_keys;
 
 	/* _id generation helpers */
 	int inc, pid, machine;
 
 	/* timestamp generation helper */
-	int ts_inc;
+	long ts_inc;
 	char *errmsg;
 	int response_num;
 	int pool_size;
