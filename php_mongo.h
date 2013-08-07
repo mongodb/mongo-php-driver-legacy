@@ -578,7 +578,7 @@ ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	int inc, pid, machine;
 
 	/* timestamp generation helper */
-	int ts_inc;
+	long ts_inc;
 	char *errmsg;
 	int response_num;
 	int pool_size;
