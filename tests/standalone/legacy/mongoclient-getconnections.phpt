@@ -40,7 +40,7 @@ array(1) {
       ["last_ping"]=>
       int(%d)
       ["last_ismaster"]=>
-      int(0)
+      int(%d)
       ["ping_ms"]=>
       int(%d)
       ["connection_type"]=>
