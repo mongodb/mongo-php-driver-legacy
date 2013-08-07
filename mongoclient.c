@@ -444,7 +444,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	} else {
 		char *tmp;
 
-		spprintf(&tmp, 0, "%s:%d", MonGlo(default_host), MonGlo(default_port));
+		spprintf(&tmp, 0, "%s:%ld", MonGlo(default_host), MonGlo(default_port));
 		error = mongo_parse_server_spec(link->manager, link->servers, tmp, (char **)&error_message);
 		efree(tmp);
 
