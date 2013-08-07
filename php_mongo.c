@@ -259,6 +259,7 @@ PHP_MINIT_FUNCTION(mongo)
 
 	return SUCCESS;
 }
+/* }}} */
 
 /* {{{ PHP_GINIT_FUNCTION
  */
@@ -278,7 +279,6 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
 	mongo_globals->cmd_char = "$";
 
-	mongo_globals->inc = 0;
 	mongo_globals->response_num = 0;
 	mongo_globals->errmsg = 0;
 
@@ -323,6 +323,7 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->machine = hash;
 
 	mongo_globals->ts_inc = 0;
+	mongo_globals->inc = rand() & 0xFFFFFF;
 
 #if PHP_VERSION_ID >= 50300
 	mongo_globals->log_callback_info = empty_fcall_info;
@@ -379,7 +380,6 @@ PHP_RINIT_FUNCTION(mongo)
 {
 	MonGlo(log_level) = 0;
 	MonGlo(log_module) = 0;
-	MonGlo(inc) = rand() & 0xFFFFFF;
 
 	return SUCCESS;
 }
