@@ -102,19 +102,22 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 			return NULL;
 		}
 
-		/* Do authentication if requested */
-		if (!manager->authenticate(manager, con, options, server, error_message)) {
-			mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
-			free(hash);
-			return NULL;
-		}
-
 		/* We call get_server_flags to the maxBsonObjectSize data */
 		if (!mongo_connection_get_server_flags(manager, con, options, error_message)) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", server->host, server->port, *error_message);
 			mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
 			free(hash);
 			return NULL;
+		}
+
+		/* Do authentication if requested */
+		/* Note: Arbiters don't contain any data, including auth stuff, so you cannot authenticate on an arbiter */
+		if (con->connection_type != MONGO_NODE_ARBITER) {
+			if (!manager->authenticate(manager, con, options, server, error_message)) {
+				mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
+				free(hash);
+				return NULL;
+			}
 		}
 
 		/* Do the first-time ping to record the latency of the connection */
