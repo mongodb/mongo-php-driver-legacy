@@ -47,17 +47,15 @@ zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC)
 {
 	zval *retval;
 
-	if (Z_TYPE_P(zid) == IS_OBJECT && instanceof_function(Z_OBJCE_P(zid), mongo_ce_Id TSRMLS_CC)) {
-		convert_to_string_ex(&zid);
-	} else if (Z_TYPE_P(zid) == IS_ARRAY || Z_TYPE_P(zid) == IS_OBJECT) {
+	if (Z_TYPE_P(zid) == IS_ARRAY || (Z_TYPE_P(zid) == IS_OBJECT && !instanceof_function(Z_OBJCE_P(zid), mongo_ce_Id TSRMLS_CC))) {
 		zval **tmpval;
 
-		if (zend_hash_find(HASH_P(zid), "_id", 4, (void**)&tmpval) == SUCCESS) {
-			return php_mongo_dbref_create(*tmpval, ns, db TSRMLS_CC);
-		} else {
+		if (zend_hash_find(HASH_P(zid), "_id", 4, (void**)&tmpval) != SUCCESS) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot find _id key in the %s", zend_get_type_by_const(Z_TYPE_P(zid)));
 			return NULL;
 		}
+
+		zid = *tmpval;
 	} else if (Z_TYPE_P(zid) == IS_RESOURCE) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Don't know what to do with a resource type");
 		return NULL;
