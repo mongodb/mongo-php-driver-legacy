@@ -444,7 +444,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	} else {
 		char *tmp;
 
-		spprintf(&tmp, 0, "%s:%d", MonGlo(default_host), MonGlo(default_port));
+		spprintf(&tmp, 0, "%s:%ld", MonGlo(default_host), MonGlo(default_port));
 		error = mongo_parse_server_spec(link->manager, link->servers, tmp, (char **)&error_message);
 		efree(tmp);
 
@@ -517,11 +517,11 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 		zend_throw_exception(mongo_ce_ConnectionException, "SSL support is only available when compiled against PHP Streams", 26 TSRMLS_CC);
 		return;
 	}
-	if (link->servers->server[0].mechanism == MONGO_AUTH_MECHANISM_GSSAPI) {
+	if (link->servers->server[0]->mechanism == MONGO_AUTH_MECHANISM_GSSAPI) {
 		zend_throw_exception(mongo_ce_ConnectionException, "GSSAPI authentication mechanism is only available when compiled against PHP Streams", 28 TSRMLS_CC);
 		return;
 	}
-	if (link->servers->server[0].mechanism == MONGO_AUTH_MECHANISM_PLAIN) {
+	if (link->servers->server[0]->mechanism == MONGO_AUTH_MECHANISM_PLAIN) {
 		zend_throw_exception(mongo_ce_ConnectionException, "Plain authentication mechanism is only available when compiled against PHP Streams", 29 TSRMLS_CC);
 		return;
 	}
