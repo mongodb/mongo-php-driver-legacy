@@ -616,18 +616,18 @@ PHP_METHOD(MongoDB, getCollectionNames)
 
 PHP_METHOD(MongoDB, createDBRef)
 {
-	char *ns;
-	int ns_len;
+	char *collection;
+	int collection_len;
 	zval *obj, *retval = NULL;
 	mongo_db *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &ns, &ns_len, &obj) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &collection, &collection_len, &obj) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_DB(getThis());
 
-	retval = php_mongo_dbref_create(obj, ns, NULL TSRMLS_CC);
+	retval = php_mongo_dbref_create(obj, collection, NULL TSRMLS_CC);
 
 	RETURN_ZVAL(retval, 0, 1);
 }
