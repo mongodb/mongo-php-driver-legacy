@@ -41,6 +41,7 @@ mongo_servers* mongo_parse_init(void)
 
 	servers->options.connectTimeoutMS = 0;
 	servers->options.socketTimeoutMS = -1;
+	servers->options.secondaryAcceptableLatencyMS = MONGO_RP_DEFAULT_ACCEPTABLE_LATENCY_MS;
 	servers->options.default_w = -1;
 	servers->options.default_wstring = NULL;
 	servers->options.default_wtimeout = -1;
@@ -495,6 +496,14 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 
+	if (strcasecmp(option_name, "secondaryAcceptableLatencyMS") == 0) {
+		int value = atoi(option_value);
+
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'secondaryAcceptableLatencyMS': '%s'", option_value);
+		servers->options.secondaryAcceptableLatencyMS = value;
+		return 0;
+	}
+
 	if (strcasecmp(option_name, "slaveOkay") == 0) {
 		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
@@ -738,7 +747,7 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 		to->options.gssapiServiceName = strdup(from->options.gssapiServiceName);
 	}
 
-	to->options.connectTimeoutMS = from->options.connectTimeoutMS;
+	to->options.secondaryAcceptableLatencyMS = from->options.secondaryAcceptableLatencyMS;
 
 	to->options.default_w = from->options.default_w;
 	to->options.default_wtimeout = from->options.default_wtimeout;
