@@ -112,13 +112,17 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	if (con) {
 		/* Do authentication if requested */
 		if (server->db && server->username && server->password) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
-			if (!authenticate_connection(manager, con, options, server->authdb ? server->authdb : server->db, server->username, server->password, error_message)) {
-				mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
-				free(hash);
-				return NULL;
+			/* Note: Arbiters don't contain any data, including auth stuff, so you cannot authenticate on an arbiter */
+			if (con->connection_type != MONGO_NODE_ARBITER) {
+				mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
+				if (!authenticate_connection(manager, con, options, server->authdb ? server->authdb : server->db, server->username, server->password, error_message)) {
+					mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
+					free(hash);
+					return NULL;
+				}
 			}
 		}
+
 		/* Do the first-time ping to record the latency of the connection */
 		if (mongo_connection_ping(manager, con, options, error_message)) {
 			/* Register the connection on successful pinging */
