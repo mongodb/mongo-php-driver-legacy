@@ -25,21 +25,21 @@ extern zend_class_entry *mongo_ce_DB, *mongo_ce_Id, *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_DBRef = NULL;
 
-/* {{{ MongoDBRef::create()
+/* {{{ MongoDBRef::create(string collection, mixed id [, string db])
  *
- * DB refs are of the form:
- * array( '$ref' => <collection>, '$id' => <id>[, $db => <dbname>] ) */
+ * DBRefs are of the form:
+ * array('$ref' => <collection>, '$id' => <id> [, $db => <db>]) */
 PHP_METHOD(MongoDBRef, create)
 {
-	char *ns, *db = NULL;
-	int ns_len, db_len = 0;
+	char *collection, *db = NULL;
+	int collection_len, db_len = 0;
 	zval *zid, *retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|s", &ns, &ns_len, &zid, &db, &db_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|s", &collection, &collection_len, &zid, &db, &db_len) == FAILURE) {
 		return;
 	}
 
-	if (retval = php_mongo_dbref_create(zid, ns, db TSRMLS_CC)) {
+	if (retval = php_mongo_dbref_create(zid, collection, db TSRMLS_CC)) {
 		RETURN_ZVAL(retval, 0, 1);
 	}
 
@@ -47,7 +47,7 @@ PHP_METHOD(MongoDBRef, create)
 }
 /* }}} */
 
-zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC)
+zval *php_mongo_dbref_create(zval *zid, char *collection, char *db TSRMLS_DC)
 {
 	zval *retval;
 
@@ -55,7 +55,7 @@ zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC)
 	array_init(retval);
 
 	/* add collection name */
-	add_assoc_string(retval, "$ref", ns, 1);
+	add_assoc_string(retval, "$ref", collection, 1);
 
 	/* add id field */
 	add_assoc_zval(retval, "$id", zid);

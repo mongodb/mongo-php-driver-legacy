@@ -16,9 +16,13 @@
 #ifndef __TYPES_DB_REF_H__
 #define __TYPES_DB_REF_H__
 
-/* Creates a DBRef array('$id' => zid, '$ref' => ns [, '$db' => db])
+/* Creates a DBRef array of the form:
+ *
+ *   array('$ref' => collection, '$id' => zid, [, '$db' => db])
+ *
+ * See: http://docs.mongodb.org/manual/reference/database-references/#dbrefs
  */
-zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC);
+zval *php_mongo_dbref_create(zval *zid, char *collection, char *db TSRMLS_DC);
 
 /* Resolves a document or ID parameter provided to the collection/db createDBRef
  * methods. If the argument is an array or object, we'll attempt to return its
