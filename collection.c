@@ -1450,8 +1450,14 @@ PHP_METHOD(MongoCollection, createDBRef)
 	PHP_MONGO_GET_COLLECTION(getThis());
 	PHP_MONGO_GET_DB(c->parent);
 
-	retval = php_mongo_dbref_create(obj, Z_STRVAL_P(c->name), NULL TSRMLS_CC);
-	RETURN_ZVAL(retval, 0, 1);
+	if (
+		(obj = php_mongo_dbref_resolve_id(obj TSRMLS_CC)) &&
+		(retval = php_mongo_dbref_create(obj, Z_STRVAL_P(c->name), NULL TSRMLS_CC))
+	) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
+
+	RETURN_NULL();
 }
 /* }}} */
 

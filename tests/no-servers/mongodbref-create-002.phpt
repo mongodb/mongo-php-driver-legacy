@@ -1,17 +1,17 @@
 --TEST--
-MongoDBRef::create() with optional database parameter
+MongoDBRef::create() casts reference and database parameters to strings
 --SKIPIF--
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
-var_dump(MongoDBRef::create('foo', 123, 'bar'));
+var_dump(MongoDBRef::create(123, 456, 789));
 ?>
 --EXPECT--
 array(3) {
   ["$ref"]=>
-  string(3) "foo"
+  string(3) "123"
   ["$id"]=>
-  int(123)
+  int(456)
   ["$db"]=>
-  string(3) "bar"
+  string(3) "789"
 }

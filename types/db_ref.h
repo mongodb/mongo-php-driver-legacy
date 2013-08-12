@@ -17,10 +17,18 @@
 #define __TYPES_DB_REF_H__
 
 /* Creates a DBRef array('$id' => zid, '$ref' => ns [, '$db' => db])
- * Note that zid needs to be a zval as $id can be a string/int/float
- * If an array/object is passed in we'll try to locate _id key and use that
  */
 zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC);
+
+/* Resolves a document or ID parameter provided to the collection/db createDBRef
+ * methods. If the argument is an array or object, we'll attempt to return its
+ * _id field, otherwise, the argument is returned as-is.
+ *
+ * NULL will be returned if, and only if, the argument is an array without an
+ * _id field. This is legacy behavior, which should probably be changed in the
+ * future.
+ */
+zval *php_mongo_dbref_resolve_id(zval *zid TSRMLS_DC);
 
 PHP_METHOD(MongoDBRef, create);
 PHP_METHOD(MongoDBRef, isRef);
