@@ -42,6 +42,7 @@ PHP_METHOD(MongoDBRef, create)
 	retval = php_mongo_dbref_create(zid, ns, db TSRMLS_CC);
 	RETURN_ZVAL(retval, 0, 1);
 }
+/* }}} */
 
 zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC)
 {
@@ -78,7 +79,6 @@ zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC)
 
 	return retval;
 }
-/* }}} */
 
 /* {{{ proto bool MongoDBRef::isRef(mixed ref)
    Checks if $ref has a $ref and $id property/key */
