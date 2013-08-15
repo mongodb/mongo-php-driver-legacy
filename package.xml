@@ -30,11 +30,11 @@
   <active>yes</active>
  </developer>
 
- <date>2013-07-22</date>
- <time>10:21:23</time>
+ <date>2013-08-15</date>
+ <time>10:59:22</time>
  <version>
-  <release>1.4.2</release>
-  <api>1.4.2</api>
+  <release>1.4.3</release>
+  <api>1.4.3</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,11 +43,15 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-706] - Busy loop when a file descriptors exceed 1024
-    * [PHP-850] - Conditional jump on empty server name to MongoClient
-    * [PHP-853] - MongoCollection::batchInsert() exceptions can obscure BSON encoding exceptions
-    * [PHP-858] - Crash when extending Mongo and MongoClient classes and not calling its constructor
-    * [PHP-872] - Driver should prevent \0 characters in keys, collection and database names
+    * [PHP-382] - When 'replicaSet' option is used, authentication calls are being sent to the arbiter server
+    * [PHP-392] - Arbiter in the seed list acts wonky
+    * [PHP-869] - ReadPreference.PrimaryPreferred + Tag sets should send to primary if available
+    * [PHP-877] - auto gen _id clashes on heavy inserts
+    * [PHP-885] - Segfault on request shutdown when using save()
+    * [PHP-890] - PHP Driver crashes on shutdown
+
+** Improvement
+    * [PHP-423] - MongoDate support for 64-bit timestamps on 32-bit systems
  </notes>
 
  <contents>
@@ -168,6 +172,28 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+
+  <release>
+   <date>2013-07-22</date>
+   <time>10:21:23</time>
+   <version>
+    <release>1.4.2</release>
+    <api>1.4.2</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-706] - Busy loop when a file descriptors exceed 1024
+    * [PHP-850] - Conditional jump on empty server name to MongoClient
+    * [PHP-853] - MongoCollection::batchInsert() exceptions can obscure BSON encoding exceptions
+    * [PHP-858] - Crash when extending Mongo and MongoClient classes and not calling its constructor
+    * [PHP-872] - Driver should prevent \0 characters in keys, collection and database names
+   </notes>
+  </release>
 
   <release>
    <date>2013-06-03</date>
