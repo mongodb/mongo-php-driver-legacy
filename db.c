@@ -348,7 +348,9 @@ PHP_METHOD(MongoDB, setProfilingLevel)
 	zval_ptr_dtor(&cmd);
 
 	if (EG(exception)) {
-		zval_ptr_dtor(&cmd_return);
+		if (cmd_return) {
+			zval_ptr_dtor(&cmd_return);
+		}
 		return;
 	}
 
@@ -382,7 +384,10 @@ PHP_METHOD(MongoDB, drop)
 	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
-	RETURN_ZVAL(retval, 0, 1);
+
+	if (retval) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
 }
 
 PHP_METHOD(MongoDB, repair)
@@ -406,7 +411,10 @@ PHP_METHOD(MongoDB, repair)
 	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
-	RETVAL_ZVAL(retval, 0, 1);
+
+	if (retval) {
+		RETVAL_ZVAL(retval, 0, 1);
+	}
 }
 
 
@@ -459,7 +467,9 @@ PHP_METHOD(MongoDB, createCollection)
 	temp = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
-	zval_ptr_dtor(&temp);
+	if (temp) {
+		zval_ptr_dtor(&temp);
+	}
 
 	if (!EG(exception)) {
 		zval *zcollection;
@@ -704,7 +714,9 @@ PHP_METHOD(MongoDB, execute)
 	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
-	RETURN_ZVAL(retval, 0, 1);
+	if (retval) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
 }
 
 static char *get_cmd_ns(char *db, int db_len)
@@ -745,9 +757,15 @@ PHP_METHOD(MongoDB, command)
 	PHP_MONGO_GET_DB(getThis());
 
 	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options TSRMLS_CC);
-	RETVAL_ZVAL(retval, 0, 1);
+	if (retval) {
+		RETVAL_ZVAL(retval, 0, 1);
+	}
 }
 
+/* Actually execute the command after doing a few extra checks.
+ *
+ * This function can run NULL but *only* if an exception is set. So please
+ * check for NULL and/or EG(exception) in the calling function. */
 zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options TSRMLS_DC)
 {
 	zval *temp, *cursor, *ns, *retval;
