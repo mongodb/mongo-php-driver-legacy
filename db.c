@@ -782,6 +782,15 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 		return NULL;
 	}
 
+	if (cmd) {
+		zval **cursor;
+
+		if (zend_hash_find(HASH_P(cmd), "cursor", strlen("cursor") + 1, (void**)&cursor) == SUCCESS) {
+			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "You can't ask for a cursor with 'command()' use 'cursorCommand()'", dbname);
+			return NULL;
+		}
+	}
+
 	link = (mongoclient*)zend_object_store_get_object(zmongoclient TSRMLS_CC);
 
 	/* create db.$cmd */
