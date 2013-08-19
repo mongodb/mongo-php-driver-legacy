@@ -305,7 +305,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 		return NULL;
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
-	collection = mongo_select_nearest_servers(manager, collection, &servers->read_pref);
+	collection = mongo_select_nearest_servers(manager, collection, &servers->options, &servers->read_pref);
 	con = mongo_pick_server_from_set(manager, collection, &servers->read_pref);
 
 	/* Cleaning up */
@@ -370,7 +370,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 		goto bailout;
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
-	collection = mongo_select_nearest_servers(manager, collection, &servers->read_pref);
+	collection = mongo_select_nearest_servers(manager, collection, &servers->options, &servers->read_pref);
 	if (!collection) {
 		*error_message = strdup("No server near us");
 		goto bailout;

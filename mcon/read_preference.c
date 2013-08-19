@@ -458,7 +458,7 @@ mcon_collection *mongo_sort_servers(mongo_con_manager *manager, mcon_collection 
 	return col;
 }
 
-mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp)
+mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_collection *col, mongo_server_options *options, mongo_read_preference *rp)
 {
 	mcon_collection *filtered;
 	int              i, nearest_ping;
@@ -479,7 +479,7 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 
 			/* FIXME: Change to iterator later */
 			for (i = 0; i < col->count; i++) {
-				if (((mongo_connection*)col->data[i])->ping_ms <= nearest_ping + MONGO_RP_CUTOFF) {
+				if (((mongo_connection*)col->data[i])->ping_ms <= nearest_ping + options->secondaryAcceptableLatencyMS) {
 					mcon_collection_add(filtered, col->data[i]);
 				}
 			}
