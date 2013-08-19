@@ -470,9 +470,13 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 {
 	mcon_str      *packet;
 	char          *data_buffer;
+	int32_t        max_bson_size = 0, max_message_size = 0;
 	char          *set = NULL;      /* For replicaset in return */
 	char          *hosts, *passives = NULL, *ptr, *string;
+	char          *msg; /* If set and its value is "isdbgrid", it signals we connected to a mongos */
+	unsigned char  ismaster = 0, secondary = 0, arbiter = 0;
 	char          *connected_name, *we_think_we_are;
+	char          *tags;
 	struct timeval now;
 	int            retval = 1;
 
@@ -491,6 +495,80 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 
 	/* Find data fields */
 	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	/* Find max bson size */
+	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: setting maxBsonObjectSize to %d", max_bson_size);
+		con->max_bson_size = max_bson_size;
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: can't find maxBsonObjectSize, defaulting to %d", con->max_bson_size);
+	}
+
+	/* Find max message size */
+	if (bson_find_field_as_int32(ptr, "maxMessageSizeBytes", &max_message_size)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: setting maxMessageSizeBytes to %d", max_message_size);
+		con->max_message_size = max_message_size;
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: can't find maxMessageSizeBytes, defaulting to %d", con->max_message_size);
+	}
+
+	/* Check for flags */
+	bson_find_field_as_bool(ptr, "ismaster", &ismaster);
+	bson_find_field_as_bool(ptr, "secondary", &secondary);
+	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
+	bson_find_field_as_string(ptr, "setName", &set);
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: set name: %s, ismaster: %d, secondary: %d, is_arbiter: %d", set, ismaster, secondary, arbiter);
+
+	/* Set connection type depending on flags */
+	if (ismaster) {
+		/* Find msg and whether it contains "isdbgrid" */
+		if (bson_find_field_as_string(ptr, "msg", (char**) &msg) && strcmp(msg, "isdbgrid") == 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: msg contains 'isdbgrid' - we're connected to a mongos");
+			con->connection_type = MONGO_NODE_MONGOS;
+		} else if(set) {
+			con->connection_type = MONGO_NODE_PRIMARY;
+		} else {
+			con->connection_type = MONGO_NODE_STANDALONE;
+		}
+	} else if (secondary) {
+		con->connection_type = MONGO_NODE_SECONDARY;
+	} else if (arbiter) {
+		con->connection_type = MONGO_NODE_ARBITER;
+	} else {
+		con->connection_type = MONGO_NODE_INVALID;
+	}
+
+	if (con->connection_type == MONGO_NODE_INVALID) {
+		*error_message = strdup("get_server_flags: got unknown node type");
+		free(data_buffer);
+		return 0;
+	}
+
+	/* Find read preferences tags */
+	con->tag_count = 0;
+	con->tags = NULL;
+	if (bson_find_field_as_document(ptr, "tags", (char**) &tags)) {
+		char *it, *name, *value;
+		int   length;
+
+		it = tags;
+
+		while (bson_array_find_next_string(&it, &name, &value)) {
+			con->tags = realloc(con->tags, (con->tag_count + 1) * sizeof(char*));
+			length = strlen(name) + strlen(value) + 2;
+			con->tags[con->tag_count] = malloc(length);
+			snprintf(con->tags[con->tag_count], length, "%s:%s", name, value);
+			free(name);
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: added tag %s", con->tags[con->tag_count]);
+			con->tag_count++;
+		}
+	}
+
+	/* If we get passed in a server it means we want to validate this node against it, along with discovery ReplicaSet stuff */
+	if (!server) {
+		goto done;
+	}
 
 	/* We find out whether the machine we connected too, is actually the
 	 * one we thought we were connecting too */
@@ -515,7 +593,6 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	}
 
 	/* Do replica set name test */
-	bson_find_field_as_string(ptr, "setName", &set);
 	if (!set) {
 		char *errmsg = NULL;
 		bson_find_field_as_string(ptr, "errmsg", &errmsg);
@@ -581,6 +658,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 		}
 	}
 
+done:
 	free(data_buffer);
 
 	con->last_ismaster = now.tv_sec;
@@ -594,97 +672,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
  * Returns 1 when it worked, and 0 when an error was encountered. */
 int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
-	mcon_str      *packet;
-	int32_t        max_bson_size = 0, max_message_size = 0;
-	char          *data_buffer;
-	char          *ptr;
-	char          *tags;
-	char          *msg; /* If set and its value is "isdbgrid", it signals we connected to a mongos */
-	char          *set = NULL;      /* check if it is a replicaset */
-	unsigned char  ismaster = 0, secondary = 0, arbiter = 0;
-
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: start");
-	packet = bson_create_ismaster_packet(con);
-
-	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
-		return 0;
-	}
-
-	/* Find data fields */
-	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
-
-	/* Find max bson size */
-	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: setting maxBsonObjectSize to %d", max_bson_size);
-		con->max_bson_size = max_bson_size;
-	} else {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: can't find maxBsonObjectSize, defaulting to %d", con->max_bson_size);
-	}
-
-	/* Find max message size */
-	if (bson_find_field_as_int32(ptr, "maxMessageSizeBytes", &max_message_size)) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: setting maxMessageSizeBytes to %d", max_message_size);
-		con->max_message_size = max_message_size;
-	} else {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: can't find maxMessageSizeBytes, defaulting to %d", con->max_message_size);
-	}
-
-	/* Check for flags */
-	bson_find_field_as_bool(ptr, "ismaster", &ismaster);
-	bson_find_field_as_bool(ptr, "secondary", &secondary);
-	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
-
-	/* Set connection type depending on flags */
-	if (ismaster) {
-		/* Find msg and whether it contains "isdbgrid" */
-		if (bson_find_field_as_string(ptr, "msg", (char**) &msg) && strcmp(msg, "isdbgrid") == 0) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: msg contains 'isdbgrid' - we're connected to a mongos");
-			con->connection_type = MONGO_NODE_MONGOS;
-		} else if (bson_find_field_as_string(ptr, "setName", &set)) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: got replicaset name: %s", set);
-			con->connection_type = MONGO_NODE_PRIMARY;
-		} else {
-			con->connection_type = MONGO_NODE_STANDALONE;
-		}
-	} else if (secondary) {
-		con->connection_type = MONGO_NODE_SECONDARY;
-	} else if (arbiter) {
-		con->connection_type = MONGO_NODE_ARBITER;
-	} else {
-		con->connection_type = MONGO_NODE_INVALID;
-	}
-
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: found server type: %s", mongo_connection_type(con->connection_type));
-
-	if (con->connection_type == MONGO_NODE_INVALID) {
-		*error_message = strdup("get_server_flags: got unknown node type");
-		free(data_buffer);
-		return 0;
-	}
-
-	/* Find read preferences tags */
-	con->tag_count = 0;
-	con->tags = NULL;
-	if (bson_find_field_as_document(ptr, "tags", (char**) &tags)) {
-		char *it, *name, *value;
-		int   length;
-
-		it = tags;
-
-		while (bson_array_find_next_string(&it, &name, &value)) {
-			con->tags = realloc(con->tags, (con->tag_count + 1) * sizeof(char*));
-			length = strlen(name) + strlen(value) + 2;
-			con->tags[con->tag_count] = malloc(length);
-			snprintf(con->tags[con->tag_count], length, "%s:%s", name, value);
-			free(name);
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: added tag %s", con->tags[con->tag_count]);
-			con->tag_count++;
-		}
-	}
-
-	free(data_buffer);
-
-	return 1;
+	return mongo_connection_ismaster(manager, con, options, NULL, NULL, NULL, error_message, NULL) > 0 ? 1 : 0;
 }
 
 /* Sends an buildInfo command to the server to find server version
