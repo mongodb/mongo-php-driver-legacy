@@ -209,6 +209,7 @@ typedef struct _mongo_server_options
 	char *repl_set_name;
 	int   connectTimeoutMS; /* How many milliseconds to wait for when connecting to nodes */
 	int   socketTimeoutMS;  /* How many milliseconds to wait for when reading/writing data to nodes */
+	int   secondaryAcceptableLatencyMS; /* Latency cutoff point for RP_NEAREST and RP_SECONDARY_PREFERRED */
 	int   default_w;        /* The number specifies the number of replica nodes */
 	char *default_wstring;  /* If the value for "w" is a string, then it means a getLastError error-mode */
 	int   default_wtimeout; /* How many milliseconds to wait for replication to "w" nodes */
