@@ -646,14 +646,21 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: got replicaset name: %s", set);
 			con->connection_type = MONGO_NODE_PRIMARY;
 		} else {
+			/* This could also be a master in a master/slave setup */
 			con->connection_type = MONGO_NODE_STANDALONE;
 		}
-	} else if (secondary) {
-		con->connection_type = MONGO_NODE_SECONDARY;
-	} else if (arbiter) {
-		con->connection_type = MONGO_NODE_ARBITER;
+	} else if(options->con_type == MONGO_CON_TYPE_REPLSET) {
+		if (secondary) {
+			con->connection_type = MONGO_NODE_SECONDARY;
+		} else if (arbiter) {
+			con->connection_type = MONGO_NODE_ARBITER;
+		} else {
+			con->connection_type = MONGO_NODE_INVALID;
+		}
 	} else {
-		con->connection_type = MONGO_NODE_INVALID;
+		/* This node is not writable (ismaster=false), and we are not creating a replicaset connection,
+		 * so it is most likely a slave in a master/slave setup. We'll treat is as a RP secondary so we don't route writes to it */
+		con->connection_type = MONGO_NODE_SECONDARY;
 	}
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: found server type: %s", mongo_connection_type(con->connection_type));

@@ -282,7 +282,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 		tmp_rp.tagsets = NULL;
 		tmp_rp.tagset_count = 0;
 
-		collection = mongo_find_candidate_servers(manager, &tmp_rp, servers);
+		collection = mongo_find_candidate_servers(manager, &tmp_rp, servers, connection_flags);
 		mongo_read_preference_dtor(&tmp_rp);
 	} else if (connection_flags & MONGO_CON_FLAG_DONT_FILTER) {
 		/* We just want to know if we have something to talk to, irregardless of RP */
@@ -292,10 +292,10 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 		tmp_rp.tagsets = NULL;
 		tmp_rp.tagset_count = 0;
 
-		collection = mongo_find_candidate_servers(manager, &tmp_rp, servers);
+		collection = mongo_find_candidate_servers(manager, &tmp_rp, servers, connection_flags);
 		mongo_read_preference_dtor(&tmp_rp);
 	} else {
-		collection = mongo_find_candidate_servers(manager, &servers->read_pref, servers);
+		collection = mongo_find_candidate_servers(manager, &servers->read_pref, servers, connection_flags);
 	}
 	if (!collection) {
 		*error_message = strdup("No candidate servers found");
@@ -361,7 +361,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	tmp_rp.type = MONGO_RP_NEAREST;
 	tmp_rp.tagsets = NULL;
 	tmp_rp.tagset_count = 0;
-	collection = mongo_find_candidate_servers(manager, &tmp_rp, servers);
+	collection = mongo_find_candidate_servers(manager, &tmp_rp, servers, connection_flags);
 	if (!collection || collection->count == 0) {
 		if (messages->l) {
 			*error_message = strdup(messages->d);
