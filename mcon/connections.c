@@ -656,6 +656,12 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: found server type: %s", mongo_connection_type(con->connection_type));
 
+	if (con->connection_type == MONGO_NODE_INVALID) {
+		*error_message = strdup("get_server_flags: got unknown node type");
+		free(data_buffer);
+		return 0;
+	}
+
 	/* Find read preferences tags */
 	con->tag_count = 0;
 	con->tags = NULL;
