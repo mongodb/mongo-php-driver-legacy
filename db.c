@@ -783,6 +783,7 @@ PHP_METHOD(MongoDB, command)
 	}
 }
 
+/* {{{ Command running helpers */
 /* Actually execute the command after doing a few extra checks.
  *
  * This function can run NULL but *only* if an exception is set. So please
@@ -825,7 +826,7 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 	MAKE_STD_ZVAL(temp);
 	ZVAL_NULL(temp);
 
-	// limit
+	/* limit: all commands need to have set a limit of -1 */
 	php_mongo_cursor_set_limit(cursor_tmp, -1);
 
 	zval_ptr_dtor(&temp);
@@ -842,8 +843,6 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 	}
 
 	/* Make sure commands aren't be sent to slaves */
-	/* TODO: The read preferences spec has a list of commands that *can* be send
-	 * to slave */
 	/* This should be refactored alongside with the getLastError redirection in
 	 * collection.c/append_getlasterror. The Cursor creation should be done
 	 * through an init method. */
@@ -868,6 +867,8 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 
 	return retval;
 }
+/* }}} */
+
 
 zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
 {
