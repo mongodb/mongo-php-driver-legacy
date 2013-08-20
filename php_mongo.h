@@ -591,6 +591,7 @@ void mongo_init_MongoInt64(TSRMLS_D);
 zval *php_mongo_make_tagsets(mongo_read_preference *rp);
 void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp);
 int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preference, HashTable *tags TSRMLS_DC);
+int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	/* php.ini options */
@@ -746,6 +747,11 @@ extern zend_module_entry mongo_module_entry;
  * 19: Could not find array key
  * 20: Chunk larger then chunksize
  * 21: Unexpected chunk format
+ *
+ * MongoResultException:
+ * 1: Unknown error executing command (empty document returned)
+ * 2: Command could not be executed for some reason (exception message tells why)
+ * 1000+: MongoDB server codes
  */
 
 /*

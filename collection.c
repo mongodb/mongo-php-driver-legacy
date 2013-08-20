@@ -42,7 +42,6 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC);
 static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
-static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
 static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
 
 /* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
@@ -1997,45 +1996,6 @@ static void php_mongo_collection_free(void *object TSRMLS_DC)
 		efree(c);
 	}
 }
-
-static int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
-{
-	zval **tmpvalue;
-
-	if (Z_TYPE_P(document) != IS_ARRAY) {
-		zend_throw_exception(mongo_ce_ResultException, strdup("Unknown error executing command (empty document returned)"), 0 TSRMLS_CC);
-		return FAILURE;
-	}
-
-	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
-		if ((Z_TYPE_PP(tmpvalue) == IS_LONG && Z_LVAL_PP(tmpvalue) < 1) || (Z_TYPE_PP(tmpvalue) == IS_DOUBLE && Z_DVAL_PP(tmpvalue) < 1)) {
-			zval **tmp, *exception;
-			char *message;
-			long code;
-
-			if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void **) &tmp) == SUCCESS) {
-				convert_to_string_ex(tmp);
-				message = Z_STRVAL_PP(tmp);
-			} else {
-				message = strdup("Unknown error executing command");
-			}
-
-			if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &tmp) == SUCCESS) {
-				convert_to_long_ex(tmp);
-				code = Z_LVAL_PP(tmp);
-			} else {
-				code = 0;
-			}
-
-			exception = zend_throw_exception(mongo_ce_ResultException, message, code TSRMLS_CC);
-			zend_update_property(mongo_ce_Exception, exception, "document", strlen("document"), document TSRMLS_CC);
-
-			return FAILURE;
-		}
-	}
-	return SUCCESS;
-}
-
 
 /* {{{ php_mongo_collection_new
  */

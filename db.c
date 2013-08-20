@@ -878,10 +878,14 @@ PHP_METHOD(MongoDB, cursorCommand)
 	PHP_MONGO_GET_DB(getThis());
 
 	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 1 TSRMLS_CC);
-	zval_ptr_dtor(&cursor_option);
 
 	if (!retval) {
 		return;
+	}
+
+	if (php_mongo_trigger_error_on_command_failure(retval TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&retval);
+		RETURN_FALSE;
 	}
 
 		RETVAL_ZVAL(retval, 0, 1);

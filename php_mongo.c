@@ -610,6 +610,44 @@ int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preferenc
 	return 1;
 }
 
+int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC)
+{
+	zval **tmpvalue;
+
+	if (Z_TYPE_P(document) != IS_ARRAY) {
+		zend_throw_exception(mongo_ce_ResultException, strdup("Unknown error executing command (empty document returned)"), 1 TSRMLS_CC);
+		return FAILURE;
+	}
+
+	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
+		if ((Z_TYPE_PP(tmpvalue) == IS_LONG && Z_LVAL_PP(tmpvalue) < 1) || (Z_TYPE_PP(tmpvalue) == IS_DOUBLE && Z_DVAL_PP(tmpvalue) < 1)) {
+			zval **tmp, *exception;
+			char *message;
+			long code;
+
+			if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void **) &tmp) == SUCCESS) {
+				convert_to_string_ex(tmp);
+				message = Z_STRVAL_PP(tmp);
+			} else {
+				message = strdup("Unknown error executing command");
+			}
+
+			if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &tmp) == SUCCESS) {
+				convert_to_long_ex(tmp);
+				code = Z_LVAL_PP(tmp);
+			} else {
+				code = 2;
+			}
+
+			exception = zend_throw_exception(mongo_ce_ResultException, message, code TSRMLS_CC);
+			zend_update_property(mongo_ce_Exception, exception, "document", strlen("document"), document TSRMLS_CC);
+
+			return FAILURE;
+		}
+	}
+	return SUCCESS;
+}
+
 /*
  * Local variables:
  * tab-width: 4
