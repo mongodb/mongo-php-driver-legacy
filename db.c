@@ -869,7 +869,6 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 }
 /* }}} */
 
-
 zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
 {
 	zval *cursor_zval;
