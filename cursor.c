@@ -1417,7 +1417,7 @@ PHP_METHOD(MongoCursor, count)
 		add_assoc_long(cmd, "skip", cursor->skip);
 	}
 
-	response = php_mongodb_runcommand(cursor->zmongoclient, &cursor->read_pref, dbname, strlen(dbname), cmd, NULL TSRMLS_CC);
+	response = php_mongodb_runcommand(cursor->zmongoclient, &cursor->read_pref, dbname, strlen(dbname), cmd, NULL, 0 TSRMLS_CC);
 	zval_ptr_dtor(&cmd);
 	efree(dbname);
 
