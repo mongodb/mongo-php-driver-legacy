@@ -857,6 +857,38 @@ PHP_METHOD(MongoDB, command)
 	}
 }
 
+PHP_METHOD(MongoDB, cursorCommand)
+{
+	zval *cmd, *retval, *options = NULL;
+	mongo_db *db;
+	zval *cursor_option;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &cmd, &options) == FAILURE) {
+		return;
+	}
+
+	MUST_BE_ARRAY_OR_OBJECT(1, cmd);
+
+	/* Force cursor option */
+	MAKE_STD_ZVAL(cursor_option);
+	array_init(cursor_option);
+	add_assoc_long(cursor_option, "batchSize", 0);
+	add_assoc_zval(cmd, "cursor", cursor_option);
+
+	PHP_MONGO_GET_DB(getThis());
+
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 1 TSRMLS_CC);
+	zval_ptr_dtor(&cursor_option);
+
+	if (!retval) {
+		return;
+	}
+
+		RETVAL_ZVAL(retval, 0, 1);
+	/* Parse returned structure */
+//	zval_ptr_dtor(&retval);
+}
+
 zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
 {
 	zval *cursor_zval;
@@ -1104,6 +1136,11 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_command, 0, ZEND_RETURN_VALU
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_cursorCommand, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, command)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_authenticate, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, username)
 	ZEND_ARG_INFO(0, password)
@@ -1138,6 +1175,7 @@ static zend_function_entry MongoDB_methods[] = {
 	PHP_ME(MongoDB, getDBRef, arginfo_getDBRef, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, execute, arginfo_execute, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, command, arginfo_command, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoDB, cursorCommand, arginfo_cursorCommand, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, lastError, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, prevError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
