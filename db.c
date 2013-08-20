@@ -838,6 +838,24 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 }
 /* }}} */
 
+PHP_METHOD(MongoDB, command)
+{
+	zval *cmd, *retval, *options = NULL;
+	mongo_db *db;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {
+		return;
+	}
+
+	MUST_BE_ARRAY_OR_OBJECT(1, cmd);
+
+	PHP_MONGO_GET_DB(getThis());
+
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0 TSRMLS_CC);
+	if (retval) {
+		RETVAL_ZVAL(retval, 0, 1);
+	}
+}
 
 zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
 {
