@@ -747,6 +747,11 @@ extern zend_module_entry mongo_module_entry;
  * 19: Could not find array key
  * 20: Chunk larger then chunksize
  * 21: Unexpected chunk format
+ *
+ * MongoResultException:
+ * 1: Unknown error executing command (empty document returned)
+ * 2: Command could not be executed for some reason (exception message tells why)
+ * 1000+: MongoDB server codes
  */
 
 /*
