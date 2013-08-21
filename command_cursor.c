@@ -133,7 +133,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	/* do query */
 	php_mongo_split_namespace(cmd_cursor->ns, &dbname, NULL);
-	result = php_mongodb_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1 TSRMLS_CC);
+	result = php_mongodb_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1, &cmd_cursor->connection TSRMLS_CC);
 	efree(dbname);
 
 	/* We need to parse the initial result, and see whether everything worked */
