@@ -343,7 +343,7 @@ PHP_METHOD(MongoDB, setProfilingLevel)
 	array_init(cmd);
 	add_assoc_long(cmd, "profile", level);
 
-	cmd_return = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0 TSRMLS_CC);
+	cmd_return = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 
@@ -381,7 +381,7 @@ PHP_METHOD(MongoDB, drop)
 	array_init(cmd);
 	add_assoc_long(cmd, "dropDatabase", 1);
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 
@@ -408,7 +408,7 @@ PHP_METHOD(MongoDB, repair)
 	add_assoc_bool(cmd, "preserveClonedFilesOnFailure", cloned);
 	add_assoc_bool(cmd, "backupOriginalFiles", original);
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 
@@ -464,7 +464,7 @@ PHP_METHOD(MongoDB, createCollection)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	temp = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0 TSRMLS_CC);
+	temp = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	if (temp) {
@@ -711,7 +711,7 @@ PHP_METHOD(MongoDB, execute)
 	}
 
 	PHP_MONGO_GET_DB(getThis());
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	if (retval) {
@@ -748,7 +748,7 @@ static char *get_cmd_ns(char *db, int db_len)
  *
  * This function can run NULL but *only* if an exception is set. So please
  * check for NULL and/or EG(exception) in the calling function. */
-zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int cursor_allowed TSRMLS_DC)
+zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int cursor_allowed, mongo_connection **used_connection TSRMLS_DC)
 {
 	zval *temp, *cursor, *ns, *retval;
 	mongo_cursor *cursor_tmp;
@@ -834,6 +834,12 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 	MONGO_METHOD(MongoCursor, getNext, retval, cursor);
 	clear_exception(retval TSRMLS_CC);
 
+	/* Before we destroy the cursor, we figure out which connection was used.
+	 * Yes, this is quite ugly but necessary for cursor commands. */
+	if (used_connection) {
+		*used_connection = cursor_tmp->connection;
+	}
+
 	zend_objects_store_del_ref(cursor TSRMLS_CC);
 	zval_ptr_dtor(&cursor);
 
@@ -854,7 +860,7 @@ PHP_METHOD(MongoDB, command)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 	if (retval) {
 		RETVAL_ZVAL(retval, 0, 1);
 	}
@@ -865,6 +871,8 @@ PHP_METHOD(MongoDB, cursorCommand)
 	zval *cmd, *retval, *options = NULL;
 	mongo_db *db;
 	zval *cursor_option;
+	int64_t cursor_id;
+	mongo_connection *connection;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &cmd, &options) == FAILURE) {
 		return;
@@ -880,7 +888,7 @@ PHP_METHOD(MongoDB, cursorCommand)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 1 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 1, (mongo_connection**) &connection TSRMLS_CC);
 
 	if (!retval) {
 		return;
@@ -893,7 +901,7 @@ PHP_METHOD(MongoDB, cursorCommand)
 
 		RETVAL_ZVAL(retval, 0, 1);
 	/* Parse returned structure */
-//	zval_ptr_dtor(&retval);
+	RETVAL_ZVAL(retval, 1, 1);
 }
 
 zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
@@ -1014,7 +1022,7 @@ static void run_err(char *cmd, zval *return_value, zval *dbobj TSRMLS_DC)
 	add_assoc_long(command, cmd, 1);
 
 	PHP_MONGO_GET_DB(dbobj);
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), command, NULL, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), command, NULL, 0, NULL TSRMLS_CC);
 	clear_exception(return_value TSRMLS_CC);
 
 	zval_ptr_dtor(&command);

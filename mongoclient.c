@@ -911,7 +911,7 @@ PHP_METHOD(MongoClient, listDBs)
 	array_init(cmd);
 	add_assoc_long(cmd, "listDatabases", 1);
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	zval_ptr_dtor(&zdb);
