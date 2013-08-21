@@ -44,6 +44,8 @@ void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC);
 
 /* Set Cursor limit */
 void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit);
+/* Forces the bson to zval conversion to use an object for a long */
+void php_mongo_cursor_force_long_as_object(mongo_cursor *cursor);
 /* Set a Cursor Option */
 int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value TSRMLS_DC);
 
