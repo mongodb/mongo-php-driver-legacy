@@ -60,6 +60,9 @@ static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define MONGO_OP_REPLY_AWAIT_CAPABLE        8
 #define MONGO_OP_REPLY_ERROR_FLAGS          (MONGO_OP_REPLY_CURSOR_NOT_FOUND|MONGO_OP_REPLY_QUERY_FAILURE)
 
+/* Extension specific cursor options */
+#define MONGO_CURSOR_OPT_LONG_AS_OBJECT     1
+
 /* Macro to check whether a cursor is dead, and if so, bailout */
 #define MONGO_CURSOR_CHECK_DEAD \
 	if (cursor->dead) { \
@@ -248,6 +251,11 @@ int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value TSR
 void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit)
 {
 	cursor->limit = limit;
+}
+
+void php_mongo_cursor_force_long_as_object(mongo_cursor *cursor)
+{
+	cursor->cursor_options |= MONGO_CURSOR_OPT_LONG_AS_OBJECT;
 }
 
 
@@ -878,7 +886,7 @@ PHP_METHOD(MongoCursor, info)
 
 		MAKE_STD_ZVAL(id_value);
 		ZVAL_NULL(id_value);
-		php_mongo_handle_int64(&id_value, cursor->cursor_id TSRMLS_CC);
+		php_mongo_handle_int64(&id_value, cursor->cursor_id, 0 TSRMLS_CC);
 		add_assoc_zval(return_value, "id", id_value);
 
 		add_assoc_long(return_value, "at", cursor->at);
@@ -1304,7 +1312,12 @@ PHP_METHOD(MongoCursor, next)
 	if (cursor->at < cursor->num) {
 		MAKE_STD_ZVAL(cursor->current);
 		array_init(cursor->current);
-		cursor->buf.pos = bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
+		cursor->buf.pos = bson_to_zval(
+			(char*)cursor->buf.pos, 
+			Z_ARRVAL_P(cursor->current), 
+			cursor->cursor_options & MONGO_CURSOR_OPT_LONG_AS_OBJECT ? BSON_OPT_FORCE_LONG_AS_OBJECT : 0 
+			TSRMLS_CC
+		);
 
 		if (EG(exception)) {
 			zval_ptr_dtor(&cursor->current);

@@ -829,6 +829,9 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 	/* limit: all commands need to have set a limit of -1 */
 	php_mongo_cursor_set_limit(cursor_tmp, -1);
 
+	/* force NumberLong to be returned as an object */
+	php_mongo_cursor_force_long_as_object(cursor_tmp);
+
 	zval_ptr_dtor(&temp);
 
 	if (options) {
