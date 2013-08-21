@@ -940,6 +940,7 @@ PHP_METHOD(MongoDB, cursorCommand)
 	}
 
 	zval_ptr_dtor(&retval);
+#warning this NS needs to be changed still
 	retval = mongo_db__create_fake_cursor(db->link, connection, "test.cursorcmd", cursor_id TSRMLS_CC);
 	/* Parse returned structure */
 	RETVAL_ZVAL(retval, 1, 1);
