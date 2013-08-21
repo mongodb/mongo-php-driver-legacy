@@ -139,6 +139,9 @@ MongoDB
   Method command expects 2 parameters
     0: command
     1: options (optional)
+  Method cursorCommand expects 2 parameters
+    0: command
+    1: options (optional)
   Method lastError expects 0 parameters
   Method prevError expects 0 parameters
   Method resetError expects 0 parameters

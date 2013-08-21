@@ -926,45 +926,50 @@ PHP_METHOD(MongoDB, cursorCommand)
 		return;
 	}
 
+	/* Checks for the "ok" flag in the document */
 	if (php_mongo_trigger_error_on_command_failure(retval TSRMLS_CC) == FAILURE) {
 		zval_ptr_dtor(&retval);
 		RETURN_FALSE;
 	}
 
-		RETVAL_ZVAL(retval, 0, 1);
+	/* Fetch the 64bit cursor ID for our psuedo cursor */
+	if (mongo_db_get_cursor_id(retval, &cursor_id TSRMLS_CC) == FAILURE) {
+		zend_throw_exception(mongo_ce_ResultException, "The returned document does not return a valid cursor ID", 3 TSRMLS_CC);
+		zval_ptr_dtor(&retval);
+		RETURN_FALSE;
+	}
+
+	zval_ptr_dtor(&retval);
+	retval = mongo_db__create_fake_cursor(db->link, connection, "test.cursorcmd", cursor_id TSRMLS_CC);
 	/* Parse returned structure */
 	RETVAL_ZVAL(retval, 1, 1);
 }
 
-zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
+zval* mongo_db__create_fake_cursor(zval *zmongoclient, mongo_connection *connection, char *ns, int64_t cursor_id TSRMLS_DC)
 {
 	zval *cursor_zval;
 	mongo_cursor *cursor;
-	smart_str ns = { 0 };
 
 	MAKE_STD_ZVAL(cursor_zval);
 	object_init_ex(cursor_zval, mongo_ce_Cursor);
 
 	cursor = (mongo_cursor*)zend_object_store_get_object(cursor_zval TSRMLS_CC);
 
-	cursor->query = cmd;
-	zval_add_ref(&cmd);
+	cursor->zmongoclient = zmongoclient;
+	zval_add_ref(&cursor->zmongoclient);
+	cursor->connection = connection;
+	cursor->query = NULL;
+	cursor->ns = estrdup(ns);
+	cursor->started_iterating = 1;
 
-	if (database) {
-		smart_str_append(&ns, database);
-		smart_str_appendl(&ns, ".$cmd", 5);
-		smart_str_0(&ns);
-		cursor->ns = ns.c;
-	} else {
-		cursor->ns = estrdup("admin.$cmd");
-	}
-
+	cursor->cursor_id = cursor_id;
 	cursor->fields = 0;
-	cursor->limit = -1;
+	cursor->limit = 0;
 	cursor->skip = 0;
 	cursor->opts = 0;
 	cursor->current = 0;
 	cursor->timeout = 0;
+	cursor->command_cursor = 1;
 
 	return cursor_zval;
 }

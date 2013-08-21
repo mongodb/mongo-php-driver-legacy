@@ -19,7 +19,7 @@
 zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
 
 /* Create a fake cursor that can be used to query the db from C. */
-zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC);
+zval* mongo_db__create_fake_cursor(zval *zmongoclient, mongo_connection *connection, char *ns, int64_t cursor_id TSRMLS_DC);
 
 /* Switch to primary connection */
 void php_mongo_connection_force_primary(mongo_cursor *cursor);

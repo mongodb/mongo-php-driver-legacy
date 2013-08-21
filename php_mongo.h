@@ -479,12 +479,13 @@ typedef struct {
 
 	mongo_read_preference read_pref;
 
-	int force_primary; /* If set to 1 then the connection selection will request a WRITE (primary) connection */
-	int dead;
-
 	/* Options that deal with changes to what the cursor documents return. For
 	 * example forcing longs to be returned as objects */
 	int cursor_options;
+	int force_primary; /* If set to 1 then the connection selection will request a WRITE (primary) connection */
+
+	int dead;
+	int command_cursor;
 } mongo_cursor;
 
 /* Unfortunately, cursors can be freed before or after link is destroyed, so we
@@ -755,6 +756,7 @@ extern zend_module_entry mongo_module_entry;
  * MongoResultException:
  * 1: Unknown error executing command (empty document returned)
  * 2: Command could not be executed for some reason (exception message tells why)
+ * 3: The returned document does not return a valid cursor ID
  * 1000+: MongoDB server codes
  */
 

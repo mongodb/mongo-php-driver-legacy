@@ -428,11 +428,15 @@ PHP_METHOD(MongoCursor, hasNext)
 
 	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
-	if ((cursor->limit > 0 && cursor->at >= cursor->limit) || cursor->num == 0) {
-		if (cursor->cursor_id != 0) {
-			mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+	/* For command cursors, it's okay to have num = 0 on the first iteration,
+	 * so we skip this bit */
+	if (!cursor->command_cursor || !cursor->num == 0) {
+		if ((cursor->limit > 0 && cursor->at >= cursor->limit) || cursor->num == 0) {
+			if (cursor->cursor_id != 0) {
+				mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+			}
+			RETURN_FALSE;
 		}
-		RETURN_FALSE;
 	}
 
 	if (cursor->at < cursor->num) {
@@ -1399,6 +1403,9 @@ PHP_METHOD(MongoCursor, reset)
 
 void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 {
+	if (cursor->command_cursor) {
+		return;
+	}
 	cursor->buf.pos = cursor->buf.start;
 
 	if (cursor->current) {
