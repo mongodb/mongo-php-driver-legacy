@@ -36,7 +36,8 @@
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_Collection;
 extern zend_class_entry *mongo_ce_Cursor, *mongo_ce_GridFS, *mongo_ce_Id;
 extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception;
-extern zend_class_entry  *mongo_ce_CursorException, *mongo_ce_ConnectionException;
+extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_Int64;
+extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_ResultException;
 
 extern int le_pconnection, le_connection;
 
@@ -864,6 +865,37 @@ PHP_METHOD(MongoDB, command)
 	if (retval) {
 		RETVAL_ZVAL(retval, 0, 1);
 	}
+}
+
+/* {{{ Command cursor helpers */
+static int mongo_db_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
+{
+	zval **cursor = NULL, **id = NULL;
+	zval  *id_value;
+
+	if (Z_TYPE_P(document) != IS_ARRAY) {
+		return FAILURE;
+	}
+
+	if (zend_hash_find(Z_ARRVAL_P(document), "cursor", sizeof("cursor"), (void **)&cursor) == FAILURE) {
+		return FAILURE;
+	}
+	if (Z_TYPE_PP(cursor) != IS_ARRAY) {
+		return FAILURE;
+	}
+	if (zend_hash_find(Z_ARRVAL_PP(cursor), "id", sizeof("id"), (void **)&id) == FAILURE) {
+		return FAILURE;
+	}
+	if (Z_TYPE_PP(id) != IS_OBJECT || Z_OBJCE_PP(id) != mongo_ce_Int64) {
+		return FAILURE;
+	}
+	id_value = zend_read_property(mongo_ce_Int64, *id, "value", strlen("value"), NOISY TSRMLS_CC);
+	if (Z_TYPE_P(id_value) != IS_STRING) {
+		return FAILURE;
+	}
+	*cursor_id = strtoll(Z_STRVAL_P(id_value), NULL, 10);
+
+	return SUCCESS;
 }
 
 PHP_METHOD(MongoDB, cursorCommand)
