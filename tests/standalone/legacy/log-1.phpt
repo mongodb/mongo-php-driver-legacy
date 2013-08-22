@@ -31,16 +31,17 @@ CON     INFO: get_server_version: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
 CON     INFO: get_server_version: server version: %d.%d.%d (%i)
-CON     INFO: get_server_flags: start
-CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: %d
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
-CON     INFO: get_server_flags: found server type: STANDALONE
 CON     INFO: is_ping: pinging %s:%d;-;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     INFO: is_ping: last pinged at %d; time: %dms
+CON     INFO: ismaster: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: %d
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     INFO: ismaster: set name: (null), ismaster: 1, secondary: 0, is_arbiter: 0
+CON     INFO: ismaster: last ran at %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
