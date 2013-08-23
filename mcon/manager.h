@@ -29,6 +29,8 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 mongo_connection *mongo_get_read_write_connection_with_callback(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, void *callback_data, mongo_cleanup_t cleanup_cb, char **error_message);
 
 /* Connection management */
+
+mongo_connection *mongo_manager_connection_find_by_server_def(mongo_con_manager *manager, mongo_server_def *def);
 mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manager, char *hash);
 void mongo_manager_connection_register(mongo_con_manager *manager, mongo_connection *con);
 int mongo_manager_connection_deregister(mongo_con_manager *manager, mongo_connection *con);
