@@ -25,47 +25,37 @@ extern zend_class_entry *mongo_ce_DB, *mongo_ce_Id, *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_DBRef = NULL;
 
-/* {{{ MongoDBRef::create()
+/* {{{ MongoDBRef::create(string collection, mixed id [, string db])
  *
- * DB refs are of the form:
- * array( '$ref' => <collection>, '$id' => <id>[, $db => <dbname>] ) */
+ * DBRefs are of the form:
+ * array('$ref' => <collection>, '$id' => <id> [, $db => <db>]) */
 PHP_METHOD(MongoDBRef, create)
 {
-	char *ns, *db = NULL;
-	int ns_len, db_len = 0;
+	char *collection, *db = NULL;
+	int collection_len, db_len = 0;
 	zval *zid, *retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|s", &ns, &ns_len, &zid, &db, &db_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|s", &collection, &collection_len, &zid, &db, &db_len) == FAILURE) {
 		return;
 	}
 
-	retval = php_mongo_dbref_create(zid, ns, db TSRMLS_CC);
-	RETURN_ZVAL(retval, 0, 1);
-}
+	if (retval = php_mongo_dbref_create(zid, collection, db TSRMLS_CC)) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
 
-zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC)
+	RETURN_NULL();
+}
+/* }}} */
+
+zval *php_mongo_dbref_create(zval *zid, char *collection, char *db TSRMLS_DC)
 {
 	zval *retval;
-
-	if (Z_TYPE_P(zid) == IS_ARRAY || (Z_TYPE_P(zid) == IS_OBJECT && !instanceof_function(Z_OBJCE_P(zid), mongo_ce_Id TSRMLS_CC))) {
-		zval **tmpval;
-
-		if (zend_hash_find(HASH_P(zid), "_id", 4, (void**)&tmpval) != SUCCESS) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot find _id key in the %s", zend_get_type_by_const(Z_TYPE_P(zid)));
-			return NULL;
-		}
-
-		zid = *tmpval;
-	} else if (Z_TYPE_P(zid) == IS_RESOURCE) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Don't know what to do with a resource type");
-		return NULL;
-	}
 
 	MAKE_STD_ZVAL(retval);
 	array_init(retval);
 
 	/* add collection name */
-	add_assoc_string(retval, "$ref", ns, 1);
+	add_assoc_string(retval, "$ref", collection, 1);
 
 	/* add id field */
 	add_assoc_zval(retval, "$id", zid);
@@ -78,7 +68,22 @@ zval *php_mongo_dbref_create(zval *zid, char *ns, char *db TSRMLS_DC)
 
 	return retval;
 }
-/* }}} */
+
+zval *php_mongo_dbref_resolve_id(zval *zid TSRMLS_DC)
+{
+	/* If zid is an array or non-MongoId object, return its "_id" field */
+	if (Z_TYPE_P(zid) == IS_ARRAY || (Z_TYPE_P(zid) == IS_OBJECT && !instanceof_function(Z_OBJCE_P(zid), mongo_ce_Id TSRMLS_CC))) {
+		zval **tmpval;
+
+		if (zend_hash_find(HASH_P(zid), "_id", 4, (void**)&tmpval) == SUCCESS) {
+			zid = *tmpval;
+		} else if (Z_TYPE_P(zid) == IS_ARRAY) {
+			return NULL;
+		}
+	}
+
+	return zid;
+}
 
 /* {{{ proto bool MongoDBRef::isRef(mixed ref)
    Checks if $ref has a $ref and $id property/key */
