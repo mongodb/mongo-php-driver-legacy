@@ -459,14 +459,24 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 		return;
 	}
 #endif
-	if (zdoptions) {
-		/* Possibly add more indexes in the future, like "log_queries",
-		 * "log_commands", "log_failures", "log_metadata"... */
-		zval **zcontext;
 
-		if (zend_hash_find(Z_ARRVAL_P(zdoptions), "context", strlen("context") + 1, (void**)&zcontext) == SUCCESS) {
-			link->servers->options.ctx = php_stream_context_from_zval(*zcontext, PHP_FILE_NO_DEFAULT_CONTEXT);
+	{
+		int i = 0;
+		zval **zcontext;
+		php_stream_context *ctx = NULL;
+
+		if (zdoptions && zend_hash_find(Z_ARRVAL_P(zdoptions), "context", strlen("context") + 1, (void**)&zcontext) == SUCCESS) {
 			mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "Found Stream context");
+			ctx = php_stream_context_from_zval(*zcontext, PHP_FILE_NO_DEFAULT_CONTEXT);
+		}
+		link->servers->options.ctx = ctx;
+
+		for (i = 0; i < link->servers->count; i++) {
+			mongo_connection *con = mongo_manager_connection_find_by_server_def(link->manager, link->servers->server[i]);
+
+			if (con) {
+				php_stream_context_set(con->socket, ctx);
+			}
 		}
 	}
 
