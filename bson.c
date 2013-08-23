@@ -947,7 +947,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				/* len includes \0 */
 				int len = MONGO_32(*((int*)buf));
 
-				if (INVALID_STRING_LEN(len)) {
+				if (INVALID_STRING_LEN(len-1)) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "invalid string length for key \"%s\": %d", name, len);
 					return 0;
@@ -1078,7 +1078,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 
 				/* length of code (includes \0) */
 				code_len = MONGO_32(*(int*)buf);
-				if (INVALID_STRING_LEN(code_len)) {
+				if (INVALID_STRING_LEN(code_len-1)) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 24 TSRMLS_CC, "invalid code length for key \"%s\": %d", name, code_len);
 					return 0;
@@ -1124,7 +1124,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 
 				/* ns */
 				ns_len = *(int*)buf;
-				if (INVALID_STRING_LEN(ns_len)) {
+				if (INVALID_STRING_LEN(ns_len-1)) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 3 TSRMLS_CC, "invalid dbref length for key \"%s\": %d", name, ns_len);
 					return 0;
