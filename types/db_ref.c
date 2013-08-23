@@ -39,7 +39,9 @@ PHP_METHOD(MongoDBRef, create)
 		return;
 	}
 
-	if (retval = php_mongo_dbref_create(zid, collection, db TSRMLS_CC)) {
+	retval = php_mongo_dbref_create(zid, collection, db TSRMLS_CC);
+
+	if (retval) {
 		RETURN_ZVAL(retval, 0, 1);
 	}
 
