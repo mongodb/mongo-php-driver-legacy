@@ -28,6 +28,15 @@
 #include "types/date.h"
 #include "types/id.h"
 
+#define CHECK_BUFFER_LEN(len) \
+	do { \
+		if (buf + (len) >= buf_end) { \
+			zval_ptr_dtor(&value); \
+			zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "Reading data for type %02x would exceed buffer for key \"%s\"", (unsigned char) type, name); \
+			return 0; \
+		} \
+	} while (0)
+
 extern zend_class_entry *mongo_ce_BinData,
 	*mongo_ce_Code,
 	*mongo_ce_Date,
@@ -884,12 +893,14 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 	 * bytes to that point.
 	 *
 	 * We lose buf's position as we iterate, so we need buf_start to save it. */
-	char *buf_start = buf;
+	char *buf_start = buf, *buf_end;
 	unsigned char type;
 
 	if (buf == 0) {
 		return 0;
 	}
+
+	buf_end = buf + MONGO_32(*((int*)buf));
 
 	/* for size */
 	buf += INT_32;
@@ -911,6 +922,8 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				mongo_id *this_id;
 				zval *str = 0;
 
+				CHECK_BUFFER_LEN(OID_SIZE);
+
 				object_init_ex(value, mongo_ce_Id);
 
 				this_id = (mongo_id*)zend_object_store_get_object(value TSRMLS_CC);
@@ -928,8 +941,12 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			}
 
 			case BSON_DOUBLE: {
-				double d = *(double*)buf;
+				double d;
 				int64_t i, *i_p;
+
+				CHECK_BUFFER_LEN(DOUBLE_64);
+
+				d = *(double*)buf;
 				i_p = &i;
 
 				memcpy(i_p, &d, DOUBLE_64);
@@ -943,15 +960,21 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 
 			case BSON_SYMBOL:
 			case BSON_STRING: {
-				/* len includes \0 */
-				int len = MONGO_32(*((int*)buf));
+				int len;
 
-				if (INVALID_STRING_LEN(len-1)) {
+				CHECK_BUFFER_LEN(INT_32);
+
+				len = MONGO_32(*((int*)buf));
+				buf += INT_32;
+
+				/* len includes \0 */
+				if (len < 1) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "invalid string length for key \"%s\": %d", name, len);
 					return 0;
 				}
-				buf += INT_32;
+
+				CHECK_BUFFER_LEN(len);
 
 				ZVAL_STRINGL(value, buf, len-1, 1);
 				buf += len;
@@ -970,26 +993,30 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			}
 
 			case BSON_BINARY: {
-				unsigned char type;
-				int len = MONGO_32(*(int*)buf);
+				unsigned char subtype;
+				int len;
 
-				if (INVALID_STRING_LEN(len)) {
-					zval_ptr_dtor(&value);
-					zend_throw_exception_ex(mongo_ce_CursorException, 22 TSRMLS_CC, "invalid binary length for key \"%s\": %d", name, len);
-					return 0;
-				}
+				CHECK_BUFFER_LEN(INT_32);
+
+				len = MONGO_32(*(int*)buf);
 				buf += INT_32;
 
-				type = *buf++;
+				CHECK_BUFFER_LEN(BYTE_8);
 
-				/* If the type is 2, check if the binary data is prefixed by its
-				 * length.
+				subtype = *buf++;
+
+				/* If the subtype is 2, check if the binary data is prefixed by
+				 * its length.
 				 *
 				 * There is an infinitesimally small chance that the first four
 				 * bytes will happen to be the length of the rest of the
 				 * string.  In this case, the data will be corrupted. */
-				if ((int)type == 2) {
-					int len2 = MONGO_32(*(int*)buf);
+				if ((int)subtype == 2) {
+					int len2;
+
+					CHECK_BUFFER_LEN(INT_32);
+
+					len2 = MONGO_32(*(int*)buf);
 
 					/* If the lengths match, the data is to spec, so we use
 					 * len2 as the true length. */
@@ -999,19 +1026,26 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 					}
 				}
 
+				if (len < 0) {
+					zval_ptr_dtor(&value);
+					zend_throw_exception_ex(mongo_ce_CursorException, 22 TSRMLS_CC, "invalid binary length for key \"%s\": %d", name, len);
+					return 0;
+				}
+
+				CHECK_BUFFER_LEN(len);
+
 				object_init_ex(value, mongo_ce_BinData);
 
 				zend_update_property_stringl(mongo_ce_BinData, value, "bin", strlen("bin"), buf, len TSRMLS_CC);
-				zend_update_property_long(mongo_ce_BinData, value, "type", strlen("type"), type TSRMLS_CC);
+				zend_update_property_long(mongo_ce_BinData, value, "type", strlen("type"), subtype TSRMLS_CC);
 
 				buf += len;
 				break;
 			}
 
 			case BSON_BOOL: {
-				char d = *buf++;
-
-				ZVAL_BOOL(value, d);
+				CHECK_BUFFER_LEN(BYTE_8);
+				ZVAL_BOOL(value, *buf++);
 				break;
 			}
 
@@ -1022,12 +1056,15 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			}
 
 			case BSON_INT: {
+				CHECK_BUFFER_LEN(INT_32);
 				ZVAL_LONG(value, MONGO_32(*((int*)buf)));
 				buf += INT_32;
 				break;
 			}
 
 			case BSON_LONG: {
+				CHECK_BUFFER_LEN(INT_64);
+
 				if (MonGlo(long_as_object)) {
 					char *buffer;
 
@@ -1063,8 +1100,11 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			}
 
 			case BSON_DATE: {
-				int64_t d = MONGO_64(*((int64_t*)buf));
+				int64_t d;
 
+				CHECK_BUFFER_LEN(INT_64);
+
+				d = MONGO_64(*((int64_t*)buf));
 				buf += INT_64;
 
 				object_init_ex(value, mongo_ce_Date);
@@ -1077,9 +1117,15 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				char *regex, *flags;
 				int regex_len, flags_len;
 
+				/* Ensure we can read at least one null byte */
+				CHECK_BUFFER_LEN(BYTE_8);
+
 				regex = buf;
 				regex_len = strlen(buf);
 				buf += regex_len + 1;
+
+				/* Ensure we can read at least one null byte */
+				CHECK_BUFFER_LEN(BYTE_8);
 
 				flags = buf;
 				flags_len = strlen(buf);
@@ -1104,14 +1150,19 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 					buf += INT_32;
 				}
 
-				/* length of code (includes \0) */
+				CHECK_BUFFER_LEN(INT_32);
+
 				code_len = MONGO_32(*(int*)buf);
-				if (INVALID_STRING_LEN(code_len-1)) {
+				buf += INT_32;
+
+				/* length of code (includes \0) */
+				if (code_len < 1) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 24 TSRMLS_CC, "invalid code length for key \"%s\": %d", name, code_len);
 					return 0;
 				}
-				buf += INT_32;
+
+				CHECK_BUFFER_LEN(code_len);
 
 				code = buf;
 				buf += code_len;
@@ -1121,6 +1172,14 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				array_init(zcope);
 
 				if (type == BSON_CODE) {
+					int scope_len;
+
+					/* Peek at the scope's document length before recursing */
+					CHECK_BUFFER_LEN(INT_32);
+					scope_len = MONGO_32(*(int*)buf);
+
+					CHECK_BUFFER_LEN(scope_len);
+
 					buf = bson_to_zval(buf, HASH_P(zcope) TSRMLS_CC);
 					if (EG(exception)) {
 						zval_ptr_dtor(&zcope);
@@ -1150,18 +1209,25 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				zval *zoid, *str = 0;
 				mongo_id *this_id;
 
-				/* ns */
+				CHECK_BUFFER_LEN(INT_32);
+
 				ns_len = *(int*)buf;
-				if (INVALID_STRING_LEN(ns_len-1)) {
+				buf += INT_32;
+
+				/* length of namespace (includes \0) */
+				if (ns_len < 1) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 3 TSRMLS_CC, "invalid dbref length for key \"%s\": %d", name, ns_len);
 					return 0;
 				}
-				buf += INT_32;
+
+				CHECK_BUFFER_LEN(ns_len);
+
 				ns = buf;
 				buf += ns_len;
 
-				/* id */
+				CHECK_BUFFER_LEN(OID_SIZE);
+
 				MAKE_STD_ZVAL(zoid);
 				object_init_ex(zoid, mongo_ce_Id);
 
@@ -1189,6 +1255,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			 *  - sec: 4 bytes
 			 *  - inc: 4 bytes */
 			case BSON_TIMESTAMP: {
+				CHECK_BUFFER_LEN(INT_64);
 				object_init_ex(value, mongo_ce_Timestamp);
 				zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), MONGO_32(*(int*)buf) TSRMLS_CC);
 				buf += INT_32;
