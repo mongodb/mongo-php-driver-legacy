@@ -210,7 +210,7 @@ int php_mongo_get_reply(mongo_cursor *cursor, zval *errmsg TSRMLS_DC)
 #ifdef WIN32
 		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "WSA error getting database response %s (%d)", error_message, WSAGetLastError());
 #else
-		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "error getting database response %s (%d)", error_message, strerror(errno));
+		mongo_cursor_throw(cursor->connection, 12 TSRMLS_CC, "error getting database response %s (%s)", error_message, strerror(errno));
 #endif
 		free(error_message);
 		return FAILURE;
