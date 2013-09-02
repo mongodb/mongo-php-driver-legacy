@@ -787,7 +787,7 @@ PHP_METHOD(MongoDB, command)
 /* {{{ Command running helpers */
 /* Actually execute the command after doing a few extra checks.
  *
- * This function can run NULL but *only* if an exception is set. So please
+ * This function can return NULL but *only* if an exception is set. So please
  * check for NULL and/or EG(exception) in the calling function. */
 zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int cursor_allowed TSRMLS_DC)
 {
