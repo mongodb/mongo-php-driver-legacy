@@ -377,16 +377,6 @@ void php_mongo_serialize_date(buffer *buf, zval *date TSRMLS_DC)
 	php_mongo_serialize_long(buf, ms);
 }
 
-#if defined(_MSC_VER)
-# define strtoll(s, f, b) _atoi64(s)
-#elif !defined(HAVE_STRTOLL)
-# if defined(HAVE_ATOLL)
-#  define strtoll(s, f, b) atoll(s)
-# else
-#  define strtoll(s, f, b) strtol(s, f, b)
-# endif
-#endif
-
 
 /*
  * create a bson int from an Int32 object
