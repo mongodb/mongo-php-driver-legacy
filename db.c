@@ -897,6 +897,7 @@ static int mongo_db_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
 
 	return SUCCESS;
 }
+/* }}} */
 
 PHP_METHOD(MongoDB, cursorCommand)
 {
@@ -909,8 +910,6 @@ PHP_METHOD(MongoDB, cursorCommand)
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &cmd, &options) == FAILURE) {
 		return;
 	}
-
-	MUST_BE_ARRAY_OR_OBJECT(1, cmd);
 
 	/* Force cursor option */
 	MAKE_STD_ZVAL(cursor_option);
