@@ -28,11 +28,11 @@ var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
 var_dump( $c->remove( array( '_id' => 'yeah' ) ) );
 var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
 
-var_dump( $c->update( array( '_id' => 'yeah' ), array( 'value' => array( '$set' => 'yes!' ) ) ) );
+var_dump( $c->update( array( '_id' => 'yeah' ), array( '$set' => array( 'value' => 'yes!' ) ) ) );
 var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
 
 var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ), array( 'w' => true ) ) );
-var_dump( $c->update( array( '_id' => 'yeah' ), array( 'value' => array( '$set' => 'yes!' ) ), array( 'w' => true ) ) );
+var_dump( $c->update( array( '_id' => 'yeah' ), array( '$set' => array( 'value' => 'yes!' ) ), array( 'w' => true ) ) );
 var_dump( $c->remove( array( '_id' => 'yeah' ), array( 'w' => true ) ) );
 ?>
 --EXPECTF--
