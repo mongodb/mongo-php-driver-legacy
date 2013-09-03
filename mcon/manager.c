@@ -515,9 +515,9 @@ void *mongo_manager_find_by_hash(mongo_con_manager *manager, mongo_con_manager_i
 	return NULL;
 }
 
-mongo_connection *mongo_manager_connection_find_by_server_def(mongo_con_manager *manager, mongo_server_def *def)
+mongo_connection *mongo_manager_connection_find_by_server_definition(mongo_con_manager *manager, mongo_server_def *definition)
 {
-	char *hash = mongo_server_create_hash(def);
+	char *hash = mongo_server_create_hash(definition);
 	mongo_connection *con = mongo_manager_find_by_hash(manager, manager->connections, hash);
 
 	free(hash);
