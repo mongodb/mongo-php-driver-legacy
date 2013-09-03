@@ -34,6 +34,7 @@ MongoLog::setLevel(0);
 Warnings:
 Fine:
 CON     FINE: found connection %s:%d;%s;.;%d (looking for %s:%d;%s;.;%d)
+CON     FINE: found connection %s:%d;%s;.;%d (looking for %s:%d;%s;.;%d)
 CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;%s;.;%d
 CON     FINE: found connection %s:%d;%s;.;%d (looking for %s:%d;%s;.;%d)
