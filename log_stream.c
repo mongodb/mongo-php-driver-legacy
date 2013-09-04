@@ -29,7 +29,8 @@
 #include <ext/json/php_json.h>
 
 
-#define add_assoc_zval_incref(args, key, zval) Z_ADDREF_P(zval); add_assoc_zval(args, key, zval)
+#define ADD_ASSOC_ZVAL_ADDREF(args, key, zval) Z_ADDREF_P(zval); add_assoc_zval(args, key, zval)
+#define CONTEXT_HAS_NOTIFY_OR_LOG(context, method) (context && (php_stream_context_get_option(context, "mongodb", #method, NULL) || context->notifier))
 
 void php_mongo_stream_notify_meta(php_stream_context *ctx, int code, zval *args TSRMLS_DC)
 {
@@ -42,6 +43,7 @@ void php_mongo_stream_notify_meta(php_stream_context *ctx, int code, zval *args 
 		smart_str_free(&buf);
 	}
 }
+
 void php_mongo_stream_notify_meta_insert(php_stream_context *ctx, zval *server, zval *document, zval *options TSRMLS_DC)
 {
 	zval *args;
@@ -49,13 +51,14 @@ void php_mongo_stream_notify_meta_insert(php_stream_context *ctx, zval *server, 
 	MAKE_STD_ZVAL(args);
 	array_init(args);
 
-	add_assoc_zval_incref(args, "server", server);
-	add_assoc_zval_incref(args, "document", document);
-	add_assoc_zval_incref(args, "options", options);
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "document", document);
+	ADD_ASSOC_ZVAL_ADDREF(args, "options", options);
 
 	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_INSERT, args TSRMLS_CC);
 	zval_ptr_dtor(&args);
 }
+
 void php_mongo_stream_notify_meta_query(php_stream_context *ctx, zval *server, zval *query, zval *info TSRMLS_DC)
 {
 	zval *args;
@@ -63,13 +66,14 @@ void php_mongo_stream_notify_meta_query(php_stream_context *ctx, zval *server, z
 	MAKE_STD_ZVAL(args);
 	array_init(args);
 
-	add_assoc_zval_incref(args, "server", server);
-	add_assoc_zval_incref(args, "query", query);
-	add_assoc_zval_incref(args, "info", info);
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "query", query);
+	ADD_ASSOC_ZVAL_ADDREF(args, "info", info);
 
 	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_QUERY, args TSRMLS_CC);
 	zval_ptr_dtor(&args);
 }
+
 void php_mongo_stream_notify_meta_update(php_stream_context *ctx, zval *server, zval *criteria, zval *newobj, zval *options, zval *info TSRMLS_DC)
 {
 	zval *args;
@@ -77,15 +81,16 @@ void php_mongo_stream_notify_meta_update(php_stream_context *ctx, zval *server, 
 	MAKE_STD_ZVAL(args);
 	array_init(args);
 
-	add_assoc_zval_incref(args, "server", server);
-	add_assoc_zval_incref(args, "criteria", criteria);
-	add_assoc_zval_incref(args, "newobj", newobj);
-	add_assoc_zval_incref(args, "options", options);
-	add_assoc_zval_incref(args, "info", info);
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "criteria", criteria);
+	ADD_ASSOC_ZVAL_ADDREF(args, "newobj", newobj);
+	ADD_ASSOC_ZVAL_ADDREF(args, "options", options);
+	ADD_ASSOC_ZVAL_ADDREF(args, "info", info);
 
 	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_UPDATE, args TSRMLS_CC);
 	zval_ptr_dtor(&args);
 }
+
 void php_mongo_stream_notify_meta_delete(php_stream_context *ctx, zval *server, zval *criteria, zval *options, zval *info TSRMLS_DC)
 {
 	zval *args;
@@ -93,14 +98,15 @@ void php_mongo_stream_notify_meta_delete(php_stream_context *ctx, zval *server, 
 	MAKE_STD_ZVAL(args);
 	array_init(args);
 
-	add_assoc_zval_incref(args, "server", server);
-	add_assoc_zval_incref(args, "criteria", criteria);
-	add_assoc_zval_incref(args, "options", options);
-	add_assoc_zval_incref(args, "info", info);
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "criteria", criteria);
+	ADD_ASSOC_ZVAL_ADDREF(args, "options", options);
+	ADD_ASSOC_ZVAL_ADDREF(args, "info", info);
 
 	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_DELETE, args TSRMLS_CC);
 	zval_ptr_dtor(&args);
 }
+
 void php_mongo_stream_notify_meta_getmore(php_stream_context *ctx, zval *server, zval *info TSRMLS_DC)
 {
 	zval *args;
@@ -108,12 +114,13 @@ void php_mongo_stream_notify_meta_getmore(php_stream_context *ctx, zval *server,
 	MAKE_STD_ZVAL(args);
 	array_init(args);
 
-	add_assoc_zval_incref(args, "server", server);
-	add_assoc_zval_incref(args, "info", info);
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "info", info);
 
 	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_GETMORE, args TSRMLS_CC);
 	zval_ptr_dtor(&args);
 }
+
 void php_mongo_stream_notify_meta_killcursor(php_stream_context *ctx, zval *server, zval *info TSRMLS_DC)
 {
 	zval *args;
@@ -121,12 +128,13 @@ void php_mongo_stream_notify_meta_killcursor(php_stream_context *ctx, zval *serv
 	MAKE_STD_ZVAL(args);
 	array_init(args);
 
-	add_assoc_zval_incref(args, "server", server);
-	add_assoc_zval_incref(args, "info", info);
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "info", info);
 
 	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_KILLCURSOR, args TSRMLS_CC);
 	zval_ptr_dtor(&args);
 }
+
 void php_mongo_stream_notify_meta_batchinsert(php_stream_context *ctx, zval *server, zval *docs, zval *options, zval *info TSRMLS_DC)
 {
 	zval *args;
@@ -134,14 +142,15 @@ void php_mongo_stream_notify_meta_batchinsert(php_stream_context *ctx, zval *ser
 	MAKE_STD_ZVAL(args);
 	array_init(args);
 
-	add_assoc_zval_incref(args, "server", server);
-	add_assoc_zval_incref(args, "docs", docs);
-	add_assoc_zval_incref(args, "options", options);
-	add_assoc_zval_incref(args, "info", info);
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "docs", docs);
+	ADD_ASSOC_ZVAL_ADDREF(args, "options", options);
+	ADD_ASSOC_ZVAL_ADDREF(args, "info", info);
 
 	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_BATCHINSERT, args TSRMLS_CC);
 	zval_ptr_dtor(&args);
 }
+
 void php_mongo_stream_notify_meta_response_header(php_stream_context *ctx, zval *server, zval *query, zval *info TSRMLS_DC)
 {
 	zval *args;
@@ -149,13 +158,14 @@ void php_mongo_stream_notify_meta_response_header(php_stream_context *ctx, zval 
 	MAKE_STD_ZVAL(args);
 	array_init(args);
 
-	add_assoc_zval_incref(args, "server", server);
-	add_assoc_zval_incref(args, "query", query);
-	add_assoc_zval_incref(args, "info", info);
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "query", query);
+	ADD_ASSOC_ZVAL_ADDREF(args, "info", info);
 
 	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_RESPONSE_HEADER, args TSRMLS_CC);
 	zval_ptr_dtor(&args);
 }
+
 void php_mongo_stream_notify_io(mongo_server_options *opts, int code, int sofar, int max TSRMLS_DC)
 {
 	php_stream_context *ctx;
@@ -182,7 +192,6 @@ void php_mongo_stream_notify_io(mongo_server_options *opts, int code, int sofar,
 	}
 }
 
-
 zval *php_log_get_server_info(mongo_connection *connection)
 {
 	zval *retval;
@@ -198,7 +207,6 @@ zval *php_log_get_server_info(mongo_connection *connection)
 	return retval;
 }
 
-#define CONTEXT_HAS_NOTIFY_OR_LOG(context, method) (context && (php_stream_context_get_option(context, "mongodb", #method, NULL) || context->notifier))
 void php_mongo_stream_callback(php_stream_context *ctx, char *cb_name, int argc, zval **args[] TSRMLS_DC)
 {
 	zval **callback;
@@ -214,6 +222,7 @@ void php_mongo_stream_callback(php_stream_context *ctx, char *cb_name, int argc,
 		zval_ptr_dtor(&retval);
 	}
 }
+
 void mongo_log_stream_insert(mongo_connection *connection, zval *document, zval *options TSRMLS_DC)
 {
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
