@@ -213,7 +213,7 @@ void php_mongo_stream_callback(php_stream_context *ctx, char *cb_name, int argc,
 	zval *retval = NULL;
 
 	if (php_stream_context_get_option(ctx, "mongodb", cb_name, &callback) == SUCCESS) {
-		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, 3, args, 0, NULL TSRMLS_CC)) {
+		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, argc, args, 0, NULL TSRMLS_CC)) {
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to call stream context callback function '%s' for 'mongodb' context option", cb_name);
 		}
 	}
