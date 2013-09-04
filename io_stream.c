@@ -191,9 +191,12 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 		data = (char*)data + num;
 		received += num;
 	}
-	/* PHP may have sent notify-progress of *more then* 'received' in some cases.
-	 * PHP will read 8192 byte chunks at a time, but if we request less data then that PHP will just buffer the rest, which is fine.
-	 * It could confuse users a little, why their progress update was higher then the max-bytes-expected though... */
+	/* PHP may have sent notify-progress of *more then* 'received' in some
+	 * cases.
+	 * PHP will read 8192 byte chunks at a time, but if we request less data
+	 * then that PHP will just buffer the rest, which is fine.  It could
+	 * confuse users a little, why their progress update was higher then the
+	 * max-bytes-expected though... */
 	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, received, size TSRMLS_CC);
 
 	if (timeout > 0 && options->socketTimeoutMS != timeout) {
