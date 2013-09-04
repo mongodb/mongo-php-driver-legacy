@@ -15,7 +15,7 @@ $coll = $mc->selectCollection("ctorfailover", "test1");
 $data = array("x" => "The world is not enough");
 $coll->insert($data);
 $id = $data["_id"];
-
+$coll->insert(array("something" => "else"), array("w" => 2));
 $coll = $mc = null;
 
 echo "About to kill master\n";
