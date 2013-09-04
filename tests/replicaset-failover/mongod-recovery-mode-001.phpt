@@ -18,6 +18,7 @@ $ctx = stream_context_create(array("mongodb" => array("log_query" => "log_query"
 
 $mc = new MongoClient($rs["dsn"], array("replicaSet" => $rs["rsname"], "readPreference" => MongoClient::RP_SECONDARY_PREFERRED), array("context" => $ctx));
 $i = "random";
+$mc->selectDb(dbname())->recovery->drop();
 $mc->selectDb(dbname())->recoverymode->insert(array("doc" => $i, "w" => "majority"));
 
 // Lower the ismaster interval to make sure we pick up on the change
@@ -74,14 +75,13 @@ for($i=0; $i < 10; $i++) {
     }
 }
 
-echo "Enabling all secondaries again\n";
-$server->setMaintenanceForSecondaries(false);
-echo "Everything should be in its original state now\n";
+echo "Enabling all secondaries again in a CLEAN section\n";
 
 ?>
 --CLEAN--
 <?php require_once "tests/utils/fix-secondaries.inc"; ?>
 --EXPECTF--
+Server type: PRIMARY (2)
 Server type: PRIMARY (2)
 Putting all secondaries into recovery mode
 We should have detected that the servers are in maintenence mode now
@@ -133,5 +133,5 @@ Server type: PRIMARY (2)
 Server type: PRIMARY (2)
 Server type: PRIMARY (2)
 Server type: PRIMARY (2)
-Enabling all secondaries again
-Everything should be in its original state now
+Enabling all secondaries again in a CLEAN section
+
