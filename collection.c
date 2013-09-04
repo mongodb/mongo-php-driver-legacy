@@ -671,12 +671,12 @@ static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_conn
 
 static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC)
 {
-	mongo_cursor *cursor;
 	char *error_message;
-	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
-	mongoclient *client = (mongoclient*)zend_object_store_get_object(cursor->zmongoclient TSRMLS_CC);
-
-
+	mongo_cursor *cursor;
+	mongoclient *client;
+	
+	cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
+	client = (mongoclient*)zend_object_store_get_object(cursor->zmongoclient TSRMLS_CC);
 	cursor->connection = connection;
 
 	if (-1 == manager->send(connection, &client->servers->options, buf->start, buf->pos - buf->start, (char **) &error_message)) {
