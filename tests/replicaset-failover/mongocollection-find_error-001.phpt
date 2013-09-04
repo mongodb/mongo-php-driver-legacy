@@ -43,7 +43,7 @@ try {
 ?>
 DONE
 --CLEAN--
-<?php require_once "tests/utils/fix-secondaries.inc"; ?>
+<?php /* This puts us in a state of negative "other tasks" which mongod pre 2.5 doesn't like require_once "tests/utils/fix-secondaries.inc";*/ ?>
 --EXPECTF--
 string(26) "No candidate servers found"
 int(71)
