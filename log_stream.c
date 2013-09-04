@@ -26,7 +26,12 @@
 #include <main/php_streams.h>
 #include <main/php_network.h>
 #include <ext/standard/php_smart_str.h>
+#if HAVE_JSON
 #include <ext/json/php_json.h>
+#else
+#include <ext/standard/php_var.h>
+#include <ext/standard/basic_functions.h>
+#endif
 
 
 #define ADD_ASSOC_ZVAL_ADDREF(args, key, zval) Z_ADDREF_P(zval); add_assoc_zval(args, key, zval)
@@ -36,8 +41,32 @@ void php_mongo_stream_notify_meta(php_stream_context *ctx, int code, zval *args 
 {
 	if (ctx && ctx->notifier) {
 		smart_str buf = {0};
+#if !HAVE_JSON
+		php_serialize_data_t var_hash;
+#endif
 
+#if HAVE_JSON
+#if PHP_VERSION_ID >= 50300
 		php_json_encode(&buf, args, 0 TSRMLS_CC);
+#else
+		php_json_encode(&buf, args TSRMLS_CC);
+#endif
+#else
+		/* Workaround for a seemingly llvm bug?
+		 * Can only reproduce this with PHP 5.5 (like 5.5.3) and MacOSX
+		 * Apple clang version 3.1 (tags/Apple/clang-318.0.61) (based on LLVM 3.1svn)
+		 * If you dump the value from a debugger it will be 0, but its always interperited as
+		 * the max value of unsigned int for magical reasons
+		 */
+		if (BG(serialize).level == -1) {
+			BG(serialize).level = 0;
+		}
+
+		PHP_VAR_SERIALIZE_INIT(var_hash);
+		php_var_serialize(&buf, &args, &var_hash TSRMLS_CC);
+		PHP_VAR_SERIALIZE_DESTROY(var_hash);
+#endif
+
 		buf.c[buf.len] = 0;
 		php_stream_notification_notify(ctx, MONGO_STREAM_NOTIFY_TYPE_LOG, PHP_STREAM_NOTIFY_SEVERITY_INFO, buf.c, code, 0, 0, NULL TSRMLS_CC);
 		smart_str_free(&buf);

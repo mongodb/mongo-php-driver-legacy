@@ -89,6 +89,7 @@ zend_function_entry mongo_functions[] = {
  */
 static const zend_module_dep mongo_deps[] = {
 	ZEND_MOD_OPTIONAL("openssl")
+	ZEND_MOD_OPTIONAL("json")
 #if PHP_VERSION_ID >= 50307
 	ZEND_MOD_END
 #else /* pre-5.3.7 */
