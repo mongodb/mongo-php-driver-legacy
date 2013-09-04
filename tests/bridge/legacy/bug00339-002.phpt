@@ -2,7 +2,7 @@
 Test for PHP-339: Segfault on insert timeout. (no streams)
 --SKIPIF--
 <?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
-<?php if (MONGO_STREAMS) { echo "skip This test requires streams support to be disabled"; } ?>
+<?php if (MONGO_STREAMS) { die("skip This test requires streams support to be disabled"); } ?>
 <?php require_once "tests/utils/bridge.inc" ?>
 --FILE--
 <?php
