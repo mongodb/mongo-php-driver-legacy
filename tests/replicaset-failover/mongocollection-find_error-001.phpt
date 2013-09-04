@@ -13,7 +13,7 @@ $rs = $server->getReplicaSetConfig();
 $mc = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname']));
 
 $c = $mc->selectCollection(dbname(), 'mongocollection-find_error-001');
-$c->insert(array('x' => 1), array('w' => 'majority'));
+$c->insert(array('x' => 1), array('w' => 'majority', 'wTimeoutMS' => 1000));
 
 // Disable secondaries so query has no candidates
 $server->setMaintenanceForSecondaries(true);
@@ -30,6 +30,7 @@ try {
 // Enable secondaries so query can succeed
 $server->setMaintenanceForSecondaries(false);
 sleep(3);
+echo "Secondaries up\n";
 
 try {
     $c->setReadPreference(MongoClient::RP_SECONDARY);
@@ -40,12 +41,15 @@ try {
 }
 
 ?>
+DONE
 --CLEAN--
 <?php require_once "tests/utils/fix-secondaries.inc"; ?>
 --EXPECTF--
 string(26) "No candidate servers found"
 int(71)
+Secondaries up
 array(1) {
   ["x"]=>
   int(1)
 }
+DONE
