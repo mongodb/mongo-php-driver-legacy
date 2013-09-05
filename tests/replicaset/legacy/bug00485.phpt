@@ -2,6 +2,8 @@
 Test for PHP-485: Update (and other methods) in safemode crash under certain conditions.
 --SKIPIF--
 <?php require_once "tests/utils/replicaset.inc" ?>
+--INI--
+report_memleaks=off
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
