@@ -37,7 +37,10 @@ foreach ( $tests as $key => $test )
 	}
 	catch ( Exception $e )
 	{
-		echo $e->getMessage(), "\n";
+		if (current($test) != "majority") {
+			/* 2.5.x maps majority=1 for standalone servers so doesn't raise an exception */
+			echo $e->getMessage(), "\n";
+		}
 	}
 }
 ?>
@@ -80,7 +83,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 Running test 5, with options: {"w":0}:
 IO      FINE: is_gle_op: no
@@ -110,7 +112,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 Running test 9, with options: {"fsync":0}:
 IO      FINE: is_gle_op: no

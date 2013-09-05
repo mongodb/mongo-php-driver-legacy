@@ -5,6 +5,16 @@ MongoCollection::findAndModify() helper
 --FILE--
 <?php
 require "tests/utils/server.inc";
+function dumpDoc($doc) {
+    /* Make the dumped doc consistent as MongoDB sometimes reorders the fields */
+    $dup = array();
+    foreach(array("_id", "inprogress", "name", "priority", "started", "tasks") as $k) {
+        if (isset($doc[$k])) {
+            $dup[$k] = $doc[$k];
+        }
+    }
+    var_dump($dup);
+}
 
 $m = mongo_standalone();
 $col = $m->selectDB(dbname())->jobs;
@@ -46,7 +56,7 @@ $retval = $col->findAndModify(
     )
 );
 
-var_dump($retval);
+dumpDoc($retval);
 
 $retval = $col->findAndModify(
      array("inprogress" => false, "name" => "Next promo"),
@@ -55,7 +65,7 @@ $retval = $col->findAndModify(
      array("new" => false)
 );
 
-var_dump($retval);
+dumpDoc($retval);
 
 
 $col->findAndModify(
@@ -66,7 +76,9 @@ $col->findAndModify(
 );
 
 $retval = $col->find();
-var_dump(iterator_to_array($retval));
+foreach($retval as $ret) {
+    dumpDoc($ret);
+}
 $col->remove();
 
 try {
@@ -123,48 +135,44 @@ array(2) {
     string(12) "do placement"
   }
 }
-array(2) {
-  [%s]=>
-  array(5) {
-    ["_id"]=>
-    object(MongoId)#%d (1) {
-      ["$id"]=>
-      string(24) "%s"
-    }
-    ["inprogress"]=>
-    bool(false)
-    ["name"]=>
-    string(10) "Next promo"
-    ["priority"]=>
-    int(0)
-    ["tasks"]=>
-    array(2) {
-      [0]=>
-      string(13) "add inventory"
-      [1]=>
-      string(12) "do placement"
-    }
+array(5) {
+  ["_id"]=>
+  object(MongoId)#%d (1) {
+    ["$id"]=>
+    string(24) "%s"
   }
-  [%s]=>
-  array(5) {
-    ["_id"]=>
-    object(MongoId)#%d (1) {
-      ["$id"]=>
-      string(24) "%s"
-    }
-    ["name"]=>
-    string(10) "Biz report"
-    ["inprogress"]=>
-    bool(false)
-    ["priority"]=>
-    int(1)
-    ["tasks"]=>
-    array(2) {
-      [0]=>
-      string(16) "run sales report"
-      [1]=>
-      string(12) "email report"
-    }
+  ["inprogress"]=>
+  bool(false)
+  ["name"]=>
+  string(10) "Next promo"
+  ["priority"]=>
+  int(0)
+  ["tasks"]=>
+  array(2) {
+    [0]=>
+    string(13) "add inventory"
+    [1]=>
+    string(12) "do placement"
+  }
+}
+array(5) {
+  ["_id"]=>
+  object(MongoId)#%d (1) {
+    ["$id"]=>
+    string(24) "%s"
+  }
+  ["inprogress"]=>
+  bool(false)
+  ["name"]=>
+  string(10) "Biz report"
+  ["priority"]=>
+  int(1)
+  ["tasks"]=>
+  array(2) {
+    [0]=>
+    string(16) "run sales report"
+    [1]=>
+    string(12) "email report"
   }
 }
 0 need remove or update
