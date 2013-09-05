@@ -397,6 +397,7 @@ function writeLogs($filename) {
     if (method_exists("MongoLog", "setCallback")) {
         MongoLog::setModule(MongoLog::ALL);
         MongoLog::setLevel(MongoLog::ALL);
+        date_default_timezone_set("America/New_York");
 
         $dir = dirname($filename) . "/";
         $base = basename($filename, ".php");
