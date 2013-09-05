@@ -471,6 +471,8 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	char          *connected_name, *we_think_we_are;
 	struct timeval now;
 	int            retval = 1;
+	unsigned char  ismaster = 0, secondary = 0, arbiter = 0;
+	int original_connection_type = 0;
 
 	gettimeofday(&now, NULL);
 	if ((con->last_ismaster + manager->ismaster_interval) > now.tv_sec) {
@@ -550,6 +552,38 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	/* If the server definition has not set the repl_set_name member yet, set it here */
 	if (!server->repl_set_name) {
 		server->repl_set_name = strdup(set);
+	}
+
+	/* Check for flags */
+	bson_find_field_as_bool(ptr, "ismaster", &ismaster);
+	bson_find_field_as_bool(ptr, "secondary", &secondary);
+	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
+
+	original_connection_type = con->connection_type;
+	/* Set connection type depending on flags */
+	if (ismaster) {
+		char *msg;
+
+		/* Find msg and whether it contains "isdbgrid" */
+		if (bson_find_field_as_string(ptr, "msg", (char**) &msg) && strcmp(msg, "isdbgrid") == 0) {
+			con->connection_type = MONGO_NODE_MONGOS;
+		} else if (bson_find_field_as_string(ptr, "setName", &set)) {
+			con->connection_type = MONGO_NODE_PRIMARY;
+		} else {
+			con->connection_type = MONGO_NODE_STANDALONE;
+		}
+	} else if (secondary) {
+		con->connection_type = MONGO_NODE_SECONDARY;
+	} else if (arbiter) {
+		con->connection_type = MONGO_NODE_ARBITER;
+	} else {
+		con->connection_type = MONGO_NODE_INVALID;
+	}
+
+	if (con->connection_type != original_connection_type) {
+		*error_message = strdup("The node has changed type, disconnecting");
+		free(data_buffer);
+		return 0;
 	}
 
 	/* Find all hosts */
