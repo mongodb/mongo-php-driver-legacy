@@ -31,10 +31,10 @@ $cmd = $mc->selectCollection('phpunit', '$cmd');
 $count = $cmd->findOne(array('count' => 'php294'));
 var_dump($count['ok'] && 1 == $count['n']);
 
-$explain = $cmd->find(array('count' => 'php294'))->explain();
+$explain = $cmd->find(array('count' => 'php294'))->limit(1)->explain();
 
 $cmd->setReadPreference(MongoClient::RP_SECONDARY);
-$explain = $cmd->find(array('count' => 'php294'))->explain();
+$explain = $cmd->find(array('count' => 'php294'))->limit(1)->explain();
 
 ?>
 --EXPECTF--

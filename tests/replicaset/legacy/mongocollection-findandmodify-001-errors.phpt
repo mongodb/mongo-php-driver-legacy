@@ -93,12 +93,12 @@ try {
 
 ?>
 --EXPECTF--
-0 : Modified field name may not start with $
+0 : %s
 array(6) {
   ["err"]=>
-  string(40) "Modified field name may not start with $"
+  string(%d) "%s"
   ["code"]=>
-  int(15896)
+  int(%d)
   ["n"]=>
   int(0)
   ["lastOp"]=>
@@ -113,7 +113,7 @@ array(6) {
   ["ok"]=>
   float(1)
 }
-string(40) "Modified field name may not start with $"
+string(%d) "%s"
 float(0)
 13097 : exception: Unsupported projection option: $pop
 array(3) {
