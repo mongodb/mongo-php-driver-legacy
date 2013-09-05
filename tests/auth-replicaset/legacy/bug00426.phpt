@@ -6,6 +6,7 @@ Test for PHP-426: Connection pool not paying attention to authentication when us
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+writeLogs(__FILE__);
 
 function get_user($m, $username) {
     $db = $m->selectDB("admin");
@@ -45,6 +46,7 @@ try {
 }
 
 ?>
+===DONE===
 --EXPECTF--
 object(MongoClient)#%d (4) {
   ["connected"]=>
@@ -79,4 +81,5 @@ discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 No candidate servers found
+===DONE===
 

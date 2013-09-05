@@ -5,6 +5,7 @@ Test for PHP-629: Missing support for passing the username/password in the $opti
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+writeLogs(__FILE__);
 
 $s = new MongoShellServer;
 $cfg = $s->getReplicaSetConfig(true);
@@ -26,6 +27,7 @@ $command = "db.version()";
 $response = $database->execute($command);
 var_dump($response);
 ?>
+===DONE===
 --EXPECTF--
 %s: MongoClient::__construct(): The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead in %s on line %d
 array(2) {
@@ -34,4 +36,5 @@ array(2) {
   ["ok"]=>
   float(1)
 }
+===DONE===
 
