@@ -362,6 +362,50 @@ function printLogs($module = MongoLog::ALL, $level = MongoLog::ALL, $containing 
     }
     MongoLog::setCallback("logCallback");
 }
+function module2string($module)
+{
+    switch ($module) {
+        case MongoLog::RS: return "REPLSET";
+        case MongoLog::CON: return "CON";
+        case MongoLog::IO: return "IO";
+        case MongoLog::SERVER: return "SERVER";
+        case MongoLog::PARSE: return "PARSE";
+        default: return "UNKNOWN";
+    }
+}
+
+function level2string($level)
+{
+    switch ($level) {
+        case MongoLog::WARNING: return "WARN";
+        case MongoLog::INFO: return "INFO";
+        case MongoLog::FINE: return "FINE";
+        default: var_dump($level); return "UNKNOWN";
+    }
+}
+
+
+function writeCallback($module, $level, $message)
+{
+    global $_LOG_FP;
+
+    fprintf($_LOG_FP, "[%s] %s (%s): %s\n", date("Y-m-d H:i:s"), module2string($module), level2string($level), $message);
+}
+function writeLogs($filename) {
+    global $_LOG_FP;
+
+    if (method_exists("MongoLog", "setCallback")) {
+        MongoLog::setModule(MongoLog::ALL);
+        MongoLog::setLevel(MongoLog::ALL);
+
+        $dir = dirname($filename) . "/";
+        $base = basename($filename, ".php");
+        $wfile = $dir.$base.".MONGOLOG";
+        $_LOG_FP = fopen($wfile, "w+");
+
+        MongoLog::setCallback("writeCallback");
+    }
+}
 
 /*
 $config = MongoShellServer::getReplicaSetInfo();

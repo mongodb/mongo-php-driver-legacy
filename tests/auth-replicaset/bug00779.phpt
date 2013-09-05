@@ -3,10 +3,10 @@ Test for PHP-779: Non-primary read preferences should set slaveOk bit
 --SKIPIF--
 <?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once 'tests/utils/replicaset.inc' ?>
---FILE--makeReplicaset
+--FILE--
 <?php
 require_once 'tests/utils/server.inc';
-
+writeLogs(__FILE__);
 $s = new MongoShellServer();
 $rs = $s->getReplicaSetConfig(true);
 $creds = $s->getCredentials();
@@ -92,6 +92,7 @@ echo "\nTesting non-primary count with MongoCollection::setReadPreference()\n";
 $coll->count();
 
 ?>
+===DONE===
 --EXPECTF--
 
 Testing primary query with MongoCursor::setReadPreference()
@@ -127,3 +128,4 @@ Bit 2 (SlaveOk) is set
 
 Testing non-primary count with MongoCollection::setReadPreference()
 Bit 2 (SlaveOk) is set
+===DONE===
