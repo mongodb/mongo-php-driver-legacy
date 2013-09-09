@@ -5,7 +5,6 @@ Test for PHP-629: Missing support for passing the username/password in the $opti
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-writeLogs(__FILE__);
 
 $s = new MongoShellServer;
 $cfg = $s->getReplicaSetConfig(true);

@@ -5,7 +5,6 @@ Test for PHP-397: Endless loop on non-existing file.
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-writeLogs(__FILE__);
 $s = new MongoShellServer;
 $cfg = $s->getReplicaSetConfig(true);
 $creds = $s->getCredentials();
