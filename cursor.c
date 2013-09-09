@@ -62,6 +62,7 @@ static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Extension specific cursor options */
 #define MONGO_CURSOR_OPT_LONG_AS_OBJECT     1
+#define MONGO_CURSOR_OPT_CMD_CURSOR         2
 
 /* Macro to check whether a cursor is dead, and if so, bailout */
 #define MONGO_CURSOR_CHECK_DEAD \
@@ -257,6 +258,12 @@ void php_mongo_cursor_force_long_as_object(mongo_cursor *cursor)
 {
 	cursor->cursor_options |= MONGO_CURSOR_OPT_LONG_AS_OBJECT;
 }
+
+void php_mongo_cursor_force_command_cursor(mongo_cursor *cursor)
+{
+	cursor->cursor_options |= MONGO_CURSOR_OPT_CMD_CURSOR;
+}
+
 
 
 /* {{{ MongoCursor->__construct(MongoClient connection, string ns [, array query [, array fields]])
