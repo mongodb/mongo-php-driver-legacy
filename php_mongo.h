@@ -496,7 +496,6 @@ typedef struct {
 	int force_primary; /* If set to 1 then the connection selection will request a WRITE (primary) connection */
 
 	int dead;
-	int command_cursor;
 } mongo_cursor;
 
 /* Unfortunately, cursors can be freed before or after link is destroyed, so we

@@ -63,6 +63,7 @@ static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Extension specific cursor options */
 #define MONGO_CURSOR_OPT_LONG_AS_OBJECT     1
+#define MONGO_CURSOR_OPT_CMD_CURSOR         2
 
 /* Macro to check whether a cursor is dead, and if so, bailout */
 #define MONGO_CURSOR_CHECK_DEAD \
@@ -255,6 +256,12 @@ void php_mongo_cursor_force_long_as_object(mongo_cursor *cursor)
 	cursor->cursor_options |= MONGO_CURSOR_OPT_LONG_AS_OBJECT;
 }
 
+void php_mongo_cursor_force_command_cursor(mongo_cursor *cursor)
+{
+	cursor->cursor_options |= MONGO_CURSOR_OPT_CMD_CURSOR;
+}
+
+
 
 /* {{{ MongoCursor->__construct(MongoClient connection, string ns [, array query [, array fields]])
    Constructs a MongoCursor */
@@ -430,7 +437,7 @@ PHP_METHOD(MongoCursor, hasNext)
 
 	/* For command cursors, it's okay to have num = 0 on the first iteration,
 	 * so we skip this bit */
-	if (!cursor->command_cursor || !cursor->num == 0) {
+	if (!(cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) || !cursor->num == 0) {
 		if ((cursor->limit > 0 && cursor->at >= cursor->limit) || cursor->num == 0) {
 			if (cursor->cursor_id != 0) {
 				mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
@@ -1403,7 +1410,7 @@ PHP_METHOD(MongoCursor, reset)
 
 void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 {
-	if (cursor->command_cursor) {
+	if (cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) {
 		return;
 	}
 	cursor->buf.pos = cursor->buf.start;

@@ -969,7 +969,8 @@ zval* mongo_db__create_fake_cursor(zval *zmongoclient, mongo_connection *connect
 	cursor->opts = 0;
 	cursor->current = 0;
 	cursor->timeout = 0;
-	cursor->command_cursor = 1;
+
+	php_mongo_cursor_force_command_cursor(cursor);
 
 	return cursor_zval;
 }
