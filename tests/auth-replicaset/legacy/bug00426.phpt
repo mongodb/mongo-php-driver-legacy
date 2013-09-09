@@ -6,7 +6,6 @@ Test for PHP-426: Connection pool not paying attention to authentication when us
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-writeLogs(__FILE__);
 
 function get_user($m, $username) {
     $db = $m->selectDB("admin");

@@ -6,7 +6,6 @@ Test for PHP-779: Non-primary read preferences should set slaveOk bit
 --FILE--
 <?php
 require_once 'tests/utils/server.inc';
-writeLogs(__FILE__);
 $s = new MongoShellServer();
 $rs = $s->getReplicaSetConfig(true);
 $creds = $s->getCredentials();

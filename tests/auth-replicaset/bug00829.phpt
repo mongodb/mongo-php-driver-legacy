@@ -5,7 +5,6 @@ Test for PHP-829: Segfault when a Replicaset doesn't have a passive server
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-writeLogs(__FILE__);
 
 $s = new MongoShellServer();
 $rs = $s->getReplicaSetConfig(true);
