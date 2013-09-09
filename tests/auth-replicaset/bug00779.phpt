@@ -2,8 +2,8 @@
 Test for PHP-779: Non-primary read preferences should set slaveOk bit
 --SKIPIF--
 <?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
-<?php require_once 'tests/utils/replicaset.inc' ?>
---FILE--makeReplicaset
+<?php require_once 'tests/utils/auth-replicaset.inc' ?>
+--FILE--
 <?php
 require_once 'tests/utils/server.inc';
 
