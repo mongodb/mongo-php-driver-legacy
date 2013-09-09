@@ -207,7 +207,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
 						new_con = mongo_get_connection_single(manager, tmp_def, &servers->options, MONGO_CON_FLAG_WRITE, (char **) &con_error_message);
 
-						if (!mongo_connection_get_server_flags(manager, new_con, &servers->options, &con_error_message)) {
+						if (new_con && !mongo_connection_get_server_flags(manager, new_con, &servers->options, &con_error_message)) {
 							mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 							mongo_manager_connection_deregister(manager, new_con);
 							new_con = NULL;
