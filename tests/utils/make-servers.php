@@ -25,6 +25,8 @@ function t() {
     $last = microtime(true);
 }
 function makeServer($SERVERS, $server, $bit) {
+    global $SHELL;
+
     echo "Making " . $SERVERS[$bit] . ".. ";
     t();
     switch($bit) {
@@ -40,6 +42,10 @@ function makeServer($SERVERS, $server, $bit) {
         $sc = $server->getStandaloneConfig();
         list($shost, $sport) = explode(":", trim($sc));
         try {
+            $path = dirname($SHELL);
+            if (!file_exists($path . "/mongobridge")) {
+                throw new DebugException("mongobridge doesn't exist in '$path'", "");
+            }
             $server->makeBridge($sport, 1000);
             $dsn = $server->getBridgeConfig();
         } catch(DebugException $e) {
