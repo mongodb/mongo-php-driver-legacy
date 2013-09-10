@@ -175,6 +175,6 @@ array(5) {
     string(12) "email report"
   }
 }
-0 need remove or update
+2 need remove or update
 string(21) "need remove or update"
 float(0)

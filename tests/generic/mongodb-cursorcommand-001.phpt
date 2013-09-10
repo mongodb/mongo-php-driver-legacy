@@ -54,7 +54,7 @@ array(15) {
   ["numReturned"]=>
   int(0)
   ["server"]=>
-  string(25) "%s"
+  string(%d) "%s"
   ["host"]=>
   string(9) "%s"
   ["port"]=>
