@@ -1,7 +1,7 @@
 --TEST--
 MongoDB::cursorCommand()
 --SKIPIF--
-<?php require "tests/utils/standalone.inc"; ?>
+<?php $needs = "2.5.1"; require "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require "tests/utils/server.inc";
