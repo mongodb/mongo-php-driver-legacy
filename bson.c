@@ -1167,10 +1167,6 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				code = buf;
 				buf += code_len;
 
-				/* initialize scope array */
-				MAKE_STD_ZVAL(zcope);
-				array_init(zcope);
-
 				if (type == BSON_CODE) {
 					int scope_len;
 
@@ -1180,11 +1176,19 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 
 					CHECK_BUFFER_LEN(scope_len);
 
+					/* initialize scope array */
+					MAKE_STD_ZVAL(zcope);
+					array_init(zcope);
+
 					buf = bson_to_zval(buf, HASH_P(zcope) TSRMLS_CC);
 					if (EG(exception)) {
 						zval_ptr_dtor(&zcope);
 						return 0;
 					}
+				} else {
+					/* initialize an empty scope array */
+					MAKE_STD_ZVAL(zcope);
+					array_init(zcope);
 				}
 
 				object_init_ex(value, mongo_ce_Code);
