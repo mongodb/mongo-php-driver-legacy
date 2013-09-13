@@ -63,6 +63,7 @@ static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 /* Extension specific cursor options */
 #define MONGO_CURSOR_OPT_LONG_AS_OBJECT     1
 #define MONGO_CURSOR_OPT_CMD_CURSOR         2
+#define MONGO_CURSOR_OPT_FORCE_PRIMARY      4
 
 /* Macro to check whether a cursor is dead, and if so, bailout */
 #define MONGO_CURSOR_CHECK_DEAD \
@@ -262,6 +263,11 @@ void php_mongo_cursor_force_long_as_object(mongo_cursor *cursor)
 void php_mongo_cursor_force_command_cursor(mongo_cursor *cursor)
 {
 	cursor->cursor_options |= MONGO_CURSOR_OPT_CMD_CURSOR;
+}
+
+void php_mongo_cursor_force_primary(mongo_cursor *cursor)
+{
+	cursor->cursor_options |= MONGO_CURSOR_OPT_FORCE_PRIMARY;
 }
 
 
@@ -1059,9 +1065,16 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 	 * really be refactored so that we can create a cursor with the correct
 	 * read/write setup already, instead of having to force a new mode later
 	 * (like we do for commands right now through
-	 * php_mongo_connection_force_primary).  See also MongoDB::command and
+	 * php_mongo_cursor_force_primary).  See also MongoDB::command and
 	 * append_getlasterror, where this has to be done too. */
-	cursor->connection = mongo_get_read_write_connection_with_callback(link->manager, link->servers, cursor->force_primary ? MONGO_CON_FLAG_WRITE : MONGO_CON_FLAG_READ, cursor, mongo_cursor_mark_dead, (char**) &error_message);
+	cursor->connection = mongo_get_read_write_connection_with_callback(
+		link->manager,
+		link->servers,
+		cursor->cursor_options & MONGO_CURSOR_OPT_FORCE_PRIMARY ? MONGO_CON_FLAG_WRITE : MONGO_CON_FLAG_READ,
+		cursor,
+		mongo_cursor_mark_dead,
+		(char**) &error_message
+	);
 
 	/* restore read preferences from backup */
 	mongo_read_preference_replace(&rp, &link->servers->read_pref);
