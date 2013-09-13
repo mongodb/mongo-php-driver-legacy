@@ -47,11 +47,6 @@ zend_class_entry *mongo_ce_DB = NULL;
 
 static void clear_exception(zval* return_value TSRMLS_DC);
 
-void php_mongo_connection_force_primary(mongo_cursor *cursor)
-{
-	cursor->force_primary = 1;
-}
-
 static int php_mongo_command_supports_rp(zval *cmd)
 {
 	HashPosition pos;
@@ -829,7 +824,7 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "command supports Read Preferences");
 	} else {
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
-		php_mongo_connection_force_primary(cursor_tmp);
+		php_mongo_cursor_force_primary(cursor_tmp);
 	}
 
 	/* query */

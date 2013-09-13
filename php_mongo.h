@@ -493,7 +493,6 @@ typedef struct {
 	/* Options that deal with changes to what the cursor documents return. For
 	 * example forcing longs to be returned as objects */
 	int cursor_options;
-	int force_primary; /* If set to 1 then the connection selection will request a WRITE (primary) connection */
 
 	int dead;
 } mongo_cursor;

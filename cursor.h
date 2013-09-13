@@ -48,6 +48,9 @@ void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit);
 void php_mongo_cursor_force_long_as_object(mongo_cursor *cursor);
 /* Flags the cursor as a command cursor */
 void php_mongo_cursor_force_command_cursor(mongo_cursor *cursor);
+/* Switch to primary connection */
+void php_mongo_cursor_force_primary(mongo_cursor *cursor);
+
 /* Set a Cursor Option */
 int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value TSRMLS_DC);
 
