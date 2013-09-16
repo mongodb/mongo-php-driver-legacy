@@ -1108,7 +1108,7 @@ PHP_METHOD(MongoCollection, remove)
    Create the $keys index if it does not already exist */
 PHP_METHOD(MongoCollection, ensureIndex)
 {
-	zval *keys, *options = 0, *db, *system_indexes, *collection, *data;
+	zval *keys, *options = 0, *db, *collection, *data;
 	mongo_collection *c;
 	zend_bool done_name = 0;
 
@@ -1139,12 +1139,8 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	/* get the system.indexes collection */
 	db = c->parent;
 
-	MAKE_STD_ZVAL(system_indexes);
-	ZVAL_STRING(system_indexes, "system.indexes", 1);
-
-	MAKE_STD_ZVAL(collection);
-	MONGO_METHOD1(MongoDB, selectCollection, collection, db, system_indexes);
-	PHP_MONGO_CHECK_EXCEPTION3(&keys, &system_indexes, &collection);
+	collection = php_mongodb_selectcollection(db, "system.indexes", strlen("system.indexes"));
+	PHP_MONGO_CHECK_EXCEPTION2(&keys, &collection);
 
 	/* set up data */
 	MAKE_STD_ZVAL(data);
@@ -1217,7 +1213,6 @@ PHP_METHOD(MongoCollection, ensureIndex)
 
 	zval_ptr_dtor(&options);
 	zval_ptr_dtor(&data);
-	zval_ptr_dtor(&system_indexes);
 	zval_ptr_dtor(&collection);
 	zval_ptr_dtor(&keys);
 }
