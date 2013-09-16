@@ -865,9 +865,9 @@ PHP_METHOD(MongoDB, command)
 }
 
 /* {{{ Command cursor helpers */
-static int mongo_db_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
+static int mongo_db_get_cursor_info(zval *document, int64_t *cursor_id, char **cursor_ns TSRMLS_DC)
 {
-	zval **cursor = NULL, **id = NULL;
+	zval **cursor = NULL, **id = NULL, **ns;
 	zval  *id_value;
 
 	if (Z_TYPE_P(document) != IS_ARRAY) {
@@ -880,6 +880,8 @@ static int mongo_db_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
 	if (Z_TYPE_PP(cursor) != IS_ARRAY) {
 		return FAILURE;
 	}
+
+	/* The Cursor ID */
 	if (zend_hash_find(Z_ARRVAL_PP(cursor), "id", sizeof("id"), (void **)&id) == FAILURE) {
 		return FAILURE;
 	}
@@ -892,6 +894,15 @@ static int mongo_db_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
 	}
 	*cursor_id = strtoll(Z_STRVAL_P(id_value), NULL, 10);
 
+	/* The Cursor's NS */
+	if (zend_hash_find(Z_ARRVAL_PP(cursor), "ns", sizeof("ns"), (void **)&ns) == FAILURE) {
+		return FAILURE;
+	}
+	if (Z_TYPE_PP(ns) != IS_STRING) {
+		return FAILURE;
+	}
+	*cursor_ns = estrdup(Z_STRVAL_PP(ns));
+
 	return SUCCESS;
 }
 /* }}} */
@@ -902,6 +913,7 @@ PHP_METHOD(MongoDB, cursorCommand)
 	mongo_db *db;
 	zval *cursor_option;
 	int64_t cursor_id;
+	char   *cursor_ns;
 	mongo_connection *connection;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &cmd, &options) == FAILURE) {
@@ -929,16 +941,16 @@ PHP_METHOD(MongoDB, cursorCommand)
 	}
 
 	/* Fetch the 64bit cursor ID for our psuedo cursor */
-	if (mongo_db_get_cursor_id(retval, &cursor_id TSRMLS_CC) == FAILURE) {
+	if (mongo_db_get_cursor_info(retval, &cursor_id, &cursor_ns TSRMLS_CC) == FAILURE) {
 		zend_throw_exception(mongo_ce_ResultException, "The returned document does not return a valid cursor ID", 3 TSRMLS_CC);
 		zval_ptr_dtor(&retval);
 		RETURN_FALSE;
 	}
 
 	zval_ptr_dtor(&retval);
-#warning this NS needs to be changed still
-	retval = mongo_db__create_fake_cursor(db->link, connection, "test.cursorcmd", cursor_id TSRMLS_CC);
-	/* Parse returned structure */
+	retval = mongo_db__create_fake_cursor(db->link, connection, cursor_ns, cursor_id TSRMLS_CC);
+	efree(cursor_ns);
+
 	RETVAL_ZVAL(retval, 1, 1);
 }
 
