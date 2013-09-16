@@ -480,10 +480,8 @@ PHP_METHOD(MongoDB, createCollection)
 		zval *zcollection;
 
 		/* get the collection we just created */
-		MAKE_STD_ZVAL(zcollection);
-		ZVAL_STRINGL(zcollection, collection, collection_len, 1);
-		MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), zcollection);
-		zval_ptr_dtor(&zcollection);
+		zcollection = php_mongodb_selectcollection(getThis(), collection, collection_len);
+		RETURN_ZVAL(zcollection, 0, 1);
 	}
 }
 
