@@ -485,6 +485,8 @@ PHP_METHOD(MongoDB, createCollection)
 	}
 }
 
+/* {{{ proto MongoCollection MongoDB::dropCollection(string|MongoCollection collection)
+   Drops a connection and returns the database's response */
 PHP_METHOD(MongoDB, dropCollection)
 {
 	zval *collection;
@@ -493,20 +495,20 @@ PHP_METHOD(MongoDB, dropCollection)
 		return;
 	}
 
-	if (Z_TYPE_P(collection) != IS_OBJECT || Z_OBJCE_P(collection) != mongo_ce_Collection) {
-		zval *temp;
-
-		MAKE_STD_ZVAL(temp);
-		MONGO_METHOD1(MongoDB, selectCollection, temp, getThis(), collection);
-		collection = temp;
-	} else {
+	if (Z_TYPE_P(collection) == IS_STRING) {
+		collection = php_mongodb_selectcollection(getThis(), Z_STRVAL_P(collection), Z_STRLEN_P(collection));
+	} else if (Z_TYPE_P(collection) == IS_OBJECT && Z_OBJCE_P(collection) == mongo_ce_Collection) {
 		zval_add_ref(&collection);
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "expects parameter 1 to be an string or MongoCollection");
+		return;
 	}
 
 	MONGO_METHOD(MongoCollection, drop, return_value, collection);
 
 	zval_ptr_dtor(&collection);
 }
+/* }}} */
 
 static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int full_collection)
 {
