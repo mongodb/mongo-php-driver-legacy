@@ -1005,17 +1005,20 @@ PHP_METHOD(MongoDB, forceError)
 /* }}} */
 
 /* {{{ MongoDB::__get
- */
+   Returns the "name" collection from the database */
 PHP_METHOD(MongoDB, __get)
 {
-	zval *name;
+	char *name;
+	int   name_len;
+	zval *collection;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &name) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
 		return;
 	}
 
 	/* select this collection */
-	MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), name);
+	collection = php_mongodb_selectcollection(getThis(), name, name_len);
+	RETURN_ZVAL(collection, 0, 1);
 }
 /* }}} */
 
