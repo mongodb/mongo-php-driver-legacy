@@ -163,7 +163,7 @@ PHP_METHOD(MongoDB, __toString)
 	RETURN_ZVAL(db->name, 1, 0);
 }
 
-zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_len)
+zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_len TSRMLS_DC)
 {
 	zval *z_collection;
 	zval *return_value;
@@ -198,7 +198,7 @@ PHP_METHOD(MongoDB, selectCollection)
 		return;
 	}
 
-	retval = php_mongodb_selectcollection(getThis(), collection, collection_len);
+	retval = php_mongodb_selectcollection(getThis(), collection, collection_len TSRMLS_CC);
 
 	RETURN_ZVAL(retval, 0, 1);
 }
@@ -480,7 +480,7 @@ PHP_METHOD(MongoDB, createCollection)
 		zval *zcollection;
 
 		/* get the collection we just created */
-		zcollection = php_mongodb_selectcollection(getThis(), collection, collection_len);
+		zcollection = php_mongodb_selectcollection(getThis(), collection, collection_len TSRMLS_CC);
 		RETURN_ZVAL(zcollection, 0, 1);
 	}
 }
@@ -496,7 +496,7 @@ PHP_METHOD(MongoDB, dropCollection)
 	}
 
 	if (Z_TYPE_P(collection) == IS_STRING) {
-		collection = php_mongodb_selectcollection(getThis(), Z_STRVAL_P(collection), Z_STRLEN_P(collection));
+		collection = php_mongodb_selectcollection(getThis(), Z_STRVAL_P(collection), Z_STRLEN_P(collection) TSRMLS_CC);
 	} else if (Z_TYPE_P(collection) == IS_OBJECT && Z_OBJCE_P(collection) == mongo_ce_Collection) {
 		zval_add_ref(&collection);
 	} else {
@@ -520,7 +520,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 	}
 
 	/* select db.system.namespaces collection */
-	system_collection = php_mongodb_selectcollection(getThis(), "system.namespaces", strlen("system.namespaces"));
+	system_collection = php_mongodb_selectcollection(getThis(), "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
 
 	/* list to return */
 	MAKE_STD_ZVAL(list);
@@ -584,7 +584,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 		}
 
 		if (full_collection) {
-			c = php_mongodb_selectcollection(getThis(), name, strlen(name));
+			c = php_mongodb_selectcollection(getThis(), name, strlen(name) TSRMLS_CC);
 			add_next_index_zval(list, c);
 		} else {
 			add_next_index_string(list, name, 1);
@@ -1000,7 +1000,7 @@ PHP_METHOD(MongoDB, __get)
 	}
 
 	/* select this collection */
-	collection = php_mongodb_selectcollection(getThis(), name, name_len);
+	collection = php_mongodb_selectcollection(getThis(), name, name_len TSRMLS_CC);
 	RETURN_ZVAL(collection, 0, 1);
 }
 /* }}} */

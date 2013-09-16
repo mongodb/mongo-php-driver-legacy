@@ -24,7 +24,7 @@ zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database,
 /* Switch to primary connection */
 void php_mongo_connection_force_primary(mongo_cursor *cursor);
 
-zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_len);
+zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_len TSRMLS_DC);
 
 /* Runs a MongoDB command.
  * NOTE: Exceptions are cleared, and the entire result document/error is returned.
