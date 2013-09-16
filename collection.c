@@ -1283,16 +1283,11 @@ PHP_METHOD(MongoCollection, deleteIndexes)
    Get all indexes for this collection */
 PHP_METHOD(MongoCollection, getIndexInfo)
 {
-	zval *collection, *i_str, *query, *cursor, *next;
+	zval *collection, *query, *cursor, *next;
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	MAKE_STD_ZVAL(collection);
-
-	MAKE_STD_ZVAL(i_str);
-	ZVAL_STRING(i_str, "system.indexes", 1);
-	MONGO_METHOD1(MongoDB, selectCollection, collection, c->parent, i_str);
-	zval_ptr_dtor(&i_str);
+	collection = php_mongodb_selectcollection(c->parent, "system.indexes", strlen("system.indexes"));
 	PHP_MONGO_CHECK_EXCEPTION1(&collection);
 
 	MAKE_STD_ZVAL(query);
