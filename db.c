@@ -163,29 +163,44 @@ PHP_METHOD(MongoDB, __toString)
 	RETURN_ZVAL(db->name, 1, 0);
 }
 
+zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_len)
+{
+	zval *z_collection;
+	zval *return_value;
+	zval temp;
+	mongo_db *db;
+
+	db = (mongo_db*)zend_object_store_get_object(this TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(db->name, MongoDB);
+
+	MAKE_STD_ZVAL(z_collection);
+	ZVAL_STRINGL(z_collection, collection, collection_len, 1);
+
+	MAKE_STD_ZVAL(return_value);
+	object_init_ex(return_value, mongo_ce_Collection);
+
+	MONGO_METHOD2(MongoCollection, __construct, &temp, return_value, this, z_collection);
+
+	zval_ptr_dtor(&z_collection);
+
+	return return_value;
+}
+
+/* {{{ proto MongoCollection MongoDB::selectCollection(string name)
+   Returns the "name" collection from the database */
 PHP_METHOD(MongoDB, selectCollection)
 {
-	zval temp;
-	zval *z_collection;
 	char *collection;
-	int collection_len;
-	mongo_db *db;
+	int   collection_len;
+	zval *retval;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &collection, &collection_len) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(z_collection);
-	ZVAL_STRINGL(z_collection, collection, collection_len, 1);
+	retval = php_mongodb_selectcollection(getThis(), collection, collection_len);
 
-	db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(db->name, MongoDB);
-
-	object_init_ex(return_value, mongo_ce_Collection);
-
-	MONGO_METHOD2(MongoCollection, __construct, &temp, return_value, getThis(), z_collection);
-
-	zval_ptr_dtor(&z_collection);
+	RETURN_ZVAL(retval, 0, 1);
 }
 
 PHP_METHOD(MongoDB, getGridFS)
