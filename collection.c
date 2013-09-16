@@ -1795,8 +1795,8 @@ PHP_METHOD(MongoCollection, __get)
 	/* This is a little trickier than the getters in Mongo and MongoDB... we
 	 * need to combine the current collection name with the parameter passed
 	 * in, get the parent db, then select the new collection from it. */
-	zval *full_name;
-	char *full_name_s, *name;
+	zval *collection;
+	char *full_name, *name;
 	int name_len;
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
@@ -1812,14 +1812,12 @@ PHP_METHOD(MongoCollection, __get)
 		RETURN_ZVAL(c->parent, 1, 0);
 	}
 
-	spprintf(&full_name_s, 0, "%s.%s", Z_STRVAL_P(c->name), name);
-	MAKE_STD_ZVAL(full_name);
-	ZVAL_STRING(full_name, full_name_s, 0);
+	spprintf(&full_name, 0, "%s.%s", Z_STRVAL_P(c->name), name);
 
 	/* select this collection */
-	MONGO_METHOD1(MongoDB, selectCollection, return_value, c->parent, full_name);
-
-	zval_ptr_dtor(&full_name);
+	collection = php_mongodb_selectcollection(c->parent, full_name, strlen(full_name));
+	RETVAL_ZVAL(collection, 0, 1);
+	efree(full_name);
 }
 /* }}} */
 
