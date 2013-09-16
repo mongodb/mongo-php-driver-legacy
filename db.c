@@ -513,18 +513,14 @@ PHP_METHOD(MongoDB, dropCollection)
 static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int full_collection)
 {
 	zend_bool system_col = 0;
-	zval *nss, *collection, *cursor, *list, *next;
+	zval *system_collection, *cursor, *list, *next;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &system_col) == FAILURE) {
 		return;
 	}
 
 	/* select db.system.namespaces collection */
-	MAKE_STD_ZVAL(nss);
-	ZVAL_STRING(nss, "system.namespaces", 1);
-
-	MAKE_STD_ZVAL(collection);
-	MONGO_METHOD1(MongoDB, selectCollection, collection, getThis(), nss);
+	system_collection = php_mongodb_selectcollection(getThis(), "system.namespaces", strlen("system.namespaces"));
 
 	/* list to return */
 	MAKE_STD_ZVAL(list);
@@ -532,14 +528,14 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 
 	/* do find */
 	MAKE_STD_ZVAL(cursor);
-	MONGO_METHOD(MongoCollection, find, cursor, collection);
+	MONGO_METHOD(MongoCollection, find, cursor, system_collection);
 
 	/* populate list */
 	MAKE_STD_ZVAL(next);
 	MONGO_METHOD(MongoCursor, getNext, next, cursor);
 
 	while (IS_ARRAY_OR_OBJECT_P(next)) {
-		zval *c, *zname;
+		zval *c;
 		zval **collection;
 		char *name, *first_dot, *system;
 
@@ -588,20 +584,8 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 		}
 
 		if (full_collection) {
-			MAKE_STD_ZVAL(c);
-			ZVAL_NULL(c);
-
-			MAKE_STD_ZVAL(zname);
-			ZVAL_NULL(zname);
-
-			/* name must be copied because it is a substring of a string that
-			 * will be garbage collected in a sec */
-			ZVAL_STRING(zname, name, 1);
-			MONGO_METHOD1(MongoDB, selectCollection, c, getThis(), zname);
-
+			c = php_mongodb_selectcollection(getThis(), name, strlen(name));
 			add_next_index_zval(list, c);
-
-			zval_ptr_dtor(&zname);
 		} else {
 			add_next_index_string(list, name, 1);
 		}
@@ -612,9 +596,8 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 	}
 
 	zval_ptr_dtor(&next);
-	zval_ptr_dtor(&nss);
 	zval_ptr_dtor(&cursor);
-	zval_ptr_dtor(&collection);
+	zval_ptr_dtor(&system_collection);
 
 	RETURN_ZVAL(list, 0, 1);
 }

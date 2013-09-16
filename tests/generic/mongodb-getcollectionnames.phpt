@@ -1,5 +1,5 @@
 --TEST--
-Database: Retrieving collection names
+MongoDB::getCollectionNames()
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
