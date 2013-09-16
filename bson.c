@@ -1181,7 +1181,8 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			case BSON_DBREF: {
 				int ns_len;
 				char *ns;
-				zval *zoid, *str = 0;
+				zval *zoid;
+				char *str = NULL;
 				mongo_id *this_id;
 
 				CHECK_BUFFER_LEN(INT_32);
@@ -1209,12 +1210,9 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 				this_id = (mongo_id*)zend_object_store_get_object(zoid TSRMLS_CC);
 				this_id->id = estrndup(buf, OID_SIZE);
 
-				MAKE_STD_ZVAL(str);
-				ZVAL_NULL(str);
-
-				MONGO_METHOD(MongoId, __toString, str, zoid);
-				zend_update_property(mongo_ce_Id, zoid, "$id", strlen("$id"), str TSRMLS_CC);
-				zval_ptr_dtor(&str);
+				str = php_mongo_mongoid_to_hex(this_id->id);
+				zend_update_property_string(mongo_ce_Id, zoid, "$id", strlen("$id"), str TSRMLS_CC);
+				efree(str);
 
 				buf += OID_SIZE;
 
