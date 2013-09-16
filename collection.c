@@ -1139,7 +1139,7 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	/* get the system.indexes collection */
 	db = c->parent;
 
-	collection = php_mongodb_selectcollection(db, "system.indexes", strlen("system.indexes"));
+	collection = php_mongodb_selectcollection(db, "system.indexes", strlen("system.indexes") TSRMLS_CC);
 	PHP_MONGO_CHECK_EXCEPTION2(&keys, &collection);
 
 	/* set up data */
@@ -1287,7 +1287,7 @@ PHP_METHOD(MongoCollection, getIndexInfo)
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	collection = php_mongodb_selectcollection(c->parent, "system.indexes", strlen("system.indexes"));
+	collection = php_mongodb_selectcollection(c->parent, "system.indexes", strlen("system.indexes") TSRMLS_CC);
 	PHP_MONGO_CHECK_EXCEPTION1(&collection);
 
 	MAKE_STD_ZVAL(query);
@@ -1805,7 +1805,7 @@ PHP_METHOD(MongoCollection, __get)
 	spprintf(&full_name, 0, "%s.%s", Z_STRVAL_P(c->name), name);
 
 	/* select this collection */
-	collection = php_mongodb_selectcollection(c->parent, full_name, strlen(full_name));
+	collection = php_mongodb_selectcollection(c->parent, full_name, strlen(full_name) TSRMLS_CC);
 	RETVAL_ZVAL(collection, 0, 1);
 	efree(full_name);
 }

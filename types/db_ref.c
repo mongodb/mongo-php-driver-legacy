@@ -166,7 +166,7 @@ PHP_METHOD(MongoDBRef, get)
 	}
 
 	/* get the collection */
-	collection = php_mongodb_selectcollection(zdb, Z_STRVAL_PP(ns), Z_STRLEN_PP(ns));
+	collection = php_mongodb_selectcollection(zdb, Z_STRVAL_PP(ns), Z_STRLEN_PP(ns) TSRMLS_CC);
 
 	/* query for the $id */
 	MAKE_STD_ZVAL(query);
