@@ -21,7 +21,7 @@ Warning: MongoDB::dropCollection(): expects parameter 1 to be an string or Mongo
 NULL
 array(4) {
   ["nIndexesWas"]=>
-  int(1)
+  %s(1)
   ["msg"]=>
   string(30) "indexes dropped for collection"
   ["ns"]=>
