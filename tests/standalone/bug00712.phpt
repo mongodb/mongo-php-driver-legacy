@@ -1,7 +1,7 @@
 --TEST--
 PHP-712: findAndModify returns empty array when nothing is found.
 --SKIPIF--
-
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
