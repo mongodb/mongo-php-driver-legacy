@@ -1051,7 +1051,7 @@ PHP_METHOD(MongoClient, killCursor)
 {
 	char *hash;
 	int   hash_len;
-	long cursor_id;
+	long cursor_id = 0;
 	mongo_connection *con;
 	zval *int64_id = NULL;
 
