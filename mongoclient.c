@@ -680,8 +680,7 @@ PHP_METHOD(MongoClient, __toString)
 	}
 
 	smart_str_0(&str);
-
-	RETURN_STRING(str.c, 0);
+	RETURN_STRINGL(str.c, str.len, 0);
 }
 /* }}} */
 
