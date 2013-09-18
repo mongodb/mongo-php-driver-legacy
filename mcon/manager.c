@@ -57,7 +57,6 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 			 * interval so lets remove the blacklisting and pretend we didn't
 			 * know about it */
 			mongo_manager_blacklist_deregister(manager, blacklist, hash);
-			con = NULL;
 		} else {
 			/* Otherwise short-circut the connection attempt, and say we failed
 			 * right away */
