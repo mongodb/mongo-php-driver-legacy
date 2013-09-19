@@ -103,6 +103,8 @@
     <file role="src" name="cursor_timeout_exception.h"/>
     <file role="src" name="exception.c"/>
     <file role="src" name="exception.h"/>
+    <file role="src" name="execution_timeout_exception.c"/>
+    <file role="src" name="execution_timeout_exception.h"/>
     <file role="src" name="gridfs_exception.c"/>
     <file role="src" name="gridfs_exception.h"/>
     <file role="src" name="duplicate_key_exception.c"/>

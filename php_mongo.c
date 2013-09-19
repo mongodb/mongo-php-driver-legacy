@@ -31,6 +31,7 @@
 #include "exceptions/connection_exception.h"
 #include "exceptions/cursor_exception.h"
 #include "exceptions/cursor_timeout_exception.h"
+#include "exceptions/execution_timeout_exception.h"
 #include "exceptions/gridfs_exception.h"
 #include "exceptions/result_exception.h"
 #include "exceptions/write_concern_exception.h"
@@ -435,6 +436,7 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 	mongo_init_MongoResultException(TSRMLS_C);
 	mongo_init_MongoWriteConcernException(TSRMLS_C);
 	mongo_init_MongoDuplicateKeyException(TSRMLS_C);
+	mongo_init_MongoExecutionTimeoutException(TSRMLS_C);
 }
 
 /* {{{ Creating & freeing Mongo type objects */
