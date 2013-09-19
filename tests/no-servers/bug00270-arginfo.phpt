@@ -242,6 +242,8 @@ MongoCursor
     0: number
   Method fields expects 1 parameters
     0: fields
+  Method maxTimeMS expects 1 parameters
+    0: ms
   Method addOption expects 2 parameters
     0: key
     1: value
