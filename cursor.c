@@ -447,18 +447,19 @@ PHP_METHOD(MongoCursor, hasNext)
 		RETURN_TRUE;
 	}
 
+	/* if cursor_id != 0, server should stay the same */
+	/* sometimes we'll have a cursor_id but there won't be any more results */
+	if (cursor->at >= cursor->num) {
+		RETVAL_FALSE;
+	} else {
+		/* but sometimes there will be */
+		RETVAL_TRUE;
+	}
+
 	if (cursor->cursor_id == 0) {
 		mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
 	}
 
-	/* if cursor_id != 0, server should stay the same */
-	/* sometimes we'll have a cursor_id but there won't be any more results */
-	if (cursor->at >= cursor->num) {
-		RETURN_FALSE;
-	} else {
-		/* but sometimes there will be */
-		RETURN_TRUE;
-	}
 }
 /* }}} */
 
@@ -1650,11 +1651,6 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC)
 			if (type == MONGO_CURSOR) {
 				mongo_cursor *cursor = (mongo_cursor*)val;
 
-				if (cursor->connection) {
-					mongo_deregister_callback_from_connection(cursor->connection, cursor);
-				}
-
-
 				if (current->cursor_id == cursor->cursor_id && cursor->connection != NULL && current->socket == cursor->connection->socket) {
 					/* If the cursor_id is 0, the db is out of results anyway */
 					if (current->cursor_id == 0) {
@@ -1676,6 +1672,12 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC)
 						 * on the cursor. */
 						cursor->cursor_id = 0;
 					}
+					if (cursor->connection) {
+						mongo_deregister_callback_from_connection(cursor->connection, cursor);
+						cursor->connection = NULL;
+					}
+
+
 					/* only one cursor to be freed */
 					break;
 				}
