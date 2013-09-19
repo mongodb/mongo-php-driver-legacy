@@ -171,7 +171,10 @@ zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_
 	mongo_db *db;
 
 	db = (mongo_db*)zend_object_store_get_object(this TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(db->name, MongoDB);
+	if (!(db->name)) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoDB object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return NULL;
+	}
 
 	MAKE_STD_ZVAL(z_collection);
 	ZVAL_STRINGL(z_collection, collection, collection_len, 1);
@@ -202,6 +205,7 @@ PHP_METHOD(MongoDB, selectCollection)
 
 	RETURN_ZVAL(retval, 0, 1);
 }
+/* }}} */
 
 PHP_METHOD(MongoDB, getGridFS)
 {

@@ -1787,7 +1787,7 @@ PHP_METHOD(MongoCollection, __get)
 	 * in, get the parent db, then select the new collection from it. */
 	zval *collection;
 	char *full_name, *name;
-	int name_len;
+	int full_name_len, name_len;
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
@@ -1802,10 +1802,10 @@ PHP_METHOD(MongoCollection, __get)
 		RETURN_ZVAL(c->parent, 1, 0);
 	}
 
-	spprintf(&full_name, 0, "%s.%s", Z_STRVAL_P(c->name), name);
+	full_name_len = spprintf(&full_name, 0, "%s.%s", Z_STRVAL_P(c->name), name);
 
 	/* select this collection */
-	collection = php_mongodb_selectcollection(c->parent, full_name, strlen(full_name) TSRMLS_CC);
+	collection = php_mongodb_selectcollection(c->parent, full_name, full_name_len TSRMLS_CC);
 	RETVAL_ZVAL(collection, 0, 1);
 	efree(full_name);
 }
