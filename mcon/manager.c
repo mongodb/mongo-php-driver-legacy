@@ -57,7 +57,6 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 			 * interval so lets remove the blacklisting and pretend we didn't
 			 * know about it */
 			mongo_manager_blacklist_deregister(manager, blacklist, hash);
-			con = NULL;
 		} else {
 			/* Otherwise short-circut the connection attempt, and say we failed
 			 * right away */
@@ -342,17 +341,21 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 				found_connected_server--;
 			}
 		}
-		if (!tmp && !(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
-			if (messages->l) {
-				mcon_str_addl(messages, "; ", 2, 0);
+		if (!tmp) {
+			if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
+				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+				if (messages->l) {
+					mcon_str_addl(messages, "; ", 2, 0);
+				}
+				mcon_str_add(messages, "Failed to connect to: ", 0);
+				mcon_str_add(messages, servers->server[i]->host, 0);
+				mcon_str_addl(messages, ":", 1, 0);
+				mcon_str_add_int(messages, servers->server[i]->port);
+				mcon_str_addl(messages, ": ", 2, 0);
+				mcon_str_add(messages, con_error_message, 1); /* Also frees con_error_message */
+			} else {
+				free(con_error_message);
 			}
-			mcon_str_add(messages, "Failed to connect to: ", 0);
-			mcon_str_add(messages, servers->server[i]->host, 0);
-			mcon_str_addl(messages, ":", 1, 0);
-			mcon_str_add_int(messages, servers->server[i]->port);
-			mcon_str_addl(messages, ": ", 2, 0);
-			mcon_str_add(messages, con_error_message, 1); /* Also frees con_error_message */
 		}
 	}
 

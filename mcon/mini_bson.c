@@ -524,16 +524,6 @@ int bson_array_find_next_int32(char **buffer, char **field, int32_t *data)
 	return *buffer == NULL ? 0 : 1;
 }
 
-int bson_array_find_next_embedded_doc(char **buffer)
-{
-	char *read_field;
-	int   read_type;
-
-	*buffer = bson_next(*buffer);
-	bson_get_current(*buffer, &read_field, &read_type);
-	return read_type == BSON_DOCUMENT;
-}
-
 /*
  * Local variables:
  * tab-width: 4
