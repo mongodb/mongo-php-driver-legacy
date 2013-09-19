@@ -59,7 +59,7 @@ static int php_mongo_command_supports_rp(zval *cmd)
 	long type;
 	ulong idx;
 
-	if (Z_TYPE_P(cmd) != IS_ARRAY) {
+	if (!cmd || Z_TYPE_P(cmd) != IS_ARRAY) {
 		return 0;
 	}
 

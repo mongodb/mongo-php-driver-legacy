@@ -680,8 +680,7 @@ PHP_METHOD(MongoClient, __toString)
 	}
 
 	smart_str_0(&str);
-
-	RETURN_STRING(str.c, 0);
+	RETURN_STRINGL(str.c, str.len, 0);
 }
 /* }}} */
 
@@ -1051,7 +1050,7 @@ PHP_METHOD(MongoClient, killCursor)
 {
 	char *hash;
 	int   hash_len;
-	long cursor_id;
+	long cursor_id = 0;
 	mongo_connection *con;
 	zval *int64_id = NULL;
 

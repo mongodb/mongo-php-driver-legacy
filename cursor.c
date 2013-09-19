@@ -263,9 +263,6 @@ PHP_METHOD(MongoCursor, __construct)
 		return;
 	}
 
-	cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	link = (mongoclient*)zend_object_store_get_object(zlink TSRMLS_CC);
-
 	/* Validate namespace */
 	{
 		char *dot;

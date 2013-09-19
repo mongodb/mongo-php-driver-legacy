@@ -39,7 +39,6 @@ int bson_find_field_as_stringl(char *buffer, char *field, char **data, int32_t *
 
 int bson_array_find_next_string(char **buffer, char **field, char **data);
 int bson_array_find_next_int32(char **buffer, char **field, int32_t *data);
-int bson_array_find_next_embedded_doc(char **buffer);
 
 #endif
 
