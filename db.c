@@ -486,7 +486,7 @@ PHP_METHOD(MongoDB, createCollection)
 }
 
 /* {{{ proto MongoCollection MongoDB::dropCollection(string|MongoCollection collection)
-   Drops a connection and returns the database's response */
+   Drops a collection and returns the database's response */
 PHP_METHOD(MongoDB, dropCollection)
 {
 	zval *collection;
@@ -987,7 +987,7 @@ PHP_METHOD(MongoDB, forceError)
 }
 /* }}} */
 
-/* {{{ MongoDB::__get
+/* {{{ proto MongoCollection MongoDB::__get(string name)
    Returns the "name" collection from the database */
 PHP_METHOD(MongoDB, __get)
 {
