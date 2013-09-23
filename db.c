@@ -195,17 +195,20 @@ zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_
    Returns the "name" collection from the database */
 PHP_METHOD(MongoDB, selectCollection)
 {
-	char *collection;
-	int   collection_len;
-	zval *retval;
+	char *name;
+	int   name_len;
+	zval *collection;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &collection, &collection_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
 		return;
 	}
 
-	retval = php_mongodb_selectcollection(getThis(), collection, collection_len TSRMLS_CC);
-
-	RETURN_ZVAL(retval, 0, 1);
+	collection = php_mongodb_selectcollection(getThis(), name, name_len TSRMLS_CC);
+	if (collection) {
+		/* Only copy the zval into return_value if it worked. If collection is
+		 * NULL here, an exception is set */
+		RETURN_ZVAL(collection, 0, 1);
+	}
 }
 /* }}} */
 
