@@ -816,7 +816,11 @@ PHP_METHOD(MongoClient, selectCollection)
 	PHP_MONGO_CHECK_EXCEPTION1(&temp_db);
 
 	collection = php_mongodb_selectcollection(temp_db, coll, coll_len TSRMLS_CC);
-	RETVAL_ZVAL(collection, 0, 1);
+	if (collection) {
+		/* Only copy the zval into return_value if it worked. If collection is
+		 * NULL here, an exception is set */
+		RETVAL_ZVAL(collection, 0, 1);
+	}
 
 	zval_ptr_dtor(&temp_db);
 }
