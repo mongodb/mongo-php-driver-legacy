@@ -163,6 +163,8 @@ PHP_METHOD(MongoDB, __toString)
 	RETURN_ZVAL(db->name, 1, 0);
 }
 
+/* Selects a collection and returns it as zval. If the return value is no, an
+ * Exception is set. This only happens if the passed in DB was invalid. */
 zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_len TSRMLS_DC)
 {
 	zval *z_collection;
@@ -485,7 +487,11 @@ PHP_METHOD(MongoDB, createCollection)
 
 		/* get the collection we just created */
 		zcollection = php_mongodb_selectcollection(getThis(), collection, collection_len TSRMLS_CC);
-		RETURN_ZVAL(zcollection, 0, 1);
+		if (zcollection) {
+			/* Only copy the zval into return_value if it worked. If
+			 * zcollection is NULL here, an exception is set */
+			RETURN_ZVAL(zcollection, 0, 1);
+		}
 	}
 }
 
@@ -501,6 +507,10 @@ PHP_METHOD(MongoDB, dropCollection)
 
 	if (Z_TYPE_P(collection) == IS_STRING) {
 		collection = php_mongodb_selectcollection(getThis(), Z_STRVAL_P(collection), Z_STRLEN_P(collection) TSRMLS_CC);
+		if (!collection) {
+			/* An exception is set in this case */
+			return;
+		}
 	} else if (Z_TYPE_P(collection) == IS_OBJECT && Z_OBJCE_P(collection) == mongo_ce_Collection) {
 		zval_add_ref(&collection);
 	} else {
@@ -525,6 +535,10 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 
 	/* select db.system.namespaces collection */
 	system_collection = php_mongodb_selectcollection(getThis(), "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
+	if (!system_collection) {
+		/* An exception is set in this case */
+		return;
+	}
 
 	/* list to return */
 	MAKE_STD_ZVAL(list);
@@ -589,6 +603,8 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 
 		if (full_collection) {
 			c = php_mongodb_selectcollection(getThis(), name, strlen(name) TSRMLS_CC);
+			/* No need to test for c here, as this was already covered in
+			 * system_collection above */
 			add_next_index_zval(list, c);
 		} else {
 			add_next_index_string(list, name, 1);
@@ -1005,7 +1021,11 @@ PHP_METHOD(MongoDB, __get)
 
 	/* select this collection */
 	collection = php_mongodb_selectcollection(getThis(), name, name_len TSRMLS_CC);
-	RETURN_ZVAL(collection, 0, 1);
+	if (collection) {
+		/* Only copy the zval into return_value if it worked. If collection is
+		 * NULL here, an exception is set */
+		RETVAL_ZVAL(collection, 0, 1);
+	}
 }
 /* }}} */
 

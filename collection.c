@@ -1806,7 +1806,11 @@ PHP_METHOD(MongoCollection, __get)
 
 	/* select this collection */
 	collection = php_mongodb_selectcollection(c->parent, full_name, full_name_len TSRMLS_CC);
-	RETVAL_ZVAL(collection, 0, 1);
+	if (collection) {
+		/* Only copy the zval into return_value if it worked. If collection is
+		 * NULL here, an exception is set */
+		RETVAL_ZVAL(collection, 0, 1);
+	}
 	efree(full_name);
 }
 /* }}} */
