@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 #include <php.h>
-#include "php_mongo.h"
+#include "../php_mongo.h"
 
 zend_class_entry *mongo_ce_BinData = NULL;
 
@@ -59,11 +59,12 @@ void mongo_init_MongoBinData(TSRMLS_D)
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "MongoBinData", MongoBinData_methods);
+	ce.create_object = php_mongo_type_object_new;
 	mongo_ce_BinData = zend_register_internal_class(&ce TSRMLS_CC);
 
 	/* fields */
-	zend_declare_property_string(mongo_ce_BinData, "bin", strlen("bin"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_string(mongo_ce_BinData, "bin", strlen("bin"), "", ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
+	zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 
 	/* constants */
 	/* can't use FUNCTION because it's a reserved word */

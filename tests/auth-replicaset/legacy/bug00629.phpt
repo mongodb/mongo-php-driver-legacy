@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-629
+Test for PHP-629: Missing support for passing the username/password in the $options array
 --SKIPIF--
 <?php require_once "tests/utils/auth-replicaset.inc" ?>
 --FILE--
@@ -26,11 +26,14 @@ $command = "db.version()";
 $response = $database->execute($command);
 var_dump($response);
 ?>
+===DONE===
 --EXPECTF--
+%s: MongoClient::__construct(): The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead in %s on line %d
 array(2) {
   ["retval"]=>
   string(%d) "%s"
   ["ok"]=>
   float(1)
 }
+===DONE===
 

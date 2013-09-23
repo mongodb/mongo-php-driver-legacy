@@ -6,7 +6,7 @@ MongoCollection::findAndModify() helper
 <?php
 require_once "tests/utils/server.inc";
 
-$m = mongo();
+$m = new_mongo();
 $col = $m->selectDB(dbname())->jobs;
 
 $col->remove();
@@ -31,7 +31,7 @@ $col->insert(array(
      "priority" => 2,
      "tasks" => array( "run marketing report", "email report" )
     ),
-    array("safe" => true)
+    array("w" => true)
 );
 
 
@@ -93,12 +93,12 @@ try {
 
 ?>
 --EXPECTF--
-0 : Modified field name may not start with $
+0 : %s
 array(6) {
   ["err"]=>
-  string(40) "Modified field name may not start with $"
+  string(%d) "%s"
   ["code"]=>
-  int(15896)
+  int(%d)
   ["n"]=>
   int(0)
   ["lastOp"]=>
@@ -113,7 +113,7 @@ array(6) {
   ["ok"]=>
   float(1)
 }
-string(40) "Modified field name may not start with $"
+string(%d) "%s"
 float(0)
 13097 : exception: Unsupported projection option: $pop
 array(3) {

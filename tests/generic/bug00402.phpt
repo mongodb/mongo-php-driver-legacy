@@ -13,7 +13,7 @@ require_once "tests/utils/server.inc";
 
 $m = mongo_standalone();
 $c = $m->selectCollection('phpunit', 'col');
-$c->insert(array('x' => 1), array('safe' => true));
+$c->insert(array('x' => 1), array('w' => true));
 
 $result = $c->validate();
 var_dump(isset($result['warning']));

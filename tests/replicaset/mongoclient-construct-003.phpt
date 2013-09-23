@@ -1,5 +1,5 @@
 --TEST--
-MongoClient::__construct()#003 Connecting to replicaset member in a standalone mode
+MongoClient::__construct(): Connecting to replicaset member in a standalone mode (3)
 --SKIPIF--
 <?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--

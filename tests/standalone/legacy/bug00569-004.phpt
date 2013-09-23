@@ -40,25 +40,34 @@ foreach ( $strings as $string )
 	}
 	catch ( Exception $e )
 	{
-		echo $e->getMessage(), "\n";
+		if (!strpos($string, "majority")) {
+			/* 2.5.x maps majority=1 for standalone servers so doesn't raise an exception */
+			echo $e->getMessage(), "\n";
+		}
 	}
 	foreach ( $tests as $key => $test )
 	{
 		echo "\n- Setting w property to $test:\n";
 		try
 		{
-			$demo->w = $test;
+			$demo->setWriteConcern($test);
 			$demo->test->insert( array( '_id' => $key ) );
 		}
 		catch ( Exception $e )
 		{
+			/* 2.5.x maps majority=1 for standalone servers so doesn't raise an exception */
+			if ($test == "majority") {
+				continue;
+			}
+			if (strpos($string, "majority") && $test == 1) {
+				continue;
+			}
 			echo $e->getMessage(), "\n";
 		}
 	}
 }
 ?>
 --EXPECTF--
-
 Running string mongodb://%s/?w=0
 PARSE   INFO: Parsing mongodb://%s/?w=0
 PARSE   INFO: - Found node: %s:%d
@@ -137,7 +146,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Setting w property to allDCs:
 IO      FINE: is_gle_op: yes
@@ -208,7 +216,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Setting w property to allDCs:
 IO      FINE: is_gle_op: yes
@@ -279,7 +286,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Setting w property to allDCs:
 IO      FINE: is_gle_op: yes
@@ -303,7 +309,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Setting w property to 0:
 IO      FINE: is_gle_op: yes
@@ -320,7 +325,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Setting w property to 2:
 IO      FINE: is_gle_op: yes
@@ -350,7 +354,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Setting w property to allDCs:
 IO      FINE: is_gle_op: yes

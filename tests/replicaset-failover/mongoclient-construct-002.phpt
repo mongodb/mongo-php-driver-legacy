@@ -1,6 +1,7 @@
 --TEST--
-MongoClient::__construct()#002 during failover
+MongoClient::__construct() during failover (2)
 --SKIPIF--
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/replicaset-failover.inc" ?>
 --FILE--
 <?php
@@ -63,7 +64,7 @@ var_dump(time()-$t > 3);
 --EXPECTF--
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;REPLICASET;X;%d"
+  string(%d) "%s:%d;REPLICASET;.;%d"
   ["type"]=>
   int(2)
   ["max_bson_size"]=>
@@ -79,7 +80,7 @@ array(1) {
 }
 array(5) {
   ["request_id"]=>
-  int(1)
+  int(4)
   ["skip"]=>
   int(0)
   ["limit"]=>
@@ -94,7 +95,7 @@ Master killed
 Attempting insert
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;REPLICASET;X;%d"
+  string(%d) "%s:%d;REPLICASET;.;%d"
   ["type"]=>
   int(2)
   ["max_bson_size"]=>
@@ -110,7 +111,7 @@ array(1) {
 }
 array(5) {
   ["request_id"]=>
-  int(3)
+  int(6)
   ["skip"]=>
   int(0)
   ["limit"]=>
@@ -122,11 +123,11 @@ array(5) {
 }
 string(20) "MongoCursorException"
 string(%d) "%s:%d: Remote server has closed the connection"
-int(3)
+int(32)
 Doing secondary read
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;REPLICASET;X;%d"
+  string(%d) "%s:%d;REPLICASET;.;%d"
   ["type"]=>
   int(4)
   ["max_bson_size"]=>
@@ -145,7 +146,7 @@ array(1) {
 }
 array(5) {
   ["request_id"]=>
-  int(4)
+  int(7)
   ["skip"]=>
   int(0)
   ["limit"]=>

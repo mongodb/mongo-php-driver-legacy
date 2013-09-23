@@ -32,29 +32,10 @@
 #include "read_preference.h"
 #include "io.h"
 
-
-#include "config.h"
-
 /* Forwards declarations */
 static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data, int why);
 
 /* Helpers */
-static int authenticate_connection(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char **error_message)
-{
-	char *nonce;
-	int   retval = 0;
-
-	nonce = mongo_connection_getnonce(manager, con, options, error_message);
-	if (!nonce) {
-		return 0;
-	}
-
-	retval = mongo_connection_authenticate(manager, con, options, database, username, password, nonce, error_message);
-	free(nonce);
-
-	return retval;
-}
-
 static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, int connection_flags, char **error_message)
 {
 	char *hash;
@@ -63,22 +44,22 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 
 	hash = mongo_server_create_hash(server);
 
-	/* See if a connection is in our blacklist to short-circut trying to connect
-	 * to a node that is known to be down. This is done so we don't waste
-	 * precious time in connecting to unreachable nodes */
+	/* See if a connection is in our blacklist to short-circut trying to
+	 * connect to a node that is known to be down. This is done so we don't
+	 * waste precious time in connecting to unreachable nodes */
 	blacklist = mongo_manager_blacklist_find_by_hash(manager, hash);
 	if (blacklist) {
 		struct timeval start;
-		/* It is blacklisted, but it may have been a long time again and chances are
-		 * we should give it another try */
+		/* It is blacklisted, but it may have been a long time again and
+		 * chances are we should give it another try */
 		if (mongo_connection_ping_check(manager, blacklist->last_ping, &start)) {
-			/* The connection is blacklisted, but we've reached our ping interval
-			 * so lets remove the blacklisting and pretend we didn't know about it
-			 */
+			/* The connection is blacklisted, but we've reached our ping
+			 * interval so lets remove the blacklisting and pretend we didn't
+			 * know about it */
 			mongo_manager_blacklist_deregister(manager, blacklist, hash);
-			con = NULL;
 		} else {
-			/* Otherwise short-circut the connection attempt, and say we failed right away */
+			/* Otherwise short-circut the connection attempt, and say we failed
+			 * right away */
 			free(hash);
 			*error_message = strdup("Previous connection attempts failed, server blacklisted");
 			return NULL;
@@ -87,7 +68,8 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 
 	con = mongo_manager_connection_find_by_hash(manager, hash);
 
-	/* If we aren't about to (re-)connect then all we care about if it was a known connection or not */
+	/* If we aren't about to (re-)connect then all we care about if it was a
+	 * known connection or not */
 	if (connection_flags & MONGO_CON_FLAG_DONT_CONNECT) {
 		free(hash);
 		return con;
@@ -99,7 +81,8 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 		if (!mongo_connection_ping(manager,  con, options, error_message)) {
 			/* If the ping failed, deregister the connection */
 			mongo_manager_connection_deregister(manager, con);
-			/* Set the return value to NULL, as the connection is broken and has been removed */
+			/* Set the return value to NULL, as the connection is broken and
+			 * has been removed */
 			con = NULL;
 		}
 
@@ -110,15 +93,24 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	/* Since we didn't find an existing connection, lets make one! */
 	con = mongo_connection_create(manager, hash, server, options, error_message);
 	if (con) {
+		/* When we make a connection, we need to figure out the server version it is */
+		if (!mongo_connection_get_server_version(manager, con, options, error_message)) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_version: error while getting the server version %s:%d: %s", server->host, server->port, *error_message);
+			mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
+			free(hash);
+			return NULL;
+		}
+
 		/* Do authentication if requested */
-		if (server->db && server->username && server->password) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_connection_single: authenticating %s", hash);
-			if (!authenticate_connection(manager, con, options, server->authdb ? server->authdb : server->db, server->username, server->password, error_message)) {
+		/* Note: Arbiters don't contain any data, including auth stuff, so you cannot authenticate on an arbiter */
+		if (con->connection_type != MONGO_NODE_ARBITER) {
+			if (!manager->authenticate(manager, con, options, server, error_message)) {
 				mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
 				free(hash);
 				return NULL;
 			}
 		}
+
 		/* Do the first-time ping to record the latency of the connection */
 		if (mongo_connection_ping(manager, con, options, error_message)) {
 			/* Register the connection on successful pinging */
@@ -160,6 +152,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 			continue;
 		}
 		
+		/* Run ismaster, if needed, to extract server flags - and fetch the other known hosts */
 		res = mongo_connection_ismaster(manager, con, &servers->options, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
 		switch (res) {
 			case 0:
@@ -190,7 +183,8 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					mongo_connection *new_con;
 					char *con_error_message = NULL;
 
-					/* Create a temp server definition to create a new connection on-demand if we didn't have one already */
+					/* Create a temp server definition to create a new
+					 * connection on-demand if we didn't have one already */
 					tmp_def = calloc(1, sizeof(mongo_server_def));
 					tmp_def->username = servers->server[i]->username ? strdup(servers->server[i]->username) : NULL;
 					tmp_def->password = servers->server[i]->password ? strdup(servers->server[i]->password) : NULL;
@@ -199,6 +193,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					tmp_def->authdb = servers->server[i]->authdb ? strdup(servers->server[i]->authdb) : NULL;
 					tmp_def->host = mcon_strndup(found_hosts[j], strchr(found_hosts[j], ':') - found_hosts[j]);
 					tmp_def->port = atoi(strchr(found_hosts[j], ':') + 1);
+					tmp_def->mechanism = servers->server[i]->mechanism;
 					
 					/* Create a hash so that we can check whether we already have a
 					 * connection for this server definition. If we don't create
@@ -210,6 +205,13 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 					if (!mongo_manager_connection_find_by_hash(manager, tmp_hash)) {
 						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
 						new_con = mongo_get_connection_single(manager, tmp_def, &servers->options, MONGO_CON_FLAG_WRITE, (char **) &con_error_message);
+
+						if (new_con && !mongo_connection_get_server_flags(manager, new_con, &servers->options, &con_error_message)) {
+							mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+							mongo_manager_connection_deregister(manager, new_con);
+							new_con = NULL;
+						}
+
 						if (new_con) {
 							servers->server[servers->count] = tmp_def;
 							servers->count++;
@@ -255,7 +257,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
 		if (tmp) {
-			found_connected_server = 1;
+			found_connected_server++;
 		} else if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 			free(con_error_message);
@@ -302,7 +304,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 		return NULL;
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
-	collection = mongo_select_nearest_servers(manager, collection, &servers->read_pref);
+	collection = mongo_select_nearest_servers(manager, collection, &servers->options, &servers->read_pref);
 	con = mongo_pick_server_from_set(manager, collection, &servers->read_pref);
 
 	/* Cleaning up */
@@ -329,23 +331,37 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
 		if (tmp) {
-			found_connected_server = 1;
-		} else if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
-			if (messages->l) {
-				mcon_str_addl(messages, "; ", 2, 0);
+			found_connected_server++;
+
+			/* Run ismaster, if needed, to extract server flags */
+			if (!mongo_connection_get_server_flags(manager, tmp, &servers->options, &con_error_message)) {
+				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", &servers->server[i]->host, &servers->server[i]->port, con_error_message);
+				mongo_connection_destroy(manager, tmp, MONGO_CLOSE_BROKEN);
+				tmp = NULL;
+				found_connected_server--;
 			}
-			mcon_str_add(messages, "Failed to connect to: ", 0);
-			mcon_str_add(messages, servers->server[i]->host, 0);
-			mcon_str_addl(messages, ":", 1, 0);
-			mcon_str_add_int(messages, servers->server[i]->port);
-			mcon_str_addl(messages, ": ", 2, 0);
-			mcon_str_add(messages, con_error_message, 1); /* Also frees con_error_message */
+		}
+		if (!tmp) {
+			if (!(connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
+				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Couldn't connect to '%s:%d': %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+				if (messages->l) {
+					mcon_str_addl(messages, "; ", 2, 0);
+				}
+				mcon_str_add(messages, "Failed to connect to: ", 0);
+				mcon_str_add(messages, servers->server[i]->host, 0);
+				mcon_str_addl(messages, ":", 1, 0);
+				mcon_str_add_int(messages, servers->server[i]->port);
+				mcon_str_addl(messages, ": ", 2, 0);
+				mcon_str_add(messages, con_error_message, 1); /* Also frees con_error_message */
+			} else {
+				free(con_error_message);
+			}
 		}
 	}
 
 	/* If we don't have a connected server then there is no point in continueing */
 	if (!found_connected_server && (connection_flags & MONGO_CON_FLAG_DONT_CONNECT)) {
+		mcon_str_ptr_dtor(messages);
 		return NULL;
 	}
 
@@ -366,7 +382,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 		goto bailout;
 	}
 	collection = mongo_sort_servers(manager, collection, &servers->read_pref);
-	collection = mongo_select_nearest_servers(manager, collection, &servers->read_pref);
+	collection = mongo_select_nearest_servers(manager, collection, &servers->options, &servers->read_pref);
 	if (!collection) {
 		*error_message = strdup("No server near us");
 		goto bailout;
@@ -409,6 +425,12 @@ int mongo_deregister_callback_from_connection(mongo_connection *connection, void
 /* API interface to fetch a connection */
 mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
 {
+	/* In some cases we won't actually have a manager or servers initialized, for example when extending PHP objects without calling the constructor,
+	 * and then var_dump() it or access the properties, for example the "connected" property */
+	if (!manager || !servers) {
+		return NULL;
+	}
+
 	/* Which connection we return depends on the type of connection we want */
 	switch (servers->options.con_type) {
 		case MONGO_CON_TYPE_STANDALONE:
@@ -502,6 +524,15 @@ void *mongo_manager_find_by_hash(mongo_con_manager *manager, mongo_con_manager_i
 		ptr = ptr->next;
 	}
 	return NULL;
+}
+
+mongo_connection *mongo_manager_connection_find_by_server_definition(mongo_con_manager *manager, mongo_server_def *definition)
+{
+	char *hash = mongo_server_create_hash(definition);
+	mongo_connection *con = mongo_manager_find_by_hash(manager, manager->connections, hash);
+
+	free(hash);
+	return con;
 }
 
 mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manager, char *hash)
@@ -658,6 +689,7 @@ mongo_con_manager *mongo_init(void)
 	tmp->send        = mongo_io_send;
 	tmp->close       = mongo_connection_close;
 	tmp->forget      = mongo_connection_forget;
+	tmp->authenticate= mongo_connection_authenticate;
 
 	return tmp;
 }

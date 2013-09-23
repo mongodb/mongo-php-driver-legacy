@@ -1,5 +1,5 @@
 --TEST--
-Test for forking and connection management [1]
+Test for forking and connection management (1)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
 <?php if (!function_exists("pcntl_fork")) { exit("skip Requires ext/pcntl"); }?>
@@ -12,7 +12,7 @@ $m = mongo_standalone();
 $col = $m->selectDb("phpunit")->fork;
 
 $col->drop();
-$col->insert(array("parent" => time()), array("safe" => 1));
+$col->insert(array("parent" => time()), array("w" => 1));
 
 $pid = pcntl_fork();
 if ($pid == 0) {
@@ -22,7 +22,7 @@ if ($pid == 0) {
 
 $n = 0;
 while($n++ < 1000) {
-	$col->insert(array("parent" => time()), array("safe" => 1));
+	$col->insert(array("parent" => time()), array("w" => 1));
 }
 
 echo $col->count(), "\n";

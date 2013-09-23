@@ -14,44 +14,58 @@
  *  limitations under the License.
  */
 #include <php.h>
-#include "php_mongo.h"
+#include "../php_mongo.h"
+#include "code.h"
 
 zend_class_entry *mongo_ce_Code = NULL;
 
-/* {{{ MongoCode::__construct(string)
+/* {{{ MongoCode::__construct(string code[, array scope])
+ * Creates a new MongoCode object
  */
 PHP_METHOD(MongoCode, __construct)
 {
 	char *code;
 	int code_len;
-	zval *zcope = 0;
+	zval *zcope = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &code, &code_len, &zcope) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a/", &code, &code_len, &zcope) == FAILURE) {
 		return;
 	}
 
-	zend_update_property_stringl(mongo_ce_Code, getThis(), "code", strlen("code"), code, code_len TSRMLS_CC);
-
-	if (!zcope) {
-		MAKE_STD_ZVAL(zcope);
-		array_init(zcope);
-	} else {
-		zval_add_ref(&zcope);
-	}
-
-	zend_update_property(mongo_ce_Code, getThis(), "scope", strlen("scope"), zcope TSRMLS_CC);
-
-	/* get rid of extra ref */
-	zval_ptr_dtor(&zcope);
+	php_mongocode_populate(getThis(), code, code_len, zcope TSRMLS_CC);
 }
 /* }}} */
 
+int php_mongocode_populate(zval *mongocode_object, char *code, int code_len, zval *scope TSRMLS_DC)
+{
+	zend_update_property_stringl(mongo_ce_Code, mongocode_object, "code", strlen("code"), code, code_len TSRMLS_CC);
+
+	if (scope) {
+		if (Z_TYPE_P(scope) != IS_ARRAY) {
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "'scope' argument of MongoCode is expected to be array, %s given", zend_get_type_by_const(Z_TYPE_P(scope)));
+			return 0;
+		}
+
+		zend_update_property(mongo_ce_Code, mongocode_object, "scope", strlen("scope"), scope TSRMLS_CC);
+	} else {
+		/* The bson serialization requires this prop to be array */
+		zval *tmp;
+
+		MAKE_STD_ZVAL(tmp);
+		array_init(tmp);
+		zend_update_property(mongo_ce_Code, mongocode_object, "scope", strlen("scope"), tmp TSRMLS_CC);
+		zval_ptr_dtor(&tmp);
+	}
+
+	return 1;
+}
 
 /* {{{ MongoCode::__toString()
  */
 PHP_METHOD(MongoCode, __toString)
 {
 	zval *zode = zend_read_property(mongo_ce_Code, getThis(), "code", strlen("code"), NOISY TSRMLS_CC);
+	convert_to_string_ex(&zode);
 
 	RETURN_STRING(Z_STRVAL_P(zode), 1);
 }
@@ -68,10 +82,11 @@ void mongo_init_MongoCode(TSRMLS_D)
 {
 	zend_class_entry ce;
 	INIT_CLASS_ENTRY(ce, "MongoCode", MongoCode_methods);
+	ce.create_object = php_mongo_type_object_new;
 	mongo_ce_Code = zend_register_internal_class(&ce TSRMLS_CC);
 
-	zend_declare_property_string(mongo_ce_Code, "code", strlen("code"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_null(mongo_ce_Code, "scope", strlen("scope"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_string(mongo_ce_Code, "code", strlen("code"), "", ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_Code, "scope", strlen("scope"), ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY  TSRMLS_CC);
 }
 
 /*

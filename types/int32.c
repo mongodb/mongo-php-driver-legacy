@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 #include <php.h>
-#include "php_mongo.h"
+#include "../php_mongo.h"
 
 zend_class_entry *mongo_ce_Int32 = NULL;
 
@@ -54,9 +54,10 @@ void mongo_init_MongoInt32(TSRMLS_D)
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "MongoInt32", MongoInt32_methods);
+	ce.create_object = php_mongo_type_object_new;
 	mongo_ce_Int32 = zend_register_internal_class(&ce TSRMLS_CC);
 
-	zend_declare_property_string(mongo_ce_Int32, "value", strlen("value"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_string(mongo_ce_Int32, "value", strlen("value"), "", ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

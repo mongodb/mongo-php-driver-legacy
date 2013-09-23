@@ -15,6 +15,14 @@ Then add
 
 to your _php.ini_ file.
 
+### Installing on Windows
+
+ - Download the latest zip file from https://s3.amazonaws.com/drivers.mongodb.org/php/index.html
+ - Extract the zip file
+ - Copy the DLL file that matches your PHP on Windows installation
+ - Add `extension=php_mongo-x.y.x.-5.n-vc....dll` to your _php.ini_ file
+
+
 ## Documentation
 
 See [the PHP manual](http://php.net/mongo).
@@ -48,3 +56,7 @@ William Volkman
 Derick Rethans
 
 * Implemented `MongoInt32`, `MongoInt64` and related _php.ini_ options.
+
+Taneli Leppä
+
+* Provided a patch for PHP-706 to swap out select() for poll().

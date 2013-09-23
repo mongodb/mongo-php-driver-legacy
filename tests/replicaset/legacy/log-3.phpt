@@ -15,7 +15,7 @@ set_error_handler('error_handler');
 MongoLog::setModule(MongoLog::PARSE);
 MongoLog::setLevel(MongoLog::ALL);
 $config = MongoShellServer::getReplicasetInfo();
-$m = new Mongo("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
+$m = new MongoClient("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
 ?>
 --EXPECTF--
 PARSE   INFO: Parsing mongodb://%s:%d

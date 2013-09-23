@@ -25,6 +25,8 @@ function t() {
     $last = microtime(true);
 }
 function makeServer($SERVERS, $server, $bit) {
+    global $SHELL;
+
     echo "Making " . $SERVERS[$bit] . ".. ";
     t();
     switch($bit) {
@@ -40,6 +42,10 @@ function makeServer($SERVERS, $server, $bit) {
         $sc = $server->getStandaloneConfig();
         list($shost, $sport) = explode(":", trim($sc));
         try {
+            $path = dirname($SHELL);
+            if (!file_exists($path . "/mongobridge")) {
+                throw new DebugException("mongobridge doesn't exist in '$path'", "");
+            }
             $server->makeBridge($sport, 1000);
             $dsn = $server->getBridgeConfig();
         } catch(DebugException $e) {
@@ -87,8 +93,8 @@ function makeServer($SERVERS, $server, $bit) {
         $members = array(
             array('tags' => array('server' => '0', 'dc' => 'ny'), "priority" => 42),
             array('tags' => array('server' => '1', 'dc' => 'ny')),
-            array('tags' => array('server' => '2', 'dc' => 'sf'), "priority" => 0),
-            array('tags' => array('server' => '3', 'dc' => 'sf')),
+            array('tags' => array('server' => '2', 'dc' => 'sf')),
+            array('tags' => array('server' => '3', 'dc' => 'sf'), "priority" => 0),
         );
         $settings = array(
             "getLastErrorModes" => array(
@@ -102,6 +108,11 @@ function makeServer($SERVERS, $server, $bit) {
             $server->makeReplicaset($members, 30200, $settings);
             $cfg = $server->getReplicaSetConfig();
         } else { /* REPLICASET_AUTH */
+            /* Remove the passive server from auth replicasets.
+             * We need to have one replicaset without a passive server, see 
+             * PHP-829 */
+            unset($members[3]);
+            $settings["getLastErrorModes"]["ALL"]["server"]--;
             $retval = $server->makeReplicaset($members, 30300, $settings, dirname(__FILE__) . "/keyFile");
             $cfg = $server->getReplicaSetConfig(true);
         }

@@ -1,5 +1,5 @@
 --TEST--
-MongoClient::insert()#001 during failover
+MongoClient::insert() during failover (1)
 --SKIPIF--
 <?php require_once "tests/utils/replicaset-failover.inc" ?>
 --FILE--
@@ -52,8 +52,8 @@ for($i=0;$i<60; $i++) {
 --EXPECTF--
 Killing master
 Master killed
-string(%d) "%s:%d: Remote server has closed the connection"
-int(3)
+string(%d) "%s:%d: %s"
+int(32)
 string(51) "Couldn't get connection: No candidate servers found"
 int(16)
 string(51) "Couldn't get connection: No candidate servers found"

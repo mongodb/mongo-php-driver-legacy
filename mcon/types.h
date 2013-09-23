@@ -16,24 +16,36 @@
 #ifndef __MCON_TYPES_H__
 #define __MCON_TYPES_H__
 
-#include <time.h>
 #include <stdarg.h>
 
 /* Windows compatibility */
 #ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
 typedef __int32 int32_t;
 typedef unsigned __int32 uint32_t;
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
-#define strcasecmp(a,b) stricmp((a), (b))
-#define snprintf _snprintf
-#define va_copy(d,s) ((void)((d) = (s)))
+#ifndef strcasecmp
+# define strcasecmp(a,b) stricmp((a), (b))
+#endif
+#ifndef snprintf
+# define snprintf _snprintf
+#endif
+#ifndef va_copy
+# define va_copy(d,s) ((void)((d) = (s)))
+#endif
 #else
 # include <stdint.h>
+# include <netinet/in.h>
+# include <netinet/tcp.h>
+# include <fcntl.h>
+# include <netdb.h>
+# include <sys/un.h>
+# include <sys/socket.h>
+# include <unistd.h>
+# include <sys/time.h>
 #endif
-#include "config.h"
-
-#include "php.h"
 
 #define MONGO_CON_TYPE_STANDALONE 1
 #define MONGO_CON_TYPE_MULTIPLE   2
@@ -72,9 +84,8 @@ typedef unsigned __int64 uint64_t;
 #define MONGO_STATE_ROLLBACK      0x09
 #define MONGO_STATE_REMOVED       0x0a
 
-/*
- * Constants for the logging framework
- */
+/* Constants for the logging framework */
+
 /* Levels */
 #define MLOG_WARN    1
 #define MLOG_INFO    2
@@ -95,8 +106,9 @@ typedef unsigned __int64 uint64_t;
 #define MONGO_DEFAULT_MAX_MESSAGE_SIZE  (32 * 1024 * 1024)
 
 
-/* FIXME: This should be dynamic.. Although mongod doesn't allow more then 12
- * replicaset members, there is nothing preventing us from connecting to 20 mongos' */
+/* FIXME: This should be dynamic. Although mongod doesn't allow more then 12
+ * replicaset members, there is nothing preventing us from connecting to 20
+ * mongos' */
 #define MAX_SERVERS_LIMIT   16
 
 /* To track why we are closing a connection */
@@ -121,17 +133,23 @@ typedef struct _mongo_connection_deregister_callback
  * parameters to identify a unique connection. */
 typedef struct _mongo_connection
 {
-	time_t last_ping; /* The timestamp when ping was called last */
+	time_t last_ping;        /* The timestamp when ping was called last */
 	int    ping_ms;
-	int    last_ismaster; /* The timestamp when ismaster/get_server_flags was called last */
+	int    last_ismaster;    /* The timestamp when ismaster/get_server_flags was called last */
 	int    last_reqid;
 	void  *socket;           /* void* so we can support different "socket" backends */
-	int    connection_type; /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
+	int    connection_type;  /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
+	struct {
+		int32_t major;
+		int32_t minor;
+		int32_t mini;
+		int32_t build;
+	} version;
 	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
 	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
 	int    tag_count;
 	char **tags;
-	char  *hash; /* Duplicate of the hash that the manager knows this connection as */
+	char  *hash;             /* Duplicate of the hash that the manager knows this connection as */
 	mongo_connection_deregister_callback *cleanup_list;
 } mongo_connection;
 
@@ -162,13 +180,15 @@ typedef struct _mongo_read_preference_tagset
 
 typedef struct _mongo_read_preference
 {
-	int                            type; /* MONGO_RP_* */
+	int                            type;         /* MONGO_RP_* */
 	int                            tagset_count; /* The number of tag sets in this RP */
 	mongo_read_preference_tagset **tagsets;
 } mongo_read_preference;
 
-#define MONGO_AUTH_MECHANISM_MONGODB_CR 1
-#define MONGO_AUTH_MECHANISM_GSSAPI     2
+#define MONGO_AUTH_MECHANISM_MONGODB_CR   1
+#define MONGO_AUTH_MECHANISM_GSSAPI       2
+#define MONGO_AUTH_MECHANISM_PLAIN        3
+#define MONGO_AUTH_MECHANISM_MONGODB_X509 4
 
 typedef struct _mongo_server_def
 {
@@ -189,12 +209,14 @@ typedef struct _mongo_server_options
 	char *repl_set_name;
 	int   connectTimeoutMS; /* How many milliseconds to wait for when connecting to nodes */
 	int   socketTimeoutMS;  /* How many milliseconds to wait for when reading/writing data to nodes */
+	int   secondaryAcceptableLatencyMS; /* Latency cutoff point for RP_NEAREST and RP_SECONDARY_PREFERRED */
 	int   default_w;        /* The number specifies the number of replica nodes */
 	char *default_wstring;  /* If the value for "w" is a string, then it means a getLastError error-mode */
 	int   default_wtimeout; /* How many milliseconds to wait for replication to "w" nodes */
 	int   default_fsync;    /* 1/0 send fsync=1 by default or not */
 	int   default_journal;  /* 1/0 send j=1 by default or not */
 	int   ssl;              /* If we should be using SSL */
+	char *gssapiServiceName;/* Service Principal Name (Kerberos) */
 	void *ctx;              /* Arbitrary implementation dependent options (MongoDB-PHP uses this for stream context) */
 } mongo_server_options;
 
@@ -219,9 +241,9 @@ typedef struct _mongo_con_manager
 	void                   *log_context;
 	mongo_log_callback_t   *log_function;
 
-	/* ping/ismaster will not be called more often than the amount of seconds that
-	 * is configured with ping_interval/ismaster_interval. The ismaster interval
-	 * is also used for the get_server_flags function. */
+	/* ping/ismaster will not be called more often than the amount of seconds
+	 * that is configured with ping_interval/ismaster_interval. The ismaster
+	 * interval is also used for the get_server_flags function. */
 	long                    ping_interval;      /* default:  5 seconds */
 	long                    ismaster_interval;  /* default: 15 seconds */
 
@@ -232,7 +254,7 @@ typedef struct _mongo_con_manager
 	int   (*send)        (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 	void  (*close)       (mongo_connection *con, int why);
 	void  (*forget)      (struct _mongo_con_manager *manager, mongo_connection *con);
-
+	int   (*authenticate)(struct _mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message);
 } mongo_con_manager;
 
 typedef void (mongo_con_manager_item_destroy_t)(mongo_con_manager *manager, void *item, int why);

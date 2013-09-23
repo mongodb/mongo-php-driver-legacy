@@ -37,20 +37,26 @@ foreach ( $tests as $key => $test )
 	}
 	catch ( Exception $e )
 	{
-		echo $e->getMessage(), "\n";
+		if (current($test) != "majority") {
+			/* 2.5.x maps majority=1 for standalone servers so doesn't raise an exception */
+			echo $e->getMessage(), "\n";
+		}
 	}
 }
 ?>
 --EXPECTF--
+%s: The Mongo class is deprecated, please use the MongoClient class
 IO      FINE: is_gle_op: no
 
 Running test 0, with options: []:
 IO      FINE: is_gle_op: no
 
 Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: getting reply
@@ -58,6 +64,7 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
 Running test 3, with options: {"safe":2}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=2
@@ -68,6 +75,7 @@ IO      FINE: getting cursor body
 %s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 Running test 4, with options: {"safe":"majority"}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
@@ -75,7 +83,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 Running test 5, with options: {"w":0}:
 IO      FINE: is_gle_op: no
@@ -105,7 +112,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 Running test 9, with options: {"fsync":0}:
 IO      FINE: is_gle_op: no

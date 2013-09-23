@@ -1,5 +1,5 @@
 --TEST--
-MongoCursor::setReadPreference (first setReadPreference, then slaveOkay) [2]
+MongoCursor::setReadPreference (first setReadPreference, then slaveOkay) (2)
 --SKIPIF--
 <?php if (version_compare(phpversion(), "5.3.0", "lt")) exit("skip setCallback and closures are 5.3+"); ?>
 <?php require_once "tests/utils/replicaset.inc"; ?>
@@ -54,15 +54,22 @@ $info = $cursor->info();
 echo "connection type: ", $info['connection_type_desc'], "\n";
 ?>
 --EXPECTF--
+%s: Function MongoCursor::slaveOkay() is deprecated in %s on line %d
 pick server: random element %d
 - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s
 connection type: PRIMARY
+
+%s: Function MongoCursor::slaveOkay() is deprecated in %s on line %d
 pick server: random element %d
 - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s
 connection type: PRIMARY
+
+%s: Function MongoCursor::slaveOkay() is deprecated in %s on line %d
 pick server: random element %d while ignoring the primary
 - connection: type: SECONDARY, socket: %d, ping: %d, hash: %s
 connection type: SECONDARY
+
+%s: Function MongoCursor::slaveOkay() is deprecated in %s on line %d
 pick server: random element %d while ignoring the primary
 - connection: type: SECONDARY, socket: %d, ping: %d, hash: %s
 connection type: SECONDARY

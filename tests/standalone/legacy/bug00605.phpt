@@ -27,7 +27,6 @@ var_dump( $c->insert( array( 'test' => 'two' ), array( 'w' => 0 ) ) );
 var_dump( $c->insert( array( 'test' => 'two' ), array( 'w' => 1 ) ) );
 ?>
 --EXPECTF--
-bool(true)
 array(4) {
   ["n"]=>
   int(0)
@@ -38,6 +37,20 @@ array(4) {
   ["ok"]=>
   float(1)
 }
+
+%s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %sbug00605.php on line %d
+array(4) {
+  ["n"]=>
+  int(0)
+  ["connectionId"]=>
+  int(%d)
+  ["err"]=>
+  NULL
+  ["ok"]=>
+  float(1)
+}
+
+%s: %s: The Mongo class is deprecated, please use the MongoClient class in %sserver.inc on line %d
 bool(true)
 bool(true)
 array(4) {

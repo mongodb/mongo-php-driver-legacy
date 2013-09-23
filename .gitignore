@@ -13,12 +13,13 @@ Makefile.fragments
 Makefile.global
 Makefile.objects
 build
-config*
+config.*
+configure
+configure.in
 doc
 CVS
 .sconf_temp
 .sconsign.dblite
-config.log
 .deps
 ac*.m4
 mkinstalldirs

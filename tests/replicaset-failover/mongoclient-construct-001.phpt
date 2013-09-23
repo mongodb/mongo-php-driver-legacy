@@ -1,5 +1,5 @@
 --TEST--
-MongoClient::__construct()#001 during failover
+MongoClient::__construct() during failover (1)
 --SKIPIF--
 <?php require_once "tests/utils/replicaset-failover.inc" ?>
 --FILE--
@@ -15,7 +15,7 @@ $coll = $mc->selectCollection("ctorfailover", "test1");
 $data = array("x" => "The world is not enough");
 $coll->insert($data);
 $id = $data["_id"];
-
+$coll->insert(array("something" => "else"), array("w" => 2));
 $coll = $mc = null;
 
 echo "About to kill master\n";
@@ -59,5 +59,5 @@ string(23) "The world is not enough"
 string(23) "The world is not enough"
 string(20) "MongoCursorException"
 string(%d) "%s:%d: Remote server has closed the connection"
-int(3)
+int(32)
 

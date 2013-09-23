@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-522_error: Checking error conditions in insert options
+Test for PHP-522: Checking error conditions in insert options
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -12,7 +12,7 @@ $c = $m->selectCollection( dbname(), "php-522_error" );
 $c->w = "3";
 
 try {
-	$c->insert( array( 'test' => 1 ), array( 'safe' => 1 ) );
+	$c->insert( array( 'test' => 1 ), array( 'w' => 1 ) );
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
 }

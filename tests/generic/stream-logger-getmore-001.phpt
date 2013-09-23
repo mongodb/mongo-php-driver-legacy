@@ -1,6 +1,7 @@
 --TEST--
-Stream Logger: log_getmore() #001
+Stream Logger: log_getmore() (1)
 --SKIPIF--
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
@@ -48,7 +49,7 @@ Now I should getmore
 log_getmore
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(1)
   ["max_bson_size"]=>

@@ -102,6 +102,17 @@ class MongoShellServer {
         return $retval;
     }
 
+    public function getUnixStandaloneConfig() {
+        $jsauth = json_encode(false);
+        $host = $this->verifyWrite("getStandaloneConfig($jsauth)");
+        $host = trim($host);
+        if ($host == "null") {
+            throw new DebugException(($auth ? "Authenticated " : "") . "Standalone server not initialized", $this->log);
+        }
+        list($hostname, $port) = explode(":", $host);
+
+        return "/tmp/mongodb-$port.sock";
+    }
     public function getStandaloneConfig($auth = false) {
         $jsauth = json_encode($auth);
         $host = $this->verifyWrite("getStandaloneConfig($jsauth)");
@@ -224,6 +235,13 @@ class MongoShellServer {
         return trim($config);
     }
 
+    public static function getUnixStandaloneInfo() {
+        $o = new self;
+        $config = $o->getUnixStandaloneConfig();
+        $o->close();
+        return trim($config);
+    }
+
     public static function getBridgeInfo() {
         $o = new self;
         $config = $o->getBridgeConfig();
@@ -270,23 +288,23 @@ function getServerVersion($mc = null) {
 /* BC Layer for old tests */
 
 function mongo() {
-    $config = MongoShellServer::getReplicaSetInfo();
-    return new Mongo($config["dsn"], array("replicaSet" => $config["rsname"]));
+    return new_mongo();
 }
 function old_mongo() {
-    return mongo();
+    $config = MongoShellServer::getReplicaSetInfo();
+    return new Mongo($config["dsn"], array("replicaSet" => $config["rsname"]));
 }
 function new_mongo($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $config = MongoShellServer::getReplicaSetInfo();
     return new MongoClient($config["dsn"], array("replicaSet" => $config["rsname"])+$options);
 }
 
-function old_mongo_standalone() {
-    return mongo_standalone();
-}
-function mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
+function old_mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $dsn = MongoShellServer::getStandaloneInfo();
     return new Mongo($dsn, $options);
+}
+function mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
+    return new_mongo_standalone();
 }
 function new_mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $dsn = MongoShellServer::getStandaloneInfo();
@@ -343,6 +361,51 @@ function printLogs($module = MongoLog::ALL, $level = MongoLog::ALL, $containing 
         $_LOG_CALLBACK_REGEX = $containing;
     }
     MongoLog::setCallback("logCallback");
+}
+function module2string($module)
+{
+    switch ($module) {
+        case MongoLog::RS: return "REPLSET";
+        case MongoLog::CON: return "CON";
+        case MongoLog::IO: return "IO";
+        case MongoLog::SERVER: return "SERVER";
+        case MongoLog::PARSE: return "PARSE";
+        default: return "UNKNOWN";
+    }
+}
+
+function level2string($level)
+{
+    switch ($level) {
+        case MongoLog::WARNING: return "WARN";
+        case MongoLog::INFO: return "INFO";
+        case MongoLog::FINE: return "FINE";
+        default: var_dump($level); return "UNKNOWN";
+    }
+}
+
+
+function writeCallback($module, $level, $message)
+{
+    global $_LOG_FP;
+
+    fprintf($_LOG_FP, "[%s] %s (%s): %s\n", date("Y-m-d H:i:s"), module2string($module), level2string($level), $message);
+}
+function writeLogs($filename) {
+    global $_LOG_FP;
+
+    if (method_exists("MongoLog", "setCallback")) {
+        MongoLog::setModule(MongoLog::ALL);
+        MongoLog::setLevel(MongoLog::ALL);
+        date_default_timezone_set("America/New_York");
+
+        $dir = dirname($filename) . "/";
+        $base = basename($filename, ".php");
+        $wfile = $dir.$base.".MONGOLOG";
+        $_LOG_FP = fopen($wfile, "w+");
+
+        MongoLog::setCallback("writeCallback");
+    }
 }
 
 /*

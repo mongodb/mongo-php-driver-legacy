@@ -13,10 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <php.h>
 
 #include <zend_exceptions.h>
@@ -43,8 +39,20 @@
 #include "util/pool.h"
 
 #include "mcon/manager.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#else
+# if WIN32
+#  include "config-w32.h"
+# endif
+#endif
+
+#if HAVE_MONGO_SASL
+#include <sasl/sasl.h>
+#endif
 
 extern zend_object_handlers mongo_default_handlers, mongo_id_handlers;
+zend_object_handlers mongo_type_object_handlers;
 
 /** Classes */
 extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
@@ -77,9 +85,9 @@ zend_function_entry mongo_functions[] = {
  */
 static const zend_module_dep mongo_deps[] = {
 	ZEND_MOD_OPTIONAL("openssl")
-#if PHP_VERSION_ID >= 50300
+#if PHP_VERSION_ID >= 50307
 	ZEND_MOD_END
-#else /* 5.2 */
+#else /* pre-5.3.7 */
 	{ NULL, NULL, NULL, 0 }
 #endif
 };
@@ -184,24 +192,29 @@ PHP_MINIT_FUNCTION(mongo)
 	/* Deprecated, but we will keep it for now */
 	mongo_init_MongoPool(TSRMLS_C);
 
-	/*
-	 * MongoMaxKey and MongoMinKey are completely non-interactive: they have
-	 * no method, fields, or constants.
-	 */
+	/* MongoMaxKey and MongoMinKey are completely non-interactive: they have no
+	 * method, fields, or constants.  */
 	INIT_CLASS_ENTRY(max_key, "MongoMaxKey", NULL);
 	mongo_ce_MaxKey = zend_register_internal_class(&max_key TSRMLS_CC);
 	INIT_CLASS_ENTRY(min_key, "MongoMinKey", NULL);
 	mongo_ce_MinKey = zend_register_internal_class(&min_key TSRMLS_CC);
 
-	/* make mongo objects uncloneable */
+	/* Make mongo objects uncloneable */
 	memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 	mongo_default_handlers.clone_obj = NULL;
+	mongo_default_handlers.read_property = mongo_read_property;
+	mongo_default_handlers.write_property = mongo_write_property;
 
-	/* add compare_objects for MongoId */
+	/* Mongo type objects */
+	memcpy(&mongo_type_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+	mongo_type_object_handlers.write_property = mongo_write_property;
+
+	/* Add compare_objects for MongoId */
 	memcpy(&mongo_id_handlers, &mongo_default_handlers, sizeof(zend_object_handlers));
 	mongo_id_handlers.compare_objects = php_mongo_compare_ids;
+	mongo_default_handlers.write_property = mongo_write_property;
 
-	/* start random number generator */
+	/* Start random number generator */
 	srand(time(0));
 
 #ifdef WIN32
@@ -212,8 +225,41 @@ PHP_MINIT_FUNCTION(mongo)
 	}
 #endif
 
+#if HAVE_MONGO_SASL
+	/* We need to bootstrap cyrus-sasl once per process */
+	if (sasl_client_init(NULL) != SASL_OK) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not initialize SASL library");
+		return FAILURE;
+	}
+#endif
+
+#if MONGO_PHP_STREAMS
+	REGISTER_LONG_CONSTANT("MONGO_STREAMS", 1, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_STREAMS", 1, CONST_PERSISTENT);
+#else
+	REGISTER_LONG_CONSTANT("MONGO_STREAMS", 0, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_STREAMS", 0, CONST_PERSISTENT);
+#endif
+
+#if MONGO_PHP_STREAMS && HAVE_OPENSSL_EXT
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_SSL", 1, CONST_PERSISTENT);
+#else
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_SSL", 0, CONST_PERSISTENT);
+#endif
+
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_MONGODB_CR", 1, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_MONGODB_X509", 1, CONST_PERSISTENT);
+#if HAVE_MONGO_SASL
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_GSSAPI", 1, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_PLAIN", 1, CONST_PERSISTENT);
+#else
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_GSSAPI", 0, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_PLAIN", 0, CONST_PERSISTENT);
+#endif
+
 	return SUCCESS;
 }
+/* }}} */
 
 /* {{{ PHP_GINIT_FUNCTION
  */
@@ -233,7 +279,6 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
 	mongo_globals->cmd_char = "$";
 
-	mongo_globals->inc = 0;
 	mongo_globals->response_num = 0;
 	mongo_globals->errmsg = 0;
 
@@ -278,6 +323,7 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->machine = hash;
 
 	mongo_globals->ts_inc = 0;
+	mongo_globals->inc = rand() & 0xFFFFFF;
 
 #if PHP_VERSION_ID >= 50300
 	mongo_globals->log_callback_info = empty_fcall_info;
@@ -295,6 +341,7 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->manager->send        = php_mongo_io_stream_send;
 	mongo_globals->manager->close       = php_mongo_io_stream_close;
 	mongo_globals->manager->forget      = php_mongo_io_stream_forget;
+	mongo_globals->manager->authenticate= php_mongo_io_stream_authenticate;
 #endif
 }
 /* }}} */
@@ -318,6 +365,10 @@ PHP_MSHUTDOWN_FUNCTION(mongo)
 	}
 #endif
 
+#if HAVE_MONGO_SASL
+	sasl_client_done();
+#endif
+
 	return SUCCESS;
 }
 /* }}} */
@@ -329,7 +380,6 @@ PHP_RINIT_FUNCTION(mongo)
 {
 	MonGlo(log_level) = 0;
 	MonGlo(log_module) = 0;
-	MonGlo(inc) = rand() & 0xFFFFFF;
 
 	return SUCCESS;
 }
@@ -345,9 +395,26 @@ PHP_MINFO_FUNCTION(mongo)
 	php_info_print_table_header(2, "MongoDB Support", "enabled");
 	php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
 #if MONGO_PHP_STREAMS
+	php_info_print_table_row(2, "Streams Support", "enabled");
+#else
+	php_info_print_table_row(2, "Streams Support", "disabled");
+#endif
+
+#if MONGO_PHP_STREAMS && HAVE_OPENSSL_EXT
 	php_info_print_table_row(2, "SSL Support", "enabled");
 #else
 	php_info_print_table_row(2, "SSL Support", "disabled");
+#endif
+
+	php_info_print_table_colspan_header(2, "Supported Authentication Mechanisms");
+	php_info_print_table_row(2, "MONGODB-CR (default)", "enabled");
+	php_info_print_table_row(2, "MONGODB-X509", "enabled");
+#if HAVE_MONGO_SASL
+	php_info_print_table_row(2, "GSSAPI (Kerberos)", "enabled");
+	php_info_print_table_row(2, "PLAIN", "enabled");
+#else
+	php_info_print_table_row(2, "GSSAPI (Kerberos)", "disabled");
+	php_info_print_table_row(2, "PLAIN", "disabled");
 #endif
 
 	php_info_print_table_end();
@@ -365,6 +432,21 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 	mongo_init_MongoGridFSException(TSRMLS_C);
 	mongo_init_MongoResultException(TSRMLS_C);
 }
+
+/* {{{ Creating & freeing Mongo type objects */
+void php_mongo_type_object_free(void *object TSRMLS_DC)
+{
+	mongo_type_object *mto = (mongo_type_object*)object;
+
+	zend_object_std_dtor(&mto->std TSRMLS_CC);
+
+	efree(mto);
+}
+
+zend_object_value php_mongo_type_object_new(zend_class_entry *class_type TSRMLS_DC) {
+	PHP_MONGO_TYPE_OBJ_NEW(mongo_type_object);
+}
+/* }}} */
 
 /* Shared helper functions */
 static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *ztagset TSRMLS_DC)
@@ -455,8 +537,7 @@ void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp)
 /* Applies an array of tagsets to the read preference. This function clears the
  * read preference before adding tagsets. If an error is encountered adding a
  * tagset, the read preference will again be cleared to avoid being left in an
- * inconsistent state.
- */
+ * inconsistent state. */
 static int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets TSRMLS_DC)
 {
 	zval **tagset;
@@ -490,8 +571,7 @@ static int php_mongo_use_tagsets(mongo_read_preference *rp, HashTable *tagsets T
 }
 
 /* Sets read preference mode and tagsets. If an error is encountered, the read
- * preference will not be changed.
- */
+ * preference will not be changed. */
 int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preference, HashTable *tags TSRMLS_DC)
 {
 	mongo_read_preference tmp_rp;

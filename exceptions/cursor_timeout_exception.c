@@ -16,7 +16,7 @@
 #include <php.h>
 #include <zend_exceptions.h>
 
-#include "php_mongo.h"
+#include "../php_mongo.h"
 #include "result_exception.h"
 
 extern zend_class_entry *mongo_ce_CursorException;

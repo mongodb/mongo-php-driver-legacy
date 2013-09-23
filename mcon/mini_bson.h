@@ -20,9 +20,12 @@
 
 mcon_str *bson_create_ping_packet(mongo_connection *con);
 mcon_str *bson_create_ismaster_packet(mongo_connection *con);
+mcon_str *bson_create_buildinfo_packet(mongo_connection *con);
 mcon_str *bson_create_rs_status_packet(mongo_connection *con);
 mcon_str *bson_create_getnonce_packet(mongo_connection *con);
-mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *database, char *username, char *nonce, char *key);
+mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *mechanism, char *database, char *username, char *nonce, char *key);
+mcon_str *bson_create_saslstart_packet(mongo_connection *con, char *database, char *mechanism, char *payload, int payload_len);
+mcon_str *bson_create_saslcontinue_packet(mongo_connection *con, int32_t conversation_id, char *payload, int payload_len);
 
 char *bson_skip_field_name(char *data);
 int bson_find_field_as_array(char *buffer, char *field, char **data);
@@ -30,10 +33,12 @@ int bson_find_field_as_document(char *buffer, char *field, char **data);
 int bson_find_field_as_double(char *buffer, char *field, double *data);
 int bson_find_field_as_bool(char *buffer, char *field, unsigned char *data);
 int bson_find_field_as_int32(char *buffer, char *field, int32_t *data);
+int bson_find_field_as_int64(char *buffer, char *field, int64_t *data);
 int bson_find_field_as_string(char *buffer, char *field, char **data);
+int bson_find_field_as_stringl(char *buffer, char *field, char **data, int32_t *length, int duplicate);
 
 int bson_array_find_next_string(char **buffer, char **field, char **data);
-int bson_array_find_next_embedded_doc(char **buffer);
+int bson_array_find_next_int32(char **buffer, char **field, int32_t *data);
 
 #endif
 

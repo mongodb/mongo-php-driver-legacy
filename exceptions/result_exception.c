@@ -16,14 +16,14 @@
 #include <php.h>
 #include <zend_exceptions.h>
 
-#include "php_mongo.h"
+#include "../php_mongo.h"
 #include "result_exception.h"
 
 extern zend_class_entry *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_ResultException;
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_getdocument, 0, 0, 0)
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getdocument, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoResultException_methods[] = {
@@ -50,7 +50,7 @@ void mongo_init_MongoResultException(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoResultException", MongoResultException_methods);
 	mongo_ce_ResultException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED  TSRMLS_CC);
 }
 
 /*

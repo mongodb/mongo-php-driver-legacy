@@ -1,5 +1,5 @@
 --TEST--
-Test for bug #644: mongo.ping_interval and mongo.is_master_interval is unused. (2)
+Test for PHP-644: mongo.ping_interval and mongo.is_master_interval is unused (2)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
 --INI--

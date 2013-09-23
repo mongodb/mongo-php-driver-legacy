@@ -42,14 +42,13 @@
 #define BSON_MAXKEY    0x7F
 
 #define GROW_SLOWLY 1048576
-#define INVALID_STRING_LEN(len) (len < 0 || len > (64*1024*1024))
 
 #define CREATE_BUF_STATIC(n) char b[n];         \
 	buf.start = buf.pos = b;                    \
 	buf.end = b+n;
 
 /* driver */
-int php_mongo_serialize_element(const char*, zval**, buffer*, int TSRMLS_DC);
+int php_mongo_serialize_element(const char* name, int name_len, zval**, buffer*, int TSRMLS_DC);
 
 /* objects */
 void php_mongo_serialize_date(buffer*, zval* TSRMLS_DC);
@@ -87,24 +86,20 @@ int resize_buf(buffer*, int);
 int zval_to_bson(buffer*, HashTable*, int, int max_document_size TSRMLS_DC);
 char* bson_to_zval(char*, HashTable* TSRMLS_DC);
 
-/**
- * Initialize buffer to contain "\0", so mongo_buf_append will start appending
- * at the beginning.
- */
+/* Initialize buffer to contain "\0", so mongo_buf_append will start appending
+ * at the beginning. */
 void mongo_buf_init(char *dest);
 
-/**
- * Takes a buffer and a string to add to the buffer.  The buffer must be large
- * enough to append the string and the string must be null-terminated. This will
- * not work for strings containing null characters (e.g., BSON).
- */
+/* Takes a buffer and a string to add to the buffer.  The buffer must be large
+ * enough to append the string and the string must be null-terminated. This
+ * will not work for strings containing null characters (e.g., BSON). */
 void mongo_buf_append(char *dest, char *piece);
 
-/**
- * Returns the actual limit to send over the wire, based on batch size, current position, and user limit
- */
+/* Returns the actual limit to send over the wire, based on batch size, current
+ * position, and user limit */
 int mongo_get_limit(mongo_cursor *cursor);
 
+void php_mongo_handle_int64(zval **value, int64_t nr TSRMLS_DC);
 
 #if PHP_C_BIGENDIAN
 /* Reverse the bytes in an int, wheeee stupid byte tricks */

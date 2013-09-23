@@ -1,7 +1,8 @@
 --TEST--
-Test for PHP-339: Segfault on insert timeout.
+Test for PHP-339: Segfault on insert timeout. (streams)
 --SKIPIF--
 <?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/bridge.inc" ?>
 --FILE--
 <?php
@@ -13,14 +14,14 @@ $c = $m->selectDB(dbname())->selectCollection("collection");
 
 try {
     $foo = array("foo" => time());
-    $result = $c->insert($foo, array("safe" => true, "timeout" => 1));
+    $result = $c->insert($foo, array("w" => true, "socketTimeoutMS" => 1));
 } catch(Exception $e) {
-    var_dump(get_class($e), $e->getMessage());
+    var_dump(get_class($e), $e->getMessage(), $e->getCode());
     var_dump($foo);
 }
 try {
     $foo = array("foo" => "bar");
-    $c->insert($foo, array("safe" => true));
+    $c->insert($foo, array("w" => true));
     $result = $c->findOne(array("_id" => $foo["_id"]));
     var_dump($result);
 } catch(Exception $e) {
@@ -31,6 +32,7 @@ try {
 --EXPECTF--
 string(27) "MongoCursorTimeoutException"
 string(%d) "%s:%d: Read timed out after reading 0 bytes, waited for 0.001000 seconds"
+int(80)
 array(2) {
   ["foo"]=>
   int(%d)

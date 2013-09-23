@@ -15,7 +15,7 @@
  */
 #include <php.h>
 #include <zend_exceptions.h>
-#include "php_mongo.h"
+#include "../php_mongo.h"
 
 extern zend_class_entry *mongo_ce_Exception;
 
@@ -95,10 +95,11 @@ void mongo_init_MongoRegex(TSRMLS_D)
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "MongoRegex", MongoRegex_methods);
+	ce.create_object = php_mongo_type_object_new;
 	mongo_ce_Regex = zend_register_internal_class(&ce TSRMLS_CC);
 
-	zend_declare_property_string(mongo_ce_Regex, "regex", strlen("regex"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_string(mongo_ce_Regex, "flags", strlen("flags"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_string(mongo_ce_Regex, "regex", strlen("regex"), "", ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
+	zend_declare_property_string(mongo_ce_Regex, "flags", strlen("flags"), "", ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

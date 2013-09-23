@@ -41,12 +41,14 @@ mongo_servers* mongo_parse_init(void)
 
 	servers->options.connectTimeoutMS = 0;
 	servers->options.socketTimeoutMS = -1;
+	servers->options.secondaryAcceptableLatencyMS = MONGO_RP_DEFAULT_ACCEPTABLE_LATENCY_MS;
 	servers->options.default_w = -1;
 	servers->options.default_wstring = NULL;
 	servers->options.default_wtimeout = -1;
 	servers->options.default_fsync = 0;
 	servers->options.default_journal = 0;
 	servers->options.ssl = MONGO_SSL_DISABLE;
+	servers->options.gssapiServiceName = strdup("mongodb");
 	servers->options.ctx = NULL;
 
 	return servers;
@@ -129,8 +131,9 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 			pos++;
 		} while (*pos != '\0');
 
-		/* We are now either at the end of the string, or at / where the dbname starts.
-		 * We still have to add the last parser host/port combination though: */
+		/* We are now either at the end of the string, or at / where the dbname
+		 * starts.  We still have to add the last parser host/port combination
+		 * though: */
 		mongo_add_parsed_server_addr(manager, servers, host_start, host_end ? host_end : pos, port_start);
 	} else if (*pos == '/') {
 		host_start = pos;
@@ -143,8 +146,9 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 		 */
 		last_slash = strrchr(pos, '/');
 
-		/* The last component of the path *could* be a database name.
-		 * The rule is; if the last component has a dot, we use the full string since "host_start" as host */
+		/* The last component of the path *could* be a database name.  The rule
+		 * is; if the last component has a dot, we use the full string since
+		 * "host_start" as host */
 		if (strchr(last_slash, '.')) {
 			host_end = host_start + strlen(host_start);
 		} else {
@@ -245,8 +249,12 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 }
 
 /* Processes a single option/value pair.
- * Returns 0 if it worked, 1 if either name or value was missing, 2 if the option didn't exist, 3 on logic errors
- */
+ * Returns:
+ * -1 if it worked, but the option really shouldn't be used
+ * 0 if it worked
+ * 1 if either name or value was missing
+ * 2 if the option didn't exist
+ * 3 on logic errors */
 int static mongo_process_option(mongo_con_manager *manager, mongo_servers *servers, char *name, char *value, char *pos, char **error_message)
 {
 	char *tmp_name;
@@ -320,9 +328,12 @@ static int parse_read_preference_tags(mongo_con_manager *manager, mongo_servers 
 }
 
 /* Sets server options.
- * Returns 0 if it worked, 2 if the option didn't exist, 3 on logical errors.
- * On logical errors, the error_message will be populated with the reason.
- */
+ * Returns:
+ * 0 if it worked
+ * 2 if the option didn't exist
+ * 3 on logical errors.
+ *
+ * On logical errors, the error_message will be populated with the reason. */
 int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char *option_name, char *option_value, char **error_message)
 {
 	int i;
@@ -333,11 +344,12 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authMechanism': '%s'", option_value);
 		if (strcasecmp(option_value, "MONGODB-CR") == 0) {
 			mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
+		} else if (strcasecmp(option_value, "MONGODB-X509") == 0) {
+			mechanism = MONGO_AUTH_MECHANISM_MONGODB_X509;
 		} else if (strcasecmp(option_value, "GSSAPI") == 0) {
-			/* FIXME: GSSAPI isn't implemented yet */
 			mechanism = MONGO_AUTH_MECHANISM_GSSAPI;
-			*error_message = strdup("The authMechanism 'GSSAPI' is currently not supported. Only MONGODB-CR is available.");
-			return 3;
+		} else if (strcasecmp(option_value, "PLAIN") == 0) {
+			mechanism = MONGO_AUTH_MECHANISM_PLAIN;
 		} else {
 			int len = strlen(option_value) + sizeof("The authMechanism '' does not exist.");
 
@@ -460,7 +472,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 				servers->options.repl_set_name = strdup(option_value);
 				mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'replicaSet': '%s'", option_value);
 
-				/* Associate the given replica set name with all the server definitions from the seed */
+				/* Associate the given replica set name with all the server
+				 * definitions from the seed */
 				for (i = 0; i < servers->count; i++) {
 					if (servers->server[i]->repl_set_name) {
 						free(servers->server[i]->repl_set_name);
@@ -476,24 +489,40 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 
+	if (strcasecmp(option_name, "gssapiServiceName") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'gssapiServiceName': '%s'", option_value);
+		free(servers->options.gssapiServiceName);
+		servers->options.gssapiServiceName = strdup(option_value);
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "secondaryAcceptableLatencyMS") == 0) {
+		int value = atoi(option_value);
+
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'secondaryAcceptableLatencyMS': '%s'", option_value);
+		servers->options.secondaryAcceptableLatencyMS = value;
+		return 0;
+	}
+
 	if (strcasecmp(option_name, "slaveOkay") == 0) {
 		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
 			if (servers->read_pref.type != MONGO_RP_PRIMARY || servers->read_pref.tagset_count) {
-				/* the server already has read preferences configured, but we're still
-				 * trying to set slave okay. The spec says that's an error */
+				/* The server already has read preferences configured, but
+				 * we're still trying to set slave okay. The spec says that's
+				 * an error */
 				*error_message = strdup("You can not use both slaveOkay and read-preferences. Please switch to read-preferences.");
 				return 3;
 			} else {
-				/* Old style option, that needs to be removed. For now, spec dictates
-				 * it needs to be ReadPreference=SECONDARY_PREFERRED */
+				/* Old style option, that needs to be removed. For now, spec
+				 * dictates it needs to be ReadPreference=SECONDARY_PREFERRED */
 				servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
 			}
-			return 0;
+			return -1;
 		}
 
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': false");
-		return 0;
+		return -1;
 	}
 
 	if (strcasecmp(option_name, "socketTimeoutMS") == 0) {
@@ -513,7 +542,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			value = MONGO_SSL_DISABLE;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': false");
 		} else if (strcasecmp(option_value, "prefer") == 0 || atoi(option_value) == MONGO_SSL_PREFER) {
-			/* FIXME: MongoDB doesn't support "connection promotion" to SSL at the moment, so we can't support this option properly */
+			/* FIXME: MongoDB doesn't support "connection promotion" to SSL at
+			 * the moment, so we can't support this option properly */
 			value = MONGO_SSL_PREFER;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': prefer");
 			*error_message = strdup("SSL=prefer is currently not supported by mongod");
@@ -536,7 +566,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		}
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'timeout' ('connectTimeoutMS'): %d", value);
 		servers->options.connectTimeoutMS = value;
-		return 0;
+		return -1;
 	}
 
 	if (strcasecmp(option_name, "username") == 0) {
@@ -551,7 +581,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			 * value before setting it anyway. */
 			if (!servers->server[i]->db) {
 				servers->server[i]->db = strdup("admin");
-				/* Admin users always authenticate on the admin db, even when using other databases */
+				/* Admin users always authenticate on the admin db, even when
+				 * using other databases */
 				servers->server[i]->authdb = strdup("admin");
 			}
 		}
@@ -560,8 +591,14 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 	if (strcasecmp(option_name, "w") == 0) {
 		/* Rough check to see whether this is a numeric string or not */
-		if ((option_value[0] >= '0' && option_value[0] <= '9') || option_value[0] == '-') {
-			servers->options.default_w = atoi(option_value);
+		char *endptr;
+		long tmp_value;
+		
+		tmp_value = strtol(option_value, &endptr, 10);
+		/* If no invalid character is found (endptr == 0), we consider the
+		 * option value as a number */
+		if (!*endptr) {
+			servers->options.default_w = tmp_value;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': %d", servers->options.default_w);
 			if (servers->options.default_w < 0) {
 				*error_message = strdup("The value of 'w' needs to be 0 or higher (or a string).");
@@ -706,8 +743,11 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	if (from->options.repl_set_name) {
 		to->options.repl_set_name = strdup(from->options.repl_set_name);
 	}
+	if (from->options.gssapiServiceName) {
+		to->options.gssapiServiceName = strdup(from->options.gssapiServiceName);
+	}
 
-	to->options.connectTimeoutMS = from->options.connectTimeoutMS;
+	to->options.secondaryAcceptableLatencyMS = from->options.secondaryAcceptableLatencyMS;
 
 	to->options.default_w = from->options.default_w;
 	to->options.default_wtimeout = from->options.default_wtimeout;
@@ -759,6 +799,9 @@ void mongo_servers_dtor(mongo_servers *servers)
 	}
 	if (servers->options.repl_set_name) {
 		free(servers->options.repl_set_name);
+	}
+	if (servers->options.gssapiServiceName) {
+		free(servers->options.gssapiServiceName);
 	}
 	if (servers->options.default_wstring) {
 		free(servers->options.default_wstring);

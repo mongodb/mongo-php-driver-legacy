@@ -21,11 +21,9 @@
 #include "php_mongo.h"
 #include "bson.h"
 
-#include "php.h"
-#include "config.h"
-#include "main/php_streams.h"
-#include "main/php_network.h"
-
+#include <php.h>
+#include <main/php_streams.h>
+#include <main/php_network.h>
 
 zval *php_log_get_server_info(mongo_connection *connection)
 {
@@ -51,11 +49,17 @@ void mongo_log_stream_insert(mongo_connection *connection, zval *document, zval 
 		zval **args[3];
 		zval *server;
 		zval *retval = NULL;
+		int   free_options = 0;
 
 		server = php_log_get_server_info(connection);
 
 		args[0] = &server;
 		args[1] = &document;
+		if (!options) {
+			free_options = 1;
+			MAKE_STD_ZVAL(options);
+			ZVAL_NULL(options);
+		}
 		args[2] = &options;
 
 		if (FAILURE == call_user_function_ex(EG(function_table), NULL, *callback, &retval, 3, args, 0, NULL TSRMLS_CC)) {
@@ -66,6 +70,9 @@ void mongo_log_stream_insert(mongo_connection *connection, zval *document, zval 
 			zval_ptr_dtor(&retval);
 		}
 		zval_ptr_dtor(args[0]);
+		if (free_options) {
+			zval_ptr_dtor(args[2]);
+		}
 	}
 }
 
@@ -214,7 +221,7 @@ void mongo_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor
 	}
 }
 
-void mongo_log_stream_killcursor(mongo_connection *connection, int cursor_id TSRMLS_DC)
+void mongo_log_stream_killcursor(mongo_connection *connection, int64_t cursor_id TSRMLS_DC)
 {
 	zval **callback;
 	php_stream_context *context = ((php_stream *)connection->socket)->context;

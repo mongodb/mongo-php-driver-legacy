@@ -62,6 +62,8 @@ Mongo
   Method listDBs expects 0 parameters
   Method getHosts expects 0 parameters
   Method close expects 0 parameters
+  Method killCursor expects 1 parameters
+    0: cursor_id
 
 MongoClient
   Method __construct expects 2 parameters
@@ -86,6 +88,8 @@ MongoClient
   Method listDBs expects 0 parameters
   Method getHosts expects 0 parameters
   Method close expects 0 parameters
+  Method killCursor expects 1 parameters
+    0: cursor_id
 
 MongoDB
   Method __construct expects 2 parameters
@@ -103,6 +107,10 @@ MongoDB
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method getWriteConcern expects 0 parameters
+  Method setWriteConcern expects 2 parameters
+    0: w
+    1: wtimeout (optional)
   Method getProfilingLevel expects 0 parameters
   Method setProfilingLevel expects 1 parameters
     0: level
@@ -112,11 +120,8 @@ MongoDB
     1: backup_original_files (optional)
   Method selectCollection expects 1 parameters
     0: collection_name
-  Method createCollection expects 4 parameters
+  Method createCollection expects 1 parameters
     0: collection_name
-    1: capped (optional)
-    2: capped_size (optional)
-    3: max_elements (optional)
   Method dropCollection expects 1 parameters
     0: collection_name
   Method listCollections expects 1 parameters
@@ -157,6 +162,10 @@ MongoCollection
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method getWriteConcern expects 0 parameters
+  Method setWriteConcern expects 2 parameters
+    0: w
+    1: wtimeout (optional)
   Method drop expects 0 parameters
   Method validate expects 1 parameters
     0: validate (optional)

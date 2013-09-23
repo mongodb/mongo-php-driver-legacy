@@ -23,11 +23,13 @@ $opts = array(
     "password"   => array("else"),
     "connect"    => "0",
 );
-$m = new Mongo(null, $opts);
+$m = new MongoClient(null, $opts);
 var_dump($opts, $m);
 echo "All done\n";
 ?>
 --EXPECTF--
+%s: MongoClient::__construct(): The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead in %s on line %d
+
 Notice: Array to string conversion in %smongoclient-ctor-002.php on line %d
 
 Notice: Array to string conversion in %smongoclient-ctor-002.php on line %d
@@ -49,7 +51,7 @@ array(5) {
   ["connect"]=>
   string(1) "0"
 }
-object(Mongo)#%d (4) {
+object(MongoClient)#%d (4) {
   ["connected"]=>
   bool(false)
   ["status"]=>

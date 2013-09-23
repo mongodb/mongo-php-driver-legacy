@@ -29,15 +29,61 @@
 #include <stdio.h>
 #include "types.h"
 
+#ifndef WIN32
+#include <poll.h>
 
 /* Wait on socket availability with a timeout
- * TODO: Port to use poll() instead of select().
  *
  * Returns:
  * 0 on success
  * -1 on failure, but not critical enough to throw an exception
- * 1.. on failure, and throw an exception. The return value is the error code
- */
+ * 1.. on failure, and throw an exception. The return value is the error code */
+int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
+{
+	/* No socket timeout.. But we default to 1 second for historical reasons */
+	if (to < 1) {
+		to = 1000;
+	}
+	while (1) {
+		struct pollfd fds[1];
+		int status;
+
+		fds[0].fd = sock;
+		fds[0].events = POLLIN | POLLHUP | POLLERR;
+		status = poll(fds, 1, to);
+
+		if (status == -1) {
+			/* on EINTR, retry - this resets the timeout however to its full length */
+			if (errno == EINTR) {
+				continue;
+			}
+
+			*error_message = strdup(strerror(errno));
+			return 13;
+		}
+
+		if (status == 0) {
+			*error_message = malloc(256);
+			snprintf(
+				*error_message, 256,
+				"cursor timed out (timeout: %d, status: %d)",
+				to, status
+			);
+			return 80;
+		}
+
+		if (status > 0 && !(fds[0].revents & POLLIN)) {
+			*error_message = strdup("Exceptional condition on socket");
+			return 17;
+		}
+		break;
+	}
+
+	return 0;
+}
+#else
+
+/* Win32 doesn't have a working poll(), so we use the old select() branch. */
 int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 {
 	/* No socket timeout.. But we default to 1 second for historical reasons */
@@ -92,16 +138,16 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 
 	return 0;
 }
-/*
- * Low-level send function.
+#endif
+
+/* Low-level send function.
  *
  * Goes through the buffer sending 4K byte batches.
  * On failure, sets errmsg to errno string and returns -1.
  * On success, returns number of bytes sent.
  * Does not attempt to reconnect nor throw any exceptions.
  *
- * On failure, the calling function is responsible for disconnecting
- */
+ * On failure, the calling function is responsible for disconnecting */
 int mongo_io_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int sent = 0, status = 1;
@@ -121,15 +167,13 @@ int mongo_io_send(mongo_connection *con, mongo_server_options *options, void *da
 	return sent;
 }
 
-/*
- * Low-level receive functions.
+/* Low-level receive functions.
  *
  * On failure, sets errmsg to errno string and returns -1.
  * On success, returns number of bytes read.
  * Does not attempt to reconnect nor throw any exceptions.
  *
- * On failure, the calling function is responsible for disconnecting
- */
+ * On failure, the calling function is responsible for disconnecting */
 int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message)
 {
 	int status = mongo_io_wait_with_timeout((int) (long)con->socket, timeout ? timeout : options->socketTimeoutMS, error_message);
@@ -137,16 +181,24 @@ int mongo_io_recv_header(mongo_connection *con, mongo_server_options *options, i
 	if (status != 0) {
 		/* We don't care which failure it was, it just failed and the error_message has been set */
 		*error_message = strdup("Timed out waiting for header data");
-		return -1;
+		return -80;
 	}
 	status = recv((int) (long) con->socket, data, size, 0);
 
 	if (status == -1) {
 		*error_message = strdup(strerror(errno));
-		return -1;
+#ifndef WIN32
+		if (errno == ECONNRESET) {
+			return -32;
+		} else {
+			return -31;
+		}
+#else
+		return -31;
+#endif
 	} else if (status == 0) {
-		*error_message = strdup("The socket was closed by remote host");
-		return -1;
+		*error_message = strdup("Remote server has closed the connection");
+		return -32;
 	}
 	return status;
 }
@@ -161,13 +213,13 @@ int mongo_io_recv_data(mongo_connection *con, mongo_server_options *options, int
 
 		if (mongo_io_wait_with_timeout((int) (long) con->socket, timeout ? timeout : options->socketTimeoutMS, error_message) != 0) {
 			/* We don't care which failure it was, it just failed */
-			return -1;
+			return -31;
 		}
 		// windows gives a WSAEFAULT if you try to get more bytes
 		num = recv((int) (long)con->socket, (char*)data, len, 0);
 
 		if (num < 0) {
-			return -1;
+			return -31;
 		}
 
 		data = (char*)data + num;

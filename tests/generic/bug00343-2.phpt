@@ -17,7 +17,7 @@ $saved = $grid->storeFile(
 		'thumbnail_size' => 'm',
 		'otherdata' => 'BIG'
 	),
-	array('safe' => true)
+	array('w' => true)
 );
 var_dump( $grid->findOne() );
 echo "OK\n";

@@ -1,6 +1,7 @@
 --TEST--
-Stream Logger: log_killcursor() #001
+Stream Logger: log_killcursor() (1)
 --SKIPIF--
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
@@ -50,7 +51,7 @@ $cursor = $mc->phpunit->jobs->drop();
 log_killcursor
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(1)
   ["max_bson_size"]=>

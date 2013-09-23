@@ -1,6 +1,7 @@
 --TEST--
-MongoClient::__construct()#001 Connecting to one mongos
+MongoClient::__construct(): Connecting to one mongos (1)
 --SKIPIF--
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
 <?php
@@ -71,7 +72,7 @@ $mc->phpunit->jobs->remove(array("_id" => $obj["_id"]));
 log_insert
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -82,14 +83,13 @@ array(5) {
   int(%d)
 }
 bool(true)
-array(0) {
-}
+NULL
 
 
 log_query
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -109,7 +109,7 @@ array(3) {
 }
 array(5) {
   ["request_id"]=>
-  int(1)
+  int(4)
   ["skip"]=>
   int(0)
   ["limit"]=>
@@ -124,7 +124,7 @@ array(5) {
 log_query
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -156,7 +156,7 @@ array(2) {
 }
 array(5) {
   ["request_id"]=>
-  int(2)
+  int(5)
   ["skip"]=>
   int(0)
   ["limit"]=>
@@ -171,7 +171,7 @@ array(5) {
 log_query
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -198,7 +198,7 @@ array(2) {
 }
 array(5) {
   ["request_id"]=>
-  int(3)
+  int(6)
   ["skip"]=>
   int(0)
   ["limit"]=>
@@ -213,7 +213,7 @@ array(5) {
 log_update
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -256,7 +256,7 @@ array(2) {
 log_query
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -272,7 +272,7 @@ array(1) {
 }
 array(5) {
   ["request_id"]=>
-  int(5)
+  int(8)
   ["skip"]=>
   int(0)
   ["limit"]=>
@@ -287,7 +287,7 @@ array(5) {
 log_delete
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -317,7 +317,7 @@ array(2) {
 log_query
 array(5) {
   ["hash"]=>
-  string(%d) "%s:%d;-;X;%d"
+  string(%d) "%s:%d;-;.;%d"
   ["type"]=>
   int(16)
   ["max_bson_size"]=>
@@ -337,7 +337,7 @@ array(3) {
 }
 array(5) {
   ["request_id"]=>
-  int(7)
+  int(10)
   ["skip"]=>
   int(0)
   ["limit"]=>

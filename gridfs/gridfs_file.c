@@ -16,11 +16,11 @@
 #include <php.h>
 #include <zend_exceptions.h>
 
-#include "php_mongo.h"
-#include "collection.h"
-#include "cursor.h"
-#include "gridfs/gridfs.h"
-#include "gridfs/gridfs_stream.h"
+#include "../php_mongo.h"
+#include "../collection.h"
+#include "../cursor.h"
+#include "gridfs.h"
+#include "gridfs_stream.h"
 
 extern zend_class_entry *mongo_ce_BinData;
 extern zend_class_entry *mongo_ce_GridFS;
@@ -337,9 +337,8 @@ static int64_t apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, 
 
 		/* This copies the next chunk -> *to
 		 * Due to a talent I have for not reading directions, older versions of
-		 * the driver store files as raw bytes, not MongoBinData.  So, we'll
-		 * check for and handle both cases.
-		 */
+		 * the driver store files as raw bytes, not MongoBinData. So, we'll
+		 * check for and handle both cases. */
 		if (Z_TYPE_PP(zdata) == IS_STRING) {
 			/* raw bytes */
 			if (total + Z_STRLEN_PP(zdata) > max) {
@@ -380,7 +379,7 @@ static int64_t apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, 
 	}
 	zval_ptr_dtor(&next);
 
-	// return the number of bytes copied
+	/* return the number of bytes copied */
 	return total;
 }
 
@@ -401,9 +400,9 @@ void mongo_init_MongoGridFSFile(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoGridFSFile", MongoGridFSFile_methods);
 	mongo_ce_GridFSFile = zend_register_internal_class(&ce TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFSFile, "file", strlen("file"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFSFile, "file", strlen("file"), ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFSFile, "gridfs", strlen("gridfs"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFSFile, "gridfs", strlen("gridfs"), ZEND_ACC_PROTECTED|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

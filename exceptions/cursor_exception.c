@@ -16,7 +16,7 @@
 #include <php.h>
 #include <zend_exceptions.h>
 
-#include "php_mongo.h"
+#include "../php_mongo.h"
 #include "cursor_exception.h"
 
 extern zend_class_entry *mongo_ce_Exception;
@@ -45,8 +45,7 @@ void mongo_init_MongoCursorException(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoCursorException", MongoCursorException_methods);
 	mongo_ce_CursorException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_CursorException, "host", strlen("host"), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_long(mongo_ce_CursorException, "fd", strlen("fd"), 0, ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_CursorException, "host", strlen("host"), ZEND_ACC_PRIVATE|ZEND_ACC_DEPRECATED  TSRMLS_CC);
 }
 
 /*

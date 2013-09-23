@@ -11,7 +11,13 @@ function get_user($m, $username) {
     $db = $m->selectDB("admin");
     $c = $db->selectCollection("system.users");
 
-    return $c->findOne(array("user" => $username));
+    $user = $c->findOne(array("user" => $username));
+    return array(
+        "_id"      => $user["_id"],
+        "user"     => $user["user"],
+        "readOnly" => $user["readOnly"],
+        "pwd"      => $user["pwd"],
+    );
 }
 
 $s = new MongoShellServer;
@@ -39,6 +45,7 @@ try {
 }
 
 ?>
+===DONE===
 --EXPECTF--
 object(MongoClient)#%d (4) {
   ["connected"]=>
@@ -64,19 +71,14 @@ array(4) {
   string(32) "%s"
 }
 authentication failed
-Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth fails
+Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth %s
 authentication failed
-Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth fails
+Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth %s
 authentication failed
-Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth fails
-authentication failed
-Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth fails
-authentication failed
-Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth fails
-discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
-discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
+Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth %s
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 No candidate servers found
+===DONE===
 

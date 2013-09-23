@@ -9,9 +9,11 @@ require_once "tests/utils/server.inc";
 $m = mongo_standalone();
 $c = $m->selectCollection( dbname(), "php-522_error" );
 
-var_dump( $c->insert( array( 'test' => 1 ), array( 'fsync' => M_PI, 'safe' => M_PI, 'timeout' => "foo" ) ) );
+var_dump( $c->insert( array( 'test' => 1 ), array( 'fsync' => M_PI, 'safe' => M_PI, 'socketTimeoutMS' => "foo" ) ) );
 ?>
 --EXPECTF--
+%s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %sbug00522_error.php on line %d
+
 Warning: MongoCollection::insert(): The value of the 'safe' option either needs to be a boolean or a string in %sbug00522_error.php on line 7
 
 Warning: MongoCollection::insert(): The value of the 'safe' option either needs to be a integer or string in %sbug00522_error.php on line 7

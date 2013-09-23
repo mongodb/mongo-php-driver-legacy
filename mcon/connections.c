@@ -24,27 +24,10 @@
 #include "bson_helpers.h"
 #include "mini_bson.h"
 
-#ifdef WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <sys/un.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <sys/time.h>
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-
-#include "config.h"
-
 
 #define INT_32  4
 #define FLAGS   0
@@ -92,14 +75,11 @@ static int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *h
 	return 1;
 }
 
-/**
-* This function does the actual connecting
-* The results of this function are stored in mongo_connection->socket,
-* which is a void* to be able to store various different backends
-* (f.e. the PHP io_streams stores a php_stream*)
-*
-* Returns an integer (masquerading as a void*) on success, NULL on failure.
-*/
+/* This function does the actual connecting The results of this function are
+ * stored in mongo_connection->socket, which is a void* to be able to store
+ * various different backends (f.e. the PHP io_streams stores a php_stream*)
+ *
+ * Returns an integer (masquerading as a void*) on success, NULL on failure. */
 void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	struct sockaddr*   sa;
@@ -273,6 +253,17 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 	tmp->last_reqid = rand();
 	tmp->connection_type = MONGO_NODE_STANDALONE;
 
+	/* Default server options */
+	/* If we don't know the version, assume 1.8.0 */
+	tmp->version.major = 1;
+	tmp->version.minor = 8;
+	tmp->version.mini  = 0;
+	tmp->version.build = 0;
+	/* MongoDB pre-1.8; Spec says default to 4 MB */
+	tmp->max_bson_size = 4194304;
+	/* MongoDB pre-2.4; Spec says default to 2 * the maxBsonSize */
+	tmp->max_message_size = 2 * tmp->max_bson_size;
+
 	/* Store hash */
 	tmp->hash = strdup(hash);
 
@@ -283,13 +274,6 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "connection_create: error while creating connection for %s:%d: %s", server_def->host, server_def->port, *error_message);
 		mongo_manager_blacklist_register(manager, tmp);
 		free(tmp->hash);
-		free(tmp);
-		return NULL;
-	}
-
-	/* We call get_server_flags to the maxBsonObjectSize data */
-	if (!mongo_connection_get_server_flags(manager, tmp, options, error_message)) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", server_def->host, server_def->port, *error_message);
 		free(tmp);
 		return NULL;
 	}
@@ -440,11 +424,9 @@ int mongo_connection_ping_check(mongo_con_manager *manager, int last_ping, struc
 	return 1;
 }
 
-/**
- * Sends a ping command to the server and stores the result.
+/* Sends a ping command to the server and stores the result.
  *
- * Returns 1 when it worked, and 0 when an error was encountered.
- */
+ * Returns 1 when it worked, and 0 when an error was encountered. */
 int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
@@ -474,8 +456,7 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, mon
 	return 1;
 }
 
-/**
- * Sends an ismaster command to the server and returns an array of new
+/* Sends an ismaster command to the server and returns an array of new
  * connectable nodes
  *
  * Returns:
@@ -484,16 +465,18 @@ int mongo_connection_ping(mongo_con_manager *manager, mongo_connection *con, mon
  * 2: when is master wasn't run due to the time-out limit
  * 3: when it all worked, but we need to remove the seed host (due to its name
  *    not being what the server thought it is) - in that case, the server in
- *    the last argument is changed
- */
+ *    the last argument is changed */
 int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **repl_set_name, int *nr_hosts, char ***found_hosts, char **error_message, mongo_server_def *server)
 {
 	mcon_str      *packet;
 	char          *data_buffer;
+	int32_t        max_bson_size = 0, max_message_size = 0;
 	char          *set = NULL;      /* For replicaset in return */
-	char          *hosts, *passives, *ptr, *string;
+	char          *hosts, *passives = NULL, *ptr, *string;
+	char          *msg; /* If set and its value is "isdbgrid", it signals we connected to a mongos */
 	unsigned char  ismaster = 0, secondary = 0, arbiter = 0;
 	char          *connected_name, *we_think_we_are;
+	char          *tags;
 	struct timeval now;
 	int            retval = 1;
 
@@ -513,11 +496,84 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	/* Find data fields */
 	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
 
+	/* Find max bson size */
+	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: setting maxBsonObjectSize to %d", max_bson_size);
+		con->max_bson_size = max_bson_size;
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: can't find maxBsonObjectSize, defaulting to %d", con->max_bson_size);
+	}
+
+	/* Find max message size */
+	if (bson_find_field_as_int32(ptr, "maxMessageSizeBytes", &max_message_size)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: setting maxMessageSizeBytes to %d", max_message_size);
+		con->max_message_size = max_message_size;
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: can't find maxMessageSizeBytes, defaulting to %d", con->max_message_size);
+	}
+
+	/* Check for flags */
+	bson_find_field_as_bool(ptr, "ismaster", &ismaster);
+	bson_find_field_as_bool(ptr, "secondary", &secondary);
+	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
+	bson_find_field_as_string(ptr, "setName", &set);
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: set name: %s, ismaster: %d, secondary: %d, is_arbiter: %d", set, ismaster, secondary, arbiter);
+
+	/* Set connection type depending on flags */
+	if (ismaster) {
+		/* Find msg and whether it contains "isdbgrid" */
+		if (bson_find_field_as_string(ptr, "msg", (char**) &msg) && strcmp(msg, "isdbgrid") == 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: msg contains 'isdbgrid' - we're connected to a mongos");
+			con->connection_type = MONGO_NODE_MONGOS;
+		} else if(set) {
+			con->connection_type = MONGO_NODE_PRIMARY;
+		} else {
+			con->connection_type = MONGO_NODE_STANDALONE;
+		}
+	} else if (secondary) {
+		con->connection_type = MONGO_NODE_SECONDARY;
+	} else if (arbiter) {
+		con->connection_type = MONGO_NODE_ARBITER;
+	} else {
+		con->connection_type = MONGO_NODE_INVALID;
+	}
+
+	if (con->connection_type == MONGO_NODE_INVALID) {
+		*error_message = strdup("get_server_flags: got unknown node type");
+		free(data_buffer);
+		return 0;
+	}
+
+	/* Find read preferences tags */
+	con->tag_count = 0;
+	con->tags = NULL;
+	if (bson_find_field_as_document(ptr, "tags", (char**) &tags)) {
+		char *it, *name, *value;
+		int   length;
+
+		it = tags;
+
+		while (bson_array_find_next_string(&it, &name, &value)) {
+			con->tags = realloc(con->tags, (con->tag_count + 1) * sizeof(char*));
+			length = strlen(name) + strlen(value) + 2;
+			con->tags[con->tag_count] = malloc(length);
+			snprintf(con->tags[con->tag_count], length, "%s:%s", name, value);
+			free(name);
+			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: added tag %s", con->tags[con->tag_count]);
+			con->tag_count++;
+		}
+	}
+
+	/* If we get passed in a server it means we want to validate this node against it, along with discovery ReplicaSet stuff */
+	if (!server) {
+		goto done;
+	}
+
 	/* We find out whether the machine we connected too, is actually the
 	 * one we thought we were connecting too */
 	/* MongoDB 1.8.x doesn't have the "me" field.
-	 * The replicaset verification is done next step (setName).
-	 */
+	 * The replicaset verification is done next step (setName). */
 	if (bson_find_field_as_string(ptr, "me", &connected_name)) {
 		we_think_we_are = mongo_server_hash_to_server(con->hash);
 		if (strcmp(connected_name, we_think_we_are) == 0) {
@@ -537,7 +593,6 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	}
 
 	/* Do replica set name test */
-	bson_find_field_as_string(ptr, "setName", &set);
 	if (!set) {
 		char *errmsg = NULL;
 		bson_find_field_as_string(ptr, "errmsg", &errmsg);
@@ -578,13 +633,6 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 		server->repl_set_name = strdup(set);
 	}
 
-	/* Check for flags */
-	bson_find_field_as_bool(ptr, "ismaster", &ismaster);
-	bson_find_field_as_bool(ptr, "secondary", &secondary);
-	bson_find_field_as_bool(ptr, "arbiterOnly", &arbiter);
-
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "ismaster: set name: %s, ismaster: %d, secondary: %d, is_arbiter: %d", set, ismaster, secondary, arbiter);
-
 	/* Find all hosts */
 	bson_find_field_as_array(ptr, "hosts", &hosts);
 	bson_find_field_as_array(ptr, "passives", &passives);
@@ -600,25 +648,17 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	}
 
 	/* Iterate over the "passives" document (priority=0) */
-	ptr = passives;
-	while (bson_array_find_next_string(&ptr, NULL, &string)) {
-		(*nr_hosts)++;
-		*found_hosts = realloc(*found_hosts, (*nr_hosts) * sizeof(char*));
-		(*found_hosts)[*nr_hosts-1] = strdup(string);
-		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "found host: %s (passive)", string);
+	if (passives) {
+		ptr = passives;
+		while (bson_array_find_next_string(&ptr, NULL, &string)) {
+			(*nr_hosts)++;
+			*found_hosts = realloc(*found_hosts, (*nr_hosts) * sizeof(char*));
+			(*found_hosts)[*nr_hosts-1] = strdup(string);
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "found host: %s (passive)", string);
+		}
 	}
 
-	/* Set connection type depending on flags */
-	if (ismaster) {
-		con->connection_type = MONGO_NODE_PRIMARY;
-	} else if (secondary) {
-		con->connection_type = MONGO_NODE_SECONDARY;
-	} else if (arbiter) {
-		con->connection_type = MONGO_NODE_ARBITER;
-	} else {
-		con->connection_type = MONGO_NODE_INVALID;
-	} /* TODO: case for mongos */
-
+done:
 	free(data_buffer);
 
 	con->last_ismaster = now.tv_sec;
@@ -627,22 +667,26 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	return retval;
 }
 
-/**
- * Sends an ismaster command to the server to find server flags
+/* Sends an ismaster command to the server to find server flags
  *
- * Returns 1 when it worked, and 0 when an error was encountered.
- */
+ * Returns 1 when it worked, and 0 when an error was encountered. */
 int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
+	return mongo_connection_ismaster(manager, con, options, NULL, NULL, NULL, error_message, NULL) > 0 ? 1 : 0;
+}
+
+/* Sends an buildInfo command to the server to find server version
+ *
+ * Returns 1 when it worked, and 0 when an error was encountered. */
+int mongo_connection_get_server_version(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
+{
 	mcon_str      *packet;
-	int32_t        max_bson_size = 0, max_message_size = 0;
 	char          *data_buffer;
 	char          *ptr;
-	char          *tags;
-	char          *msg; /* If set and its value is "isdbgrid", it signals we connected to a mongos */
+	char          *version_array;
 
-	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_flags: start");
-	packet = bson_create_ismaster_packet(con);
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_version: start");
+	packet = bson_create_buildinfo_packet(con);
 
 	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;
@@ -651,54 +695,23 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	/* Find data fields */
 	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
 
-	/* Find max bson size */
-	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: setting maxBsonObjectSize to %d", max_bson_size);
-		con->max_bson_size = max_bson_size;
-	} else {
-		/* This seems to be a pre-1.8 MongoDB installation, where we need to
-		 * default to 4MB */
-		con->max_bson_size = 4194304;
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: can't find maxBsonObjectSize, defaulting to %d", con->max_bson_size);
-	}
-
-	/* Find max message size */
-	if (bson_find_field_as_int32(ptr, "maxMessageSizeBytes", &max_message_size)) {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: setting maxMessageSizeBytes to %d", max_message_size);
-		con->max_message_size = max_message_size;
-	} else {
-		/* This seems to be a pre-2.4 MongoDB installation, where we need to
-		 * default to two times the max BSON size */
-		con->max_message_size = 2 * con->max_bson_size;
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: can't find maxMessageSizeBytes, defaulting to %d", con->max_message_size);
-	}
-
-	/* Find msg and whether it contains "isdbgrid" */
-	if (bson_find_field_as_string(ptr, "msg", (char**) &msg)) {
-		if (strcmp(msg, "isdbgrid") == 0) {
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: msg contains 'isdbgrid' - we're connected to a mongos");
-			con->connection_type = MONGO_NODE_MONGOS;
-		}
-	}
-
 	/* Find read preferences tags */
-	con->tag_count = 0;
-	con->tags = NULL;
-	if (bson_find_field_as_document(ptr, "tags", (char**) &tags)) {
-		char *it, *name, *value;
-		int   length;
+	if (bson_find_field_as_array(ptr, "versionArray", (char**) &version_array)) {
+		char *it, *name;
 
-		it = tags;
+		it = version_array;
 
-		while (bson_array_find_next_string(&it, &name, &value)) {
-			con->tags = realloc(con->tags, (con->tag_count + 1) * sizeof(char*));
-			length = strlen(name) + strlen(value) + 2;
-			con->tags[con->tag_count] = malloc(length);
-			snprintf(con->tags[con->tag_count], length, "%s:%s", name, value);
-			free(name);
-			mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "get_server_flags: added tag %s", con->tags[con->tag_count]);
-			con->tag_count++;
+		if (bson_array_find_next_int32(&it, NULL, &con->version.major)) {
+			if (bson_array_find_next_int32(&it, NULL, &con->version.minor)) {
+				if (bson_array_find_next_int32(&it, NULL, &con->version.mini)) {
+					if (bson_array_find_next_int32(&it, NULL, &con->version.build)) {
+						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "get_server_version: server version: %d.%d.%d (%d)", con->version.major, con->version.minor, con->version.mini, con->version.build);
+					}
+				}
+			}
 		}
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "get_server_flags: can't find version information, defaulting to %d.%d.%d (%d)", con->version.major, con->version.minor, con->version.mini, con->version.build);
 	}
 
 	free(data_buffer);
@@ -706,11 +719,9 @@ int mongo_connection_get_server_flags(mongo_con_manager *manager, mongo_connecti
 	return 1;
 }
 
-/**
- * Sends a getnonce command to the server for authentication
+/* Sends a getnonce command to the server for authentication
  *
- * Returns the nonsense when it worked, or NULL if it didn't.
- */
+ * Returns the nonsense when it worked, or NULL if it didn't. */
 char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char **error_message)
 {
 	mcon_str      *packet;
@@ -748,14 +759,53 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
 /**
  * Authenticates a connection
  *
- * Returns 1 when it worked, or 0 when it didn't - with the error_message set.
+ * Returns:
+ * 0: when authentication (or getting nonce) fails, or unknown auth mechanism is set - with the error_message set
+ * 1: when it worked
+ * 2: when no need to authenticate (i.e. no credentials provided)
  */
-int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char *nonce, char **error_message)
+int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
+{
+	char *nonce;
+	int   retval = 0;
+
+	switch(server_def->mechanism) {
+		case MONGO_AUTH_MECHANISM_MONGODB_CR:
+			if (!server_def->db || !server_def->username || !server_def->password) {
+				return 2;
+			}
+
+			nonce = mongo_connection_getnonce(manager, con, options, error_message);
+			if (!nonce) {
+				return 0;
+			}
+
+			retval = mongo_connection_authenticate_mongodb_cr(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, server_def->password, nonce, error_message);
+			free(nonce);
+			break;
+
+		case MONGO_AUTH_MECHANISM_MONGODB_X509:
+			retval = mongo_connection_authenticate_mongodb_x509(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, error_message);
+			break;
+
+		default:
+			*error_message = strdup("Only MongoDB-CR and MONGODB-X509 authentication mechanisms is supported by this build");
+		return 0;
+	}
+
+	return retval;
+}
+
+/**
+ * Authenticates a connection using MONGODB-CR
+ *
+ * Returns:
+ * 0: when it didn't work - with the error_message set.
+ * 1: when it worked
+ */
+int mongo_connection_authenticate_mongodb_cr(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char *password, char *nonce, char **error_message)
 {
 	mcon_str      *packet;
-	char          *data_buffer, *errmsg;
-	double         ok;
-	char          *ptr;
 	char          *salted;
 	int            length;
 	char          *hash, *key;
@@ -778,10 +828,45 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	free(salted);
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "authenticate: key=md5(%s%s%s) = %s", nonce, username, hash, key);
 
-	packet = bson_create_authenticate_packet(con, database, username, nonce, key);
+	/* BC: Do not send MONGODB-CR as mechanism, won't work on older mongod */
+	packet = bson_create_authenticate_packet(con, NULL, database, username, nonce, key);
 
 	free(hash);
 	free(key);
+
+	return mongo_connection_authenticate_cmd(manager, con, options, database, username, packet, error_message);
+}
+
+/**
+ * Authenticates a connection using MONGODB-X509
+ *
+ * Returns:
+ * 0: when it didn't work - with the error_message set.
+ * 1: when it worked
+ */
+int mongo_connection_authenticate_mongodb_x509(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, char **error_message)
+{
+	mcon_str      *packet;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate (X509): start");
+
+	packet = bson_create_authenticate_packet(con, "MONGODB-X509", database, username, NULL, NULL);
+
+	return mongo_connection_authenticate_cmd(manager, con, options, database, username, packet, error_message);
+}
+
+/**
+ * Sends the db.authenticate() command packet
+ *
+ * Returns:
+ * 0: when it didn't work - with the error_message set (extracted from the 'errmsg' field if possible)
+ * 1: when it worked
+ */
+int mongo_connection_authenticate_cmd(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, char *database, char *username, mcon_str *packet, char **error_message)
+{
+	char          *data_buffer, *errmsg;
+	double         ok;
+	char          *ptr;
 
 	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;
@@ -810,6 +895,112 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	return 1;
 }
 
+int mongo_connection_authenticate_saslstart(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char *mechanism, char *payload, unsigned int payload_len, char **out_payload, int *out_payload_len, int32_t *out_conversation_id, char **error_message)
+{
+	mcon_str      *packet;
+	char          *data_buffer;
+	char          *ptr;
+	char          *smechanism;
+	double         ok;
+	char          *errmsg;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_authenticate_sasl: Starting SASL authentication process to '%s'", con->hash);
+
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_CR) {
+		*error_message = strdup("Invalid authentication mechanism. Expected SASL mechanism, got MongoDB-CR");
+		return 0;
+	}
+
+	packet = bson_create_saslstart_packet(con, server_def->authdb, mechanism, payload, payload_len);
+
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
+		return 0;
+	}
+
+	/* Find data fields */
+	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	if (bson_find_field_as_double(ptr, "ok", &ok)) {
+		if (ok > 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "SASL request successful");
+		} else {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "SASL request failed");
+			if (bson_find_field_as_string(ptr, "errmsg", &errmsg)) {
+				*error_message = malloc(256);
+				snprintf(*error_message, 256, "SASL Authentication failed on database '%s': %s", server_def->db, errmsg);
+			} else {
+				*error_message = "SASL Authentication failed";
+			}
+			if (bson_find_field_as_document(ptr, "supportedMechanisms", (char**) &smechanism)) {
+				/* TODO: Retrieve a list of supportedMechanisms and return it somehow */
+			}
+
+			free(data_buffer);
+			return 0;
+		}
+	}
+
+	if (bson_find_field_as_int32(ptr, "conversationId", out_conversation_id)) {
+		bson_find_field_as_stringl(ptr, "payload", out_payload, out_payload_len, 1);
+	}
+	free(data_buffer);
+
+	return 1;
+}
+
+int mongo_connection_authenticate_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, int32_t conversation_id, char *payload, int payload_len, char **out_payload, int *out_payload_len, unsigned char *done, char **error_message)
+{
+	mcon_str      *packet;
+	char          *data_buffer;
+	char          *ptr;
+	double         ok;
+	char          *errmsg;
+	int32_t       out_conversation_id;
+
+	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_authenticate_saslcontinue: continuing SASL authentication to '%s'", con->hash);
+
+	packet = bson_create_saslcontinue_packet(con, conversation_id, payload, payload_len);
+
+	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
+		return 0;
+	}
+
+	/* Find data fields */
+	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	if (bson_find_field_as_double(ptr, "ok", &ok)) {
+		if (ok > 0) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "SASL continue successful");
+		} else {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "SASL continue failed");
+			if (bson_find_field_as_string(ptr, "errmsg", &errmsg)) {
+				int errlen = strlen("SASL Authentication failed on database '':") + strlen(server_def->db) + strlen(errmsg);
+				*error_message = malloc(errlen);
+				snprintf(*error_message, errlen, "SASL Authentication failed on database '%s': %s", server_def->db, errmsg);
+			} else {
+				int errlen = strlen("SASL Authentication failed on database ''") + strlen(server_def->db);
+				*error_message = malloc(errlen);
+				snprintf(*error_message, errlen, "SASL Authentication failed on database '%s'", server_def->db);
+			}
+
+			free(data_buffer);
+			return 0;
+		}
+	}
+
+	if (bson_find_field_as_int32(ptr, "conversationId", &out_conversation_id)) {
+		if (out_conversation_id != conversation_id) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "SASL continue failed: Got wrong conversation_id back! Expected %d but got %d", conversation_id, out_conversation_id);
+			free(data_buffer);
+			return 0;
+		}
+		bson_find_field_as_stringl(ptr, "payload", out_payload, out_payload_len, 0);
+		bson_find_field_as_bool(ptr, "done", done);
+	}
+	free(data_buffer);
+
+	return (int)ok;
+}
 /*
  * Local variables:
  * tab-width: 4

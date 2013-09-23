@@ -14,22 +14,33 @@ array(1) {
   [0]=>
   array(3) {
     ["hash"]=>
-    string(%d) "%s:%d;-;X;%d"
+    string(%d) "%s:%d;-;.;%d"
     ["server"]=>
-    array(3) {
+    array(4) {
       ["host"]=>
       string(%d) "%s"
       ["port"]=>
       int(%d)
       ["pid"]=>
       int(%d)
+      ["version"]=>
+      array(4) {
+        ["major"]=>
+        int(%d)
+        ["minor"]=>
+        int(%d)
+        ["mini"]=>
+        int(%d)
+        ["build"]=>
+        int(%i)
+      }
     }
     ["connection"]=>
     array(8) {
       ["last_ping"]=>
       int(%d)
       ["last_ismaster"]=>
-      int(0)
+      int(%d)
       ["ping_ms"]=>
       int(%d)
       ["connection_type"]=>

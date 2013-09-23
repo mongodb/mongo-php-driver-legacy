@@ -15,47 +15,77 @@
  */
 #include <php.h>
 #include <zend_exceptions.h>
-#include "php_mongo.h"
-#include "mongoclient.h"
-#include "db.h"
-#include "collection.h"
+#include "../php_mongo.h"
+#include "../mongoclient.h"
+#include "../db.h"
+#include "../collection.h"
+#include "db_ref.h"
 
-extern zend_class_entry *mongo_ce_DB, *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_DB, *mongo_ce_Id, *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_DBRef = NULL;
 
-/* {{{ MongoDBRef::create()
+/* {{{ MongoDBRef::create(string collection, mixed id [, string db])
  *
- * DB refs are of the form:
- * array( '$ref' => <collection>, '$id' => <id>[, $db => <dbname>] )
- */
+ * DBRefs are of the form:
+ * array('$ref' => <collection>, '$id' => <id> [, $db => <db>]) */
 PHP_METHOD(MongoDBRef, create)
 {
-	zval *zns, *zid, *zdb = 0;
+	char *collection, *db = NULL;
+	int collection_len, db_len = 0;
+	zval *zid, *retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &zns, &zid, &zdb) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|s", &collection, &collection_len, &zid, &db, &db_len) == FAILURE) {
 		return;
 	}
 
-	array_init(return_value);
+	retval = php_mongo_dbref_create(zid, collection, db TSRMLS_CC);
+
+	if (retval) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
+
+	RETURN_NULL();
+}
+/* }}} */
+
+zval *php_mongo_dbref_create(zval *zid, char *collection, char *db TSRMLS_DC)
+{
+	zval *retval;
+
+	MAKE_STD_ZVAL(retval);
+	array_init(retval);
 
 	/* add collection name */
-	convert_to_string(zns);
-	add_assoc_zval(return_value, "$ref", zns);
-	zval_add_ref(&zns);
+	add_assoc_string(retval, "$ref", collection, 1);
 
 	/* add id field */
-	add_assoc_zval(return_value, "$id", zid);
+	add_assoc_zval(retval, "$id", zid);
 	zval_add_ref(&zid);
 
 	/* if we got a database name, add that, too */
-	if (zdb) {
-		convert_to_string(zdb);
-		add_assoc_zval(return_value, "$db", zdb);
-		zval_add_ref(&zdb);
+	if (db) {
+		add_assoc_string(retval, "$db", db, 1);
 	}
+
+	return retval;
 }
-/* }}} */
+
+zval *php_mongo_dbref_resolve_id(zval *zid TSRMLS_DC)
+{
+	/* If zid is an array or non-MongoId object, return its "_id" field */
+	if (Z_TYPE_P(zid) == IS_ARRAY || (Z_TYPE_P(zid) == IS_OBJECT && !instanceof_function(Z_OBJCE_P(zid), mongo_ce_Id TSRMLS_CC))) {
+		zval **tmpval;
+
+		if (zend_hash_find(HASH_P(zid), "_id", 4, (void**)&tmpval) == SUCCESS) {
+			zid = *tmpval;
+		} else if (Z_TYPE_P(zid) == IS_ARRAY) {
+			return NULL;
+		}
+	}
+
+	return zid;
+}
 
 /* {{{ proto bool MongoDBRef::isRef(mixed ref)
    Checks if $ref has a $ref and $id property/key */
@@ -85,13 +115,16 @@ PHP_METHOD(MongoDBRef, isRef)
  */
 PHP_METHOD(MongoDBRef, get)
 {
-	zval *db, *ref, *collection, *query;
+	zval *zdb, *ref, *collection, *query;
 	zval **ns, **id, **dbname;
 	zend_bool alloced_db = 0;
+	mongo_db *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &db, mongo_ce_DB, &ref) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &zdb, mongo_ce_DB, &ref) == FAILURE) {
 		return;
 	}
+		
+	PHP_MONGO_GET_DB(zdb);
 
 	if (
 		IS_SCALAR_P(ref) ||
@@ -108,8 +141,6 @@ PHP_METHOD(MongoDBRef, get)
 
 	/* if this reference contains a db name, we have to switch dbs */
 	if (zend_hash_find(HASH_P(ref), "$db", strlen("$db") + 1, (void**)&dbname) == SUCCESS) {
-		mongo_db *temp_db = (mongo_db*)zend_object_store_get_object(db TSRMLS_CC);
-
 		/* just to be paranoid, make sure dbname is a string */
 		if (Z_TYPE_PP(dbname) != IS_STRING) {
 			zend_throw_exception(mongo_ce_Exception, "MongoDBRef::get: $db field must be a string", 11 TSRMLS_CC);
@@ -118,16 +149,16 @@ PHP_METHOD(MongoDBRef, get)
 
 		/* if the name in the $db field doesn't match the current db, make up
 		 * a new db */
-		if (strcmp(Z_STRVAL_PP(dbname), Z_STRVAL_P(temp_db->name)) != 0) {
+		if (strcmp(Z_STRVAL_PP(dbname), Z_STRVAL_P(db->name)) != 0) {
 			zval *new_db_z;
 
 			MAKE_STD_ZVAL(new_db_z);
 			ZVAL_NULL(new_db_z);
 
-			MONGO_METHOD1(MongoClient, selectDB, new_db_z, temp_db->link, *dbname);
+			MONGO_METHOD1(MongoClient, selectDB, new_db_z, db->link, *dbname);
 
 			/* make the new db the current one */
-			db = new_db_z;
+			zdb = new_db_z;
 
 			/* so we can dtor this later */
 			alloced_db = 1;
@@ -136,7 +167,7 @@ PHP_METHOD(MongoDBRef, get)
 
 	/* get the collection */
 	MAKE_STD_ZVAL(collection);
-	MONGO_METHOD1(MongoDB, selectCollection, collection, db, *ns);
+	MONGO_METHOD1(MongoDB, selectCollection, collection, zdb, *ns);
 
 	/* query for the $id */
 	MAKE_STD_ZVAL(query);
@@ -151,7 +182,7 @@ PHP_METHOD(MongoDBRef, get)
 	zval_ptr_dtor(&collection);
 	zval_ptr_dtor(&query);
 	if (alloced_db) {
-		zval_ptr_dtor(&db);
+		zval_ptr_dtor(&zdb);
 	}
 }
 /* }}} */
@@ -170,9 +201,6 @@ void mongo_init_MongoDBRef(TSRMLS_D)
 
 	INIT_CLASS_ENTRY(ce, "MongoDBRef", MongoDBRef_methods);
 	mongo_ce_DBRef = zend_register_internal_class(&ce TSRMLS_CC);
-
-	zend_declare_property_string(mongo_ce_DBRef, "refKey", strlen("refKey"), "$ref", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
-	zend_declare_property_string(mongo_ce_DBRef, "idKey", strlen("idKey"), "$id", ZEND_ACC_PROTECTED|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
 /*

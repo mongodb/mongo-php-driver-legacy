@@ -31,12 +31,12 @@ typedef __int64 int64_t;
 
 #include <zend_exceptions.h>
 
-#include "php_mongo.h"
+#include "../php_mongo.h"
 #include "gridfs.h"
 #include "gridfs_stream.h"
-#include "collection.h"
-#include "cursor.h"
-#include "db.h"
+#include "../collection.h"
+#include "../cursor.h"
+#include "../db.h"
 
 extern zend_class_entry *mongo_ce_BinData, *mongo_ce_GridFS;
 extern zend_class_entry *mongo_ce_GridFSFile, *mongo_ce_GridFSException;

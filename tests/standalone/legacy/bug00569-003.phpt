@@ -38,7 +38,10 @@ foreach ( $strings as $string )
 	}
 	catch ( Exception $e )
 	{
-		echo $e->getMessage(), "\n";
+		if (!strpos($string, "majority")) {
+			/* 2.5.x maps majority=1 for standalone servers so doesn't raise an exception */
+			echo $e->getMessage(), "\n";
+		}
 	}
 	foreach ( $tests as $key => $test )
 	{
@@ -49,13 +52,14 @@ foreach ( $strings as $string )
 		}
 		catch ( Exception $e )
 		{
-			echo $e->getMessage(), "\n";
+			if (!strpos($string, "majority")) {
+				echo $e->getMessage(), "\n";
+			}
 		}
 	}
 }
 ?>
 --EXPECTF--
-
 Running string mongodb://%s/?w=0
 PARSE   INFO: Parsing mongodb://%s/?w=0
 PARSE   INFO: - Found node: %s:%d
@@ -67,9 +71,11 @@ IO      FINE: is_gle_op: no
 IO      FINE: is_gle_op: no
 
 - Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 - Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: getting reply
@@ -105,9 +111,11 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
 - Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 - Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: getting reply
@@ -149,9 +157,11 @@ IO      FINE: getting cursor body
 %s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 - Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: getting reply
@@ -193,9 +203,11 @@ IO      FINE: getting cursor body
 %s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 - Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='allDCs'
@@ -230,7 +242,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Running test 0, with options: []:
 IO      FINE: is_gle_op: yes
@@ -240,12 +251,13 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 - Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'
@@ -253,7 +265,6 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
 
 - Running test 3, with options: {"w":0}:
 IO      FINE: is_gle_op: no
@@ -266,4 +277,4 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
+

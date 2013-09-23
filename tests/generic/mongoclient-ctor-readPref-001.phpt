@@ -1,5 +1,5 @@
 --TEST--
-Connection strings: read preferences [1]
+Connection strings: read preferences (1)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
@@ -21,7 +21,7 @@ $a = array(
 );
 
 foreach ($a as $value) {
-	$m = new mongo($baseString . $value);
+	$m = new MongoClient($baseString . $value);
 	$rp = $m->getReadPreference();
 	echo $rp["type"], "\n";
 }
@@ -41,6 +41,6 @@ nearest
 
 Fatal error: Uncaught exception 'MongoConnectionException' with message 'The readPreference value 'nonsense' is not supported.' in %smongoclient-ctor-readPref-001.php:%d
 Stack trace:
-#0 %smongoclient-ctor-readPref-001.php(%d): Mongo->__construct('%s')
+#0 %smongoclient-ctor-readPref-001.php(%d): MongoClient->__construct('%s')
 #1 {main}
   thrown in %smongoclient-ctor-readPref-001.php on line %d

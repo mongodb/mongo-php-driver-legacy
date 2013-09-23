@@ -14,7 +14,7 @@ $grid->drop();
 
 // dummy file
 $bytes = str_repeat("x", 128);
-$grid->storeBytes($bytes, array("filename" => "demo.txt", 'chunkSize' => 128), array('safe' => true));
+$grid->storeBytes($bytes, array("filename" => "demo.txt", 'chunkSize' => 128), array('w' => true));
 unset($bytes);
 
 // fetch it

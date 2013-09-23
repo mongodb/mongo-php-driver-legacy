@@ -16,8 +16,16 @@
 #ifndef PHP_MONGO_H
 #define PHP_MONGO_H 1
 
-#define PHP_MONGO_VERSION "1.4.0dev"
+#define PHP_MONGO_VERSION "1.5.0dev"
 #define PHP_MONGO_EXTNAME "mongo"
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#else
+# if WIN32
+#  include "config-w32.h"
+# endif
+#endif
 
 #include "mcon/types.h"
 #include "mcon/read_preference.h"
@@ -217,23 +225,12 @@ typedef __int64 int64_t;
 	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 5, param5);	\
 	POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
-#define MONGO_CMD(retval, thisptr) MONGO_METHOD1(MongoDB, command, retval, thisptr, data)
-#define MONGO_CMD_WITH_RP(retval, thisptr, collection) \
-	do { \
-		mongo_db *db = (mongo_db*)zend_object_store_get_object(collection->parent TSRMLS_CC); \
-		mongo_read_preference rp; \
-		mongo_read_preference_copy(&db->read_pref, &rp); \
-		mongo_read_preference_replace(&collection->read_pref, &db->read_pref); \
-		MONGO_METHOD1(MongoDB, command, retval, thisptr, data) \
-		mongo_read_preference_replace(&rp, &db->read_pref); \
-		mongo_read_preference_dtor(&rp); \
-	} while(0);
-
 #define HASH_P(a) (Z_TYPE_P(a) == IS_ARRAY ? Z_ARRVAL_P(a) : Z_OBJPROP_P(a))
 #define HASH_PP(a) (Z_TYPE_PP(a) == IS_ARRAY ? Z_ARRVAL_PP(a) : Z_OBJPROP_PP(a))
 
-#define IS_SCALAR_P(a) (Z_TYPE_P(a) != IS_ARRAY && Z_TYPE_P(a) != IS_OBJECT)
-#define IS_SCALAR_PP(a) (Z_TYPE_PP(a) != IS_ARRAY && Z_TYPE_PP(a) != IS_OBJECT)
+#define IS_SCALAR_P(a) (Z_TYPE_P(a) == IS_NULL || Z_TYPE_P(a) == IS_LONG || Z_TYPE_P(a) == IS_DOUBLE || Z_TYPE_P(a) == IS_BOOL || Z_TYPE_P(a) == IS_STRING)
+#define IS_SCALAR_PP(a) IS_SCALAR_P(*a)
+#define IS_ARRAY_OR_OBJECT_P(a) (Z_TYPE_P(a) == IS_ARRAY || Z_TYPE_P(a) == IS_OBJECT)
 
 /* TODO: this should be expanded to handle long_as_object being set */
 #define Z_NUMVAL_P(variable, value)                                     \
@@ -252,6 +249,21 @@ typedef __int64 int64_t;
 }
 #endif
 
+#define PHP_MONGO_TYPE_OBJ_NEW(mongo_obj)                    \
+	zend_object_value retval;                           \
+	mongo_obj *intern;                                  \
+	                                                    \
+	intern = (mongo_obj*)emalloc(sizeof(mongo_obj));               \
+	memset(intern, 0, sizeof(mongo_obj));                          \
+	                                                               \
+	zend_object_std_init(&intern->std, class_type TSRMLS_CC);      \
+	init_properties(intern);                                       \
+	                                                               \
+	retval.handle = zend_objects_store_put(intern,(zend_objects_store_dtor_t) zend_objects_destroy_object, php_##mongo_obj##_free, NULL TSRMLS_CC); \
+	retval.handlers = &mongo_type_object_handlers;                     \
+	                                                               \
+	return retval;
+
 #define PHP_MONGO_OBJ_NEW(mongo_obj)                    \
 	zend_object_value retval;                           \
 	mongo_obj *intern;                                  \
@@ -267,8 +279,32 @@ typedef __int64 int64_t;
 	                                                               \
 	return retval;
 
+zend_object_value php_mongo_type_object_new(zend_class_entry *class_type TSRMLS_DC);
+void php_mongo_type_object_free(void *object TSRMLS_DC);
+
+#if PHP_VERSION_ID >= 50400
+void mongo_write_property(zval *object, zval *member, zval *value, const zend_literal *key TSRMLS_DC);
+#else
+void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC);
+#endif
+
+#if PHP_VERSION_ID >= 50400
+zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC);
+#else
+zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
+#endif
+
+
 #define RS_PRIMARY 1
 #define RS_SECONDARY 2
+
+
+/* Used in our _write_property() handler to mark properties are userland Read Only */
+#define MONGO_ACC_READ_ONLY 0x10000000
+
+typedef struct {
+	zend_object std;
+} mongo_type_object;
 
 typedef struct {
 	zend_object std;
@@ -347,7 +383,10 @@ typedef struct {
 
 #define PHP_MONGO_GET_CURSOR(obj) \
 	cursor = (mongo_cursor*)zend_object_store_get_object((obj) TSRMLS_CC); \
-	MONGO_CHECK_INITIALIZED(cursor->resource, MongoCursor);
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
+
+#define PHP_MONGO_GET_MONGOCLIENT_FROM_CURSOR(cursor) \
+	client = (mongoclient*)zend_object_store_get_object((cursor)->zmongoclient TSRMLS_CC);
 
 #define PHP_MONGO_CHECK_EXCEPTION() if (EG(exception)) { return; }
 
@@ -396,7 +435,7 @@ typedef struct {
 
 	/* Connection */
 	mongo_connection *connection;
-	zval *resource;
+	zval *zmongoclient;
 
 	/* collection namespace */
 	char *ns;
@@ -444,17 +483,15 @@ typedef struct {
 	int dead;
 } mongo_cursor;
 
-/*
- * Unfortunately, cursors can be freed before or after link is destroyed, so
- * we can't actually depend on having a link to the database.  So, we're
- * going to keep a separate list of link ids associated with cursor ids.
+/* Unfortunately, cursors can be freed before or after link is destroyed, so we
+ * can't actually depend on having a link to the database. So, we're going to
+ * keep a separate list of link ids associated with cursor ids.
  *
- * When a cursor is to be freed, we try to find this cursor in the list.  If
+ * When a cursor is to be freed, we try to find this cursor in the list. If
  * it's there, kill it.  If not, the db connection is probably already dead.
  *
  * When a connection is killed, we sweep through the list and kill all the
- * cursors for that link.
- */
+ * cursors for that link. */
 typedef struct _cursor_node {
 	int64_t cursor_id;
 	void *socket;
@@ -504,16 +541,12 @@ PHP_MSHUTDOWN_FUNCTION(mongo);
 PHP_RINIT_FUNCTION(mongo);
 PHP_MINFO_FUNCTION(mongo);
 
-/*
-* serialization functions
-*/
+/* Serialization functions */
 PHP_FUNCTION(bson_encode);
 PHP_FUNCTION(bson_decode);
 
 
-/*
- * Mutex macros
- */
+/* Mutex macros */
 #ifdef WIN32
 # define LOCK(lk) { \
 	int ret = -1; \
@@ -562,21 +595,21 @@ int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preferenc
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	/* php.ini options */
 	char *default_host;
-	int default_port;
-	int request_id;
+	long default_port;
+	long request_id;
 	int chunk_size;
 
 	/* $ alternative */
 	char *cmd_char;
-	int native_long;
-	int long_as_object;
-	int allow_empty_keys;
+	long native_long;
+	long long_as_object;
+	long allow_empty_keys;
 
 	/* _id generation helpers */
 	int inc, pid, machine;
 
 	/* timestamp generation helper */
-	int ts_inc;
+	long ts_inc;
 	char *errmsg;
 	int response_num;
 	int pool_size;
@@ -612,7 +645,7 @@ extern zend_module_entry mongo_module_entry;
  * MongoException:
  * 0: The <class> object has not been correctly initialized by its constructor
  * 1: zero-length keys are not allowed, did you use $ with double quotes?
- * 2: '.' not allowed in key: <key>
+ * 2: characters not allowed in key: <key>
  * 3: insert too large: <size>, max: 16000000
  * 4: no elements in doc
  * 5: size of BSON doc is <size> bytes, max 4MB
@@ -630,6 +663,8 @@ extern zend_module_entry mongo_module_entry;
  * 17: The MongoCollection object has not been correctly initialized by its constructor
  * 18: ID must be valid hex characters
  * 19: Invalid object ID
+ * 20: Cannot run command count(): (error message from MongoDB)
+ * 21: Namespace field is invalid.
  *
  * MongoConnectionException:
  * 0: connection to <host> failed: <errmsg>
@@ -649,6 +684,10 @@ extern zend_module_entry mongo_module_entry;
  * 25: Option with no string key
  * 26: SSL support is only available when compiled against PHP Streams
  * 27: Driver options are only available when compiled against PHP Streams
+ * 28: GSSAPI authentication mechanism is only available when compiled against PHP Streams
+ * 29: Plain authentication mechanism is only available when compiled against PHP Streams
+ * 31: Unknown failure doing io_stream_read.
+ * 32: When the remote server closes the connection in io_stream_read.
  * 72: Could not retrieve connection
  *
  * MongoCursorTimeoutException:
@@ -676,7 +715,12 @@ extern zend_module_entry mongo_module_entry;
  * 18: Trying to get more, but cannot find server
  * 19: max number of retries exhausted, couldn't send query
  * 20: something exceptional has happened, and the cursor is now dead
- * various: database error
+ * 21: invalid string length for key "%s"
+ * 22: invalid binary length for key "%s"
+ * 23: Can not natively represent the long %llu on this platform
+ * 24: invalid code length for key "%s"
+ * 28: recv_header() (abs()) recv_data() stream handlers error (timeout)
+ * 29: Unknown query/get_more failure
  *
  * MongoGridFSException:
  * 0: 

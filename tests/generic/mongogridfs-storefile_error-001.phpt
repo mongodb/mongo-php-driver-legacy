@@ -10,10 +10,10 @@ $db = $mongo->selectDB(dbname());
 
 $gridfs = $db->getGridFS();
 $gridfs->drop();
-$gridfs->storeFile(__FILE__, array('_id' => 1), array('safe' => true));
+$gridfs->storeFile(__FILE__, array('_id' => 1), array('w' => true));
 
 try {
-    $gridfs->storeFile(__FILE__, array('_id' => 1), array('safe' => true));
+    $gridfs->storeFile(__FILE__, array('_id' => 1), array('w' => true));
     var_dump(false);
 } catch (MongoGridFSException $e) {
     var_dump($e->getMessage(), $e->getCode());

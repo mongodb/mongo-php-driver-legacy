@@ -1,6 +1,7 @@
 --TEST--
 Test for MongoLog
 --SKIPIF--
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require "tests/utils/replicaset.inc"; ?>
 --FILE--
 <?php
@@ -16,7 +17,7 @@ MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::ALL);
 
 $config = MongoShellServer::getReplicasetInfo();
-$m = new Mongo("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
+$m = new MongoClient("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
 
 MongoLog::setModule(0);
 MongoLog::setLevel(0);
@@ -30,202 +31,179 @@ PARSE   INFO: - Switching connection type: REPLSET
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: get_server_version: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
-CON     FINE: get_server_flags: added tag dc:%s
-CON     FINE: get_server_flags: added tag server:%d
-CON     INFO: is_ping: pinging %s:%d;%s;X;%d
+CON     INFO: get_server_version: server version: %d.%d.%d (%i)
+CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     INFO: is_ping: last pinged at %d; time: %dms
-CON     FINE: discover_topology: checking ismaster for %s:%d;%s;X;%d
-CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
+CON     FINE: discover_topology: checking ismaster for %s:%d;%s;.;%d
+CON     FINE: found connection %s:%d;%s;.;%d (looking for %s:%d;%s;.;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     INFO: ismaster: set name: REPLICASET, ismaster: 1, secondary: 0, is_arbiter: 0
+CON     FINE: ismaster: added tag dc:ny
+CON     FINE: ismaster: added tag server:0
 CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
 CON     FINE: ismaster: the found replicaset name matches the expected one (%s).
-CON     INFO: ismaster: set name: %s, ismaster: 1, secondary: 0, is_arbiter: 0
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d
 CON     INFO: found host: %s:%d (passive)
 CON     INFO: ismaster: last ran at %d
 CON     FINE: discover_topology: ismaster worked
-CON     FINE: found connection %s:%d;%s;X;%d (looking for %s:%d;%s;X;%d)
+CON     FINE: found connection %s:%d;%s;.;%d (looking for %s:%d;%s;.;%d)
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: get_server_version: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: %d
+CON     INFO: get_server_version: server version: %d.%d.%d (%i)
+CON     INFO: is_ping: pinging %s:%d;%s;.;%d
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: %d
+CON     INFO: is_ping: last pinged at %d; time: %dms
+CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
-CON     FINE: get_server_flags: added tag dc:%s
-CON     FINE: get_server_flags: added tag server:%d
-CON     INFO: is_ping: pinging %s:%d;%s;X;%d
-CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 17
-CON     INFO: is_ping: last pinged at %d; time: %dms
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
+CON     FINE: ismaster: added tag dc:sf
+CON     FINE: ismaster: added tag server:2
+CON     INFO: ismaster: last ran at %d
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: get_server_version: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: %s
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
-CON     FINE: get_server_flags: added tag dc:%s
-CON     FINE: get_server_flags: added tag server:%d
-CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
+CON     FINE: send_packet: data_size: %d
+CON     INFO: get_server_version: server version: %d.%d.%d (%i)
+CON     INFO: is_ping: pinging %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 17
+CON     FINE: send_packet: data_size: %d
 CON     INFO: is_ping: last pinged at %d; time: %dms
+CON     INFO: ismaster: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: %d
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
+CON     FINE: ismaster: added tag dc:ny
+CON     FINE: ismaster: added tag server:1
+CON     INFO: ismaster: last ran at %d
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: get_server_version: start
 CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: %s
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
-CON     FINE: get_server_flags: added tag dc:%s
-CON     FINE: get_server_flags: added tag server:%d
-CON     INFO: is_ping: pinging %s:%d;REPLICASET;X;%d
+CON     FINE: send_packet: data_size: %d
+CON     INFO: get_server_version: server version: %d.%d.%d (%i)
+CON     INFO: is_ping: pinging %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     INFO: is_ping: last pinged at %d; time: %dms
-CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
-CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
-CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: %s maxMessageSizeBytes%s
 CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d (passive)
+CON     FINE: ismaster: added tag dc:sf
+CON     FINE: ismaster: added tag server:3
 CON     INFO: ismaster: last ran at %d
-CON     FINE: discover_topology: ismaster worked
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     INFO: ismaster: start
-CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: %s
-CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
-CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
-CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d (passive)
-CON     INFO: ismaster: last ran at %d
-CON     FINE: discover_topology: ismaster worked
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;X;%d
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     INFO: ismaster: start
-CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: %s
-CON     FINE: ismaster: the server name matches what we thought it'd be (%s:%d).
-CON     FINE: ismaster: the found replicaset name matches the expected one (REPLICASET).
-CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d
-CON     INFO: found host: %s:%d (passive)
-CON     INFO: ismaster: last ran at %d
-CON     FINE: discover_topology: ismaster worked
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
-CON     FINE: found connection %s:%d;REPLICASET;X;%d (looking for %s:%d;REPLICASET;X;%d)
+CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;.;%d
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
+CON     FINE: discover_topology: ismaster got skipped
+CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;.;%d
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
+CON     FINE: discover_topology: ismaster got skipped
+CON     FINE: discover_topology: checking ismaster for %s:%d;REPLICASET;.;%d
+CON     FINE: found connection %s:%d;REPLICASET;.;%d (looking for %s:%d;REPLICASET;.;%d)
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
+CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: filter_connections: adding connections:
-REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: filter_connections: done
 REPLSET FINE: limiting to servers with same replicaset name
-REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: limiting to servers with same replicaset name: done
 REPLSET FINE: limiting by credentials
-REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
-REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
 REPLSET FINE: selecting near servers: nearest is 0ms
-REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: selecting near server: done
 REPLSET INFO: pick server: random element %d
-REPLSET INFO: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;X;%d
+REPLSET INFO: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET INFO:   - tag: dc:%s
 REPLSET INFO:   - tag: server:%d
