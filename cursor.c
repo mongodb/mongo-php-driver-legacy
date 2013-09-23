@@ -1209,11 +1209,8 @@ static int handle_error(mongo_cursor *cursor TSRMLS_DC)
 
 	/* check for $err */
 	if (
-		cursor->current && (
-			zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err") + 1, (void**)&err) == SUCCESS ||
-			/* getLastError can return an error here */
-			(zend_hash_find(Z_ARRVAL_P(cursor->current), "err", strlen("err") + 1, (void**)&err) == SUCCESS && Z_TYPE_PP(err) == IS_STRING)
-		)
+		cursor->current &&
+		zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err") + 1, (void**)&err) == SUCCESS
 	) {
 		zval **code_z, *exception;
 		/* default error code */
