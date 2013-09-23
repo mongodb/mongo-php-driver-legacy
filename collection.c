@@ -1108,7 +1108,7 @@ PHP_METHOD(MongoCollection, remove)
    Create the $keys index if it does not already exist */
 PHP_METHOD(MongoCollection, ensureIndex)
 {
-	zval *keys, *options = 0, *db, *system_indexes, *collection, *data;
+	zval *keys, *options = 0, *db, *collection, *data;
 	mongo_collection *c;
 	zend_bool done_name = 0;
 
@@ -1139,12 +1139,8 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	/* get the system.indexes collection */
 	db = c->parent;
 
-	MAKE_STD_ZVAL(system_indexes);
-	ZVAL_STRING(system_indexes, "system.indexes", 1);
-
-	MAKE_STD_ZVAL(collection);
-	MONGO_METHOD1(MongoDB, selectCollection, collection, db, system_indexes);
-	PHP_MONGO_CHECK_EXCEPTION3(&keys, &system_indexes, &collection);
+	collection = php_mongodb_selectcollection(db, "system.indexes", strlen("system.indexes") TSRMLS_CC);
+	PHP_MONGO_CHECK_EXCEPTION2(&keys, &collection);
 
 	/* set up data */
 	MAKE_STD_ZVAL(data);
@@ -1217,7 +1213,6 @@ PHP_METHOD(MongoCollection, ensureIndex)
 
 	zval_ptr_dtor(&options);
 	zval_ptr_dtor(&data);
-	zval_ptr_dtor(&system_indexes);
 	zval_ptr_dtor(&collection);
 	zval_ptr_dtor(&keys);
 }
@@ -1288,16 +1283,11 @@ PHP_METHOD(MongoCollection, deleteIndexes)
    Get all indexes for this collection */
 PHP_METHOD(MongoCollection, getIndexInfo)
 {
-	zval *collection, *i_str, *query, *cursor, *next;
+	zval *collection, *query, *cursor, *next;
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	MAKE_STD_ZVAL(collection);
-
-	MAKE_STD_ZVAL(i_str);
-	ZVAL_STRING(i_str, "system.indexes", 1);
-	MONGO_METHOD1(MongoDB, selectCollection, collection, c->parent, i_str);
-	zval_ptr_dtor(&i_str);
+	collection = php_mongodb_selectcollection(c->parent, "system.indexes", strlen("system.indexes") TSRMLS_CC);
 	PHP_MONGO_CHECK_EXCEPTION1(&collection);
 
 	MAKE_STD_ZVAL(query);
@@ -1795,9 +1785,9 @@ PHP_METHOD(MongoCollection, __get)
 	/* This is a little trickier than the getters in Mongo and MongoDB... we
 	 * need to combine the current collection name with the parameter passed
 	 * in, get the parent db, then select the new collection from it. */
-	zval *full_name;
-	char *full_name_s, *name;
-	int name_len;
+	zval *collection;
+	char *full_name, *name;
+	int full_name_len, name_len;
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
@@ -1812,14 +1802,16 @@ PHP_METHOD(MongoCollection, __get)
 		RETURN_ZVAL(c->parent, 1, 0);
 	}
 
-	spprintf(&full_name_s, 0, "%s.%s", Z_STRVAL_P(c->name), name);
-	MAKE_STD_ZVAL(full_name);
-	ZVAL_STRING(full_name, full_name_s, 0);
+	full_name_len = spprintf(&full_name, 0, "%s.%s", Z_STRVAL_P(c->name), name);
 
 	/* select this collection */
-	MONGO_METHOD1(MongoDB, selectCollection, return_value, c->parent, full_name);
-
-	zval_ptr_dtor(&full_name);
+	collection = php_mongodb_selectcollection(c->parent, full_name, full_name_len TSRMLS_CC);
+	if (collection) {
+		/* Only copy the zval into return_value if it worked. If collection is
+		 * NULL here, an exception is set */
+		RETVAL_ZVAL(collection, 0, 1);
+	}
+	efree(full_name);
 }
 /* }}} */
 

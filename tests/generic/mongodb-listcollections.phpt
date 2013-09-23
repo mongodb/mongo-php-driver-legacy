@@ -1,5 +1,5 @@
 --TEST--
-Database: Enumerating collections
+MongoDB::listCollections()
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
