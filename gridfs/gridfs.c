@@ -43,13 +43,13 @@ zend_class_entry *mongo_ce_GridFS = NULL;
 
 typedef struct {
 	FILE *file;
-	int fd;                     /* underlying file descriptor */
+	int64_t fd;                     /* underlying file descriptor */
 	unsigned is_process_pipe:1; /* use pclose instead of fclose */
 	unsigned is_pipe:1;         /* don't try and seek */
 	unsigned cached_fstat:1;    /* sb is valid */
 	unsigned _reserved:29;
 
-	int lock_flag;              /* stores the lock state */
+	int64_t lock_flag;              /* stores the lock state */
 	char *temp_file_name;       /* if non-null, this is the path to a temporary file that
 	                             * is to be deleted when the stream is closed */
 #if HAVE_FLUSHIO
@@ -68,8 +68,8 @@ typedef struct {
 	struct stat sb;
 } php_stdio_stream_data;
 
-static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
-static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options TSRMLS_DC);
+static int64_t setup_file_fields(zval *zfile, char *filename, int64_t size TSRMLS_DC);
+static zval* insert_chunk(zval *chunks, zval *zid, int64_t chunk_num, char *buf, int64_t chunk_size, zval *options TSRMLS_DC);
 
 /* {{{ proto MongoGridFS::__construct(MongoDB db [, string prefix = "fs.files" [, string chunks = "fs.chunks"]])
    Creates a new MongoGridFS object */
@@ -218,7 +218,7 @@ PHP_METHOD(MongoGridFS, find)
 }
 /* }}} */
 
-static int get_chunk_size(zval *array TSRMLS_DC)
+static int64_t get_chunk_size(zval *array TSRMLS_DC)
 {
 	zval **zchunk_size = 0;
 
@@ -232,9 +232,9 @@ static int get_chunk_size(zval *array TSRMLS_DC)
 }
 
 
-static long setup_file(FILE *fp, char *filename TSRMLS_DC)
+static int64_t setup_file(FILE *fp, char *filename TSRMLS_DC)
 {
-	long size = 0;
+	int64_t size = 0;
 
 	/* try to open the file */
 	if (!fp) {
@@ -244,13 +244,15 @@ static long setup_file(FILE *fp, char *filename TSRMLS_DC)
 
 	/* get size */
 	fseek(fp, 0, SEEK_END);
+    
 	size = ftell(fp);
+    /*
 	if (size >= 0xffffffff) {
 		zend_throw_exception_ex(mongo_ce_GridFSException, 4 TSRMLS_CC, "file %s is too large: %ld bytes", filename, size);
 		fclose(fp);
 		return FAILURE;
 	}
-
+    */
 	/* reset file ptr */
 	fseek(fp, 0, SEEK_SET);
 
@@ -300,7 +302,7 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC)
 		zval *data = 0, *response = 0, **md5 = 0;
 
 		/* get the prefix */
-		int prefix_len = strchr(Z_STRVAL_P(c->name), '.') - Z_STRVAL_P(c->name);
+		int64_t prefix_len = strchr(Z_STRVAL_P(c->name), '.') - Z_STRVAL_P(c->name);
 		char *prefix = estrndup(Z_STRVAL_P(c->name), prefix_len);
 
 		/* create command */
@@ -338,7 +340,7 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC)
 static void gridfs_rewrite_cursor_exception(TSRMLS_D)
 {
 	char *message = NULL;
-	long code = 0;
+	int64_t code = 0;
 	smart_str tmp_message = { 0 };
 
 	if (EG(exception)) {
@@ -405,9 +407,9 @@ static void cleanup_stale_chunks(INTERNAL_FUNCTION_PARAMETERS, zval *cleanup_ids
 PHP_METHOD(MongoGridFS, storeBytes)
 {
 	char *bytes = 0;
-	int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0,
+	int64_t bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0,
 	pos = 0;
-	int revert = 0;
+	int64_t revert = 0;
 
 	zval temp;
 	zval *extra = 0, *zid = 0, *zfile = 0, *chunks = 0, *options = 0;
@@ -539,7 +541,7 @@ cleanup_on_failure:
  * - length
  * these fields are only added if the user hasn't defined them.
  */
-static int setup_file_fields(zval *zfile, char *filename, int length TSRMLS_DC)
+static int64_t setup_file_fields(zval *zfile, char *filename, int64_t length TSRMLS_DC)
 {
 	zval temp;
 
@@ -577,7 +579,7 @@ static int setup_file_fields(zval *zfile, char *filename, int length TSRMLS_DC)
  * - 1 ref to zid
  * - buf
  */
-static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options  TSRMLS_DC) {
+static zval* insert_chunk(zval *chunks, zval *zid, int64_t chunk_num, char *buf, int64_t chunk_size, zval *options  TSRMLS_DC) {
 	zval temp;
 	zval *zchunk, *zbin, *zretval = NULL;
 	zval **_id;
@@ -630,9 +632,9 @@ PHP_METHOD(MongoGridFS, storeFile)
 {
 	zval *fh, *extra = 0, *options = 0;
 	char *filename = 0;
-	int chunk_num = 0, global_chunk_size = 0, fd = -1;
-	long size = 0, pos = 0;
-	int revert = 0;
+	int64_t chunk_num = 0, global_chunk_size = 0, fd = -1;
+	int64_t size = 0, pos = 0;
+	int64_t revert = 0;
 	FILE *fp = 0;
 
 	zval temp;
@@ -719,15 +721,15 @@ PHP_METHOD(MongoGridFS, storeFile)
 
 	/* insert chunks */
 	while (pos < size || fp == 0) {
-		int result = 0;
+		int64_t result = 0;
 		char *buf;
 		zval *chunk_id = NULL;
 
-		int chunk_size = size-pos >= global_chunk_size || fp == 0 ? global_chunk_size : size-pos;
+		int64_t chunk_size = size-pos >= global_chunk_size || fp == 0 ? global_chunk_size : size-pos;
 		buf = (char*)emalloc(chunk_size);
 
 		if (fp) {
-			int retval = (int)fread(buf, 1, chunk_size, fp);
+			int64_t retval = (int64_t)fread(buf, 1, chunk_size, fp);
 			if (retval < chunk_size) {
 				zend_throw_exception_ex(mongo_ce_GridFSException, 9 TSRMLS_CC, "error reading file %s", filename);
 				revert = 1;

@@ -31,17 +31,17 @@ extern zend_class_entry *mongo_ce_Int64;
 
 zend_class_entry *mongo_ce_GridFSFile = NULL;
 
-typedef int (*apply_copy_func_t)(void *to, char *from, int len);
-static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to, int max TSRMLS_DC);
-static int copy_bytes(void *to, char *from, int len);
-static int copy_file(void *to, char *from, int len);
+typedef int64_t (*apply_copy_func_t)(void *to, char *from, int64_t len);
+static int64_t apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to, int64_t max TSRMLS_DC);
+static int64_t copy_bytes(void *to, char *from, int64_t len);
+static int64_t copy_file(void *to, char *from, int64_t len);
 
 /* {{{ proto MongoGridFSFile::__construct(MongoGridFS gridfs, array file)
    Creates a new MongoGridFSFile object */
 PHP_METHOD(MongoGridFSFile, __construct)
 {
 	zval *gridfs = 0, *file = 0;
-	long flags = 0;
+	int64_t flags = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oa|l", &gridfs, mongo_ce_GridFS, &file, &flags) == FAILURE) {
 		zval *object = getThis();
@@ -284,7 +284,7 @@ PHP_METHOD(MongoGridFSFile, getBytes)
 }
 /* }}} */
 
-static int copy_bytes(void *to, char *from, int len)
+static int64_t copy_bytes(void *to, char *from, int64_t len)
 {
 	char *winIsDumb = *(char**)to;
 	memcpy(winIsDumb, from, len);
@@ -294,9 +294,9 @@ static int copy_bytes(void *to, char *from, int len)
 	return len;
 }
 
-static int copy_file(void *to, char *from, int len)
+static int64_t copy_file(void *to, char *from, int64_t len)
 {
-	int written = fwrite(from, 1, len, (FILE*)to);
+	int64_t written = fwrite(from, 1, len, (FILE*)to);
 
 	if (written != len) {
 		zend_error(E_WARNING, "Incorrect byte count. Expected: %d, got %d", len, written);
@@ -305,9 +305,9 @@ static int copy_file(void *to, char *from, int len)
 	return written;
 }
 
-static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to, int max TSRMLS_DC)
+static int64_t apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void *to, int64_t max TSRMLS_DC)
 {
-	int total = 0;
+	int64_t total = 0;
 	zval *next;
 
 	MAKE_STD_ZVAL(next);
