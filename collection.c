@@ -2035,35 +2035,40 @@ static int php_mongo_trigger_error_on_command_failure(mongo_connection *connecti
 
 static int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document TSRMLS_DC)
 {
-	zval **tmp;
+	zval **err;
 
 	/* Check if the GLE command itself failed */
 	if (php_mongo_trigger_error_on_command_failure(connection, document TSRMLS_CC) == FAILURE) {
 		return FAILURE;
 	}
 
-	/* If the previous write operation failed, the GLE document will have its
-	 * err field populated with a non-empty string. */
-	if (zend_hash_find(Z_ARRVAL_P(document), "err", strlen("err") + 1, (void**)&tmp) == SUCCESS && Z_TYPE_PP(tmp) == IS_STRING) {
-		zval *exception;
-		char *message;
-		long code;
+	/* Check for an error message in the "err" field. Technically, a non-null
+	 * value indicates an error, but we'll check for a non-empty string. */
+	if (
+		zend_hash_find(Z_ARRVAL_P(document), "err", strlen("err") + 1, (void**) &err) == SUCCESS &&
+		Z_TYPE_PP(err) == IS_STRING && Z_STRLEN_PP(err) > 0
+	) {
+		zval *exception, **code_z, **wnote_z;
+		/* Default error code from handle_error() in cursor.c */
+		long code = 4;
 
-		if (Z_STRLEN_PP(tmp) == 0) {
-			return SUCCESS;
+		/* Check for the error code in the "code" field. */
+		if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &code_z) == SUCCESS) {
+			convert_to_long_ex(code_z);
+			code = Z_LVAL_PP(code_z);
 		}
 
-		message = Z_STRVAL_PP(tmp);
-
-		/* GLE may re-use the code field for the write operation error code */
-		if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &tmp) == SUCCESS) {
-			convert_to_long_ex(tmp);
-			code = Z_LVAL_PP(tmp);
+		/* If additional information is found in the "wnote" field, include it
+		 * in the exception message. Otherwise, just use "err". */
+		if (
+			zend_hash_find(Z_ARRVAL_P(document), "wnote", strlen("wnote") + 1, (void**) &wnote_z) == SUCCESS &&
+			Z_TYPE_PP(wnote_z) == IS_STRING && Z_STRLEN_PP(wnote_z) > 0
+		) {
+			exception = mongo_cursor_throw(mongo_ce_WriteConcernException, connection, code TSRMLS_CC, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote_z));
 		} else {
-			code = 0;
+			exception = mongo_cursor_throw(mongo_ce_WriteConcernException, connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
 		}
 
-		exception = mongo_cursor_throw(mongo_ce_WriteConcernException, connection, code TSRMLS_CC, "%s", message);
 		zend_update_property(mongo_ce_WriteConcernException, exception, "document", strlen("document"), document TSRMLS_CC);
 
 		return FAILURE;

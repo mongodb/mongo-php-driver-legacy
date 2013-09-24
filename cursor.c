@@ -1204,8 +1204,7 @@ static int have_error_flags(mongo_cursor *cursor)
  * situation has ocurred on the cursor */
 static int handle_error(mongo_cursor *cursor TSRMLS_DC)
 {
-	zval **err = NULL, **wnote = NULL;
-	char *error_message = NULL;
+	zval **err = NULL;
 
 	/* check for $err */
 	if (
@@ -1222,22 +1221,9 @@ static int handle_error(mongo_cursor *cursor TSRMLS_DC)
 			code = Z_LVAL_PP(code_z);
 		}
 
-		error_message = strdup(Z_STRVAL_PP(err));
-
-		/* We check for additional information as well, in the "wnote" property */
-		if (
-			(zend_hash_find(Z_ARRVAL_P(cursor->current), "wnote", strlen("wnote") + 1, (void**) &wnote) == SUCCESS) &&
-			(Z_TYPE_PP(wnote) == IS_STRING)
-		) {
-			free(error_message);
-			error_message = malloc(Z_STRLEN_PP(err) + 2 + Z_STRLEN_PP(wnote) + 1);
-			snprintf(error_message, Z_STRLEN_PP(err) + 2 + Z_STRLEN_PP(wnote) + 1, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote));
-		}
-
 		/* TODO: Determine if we need to throw MongoCursorTimeoutException
 		 * or MongoWriteConcernException here, depending on the code. */
-		exception = mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, code TSRMLS_CC, "%s", error_message);
-		free(error_message);
+		exception = mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
 		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current TSRMLS_CC);
 		zval_ptr_dtor(&cursor->current);
 		cursor->current = 0;
