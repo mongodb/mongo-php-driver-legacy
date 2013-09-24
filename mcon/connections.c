@@ -697,7 +697,7 @@ int mongo_connection_get_server_version(mongo_con_manager *manager, mongo_connec
 
 	/* Find read preferences tags */
 	if (bson_find_field_as_array(ptr, "versionArray", (char**) &version_array)) {
-		char *it, *name;
+		char *it;
 
 		it = version_array;
 
