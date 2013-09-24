@@ -73,7 +73,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	}
 
 	if (options->ssl) {
-		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_TLS_CLIENT, NULL TSRMLS_CC) < 0) {
+		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_SSLv23_CLIENT, NULL TSRMLS_CC) < 0) {
 			*error_message = strdup("Cannot setup SSL, is ext/openssl loaded?");
 			php_stream_close(stream);
 			return NULL;
