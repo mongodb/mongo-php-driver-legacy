@@ -42,10 +42,17 @@ function makeServer($SERVERS, $server, $bit) {
         $sc = $server->getStandaloneConfig();
         list($shost, $sport) = explode(":", trim($sc));
         try {
-            $path = dirname($SHELL);
-            if (!file_exists($path . "/mongobridge")) {
-                throw new DebugException("mongobridge doesn't exist in '$path'", "");
+            if (strncasecmp(php_uname(), 'win', 3) === 0) {
+                // Note: where.exe requires Windows Server 2003 or newer (not XP)
+                if (system('where mongobridge.exe', $status) === false || $status !== 0) {
+                    throw new DebugException('Could not find mongobridge in $PATH');
+                }
+            } else {
+                if (system('which mongobridge', $status) === false || $status !== 0) {
+                    throw new DebugException('Could not find mongobridge in $PATH');
+                }
             }
+
             $server->makeBridge($sport, 1000);
             $dsn = $server->getBridgeConfig();
         } catch(DebugException $e) {
