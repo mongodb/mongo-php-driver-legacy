@@ -48,7 +48,7 @@ array(15) {
   ["started_iterating"]=>
   bool(true)
   ["id"]=>
-  int(%d)
+  %s(%d)
   ["at"]=>
   int(0)
   ["numReturned"]=>

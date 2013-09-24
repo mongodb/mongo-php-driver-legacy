@@ -743,7 +743,11 @@ static char *get_cmd_ns(char *db, int db_len)
 /* Actually execute the command after doing a few extra checks.
  *
  * This function can return NULL but *only* if an exception is set. So please
- * check for NULL and/or EG(exception) in the calling function. */
+ * check for NULL and/or EG(exception) in the calling function. 
+ *
+ * The function also returns the used connection through the &used_connection
+ * argument so that command cursors are be able to use the exact same
+ * connection as the initial cursor command. */
 zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int cursor_allowed, mongo_connection **used_connection TSRMLS_DC)
 {
 	zval *temp, *cursor, *ns, *retval;
@@ -764,7 +768,7 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 		zval **cursor;
 
 		if (zend_hash_find(HASH_P(cmd), "cursor", strlen("cursor") + 1, (void**)&cursor) == SUCCESS) {
-			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "You can't ask for a cursor with 'command()' use 'cursorCommand()'", dbname);
+			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "You can't ask for a cursor with 'command()' use 'cursorCommand()'");
 			return NULL;
 		}
 	}
@@ -907,6 +911,8 @@ static int mongo_db_get_cursor_info(zval *document, int64_t *cursor_id, char **c
 }
 /* }}} */
 
+/* {{{ proto MongoCursor MongoDB::cursorCommand(array command)
+   Runs a command with the "cursor" option forced to return a MongoCursor */
 PHP_METHOD(MongoDB, cursorCommand)
 {
 	zval *cmd, *retval, *options = NULL;
@@ -942,7 +948,7 @@ PHP_METHOD(MongoDB, cursorCommand)
 
 	/* Fetch the 64bit cursor ID for our psuedo cursor */
 	if (mongo_db_get_cursor_info(retval, &cursor_id, &cursor_ns TSRMLS_CC) == FAILURE) {
-		zend_throw_exception(mongo_ce_ResultException, "The returned document does not return a valid cursor ID", 3 TSRMLS_CC);
+		zend_throw_exception(mongo_ce_ResultException, "The returned document did not return a valid cursor ID", 3 TSRMLS_CC);
 		zval_ptr_dtor(&retval);
 		RETURN_FALSE;
 	}
@@ -953,6 +959,7 @@ PHP_METHOD(MongoDB, cursorCommand)
 
 	RETVAL_ZVAL(retval, 1, 1);
 }
+/* }}} */
 
 zval* mongo_db__create_fake_cursor(zval *zmongoclient, mongo_connection *connection, char *ns, int64_t cursor_id TSRMLS_DC)
 {
