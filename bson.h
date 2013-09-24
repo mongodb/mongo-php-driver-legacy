@@ -87,6 +87,9 @@ int php_mongo_write_kill_cursors(buffer*, int64_t, int max_message_size TSRMLS_D
 int resize_buf(buffer*, int);
 
 int zval_to_bson(buffer*, HashTable*, int, int max_document_size TSRMLS_DC);
+
+/* Converts a BSON document to a zval. The conversions options are a bitmask
+ * of the BSON_OPT_* constants */
 char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_DC);
 
 /* Initialize buffer to contain "\0", so mongo_buf_append will start appending
