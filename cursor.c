@@ -1424,6 +1424,9 @@ PHP_METHOD(MongoCursor, reset)
 void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 {
 	if (cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) {
+		if (cursor->at != 0) {
+			zend_throw_exception_ex(mongo_ce_CursorException, 30 TSRMLS_CC, "Can't reset command cursors");
+		}
 		return;
 	}
 	cursor->buf.pos = cursor->buf.start;

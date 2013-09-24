@@ -737,6 +737,7 @@ extern zend_module_entry mongo_module_entry;
  * 24: invalid code length for key "%s"
  * 28: recv_header() (abs()) recv_data() stream handlers error (timeout)
  * 29: Unknown query/get_more failure
+ * 30: can't reset/rewind a command cursor
  *
  * MongoGridFSException:
  * 0: 
