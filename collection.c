@@ -1993,7 +1993,7 @@ static int php_mongo_trigger_error_on_command_failure(mongo_connection *connecti
 
 	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
 		if ((Z_TYPE_PP(tmpvalue) == IS_LONG && Z_LVAL_PP(tmpvalue) < 1) || (Z_TYPE_PP(tmpvalue) == IS_DOUBLE && Z_DVAL_PP(tmpvalue) < 1)) {
-			zval **tmp, *exception;
+			zval **tmp, *error_doc, *exception;
 			char *message;
 			long code;
 
@@ -2022,7 +2022,14 @@ static int php_mongo_trigger_error_on_command_failure(mongo_connection *connecti
 				exception = zend_throw_exception(mongo_ce_ResultException, message, code TSRMLS_CC);
 			}
 
+			/* Since document may be a return_value (if this function is invoked
+			 * through php_mongo_trigger_error_on_gle() and not findAndModify),
+			 * copy it to a new zval before updating the exception property. */
+			MAKE_STD_ZVAL(error_doc);
+			array_init(error_doc);
+			zend_hash_copy(Z_ARRVAL_P(error_doc), Z_ARRVAL_P(document), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
 			zend_update_property(mongo_ce_ResultException, exception, "document", strlen("document"), document TSRMLS_CC);
+			zval_ptr_dtor(&error_doc);
 
 			return FAILURE;
 		}
@@ -2045,7 +2052,7 @@ static int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *do
 		zend_hash_find(Z_ARRVAL_P(document), "err", strlen("err") + 1, (void**) &err) == SUCCESS &&
 		Z_TYPE_PP(err) == IS_STRING && Z_STRLEN_PP(err) > 0
 	) {
-		zval *exception, **code_z, **wnote_z;
+		zval *error_doc, *exception, **code_z, **wnote_z;
 		/* Default error code from handle_error() in cursor.c */
 		long code = 4;
 
@@ -2066,7 +2073,13 @@ static int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *do
 			exception = mongo_cursor_throw(mongo_ce_WriteConcernException, connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
 		}
 
-		zend_update_property(mongo_ce_WriteConcernException, exception, "document", strlen("document"), document TSRMLS_CC);
+		/* Since document is a return_value (thanks to MONGO_METHOD stuff), copy
+		 * it to a new zval before updating the exception property. */
+		MAKE_STD_ZVAL(error_doc);
+		array_init(error_doc);
+		zend_hash_copy(Z_ARRVAL_P(error_doc), Z_ARRVAL_P(document), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+		zend_update_property(mongo_ce_WriteConcernException, exception, "document", strlen("document"), error_doc TSRMLS_CC);
+		zval_ptr_dtor(&error_doc);
 
 		return FAILURE;
 	}
