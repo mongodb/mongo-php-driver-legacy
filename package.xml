@@ -30,11 +30,11 @@
   <active>yes</active>
  </developer>
 
- <date>2013-08-15</date>
- <time>10:59:22</time>
+ <date>2013-09-25</date>
+ <time>10:24:22</time>
  <version>
-  <release>1.4.3</release>
-  <api>1.4.3</api>
+  <release>1.4.4</release>
+  <api>1.4.4</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,15 +43,16 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-382] - When 'replicaSet' option is used, authentication calls are being sent to the arbiter server
-    * [PHP-392] - Arbiter in the seed list acts wonky
-    * [PHP-869] - ReadPreference.PrimaryPreferred + Tag sets should send to primary if available
-    * [PHP-877] - auto gen _id clashes on heavy inserts
-    * [PHP-885] - Segfault on request shutdown when using save()
-    * [PHP-890] - PHP Driver crashes on shutdown
-
-** Improvement
-    * [PHP-423] - MongoDate support for 64-bit timestamps on 32-bit systems
+    * [PHP-773] - Fix the persistence issue with logging stream contexts
+    * [PHP-874] - New Replica Set connections hang when secondaries are creating indexes during initialSync
+    * [PHP-893] - Fix documentation of MongoCursor::$timeout default value
+    * [PHP-894] - BSON decoding segfaults if string length prefix is zero
+    * [PHP-896] - BSON decoding segfaults reading past buffer endpoint
+    * [PHP-898] - Cursor exception should not print strerror() as int
+    * [PHP-901] - Detect server state changes
+    * [PHP-906] - Segmentation Fault - in mongo_deregister_callback_from_connection when calling MongoClient->close(true)
+    * [PHP-907] - BSON decoding of DBPointer does not set MongoId::$id property
+    * [PHP-912] - PHP driver should use SSLv23 instead of TLS
  </notes>
 
  <contents>
@@ -172,6 +173,32 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+
+  <release>
+   <date>2013-08-15</date>
+   <time>10:59:22</time>
+   <version>
+    <release>1.4.3</release>
+    <api>1.4.3</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-382] - When 'replicaSet' option is used, authentication calls are being sent to the arbiter server
+    * [PHP-392] - Arbiter in the seed list acts wonky
+    * [PHP-869] - ReadPreference.PrimaryPreferred + Tag sets should send to primary if available
+    * [PHP-877] - auto gen _id clashes on heavy inserts
+    * [PHP-885] - Segfault on request shutdown when using save()
+    * [PHP-890] - PHP Driver crashes on shutdown
+
+** Improvement
+    * [PHP-423] - MongoDate support for 64-bit timestamps on 32-bit systems
+   </notes>
+  </release>
 
   <release>
    <date>2013-07-22</date>
