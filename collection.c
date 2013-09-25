@@ -565,6 +565,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, buffer *bu
 		zval *cursor = append_getlasterror(getThis(), buf, options, connection TSRMLS_CC);
 		if (cursor) {
 			do_gle_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
+			zval_ptr_dtor(&cursor);
 			retval = -1;
 		} else {
 			retval = 0;
@@ -687,7 +688,6 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 
 		free(error_message);
 		cursor->connection = NULL;
-		zval_ptr_dtor(&cursor_z);
 		return;
 	}
 
@@ -696,7 +696,6 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 		/* php_mongo_get_reply() throws exceptions */
 		mongo_manager_connection_deregister(manager, connection);
 		cursor->connection = NULL;
-		zval_ptr_dtor(&cursor_z);
 		return;
 	}
 
@@ -707,7 +706,6 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 	/* MongoCursor::getNext() threw an exception */
 	if (EG(exception) || (Z_TYPE_P(return_value) == IS_BOOL && Z_BVAL_P(return_value) == 0)) {
 		cursor->connection = NULL;
-		zval_ptr_dtor(&cursor_z);
 		return;
 	}
 
@@ -715,7 +713,6 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 	php_mongo_trigger_error_on_gle(cursor->connection, return_value TSRMLS_CC);
 
 	cursor->connection = NULL;
-	zval_ptr_dtor(&cursor_z);
 	return;
 }
 
