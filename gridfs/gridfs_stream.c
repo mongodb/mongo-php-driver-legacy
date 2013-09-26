@@ -44,10 +44,10 @@ extern zend_class_entry *mongo_ce_GridFSFile, *mongo_ce_GridFSException;
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC);
-static int64_t gridfs_close(php_stream *stream, int64_t close_handle TSRMLS_DC);
-static int64_t gridfs_stat(php_stream *stream, php_stream_statbuf *ssb TSRMLS_DC);
-static int64_t gridfs_option(php_stream *stream, int64_t option, int64_t value, void *ptrparam TSRMLS_DC);
-static int64_t gridfs_seek(php_stream *stream, off_t offset, int64_t whence, off_t *newoffs TSRMLS_DC);
+static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC);
+static int gridfs_stat(php_stream *stream, php_stream_statbuf *ssb TSRMLS_DC);
+static int gridfs_option(php_stream *stream, int option, int value, void *ptrparam TSRMLS_DC);
+static int gridfs_seek(php_stream *stream, off_t offset, int whence, off_t *newoffs TSRMLS_DC);
 
 typedef struct _gridfs_stream_data {
 	zval * fileObj; /* MongoGridFSFile Object */
@@ -182,7 +182,7 @@ php_stream* gridfs_stream_init(zval *file_object TSRMLS_DC)
 /* }}} */
 
 /* {{{ array fstat($fp) */
-static int64_t gridfs_stat(php_stream *stream, php_stream_statbuf *ssb TSRMLS_DC)
+static int gridfs_stat(php_stream *stream, php_stream_statbuf *ssb TSRMLS_DC)
 {
 	gridfs_stream_data *self = (gridfs_stream_data *) stream->abstract;
 
@@ -286,7 +286,7 @@ static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 /* }}} */
 
 /* {{{ fseek($fp, $bytes, $whence) */
-static int64_t gridfs_seek(php_stream *stream, off_t offset, int64_t whence, off_t *newoffs TSRMLS_DC)
+static int gridfs_seek(php_stream *stream, off_t offset, int whence, off_t *newoffs TSRMLS_DC)
 {
 	gridfs_stream_data *self = (gridfs_stream_data *) stream->abstract;
 	int64_t newoffset = 0;
@@ -325,7 +325,7 @@ static int64_t gridfs_seek(php_stream *stream, off_t offset, int64_t whence, off
 /* }}} */
 
 /* {{{ fclose($fp) */
-static int64_t gridfs_close(php_stream *stream, int64_t close_handle TSRMLS_DC)
+static int gridfs_close(php_stream *stream, int close_handle TSRMLS_DC)
 {
 	gridfs_stream_data *self = (gridfs_stream_data *) stream->abstract;
 
@@ -342,11 +342,11 @@ static int64_t gridfs_close(php_stream *stream, int64_t close_handle TSRMLS_DC)
 /* }}} */
 
 /* {{{ feof */
-static int64_t gridfs_option(php_stream *stream, int64_t option, int64_t value, void *ptrparam TSRMLS_DC)
+static int gridfs_option(php_stream *stream, int option, int value, void *ptrparam TSRMLS_DC)
 {
 
 	gridfs_stream_data * self = (gridfs_stream_data *) stream->abstract;
-	int64_t ret = -1;
+	int ret = -1;
 
 	switch (option) {
 		case PHP_STREAM_OPTION_CHECK_LIVENESS:
