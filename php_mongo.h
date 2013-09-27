@@ -27,6 +27,17 @@
 # endif
 #endif
 
+#if defined(_MSC_VER)
+# define strtoll(s, f, b) _atoi64(s)
+#elif !defined(HAVE_STRTOLL)
+# if defined(HAVE_ATOLL)
+#  define strtoll(s, f, b) atoll(s)
+# else
+#  define strtoll(s, f, b) strtol(s, f, b)
+# endif
+#endif
+
+
 #include "mcon/types.h"
 #include "mcon/read_preference.h"
 
@@ -479,7 +490,10 @@ typedef struct {
 
 	mongo_read_preference read_pref;
 
-	int force_primary; /* If set to 1 then the connection selection will request a WRITE (primary) connection */
+	/* Options that deal with changes to what the cursor documents return. For
+	 * example forcing longs to be returned as objects */
+	int cursor_options;
+
 	int dead;
 } mongo_cursor;
 
@@ -591,6 +605,7 @@ void mongo_init_MongoInt64(TSRMLS_D);
 zval *php_mongo_make_tagsets(mongo_read_preference *rp);
 void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp);
 int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preference, HashTable *tags TSRMLS_DC);
+int php_mongo_trigger_error_on_command_failure(zval *document TSRMLS_DC);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	/* php.ini options */
@@ -665,6 +680,7 @@ extern zend_module_entry mongo_module_entry;
  * 19: Invalid object ID
  * 20: Cannot run command count(): (error message from MongoDB)
  * 21: Namespace field is invalid.
+ * 22: You can't ask for a cursor with "command()" use "cursorCommand()".
  *
  * MongoConnectionException:
  * 0: connection to <host> failed: <errmsg>
@@ -721,6 +737,7 @@ extern zend_module_entry mongo_module_entry;
  * 24: invalid code length for key "%s"
  * 28: recv_header() (abs()) recv_data() stream handlers error (timeout)
  * 29: Unknown query/get_more failure
+ * 30: can't reset/rewind a command cursor
  *
  * MongoGridFSException:
  * 0: 
@@ -745,6 +762,12 @@ extern zend_module_entry mongo_module_entry;
  * 19: Could not find array key
  * 20: Chunk larger then chunksize
  * 21: Unexpected chunk format
+ *
+ * MongoResultException:
+ * 1: Unknown error executing command (empty document returned)
+ * 2: Command could not be executed for some reason (exception message tells why)
+ * 3: The returned document does not return a valid cursor ID
+ * 1000+: MongoDB server codes
  */
 
 /*

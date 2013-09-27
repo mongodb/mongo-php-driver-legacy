@@ -61,6 +61,11 @@ static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define MONGO_OP_REPLY_AWAIT_CAPABLE        8
 #define MONGO_OP_REPLY_ERROR_FLAGS          (MONGO_OP_REPLY_CURSOR_NOT_FOUND|MONGO_OP_REPLY_QUERY_FAILURE)
 
+/* Extension specific cursor options */
+#define MONGO_CURSOR_OPT_LONG_AS_OBJECT     1
+#define MONGO_CURSOR_OPT_CMD_CURSOR         2
+#define MONGO_CURSOR_OPT_FORCE_PRIMARY      4
+
 /* Macro to check whether a cursor is dead, and if so, bailout */
 #define MONGO_CURSOR_CHECK_DEAD \
 	if (cursor->dead) { \
@@ -247,6 +252,22 @@ void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit)
 	cursor->limit = limit;
 }
 
+void php_mongo_cursor_force_long_as_object(mongo_cursor *cursor)
+{
+	cursor->cursor_options |= MONGO_CURSOR_OPT_LONG_AS_OBJECT;
+}
+
+void php_mongo_cursor_force_command_cursor(mongo_cursor *cursor)
+{
+	cursor->cursor_options |= MONGO_CURSOR_OPT_CMD_CURSOR;
+}
+
+void php_mongo_cursor_force_primary(mongo_cursor *cursor)
+{
+	cursor->cursor_options |= MONGO_CURSOR_OPT_FORCE_PRIMARY;
+}
+
+
 
 /* {{{ MongoCursor->__construct(MongoClient connection, string ns [, array query [, array fields]])
    Constructs a MongoCursor */
@@ -417,11 +438,15 @@ PHP_METHOD(MongoCursor, hasNext)
 
 	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
-	if ((cursor->limit > 0 && cursor->at >= cursor->limit) || cursor->num == 0) {
-		if (cursor->cursor_id != 0) {
-			mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+	/* For command cursors, it's okay to have num = 0 on the first iteration,
+	 * so we skip this bit */
+	if (!(cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) || !cursor->num == 0) {
+		if ((cursor->limit > 0 && cursor->at >= cursor->limit) || cursor->num == 0) {
+			if (cursor->cursor_id != 0) {
+				mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+			}
+			RETURN_FALSE;
 		}
-		RETURN_FALSE;
 	}
 
 	if (cursor->at < cursor->num) {
@@ -880,7 +905,7 @@ PHP_METHOD(MongoCursor, info)
 
 		MAKE_STD_ZVAL(id_value);
 		ZVAL_NULL(id_value);
-		php_mongo_handle_int64(&id_value, cursor->cursor_id TSRMLS_CC);
+		php_mongo_handle_int64(&id_value, cursor->cursor_id, 0 TSRMLS_CC);
 		add_assoc_zval(return_value, "id", id_value);
 
 		add_assoc_long(return_value, "at", cursor->at);
@@ -1047,9 +1072,16 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 	 * really be refactored so that we can create a cursor with the correct
 	 * read/write setup already, instead of having to force a new mode later
 	 * (like we do for commands right now through
-	 * php_mongo_connection_force_primary).  See also MongoDB::command and
+	 * php_mongo_cursor_force_primary).  See also MongoDB::command and
 	 * append_getlasterror, where this has to be done too. */
-	cursor->connection = mongo_get_read_write_connection_with_callback(link->manager, link->servers, cursor->force_primary ? MONGO_CON_FLAG_WRITE : MONGO_CON_FLAG_READ, cursor, mongo_cursor_mark_dead, (char**) &error_message);
+	cursor->connection = mongo_get_read_write_connection_with_callback(
+		link->manager,
+		link->servers,
+		cursor->cursor_options & MONGO_CURSOR_OPT_FORCE_PRIMARY ? MONGO_CON_FLAG_WRITE : MONGO_CON_FLAG_READ,
+		cursor,
+		mongo_cursor_mark_dead,
+		(char**) &error_message
+	);
 
 	/* restore read preferences from backup */
 	mongo_read_preference_replace(&rp, &link->servers->read_pref);
@@ -1327,7 +1359,12 @@ PHP_METHOD(MongoCursor, next)
 	if (cursor->at < cursor->num) {
 		MAKE_STD_ZVAL(cursor->current);
 		array_init(cursor->current);
-		cursor->buf.pos = bson_to_zval((char*)cursor->buf.pos, Z_ARRVAL_P(cursor->current) TSRMLS_CC);
+		cursor->buf.pos = bson_to_zval(
+			(char*)cursor->buf.pos, 
+			Z_ARRVAL_P(cursor->current), 
+			cursor->cursor_options & MONGO_CURSOR_OPT_LONG_AS_OBJECT ? BSON_OPT_FORCE_LONG_AS_OBJECT : 0 
+			TSRMLS_CC
+		);
 
 		if (EG(exception)) {
 			zval_ptr_dtor(&cursor->current);
@@ -1384,6 +1421,12 @@ PHP_METHOD(MongoCursor, reset)
 
 void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 {
+	if (cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) {
+		if (cursor->at != 0) {
+			zend_throw_exception_ex(mongo_ce_CursorException, 30 TSRMLS_CC, "Can't reset command cursors");
+		}
+		return;
+	}
 	cursor->buf.pos = cursor->buf.start;
 
 	if (cursor->current) {
@@ -1440,7 +1483,7 @@ PHP_METHOD(MongoCursor, count)
 		add_assoc_long(cmd, "skip", cursor->skip);
 	}
 
-	response = php_mongodb_runcommand(cursor->zmongoclient, &cursor->read_pref, dbname, strlen(dbname), cmd, NULL TSRMLS_CC);
+	response = php_mongodb_runcommand(cursor->zmongoclient, &cursor->read_pref, dbname, strlen(dbname), cmd, NULL, 0, NULL TSRMLS_CC);
 	zval_ptr_dtor(&cmd);
 	efree(dbname);
 

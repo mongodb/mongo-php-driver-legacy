@@ -19,17 +19,14 @@
 zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
 
 /* Create a fake cursor that can be used to query the db from C. */
-zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC);
-
-/* Switch to primary connection */
-void php_mongo_connection_force_primary(mongo_cursor *cursor);
+zval* mongo_db__create_fake_cursor(zval *zmongoclient, mongo_connection *connection, char *ns, int64_t cursor_id TSRMLS_DC);
 
 zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_len TSRMLS_DC);
 
 /* Runs a MongoDB command.
  * NOTE: Exceptions are cleared, and the entire result document/error is returned.
  * On invalid database name or no servers available, returns NULL and raises an exception. */
-zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options TSRMLS_DC);
+zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int cursor_allowed, mongo_connection **used_connection TSRMLS_DC);
 
 PHP_METHOD(MongoDB, __construct);
 PHP_METHOD(MongoDB, __toString);
@@ -51,6 +48,7 @@ PHP_METHOD(MongoDB, createDBRef);
 PHP_METHOD(MongoDB, getDBRef);
 PHP_METHOD(MongoDB, execute);
 PHP_METHOD(MongoDB, command);
+PHP_METHOD(MongoDB, cursorCommand);
 PHP_METHOD(MongoDB, lastError);
 PHP_METHOD(MongoDB, prevError);
 PHP_METHOD(MongoDB, resetError);

@@ -319,7 +319,7 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC)
 		add_assoc_stringl(cmd, "root", prefix, prefix_len, 0);
 
 		/* run command */
-		response = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
+		response = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 		/* make sure there wasn't an error */
 		if (!EG(exception) && zend_hash_find(HASH_P(response), "md5", strlen("md5") + 1, (void**)&md5) == SUCCESS) {
@@ -488,7 +488,7 @@ PHP_METHOD(MongoGridFS, storeBytes)
 		add_assoc_long(cmd, "getlasterror", 1);
 
 		/* run command */
-		gle_retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
+		gle_retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 		if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
 			zval **err;
@@ -774,7 +774,7 @@ PHP_METHOD(MongoGridFS, storeFile)
 			add_assoc_long(cmd, "getlasterror", 1);
 
 			/* run command */
-			gle_retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL TSRMLS_CC);
+			gle_retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 			if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
 				zval **err;
