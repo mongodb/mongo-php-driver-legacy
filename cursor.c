@@ -540,7 +540,7 @@ PHP_METHOD(MongoCursor, batchSize)
 	long l;
 	mongo_cursor *cursor;
 
-	PREITERATION_SETUP;
+	PHP_MONGO_GET_CURSOR(getThis());
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
 		return;
