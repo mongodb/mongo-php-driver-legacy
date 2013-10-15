@@ -17,40 +17,40 @@
 #include <zend_exceptions.h>
 
 #include "../php_mongo.h"
-#include "cursor_exception.h"
+#include "write_concern_exception.h"
 
-extern zend_class_entry *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_CursorException;
 
-zend_class_entry *mongo_ce_CursorException;
+zend_class_entry *mongo_ce_WriteConcernException;
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
-static zend_function_entry MongoCursorException_methods[] = {
-	PHP_ME(MongoCursorException, getHost, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+static zend_function_entry MongoWriteConcernException_methods[] = {
+	PHP_ME(MongoWriteConcernException, getDocument, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
-/* {{{ proto string MongoCursorException::getHost()
-   Get the host related to this exception */
-PHP_METHOD(MongoCursorException, getHost)
+/* {{{ proto array MongoWriteConcernException::getDocument(void)
+ * Returns the full GLE document from MongoDB */
+PHP_METHOD(MongoWriteConcernException, getDocument)
 {
 	zval *h;
 
-	h = zend_read_property(mongo_ce_CursorException, getThis(), "host", strlen("host"), NOISY TSRMLS_CC);
+	h = zend_read_property(mongo_ce_WriteConcernException, getThis(), "document", strlen("document"), NOISY TSRMLS_CC);
 
 	RETURN_ZVAL(h, 1, 0);
 }
 /* }}} */
 
-void mongo_init_MongoCursorException(TSRMLS_D)
+void mongo_init_MongoWriteConcernException(TSRMLS_D)
 {
 	zend_class_entry ce;
 
-	INIT_CLASS_ENTRY(ce, "MongoCursorException", MongoCursorException_methods);
-	mongo_ce_CursorException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
+	INIT_CLASS_ENTRY(ce, "MongoWriteConcernException", MongoWriteConcernException_methods);
+	mongo_ce_WriteConcernException = zend_register_internal_class_ex(&ce, mongo_ce_CursorException, NULL TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_CursorException, "host", strlen("host"), ZEND_ACC_PRIVATE|ZEND_ACC_DEPRECATED  TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_WriteConcernException, "document", strlen("document"), ZEND_ACC_PRIVATE TSRMLS_CC);
 }
 
 /*
