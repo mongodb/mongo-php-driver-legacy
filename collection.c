@@ -671,7 +671,6 @@ static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_conn
 
 static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC)
 {
-	zval **err;
 	mongo_cursor *cursor;
 	char *error_message;
 
