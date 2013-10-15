@@ -32,6 +32,7 @@
 #include "exceptions/cursor_timeout_exception.h"
 #include "exceptions/gridfs_exception.h"
 #include "exceptions/result_exception.h"
+#include "exceptions/write_concern_exception.h"
 
 #include "types/id.h"
 
@@ -39,6 +40,7 @@
 #include "util/pool.h"
 
 #include "mcon/manager.h"
+#include "mcon/utils.h"
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #else
@@ -58,6 +60,7 @@ zend_object_handlers mongo_type_object_handlers;
 extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
 extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_GridFSException;
+extern zend_class_entry *mongo_ce_WriteConcernException;
 
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
 
@@ -609,6 +612,111 @@ int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preferenc
 	mongo_read_preference_dtor(&tmp_rp);
 
 	return 1;
+}
+
+int php_mongo_trigger_error_on_command_failure(mongo_connection *connection, zval *document TSRMLS_DC)
+{
+	zval **tmpvalue;
+
+	if (Z_TYPE_P(document) != IS_ARRAY) {
+		zend_throw_exception(mongo_ce_ResultException, strdup("Unknown error executing command (empty document returned)"), 0 TSRMLS_CC);
+		return FAILURE;
+	}
+
+	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
+		if ((Z_TYPE_PP(tmpvalue) == IS_LONG && Z_LVAL_PP(tmpvalue) < 1) || (Z_TYPE_PP(tmpvalue) == IS_DOUBLE && Z_DVAL_PP(tmpvalue) < 1)) {
+			zval **tmp, *error_doc, *exception;
+			char *message;
+			long code;
+
+			if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void **) &tmp) == SUCCESS) {
+				convert_to_string_ex(tmp);
+				message = Z_STRVAL_PP(tmp);
+			} else {
+				message = strdup("Unknown error executing command");
+			}
+
+			if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &tmp) == SUCCESS) {
+				convert_to_long_ex(tmp);
+				code = Z_LVAL_PP(tmp);
+			} else {
+				code = 0;
+			}
+
+			if (connection) {
+				char *host;
+
+				host = mongo_server_hash_to_server(connection->hash);
+				exception = zend_throw_exception_ex(mongo_ce_ResultException, code TSRMLS_CC, "%s: %s", host, message);
+				zend_update_property_string(mongo_ce_ResultException, exception, "host", strlen("host"), host TSRMLS_CC);
+				free(host);
+			} else {
+				exception = zend_throw_exception(mongo_ce_ResultException, message, code TSRMLS_CC);
+			}
+
+			/* Since document may be a return_value (if this function is invoked
+			 * through php_mongo_trigger_error_on_gle() and not findAndModify),
+			 * copy it to a new zval before updating the exception property. */
+			MAKE_STD_ZVAL(error_doc);
+			array_init(error_doc);
+			zend_hash_copy(Z_ARRVAL_P(error_doc), Z_ARRVAL_P(document), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+			zend_update_property(mongo_ce_ResultException, exception, "document", strlen("document"), document TSRMLS_CC);
+			zval_ptr_dtor(&error_doc);
+
+			return FAILURE;
+		}
+	}
+	return SUCCESS;
+}
+
+int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document TSRMLS_DC)
+{
+	zval **err;
+
+	/* Check if the GLE command itself failed */
+	if (php_mongo_trigger_error_on_command_failure(connection, document TSRMLS_CC) == FAILURE) {
+		return FAILURE;
+	}
+
+	/* Check for an error message in the "err" field. Technically, a non-null
+	 * value indicates an error, but we'll check for a non-empty string. */
+	if (
+		zend_hash_find(Z_ARRVAL_P(document), "err", strlen("err") + 1, (void**) &err) == SUCCESS &&
+		Z_TYPE_PP(err) == IS_STRING && Z_STRLEN_PP(err) > 0
+	) {
+		zval *error_doc, *exception, **code_z, **wnote_z;
+		/* Default error code from handle_error() in cursor.c */
+		long code = 4;
+
+		/* Check for the error code in the "code" field. */
+		if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &code_z) == SUCCESS) {
+			convert_to_long_ex(code_z);
+			code = Z_LVAL_PP(code_z);
+		}
+
+		/* If additional information is found in the "wnote" field, include it
+		 * in the exception message. Otherwise, just use "err". */
+		if (
+			zend_hash_find(Z_ARRVAL_P(document), "wnote", strlen("wnote") + 1, (void**) &wnote_z) == SUCCESS &&
+			Z_TYPE_PP(wnote_z) == IS_STRING && Z_STRLEN_PP(wnote_z) > 0
+		) {
+			exception = mongo_cursor_throw(mongo_ce_WriteConcernException, connection, code TSRMLS_CC, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote_z));
+		} else {
+			exception = mongo_cursor_throw(mongo_ce_WriteConcernException, connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
+		}
+
+		/* Since document is a return_value (thanks to MONGO_METHOD stuff), copy
+		 * it to a new zval before updating the exception property. */
+		MAKE_STD_ZVAL(error_doc);
+		array_init(error_doc);
+		zend_hash_copy(Z_ARRVAL_P(error_doc), Z_ARRVAL_P(document), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+		zend_update_property(mongo_ce_WriteConcernException, exception, "document", strlen("document"), error_doc TSRMLS_CC);
+		zval_ptr_dtor(&error_doc);
+
+		return FAILURE;
+	}
+
+	return SUCCESS;
 }
 
 /*

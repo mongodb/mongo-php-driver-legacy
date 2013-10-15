@@ -591,6 +591,8 @@ void mongo_init_MongoInt64(TSRMLS_D);
 zval *php_mongo_make_tagsets(mongo_read_preference *rp);
 void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp);
 int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preference, HashTable *tags TSRMLS_DC);
+int php_mongo_trigger_error_on_command_failure(mongo_connection *connection, zval *document TSRMLS_DC);
+int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document TSRMLS_DC);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	/* php.ini options */
