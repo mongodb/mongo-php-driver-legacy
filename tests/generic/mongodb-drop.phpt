@@ -11,15 +11,19 @@ require_once "tests/utils/server.inc";
 $dsn = MongoShellServer::getStandaloneInfo();
 $m = new MongoClient($dsn);
 
-$db = $m->dropMe;
-$db->data->insert(array("document" => "to drop"));
-
-var_dump($db->data->find()->count());
+$db = $m->selectDb(dbname());
 $db->drop();
-$db = $m->listDbs();
-foreach($db["databases"] as $database) {
-    if ($database["name"] == "dropMe") {
-        echo "FAILED to drop the db!\n";
+
+$db->collection->insert(array('_id' => 1));
+var_dump($db->collection->count());
+
+$db->drop();
+
+$list = $m->listDBs();
+
+foreach($list['databases'] as $database) {
+    if ($database['name'] == (string) $db) {
+        printf("FAILED to drop databse: %s\n", $db);
     }
 }
 ?>
