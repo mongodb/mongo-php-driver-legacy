@@ -102,6 +102,8 @@
     <file role="src" name="gridfs_exception.h"/>
     <file role="src" name="result_exception.c"/>
     <file role="src" name="result_exception.h"/>
+    <file role="src" name="write_concern_exception.c"/>
+    <file role="src" name="write_concern_exception.h"/>
    </dir>
 
    <dir baseinstalldir="/" name="gridfs">
