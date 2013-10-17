@@ -871,7 +871,7 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 /* }}} */
 
 /* {{{ Command cursor helpers */
-static int mongo_db_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
+static int php_mongodb_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
 {
 	zval **cursor = NULL, **id = NULL;
 	zval  *id_value;
