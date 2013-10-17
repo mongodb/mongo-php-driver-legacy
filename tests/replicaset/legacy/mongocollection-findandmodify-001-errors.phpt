@@ -93,7 +93,7 @@ try {
 
 ?>
 --EXPECTF--
-0 : %s
+2 : %s
 array(6) {
   ["err"]=>
   string(%d) "%s"
@@ -133,6 +133,6 @@ array(3) {
   ["ok"]=>
   float(0)
 }
-0 : need remove or update
+2 : need remove or update
 string(21) "need remove or update"
 float(0)

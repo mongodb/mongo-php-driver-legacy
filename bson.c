@@ -377,16 +377,6 @@ void php_mongo_serialize_date(buffer *buf, zval *date TSRMLS_DC)
 	php_mongo_serialize_long(buf, ms);
 }
 
-#if defined(_MSC_VER)
-# define strtoll(s, f, b) _atoi64(s)
-#elif !defined(HAVE_STRTOLL)
-# if defined(HAVE_ATOLL)
-#  define strtoll(s, f, b) atoll(s)
-# else
-#  define strtoll(s, f, b) strtol(s, f, b)
-# endif
-#endif
-
 
 /*
  * create a bson int from an Int32 object
@@ -885,7 +875,7 @@ int mongo_get_limit(mongo_cursor *cursor)
 }
 
 
-char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
+char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_DC)
 {
 	/* buf_start is used for debugging
 	 *
@@ -985,7 +975,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 			case BSON_OBJECT:
 			case BSON_ARRAY: {
 				array_init(value);
-				buf = bson_to_zval(buf, Z_ARRVAL_P(value) TSRMLS_CC);
+				buf = bson_to_zval(buf, Z_ARRVAL_P(value), conversion_options TSRMLS_CC);
 				if (EG(exception)) {
 					zval_ptr_dtor(&value);
 					return 0;
@@ -1065,7 +1055,12 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 
 			case BSON_LONG: {
 				CHECK_BUFFER_LEN(INT_64);
-				php_mongo_handle_int64(&value, MONGO_64(*((int64_t*)buf)) TSRMLS_CC);
+				php_mongo_handle_int64(
+					&value,
+					MONGO_64(*((int64_t*)buf)),
+					(conversion_options & BSON_OPT_FORCE_LONG_AS_OBJECT) ? 1 : 0
+					TSRMLS_CC
+				);
 				buf += INT_64;
 				break;
 			}
@@ -1151,7 +1146,7 @@ char* bson_to_zval(char *buf, HashTable *result TSRMLS_DC)
 					MAKE_STD_ZVAL(zcope);
 					array_init(zcope);
 
-					buf = bson_to_zval(buf, HASH_P(zcope) TSRMLS_CC);
+					buf = bson_to_zval(buf, HASH_P(zcope), conversion_options TSRMLS_CC);
 					if (EG(exception)) {
 						zval_ptr_dtor(&zcope);
 						return 0;
@@ -1440,7 +1435,7 @@ PHP_FUNCTION(bson_decode)
 	}
 
 	array_init(return_value);
-	bson_to_zval(str, HASH_P(return_value) TSRMLS_CC);
+	bson_to_zval(str, HASH_P(return_value), 0 TSRMLS_CC);
 }
 /* }}} */
 
@@ -1455,9 +1450,9 @@ void mongo_buf_append(char *dest, char *piece)
 	memcpy(dest + pos, piece, strlen(piece) + 1);
 }
 
-void php_mongo_handle_int64(zval **value, int64_t nr TSRMLS_DC)
+void php_mongo_handle_int64(zval **value, int64_t nr, int force_as_object TSRMLS_DC)
 {
-	if (MonGlo(long_as_object)) {
+	if (force_as_object || MonGlo(long_as_object)) {
 		char *buffer;
 
 #ifdef WIN32

@@ -619,7 +619,7 @@ int php_mongo_trigger_error_on_command_failure(mongo_connection *connection, zva
 	zval **tmpvalue;
 
 	if (Z_TYPE_P(document) != IS_ARRAY) {
-		zend_throw_exception(mongo_ce_ResultException, strdup("Unknown error executing command (empty document returned)"), 0 TSRMLS_CC);
+		zend_throw_exception(mongo_ce_ResultException, strdup("Unknown error executing command (empty document returned)"), 1 TSRMLS_CC);
 		return FAILURE;
 	}
 
@@ -633,14 +633,14 @@ int php_mongo_trigger_error_on_command_failure(mongo_connection *connection, zva
 				convert_to_string_ex(tmp);
 				message = Z_STRVAL_PP(tmp);
 			} else {
-				message = strdup("Unknown error executing command");
+				message = estrdup("Unknown error executing command");
 			}
 
 			if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &tmp) == SUCCESS) {
 				convert_to_long_ex(tmp);
 				code = Z_LVAL_PP(tmp);
 			} else {
-				code = 0;
+				code = 2;
 			}
 
 			if (connection) {
@@ -718,7 +718,6 @@ int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document 
 
 	return SUCCESS;
 }
-
 /*
  * Local variables:
  * tab-width: 4

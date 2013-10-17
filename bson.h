@@ -43,6 +43,9 @@
 
 #define GROW_SLOWLY 1048576
 
+/* Options used for conversion between zval and bson and v.v. */
+#define BSON_OPT_FORCE_LONG_AS_OBJECT   0x01
+
 #define CREATE_BUF_STATIC(n) char b[n];         \
 	buf.start = buf.pos = b;                    \
 	buf.end = b+n;
@@ -84,7 +87,10 @@ int php_mongo_write_kill_cursors(buffer*, int64_t, int max_message_size TSRMLS_D
 int resize_buf(buffer*, int);
 
 int zval_to_bson(buffer*, HashTable*, int, int max_document_size TSRMLS_DC);
-char* bson_to_zval(char*, HashTable* TSRMLS_DC);
+
+/* Converts a BSON document to a zval. The conversions options are a bitmask
+ * of the BSON_OPT_* constants */
+char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_DC);
 
 /* Initialize buffer to contain "\0", so mongo_buf_append will start appending
  * at the beginning. */
@@ -99,7 +105,7 @@ void mongo_buf_append(char *dest, char *piece);
  * position, and user limit */
 int mongo_get_limit(mongo_cursor *cursor);
 
-void php_mongo_handle_int64(zval **value, int64_t nr TSRMLS_DC);
+void php_mongo_handle_int64(zval **value, int64_t nr, int force_as_object TSRMLS_DC);
 
 #if PHP_C_BIGENDIAN
 /* Reverse the bytes in an int, wheeee stupid byte tricks */
