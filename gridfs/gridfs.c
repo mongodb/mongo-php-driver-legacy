@@ -44,13 +44,13 @@ zend_class_entry *mongo_ce_GridFS = NULL;
 
 typedef struct {
 	FILE *file;
-	int64_t fd;                     /* underlying file descriptor */
+	int64_t fd;                 /* underlying file descriptor */
 	unsigned is_process_pipe:1; /* use pclose instead of fclose */
 	unsigned is_pipe:1;         /* don't try and seek */
 	unsigned cached_fstat:1;    /* sb is valid */
 	unsigned _reserved:29;
 
-	int64_t lock_flag;              /* stores the lock state */
+	int64_t lock_flag;          /* stores the lock state */
 	char *temp_file_name;       /* if non-null, this is the path to a temporary file that
 	                             * is to be deleted when the stream is closed */
 #if HAVE_FLUSHIO
@@ -251,13 +251,7 @@ static int64_t setup_file(FILE *fp, char *filename TSRMLS_DC)
 	fseek(fp, 0, SEEK_END);
     
 	size = ftell(fp);
-    /*
-	if (size >= 0xffffffff) {
-		zend_throw_exception_ex(mongo_ce_GridFSException, 4 TSRMLS_CC, "file %s is too large: %ld bytes", filename, size);
-		fclose(fp);
-		return FAILURE;
-	}
-    */
+
 	/* reset file ptr */
 	fseek(fp, 0, SEEK_SET);
 
@@ -540,8 +534,7 @@ cleanup_on_failure:
  * - filename
  * - upload date
  * - length
- * these fields are only added if the user hasn't defined them.
- */
+ * these fields are only added if the user hasn't defined them. */
 static int64_t setup_file_fields(zval *zfile, char *filename, int64_t length TSRMLS_DC)
 {
 	/* filename */
@@ -579,8 +572,7 @@ static int64_t setup_file_fields(zval *zfile, char *filename, int64_t length TSR
  *
  * Clean up should leave:
  * - 1 ref to zid
- * - buf
- */
+ * - buf */
 static zval* insert_chunk(zval *chunks, zval *zid, int64_t chunk_num, char *buf, int64_t chunk_size, zval *options  TSRMLS_DC) {
 	zval temp;
 	zval *zchunk, *zbin, *zretval = NULL;
