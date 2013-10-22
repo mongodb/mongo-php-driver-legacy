@@ -278,6 +278,16 @@ function getBridgeConfig() {
 }
 
 /**
+ * Get is master result
+ *
+ * @return array Is master result
+ */
+function getIsMaster() {
+	var info = replTest.getMaster().getDB("admin").runCommand({ismaster: 1});
+	return [ info.ismaster, info.secondary, info.primary, info.hosts ];
+}
+
+/**
  * Get sharded cluster hosts.
  *
  * @return array Array of host/port strings for each mongos

@@ -88,7 +88,7 @@ PHP_METHOD(MongoGridFSFile, write)
 {
 	char *filename = 0;
 	int filename_len, total = 0;
-	zval *gridfs, *file, *chunks, *query, *cursor, *sort, tmp;
+	zval *gridfs, *file, *chunks, *query, *cursor, *sort;
 	zval **id, **size;
 	int len;
 	FILE *fp;
@@ -123,11 +123,7 @@ PHP_METHOD(MongoGridFSFile, write)
 		return;
 	}
 
-	/* Make sure that there's an index on chunks so we can sort by chunk num */
 	chunks = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
-
-	php_mongo_ensure_gridfs_index(&tmp, chunks TSRMLS_CC);
-	zval_dtor(&tmp);
 
 	if (!filename) {
 		zval **temp;
@@ -215,10 +211,6 @@ PHP_METHOD(MongoGridFSFile, getBytes)
 	gridfs = zend_read_property(mongo_ce_GridFSFile, getThis(), "gridfs", strlen("gridfs"), NOISY TSRMLS_CC);
 	chunks = zend_read_property(mongo_ce_GridFS, gridfs, "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
-	MAKE_STD_ZVAL(temp);
-	php_mongo_ensure_gridfs_index(temp, chunks TSRMLS_CC);
-	zval_dtor(temp);
-
 	/* query for chunks */
 	MAKE_STD_ZVAL(query);
 	array_init(query);
@@ -238,6 +230,7 @@ PHP_METHOD(MongoGridFSFile, getBytes)
 	array_init(sort);
 	add_assoc_long(sort, "n", 1);
 
+	MAKE_STD_ZVAL(temp);
 	MONGO_METHOD1(MongoCursor, sort, temp, cursor, sort);
 	zval_ptr_dtor(&temp);
 
