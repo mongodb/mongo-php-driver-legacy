@@ -93,6 +93,13 @@ class MongoShellServer {
         return self::prettifyRSInfo($config);
     }
 
+    public function getMaster() {
+        $json = $this->verifyWrite("getIsMaster()");
+        $retval = json_decode($json);
+
+        return $retval;
+    }
+
     public function getShardConfig() {
         $json = $this->verifyWrite("getShardConfig()");
         $retval = json_decode($json);
@@ -219,6 +226,25 @@ class MongoShellServer {
         $config = $o->getReplicaSetConfig($auth);
         $o->close();
         return $config;
+    }
+
+    public static function getPrimaryNode($auth = false) {
+        $o = new self;
+        $config = $o->getMaster($auth);
+        $o->close();
+        
+        return $config[2];
+    }
+
+    public static function getASecondaryNode($auth = false) {
+        $o = new self;
+        $config = $o->getMaster($auth);
+        $o->close();
+    
+        $hosts = $config[3];
+        $secondaries = array_diff($hosts, array($config[2]));
+
+        return current($secondaries);
     }
 
     public static function getShardInfo() {
