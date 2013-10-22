@@ -73,9 +73,13 @@
    <file role="src" name="bson.h"/>
    <file role="src" name="collection.c"/>
    <file role="src" name="collection.h"/>
+   <file role="src" name="command_cursor.c"/>
+   <file role="src" name="command_cursor.h"/>
    <file role="src" name="config-w32.h"/>
    <file role="src" name="cursor.c"/>
    <file role="src" name="cursor.h"/>
+   <file role="src" name="cursor_shared.c"/>
+   <file role="src" name="cursor_shared.h"/>
    <file role="src" name="db.c"/>
    <file role="src" name="db.h"/>
    <file role="src" name="io_stream.c"/>
