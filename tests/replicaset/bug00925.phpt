@@ -6,6 +6,8 @@ Test for PHP-925: GridFS read methods issue a write through ensureIndex().
 <?php
 require_once 'tests/utils/server.inc';
 
+$filename = tempnam(sys_get_temp_dir(), "gridfs-ensure-index");
+
 $primary = MongoShellServer::getPrimaryNode();
 $secondary = MongoShellServer::getASecondaryNode();
 
@@ -30,9 +32,9 @@ $file = $g->get($id);
 echo $file->getBytes(), "\n";
 
 /* Test for write */
-$file->write("/tmp/foo");
-echo file_get_contents("/tmp/foo"), "\n";
-unlink("/tmp/foo");
+$file->write($filename);
+echo file_get_contents($filename), "\n";
+unlink($filename);
 ?>
 --EXPECT--
 foo
