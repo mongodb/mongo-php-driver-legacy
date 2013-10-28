@@ -471,7 +471,7 @@ PHP_METHOD(MongoCursor, hasNext)
 
 	PHP_MONGO_GET_MONGOCLIENT_FROM_CURSOR(cursor);
 
-	if (client->manager->send(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
+	if (client->manager->send(cursor->connection, &client->servers->options, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		efree(buf.start);
 
 		mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 1 TSRMLS_CC, "%s", error_message);
@@ -1107,7 +1107,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 	mongo_log_stream_query(cursor->connection, cursor TSRMLS_CC);
 #endif
 
-	if (link->manager->send(cursor->connection, NULL, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
+	if (link->manager->send(cursor->connection, &link->servers->options, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {
 			mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 14 TSRMLS_CC, "couldn't send query: %s", error_message);
 			free(error_message);
