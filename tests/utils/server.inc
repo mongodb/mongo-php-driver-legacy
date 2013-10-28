@@ -433,6 +433,13 @@ function writeLogs($filename) {
         MongoLog::setCallback("writeCallback");
     }
 }
+function dump_these_keys($values, $keys) {
+    $dump = array();
+    foreach($keys as $key) {
+        $dump[$key] = $values[$key];
+    }
+    var_dump($dump);
+}
 
 /*
 $config = MongoShellServer::getReplicaSetInfo();
