@@ -7,7 +7,7 @@ MongoCollection::batchInsert() sets continueOnError flag
 <?php
 require_once "tests/utils/server.inc";
 
-function print_flags($server, $docs, $info, $options) {
+function print_flags($server, $docs, $options, $info) {
     var_dump($info['flags']);
 }
 

@@ -15,6 +15,7 @@
  */
 
 #include "io_stream.h"
+#include "log_stream.h"
 #include "mcon/types.h"
 #include "mcon/utils.h"
 #include "mcon/manager.h"
@@ -99,8 +100,6 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Not establishing SSL for %s:%d", server->host, server->port);
 	}
 
-	php_stream_notify_progress_init(stream->context, 0, 0);
-
 	if (options->socketTimeoutMS) {
 		struct timeval rtimeout = {0};
 		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
@@ -134,6 +133,8 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 
 		php_stream_set_option(con->socket, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
 	}
+
+	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_READ, 0, size TSRMLS_CC);
 
 	/* this can return FAILED if there is just no more data from db */
 	while (received < size && num > 0) {
@@ -190,10 +191,14 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 		data = (char*)data + num;
 		received += num;
 	}
+	/* PHP may have sent notify-progress of *more then* 'received' in some
+	 * cases.
+	 * PHP will read 8192 byte chunks at a time, but if we request less data
+	 * then that PHP will just buffer the rest, which is fine.  It could
+	 * confuse users a little, why their progress update was higher then the
+	 * max-bytes-expected though... */
+	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, received, size TSRMLS_CC);
 
-	if (options && options->ctx) {
-		php_stream_notify_progress_increment((php_stream_context *)options->ctx, received, size);
-	}
 	if (timeout > 0 && options->socketTimeoutMS != timeout) {
 		struct timeval rtimeout = {0};
 		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
@@ -210,7 +215,12 @@ int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *option
 	int retval;
 	TSRMLS_FETCH();
 
+	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_WRITE, 0, size TSRMLS_CC);
+
 	retval = php_stream_write(con->socket, (char *) data, size);
+	if (retval >= size) {
+		php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, size, size TSRMLS_CC);
+	}
 
 	return retval;
 }
