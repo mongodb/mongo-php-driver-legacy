@@ -3,6 +3,7 @@
 class MongoShellServer {
     protected $fp;
     protected $log = "";
+
     public function __construct() {
         $fp = fsockopen("localhost", 8000, $errno, $errstr, 2);
         if (!$fp) {
@@ -120,6 +121,7 @@ class MongoShellServer {
 
         return "/tmp/mongodb-$port.sock";
     }
+
     public function getStandaloneConfig($auth = false) {
         $jsauth = json_encode($auth);
         $host = $this->verifyWrite("getStandaloneConfig($jsauth)");
@@ -151,7 +153,6 @@ class MongoShellServer {
         }
         return $host;
     }
-
 
     public function addStandaloneUser($db, $username, $password) {
         $data   = $this->_prepAddUser($db, $username, $password);
@@ -220,7 +221,6 @@ class MongoShellServer {
         return $this->close();
     }
 
-
     public static function getReplicaSetInfo($auth = false) {
         $o = new self;
         $config = $o->getReplicaSetConfig($auth);
@@ -275,7 +275,6 @@ class MongoShellServer {
         return trim($config);
     }
 
-
     protected static function prettifyRSInfo($config) {
         $rsname = $config["_id"];
         $hosts  = array();
@@ -309,17 +308,17 @@ function getServerVersion($mc = null) {
     $mc->selectDB(dbname())->command(array('buildinfo'=>true));
 }
 
-
-
 /* BC Layer for old tests */
 
 function mongo() {
     return new_mongo();
 }
+
 function old_mongo() {
     $config = MongoShellServer::getReplicaSetInfo();
     return new Mongo($config["dsn"], array("replicaSet" => $config["rsname"]));
 }
+
 function new_mongo($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $config = MongoShellServer::getReplicaSetInfo();
     return new MongoClient($config["dsn"], array("replicaSet" => $config["rsname"])+$options);
@@ -329,40 +328,49 @@ function old_mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null,
     $dsn = MongoShellServer::getStandaloneInfo();
     return new Mongo($dsn, $options);
 }
+
 function mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     return new_mongo_standalone();
 }
+
 function new_mongo_standalone($unused1 = null, $unused2 = null, $unused3 = null, $options = array()) {
     $dsn = MongoShellServer::getStandaloneInfo();
     return new MongoClient($dsn, $options);
 }
+
 function dbname() {
     return "test";
 }
+
 function hostname() {
     $config = MongoShellServer::getReplicaSetInfo();
     list($host, $port) = explode(":", $config["hosts"][0]);
     return $host;
 }
+
 function standalone_hostname() {
     $dsn = MongoShellServer::getStandaloneInfo();
     list($host, $port) = explode(":", $dsn);
     return $host;
 }
+
 function standalone_port() {
     $dsn = MongoShellServer::getStandaloneInfo();
     list($host, $port) = explode(":", $dsn);
     return $port;
 }
+
 function port() {
     $config = MongoShellServer::getReplicaSetInfo();
     list($host, $port) = explode(":", $config["hosts"][0]);
     return $port;
 }
+
 function rsname() {
     $config = MongoShellServer::getReplicaSetInfo();
     return $config["rsname"];
 }
+
 function logCallback($module, $level, $message)
 {
     global $_LOG_CALLBACK_REGEX;
@@ -388,6 +396,7 @@ function printLogs($module = MongoLog::ALL, $level = MongoLog::ALL, $containing 
     }
     MongoLog::setCallback("logCallback");
 }
+
 function module2string($module)
 {
     switch ($module) {
@@ -417,6 +426,7 @@ function writeCallback($module, $level, $message)
 
     fprintf($_LOG_FP, "[%s] %s (%s): %s\n", date("Y-m-d H:i:s"), module2string($module), level2string($level), $message);
 }
+
 function writeLogs($filename) {
     global $_LOG_FP;
 
@@ -433,6 +443,7 @@ function writeLogs($filename) {
         MongoLog::setCallback("writeCallback");
     }
 }
+
 function dump_these_keys($values, $keys) {
     $dump = array();
     foreach($keys as $key) {
