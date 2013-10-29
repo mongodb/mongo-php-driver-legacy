@@ -42,15 +42,15 @@ foreach( $cursor as $foo ) { }
 /* with setFlag() */
 for ( $i = 1; $i < 11; $i++ )
 {
-	echo "Setting flag #", $i, "\n";
-	try {
-		$cursor = $c->find(array("ts" => 1))->setFlag( $i );
-		foreach( $cursor as $foo ) { }
-	} catch ( MongoCursorException $e ) {
+    echo "Setting flag #", $i, "\n";
+    try {
+        $cursor = $c->find(array("ts" => 1))->setFlag( $i );
+        foreach( $cursor as $foo ) { }
+    } catch ( MongoCursorException $e ) {
         if (strpos($e->getMessage(), "tailable cursor requested on non capped collection")) {
             echo "..tailable cursor requested on non capped collection...\n";
         }
-	}
+    }
 }
 ?>
 --EXPECTF--
