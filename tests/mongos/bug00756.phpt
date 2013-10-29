@@ -20,10 +20,8 @@ try {
 		var_dump($f);
 	}
 } catch (MongoCursorException $e) {
-	var_dump($e->getCode());
-	var_dump($e->getMessage());
+    echo "got exception\n";
 }
 ?>
 --EXPECTF--
-int(13038)
-string(%d) "%s:%d: can't find %s for: { foo: { $near: [ 5, 5 ] } }"
+got exception

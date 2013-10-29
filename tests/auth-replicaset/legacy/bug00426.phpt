@@ -7,18 +7,6 @@ Test for PHP-426: Connection pool not paying attention to authentication when us
 <?php
 require_once "tests/utils/server.inc";
 
-function get_user($m, $username) {
-    $db = $m->selectDB("admin");
-    $c = $db->selectCollection("system.users");
-
-    $user = $c->findOne(array("user" => $username));
-    return array(
-        "_id"      => $user["_id"],
-        "user"     => $user["user"],
-        "readOnly" => $user["readOnly"],
-        "pwd"      => $user["pwd"],
-    );
-}
 
 $s = new MongoShellServer;
 $cfg = $s->getReplicaSetConfig(true);
@@ -32,7 +20,12 @@ $opts = array(
 );
 $m = new MongoClient($cfg["dsn"], $opts+array("readPreference" => MongoClient::RP_SECONDARY_PREFERRED));
 var_dump($m);
-var_dump(get_user($m, $creds["admin"]->username));
+try {
+    $m->admin->test->findOne();
+    echo "ok - so far\n";
+} catch(Exception $e) {
+    echo "FAILED: ", get_class($e), " - ", $e->getMessage();
+}
 
 try {
     $opts["password"] .= "THIS-PASSWORD-IS-WRONG";
@@ -57,19 +50,7 @@ object(MongoClient)#%d (4) {
   ["persistent":protected]=>
   NULL
 }
-array(4) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
-  }
-  ["user"]=>
-  string(%d) "%s"
-  ["readOnly"]=>
-  bool(false)
-  ["pwd"]=>
-  string(32) "%s"
-}
+ok - so far
 authentication failed
 Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth %s
 authentication failed

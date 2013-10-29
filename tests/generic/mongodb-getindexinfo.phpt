@@ -18,53 +18,43 @@ $d->col1->ensureIndex(array('a' => 1));
 $d->col1->ensureIndex(array('b' => '2dsphere'), array('sparse' => true));
 
 // check indexes
-var_dump($d->col1->getIndexInfo());
+$indexes = $d->col1->getIndexInfo();
+foreach($indexes as $index) {
+    dump_these_keys($index, array("key", "ns", "name"));
+}
 
 ?>
 --EXPECTF--
 array(3) {
-  [0]=>
-  array(4) {
-    ["v"]=>
+  ["key"]=>
+  array(1) {
+    ["_id"]=>
     int(1)
-    ["key"]=>
-    array(1) {
-      ["_id"]=>
-      int(1)
-    }
-    ["ns"]=>
-    string(%d) "%s.col1"
-    ["name"]=>
-    string(4) "_id_"
   }
-  [1]=>
-  array(4) {
-    ["v"]=>
+  ["ns"]=>
+  string(%d) "%s.col1"
+  ["name"]=>
+  string(4) "_id_"
+}
+array(3) {
+  ["key"]=>
+  array(1) {
+    ["a"]=>
     int(1)
-    ["key"]=>
-    array(1) {
-      ["a"]=>
-      int(1)
-    }
-    ["ns"]=>
-    string(%d) "%s.col1"
-    ["name"]=>
-    string(3) "a_1"
   }
-  [2]=>
-  array(5) {
-    ["v"]=>
-    int(1)
-    ["key"]=>
-    array(1) {
-      ["b"]=>
-      string(8) "2dsphere"
-    }
-    ["ns"]=>
-    string(%d) "%s.col1"
-    ["sparse"]=>
-    bool(true)
-    ["name"]=>
-    string(10) "b_2dsphere"
+  ["ns"]=>
+  string(%d) "%s.col1"
+  ["name"]=>
+  string(3) "a_1"
+}
+array(3) {
+  ["key"]=>
+  array(1) {
+    ["b"]=>
+    string(8) "2dsphere"
   }
+  ["ns"]=>
+  string(%d) "%s.col1"
+  ["name"]=>
+  string(10) "b_2dsphere"
 }
