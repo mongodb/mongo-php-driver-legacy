@@ -255,6 +255,9 @@ typedef struct _mongo_con_manager
 	void  (*close)       (mongo_connection *con, int why);
 	void  (*forget)      (struct _mongo_con_manager *manager, mongo_connection *con);
 	int   (*authenticate)(struct _mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message);
+
+	/* Check if a Wire Version supported by the library */
+	int (*supports_wire_version) (int min_wire_version, int max_wire_version, char **error_message);
 } mongo_con_manager;
 
 typedef void (mongo_con_manager_item_destroy_t)(mongo_con_manager *manager, void *item, int why);

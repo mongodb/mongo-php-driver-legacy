@@ -690,6 +690,7 @@ mongo_con_manager *mongo_init(void)
 	tmp->close       = mongo_connection_close;
 	tmp->forget      = mongo_connection_forget;
 	tmp->authenticate= mongo_connection_authenticate;
+	tmp->supports_wire_version = mongo_mcon_supports_wire_version;
 
 	return tmp;
 }
@@ -712,6 +713,26 @@ void mongo_deinit(mongo_con_manager *manager)
 	}
 
 	free(manager);
+}
+
+int mongo_mcon_supports_wire_version(int min_wire_version, int max_wire_version, char **error_message)
+{
+	char *errmsg = "This driver version requires WireVersion between minWireVersion: %d and maxWireVersion: %d. Got: minWireVersion=%d and maxWireVersion=%d";
+	int errlen = strlen(errmsg) - 8 + 1 + (4 * 10); /* Subtract the %d, plus \0, plus 4 ints at maximum size.. */
+
+	if (min_wire_version > MCON_MAX_WIRE_VERSION) {
+		*error_message = malloc(errlen);
+		snprintf(*error_message, errlen, errmsg, MCON_MIN_WIRE_VERSION, MCON_MAX_WIRE_VERSION, min_wire_version, max_wire_version);
+		return 0;
+	}
+
+	if (max_wire_version < MCON_MIN_WIRE_VERSION) {
+		*error_message = malloc(errlen);
+		snprintf(*error_message, errlen, errmsg, MCON_MIN_WIRE_VERSION, MCON_MAX_WIRE_VERSION, min_wire_version, max_wire_version);
+		return 0;
+	}
+
+	return 1;
 }
 
 /*

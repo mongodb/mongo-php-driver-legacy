@@ -50,6 +50,10 @@
 # endif
 #endif
 
+#if MONGO_PHP_STREAMS
+#include <api/wire_version.h>
+#endif
+
 #if HAVE_MONGO_SASL
 #include <sasl/sasl.h>
 #endif
@@ -364,6 +368,7 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->manager->close       = php_mongo_io_stream_close;
 	mongo_globals->manager->forget      = php_mongo_io_stream_forget;
 	mongo_globals->manager->authenticate= php_mongo_io_stream_authenticate;
+	mongo_globals->manager->supports_wire_version = php_mongodb_api_supports_wire_version;
 #endif
 }
 /* }}} */
