@@ -683,13 +683,13 @@ mongo_con_manager *mongo_init(void)
 	tmp->ping_interval = MONGO_MANAGER_DEFAULT_PING_INTERVAL;
 	tmp->ismaster_interval = MONGO_MANAGER_DEFAULT_MASTER_INTERVAL;
 
-	tmp->connect     = mongo_connection_connect;
-	tmp->recv_header = mongo_io_recv_header;
-	tmp->recv_data   = mongo_io_recv_data;
-	tmp->send        = mongo_io_send;
-	tmp->close       = mongo_connection_close;
-	tmp->forget      = mongo_connection_forget;
-	tmp->authenticate= mongo_connection_authenticate;
+	tmp->connect               = mongo_connection_connect;
+	tmp->recv_header           = mongo_io_recv_header;
+	tmp->recv_data             = mongo_io_recv_data;
+	tmp->send                  = mongo_io_send;
+	tmp->close                 = mongo_connection_close;
+	tmp->forget                = mongo_connection_forget;
+	tmp->authenticate          = mongo_connection_authenticate;
 	tmp->supports_wire_version = mongo_mcon_supports_wire_version;
 
 	return tmp;
