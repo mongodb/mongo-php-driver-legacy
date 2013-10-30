@@ -16,6 +16,7 @@
 #ifndef MONGO_CURSOR_SHARED_H
 #define MONGO_CURSOR_SHARED_H 1
 
+#include "php_mongo.h"
 #include "cursor.h"
 
 /* Cursor flags */
@@ -45,6 +46,38 @@
 		zend_throw_exception(mongo_ce_ConnectionException, "the connection has been terminated, and this cursor is dead", 12 TSRMLS_CC); \
 		return; \
 	}
+
+/* The cursor_list
+ *
+ * In PHP, garbage collection works via reference counting.  MongoCursor
+ * contains a reference to its "parent" Mongo instance, so it increments the
+ * Mongo's reference count in the constructor.
+ *
+ * Depending on app server/code, MongoCursor could be destroyed before or after
+ * Mongo.  If Mongo is destroyed first, we want to kill all open cursors using
+ * that connection before destroying the connection.  So, mongo_cursor_free_le,
+ * when given a MONGO_LINK, will kill all cursors associated with that link.
+ * When given a MONGO_CURSOR, it will destroy exactly that cursor (and no
+ * others).  This also removes it from the cursor_list. */
+
+void php_mongo_cursor_free(void *object TSRMLS_DC);
+
+/* This kills a cursor or all cursors for a given link, depending on the type
+ * given. Also removes killed cursor(s) from the cursor_list. */
+void php_mongo_cursor_free_le(void* val, int type TSRMLS_DC);
+
+/* Adds a cursor to the cursor_list.
+ *
+ * A cursor can only be added once to the cursor list.  If cursor is already on
+ * the list, this does nothing.  This creates the cursor_list if it does not
+ * exist. */
+int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
+
+/* Actually removes a cursor_node node from the linked list. */
+void php_mongo_free_cursor_node(cursor_node*, zend_rsrc_list_entry*);
+
+/* Persistent list destructor. */
+void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
 
 signed int php_mongo_get_cursor_header(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC);
 int php_mongo_get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC);

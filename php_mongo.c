@@ -24,6 +24,7 @@
 #include "mongoclient.h"
 #include "mongo.h"
 #include "cursor.h"
+#include "cursor_shared.h"
 #include "io_stream.h"
 #include "log_stream.h"
 

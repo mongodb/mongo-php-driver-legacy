@@ -16,10 +16,7 @@
 #ifndef MONGO_CURSOR_H
 #define MONGO_CURSOR_H 1
 
-#include "cursor_shared.h"
 #include "php_mongo.h"
-
-void php_mongo_cursor_free(void *object TSRMLS_DC);
 
 /* Queries the database. Returns SUCCESS or FAILURE. */
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC);
@@ -104,7 +101,6 @@ PHP_METHOD(MongoCursorException, getHost);
  * server to fill in information about the connection that cause the exception.
  * Does nothing if an exception has already been thrown. */
 zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *connection, int code TSRMLS_DC, char *format, ...);
-
 
 #endif
 

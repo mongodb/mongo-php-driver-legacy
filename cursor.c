@@ -273,7 +273,6 @@ PHP_METHOD(MongoCursor, hasNext)
 		/* but sometimes there will be */
 		RETVAL_TRUE;
 	}
-
 }
 /* }}} */
 
@@ -1455,74 +1454,8 @@ zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *conne
 	return e;
 }
 
-void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC)
-{
-	char quickbuf[128];
-	mongo_buffer buf;
-	char *error_message;
-
-	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", cursor_id);
-
-	buf.pos = quickbuf;
-	buf.start = buf.pos;
-	buf.end = buf.start + 128;
-
-	php_mongo_write_kill_cursors(&buf, cursor_id, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
-#if MONGO_PHP_STREAMS
-	mongo_log_stream_killcursor(con, cursor_id TSRMLS_CC);
-#endif
-
-	if (MonGlo(manager)->send(con, NULL, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %lld: %s", (long long int) cursor_id, error_message);
-		free(error_message);
-	}
-}
-
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC) {
 	PHP_MONGO_OBJ_NEW(mongo_cursor);
-}
-
-
-void php_mongo_cursor_free(void *object TSRMLS_DC)
-{
-	mongo_cursor *cursor = (mongo_cursor*)object;
-
-	if (cursor) {
-		if (cursor->cursor_id != 0) {
-			php_mongo_kill_cursor(cursor->connection, cursor->cursor_id TSRMLS_CC);
-		}
-		if (cursor->connection) {
-			mongo_deregister_callback_from_connection(cursor->connection, cursor);
-		}
-
-		if (cursor->current) {
-			zval_ptr_dtor(&cursor->current);
-		}
-
-		if (cursor->query) {
-			zval_ptr_dtor(&cursor->query);
-		}
-		if (cursor->fields) {
-			zval_ptr_dtor(&cursor->fields);
-		}
-
-		if (cursor->buf.start) {
-			efree(cursor->buf.start);
-		}
-		if (cursor->ns) {
-			efree(cursor->ns);
-		}
-
-		if (cursor->zmongoclient) {
-			zval_ptr_dtor(&cursor->zmongoclient);
-		}
-
-		mongo_read_preference_dtor(&cursor->read_pref);
-
-		zend_object_std_dtor(&cursor->std TSRMLS_CC);
-
-		efree(cursor);
-	}
 }
 
 void mongo_init_MongoCursor(TSRMLS_D)

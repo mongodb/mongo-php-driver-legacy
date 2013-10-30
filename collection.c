@@ -20,6 +20,7 @@
 #include "php_mongo.h"
 #include "collection.h"
 #include "cursor.h"
+#include "cursor_shared.h"
 #include "bson.h"
 #include "types/code.h"
 #include "types/db_ref.h"
