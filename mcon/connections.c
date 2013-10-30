@@ -263,6 +263,9 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 	tmp->max_bson_size = 4194304;
 	/* MongoDB pre-2.4; Spec says default to 2 * the maxBsonSize */
 	tmp->max_message_size = 2 * tmp->max_bson_size;
+	/* Default Wire Versions for MongoDB pre-2.6 */
+	tmp->min_wire_version = 0;
+	tmp->max_wire_version = 0;
 
 	/* Store hash */
 	tmp->hash = strdup(hash);
@@ -471,6 +474,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	mcon_str      *packet;
 	char          *data_buffer;
 	int32_t        max_bson_size = 0, max_message_size = 0;
+	int32_t        min_wire_version = 0, max_wire_version = 0;
 	char          *set = NULL;      /* For replicaset in return */
 	char          *hosts, *passives = NULL, *ptr, *string;
 	char          *msg; /* If set and its value is "isdbgrid", it signals we connected to a mongos */
@@ -495,6 +499,21 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 
 	/* Find data fields */
 	ptr = data_buffer + sizeof(int32_t); /* Skip the length */
+
+	/* Find [min|max]WireVersion */
+	if (bson_find_field_as_int32(ptr, "minWireVersion", &min_wire_version)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: setting minWireVersion to %d", min_wire_version);
+		con->min_wire_version = min_wire_version;
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: can't find minWireVersion, defaulting to %d", con->min_wire_version);
+	}
+
+	if (bson_find_field_as_int32(ptr, "maxWireVersion", &max_wire_version)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: setting maxWireVersion to %d", max_wire_version);
+		con->max_wire_version = max_wire_version;
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: can't find maxWireVersion, defaulting to %d", con->max_wire_version);
+	}
 
 	/* Find max bson size */
 	if (bson_find_field_as_int32(ptr, "maxBsonObjectSize", &max_bson_size)) {

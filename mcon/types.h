@@ -145,6 +145,8 @@ typedef struct _mongo_connection
 		int32_t mini;
 		int32_t build;
 	} version;
+	int    min_wire_version; /* Minimum wire version supported by mongo[d|s] */
+	int    max_wire_version; /* Maximum wire version supported by mongo[d|s] */
 	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
 	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
 	int    tag_count;
