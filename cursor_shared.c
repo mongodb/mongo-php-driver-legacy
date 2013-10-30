@@ -29,9 +29,263 @@
 #include "cursor_shared.h"
 
 /* externs */
+extern int le_cursor_list;
+
 extern zend_class_entry *mongo_ce_CursorException;
 extern zend_class_entry *mongo_ce_CursorTimeoutException;
+
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
+
+/* {{{ mongo_cursor list helpers */
+static void kill_cursor_le(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC);
+
+
+void php_mongo_cursor_free_le(void *val, int type TSRMLS_DC)
+{
+	zend_rsrc_list_entry *le;
+
+	/* This should work if le->ptr is null or non-null */
+	if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
+		cursor_node *current;
+
+		current = le->ptr;
+
+		while (current) {
+			cursor_node *next = current->next;
+
+			if (type == MONGO_CURSOR) {
+				mongo_cursor *cursor = (mongo_cursor*)val;
+
+				if (current->cursor_id == cursor->cursor_id && cursor->connection != NULL && current->socket == cursor->connection->socket) {
+					/* If the cursor_id is 0, the db is out of results anyway */
+					if (current->cursor_id == 0) {
+						php_mongo_free_cursor_node(current, le);
+					} else {
+						kill_cursor_le(current, cursor->connection, le TSRMLS_CC);
+
+						/* If the connection is closed before the cursor is
+						 * destroyed, the cursor might try to fetch more
+						 * results with disasterous consequences.  Thus, the
+						 * cursor_id is set to 0, so no more results will be
+						 * fetched.
+						 *
+						 * This might not be the most elegant solution, since
+						 * you could fetch 100 results, get the first one,
+						 * close the connection, get 99 more, and suddenly not
+						 * be able to get any more.  Not sure if there's a
+						 * better one, though. I guess the user can call dead()
+						 * on the cursor. */
+						cursor->cursor_id = 0;
+					}
+					if (cursor->connection) {
+						mongo_deregister_callback_from_connection(cursor->connection, cursor);
+						cursor->connection = NULL;
+					}
+
+
+					/* only one cursor to be freed */
+					break;
+				}
+			}
+
+			current = next;
+		}
+	}
+}
+
+int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
+{
+	zend_rsrc_list_entry *le;
+	cursor_node *new_node;
+
+	new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
+	new_node->cursor_id = cursor->cursor_id;
+	if (cursor->connection) {
+		new_node->socket = cursor->connection->socket;
+	} else {
+		new_node->socket = 0;
+	}
+	new_node->next = new_node->prev = 0;
+
+	/*
+	 * 3 options:
+	 *   - le doesn't exist
+	 *   - le exists and is null
+	 *   - le exists and has elements
+	 * In case 1 & 2, we want to create a new le ptr, otherwise we want to append
+	 * to the existing ptr.
+	 */
+	if (zend_hash_find(&EG(persistent_list), name, strlen(name) + 1, (void**)&le) == SUCCESS) {
+		cursor_node *current = le->ptr;
+		cursor_node *prev = 0;
+
+		if (current == 0) {
+			le->ptr = new_node;
+			return 0;
+		}
+
+		do {
+			/* If we find the current cursor in the cursor list, we don't need
+			 * another dtor for it so unlock the mutex & return. */
+			if (current->cursor_id == cursor->cursor_id && cursor->connection && current->socket == cursor->connection->socket) {
+				pefree(new_node, 1);
+				return 0;
+			}
+
+			prev = current;
+			current = current->next;
+		} while (current);
+
+		/* We didn't find the cursor so we add it to the list. prev is pointing
+		 * to the tail of the list, current is pointing to null. */
+		prev->next = new_node;
+		new_node->prev = prev;
+	} else {
+		zend_rsrc_list_entry new_le;
+
+		new_le.ptr = new_node;
+		new_le.type = le_cursor_list;
+		new_le.refcount = 1;
+		zend_hash_add(&EG(persistent_list), name, strlen(name) + 1, &new_le, sizeof(zend_rsrc_list_entry), NULL);
+	}
+
+	return 0;
+}
+
+static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+{
+	cursor_node *node = (cursor_node*)rsrc->ptr;
+
+	if (!node) {
+		return 0;
+	}
+
+	while (node->next) {
+		cursor_node *temp = node;
+		node = node->next;
+		pefree(temp, 1);
+	}
+	pefree(node, 1);
+
+	return 0;
+}
+
+void php_mongo_cursor_list_pfree(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
+	cursor_list_pfree_helper(rsrc TSRMLS_CC);
+}
+
+void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le)
+{
+	if (node->prev) {
+		/*
+		 * [node1][<->][NODE2][<->][node3]
+		 *   [node1][->][node3]
+		 *   [node1][<->][node3]
+		 *
+		 * [node1][<->][NODE2]
+		 *   [node1]
+		 */
+		node->prev->next = node->next;
+		if (node->next) {
+			node->next->prev = node->prev;
+		}
+	} else {
+		/*
+		 * [NODE2][<->][node3]
+		 *   le->ptr = node3
+		 *   [node3]
+		 *
+		 * [NODE2]
+		 *   le->ptr = 0
+		 */
+		le->ptr = node->next;
+		if (node->next) {
+			node->next->prev = 0;
+		}
+	}
+
+	pefree(node, 1);
+}
+
+void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC)
+{
+	char quickbuf[128];
+	buffer buf;
+	char *error_message;
+
+	buf.pos = quickbuf;
+	buf.start = buf.pos;
+	buf.end = buf.start + 128;
+
+	php_mongo_write_kill_cursors(&buf, cursor_id, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
+#if MONGO_PHP_STREAMS
+	mongo_log_stream_killcursor(con, cursor_id TSRMLS_CC);
+#endif
+
+	if (MonGlo(manager)->send(con, NULL, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %lld: %s", (long long int) cursor_id, error_message);
+		free(error_message);
+	}
+}
+
+/* Tell the database to destroy its cursor */
+static void kill_cursor_le(cursor_node *node, mongo_connection *con, zend_rsrc_list_entry *le TSRMLS_DC)
+{
+	/* If the cursor_id is 0, the db is out of results anyway. */
+	if (node->cursor_id == 0) {
+		php_mongo_free_cursor_node(node, le);
+		return;
+	}
+
+	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", node->cursor_id);
+
+	php_mongo_kill_cursor(con, node->cursor_id TSRMLS_CC);
+
+	/* Free this cursor/link pair */
+	php_mongo_free_cursor_node(node, le);
+}
+
+void php_mongo_cursor_free(void *object TSRMLS_DC)
+{
+	mongo_cursor *cursor = (mongo_cursor*)object;
+
+	if (cursor) {
+		if (cursor->cursor_id != 0) {
+			php_mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+		} else if (cursor->connection) {
+			mongo_deregister_callback_from_connection(cursor->connection, cursor);
+		}
+
+		if (cursor->current) {
+			zval_ptr_dtor(&cursor->current);
+		}
+
+		if (cursor->query) {
+			zval_ptr_dtor(&cursor->query);
+		}
+		if (cursor->fields) {
+			zval_ptr_dtor(&cursor->fields);
+		}
+
+		if (cursor->buf.start) {
+			efree(cursor->buf.start);
+		}
+		if (cursor->ns) {
+			efree(cursor->ns);
+		}
+
+		if (cursor->zmongoclient) {
+			zval_ptr_dtor(&cursor->zmongoclient);
+		}
+
+		mongo_read_preference_dtor(&cursor->read_pref);
+
+		zend_object_std_dtor(&cursor->std TSRMLS_CC);
+
+		efree(cursor);
+	}
+}
+/* }}} */
 
 /*
  * Cursor related read/write functions
