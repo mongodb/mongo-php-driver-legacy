@@ -1021,6 +1021,10 @@ PHP_METHOD(MongoClient, getConnections)
 		add_assoc_long(version, "build", con->version.build);
 		add_assoc_zval(server, "version", version);
 
+		/* Add [min|max]WireVersion */
+		add_assoc_long(connection, "min_wire_version", con->min_wire_version);
+		add_assoc_long(connection, "max_wire_version", con->max_wire_version);
+
 		/* Grab connection info */
 		add_assoc_long(connection, "last_ping", con->last_ping);
 		add_assoc_long(connection, "last_ismaster", con->last_ismaster);
