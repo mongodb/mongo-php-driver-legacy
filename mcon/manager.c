@@ -129,7 +129,10 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 /* Topology discovery */
 
 /* - Helpers */
-static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *servers)
+/* Returns:
+ * 1 on success
+ * 0 on total failure (e.g. unsupported Wire Version) */
+static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *servers)
 {
 	int i, j;
 	char *hash;
@@ -140,6 +143,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	char **found_hosts = NULL;
 	char *tmp_hash;
 	int   res;
+	int supported_wire_version = 1;
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
@@ -206,10 +210,29 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
 						new_con = mongo_get_connection_single(manager, tmp_def, &servers->options, MONGO_CON_FLAG_WRITE, (char **) &con_error_message);
 
-						if (new_con && !mongo_connection_get_server_flags(manager, new_con, &servers->options, &con_error_message)) {
-							mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
-							mongo_manager_connection_deregister(manager, new_con);
-							new_con = NULL;
+						if (new_con) {
+							int ismaster_error = mongo_connection_ismaster(manager, new_con, &servers->options, NULL, NULL, NULL, &con_error_message, NULL);
+
+							do {
+								if (ismaster_error == 1) {
+									/* ismaster() worked just fine */
+									break;
+								}
+								if (ismaster_error == 2) {
+									/* skipped due to configured interval */
+									break;
+								}
+
+								if (ismaster_error == 4) {
+									/* The server is running unsupported Wire Versions */
+									supported_wire_version = 0;
+								}
+
+								/* Any other error. We don't really care which */
+								mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+								mongo_manager_connection_deregister(manager, new_con);
+								new_con = NULL;
+							} while(0);
 						}
 
 						if (new_con) {
@@ -241,6 +264,8 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	if (repl_set_name) {
 		free(repl_set_name);
 	}
+
+	return supported_wire_version;
 }
 
 static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
@@ -269,7 +294,11 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 
 	/* Discover more nodes. This also adds a connection to "servers" for each
 	 * new node */
-	mongo_discover_topology(manager, servers);
+	if (!mongo_discover_topology(manager, servers)) {
+		/* Total failure, we cannot proceed */
+		*error_message = strdup("Found a server running unsupported WireVersion. Please upgrade the driver, or take the server out of rotation");
+		return NULL;
+	}
 
 	/* Depending on whether we want a read or a write connection, run the correct algorithms */
 	if (connection_flags & MONGO_CON_FLAG_WRITE) {
@@ -322,11 +351,13 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	int i;
 	int found_connected_server = 0;
 	mcon_str         *messages;
+	int supported_wire_version = 1;
 
 	mcon_str_ptr_init(messages);
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
+		int ismaster_error = 0;
 		char *con_error_message = NULL;
 		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
@@ -334,11 +365,19 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 			found_connected_server++;
 
 			/* Run ismaster, if needed, to extract server flags */
-			if (!mongo_connection_get_server_flags(manager, tmp, &servers->options, &con_error_message)) {
+			ismaster_error = mongo_connection_ismaster(manager, tmp, &servers->options, NULL, NULL, NULL, &con_error_message, NULL);
+			if (ismaster_error != 1 && ismaster_error != 2) {
 				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", &servers->server[i]->host, &servers->server[i]->port, con_error_message);
 				mongo_connection_destroy(manager, tmp, MONGO_CLOSE_BROKEN);
 				tmp = NULL;
 				found_connected_server--;
+
+				/* If it failed because of WireVersion, we have to bail out completely
+				 * later on, but we should continue to aggregate the errors in case more
+				 * servers are unsupported */
+				if (ismaster_error == 4) {
+					supported_wire_version = 0;
+				}
 			}
 		}
 		if (!tmp) {
@@ -357,6 +396,12 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 				free(con_error_message);
 			}
 		}
+	}
+
+	if (!supported_wire_version) {
+		*error_message = strdup("Found a server running unsupported WireVersion. Please upgrade the driver, or take the server out of rotation");
+		mcon_str_ptr_dtor(messages);
+		return NULL;
 	}
 
 	/* If we don't have a connected server then there is no point in continueing */
