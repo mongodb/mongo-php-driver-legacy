@@ -155,6 +155,14 @@ typedef struct _mongo_connection
 	mongo_connection_deregister_callback *cleanup_list;
 } mongo_connection;
 
+/* MongoDB pre-1.8; Spec says default to 4 MB */
+#define MONGO_CONNECTION_DEFAULT_MAX_BSON_SIZE 4194304
+/* MongoDB pre-2.4; Spec says default to 2 * the maxBsonSize */
+#define MONGO_CONNECTION_DEFAULT_MAX_MESSAGE_SIZE 2 * MONGO_CONNECTION_DEFAULT_MAX_BSON_SIZE
+/* Default Wire Versions for MongoDB pre-2.6 */
+#define MONGO_CONNECTION_DEFAULT_MIN_WIRE_VERSION 0
+#define MONGO_CONNECTION_DEFAULT_MAX_WIRE_VERSION 0
+
 typedef struct _mongo_connection_blacklist
 {
 	time_t last_ping;

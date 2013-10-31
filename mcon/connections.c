@@ -259,13 +259,10 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 	tmp->version.minor = 8;
 	tmp->version.mini  = 0;
 	tmp->version.build = 0;
-	/* MongoDB pre-1.8; Spec says default to 4 MB */
-	tmp->max_bson_size = 4194304;
-	/* MongoDB pre-2.4; Spec says default to 2 * the maxBsonSize */
-	tmp->max_message_size = 2 * tmp->max_bson_size;
-	/* Default Wire Versions for MongoDB pre-2.6 */
-	tmp->min_wire_version = 0;
-	tmp->max_wire_version = 0;
+	tmp->max_bson_size = MONGO_CONNECTION_DEFAULT_MAX_BSON_SIZE;
+	tmp->max_message_size = MONGO_CONNECTION_DEFAULT_MAX_MESSAGE_SIZE;
+	tmp->min_wire_version = MONGO_CONNECTION_DEFAULT_MIN_WIRE_VERSION;
+	tmp->max_wire_version = MONGO_CONNECTION_DEFAULT_MAX_WIRE_VERSION;
 
 	/* Store hash */
 	tmp->hash = strdup(hash);
