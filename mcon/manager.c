@@ -143,7 +143,7 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 	char **found_hosts = NULL;
 	char *tmp_hash;
 	int   res;
-	int found_unsupported_wire_version = 0;
+	int found_supported_wire_version = 1; /* Innocent unless proven guilty */
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
@@ -161,8 +161,8 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 		switch (res) {
 			case 4:
 				/* The server is running unsupported Wire Versions */
-				found_unsupported_wire_version = 1;
-				/* falltrhough intentional */
+				found_supported_wire_version = 0;
+				/* break omitted intentionally */
 			case 0:
 				/* Something is wrong with the connection, we need to remove
 				 * this from our list */
@@ -217,26 +217,23 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 						if (new_con) {
 							int ismaster_error = mongo_connection_ismaster(manager, new_con, &servers->options, NULL, NULL, NULL, &con_error_message, NULL);
 
-							do {
-								if (ismaster_error == 1) {
-									/* ismaster() worked just fine */
+							switch (ismaster_error) {
+								case 1: /* Run just fine */
+								case 2: /* ismaster() skipped due to interval */
 									break;
-								}
-								if (ismaster_error == 2) {
-									/* skipped due to configured interval */
-									break;
-								}
 
-								if (ismaster_error == 4) {
-									/* The server is running unsupported Wire Versions */
-									found_unsupported_wire_version = 1;
-								}
+								case 4: /* Danger danger, reported WireVersion does not overlap what we support */
+									found_supported_wire_version = 0;
+									/* break omitted intentionally */
 
-								/* Any other error. We don't really care which */
-								mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
-								mongo_manager_connection_deregister(manager, new_con);
-								new_con = NULL;
-							} while(0);
+								case 0: /* Some error */
+								case 3: /* Run just fine, but hostname didn't match what we expected */
+								default:
+
+									mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+									mongo_manager_connection_deregister(manager, new_con);
+									new_con = NULL;
+							}
 						}
 
 						if (new_con) {
@@ -269,7 +266,7 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 		free(repl_set_name);
 	}
 
-	return !found_unsupported_wire_version;
+	return found_supported_wire_version;
 }
 
 static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
@@ -355,7 +352,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	int i;
 	int found_connected_server = 0;
 	mcon_str         *messages;
-	int supported_wire_version = 1;
+	int found_supported_wire_version = 1;
 
 	mcon_str_ptr_init(messages);
 
@@ -370,13 +367,14 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 			/* Run ismaster, if needed, to extract server flags */
 			ismaster_error = mongo_connection_ismaster(manager, tmp, &servers->options, NULL, NULL, NULL, &con_error_message, NULL);
-			switch(ismaster_error) {
-				case 1:
-				case 2:
+			switch (ismaster_error) {
+				case 1: /* Run just fine */
+				case 2: /* ismaster() skipped due to interval */
 					break;
 
-				case 3:
-				case 4:
+				case 0: /* Some error */
+				case 3: /* Run just fine, but hostname didn't match what we expected */
+				case 4: /* Danger danger, reported WireVersion does not overlap what we support */
 				default:
 					mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 					/* If it failed because of WireVersion, we have to bail out completely
@@ -384,7 +382,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 					 * servers are unsupported */
 					if (ismaster_error == 4) {
 						mongo_manager_connection_deregister(manager, tmp);
-						supported_wire_version = 0;
+						found_supported_wire_version = 0;
 					} else {
 						mongo_connection_destroy(manager, tmp, MONGO_CLOSE_BROKEN);
 					}
@@ -410,7 +408,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 		}
 	}
 
-	if (!supported_wire_version) {
+	if (!found_supported_wire_version) {
 		*error_message = strdup("Found a server running unsupported WireVersion. Please upgrade the driver, or take the server out of rotation");
 		mcon_str_ptr_dtor(messages);
 		return NULL;
