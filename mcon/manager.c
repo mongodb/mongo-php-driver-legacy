@@ -143,7 +143,7 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 	char **found_hosts = NULL;
 	char *tmp_hash;
 	int   res;
-	int supported_wire_version = 1;
+	int found_unsupported_wire_version = 0;
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
@@ -161,7 +161,7 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 		switch (res) {
 			case 4:
 				/* The server is running unsupported Wire Versions */
-				supported_wire_version = 0;
+				found_unsupported_wire_version = 1;
 				/* falltrhough intentional */
 			case 0:
 				/* Something is wrong with the connection, we need to remove
@@ -229,7 +229,7 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 
 								if (ismaster_error == 4) {
 									/* The server is running unsupported Wire Versions */
-									supported_wire_version = 0;
+									found_unsupported_wire_version = 1;
 								}
 
 								/* Any other error. We don't really care which */
@@ -269,7 +269,7 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 		free(repl_set_name);
 	}
 
-	return supported_wire_version;
+	return !found_unsupported_wire_version;
 }
 
 static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
