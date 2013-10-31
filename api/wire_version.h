@@ -27,10 +27,10 @@
  */
 
 /* WireVersion this release of the driver supports */
-#define PHP_MONGODB_API_MIN_WIRE_VERSION 0
-#define PHP_MONGODB_API_MAX_WIRE_VERSION 2
+#define PHP_MONGO_API_MIN_WIRE_VERSION 0
+#define PHP_MONGO_API_MAX_WIRE_VERSION 2
 
-int php_mongodb_api_supports_wire_version(int min_wire_version, int max_wire_version, char **error_message);
+int php_mongo_api_supports_wire_version(int min_wire_version, int max_wire_version, char **error_message);
 
 #endif
 

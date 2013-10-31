@@ -19,20 +19,20 @@
 #include <string.h>
 #include "wire_version.h"
 
-int php_mongodb_api_supports_wire_version(int min_wire_version, int max_wire_version, char **error_message)
+int php_mongo_api_supports_wire_version(int min_wire_version, int max_wire_version, char **error_message)
 {
 	char *errmsg = "This driver version requires WireVersion between minWireVersion: %d and maxWireVersion: %d. Got: minWireVersion=%d and maxWireVersion=%d";
 	int errlen = strlen(errmsg) - 8 + 1 + (4 * 10); /* Subtract the %d, plus \0, plus 4 ints at maximum size.. */
 
-	if (min_wire_version > PHP_MONGODB_API_MAX_WIRE_VERSION) {
+	if (min_wire_version > PHP_MONGO_API_MAX_WIRE_VERSION) {
 		*error_message = malloc(errlen);
-		snprintf(*error_message, errlen, errmsg, PHP_MONGODB_API_MIN_WIRE_VERSION, PHP_MONGODB_API_MAX_WIRE_VERSION, min_wire_version, max_wire_version);
+		snprintf(*error_message, errlen, errmsg, PHP_MONGO_API_MIN_WIRE_VERSION, PHP_MONGO_API_MAX_WIRE_VERSION, min_wire_version, max_wire_version);
 		return 0;
 	}
 
-	if (max_wire_version < PHP_MONGODB_API_MIN_WIRE_VERSION) {
+	if (max_wire_version < PHP_MONGO_API_MIN_WIRE_VERSION) {
 		*error_message = malloc(errlen);
-		snprintf(*error_message, errlen, errmsg, PHP_MONGODB_API_MIN_WIRE_VERSION, PHP_MONGODB_API_MAX_WIRE_VERSION, min_wire_version, max_wire_version);
+		snprintf(*error_message, errlen, errmsg, PHP_MONGO_API_MIN_WIRE_VERSION, PHP_MONGO_API_MAX_WIRE_VERSION, min_wire_version, max_wire_version);
 		return 0;
 	}
 
