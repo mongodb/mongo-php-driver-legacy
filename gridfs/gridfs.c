@@ -250,7 +250,7 @@ static long setup_file(FILE *fp, char *filename TSRMLS_DC)
 	/* get size */
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
-	if (size >= 0xffffffff) {
+	if (size == -1) {
 		zend_throw_exception_ex(mongo_ce_GridFSException, 4 TSRMLS_CC, "file %s is too large: %ld bytes", filename, size);
 		fclose(fp);
 		return FAILURE;

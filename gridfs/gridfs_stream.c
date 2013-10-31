@@ -59,7 +59,7 @@ typedef struct _gridfs_stream_data {
 	size_t offset;
 
 	/* file size */
-	int size;
+	size_t size;
 
 	/* chunk size */
 	int chunkSize;
@@ -73,7 +73,7 @@ typedef struct _gridfs_stream_data {
 	unsigned char * buffer;
 
 	/* chunk size */
-	int buffer_size;
+	size_t buffer_size;
 
 	/* where we are in the chunk? */
 	size_t buffer_offset;
@@ -272,7 +272,7 @@ static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 		if (gridfs_read_chunk(self, chunk_id + 1 TSRMLS_CC) == FAILURE) {
 			return -1;
 		}
-		tmp_bytes = MIN(count-size, self->buffer_size);
+		tmp_bytes = MIN(count - size, self->buffer_size);
 		memcpy(buf+size, self->buffer, tmp_bytes);
 		size += tmp_bytes;
 	}
@@ -290,7 +290,7 @@ static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 static int gridfs_seek(php_stream *stream, off_t offset, int whence, off_t *newoffs TSRMLS_DC)
 {
 	gridfs_stream_data *self = (gridfs_stream_data *) stream->abstract;
-	int newoffset = 0;
+	size_t newoffset = 0;
 
 	switch (whence) {
 		case SEEK_SET:
