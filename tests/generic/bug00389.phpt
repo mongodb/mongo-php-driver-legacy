@@ -18,7 +18,9 @@ try {
 	$cursor = $c->find()->tailable();
 	foreach( $cursor as $foo ) { }
 } catch ( MongoCursorException $e ) {
-	echo $e->getMessage(), "\n";
+    if (strpos($e->getMessage(), "tailable cursor requested on non capped collection")) {
+        echo "..tailable cursor requested on non capped collection...\n";
+    }
 }
 
 /* Slave okay */
@@ -40,24 +42,25 @@ foreach( $cursor as $foo ) { }
 /* with setFlag() */
 for ( $i = 1; $i < 11; $i++ )
 {
-	echo "Setting flag #", $i, "\n";
-	try {
-		$cursor = $c->find()->setFlag( $i );
-		foreach( $cursor as $foo ) { }
-	} catch ( MongoCursorException $e ) {
-		echo $e->getMessage(), "\n";
-	}
+    echo "Setting flag #", $i, "\n";
+    try {
+        $cursor = $c->find(array("ts" => 1))->setFlag( $i );
+        foreach( $cursor as $foo ) { }
+    } catch ( MongoCursorException $e ) {
+        if (strpos($e->getMessage(), "tailable cursor requested on non capped collection")) {
+            echo "..tailable cursor requested on non capped collection...\n";
+        }
+    }
 }
 ?>
 --EXPECTF--
-%s:%d: tailable cursor requested on non capped collection
+..tailable cursor requested on non capped collection...
 
 %s: Function MongoCursor::slaveOkay() is deprecated in %sbug00389.php on line %d
 Setting flag #1
-%s:%d: tailable cursor requested on non capped collection
+..tailable cursor requested on non capped collection...
 Setting flag #2
 Setting flag #3
-%s:%d: no ts field in query
 Setting flag #4
 Setting flag #5
 Setting flag #6

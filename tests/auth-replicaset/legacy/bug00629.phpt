@@ -21,19 +21,13 @@ $opts = array(
 );
 $m = new MongoClient($cfg["dsn"], $opts+array("readPreference" => MongoClient::RP_SECONDARY_PREFERRED));
 
-$database = $m->selectDB('admin');
-$command = "db.version()";
-$response = $database->execute($command);
-var_dump($response);
+$database = $m->selectDB(dbname());
+$response = $database->command(array("buildinfo" => 1));
+var_dump($response["ok"]);
 ?>
 ===DONE===
 --EXPECTF--
 %s: MongoClient::__construct(): The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead in %s on line %d
-array(2) {
-  ["retval"]=>
-  string(%d) "%s"
-  ["ok"]=>
-  float(1)
-}
+float(1)
 ===DONE===
 

@@ -14,16 +14,15 @@ $col = $db->createCollection("dropcollection");
 $col->insert(array('boo' => 'bar'));
 
 var_dump($db->dropCollection(0));
-var_dump($db->dropCollection('dropcollection'));
+
+dump_these_keys($db->dropCollection('dropcollection'), array("nIndexesWas", "ns", "ok"));
 ?>
 --EXPECTF--
 Warning: MongoDB::dropCollection(): expects parameter 1 to be an string or MongoCollection in %smongodb-dropcollection.php on line %d
 NULL
-array(4) {
+array(3) {
   ["nIndexesWas"]=>
   %s(1)
-  ["msg"]=>
-  string(30) "indexes dropped for collection"
   ["ns"]=>
   string(19) "test.dropcollection"
   ["ok"]=>

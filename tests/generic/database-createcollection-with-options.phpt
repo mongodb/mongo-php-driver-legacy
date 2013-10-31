@@ -23,7 +23,8 @@ $c = $d->createCollection('create-col1', array('size' => 100, 'capped' => true, 
 var_dump($ns->findOne(array('name' => 'phpunit.create-col1')));
 
 // check indexes
-var_dump($c->getIndexInfo());
+$index = $c->getIndexInfo();
+var_dump($index[0]["ns"]);
 
 // test cap
 for ($i = 0; $i < 10; $i++) {
@@ -53,22 +54,7 @@ array(2) {
     int(5)
   }
 }
-array(1) {
-  [0]=>
-  array(4) {
-    ["v"]=>
-    int(1)
-    ["key"]=>
-    array(1) {
-      ["_id"]=>
-      int(1)
-    }
-    ["ns"]=>
-    string(%d) "%s.create-col1"
-    ["name"]=>
-    string(4) "_id_"
-  }
-}
+string(%d) "%s.create-col1"
 int(5)
 int(6)
 int(7)
