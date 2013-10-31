@@ -40,7 +40,7 @@
 void php_mongo_stream_notify_meta(php_stream_context *ctx, int code, zval *args TSRMLS_DC)
 {
 	if (ctx && ctx->notifier) {
-		smart_str buf = {0};
+		smart_str buf = {NULL, 0, 0};
 #if !HAVE_JSON
 		php_serialize_data_t var_hash;
 #endif

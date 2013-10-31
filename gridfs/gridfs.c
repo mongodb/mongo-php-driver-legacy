@@ -341,7 +341,7 @@ static void gridfs_rewrite_cursor_exception(TSRMLS_D)
 {
 	char *message = NULL;
 	long code = 0;
-	smart_str tmp_message = { 0 };
+	smart_str tmp_message = { NULL, 0, 0 };
 
 	if (EG(exception)) {
 		message = estrdup(Z_STRVAL_P(zend_read_property(mongo_ce_GridFSException, EG(exception), "message", strlen("message"), NOISY TSRMLS_CC)));
@@ -1188,7 +1188,7 @@ static zend_function_entry MongoGridFS_methods[] = {
 	PHP_ME(MongoGridFS, delete, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFS, get, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFS, put, NULL, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	{NULL, NULL, NULL, 0, 0}
 };
 
 void mongo_init_MongoGridFS(TSRMLS_D)

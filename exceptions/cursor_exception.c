@@ -28,7 +28,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoCursorException_methods[] = {
 	PHP_ME(MongoCursorException, getHost, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	{NULL, NULL, NULL, 0, 0}
 };
 
 /* {{{ proto string MongoCursorException::getHost()

@@ -1603,7 +1603,7 @@ static zend_function_entry MongoCursor_methods[] = {
 	/* stand-alones */
 	PHP_ME(MongoCursor, count, arginfo_count, ZEND_ACC_PUBLIC)
 
-	{NULL, NULL, NULL}
+	{NULL, NULL, NULL, 0, 0}
 };
 
 zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *connection, int code TSRMLS_DC, char *format, ...)

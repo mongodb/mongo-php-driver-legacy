@@ -106,7 +106,7 @@ static zend_function_entry mongo_methods[] = {
 	PHP_ME(MongoClient, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, killCursor, arginfo_killCursor, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 
-	{ NULL, NULL, NULL }
+	{ NULL, NULL, NULL, 0, 0 }
 };
 
 /* {{{ php_mongoclient_free
@@ -664,7 +664,7 @@ static void stringify_server(mongo_server_def *server, smart_str *str)
    Returns comma seperated list of servers we try to use */
 PHP_METHOD(MongoClient, __toString)
 {
-	smart_str str = { 0 };
+	smart_str str = { NULL, 0, 0 };
 	mongoclient *link;
 	int i;
 

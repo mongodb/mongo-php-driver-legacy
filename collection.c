@@ -1471,7 +1471,7 @@ static void replace_dots(char *key, int key_len)
 
 static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC)
 {
-	smart_str str = { NULL };
+	smart_str str = { NULL, 0, 0 };
 
 	switch (Z_TYPE_P(zkeys)) {
 		case IS_ARRAY:
@@ -1954,7 +1954,7 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, group, arginfo_group, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, distinct, arginfo_distinct, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, aggregate, arginfo_aggregate, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	{NULL, NULL, NULL, 0, 0}
 };
 
 static void php_mongo_collection_free(void *object TSRMLS_DC)

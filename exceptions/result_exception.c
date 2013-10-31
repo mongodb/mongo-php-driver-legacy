@@ -29,7 +29,7 @@ ZEND_END_ARG_INFO()
 static zend_function_entry MongoResultException_methods[] = {
 	PHP_ME(MongoResultException, getDocument, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoResultException, getHost, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	{NULL, NULL, NULL, 0, 0}
 };
 
 /* {{{ proto array MongoResultException::getDocument()
