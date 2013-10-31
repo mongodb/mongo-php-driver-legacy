@@ -378,7 +378,7 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 				case 3:
 				case 4:
 				default:
-					mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: grarg error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+					mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
 					/* If it failed because of WireVersion, we have to bail out completely
 					 * later on, but we should continue to aggregate the errors in case more
 					 * servers are unsupported */
