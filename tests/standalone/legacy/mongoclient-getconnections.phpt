@@ -38,7 +38,7 @@ array(1) {
     ["connection"]=>
     array(10) {
       ["min_wire_version"]=>
-      int(0)
+      int(%d)
       ["max_wire_version"]=>
       int(%d)
       ["last_ping"]=>
