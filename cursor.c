@@ -191,7 +191,7 @@ static int get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **e
 /* Cursor helper function */
 int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 {
-	unsigned int status;
+	int status;
 	char        *error_message = NULL;
 
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting reply");
