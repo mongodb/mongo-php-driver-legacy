@@ -253,7 +253,8 @@ static int gridfs_read_chunk(gridfs_stream_data *self, int chunk_id TSRMLS_DC)
 static size_t gridfs_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 {
 	gridfs_stream_data *self = (gridfs_stream_data *) stream->abstract;
-	int size, chunk_id;
+	size_t size;
+	int chunk_id;
 
 	/* load the needed chunk from mongo */
 	chunk_id = (int)((self->offset)/self->chunkSize);
