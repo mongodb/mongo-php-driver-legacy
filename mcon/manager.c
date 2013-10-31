@@ -159,6 +159,10 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 		/* Run ismaster, if needed, to extract server flags - and fetch the other known hosts */
 		res = mongo_connection_ismaster(manager, con, &servers->options, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
 		switch (res) {
+			case 4:
+				/* The server is running unsupported Wire Versions */
+				supported_wire_version = 0;
+				/* falltrhough intentional */
 			case 0:
 				/* Something is wrong with the connection, we need to remove
 				 * this from our list */
@@ -366,18 +370,26 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 
 			/* Run ismaster, if needed, to extract server flags */
 			ismaster_error = mongo_connection_ismaster(manager, tmp, &servers->options, NULL, NULL, NULL, &con_error_message, NULL);
-			if (ismaster_error != 1 && ismaster_error != 2) {
-				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", &servers->server[i]->host, &servers->server[i]->port, con_error_message);
-				mongo_connection_destroy(manager, tmp, MONGO_CLOSE_BROKEN);
-				tmp = NULL;
-				found_connected_server--;
+			switch(ismaster_error) {
+				case 1:
+				case 2:
+					break;
 
-				/* If it failed because of WireVersion, we have to bail out completely
-				 * later on, but we should continue to aggregate the errors in case more
-				 * servers are unsupported */
-				if (ismaster_error == 4) {
-					supported_wire_version = 0;
-				}
+				case 3:
+				case 4:
+				default:
+					mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: grarg error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+					/* If it failed because of WireVersion, we have to bail out completely
+					 * later on, but we should continue to aggregate the errors in case more
+					 * servers are unsupported */
+					if (ismaster_error == 4) {
+						mongo_manager_connection_deregister(manager, tmp);
+						supported_wire_version = 0;
+					} else {
+						mongo_connection_destroy(manager, tmp, MONGO_CLOSE_BROKEN);
+					}
+					tmp = NULL;
+					found_connected_server--;
 			}
 		}
 		if (!tmp) {
