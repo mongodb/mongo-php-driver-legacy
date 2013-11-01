@@ -1480,7 +1480,7 @@ static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC)
 			HashPosition pointer;
 			zval **data;
 			char *key;
-			uint key_len, first = 1, key_type;
+			uint index_key_len, first = 1, key_type;
 			ulong index;
 
 			for (
@@ -1493,11 +1493,11 @@ static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC)
 				}
 				first = 0;
 
-				key_type = zend_hash_get_current_key_ex(hindex, &key, &key_len, &index, NO_DUP, &pointer);
+				key_type = zend_hash_get_current_key_ex(hindex, &key, &index_key_len, &index, NO_DUP, &pointer);
 
 				switch (key_type) {
 					case HASH_KEY_IS_STRING:
-						smart_str_appendl(&str, key, key_len - 1);
+						smart_str_appendl(&str, key, index_key_len - 1);
 						break;
 
 					case HASH_KEY_IS_LONG:

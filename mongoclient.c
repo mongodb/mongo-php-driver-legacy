@@ -475,11 +475,11 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 		) {
 			switch (zend_hash_get_current_key_ex(Z_ARRVAL_P(options), &opt_key, &opt_key_len, &num_key, 0, &pos)) {
 				case HASH_KEY_IS_STRING: {
-					int error = 0;
+					int error_code = 0;
 
-					error = mongo_store_option_wrapper(link->manager, link->servers, opt_key, opt_entry, (char **)&error_message);
+					error_code = mongo_store_option_wrapper(link->manager, link->servers, opt_key, opt_entry, (char **)&error_message);
 
-					switch (error) {
+					switch (error_code) {
 						case -1: /* Deprecated options */
 							if (strcasecmp(opt_key, "slaveOkay") == 0) {
 								php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'slaveOkay' option is deprecated. Please switch to read-preferences");
@@ -498,7 +498,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 						case 2: /* Unknown connection string option */
 						case 1: /* Empty option name or value */
 							/* Throw exception - error code is 20 + above value. They are defined in php_mongo.h */
-							zend_throw_exception(mongo_ce_ConnectionException, error_message, 20 + error TSRMLS_CC);
+							zend_throw_exception(mongo_ce_ConnectionException, error_message, 20 + error_code TSRMLS_CC);
 							free(error_message);
 							return;
 					}
