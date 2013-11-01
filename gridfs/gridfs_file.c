@@ -383,7 +383,7 @@ static zend_function_entry MongoGridFSFile_methods[] = {
 	PHP_ME(MongoGridFSFile, write, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFSFile, getBytes, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFSFile, getResource, NULL, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 void mongo_init_MongoGridFSFile(TSRMLS_D)

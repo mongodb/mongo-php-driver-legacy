@@ -87,7 +87,7 @@ PHP_METHOD(MongoRegex, __toString)
 static zend_function_entry MongoRegex_methods[] = {
 	PHP_ME(MongoRegex, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoRegex, __toString, NULL, ZEND_ACC_PUBLIC)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 void mongo_init_MongoRegex(TSRMLS_D)

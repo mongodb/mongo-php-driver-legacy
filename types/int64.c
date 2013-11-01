@@ -46,7 +46,7 @@ PHP_METHOD(MongoInt64, __toString)
 static zend_function_entry MongoInt64_methods[] = {
 	PHP_ME(MongoInt64, __construct, NULL, ZEND_ACC_PUBLIC )
 	PHP_ME(MongoInt64, __toString, NULL, ZEND_ACC_PUBLIC )
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 void mongo_init_MongoInt64(TSRMLS_D)

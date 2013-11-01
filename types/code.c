@@ -75,7 +75,7 @@ PHP_METHOD(MongoCode, __toString)
 static zend_function_entry MongoCode_methods[] = {
 	PHP_ME(MongoCode, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCode, __toString, NULL, ZEND_ACC_PUBLIC)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 void mongo_init_MongoCode(TSRMLS_D)

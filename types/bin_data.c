@@ -51,7 +51,7 @@ PHP_METHOD(MongoBinData, __toString)
 static zend_function_entry MongoBinData_methods[] = {
 	PHP_ME(MongoBinData, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoBinData, __toString, NULL, ZEND_ACC_PUBLIC)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 void mongo_init_MongoBinData(TSRMLS_D)

@@ -906,7 +906,7 @@ zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database,
 {
 	zval *cursor_zval;
 	mongo_cursor *cursor;
-	smart_str ns = { 0 };
+	smart_str ns = { NULL, 0, 0 };
 
 	MAKE_STD_ZVAL(cursor_zval);
 	object_init_ex(cursor_zval, mongo_ce_Cursor);
@@ -1197,7 +1197,7 @@ static zend_function_entry MongoDB_methods[] = {
 	PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, forceError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, authenticate, arginfo_authenticate, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 static void php_mongo_db_free(void *object TSRMLS_DC)

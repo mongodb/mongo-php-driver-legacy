@@ -65,7 +65,7 @@ static zend_function_entry mongo_methods[] = {
 	PHP_ME(Mongo, getPoolSize, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, poolDebug, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
 
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 void mongo_init_Mongo(TSRMLS_D)

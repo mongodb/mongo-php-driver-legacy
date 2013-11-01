@@ -82,7 +82,7 @@ extern HANDLE cursor_mutex;
 zend_function_entry mongo_functions[] = {
 	PHP_FE(bson_encode, NULL)
 	PHP_FE(bson_decode, NULL)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 /* {{{ mongo_module_entry

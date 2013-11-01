@@ -197,7 +197,7 @@ static mcon_collection* mongo_filter_candidates_by_tagset(mongo_con_manager *man
 char *mongo_read_preference_squash_tagset(mongo_read_preference_tagset *tagset)
 {
 	int    i;
-	struct mcon_str str = { 0 };
+	struct mcon_str str = { 0, 0, 0 };
 
 	for (i = 0; i < tagset->tag_count; i++) {
 		if (i) {

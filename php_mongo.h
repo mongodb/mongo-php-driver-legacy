@@ -171,6 +171,7 @@ typedef __int64 int64_t;
 # define MONGO_E_DEPRECATED E_DEPRECATED
 #else
 # define MONGO_E_DEPRECATED E_STRICT
+# define PHP_FE_END         { NULL, NULL, NULL, 0, 0 }
 #endif
 
 #define MUST_BE_ARRAY_OR_OBJECT(num, arg) do { \

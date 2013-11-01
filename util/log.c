@@ -38,7 +38,7 @@ static zend_function_entry mongo_log_methods[] = {
 	PHP_ME(MongoLog, setCallback, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(MongoLog, getCallback, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 #endif
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 void mongo_init_MongoLog(TSRMLS_D) {
