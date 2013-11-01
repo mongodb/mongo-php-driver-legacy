@@ -1188,7 +1188,7 @@ static zend_function_entry MongoGridFS_methods[] = {
 	PHP_ME(MongoGridFS, delete, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFS, get, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFS, put, NULL, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL, 0, 0}
+	PHP_FE_END
 };
 
 void mongo_init_MongoGridFS(TSRMLS_D)

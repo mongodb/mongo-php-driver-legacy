@@ -1197,7 +1197,7 @@ static zend_function_entry MongoDB_methods[] = {
 	PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, forceError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, authenticate, arginfo_authenticate, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-	{ NULL, NULL, NULL, 0, 0 }
+	PHP_FE_END
 };
 
 static void php_mongo_db_free(void *object TSRMLS_DC)

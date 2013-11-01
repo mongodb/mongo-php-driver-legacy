@@ -1954,7 +1954,7 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, group, arginfo_group, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, distinct, arginfo_distinct, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, aggregate, arginfo_aggregate, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL, 0, 0}
+	PHP_FE_END
 };
 
 static void php_mongo_collection_free(void *object TSRMLS_DC)

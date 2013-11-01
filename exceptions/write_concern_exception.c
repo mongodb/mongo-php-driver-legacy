@@ -28,7 +28,7 @@ ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoWriteConcernException_methods[] = {
 	PHP_ME(MongoWriteConcernException, getDocument, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL, 0, 0}
+	PHP_FE_END
 };
 
 /* {{{ proto array MongoWriteConcernException::getDocument(void)

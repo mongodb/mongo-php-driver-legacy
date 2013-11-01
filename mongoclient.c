@@ -106,7 +106,7 @@ static zend_function_entry mongo_methods[] = {
 	PHP_ME(MongoClient, close, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, killCursor, arginfo_killCursor, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 
-	{ NULL, NULL, NULL, 0, 0 }
+	PHP_FE_END
 };
 
 /* {{{ php_mongoclient_free

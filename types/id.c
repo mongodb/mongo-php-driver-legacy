@@ -372,7 +372,7 @@ static zend_function_entry MongoId_methods[] = {
 	PHP_ME(MongoId, getPID, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoId, getInc, NULL, ZEND_ACC_PUBLIC)
 
-	{ NULL, NULL, NULL, 0, 0 }
+	PHP_FE_END
 };
 
 void mongo_init_MongoId(TSRMLS_D)

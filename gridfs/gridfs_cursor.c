@@ -87,7 +87,7 @@ static zend_function_entry MongoGridFSCursor_methods[] = {
 	PHP_ME(MongoGridFSCursor, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFSCursor, getNext, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFSCursor, current, NULL, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL, 0, 0}
+	PHP_FE_END
 };
 
 void mongo_init_MongoGridFSCursor(TSRMLS_D)
