@@ -191,8 +191,8 @@ static int get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **e
 /* Cursor helper function */
 int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 {
-	unsigned int status;
-	char        *error_message = NULL;
+	int   status;
+	char *error_message = NULL;
 
 	php_mongo_log(MLOG_IO, MLOG_FINE TSRMLS_CC, "getting reply");
 
@@ -1603,7 +1603,7 @@ static zend_function_entry MongoCursor_methods[] = {
 	/* stand-alones */
 	PHP_ME(MongoCursor, count, arginfo_count, ZEND_ACC_PUBLIC)
 
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *connection, int code TSRMLS_DC, char *format, ...)

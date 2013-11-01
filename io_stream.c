@@ -45,7 +45,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	int errcode;
 	php_stream *stream;
 	char *hash = mongo_server_create_hash(server);
-	struct timeval ctimeout = {0};
+	struct timeval ctimeout = {0, 0};
 	char *dsn;
 	int dsn_len;
 	TSRMLS_FETCH();
@@ -101,7 +101,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	}
 
 	if (options->socketTimeoutMS) {
-		struct timeval rtimeout = {0};
+		struct timeval rtimeout = {0, 0};
 		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
 		rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
 		php_stream_set_option(stream, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
@@ -127,7 +127,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	TSRMLS_FETCH();
 
 	if (timeout > 0 && options->socketTimeoutMS != timeout) {
-		struct timeval rtimeout = {0};
+		struct timeval rtimeout = {0, 0};
 		rtimeout.tv_sec = timeout / 1000;
 		rtimeout.tv_usec = (timeout % 1000) * 1000;
 
@@ -161,7 +161,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 				if (zend_hash_find(Z_ARRVAL_P(metadata), "timed_out", sizeof("timed_out"), (void**)&tmp) == SUCCESS) {
 					convert_to_boolean_ex(tmp);
 					if (Z_BVAL_PP(tmp)) {
-						struct timeval rtimeout = {0};
+						struct timeval rtimeout = {0, 0};
 
 						if (timeout > 0 && options->socketTimeoutMS != timeout) {
 							rtimeout.tv_sec = timeout / 1000;
@@ -200,7 +200,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, received, size TSRMLS_CC);
 
 	if (timeout > 0 && options->socketTimeoutMS != timeout) {
-		struct timeval rtimeout = {0};
+		struct timeval rtimeout = {0, 0};
 		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
 		rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
 

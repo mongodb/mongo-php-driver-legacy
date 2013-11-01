@@ -375,7 +375,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "send_packet: data_size: %d", data_size);
 
 	/* Check size limits */
-	if (con->max_bson_size && data_size > con->max_bson_size) {
+	if (con->max_bson_size && data_size > (uint32_t)con->max_bson_size) {
 		*error_message = malloc(256);
 		snprintf(*error_message, 256, "send_package: data corruption: the returned size of the reply (%d) is larger than the maximum allowed size (%d)", data_size, con->max_bson_size);
 		return 0;

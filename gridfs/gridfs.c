@@ -250,7 +250,7 @@ static long setup_file(FILE *fp, char *filename TSRMLS_DC)
 	/* get size */
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
-	if (size >= 0xffffffff) {
+	if (size == -1) {
 		zend_throw_exception_ex(mongo_ce_GridFSException, 4 TSRMLS_CC, "file %s is too large: %ld bytes", filename, size);
 		fclose(fp);
 		return FAILURE;
@@ -341,7 +341,7 @@ static void gridfs_rewrite_cursor_exception(TSRMLS_D)
 {
 	char *message = NULL;
 	long code = 0;
-	smart_str tmp_message = { 0 };
+	smart_str tmp_message = { NULL, 0, 0 };
 
 	if (EG(exception)) {
 		message = estrdup(Z_STRVAL_P(zend_read_property(mongo_ce_GridFSException, EG(exception), "message", strlen("message"), NOISY TSRMLS_CC)));
@@ -917,13 +917,13 @@ PHP_METHOD(MongoGridFS, findOne)
    used to match documents by the filename field, which may not be unique. */
 PHP_METHOD(MongoGridFS, remove)
 {
-	zval *criteria = 0, *options = 0, *zfields, *zcursor, *chunks, *next, temp;
+	zval *criteria = 0, *options = 0, *zfields, *zcursor, *chunks, *next, chunktemp;
 	zval **tmp;
 	int justOne = -1;
 
 	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
-	php_mongo_ensure_gridfs_index(&temp, chunks TSRMLS_CC);
-	zval_dtor(&temp);
+	php_mongo_ensure_gridfs_index(&chunktemp, chunks TSRMLS_CC);
+	zval_dtor(&chunktemp);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|za/", &criteria, &options) == FAILURE) {
 		return;
@@ -935,13 +935,13 @@ PHP_METHOD(MongoGridFS, remove)
 	} else if (Z_TYPE_P(criteria) == IS_ARRAY) {
 		zval_add_ref(&criteria);
 	} else {
-		zval *tmp;
+		zval *temp;
 
-		MAKE_STD_ZVAL(tmp);
-		array_init(tmp);
+		MAKE_STD_ZVAL(temp);
+		array_init(temp);
 		convert_to_string(criteria);
-		add_assoc_stringl(tmp, "filename", Z_STRVAL_P(criteria), Z_STRLEN_P(criteria), 1);
-		criteria = tmp;
+		add_assoc_stringl(temp, "filename", Z_STRVAL_P(criteria), Z_STRLEN_P(criteria), 1);
+		criteria = temp;
 	}
 
 	if (!options) {
@@ -1067,11 +1067,11 @@ PHP_METHOD(MongoGridFS, storeUpload)
 		while (zend_hash_get_current_data_ex(Z_ARRVAL_PP(temp), (void **)&entry, &pos) == SUCCESS) {
 			zval *retval;
 			zval *copied;
-			zval **name;
+			zval **current_file_name;
 			MAKE_STD_ZVAL(retval);
 
-			zend_hash_get_current_data(Z_ARRVAL_PP(names), (void **)&name);
-			add_assoc_string(extra_param, "filename", Z_STRVAL_PP(name), 1);
+			zend_hash_get_current_data(Z_ARRVAL_PP(names), (void **)&current_file_name);
+			add_assoc_string(extra_param, "filename", Z_STRVAL_PP(current_file_name), 1);
 
 			MONGO_METHOD2(MongoGridFS, storeFile, retval, getThis(), *entry, extra_param);
 
@@ -1188,7 +1188,7 @@ static zend_function_entry MongoGridFS_methods[] = {
 	PHP_ME(MongoGridFS, delete, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFS, get, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFS, put, NULL, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 void mongo_init_MongoGridFS(TSRMLS_D)

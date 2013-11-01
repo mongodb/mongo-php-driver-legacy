@@ -199,7 +199,6 @@ PHP_METHOD(MongoId, __construct)
 
 void php_mongo_mongoid_populate(zval *this_ptr, zval *id TSRMLS_DC)
 {
-	zval *str = NULL;
 	mongo_id *this_id = (mongo_id*)zend_object_store_get_object(this_ptr TSRMLS_CC);
 
 	if (!this_id->id) {
@@ -242,6 +241,7 @@ void php_mongo_mongoid_populate(zval *this_ptr, zval *id TSRMLS_DC)
 		zend_throw_exception(mongo_ce_Exception, "Invalid object ID", 19 TSRMLS_CC);
 		return;
 	} else {
+		zval *str = NULL;
 		char *tmp_id;
 		generate_id(this_id->id TSRMLS_CC);
 
@@ -372,7 +372,7 @@ static zend_function_entry MongoId_methods[] = {
 	PHP_ME(MongoId, getPID, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoId, getInc, NULL, ZEND_ACC_PUBLIC)
 
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 void mongo_init_MongoId(TSRMLS_D)

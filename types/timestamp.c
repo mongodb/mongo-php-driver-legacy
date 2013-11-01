@@ -53,7 +53,7 @@ PHP_METHOD(MongoTimestamp, __toString)
 static zend_function_entry MongoTimestamp_methods[] = {
 	PHP_ME(MongoTimestamp, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoTimestamp, __toString, NULL, ZEND_ACC_PUBLIC)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 void mongo_init_MongoTimestamp(TSRMLS_D)

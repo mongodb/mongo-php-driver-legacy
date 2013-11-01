@@ -113,7 +113,7 @@ PHP_METHOD(MongoDate, __toString)
 static zend_function_entry MongoDate_methods[] = {
 	PHP_ME(MongoDate, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDate, __toString, NULL, ZEND_ACC_PUBLIC)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 /* {{{ php_mongo_date_free
