@@ -466,6 +466,8 @@ typedef struct {
 	int cursor_options;
 } mongo_cursor;
 
+typedef mongo_cursor mongo_command_cursor;
+
 typedef struct {
 	zend_object std;
 	char *id;
