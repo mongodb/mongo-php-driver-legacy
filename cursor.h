@@ -54,8 +54,6 @@ PHP_METHOD(MongoCursor, reset);
 PHP_METHOD(MongoCursor, count);
 PHP_METHOD(MongoCursor, info);
 
-PHP_METHOD(MongoCursorException, getHost);
-
 #endif
 
 /*

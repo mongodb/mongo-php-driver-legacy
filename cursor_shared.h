@@ -17,7 +17,6 @@
 #define MONGO_CURSOR_SHARED_H 1
 
 #include "php_mongo.h"
-#include "cursor.h"
 
 /* Cursor flags */
 #define CURSOR_FLAG_TAILABLE      2
@@ -81,6 +80,7 @@ void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
 
 signed int php_mongo_get_cursor_header(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC);
 int php_mongo_get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC);
+
 /* Tries to read the reply from the database */
 int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC);
 void php_mongo_make_special(mongo_cursor *cursor);
@@ -109,3 +109,12 @@ void php_mongo_cursor_force_primary(mongo_cursor *cursor);
 zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *connection, int code TSRMLS_DC, char *format, ...);
 
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */
