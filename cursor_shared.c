@@ -23,7 +23,6 @@
 #include "php_mongo.h"
 #include "bson.h"
 #include "db.h"
-#include "cursor.h"
 #include "collection.h"
 #include "util/log.h"
 #include "log_stream.h"
@@ -509,3 +508,12 @@ zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *c
 
 	return e;
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */
