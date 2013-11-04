@@ -60,6 +60,32 @@ static int handle_error(mongo_cursor *cursor TSRMLS_DC);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
 
+/* Queries the database. Returns SUCCESS or FAILURE. */
+static int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC);
+
+/* Reset the cursor to clean up or prepare for another query. Removes cursor
+ * from cursor list (and kills it, if necessary).  */
+static void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC);
+
+/* Resets cursor and disconnects connection.  Always returns FAILURE (so it can
+ * be used by functions returning FAILURE). */
+static int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC);
+
+/* If the query should be send to the db or not. The rules are:
+ * - db commands should only be sent onces (no retries)
+ * - normal queries should be sent up to 5 times
+ * This uses exponential backoff with a random seed to avoid flooding a
+ * struggling db with retries.  */
+static int mongo_cursor__should_retry(mongo_cursor *cursor);
+
+#define PREITERATION_SETUP \
+	PHP_MONGO_GET_CURSOR(getThis()); \
+	\
+	if (cursor->started_iterating) { \
+		zend_throw_exception(mongo_ce_CursorException, "cannot modify cursor after beginning iteration.", 0 TSRMLS_CC); \
+		return; \
+	}
+
 /* {{{ MongoCursor->__construct(MongoClient connection, string ns [, array query [, array fields]])
    Constructs a MongoCursor */
 PHP_METHOD(MongoCursor, __construct)
@@ -821,7 +847,7 @@ void mongo_apply_mongos_rp(mongo_cursor *cursor)
 	add_assoc_zval(cursor->query, "$readPreference", rp);
 }
 
-int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
+static int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 {
 	mongo_cursor *cursor;
 	mongo_buffer buf;
@@ -928,7 +954,7 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 }
 /* }}} */
 
-int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
+static int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
 {
 	mongo_manager_connection_deregister(MonGlo(manager), cursor->connection);
 	cursor->dead = 1;
@@ -980,7 +1006,7 @@ PHP_METHOD(MongoCursor, key)
 }
 /* }}} */
 
-int mongo_cursor__should_retry(mongo_cursor *cursor)
+static int mongo_cursor__should_retry(mongo_cursor *cursor)
 {
 	int microseconds = 50000, slots = 0, wait_us = 0;
 
@@ -1185,7 +1211,7 @@ PHP_METHOD(MongoCursor, reset)
 	mongo_util_cursor_reset(cursor TSRMLS_CC);
 }
 
-void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
+static void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 {
 	cursor->buf.pos = cursor->buf.start;
 
