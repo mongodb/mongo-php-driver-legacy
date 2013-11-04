@@ -131,7 +131,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 /* - Helpers */
 /* Returns:
  * 1 on success
- * 0 on total failure (e.g. unsupported Wire Version) */
+ * 0 on total failure (e.g. unsupported WireVersion) */
 static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *servers)
 {
 	int i, j;
@@ -160,7 +160,7 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 		res = mongo_connection_ismaster(manager, con, &servers->options, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
 		switch (res) {
 			case 4:
-				/* The server is running unsupported Wire Versions */
+				/* The server is running unsupported WireVersions */
 				found_supported_wire_version = 0;
 				/* break omitted intentionally */
 			case 0:

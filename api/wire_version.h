@@ -18,7 +18,7 @@
 #define __API_WIRE_VERSION_H__
 
 /*
- * Known Wire Versions:
+ * Known WireVersions:
  * 0: All features before 2.5.0
  * 1: Aggregate can return cursors
  * 2: Write Commands API
