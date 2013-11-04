@@ -103,8 +103,8 @@ void php_mongo_cursor_force_command_cursor(mongo_cursor *cursor);
 /* Switch to primary connection */
 void php_mongo_cursor_force_primary(mongo_cursor *cursor);
 
-/* Throw a MongoCursorException with the given code and message.  Uses the
- * server to fill in information about the connection that cause the exception.
+/* Throw a MongoCursorException with the given code and message. Uses the
+ * server to fill in information about the connection that caused the exception.
  * Does nothing if an exception has already been thrown. */
 zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *connection, int code TSRMLS_DC, char *format, ...);
 

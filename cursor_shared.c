@@ -287,9 +287,8 @@ void php_mongo_cursor_free(void *object TSRMLS_DC)
 }
 /* }}} */
 
-/*
- * Cursor related read/write functions
- */
+/* {{{ Cursor related read/write functions */
+
 /*
  * This method reads the message header for a database response
  * It returns failure or success and throws an exception on failure.
@@ -424,7 +423,9 @@ int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 
 	return SUCCESS;
 }
+/* }}} */
 
+/* {{{ Cursor option setting */
 /* Returns 1 on success, and 0 (raising an exception) on failure */
 int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value TSRMLS_DC)
 {
@@ -462,7 +463,13 @@ void php_mongo_cursor_force_primary(mongo_cursor *cursor)
 {
 	cursor->cursor_options |= MONGO_CURSOR_OPT_FORCE_PRIMARY;
 }
+/* }}} */
 
+/* {{{ Utility functions */
+
+/* This function encapsulates a simple query in an array where the query is 
+ * added as the $query element. This new array also allows other options to be
+ * set, such as limit and skip. */
 void php_mongo_make_special(mongo_cursor *cursor)
 {
 	zval *temp;
@@ -479,6 +486,8 @@ void php_mongo_make_special(mongo_cursor *cursor)
 	add_assoc_zval(cursor->query, "$query", temp);
 }
 
+/* This function throws an exception if none is set, and automatically adds the
+ * hostname if available. */
 zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *connection, int code TSRMLS_DC, char *format, ...)
 {
 	zval *e;
@@ -508,6 +517,7 @@ zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *c
 
 	return e;
 }
+/* }}} */
 
 /*
  * Local variables:
