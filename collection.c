@@ -42,8 +42,8 @@ zend_class_entry *mongo_ce_Collection = NULL;
 
 static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
 static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC);
-static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC);
-static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
+static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, mongo_buffer *buf, zval *return_value TSRMLS_DC);
+static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
 
 /* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
@@ -295,7 +295,7 @@ PHP_METHOD(MongoCollection, validate)
 
 /* This should probably be split into two methods... right now appends the
  * getlasterror query to the buffer and alloc & inits the cursor zval. */
-static zval* append_getlasterror(zval *coll, buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC)
+static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC)
 {
 	zval *cmd_ns_z, *cmd, *cursor_z, *temp, *timeout_p;
 	char *cmd_ns, *w_str = NULL;
@@ -540,7 +540,7 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 }
 
 /* Wrapper for sending and wrapping in a safe op */
-static int send_message(zval *this_ptr, mongo_connection *connection, buffer *buf, zval *options, zval *return_value TSRMLS_DC)
+static int send_message(zval *this_ptr, mongo_connection *connection, mongo_buffer *buf, zval *options, zval *return_value TSRMLS_DC)
 {
 	int retval = 1;
 	char *error_message = NULL;
@@ -669,7 +669,7 @@ static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_conn
 	MONGO_ERROR_G(error_handling) = orig_error_handling;
 }
 
-static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, buffer *buf, zval *return_value TSRMLS_DC)
+static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, mongo_buffer *buf, zval *return_value TSRMLS_DC)
 {
 	char *error_message;
 	mongo_cursor *cursor;
@@ -723,7 +723,7 @@ PHP_METHOD(MongoCollection, insert)
 {
 	zval *a, *options = 0;
 	mongo_collection *c;
-	buffer buf;
+	mongo_buffer buf;
 	mongo_connection *connection;
 	int retval;
 
@@ -768,7 +768,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 	zval *docs, *options = NULL;
 	mongo_collection *c;
 	mongo_connection *connection;
-	buffer buf;
+	mongo_buffer buf;
 	int bit_opts = 0;
 	int retval;
 
@@ -957,7 +957,7 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 {
 	int bit_opts = 0;
 	int retval = 1;
-	buffer buf;
+	mongo_buffer buf;
 	mongo_connection *connection;
 
 	if (options) {
@@ -1035,7 +1035,7 @@ PHP_METHOD(MongoCollection, remove)
 	int bit_opts = 0;
 	mongo_collection *c;
 	mongo_connection *connection;
-	buffer buf;
+	mongo_buffer buf;
 	int retval;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|za/", &criteria, &options) == FAILURE) {

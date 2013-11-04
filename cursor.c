@@ -425,7 +425,7 @@ static void make_special(mongo_cursor *cursor)
  */
 PHP_METHOD(MongoCursor, hasNext)
 {
-	buffer buf;
+	mongo_buffer buf;
 	int size;
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	char *error_message = NULL;
@@ -1026,7 +1026,7 @@ void mongo_apply_mongos_rp(mongo_cursor *cursor)
 int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 {
 	mongo_cursor *cursor;
-	buffer buf;
+	mongo_buffer buf;
 	char *error_message;
 	mongoclient *link;
 	mongo_read_preference rp;
@@ -1823,7 +1823,7 @@ void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le)
 void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC)
 {
 	char quickbuf[128];
-	buffer buf;
+	mongo_buffer buf;
 	char *error_message;
 
 	buf.pos = quickbuf;
