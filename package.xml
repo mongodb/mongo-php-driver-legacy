@@ -89,6 +89,11 @@
    <file role="src" name="php_mongo.c"/>
    <file role="src" name="php_mongo.h"/>
 
+   <dir baseinstalldir="/" name="api">
+    <file role="src" name="wire_version.c"/>
+    <file role="src" name="wire_version.h"/>
+   </dir>
+
    <dir baseinstalldir="/" name="exceptions">
     <file role="src" name="connection_exception.c"/>
     <file role="src" name="connection_exception.h"/>
