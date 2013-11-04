@@ -34,10 +34,12 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	struct timeval ctimeout = {0};
 	char *dsn;
 	int dsn_len;
+	int tcp_socket = 1;
 	TSRMLS_FETCH();
 
 	if (server->host[0] == '/') {
 		dsn_len = spprintf(&dsn, 0, "unix://%s", server->host);
+		tcp_socket = 0;
 	} else {
 		dsn_len = spprintf(&dsn, 0, "tcp://%s:%d", server->host, server->port);
 	}
@@ -57,6 +59,13 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		*error_message = strdup(errmsg);
 		efree(errmsg);
 		return NULL;
+	}
+
+	if (tcp_socket) {
+		int socket = ((php_netstream_data_t*)stream->abstract)->socket;
+		int flag = 1;
+
+		setsockopt(socket, IPPROTO_TCP,  TCP_NODELAY, (char *) &flag, sizeof(int));
 	}
 
 	if (options->ssl) {
