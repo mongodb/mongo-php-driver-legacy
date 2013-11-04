@@ -338,7 +338,7 @@ typedef struct {
 	char *start;
 	char *pos;
 	char *end;
-} buffer;
+} mongo_buffer;
 
 #define CREATE_MSG_HEADER(rid, rto, opcode) \
 	header.length = 0; \
@@ -474,7 +474,7 @@ typedef struct {
 	/* number results returned */
 	int num;
 	/* results */
-	buffer buf;
+	mongo_buffer buf;
 
 	/* cursor_id indicates if there are more results to fetch.  If cursor_id
 	 * is 0, the cursor is "dead."  If cursor_id != 0, server is set to the
