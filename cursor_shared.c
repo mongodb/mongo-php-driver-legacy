@@ -210,7 +210,7 @@ void php_mongo_free_cursor_node(cursor_node *node, zend_rsrc_list_entry *le)
 void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC)
 {
 	char quickbuf[128];
-	buffer buf;
+	mongo_buffer buf;
 	char *error_message;
 
 	buf.pos = quickbuf;
