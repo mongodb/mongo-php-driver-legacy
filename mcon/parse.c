@@ -24,8 +24,8 @@
 #include "read_preference.h"
 
 /* Forward declarations */
-void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start);
-int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message);
+static void mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start);
+static int mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message);
 
 /* Parsing routine */
 mongo_servers* mongo_parse_init(void)
@@ -229,7 +229,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 }
 
 /* Helpers */
-void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start)
+static void mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start)
 {
 	mongo_server_def *tmp;
 
@@ -255,7 +255,7 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
  * 1 if either name or value was missing
  * 2 if the option didn't exist
  * 3 on logic errors */
-int static mongo_process_option(mongo_con_manager *manager, mongo_servers *servers, char *name, char *value, char *pos, char **error_message)
+static int mongo_process_option(mongo_con_manager *manager, mongo_servers *servers, char *name, char *value, char *pos, char **error_message)
 {
 	char *tmp_name;
 	char *tmp_value;
@@ -643,7 +643,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 /* Returns 0 if all options were processed without errors.
  * On failure, returns 1 and populates error_message */
-int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message)
+static int mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message)
 {
 	int retval = 0;
 	char *name_start, *value_start = NULL, *pos;
@@ -670,7 +670,7 @@ int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *server
 	return retval;
 }
 
-void static mongo_server_def_dump(mongo_con_manager *manager, mongo_server_def *server_def)
+static void mongo_server_def_dump(mongo_con_manager *manager, mongo_server_def *server_def)
 {
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO,
 		"- host: %s; port: %d; username: %s, password: %s, database: %s, auth source: %s, mechanism: %d",

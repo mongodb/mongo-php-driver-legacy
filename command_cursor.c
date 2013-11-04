@@ -148,7 +148,7 @@ static zend_function_entry MongoCommandCursor_methods[] = {
 	/* stand-alones */
 	PHP_ME(MongoCursor, count, arginfo_count, ZEND_ACC_PUBLIC)
 
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 /* The PHP_MONGO_OBJ_NEW macro needs a specifically named function for free, but
