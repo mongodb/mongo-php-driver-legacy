@@ -82,7 +82,7 @@ PHP_METHOD(MongoCursor, __construct)
 		dot = strchr(ns, '.');
 
 		if (ns_len < 3 || dot == NULL || ns[0] == '.' || ns[ns_len-1] == '.') {
-			mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
+			php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
 			return;
 		}
 	}
@@ -225,7 +225,7 @@ PHP_METHOD(MongoCursor, hasNext)
 		RETURN_FALSE;
 	} else if (cursor->connection == 0) {
 		/* if we have a cursor_id, we should have a server */
-		mongo_cursor_throw(mongo_ce_CursorException, NULL, 18 TSRMLS_CC, "trying to get more, but cannot find server");
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 18 TSRMLS_CC, "trying to get more, but cannot find server");
 		return;
 	}
 
@@ -246,7 +246,7 @@ PHP_METHOD(MongoCursor, hasNext)
 	if (client->manager->send(cursor->connection, &client->servers->options, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		efree(buf.start);
 
-		mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 1 TSRMLS_CC, "%s", error_message);
+		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 1 TSRMLS_CC, "%s", error_message);
 		free(error_message);
 		mongo_util_cursor_failed(cursor TSRMLS_CC);
 		return;
@@ -768,11 +768,11 @@ PHP_METHOD(MongoCursor, doQuery)
 	} while (mongo_cursor__should_retry(cursor));
 
 	if (strcmp(".$cmd", cursor->ns+(strlen(cursor->ns)-5)) == 0) {
-		mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 19 TSRMLS_CC, "couldn't send command");
+		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 19 TSRMLS_CC, "couldn't send command");
 		return;
 	}
 
-	mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 19 TSRMLS_CC, "max number of retries exhausted, couldn't send query");
+	php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 19 TSRMLS_CC, "max number of retries exhausted, couldn't send query");
 }
 /* }}} */
 
@@ -907,10 +907,10 @@ int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 
 	if (link->manager->send(cursor->connection, &link->servers->options, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {
-			mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 14 TSRMLS_CC, "couldn't send query: %s", error_message);
+			php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 14 TSRMLS_CC, "couldn't send query: %s", error_message);
 			free(error_message);
 		} else {
-			mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 14 TSRMLS_CC, "couldn't send query");
+			php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 14 TSRMLS_CC, "couldn't send query");
 		}
 		efree(buf.start);
 		
@@ -1044,7 +1044,7 @@ static int handle_error(mongo_cursor *cursor TSRMLS_DC)
 
 		/* TODO: Determine if we need to throw MongoCursorTimeoutException
 		 * or MongoWriteConcernException here, depending on the code. */
-		exception = mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
+		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
 		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current TSRMLS_CC);
 		zval_ptr_dtor(&cursor->current);
 		cursor->current = 0;
@@ -1067,17 +1067,17 @@ static int handle_error(mongo_cursor *cursor TSRMLS_DC)
 
 	if (cursor->flag & MONGO_OP_REPLY_ERROR_FLAGS) {
 		if (cursor->flag & MONGO_OP_REPLY_CURSOR_NOT_FOUND) {
-			mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 16336 TSRMLS_CC, "could not find cursor over collection %s", cursor->ns);
+			php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 16336 TSRMLS_CC, "could not find cursor over collection %s", cursor->ns);
 			return 1;
 		}
 
 		if (cursor->flag & MONGO_OP_REPLY_QUERY_FAILURE) {
-			mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 2 TSRMLS_CC, "query failure");
+			php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 2 TSRMLS_CC, "query failure");
 			return 1;
 		}
 
 		/* Default case */
-		mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 29 TSRMLS_CC, "Unknown query/get_more failure");
+		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 29 TSRMLS_CC, "Unknown query/get_more failure");
 		return 1;
 	}
 
@@ -1399,60 +1399,6 @@ static zend_function_entry MongoCursor_methods[] = {
 
 	PHP_FE_END
 };
-
-zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *connection, int code TSRMLS_DC, char *format, ...)
-{
-	zval *e;
-	va_list arg;
-	char *host, *message;
-
-	if (EG(exception)) {
-		return EG(exception);
-	}
-
-	/* Based on the status, we pick a different exception class.
-	 *
-	 * For specific cases we pick something else than the default
-	 * mongo_ce_CursorException:
-	 * - code 50, which is an operation exceeded timeout.
-	 * - code 80, which is a cursor timeout.
-	 * - codes 11000, 11001, 12582, which are all duplicate key exceptions
-	 *
-	 * Code 80 *also* comes from recv_header() (abs()) recv_data() stream
-	 * handlers */
-	switch (code) {
-		case 50:
-			exception_ce = mongo_ce_ExecutionTimeoutException;
-			break;
-		case 80:
-			exception_ce = mongo_ce_CursorTimeoutException;
-			break;
-		case 11000:
-		case 11001:
-		case 12582:
-			exception_ce = mongo_ce_DuplicateKeyException;
-			break;
-	}
-
-	/* Construct message */
-	va_start(arg, format);
-	message = malloc(1024);
-	vsnprintf(message, 1024, format, arg);
-	va_end(arg);
-
-	if (connection) {
-		host = mongo_server_hash_to_server(connection->hash);
-		e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, "%s: %s", host, message);
-		zend_update_property_string(exception_ce, e, "host", strlen("host"), host TSRMLS_CC);
-		free(host);
-	} else {
-		e = zend_throw_exception(exception_ce, message, code TSRMLS_CC);
-	}
-
-	free(message);
-
-	return e;
-}
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC) {
 	PHP_MONGO_OBJ_NEW(mongo_cursor);

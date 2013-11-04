@@ -15,6 +15,7 @@
  */
 
 #include <php.h>
+#include <zend_exceptions.h>
 #include "mcon/io.h"
 #include "mcon/manager.h"
 #include "mcon/utils.h"
@@ -399,7 +400,7 @@ int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 			exception_ce = mongo_ce_CursorException;
 		}
 
-		mongo_cursor_throw(exception_ce, cursor->connection, status TSRMLS_CC, "%s", error_message);
+		php_mongo_cursor_throw(exception_ce, cursor->connection, status TSRMLS_CC, "%s", error_message);
 		free(error_message);
 		return FAILURE;
 	}
@@ -408,15 +409,15 @@ int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 	if (cursor->send.request_id != cursor->recv.response_to) {
 		php_mongo_log(MLOG_IO, MLOG_WARN TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
 
-		mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 9 TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
+		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 9 TSRMLS_CC, "request/cursor mismatch: %d vs %d", cursor->send.request_id, cursor->recv.response_to);
 		return FAILURE;
 	}
 
 	if (php_mongo_get_cursor_body(cursor->connection, cursor, (char **) &error_message TSRMLS_CC) < 0) {
 #ifdef WIN32
-		mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 12 TSRMLS_CC, "WSA error getting database response %s (%d)", error_message, WSAGetLastError());
+		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 12 TSRMLS_CC, "WSA error getting database response %s (%d)", error_message, WSAGetLastError());
 #else
-		mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 12 TSRMLS_CC, "error getting database response %s (%s)", error_message, strerror(errno));
+		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 12 TSRMLS_CC, "error getting database response %s (%s)", error_message, strerror(errno));
 #endif
 		free(error_message);
 		return FAILURE;
@@ -431,7 +432,7 @@ int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value TSR
 	zval *query;
 
 	if (cursor->started_iterating) {
-		mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
+		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 0 TSRMLS_CC, "cannot modify cursor after beginning iteration");
 		return 0;
 	}
 
@@ -477,4 +478,34 @@ void php_mongo_make_special(mongo_cursor *cursor)
 	MAKE_STD_ZVAL(cursor->query);
 	array_init(cursor->query);
 	add_assoc_zval(cursor->query, "$query", temp);
+}
+
+zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *connection, int code TSRMLS_DC, char *format, ...)
+{
+	zval *e;
+	va_list arg;
+	char *host, *message;
+
+	if (EG(exception)) {
+		return EG(exception);
+	}
+
+	/* Construct message */
+	va_start(arg, format);
+	message = malloc(1024);
+	vsnprintf(message, 1024, format, arg);
+	va_end(arg);
+
+	if (connection) {
+		host = mongo_server_hash_to_server(connection->hash);
+		e = zend_throw_exception_ex(exception_ce, code TSRMLS_CC, "%s: %s", host, message);
+		zend_update_property_string(exception_ce, e, "host", strlen("host"), host TSRMLS_CC);
+		free(host);
+	} else {
+		e = zend_throw_exception(exception_ce, message, code TSRMLS_CC);
+	}
+
+	free(message);
+
+	return e;
 }

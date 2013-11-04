@@ -18,6 +18,7 @@
 
 #include "../php_mongo.h"
 #include "../cursor.h"
+#include "../cursor_shared.h"
 #include "gridfs_cursor.h"
 #include "gridfs_file.h"
 

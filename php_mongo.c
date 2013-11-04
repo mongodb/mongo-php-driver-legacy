@@ -723,9 +723,9 @@ int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document 
 			zend_hash_find(Z_ARRVAL_P(document), "wnote", strlen("wnote") + 1, (void**) &wnote_z) == SUCCESS &&
 			Z_TYPE_PP(wnote_z) == IS_STRING && Z_STRLEN_PP(wnote_z) > 0
 		) {
-			exception = mongo_cursor_throw(exception_ce, connection, code TSRMLS_CC, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote_z));
+			exception = php_mongo_cursor_throw(exception_ce, connection, code TSRMLS_CC, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote_z));
 		} else {
-			exception = mongo_cursor_throw(exception_ce, connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
+			exception = php_mongo_cursor_throw(exception_ce, connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
 		}
 
 		/* Since document is a return_value (thanks to MONGO_METHOD stuff), copy
