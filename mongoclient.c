@@ -29,7 +29,7 @@
 #include "php_mongo.h"
 #include "mongoclient.h"
 #include "db.h"
-#include "cursor.h"
+#include "cursor_shared.h"
 #include "bson.h"
 
 #include "util/log.h"

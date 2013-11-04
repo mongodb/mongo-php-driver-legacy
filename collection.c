@@ -528,10 +528,10 @@ static mongo_connection* get_server(mongo_collection *c, int connection_flags TS
 	/* TODO: Fix better error message */
 	if ((connection = mongo_get_read_write_connection(link->manager, link->servers, connection_flags, (char **) &error_message)) == NULL) {
 		if (error_message) {
-			mongo_cursor_throw(mongo_ce_CursorException, NULL, 16 TSRMLS_CC, "Couldn't get connection: %s", error_message);
+			php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 16 TSRMLS_CC, "Couldn't get connection: %s", error_message);
 			free(error_message);
 		} else {
-			mongo_cursor_throw(mongo_ce_CursorException, NULL, 16 TSRMLS_CC, "Couldn't get connection");
+			php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 16 TSRMLS_CC, "Couldn't get connection");
 		}
 		return 0;
 	}
@@ -646,9 +646,9 @@ static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_
 #endif
 
 /* This wrapper temporarily turns off the exception throwing bit if it has been
- * set (by calling mongo_cursor_throw() before). We can't call
- * mongo_cursor_throw after deregister as it frees up bits of memory that
- * mongo_cursor_throw uses to construct its error message.
+ * set (by calling php_mongo_cursor_throw() before). We can't call
+ * php_mongo_cursor_throw after deregister as it frees up bits of memory that
+ * php_mongo_cursor_throw uses to construct its error message.
  *
  * Without the disabling of the exception bit and when a user defined error
  * handler is used on the PHP side, the notice would never been shown because
@@ -681,7 +681,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 
 	if (-1 == manager->send(connection, &client->servers->options, buf->start, buf->pos - buf->start, (char **) &error_message)) {
 		mongo_manager_log(manager, MLOG_IO, MLOG_WARN, "do_gle_op: sending data failed, removing connection %s", connection->hash);
-		mongo_cursor_throw(mongo_ce_CursorException, connection, 16 TSRMLS_CC, "%s", error_message);
+		php_mongo_cursor_throw(mongo_ce_CursorException, connection, 16 TSRMLS_CC, "%s", error_message);
 		connection_deregister_wrapper(manager, connection TSRMLS_CC);
 
 		free(error_message);

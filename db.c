@@ -23,6 +23,7 @@
 #include "db.h"
 #include "collection.h"
 #include "cursor.h"
+#include "cursor_shared.h"
 #include "gridfs/gridfs.h"
 #include "types/code.h"
 #include "types/db_ref.h"
