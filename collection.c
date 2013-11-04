@@ -1501,7 +1501,7 @@ static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC)
 						break;
 
 					case HASH_KEY_IS_LONG:
-						smart_str_append_long(&str, index);
+						smart_str_append_long(&str, (long) index);
 						break;
 
 					default:
