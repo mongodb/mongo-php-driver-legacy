@@ -30,11 +30,11 @@
   <active>yes</active>
  </developer>
 
- <date>2013-09-25</date>
- <time>10:24:22</time>
+ <date>2013-11-05</date>
+ <time>09:05:05</time>
  <version>
-  <release>1.4.4</release>
-  <api>1.4.4</api>
+  <release>1.4.5</release>
+  <api>1.4.5</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,16 +43,9 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-773] - Fix the persistence issue with logging stream contexts
-    * [PHP-874] - New Replica Set connections hang when secondaries are creating indexes during initialSync
-    * [PHP-893] - Fix documentation of MongoCursor::$timeout default value
-    * [PHP-894] - BSON decoding segfaults if string length prefix is zero
-    * [PHP-896] - BSON decoding segfaults reading past buffer endpoint
-    * [PHP-898] - Cursor exception should not print strerror() as int
-    * [PHP-901] - Detect server state changes
-    * [PHP-906] - Segmentation Fault - in mongo_deregister_callback_from_connection when calling MongoClient->close(true)
-    * [PHP-907] - BSON decoding of DBPointer does not set MongoId::$id property
-    * [PHP-912] - PHP driver should use SSLv23 instead of TLS
+    * [PHP-915] - batchSize() can not be called after a cursor has been iterating contradicting documentation
+    * [PHP-925] - Reading a GridFS file from a secondary server using PHP requires write access
+    * [PHP-939] - Slow connection in 1.4+
  </notes>
 
  <contents>
@@ -173,6 +166,33 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+
+  <release>
+   <date>2013-09-25</date>
+   <time>10:24:22</time>
+   <version>
+    <release>1.4.4</release>
+    <api>1.4.4</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-773] - Fix the persistence issue with logging stream contexts
+    * [PHP-874] - New Replica Set connections hang when secondaries are creating indexes during initialSync
+    * [PHP-893] - Fix documentation of MongoCursor::$timeout default value
+    * [PHP-894] - BSON decoding segfaults if string length prefix is zero
+    * [PHP-896] - BSON decoding segfaults reading past buffer endpoint
+    * [PHP-898] - Cursor exception should not print strerror() as int
+    * [PHP-901] - Detect server state changes
+    * [PHP-906] - Segmentation Fault - in mongo_deregister_callback_from_connection when calling MongoClient->close(true)
+    * [PHP-907] - BSON decoding of DBPointer does not set MongoId::$id property
+    * [PHP-912] - PHP driver should use SSLv23 instead of TLS
+   </notes>
+  </release>
 
   <release>
    <date>2013-08-15</date>
