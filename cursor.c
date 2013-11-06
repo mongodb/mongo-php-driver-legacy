@@ -1215,8 +1215,8 @@ PHP_METHOD(MongoCursor, count)
 
 	PHP_MONGO_GET_CURSOR(getThis());
 	PHP_MONGO_GET_LINK(cursor->zmongoclient);
-	cname = estrdup(cursor->ns + (strchr(cursor->ns, '.') - cursor->ns) + 1);
-	dbname = estrndup(cursor->ns, strchr(cursor->ns, '.') - cursor->ns);
+
+	php_mongo_split_namespace(cursor->ns, &dbname, &cname);
 
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);

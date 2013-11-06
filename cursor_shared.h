@@ -110,6 +110,8 @@ zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *c
 
 /* Returns whether a passed in namespace is a valid one */
 int php_mongo_is_valid_namespace(char *ns, int ns_len);
+/* Splits a namespace name into the database and collection names, allocated with estrdup. */
+void php_mongo_split_namespace(char *ns, char **dbname, char **cname);
 
 /* Reset the cursor to clean up or prepare for another query. Removes cursor
  * from cursor list (and kills it, if necessary).  */
