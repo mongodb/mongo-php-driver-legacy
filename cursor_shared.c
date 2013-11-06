@@ -517,6 +517,19 @@ zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *c
 
 	return e;
 }
+
+/* Returns whether a passed in namespace is a valid one */
+int php_mongo_is_valid_namespace(char *ns, int ns_len)
+{
+	char *dot;
+
+	dot = strchr(ns, '.');
+
+	if (ns_len < 3 || dot == NULL || ns[0] == '.' || ns[ns_len-1] == '.') {
+		return 0;
+	}
+	return 1;
+}
 /* }}} */
 
 /*
