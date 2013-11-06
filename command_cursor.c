@@ -99,6 +99,10 @@ PHP_METHOD(MongoCommandCursor, __construct)
 	/* ns */
 	cmd_cursor->ns = estrdup(ns);
 
+	/* db connection */
+	cmd_cursor->zmongoclient = zlink;
+	zval_add_ref(&zlink);
+
 	/* query */
 	cmd_cursor->query = zcommand;
 	zval_add_ref(&zcommand);
@@ -106,6 +110,8 @@ PHP_METHOD(MongoCommandCursor, __construct)
 	/* reset iteration pointer and flags */
 	php_mongo_cursor_reset(cmd_cursor TSRMLS_CC);
 	cmd_cursor->special = 0;
+
+	mongo_read_preference_replace(&link->servers->read_pref, &cmd_cursor->read_pref);
 }
 /* }}} */
 
