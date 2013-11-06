@@ -530,6 +530,17 @@ int php_mongo_is_valid_namespace(char *ns, int ns_len)
 	}
 	return 1;
 }
+
+/* Splits a namespace name into the database and collection names, allocated with estrdup. */
+void php_mongo_split_namespace(char *ns, char **dbname, char **cname)
+{
+	if (cname) {
+		*cname = estrdup(ns + (strchr(ns, '.') - ns) + 1);
+	}
+	if (dbname) {
+		*dbname = estrndup(ns, strchr(ns, '.') - ns);
+	}
+}
 /* }}} */
 
 
