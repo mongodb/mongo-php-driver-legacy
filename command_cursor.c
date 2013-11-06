@@ -19,6 +19,7 @@
 
 #include "cursor.h"
 #include "cursor_shared.h"
+#include "db.h"
 
 /* externs */
 extern zend_class_entry *mongo_ce_MongoClient;
@@ -116,7 +117,7 @@ PHP_METHOD(MongoCommandCursor, __construct)
 /* }}} */
 
 static zend_function_entry MongoCommandCursor_methods[] = {
-	PHP_ME(MongoCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCommandCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, hasNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, getNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
