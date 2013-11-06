@@ -111,6 +111,10 @@ zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *c
 /* Returns whether a passed in namespace is a valid one */
 int php_mongo_is_valid_namespace(char *ns, int ns_len);
 
+/* Reset the cursor to clean up or prepare for another query. Removes cursor
+ * from cursor list (and kills it, if necessary).  */
+void php_mongo_cursor_reset(mongo_cursor *cursor TSRMLS_DC);
+
 #endif
 
 /*
