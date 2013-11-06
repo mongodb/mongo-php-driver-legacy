@@ -54,6 +54,7 @@ PHP_METHOD(MongoCursor, reset);
 PHP_METHOD(MongoCursor, count);
 PHP_METHOD(MongoCursor, info);
 
+void mongo_init_MongoCursor(TSRMLS_D);
 #endif
 
 /*

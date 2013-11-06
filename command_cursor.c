@@ -15,14 +15,20 @@
  */
 #include <php.h>
 #include <zend_interfaces.h>
+#include <zend_exceptions.h>
+
 #include "cursor.h"
 #include "cursor_shared.h"
 
+/* externs */
+extern zend_class_entry *mongo_ce_MongoClient;
+extern zend_class_entry *mongo_ce_Exception, *mongo_ce_CursorException;
 extern zend_object_handlers mongo_default_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_CommandCursor = NULL;
+
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, connection, MongoClient, 0)
@@ -66,6 +72,42 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_R
 	ZEND_ARG_INFO(0, read_preference)
 	ZEND_ARG_ARRAY_INFO(0, tags, 0)
 ZEND_END_ARG_INFO()
+
+/* {{{ MongoCommandCursor::__construct(MongoClient connection, string ns [, array query])
+   Constructs a MongoCursor */
+PHP_METHOD(MongoCommandCursor, __construct)
+{
+	zval *zlink = 0, *zcommand = 0;
+	char *ns;
+	int   ns_len;
+	mongo_command_cursor *cmd_cursor;
+	mongoclient          *link;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Osa", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zcommand) == FAILURE) {
+		return;
+	}
+
+	if (!php_mongo_is_valid_namespace(ns, ns_len)) {
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
+		return;
+	}
+
+	cmd_cursor = (mongo_command_cursor*) zend_object_store_get_object(getThis() TSRMLS_CC);
+	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(link->manager, MongoClient);
+
+	/* ns */
+	cmd_cursor->ns = estrdup(ns);
+
+	/* query */
+	cmd_cursor->query = zcommand;
+	zval_add_ref(&zcommand);
+
+	/* reset iteration pointer and flags */
+	php_mongo_cursor_reset(cmd_cursor TSRMLS_CC);
+	cmd_cursor->special = 0;
+}
+/* }}} */
 
 static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)

@@ -554,6 +554,7 @@ void php_mongo_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 	cursor->current = 0;
 	cursor->at = 0;
 	cursor->num = 0;
+	cursor->persist = 0;
 }
 /* }}} */
 
