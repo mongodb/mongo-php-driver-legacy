@@ -172,10 +172,6 @@ void mongo_init_MongoCommandCursor(TSRMLS_D)
 	ce.create_object = php_mongo_command_cursor_new;
 	mongo_ce_CommandCursor = zend_register_internal_class(&ce TSRMLS_CC);
 	zend_class_implements(mongo_ce_CommandCursor TSRMLS_CC, 1, zend_ce_iterator);
-/*
-	zend_declare_property_bool(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
-	zend_declare_property_long(mongo_ce_Cursor, "timeout", strlen("timeout"), PHP_MONGO_DEFAULT_SOCKET_TIMEOUT, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
-*/
 }
 
 /*
