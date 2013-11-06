@@ -116,6 +116,51 @@ PHP_METHOD(MongoCommandCursor, __construct)
 }
 /* }}} */
 
+PHP_METHOD(MongoCommandCursor, current)
+{
+	printf("current\n");
+}
+
+PHP_METHOD(MongoCommandCursor, key)
+{
+	printf("key\n");
+}
+
+PHP_METHOD(MongoCommandCursor, next)
+{
+	printf("next\n");
+}
+
+PHP_METHOD(MongoCommandCursor, rewind)
+{
+	char *dbname;
+	zval *result;
+	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	printf("rewind\n");
+
+	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
+
+	php_mongo_cursor_reset(cmd_cursor TSRMLS_CC);
+
+	/* do query */
+	php_mongo_split_namespace(cmd_cursor->ns, &dbname, NULL);
+	result = php_mongodb_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1 TSRMLS_CC);
+	efree(dbname);
+	RETVAL_ZVAL(result, 0, 1);
+}
+
+PHP_METHOD(MongoCommandCursor, valid)
+{
+	printf("valid\n");
+	RETVAL_TRUE;
+}
+
+PHP_METHOD(MongoCommandCursor, reset)
+{
+	printf("reset\n");
+}
+
 static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCommandCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, hasNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
@@ -144,12 +189,12 @@ static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCursor, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
 	/* iterator funcs */
-	PHP_ME(MongoCursor, current, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, key, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, next, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, rewind, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, valid, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, reset, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCommandCursor, current, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCommandCursor, key, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCommandCursor, next, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCommandCursor, rewind, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCommandCursor, valid, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCommandCursor, reset, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
 	PHP_FE_END
 };
