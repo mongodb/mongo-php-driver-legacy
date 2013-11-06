@@ -101,16 +101,9 @@ PHP_METHOD(MongoCursor, __construct)
 		return;
 	}
 
-	/* Validate namespace */
-	{
-		char *dot;
-
-		dot = strchr(ns, '.');
-
-		if (ns_len < 3 || dot == NULL || ns[0] == '.' || ns[ns_len-1] == '.') {
-			php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
-			return;
-		}
+	if (!php_mongo_is_valid_namespace(ns, ns_len)) {
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
+		return;
 	}
 
 	MUST_BE_ARRAY_OR_OBJECT(3, zquery);
