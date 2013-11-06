@@ -532,6 +532,31 @@ int php_mongo_is_valid_namespace(char *ns, int ns_len)
 }
 /* }}} */
 
+
+/* {{{ Iteration helpers and functions */
+
+/* Reset the cursor to clean up or prepare for another query. Removes cursor
+ * from cursor list (and kills it, if necessary).  */
+void php_mongo_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
+{
+	cursor->buf.pos = cursor->buf.start;
+
+	if (cursor->current) {
+		zval_ptr_dtor(&cursor->current);
+	}
+
+	if (cursor->cursor_id != 0) {
+		php_mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+		cursor->cursor_id = 0;
+	}
+
+	cursor->started_iterating = 0;
+	cursor->current = 0;
+	cursor->at = 0;
+	cursor->num = 0;
+}
+/* }}} */
+
 /*
  * Local variables:
  * tab-width: 4
