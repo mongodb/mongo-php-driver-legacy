@@ -46,21 +46,9 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_skip, 0, ZEND_RETURN_VALUE, 
 	ZEND_ARG_INFO(0, number)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_fields, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, fields)
-ZEND_END_ARG_INFO()
-
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_add_option, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, key)
 	ZEND_ARG_INFO(0, value)
-ZEND_END_ARG_INFO()
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_sort, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, fields)
-ZEND_END_ARG_INFO()
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_hint, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, keyPattern)
 ZEND_END_ARG_INFO()
 
 /* {{{ Cursor flags */
@@ -69,34 +57,10 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_set_flag, 0, ZEND_RETURN_VAL
 	ZEND_ARG_INFO(0, set)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_tailable, 0, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, tail)
-ZEND_END_ARG_INFO()
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_slave_okay, 0, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, okay)
-ZEND_END_ARG_INFO()
-
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_immortal, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, liveForever)
 ZEND_END_ARG_INFO()
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_await_data, 0, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, wait)
-ZEND_END_ARG_INFO()
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_partial, 0, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, okay)
-ZEND_END_ARG_INFO()
 /* }}} */
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_timeout, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, milliseconds)
-ZEND_END_ARG_INFO()
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_count, 0, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, foundOnly)
-ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, read_preference)
@@ -112,28 +76,21 @@ static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCursor, limit, arginfo_limit, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, batchSize, arginfo_batchsize, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, skip, arginfo_skip, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, fields, arginfo_fields, ZEND_ACC_PUBLIC)
 
 	/* meta options */
 	PHP_ME(MongoCursor, addOption, arginfo_add_option, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, snapshot, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, sort, arginfo_sort, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, hint, arginfo_hint, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, explain, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
 	/* flags */
 	PHP_ME(MongoCursor, setFlag, arginfo_set_flag, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, tailable, arginfo_tailable, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, immortal, arginfo_immortal, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, awaitData, arginfo_await_data, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, partial, arginfo_partial, ZEND_ACC_PUBLIC)
 
 	/* read preferences */
 	PHP_ME(MongoCursor, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
 
 	/* query */
-	PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
@@ -144,9 +101,6 @@ static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCursor, rewind, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, valid, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, reset, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-
-	/* stand-alones */
-	PHP_ME(MongoCursor, count, arginfo_count, ZEND_ACC_PUBLIC)
 
 	PHP_FE_END
 };
