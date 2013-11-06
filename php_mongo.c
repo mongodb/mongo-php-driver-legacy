@@ -24,6 +24,8 @@
 #include "mongoclient.h"
 #include "mongo.h"
 #include "cursor_shared.h"
+#include "cursor.h"
+#include "command_cursor.h"
 #include "io_stream.h"
 #include "log_stream.h"
 
@@ -176,6 +178,7 @@ PHP_MINIT_FUNCTION(mongo)
 	mongo_init_MongoDB(TSRMLS_C);
 	mongo_init_MongoCollection(TSRMLS_C);
 	mongo_init_MongoCursor(TSRMLS_C);
+	mongo_init_MongoCommandCursor(TSRMLS_C);
 
 	mongo_init_MongoGridFS(TSRMLS_C);
 	mongo_init_MongoGridFSFile(TSRMLS_C);
