@@ -297,7 +297,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 	 * new node */
 	if (!mongo_discover_topology(manager, servers)) {
 		/* Total failure, we cannot proceed */
-		*error_message = strdup("Found a server running unsupported WireVersion. Please upgrade the driver, or take the server out of rotation");
+		*error_message = strdup("Incompatible server detected. This driver release is not compatible with one of the connected servers");
 		return NULL;
 	}
 
