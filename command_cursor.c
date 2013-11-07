@@ -116,21 +116,6 @@ PHP_METHOD(MongoCommandCursor, __construct)
 }
 /* }}} */
 
-PHP_METHOD(MongoCommandCursor, current)
-{
-	printf("current\n");
-}
-
-PHP_METHOD(MongoCommandCursor, key)
-{
-	printf("key\n");
-}
-
-PHP_METHOD(MongoCommandCursor, next)
-{
-	printf("next\n");
-}
-
 PHP_METHOD(MongoCommandCursor, rewind)
 {
 	char *dbname;
@@ -176,8 +161,77 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 PHP_METHOD(MongoCommandCursor, valid)
 {
-	printf("valid\n");
-	RETVAL_TRUE;
+	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	zval **current;
+
+	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
+
+	if (cmd_cursor->current) {
+		zval_ptr_dtor(&cmd_cursor->current);
+		cmd_cursor->current = NULL;
+	}
+
+	if (cmd_cursor->first_batch) {
+		if (cmd_cursor->first_batch_at < cmd_cursor->first_batch_num) {
+			if (zend_hash_index_find(HASH_OF(cmd_cursor->first_batch), cmd_cursor->first_batch_at, (void**) &current) == SUCCESS) {
+				cmd_cursor->current = *current;
+				Z_ADDREF_PP(current);
+				RETURN_TRUE;
+			}
+		}
+	}
+	RETURN_FALSE;
+}
+
+PHP_METHOD(MongoCommandCursor, next)
+{
+	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
+
+	if (cmd_cursor->first_batch) {
+		cmd_cursor->first_batch_at++;
+	}
+}
+
+PHP_METHOD(MongoCommandCursor, current)
+{
+	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
+
+	if (cmd_cursor->current) {
+		RETVAL_ZVAL(cmd_cursor->current, 1, 0);
+	} else {
+		RETURN_NULL();
+	}
+}
+
+PHP_METHOD(MongoCommandCursor, key)
+{
+	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	zval **id;
+
+	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCursor);
+
+	if (!cmd_cursor->current) {
+		RETURN_NULL();
+	}
+
+	if (cmd_cursor->current && Z_TYPE_P(cmd_cursor->current) == IS_ARRAY && zend_hash_find(HASH_P(cmd_cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
+		if (Z_TYPE_PP(id) == IS_OBJECT) {
+			zend_std_cast_object_tostring(*id, return_value, IS_STRING TSRMLS_CC);
+		} else {
+			RETVAL_ZVAL(*id, 1, 0);
+			convert_to_string(return_value);
+		}
+	} else {
+		if (cmd_cursor->first_batch) {
+			RETURN_LONG(cmd_cursor->first_batch_at - 1);
+		} else {
+			RETURN_LONG(cmd_cursor->first_batch_num + cmd_cursor->at - 1);
+		}
+	}
 }
 
 PHP_METHOD(MongoCommandCursor, reset)
@@ -187,8 +241,6 @@ PHP_METHOD(MongoCommandCursor, reset)
 
 static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCommandCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, hasNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, getNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
 	/* options */
 	PHP_ME(MongoCursor, limit, arginfo_limit, ZEND_ACC_PUBLIC)
