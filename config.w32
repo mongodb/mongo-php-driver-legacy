@@ -12,6 +12,7 @@ if (PHP_MONGO != "no") {
   ADD_SOURCES(configure_module_dirname + "/types", "bin_data.c code.c date.c db_ref.c id.c int32.c int64.c regex.c timestamp.c", "mongo");
   ADD_SOURCES(configure_module_dirname + "/util", "log.c pool.c", "mongo");
   ADD_SOURCES(configure_module_dirname + "/mcon", "bson_helpers.c collection.c connections.c io.c manager.c mini_bson.c parse.c read_preference.c str.c utils.c", "mongo");
+  ADD_SOURCES(configure_module_dirname + "/api", "wire_version.c", "mongo");
 
   AC_DEFINE('HAVE_MONGO', 1);
 }

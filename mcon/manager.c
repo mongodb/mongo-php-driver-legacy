@@ -129,7 +129,10 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 /* Topology discovery */
 
 /* - Helpers */
-static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *servers)
+/* Returns:
+ * 1 on success
+ * 0 on total failure (e.g. unsupported wire version) */
+static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *servers)
 {
 	int i, j;
 	char *hash;
@@ -140,6 +143,7 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	char **found_hosts = NULL;
 	char *tmp_hash;
 	int   res;
+	int found_supported_wire_version = 1; /* Innocent unless proven guilty */
 
 	for (i = 0; i < servers->count; i++) {
 		hash = mongo_server_create_hash(servers->server[i]);
@@ -155,6 +159,10 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 		/* Run ismaster, if needed, to extract server flags - and fetch the other known hosts */
 		res = mongo_connection_ismaster(manager, con, &servers->options, (char**) &repl_set_name, (int*) &nr_hosts, (char***) &found_hosts, (char**) &error_message, servers->server[i]);
 		switch (res) {
+			case 4:
+				/* The server is running unsupported wire versions */
+				found_supported_wire_version = 0;
+				/* break omitted intentionally */
 			case 0:
 				/* Something is wrong with the connection, we need to remove
 				 * this from our list */
@@ -206,10 +214,26 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 						mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "discover_topology: found new host: %s:%d", tmp_def->host, tmp_def->port);
 						new_con = mongo_get_connection_single(manager, tmp_def, &servers->options, MONGO_CON_FLAG_WRITE, (char **) &con_error_message);
 
-						if (new_con && !mongo_connection_get_server_flags(manager, new_con, &servers->options, &con_error_message)) {
-							mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
-							mongo_manager_connection_deregister(manager, new_con);
-							new_con = NULL;
+						if (new_con) {
+							int ismaster_error = mongo_connection_ismaster(manager, new_con, &servers->options, NULL, NULL, NULL, &con_error_message, NULL);
+
+							switch (ismaster_error) {
+								case 1: /* Run just fine */
+								case 2: /* ismaster() skipped due to interval */
+									break;
+
+								case 4: /* Danger danger, reported wire version does not overlap what we support */
+									found_supported_wire_version = 0;
+									/* break omitted intentionally */
+
+								case 0: /* Some error */
+								case 3: /* Run just fine, but hostname didn't match what we expected */
+								default:
+
+									mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+									mongo_manager_connection_deregister(manager, new_con);
+									new_con = NULL;
+							}
 						}
 
 						if (new_con) {
@@ -241,6 +265,8 @@ static void mongo_discover_topology(mongo_con_manager *manager, mongo_servers *s
 	if (repl_set_name) {
 		free(repl_set_name);
 	}
+
+	return found_supported_wire_version;
 }
 
 static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, char **error_message)
@@ -269,7 +295,11 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 
 	/* Discover more nodes. This also adds a connection to "servers" for each
 	 * new node */
-	mongo_discover_topology(manager, servers);
+	if (!mongo_discover_topology(manager, servers)) {
+		/* Total failure, we cannot proceed */
+		*error_message = strdup("Incompatible server detected. This driver release is not compatible with one of the connected servers");
+		return NULL;
+	}
 
 	/* Depending on whether we want a read or a write connection, run the correct algorithms */
 	if (connection_flags & MONGO_CON_FLAG_WRITE) {
@@ -322,11 +352,13 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 	int i;
 	int found_connected_server = 0;
 	mcon_str         *messages;
+	int found_supported_wire_version = 1;
 
 	mcon_str_ptr_init(messages);
 
 	/* Create a connection to every of the servers in the seed list */
 	for (i = 0; i < servers->count; i++) {
+		int ismaster_error = 0;
 		char *con_error_message = NULL;
 		tmp = mongo_get_connection_single(manager, servers->server[i], &servers->options, connection_flags, (char **) &con_error_message);
 
@@ -334,11 +366,28 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 			found_connected_server++;
 
 			/* Run ismaster, if needed, to extract server flags */
-			if (!mongo_connection_get_server_flags(manager, tmp, &servers->options, &con_error_message)) {
-				mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", &servers->server[i]->host, &servers->server[i]->port, con_error_message);
-				mongo_connection_destroy(manager, tmp, MONGO_CLOSE_BROKEN);
-				tmp = NULL;
-				found_connected_server--;
+			ismaster_error = mongo_connection_ismaster(manager, tmp, &servers->options, NULL, NULL, NULL, &con_error_message, NULL);
+			switch (ismaster_error) {
+				case 1: /* Run just fine */
+				case 2: /* ismaster() skipped due to interval */
+					break;
+
+				case 0: /* Some error */
+				case 3: /* Run just fine, but hostname didn't match what we expected */
+				case 4: /* Danger danger, reported wire version does not overlap what we support */
+				default:
+					mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_flags: error while getting the server configuration %s:%d: %s", servers->server[i]->host, servers->server[i]->port, con_error_message);
+					/* If it failed because of wire version, we have to bail out completely
+					 * later on, but we should continue to aggregate the errors in case more
+					 * servers are unsupported */
+					if (ismaster_error == 4) {
+						mongo_manager_connection_deregister(manager, tmp);
+						found_supported_wire_version = 0;
+					} else {
+						mongo_connection_destroy(manager, tmp, MONGO_CLOSE_BROKEN);
+					}
+					tmp = NULL;
+					found_connected_server--;
 			}
 		}
 		if (!tmp) {
@@ -357,6 +406,12 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 				free(con_error_message);
 			}
 		}
+	}
+
+	if (!found_supported_wire_version) {
+		*error_message = strdup("Found a server running unsupported wire version. Please upgrade the driver, or take the server out of rotation");
+		mcon_str_ptr_dtor(messages);
+		return NULL;
 	}
 
 	/* If we don't have a connected server then there is no point in continueing */
@@ -683,13 +738,14 @@ mongo_con_manager *mongo_init(void)
 	tmp->ping_interval = MONGO_MANAGER_DEFAULT_PING_INTERVAL;
 	tmp->ismaster_interval = MONGO_MANAGER_DEFAULT_MASTER_INTERVAL;
 
-	tmp->connect     = mongo_connection_connect;
-	tmp->recv_header = mongo_io_recv_header;
-	tmp->recv_data   = mongo_io_recv_data;
-	tmp->send        = mongo_io_send;
-	tmp->close       = mongo_connection_close;
-	tmp->forget      = mongo_connection_forget;
-	tmp->authenticate= mongo_connection_authenticate;
+	tmp->connect               = mongo_connection_connect;
+	tmp->recv_header           = mongo_io_recv_header;
+	tmp->recv_data             = mongo_io_recv_data;
+	tmp->send                  = mongo_io_send;
+	tmp->close                 = mongo_connection_close;
+	tmp->forget                = mongo_connection_forget;
+	tmp->authenticate          = mongo_connection_authenticate;
+	tmp->supports_wire_version = mongo_mcon_supports_wire_version;
 
 	return tmp;
 }
@@ -712,6 +768,26 @@ void mongo_deinit(mongo_con_manager *manager)
 	}
 
 	free(manager);
+}
+
+int mongo_mcon_supports_wire_version(int min_wire_version, int max_wire_version, char **error_message)
+{
+	char *errmsg = "This driver version requires WireVersion between minWireVersion: %d and maxWireVersion: %d. Got: minWireVersion=%d and maxWireVersion=%d";
+	int errlen = strlen(errmsg) - 8 + 1 + (4 * 10); /* Subtract the %d, plus \0, plus 4 ints at maximum size.. */
+
+	if (min_wire_version > MCON_MAX_WIRE_VERSION) {
+		*error_message = malloc(errlen);
+		snprintf(*error_message, errlen, errmsg, MCON_MIN_WIRE_VERSION, MCON_MAX_WIRE_VERSION, min_wire_version, max_wire_version);
+		return 0;
+	}
+
+	if (max_wire_version < MCON_MIN_WIRE_VERSION) {
+		*error_message = malloc(errlen);
+		snprintf(*error_message, errlen, errmsg, MCON_MIN_WIRE_VERSION, MCON_MAX_WIRE_VERSION, min_wire_version, max_wire_version);
+		return 0;
+	}
+
+	return 1;
 }
 
 /*

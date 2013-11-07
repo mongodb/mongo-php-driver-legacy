@@ -38,6 +38,8 @@ CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
+CON     FINE: ismaster: %s minWireVersion%sto %d
+CON     FINE: ismaster: %s maxWireVersion%sto %d
 CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
 CON     FINE: ismaster: %s maxMessageSizeBytes%s
 CON     INFO: ismaster: set name: (null), ismaster: 1, secondary: 0, is_arbiter: 0
