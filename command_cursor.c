@@ -137,8 +137,6 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	zval *result;
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-	printf("rewind\n");
-
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
 
 	php_mongo_cursor_reset(cmd_cursor TSRMLS_CC);
