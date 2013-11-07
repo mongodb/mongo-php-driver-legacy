@@ -109,7 +109,7 @@ PHP_METHOD(MongoCommandCursor, __construct)
 	zval_add_ref(&zcommand);
 
 	/* reset iteration pointer and flags */
-	php_mongo_cursor_reset(cmd_cursor TSRMLS_CC);
+	php_mongo_cursor_reset((mongo_cursor*)cmd_cursor TSRMLS_CC);
 	cmd_cursor->special = 0;
 
 	mongo_read_preference_replace(&link->servers->read_pref, &cmd_cursor->read_pref);
@@ -142,7 +142,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
 
-	php_mongo_cursor_reset(cmd_cursor TSRMLS_CC);
+	php_mongo_cursor_reset((mongo_cursor*)cmd_cursor TSRMLS_CC);
 
 	/* Process batchSize and set it if necessary */
 
