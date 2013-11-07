@@ -279,6 +279,10 @@ void php_mongo_cursor_free(void *object TSRMLS_DC)
 			zval_ptr_dtor(&cursor->zmongoclient);
 		}
 
+		if (cursor->first_batch) {
+			zval_ptr_dtor(&cursor->first_batch);
+		}
+
 		mongo_read_preference_dtor(&cursor->read_pref);
 
 		zend_object_std_dtor(&cursor->std TSRMLS_CC);
@@ -612,6 +616,11 @@ void php_mongo_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 		zval_ptr_dtor(&cursor->current);
 	}
 
+	if (cursor->first_batch) {
+		zval_ptr_dtor(&cursor->first_batch);
+		cursor->first_batch = NULL;
+	}
+
 	if (cursor->cursor_id != 0) {
 		php_mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
 		cursor->cursor_id = 0;
@@ -622,6 +631,8 @@ void php_mongo_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 	cursor->at = 0;
 	cursor->num = 0;
 	cursor->persist = 0;
+	cursor->first_batch_at = 0;
+	cursor->first_batch_num = 0;
 }
 /* }}} */
 
