@@ -1036,8 +1036,9 @@ static int have_error_flags(mongo_cursor *cursor)
 	return 0;
 }
 
-/* Returns 1 when an error was found and *handled*, and it returns 0 if no error
- * situation has ocurred on the cursor */
+/* Returns 1 when an error was found and *handled*, and it returns 0 if no
+ * error situation has ocurred on the cursor. If the error is handled, then an
+ * exception has been thrown as well. */
 static int handle_error(mongo_cursor *cursor TSRMLS_DC)
 {
 	zval **err = NULL;
