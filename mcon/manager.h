@@ -19,6 +19,10 @@
 #include "types.h"
 #include "read_preference.h"
 
+/* Supported wire version */
+#define MCON_MIN_WIRE_VERSION 0
+#define MCON_MAX_WIRE_VERSION 2
+
 /* Manager */
 mongo_con_manager *mongo_init(void);
 void mongo_deinit(mongo_con_manager *manager);
@@ -43,6 +47,8 @@ int mongo_manager_blacklist_deregister(mongo_con_manager *manager, mongo_connect
 void mongo_log_null(int module, int level, void *context, char *format, va_list arg);
 void mongo_log_printf(int module, int level, void *context, char *format, va_list arg);
 void mongo_manager_log(mongo_con_manager *manager, int module, int level, char *format, ...);
+
+int mongo_mcon_supports_wire_version(int min_wire_version, int max_wire_version, char **error_message);
 #endif
 
 /*

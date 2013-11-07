@@ -36,7 +36,11 @@ array(1) {
       }
     }
     ["connection"]=>
-    array(8) {
+    array(10) {
+      ["min_wire_version"]=>
+      int(%d)
+      ["max_wire_version"]=>
+      int(%d)
       ["last_ping"]=>
       int(%d)
       ["last_ismaster"]=>

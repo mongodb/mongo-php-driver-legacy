@@ -145,6 +145,8 @@ typedef struct _mongo_connection
 		int32_t mini;
 		int32_t build;
 	} version;
+	int    min_wire_version; /* Minimum wire version supported by mongo[d|s] */
+	int    max_wire_version; /* Maximum wire version supported by mongo[d|s] */
 	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
 	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
 	int    tag_count;
@@ -152,6 +154,14 @@ typedef struct _mongo_connection
 	char  *hash;             /* Duplicate of the hash that the manager knows this connection as */
 	mongo_connection_deregister_callback *cleanup_list;
 } mongo_connection;
+
+/* MongoDB pre-1.8; Spec says default to 4 MB */
+#define MONGO_CONNECTION_DEFAULT_MAX_BSON_SIZE 4194304
+/* MongoDB pre-2.4; Spec says default to 2 * the maxBsonSize */
+#define MONGO_CONNECTION_DEFAULT_MAX_MESSAGE_SIZE 2 * MONGO_CONNECTION_DEFAULT_MAX_BSON_SIZE
+/* Default wire versions for MongoDB pre-2.6 */
+#define MONGO_CONNECTION_DEFAULT_MIN_WIRE_VERSION 0
+#define MONGO_CONNECTION_DEFAULT_MAX_WIRE_VERSION 0
 
 typedef struct _mongo_connection_blacklist
 {
@@ -255,6 +265,9 @@ typedef struct _mongo_con_manager
 	void  (*close)       (mongo_connection *con, int why);
 	void  (*forget)      (struct _mongo_con_manager *manager, mongo_connection *con);
 	int   (*authenticate)(struct _mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message);
+
+	/* Check if a wire version supported */
+	int (*supports_wire_version) (int min_wire_version, int max_wire_version, char **error_message);
 } mongo_con_manager;
 
 typedef void (mongo_con_manager_item_destroy_t)(mongo_con_manager *manager, void *item, int why);
