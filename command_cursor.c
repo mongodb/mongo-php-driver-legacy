@@ -135,16 +135,42 @@ PHP_METHOD(MongoCommandCursor, rewind)
 {
 	char *dbname;
 	zval *result;
+	int64_t cursor_id;
+	zval *exception;
+	zval *first_batch;
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
 
 	php_mongo_cursor_reset(cmd_cursor TSRMLS_CC);
 
+	/* Process batchSize and set it if necessary */
+
 	/* do query */
 	php_mongo_split_namespace(cmd_cursor->ns, &dbname, NULL);
 	result = php_mongodb_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1 TSRMLS_CC);
 	efree(dbname);
+
+	/* We need to parse the initial result, and see whether everything worked */
+	if (php_mongo_get_cursor_id(result, &cursor_id TSRMLS_CC) == FAILURE) {
+		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response");
+		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), result TSRMLS_CC);
+		return;
+	}
+
+	if (php_mongo_get_cursor_first_batch(result, &first_batch TSRMLS_CC) == FAILURE) {
+		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response");
+		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), result TSRMLS_CC);
+		return;
+	}
+
+	cmd_cursor->first_batch = first_batch;
+	Z_ADDREF_P(first_batch);
+	cmd_cursor->first_batch_at = 0;
+	cmd_cursor->first_batch_num = HASH_OF(cmd_cursor->first_batch)->nNumOfElements;
+
+	/* We don't really *have* to return the value, but it makes testing easier,
+	 * and perhaps diagnostics as well. */
 	RETVAL_ZVAL(result, 0, 1);
 }
 
