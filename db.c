@@ -869,38 +869,6 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 }
 /* }}} */
 
-/* {{{ Command cursor helpers */
-static int php_mongodb_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
-{
-	zval **cursor = NULL, **id = NULL;
-	zval  *id_value;
-
-	if (Z_TYPE_P(document) != IS_ARRAY) {
-		return FAILURE;
-	}
-
-	if (zend_hash_find(Z_ARRVAL_P(document), "cursor", sizeof("cursor"), (void **)&cursor) == FAILURE) {
-		return FAILURE;
-	}
-	if (Z_TYPE_PP(cursor) != IS_ARRAY) {
-		return FAILURE;
-	}
-	if (zend_hash_find(Z_ARRVAL_PP(cursor), "id", sizeof("id"), (void **)&id) == FAILURE) {
-		return FAILURE;
-	}
-	if (Z_TYPE_PP(id) != IS_OBJECT || Z_OBJCE_PP(id) != mongo_ce_Int64) {
-		return FAILURE;
-	}
-	id_value = zend_read_property(mongo_ce_Int64, *id, "value", strlen("value"), NOISY TSRMLS_CC);
-	if (Z_TYPE_P(id_value) != IS_STRING) {
-		return FAILURE;
-	}
-	*cursor_id = strtoll(Z_STRVAL_P(id_value), NULL, 10);
-
-	return SUCCESS;
-}
-/* }}} */
-
 zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
 {
 	zval *cursor_zval;
