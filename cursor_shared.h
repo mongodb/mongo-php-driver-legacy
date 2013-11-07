@@ -81,6 +81,9 @@ void php_mongo_cursor_list_pfree(zend_rsrc_list_entry* TSRMLS_DC);
 signed int php_mongo_get_cursor_header(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC);
 int php_mongo_get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC);
 
+int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC);
+int php_mongo_get_cursor_first_batch(zval *document, zval **first_batch TSRMLS_DC);
+
 /* Tries to read the reply from the database */
 int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC);
 void php_mongo_make_special(mongo_cursor *cursor);
