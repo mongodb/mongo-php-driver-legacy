@@ -18,7 +18,7 @@
 #define __API_WIRE_VERSION_H__
 
 /*
- * Known WireVersions:
+ * Known wire versions:
  * 0: All features before 2.5.0
  * 1: Aggregate can return cursors
  * 2: Write Commands API
@@ -26,7 +26,7 @@
  * MongoDB 2.6.0 will return 0, 2
  */
 
-/* WireVersion this release of the driver supports */
+/* Wire version this release of the driver supports */
 #define PHP_MONGO_API_MIN_WIRE_VERSION 0
 #define PHP_MONGO_API_MAX_WIRE_VERSION 2
 

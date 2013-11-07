@@ -159,7 +159,7 @@ typedef struct _mongo_connection
 #define MONGO_CONNECTION_DEFAULT_MAX_BSON_SIZE 4194304
 /* MongoDB pre-2.4; Spec says default to 2 * the maxBsonSize */
 #define MONGO_CONNECTION_DEFAULT_MAX_MESSAGE_SIZE 2 * MONGO_CONNECTION_DEFAULT_MAX_BSON_SIZE
-/* Default WireVersions for MongoDB pre-2.6 */
+/* Default wire versions for MongoDB pre-2.6 */
 #define MONGO_CONNECTION_DEFAULT_MIN_WIRE_VERSION 0
 #define MONGO_CONNECTION_DEFAULT_MAX_WIRE_VERSION 0
 
@@ -266,7 +266,7 @@ typedef struct _mongo_con_manager
 	void  (*forget)      (struct _mongo_con_manager *manager, mongo_connection *con);
 	int   (*authenticate)(struct _mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message);
 
-	/* Check if a WireVersion supported */
+	/* Check if a wire version supported */
 	int (*supports_wire_version) (int min_wire_version, int max_wire_version, char **error_message);
 } mongo_con_manager;
 

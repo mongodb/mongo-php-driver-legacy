@@ -19,7 +19,7 @@
 #include "types.h"
 #include "read_preference.h"
 
-/* Supported WireVersion */
+/* Supported wire version */
 #define MCON_MIN_WIRE_VERSION 0
 #define MCON_MAX_WIRE_VERSION 2
 
