@@ -56,3 +56,12 @@ void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor
 void mongo_log_stream_write_reply(mongo_connection *connection, mongo_msg_header *header, php_mongodb_reply *reply TSRMLS_DC);
 void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
 #endif
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */

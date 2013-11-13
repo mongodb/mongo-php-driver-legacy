@@ -593,3 +593,11 @@ void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, p
 	}
 }
 
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */
