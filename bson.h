@@ -72,6 +72,9 @@ void php_mongo_serialize_bytes(mongo_buffer*, char*, int);
 void php_mongo_serialize_key(mongo_buffer*, const char*, int, int TSRMLS_DC);
 void php_mongo_serialize_ns(mongo_buffer*, char* TSRMLS_DC);
 
+/* End a complex type */
+int php_mongo_serialize_size(char *start, mongo_buffer *buf, int max_size TSRMLS_DC);
+
 int php_mongo_write_insert(mongo_buffer*, char*, zval*, int max_document_size, int max_message_size TSRMLS_DC);
 int php_mongo_write_batch_insert(mongo_buffer*, char*, int flags, zval*, int max_document_size, int max_message_size TSRMLS_DC);
 int php_mongo_write_query(mongo_buffer*, mongo_cursor*, int max_document_size, int max_message_size TSRMLS_DC);

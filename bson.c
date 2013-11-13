@@ -64,7 +64,7 @@ static int insert_helper(mongo_buffer *buf, zval *doc, int max TSRMLS_DC);
 
 /* The position is not increased, we are just filling in the first 4 bytes with
  * the size.  */
-static int php_mongo_serialize_size(char *start, mongo_buffer *buf, int max_size TSRMLS_DC)
+int php_mongo_serialize_size(char *start, mongo_buffer *buf, int max_size TSRMLS_DC)
 {
 	int total = MONGO_32((buf->pos - start));
 
