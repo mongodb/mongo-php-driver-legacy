@@ -23,6 +23,7 @@
 
 #include "mcon/types.h"
 #include "php_mongo.h"
+#include "api/write.h"
 
 #define MONGO_STREAM_NOTIFY_TYPE_IO_INIT        100
 #define MONGO_STREAM_NOTIFY_TYPE_LOG            200
@@ -40,6 +41,8 @@
 #define MONGO_STREAM_NOTIFY_LOG_KILLCURSOR      216
 #define MONGO_STREAM_NOTIFY_LOG_BATCHINSERT     217
 #define MONGO_STREAM_NOTIFY_LOG_RESPONSE_HEADER 218
+#define MONGO_STREAM_NOTIFY_LOG_WRITE_REPLY     219
+#define MONGO_STREAM_NOTIFY_LOG_CMD_INSERT      220
 
 void php_mongo_stream_notify_io(mongo_server_options *opts, int code, int sofar, int max TSRMLS_DC);
 void mongo_log_stream_insert(mongo_connection *connection, zval *document, zval *options TSRMLS_DC);
@@ -50,4 +53,6 @@ void mongo_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor
 void mongo_log_stream_killcursor(mongo_connection *connection, int64_t cursor_id TSRMLS_DC);
 void mongo_log_stream_batchinsert(mongo_connection *connection, zval *docs, zval *options, int flags TSRMLS_DC);
 void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC);
+void mongo_log_stream_write_reply(mongo_connection *connection, mongo_msg_header *header, php_mongodb_reply *reply TSRMLS_DC);
+void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
 #endif

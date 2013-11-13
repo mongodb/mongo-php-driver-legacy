@@ -74,6 +74,22 @@ void php_mongo_stream_notify_meta(php_stream_context *ctx, int code, zval *args 
 	}
 }
 
+void php_mongo_stream_notify_meta_cmd_insert(php_stream_context *ctx, zval *server, zval *document, zval *write_options, zval *protocol_options TSRMLS_DC)
+{
+	zval *args;
+
+	MAKE_STD_ZVAL(args);
+	array_init(args);
+
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "document", document);
+	ADD_ASSOC_ZVAL_ADDREF(args, "write_options", write_options);
+	ADD_ASSOC_ZVAL_ADDREF(args, "protocol_options", protocol_options);
+
+	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_CMD_INSERT, args TSRMLS_CC);
+	zval_ptr_dtor(&args);
+}
+
 void php_mongo_stream_notify_meta_insert(php_stream_context *ctx, zval *server, zval *document, zval *options TSRMLS_DC)
 {
 	zval *args;
@@ -193,6 +209,21 @@ void php_mongo_stream_notify_meta_response_header(php_stream_context *ctx, zval 
 	ADD_ASSOC_ZVAL_ADDREF(args, "info", info);
 
 	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_RESPONSE_HEADER, args TSRMLS_CC);
+	zval_ptr_dtor(&args);
+}
+
+void php_mongo_stream_notify_meta_write_reply(php_stream_context *ctx, zval *server, zval *op, zval *reply TSRMLS_DC)
+{
+	zval *args;
+
+	MAKE_STD_ZVAL(args);
+	array_init(args);
+
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "op", op);
+	ADD_ASSOC_ZVAL_ADDREF(args, "reply", reply);
+
+	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_WRITE_REPLY, args TSRMLS_CC);
 	zval_ptr_dtor(&args);
 }
 
@@ -485,6 +516,80 @@ void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor
 		php_mongo_stream_callback(context, "log_response_header", 3, args TSRMLS_CC);
 		zval_ptr_dtor(&server);
 		zval_ptr_dtor(&info);
+	}
+}
+
+void mongo_log_stream_write_reply(mongo_connection *connection, mongo_msg_header *header, php_mongodb_reply *reply TSRMLS_DC)
+{
+	php_stream_context *context = ((php_stream *)connection->socket)->context;
+
+	if (CONTEXT_HAS_NOTIFY_OR_LOG(context, "log_reply")) {
+		zval **args[3];
+		zval *server, *zop, *zreply;
+
+		server = php_log_get_server_info(connection);
+
+		MAKE_STD_ZVAL(zop);
+		array_init(zop);
+
+		MAKE_STD_ZVAL(zreply);
+		array_init(zreply);
+
+		add_assoc_long(zop, "length", header->length);
+		add_assoc_long(zop, "request_id", header->request_id);
+		add_assoc_long(zop, "response_to", header->response_to);
+		add_assoc_long(zop, "op", header->op);
+		add_assoc_long(zreply, "flags", reply->flags);
+		add_assoc_long(zreply, "cursor_id", reply->cursor_id);
+		add_assoc_long(zreply, "start", reply->start);
+		add_assoc_long(zreply, "returned", reply->returned);
+
+		args[0] = &server;
+		args[1] = &zop;
+		args[2] = &zreply;
+
+
+		php_mongo_stream_notify_meta_write_reply(context, server, zop, zreply TSRMLS_CC);
+		php_mongo_stream_callback(context, "log_reply", 3, args TSRMLS_CC);
+		zval_ptr_dtor(&server);
+		zval_ptr_dtor(&zop);
+		zval_ptr_dtor(&zreply);
+	}
+}
+
+void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC)
+{
+	php_stream_context *context = ((php_stream *)connection->socket)->context;
+
+	if (CONTEXT_HAS_NOTIFY_OR_LOG(context, "log_cmd_insert")) {
+		zval **args[4];
+		zval *protocol_options, *server, *z_write_options;
+
+		server = php_log_get_server_info(connection);
+
+		MAKE_STD_ZVAL(protocol_options);
+		array_init(protocol_options);
+
+		MAKE_STD_ZVAL(z_write_options);
+		array_init(z_write_options);
+
+		php_mongo_api_write_options_to_zval(write_options, z_write_options);
+
+		add_assoc_long(protocol_options, "message_length", message_length);
+		add_assoc_long(protocol_options, "request_id", request_id);
+		add_assoc_stringl(protocol_options, "namespace", ns, strlen(ns), 1);
+
+		args[0] = &server;
+		args[1] = &document;
+		args[2] = &z_write_options;
+		args[3] = &protocol_options;
+
+		php_mongo_stream_notify_meta_cmd_insert(context, server, document, z_write_options, protocol_options TSRMLS_CC);
+		php_mongo_stream_callback(context, "log_cmd_insert", 4, args TSRMLS_CC);
+
+		zval_ptr_dtor(&server);
+		zval_ptr_dtor(&protocol_options);
+		zval_ptr_dtor(&z_write_options);
 	}
 }
 
