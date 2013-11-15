@@ -69,9 +69,6 @@ extern zend_class_entry *mongo_ce_WriteConcernException;
 
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
 
-/** Resources */
-int le_cursor_list;
-
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
@@ -167,7 +164,6 @@ PHP_MINIT_FUNCTION(mongo)
 	zend_class_entry max_key, min_key;
 
 	REGISTER_INI_ENTRIES();
-	le_cursor_list = zend_register_list_destructors_ex(NULL, php_mongo_cursor_list_pfree, PHP_CURSOR_LIST_RES_NAME, module_number);
 
 	mongo_init_MongoClient(TSRMLS_C);
 	mongo_init_Mongo(TSRMLS_C);
