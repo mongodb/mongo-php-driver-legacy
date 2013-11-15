@@ -293,8 +293,6 @@ typedef struct {
 	mongo_servers     *servers;
 } mongoclient;
 
-#define MONGO_CURSOR 1
-
 typedef struct {
 	int length;
 	int request_id;

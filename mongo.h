@@ -17,8 +17,6 @@
 #ifndef __MONGO_H__
 #define __MONGO_H__
 
-int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
-
 void mongo_init_Mongo(TSRMLS_D);
 
 /* Mongo class */

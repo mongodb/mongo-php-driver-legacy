@@ -120,7 +120,7 @@ zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *conne
 
 /* This kills a cursor or all cursors for a given link, depending on the type
  * given. Also removes killed cursor(s) from the cursor_list. */
-void mongo_cursor_free_le(void* val, int type TSRMLS_DC);
+void mongo_cursor_free_le(void* val TSRMLS_DC);
 
 /* Adds a cursor to the cursor_list.
  *

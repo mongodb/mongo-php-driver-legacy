@@ -442,7 +442,7 @@ PHP_METHOD(MongoCursor, hasNext)
 
 	if ((cursor->limit > 0 && cursor->at >= cursor->limit) || cursor->num == 0) {
 		if (cursor->cursor_id != 0) {
-			mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+			mongo_cursor_free_le(cursor TSRMLS_CC);
 		}
 		RETURN_FALSE;
 	}
@@ -503,7 +503,7 @@ PHP_METHOD(MongoCursor, hasNext)
 	}
 
 	if (cursor->cursor_id == 0) {
-		mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+		mongo_cursor_free_le(cursor TSRMLS_CC);
 	}
 
 }
@@ -1401,7 +1401,7 @@ void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 	}
 
 	if (cursor->cursor_id != 0) {
-		mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+		mongo_cursor_free_le(cursor TSRMLS_CC);
 		cursor->cursor_id = 0;
 	}
 
@@ -1637,7 +1637,7 @@ zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *conne
 }
 
 
-void mongo_cursor_free_le(void *val, int type TSRMLS_DC)
+void mongo_cursor_free_le(void *val TSRMLS_DC)
 {
 	zend_rsrc_list_entry *le;
 
@@ -1652,7 +1652,6 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC)
 		while (current) {
 			cursor_node *next = current->next;
 
-			if (type == MONGO_CURSOR) {
 				mongo_cursor *cursor = (mongo_cursor*)val;
 
 				if (current->cursor_id == cursor->cursor_id && cursor->connection != NULL && current->socket == cursor->connection->socket) {
@@ -1685,7 +1684,6 @@ void mongo_cursor_free_le(void *val, int type TSRMLS_DC)
 					/* only one cursor to be freed */
 					break;
 				}
-			}
 
 			current = next;
 		}
@@ -1870,7 +1868,7 @@ void php_mongo_cursor_free(void *object TSRMLS_DC)
 
 	if (cursor) {
 		if (cursor->cursor_id != 0) {
-			mongo_cursor_free_le(cursor, MONGO_CURSOR TSRMLS_CC);
+			mongo_cursor_free_le(cursor TSRMLS_CC);
 		} else if (cursor->connection) {
 			mongo_deregister_callback_from_connection(cursor->connection, cursor);
 		}
