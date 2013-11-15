@@ -42,8 +42,6 @@
 #include "mcon/read_preference.h"
 
 /* resource names */
-#define PHP_CONNECTION_RES_NAME "mongo connection"
-#define PHP_SERVER_RES_NAME "mongo server info"
 #define PHP_CURSOR_LIST_RES_NAME "cursor list"
 
 #ifndef zend_parse_parameters_none
@@ -60,15 +58,6 @@
 	do { \
 		(z)->value = (v)->value; \
 		Z_TYPE_P(z) = Z_TYPE_P(v); \
-	} while (0)
-#endif
-
-#ifndef INIT_PZVAL_COPY
-# define INIT_PZVAL_COPY(z, v) \
-	do { \
-		ZVAL_COPY_VALUE(z, v); \
-		Z_SET_REFCOUNT_P(z, 1); \
-		Z_UNSET_ISREF_P(z); \
 	} while (0)
 #endif
 
@@ -116,12 +105,8 @@ typedef __int64 int64_t;
 #define OP_DELETE 2006
 #define OP_KILL_CURSORS 2007
 
-/* cursor flags */
-#define CURSOR_NOT_FOUND 1
-#define CURSOR_ERR 2
+#define REPLY_HEADER_SIZE 36
 
-#define MSG_HEADER_SIZE 16
-#define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
 #define INITIAL_BUF_SIZE 4096
 #define DEFAULT_CHUNK_SIZE (256*1024)
 
@@ -138,11 +123,6 @@ typedef __int64 int64_t;
 /* duplicate strings */
 #define DUP 1
 #define NO_DUP 0
-
-#define PERSIST 1
-#define NO_PERSIST 0
-
-#define FLAGS 0
 
 #define LAST_ERROR 0
 #define PREV_ERROR 1
@@ -244,14 +224,6 @@ typedef __int64 int64_t;
 #define IS_SCALAR_PP(a) IS_SCALAR_P(*a)
 #define IS_ARRAY_OR_OBJECT_P(a) (Z_TYPE_P(a) == IS_ARRAY || Z_TYPE_P(a) == IS_OBJECT)
 
-/* TODO: this should be expanded to handle long_as_object being set */
-#define Z_NUMVAL_P(variable, value)                                     \
-  ((Z_TYPE_P(variable) == IS_LONG && Z_LVAL_P(variable) == value) ||    \
-   (Z_TYPE_P(variable) == IS_DOUBLE && Z_DVAL_P(variable) == value))
-#define Z_NUMVAL_PP(variable, value)                                    \
-  ((Z_TYPE_PP(variable) == IS_LONG && Z_LVAL_PP(variable) == value) ||  \
-   (Z_TYPE_PP(variable) == IS_DOUBLE && Z_DVAL_PP(variable) == value))
-
 #if PHP_VERSION_ID >= 50400
 # define init_properties(intern) object_properties_init(&intern->std, class_type)
 #else
@@ -305,10 +277,6 @@ zval *mongo_read_property(zval *object, zval *member, int type, const zend_liter
 #else
 zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
 #endif
-
-
-#define RS_PRIMARY 1
-#define RS_SECONDARY 2
 
 
 /* Used in our _write_property() handler to mark properties are userland Read Only */
