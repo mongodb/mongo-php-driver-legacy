@@ -34,6 +34,7 @@
 #include "exceptions/gridfs_exception.h"
 #include "exceptions/result_exception.h"
 #include "exceptions/write_concern_exception.h"
+#include "exceptions/duplicate_key_exception.h"
 
 #include "types/id.h"
 
@@ -66,6 +67,7 @@ extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
 extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_GridFSException;
 extern zend_class_entry *mongo_ce_WriteConcernException;
+extern zend_class_entry *mongo_ce_DuplicateKeyException;
 
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
 
@@ -432,6 +434,7 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 	mongo_init_MongoGridFSException(TSRMLS_C);
 	mongo_init_MongoResultException(TSRMLS_C);
 	mongo_init_MongoWriteConcernException(TSRMLS_C);
+	mongo_init_MongoDuplicateKeyException(TSRMLS_C);
 }
 
 /* {{{ Creating & freeing Mongo type objects */
@@ -669,6 +672,7 @@ int php_mongo_trigger_error_on_command_failure(mongo_connection *connection, zva
 int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document TSRMLS_DC)
 {
 	zval **err;
+	zend_class_entry *exception_ce = mongo_ce_WriteConcernException;
 
 	/* Check if the GLE command itself failed */
 	if (php_mongo_trigger_error_on_command_failure(connection, document TSRMLS_CC) == FAILURE) {
@@ -691,15 +695,19 @@ int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document 
 			code = Z_LVAL_PP(code_z);
 		}
 
+		if (code == 11000) {
+			exception_ce = mongo_ce_DuplicateKeyException;
+		}
+
 		/* If additional information is found in the "wnote" field, include it
 		 * in the exception message. Otherwise, just use "err". */
 		if (
 			zend_hash_find(Z_ARRVAL_P(document), "wnote", strlen("wnote") + 1, (void**) &wnote_z) == SUCCESS &&
 			Z_TYPE_PP(wnote_z) == IS_STRING && Z_STRLEN_PP(wnote_z) > 0
 		) {
-			exception = mongo_cursor_throw(mongo_ce_WriteConcernException, connection, code TSRMLS_CC, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote_z));
+			exception = mongo_cursor_throw(exception_ce, connection, code TSRMLS_CC, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote_z));
 		} else {
-			exception = mongo_cursor_throw(mongo_ce_WriteConcernException, connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
+			exception = mongo_cursor_throw(exception_ce, connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
 		}
 
 		/* Since document is a return_value (thanks to MONGO_METHOD stuff), copy
