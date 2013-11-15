@@ -141,10 +141,6 @@ static signed int get_cursor_header(mongo_connection *con, mongo_cursor *cursor,
 	mongo_log_stream_response_header(con, cursor TSRMLS_CC);
 #endif
 
-	/* TODO: find out what this does */
-	if (cursor->recv.response_to > MonGlo(response_num)) {
-		MonGlo(response_num) = cursor->recv.response_to;
-	}
 
 	/* cursor->num is the total of the elements we've retrieved (elements
 	 * already iterated through + elements in db response but not yet iterated

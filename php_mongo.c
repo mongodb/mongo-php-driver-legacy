@@ -289,10 +289,7 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
 	mongo_globals->cmd_char = "$";
 
-	mongo_globals->response_num = 0;
 	mongo_globals->errmsg = 0;
-
-	mongo_globals->pool_size = -1;
 
 	hostname = host_start;
 	/* from the gnu manual:

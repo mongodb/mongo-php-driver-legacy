@@ -41,9 +41,6 @@
 #include "mcon/types.h"
 #include "mcon/read_preference.h"
 
-/* resource names */
-#define PHP_CURSOR_LIST_RES_NAME "cursor list"
-
 #ifndef zend_parse_parameters_none
 # define zend_parse_parameters_none() \
 	zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
@@ -554,8 +551,6 @@ ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	/* timestamp generation helper */
 	long ts_inc;
 	char *errmsg;
-	int response_num;
-	int pool_size;
 
 	long log_level;
 	long log_module;
