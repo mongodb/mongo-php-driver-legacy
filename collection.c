@@ -1571,7 +1571,7 @@ PHP_METHOD(MongoCollection, toIndexString)
 PHP_METHOD(MongoCollection, aggregate)
 {
 	zval ***argv, *pipeline, *cmd, *retval, *tmp;
-	int argc, i;
+	int argc, i, original_rp;
 	mongo_collection *c;
 	mongo_db *db;
 
@@ -1589,6 +1589,7 @@ PHP_METHOD(MongoCollection, aggregate)
 			return;
 		}
 	}
+	original_rp = c->read_pref.type;
 
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);
@@ -1600,7 +1601,23 @@ PHP_METHOD(MongoCollection, aggregate)
 	 * array of pipeline operators. Otherwise, assume it is a single pipeline
 	 * operator and allow it to be wrapped in an array. */
 	if (argc == 1 && zend_hash_index_exists(Z_ARRVAL_PP(argv[0]), 0)) {
+		zval      **op;
+		HashTable  *ops = Z_ARRVAL_PP(argv[0]);
 		Z_ADDREF_PP(*argv);
+
+		zend_hash_internal_pointer_reset(ops);
+		while (zend_hash_get_current_data(ops, (void **)&op) == SUCCESS) {
+			if (zend_symtable_exists(Z_ARRVAL_PP(op), "$out", strlen("$out") + 1)) {
+				if (c->read_pref.type > MONGO_RP_PRIMARY_PREFERRED) {
+					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Forcing aggregate with $out to run on primary");
+					c->read_pref.type = MONGO_RP_PRIMARY;
+					break;
+				}
+			}
+			zend_hash_move_forward(ops);
+		}
+		zend_hash_internal_pointer_reset(ops);
+
 		add_assoc_zval(cmd, "pipeline", **argv);
 	} else {
 		MAKE_STD_ZVAL(pipeline);
@@ -1615,6 +1632,12 @@ PHP_METHOD(MongoCollection, aggregate)
 				efree(argv);
 				RETURN_FALSE;
 			}
+			if (zend_symtable_exists(Z_ARRVAL_P(tmp), "$out", strlen("$out") + 1)) {
+				if (c->read_pref.type > MONGO_RP_PRIMARY_PREFERRED) {
+					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Forcing aggregate with $out to run on primary");
+					c->read_pref.type = MONGO_RP_PRIMARY;
+				}
+			}
 		}
 		add_assoc_zval(cmd, "pipeline", pipeline);
 	}
@@ -1622,6 +1645,7 @@ PHP_METHOD(MongoCollection, aggregate)
 
 	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0 TSRMLS_CC);
 
+	c->read_pref.type = original_rp;
 	zval_ptr_dtor(&cmd);
 
 	RETVAL_ZVAL(retval, 0, 1);
