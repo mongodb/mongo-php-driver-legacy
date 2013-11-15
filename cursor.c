@@ -73,7 +73,7 @@ extern zend_class_entry *mongo_ce_ConnectionException;
 extern zend_class_entry *mongo_ce_CursorException;
 extern zend_class_entry *mongo_ce_CursorTimeoutException;
 
-extern int le_pconnection, le_cursor_list;
+extern int le_cursor_list;
 
 extern zend_object_handlers mongo_default_handlers;
 

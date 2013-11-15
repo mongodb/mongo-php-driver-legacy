@@ -33,7 +33,6 @@ extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_DB, *mongo_ce_Cursor;
 extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception, *mongo_ce_ResultException;
 extern zend_class_entry *mongo_ce_CursorException;
 
-extern int le_pconnection, le_connection;
 extern zend_object_handlers mongo_default_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
