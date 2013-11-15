@@ -51,7 +51,10 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	char *dsn;
 	int dsn_len;
 	int tcp_socket = 1;
+#if PHP_VERSION_ID > 50300
 	zend_error_handling error_handling;
+#endif
+
 	TSRMLS_FETCH();
 
 	if (server->host[0] == '/') {
@@ -67,9 +70,18 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		ctimeout.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
 	}
 
+#if PHP_VERSION_ID > 50300
 	zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handling TSRMLS_CC);
+#else
+	php_set_error_handling(EH_THROW, mongo_ce_ConnectionException TSRMLS_CC);
+#endif
 	stream = php_stream_xport_create(dsn, dsn_len, 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
+
+#if PHP_VERSION_ID > 50300
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
+#else
+	php_set_error_handling(EH_NORMAL, NULL TSRMLS_CC);
+#endif
 
 	efree(dsn);
 	free(hash);
@@ -91,16 +103,28 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	if (options->ssl) {
 		int crypto_enabled;
 
+#if PHP_VERSION_ID > 50300
 		zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handling TSRMLS_CC);
+#else
+		php_set_error_handling(EH_THROW, mongo_ce_ConnectionException TSRMLS_CC);
+#endif
 		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_SSLv23_CLIENT, NULL TSRMLS_CC) < 0) {
+#if PHP_VERSION_ID > 50300
 			zend_restore_error_handling(&error_handling TSRMLS_CC);
+#else
+			php_set_error_handling(EH_NORMAL, NULL TSRMLS_CC);
+#endif
 			*error_message = strdup("Cannot setup SSL, is ext/openssl loaded?");
 			php_stream_close(stream);
 			return NULL;
 		}
 
 		crypto_enabled = php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC);
+#if PHP_VERSION_ID > 50300
 		zend_restore_error_handling(&error_handling TSRMLS_CC);
+#else
+		php_set_error_handling(EH_NORMAL, NULL TSRMLS_CC);
+#endif
 
 		if (crypto_enabled < 0) {
 			/* Setting up crypto failed. Thats only OK if we only preferred it */
@@ -162,12 +186,22 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 
 	/* this can return FAILED if there is just no more data from db */
 	while (received < size && num > 0) {
+#if PHP_VERSION_ID > 50300
 		zend_error_handling error_handling;
+#endif
 		int len = 4096 < (size - received) ? 4096 : size - received;
 
+#if PHP_VERSION_ID > 50300
 		zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handling TSRMLS_CC);
+#else
+		php_set_error_handling(EH_THROW, mongo_ce_ConnectionException TSRMLS_CC);
+#endif
 		num = php_stream_read(con->socket, (char *) data, len);
+#if PHP_VERSION_ID > 50300
 		zend_restore_error_handling(&error_handling TSRMLS_CC);
+#else
+		php_set_error_handling(EH_NORMAL, NULL TSRMLS_CC);
+#endif
 
 		if (num < 0) {
 			/* Doesn't look like this can happen, php_sockop_read overwrites
@@ -240,14 +274,24 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int retval;
+#if PHP_VERSION_ID > 50300
 	zend_error_handling error_handling;
+#endif
 	TSRMLS_FETCH();
 
 	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_WRITE, 0, size TSRMLS_CC);
 
+#if PHP_VERSION_ID > 50300
 	zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handling TSRMLS_CC);
+#else
+	php_set_error_handling(EH_THROW, mongo_ce_ConnectionException TSRMLS_CC);
+#endif
 	retval = php_stream_write(con->socket, (char *) data, size);
+#if PHP_VERSION_ID > 50300
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
+#else
+	php_set_error_handling(EH_NORMAL, NULL TSRMLS_CC);
+#endif
 	if (retval >= size) {
 		php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, size, size TSRMLS_CC);
 	}
