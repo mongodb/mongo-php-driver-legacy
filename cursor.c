@@ -435,7 +435,7 @@ PHP_METHOD(MongoCursor, hasNext)
 
 	if ((cursor->limit > 0 && cursor->at >= cursor->limit) || cursor->num == 0) {
 		if (cursor->cursor_id != 0) {
-			mongo_cursor_free_le(cursor TSRMLS_CC);
+			php_mongo_kill_cursor(cursor->connection, cursor->cursor_id TSRMLS_CC);
 		}
 		RETURN_FALSE;
 	}
@@ -493,10 +493,6 @@ PHP_METHOD(MongoCursor, hasNext)
 	} else {
 		/* but sometimes there will be */
 		RETVAL_TRUE;
-	}
-
-	if (cursor->cursor_id == 0) {
-		mongo_cursor_free_le(cursor TSRMLS_CC);
 	}
 
 }
@@ -1394,7 +1390,7 @@ void mongo_util_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 	}
 
 	if (cursor->cursor_id != 0) {
-		mongo_cursor_free_le(cursor TSRMLS_CC);
+		php_mongo_kill_cursor(cursor->connection, cursor->cursor_id TSRMLS_CC);
 		cursor->cursor_id = 0;
 	}
 
@@ -1804,6 +1800,8 @@ void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC)
 	mongo_buffer buf;
 	char *error_message;
 
+	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", cursor_id);
+
 	buf.pos = quickbuf;
 	buf.start = buf.pos;
 	buf.end = buf.start + 128;
@@ -1828,8 +1826,6 @@ static void kill_cursor_le(cursor_node *node, mongo_connection *con, zend_rsrc_l
 		return;
 	}
 
-	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", node->cursor_id);
-
 	php_mongo_kill_cursor(con, node->cursor_id TSRMLS_CC);
 
 	/* Free this cursor/link pair */
@@ -1848,8 +1844,9 @@ void php_mongo_cursor_free(void *object TSRMLS_DC)
 
 	if (cursor) {
 		if (cursor->cursor_id != 0) {
-			mongo_cursor_free_le(cursor TSRMLS_CC);
-		} else if (cursor->connection) {
+			php_mongo_kill_cursor(cursor->connection, cursor->cursor_id TSRMLS_CC);
+		}
+		if (cursor->connection) {
 			mongo_deregister_callback_from_connection(cursor->connection, cursor);
 		}
 
