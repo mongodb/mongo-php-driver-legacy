@@ -39,6 +39,8 @@
 #include <sasl/saslutil.h>
 #endif
 
+extern zend_class_entry *mongo_ce_ConnectionException;
+
 void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	char *errmsg;
@@ -49,6 +51,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	char *dsn;
 	int dsn_len;
 	int tcp_socket = 1;
+	zend_error_handling error_handling;
 	TSRMLS_FETCH();
 
 	if (server->host[0] == '/') {
@@ -64,7 +67,10 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		ctimeout.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
 	}
 
+	zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handling TSRMLS_CC);
 	stream = php_stream_xport_create(dsn, dsn_len, 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
+	zend_restore_error_handling(&error_handling TSRMLS_CC);
+
 	efree(dsn);
 	free(hash);
 
@@ -83,12 +89,20 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	}
 
 	if (options->ssl) {
+		int crypto_enabled;
+
+		zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handling TSRMLS_CC);
 		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_SSLv23_CLIENT, NULL TSRMLS_CC) < 0) {
+			zend_restore_error_handling(&error_handling TSRMLS_CC);
 			*error_message = strdup("Cannot setup SSL, is ext/openssl loaded?");
 			php_stream_close(stream);
 			return NULL;
 		}
-		if (php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0) {
+
+		crypto_enabled = php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC);
+		zend_restore_error_handling(&error_handling TSRMLS_CC);
+
+		if (crypto_enabled < 0) {
 			/* Setting up crypto failed. Thats only OK if we only preferred it */
 			if (options->ssl == MONGO_SSL_PREFER) {
 				/* FIXME: We can't actually get here because we reject setting
@@ -121,6 +135,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 #if ZEND_DEBUG
 	stream->__exposed = 1;
 #endif
+
 	return stream;
 
 }
@@ -147,9 +162,12 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 
 	/* this can return FAILED if there is just no more data from db */
 	while (received < size && num > 0) {
+		zend_error_handling error_handling;
 		int len = 4096 < (size - received) ? 4096 : size - received;
 
+		zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handling TSRMLS_CC);
 		num = php_stream_read(con->socket, (char *) data, len);
+		zend_restore_error_handling(&error_handling TSRMLS_CC);
 
 		if (num < 0) {
 			/* Doesn't look like this can happen, php_sockop_read overwrites
@@ -222,11 +240,14 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int retval;
+	zend_error_handling error_handling;
 	TSRMLS_FETCH();
 
 	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_WRITE, 0, size TSRMLS_CC);
 
+	zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handling TSRMLS_CC);
 	retval = php_stream_write(con->socket, (char *) data, size);
+	zend_restore_error_handling(&error_handling TSRMLS_CC);
 	if (retval >= size) {
 		php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, size, size TSRMLS_CC);
 	}
