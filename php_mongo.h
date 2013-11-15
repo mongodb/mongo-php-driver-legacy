@@ -527,29 +527,6 @@ PHP_FUNCTION(bson_encode);
 PHP_FUNCTION(bson_decode);
 
 
-/* Mutex macros */
-#ifdef WIN32
-# define LOCK(lk) { \
-	int ret = -1; \
-	int tries = 0; \
-	\
-	while (tries++ < 3 && ret != 0) { \
-		ret = WaitForSingleObject(lk##_mutex, 5000); \
-		if (ret != 0) { \
-			if (ret == WAIT_TIMEOUT) { \
-				continue; \
-			} else { \
-				break; \
-			} \
-		} \
-	} \
-}
-# define UNLOCK(lk) ReleaseMutex(lk##_mutex);
-#else
-# define LOCK(lk) pthread_mutex_lock(&lk##_mutex);
-# define UNLOCK(lk) pthread_mutex_unlock(&lk##_mutex);
-#endif
-
 void mongo_init_MongoDB(TSRMLS_D);
 void mongo_init_MongoCollection(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);

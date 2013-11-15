@@ -26,7 +26,6 @@ typedef __int64 int64_t;
 # endif
 #else
 # include <unistd.h>
-# include <pthread.h>
 #endif
 #include <math.h>
 
@@ -37,12 +36,6 @@ typedef __int64 int64_t;
 #include "collection.h"
 #include "util/log.h"
 #include "log_stream.h"
-
-#if WIN32
-HANDLE cursor_mutex;
-#else
-static pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
 
 /* Cursor flags */
 #define CURSOR_FLAG_TAILABLE      2
@@ -1641,8 +1634,6 @@ void mongo_cursor_free_le(void *val TSRMLS_DC)
 {
 	zend_rsrc_list_entry *le;
 
-	LOCK(cursor);
-
 	/* This should work if le->ptr is null or non-null */
 	if (zend_hash_find(&EG(persistent_list), "cursor_list", strlen("cursor_list") + 1, (void**)&le) == SUCCESS) {
 		cursor_node *current;
@@ -1689,7 +1680,6 @@ void mongo_cursor_free_le(void *val TSRMLS_DC)
 		}
 	}
 
-	UNLOCK(cursor);
 }
 
 
@@ -1697,8 +1687,6 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
 {
 	zend_rsrc_list_entry *le;
 	cursor_node *new_node;
-
-	LOCK(cursor);
 
 	new_node = (cursor_node*)pemalloc(sizeof(cursor_node), 1);
 	new_node->cursor_id = cursor->cursor_id;
@@ -1723,16 +1711,14 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
 
 		if (current == 0) {
 			le->ptr = new_node;
-			UNLOCK(cursor);
 			return 0;
 		}
 
 		do {
 			/* If we find the current cursor in the cursor list, we don't need
-			 * another dtor for it so unlock the mutex & return. */
+			 * another dtor for it . */
 			if (current->cursor_id == cursor->cursor_id && cursor->connection && current->socket == cursor->connection->socket) {
 				pefree(new_node, 1);
-				UNLOCK(cursor);
 				return 0;
 			}
 
@@ -1753,31 +1739,25 @@ int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC)
 		zend_hash_add(&EG(persistent_list), name, strlen(name) + 1, &new_le, sizeof(zend_rsrc_list_entry), NULL);
 	}
 
-	UNLOCK(cursor);
 	return 0;
 }
 
 static int cursor_list_pfree_helper(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
-	LOCK(cursor);
 
-	{
-		cursor_node *node = (cursor_node*)rsrc->ptr;
+	cursor_node *node = (cursor_node*)rsrc->ptr;
 
-		if (!node) {
-			UNLOCK(cursor);
-			return 0;
-		}
-
-		while (node->next) {
-			cursor_node *temp = node;
-			node = node->next;
-			pefree(temp, 1);
-		}
-		pefree(node, 1);
+	if (!node) {
+		return 0;
 	}
 
-	UNLOCK(cursor);
+	while (node->next) {
+		cursor_node *temp = node;
+		node = node->next;
+		pefree(temp, 1);
+	}
+	pefree(node, 1);
+
 	return 0;
 }
 

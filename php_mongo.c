@@ -79,10 +79,6 @@ ZEND_DECLARE_MODULE_GLOBALS(mongo)
 static PHP_GINIT_FUNCTION(mongo);
 static PHP_GSHUTDOWN_FUNCTION(mongo);
 
-#if WIN32
-extern HANDLE cursor_mutex;
-#endif
-
 zend_function_entry mongo_functions[] = {
 	PHP_FE(bson_encode, NULL)
 	PHP_FE(bson_decode, NULL)
@@ -225,14 +221,6 @@ PHP_MINIT_FUNCTION(mongo)
 
 	/* Start random number generator */
 	srand(time(0));
-
-#ifdef WIN32
-	cursor_mutex = CreateMutex(NULL, FALSE, NULL);
-	if (cursor_mutex == NULL) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
-		return FAILURE;
-	}
-#endif
 
 #if HAVE_MONGO_SASL
 	/* We need to bootstrap cyrus-sasl once per process */
@@ -383,14 +371,6 @@ PHP_GSHUTDOWN_FUNCTION(mongo)
 PHP_MSHUTDOWN_FUNCTION(mongo)
 {
 	UNREGISTER_INI_ENTRIES();
-
-#if WIN32
-	/* 0 is failure */
-	if (CloseHandle(cursor_mutex) == 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
-		return FAILURE;
-	}
-#endif
 
 #if HAVE_MONGO_SASL
 	sasl_client_done();
