@@ -41,11 +41,6 @@
 #include "mcon/types.h"
 #include "mcon/read_preference.h"
 
-/* resource names */
-#define PHP_CONNECTION_RES_NAME "mongo connection"
-#define PHP_SERVER_RES_NAME "mongo server info"
-#define PHP_CURSOR_LIST_RES_NAME "cursor list"
-
 #ifndef zend_parse_parameters_none
 # define zend_parse_parameters_none() \
 	zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
@@ -55,27 +50,11 @@
 # define Z_UNSET_ISREF_P(pz)      pz->is_ref = 0
 #endif
 
-#ifndef ZVAL_COPY_VALUE
-#define ZVAL_COPY_VALUE(z, v) \
-	do { \
-		(z)->value = (v)->value; \
-		Z_TYPE_P(z) = Z_TYPE_P(v); \
-	} while (0)
-#endif
-
-#ifndef INIT_PZVAL_COPY
-# define INIT_PZVAL_COPY(z, v) \
-	do { \
-		ZVAL_COPY_VALUE(z, v); \
-		Z_SET_REFCOUNT_P(z, 1); \
-		Z_UNSET_ISREF_P(z); \
-	} while (0)
-#endif
-
-#ifndef MAKE_COPY_ZVAL
+#if PHP_VERSION_ID < 50300
 # define MAKE_COPY_ZVAL(ppzv, pzv) \
-	INIT_PZVAL_COPY(pzv, *(ppzv)); \
-	zval_copy_ctor((pzv));
+    *(pzv) = **(ppzv);            \
+    zval_copy_ctor((pzv));        \
+    INIT_PZVAL((pzv));
 #endif
 
 #ifdef WIN32
@@ -116,12 +95,8 @@ typedef __int64 int64_t;
 #define OP_DELETE 2006
 #define OP_KILL_CURSORS 2007
 
-/* cursor flags */
-#define CURSOR_NOT_FOUND 1
-#define CURSOR_ERR 2
+#define REPLY_HEADER_SIZE 36
 
-#define MSG_HEADER_SIZE 16
-#define REPLY_HEADER_SIZE (MSG_HEADER_SIZE+20)
 #define INITIAL_BUF_SIZE 4096
 #define DEFAULT_CHUNK_SIZE (256*1024)
 
@@ -138,11 +113,6 @@ typedef __int64 int64_t;
 /* duplicate strings */
 #define DUP 1
 #define NO_DUP 0
-
-#define PERSIST 1
-#define NO_PERSIST 0
-
-#define FLAGS 0
 
 #define LAST_ERROR 0
 #define PREV_ERROR 1
@@ -244,14 +214,6 @@ typedef __int64 int64_t;
 #define IS_SCALAR_PP(a) IS_SCALAR_P(*a)
 #define IS_ARRAY_OR_OBJECT_P(a) (Z_TYPE_P(a) == IS_ARRAY || Z_TYPE_P(a) == IS_OBJECT)
 
-/* TODO: this should be expanded to handle long_as_object being set */
-#define Z_NUMVAL_P(variable, value)                                     \
-  ((Z_TYPE_P(variable) == IS_LONG && Z_LVAL_P(variable) == value) ||    \
-   (Z_TYPE_P(variable) == IS_DOUBLE && Z_DVAL_P(variable) == value))
-#define Z_NUMVAL_PP(variable, value)                                    \
-  ((Z_TYPE_PP(variable) == IS_LONG && Z_LVAL_PP(variable) == value) ||  \
-   (Z_TYPE_PP(variable) == IS_DOUBLE && Z_DVAL_PP(variable) == value))
-
 #if PHP_VERSION_ID >= 50400
 # define init_properties(intern) object_properties_init(&intern->std, class_type)
 #else
@@ -307,10 +269,6 @@ zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
 #endif
 
 
-#define RS_PRIMARY 1
-#define RS_SECONDARY 2
-
-
 /* Used in our _write_property() handler to mark properties are userland Read Only */
 #define MONGO_ACC_READ_ONLY 0x10000000
 
@@ -324,8 +282,6 @@ typedef struct {
 	mongo_con_manager *manager; /* Contains a link to the manager */
 	mongo_servers     *servers;
 } mongoclient;
-
-#define MONGO_CURSOR 1
 
 typedef struct {
 	int length;
@@ -498,23 +454,6 @@ typedef struct {
 	int cursor_options;
 } mongo_cursor;
 
-/* Unfortunately, cursors can be freed before or after link is destroyed, so we
- * can't actually depend on having a link to the database. So, we're going to
- * keep a separate list of link ids associated with cursor ids.
- *
- * When a cursor is to be freed, we try to find this cursor in the list. If
- * it's there, kill it.  If not, the db connection is probably already dead.
- *
- * When a connection is killed, we sweep through the list and kill all the
- * cursors for that link. */
-typedef struct _cursor_node {
-	int64_t cursor_id;
-	void *socket;
-
-	struct _cursor_node *next;
-	struct _cursor_node *prev;
-} cursor_node;
-
 typedef struct {
 	zend_object std;
 	char *id;
@@ -561,29 +500,6 @@ PHP_FUNCTION(bson_encode);
 PHP_FUNCTION(bson_decode);
 
 
-/* Mutex macros */
-#ifdef WIN32
-# define LOCK(lk) { \
-	int ret = -1; \
-	int tries = 0; \
-	\
-	while (tries++ < 3 && ret != 0) { \
-		ret = WaitForSingleObject(lk##_mutex, 5000); \
-		if (ret != 0) { \
-			if (ret == WAIT_TIMEOUT) { \
-				continue; \
-			} else { \
-				break; \
-			} \
-		} \
-	} \
-}
-# define UNLOCK(lk) ReleaseMutex(lk##_mutex);
-#else
-# define LOCK(lk) pthread_mutex_lock(&lk##_mutex);
-# define UNLOCK(lk) pthread_mutex_unlock(&lk##_mutex);
-#endif
-
 void mongo_init_MongoDB(TSRMLS_D);
 void mongo_init_MongoCollection(TSRMLS_D);
 void mongo_init_MongoCursor(TSRMLS_D);
@@ -628,8 +544,6 @@ ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	/* timestamp generation helper */
 	long ts_inc;
 	char *errmsg;
-	int response_num;
-	int pool_size;
 
 	long log_level;
 	long log_module;
@@ -650,7 +564,6 @@ ZEND_END_MODULE_GLOBALS(mongo)
 #endif
 
 extern zend_module_entry mongo_module_entry;
-#define phpext_mongo_ptr &mongo_module_entry
 
 #endif
 

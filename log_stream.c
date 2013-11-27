@@ -474,7 +474,6 @@ void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor
 		add_assoc_long(info, "recv_opcode", cursor->recv.op);
 		add_assoc_long(info, "flag", cursor->flag);
 		add_assoc_long(info, "start", cursor->start);
-		/*add_assoc_long(info, "global_response_num", MonGlo(response_num)); */
 
 		args[0] = &server;
 		args[1] = &cursor->query;
