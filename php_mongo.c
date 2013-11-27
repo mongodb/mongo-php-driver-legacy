@@ -69,19 +69,12 @@ extern zend_class_entry *mongo_ce_WriteConcernException;
 
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
 
-/** Resources */
-int le_cursor_list;
-
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
 ZEND_DECLARE_MODULE_GLOBALS(mongo)
 
 static PHP_GINIT_FUNCTION(mongo);
 static PHP_GSHUTDOWN_FUNCTION(mongo);
-
-#if WIN32
-extern HANDLE cursor_mutex;
-#endif
 
 zend_function_entry mongo_functions[] = {
 	PHP_FE(bson_encode, NULL)
@@ -171,7 +164,6 @@ PHP_MINIT_FUNCTION(mongo)
 	zend_class_entry max_key, min_key;
 
 	REGISTER_INI_ENTRIES();
-	le_cursor_list = zend_register_list_destructors_ex(NULL, php_mongo_cursor_list_pfree, PHP_CURSOR_LIST_RES_NAME, module_number);
 
 	mongo_init_MongoClient(TSRMLS_C);
 	mongo_init_Mongo(TSRMLS_C);
@@ -225,14 +217,6 @@ PHP_MINIT_FUNCTION(mongo)
 
 	/* Start random number generator */
 	srand(time(0));
-
-#ifdef WIN32
-	cursor_mutex = CreateMutex(NULL, FALSE, NULL);
-	if (cursor_mutex == NULL) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
-		return FAILURE;
-	}
-#endif
 
 #if HAVE_MONGO_SASL
 	/* We need to bootstrap cyrus-sasl once per process */
@@ -305,10 +289,7 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
 	mongo_globals->cmd_char = "$";
 
-	mongo_globals->response_num = 0;
 	mongo_globals->errmsg = 0;
-
-	mongo_globals->pool_size = -1;
 
 	hostname = host_start;
 	/* from the gnu manual:
@@ -383,14 +364,6 @@ PHP_GSHUTDOWN_FUNCTION(mongo)
 PHP_MSHUTDOWN_FUNCTION(mongo)
 {
 	UNREGISTER_INI_ENTRIES();
-
-#if WIN32
-	/* 0 is failure */
-	if (CloseHandle(cursor_mutex) == 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
-		return FAILURE;
-	}
-#endif
 
 #if HAVE_MONGO_SASL
 	sasl_client_done();

@@ -16,7 +16,6 @@
 #ifndef __MONGOCLIENT_H__
 #define __MONGOCLIENT_H__
 
-int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC);
 void mongo_init_MongoClient(TSRMLS_D);
 void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc);
