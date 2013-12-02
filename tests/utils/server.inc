@@ -65,6 +65,10 @@ class MongoShellServer {
     }
 
     protected function verifyWrite($command) {
+        if (!is_resource($this->fp)) {
+            debug_print_backtrace();
+            throw new DebugException("No socket to run $command", $this->log);
+        }
         $md5 = md5($command);
         $r = fwrite($this->fp, "print('$md5')\n$command\nprint('$md5')\n");
         $retval = "";
@@ -134,6 +138,9 @@ class MongoShellServer {
 
     public function getServerVersion($which = "STANDALONE") {
         switch($which) {
+        case "REPLICASET":
+            $buildinfo = $this->verifyWrite("getReplicasetBuildInfo()");
+            break;
         case "STANDALONE":
             $buildinfo = $this->verifyWrite("getBuildInfo()");
             break;
