@@ -21,6 +21,7 @@
 
 #define MONGO_RP_FIRST               0x00
 
+/* The order of these is significant. Do not change! */
 #define MONGO_RP_PRIMARY             0x00
 #define MONGO_RP_PRIMARY_PREFERRED   0x01
 #define MONGO_RP_SECONDARY           0x02
