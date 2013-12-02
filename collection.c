@@ -718,7 +718,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 	return;
 }
 
-int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, zval *write_options, zval *this_ptr, mongo_buffer *buf, char *namespace, int namespace_len, zval *document, zval *return_value)
+int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, zval *write_options, zval *this_ptr, mongo_buffer *buf, char *namespace, int namespace_len, zval *document, zval *return_value TSRMLS_DC)
 {
 	int retval = 0;
 
@@ -740,7 +740,7 @@ int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection 
 void mongo_convert_write_api_return_to_weirdness(zval *return_value) {
 	/* FIXME: Add random crap to the return value */
 }
-void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options, mongo_server_options *server_options, zval *collection)
+void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options, mongo_server_options *server_options, zval *collection TSRMLS_DC)
 {
 	zval *wtimeout_prop;
 
@@ -786,7 +786,7 @@ void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options
 		write_options->wtimeout = Z_LVAL_P(wtimeout_prop);
 	}
 }
-int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_write_options) {
+int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_write_options TSRMLS_DC) {
 	if (z_write_options && Z_TYPE_P(z_write_options) == IS_ARRAY) {
 		zval **timeout_pp;
 
@@ -807,7 +807,7 @@ int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_
 /* Returns 0 on failure, throwing exception?
  * Returns 1 on success, setting zval return_value to the return document
  */
-int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *server_options, zval *z_write_options, char *dbname, zval *collection, zval *document, zval *return_value)
+int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *server_options, zval *z_write_options, char *dbname, zval *collection, zval *document, zval *return_value TSRMLS_DC)
 {
 	char *command_ns;
 	char *error_message;
@@ -823,8 +823,8 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 	spprintf(&command_ns, 0, "%s.$cmd", dbname);
 
 	php_mongo_api_write_options_from_zval(&write_options, z_write_options);
-	mongo_apply_implicit_write_options(&write_options, server_options, collection);
-	socket_read_timeout = mongo_get_socket_read_timeout(server_options, z_write_options);
+	mongo_apply_implicit_write_options(&write_options, server_options, collection TSRMLS_CC);
+	socket_read_timeout = mongo_get_socket_read_timeout(server_options, z_write_options TSRMLS_CC);
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
 	request_id = php_mongo_api_insert_single(&buf, command_ns, Z_STRVAL_P(c->name), document, &write_options, connection TSRMLS_CC);
@@ -845,7 +845,7 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 		return 0;
 	}
 
-	retval = php_mongo_api_get_reply(manager, connection, server_options, socket_read_timeout, request_id, &return_value);
+	retval = php_mongo_api_get_reply(manager, connection, server_options, socket_read_timeout, request_id, &return_value TSRMLS_CC);
 	efree(buf.start);
 
 	if (retval != 0) {
@@ -885,7 +885,7 @@ PHP_METHOD(MongoCollection, insert)
 
 		PHP_MONGO_GET_DB(c->parent);
 
-		retval = mongo_collection_insert_api(link->manager, connection, &link->servers->options, write_options, Z_STRVAL_P(db->name), getThis(), document, return_value);
+		retval = mongo_collection_insert_api(link->manager, connection, &link->servers->options, write_options, Z_STRVAL_P(db->name), getThis(), document, return_value TSRMLS_CC);
 
 		if (retval) {
 			/* Adds random "err", "code", "errmsg" empty fields to be compatible with
@@ -898,7 +898,7 @@ PHP_METHOD(MongoCollection, insert)
 		mongo_buffer buf;
 
 		CREATE_BUF(buf, INITIAL_BUF_SIZE);
-		retval = mongo_collection_insert_opcode(link->manager, connection, &link->servers->options, write_options, getThis(), &buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), document, return_value);
+		retval = mongo_collection_insert_opcode(link->manager, connection, &link->servers->options, write_options, getThis(), &buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), document, return_value TSRMLS_CC);
 
 		/* retval == -1 means a GLE response was received, so send_message() has
 		* either set return_value or thrown an exception via do_gle_op(). */

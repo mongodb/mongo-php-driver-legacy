@@ -143,7 +143,7 @@ int php_mongo_api_insert_start(mongo_buffer *buf, char *ns, char *collection, ph
 	php_mongo_serialize_string(buf, collection, strlen(collection));
 
 	if (write_options) {
-		php_mongo_api_add_write_options(buf, write_options TSRMLS_DC);
+		php_mongo_api_add_write_options(buf, write_options TSRMLS_CC);
 	}
 
 	/* documents: [ 0: {document: 1}, 1: {document: 2}, ...] */
