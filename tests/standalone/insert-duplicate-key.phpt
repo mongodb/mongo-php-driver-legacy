@@ -34,6 +34,7 @@ try {
     $ret = $collection->insert($doc, $opts);
     echo "FAILED\nThat should have raised duplicate key exception!\n";
 } catch(MongoDuplicateKeyException $e) {
+    var_dump($e->getCode());
     echo $e->getMessage(), "\n";
 }
 
@@ -44,6 +45,7 @@ var_dump($tmp == $doc);
 ===DONE===
 <?php exit(0); ?>
 --EXPECTF--
+int(11000)
 127.0.0.1:30000: E11000 duplicate key error index: %s.dupkey.$_id_  dup key: { : "DuplicateKeyError" }
 bool(true)
 ===DONE===
