@@ -1609,7 +1609,8 @@ PHP_METHOD(MongoCollection, aggregate)
 		while (zend_hash_get_current_data(ops, (void **)&op) == SUCCESS) {
 			if (zend_symtable_exists(Z_ARRVAL_PP(op), "$out", strlen("$out") + 1)) {
 				if (c->read_pref.type > MONGO_RP_PRIMARY_PREFERRED) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Forcing aggregate with $out to run on primary");
+					mongo_manager_log(MonGlo(manager), MLOG_RS, MLOG_WARN, "Forcing aggregate with $out to run on primary");
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Forcing aggregate with $out to run on primary");
 					c->read_pref.type = MONGO_RP_PRIMARY;
 					break;
 				}
@@ -1634,7 +1635,8 @@ PHP_METHOD(MongoCollection, aggregate)
 			}
 			if (zend_symtable_exists(Z_ARRVAL_P(tmp), "$out", strlen("$out") + 1)) {
 				if (c->read_pref.type > MONGO_RP_PRIMARY_PREFERRED) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Forcing aggregate with $out to run on primary");
+					mongo_manager_log(MonGlo(manager), MLOG_RS, MLOG_WARN, "Forcing aggregate with $out to run on primary");
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Forcing aggregate with $out to run on primary");
 					c->read_pref.type = MONGO_RP_PRIMARY;
 				}
 			}
