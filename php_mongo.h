@@ -146,6 +146,16 @@ typedef __int64 int64_t;
 # define MONGO_E_DEPRECATED E_STRICT
 #endif
 
+#if PHP_VERSION_ID > 50300
+# define ERROR_HANDLER_DECLARATION(varname) zend_error_handling varname
+# define ERROR_HANDLER_REPLACE(varname, ex) zend_replace_error_handling(EH_THROW, ex, &varname TSRMLS_CC)
+# define ERROR_HANDLER_RESTORE(varname)     zend_restore_error_handling(&varname TSRMLS_CC)
+#else
+# define ERROR_HANDLER_DECLARATION(varname)
+# define ERROR_HANDLER_REPLACE(varname, ex) php_set_error_handling(EH_THROW, ex TSRMLS_CC)
+# define ERROR_HANDLER_RESTORE(varname)     php_set_error_handling(EH_NORMAL, NULL TSRMLS_CC)
+#endif
+
 #define MUST_BE_ARRAY_OR_OBJECT(num, arg) do { \
 	if (arg && !(Z_TYPE_P(arg) == IS_ARRAY || Z_TYPE_P(arg) == IS_OBJECT)) { \
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "expects parameter %d to be an array or object, %s given", num, zend_get_type_by_const(Z_TYPE_P(arg))); \
