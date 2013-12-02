@@ -718,7 +718,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 	return;
 }
 
-int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, zval *write_options, buffer *buf, char *namespace, int namespace_len, zval *document)
+int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, zval *write_options, mongo_buffer *buf, char *namespace, int namespace_len, zval *document)
 {
 	int retval = 0;
 	zval *return_value = NULL;
@@ -817,7 +817,7 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 	int wrotebytes = 0;
 	int request_id;
 	int socket_read_timeout = 0;
-	buffer buf;
+	mongo_buffer buf;
 	php_mongodb_write_options write_options = {{-1}, -1, -1, -1, -1, -1};
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(collection TSRMLS_CC);
 

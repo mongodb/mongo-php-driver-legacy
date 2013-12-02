@@ -34,7 +34,7 @@ extern zend_class_entry *mongo_ce_DuplicateKeyException;
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *connection, zval *document TSRMLS_DC);
-static void php_mongo_api_add_write_options(buffer *buf, php_mongodb_write_options *write_options TSRMLS_DC);
+static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write_options *write_options TSRMLS_DC);
 static void php_mongo_api_throw_exception(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC);
 static void php_mongo_api_throw_exception_from_server_code(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC);
 
@@ -114,7 +114,7 @@ void php_mongo_api_write_options_to_zval(php_mongodb_write_options *write_option
 /* Bootstraps a Write API Insert message with its write concerns.
  * Returns the position of the root element, needed to backtract and serialize
  * the size of the combined command */
-int php_mongo_api_insert_start(buffer *buf, char *ns, char *collection, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
+int php_mongo_api_insert_start(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
 {
 	int container_pos;
 
@@ -170,7 +170,7 @@ int php_mongo_api_insert_start(buffer *buf, char *ns, char *collection, php_mong
  *
  * NOTE: It is the callers responsibility to "unwind" the document from buf if it wants to
  * keep the existing buffer and ship it without the new document */
-int php_mongo_api_insert_add(buffer *buf, int n, HashTable *document, int max_document_size TSRMLS_DC) /* {{{  */
+int php_mongo_api_insert_add(mongo_buffer *buf, int n, HashTable *document, int max_document_size TSRMLS_DC) /* {{{  */
 {
 	int docstart = buf->pos-buf->start;
 	char *number;
@@ -201,7 +201,7 @@ int php_mongo_api_insert_add(buffer *buf, int n, HashTable *document, int max_do
  * Use MAX_BSON_WIRE_OBJECT_SIZE(max_bson_size) to calculate the correct max_write_size
  * Returns the the full message length.
  * Throws mongo_ce_Exception if the buffer is larger then max_write_size */
-int php_mongo_api_insert_end(buffer *buf, int container_pos, int max_write_size TSRMLS_DC) /* {{{  */
+int php_mongo_api_insert_end(mongo_buffer *buf, int container_pos, int max_write_size TSRMLS_DC) /* {{{  */
 {
 	php_mongo_serialize_null(buf);
 	if (php_mongo_serialize_size(buf->start + container_pos, buf, max_write_size TSRMLS_CC) == FAILURE) {
@@ -221,7 +221,7 @@ int php_mongo_api_insert_end(buffer *buf, int container_pos, int max_write_size 
  * Does the _start() _add() _end() dance.
  * Returns the generated Protocol Request ID (>0) on success
  * Returns 0 on failure, and raises exception (see _add() and _end()) */
-int php_mongo_api_insert_single(buffer *buf, char *ns, char *collection, zval *document, php_mongodb_write_options *write_options, mongo_connection *connection TSRMLS_DC) /* {{{  */
+int php_mongo_api_insert_single(mongo_buffer *buf, char *ns, char *collection, zval *document, php_mongodb_write_options *write_options, mongo_connection *connection TSRMLS_DC) /* {{{  */
 {
 	int request_id;
 	int container_pos;
@@ -322,7 +322,7 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 
 
 /* Internal helper.. Writes the php_mongodb_write_options options to the buffer */
-static void php_mongo_api_add_write_options(buffer *buf, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{  */
+static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{  */
 {
 	int document_start, document_end;
 
