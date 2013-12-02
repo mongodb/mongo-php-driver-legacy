@@ -449,8 +449,7 @@ function shutdownEverything(callback) {
 function getBuildInfo() {
     return standaloneTest.adminCommand({buildinfo: 1})
 }
+
 function getReplicasetBuildInfo() {
     return replTest.getMaster().getDB("admin")._adminCommand({ buildinfo: 1 });
 }
-
-
