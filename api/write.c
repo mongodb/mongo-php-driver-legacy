@@ -16,7 +16,6 @@
 #include <php.h>
 #include <zend_exceptions.h>
 
-#include <zend_exceptions.h>
 #include "../php_mongo.h"
 #include "../bson.h"
 #include "../cursor.h" /* For mongo_cursor_throw() */
@@ -131,20 +130,17 @@ int php_mongo_api_insert_start(mongo_buffer *buf, char *ns, char *collection, ph
 	php_mongo_serialize_int(buf, 0);                    /* numberToSkip */
 	php_mongo_serialize_int(buf, -1);                   /* numberToReturn */
 
-
 	/* The root element is a BSON Document, which doesn't have a type
 	 * But we need to reserve space to fill out its size.
 	 * We need to store our current position so we can write it in the _end() */
 	container_pos = buf->pos-buf->start;
 	buf->pos += INT_32;
 
-
 	/* insert: databasename.collectionName */
 	php_mongo_set_type(buf, BSON_STRING);
 	php_mongo_serialize_key(buf, "insert", strlen("insert"), 0 TSRMLS_CC);
 	php_mongo_serialize_int(buf, strlen(collection) + 1);
 	php_mongo_serialize_string(buf, collection, strlen(collection));
-
 
 	if (write_options) {
 		php_mongo_api_add_write_options(buf, write_options TSRMLS_DC);
@@ -153,7 +149,6 @@ int php_mongo_api_insert_start(mongo_buffer *buf, char *ns, char *collection, ph
 	/* documents: [ 0: {document: 1}, 1: {document: 2}, ...] */
 	php_mongo_set_type(buf, BSON_ARRAY);
 	php_mongo_serialize_key(buf, "documents", strlen("documents"), 0 TSRMLS_CC);
-
 
 	return container_pos;
 }
@@ -321,7 +316,7 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 /* }}} */
 
 
-/* Internal helper.. Writes the php_mongodb_write_options options to the buffer */
+/* Internal helper: Writes the php_mongodb_write_options options to the buffer */
 static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{  */
 {
 	int document_start, document_end;
@@ -378,7 +373,7 @@ static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write
 }
 /* }}}  */
 
-/* Internal helper.. Raises an exception if needed
+/* Internal helper: Raises an exception if needed
  * Returns 0 when write succeeded (ok=1)
  * Returns 1 when write failed, and raises different exceptions depending on the error */
 static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *connection, zval *document TSRMLS_DC) /* {{{ */
@@ -423,7 +418,7 @@ static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *conn
 	return 1;
 } /* }}} */
 
-/* Internal helper.. raises exception based on the server error code */
+/* Internal helper: raises exception based on the server error code */
 static void php_mongo_api_throw_exception_from_server_code(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC) /* {{{ */
 {
 	zval *exception;
@@ -455,34 +450,33 @@ static void php_mongo_api_throw_exception_from_server_code(mongo_connection *con
 }
 /* }}}  */
 
-/* Internal helper.. raises exception based on our failure codes */
+/* Internal helper: raises exception based on our failure codes */
 static void php_mongo_api_throw_exception(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC) /* {{{ */
 {
 	zval *exception;
 	zend_class_entry *ce;
 
 	switch(code) {
-	case 2: /* old-style timeout? I don't know where this is coming from */
-	case 80: /* timeout, io_stream:php_mongo_io_stream_read() */
-		ce = mongo_ce_CursorTimeoutException; /* Cursor Exception for BC */
-		break;
+		case 2: /* old-style timeout? I don't know where this is coming from */
+		case 80: /* timeout, io_stream:php_mongo_io_stream_read() */
+			ce = mongo_ce_CursorTimeoutException; /* Cursor Exception for BC */
+			break;
 
-	case 32: /* Remote server has closed the connection, io_stream:php_mongo_io_stream_read() */
-		ce = mongo_ce_CursorException; /* Cursor Exception for BC */
-		break;
+		case 32: /* Remote server has closed the connection, io_stream:php_mongo_io_stream_read() */
+			ce = mongo_ce_CursorException; /* Cursor Exception for BC */
+			break;
 
-	/* MongoCursorException for BC with pre-2.6 write API*/
-	case 4: /* couldn't get full response header, got %d bytes but expected atleast %d php_mongo_api_get_reply() */
-	case 6: /* bad response length: %d, did the db assert? php_mongo_api_get_reply() */
-	case 7: /* Message size (%d) overflows valid message size (%d) php_mongo_api_get_reply() */
-	case 9: /* request/response mismatch: %d vs %d php_mongo_api_get_reply() */
-		ce = mongo_ce_CursorException; /* should be MongoProtocol error php_mongo_api_get_reply() */
-		break;
+			/* MongoCursorException for BC with pre-2.6 write API*/
+		case 4: /* couldn't get full response header, got %d bytes but expected atleast %d php_mongo_api_get_reply() */
+		case 6: /* bad response length: %d, did the db assert? php_mongo_api_get_reply() */
+		case 7: /* Message size (%d) overflows valid message size (%d) php_mongo_api_get_reply() */
+		case 9: /* request/response mismatch: %d vs %d php_mongo_api_get_reply() */
+			ce = mongo_ce_CursorException; /* should be MongoProtocol error php_mongo_api_get_reply() */
+			break;
 
-	default:
-		ce = mongo_ce_ProtocolException;
-		break;
-
+		default:
+			ce = mongo_ce_ProtocolException;
+			break;
 	}
 
 	exception = mongo_cursor_throw(ce, connection, code TSRMLS_CC, "%s", error_message);

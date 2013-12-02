@@ -13,16 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-#ifndef PHP_MONGODB_API_WRITE_H
-#define PHP_MONGODB_API_WRITE_H 1
+#ifndef __API_WRITE_H__
+#define __API_WRITE_H__ 1
 
 
 typedef struct {
+	int        wtype; /* 0=use-default, 1=w, 2=wstring */
 	union {
 		int    w;
 		char  *wstring;
 	} write_concern;
-	int        wtype; /* 0=use-default, 1=w, 2=wstring */
 	int        wtimeout;
 	int        j;
 	int        fsync;

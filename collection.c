@@ -814,11 +814,11 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 	char *command_ns;
 	char *error_message;
 	int retval = 0;
-	int wrotebytes = 0;
+	int bytes_written = 0;
 	int request_id;
 	int socket_read_timeout = 0;
 	mongo_buffer buf;
-	php_mongodb_write_options write_options = {{-1}, -1, -1, -1, -1, -1};
+	php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(collection TSRMLS_CC);
 
 
@@ -839,9 +839,9 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 		return 0;
 	}
 
-	wrotebytes = manager->send(connection, server_options, buf.start, buf.pos - buf.start, &error_message);
+	bytes_written = manager->send(connection, server_options, buf.start, buf.pos - buf.start, &error_message);
 
-	if (wrotebytes < 1) {
+	if (bytes_written < 1) {
 		/* Didn't write anything, something bad must have happened */
 		efree(buf.start);
 		return 0;
