@@ -695,8 +695,14 @@ int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document 
 			code = Z_LVAL_PP(code_z);
 		}
 
-		if (code == 11000) {
-			exception_ce = mongo_ce_DuplicateKeyException;
+		/* Convert some known error codes into dedicated exception classes */
+		switch(code) {
+			/* All three are actively used for DuplicateKey errors by the server */
+			case 11000:
+			case 11001:
+			case 12582:
+				exception_ce = mongo_ce_DuplicateKeyException;
+				break;
 		}
 
 		/* If additional information is found in the "wnote" field, include it
