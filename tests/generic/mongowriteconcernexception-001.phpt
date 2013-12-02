@@ -17,7 +17,7 @@ try {
     echo "first document inserted\n";
     $c->insert(array('_id' => 1));
     echo "second document inserted\n";
-} catch (Exception $e) {
+} catch (MongoWriteConcernException $e) {
     printf("exception class: %s\n", get_class($e));
     printf("exception message: %s\n", $e->getMessage());
     printf("exception code: %d\n", $e->getCode());
@@ -27,7 +27,7 @@ try {
 ?>
 --EXPECTF--
 first document inserted
-exception class: MongoWriteConcernException
+exception class: MongoDuplicateKeyException
 exception message: %s:%d: E11000 duplicate key error %s
 exception code: 11000
 bool(true)
