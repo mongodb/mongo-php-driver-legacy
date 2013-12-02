@@ -718,11 +718,9 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 	return;
 }
 
-int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, zval *write_options, mongo_buffer *buf, char *namespace, int namespace_len, zval *document)
+int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, zval *write_options, zval *this_ptr, mongo_buffer *buf, char *namespace, int namespace_len, zval *document, zval *return_value)
 {
 	int retval = 0;
-	zval *return_value = NULL;
-	zval *this_ptr = NULL;
 
 	if (FAILURE == php_mongo_write_insert(buf, namespace, document, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
 		return 0;
@@ -900,7 +898,7 @@ PHP_METHOD(MongoCollection, insert)
 		mongo_buffer buf;
 
 		CREATE_BUF(buf, INITIAL_BUF_SIZE);
-		retval = mongo_collection_insert_opcode(link->manager, connection, &link->servers->options, write_options, &buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), document);
+		retval = mongo_collection_insert_opcode(link->manager, connection, &link->servers->options, write_options, getThis(), &buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), document, return_value);
 
 		/* retval == -1 means a GLE response was received, so send_message() has
 		* either set return_value or thrown an exception via do_gle_op(). */
