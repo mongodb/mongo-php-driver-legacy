@@ -54,7 +54,6 @@ extern zend_object_handlers mongo_default_handlers;
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
-static void make_special(mongo_cursor *);
 static int have_error_flags(mongo_cursor *cursor);
 static int handle_error(mongo_cursor *cursor TSRMLS_DC);
 
