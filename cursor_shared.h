@@ -67,6 +67,10 @@ int php_mongo_get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char 
 int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC);
 int php_mongo_get_cursor_first_batch(zval *document, zval **first_batch TSRMLS_DC);
 
+/* Returns the actual limit to send over the wire, based on batch size, current
+ * position, and user limit */
+int php_mongo_get_next_request_limit(mongo_cursor *cursor);
+
 /* Tries to read the reply from the database */
 int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC);
 void php_mongo_make_special(mongo_cursor *cursor);

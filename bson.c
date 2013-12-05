@@ -27,6 +27,7 @@
 #include "bson.h"
 #include "types/date.h"
 #include "types/id.h"
+#include "cursor_shared.h"
 
 #define CHECK_BUFFER_LEN(len) \
 	do { \
@@ -801,7 +802,7 @@ int php_mongo_write_query(mongo_buffer *buf, mongo_cursor *cursor, int max_docum
 	cursor->send.request_id = header.request_id;
 
 	php_mongo_serialize_int(buf, cursor->skip);
-	php_mongo_serialize_int(buf, mongo_get_limit(cursor));
+	php_mongo_serialize_int(buf, php_mongo_get_next_request_limit(cursor));
 
 	if (zval_to_bson(buf, HASH_P(cursor->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE || EG(exception)) {
 		return FAILURE;
@@ -846,32 +847,10 @@ int php_mongo_write_get_more(mongo_buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 	CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
 	cursor->send.request_id = header.request_id;
 
-	php_mongo_serialize_int(buf, mongo_get_limit(cursor));
+	php_mongo_serialize_int(buf, php_mongo_get_next_request_limit(cursor));
 	php_mongo_serialize_long(buf, cursor->cursor_id);
 
 	return php_mongo_serialize_size(buf->start + start, buf, cursor->connection->max_message_size TSRMLS_CC);
-}
-
-
-int mongo_get_limit(mongo_cursor *cursor)
-{
-	int lim_at;
-
-	if (cursor->limit < 0) {
-		return cursor->limit;
-	} else if (cursor->batch_size < 0) {
-		return cursor->batch_size;
-	}
-
-	lim_at = cursor->limit > cursor->batch_size ? cursor->limit - cursor->at : cursor->limit;
-
-	if (cursor->batch_size && (!lim_at || cursor->batch_size <= lim_at)) {
-		return cursor->batch_size;
-	} else if (lim_at && (!cursor->batch_size || lim_at < cursor->batch_size)) {
-		return lim_at;
-	}
-
-	return 0;
 }
 
 
