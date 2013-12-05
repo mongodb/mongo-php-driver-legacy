@@ -293,6 +293,27 @@ int php_mongo_get_cursor_first_batch(zval *document, zval **first_batch TSRMLS_D
 
 	return SUCCESS;
 }
+
+int php_mongo_get_next_request_limit(mongo_cursor *cursor)
+{
+	int lim_at;
+
+	if (cursor->limit < 0) {
+		return cursor->limit;
+	} else if (cursor->batch_size < 0) {
+		return cursor->batch_size;
+	}
+
+	lim_at = cursor->limit > cursor->batch_size ? cursor->limit - cursor->at : cursor->limit;
+
+	if (cursor->batch_size && (!lim_at || cursor->batch_size <= lim_at)) {
+		return cursor->batch_size;
+	} else if (lim_at && (!cursor->batch_size || lim_at < cursor->batch_size)) {
+		return lim_at;
+	}
+
+	return 0;
+}
 /* }}} */
 
 /* {{{ Cursor option setting */

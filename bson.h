@@ -101,10 +101,6 @@ void mongo_buf_init(char *dest);
  * will not work for strings containing null characters (e.g., BSON). */
 void mongo_buf_append(char *dest, char *piece);
 
-/* Returns the actual limit to send over the wire, based on batch size, current
- * position, and user limit */
-int mongo_get_limit(mongo_cursor *cursor);
-
 void php_mongo_handle_int64(zval **value, int64_t nr, int force_as_object TSRMLS_DC);
 
 #if PHP_C_BIGENDIAN
