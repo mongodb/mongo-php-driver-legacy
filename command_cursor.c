@@ -156,6 +156,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 		return;
 	}
 
+	cmd_cursor->cursor_id = cursor_id;
 	cmd_cursor->first_batch = first_batch;
 	Z_ADDREF_P(first_batch);
 	cmd_cursor->first_batch_at = 0;
