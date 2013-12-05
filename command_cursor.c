@@ -136,14 +136,21 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	result = php_mongodb_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1, &cmd_cursor->connection TSRMLS_CC);
 	efree(dbname);
 
+	if (php_mongo_trigger_error_on_command_failure(cmd_cursor->connection, result TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&result);
+		return;
+	}
+
 	/* We need to parse the initial result, and see whether everything worked */
 	if (php_mongo_get_cursor_id(result, &cursor_id TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&result);
 		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response");
 		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), result TSRMLS_CC);
 		return;
 	}
 
 	if (php_mongo_get_cursor_first_batch(result, &first_batch TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&result);
 		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response");
 		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), result TSRMLS_CC);
 		return;
