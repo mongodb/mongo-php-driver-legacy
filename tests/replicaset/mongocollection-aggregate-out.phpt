@@ -75,14 +75,16 @@ var_dump($alone);
 reset($ops);
 $multiple = $c->aggregate(current($ops), next($ops), next($ops), next($ops));
 var_dump($multiple);
-$c->drop();
+$cout->setReadPreference(MongoClient::RP_PRIMARY);
 var_dump($cout->findOne());
+$c->drop();
+$cout->drop();
 
 ?>
 ===DONE===
 <?php exit(0); ?>
 --EXPECTF--
-Notice: MongoCollection::aggregate(): Forcing aggregate with $out to run on primary in %s on line %d
+Warning: MongoCollection::aggregate(): Forcing aggregate with $out to run on primary in %s on line %d
 array(2) {
   ["result"]=>
   array(0) {
@@ -91,7 +93,7 @@ array(2) {
   float(1)
 }
 
-Notice: MongoCollection::aggregate(): Forcing aggregate with $out to run on primary in %s on line %d
+Warning: MongoCollection::aggregate(): Forcing aggregate with $out to run on primary in %s on line %d
 array(2) {
   ["result"]=>
   array(0) {
