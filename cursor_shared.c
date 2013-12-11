@@ -465,6 +465,17 @@ void php_mongo_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 	cursor->first_batch_at = 0;
 	cursor->first_batch_num = 0;
 }
+
+/* Resets cursor and disconnects connection.  Always returns FAILURE (so it can
+ * be used by functions returning FAILURE). */
+int php_mongo_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
+{
+	mongo_manager_connection_deregister(MonGlo(manager), cursor->connection);
+	cursor->dead = 1;
+	cursor->connection = NULL;
+
+	return FAILURE;
+}
 /* }}} */
 
 /*

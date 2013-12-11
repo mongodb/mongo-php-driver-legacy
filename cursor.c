@@ -62,10 +62,6 @@ zend_class_entry *mongo_ce_Cursor = NULL;
 /* Queries the database. Returns SUCCESS or FAILURE. */
 static int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC);
 
-/* Resets cursor and disconnects connection.  Always returns FAILURE (so it can
- * be used by functions returning FAILURE). */
-static int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC);
-
 /* If the query should be send to the db or not. The rules are:
  * - db commands should only be sent onces (no retries)
  * - normal queries should be sent up to 5 times
@@ -262,7 +258,7 @@ PHP_METHOD(MongoCursor, hasNext)
 
 		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 1 TSRMLS_CC, "%s", error_message);
 		free(error_message);
-		mongo_util_cursor_failed(cursor TSRMLS_CC);
+		php_mongo_cursor_failed(cursor TSRMLS_CC);
 		return;
 	}
 
@@ -271,7 +267,7 @@ PHP_METHOD(MongoCursor, hasNext)
 	if (php_mongo_get_reply(cursor TSRMLS_CC) != SUCCESS) {
 		/* php_mongo_get_reply() throws exceptions */
 		free(error_message);
-		mongo_util_cursor_failed(cursor TSRMLS_CC);
+		php_mongo_cursor_failed(cursor TSRMLS_CC);
 		return;
 	}
 
@@ -928,28 +924,19 @@ static int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 		}
 		efree(buf.start);
 		
-		return mongo_util_cursor_failed(cursor TSRMLS_CC);
+		return php_mongo_cursor_failed(cursor TSRMLS_CC);
 	}
 
 	efree(buf.start);
 
 	if (php_mongo_get_reply(cursor TSRMLS_CC) == FAILURE) {
 		/* php_mongo_get_reply() throws exceptions */
-		return mongo_util_cursor_failed(cursor TSRMLS_CC);
+		return php_mongo_cursor_failed(cursor TSRMLS_CC);
 	}
 
 	return SUCCESS;
 }
 /* }}} */
-
-static int mongo_util_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
-{
-	mongo_manager_connection_deregister(MonGlo(manager), cursor->connection);
-	cursor->dead = 1;
-	cursor->connection = NULL;
-
-	return FAILURE;
-}
 
 /* ITERATOR FUNCTIONS */
 
@@ -1074,7 +1061,7 @@ static int handle_error(mongo_cursor *cursor TSRMLS_DC)
 		 * exception, otherwise the exception won't include the servername
 		 * it hit for example. */
 		if (code == 10107 || code == 13435 || code == 13436 || code == 10054 || code == 10056 || code == 10058) {
-			mongo_util_cursor_failed(cursor TSRMLS_CC);
+			php_mongo_cursor_failed(cursor TSRMLS_CC);
 		}
 
 		return 1;

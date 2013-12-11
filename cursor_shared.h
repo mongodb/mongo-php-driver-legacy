@@ -107,6 +107,9 @@ void php_mongo_split_namespace(char *ns, char **dbname, char **cname);
  * from cursor list (and kills it, if necessary).  */
 void php_mongo_cursor_reset(mongo_cursor *cursor TSRMLS_DC);
 
+/* Resets cursor and disconnects connection.  Always returns FAILURE (so it can
+ * be used by functions returning FAILURE). */
+int php_mongo_cursor_failed(mongo_cursor *cursor TSRMLS_DC);
 #endif
 
 /*
