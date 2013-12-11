@@ -119,6 +119,34 @@ PHP_METHOD(MongoCommandCursor, __construct)
 }
 /* }}} */
 
+static int get_batch_size_from_command(zval *command TSRMLS_DC)
+{
+	int    size = 101;
+	zval **zcursor, **zbatchsize;
+
+	if (Z_TYPE_P(command) != IS_ARRAY) {
+		goto exit;
+	}
+
+	if (zend_hash_find(HASH_P(command), "cursor", 7, (void**) &zcursor) == FAILURE) {
+		goto exit;
+	}
+
+	if (Z_TYPE_PP(zcursor) != IS_ARRAY) {
+		goto exit;
+	}
+
+	if (zend_hash_find(HASH_PP(zcursor), "batchSize", 10, (void**) &zbatchsize) == FAILURE) {
+		goto exit;
+	}
+
+	convert_to_long_ex(zbatchsize);
+	size = Z_LVAL_PP(zbatchsize);
+
+exit:
+	return size;
+}
+
 PHP_METHOD(MongoCommandCursor, rewind)
 {
 	char *dbname;
@@ -132,7 +160,8 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	php_mongo_cursor_reset((mongo_cursor*)cmd_cursor TSRMLS_CC);
 
-	/* Process batchSize and set it if necessary */
+	/* reads the batchsize through the command, or uses 101 when nothing is set */
+	cmd_cursor->batch_size = get_batch_size_from_command(cmd_cursor->query TSRMLS_CC);
 
 	/* do query */
 	php_mongo_split_namespace(cmd_cursor->ns, &dbname, NULL);
