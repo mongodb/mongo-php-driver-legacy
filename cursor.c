@@ -1125,12 +1125,19 @@ PHP_METHOD(MongoCursor, next)
 
 	/* we got more results */
 	if (cursor->at < cursor->num) {
+		mongo_bson_conversion_options options = MONGO_BSON_CONVERSION_OPTIONS_INIT;
+
+		if (cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) {
+			options.level = 0;
+			options.flag_cmd_cursor_as_int64 = 1;
+		}
+
 		MAKE_STD_ZVAL(cursor->current);
 		array_init(cursor->current);
 		cursor->buf.pos = bson_to_zval(
-			(char*)cursor->buf.pos, 
-			Z_ARRVAL_P(cursor->current), 
-			cursor->cursor_options & MONGO_CURSOR_OPT_LONG_AS_OBJECT ? BSON_OPT_FORCE_LONG_AS_OBJECT : 0 
+			(char*)cursor->buf.pos,
+			Z_ARRVAL_P(cursor->current),
+			&options
 			TSRMLS_CC
 		);
 

@@ -88,9 +88,16 @@ int resize_buf(mongo_buffer*, int);
 
 int zval_to_bson(mongo_buffer*, HashTable*, int, int max_document_size TSRMLS_DC);
 
+typedef struct {
+	int level;
+	int flag_cmd_cursor_as_int64;
+} mongo_bson_conversion_options;
+
+#define MONGO_BSON_CONVERSION_OPTIONS_INIT { 0, 0 }
+
 /* Converts a BSON document to a zval. The conversions options are a bitmask
  * of the BSON_OPT_* constants */
-char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_DC);
+char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC);
 
 /* Initialize buffer to contain "\0", so mongo_buf_append will start appending
  * at the beginning. */

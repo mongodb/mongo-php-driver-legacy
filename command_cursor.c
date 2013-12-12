@@ -115,6 +115,9 @@ PHP_METHOD(MongoCommandCursor, __construct)
 	php_mongo_cursor_reset((mongo_cursor*)cmd_cursor TSRMLS_CC);
 	cmd_cursor->special = 0;
 
+	/* flags */
+	php_mongo_cursor_force_command_cursor(cmd_cursor);
+
 	mongo_read_preference_replace(&link->servers->read_pref, &cmd_cursor->read_pref);
 }
 /* }}} */
@@ -288,7 +291,7 @@ PHP_METHOD(MongoCommandCursor, valid)
 		cmd_cursor->buf.pos = bson_to_zval(
 			(char*)cmd_cursor->buf.pos,
 			Z_ARRVAL_P(cmd_cursor->current),
-			cmd_cursor->cursor_options & MONGO_CURSOR_OPT_LONG_AS_OBJECT ? BSON_OPT_FORCE_LONG_AS_OBJECT : 0
+			NULL
 			TSRMLS_CC
 		);
 

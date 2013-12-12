@@ -340,11 +340,6 @@ void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit)
 	cursor->limit = limit;
 }
 
-void php_mongo_cursor_force_long_as_object(mongo_cursor *cursor)
-{
-	cursor->cursor_options |= MONGO_CURSOR_OPT_LONG_AS_OBJECT;
-}
-
 void php_mongo_cursor_force_command_cursor(mongo_cursor *cursor)
 {
 	cursor->cursor_options |= MONGO_CURSOR_OPT_CMD_CURSOR;
