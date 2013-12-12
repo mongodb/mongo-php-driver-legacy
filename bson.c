@@ -854,7 +854,7 @@ int php_mongo_write_get_more(mongo_buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 }
 
 
-char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_DC)
+char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
 {
 	/* buf_start is used for debugging
 	 *
@@ -954,7 +954,11 @@ char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_D
 			case BSON_OBJECT:
 			case BSON_ARRAY: {
 				array_init(value);
-				buf = bson_to_zval(buf, Z_ARRVAL_P(value), conversion_options TSRMLS_CC);
+
+				options->level++;
+				buf = bson_to_zval(buf, Z_ARRVAL_P(value), options TSRMLS_CC);
+				options->level--;
+
 				if (EG(exception)) {
 					zval_ptr_dtor(&value);
 					return 0;
@@ -1037,7 +1041,7 @@ char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_D
 				php_mongo_handle_int64(
 					&value,
 					MONGO_64(*((int64_t*)buf)),
-					(conversion_options & BSON_OPT_FORCE_LONG_AS_OBJECT) ? 1 : 0
+					(options && options->flag_cmd_cursor_as_int64 && options->level == 1 && strcmp(name, "id") == 0) ? 1 : 0
 					TSRMLS_CC
 				);
 				buf += INT_64;
@@ -1125,7 +1129,7 @@ char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_D
 					MAKE_STD_ZVAL(zcope);
 					array_init(zcope);
 
-					buf = bson_to_zval(buf, HASH_P(zcope), conversion_options TSRMLS_CC);
+					buf = bson_to_zval(buf, HASH_P(zcope), options TSRMLS_CC);
 					if (EG(exception)) {
 						zval_ptr_dtor(&zcope);
 						return 0;
