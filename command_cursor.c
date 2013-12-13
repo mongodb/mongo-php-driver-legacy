@@ -191,6 +191,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 		return;
 	}
 
+	cmd_cursor->started_iterating = 1;
 	cmd_cursor->cursor_id = cursor_id;
 	cmd_cursor->first_batch = first_batch;
 	Z_ADDREF_P(first_batch);
@@ -249,6 +250,10 @@ PHP_METHOD(MongoCommandCursor, valid)
 	zval **current;
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
+
+	if (!cmd_cursor->started_iterating) {
+		RETURN_FALSE;
+	}
 
 	/* Free the previous current item */
 	if (cmd_cursor->current) {
@@ -313,6 +318,10 @@ PHP_METHOD(MongoCommandCursor, next)
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
 
+	if (!cmd_cursor->started_iterating) {
+		zend_throw_exception(mongo_ce_CursorException, "can only iterate after the command has been run.", 0 TSRMLS_CC); \
+	}
+
 	if (cmd_cursor->first_batch) {
 		cmd_cursor->first_batch_at++;
 		return;
@@ -329,8 +338,6 @@ PHP_METHOD(MongoCommandCursor, current)
 
 	if (cmd_cursor->current) {
 		RETVAL_ZVAL(cmd_cursor->current, 1, 0);
-	} else {
-		RETURN_TRUE;
 	}
 }
 
@@ -396,6 +403,7 @@ static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCommandCursor, key, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCommandCursor, next, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCommandCursor, rewind, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_MALIAS(MongoCommandCursor, doQuery, rewind, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCommandCursor, valid, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCommandCursor, reset, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
