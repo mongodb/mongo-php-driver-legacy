@@ -955,9 +955,13 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 			case BSON_ARRAY: {
 				array_init(value);
 
-				options->level++;
+				if (options) {
+					options->level++;
+				}
 				buf = bson_to_zval(buf, Z_ARRVAL_P(value), options TSRMLS_CC);
-				options->level--;
+				if (options) {
+					options->level--;
+				}
 
 				if (EG(exception)) {
 					zval_ptr_dtor(&value);
