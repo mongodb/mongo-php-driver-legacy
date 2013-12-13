@@ -1,5 +1,5 @@
 --TEST--
-MongoCommandCursor iteration [1] (limit=2, batchSize=2)
+MongoCommandCursor iteration [3] (limit=1, batchSize=5)
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -21,9 +21,10 @@ $c = new MongoCommandCursor(
 	array(
 		'aggregate' => 'cursorcmd', 
 		'pipeline' => array( 
-			array( '$limit' => 2 ) 
+			array( '$limit' => 1 ), 
+			array( '$sort' => array( 'article_id' => 1 ) ) 
 		), 
-		'cursor' => array( 'batchSize' => 2 )
+		'cursor' => array( 'batchSize' => 5 )
 	)
 );
 
@@ -36,20 +37,10 @@ foreach ($c as $key => $record) {
 string(24) "5%s"
 array(2) {
   ["_id"]=>
-  object(MongoId)#%d (1) {
+  object(MongoId)#8 (1) {
     ["$id"]=>
     string(24) "5%s"
   }
   ["article_id"]=>
   int(0)
-}
-string(24) "5%s"
-array(2) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "5%s"
-  }
-  ["article_id"]=>
-  int(1)
 }
