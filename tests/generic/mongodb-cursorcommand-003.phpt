@@ -1,5 +1,5 @@
 --TEST--
-MongoCommandCursor iteration [2]
+MongoCommandCursor iteration [2] (limit=5, batchSize=2)
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -18,17 +18,19 @@ for ($i = 0; $i < 500; $i++) {
 
 $c = new MongoCommandCursor(
 	$m, "{$dbname}.cursorcmd",
-	array( 'aggregate' => 'cursorcmd', 'pipeline' => array( array( '$limit' => 4 ), array( '$sort' => array( 'article_id' => 1 ) ) ), 'cursor' => array('batchSize' => 2 ))
+	array(
+		'aggregate' => 'cursorcmd', 
+		'pipeline' => array( 
+			array( '$limit' => 5 ), 
+			array( '$sort' => array( 'article_id' => 1 ) ) 
+		), 
+		'cursor' => array( 'batchSize' => 2 )
+	)
 );
 
-try {
-	foreach ($c as $key => $record) {
-		var_dump($key);
-		var_dump($record);
-	}
-} catch ( MongoResultException $e ) {
-	echo $e->getCode(), "\n";
-	echo $e->getMessage(), "\n";
+foreach ($c as $key => $record) {
+	var_dump($key);
+	var_dump($record);
 }
 ?>
 --EXPECTF--
@@ -40,23 +42,17 @@ array(2) {
     string(24) "5%s"
   }
   ["article_id"]=>
-  object(MongoInt64)#9 (1) {
-    ["value"]=>
-    string(1) "0"
-  }
+  int(0)
 }
 string(24) "5%s"
 array(2) {
   ["_id"]=>
-  object(MongoId)#10 (1) {
+  object(MongoId)#9 (1) {
     ["$id"]=>
     string(24) "5%s"
   }
   ["article_id"]=>
-  object(MongoInt64)#11 (1) {
-    ["value"]=>
-    string(1) "1"
-  }
+  int(1)
 }
 string(24) "5%s"
 array(2) {
@@ -66,21 +62,25 @@ array(2) {
     string(24) "5%s"
   }
   ["article_id"]=>
-  object(MongoInt64)#9 (1) {
-    ["value"]=>
-    string(1) "2"
-  }
+  int(2)
 }
 string(24) "5%s"
 array(2) {
   ["_id"]=>
-  object(MongoId)#10 (1) {
+  object(MongoId)#%d (1) {
     ["$id"]=>
     string(24) "5%s"
   }
   ["article_id"]=>
-  object(MongoInt64)#11 (1) {
-    ["value"]=>
-    string(1) "3"
+  int(3)
+}
+string(24) "5%s"
+array(2) {
+  ["_id"]=>
+  object(MongoId)#%d (1) {
+    ["$id"]=>
+    string(24) "5%s"
   }
+  ["article_id"]=>
+  int(4)
 }
