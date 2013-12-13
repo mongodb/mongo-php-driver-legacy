@@ -783,7 +783,7 @@ PHP_METHOD(MongoDB, command)
  *
  * This function can return NULL but *only* if an exception is set. So please
  * check for NULL and/or EG(exception) in the calling function. */
-zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int cursor_allowed, mongo_connection **used_connection TSRMLS_DC)
+zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int is_cmd_cursor, mongo_connection **used_connection TSRMLS_DC)
 {
 	zval *temp, *cursor, *ns, *retval;
 	mongo_cursor *cursor_tmp;
@@ -824,8 +824,10 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 	/* limit: all commands need to have set a limit of -1 */
 	php_mongo_cursor_set_limit(cursor_tmp, -1);
 
-	/* force NumberLong to be returned as an object, but only for command cursors */
-	if (cursor_allowed) {
+	/* Mark as a command cursor if requested. If done, this triggers special
+	 * BSON conversion to make sure that the cursor ID is represented as
+	 * MongoInt64. */
+	if (is_cmd_cursor) {
 		php_mongo_cursor_force_command_cursor(cursor_tmp);
 	}
 
