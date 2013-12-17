@@ -1513,9 +1513,31 @@ static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC)
 					case IS_STRING:
 						smart_str_appendl(&str, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
 						break;
-					case IS_LONG:
-						smart_str_append_long(&str, Z_LVAL_PP(data) != 1 ? -1 : 1);
+
+					case IS_BOOL:
+						/* -1 cannot be expressed as a boolean, so the order is
+						 * is ascending. Emit a notice if boolean false is used,
+						 * since users may expect a descending order. */
+						if (Z_BVAL_PP(data) == 0) {
+							php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Boolean false ordering is ascending");
+						}
+						smart_str_append_long(&str, 1);
 						break;
+
+					case IS_LONG:
+						smart_str_append_long(&str, Z_LVAL_PP(data) < 0 ? -1 : 1);
+						break;
+
+					case IS_DOUBLE:
+						smart_str_append_long(&str, Z_DVAL_PP(data) < 0 ? -1 : 1);
+						break;
+
+					default:
+						php_error_docref(NULL TSRMLS_CC, E_WARNING, "Key orderings must be scalar; %s given", zend_get_type_by_const(Z_TYPE_PP(data)));
+						/* -1 cannot be expressed as a non-scalar, so the order
+						 * is ascending. While the server will accept a null
+						 * ordering, arrays and objects should be rejected. */
+						smart_str_append_long(&str, 1);
 				}
 			}
 		} break;
