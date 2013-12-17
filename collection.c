@@ -1513,8 +1513,18 @@ static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC)
 					case IS_STRING:
 						smart_str_appendl(&str, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
 						break;
+
+					case IS_BOOL:
+						smart_str_append_long(&str, Z_BVAL_PP(data) ? 1 : -1);
+						break;
+
 					case IS_LONG:
 						smart_str_append_long(&str, Z_LVAL_PP(data) != 1 ? -1 : 1);
+						break;
+
+					default:
+						convert_to_string(*data);
+						smart_str_appendl(&str, Z_STRVAL_PP(data), Z_STRLEN_PP(data));
 						break;
 				}
 			}

@@ -20,5 +20,5 @@ var_dump($indexes[1]["name"], $indexes[1]["sparse"]);
 $db->people->drop();
 ?>
 --EXPECT--
-string(6) "title_"
+string(7) "title_1"
 bool(true)
