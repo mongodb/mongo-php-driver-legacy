@@ -1041,11 +1041,16 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 			}
 
 			case BSON_LONG: {
+				int force_as_object = 0;
+
+				if (options && options->flag_cmd_cursor_as_int64 && options->level == 1 && strcmp(name, "id") == 0) {
+					force_as_object = 1;
+				}
 				CHECK_BUFFER_LEN(INT_64);
 				php_mongo_handle_int64(
 					&value,
 					MONGO_64(*((int64_t*)buf)),
-					(options && options->flag_cmd_cursor_as_int64 && options->level == 1 && strcmp(name, "id") == 0) ? 1 : 0
+					force_as_object
 					TSRMLS_CC
 				);
 				buf += INT_64;
