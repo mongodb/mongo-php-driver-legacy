@@ -151,6 +151,8 @@ end:
 	return size;
 }
 
+/* {{{ MongoCommandCursor::rewind()
+   Resets the command cursor, executes the associated query and prepares the iterator */
 PHP_METHOD(MongoCommandCursor, rewind)
 {
 	char *dbname;
@@ -203,6 +205,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	 * and perhaps diagnostics as well. */
 	RETVAL_ZVAL(result, 0, 1);
 }
+/* }}} */
 
 static int fetch_next_batch(mongo_cursor *cursor TSRMLS_DC)
 {
@@ -245,6 +248,8 @@ static int fetch_next_batch(mongo_cursor *cursor TSRMLS_DC)
 }
 
 
+/* {{{ MongoCommandCursor::valid()
+   Returns whether the current iterator position is valid and fetches the key/value associated with the position. */
 PHP_METHOD(MongoCommandCursor, valid)
 {
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -312,7 +317,10 @@ PHP_METHOD(MongoCommandCursor, valid)
 
 	RETURN_FALSE;
 }
+/* }}} */
 
+/* {{{ MongoCommandCursor::next()
+   Advances the interal cursor position. */
 PHP_METHOD(MongoCommandCursor, next)
 {
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -330,7 +338,10 @@ PHP_METHOD(MongoCommandCursor, next)
 
 	cmd_cursor->at++;
 }
+/* }}} */
 
+/* {{{ MongoCommandCursor::current()
+   Returns the data associated with the current cursor position. */
 PHP_METHOD(MongoCommandCursor, current)
 {
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -341,7 +352,10 @@ PHP_METHOD(MongoCommandCursor, current)
 		RETVAL_ZVAL(cmd_cursor->current, 1, 0);
 	}
 }
+/* }}} */
 
+/* {{{ MongoCommandCursor::key()
+   Returns the key associated with the current cursor position. */
 PHP_METHOD(MongoCommandCursor, key)
 {
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -368,11 +382,15 @@ PHP_METHOD(MongoCommandCursor, key)
 		}
 	}
 }
+/* }}} */
 
+/* {{{ MongoCommandCursor::reset()
+   Does nothing yet. */
 PHP_METHOD(MongoCommandCursor, reset)
 {
 	printf("reset\n");
 }
+/* }}} */
 
 static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCommandCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
