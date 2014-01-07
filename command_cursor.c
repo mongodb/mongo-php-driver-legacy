@@ -181,14 +181,14 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	/* We need to parse the initial result, and see whether everything worked */
 	if (php_mongo_get_cursor_id(result, &cursor_id TSRMLS_CC) == FAILURE) {
-		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response");
+		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response (no ID)");
 		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), result TSRMLS_CC);
 		zval_ptr_dtor(&result);
 		return;
 	}
 
 	if (php_mongo_get_cursor_first_batch(result, &first_batch TSRMLS_CC) == FAILURE) {
-		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response");
+		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 31 TSRMLS_CC, "the command cursor did not return a correctly structured response (no first batch)");
 		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), result TSRMLS_CC);
 		zval_ptr_dtor(&result);
 		return;
