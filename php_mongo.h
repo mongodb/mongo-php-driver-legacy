@@ -669,7 +669,8 @@ extern zend_module_entry mongo_module_entry;
  * 24: invalid code length for key "%s"
  * 28: recv_header() (abs()) recv_data() stream handlers error (timeout)
  * 29: Unknown query/get_more failure
- * 30: Cursor command response does not have the expected structure
+ * 30: Cursor command response does not have the expected structure (no ID)
+ * 31: Cursor command response does not have the expected structure (no first batch)
  *
  * MongoGridFSException:
  * 0: 
