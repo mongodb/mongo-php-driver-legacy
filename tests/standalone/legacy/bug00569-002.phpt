@@ -76,7 +76,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
+%s:%d: norepl: %s
 
 Running test 4, with options: {"safe":"majority"}:
 IO      FINE: is_gle_op: yes
@@ -105,7 +105,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
+%s:%d: norepl: %s
 
 Running test 8, with options: {"w":"majority"}:
 IO      FINE: is_gle_op: yes

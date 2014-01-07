@@ -30,9 +30,12 @@ var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
 var_dump( $c->update( array( '_id' => 'yeah' ), array( '$set' => array( 'value' => 'yes!' ) ) ) );
 var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
 
-var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ), array( 'safe' => true ) ) );
-var_dump( $c->update( array( '_id' => 'yeah' ), array( '$set' => array( 'value' => 'yes!' ) ), array( 'safe' => true ) ) );
-var_dump( $c->remove( array( '_id' => 'yeah' ), array( 'safe' => true ) ) );
+$ret = $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ), array( 'w' => true ) );
+dump_these_keys($ret, array("n", "err", "ok"));
+$ret = $c->update( array( '_id' => 'yeah' ), array( '$set' => array( 'value' => 'yes!' ) ), array( 'w' => true ) );
+dump_these_keys($ret, array("updatedExisting", "n", "err", "ok"));
+$ret = $c->remove( array( '_id' => 'yeah' ), array( 'w' => true ) );
+dump_these_keys($ret, array("n", "err", "ok"));
 ?>
 --EXPECTF--
 bool(true)
@@ -49,54 +52,27 @@ bool(true)
 NULL
 bool(true)
 NULL
-array(5) {
+array(3) {
   ["n"]=>
   int(0)
-  ["lastOp"]=>
-  object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
-  }
-  ["connectionId"]=>
-  int(%d)
   ["err"]=>
   NULL
   ["ok"]=>
   float(1)
 }
-array(6) {
+array(4) {
   ["updatedExisting"]=>
   bool(true)
   ["n"]=>
   int(1)
-  ["lastOp"]=>
-  object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
-  }
-  ["connectionId"]=>
-  int(%d)
   ["err"]=>
   NULL
   ["ok"]=>
   float(1)
 }
-array(5) {
+array(3) {
   ["n"]=>
   int(1)
-  ["lastOp"]=>
-  object(MongoTimestamp)#5 (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
-  }
-  ["connectionId"]=>
-  int(%d)
   ["err"]=>
   NULL
   ["ok"]=>

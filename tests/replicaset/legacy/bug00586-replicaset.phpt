@@ -23,11 +23,11 @@ try {
 
 try {
     /* FIXME: The timeout is broken and seems hardcoded. The actual timeout is irrelevant to this test, as long as it timesout the replication at all :) */
-    $gridfs->storeFile(__FILE__, array('x' => 1), array("w" => 42, "wtimeout" => 42));
+    $gridfs->storeFile(__FILE__, array('x' => 1), array("w" => 42, "wTimeoutMS" => 42));
 } catch(MongoGridFSException $e) {
     var_dump($e->getMessage(), $e->getCode());
 }
 --EXPECTF--
 bool(true)
-string(%d) "Could not store file: %s:%d: timeout"
+string(%d) "Could not store file: %s:%d: timeout%S"
 int(4)
