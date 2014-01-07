@@ -33,6 +33,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_CommandCursor = NULL;
 
+#define MONGO_DEFAULT_COMMAND_BATCH_SIZE 101
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, connection, MongoClient, 0)
@@ -124,29 +125,29 @@ PHP_METHOD(MongoCommandCursor, __construct)
 
 static int get_batch_size_from_command(zval *command TSRMLS_DC)
 {
-	int    size = 101;
+	int    size = MONGO_DEFAULT_COMMAND_BATCH_SIZE;
 	zval **zcursor, **zbatchsize;
 
 	if (Z_TYPE_P(command) != IS_ARRAY) {
-		goto exit;
+		goto end;
 	}
 
 	if (zend_hash_find(HASH_P(command), "cursor", 7, (void**) &zcursor) == FAILURE) {
-		goto exit;
+		goto end;
 	}
 
 	if (Z_TYPE_PP(zcursor) != IS_ARRAY) {
-		goto exit;
+		goto end;
 	}
 
 	if (zend_hash_find(HASH_PP(zcursor), "batchSize", 10, (void**) &zbatchsize) == FAILURE) {
-		goto exit;
+		goto end;
 	}
 
 	convert_to_long_ex(zbatchsize);
 	size = Z_LVAL_PP(zbatchsize);
 
-exit:
+end:
 	return size;
 }
 
