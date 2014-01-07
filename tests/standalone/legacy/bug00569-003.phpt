@@ -144,7 +144,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
+%s:%d: norepl: %s
 
 - Running test 0, with options: []:
 IO      FINE: is_gle_op: yes
@@ -154,7 +154,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
+%s:%d: norepl: %s
 
 - Running test 1, with options: {"safe":0}:
 MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
@@ -190,7 +190,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
+%s:%d: norepl: %s
 
 - Running test 0, with options: []:
 IO      FINE: is_gle_op: yes
@@ -200,7 +200,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
+%s:%d: norepl: %s
 
 - Running test 1, with options: {"safe":0}:
 MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
@@ -215,7 +215,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
+%s:%d: norepl: %s
 
 - Running test 3, with options: {"w":0}:
 IO      FINE: is_gle_op: no
@@ -228,7 +228,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: no replication has been enabled, so w=%s won't work
+%s:%d: norepl: %s
 
 Running string mongodb://%s/?w=majority
 PARSE   INFO: Parsing mongodb://%s/?w=majority

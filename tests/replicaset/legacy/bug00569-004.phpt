@@ -128,7 +128,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: timeout
+%s:%d: timeout%S
 
 - Setting w property to majority:
 IO      FINE: is_gle_op: yes
@@ -195,7 +195,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: timeout
+%s:%d: timeout%S
 
 - Setting w property to majority:
 IO      FINE: is_gle_op: yes
@@ -264,7 +264,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: timeout
+%s:%d: timeout%S
 
 - Setting w property to majority:
 IO      FINE: is_gle_op: yes
@@ -331,7 +331,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: timeout
+%s:%d: timeout%S
 
 - Setting w property to majority:
 IO      FINE: is_gle_op: yes
