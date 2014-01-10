@@ -151,8 +151,8 @@ end:
 	return size;
 }
 
-/* {{{ MongoCommandCursor::rewind()
-   Resets the command cursor, executes the associated query and prepares the iterator */
+/* {{{ array MongoCommandCursor::rewind()
+   Resets the command cursor, executes the associated query and prepares the iterator. Returns the raw command document */
 PHP_METHOD(MongoCommandCursor, rewind)
 {
 	char *dbname;
@@ -248,7 +248,7 @@ static int fetch_next_batch(mongo_cursor *cursor TSRMLS_DC)
 }
 
 
-/* {{{ MongoCommandCursor::valid()
+/* {{{ bool MongoCommandCursor::valid()
    Returns whether the current iterator position is valid and fetches the key/value associated with the position. */
 PHP_METHOD(MongoCommandCursor, valid)
 {
@@ -319,7 +319,7 @@ PHP_METHOD(MongoCommandCursor, valid)
 }
 /* }}} */
 
-/* {{{ MongoCommandCursor::next()
+/* {{{ void MongoCommandCursor::next()
    Advances the interal cursor position. */
 PHP_METHOD(MongoCommandCursor, next)
 {
@@ -340,7 +340,7 @@ PHP_METHOD(MongoCommandCursor, next)
 }
 /* }}} */
 
-/* {{{ MongoCommandCursor::current()
+/* {{{ mixed MongoCommandCursor::current()
    Returns the data associated with the current cursor position. */
 PHP_METHOD(MongoCommandCursor, current)
 {
@@ -354,7 +354,7 @@ PHP_METHOD(MongoCommandCursor, current)
 }
 /* }}} */
 
-/* {{{ MongoCommandCursor::key()
+/* {{{ mixed MongoCommandCursor::key()
    Returns the key associated with the current cursor position. */
 PHP_METHOD(MongoCommandCursor, key)
 {
