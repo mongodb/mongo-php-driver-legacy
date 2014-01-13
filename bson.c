@@ -802,7 +802,7 @@ int php_mongo_write_query(mongo_buffer *buf, mongo_cursor *cursor, int max_docum
 	cursor->send.request_id = header.request_id;
 
 	php_mongo_serialize_int(buf, cursor->skip);
-	php_mongo_serialize_int(buf, php_mongo_get_next_request_limit(cursor));
+	php_mongo_serialize_int(buf, php_mongo_calculate_next_request_limit(cursor));
 
 	if (zval_to_bson(buf, HASH_P(cursor->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE || EG(exception)) {
 		return FAILURE;
@@ -847,7 +847,7 @@ int php_mongo_write_get_more(mongo_buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 	CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
 	cursor->send.request_id = header.request_id;
 
-	php_mongo_serialize_int(buf, php_mongo_get_next_request_limit(cursor));
+	php_mongo_serialize_int(buf, php_mongo_calculate_next_request_limit(cursor));
 	php_mongo_serialize_long(buf, cursor->cursor_id);
 
 	return php_mongo_serialize_size(buf->start + start, buf, cursor->connection->max_message_size TSRMLS_CC);
