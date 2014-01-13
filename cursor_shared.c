@@ -294,7 +294,7 @@ int php_mongo_get_cursor_first_batch(zval *document, zval **first_batch TSRMLS_D
 	return SUCCESS;
 }
 
-int php_mongo_get_next_request_limit(mongo_cursor *cursor)
+int php_mongo_calculate_next_request_limit(mongo_cursor *cursor)
 {
 	int lim_at;
 

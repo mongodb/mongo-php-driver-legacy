@@ -68,7 +68,7 @@ int php_mongo_get_cursor_first_batch(zval *document, zval **first_batch TSRMLS_D
 
 /* Returns the actual limit to send over the wire, based on batch size, current
  * position, and user limit */
-int php_mongo_get_next_request_limit(mongo_cursor *cursor);
+int php_mongo_calculate_next_request_limit(mongo_cursor *cursor);
 
 /* Tries to read the reply from the database */
 int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC);
@@ -80,7 +80,7 @@ int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value TSR
 /* Kills a cursor on the server */
 void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC);
 
-/* Set Cursor limit */
+/* Set cursor limit on the cursor object */
 void php_mongo_cursor_set_limit(mongo_cursor *cursor, long limit);
 
 /* Forces the bson to zval conversion to use an object for a long */
