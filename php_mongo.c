@@ -31,11 +31,11 @@
 #include "exceptions/connection_exception.h"
 #include "exceptions/cursor_exception.h"
 #include "exceptions/cursor_timeout_exception.h"
+#include "exceptions/duplicate_key_exception.h"
 #include "exceptions/execution_timeout_exception.h"
 #include "exceptions/gridfs_exception.h"
 #include "exceptions/result_exception.h"
 #include "exceptions/write_concern_exception.h"
-#include "exceptions/duplicate_key_exception.h"
 
 #include "types/id.h"
 
@@ -68,7 +68,6 @@ extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
 extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_GridFSException;
 extern zend_class_entry *mongo_ce_WriteConcernException;
-extern zend_class_entry *mongo_ce_DuplicateKeyException;
 
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
 
@@ -695,16 +694,6 @@ int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document 
 		if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &code_z) == SUCCESS) {
 			convert_to_long_ex(code_z);
 			code = Z_LVAL_PP(code_z);
-		}
-
-		/* Convert some known error codes into dedicated exception classes */
-		switch(code) {
-			/* All three are actively used for DuplicateKey errors by the server */
-			case 11000:
-			case 11001:
-			case 12582:
-				exception_ce = mongo_ce_DuplicateKeyException;
-				break;
 		}
 
 		/* If additional information is found in the "wnote" field, include it
