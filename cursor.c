@@ -19,6 +19,8 @@
 #include "mcon/io.h"
 #include "mcon/manager.h"
 #include "mcon/utils.h"
+#include "exceptions/duplicate_key_exception.h"
+#include "exceptions/execution_timeout_exception.h"
 
 #ifdef WIN32
 # ifndef int64_t
@@ -36,8 +38,6 @@ typedef __int64 int64_t;
 #include "collection.h"
 #include "util/log.h"
 #include "log_stream.h"
-#include "exceptions/cursor_timeout_exception.h"
-#include "exceptions/execution_timeout_exception.h"
 
 /* Cursor flags */
 #define CURSOR_FLAG_TAILABLE      2
@@ -74,6 +74,7 @@ extern zend_class_entry *mongo_ce_Collection, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_ConnectionException;
 extern zend_class_entry *mongo_ce_CursorException;
 extern zend_class_entry *mongo_ce_CursorTimeoutException;
+extern zend_class_entry *mongo_ce_DuplicateKeyException;
 extern zend_class_entry *mongo_ce_ExecutionTimeoutException;
 
 extern zend_object_handlers mongo_default_handlers;
@@ -1631,17 +1632,25 @@ zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *conne
 	/* Based on the status, we pick a different exception class.
 	 *
 	 * For specific cases we pick something else than the default
-	 * mongo_ce_CursorException: code 80, which is a cursor timeout, and code
-	 * 16986, which is an operation exceeded timeout.
+	 * mongo_ce_CursorException:
+	 * - code 80, which is a cursor timeout.
+	 * - codes 11000, 11001, 12582, which are all duplicate key exceptions
+	 * - code 50, which is an operation exceeded timeout.
 	 *
 	 * Code 80 *also* comes from recv_header() (abs()) recv_data() stream
 	 * handlers */
-	if (code == 16986) {
-		exception_ce = mongo_ce_ExecutionTimeoutException;
-	} else if (code == 80) {
-		exception_ce = mongo_ce_CursorTimeoutException;
-	} else {
-		exception_ce = mongo_ce_CursorException;
+	switch (code) {
+		case 80:
+			exception_ce = mongo_ce_CursorTimeoutException;
+			break;
+		case 11000:
+		case 11001:
+		case 12582:
+			exception_ce = mongo_ce_DuplicateKeyException;
+			break;
+		case 50:
+			exception_ce = mongo_ce_ExecutionTimeoutException;
+			break;
 	}
 
 	/* Construct message */
