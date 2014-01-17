@@ -291,6 +291,7 @@ PHP_METHOD(MongoCommandCursor, valid)
 
 	if (cmd_cursor->at == cmd_cursor->num && cmd_cursor->cursor_id != 0) {
 		if (!fetch_next_batch(cmd_cursor TSRMLS_CC)) {
+			cmd_cursor->cursor_id = 0;
 			RETURN_FALSE;
 		}
 	}
@@ -315,6 +316,7 @@ PHP_METHOD(MongoCommandCursor, valid)
 		RETURN_TRUE;
 	}
 
+	cmd_cursor->dead = 1;
 	RETURN_FALSE;
 }
 /* }}} */
