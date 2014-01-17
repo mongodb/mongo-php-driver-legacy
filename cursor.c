@@ -719,6 +719,11 @@ PHP_METHOD(MongoCursor, info)
 			add_assoc_long(return_value, "port", port);
 			add_assoc_string(return_value, "connection_type_desc", mongo_connection_type(cursor->connection->connection_type), 1);
 		}
+
+		if (cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) {
+			add_assoc_long(return_value, "firstBatchAt", cursor->first_batch_at);
+			add_assoc_long(return_value, "firstBatchNumReturned", cursor->first_batch_num);
+		}
 	}
 }
 /* }}} */
