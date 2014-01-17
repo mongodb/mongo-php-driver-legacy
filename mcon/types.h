@@ -37,6 +37,7 @@ typedef unsigned __int64 uint64_t;
 #endif
 #else
 # include <stdint.h>
+# include <sys/types.h>
 # include <netinet/in.h>
 # include <netinet/tcp.h>
 # include <fcntl.h>
