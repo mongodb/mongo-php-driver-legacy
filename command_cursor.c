@@ -78,8 +78,8 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_R
 	ZEND_ARG_ARRAY_INFO(0, tags, 0)
 ZEND_END_ARG_INFO()
 
-/* {{{ MongoCommandCursor::__construct(MongoClient connection, string ns [, array query])
-   Constructs a MongoCursor */
+/* {{{ MongoCommandCursor::__construct(MongoClient connection, string ns, array query)
+   Constructs a MongoCommandCursor */
 PHP_METHOD(MongoCommandCursor, __construct)
 {
 	zval *zlink = 0, *zcommand = 0;
