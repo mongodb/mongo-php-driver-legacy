@@ -21,6 +21,7 @@
 #include "bson.h"
 #include "cursor.h"
 #include "cursor_shared.h"
+#include "command_cursor.h"
 #include "db.h"
 #include "log_stream.h"
 
