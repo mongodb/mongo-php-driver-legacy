@@ -78,28 +78,11 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_R
 	ZEND_ARG_ARRAY_INFO(0, tags, 0)
 ZEND_END_ARG_INFO()
 
-/* {{{ MongoCommandCursor::__construct(MongoClient connection, string ns, array query)
-   Constructs a MongoCommandCursor */
-PHP_METHOD(MongoCommandCursor, __construct)
+void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval *zlink, zval *zcommand TSRMLS_DC)
 {
-	zval *zlink = 0, *zcommand = 0;
-	char *ns;
-	int   ns_len;
-	mongo_command_cursor *cmd_cursor;
-	mongoclient          *link;
+	mongoclient *link;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Osa", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zcommand) == FAILURE) {
-		return;
-	}
-
-	if (!php_mongo_is_valid_namespace(ns, ns_len)) {
-		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
-		return;
-	}
-
-	cmd_cursor = (mongo_command_cursor*) zend_object_store_get_object(getThis() TSRMLS_CC);
 	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(link->manager, MongoClient);
 
 	/* ns */
 	cmd_cursor->ns = estrdup(ns);
@@ -120,6 +103,32 @@ PHP_METHOD(MongoCommandCursor, __construct)
 	php_mongo_cursor_force_command_cursor(cmd_cursor);
 
 	mongo_read_preference_replace(&link->servers->read_pref, &cmd_cursor->read_pref);
+}
+
+/* {{{ MongoCommandCursor::__construct(MongoClient connection, string ns, array query)
+   Constructs a MongoCommandCursor */
+PHP_METHOD(MongoCommandCursor, __construct)
+{
+	zval *zlink = NULL, *zcommand = NULL;
+	char *ns;
+	int   ns_len;
+	mongo_command_cursor *cmd_cursor;
+	mongoclient *link;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Osa", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zcommand) == FAILURE) {
+		return;
+	}
+
+	if (!php_mongo_is_valid_namespace(ns, ns_len)) {
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
+		return;
+	}
+
+	cmd_cursor = (mongo_command_cursor*) zend_object_store_get_object(getThis() TSRMLS_CC);
+	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(link->manager, MongoClient);
+
+	mongo_command_cursor_init(cmd_cursor, ns, zlink, zcommand TSRMLS_CC);
 }
 /* }}} */
 
