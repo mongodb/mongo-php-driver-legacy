@@ -19,6 +19,7 @@
 
 #include "php_mongo.h"
 #include "collection.h"
+#include "command_cursor.h"
 #include "cursor.h"
 #include "cursor_shared.h"
 #include "bson.h"
@@ -31,6 +32,7 @@
 #include "log_stream.h"
 
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_DB, *mongo_ce_Cursor;
+extern zend_class_entry *mongo_ce_CommandCursor;
 extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception, *mongo_ce_ResultException;
 extern zend_class_entry *mongo_ce_CursorException;
 
@@ -952,6 +954,29 @@ PHP_METHOD(MongoCollection, findAndModify)
 }
 /* }}} */
 
+/* {{{ proto MongoCommandCursor MongoCollection::commandCursor(array command)
+   Returns a command cursor after running the specified command. */
+PHP_METHOD(MongoCollection, commandCursor)
+{
+	zval *command = NULL;
+	mongo_collection *c;
+	mongo_cursor *cmd_cursor;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &command) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_COLLECTION(getThis());
+
+	object_init_ex(return_value, mongo_ce_CommandCursor);
+
+	/* Add read preferences to cursor */
+	cmd_cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
+	mongo_read_preference_replace(&c->read_pref, &cmd_cursor->read_pref);
+
+	mongo_command_cursor_init(cmd_cursor, Z_STRVAL_P(c->ns), c->link, command TSRMLS_CC);
+}
+/* }}} */
 
 static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval *criteria, zval *newobj, zval *options, zval *return_value TSRMLS_DC)
 {
@@ -1919,6 +1944,10 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_findandmodify, 0, ZEND_RETUR
 	ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_commandcursor, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, command, 1)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_update, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, old_array_of_fields_OR_object)
 	ZEND_ARG_INFO(0, new_array_of_fields_OR_object)
@@ -1990,6 +2019,7 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, find, arginfo_find, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, findOne, arginfo_find_one, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, findAndModify, arginfo_findandmodify, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCollection, commandCursor, arginfo_commandcursor, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, ensureIndex, arginfo_ensureIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, deleteIndex, arginfo_deleteIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, deleteIndexes, arginfo_no_parameters, ZEND_ACC_PUBLIC)
