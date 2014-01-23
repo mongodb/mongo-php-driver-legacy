@@ -15,6 +15,7 @@
  */
 #include <php.h>
 #include "../php_mongo.h"
+#include "bin_data.h"
 
 zend_class_entry *mongo_ce_BinData = NULL;
 
@@ -67,13 +68,15 @@ void mongo_init_MongoBinData(TSRMLS_D)
 	zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 
 	/* constants */
+	zend_declare_class_constant_long(mongo_ce_BinData, "GENERIC", strlen("GENERIC"), BIN_GENERIC TSRMLS_CC);
 	/* can't use FUNCTION because it's a reserved word */
-	zend_declare_class_constant_long(mongo_ce_BinData, "FUNC", strlen("FUNC"), 0x01 TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "FUNC", strlen("FUNC"), BIN_FUNC TSRMLS_CC);
 	/* can't use ARRAY because it's a reserved word */
-	zend_declare_class_constant_long(mongo_ce_BinData, "BYTE_ARRAY", strlen("BYTE_ARRAY"), 0x02 TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_BinData, "UUID", strlen("UUID"), 0x03 TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_BinData, "MD5", strlen("MD5"), 0x05 TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_BinData, "CUSTOM", strlen("CUSTOM"), 0x80 TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "BYTE_ARRAY", strlen("BYTE_ARRAY"), BIN_BYTE_ARRAY TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "UUID", strlen("UUID"), BIN_UUID TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "UUID_RFC4122", strlen("UUID_RFC4122"), BIN_UUID_RFC4122 TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "MD5", strlen("MD5"), BIN_MD5 TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "CUSTOM", strlen("CUSTOM"), BIN_CUSTOM TSRMLS_CC);
 }
 
 /*

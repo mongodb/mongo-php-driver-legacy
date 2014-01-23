@@ -16,11 +16,13 @@
 #ifndef __TYPES_BIN_DATA_H__
 #define __TYPES_BIN_DATA_H__
 
-#define BIN_FUNCTION 1
-#define BIN_BYTE_ARRAY 2
-#define BIN_UUID 3
-#define BIN_MD5 5
-#define BIN_CUSTOM 128
+#define BIN_GENERIC      0x00
+#define BIN_FUNC         0x01
+#define BIN_BYTE_ARRAY   0x02
+#define BIN_UUID         0x03
+#define BIN_UUID_RFC4122 0x04
+#define BIN_MD5          0x05
+#define BIN_CUSTOM       0x80
 
 PHP_METHOD(MongoBinData, __construct);
 PHP_METHOD(MongoBinData, __toString);
