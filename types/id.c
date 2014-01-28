@@ -83,6 +83,23 @@ void generate_id(char *data TSRMLS_DC)
 #endif
 }
 
+static int php_mongo_is_valid_id(const char *id)
+{
+	if (id == NULL) {
+		return 0;
+	}
+
+	if (strlen(id) != 24) {
+		return 0;
+	}
+
+	if (strspn(id, "0123456789abcdefABCDEF") != 24) {
+		return 0;
+	}
+
+	return 1;
+}
+
 int php_mongo_compare_ids(zval *o1, zval *o2 TSRMLS_DC)
 {
 	if (
@@ -209,7 +226,7 @@ void php_mongo_mongoid_populate(zval *this_ptr, zval *id TSRMLS_DC)
 	if (id && Z_TYPE_P(id) == IS_STRING && Z_STRLEN_P(id) == 24) {
 		int i;
 
-		if (strspn(Z_STRVAL_P(id), "0123456789abcdefABCDEF") != 24) {
+		if (!php_mongo_is_valid_id(Z_STRVAL_P(id))) {
 			zend_throw_exception(mongo_ce_Exception, "ID must be valid hex characters", 18 TSRMLS_CC);
 			return;
 		}
@@ -335,6 +352,41 @@ PHP_METHOD(MongoId, getHostname)
 }
 /* }}} */
 
+/* {{{ proto static bool MongoID::isValid(mixed id)
+   Returns true if $id is valid MongoID, false on failure */
+PHP_METHOD(MongoId, isValid)
+{
+	zval **mongoid;
+
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "Z", &mongoid) == FAILURE) {
+		return;
+	}
+
+	switch(Z_TYPE_PP(mongoid)) {
+		case IS_OBJECT:
+			if (instanceof_function(Z_OBJCE_PP(mongoid), mongo_ce_Id TSRMLS_CC)) {
+				RETURN_TRUE;
+			}
+			RETURN_FALSE;
+			break;
+
+		case IS_LONG:
+			convert_to_string_ex(mongoid);
+			/* break intentionally omitted */
+
+		case IS_STRING:
+			if (php_mongo_is_valid_id(Z_STRVAL_PP(mongoid))) {
+				RETURN_TRUE;
+			}
+			RETURN_FALSE;
+			break;
+	}
+
+	RETURN_FALSE;
+}
+/* }}} */
+
+
 int php_mongo_id_serialize(zval *struc, unsigned char **serialized_data, zend_uint *serialized_length, zend_serialize_data *var_hash TSRMLS_DC)
 {
 	char *tmp_id;
@@ -363,6 +415,10 @@ int php_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned c
 	return SUCCESS;
 }
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_isValid, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, id)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry MongoId_methods[] = {
 	PHP_ME(MongoId, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoId, __toString, NULL, ZEND_ACC_PUBLIC)
@@ -371,6 +427,7 @@ static zend_function_entry MongoId_methods[] = {
 	PHP_ME(MongoId, getHostname, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(MongoId, getPID, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoId, getInc, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoId, isValid, arginfo_isValid, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 
 	PHP_FE_END
 };
