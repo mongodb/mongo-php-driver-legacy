@@ -83,6 +83,15 @@ void generate_id(char *data TSRMLS_DC)
 #endif
 }
 
+static int php_mongo_is_valid_id(const char *id)
+{
+	if (strspn(id, "0123456789abcdefABCDEF") == 24) {
+		return 1;
+	}
+
+	return 0;
+}
+
 int php_mongo_compare_ids(zval *o1, zval *o2 TSRMLS_DC)
 {
 	if (
@@ -196,15 +205,6 @@ PHP_METHOD(MongoId, __construct)
 	php_mongo_mongoid_populate(getThis(), id TSRMLS_CC);
 }
 /* }}} */
-
-int php_mongo_is_valid_id(char *id)
-{
-	if (strspn(id, "0123456789abcdefABCDEF") != 24) {
-		return 0;
-	}
-
-	return 1;
-}
 
 void php_mongo_mongoid_populate(zval *this_ptr, zval *id TSRMLS_DC)
 {
