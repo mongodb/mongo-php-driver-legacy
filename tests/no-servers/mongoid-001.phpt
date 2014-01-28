@@ -49,6 +49,7 @@ $invalid = array (
     'fe166D19Aa5e2a0121f967B',
     'fe166D19Aa5e2a 0121f967B',
     'FaAf92CEAFf8CCC3353c8D0C7',
+    'FaAf92CEAFf8CCC3353c8D0Cz',
     true,
     false,
     new stdclass,
@@ -103,6 +104,7 @@ INVALID: ('fe166D19Aa5e2a0121f967')
 INVALID: ('fe166D19Aa5e2a0121f967B')
 INVALID: ('fe166D19Aa5e2a 0121f967B')
 INVALID: ('FaAf92CEAFf8CCC3353c8D0C7')
+INVALID: ('FaAf92CEAFf8CCC3353c8D0Cz')
 INVALID: (true)
 INVALID: (false)
 INVALID: (stdClass::__set_state(array(

@@ -85,11 +85,19 @@ void generate_id(char *data TSRMLS_DC)
 
 static int php_mongo_is_valid_id(const char *id)
 {
-	if (strspn(id, "0123456789abcdefABCDEF") == 24) {
-		return 1;
+	if (id == NULL) {
+		return 0;
 	}
 
-	return 0;
+	if (strlen(id) != 24) {
+		return 0;
+	}
+
+	if (strspn(id, "0123456789abcdefABCDEF") != 24) {
+		return 0;
+	}
+
+	return 1;
 }
 
 int php_mongo_compare_ids(zval *o1, zval *o2 TSRMLS_DC)
