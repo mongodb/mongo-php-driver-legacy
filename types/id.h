@@ -29,6 +29,7 @@ PHP_METHOD(MongoId, getTimestamp);
 PHP_METHOD(MongoId, getPID);
 PHP_METHOD(MongoId, getInc);
 PHP_METHOD(MongoId, getHostname);
+PHP_METHOD(MongoId, isValid);
 
 #endif
 
