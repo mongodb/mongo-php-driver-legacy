@@ -295,7 +295,7 @@ class MongoShellServer {
 }
 
 class DebugException extends Exception {
-    public function __construct($msg, $log) {
+    public function __construct($msg, $log = null) {
         parent::__construct($msg);
         $this->log = $log;
     }
