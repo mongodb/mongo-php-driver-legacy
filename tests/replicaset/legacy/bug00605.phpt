@@ -51,16 +51,15 @@ array(3) {
   ["ok"]=>
   float(1)
 }
-
 bool(true)
 bool(true)
 array(3) {
   ["n"]=>
-  NULL
+  int(0)
   ["err"]=>
   NULL
   ["ok"]=>
-  NULL
+  float(1)
 }
 array(3) {
   ["n"]=>

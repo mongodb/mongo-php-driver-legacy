@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-389: Setting arbitrary flags.
 --SKIPIF--
-<?php require_once "tests/utils/standalone.inc"; ?>
+<?php $needs = "2.5.2"; require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
@@ -55,7 +55,6 @@ Setting flag #1
 Couldn't set flag #1
 Setting flag #2
 Setting flag #3
-%s:%d: no ts field in query
 Setting flag #4
 Setting flag #5
 Setting flag #6

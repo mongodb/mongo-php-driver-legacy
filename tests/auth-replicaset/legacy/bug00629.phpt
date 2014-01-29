@@ -24,7 +24,6 @@ $m = new MongoClient($cfg["dsn"], $opts+array("readPreference" => MongoClient::R
 $database = $m->selectDB('admin');
 $command = "db.version()";
 $response = $database->execute($command);
-var_dump( $response );
 dump_these_keys($response, array('retval', 'ok'));
 ?>
 --EXPECTF--
