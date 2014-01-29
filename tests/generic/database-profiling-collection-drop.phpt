@@ -27,14 +27,12 @@ $prev = $d->setProfilingLevel(MongoDB::PROFILING_OFF);
 $d->dropCollection('system.profile');
 var_dump($ns->findOne(array('name' => 'phpunit.system.profile')));
 ?>
---EXPECT--
+--EXPECTF--
 array(2) {
   ["name"]=>
   string(22) "phpunit.system.profile"
   ["options"]=>
-  array(3) {
-    ["create"]=>
-    string(14) "system.profile"
+  array(%d) {%A
     ["size"]=>
     int(5000)
     ["capped"]=>
@@ -45,9 +43,7 @@ array(2) {
   ["name"]=>
   string(22) "phpunit.system.profile"
   ["options"]=>
-  array(3) {
-    ["create"]=>
-    string(14) "system.profile"
+  array(%d) {%A
     ["size"]=>
     int(5000)
     ["capped"]=>

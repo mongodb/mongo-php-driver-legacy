@@ -37,11 +37,11 @@ dump_these_keys($ret, array("n", "err", "ok"));
 --EXPECTF--
 array(3) {
   ["n"]=>
-  int(0)
+  NULL
   ["err"]=>
   NULL
   ["ok"]=>
-  float(1)
+  NULL
 }
 array(3) {
   ["n"]=>
