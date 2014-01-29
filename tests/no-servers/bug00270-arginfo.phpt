@@ -193,6 +193,8 @@ MongoCollection
     1: update (optional)
     2: fields (optional)
     3: options (optional)
+  Method commandCursor expects 1 parameters
+    0: command
   Method ensureIndex expects 2 parameters
     0: key_OR_array_of_keys
     1: options (optional)
