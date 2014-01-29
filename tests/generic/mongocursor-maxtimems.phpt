@@ -2,7 +2,7 @@
 MongoCursor::maxTimeMS().
 --SKIPIF--
 <?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
-<?php require_once "tests/utils/standalone.inc" ?>
+<?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

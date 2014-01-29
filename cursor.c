@@ -598,16 +598,16 @@ PHP_METHOD(MongoCursor, fields)
 /* }}} */
 
 /* {{{ proto void MongoCursor::maxTimeMS(int ms)
- */
+ * Configures a maximum time for the query to run, including fetching results. */
 PHP_METHOD(MongoCursor, maxTimeMS)
 {
-	long l;
+	long time_ms;
 	mongo_cursor *cursor;
 	zval *value;
 
 	PREITERATION_SETUP;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &time_ms) == FAILURE) {
 		return;
 	}
 
@@ -615,7 +615,7 @@ PHP_METHOD(MongoCursor, maxTimeMS)
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
 	MAKE_STD_ZVAL(value);
-	ZVAL_LONG(value, l);
+	ZVAL_LONG(value, time_ms);
 
 	if (php_mongo_cursor_add_option(cursor, "$maxTimeMS", value TSRMLS_CC)) {
 		RETVAL_ZVAL(getThis(), 1, 0);
@@ -1634,13 +1634,16 @@ zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *conne
 	 *
 	 * For specific cases we pick something else than the default
 	 * mongo_ce_CursorException:
+	 * - code 50, which is an operation exceeded timeout.
 	 * - code 80, which is a cursor timeout.
 	 * - codes 11000, 11001, 12582, which are all duplicate key exceptions
-	 * - code 50, which is an operation exceeded timeout.
 	 *
 	 * Code 80 *also* comes from recv_header() (abs()) recv_data() stream
 	 * handlers */
 	switch (code) {
+		case 50:
+			exception_ce = mongo_ce_ExecutionTimeoutException;
+			break;
 		case 80:
 			exception_ce = mongo_ce_CursorTimeoutException;
 			break;
@@ -1648,9 +1651,6 @@ zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *conne
 		case 11001:
 		case 12582:
 			exception_ce = mongo_ce_DuplicateKeyException;
-			break;
-		case 50:
-			exception_ce = mongo_ce_ExecutionTimeoutException;
 			break;
 	}
 
