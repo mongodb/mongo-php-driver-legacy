@@ -30,4 +30,4 @@ try {
 --EXPECTF--
 bool(true)
 string(%d) "Could not store file: %s:%d: timeout%S"
-int(4)
+int(%d)
