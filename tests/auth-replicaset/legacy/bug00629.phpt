@@ -15,23 +15,16 @@ $opts = array(
     "username" => $creds["admin"]->username,
     "password" => $creds["admin"]->password,
     "replicaSet" => $cfg["rsname"],
-
-    'connect'    => true,
-    'timeout'    => 5000,
 );
-$m = new MongoClient($cfg["dsn"], $opts+array("readPreference" => MongoClient::RP_SECONDARY_PREFERRED));
 
-$database = $m->selectDB('admin');
-$command = "db.version()";
-$response = $database->execute($command);
-dump_these_keys($response, array('retval', 'ok'));
+$m = new MongoClient($cfg["dsn"], $opts+array("readPreference" => MongoClient::RP_SECONDARY_PREFERRED));
+$response = $m->admin->command(array('buildInfo' => 1));
+dump_these_keys($response, array('version', 'ok'));
 ?>
 --EXPECTF--
-%s: MongoClient::__construct(): The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead in %s on line %d
 array(2) {
-  ["retval"]=>
+  ["version"]=>
   string(%d) "%s"
   ["ok"]=>
   float(1)
 }
-
