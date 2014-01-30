@@ -2,26 +2,33 @@
 
 ## Installation
 
-To install:
+To build and install the driver:
 
     phpize
     ./configure
     make
     sudo make install
 
-Then add
+Then, add the following to your `php.ini` file:
 
     extension=mongo.so
 
-to your _php.ini_ file.
-
 ### Installing on Windows
 
- - Download the latest zip file from https://s3.amazonaws.com/drivers.mongodb.org/php/index.html
- - Extract the zip file
- - Copy the DLL file that matches your PHP on Windows installation
- - Add `extension=php_mongo-x.y.z-5.n-vc…dll` to your _php.ini_ file
+Windows builds are available through http://pecl.php.net/package/mongo.
 
+Builds for older driver versions may be found through
+https://s3.amazonaws.com/drivers.mongodb.org/php/index.html.
+
+Each driver release includes various builds to support specific versions of PHP
+and Windows. Select the correct DLL file for your environment, and add the
+following to your `php.ini` file (`VERSION` will vary by environment):
+
+    extension=php_mongo-VERSION.dll
+
+If the DLL is not located within the directory specified by the
+[extension_dir](http://www.php.net/manual/en/ini.core.php#ini.extension-dir) INI
+setting, you may need to specify its full path.
 
 ## Documentation
 
@@ -51,8 +58,8 @@ open a case in our issue management tool, JIRA:
 Bug reports in JIRA for all driver projects, as well as for the MongoDB server
 project, are **public**. Please do not add private information to bug reports.
 
-Security Vulnerabilities
-------------------------
+
+## Security Vulnerabilities
 
 If you’ve identified a security vulnerability in a driver or any other
 MongoDB project, please report it according to the 
@@ -65,6 +72,7 @@ The tests are not available as part of the PECL package, but they are available
 on [Github](http://www.github.com/mongodb/mongo-php-driver/tree/master/tests).  
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to run and create new tests.
+
 
 ## Credits
 
