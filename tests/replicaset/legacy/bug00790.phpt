@@ -21,5 +21,5 @@ if ((time() - $start) > 2) {
 }
 ?>
 --EXPECTF--
-string(%d) "%s:%d: timeout"
-int(4)
+string(%d) "%s:%d: timeout%S"
+int(%d)

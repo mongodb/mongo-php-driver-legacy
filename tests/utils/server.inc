@@ -389,6 +389,14 @@ function printLogs($module = MongoLog::ALL, $level = MongoLog::ALL, $containing 
     MongoLog::setCallback("logCallback");
 }
 
+function dump_these_keys($values, $keys) {
+    $dump = array();
+    foreach($keys as $key) {
+        $dump[$key] = $values[$key];
+    }
+    var_dump($dump);
+}
+
 /*
 $config = MongoShellServer::getReplicaSetInfo();
 list($REPLICASET_SECONDARY, $REPLICASET_SECONDARY_PORT) = explode(":", $config["hosts"][2]);

@@ -128,7 +128,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: timeout
+%s:%d: timeout%S
 
 - Setting w property to majority:
 IO      FINE: is_gle_op: yes
@@ -147,7 +147,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs
 
 Running string mongodb://%s/?w=2
 PARSE   INFO: Parsing mongodb://%s/?w=2
@@ -195,7 +195,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: timeout
+%s:%d: timeout%S
 
 - Setting w property to majority:
 IO      FINE: is_gle_op: yes
@@ -214,7 +214,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs
 
 Running string mongodb://%s/?w=allDCs
 PARSE   INFO: Parsing mongodb://%s/?w=allDCs
@@ -228,7 +228,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs
 
 - Setting w property to 0:
 IO      FINE: is_gle_op: yes
@@ -245,7 +245,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs
 
 - Setting w property to 2:
 IO      FINE: is_gle_op: yes
@@ -264,7 +264,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: timeout
+%s:%d: timeout%S
 
 - Setting w property to majority:
 IO      FINE: is_gle_op: yes
@@ -283,7 +283,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs
 
 Running string mongodb://%s/?w=majority
 PARSE   INFO: Parsing mongodb://%s/?w=majority
@@ -331,7 +331,7 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: timeout
+%s:%d: timeout%S
 
 - Setting w property to majority:
 IO      FINE: is_gle_op: yes
@@ -350,4 +350,4 @@ IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs

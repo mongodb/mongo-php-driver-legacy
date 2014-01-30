@@ -178,7 +178,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs
 
 - Running test 0, with options: []:
 IO      FINE: is_gle_op: yes
@@ -188,7 +188,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs
 
 - Running test 1, with options: {"safe":0}:
 IO      FINE: is_gle_op: no
@@ -201,7 +201,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs
 
 - Running test 3, with options: {"w":0}:
 IO      FINE: is_gle_op: no
@@ -214,7 +214,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs
 
 Running string mongodb://%s/?w=majority
 PARSE   INFO: Parsing mongodb://%s/?w=majority

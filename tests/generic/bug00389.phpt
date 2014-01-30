@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-389: Setting arbitrary flags.
 --SKIPIF--
-<?php require_once "tests/utils/standalone.inc"; ?>
+<?php $needs = "2.5.2"; require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
@@ -18,7 +18,7 @@ try {
 	$cursor = $c->find()->tailable();
 	foreach( $cursor as $foo ) { }
 } catch ( MongoCursorException $e ) {
-	echo $e->getMessage(), "\n";
+    echo "Couldn't set tailable\n";
 }
 
 /* Slave okay */
@@ -45,17 +45,16 @@ for ( $i = 1; $i < 11; $i++ )
 		$cursor = $c->find()->setFlag( $i );
 		foreach( $cursor as $foo ) { }
 	} catch ( MongoCursorException $e ) {
-		echo $e->getMessage(), "\n";
+        echo "Couldn't set flag #$i\n";
 	}
 }
 ?>
 --EXPECTF--
-%s:%d: tailable cursor requested on non capped collection
+Couldn't set tailable
 Setting flag #1
-%s:%d: tailable cursor requested on non capped collection
+Couldn't set flag #1
 Setting flag #2
 Setting flag #3
-%s:%d: no ts field in query
 Setting flag #4
 Setting flag #5
 Setting flag #6

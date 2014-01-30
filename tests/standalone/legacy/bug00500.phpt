@@ -11,9 +11,12 @@ $m = mongo_standalone();
 $c = $m->selectCollection(dbname(), 'crash');
 $c->drop();
 
-var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ) ) );
-var_dump( $c->update( array( '_id' => 'yeah' ), array( 'value' => array( '$set' => 'yes!' ) ) ) );
-var_dump( $c->remove( array( '_id' => 'yeah' ) ) );
+$ret = $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ) );
+var_dump($ret);
+$ret = $c->update( array( '_id' => 'yeah' ), array( 'value' => array( '$set' => 'yes!' ) ) );
+var_dump($ret);
+$ret = $c->remove( array( '_id' => 'yeah' ) );
+var_dump($ret);
 
 try {
 	var_dump( $c->insert( array() ) );
@@ -21,19 +24,29 @@ try {
 	echo "Exception: ", get_class( $e ) , ": ", $e->getMessage(), "\n";
 }
 
-var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ) ) );
-var_dump( $c->update( array( '_id' => 'yeah' ), array() ) );
-var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
+$ret = $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ) );
+var_dump($ret);
+$ret = $c->update( array( '_id' => 'yeah' ), array() );
+var_dump($ret);
+$ret = $c->findOne( array( '_id' => 'yeah' ) );
+var_dump($ret);
 
-var_dump( $c->remove( array( '_id' => 'yeah' ) ) );
-var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
+$ret = $c->remove( array( '_id' => 'yeah' ) );
+var_dump($ret);
+$ret = $c->findOne( array( '_id' => 'yeah' ) );
+var_dump($ret);
 
-var_dump( $c->update( array( '_id' => 'yeah' ), array( '$set' => array( 'value' => 'yes!' ) ) ) );
-var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
+$ret = $c->update( array( '_id' => 'yeah' ), array( '$set' => array( 'value' => 'yes!' ) ) );
+var_dump($ret);
+$ret = $c->findOne( array( '_id' => 'yeah' ) );
+var_dump($ret);
 
-var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ), array( 'safe' => true ) ) );
-var_dump( $c->update( array( '_id' => 'yeah' ), array( '$set' => array( 'value' => 'yes!' ) ), array( 'safe' => true ) ) );
-var_dump( $c->remove( array( '_id' => 'yeah' ), array( 'safe' => true ) ) );
+$ret = $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ), array( 'w' => true ) );
+dump_these_keys($ret, array("n", "err", "ok"));
+$ret = $c->update( array( '_id' => 'yeah' ), array( '$set' => array( 'value' => 'yes!' ) ), array( 'w' => true ) );
+dump_these_keys($ret, array("updatedExisting", "n", "err", "ok"));
+$ret = $c->remove( array( '_id' => 'yeah' ), array( 'w' => true ) );
+dump_these_keys($ret, array("n", "err", "ok"));
 ?>
 --EXPECTF--
 bool(true)
@@ -50,33 +63,27 @@ bool(true)
 NULL
 bool(true)
 NULL
-array(4) {
+array(3) {
   ["n"]=>
   int(0)
-  ["connectionId"]=>
-  int(%d)
   ["err"]=>
   NULL
   ["ok"]=>
   float(1)
 }
-array(5) {
+array(4) {
   ["updatedExisting"]=>
   bool(true)
   ["n"]=>
   int(1)
-  ["connectionId"]=>
-  int(%d)
   ["err"]=>
   NULL
   ["ok"]=>
   float(1)
 }
-array(4) {
+array(3) {
   ["n"]=>
   int(1)
-  ["connectionId"]=>
-  int(%d)
   ["err"]=>
   NULL
   ["ok"]=>
