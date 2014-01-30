@@ -34,6 +34,6 @@ IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 exception class: MongoResultException
-exception message: %s:%d: exception: unrecognized getLastError mode: nonsense
-exception code: 14830
+exception message: %s:%d:%S unrecognized getLastError mode: nonsense
+exception code: %d
 bool(false)
