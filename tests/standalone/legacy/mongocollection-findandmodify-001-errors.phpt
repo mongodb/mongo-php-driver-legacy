@@ -49,7 +49,8 @@ try {
 } catch(MongoResultException $e) {
     echo $e->getCode(), " : ", $e->getMessage(), "\n";
     $res = $e->getDocument();
-    var_dump($res["lastErrorObject"], $res["errmsg"], $res["ok"]);
+    dump_these_keys($res["lastErrorObject"], array('err', 'code', 'n', 'connectionId', 'ok'));
+    var_dump($res["errmsg"], $res["ok"]);
 }
 
 

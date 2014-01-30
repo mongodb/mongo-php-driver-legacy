@@ -1,7 +1,7 @@
 --TEST--
 Indexes: Sparse
 --SKIPIF--
-<?php require_once "tests/utils/standalone.inc"; ?>
+<?php $needs = "2.5.3"; $needsOp = 'lt'; require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

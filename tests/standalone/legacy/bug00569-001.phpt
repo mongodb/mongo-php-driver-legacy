@@ -72,7 +72,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: %s
+%s:%d:%s
 
 Running test 4, with options: {"safe":"majority"}:
 MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
@@ -102,7 +102,7 @@ IO      FINE: append_getlasterror: added wtimeout=10000 (from collection propert
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: norepl: %s
+%s:%d:%s
 
 Running test 8, with options: {"w":"majority"}:
 IO      FINE: is_gle_op: yes

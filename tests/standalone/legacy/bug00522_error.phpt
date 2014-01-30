@@ -18,4 +18,4 @@ try {
 }
 ?>
 --EXPECTF--
-%s:%d: norepl: %s
+%s:%d:%s

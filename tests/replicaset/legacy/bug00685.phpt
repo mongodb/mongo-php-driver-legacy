@@ -23,4 +23,4 @@ if ((time() - $start) > 2) {
 --EXPECTF--
 %s: MongoCollection::insert(): The 'wtimeout' option is deprecated, please use 'wTimeoutMS' instead in %sbug00685.php on line %d
 string(%d) "%s:%d: timeout%S"
-int(4)
+int(%d)

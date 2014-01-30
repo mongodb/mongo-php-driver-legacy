@@ -22,4 +22,4 @@ try{
 --EXPECTF--
 %s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %sbug00676.php on line %d
 string(%d) "%s:%d: timeout%S"
-int(4)
+int(%d)
