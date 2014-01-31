@@ -33,9 +33,7 @@ array(2) {
   ["name"]=>
   string(19) "phpunit.create-col1"
   ["options"]=>
-  array(3) {
-    ["create"]=>
-    string(11) "create-col1"
+  array(%d) {%A
     ["size"]=>
     int(100)
     ["capped"]=>

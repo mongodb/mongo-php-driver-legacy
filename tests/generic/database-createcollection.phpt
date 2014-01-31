@@ -20,14 +20,11 @@ $retval = $ns->findOne(array('name' => 'phpunit.create-col1'));
 
 var_dump($retval);
 ?>
---EXPECT--
+--EXPECTF--
 NULL
 array(2) {
   ["name"]=>
   string(19) "phpunit.create-col1"
   ["options"]=>
-  array(1) {
-    ["create"]=>
-    string(11) "create-col1"
-  }
+  array(%a
 }

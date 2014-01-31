@@ -28,6 +28,6 @@ try {
 --EXPECTF--
 first document inserted
 exception class: MongoDuplicateKeyException
-exception message: %s:%d: E11000 duplicate key error %s
+exception message: %s:%d:%S E11000 duplicate key error %s
 exception code: 11000
 bool(true)

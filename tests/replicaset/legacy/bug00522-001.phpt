@@ -106,5 +106,5 @@ IO      FINE: append_getlasterror: added wtimeout=4500 (from collection property
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
-%s:%d: exception: unrecognized getLastError mode: allDCs
+%s:%d:%sunrecognized getLastError mode: allDCs
 -----

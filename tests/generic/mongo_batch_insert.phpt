@@ -44,7 +44,7 @@ foreach ($c as $item) {
 ?>
 --EXPECTF--
 11000
-%s:%d: E11000 duplicate key error index: %s.c.$_id_  dup key: { : ObjectId('4cb4ab6d7addf98506010002') }
+%s:%d:%S E11000 duplicate key error index: %s.c.$_id_  dup key: { : ObjectId('4cb4ab6d7addf98506010002') }
 array(3) {
   ["_id"]=>
   object(MongoId)#%d (1) {
