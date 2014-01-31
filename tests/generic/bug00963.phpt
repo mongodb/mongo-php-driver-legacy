@@ -19,9 +19,10 @@ $c->insert(array('test' => 7));
 
 $txlogs = $c->find()->limit(5);
 
-foreach($txlogs as $txlog)  {
-  echo ($txlogs->dead() ? "Dead" : "Not Dead") . "\n";
+foreach($txlogs as $txlog) {
+	echo ($txlogs->dead() ? "Dead" : "Not Dead") . "\n";
 }
+echo ($txlogs->dead() ? "Dead" : "Not Dead") . "\n";
 
 $info = $txlogs->info();
 var_dump($info['id'], $info['at']);
@@ -33,6 +34,7 @@ Not Dead
 Not Dead
 Not Dead
 Not Dead
+Dead
 int(0)
 int(5)
 ALIVE
