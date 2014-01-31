@@ -828,8 +828,8 @@ PHP_METHOD(MongoCursor, hint)
 }
 /* }}} */
 
-/* {{{ MongoCursor->getCursorInfo: Return information about the current query (by @crodas)
- */
+/* {{{ array MongoCursor->info()
+ * Return execution and connection information of the current cursor */
 PHP_METHOD(MongoCursor, info)
 {
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -863,13 +863,16 @@ PHP_METHOD(MongoCursor, info)
 		add_assoc_long(return_value, "id", (long)cursor->cursor_id);
 		add_assoc_long(return_value, "at", cursor->at);
 		add_assoc_long(return_value, "numReturned", cursor->num);
-		add_assoc_string(return_value, "server", cursor->connection->hash, 1);
 
-		mongo_server_split_hash(cursor->connection->hash, &host, &port, NULL, NULL, NULL, NULL, NULL);
-		add_assoc_string(return_value, "host", host, 1);
-		free(host);
-		add_assoc_long(return_value, "port", port);
-		add_assoc_string(return_value, "connection_type_desc", mongo_connection_type(cursor->connection->connection_type), 1);
+		if (cursor->connection) {
+			add_assoc_string(return_value, "server", cursor->connection->hash, 1);
+
+			mongo_server_split_hash(cursor->connection->hash, &host, &port, NULL, NULL, NULL, NULL, NULL);
+			add_assoc_string(return_value, "host", host, 1);
+			free(host);
+			add_assoc_long(return_value, "port", port);
+			add_assoc_string(return_value, "connection_type_desc", mongo_connection_type(cursor->connection->connection_type), 1);
+		}
 	}
 }
 /* }}} */
