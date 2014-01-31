@@ -429,6 +429,7 @@ PHP_METHOD(MongoCursor, hasNext)
 	if ((cursor->limit > 0 && cursor->at >= cursor->limit) || cursor->num == 0) {
 		if (cursor->cursor_id != 0) {
 			php_mongo_kill_cursor(cursor->connection, cursor->cursor_id TSRMLS_CC);
+			cursor->cursor_id = 0;
 		}
 		RETURN_FALSE;
 	}
