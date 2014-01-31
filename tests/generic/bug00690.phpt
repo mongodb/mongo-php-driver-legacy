@@ -21,4 +21,4 @@ catch ( Exception $e )
 
 ?>
 --EXPECTF--
-%s:%d: E11000 duplicate key error index: %s dup key: { : "hello%20London" }
+%s:%d:%sE11000 duplicate key error index: %s dup key: { : "hello%20London" }
