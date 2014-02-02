@@ -380,7 +380,7 @@ typedef struct {
 	if (EG(exception)) { \
 		if (*arg1) { zval_ptr_dtor(arg1); } \
 		if (*arg2) { zval_ptr_dtor(arg2); } \
-	return; \
+		return; \
 	}
 
 #define PHP_MONGO_CHECK_EXCEPTION3(arg1, arg2, arg3) \
