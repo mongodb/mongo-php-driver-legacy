@@ -14,8 +14,11 @@ $coll->insert(array('int64' => new MongoInt64(123456789012345)));
 
 ini_set('mongo.native_long', false);
 ini_set('mongo.long_as_object', false);
-$result = $coll->findOne();
-var_dump($result['int64']);
+try {
+    $coll->findOne();
+} catch (Exception $e) {
+    printf("%s: %s\n", get_class($e), $e->getMessage());
+}
 
 ini_set('mongo.native_long', true);
 ini_set('mongo.long_as_object', false);
@@ -36,7 +39,7 @@ $result = $coll->findOne();
 printf("%s(%s)\n", get_class($result['int64']), $result['int64']);
 ?>
 --EXPECT--
-float(1)
+MongoCursorException: Can not natively represent the long 1 on this platform
 MongoCursorException: Can not natively represent the long 1 on this platform
 MongoInt64(1)
 MongoInt64(1)

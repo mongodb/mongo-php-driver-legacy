@@ -1,5 +1,5 @@
 --TEST--
-MongoCursor::info() (32bit, native_long=1, long_as_object=0)
+MongoCursor::info() (32bit, long_as_object=0)
 --SKIPIF--
 <?php if (4 !== PHP_INT_SIZE) { die('skip Only for 32-bit platform'); } ?>
 <?php require_once "tests/utils/mongos.inc" ?>

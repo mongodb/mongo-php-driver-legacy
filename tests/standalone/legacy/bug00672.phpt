@@ -7,6 +7,7 @@ Test for PHP-672: MongoGridFSFile::write() leaks memory
 require_once "tests/utils/server.inc";
 $mongo = new_mongo_standalone();
 $gridfs = $mongo->files->getGridFS();
+$gridfs->drop();
 $i = 0;
 foreach(glob(dirname(__FILE__) . "/*") as $file) {
     $gridfs->put($file);

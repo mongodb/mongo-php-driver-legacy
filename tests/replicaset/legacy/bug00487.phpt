@@ -10,6 +10,7 @@ $m = new Mongo($cfg["hosts"][2]);
 
 try {
     $c = $m->selectDb(dbname())->test;
+    $c->drop();
     var_dump($c->findOne());
 } catch(Exception $e) {
     var_dump($e->getMessage());
