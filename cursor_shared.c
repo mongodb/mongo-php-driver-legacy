@@ -519,13 +519,6 @@ static const zend_function_entry mongo_cursor_funcs_interface[] = {
 	PHP_ABSTRACT_ME(MongoCursorInterface, info, arginfo_no_parameters)
 	PHP_ABSTRACT_ME(MongoCursorInterface, dead, arginfo_no_parameters)
 
-	/* iterator funcs */
-	PHP_ABSTRACT_ME(MongoCommandInterface, current, arginfo_no_parameters)
-	PHP_ABSTRACT_ME(MongoCommandInterface, key, arginfo_no_parameters)
-	PHP_ABSTRACT_ME(MongoCommandInterface, next, arginfo_no_parameters)
-	PHP_ABSTRACT_ME(MongoCommandInterface, rewind, arginfo_no_parameters)
-	PHP_ABSTRACT_ME(MongoCommandInterface, valid, arginfo_no_parameters)
-
 	PHP_FE_END
 };
 
@@ -548,6 +541,7 @@ void mongo_init_MongoCursorInterface(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoCursorInterface", mongo_cursor_funcs_interface);
 	mongo_ce_CursorInterface = zend_register_internal_interface(&ce TSRMLS_CC);
 	mongo_ce_CursorInterface->interface_gets_implemented = implement_mongo_cursor_interface_handler;
+	zend_class_implements(mongo_ce_CursorInterface TSRMLS_CC, 1, zend_ce_iterator);
 }
 /* }}} */
 

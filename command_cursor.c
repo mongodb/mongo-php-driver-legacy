@@ -417,7 +417,6 @@ void mongo_init_MongoCommandCursor(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoCommandCursor", MongoCommandCursor_methods);
 	ce.create_object = php_mongo_command_cursor_new;
 	mongo_ce_CommandCursor = zend_register_internal_class(&ce TSRMLS_CC);
-	zend_class_implements(mongo_ce_CommandCursor TSRMLS_CC, 1, zend_ce_iterator);
 	zend_class_implements(mongo_ce_CommandCursor TSRMLS_CC, 1, mongo_ce_CursorInterface);
 }
 
