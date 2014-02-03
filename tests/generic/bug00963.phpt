@@ -28,13 +28,13 @@ $info = $txlogs->info();
 var_dump($info['id'], $info['at']);
 echo "ALIVE";
 ?>
---EXPECT--
+--EXPECTF--
 Not Dead
 Not Dead
 Not Dead
 Not Dead
 Not Dead
 Dead
-int(0)
+%s(0)
 int(5)
 ALIVE

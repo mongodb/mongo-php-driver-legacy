@@ -19,6 +19,8 @@
 #include "mcon/io.h"
 #include "mcon/manager.h"
 #include "mcon/utils.h"
+#include "exceptions/duplicate_key_exception.h"
+#include "exceptions/execution_timeout_exception.h"
 
 #ifdef WIN32
 # ifndef int64_t
@@ -72,6 +74,8 @@ extern zend_class_entry *mongo_ce_Collection, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_ConnectionException;
 extern zend_class_entry *mongo_ce_CursorException;
 extern zend_class_entry *mongo_ce_CursorTimeoutException;
+extern zend_class_entry *mongo_ce_DuplicateKeyException;
+extern zend_class_entry *mongo_ce_ExecutionTimeoutException;
 
 extern zend_object_handlers mongo_default_handlers;
 
@@ -590,6 +594,34 @@ PHP_METHOD(MongoCursor, fields)
 	zval_add_ref(&z);
 
 	RETURN_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
+/* {{{ proto void MongoCursor::maxTimeMS(int ms)
+ * Configures a maximum time for the query to run, including fetching results. */
+PHP_METHOD(MongoCursor, maxTimeMS)
+{
+	long time_ms;
+	mongo_cursor *cursor;
+	zval *value;
+
+	PREITERATION_SETUP;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &time_ms) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_CURSOR(getThis());
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
+
+	MAKE_STD_ZVAL(value);
+	ZVAL_LONG(value, time_ms);
+
+	if (php_mongo_cursor_add_option(cursor, "$maxTimeMS", value TSRMLS_CC)) {
+		RETVAL_ZVAL(getThis(), 1, 0);
+	}
+
+	zval_ptr_dtor(&value);
 }
 /* }}} */
 
@@ -1484,6 +1516,10 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_fields, 0, ZEND_RETURN_VALUE
 	ZEND_ARG_INFO(0, fields)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_maxtimems, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, ms)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_add_option, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, key)
 	ZEND_ARG_INFO(0, value)
@@ -1543,6 +1579,7 @@ static zend_function_entry MongoCursor_methods[] = {
 	PHP_ME(MongoCursor, batchSize, arginfo_batchsize, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, skip, arginfo_skip, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, fields, arginfo_fields, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCursor, maxTimeMS, arginfo_maxtimems, ZEND_ACC_PUBLIC)
 
 	/* meta options */
 	PHP_ME(MongoCursor, addOption, arginfo_add_option, ZEND_ACC_PUBLIC)
@@ -1591,6 +1628,30 @@ zval* mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *conne
 
 	if (EG(exception)) {
 		return EG(exception);
+	}
+
+	/* Based on the status, we pick a different exception class.
+	 *
+	 * For specific cases we pick something else than the default
+	 * mongo_ce_CursorException:
+	 * - code 50, which is an operation exceeded timeout.
+	 * - code 80, which is a cursor timeout.
+	 * - codes 11000, 11001, 12582, which are all duplicate key exceptions
+	 *
+	 * Code 80 *also* comes from recv_header() (abs()) recv_data() stream
+	 * handlers */
+	switch (code) {
+		case 50:
+			exception_ce = mongo_ce_ExecutionTimeoutException;
+			break;
+		case 80:
+			exception_ce = mongo_ce_CursorTimeoutException;
+			break;
+		case 11000:
+		case 11001:
+		case 12582:
+			exception_ce = mongo_ce_DuplicateKeyException;
+			break;
 	}
 
 	/* Construct message */
