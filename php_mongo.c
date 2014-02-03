@@ -38,6 +38,8 @@
 #include "exceptions/gridfs_exception.h"
 #include "exceptions/result_exception.h"
 #include "exceptions/write_concern_exception.h"
+#include "exceptions/duplicate_key_exception.h"
+#include "exceptions/protocol_exception.h"
 
 #include "types/id.h"
 
@@ -70,6 +72,8 @@ extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
 extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_GridFSException;
 extern zend_class_entry *mongo_ce_WriteConcernException;
+extern zend_class_entry *mongo_ce_DuplicateKeyException;
+extern zend_class_entry *mongo_ce_ProtocolException;
 
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
 
@@ -460,6 +464,7 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 	mongo_init_MongoWriteConcernException(TSRMLS_C);
 	mongo_init_MongoDuplicateKeyException(TSRMLS_C);
 	mongo_init_MongoExecutionTimeoutException(TSRMLS_C);
+	mongo_init_MongoProtocolException(TSRMLS_C);
 }
 
 /* {{{ Creating & freeing Mongo type objects */
