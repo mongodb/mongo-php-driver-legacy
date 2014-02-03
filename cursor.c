@@ -597,7 +597,7 @@ PHP_METHOD(MongoCursor, fields)
 }
 /* }}} */
 
-/* {{{ proto void MongoCursor::maxTimeMS(int ms)
+/* {{{ proto MongoCursor MongoCursor::maxTimeMS(int ms)
  * Configures a maximum time for the query to run, including fetching results. */
 PHP_METHOD(MongoCursor, maxTimeMS)
 {
