@@ -33,6 +33,8 @@ extern int le_cursor_list;
 
 extern zend_class_entry *mongo_ce_CursorException;
 extern zend_class_entry *mongo_ce_CursorTimeoutException;
+extern zend_class_entry *mongo_ce_DuplicateKeyException;
+extern zend_class_entry *mongo_ce_ExecutionTimeoutException;
 extern zend_class_entry *mongo_ce_Int64;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
@@ -382,6 +384,30 @@ zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *c
 
 	if (EG(exception)) {
 		return EG(exception);
+	}
+
+	/* Based on the status, we pick a different exception class.
+	 *
+	 * For specific cases we pick something else than the default
+	 * mongo_ce_CursorException:
+	 * - code 50, which is an operation exceeded timeout.
+	 * - code 80, which is a cursor timeout.
+	 * - codes 11000, 11001, 12582, which are all duplicate key exceptions
+	 *
+	 * Code 80 *also* comes from recv_header() (abs()) recv_data() stream
+	 * handlers */
+	switch (code) {
+		case 50:
+			exception_ce = mongo_ce_ExecutionTimeoutException;
+			break;
+		case 80:
+			exception_ce = mongo_ce_CursorTimeoutException;
+			break;
+		case 11000:
+		case 11001:
+		case 12582:
+			exception_ce = mongo_ce_DuplicateKeyException;
+			break;
 	}
 
 	/* Construct message */
