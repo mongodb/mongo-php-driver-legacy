@@ -193,6 +193,7 @@ PHP_MINIT_FUNCTION(mongo)
 	mongo_init_Mongo(TSRMLS_C);
 	mongo_init_MongoDB(TSRMLS_C);
 	mongo_init_MongoCollection(TSRMLS_C);
+	mongo_init_MongoCursorInterface(TSRMLS_C);
 	mongo_init_MongoCursor(TSRMLS_C);
 	mongo_init_MongoCommandCursor(TSRMLS_C);
 

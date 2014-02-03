@@ -27,6 +27,7 @@
 
 /* externs */
 extern zend_class_entry *mongo_ce_MongoClient;
+extern zend_class_entry *mongo_ce_CursorInterface;
 extern zend_class_entry *mongo_ce_Exception, *mongo_ce_CursorException;
 extern zend_object_handlers mongo_default_handlers;
 
@@ -46,37 +47,8 @@ ZEND_END_ARG_INFO()
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_limit, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, number)
-ZEND_END_ARG_INFO()
-
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, number)
-ZEND_END_ARG_INFO()
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_skip, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, number)
-ZEND_END_ARG_INFO()
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_add_option, 0, ZEND_RETURN_VALUE, 2)
-	ZEND_ARG_INFO(0, key)
-	ZEND_ARG_INFO(0, value)
-ZEND_END_ARG_INFO()
-
-/* {{{ Cursor flags */
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_set_flag, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, bit)
-	ZEND_ARG_INFO(0, set)
-ZEND_END_ARG_INFO()
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_immortal, 0, ZEND_RETURN_VALUE, 0)
-	ZEND_ARG_INFO(0, liveForever)
-ZEND_END_ARG_INFO()
-/* }}} */
-
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_INFO(0, read_preference)
-	ZEND_ARG_ARRAY_INFO(0, tags, 0)
 ZEND_END_ARG_INFO()
 
 void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval *zlink, zval *zcommand TSRMLS_DC)
@@ -407,25 +379,10 @@ PHP_METHOD(MongoCommandCursor, reset)
 static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCommandCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
 
-	/* options */
-	PHP_ME(MongoCursor, limit, arginfo_limit, ZEND_ACC_PUBLIC)
+	/* options, code is reused from MongoCursor */
 	PHP_ME(MongoCursor, batchSize, arginfo_batchsize, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, skip, arginfo_skip, ZEND_ACC_PUBLIC)
 
-	/* meta options */
-	PHP_ME(MongoCursor, addOption, arginfo_add_option, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, snapshot, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, explain, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-
-	/* flags */
-	PHP_ME(MongoCursor, setFlag, arginfo_set_flag, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, immortal, arginfo_immortal, ZEND_ACC_PUBLIC)
-
-	/* read preferences */
-	PHP_ME(MongoCursor, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
-
-	/* query */
+	/* query, code is reused from MongoCursor */
 	PHP_ME(MongoCursor, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
@@ -434,7 +391,6 @@ static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCommandCursor, key, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCommandCursor, next, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCommandCursor, rewind, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_MALIAS(MongoCommandCursor, doQuery, rewind, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCommandCursor, valid, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCommandCursor, reset, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
@@ -462,6 +418,7 @@ void mongo_init_MongoCommandCursor(TSRMLS_D)
 	ce.create_object = php_mongo_command_cursor_new;
 	mongo_ce_CommandCursor = zend_register_internal_class(&ce TSRMLS_CC);
 	zend_class_implements(mongo_ce_CommandCursor TSRMLS_CC, 1, zend_ce_iterator);
+	zend_class_implements(mongo_ce_CommandCursor TSRMLS_CC, 1, mongo_ce_CursorInterface);
 }
 
 /*

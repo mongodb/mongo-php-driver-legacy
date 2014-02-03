@@ -16,6 +16,7 @@
 
 #include <php.h>
 #include <zend_exceptions.h>
+#include <zend_interfaces.h>
 #include "mcon/io.h"
 #include "mcon/manager.h"
 #include "mcon/utils.h"
@@ -31,11 +32,14 @@
 /* externs */
 extern int le_cursor_list;
 
+extern zend_class_entry *mongo_ce_Cursor, *mongo_ce_CommandCursor;
 extern zend_class_entry *mongo_ce_CursorException;
 extern zend_class_entry *mongo_ce_CursorTimeoutException;
 extern zend_class_entry *mongo_ce_DuplicateKeyException;
 extern zend_class_entry *mongo_ce_ExecutionTimeoutException;
 extern zend_class_entry *mongo_ce_Int64;
+
+zend_class_entry *mongo_ce_CursorInterface = NULL;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
@@ -496,6 +500,54 @@ int php_mongo_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
 	cursor->connection = NULL;
 
 	return FAILURE;
+}
+/* }}} */
+
+/* {{{ MongoCursorInterface */
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, number)
+ZEND_END_ARG_INFO()
+
+static const zend_function_entry mongo_cursor_funcs_interface[] = {
+	/* options */
+	PHP_ABSTRACT_ME(MongoCursorInterface, batchSize, arginfo_batchsize)
+
+	/* query */
+	PHP_ABSTRACT_ME(MongoCursorInterface, info, arginfo_no_parameters)
+	PHP_ABSTRACT_ME(MongoCursorInterface, dead, arginfo_no_parameters)
+
+	/* iterator funcs */
+	PHP_ABSTRACT_ME(MongoCommandInterface, current, arginfo_no_parameters)
+	PHP_ABSTRACT_ME(MongoCommandInterface, key, arginfo_no_parameters)
+	PHP_ABSTRACT_ME(MongoCommandInterface, next, arginfo_no_parameters)
+	PHP_ABSTRACT_ME(MongoCommandInterface, rewind, arginfo_no_parameters)
+	PHP_ABSTRACT_ME(MongoCommandInterface, valid, arginfo_no_parameters)
+
+	PHP_FE_END
+};
+
+static int implement_mongo_cursor_interface_handler(zend_class_entry *interface, zend_class_entry *implementor TSRMLS_DC)
+{
+    if (implementor->type == ZEND_USER_CLASS &&
+        !instanceof_function(implementor, mongo_ce_Cursor TSRMLS_CC) &&
+        !instanceof_function(implementor, mongo_ce_CommandCursor TSRMLS_CC)
+    ) {
+        zend_error(E_ERROR, "MongoCursorInterface can't be implemented by user classes");
+    }
+
+    return SUCCESS;
+}
+
+void mongo_init_MongoCursorInterface(TSRMLS_D)
+{
+	zend_class_entry ce;
+
+	INIT_CLASS_ENTRY(ce, "MongoCursorInterface", mongo_cursor_funcs_interface);
+	mongo_ce_CursorInterface = zend_register_internal_interface(&ce TSRMLS_CC);
+	mongo_ce_CursorInterface->interface_gets_implemented = implement_mongo_cursor_interface_handler;
 }
 /* }}} */
 
