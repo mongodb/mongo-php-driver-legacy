@@ -43,6 +43,7 @@ typedef __int64 int64_t;
 /* externs */
 extern zend_class_entry *mongo_ce_Id, *mongo_ce_MongoClient, *mongo_ce_DB;
 extern zend_class_entry *mongo_ce_Collection, *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_CursorInterface;
 extern zend_class_entry *mongo_ce_ConnectionException;
 extern zend_class_entry *mongo_ce_CursorException;
 extern zend_class_entry *mongo_ce_CursorTimeoutException;
@@ -1407,6 +1408,7 @@ void mongo_init_MongoCursor(TSRMLS_D)
 	ce.create_object = php_mongo_cursor_new;
 	mongo_ce_Cursor = zend_register_internal_class(&ce TSRMLS_CC);
 	zend_class_implements(mongo_ce_Cursor TSRMLS_CC, 1, zend_ce_iterator);
+	zend_class_implements(mongo_ce_Cursor TSRMLS_CC, 1, mongo_ce_CursorInterface);
 
 	zend_declare_property_bool(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
 	zend_declare_property_long(mongo_ce_Cursor, "timeout", strlen("timeout"), PHP_MONGO_DEFAULT_SOCKET_TIMEOUT, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);

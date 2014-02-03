@@ -111,6 +111,8 @@ void php_mongo_cursor_reset(mongo_cursor *cursor TSRMLS_DC);
 int php_mongo_cursor_failed(mongo_cursor *cursor TSRMLS_DC);
 #endif
 
+void mongo_init_MongoCursorInterface(TSRMLS_D);
+
 /*
  * Local variables:
  * tab-width: 4

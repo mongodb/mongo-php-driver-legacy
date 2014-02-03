@@ -8,6 +8,7 @@ $classes = array(
     'MongoDB',
     'MongoCollection',
     'MongoCursor',
+    'MongoCommandCursor',
     'MongoPool',
 );
 foreach ($classes as $class) {
@@ -284,6 +285,23 @@ MongoCursor
   Method reset expects 0 parameters
   Method count expects 1 parameters
     0: foundOnly (optional)
+
+MongoCommandCursor
+  Method __construct expects 4 parameters
+    0: connection
+    1: database_and_collection_name
+    2: query (optional)
+    3: array_of_fields_OR_object (optional)
+  Method batchSize expects 1 parameters
+    0: number
+  Method info expects 0 parameters
+  Method dead expects 0 parameters
+  Method current expects 0 parameters
+  Method key expects 0 parameters
+  Method next expects 0 parameters
+  Method rewind expects 0 parameters
+  Method valid expects 0 parameters
+  Method reset expects 0 parameters
 
 MongoPool
   Method info expects 0 parameters
