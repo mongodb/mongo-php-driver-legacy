@@ -24,7 +24,7 @@ class MongoNotifications {
                 $this->inserts[] = $reqid;
             break;
 
-            case MONGO_STREAM_NOTIFY_LOG_REPLY:
+            case MONGO_STREAM_NOTIFY_LOG_WRITE_REPLY:
                 $reqid = $data["op"]["response_to"];
 
                 $end = microtime(true);
