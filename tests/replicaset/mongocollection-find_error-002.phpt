@@ -33,7 +33,7 @@ try {
 ?>
 --EXPECTF--
 string(26) "No candidate servers found"
-int(71)
+%s(71)
 array(1) {
   ["x"]=>
   int(1)
