@@ -113,6 +113,10 @@ int php_mongo_cursor_failed(mongo_cursor *cursor TSRMLS_DC);
 
 void mongo_init_MongoCursorInterface(TSRMLS_D);
 
+PHP_METHOD(MongoCursorInterface, batchSize);
+PHP_METHOD(MongoCursorInterface, dead);
+PHP_METHOD(MongoCursorInterface, info);
+
 /*
  * Local variables:
  * tab-width: 4

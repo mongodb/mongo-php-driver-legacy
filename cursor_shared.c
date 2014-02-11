@@ -38,6 +38,7 @@ extern zend_class_entry *mongo_ce_CursorTimeoutException;
 extern zend_class_entry *mongo_ce_DuplicateKeyException;
 extern zend_class_entry *mongo_ce_ExecutionTimeoutException;
 extern zend_class_entry *mongo_ce_Int64;
+extern zend_class_entry *mongo_ce_Exception, *mongo_ce_CursorException;
 
 zend_class_entry *mongo_ce_CursorInterface = NULL;
 
@@ -543,6 +544,95 @@ void mongo_init_MongoCursorInterface(TSRMLS_D)
 	mongo_ce_CursorInterface->interface_gets_implemented = implement_mongo_cursor_interface_handler;
 	zend_class_implements(mongo_ce_CursorInterface TSRMLS_CC, 1, zend_ce_iterator);
 }
+
+/* {{{ MongoCursorInterface MongoCursorInterface->batchSize(void)
+ */
+PHP_METHOD(MongoCursorInterface, batchSize)
+{
+	long l;
+	mongo_cursor *cursor;
+
+	PHP_MONGO_GET_CURSOR(getThis());
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
+		return;
+	}
+
+	cursor->batch_size = l;
+	RETVAL_ZVAL(getThis(), 1, 0);
+}
+/* }}} */
+
+/* {{{ boolean MongoCursorInterface->dead(void)
+ */
+PHP_METHOD(MongoCursorInterface, dead)
+{
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursorInterface);
+
+	RETURN_BOOL(cursor->dead || (cursor->started_iterating && cursor->cursor_id == 0));
+}
+/* }}} */
+
+/* {{{ array MongoCursorInterface->info(void)
+ * Return execution and connection information of the current cursor */
+PHP_METHOD(MongoCursorInterface, info)
+{
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursorInterface);
+	array_init(return_value);
+
+	add_assoc_string(return_value, "ns", cursor->ns, 1);
+	add_assoc_long(return_value, "limit", cursor->limit);
+	add_assoc_long(return_value, "batchSize", cursor->batch_size);
+	add_assoc_long(return_value, "skip", cursor->skip);
+	add_assoc_long(return_value, "flags", cursor->opts);
+	if (cursor->query) {
+		add_assoc_zval(return_value, "query", cursor->query);
+		zval_add_ref(&cursor->query);
+	} else {
+		add_assoc_null(return_value, "query");
+	}
+	if (cursor->fields) {
+		add_assoc_zval(return_value, "fields", cursor->fields);
+		zval_add_ref(&cursor->fields);
+	} else {
+		add_assoc_null(return_value, "fields");
+	}
+
+	add_assoc_bool(return_value, "started_iterating", cursor->started_iterating);
+
+	if (cursor->started_iterating) {
+		char *host;
+		int   port;
+		zval *id_value;
+
+		MAKE_STD_ZVAL(id_value);
+		ZVAL_NULL(id_value);
+		php_mongo_handle_int64(&id_value, cursor->cursor_id, 0 TSRMLS_CC);
+		add_assoc_zval(return_value, "id", id_value);
+
+		add_assoc_long(return_value, "at", cursor->at);
+		add_assoc_long(return_value, "numReturned", cursor->num);
+
+		if (cursor->connection) {
+			add_assoc_string(return_value, "server", cursor->connection->hash, 1);
+
+			mongo_server_split_hash(cursor->connection->hash, &host, &port, NULL, NULL, NULL, NULL, NULL);
+			add_assoc_string(return_value, "host", host, 1);
+			free(host);
+			add_assoc_long(return_value, "port", port);
+			add_assoc_string(return_value, "connection_type_desc", mongo_connection_type(cursor->connection->connection_type), 1);
+		}
+
+		if (cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) {
+			add_assoc_long(return_value, "firstBatchAt", cursor->first_batch_at);
+			add_assoc_long(return_value, "firstBatchNumReturned", cursor->first_batch_num);
+		}
+	}
+}
+/* }}} */
+
 /* }}} */
 
 /*
