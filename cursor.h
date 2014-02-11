@@ -22,7 +22,6 @@ PHP_METHOD(MongoCursor, __construct);
 PHP_METHOD(MongoCursor, getNext);
 PHP_METHOD(MongoCursor, hasNext);
 PHP_METHOD(MongoCursor, limit);
-PHP_METHOD(MongoCursor, batchSize);
 PHP_METHOD(MongoCursor, skip);
 PHP_METHOD(MongoCursor, fields);
 
@@ -34,7 +33,6 @@ PHP_METHOD(MongoCursor, awaitData);
 PHP_METHOD(MongoCursor, partial);
 
 PHP_METHOD(MongoCursor, timeout);
-PHP_METHOD(MongoCursor, dead);
 PHP_METHOD(MongoCursor, snapshot);
 PHP_METHOD(MongoCursor, sort);
 PHP_METHOD(MongoCursor, hint);
@@ -52,7 +50,6 @@ PHP_METHOD(MongoCursor, rewind);
 PHP_METHOD(MongoCursor, valid);
 PHP_METHOD(MongoCursor, reset);
 PHP_METHOD(MongoCursor, count);
-PHP_METHOD(MongoCursor, info);
 
 void mongo_init_MongoCursor(TSRMLS_D);
 #endif

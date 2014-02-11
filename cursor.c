@@ -21,6 +21,7 @@
 #include "mcon/utils.h"
 #include "exceptions/duplicate_key_exception.h"
 #include "exceptions/execution_timeout_exception.h"
+#include "cursor_shared.h"
 
 #ifdef WIN32
 # ifndef int64_t
@@ -330,24 +331,6 @@ PHP_METHOD(MongoCursor, limit)
 }
 /* }}} */
 
-/* {{{ MongoCursor::batchSize
- */
-PHP_METHOD(MongoCursor, batchSize)
-{
-	long l;
-	mongo_cursor *cursor;
-
-	PHP_MONGO_GET_CURSOR(getThis());
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &l) == FAILURE) {
-		return;
-	}
-
-	cursor->batch_size = l;
-	RETVAL_ZVAL(getThis(), 1, 0);
-}
-/* }}} */
-
 /* {{{ MongoCursor::skip
  */
 PHP_METHOD(MongoCursor, skip)
@@ -413,18 +396,6 @@ PHP_METHOD(MongoCursor, maxTimeMS)
 	}
 
 	zval_ptr_dtor(&value);
-}
-/* }}} */
-
-
-/* {{{ MongoCursor::dead
- */
-PHP_METHOD(MongoCursor, dead)
-{
-	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
-
-	RETURN_BOOL(cursor->dead || (cursor->started_iterating && cursor->cursor_id == 0));
 }
 /* }}} */
 
@@ -666,65 +637,6 @@ PHP_METHOD(MongoCursor, hint)
 
 	if (php_mongo_cursor_add_option(cursor, "$hint", index TSRMLS_CC)) {
 		RETURN_ZVAL(getThis(), 1, 0);
-	}
-}
-/* }}} */
-
-/* {{{ array MongoCursor->info()
- * Return execution and connection information of the current cursor */
-PHP_METHOD(MongoCursor, info)
-{
-	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
-	array_init(return_value);
-
-	add_assoc_string(return_value, "ns", cursor->ns, 1);
-	add_assoc_long(return_value, "limit", cursor->limit);
-	add_assoc_long(return_value, "batchSize", cursor->batch_size);
-	add_assoc_long(return_value, "skip", cursor->skip);
-	add_assoc_long(return_value, "flags", cursor->opts);
-	if (cursor->query) {
-		add_assoc_zval(return_value, "query", cursor->query);
-		zval_add_ref(&cursor->query);
-	} else {
-		add_assoc_null(return_value, "query");
-	}
-	if (cursor->fields) {
-		add_assoc_zval(return_value, "fields", cursor->fields);
-		zval_add_ref(&cursor->fields);
-	} else {
-		add_assoc_null(return_value, "fields");
-	}
-
-	add_assoc_bool(return_value, "started_iterating", cursor->started_iterating);
-
-	if (cursor->started_iterating) {
-		char *host;
-		int   port;
-		zval *id_value;
-
-		MAKE_STD_ZVAL(id_value);
-		ZVAL_NULL(id_value);
-		php_mongo_handle_int64(&id_value, cursor->cursor_id, 0 TSRMLS_CC);
-		add_assoc_zval(return_value, "id", id_value);
-
-		add_assoc_long(return_value, "at", cursor->at);
-		add_assoc_long(return_value, "numReturned", cursor->num);
-
-		if (cursor->connection) {
-			add_assoc_string(return_value, "server", cursor->connection->hash, 1);
-
-			mongo_server_split_hash(cursor->connection->hash, &host, &port, NULL, NULL, NULL, NULL, NULL);
-			add_assoc_string(return_value, "host", host, 1);
-			free(host);
-			add_assoc_long(return_value, "port", port);
-			add_assoc_string(return_value, "connection_type_desc", mongo_connection_type(cursor->connection->connection_type), 1);
-		}
-
-		if (cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) {
-			add_assoc_long(return_value, "firstBatchAt", cursor->first_batch_at);
-			add_assoc_long(return_value, "firstBatchNumReturned", cursor->first_batch_num);
-		}
 	}
 }
 /* }}} */
@@ -1352,7 +1264,7 @@ static zend_function_entry MongoCursor_methods[] = {
 
 	/* options */
 	PHP_ME(MongoCursor, limit, arginfo_limit, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, batchSize, arginfo_batchsize, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCursorInterface, batchSize, arginfo_batchsize, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, skip, arginfo_skip, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, fields, arginfo_fields, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, maxTimeMS, arginfo_maxtimems, ZEND_ACC_PUBLIC)
@@ -1379,8 +1291,8 @@ static zend_function_entry MongoCursor_methods[] = {
 	/* query */
 	PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, doQuery, arginfo_no_parameters, ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED)
-	PHP_ME(MongoCursor, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCursorInterface, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCursorInterface, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
 	/* iterator funcs */
 	PHP_ME(MongoCursor, current, arginfo_no_parameters, ZEND_ACC_PUBLIC)
