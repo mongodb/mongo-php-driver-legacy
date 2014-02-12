@@ -110,26 +110,35 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 /* Wrappers for the different collection types */
 static mcon_collection *mongo_rp_collect_primary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- collect primary");
 	return filter_connections(manager, MONGO_NODE_PRIMARY, rp);
 }
 
 static mcon_collection *mongo_rp_collect_primary_and_secondary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- collect primary and secondaries");
 	return filter_connections(manager, MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY, rp);
 }
 
 static mcon_collection *mongo_rp_collect_secondary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- collect secondaries");
 	return filter_connections(manager, MONGO_NODE_SECONDARY, rp);
+}
+
+static mcon_collection *mongo_rp_collect_nearest(mongo_con_manager *manager, mongo_read_preference *rp)
+{
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- collect nearest");
+	return filter_connections(manager, MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY, rp);
 }
 
 static mcon_collection *mongo_rp_collect_any(mongo_con_manager *manager, mongo_read_preference *rp)
 {
-	/* We add the MONGO_NODE_STANDALONE and MONGO_NODE_MONGOS here, because
-	 * that's needed for the MULTIPLE connection type. Right now, that only is
-	 * used for MONGO_RP_NEAREST, and MONGO_RP_NEAREST uses this function (see
-	 * below in mongo_find_all_candidate_servers(). */
-	return filter_connections(manager, MONGO_NODE_STANDALONE | MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY | MONGO_NODE_MONGOS, rp);
+	/* We add the MONGO_NODE_STANDALONE, MONGO_NODE_MONGOS and
+	 * MONGO_NODE_ARBITER here, because that's needed for the STANDALONE or
+	 * MULTIPLE connection type. */
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- collect any");
+	return filter_connections(manager, MONGO_NODE_STANDALONE | MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY | MONGO_NODE_MONGOS | MONGO_NODE_ARBITER, rp);
 }
 
 static mcon_collection* mongo_find_all_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
@@ -148,6 +157,9 @@ static mcon_collection* mongo_find_all_candidate_servers(mongo_con_manager *mana
 			return mongo_rp_collect_secondary(manager, rp);
 			break;
 		case MONGO_RP_NEAREST:
+			return mongo_rp_collect_nearest(manager, rp);
+			break;
+		case MONGO_RP_ANY:
 			return mongo_rp_collect_any(manager, rp);
 			break;
 		default:

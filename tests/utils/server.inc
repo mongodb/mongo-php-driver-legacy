@@ -257,6 +257,16 @@ class MongoShellServer {
         return current($secondaries);
     }
 
+    public static function getAnArbiterNode($auth = false) {
+        $o = new self;
+        $config = $o->getMaster($auth);
+        $o->close();
+    
+        $arbiters = $config[4];
+
+        return current($arbiters);
+    }
+
     public static function getShardInfo() {
         $o = new self;
         $config = $o->getShardConfig();

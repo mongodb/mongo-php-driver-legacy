@@ -421,11 +421,11 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 		return NULL;
 	}
 
-	/* When selecting a *mongos* node, readPreferences make no sense as we
-	 * don't have a "primary" or "secondary" mongos. The mongos nodes aren't
-	 * tagged either.  To pick a mongos we therefore simply pick the "nearest"
-	 * mongos node. */
-	tmp_rp.type = MONGO_RP_NEAREST;
+	/* When selecting a *standalone, *mongos* or *arbiter* node,
+	 * readPreferences make no sense as we don't have a "primary" or
+	 * "secondary". The mongos nodes aren't tagged either.  To pick a node we
+	 * therefore simply pick any one of our nodes.*/
+	tmp_rp.type = MONGO_RP_ANY;
 	tmp_rp.tagsets = NULL;
 	tmp_rp.tagset_count = 0;
 	collection = mongo_find_candidate_servers(manager, &tmp_rp, servers);
