@@ -143,6 +143,22 @@ static PHP_INI_MH(OnUpdateIsMasterInterval)
 	return FAILURE;
 }
 
+#if SIZEOF_LONG == 4
+static PHP_INI_MH(OnUpdateNativeLong)
+{
+	long converted_val;
+
+	if (new_value && is_numeric_string(new_value, new_value_length, &converted_val, NULL, 0) == IS_LONG) {
+		if (converted_val != 0) {
+			php_error_docref(NULL TSRMLS_CC, E_CORE_ERROR, "To prevent data corruption, you are not allowed to turn on the mongo.native_long setting on 32-bit platforms");
+		}
+		return SUCCESS;
+	}
+
+	return FAILURE;
+}
+#endif
+
 /* {{{ PHP_INI */
 PHP_INI_BEGIN()
 	STD_PHP_INI_ENTRY("mongo.default_host", "localhost", PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals)
@@ -150,7 +166,7 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_ENTRY("mongo.chunk_size", "262144", PHP_INI_ALL, OnUpdateLong, chunk_size, zend_mongo_globals, mongo_globals)
 	STD_PHP_INI_ENTRY("mongo.cmd", "$", PHP_INI_ALL, OnUpdateStringUnempty, cmd_char, zend_mongo_globals, mongo_globals)
 #if SIZEOF_LONG == 4
-	STD_PHP_INI_ENTRY("mongo.native_long", "0", PHP_INI_ALL, OnUpdateLong, native_long, zend_mongo_globals, mongo_globals)
+	STD_PHP_INI_ENTRY("mongo.native_long", "0", PHP_INI_ALL, OnUpdateNativeLong, native_long, zend_mongo_globals, mongo_globals)
 #else
 	STD_PHP_INI_ENTRY("mongo.native_long", "1", PHP_INI_ALL, OnUpdateLong, native_long, zend_mongo_globals, mongo_globals)
 #endif

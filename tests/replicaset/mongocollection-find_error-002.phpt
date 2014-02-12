@@ -10,6 +10,7 @@ $rs = MongoShellServer::getReplicasetInfo();
 $mc = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname']));
 
 $c = $mc->selectCollection(dbname(), 'mongocollection-find_error-002');
+$c->drop();
 $c->insert(array('x' => 1), array('w' => 'majority'));
 
 // Use non-matching tags so query has no candidates

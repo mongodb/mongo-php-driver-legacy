@@ -13,6 +13,7 @@ $rs = $server->getReplicaSetConfig();
 $mc = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname']));
 
 $c = $mc->selectCollection(dbname(), 'mongocollection-find_error-001');
+$c->drop();
 echo "DEBUG: "; // Print out some debug info so we can understand what is happening
 
 for($i=1; $i<10; $i++) {

@@ -1466,21 +1466,21 @@ void php_mongo_handle_int64(zval **value, int64_t nr, int force_as_object TSRMLS
 
 		efree(tmp_string);
 	} else {
-		if (MonGlo(native_long)) {
 #if SIZEOF_LONG == 4
-			zend_throw_exception_ex(mongo_ce_CursorException, 23 TSRMLS_CC, "Can not natively represent the long %llu on this platform", (int64_t)nr);
-			zval_ptr_dtor(value);
-			return;
+		zend_throw_exception_ex(mongo_ce_CursorException, 23 TSRMLS_CC, "Cannot natively represent the long %llu on this platform", (int64_t)nr);
+		zval_ptr_dtor(value);
+		return;
 #else
 # if SIZEOF_LONG == 8
+		if (MonGlo(native_long)) {
 			ZVAL_LONG(*value, (long)nr);
+		} else {
+			ZVAL_DOUBLE(*value, (double)nr);
+		}
 # else
 #  error The PHP number size is neither 4 or 8 bytes; no clue what to do with that!
 # endif
 #endif
-		} else {
-			ZVAL_DOUBLE(*value, (double)nr);
-		}
 	}
 }
 

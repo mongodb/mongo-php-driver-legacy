@@ -3,6 +3,8 @@ Test for PHP-639: MongoCursor::slaveOkay() has no effect (property)
 --SKIPIF--
 <?php require_once "tests/utils/replicaset.inc"; ?>
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
+--INI--
+mongo.long_as_object=1
 --FILE--
 <?php
 $mentions = array(); 

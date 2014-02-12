@@ -17,23 +17,11 @@ ini_set('mongo.long_as_object', false);
 $result = $coll->findOne();
 var_dump($result['int32']);
 
-ini_set('mongo.native_long', true);
-ini_set('mongo.long_as_object', false);
-$result = $coll->findOne();
-var_dump($result['int32']);
-
 ini_set('mongo.native_long', false);
-ini_set('mongo.long_as_object', true);
-$result = $coll->findOne();
-var_dump($result['int32']);
-
-ini_set('mongo.native_long', true);
 ini_set('mongo.long_as_object', true);
 $result = $coll->findOne();
 var_dump($result['int32']);
 ?>
 --EXPECT--
-int(1)
-int(1)
 int(1)
 int(1)
