@@ -20,26 +20,11 @@ try {
     printf("%s: %s\n", get_class($e), $e->getMessage());
 }
 
-ini_set('mongo.native_long', true);
-ini_set('mongo.long_as_object', false);
-try {
-    $coll->findOne();
-} catch (Exception $e) {
-    printf("%s: %s\n", get_class($e), $e->getMessage());
-}
-
 ini_set('mongo.native_long', false);
-ini_set('mongo.long_as_object', true);
-$result = $coll->findOne();
-printf("%s(%s)\n", get_class($result['int64']), $result['int64']);
-
-ini_set('mongo.native_long', true);
 ini_set('mongo.long_as_object', true);
 $result = $coll->findOne();
 printf("%s(%s)\n", get_class($result['int64']), $result['int64']);
 ?>
 --EXPECT--
-MongoCursorException: Can not natively represent the long 9223372036854775807 on this platform
-MongoCursorException: Can not natively represent the long 9223372036854775807 on this platform
-MongoInt64(9223372036854775807)
+MongoCursorException: Cannot natively represent the long 9223372036854775807 on this platform
 MongoInt64(9223372036854775807)

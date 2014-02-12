@@ -5,8 +5,9 @@ Test for PHP-792: Memory leak while reading an INT64 on a 32bit platform with na
 <?php require "tests/utils/standalone.inc";?>
 --INI--
 report_memleaks=1
-display_errors=1
+display_errors=0
 mongo.native_long=1
+log_errors=1
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
@@ -28,5 +29,4 @@ try
 }
 ?>
 --EXPECT--
-23
-Can not natively represent the long 8237468276182323423 on this platform
+PHP Fatal error:  PHP Startup: To prevent data corruption, you are not allowed to turn this setting on, on 32-bit platforms in Unknown on line 0
