@@ -150,7 +150,7 @@ static PHP_INI_MH(OnUpdateNativeLong)
 
 	if (new_value && is_numeric_string(new_value, new_value_length, &converted_val, NULL, 0) == IS_LONG) {
 		if (converted_val != 0) {
-			php_error_docref(NULL TSRMLS_CC, E_CORE_ERROR, "To prevent data corruption, you are not allowed to turn this setting on, on 32-bit platforms");
+			php_error_docref(NULL TSRMLS_CC, E_CORE_ERROR, "To prevent data corruption, you are not allowed to turn on the mongo.native_long setting on 32-bit platforms");
 		}
 		return SUCCESS;
 	}

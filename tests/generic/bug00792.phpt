@@ -29,4 +29,4 @@ try
 }
 ?>
 --EXPECT--
-PHP Fatal error:  PHP Startup: To prevent data corruption, you are not allowed to turn this setting on, on 32-bit platforms in Unknown on line 0
+PHP Fatal error:  PHP Startup: To prevent data corruption, you are not allowed to turn on the mongo.native_long setting on 32-bit platforms in Unknown on line 0
