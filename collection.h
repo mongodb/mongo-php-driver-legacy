@@ -38,6 +38,7 @@ PHP_METHOD(MongoCollection, update);
 PHP_METHOD(MongoCollection, remove);
 PHP_METHOD(MongoCollection, find);
 PHP_METHOD(MongoCollection, findOne);
+PHP_METHOD(MongoCollection, createIndex);
 PHP_METHOD(MongoCollection, ensureIndex);
 PHP_METHOD(MongoCollection, deleteIndex);
 PHP_METHOD(MongoCollection, getIndexInfo);

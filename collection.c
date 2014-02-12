@@ -1516,6 +1516,110 @@ PHP_METHOD(MongoCollection, remove)
 }
 /* }}} */
 
+/* {{{ proto bool MongoCollection::createIndex(array keys [, array options])
+   Create the $keys index if it does not already exist */
+PHP_METHOD(MongoCollection, createIndex)
+{
+	zval *keys, *options = NULL;
+	zval *cmd, *indexes, *index_spec, **name, *retval;
+	mongo_collection *c;
+	zend_bool done_name = 0;
+	int original_rp = 0;
+	mongo_db *db;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &keys, &options) == FAILURE) {
+		return;
+	}
+
+	zval_add_ref(&keys);
+
+	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
+	PHP_MONGO_GET_DB(c->parent);
+
+	original_rp = c->read_pref.type;
+
+	/* set up data */
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+
+	add_assoc_zval(cmd, "createIndexes", c->name);
+	zval_add_ref(&c->name);
+
+	/* set up "indexes" wrapper */
+	MAKE_STD_ZVAL(indexes);
+	array_init(indexes);
+	add_assoc_zval(cmd, "indexes", indexes);
+
+	/* set up index fields */
+	MAKE_STD_ZVAL(index_spec);
+	array_init(index_spec);
+	add_next_index_zval(indexes, index_spec);
+
+	/* add index keys */
+	add_assoc_zval(index_spec, "key", keys);
+	Z_ADDREF_P(keys);
+
+	/* process options */
+	if (options) {
+		if (zend_hash_find(HASH_P(options), "name", strlen("name") + 1, (void**)&name) == SUCCESS) {
+			if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
+				zval_ptr_dtor(&cmd);
+				zval_ptr_dtor(&indexes);
+				zval_ptr_dtor(&index_spec);
+				zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
+				return;
+			}
+			done_name = 1;
+			add_assoc_zval(index_spec, "name", *name);
+			Z_ADDREF_PP(name);
+		}
+	}
+
+	/* make sure we set the name, based on the keys, if no name was part of options */
+	if (!done_name) {
+		char *key_str;
+		int   key_str_len;
+
+		key_str = to_index_string(keys, &key_str_len TSRMLS_CC);
+		if (!key_str) {
+			zval_ptr_dtor(&cmd);
+			zval_ptr_dtor(&indexes);
+			zval_ptr_dtor(&index_spec);
+			return;
+		}
+
+		if (key_str_len > MAX_INDEX_NAME_LEN) {
+			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", key_str_len, MAX_INDEX_NAME_LEN);
+			efree(key_str);
+			zval_ptr_dtor(&cmd);
+			zval_ptr_dtor(&indexes);
+			zval_ptr_dtor(&index_spec);
+			return;
+		}
+
+		add_assoc_stringl(index_spec, "name", key_str, key_str_len, 0);
+	}
+
+	/* Force primary write */
+
+	if (c->read_pref.type > MONGO_RP_PRIMARY_PREFERRED) {
+		mongo_manager_log(MonGlo(manager), MLOG_RS, MLOG_WARN, "Forcing createIndex to run on primary");
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Forcing createIndex to run on primary");
+		c->read_pref.type = MONGO_RP_PRIMARY;
+	}
+
+	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0 TSRMLS_CC);
+
+	c->read_pref.type = original_rp;
+	zval_ptr_dtor(&cmd);
+
+	if (php_mongo_trigger_error_on_command_failure(NULL, retval TSRMLS_CC) == SUCCESS) {
+		RETVAL_ZVAL(retval, 0, 1);
+	}
+}
+/* }}} */
+
 /* {{{ proto bool MongoCollection::ensureIndex(mixed keys [, array options])
    Create the $keys index if it does not already exist */
 PHP_METHOD(MongoCollection, ensureIndex)
@@ -2356,6 +2460,11 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_createIndex, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, array_of_keys)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_ensureIndex, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, key_OR_array_of_keys)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
@@ -2417,6 +2526,7 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, findOne, arginfo_find_one, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, findAndModify, arginfo_findandmodify, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, commandCursor, arginfo_commandcursor, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCollection, createIndex, arginfo_createIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, ensureIndex, arginfo_ensureIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, deleteIndex, arginfo_deleteIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, deleteIndexes, arginfo_no_parameters, ZEND_ACC_PUBLIC)
