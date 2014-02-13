@@ -6,13 +6,26 @@ Test for PHP-978: Standalone connection to arbiter fails
 <?php
 require_once 'tests/utils/server.inc';
 
+$arb = MongoShellServer::getAnArbiterNode();
+
+echo "CREATING CONNECTION\n";
+$m = new MongoClient("mongodb://$arb");
 MongoLog::setModule( MongoLog::RS );
 MongoLog::setLevel( MongoLog::INFO );
 set_error_handler('foo'); function foo($a, $b) { echo $b, "\n"; };
 
-$arb = MongoShellServer::getAnArbiterNode();
-$m = new MongoClient("mongodb://$arb");
+echo "INSERT DATA\n";
+try {
+	$m->selectDb(dbname())->bug978->insert(array("test" => 1));
+} catch (MongoCursorException $e) {
+	echo "\n", $e->getCode(), "\n";
+	echo $e->getMessage(), "\n\n";
+}
+
+echo "RUNNING COMMAND\n";
 $result = $m->admin->command(array('replSetGetStatus' => 1));
+
+echo "DONE WITH COMMAND\n";
 if (!array_key_exists('ok', $result) || $result['ok'] == 0) {
 	echo "error\n";
 	var_dump($result);
@@ -21,8 +34,16 @@ if (!array_key_exists('ok', $result) || $result['ok'] == 0) {
 }
 ?>
 --EXPECTF--
+CREATING CONNECTION
+INSERT DATA
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: ARBITER, socket: %d, ping: 0, hash: %s:%d;-;.;%d
+
+10058
+%s:%d: not master
+
+RUNNING COMMAND
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: ARBITER, socket: %d, ping: 0, hash: %s:%d;-;.;%d
+DONE WITH COMMAND
 all is good
