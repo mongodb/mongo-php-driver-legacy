@@ -61,7 +61,7 @@ array(1) {
 }
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; array given in %s on line %d
-%d: 127.0.0.1:30000: bad index key pattern { d: [ 1 ] }
+%d: 127.0.0.1:30000: bad index key pattern { d: [ 1 ] }%S
 array(1) {
   ["d"]=>
   array(1) {
@@ -71,7 +71,7 @@ array(1) {
 }
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; object given in %s on line %d
-%d: 127.0.0.1:30000: bad index key pattern { e: {} }
+%d: 127.0.0.1:30000: bad index key pattern { e: {} }%S
 array(1) {
   ["e"]=>
   object(stdClass)#%d (0) {
