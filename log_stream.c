@@ -21,6 +21,7 @@
 #include "mcon/manager.h"
 #include "php_mongo.h"
 #include "bson.h"
+#include "cursor_shared.h"
 
 #include <php.h>
 #include <main/php_streams.h>
@@ -297,7 +298,7 @@ void mongo_log_stream_query(mongo_connection *connection, mongo_cursor *cursor T
 
 		add_assoc_long(info, "request_id", cursor->send.request_id);
 		add_assoc_long(info, "skip", cursor->skip);
-		add_assoc_long(info, "limit", mongo_get_limit(cursor));
+		add_assoc_long(info, "limit", cursor->limit);
 		add_assoc_long(info, "options", cursor->opts);
 		add_assoc_long(info, "cursor_id", cursor->cursor_id);
 

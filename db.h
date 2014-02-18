@@ -29,7 +29,7 @@ zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_
 /* Runs a MongoDB command.
  * NOTE: Exceptions are cleared, and the entire result document/error is returned.
  * On invalid database name or no servers available, returns NULL and raises an exception. */
-zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int cursor_allowed TSRMLS_DC);
+zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int cursor_allowed, mongo_connection **used_connection TSRMLS_DC);
 
 PHP_METHOD(MongoDB, __construct);
 PHP_METHOD(MongoDB, __toString);

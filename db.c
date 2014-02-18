@@ -23,6 +23,7 @@
 #include "db.h"
 #include "collection.h"
 #include "cursor.h"
+#include "cursor_shared.h"
 #include "gridfs/gridfs.h"
 #include "types/code.h"
 #include "types/db_ref.h"
@@ -361,7 +362,7 @@ PHP_METHOD(MongoDB, setProfilingLevel)
 	array_init(cmd);
 	add_assoc_long(cmd, "profile", level);
 
-	cmd_return = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0 TSRMLS_CC);
+	cmd_return = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 
@@ -399,7 +400,7 @@ PHP_METHOD(MongoDB, drop)
 	array_init(cmd);
 	add_assoc_long(cmd, "dropDatabase", 1);
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 
@@ -426,7 +427,7 @@ PHP_METHOD(MongoDB, repair)
 	add_assoc_bool(cmd, "preserveClonedFilesOnFailure", cloned);
 	add_assoc_bool(cmd, "backupOriginalFiles", original);
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 
@@ -482,7 +483,7 @@ PHP_METHOD(MongoDB, createCollection)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	temp = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0 TSRMLS_CC);
+	temp = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	if (temp) {
@@ -726,7 +727,7 @@ PHP_METHOD(MongoDB, execute)
 	}
 
 	PHP_MONGO_GET_DB(getThis());
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	if (retval) {
@@ -771,7 +772,7 @@ PHP_METHOD(MongoDB, command)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 	if (retval) {
 		RETVAL_ZVAL(retval, 0, 1);
 	}
@@ -782,7 +783,7 @@ PHP_METHOD(MongoDB, command)
  *
  * This function can return NULL but *only* if an exception is set. So please
  * check for NULL and/or EG(exception) in the calling function. */
-zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int cursor_allowed TSRMLS_DC)
+zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int is_cmd_cursor, mongo_connection **used_connection TSRMLS_DC)
 {
 	zval *temp, *cursor, *ns, *retval;
 	mongo_cursor *cursor_tmp;
@@ -823,9 +824,11 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 	/* limit: all commands need to have set a limit of -1 */
 	php_mongo_cursor_set_limit(cursor_tmp, -1);
 
-	/* force NumberLong to be returned as an object, but only for command cursors */
-	if (cursor_allowed) {
-		php_mongo_cursor_force_long_as_object(cursor_tmp);
+	/* Mark as a command cursor if requested. If done, this triggers special
+	 * BSON conversion to make sure that the cursor ID is represented as
+	 * MongoInt64. */
+	if (is_cmd_cursor) {
+		php_mongo_cursor_force_command_cursor(cursor_tmp);
 	}
 
 	zval_ptr_dtor(&temp);
@@ -861,42 +864,16 @@ zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_pre
 	MONGO_METHOD(MongoCursor, getNext, retval, cursor);
 	clear_exception(retval TSRMLS_CC);
 
+	/* Before we destroy the cursor, we figure out which connection was used.
+	 * Yes, this is quite ugly but necessary for cursor commands. */
+	if (used_connection) {
+		*used_connection = cursor_tmp->connection;
+	}
+
 	zend_objects_store_del_ref(cursor TSRMLS_CC);
 	zval_ptr_dtor(&cursor);
 
 	return retval;
-}
-/* }}} */
-
-/* {{{ Command cursor helpers */
-static int php_mongodb_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
-{
-	zval **cursor = NULL, **id = NULL;
-	zval  *id_value;
-
-	if (Z_TYPE_P(document) != IS_ARRAY) {
-		return FAILURE;
-	}
-
-	if (zend_hash_find(Z_ARRVAL_P(document), "cursor", sizeof("cursor"), (void **)&cursor) == FAILURE) {
-		return FAILURE;
-	}
-	if (Z_TYPE_PP(cursor) != IS_ARRAY) {
-		return FAILURE;
-	}
-	if (zend_hash_find(Z_ARRVAL_PP(cursor), "id", sizeof("id"), (void **)&id) == FAILURE) {
-		return FAILURE;
-	}
-	if (Z_TYPE_PP(id) != IS_OBJECT || Z_OBJCE_PP(id) != mongo_ce_Int64) {
-		return FAILURE;
-	}
-	id_value = zend_read_property(mongo_ce_Int64, *id, "value", strlen("value"), NOISY TSRMLS_CC);
-	if (Z_TYPE_P(id_value) != IS_STRING) {
-		return FAILURE;
-	}
-	*cursor_id = strtoll(Z_STRVAL_P(id_value), NULL, 10);
-
-	return SUCCESS;
 }
 /* }}} */
 
@@ -1020,7 +997,7 @@ static void run_err(char *cmd, zval *return_value, zval *dbobj TSRMLS_DC)
 	add_assoc_long(command, cmd, 1);
 
 	PHP_MONGO_GET_DB(dbobj);
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), command, NULL, 0 TSRMLS_CC);
+	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), command, NULL, 0, NULL TSRMLS_CC);
 	clear_exception(return_value TSRMLS_CC);
 
 	zval_ptr_dtor(&command);

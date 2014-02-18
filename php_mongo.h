@@ -464,7 +464,14 @@ typedef struct {
 	/* Options that deal with changes to what the cursor documents return. For
 	 * example forcing longs to be returned as objects */
 	int cursor_options;
+
+	/* Fields that are only used for command cursors */
+	zval *first_batch;     /* The first batch of results */
+	int   first_batch_at;  /* The current cursor position in the first batch */
+	int   first_batch_num; /* The number of entries in the first batch */
 } mongo_cursor;
+
+typedef mongo_cursor mongo_command_cursor;
 
 typedef struct {
 	zend_object std;
@@ -514,7 +521,6 @@ PHP_FUNCTION(bson_decode);
 
 void mongo_init_MongoDB(TSRMLS_D);
 void mongo_init_MongoCollection(TSRMLS_D);
-void mongo_init_MongoCursor(TSRMLS_D);
 
 void mongo_init_MongoGridFS(TSRMLS_D);
 void mongo_init_MongoGridFSFile(TSRMLS_D);
@@ -663,6 +669,8 @@ extern zend_module_entry mongo_module_entry;
  * 24: invalid code length for key "%s"
  * 28: recv_header() (abs()) recv_data() stream handlers error (timeout)
  * 29: Unknown query/get_more failure
+ * 30: Cursor command response does not have the expected structure (no ID)
+ * 31: Cursor command response does not have the expected structure (no first batch)
  *
  * MongoGridFSException:
  * 0: 

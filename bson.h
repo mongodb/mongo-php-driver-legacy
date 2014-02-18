@@ -88,9 +88,16 @@ int resize_buf(mongo_buffer*, int);
 
 int zval_to_bson(mongo_buffer*, HashTable*, int, int max_document_size TSRMLS_DC);
 
+typedef struct {
+	int level;
+	int flag_cmd_cursor_as_int64;
+} mongo_bson_conversion_options;
+
+#define MONGO_BSON_CONVERSION_OPTIONS_INIT { 0, 0 }
+
 /* Converts a BSON document to a zval. The conversions options are a bitmask
  * of the BSON_OPT_* constants */
-char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_DC);
+char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC);
 
 /* Initialize buffer to contain "\0", so mongo_buf_append will start appending
  * at the beginning. */
@@ -100,10 +107,6 @@ void mongo_buf_init(char *dest);
  * enough to append the string and the string must be null-terminated. This
  * will not work for strings containing null characters (e.g., BSON). */
 void mongo_buf_append(char *dest, char *piece);
-
-/* Returns the actual limit to send over the wire, based on batch size, current
- * position, and user limit */
-int mongo_get_limit(mongo_cursor *cursor);
 
 void php_mongo_handle_int64(zval **value, int64_t nr, int force_as_object TSRMLS_DC);
 

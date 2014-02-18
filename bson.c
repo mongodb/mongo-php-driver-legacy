@@ -27,6 +27,7 @@
 #include "bson.h"
 #include "types/date.h"
 #include "types/id.h"
+#include "cursor_shared.h"
 
 #define CHECK_BUFFER_LEN(len) \
 	do { \
@@ -801,7 +802,7 @@ int php_mongo_write_query(mongo_buffer *buf, mongo_cursor *cursor, int max_docum
 	cursor->send.request_id = header.request_id;
 
 	php_mongo_serialize_int(buf, cursor->skip);
-	php_mongo_serialize_int(buf, mongo_get_limit(cursor));
+	php_mongo_serialize_int(buf, php_mongo_calculate_next_request_limit(cursor));
 
 	if (zval_to_bson(buf, HASH_P(cursor->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE || EG(exception)) {
 		return FAILURE;
@@ -846,36 +847,14 @@ int php_mongo_write_get_more(mongo_buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 	CREATE_RESPONSE_HEADER(buf, cursor->ns, cursor->recv.request_id, OP_GET_MORE);
 	cursor->send.request_id = header.request_id;
 
-	php_mongo_serialize_int(buf, mongo_get_limit(cursor));
+	php_mongo_serialize_int(buf, php_mongo_calculate_next_request_limit(cursor));
 	php_mongo_serialize_long(buf, cursor->cursor_id);
 
 	return php_mongo_serialize_size(buf->start + start, buf, cursor->connection->max_message_size TSRMLS_CC);
 }
 
 
-int mongo_get_limit(mongo_cursor *cursor)
-{
-	int lim_at;
-
-	if (cursor->limit < 0) {
-		return cursor->limit;
-	} else if (cursor->batch_size < 0) {
-		return cursor->batch_size;
-	}
-
-	lim_at = cursor->limit > cursor->batch_size ? cursor->limit - cursor->at : cursor->limit;
-
-	if (cursor->batch_size && (!lim_at || cursor->batch_size <= lim_at)) {
-		return cursor->batch_size;
-	} else if (lim_at && (!cursor->batch_size || lim_at < cursor->batch_size)) {
-		return lim_at;
-	}
-
-	return 0;
-}
-
-
-char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_DC)
+char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
 {
 	/* buf_start is used for debugging
 	 *
@@ -975,7 +954,15 @@ char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_D
 			case BSON_OBJECT:
 			case BSON_ARRAY: {
 				array_init(value);
-				buf = bson_to_zval(buf, Z_ARRVAL_P(value), conversion_options TSRMLS_CC);
+
+				if (options) {
+					options->level++;
+				}
+				buf = bson_to_zval(buf, Z_ARRVAL_P(value), options TSRMLS_CC);
+				if (options) {
+					options->level--;
+				}
+
 				if (EG(exception)) {
 					zval_ptr_dtor(&value);
 					return 0;
@@ -1054,11 +1041,16 @@ char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_D
 			}
 
 			case BSON_LONG: {
+				int force_as_object = 0;
+
+				if (options && options->flag_cmd_cursor_as_int64 && options->level == 1 && strcmp(name, "id") == 0) {
+					force_as_object = 1;
+				}
 				CHECK_BUFFER_LEN(INT_64);
 				php_mongo_handle_int64(
 					&value,
 					MONGO_64(*((int64_t*)buf)),
-					(conversion_options & BSON_OPT_FORCE_LONG_AS_OBJECT) ? 1 : 0
+					force_as_object
 					TSRMLS_CC
 				);
 				buf += INT_64;
@@ -1146,7 +1138,7 @@ char* bson_to_zval(char *buf, HashTable *result, int conversion_options TSRMLS_D
 					MAKE_STD_ZVAL(zcope);
 					array_init(zcope);
 
-					buf = bson_to_zval(buf, HASH_P(zcope), conversion_options TSRMLS_CC);
+					buf = bson_to_zval(buf, HASH_P(zcope), options TSRMLS_CC);
 					if (EG(exception)) {
 						zval_ptr_dtor(&zcope);
 						return 0;
