@@ -1,4 +1,4 @@
-<?php // vim: set ft=php
+<?php
 
 class MongoNotifications {
     public $reqs = array();
@@ -102,3 +102,5 @@ function dump_writes($mn) {
         echo "\n\n\n";
     }
 }
+
+// vim: set ft=php
