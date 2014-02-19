@@ -735,8 +735,8 @@ int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection 
 	retval = send_message(this_ptr, connection, buf, write_options, return_value TSRMLS_CC);
 
 	return retval;
-
 }
+
 void mongo_convert_write_api_return_to_weirdness(zval *return_value, int insert, int write_concern TSRMLS_DC)
 {
 	zval **ok, **err, **errmsg;
@@ -766,6 +766,7 @@ void mongo_convert_write_api_return_to_weirdness(zval *return_value, int insert,
 		}
 	}
 }
+
 void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options, mongo_server_options *server_options, zval *collection TSRMLS_DC)
 {
 	if (write_options->fsync == -1) {
@@ -815,6 +816,7 @@ void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options
 	}
 
 }
+
 int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_write_options TSRMLS_DC) {
 	if (z_write_options && Z_TYPE_P(z_write_options) == IS_ARRAY) {
 		zval **timeout_pp;
@@ -831,7 +833,6 @@ int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_
 
 	return server_options->socketTimeoutMS;
 }
-
 
 /* Returns 0 on failure, throwing exception?
  * Returns 1 on success, setting zval return_value to the return document
