@@ -86,8 +86,12 @@ void php_mongo_api_write_options_from_zval(php_mongodb_write_options *write_opti
 		else if (zend_binary_strcasecmp(key, index_key_len, "safe", strlen("safe") + 1) == 0) {
 			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
 			if (Z_TYPE_PP(data) == IS_LONG || Z_TYPE_PP(data) == IS_BOOL) {
-				write_options->write_concern.w = Z_LVAL_PP(data);
-				write_options->wtype = 1;
+				if (write_options->wtype == 1 && write_options->write_concern.w > Z_LVAL_PP(data)) {
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Using w=%d rather then w=%ld as suggested by deprecated 'safe' value", write_options->write_concern.w, Z_LVAL_PP(data));
+				} else {
+					write_options->write_concern.w = Z_LVAL_PP(data);
+					write_options->wtype = 1;
+				}
 			} else {
 				convert_to_string_ex(data);
 				write_options->write_concern.wstring = Z_STRVAL_PP(data);
