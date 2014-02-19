@@ -780,7 +780,6 @@ void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options
 
 		write_options->wtimeout = server_options->default_wtimeout;
 
-		/* FIXME2.0: Kill me dead */
 		wtimeout_prop = zend_read_property(mongo_ce_Collection, collection, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
 		convert_to_long(wtimeout_prop);
 		if (Z_LVAL_P(wtimeout_prop) != PHP_MONGO_DEFAULT_WTIMEOUT) {
@@ -789,7 +788,6 @@ void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options
 	}
 
 	if (write_options->wtype == -1) {
-		/* FIXME2.0: Kill me dead */
 		zval *w_prop = zend_read_property(mongo_ce_Collection, collection, "w", strlen("w"), NOISY TSRMLS_CC);
 
 		if (Z_TYPE_P(w_prop) == IS_LONG || Z_TYPE_P(w_prop) == IS_BOOL) {
