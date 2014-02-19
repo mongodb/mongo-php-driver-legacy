@@ -876,6 +876,7 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 	efree(buf.start);
 
 	if (retval != 0) {
+		mongo_manager_connection_deregister(manager, connection);
 		/* Exception already thrown */
 		return 0;
 	}
