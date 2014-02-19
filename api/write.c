@@ -109,7 +109,8 @@ void php_mongo_api_write_options_from_zval(php_mongodb_write_options *write_opti
 			}
 		}
 	}
-} /* }}} */
+}
+/* }}} */
 
 /* Converts a php_mongodb_write_options to a zval representation of the structure */
 void php_mongo_api_write_options_to_zval(php_mongodb_write_options *write_options, zval *z_write_options) /* {{{ */
@@ -143,7 +144,8 @@ void php_mongo_api_write_options_to_zval(php_mongodb_write_options *write_option
 
 	add_assoc_zval(z_write_options, "writeConcern", write_concern);
 
-} /* }}} */
+}
+/* }}} */
 
 /* Bootstraps a Write API Insert message with its write concerns.
  * Returns the position of the root element, needed to backtrack and serialize
@@ -151,7 +153,6 @@ void php_mongo_api_write_options_to_zval(php_mongodb_write_options *write_option
 int php_mongo_api_insert_start(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
 {
 	int container_pos;
-
 
 	/* Standard Message Header */
 	buf->pos += INT_32;                                 /* skip messageLength */
@@ -278,7 +279,6 @@ int php_mongo_api_insert_single(mongo_buffer *buf, char *ns, char *collection, z
 }
 /* }}}  */
 
-
 /* Returns 0 on success
  * Returns 1 on failure, and sets EG(exception) */
 int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, int socket_read_timeout, int request_id, zval **retval TSRMLS_DC) /* {{{  */
@@ -290,7 +290,6 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 	char              *error_message;
 	mongo_msg_header   msg_header;
 	php_mongodb_reply  dbreply;
-
 
 	status = manager->recv_header(connection, options, socket_read_timeout, buf, REPLY_HEADER_LEN, &error_message);
 	if (status < 0) {
@@ -312,7 +311,6 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 	dbreply.cursor_id      = MONGO_64(*(int64_t*)(buf + INT_32*5));
 	dbreply.start          = MONGO_32(*(int*)(buf + INT_32*5 + INT_64));
 	dbreply.returned       = MONGO_32(*(int*)(buf + INT_32*6 + INT_64));
-
 
 #if MONGO_PHP_STREAMS
 	mongo_log_stream_write_reply(connection, &msg_header, &dbreply TSRMLS_CC);
@@ -351,7 +349,6 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 }
 /* }}} */
 
-
 /* Internal helper: Writes the php_mongodb_write_options options to the buffer */
 static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{  */
 {
@@ -362,7 +359,6 @@ static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write
 		php_mongo_serialize_key(buf, "ordered", strlen("ordered"), 0 TSRMLS_CC);
 		php_mongo_serialize_bool(buf, write_options->ordered);
 	}
-
 
 	php_mongo_set_type(buf, BSON_OBJECT);
 	php_mongo_serialize_key(buf, "writeConcern", strlen("writeConcern"), NO_PREP TSRMLS_CC);
@@ -434,7 +430,8 @@ static void php_mongo_api_raise_epic_write_failure_exception(mongo_connection *c
 	else {
 		php_mongo_api_throw_exception_from_server_code(connection, 0, "Unknown error occurred, did not get an error message or code", document TSRMLS_CC);
 	}
-} /* }}} */
+}
+/* }}} */
 
 /* Internal helper: Called from php_mongo_api_raise_exception_on_write_failure() to raise maybe multiple exceptions */
 static void php_mongo_api_raise_exception_it_array(mongo_connection *connection, zval **z_write_errors, zval *document TSRMLS_DC) /* {{{ */
@@ -465,7 +462,8 @@ static void php_mongo_api_raise_exception_it_array(mongo_connection *connection,
 		php_mongo_api_throw_exception_from_server_code(connection, Z_LVAL_PP(code), Z_STRVAL_PP(errmsg), document TSRMLS_CC);
 		zend_hash_move_forward(write_errors);
 	}
-} /* }}} */
+}
+/* }}} */
 
 /* Internal helper: Raises an exception if needed
  * Returns 0 when write succeeded (ok=1)
@@ -519,7 +517,8 @@ static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *conn
 
 	return 0;
 
-} /* }}} */
+}
+/* }}} */
 
 /* Internal helper: raises exception based on the server error code */
 static void php_mongo_api_throw_exception_from_server_code(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC) /* {{{ */
