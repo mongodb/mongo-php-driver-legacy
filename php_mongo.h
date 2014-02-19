@@ -595,7 +595,6 @@ extern zend_module_entry mongo_module_entry;
  * 1: zero-length keys are not allowed, did you use $ with double quotes?
  * 2: characters not allowed in key: <key>
  * 3: insert too large: <size>, max: 16000000
- * 4: no elements in doc
  * 5: size of BSON doc is <size> bytes, max 4MB
  * 6: no documents given
  * 7: MongoCollection::group takes an array, object, or MongoCode key

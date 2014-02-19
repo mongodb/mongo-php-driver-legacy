@@ -14,12 +14,6 @@ var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ) ) );
 var_dump( $c->update( array( '_id' => 'yeah' ), array( 'value' => array( '$set' => 'yes!' ) ) ) );
 var_dump( $c->remove( array( '_id' => 'yeah' ) ) );
 
-try {
-	var_dump( $c->insert( array() ) );
-} catch ( Exception $e ) {
-	echo "Exception: ", get_class( $e ) , ": ", $e->getMessage(), "\n";
-}
-
 var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ) ) );
 var_dump( $c->update( array( '_id' => 'yeah' ), array() ) );
 var_dump( $c->findOne( array( '_id' => 'yeah' ) ) );
@@ -42,7 +36,6 @@ dump_these_keys($ret, array("n", "err", "ok"));
 bool(true)
 bool(true)
 bool(true)
-Exception: MongoException: no elements in doc
 bool(true)
 bool(true)
 array(1) {

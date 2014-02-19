@@ -18,12 +18,6 @@ var_dump($ret);
 $ret = $c->remove( array( '_id' => 'yeah' ) );
 var_dump($ret);
 
-try {
-	var_dump( $c->insert( array() ) );
-} catch ( Exception $e ) {
-	echo "Exception: ", get_class( $e ) , ": ", $e->getMessage(), "\n";
-}
-
 $ret = $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ) );
 var_dump($ret);
 $ret = $c->update( array( '_id' => 'yeah' ), array() );
@@ -53,7 +47,6 @@ dump_these_keys($ret, array("n", "err", "ok"));
 bool(true)
 bool(true)
 bool(true)
-Exception: MongoException: no elements in doc
 bool(true)
 bool(true)
 array(1) {
