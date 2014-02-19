@@ -88,7 +88,7 @@ for($i = 1; $i <= 10; $i++) {
 Inserting#1
 array(2) {
   ["ok"]=>
-  int(1)
+  float(1)
   ["n"]=>
   int(1)
 }
@@ -115,7 +115,7 @@ Retrieving the document#1 from DB resulted in the same doc as we inserted too :D
 Inserting#2
 array(2) {
   ["ok"]=>
-  int(1)
+  float(1)
   ["n"]=>
   int(1)
 }
@@ -142,7 +142,7 @@ Retrieving the document#2 from DB resulted in the same doc as we inserted too :D
 Inserting#3
 array(2) {
   ["ok"]=>
-  int(1)
+  float(1)
   ["n"]=>
   int(1)
 }
@@ -169,7 +169,7 @@ Retrieving the document#3 from DB resulted in the same doc as we inserted too :D
 Inserting#4
 array(2) {
   ["ok"]=>
-  int(1)
+  float(1)
   ["n"]=>
   int(1)
 }
@@ -196,7 +196,7 @@ Retrieving the document#4 from DB resulted in the same doc as we inserted too :D
 Inserting#5
 array(2) {
   ["ok"]=>
-  int(1)
+  float(1)
   ["n"]=>
   int(1)
 }
@@ -223,7 +223,7 @@ Retrieving the document#5 from DB resulted in the same doc as we inserted too :D
 Inserting#6
 array(2) {
   ["ok"]=>
-  int(1)
+  float(1)
   ["n"]=>
   int(1)
 }
@@ -250,7 +250,7 @@ Retrieving the document#6 from DB resulted in the same doc as we inserted too :D
 Inserting#7
 array(2) {
   ["ok"]=>
-  int(1)
+  float(1)
   ["n"]=>
   int(1)
 }
@@ -277,7 +277,7 @@ Retrieving the document#7 from DB resulted in the same doc as we inserted too :D
 Inserting#8
 array(2) {
   ["ok"]=>
-  int(1)
+  float(1)
   ["n"]=>
   int(1)
 }
@@ -304,7 +304,7 @@ Retrieving the document#8 from DB resulted in the same doc as we inserted too :D
 Inserting#9
 array(2) {
   ["ok"]=>
-  int(1)
+  float(1)
   ["n"]=>
   int(1)
 }
@@ -331,7 +331,7 @@ Retrieving the document#9 from DB resulted in the same doc as we inserted too :D
 Inserting#10
 array(2) {
   ["ok"]=>
-  int(1)
+  float(1)
   ["n"]=>
   int(1)
 }
