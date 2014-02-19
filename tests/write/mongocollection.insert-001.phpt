@@ -35,7 +35,7 @@ for($i = 1; $i <= 10; $i++) {
     $opts = array(
         "ordered"  => "somehow",
         "w"        => 1,
-        "wtimeout" => 1000,
+        "wTimeoutMS" => 1000,
     );
 
     $org_opts = $opts;
@@ -90,7 +90,7 @@ array(2) {
   ["ok"]=>
   float(1)
   ["n"]=>
-  int(1)
+  int(0)
 }
 Inserted document#1 had the same ID :)
 Inserted document#1 was the same as we tried to insert
@@ -117,7 +117,7 @@ array(2) {
   ["ok"]=>
   float(1)
   ["n"]=>
-  int(1)
+  int(0)
 }
 Inserted document#2 had the same ID :)
 Inserted document#2 was the same as we tried to insert
@@ -144,7 +144,7 @@ array(2) {
   ["ok"]=>
   float(1)
   ["n"]=>
-  int(1)
+  int(0)
 }
 Inserted document#3 had the same ID :)
 Inserted document#3 was the same as we tried to insert
@@ -171,7 +171,7 @@ array(2) {
   ["ok"]=>
   float(1)
   ["n"]=>
-  int(1)
+  int(0)
 }
 Inserted document#4 had the same ID :)
 Inserted document#4 was the same as we tried to insert
@@ -198,7 +198,7 @@ array(2) {
   ["ok"]=>
   float(1)
   ["n"]=>
-  int(1)
+  int(0)
 }
 Inserted document#5 had the same ID :)
 Inserted document#5 was the same as we tried to insert
@@ -225,7 +225,7 @@ array(2) {
   ["ok"]=>
   float(1)
   ["n"]=>
-  int(1)
+  int(0)
 }
 Inserted document#6 had the same ID :)
 Inserted document#6 was the same as we tried to insert
@@ -252,7 +252,7 @@ array(2) {
   ["ok"]=>
   float(1)
   ["n"]=>
-  int(1)
+  int(0)
 }
 Inserted document#7 had the same ID :)
 Inserted document#7 was the same as we tried to insert
@@ -279,7 +279,7 @@ array(2) {
   ["ok"]=>
   float(1)
   ["n"]=>
-  int(1)
+  int(0)
 }
 Inserted document#8 had the same ID :)
 Inserted document#8 was the same as we tried to insert
@@ -306,7 +306,7 @@ array(2) {
   ["ok"]=>
   float(1)
   ["n"]=>
-  int(1)
+  int(0)
 }
 Inserted document#9 had the same ID :)
 Inserted document#9 was the same as we tried to insert
@@ -333,7 +333,7 @@ array(2) {
   ["ok"]=>
   float(1)
   ["n"]=>
-  int(1)
+  int(0)
 }
 Inserted document#10 had the same ID :)
 Inserted document#10 was the same as we tried to insert
