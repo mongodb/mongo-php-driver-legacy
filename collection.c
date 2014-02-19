@@ -737,8 +737,32 @@ int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection 
 	return retval;
 
 }
-void mongo_convert_write_api_return_to_weirdness(zval *return_value) {
-	/* FIXME: Add random crap to the return value */
+void mongo_convert_write_api_return_to_weirdness(zval *return_value, int insert, int write_concern)
+{
+	zval **ok, **err, **errmsg;
+
+	if (write_concern < 1) {
+		convert_to_boolean(return_value);
+		return;
+	}
+	if (SUCCESS == zend_hash_find(HASH_P(return_value), "ok", strlen("ok") + 1, (void**) &ok) && Z_TYPE_PP(ok) != IS_DOUBLE) {
+		convert_to_double(*ok);
+	}
+	if (FAILURE == zend_hash_find(HASH_P(return_value), "err", strlen("err") + 1, (void**) &err)) {
+		add_assoc_null(return_value, "err");
+	}
+	if (FAILURE == zend_hash_find(HASH_P(return_value), "errmsg", strlen("errmsg") + 1, (void**) &errmsg)) {
+		add_assoc_null(return_value, "errmsg");
+	}
+	if (insert) {
+		zval **n;
+
+		/* "n" was always 0 for OP_INSERT gle */
+		if (SUCCESS == zend_hash_find(HASH_P(return_value), "n", strlen("n") + 1, (void**) &n)) {
+			convert_to_long(*n);
+			Z_LVAL_PP(n) = 0;
+		}
+	}
 }
 void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options, mongo_server_options *server_options, zval *collection TSRMLS_DC)
 {
