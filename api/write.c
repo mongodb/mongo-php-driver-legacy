@@ -39,39 +39,70 @@ static void php_mongo_api_throw_exception_from_server_code(mongo_connection *con
 
 /* Converts a zval of $options (passed to ->insert(), ->update(), ...) and creates a
  * php_mongodb_write_options from it */
-void php_mongo_api_write_options_from_zval(php_mongodb_write_options *write_options, zval *z_write_options) /* {{{ */
+void php_mongo_api_write_options_from_zval(php_mongodb_write_options *write_options, zval *z_write_options TSRMLS_DC) /* {{{ */
 {
-	zval **ordered, **fsync, **j, **wtimeout, **w;
+	HashTable *hindex;
+	HashPosition pointer;
+	zval **data;
+	char *key;
+	uint index_key_len;
+	ulong index;
 
-	if (!z_write_options || Z_TYPE_P(z_write_options) != IS_ARRAY) {
+	if (!z_write_options) {
 		return;
 	}
 
-	if (zend_hash_find(Z_ARRVAL_P(z_write_options), "ordered", strlen("ordered") + 1, (void**)&ordered) == SUCCESS ) {
-		write_options->ordered = zend_is_true(*ordered);
-	}
+	hindex = HASH_P(z_write_options);
 
-	if (zend_hash_find(Z_ARRVAL_P(z_write_options), "fsync", strlen("fsync") + 1, (void**)&fsync) == SUCCESS) {
-		write_options->fsync = zend_is_true(*fsync);
-	}
+	for (
+			zend_hash_internal_pointer_reset_ex(hindex, &pointer);
+			zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
+			zend_hash_move_forward_ex(hindex, &pointer)
+		) {
+		uint key_type = zend_hash_get_current_key_ex(hindex, &key, &index_key_len, &index, NO_DUP, &pointer);
 
-	if (zend_hash_find(Z_ARRVAL_P(z_write_options), "j", strlen("j") + 1, (void**)&j) == SUCCESS) {
-		write_options->j = zend_is_true(*j);
-	}
+		if (key_type == HASH_KEY_IS_LONG) {
+			continue;
+		}
 
-	if (zend_hash_find(Z_ARRVAL_P(z_write_options), "wtimeout", strlen("wtimeout") + 1, (void**)&wtimeout) == SUCCESS) {
-		convert_to_long_ex(wtimeout);
-		write_options->wtimeout = Z_LVAL_PP(wtimeout);
-	}
-
-	if (zend_hash_find(Z_ARRVAL_P(z_write_options), "w", strlen("w") + 1, (void**)&w) == SUCCESS) {
-		if (Z_TYPE_PP(w) == IS_LONG || Z_TYPE_PP(w) == IS_BOOL) {
-			write_options->write_concern.w = Z_LVAL_PP(w);
-			write_options->wtype = 1;
-		} else {
-			convert_to_string_ex(w);
-			write_options->write_concern.wstring = Z_STRVAL_PP(w);
-			write_options->wtype = 2;
+		if (zend_binary_strcasecmp(key, index_key_len, "ordered", strlen("ordered") + 1) == 0) {
+			write_options->ordered = zend_is_true(*data);
+		}
+		else if (zend_binary_strcasecmp(key, index_key_len, "fsync", strlen("fsync") + 1) == 0) {
+			write_options->fsync = zend_is_true(*data);
+		}
+		else if (zend_binary_strcasecmp(key, index_key_len, "j", strlen("j") + 1) == 0) {
+			write_options->j = zend_is_true(*data);
+		}
+		else if (zend_binary_strcasecmp(key, index_key_len, "wTimeoutMS", strlen("wTimeoutMS") + 1) == 0) {
+			convert_to_long_ex(data);
+			write_options->wtimeout = Z_LVAL_PP(data);
+		}
+		else if (zend_binary_strcasecmp(key, index_key_len, "wtimeout", strlen("wtimeout") + 1) == 0) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'wtimeout' option is deprecated, please use 'wTimeoutMS' instead");
+			convert_to_long_ex(data);
+			write_options->wtimeout = Z_LVAL_PP(data);
+		}
+		else if (zend_binary_strcasecmp(key, index_key_len, "safe", strlen("safe") + 1) == 0) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
+			if (Z_TYPE_PP(data) == IS_LONG || Z_TYPE_PP(data) == IS_BOOL) {
+				write_options->write_concern.w = Z_LVAL_PP(data);
+				write_options->wtype = 1;
+			} else {
+				convert_to_string_ex(data);
+				write_options->write_concern.wstring = Z_STRVAL_PP(data);
+				write_options->wtype = 2;
+			}
+		}
+		else if (zend_binary_strcasecmp(key, index_key_len, "w", strlen("w") + 1) == 0) {
+			if (Z_TYPE_PP(data) == IS_LONG || Z_TYPE_PP(data) == IS_BOOL) {
+				write_options->write_concern.w = Z_LVAL_PP(data);
+				write_options->wtype = 1;
+			} else {
+				convert_to_string_ex(data);
+				write_options->write_concern.wstring = Z_STRVAL_PP(data);
+				write_options->wtype = 2;
+			}
 		}
 	}
 } /* }}} */
