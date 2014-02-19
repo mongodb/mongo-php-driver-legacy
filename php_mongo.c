@@ -36,10 +36,9 @@
 #include "exceptions/duplicate_key_exception.h"
 #include "exceptions/execution_timeout_exception.h"
 #include "exceptions/gridfs_exception.h"
+#include "exceptions/protocol_exception.h"
 #include "exceptions/result_exception.h"
 #include "exceptions/write_concern_exception.h"
-#include "exceptions/duplicate_key_exception.h"
-#include "exceptions/protocol_exception.h"
 
 #include "types/id.h"
 
@@ -68,12 +67,15 @@ extern zend_object_handlers mongo_default_handlers, mongo_id_handlers;
 zend_object_handlers mongo_type_object_handlers;
 
 /** Classes */
-extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
-extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Exception;
-extern zend_class_entry *mongo_ce_GridFSException;
-extern zend_class_entry *mongo_ce_WriteConcernException;
+extern zend_class_entry *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_ConnectionException;
+extern zend_class_entry *mongo_ce_CursorException;
+extern zend_class_entry *mongo_ce_CursorTimeoutException;
 extern zend_class_entry *mongo_ce_DuplicateKeyException;
+extern zend_class_entry *mongo_ce_GridFSException;
 extern zend_class_entry *mongo_ce_ProtocolException;
+extern zend_class_entry *mongo_ce_ResultException;
+extern zend_class_entry *mongo_ce_WriteConcernException;
 
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
 
