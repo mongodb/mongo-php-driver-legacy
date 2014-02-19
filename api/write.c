@@ -524,20 +524,9 @@ static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *conn
 static void php_mongo_api_throw_exception_from_server_code(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC) /* {{{ */
 {
 	zval *exception;
-	zend_class_entry *ce;
 
-	switch(code) {
-	case 11000: /* Duplicate key Exception */
-		ce = mongo_ce_DuplicateKeyException;
-		break;
-
-	default: /* Any other error we would have hit */
-		ce = mongo_ce_WriteConcernException;
-		break;
-
-	}
-
-	exception = php_mongo_cursor_throw(ce, connection, code TSRMLS_CC, "%s", error_message);
+	/* php_mongo_cursor_throw() rewrites the ce for certain error codes */
+	exception = php_mongo_cursor_throw(mongo_ce_WriteConcernException, connection, code TSRMLS_CC, "%s", error_message);
 
 	if (document && Z_TYPE_P(document) == IS_ARRAY) {
 		zval *error_doc;
@@ -545,7 +534,7 @@ static void php_mongo_api_throw_exception_from_server_code(mongo_connection *con
 		MAKE_STD_ZVAL(error_doc);
 		array_init(error_doc);
 		zend_hash_copy(Z_ARRVAL_P(error_doc), Z_ARRVAL_P(document), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
-		zend_update_property(ce, exception, "document", strlen("document"), error_doc TSRMLS_CC);
+		zend_update_property(Z_OBJCE_P(exception), exception, "document", strlen("document"), error_doc TSRMLS_CC);
 		zval_ptr_dtor(&error_doc);
 	}
 
