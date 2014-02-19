@@ -742,6 +742,8 @@ void mongo_convert_write_api_return_to_weirdness(zval *return_value, int insert,
 	zval **ok, **err, **errmsg;
 
 	if (write_concern < 1) {
+		/* Not kidding.. Surpress any exception thrown for w=0 */
+		zend_clear_exception(TSRMLS_C);
 		convert_to_boolean(return_value);
 		return;
 	}
