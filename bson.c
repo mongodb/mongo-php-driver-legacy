@@ -122,7 +122,8 @@ int zval_to_bson(mongo_buffer *buf, HashTable *hash, int prep, int max_document_
 	/* skip first 4 bytes to leave room for size */
 	buf->pos += INT_32;
 
-	if (zend_hash_num_elements(hash) > 0) {
+	/* It doesn't matter if the document is empty if we need to prep it */
+	if (zend_hash_num_elements(hash) > 0 || prep) {
 		if (prep) {
 			prep_obj_for_db(buf, hash TSRMLS_CC);
 			num++;
@@ -658,7 +659,6 @@ void php_mongo_serialize_ns(mongo_buffer *buf, char *str TSRMLS_DC)
 /* Returns:
  *  0 on success,
  * -1 when an exception in zval_to_bson was thrown
- * -2 when there were no elements
  * -3 when a fragment or document was too large
  * An exception is also thrown when the return value is not 0 */
 static int insert_helper(mongo_buffer *buf, zval *doc, int max_document_size TSRMLS_DC)
@@ -669,10 +669,6 @@ static int insert_helper(mongo_buffer *buf, zval *doc, int max_document_size TSR
 	/* throw exception if serialization crapped out */
 	if (EG(exception) || FAILURE == result) {
 		return -1;
-	} else if (0 == result) {
-		/* return if there were 0 elements */
-		zend_throw_exception_ex(mongo_ce_Exception, 4 TSRMLS_CC, "no elements in doc");
-		return -2;
 	}
 
 	/* throw an exception if the doc was too big */
@@ -727,12 +723,6 @@ int php_mongo_write_batch_insert(mongo_buffer *buf, char *ns, int flags, zval *d
 		}
 
 		count++;
-	}
-
-	/* if there are no elements, don't bother saving */
-	if (count == 0) {
-		zend_throw_exception_ex(mongo_ce_Exception, 6 TSRMLS_CC, "no documents given");
-		return FAILURE;
 	}
 
 	/* this is a hard limit in the db server (util/messages.cpp) */
