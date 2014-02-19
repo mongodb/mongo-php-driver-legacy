@@ -940,7 +940,7 @@ PHP_METHOD(MongoCollection, insert)
 		}
 		efree(buf.start);
 	} else {
-		zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Cannot determin how to Write Documents to the server");
+		zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Cannot determine how to write documents to the server");
 	}
 }
 /* }}} */
