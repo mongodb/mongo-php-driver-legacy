@@ -516,7 +516,6 @@ static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *conn
 	}
 
 	return 0;
-
 }
 /* }}} */
 
