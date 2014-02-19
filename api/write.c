@@ -146,7 +146,7 @@ void php_mongo_api_write_options_to_zval(php_mongodb_write_options *write_option
 } /* }}} */
 
 /* Bootstraps a Write API Insert message with its write concerns.
- * Returns the position of the root element, needed to backtract and serialize
+ * Returns the position of the root element, needed to backtrack and serialize
  * the size of the combined command */
 int php_mongo_api_insert_start(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
 {
