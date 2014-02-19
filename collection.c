@@ -910,8 +910,8 @@ PHP_METHOD(MongoCollection, insert)
 		int socket_read_timeout = 0;
 		PHP_MONGO_GET_DB(c->parent);
 
-		php_mongo_api_write_options_from_zval(&write_options, z_write_options TSRMLS_CC);
 		mongo_apply_implicit_write_options(&write_options, &link->servers->options, getThis() TSRMLS_CC);
+		php_mongo_api_write_options_from_zval(&write_options, z_write_options TSRMLS_CC);
 		socket_read_timeout = mongo_get_socket_read_timeout(&link->servers->options, z_write_options TSRMLS_CC);
 
 		retval = mongo_collection_insert_api(link->manager, connection, &link->servers->options, socket_read_timeout, &write_options, Z_STRVAL_P(db->name), getThis(), document, return_value TSRMLS_CC);
