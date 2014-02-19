@@ -267,4 +267,3 @@ array(3) {
   ["w"]=>
   int(0)
 }
---EXPECTF--
