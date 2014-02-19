@@ -815,7 +815,12 @@ void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options
 
 }
 
-int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_write_options TSRMLS_DC) {
+/*
+ * Returns the socket read timeout (in ms) from the specified write options
+ * ('socketTimeoutMS', with a deprecated fallback to 'timeout').
+ */
+int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_write_options TSRMLS_DC)
+{
 	if (z_write_options && Z_TYPE_P(z_write_options) == IS_ARRAY) {
 		zval **timeout_pp;
 
