@@ -737,7 +737,7 @@ int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection 
 	return retval;
 }
 
-void mongo_convert_write_api_return_to_weirdness(zval *return_value, int insert, int write_concern TSRMLS_DC)
+void mongo_convert_write_api_return_to_legacy_retval(zval *return_value, int insert, int write_concern TSRMLS_DC)
 {
 	zval **ok, **err, **errmsg;
 
@@ -920,7 +920,7 @@ PHP_METHOD(MongoCollection, insert)
 		if (retval) {
 			/* Adds random "err", "code", "errmsg" empty fields to be compatible with
 			 * old-style return values */
-			mongo_convert_write_api_return_to_weirdness(return_value, 1, write_options.wtype == 1 ? write_options.write_concern.w : 1 TSRMLS_CC);
+			mongo_convert_write_api_return_to_legacy_retval(return_value, 1, write_options.wtype == 1 ? write_options.write_concern.w : 1 TSRMLS_CC);
 		}
 		return;
 	} else if(php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
