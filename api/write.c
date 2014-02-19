@@ -405,7 +405,7 @@ static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write
 }
 /* }}}  */
 
-/* Internal helper: Called from php_mongo_api_raise_exception_on_write_failure() to raise ok=false exceptions */
+/* Internal helper: Called from php_mongo_api_raise_exception_on_write_failure() to exception on complete command failure */
 static void php_mongo_api_raise_epic_write_failure_exception(mongo_connection *connection, zval *document TSRMLS_DC) /* {{{ */
 {
 	zval **code, **errmsg;
@@ -425,10 +425,10 @@ static void php_mongo_api_raise_epic_write_failure_exception(mongo_connection *c
 	else if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void**)&errmsg) == SUCCESS) {
 		convert_to_string(*errmsg);
 
-		php_mongo_api_throw_exception_from_server_code(connection, 0, Z_STRVAL_PP(errmsg), document TSRMLS_CC);
+		php_mongo_api_throw_exception_from_server_code(connection, 100, Z_STRVAL_PP(errmsg), document TSRMLS_CC);
 	}
 	else {
-		php_mongo_api_throw_exception_from_server_code(connection, 0, "Unknown error occurred, did not get an error message or code", document TSRMLS_CC);
+		php_mongo_api_throw_exception_from_server_code(connection, 101, "Unknown error occurred, did not get an error message or code", document TSRMLS_CC);
 	}
 }
 /* }}} */
@@ -444,7 +444,7 @@ static void php_mongo_api_raise_exception_it_array(mongo_connection *connection,
 		zval **index = NULL, **code = NULL, **errmsg = NULL;
 
 		if (Z_TYPE_PP(error) != IS_ARRAY) {
-			php_mongo_api_throw_exception_from_server_code(connection, 0, "Got write errors, but don't know how to parse them", *error TSRMLS_CC);
+			php_mongo_api_throw_exception_from_server_code(connection, 102, "Got write errors, but don't know how to parse them", *error TSRMLS_CC);
 			break;
 		}
 
@@ -483,7 +483,7 @@ static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *conn
 		}
 	} else {
 		/* Missing OK field... that can't be good! */
-		php_mongo_api_throw_exception_from_server_code(connection, 100, "Missing 'ok' field in response, don't know what to do", document TSRMLS_CC);
+		php_mongo_api_throw_exception_from_server_code(connection, 103, "Missing 'ok' field in response, don't know what to do", document TSRMLS_CC);
 		return 1;
 	}
 
@@ -492,7 +492,7 @@ static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *conn
 		if (Z_TYPE_PP(write_errors) == IS_ARRAY) {
 			php_mongo_api_raise_exception_it_array(connection, write_errors, document TSRMLS_CC);
 		} else {
-			php_mongo_api_throw_exception_from_server_code(connection, 0, "Got write errors, but don't know how to parse them", document TSRMLS_CC);
+			php_mongo_api_throw_exception_from_server_code(connection, 104, "Got write errors, but don't know how to parse them", document TSRMLS_CC);
 		}
 		return 1;
 	}
@@ -510,7 +510,7 @@ static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *conn
 			/* FIXME: There is also errorInfo.. Do we care? We include the full error document anyway.. */
 			php_mongo_api_throw_exception_from_server_code(connection, Z_LVAL_PP(code), Z_STRVAL_PP(errmsg), document TSRMLS_CC);
 		} else {
-			php_mongo_api_throw_exception_from_server_code(connection, 0, "Got write errors, but don't know how to parse them", document TSRMLS_CC);
+			php_mongo_api_throw_exception_from_server_code(connection, 105, "Got write errors, but don't know how to parse them", document TSRMLS_CC);
 		}
 		return 1;
 	}
