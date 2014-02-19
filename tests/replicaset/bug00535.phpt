@@ -15,8 +15,10 @@ MongoLog::setCallback(function($module, $level, $msg) {
         return;
     }
     if (strpos($msg, "forcing") !== false) {
-        echo $msg, "\n";
-        return;
+        if (strpos($msg, "ommand") !== false) {
+            echo $msg, "\n";
+            return;
+        }
     }
 });
 
@@ -85,11 +87,6 @@ var_dump($result["ok"]);
 ?>
 --EXPECT--
 forcing primary for command
-forcing primary for getlasterror
-forcing primary for getlasterror
-forcing primary for getlasterror
-forcing primary for getlasterror
-forcing primary for getlasterror
 
 Done priming data... now the actual tests
 
