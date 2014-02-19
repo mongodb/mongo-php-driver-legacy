@@ -292,6 +292,7 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 	if (status < 0) {
 		/* Read failed, error message populated by recv_header */
 		php_mongo_api_throw_exception(connection, abs(status), error_message, NULL TSRMLS_CC);
+		free(error_message);
 		return 1;
 	} else if (status < INT_32*4) {
 		spprintf(&error_message, 256, "couldn't get full response header, got %d bytes but expected atleast %d", status, INT_32*4);
@@ -404,24 +405,10 @@ static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write
 }
 /* }}}  */
 
-/* Internal helper: Raises an exception if needed
- * Returns 0 when write succeeded (ok=1)
- * Returns 1 when write failed, and raises different exceptions depending on the error */
-static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *connection, zval *document TSRMLS_DC) /* {{{ */
+/* Internal helper: Called from php_mongo_api_raise_exception_on_write_failure() to raise ok=false exceptions */
+static void php_mongo_api_raise_epic_write_failure_exception(mongo_connection *connection, zval *document TSRMLS_DC) /* {{{ */
 {
-	zval **ok, **code, **errmsg;
-
-	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void**)&ok) == SUCCESS) {
-		convert_to_boolean(*ok);
-		if (Z_BVAL_PP(ok)) {
-			/* Write succeeded */
-			return 0;
-		}
-	} else {
-		/* Missing OK field... that can't be good! */
-		php_mongo_api_throw_exception_from_server_code(connection, 100, "Missing 'ok' field in response, don't know what to do", document TSRMLS_CC);
-		return 1;
-	}
+	zval **code, **errmsg;
 
 	if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void**)&code) == SUCCESS) {
 		convert_to_long(*code);
@@ -430,23 +417,104 @@ static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *conn
 			convert_to_string(*errmsg);
 
 			php_mongo_api_throw_exception_from_server_code(connection, Z_LVAL_PP(code), Z_STRVAL_PP(errmsg), document TSRMLS_CC);
-			return 1;
+		} else {
+			php_mongo_api_throw_exception_from_server_code(connection, Z_LVAL_PP(code), "Unknown failure, no error message from server", document TSRMLS_CC);
 		}
-
-		php_mongo_api_throw_exception_from_server_code(connection, Z_LVAL_PP(code), "Unknown failure, no error message from server", document TSRMLS_CC);
-		return 1;
 	}
-
 	/* Couldn't find a error code.. do I atleast have a error message? */
-	if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void**)&errmsg) == SUCCESS) {
+	else if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void**)&errmsg) == SUCCESS) {
 		convert_to_string(*errmsg);
 
 		php_mongo_api_throw_exception_from_server_code(connection, 0, Z_STRVAL_PP(errmsg), document TSRMLS_CC);
+	}
+	else {
+		php_mongo_api_throw_exception_from_server_code(connection, 0, "Unknown error occurred, did not get an error message or code", document TSRMLS_CC);
+	}
+} /* }}} */
+
+/* Internal helper: Called from php_mongo_api_raise_exception_on_write_failure() to raise maybe multiple exceptions */
+static void php_mongo_api_raise_exception_it_array(mongo_connection *connection, zval **z_write_errors, zval *document TSRMLS_DC) /* {{{ */
+{
+	HashTable  *write_errors = Z_ARRVAL_PP(z_write_errors);
+	zval      **error;
+
+	zend_hash_internal_pointer_reset(write_errors);
+	while (zend_hash_get_current_data(write_errors, (void **)&error) == SUCCESS) {
+		zval **index = NULL, **code = NULL, **errmsg = NULL;
+
+		if (Z_TYPE_PP(error) != IS_ARRAY) {
+			php_mongo_api_throw_exception_from_server_code(connection, 0, "Got write errors, but don't know how to parse them", *error TSRMLS_CC);
+			break;
+		}
+
+		if (zend_hash_find(Z_ARRVAL_PP(error), "index", strlen("index") + 1, (void**)&index) == SUCCESS) {
+			convert_to_long_ex(index);
+		}
+		if (zend_hash_find(Z_ARRVAL_PP(error), "code", strlen("code") + 1, (void**)&code) == SUCCESS) {
+			convert_to_long_ex(code);
+		}
+		if (zend_hash_find(Z_ARRVAL_PP(error), "errmsg", strlen("errmsg") + 1, (void**)&errmsg) == SUCCESS) {
+			convert_to_string_ex(errmsg);
+		}
+
+		/* FIXME: Do we care about the index? */
+		php_mongo_api_throw_exception_from_server_code(connection, Z_LVAL_PP(code), Z_STRVAL_PP(errmsg), document TSRMLS_CC);
+		zend_hash_move_forward(write_errors);
+	}
+} /* }}} */
+
+/* Internal helper: Raises an exception if needed
+ * Returns 0 when write succeeded (ok=1)
+ * Returns 1 when write failed, and raises different exceptions depending on the error */
+static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *connection, zval *document TSRMLS_DC) /* {{{ */
+{
+	zval **ok, **write_errors, **write_concern_error;
+
+	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void**)&ok) == SUCCESS) {
+		convert_to_boolean(*ok);
+
+		/* If ok=false we should have a top-level code and errmsg fields
+		 * These would be epic failures, authentication, parse errors.. */
+		if (!Z_BVAL_PP(ok)) {
+			php_mongo_api_raise_epic_write_failure_exception(connection, document TSRMLS_CC);
+			return 1;
+		}
+	} else {
+		/* Missing OK field... that can't be good! */
+		php_mongo_api_throw_exception_from_server_code(connection, 100, "Missing 'ok' field in response, don't know what to do", document TSRMLS_CC);
 		return 1;
 	}
 
-	php_mongo_api_throw_exception_from_server_code(connection, 0, "Unknown error occurred, did not get an error message or code", document TSRMLS_CC);
-	return 1;
+	/* Check for Write Errors, such as duplicate key errors */
+	if (zend_hash_find(Z_ARRVAL_P(document), "writeErrors", strlen("writeErrors") + 1, (void**)&write_errors) == SUCCESS) {
+		if (Z_TYPE_PP(write_errors) == IS_ARRAY) {
+			php_mongo_api_raise_exception_it_array(connection, write_errors, document TSRMLS_CC);
+		} else {
+			php_mongo_api_throw_exception_from_server_code(connection, 0, "Got write errors, but don't know how to parse them", document TSRMLS_CC);
+		}
+		return 1;
+	}
+	if (zend_hash_find(Z_ARRVAL_P(document), "writeConcernError", strlen("writeConcernError") + 1, (void**)&write_concern_error) == SUCCESS) {
+		zval **code = NULL, **errmsg = NULL;
+
+		if (Z_TYPE_PP(write_concern_error) == IS_ARRAY) {
+			if (zend_hash_find(Z_ARRVAL_PP(write_concern_error), "code", strlen("code") + 1, (void**)&code) == SUCCESS) {
+				convert_to_long_ex(code);
+			}
+			if (zend_hash_find(Z_ARRVAL_PP(write_concern_error), "errmsg", strlen("errmsg") + 1, (void**)&errmsg) == SUCCESS) {
+				convert_to_string_ex(errmsg);
+			}
+
+			/* FIXME: There is also errorInfo.. Do we care? We include the full error document anyway.. */
+			php_mongo_api_throw_exception_from_server_code(connection, Z_LVAL_PP(code), Z_STRVAL_PP(errmsg), document TSRMLS_CC);
+		} else {
+			php_mongo_api_throw_exception_from_server_code(connection, 0, "Got write errors, but don't know how to parse them", document TSRMLS_CC);
+		}
+		return 1;
+	}
+
+	return 0;
+
 } /* }}} */
 
 /* Internal helper: raises exception based on the server error code */
