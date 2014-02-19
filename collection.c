@@ -934,9 +934,7 @@ PHP_METHOD(MongoCollection, insert)
 		}
 		efree(buf.start);
 	} else {
-#define THROW_UNSUPPORTED_FEATURE 
-
-		THROW_UNSUPPORTED_FEATURE;
+		zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Cannot determin how to Write Documents to the server");
 	}
 }
 /* }}} */
