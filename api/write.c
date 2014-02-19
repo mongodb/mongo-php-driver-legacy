@@ -18,7 +18,7 @@
 
 #include "../php_mongo.h"
 #include "../bson.h"
-#include "../cursor.h" /* For mongo_cursor_throw() */
+#include "../cursor_shared.h" /* For php_mongo_cursor_throw() */
 #include "../log_stream.h"
 #include "write.h"
 
@@ -538,7 +538,7 @@ static void php_mongo_api_throw_exception_from_server_code(mongo_connection *con
 
 	}
 
-	exception = mongo_cursor_throw(ce, connection, code TSRMLS_CC, "%s", error_message);
+	exception = php_mongo_cursor_throw(ce, connection, code TSRMLS_CC, "%s", error_message);
 
 	if (document && Z_TYPE_P(document) == IS_ARRAY) {
 		zval *error_doc;
@@ -582,7 +582,7 @@ static void php_mongo_api_throw_exception(mongo_connection *connection, int code
 			break;
 	}
 
-	exception = mongo_cursor_throw(ce, connection, code TSRMLS_CC, "%s", error_message);
+	exception = php_mongo_cursor_throw(ce, connection, code TSRMLS_CC, "%s", error_message);
 
 	if (document && Z_TYPE_P(document) == IS_ARRAY) {
 		zval *error_doc;
