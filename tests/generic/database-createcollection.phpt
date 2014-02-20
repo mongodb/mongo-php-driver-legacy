@@ -18,13 +18,8 @@ var_dump($retval);
 $d->createCollection('create-col1');
 $retval = $ns->findOne(array('name' => 'phpunit.create-col1'));
 
-var_dump($retval);
+var_dump($retval["name"]);
 ?>
 --EXPECTF--
 NULL
-array(2) {
-  ["name"]=>
-  string(19) "phpunit.create-col1"
-  ["options"]=>
-  array(%a
-}
+string(19) "phpunit.create-col1"
