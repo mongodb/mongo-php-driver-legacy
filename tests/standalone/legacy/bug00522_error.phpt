@@ -12,7 +12,7 @@ $c = $m->selectCollection( dbname(), "php-522_error" );
 $c->w = "3";
 
 try {
-	$c->insert( array( 'test' => 1 ), array( 'w' => 1 ) );
+	$c->insert( array( 'test' => 1 ), array( 'w' => 3 ) );
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
 }

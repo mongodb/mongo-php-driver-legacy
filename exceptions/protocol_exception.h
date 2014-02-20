@@ -1,5 +1,5 @@
 /**
- *  Copyright 2013 MongoDB, Inc.
+ *  Copyright 2013-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,26 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+#ifndef __PROTOCOL_EXCEPTION_H__
+#define __PROTOCOL_EXCEPTION_H__
 
-#ifndef __API_WIRE_VERSION_H__
-#define __API_WIRE_VERSION_H__
-
-#include "mcon/types.h"
-
-/* Known wire versions:
- *     MongoDB 2.4.0: N/A
- *     MongoDB 2.6.0: min=0, max=2
- */
-#define PHP_MONGO_API_RELEASE_2_4_AND_BEFORE 0
-#define PHP_MONGO_API_AGGREGATE_CURSOR       1
-#define PHP_MONGO_API_WRITE_API              2
-
-/* Wire version this release of the driver supports */
-#define PHP_MONGO_API_MIN_WIRE_VERSION 0
-#define PHP_MONGO_API_MAX_WIRE_VERSION 2
-
-int php_mongo_api_supports_wire_version(int min_wire_version, int max_wire_version, char **error_message);
-int php_mongo_api_connection_supports_feature(mongo_connection *connection, int feature);
+void mongo_init_MongoProtocolException(TSRMLS_D);
 
 #endif
 

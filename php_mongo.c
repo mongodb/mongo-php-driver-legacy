@@ -36,6 +36,7 @@
 #include "exceptions/duplicate_key_exception.h"
 #include "exceptions/execution_timeout_exception.h"
 #include "exceptions/gridfs_exception.h"
+#include "exceptions/protocol_exception.h"
 #include "exceptions/result_exception.h"
 #include "exceptions/write_concern_exception.h"
 
@@ -66,9 +67,14 @@ extern zend_object_handlers mongo_default_handlers, mongo_id_handlers;
 zend_object_handlers mongo_type_object_handlers;
 
 /** Classes */
-extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
-extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_ConnectionException;
+extern zend_class_entry *mongo_ce_CursorException;
+extern zend_class_entry *mongo_ce_CursorTimeoutException;
+extern zend_class_entry *mongo_ce_DuplicateKeyException;
 extern zend_class_entry *mongo_ce_GridFSException;
+extern zend_class_entry *mongo_ce_ProtocolException;
+extern zend_class_entry *mongo_ce_ResultException;
 extern zend_class_entry *mongo_ce_WriteConcernException;
 
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
@@ -291,7 +297,9 @@ PHP_MINIT_FUNCTION(mongo)
 	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_GETMORE", MONGO_STREAM_NOTIFY_LOG_GETMORE, CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_KILLCURSOR", MONGO_STREAM_NOTIFY_LOG_KILLCURSOR, CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_BATCHINSERT", MONGO_STREAM_NOTIFY_LOG_BATCHINSERT, CONST_PERSISTENT);
-	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_RESPONSE_HEADER", MONGO_STREAM_NOTIFY_LOG_RESPONSE_HEADER , CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_RESPONSE_HEADER", MONGO_STREAM_NOTIFY_LOG_RESPONSE_HEADER, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_WRITE_REPLY", MONGO_STREAM_NOTIFY_LOG_WRITE_REPLY, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_CMD_INSERT", MONGO_STREAM_NOTIFY_LOG_CMD_INSERT, CONST_PERSISTENT);
 
 	return SUCCESS;
 }
@@ -460,6 +468,7 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 	mongo_init_MongoWriteConcernException(TSRMLS_C);
 	mongo_init_MongoDuplicateKeyException(TSRMLS_C);
 	mongo_init_MongoExecutionTimeoutException(TSRMLS_C);
+	mongo_init_MongoProtocolException(TSRMLS_C);
 }
 
 /* {{{ Creating & freeing Mongo type objects */

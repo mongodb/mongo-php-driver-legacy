@@ -699,6 +699,15 @@ extern zend_module_entry mongo_module_entry;
  * 1: Unknown error executing command (empty document returned)
  * 2: Command could not be executed for some reason (exception message tells why)
  * 1000+: MongoDB server codes
+ *
+ * MongoWriteConcernException:
+ * 100: <server error message> (server returned no error code, only message)
+ * 101: Unknown error occurred, did not get an error message or code
+ * 102: Got write errors, but don't know how to parse them
+ * 103: Missing 'ok' field in response, don't know what to do
+ * 104: Got write errors, but don't know how to parse them
+ * 105: Got write errors, but don't know how to parse them
+ * (all other error codes are from mongod)
  */
 
 /*

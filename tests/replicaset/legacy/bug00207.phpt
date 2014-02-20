@@ -8,7 +8,7 @@ Test for PHP-207: setSlaveOkay not supported for GridFS queries
 require_once "tests/utils/server.inc";
 
 function log_query($server, $query, $cursor_options) {
-    echo $server["type"] == 2 ?  "Hit the primary\n" : "Hit a secondary\n";
+    echo $server["type"] == 2 ?  "" : "Hit a secondary\n";
 }
 $ctx = stream_context_create(
     array(
@@ -30,7 +30,7 @@ $gridfs = $db->getGridFS();
 
 for($i=0; $i<5; $i++) {
     // Since we will be reading from slave in a second, it is nice to know that the file is there
-    $safe = array("safe" => 1, "w" => "majority");
+    $safe = array("w" => "majority");
     try {
         $ok = $gridfs->storeFile(__FILE__, array( "_id" => "slaveOkayFile-$i"), $safe);
     } catch(Exception $e) {
@@ -50,37 +50,10 @@ foreach($cursor as $file) {
 ?>
 ===DONE===
 --EXPECTF--
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
 string(15) "slaveOkayFile-0"
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
 string(15) "slaveOkayFile-1"
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
 string(15) "slaveOkayFile-2"
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
 string(15) "slaveOkayFile-3"
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
-Hit the primary
 string(15) "slaveOkayFile-4"
 
 %s: Function MongoCursor::slaveOkay() is deprecated in %sbug00207.php on line %d
