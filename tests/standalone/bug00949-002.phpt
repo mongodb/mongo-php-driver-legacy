@@ -10,7 +10,7 @@ require_once "tests/utils/server.inc";
 $dsn = MongoShellServer::getStandaloneInfo();
 
 $m = new MongoClient($dsn);
-$c = $m->selectCollection(dbname(), 'bug00949');
+$c = $m->selectCollection(dbname()."special", 'bug00949');
 $c->drop();
 
 // Valid index orderings
