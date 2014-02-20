@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-569: Checking for w in the connection string.
 --SKIPIF--
+<?php $needs = "2.5.5"; $needsOp = "lt"; ?>
 <?php require_once "tests/utils/replicaset.inc";?>
 --FILE--
 <?php
