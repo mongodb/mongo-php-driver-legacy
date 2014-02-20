@@ -3,6 +3,7 @@ Test for PHP-294: Workaround for sending commands to secondaries
 --SKIPIF--
 <?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php $needs = "2.5.5"; ?>
+<?php if (version_compare(PHP_VERSION, "5.4.0", "le")) { exit("skip This test requires PHP version PHP5.4+"); }?>
 <?php require_once 'tests/utils/replicaset.inc' ?>
 --FILE--
 <?php
