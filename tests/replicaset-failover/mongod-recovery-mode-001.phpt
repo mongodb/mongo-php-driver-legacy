@@ -18,7 +18,7 @@ $ctx = stream_context_create(array("mongodb" => array("log_query" => "log_query"
 
 $mc = new MongoClient($rs["dsn"], array("replicaSet" => $rs["rsname"], "readPreference" => MongoClient::RP_SECONDARY_PREFERRED), array("context" => $ctx));
 $i = "random";
-$mc->selectDb(dbname())->recovery->drop();
+$mc->selectDb(dbname())->recoverymode->drop();
 $mc->selectDb(dbname())->recoverymode->insert(array("doc" => $i, "w" => "majority"));
 
 // Lower the ismaster interval to make sure we pick up on the change
