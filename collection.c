@@ -759,10 +759,19 @@ void mongo_convert_write_api_return_to_legacy_retval(zval *return_value, int ins
 	if (insert) {
 		zval **n;
 
-		/* "n" was always 0 for OP_INSERT gle */
 		if (SUCCESS == zend_hash_find(HASH_P(return_value), "n", strlen("n") + 1, (void**) &n)) {
-			convert_to_long(*n);
-			Z_LVAL_PP(n) = 0;
+			zval *nModified;
+
+			/*
+			 * "n" was always 0 for OP_INSERT gle.
+			 * Update will return nModified, in which case we don't modify 'n'
+			 */
+			if (SUCCESS == zend_hash_find(HASH_P(return_value), "nModified", strlen("nModified") + 1, (void**) &nModified)) {
+				add_assoc_bool(return_value, "updatedExisting", 1);
+			} else {
+				convert_to_long(*n);
+				Z_LVAL_PP(n) = 0;
+			}
 		}
 	}
 }
@@ -835,6 +844,50 @@ int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_
 	}
 
 	return server_options->socketTimeoutMS;
+}
+
+int mongo_collection_update_api(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *server_options, int socket_read_timeout, php_mongodb_write_update_args *update_options, php_mongodb_write_options *write_options, char *dbname, zval *collection, zval *return_value TSRMLS_DC)
+{
+	char *command_ns;
+	char *error_message;
+	int retval = 0;
+	int bytes_written = 0;
+	int request_id;
+	mongo_buffer buf;
+	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(collection TSRMLS_CC);
+
+
+	spprintf(&command_ns, 0, "%s.$cmd", dbname);
+
+	CREATE_BUF(buf, INITIAL_BUF_SIZE);
+	request_id = php_mongo_api_update_single(&buf, command_ns, Z_STRVAL_P(c->name), update_options, write_options, connection TSRMLS_CC);
+
+	efree(command_ns);
+
+	if (request_id == 0) {
+		/* The document is greater then allowed limits, exception already thrown */
+		efree(buf.start);
+		return 0;
+	}
+
+	bytes_written = manager->send(connection, server_options, buf.start, buf.pos - buf.start, &error_message);
+
+	if (bytes_written < 1) {
+		/* Didn't write anything, something bad must have happened */
+		efree(buf.start);
+		return 0;
+	}
+
+	retval = php_mongo_api_get_reply(manager, connection, server_options, socket_read_timeout, request_id, &return_value TSRMLS_CC);
+	efree(buf.start);
+
+	if (retval != 0) {
+		mongo_manager_connection_deregister(manager, connection);
+		/* Exception already thrown */
+		return 0;
+	}
+
+	return 1;
 }
 
 /* Returns 0 on failure, throwing exception?
@@ -1162,57 +1215,99 @@ PHP_METHOD(MongoCollection, commandCursor)
 }
 /* }}} */
 
-static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval *criteria, zval *newobj, zval *options, zval *return_value TSRMLS_DC)
+/* Takes OP_UPDATE flags (bit vector) and sets the correct update_args options
+ */
+static void mongo_apply_update_options_from_bits(php_mongodb_write_update_args *update_options, int bits)
+{
+	update_options->upsert = bits & (1 << 0) ? 1 : 0;
+	update_options->multi  = bits & (1 << 1) ? 1 : 0;
+}
+
+static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval *criteria, zval *newobj, zval *z_write_options, zval *return_value TSRMLS_DC)
 {
 	int bit_opts = 0;
-	int retval = 1;
-	mongo_buffer buf;
 	mongo_connection *connection;
 
-	if (options) {
+	if (z_write_options) {
 		zval **upsert = 0, **multiple = 0;
 
-		if (zend_hash_find(HASH_P(options), "upsert", strlen("upsert") + 1, (void**)&upsert) == SUCCESS) {
+		if (zend_hash_find(HASH_P(z_write_options), "upsert", strlen("upsert") + 1, (void**)&upsert) == SUCCESS) {
 			convert_to_boolean_ex(upsert);
 			bit_opts |= Z_BVAL_PP(upsert) << 0;
 		}
 
-		if (zend_hash_find(HASH_P(options), "multiple", strlen("multiple") + 1, (void**)&multiple) == SUCCESS) {
+		if (zend_hash_find(HASH_P(z_write_options), "multiple", strlen("multiple") + 1, (void**)&multiple) == SUCCESS) {
 			convert_to_boolean_ex(multiple);
 			bit_opts |= Z_BVAL_PP(multiple) << 1;
 		}
 
-		Z_ADDREF_P(options);
+		Z_ADDREF_P(z_write_options);
 	} else {
-		MAKE_STD_ZVAL(options);
-		array_init(options);
+		MAKE_STD_ZVAL(z_write_options);
+		array_init(z_write_options);
 	}
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
-		zval_ptr_dtor(&options);
+		zval_ptr_dtor(&z_write_options);
 		RETURN_FALSE;
 	}
 
-	CREATE_BUF(buf, INITIAL_BUF_SIZE);
-	if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, newobj, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
-		efree(buf.start);
-		zval_ptr_dtor(&options);
-		return;
-	}
+	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
+		php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
+		php_mongodb_write_update_args update_options = { NULL, NULL, -1, -1 };
+		mongo_collection *c;
+		mongoclient *link;
+
+		int retval;
+		mongo_db *db;
+		int socket_read_timeout = 0;
+		PHP_MONGO_GET_COLLECTION(getThis());
+		PHP_MONGO_GET_DB(c->parent);
+
+		link = (mongoclient*)zend_object_store_get_object(c->link TSRMLS_CC);
+		update_options.query  = criteria;
+		update_options.update = newobj;
+
+		mongo_apply_update_options_from_bits(&update_options, bit_opts);
+		mongo_apply_implicit_write_options(&write_options, &link->servers->options, getThis() TSRMLS_CC);
+		php_mongo_api_write_options_from_zval(&write_options, z_write_options TSRMLS_CC);
+		socket_read_timeout = mongo_get_socket_read_timeout(&link->servers->options, z_write_options TSRMLS_CC);
+
+		retval = mongo_collection_update_api(link->manager, connection, &link->servers->options, socket_read_timeout, &update_options, &write_options, Z_STRVAL_P(db->name), getThis(), return_value TSRMLS_CC);
+
+		if (retval) {
+			/* Adds random "err", "code", "errmsg" empty fields to be compatible with
+			 * old-style return values */
+			mongo_convert_write_api_return_to_legacy_retval(return_value, 1, write_options.wtype == 1 ? write_options.write_concern.w : 1 TSRMLS_CC);
+		}
+		zval_ptr_dtor(&z_write_options);
+	} else if(php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
+		int retval = 1;
+		mongo_buffer buf;
+
+		CREATE_BUF(buf, INITIAL_BUF_SIZE);
+		if (FAILURE == php_mongo_write_update(&buf, Z_STRVAL_P(c->ns), bit_opts, criteria, newobj, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
+			efree(buf.start);
+			zval_ptr_dtor(&z_write_options);
+			return;
+		}
 
 #if MONGO_PHP_STREAMS
-	mongo_log_stream_update(connection, c->ns, criteria, newobj, options, bit_opts TSRMLS_CC);
+		mongo_log_stream_update(connection, c->ns, criteria, newobj, z_write_options, bit_opts TSRMLS_CC);
 #endif
 
-	/* retval == -1 means a GLE response was received, so send_message() has
-	 * either set return_value or thrown an exception via do_gle_op(). */
-	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
-	if (retval != -1) {
-		RETVAL_BOOL(retval);
-	}
+		/* retval == -1 means a GLE response was received, so send_message() has
+		 * either set return_value or thrown an exception via do_gle_op(). */
+		retval = send_message(this_ptr, connection, &buf, z_write_options, return_value TSRMLS_CC);
+		if (retval != -1) {
+			RETVAL_BOOL(retval);
+		}
 
-	efree(buf.start);
-	zval_ptr_dtor(&options);
+		efree(buf.start);
+		zval_ptr_dtor(&z_write_options);
+	} else {
+		zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Cannot determine how to update documents on the server");
+	}
 }
 
 /* {{{ proto bool|array MongoCollection::update(array|object criteria, array|object $newobj [, array options])

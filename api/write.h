@@ -30,18 +30,34 @@ typedef struct {
 } php_mongodb_write_options;
 
 typedef struct {
+	zval *query;
+	zval *update;
+	int multi;
+	int upsert;
+} php_mongodb_write_update_args;
+
+typedef struct {
 	int     flags;
 	int64_t cursor_id;
 	int     start;
 	int     returned;
 } php_mongodb_reply;
 
+typedef enum {
+	MONGODB_API_COMMAND_INSERT,
+	MONGODB_API_COMMAND_UPDATE,
+	MONGODB_API_COMMAND_DELETE
+} php_mongodb_write_types;
+
 void php_mongo_api_write_options_from_zval(php_mongodb_write_options *write_options, zval *z_write_options TSRMLS_DC);
 void php_mongo_api_write_options_to_zval(php_mongodb_write_options *write_options, zval *z_write_options);
+
+int php_mongo_api_write_start(php_mongodb_write_types type, mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_options *write_options TSRMLS_DC);
+int php_mongo_api_write_end(mongo_buffer *buf, int container_pos, int max_write_size TSRMLS_DC);
+
 int php_mongo_api_insert_single(mongo_buffer *buf, char *ns, char *collection, zval *doc, php_mongodb_write_options *write_options, mongo_connection *connection TSRMLS_DC);
-int php_mongo_api_insert_start(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_options *write_options TSRMLS_DC);
 int php_mongo_api_insert_add(mongo_buffer *buf, int n, HashTable *document, int max_document_size TSRMLS_DC);
-int php_mongo_api_insert_end(mongo_buffer *buf, int container_pos, int max_write_size TSRMLS_DC);
+int php_mongo_api_update_single(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_update_args *update_args, php_mongodb_write_options *write_options, mongo_connection *connection TSRMLS_DC);
 int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, int socket_read_timeout, int request_id, zval **retval TSRMLS_DC);
 
 /* SERVER-10643: maxBsonWireObjectSize isn't exposed yet, so we need to cruft the

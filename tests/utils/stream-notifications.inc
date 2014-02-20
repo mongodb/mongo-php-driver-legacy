@@ -17,6 +17,7 @@ class MongoNotifications {
         $data = json_decode($message, true);
 
         switch($code) {
+            case MONGO_STREAM_NOTIFY_LOG_CMD_UPDATE:
             case MONGO_STREAM_NOTIFY_LOG_CMD_INSERT:
                 $reqid = $data["protocol_options"]["request_id"];
                 $this->reqs[$reqid] = $data;

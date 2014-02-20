@@ -147,10 +147,39 @@ void php_mongo_api_write_options_to_zval(php_mongodb_write_options *write_option
 }
 /* }}} */
 
-/* Bootstraps a Write API Insert message with its write concerns.
+void php_mongo_api_write_command_name(mongo_buffer *buf, php_mongodb_write_types type TSRMLS_DC)
+{
+	switch(type) {
+		case MONGODB_API_COMMAND_INSERT:
+			php_mongo_serialize_key(buf, "insert", strlen("insert"), 0 TSRMLS_CC);
+			break;
+		case MONGODB_API_COMMAND_UPDATE:
+			php_mongo_serialize_key(buf, "update", strlen("update"), 0 TSRMLS_CC);
+			break;
+		case MONGODB_API_COMMAND_DELETE:
+			php_mongo_serialize_key(buf, "delete", strlen("delete"), 0 TSRMLS_CC);
+			break;
+	}
+}
+void php_mongo_api_write_command_fieldname(mongo_buffer *buf, php_mongodb_write_types type TSRMLS_DC)
+{
+	switch(type) {
+		case MONGODB_API_COMMAND_INSERT:
+			php_mongo_serialize_key(buf, "documents", strlen("documents"), 0 TSRMLS_CC);
+			break;
+		case MONGODB_API_COMMAND_UPDATE:
+			php_mongo_serialize_key(buf, "updates", strlen("updates"), 0 TSRMLS_CC);
+			break;
+		case MONGODB_API_COMMAND_DELETE:
+			php_mongo_serialize_key(buf, "deletes", strlen("deletes"), 0 TSRMLS_CC);
+			break;
+	}
+}
+
+/* Bootstraps a Write API message with its write concerns.
  * Returns the position of the root element, needed to backtrack and serialize
  * the size of the combined command */
-int php_mongo_api_insert_start(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
+int php_mongo_api_write_start(php_mongodb_write_types type, mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
 {
 	int container_pos;
 
@@ -172,9 +201,9 @@ int php_mongo_api_insert_start(mongo_buffer *buf, char *ns, char *collection, ph
 	container_pos = buf->pos-buf->start;
 	buf->pos += INT_32;
 
-	/* insert: databasename.collectionName */
+	/* <command-name>: databasename.collectionName */
 	php_mongo_set_type(buf, BSON_STRING);
-	php_mongo_serialize_key(buf, "insert", strlen("insert"), 0 TSRMLS_CC);
+	php_mongo_api_write_command_name(buf, type TSRMLS_CC);
 	php_mongo_serialize_int(buf, strlen(collection) + 1);
 	php_mongo_serialize_string(buf, collection, strlen(collection));
 
@@ -182,15 +211,17 @@ int php_mongo_api_insert_start(mongo_buffer *buf, char *ns, char *collection, ph
 		php_mongo_api_add_write_options(buf, write_options TSRMLS_CC);
 	}
 
-	/* documents: [ 0: {document: 1}, 1: {document: 2}, ...] */
+	/* documents: [ 0: {document: 1},                        1: {document: 2},                         ...] */
+	/* updates:   [ 0: { q: {}, u: {}, multi: b, upsert: b}, 1: { q: {}, u: {}, multi: b, upsert: b }, ...] */
+	/* deletes:   [ 0: { q: {},        limit: n},            1: { q: {},        limit: n            }, ...] */
 	php_mongo_set_type(buf, BSON_ARRAY);
-	php_mongo_serialize_key(buf, "documents", strlen("documents"), 0 TSRMLS_CC);
+	php_mongo_api_write_command_fieldname(buf, type TSRMLS_CC);
 
 	return container_pos;
 }
 /* }}}  */
 
-/* Adds a new document to write. Must be called after php_mongo_api_insert_start(), and
+/* Adds a new document to write. Must be called after php_mongo_api_write_start(), and
  * can be called many many times.
  * n: The index of the document (eg: n=0 for first document, n=1 for second doc in a batch)
  * document: The actual document to insert
@@ -226,13 +257,71 @@ int php_mongo_api_insert_add(mongo_buffer *buf, int n, HashTable *document, int 
 	return 1;
 }
 /* }}}  */
+int php_mongo_api_update_add(mongo_buffer *buf, int n, php_mongodb_write_update_args *update_args, int max_document_size TSRMLS_DC) /* {{{  */
+{
+	int docstart = buf->pos-buf->start;
+	int argstart, document_end;
+	char *number;
+
+	buf->pos += INT_32;
+	php_mongo_set_type(buf, BSON_OBJECT);
+
+	spprintf(&number, 0, "%d", n);
+	php_mongo_serialize_key(buf, number, strlen(number), 0 TSRMLS_CC);
+	efree(number);
+
+	argstart = buf->pos-buf->start;
+	buf->pos += INT_32;
+
+
+	php_mongo_set_type(buf, BSON_OBJECT);
+	php_mongo_serialize_key(buf, "q", strlen("q"), 0 TSRMLS_CC);
+	if (zval_to_bson(buf, Z_ARRVAL_P(update_args->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE) {
+		return 0;
+	}
+	php_mongo_set_type(buf, BSON_OBJECT);
+	php_mongo_serialize_key(buf, "u", strlen("u"), 0 TSRMLS_CC);
+	if (zval_to_bson(buf, Z_ARRVAL_P(update_args->update), NO_PREP, max_document_size TSRMLS_CC) == FAILURE) {
+		return 0;
+	}
+
+	if (update_args->multi != -1) {
+		php_mongo_set_type(buf, BSON_BOOL);
+		php_mongo_serialize_key(buf, "multi", strlen("multi"), 0 TSRMLS_CC);
+		php_mongo_serialize_bool(buf, update_args->multi);
+	}
+
+	if (update_args->upsert != -1) {
+		php_mongo_set_type(buf, BSON_BOOL);
+		php_mongo_serialize_key(buf, "upsert", strlen("upsert"), 0 TSRMLS_CC);
+		php_mongo_serialize_bool(buf, update_args->upsert);
+	}
+
+
+	/* Finished with the object */
+	php_mongo_serialize_null(buf);
+
+	/* Seek back and set the size of this object */
+	document_end = MONGO_32((buf->pos - (buf->start + argstart)));
+	memcpy(buf->start + argstart, &document_end, INT_32);
+
+
+	/* Finished with all data for the `n` key */
+	php_mongo_serialize_null(buf);
+	if (php_mongo_serialize_size(buf->start + docstart, buf, MAX_BSON_WIRE_OBJECT_SIZE(max_document_size) TSRMLS_CC) == FAILURE) {
+		return 0;
+	}
+
+	return 1;
+}
+/* }}}  */
 
 /* Finalize the BSON buffer.
- * Requires the container_pos from php_mongo_api_insert_start() and the max_write_size
+ * Requires the container_pos from php_mongo_api_write_start() and the max_write_size
  * Use MAX_BSON_WIRE_OBJECT_SIZE(max_bson_size) to calculate the correct max_write_size
  * Returns the the full message length.
  * Throws mongo_ce_Exception if the buffer is larger then max_write_size */
-int php_mongo_api_insert_end(mongo_buffer *buf, int container_pos, int max_write_size TSRMLS_DC) /* {{{  */
+int php_mongo_api_write_end(mongo_buffer *buf, int container_pos, int max_write_size TSRMLS_DC) /* {{{  */
 {
 	php_mongo_serialize_null(buf);
 	if (php_mongo_serialize_size(buf->start + container_pos, buf, max_write_size TSRMLS_CC) == FAILURE) {
@@ -256,23 +345,23 @@ int php_mongo_api_insert_single(mongo_buffer *buf, char *ns, char *collection, z
 {
 	int request_id;
 	int container_pos;
-	int message_lenth;
+	int message_length;
 
 	request_id = MonGlo(request_id);
-	container_pos = php_mongo_api_insert_start(buf, ns, collection, write_options TSRMLS_CC);
+	container_pos = php_mongo_api_write_start(MONGODB_API_COMMAND_INSERT, buf, ns, collection, write_options TSRMLS_CC);
 
 	if (!php_mongo_api_insert_add(buf, 0, HASH_OF(document), connection->max_bson_size TSRMLS_CC)) {
 		return 0;
 	}
 
-	message_lenth = php_mongo_api_insert_end(buf, container_pos, MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size) TSRMLS_CC);
+	message_length = php_mongo_api_write_end(buf, container_pos, MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size) TSRMLS_CC);
 	/* Overflowed the max_write_size */
-	if (message_lenth == 0) {
+	if (message_length == 0) {
 		return 0;
 	}
 
 #if MONGO_PHP_STREAMS
-	mongo_log_stream_cmd_insert(connection, document, write_options, message_lenth, request_id, ns TSRMLS_CC);
+	mongo_log_stream_cmd_insert(connection, document, write_options, message_length, request_id, ns TSRMLS_CC);
 #endif
 
 	return request_id;
@@ -348,6 +437,36 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 	return 0;
 }
 /* }}} */
+
+
+
+
+int php_mongo_api_update_single(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_update_args *update_args, php_mongodb_write_options *write_options, mongo_connection *connection TSRMLS_DC)
+{
+	int request_id;
+	int container_pos;
+	int message_length;
+
+	request_id = MonGlo(request_id);
+	container_pos = php_mongo_api_write_start(MONGODB_API_COMMAND_UPDATE, buf, ns, collection, write_options TSRMLS_CC);
+
+	if (!php_mongo_api_update_add(buf, 0, update_args, connection->max_bson_size TSRMLS_CC)) {
+		return 0;
+	}
+
+	message_length = php_mongo_api_write_end(buf, container_pos, MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size) TSRMLS_CC);
+	/* Overflowed the max_write_size */
+	if (message_length == 0) {
+		return 0;
+	}
+
+#if MONGO_PHP_STREAMS
+	mongo_log_stream_cmd_update(connection, update_args, write_options, message_length, request_id, ns TSRMLS_CC);
+#endif
+
+	return request_id;
+}
+
 
 /* Internal helper: Writes the php_mongodb_write_options options to the buffer */
 static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{  */

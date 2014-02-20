@@ -74,6 +74,22 @@ void php_mongo_stream_notify_meta(php_stream_context *ctx, int code, zval *args 
 	}
 }
 
+void php_mongo_stream_notify_meta_cmd_update(php_stream_context *ctx, zval *server, zval *write_options, zval *update_options, zval *protocol_options TSRMLS_DC)
+{
+	zval *args;
+
+	MAKE_STD_ZVAL(args);
+	array_init(args);
+
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "update_options", update_options);
+	ADD_ASSOC_ZVAL_ADDREF(args, "write_options", write_options);
+	ADD_ASSOC_ZVAL_ADDREF(args, "protocol_options", protocol_options);
+
+	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_CMD_UPDATE, args TSRMLS_CC);
+	zval_ptr_dtor(&args);
+}
+
 void php_mongo_stream_notify_meta_cmd_insert(php_stream_context *ctx, zval *server, zval *document, zval *write_options, zval *protocol_options TSRMLS_DC)
 {
 	zval *args;
@@ -590,6 +606,55 @@ void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, p
 		zval_ptr_dtor(&server);
 		zval_ptr_dtor(&protocol_options);
 		zval_ptr_dtor(&z_write_options);
+	}
+}
+
+void php_update_options_to_zval(php_mongodb_write_update_args *update_options, zval *z_update_options)
+{
+	add_assoc_bool(z_update_options, "multi", update_options->multi);
+	add_assoc_bool(z_update_options, "upsert", update_options->upsert);
+	ADD_ASSOC_ZVAL_ADDREF(z_update_options, "q", update_options->query);
+	ADD_ASSOC_ZVAL_ADDREF(z_update_options, "u", update_options->update);
+}
+
+void mongo_log_stream_cmd_update(mongo_connection *connection, php_mongodb_write_update_args *update_options, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC)
+{
+	php_stream_context *context = ((php_stream *)connection->socket)->context;
+
+	if (CONTEXT_HAS_NOTIFY_OR_LOG(context, "log_cmd_update")) {
+		zval **args[4];
+		zval *protocol_options, *server, *z_write_options, *z_update_options;
+
+		server = php_log_get_server_info(connection);
+
+		MAKE_STD_ZVAL(protocol_options);
+		array_init(protocol_options);
+
+		MAKE_STD_ZVAL(z_write_options);
+		array_init(z_write_options);
+
+		MAKE_STD_ZVAL(z_update_options);
+		array_init(z_update_options);
+
+		php_mongo_api_write_options_to_zval(write_options, z_write_options);
+		php_update_options_to_zval(update_options, z_update_options);
+
+		add_assoc_long(protocol_options, "message_length", message_length);
+		add_assoc_long(protocol_options, "request_id", request_id);
+		add_assoc_stringl(protocol_options, "namespace", ns, strlen(ns), 1);
+
+		args[0] = &server;
+		args[1] = &z_write_options;
+		args[2] = &z_update_options;
+		args[3] = &protocol_options;
+
+		php_mongo_stream_notify_meta_cmd_update(context, server, z_write_options, z_update_options, protocol_options TSRMLS_CC);
+		php_mongo_stream_callback(context, "log_cmd_update", 4, args TSRMLS_CC);
+
+		zval_ptr_dtor(&server);
+		zval_ptr_dtor(&protocol_options);
+		zval_ptr_dtor(&z_write_options);
+		zval_ptr_dtor(&z_update_options);
 	}
 }
 
