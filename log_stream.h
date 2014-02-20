@@ -44,6 +44,7 @@
 #define MONGO_STREAM_NOTIFY_LOG_WRITE_REPLY     219
 #define MONGO_STREAM_NOTIFY_LOG_CMD_INSERT      220
 #define MONGO_STREAM_NOTIFY_LOG_CMD_UPDATE      221
+#define MONGO_STREAM_NOTIFY_LOG_CMD_DELETE      222
 
 void php_mongo_stream_notify_io(mongo_server_options *opts, int code, int sofar, int max TSRMLS_DC);
 void mongo_log_stream_insert(mongo_connection *connection, zval *document, zval *options TSRMLS_DC);
@@ -57,6 +58,7 @@ void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor
 void mongo_log_stream_write_reply(mongo_connection *connection, mongo_msg_header *header, php_mongodb_reply *reply TSRMLS_DC);
 void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
 void mongo_log_stream_cmd_update(mongo_connection *connection, php_mongodb_write_update_args *update_options, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
+void mongo_log_stream_cmd_delete(mongo_connection *connection, php_mongodb_write_delete_args *delete_options, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
 #endif
 
 /*

@@ -17,8 +17,9 @@ class MongoNotifications {
         $data = json_decode($message, true);
 
         switch($code) {
-            case MONGO_STREAM_NOTIFY_LOG_CMD_UPDATE:
             case MONGO_STREAM_NOTIFY_LOG_CMD_INSERT:
+            case MONGO_STREAM_NOTIFY_LOG_CMD_UPDATE:
+            case MONGO_STREAM_NOTIFY_LOG_CMD_DELETE:
                 $reqid = $data["protocol_options"]["request_id"];
                 $this->reqs[$reqid] = $data;
                 $this->reqs[$reqid]["start"] = microtime(true);

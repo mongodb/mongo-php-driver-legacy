@@ -315,6 +315,53 @@ int php_mongo_api_update_add(mongo_buffer *buf, int n, php_mongodb_write_update_
 	return 1;
 }
 /* }}}  */
+int php_mongo_api_delete_add(mongo_buffer *buf, int n, php_mongodb_write_delete_args *delete_args, int max_document_size TSRMLS_DC) /* {{{  */
+{
+	int docstart = buf->pos-buf->start;
+	int argstart, document_end;
+	char *number;
+
+	buf->pos += INT_32;
+	php_mongo_set_type(buf, BSON_OBJECT);
+
+	spprintf(&number, 0, "%d", n);
+	php_mongo_serialize_key(buf, number, strlen(number), 0 TSRMLS_CC);
+	efree(number);
+
+	argstart = buf->pos-buf->start;
+	buf->pos += INT_32;
+
+
+	php_mongo_set_type(buf, BSON_OBJECT);
+	php_mongo_serialize_key(buf, "q", strlen("q"), 0 TSRMLS_CC);
+	if (zval_to_bson(buf, Z_ARRVAL_P(delete_args->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE) {
+		return 0;
+	}
+
+	if (delete_args->limit != -1) {
+		php_mongo_set_type(buf, BSON_INT);
+		php_mongo_serialize_key(buf, "limit", strlen("limit"), 0 TSRMLS_CC);
+		php_mongo_serialize_int(buf, delete_args->limit);
+	}
+
+
+	/* Finished with the object */
+	php_mongo_serialize_null(buf);
+
+	/* Seek back and set the size of this object */
+	document_end = MONGO_32((buf->pos - (buf->start + argstart)));
+	memcpy(buf->start + argstart, &document_end, INT_32);
+
+
+	/* Finished with all data for the `n` key */
+	php_mongo_serialize_null(buf);
+	if (php_mongo_serialize_size(buf->start + docstart, buf, MAX_BSON_WIRE_OBJECT_SIZE(max_document_size) TSRMLS_CC) == FAILURE) {
+		return 0;
+	}
+
+	return 1;
+}
+/* }}}  */
 
 /* Finalize the BSON buffer.
  * Requires the container_pos from php_mongo_api_write_start() and the max_write_size
@@ -440,6 +487,32 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 
 
 
+
+int php_mongo_api_delete_single(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_delete_args *delete_args, php_mongodb_write_options *write_options, mongo_connection *connection TSRMLS_DC)
+{
+	int request_id;
+	int container_pos;
+	int message_length;
+
+	request_id = MonGlo(request_id);
+	container_pos = php_mongo_api_write_start(MONGODB_API_COMMAND_DELETE, buf, ns, collection, write_options TSRMLS_CC);
+
+	if (!php_mongo_api_delete_add(buf, 0, delete_args, connection->max_bson_size TSRMLS_CC)) {
+		return 0;
+	}
+
+	message_length = php_mongo_api_write_end(buf, container_pos, MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size) TSRMLS_CC);
+	/* Overflowed the max_write_size */
+	if (message_length == 0) {
+		return 0;
+	}
+
+#if MONGO_PHP_STREAMS
+	mongo_log_stream_cmd_delete(connection, delete_args, write_options, message_length, request_id, ns TSRMLS_CC);
+#endif
+
+	return request_id;
+}
 
 int php_mongo_api_update_single(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_update_args *update_args, php_mongodb_write_options *write_options, mongo_connection *connection TSRMLS_DC)
 {

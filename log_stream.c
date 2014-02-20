@@ -74,6 +74,22 @@ void php_mongo_stream_notify_meta(php_stream_context *ctx, int code, zval *args 
 	}
 }
 
+void php_mongo_stream_notify_meta_cmd_delete(php_stream_context *ctx, zval *server, zval *write_options, zval *delete_options, zval *protocol_options TSRMLS_DC)
+{
+	zval *args;
+
+	MAKE_STD_ZVAL(args);
+	array_init(args);
+
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "delete_options", delete_options);
+	ADD_ASSOC_ZVAL_ADDREF(args, "write_options", write_options);
+	ADD_ASSOC_ZVAL_ADDREF(args, "protocol_options", protocol_options);
+
+	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_CMD_DELETE, args TSRMLS_CC);
+	zval_ptr_dtor(&args);
+}
+
 void php_mongo_stream_notify_meta_cmd_update(php_stream_context *ctx, zval *server, zval *write_options, zval *update_options, zval *protocol_options TSRMLS_DC)
 {
 	zval *args;
@@ -655,6 +671,53 @@ void mongo_log_stream_cmd_update(mongo_connection *connection, php_mongodb_write
 		zval_ptr_dtor(&protocol_options);
 		zval_ptr_dtor(&z_write_options);
 		zval_ptr_dtor(&z_update_options);
+	}
+}
+
+void php_delete_options_to_zval(php_mongodb_write_delete_args *delete_options, zval *z_delete_options)
+{
+	add_assoc_long(z_delete_options, "limit", delete_options->limit);
+	ADD_ASSOC_ZVAL_ADDREF(z_delete_options, "q", delete_options->query);
+}
+
+void mongo_log_stream_cmd_delete(mongo_connection *connection, php_mongodb_write_delete_args *delete_options, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC)
+{
+	php_stream_context *context = ((php_stream *)connection->socket)->context;
+
+	if (CONTEXT_HAS_NOTIFY_OR_LOG(context, "log_cmd_delete")) {
+		zval **args[4];
+		zval *protocol_options, *server, *z_write_options, *z_delete_options;
+
+		server = php_log_get_server_info(connection);
+
+		MAKE_STD_ZVAL(protocol_options);
+		array_init(protocol_options);
+
+		MAKE_STD_ZVAL(z_write_options);
+		array_init(z_write_options);
+
+		MAKE_STD_ZVAL(z_delete_options);
+		array_init(z_delete_options);
+
+		php_mongo_api_write_options_to_zval(write_options, z_write_options);
+		php_delete_options_to_zval(delete_options, z_delete_options);
+
+		add_assoc_long(protocol_options, "message_length", message_length);
+		add_assoc_long(protocol_options, "request_id", request_id);
+		add_assoc_stringl(protocol_options, "namespace", ns, strlen(ns), 1);
+
+		args[0] = &server;
+		args[1] = &z_write_options;
+		args[2] = &z_delete_options;
+		args[3] = &protocol_options;
+
+		php_mongo_stream_notify_meta_cmd_delete(context, server, z_write_options, z_delete_options, protocol_options TSRMLS_CC);
+		php_mongo_stream_callback(context, "log_cmd_delete", 4, args TSRMLS_CC);
+
+		zval_ptr_dtor(&server);
+		zval_ptr_dtor(&protocol_options);
+		zval_ptr_dtor(&z_write_options);
+		zval_ptr_dtor(&z_delete_options);
 	}
 }
 
