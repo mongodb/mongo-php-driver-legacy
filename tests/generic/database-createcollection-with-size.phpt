@@ -14,18 +14,16 @@ $d->dropCollection('create-col1');
 var_dump($ns->findOne(array('name' => 'phpunit.create-col1')));
 
 // create
-// * even though we're only setting this to 100, it allocates 1 extent, so we
-//   can fit 4096, not 100, bytes of data in the collection.
 
-$c = $d->createCollection('create-col1', array('size' => 100, 'capped' => true));
+$c = $d->createCollection('create-col1', array('size' => 1024, 'capped' => true));
 var_dump($ns->findOne(array('name' => 'phpunit.create-col1')));
 
 // test cap
-for ($i = 0; $i < 100; $i++) {
+for ($i = 0; $i < 1024; $i++) {
 	$c->insert(array('x' => $i));
 }
 var_dump($c->count());
-var_dump($c->count() < 100);
+var_dump($c->count() < 1024);
 ?>
 --EXPECTF--
 NULL
@@ -34,10 +32,8 @@ array(2) {
   string(19) "phpunit.create-col1"
   ["options"]=>
   array(%d) {%A
-    ["size"]=>
-    int(100)
     ["capped"]=>
-    bool(true)
+    bool(true)%A
   }
 }
 int(%d)
