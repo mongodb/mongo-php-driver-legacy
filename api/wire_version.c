@@ -39,6 +39,18 @@ int php_mongo_api_supports_wire_version(int min_wire_version, int max_wire_versi
 	return 1;
 }
 
+int php_mongo_api_connection_supports_feature(mongo_connection *connection, int feature)
+{
+	if (connection->min_wire_version > feature) {
+		return 0;
+	}
+	if (connection->max_wire_version < feature) {
+		return 0;
+	}
+
+	return 1;
+}
+
 /*
  * Local variables:
  * tab-width: 4

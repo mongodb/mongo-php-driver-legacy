@@ -30,6 +30,8 @@
 #include "mcon/io.h"
 #include "mcon/utils.h"
 #include "log_stream.h"
+#include "api/write.h"
+#include "api/wire_version.h"
 
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_DB, *mongo_ce_Cursor;
 extern zend_class_entry *mongo_ce_CommandCursor;
@@ -716,6 +718,171 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 	return;
 }
 
+int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, zval *write_options, zval *this_ptr, mongo_buffer *buf, char *namespace, int namespace_len, zval *document, zval *return_value TSRMLS_DC)
+{
+	int retval = 0;
+
+	if (FAILURE == php_mongo_write_insert(buf, namespace, document, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
+		return 0;
+	}
+
+#if MONGO_PHP_STREAMS
+	mongo_log_stream_insert(connection, document, write_options TSRMLS_CC);
+#endif
+
+	/* retval == -1 means a GLE response was received, so send_message() has
+	 * either set return_value or thrown an exception via do_gle_op(). */
+	retval = send_message(this_ptr, connection, buf, write_options, return_value TSRMLS_CC);
+
+	return retval;
+}
+
+void mongo_convert_write_api_return_to_legacy_retval(zval *return_value, int insert, int write_concern TSRMLS_DC)
+{
+	zval **ok, **err, **errmsg;
+
+	if (write_concern < 1) {
+		/* Not kidding.. Surpress any exception thrown for w=0 */
+		zend_clear_exception(TSRMLS_C);
+		convert_to_boolean(return_value);
+		return;
+	}
+	if (SUCCESS == zend_hash_find(HASH_P(return_value), "ok", strlen("ok") + 1, (void**) &ok) && Z_TYPE_PP(ok) != IS_DOUBLE) {
+		convert_to_double(*ok);
+	}
+	if (FAILURE == zend_hash_find(HASH_P(return_value), "err", strlen("err") + 1, (void**) &err)) {
+		add_assoc_null(return_value, "err");
+	}
+	if (FAILURE == zend_hash_find(HASH_P(return_value), "errmsg", strlen("errmsg") + 1, (void**) &errmsg)) {
+		add_assoc_null(return_value, "errmsg");
+	}
+	if (insert) {
+		zval **n;
+
+		/* "n" was always 0 for OP_INSERT gle */
+		if (SUCCESS == zend_hash_find(HASH_P(return_value), "n", strlen("n") + 1, (void**) &n)) {
+			convert_to_long(*n);
+			Z_LVAL_PP(n) = 0;
+		}
+	}
+}
+
+void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options, mongo_server_options *server_options, zval *collection TSRMLS_DC)
+{
+	if (write_options->fsync == -1) {
+		write_options->fsync = server_options->default_fsync;
+	}
+	if (write_options->j == -1) {
+		write_options->j = server_options->default_journal;
+	}
+	if (write_options->wtimeout == -1) {
+		zval *wtimeout_prop;
+
+		write_options->wtimeout = server_options->default_wtimeout;
+
+		wtimeout_prop = zend_read_property(mongo_ce_Collection, collection, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
+		convert_to_long(wtimeout_prop);
+		if (Z_LVAL_P(wtimeout_prop) != PHP_MONGO_DEFAULT_WTIMEOUT) {
+			write_options->wtimeout = Z_LVAL_P(wtimeout_prop);
+		}
+	}
+
+	if (write_options->wtype == -1) {
+		zval *w_prop = zend_read_property(mongo_ce_Collection, collection, "w", strlen("w"), NOISY TSRMLS_CC);
+
+		if (Z_TYPE_P(w_prop) == IS_LONG || Z_TYPE_P(w_prop) == IS_BOOL) {
+			if (Z_LVAL_P(w_prop) == 1) {
+				if (server_options->default_w != -1) {
+					write_options->write_concern.w = server_options->default_w;
+					write_options->wtype = 1;
+				} else if (server_options->default_wstring != NULL) {
+					write_options->write_concern.wstring = server_options->default_wstring;
+					write_options->wtype = 2;
+				} else {
+					write_options->write_concern.w = Z_LVAL_P(w_prop);
+					write_options->wtype = 1;
+				}
+			} else {
+				write_options->write_concern.w = Z_LVAL_P(w_prop);
+				write_options->wtype = 1;
+			}
+		} else {
+			convert_to_string(w_prop);
+			write_options->write_concern.wstring = Z_STRVAL_P(w_prop);
+			write_options->wtype = 2;
+		}
+	}
+
+}
+
+/*
+ * Returns the socket read timeout (in ms) from the specified write options
+ * ('socketTimeoutMS', with a deprecated fallback to 'timeout').
+ */
+int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_write_options TSRMLS_DC)
+{
+	if (z_write_options && Z_TYPE_P(z_write_options) == IS_ARRAY) {
+		zval **timeout_pp;
+
+		if (SUCCESS == zend_hash_find(HASH_P(z_write_options), "socketTimeoutMS", strlen("socketTimeoutMS") + 1, (void**) &timeout_pp)) {
+			convert_to_long(*timeout_pp);
+			return Z_LVAL_PP(timeout_pp);
+		} else if (SUCCESS == zend_hash_find(HASH_P(z_write_options), "timeout", strlen("timeout") + 1, (void**) &timeout_pp)) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead");
+			convert_to_long(*timeout_pp);
+			return Z_LVAL_PP(timeout_pp);
+		}
+	}
+
+	return server_options->socketTimeoutMS;
+}
+
+/* Returns 0 on failure, throwing exception?
+ * Returns 1 on success, setting zval return_value to the return document
+ */
+int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *server_options, int socket_read_timeout, php_mongodb_write_options *write_options, char *dbname, zval *collection, zval *document, zval *return_value TSRMLS_DC)
+{
+	char *command_ns;
+	char *error_message;
+	int retval = 0;
+	int bytes_written = 0;
+	int request_id;
+	mongo_buffer buf;
+	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(collection TSRMLS_CC);
+
+
+	spprintf(&command_ns, 0, "%s.$cmd", dbname);
+
+	CREATE_BUF(buf, INITIAL_BUF_SIZE);
+	request_id = php_mongo_api_insert_single(&buf, command_ns, Z_STRVAL_P(c->name), document, write_options, connection TSRMLS_CC);
+
+	efree(command_ns);
+
+	if (request_id == 0) {
+		/* The document is greater then allowed limits, exception already thrown */
+		efree(buf.start);
+		return 0;
+	}
+
+	bytes_written = manager->send(connection, server_options, buf.start, buf.pos - buf.start, &error_message);
+
+	if (bytes_written < 1) {
+		/* Didn't write anything, something bad must have happened */
+		efree(buf.start);
+		return 0;
+	}
+
+	retval = php_mongo_api_get_reply(manager, connection, server_options, socket_read_timeout, request_id, &return_value TSRMLS_CC);
+	efree(buf.start);
+
+	if (retval != 0) {
+		mongo_manager_connection_deregister(manager, connection);
+		/* Exception already thrown */
+		return 0;
+	}
+
+	return 1;
+}
 
 /* {{{ proto bool|array MongoCollection::insert(array|object document [, array options])
    Insert a document into the collection and return the database response if
@@ -723,41 +890,58 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
    document is not empty. */
 PHP_METHOD(MongoCollection, insert)
 {
-	zval *a, *options = 0;
-	mongo_collection *c;
-	mongo_buffer buf;
+	zval *document, *z_write_options = 0;
+	mongoclient *link;
 	mongo_connection *connection;
-	int retval;
+	mongo_collection *c;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &a, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &document, &z_write_options) == FAILURE) {
 		return;
 	}
-	MUST_BE_ARRAY_OR_OBJECT(1, a);
+	MUST_BE_ARRAY_OR_OBJECT(1, document);
 
 	PHP_MONGO_GET_COLLECTION(getThis());
+	link = (mongoclient*)zend_object_store_get_object(c->link TSRMLS_CC);
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
 		RETURN_FALSE;
 	}
 
-	CREATE_BUF(buf, INITIAL_BUF_SIZE);
-	if (FAILURE == php_mongo_write_insert(&buf, Z_STRVAL_P(c->ns), a, connection->max_bson_size, connection->max_message_size TSRMLS_CC)) {
+	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
+		php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
+		int retval;
+		mongo_db *db;
+		int socket_read_timeout = 0;
+		PHP_MONGO_GET_DB(c->parent);
+
+		mongo_apply_implicit_write_options(&write_options, &link->servers->options, getThis() TSRMLS_CC);
+		php_mongo_api_write_options_from_zval(&write_options, z_write_options TSRMLS_CC);
+		socket_read_timeout = mongo_get_socket_read_timeout(&link->servers->options, z_write_options TSRMLS_CC);
+
+		retval = mongo_collection_insert_api(link->manager, connection, &link->servers->options, socket_read_timeout, &write_options, Z_STRVAL_P(db->name), getThis(), document, return_value TSRMLS_CC);
+
+		if (retval) {
+			/* Adds random "err", "code", "errmsg" empty fields to be compatible with
+			 * old-style return values */
+			mongo_convert_write_api_return_to_legacy_retval(return_value, 1, write_options.wtype == 1 ? write_options.write_concern.w : 1 TSRMLS_CC);
+		}
+		return;
+	} else if(php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
+		int retval;
+		mongo_buffer buf;
+
+		CREATE_BUF(buf, INITIAL_BUF_SIZE);
+		retval = mongo_collection_insert_opcode(link->manager, connection, &link->servers->options, z_write_options, getThis(), &buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), document, return_value TSRMLS_CC);
+
+		/* retval == -1 means a GLE response was received, so send_message() has
+		* either set return_value or thrown an exception via do_gle_op(). */
+		if (retval != -1) {
+			RETVAL_BOOL(retval);
+		}
 		efree(buf.start);
-		RETURN_FALSE;
+	} else {
+		zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Cannot determine how to write documents to the server");
 	}
-
-#if MONGO_PHP_STREAMS
-	mongo_log_stream_insert(connection, a, options TSRMLS_CC);
-#endif
-
-	/* retval == -1 means a GLE response was received, so send_message() has
-	 * either set return_value or thrown an exception via do_gle_op(). */
-	retval = send_message(this_ptr, connection, &buf, options, return_value TSRMLS_CC);
-	if (retval != -1) {
-		RETVAL_BOOL(retval);
-	}
-
-	efree(buf.start);
 }
 /* }}} */
 
