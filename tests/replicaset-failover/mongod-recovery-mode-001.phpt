@@ -10,15 +10,19 @@ require_once "tests/utils/server.inc";
 $server = new MongoShellServer;
 $rs = $server->getReplicasetConfig();
 
-function log_query($server, $query, $cursor_options) {
+function log_server_type($server) {
     printf("Server type: %s (%d)\n", $server["type"] == 2 ? "PRIMARY" : ($server["type"] == 4 ? "SECONDARY" : "UNKNOWN"), $server["type"]);
 }
 
-$ctx = stream_context_create(array("mongodb" => array("log_query" => "log_query")));
+$ctx = stream_context_create(array("mongodb" => array(
+    "log_query" => "log_server_type",
+    "log_cmd_insert" => "log_server_type",
+    "log_cmd_delete" => "log_server_type",
+)));
 
 $mc = new MongoClient($rs["dsn"], array("replicaSet" => $rs["rsname"], "readPreference" => MongoClient::RP_SECONDARY_PREFERRED), array("context" => $ctx));
 $i = "random";
-$mc->selectDb(dbname())->recovery->drop();
+$mc->selectDb(dbname())->recoverymode->drop();
 $mc->selectDb(dbname())->recoverymode->insert(array("doc" => $i, "w" => "majority"));
 
 // Lower the ismaster interval to make sure we pick up on the change

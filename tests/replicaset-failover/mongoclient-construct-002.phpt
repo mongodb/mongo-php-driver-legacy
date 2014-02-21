@@ -10,21 +10,21 @@ require_once "tests/utils/server.inc";
 $server = new MongoShellServer;
 $rs = $server->getReplicasetConfig();
 
-function log_query($server, $query, $cursor_options) {
-    var_dump($server, $query, $cursor_options);
+function log_server_type($server) {
+    printf("Server type: %s (%d)\n", $server["type"] == 2 ? "PRIMARY" : ($server["type"] == 4 ? "SECONDARY" : "UNKNOWN"), $server["type"]);
 }
-$ctx = stream_context_create(
-    array(
-        "mongodb" => array(
-            "log_query" => "log_query",
-        )
-    )
-);
+
+$ctx = stream_context_create(array("mongodb" => array(
+    "log_query" => "log_server_type",
+    "log_cmd_insert" => "log_server_type",
+)));
+
 $mc = new MongoClient($rs["dsn"], array("replicaSet" => $rs["rsname"]), array("context" => $ctx));
 
-$coll = $mc->selectCollection("ctorfailover", "test1");
+$coll = $mc->selectCollection("ctorfailover", "test2");
+$coll->drop();
 $data = array("x" => "The world is not enough");
-$coll->insert($data);
+$coll->insert($data, array('w' => 'majority'));
 $id = $data["_id"];
 
 echo "About to kill master\n";
@@ -62,100 +62,17 @@ var_dump(time()-$t > 3);
 --CLEAN--
 <?php require_once "tests/utils/fix-master.inc"; ?>
 --EXPECTF--
-array(5) {
-  ["hash"]=>
-  string(%d) "%s:%d;REPLICASET;.;%d"
-  ["type"]=>
-  int(2)
-  ["max_bson_size"]=>
-  int(16777216)
-  ["max_message_size"]=>
-  int(%d)
-  ["request_id"]=>
-  int(%d)
-}
-array(1) {
-  ["getlasterror"]=>
-  int(1)
-}
-array(5) {
-  ["request_id"]=>
-  int(4)
-  ["skip"]=>
-  int(0)
-  ["limit"]=>
-  int(-1)
-  ["options"]=>
-  int(0)
-  ["cursor_id"]=>
-  int(0)
-}
+Server type: PRIMARY (2)
+Server type: PRIMARY (2)
 About to kill master
 Master killed
 Attempting insert
-array(5) {
-  ["hash"]=>
-  string(%d) "%s:%d;REPLICASET;.;%d"
-  ["type"]=>
-  int(2)
-  ["max_bson_size"]=>
-  int(16777216)
-  ["max_message_size"]=>
-  int(%d)
-  ["request_id"]=>
-  int(%d)
-}
-array(1) {
-  ["getlasterror"]=>
-  int(1)
-}
-array(5) {
-  ["request_id"]=>
-  int(6)
-  ["skip"]=>
-  int(0)
-  ["limit"]=>
-  int(-1)
-  ["options"]=>
-  int(0)
-  ["cursor_id"]=>
-  int(0)
-}
+Server type: PRIMARY (2)
 string(20) "MongoCursorException"
 string(%d) "%s:%d: Remote server has closed the connection"
 int(32)
 Doing secondary read
-array(5) {
-  ["hash"]=>
-  string(%d) "%s:%d;REPLICASET;.;%d"
-  ["type"]=>
-  int(4)
-  ["max_bson_size"]=>
-  int(16777216)
-  ["max_message_size"]=>
-  int(%d)
-  ["request_id"]=>
-  int(%d)
-}
-array(1) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "%s"
-  }
-}
-array(5) {
-  ["request_id"]=>
-  int(7)
-  ["skip"]=>
-  int(0)
-  ["limit"]=>
-  int(-1)
-  ["options"]=>
-  int(4)
-  ["cursor_id"]=>
-  int(0)
-}
+Server type: SECONDARY (4)
 Doing primary read, should fail since we don't have primary
 string(24) "MongoConnectionException"
 string(26) "No candidate servers found"
