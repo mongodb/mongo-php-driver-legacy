@@ -862,7 +862,6 @@ int mongo_collection_delete_api(mongo_con_manager *manager, mongo_connection *co
 	mongo_buffer buf;
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(collection TSRMLS_CC);
 
-
 	spprintf(&command_ns, 0, "%s.$cmd", dbname);
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
@@ -905,7 +904,6 @@ int mongo_collection_update_api(mongo_con_manager *manager, mongo_connection *co
 	int request_id;
 	mongo_buffer buf;
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(collection TSRMLS_CC);
-
 
 	spprintf(&command_ns, 0, "%s.$cmd", dbname);
 
@@ -952,7 +950,6 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 	int request_id;
 	mongo_buffer buf;
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(collection TSRMLS_CC);
-
 
 	spprintf(&command_ns, 0, "%s.$cmd", dbname);
 
@@ -1015,6 +1012,7 @@ PHP_METHOD(MongoCollection, insert)
 		int retval;
 		mongo_db *db;
 		int socket_read_timeout = 0;
+
 		PHP_MONGO_GET_DB(c->parent);
 
 		mongo_apply_implicit_write_options(&write_options, &link->servers->options, getThis() TSRMLS_CC);
@@ -1029,7 +1027,7 @@ PHP_METHOD(MongoCollection, insert)
 			mongo_convert_write_api_return_to_legacy_retval(return_value, MONGODB_API_COMMAND_INSERT, write_options.wtype == 1 ? write_options.write_concern.w : 1 TSRMLS_CC);
 		}
 		return;
-	} else if(php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
+	} else if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
 		int retval;
 		mongo_buffer buf;
 
@@ -1265,8 +1263,7 @@ PHP_METHOD(MongoCollection, commandCursor)
 }
 /* }}} */
 
-/* Takes OP_UPDATE flags (bit vector) and sets the correct update_args options
- */
+/* Takes OP_UPDATE flags (bit vector) and sets the correct update_args options */
 static void mongo_apply_update_options_from_bits(php_mongodb_write_update_args *update_options, int bits)
 {
 	update_options->upsert = bits & (1 << 0) ? 1 : 0;
@@ -1307,10 +1304,10 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 		php_mongodb_write_update_args update_options = { NULL, NULL, -1, -1 };
 		mongo_collection *c;
 		mongoclient *link;
-
 		int retval;
 		mongo_db *db;
 		int socket_read_timeout = 0;
+
 		PHP_MONGO_GET_COLLECTION(getThis());
 		PHP_MONGO_GET_DB(c->parent);
 
@@ -1331,7 +1328,7 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 			mongo_convert_write_api_return_to_legacy_retval(return_value, MONGODB_API_COMMAND_UPDATE, write_options.wtype == 1 ? write_options.write_concern.w : 1 TSRMLS_CC);
 		}
 		zval_ptr_dtor(&z_write_options);
-	} else if(php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
+	} else if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
 		int retval = 1;
 		mongo_buffer buf;
 
@@ -1411,7 +1408,6 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 		array_init(z_write_options);
 	}
 
-
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
 		zval_ptr_dtor(&z_write_options);
 		zval_ptr_dtor(&criteria);
@@ -1426,6 +1422,7 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 		int retval;
 		mongo_db *db;
 		int socket_read_timeout = 0;
+
 		PHP_MONGO_GET_COLLECTION(getThis());
 		PHP_MONGO_GET_DB(c->parent);
 
@@ -1446,7 +1443,7 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 		}
 		zval_ptr_dtor(&z_write_options);
 		zval_ptr_dtor(&criteria);
-	} else if(php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
+	} else if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
 		mongo_buffer buf;
 		int retval = 1;
 
@@ -1475,6 +1472,7 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 		zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Cannot determine how to update documents on the server");
 	}
 }
+
 /* {{{ proto bool|array MongoCollection::remove([array|object criteria [array options]])
    Remove one or more documents matching $criteria */
 PHP_METHOD(MongoCollection, remove)

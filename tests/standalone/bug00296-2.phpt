@@ -19,7 +19,9 @@ function log_update($server, $old, $newobj, $flags, $insertopts) {
 
     var_dump($flags, $insertopts);
 }
-function log_cmd_update($server, $write_options, $update_arguments, $protocol_options) {
+
+function log_cmd_update($server, $write_options, $update_arguments, $protocol_options)
+{
     $pretend = $pretend2 = array();
     $flags = 0;
 

@@ -64,7 +64,7 @@ try {
 	$c->wtimeout = 4500;
 	$retval = $c->insert( array( 'test' => 1 ), array( 'fsync' => false, 'safe' => "allDCs", 'socketTimeoutMS' => M_PI * 1000 ) );
 	var_dump($retval["ok"]);
-    var_dump($mn->getLastInsertMeta()["write_options"]);
+	var_dump($mn->getLastInsertMeta()["write_options"]);
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
 }
