@@ -102,6 +102,8 @@ array(1) {
 -----
 
 %s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %s on line %d
+
+%s: MongoCollection::insert(): Using w=2 rather than w=1 as suggested by deprecated 'safe' value in %s on line %d
 float(1)
 array(1) {
   ["writeConcern"]=>
@@ -130,6 +132,20 @@ array(1) {
   }
 }
 -----
+
 %s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %s on line %d
 %s:%d:%sunrecognized getLastError mode: allDCs
+array(1) {
+  ["writeConcern"]=>
+  array(4) {
+    ["fsync"]=>
+    bool(false)
+    ["j"]=>
+    bool(false)
+    ["wtimeout"]=>
+    int(4500)
+    ["w"]=>
+    string(6) "allDCs"
+  }
+}
 -----

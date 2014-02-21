@@ -15,7 +15,7 @@ $ns = $d->selectCollection('system.namespaces');
 $d->dropCollection('col1');
 
 $d->col1->ensureIndex(array('a' => 1));
-$d->col1->ensureIndex(array('b' => '2dsphere'), array('sparse' => true));
+$d->col1->ensureIndex(array('b' => '2d'), array('sparse' => true));
 
 // check indexes
 $indexes = $d->col1->getIndexInfo();
@@ -51,10 +51,10 @@ array(3) {
   ["key"]=>
   array(1) {
     ["b"]=>
-    string(8) "2dsphere"
+    string(2) "2d"
   }
   ["ns"]=>
   string(%d) "%s.col1"
   ["name"]=>
-  string(10) "b_2dsphere"
+  string(4) "b_2d"
 }

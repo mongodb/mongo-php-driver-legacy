@@ -15,12 +15,10 @@ $ns = $d->selectCollection('system.namespaces');
 $d->dropCollection('create-col1');
 var_dump($ns->findOne(array('name' => 'phpunit.create-col1')));
 
-// create
-// * even though we're only setting this to 100, it allocates 1 extent, so we
-//   can fit 4096, not 100, bytes of data in the collection.
-
-$c = $d->createCollection('create-col1', array('size' => 100, 'capped' => true, 'autoIndexId' => true, 'max' => 5));
-var_dump($ns->findOne(array('name' => 'phpunit.create-col1')));
+$c = $d->createCollection('create-col1', array('size' => 4096, 'capped' => true, 'autoIndexId' => true, 'max' => 5));
+$retval = $ns->findOne(array('name' => 'phpunit.create-col1'));
+var_dump($retval['name']);
+dump_these_keys($retval['options'], array('size', 'capped', 'autoIndexId', 'max'));
 
 // check indexes
 $indexes = $c->getIndexInfo();
@@ -38,20 +36,16 @@ var_dump($c->count());
 ?>
 --EXPECTF--
 NULL
-array(2) {
-  ["name"]=>
-  string(%d) "%s.create-col1"
-  ["options"]=>
-  array(%a
-    ["size"]=>
-    int(100)
-    ["capped"]=>
-    bool(true)
-    ["autoIndexId"]=>
-    bool(true)
-    ["max"]=>
-    int(5)
-  }
+string(19) "phpunit.create-col1"
+array(4) {
+  ["size"]=>
+  int(4096)
+  ["capped"]=>
+  bool(true)
+  ["autoIndexId"]=>
+  bool(true)
+  ["max"]=>
+  int(5)
 }
 int(1)
 array(3) {
