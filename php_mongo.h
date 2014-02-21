@@ -539,10 +539,10 @@ void mongo_init_MongoGridFS(TSRMLS_D);
 void mongo_init_MongoGridFSFile(TSRMLS_D);
 void mongo_init_MongoGridFSCursor(TSRMLS_D);
 
-void mongo_init_MongoWriteBatch(TSRMLS_C);
-void mongo_init_MongoInsertBatch(TSRMLS_C);
-void mongo_init_MongoUpdateBatch(TSRMLS_C);
-void mongo_init_MongoDeleteBatch(TSRMLS_C);
+void mongo_init_MongoWriteBatch(TSRMLS_D);
+void mongo_init_MongoInsertBatch(TSRMLS_D);
+void mongo_init_MongoUpdateBatch(TSRMLS_D);
+void mongo_init_MongoDeleteBatch(TSRMLS_D);
 
 void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoCode(TSRMLS_D);

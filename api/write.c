@@ -362,13 +362,13 @@ int php_mongo_api_write_add(mongo_buffer *buf, int n, php_mongodb_write_item *it
 {
 	switch(item->type) {
 		case MONGODB_API_COMMAND_INSERT:
-			return php_mongo_api_insert_add(buf, n, item->write.insert, max_document_size);
+			return php_mongo_api_insert_add(buf, n, item->write.insert, max_document_size TSRMLS_CC);
 
 		case MONGODB_API_COMMAND_UPDATE:
-			return php_mongo_api_update_add(buf, n, item->write.update, max_document_size);
+			return php_mongo_api_update_add(buf, n, item->write.update, max_document_size TSRMLS_CC);
 
 		case MONGODB_API_COMMAND_DELETE:
-			return php_mongo_api_delete_add(buf, n, item->write.delete, max_document_size);
+			return php_mongo_api_delete_add(buf, n, item->write.delete, max_document_size TSRMLS_CC);
 	}
 }
 /* }}} */
