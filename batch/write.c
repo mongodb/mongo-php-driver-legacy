@@ -20,6 +20,9 @@
 #include "../batch/write.h"
 #include "../collection.h" /* mongo_apply_implicit_write_options() */
 
+/* The Batch API is only available for 5.3.0+ */
+#if PHP_VERSION_ID >= 50300
+
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 extern zend_class_entry *mongo_ce_Collection;
@@ -310,6 +313,8 @@ void mongo_init_MongoWriteBatch(TSRMLS_D)
 
 	mongo_ce_WriteBatch = zend_register_internal_class(&write_batch TSRMLS_CC);
 }
+
+#endif /* PHP_VERSION_ID >= 50300 */
 
 /*
  * Local variables:

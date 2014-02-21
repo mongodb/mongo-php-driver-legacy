@@ -18,6 +18,9 @@
 #include "../php_mongo.h"
 #include "../batch/write.h"
 
+/* The Batch API is only available for 5.3.0+ */
+#if PHP_VERSION_ID >= 50300
+
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_InsertBatch = NULL;
@@ -71,6 +74,8 @@ void mongo_init_MongoInsertBatch(TSRMLS_D)
 
 	mongo_ce_InsertBatch = zend_register_internal_class_ex(&insert_batch, mongo_ce_WriteBatch, "MongoWriteBatch" TSRMLS_CC);
 }
+
+#endif /* PHP_VERSION_ID >= 50300 */
 
 /*
  * Local variables:
