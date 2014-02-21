@@ -1,5 +1,5 @@
 --TEST--
-MongoInsertWriteBatch
+MongoInsertBatch
 --SKIPIF--
 <?php $needs = "2.5.5"; ?>
 <?php require_once "tests/utils/standalone.inc" ?>
@@ -19,7 +19,7 @@ $insertdoc1 = array("my" => "demo");
 $insertdoc2 = array("is" => "working");
 $insertdoc3 = array("pretty" => "well");
 
-$batch = new MongoWriteBatch($collection, 0);
+$batch = new MongoInsertBatch($collection);
 $addretval = $batch->add($insertdoc1);
 var_dump($addretval);
 $addretval = $batch->add($insertdoc2);

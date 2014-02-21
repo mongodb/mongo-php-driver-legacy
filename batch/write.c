@@ -28,12 +28,17 @@ extern zend_object_handlers mongo_type_object_handlers;
 
 zend_class_entry *mongo_ce_WriteBatch = NULL;
 
-static void php_mongo_write_batch_free(void *object TSRMLS_DC)
+void php_mongo_write_batch_object_free(void *object TSRMLS_DC)
 {
 	mongo_write_batch_object *intern = (mongo_write_batch_object *)object;
 
 	if (intern) {
-		Z_DELREF_P(intern->zcollection_object);
+		/* If the ctor fails then we won't have a MongoCollection object */
+		if (intern->zcollection_object) {
+			Z_DELREF_P(intern->zcollection_object);
+		}
+
+		/* We only need to clean the buffer if we never executed it */
 		if (intern->request_id) {
 			efree(intern->buf.start);
 		}
@@ -43,7 +48,7 @@ static void php_mongo_write_batch_free(void *object TSRMLS_DC)
 	}
 }
 
-static zend_object_value php_mongo_write_batch_new(zend_class_entry *class_type TSRMLS_DC)
+zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type TSRMLS_DC)
 {
 	zend_object_value retval;
 	mongo_write_batch_object *intern;
@@ -56,10 +61,32 @@ static zend_object_value php_mongo_write_batch_new(zend_class_entry *class_type 
 
 	retval.handle = zend_objects_store_put(intern,
 		(zend_objects_store_dtor_t) zend_objects_destroy_object,
-		php_mongo_write_batch_free, NULL TSRMLS_CC);
+		php_mongo_write_batch_object_free, NULL TSRMLS_CC);
 	retval.handlers = &mongo_type_object_handlers;
 
 	return retval;
+}
+
+void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC)
+{
+	mongo_collection *collection;
+	mongo_db *db;
+	char *cmd_ns;
+
+	collection = (mongo_collection*)zend_object_store_get_object(zcollection TSRMLS_CC);
+
+	intern->zcollection_object = zcollection;
+	Z_ADDREF_P(zcollection);
+
+	db = (mongo_db*)zend_object_store_get_object(collection->parent TSRMLS_CC);
+
+	CREATE_BUF(intern->buf, INITIAL_BUF_SIZE);
+	intern->request_id = MonGlo(request_id);
+
+	spprintf(&cmd_ns, 0, "%s.$cmd", Z_STRVAL_P(db->name));
+	intern->container_pos = php_mongo_api_write_header(&intern->buf, cmd_ns TSRMLS_CC);
+	intern->batch_pos     = php_mongo_api_write_start(&intern->buf, type, Z_STRVAL_P(collection->name) TSRMLS_CC);
+	efree(cmd_ns);
 }
 
 /* {{{ proto MongoWriteBatch MongoWriteBatch::__construct(MongoCollection $collection, long $batch_type)
@@ -70,9 +97,6 @@ PHP_METHOD(MongoWriteBatch, __construct)
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
 	zval *zcollection;
-	mongo_collection *collection;
-	mongo_db *db;
-	char *cmd_ns;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -81,8 +105,6 @@ PHP_METHOD(MongoWriteBatch, __construct)
 		zend_restore_error_handling(&error_handling TSRMLS_CC);
 		return;
 	}
-	collection = (mongo_collection*)zend_object_store_get_object(zcollection TSRMLS_CC);
-
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
 	switch(batch_type) {
@@ -96,19 +118,7 @@ PHP_METHOD(MongoWriteBatch, __construct)
 			return;
 	}
 
-	intern->zcollection_object = zcollection;
-	Z_ADDREF_P(zcollection);
-
-	db = (mongo_db*)zend_object_store_get_object(collection->parent TSRMLS_CC);
-
-	CREATE_BUF(intern->buf, INITIAL_BUF_SIZE);
-	intern->request_id = MonGlo(request_id);
-
-	spprintf(&cmd_ns, 0, "%s.$cmd", Z_STRVAL_P(db->name));
-	intern->container_pos = php_mongo_api_write_header(&intern->buf, cmd_ns TSRMLS_CC);
-	intern->batch_pos     = php_mongo_api_write_start(&intern->buf, batch_type, Z_STRVAL_P(collection->name) TSRMLS_CC);
-	efree(cmd_ns);
-
+	php_mongo_write_batch_ctor(intern, zcollection, batch_type TSRMLS_CC);
 }
 /* }}} */
 
@@ -285,7 +295,7 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALU
 ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoWriteBatch_methods[] = {
-	PHP_ME(MongoWriteBatch, __construct, arginfo___construct, ZEND_ACC_PUBLIC/*ZEND_ACC_PROTECTED*/)
+	PHP_ME(MongoWriteBatch, __construct, arginfo___construct, ZEND_ACC_PROTECTED)
 	PHP_ME(MongoWriteBatch, add, arginfo_add, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoWriteBatch, execute, arginfo_execute, ZEND_ACC_PUBLIC|ZEND_ACC_FINAL)
 	PHP_FE_END
@@ -296,7 +306,7 @@ void mongo_init_MongoWriteBatch(TSRMLS_D)
 	zend_class_entry write_batch;
 	INIT_CLASS_ENTRY(write_batch, "MongoWriteBatch", MongoWriteBatch_methods);
 
-	write_batch.create_object = php_mongo_write_batch_new;;
+	write_batch.create_object = php_mongo_write_batch_object_new;
 
 	mongo_ce_WriteBatch = zend_register_internal_class(&write_batch TSRMLS_CC);
 }

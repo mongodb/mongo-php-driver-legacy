@@ -182,6 +182,8 @@
    <dir baseinstalldir="/" name="batch">
     <file role="src" name="write.c"/>
     <file role="src" name="write.h"/>
+    <file role="src" name="insert.c"/>
+    <file role="src" name="insert.h"/>
    </dir>
 
    <dir baseinstalldir="/" name="util">
