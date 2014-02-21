@@ -10,6 +10,11 @@ Connection strings: Test fsync over standalone server
 require_once "tests/utils/server.inc";
 require_once "tests/utils/stream-notifications.inc";
 
+function dump_writeConcern(MongoNotifications $mn) {
+    $meta = $mn->getLastInsertMeta();
+    var_dump($meta['write_options']['writeConcern']);
+}
+
 $host = MongoShellServer::getStandaloneInfo();
 
 
@@ -26,69 +31,69 @@ $mc = new MongoClient($host, array("fsync" => true), array("context" => $ctx));
 echo "Fsync enabled by default\n";
 $doc = array("doc" => "ument");
 $mc->test->bug572->insert($doc);
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->update(array("_id" => $doc["_id"]), array("updated" => "doc"));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->remove(array("_id" => $doc["_id"]));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 
 echo "Setting it to false, per-query\n";
 $doc = array("doc" => "ument");
 $mc->test->bug572->insert($doc, array("fsync" => false));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->update(array("_id" => $doc["_id"]), array("updated" => "doc"), array("fsync" => false));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->remove(array("_id" => $doc["_id"]), array("fsync" => false));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 
 echo "Setting it to false, per-query, and w=0 to force no-gle\n";
 $doc = array("doc" => "ument");
 $mc->test->bug572->insert($doc, array("fsync" => false, "w" => 0));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->update(array("_id" => $doc["_id"]), array("updated" => "doc"), array("fsync" => false, "w" => 0));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->remove(array("_id" => $doc["_id"]), array("fsync" => false, "w" => 0));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 
 $mc = new MongoClient($host, array("fsync" => false), array("context" => $ctx));
 
 echo "Fsync disabled by default\n";
 $doc = array("doc" => "ument");
 $mc->test->bug572->insert($doc);
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->update(array("_id" => $doc["_id"]), array("updated" => "doc"));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->remove(array("_id" => $doc["_id"]));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 
 echo "Setting it to true, per-query\n";
 $doc = array("doc" => "ument");
 $mc->test->bug572->insert($doc, array("fsync" => true));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->update(array("_id" => $doc["_id"]), array("updated" => "doc"), array("fsync" => true));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->remove(array("_id" => $doc["_id"]), array("fsync" => true));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 
 $mc = new MongoClient($host, array("fsync" => false, "w" => 0), array("context" => $ctx));
 
 echo "Fsync disabled by default, and gle\n";
 $doc = array("doc" => "ument");
 $mc->test->bug572->insert($doc);
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->update(array("_id" => $doc["_id"]), array("updated" => "doc"));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->remove(array("_id" => $doc["_id"]));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 
 echo "Setting it to true, per-query, with gle=0\n";
 $doc = array("doc" => "ument");
 $mc->test->bug572->insert($doc, array("fsync" => true));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->update(array("_id" => $doc["_id"]), array("updated" => "doc"), array("fsync" => true));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 $mc->test->bug572->remove(array("_id" => $doc["_id"]), array("fsync" => true));
-var_dump($mn->getLastInsertMeta()["write_options"]["writeConcern"]);
+dump_writeConcern($mn);
 
 ?>
 --EXPECTF--

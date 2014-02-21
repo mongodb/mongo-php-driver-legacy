@@ -9,6 +9,11 @@ Test for PHP-522: Setting per-insert options. (streams)
 require_once "tests/utils/server.inc";
 require_once "tests/utils/stream-notifications.inc";
 
+function dump_writeOptions(MongoNotifications $mn) {
+    $meta = $mn->getLastInsertMeta();
+    var_dump($meta['write_options']);
+}
+
 $mn = new MongoNotifications;
 $ctx = stream_context_create(
     array(),
@@ -27,7 +32,7 @@ try {
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
 }
-var_dump($mn->getLastInsertMeta()["write_options"]);
+dump_writeOptions($mn);
 echo "-----\n";
 
 try {
@@ -36,7 +41,7 @@ try {
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
 }
-var_dump($mn->getLastInsertMeta()["write_options"]);
+dump_writeOptions($mn);
 echo "-----\n";
 
 try {
@@ -46,7 +51,7 @@ try {
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
 }
-var_dump($mn->getLastInsertMeta()["write_options"]);
+dump_writeOptions($mn);
 echo "-----\n";
 
 try {
@@ -56,7 +61,7 @@ try {
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
 }
-var_dump($mn->getLastInsertMeta()["write_options"]);
+dump_writeOptions($mn);
 echo "-----\n";
 
 try {
@@ -64,10 +69,10 @@ try {
 	$c->wtimeout = 4500;
 	$retval = $c->insert( array( 'test' => 1 ), array( 'fsync' => false, 'safe' => "allDCs", 'socketTimeoutMS' => M_PI * 1000 ) );
 	var_dump($retval["ok"]);
-	var_dump($mn->getLastInsertMeta()["write_options"]);
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
 }
+dump_writeOptions($mn);
 echo "-----\n";
 ?>
 --EXPECTF--
