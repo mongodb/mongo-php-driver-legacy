@@ -62,9 +62,8 @@ static zend_object_value php_mongo_write_batch_new(zend_class_entry *class_type 
 	return retval;
 }
 
-
-/* {{{ MongoWriteBatch::__construct(MongoCollection $collection, long $batch_type)
- */
+/* {{{ proto MongoWriteBatch MongoWriteBatch::__construct(MongoCollection $collection, long $batch_type)
+   Constructs a new Write Batch of $batch_type operations */
 PHP_METHOD(MongoWriteBatch, __construct)
 {
 	long  batch_type;
@@ -74,7 +73,6 @@ PHP_METHOD(MongoWriteBatch, __construct)
 	mongo_collection *collection;
 	mongo_db *db;
 	char *cmd_ns;
-
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -97,7 +95,6 @@ PHP_METHOD(MongoWriteBatch, __construct)
 			zend_throw_exception(mongo_ce_Exception, "Invalid argument, must one of the write methods", 1 TSRMLS_CC);
 			return;
 	}
-
 
 	intern->zcollection_object = zcollection;
 	Z_ADDREF_P(zcollection);
@@ -221,7 +218,6 @@ PHP_METHOD(MongoWriteBatch, execute)
 	mongo_connection *connection;
 	mongo_collection *collection;
 
-
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
@@ -275,7 +271,6 @@ PHP_METHOD(MongoWriteBatch, execute)
 }
 /* }}} */
 
-
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_OBJ_INFO(0, collection, MongoCollection, 0)
 	ZEND_ARG_INFO(0, batch_type)
@@ -293,7 +288,6 @@ static zend_function_entry MongoWriteBatch_methods[] = {
 	PHP_ME(MongoWriteBatch, __construct, arginfo___construct, ZEND_ACC_PUBLIC/*ZEND_ACC_PROTECTED*/)
 	PHP_ME(MongoWriteBatch, add, arginfo_add, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoWriteBatch, execute, arginfo_execute, ZEND_ACC_PUBLIC|ZEND_ACC_FINAL)
-
 	PHP_FE_END
 };
 

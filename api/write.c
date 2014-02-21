@@ -37,8 +37,7 @@ static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write
 static void php_mongo_api_throw_exception(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC);
 static void php_mongo_api_throw_exception_from_server_code(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC);
 
-/* Converts a zval of $options (passed to ->insert(), ->update(), ...) and creates a
- * php_mongodb_write_options from it */
+/* Wrapper for php_mongo_api_write_options_from_ht(), taking a zval rather then HashTable */
 void php_mongo_api_write_options_from_zval(php_mongodb_write_options *write_options, zval *z_write_options TSRMLS_DC) /* {{{ */
 {
 
@@ -48,6 +47,10 @@ void php_mongo_api_write_options_from_zval(php_mongodb_write_options *write_opti
 
 	php_mongo_api_write_options_from_ht(write_options, HASH_P(z_write_options) TSRMLS_CC);
 }
+/* }}} */
+
+/* Converts a HashTable of $options (passed to ->insert(), ->update(), ...) and creates a
+ * php_mongodb_write_options() from it */
 void php_mongo_api_write_options_from_ht(php_mongodb_write_options *write_options, HashTable *hindex TSRMLS_DC) /* {{{ */
 {
 	HashPosition pointer;
@@ -187,7 +190,7 @@ void php_mongo_api_write_command_fieldname(mongo_buffer *buf, php_mongodb_write_
 }
 /* }}} */
 
-/* Bootstraps a Write API message with its write concerns.
+/* 
  * Returns the position of the root element, needed to backtrack and serialize
  * the size of the combined command */
 int php_mongo_api_write_header(mongo_buffer *buf, char *ns TSRMLS_DC) /* {{{ */
@@ -214,7 +217,11 @@ int php_mongo_api_write_header(mongo_buffer *buf, char *ns TSRMLS_DC) /* {{{ */
 
 	return container_pos;
 }
+/* }}} */
 
+/* Bootstraps a Write API message with the correct command format + fieldnames
+ * Expects php_mongo_api_write_header() has been called successfully first.
+ * Returns the position of the items object where the size needs to be filled in later */
 int php_mongo_api_write_start(mongo_buffer *buf, php_mongodb_write_types type, char *collection TSRMLS_DC) /* {{{ */
 {
 	int object_pos;
