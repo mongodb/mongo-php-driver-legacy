@@ -179,6 +179,11 @@
     <file role="src" name="timestamp.h"/>
    </dir>
 
+   <dir baseinstalldir="/" name="batch">
+    <file role="src" name="write.c"/>
+    <file role="src" name="write.h"/>
+   </dir>
+
    <dir baseinstalldir="/" name="util">
     <file role="src" name="log.c"/>
     <file role="src" name="log.h"/>

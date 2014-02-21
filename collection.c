@@ -44,7 +44,6 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_Collection = NULL;
 
-static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
 static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC);
 static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, mongo_buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
@@ -517,7 +516,7 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 
 /* Returns a connection for the operation.
  * Connection flags (connection_flags) are MONGO_CON_TYPE_READ and MONGO_CON_TYPE_WRITE. */
-static mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC)
+mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC)
 {
 	mongoclient *link;
 	mongo_connection *connection;

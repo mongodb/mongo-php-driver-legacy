@@ -207,6 +207,8 @@ PHP_MINIT_FUNCTION(mongo)
 	mongo_init_MongoGridFSFile(TSRMLS_C);
 	mongo_init_MongoGridFSCursor(TSRMLS_C);
 
+	mongo_init_MongoWriteBatch(TSRMLS_C);
+
 	mongo_init_MongoId(TSRMLS_C);
 	mongo_init_MongoCode(TSRMLS_C);
 	mongo_init_MongoRegex(TSRMLS_C);
