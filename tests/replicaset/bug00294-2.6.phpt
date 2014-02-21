@@ -29,7 +29,8 @@ $mc = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname']), array("c
 $coll = $mc->selectCollection('phpunit', 'php294');
 $coll->drop();
 $coll->insert(array('x' => 1), array('w' => 'majority'));
-var_dump($mn->getLastInsertMeta()["server"]["type"] == 2);
+$meta = $mn->getLastInsertMeta();
+var_dump($meta["server"]["type"] == 2);
 
 $cmd = $mc->selectCollection('phpunit', '$cmd');
 $count = $cmd->findOne(array('count' => 'php294'));

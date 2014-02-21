@@ -23,7 +23,7 @@ for ($i = 0; $i < 100; $i++) {
 	$c->insert(array('x' => $i));
 }
 var_dump($c->count());
-var_dump($c->count() < 100);
+var_dump($c->count() < 125); // 4096 / (33-byte BSON documents) = 124.12
 ?>
 --EXPECTF--
 NULL
