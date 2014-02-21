@@ -209,6 +209,8 @@ PHP_MINIT_FUNCTION(mongo)
 
 	mongo_init_MongoWriteBatch(TSRMLS_C);
 	mongo_init_MongoInsertBatch(TSRMLS_C);
+	mongo_init_MongoUpdateBatch(TSRMLS_C);
+	mongo_init_MongoDeleteBatch(TSRMLS_C);
 
 	mongo_init_MongoId(TSRMLS_C);
 	mongo_init_MongoCode(TSRMLS_C);

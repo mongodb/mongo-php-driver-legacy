@@ -184,6 +184,10 @@
     <file role="src" name="write.h"/>
     <file role="src" name="insert.c"/>
     <file role="src" name="insert.h"/>
+    <file role="src" name="update.c"/>
+    <file role="src" name="update.h"/>
+    <file role="src" name="delete.c"/>
+    <file role="src" name="delete.h"/>
    </dir>
 
    <dir baseinstalldir="/" name="util">
