@@ -351,6 +351,21 @@ int php_mongo_api_delete_add(mongo_buffer *buf, int n, php_mongodb_write_delete_
 }
 /* }}}  */
 
+int php_mongo_api_write_add(mongo_buffer *buf, int n, php_mongodb_write_item *item, int max_document_size TSRMLS_DC) /* {{{  */
+{
+	switch(item->type) {
+		case MONGODB_API_COMMAND_INSERT:
+			return php_mongo_api_insert_add(buf, n, item->write.insert, max_document_size);
+
+		case MONGODB_API_COMMAND_UPDATE:
+			return php_mongo_api_update_add(buf, n, item->write.update, max_document_size);
+
+		case MONGODB_API_COMMAND_DELETE:
+			return php_mongo_api_delete_add(buf, n, item->write.delete, max_document_size);
+	}
+}
+/* }}} */
+
 /* Finalize the BSON buffer.
  * Requires the container_pos from php_mongo_api_write_start() and the max_write_size
  * Use MAX_BSON_WIRE_OBJECT_SIZE(max_bson_size) to calculate the correct max_write_size
