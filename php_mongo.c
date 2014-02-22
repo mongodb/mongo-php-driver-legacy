@@ -207,6 +207,13 @@ PHP_MINIT_FUNCTION(mongo)
 	mongo_init_MongoGridFSFile(TSRMLS_C);
 	mongo_init_MongoGridFSCursor(TSRMLS_C);
 
+#if PHP_VERSION_ID >= 50300
+	mongo_init_MongoWriteBatch(TSRMLS_C);
+	mongo_init_MongoInsertBatch(TSRMLS_C);
+	mongo_init_MongoUpdateBatch(TSRMLS_C);
+	mongo_init_MongoDeleteBatch(TSRMLS_C);
+#endif
+
 	mongo_init_MongoId(TSRMLS_C);
 	mongo_init_MongoCode(TSRMLS_C);
 	mongo_init_MongoRegex(TSRMLS_C);
