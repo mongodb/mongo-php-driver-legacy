@@ -72,15 +72,14 @@ zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type 
 
 void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC)
 {
-	mongo_collection *collection;
 	mongo_db *db;
 	char *cmd_ns;
-
-	collection = (mongo_collection*)zend_object_store_get_object(zcollection TSRMLS_CC);
+	mongo_collection *collection;
 
 	intern->zcollection_object = zcollection;
 	Z_ADDREF_P(zcollection);
 
+	collection = (mongo_collection*)zend_object_store_get_object(zcollection TSRMLS_CC);
 	db = (mongo_db*)zend_object_store_get_object(collection->parent TSRMLS_CC);
 
 	CREATE_BUF(intern->buf, INITIAL_BUF_SIZE);
@@ -90,6 +89,65 @@ void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollect
 	intern->container_pos = php_mongo_api_write_header(&intern->buf, cmd_ns TSRMLS_CC);
 	intern->batch_pos     = php_mongo_api_write_start(&intern->buf, type, Z_STRVAL_P(collection->name) TSRMLS_CC);
 	efree(cmd_ns);
+}
+
+int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, zval *zcollection_object, HashTable *write_concern TSRMLS_DC)
+{
+	php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
+	int message_length;
+	mongoclient      *link;
+	mongo_connection *connection;
+	mongo_collection *collection;
+
+	collection = (mongo_collection *)zend_object_store_get_object(zcollection_object TSRMLS_CC);
+	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
+
+	mongo_apply_implicit_write_options(&write_options, &link->servers->options, zcollection_object TSRMLS_CC);
+	php_mongo_api_write_options_from_ht(&write_options, write_concern TSRMLS_CC);
+
+	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+	message_length = php_mongo_api_write_end(buf, container_pos, batch_pos, MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size), &write_options TSRMLS_CC);
+
+	/* The document is greater then allowed limits, exception already thrown */
+	if (message_length == 0) {
+		efree(buf->start);
+	}
+	return message_length;
+}
+
+int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, zval *zcollection_object, zval *return_value TSRMLS_DC)
+{
+	mongo_connection *connection;
+	mongo_collection *collection;
+	mongoclient      *link;
+	int               bytes_written;
+	char             *error_message;
+	int               success;
+
+	collection = (mongo_collection *)zend_object_store_get_object(zcollection_object TSRMLS_CC);
+	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
+	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+
+	if (connection == 0) {
+		return 0;
+	}
+
+	bytes_written = MonGlo(manager)->send(connection, &link->servers->options, buf->start, buf->pos - buf->start, &error_message);
+	if (bytes_written < 1) {
+		/* Didn't write anything, something bad must have happened */
+		efree(buf->start);
+		return 0;
+	}
+
+	success = php_mongo_api_get_reply(MonGlo(manager), connection, &link->servers->options, 0 /*socket_read_timeout*/, request_id, &return_value TSRMLS_CC);
+	efree(buf->start);
+
+	if (success != 0) {
+		/* Exception already thrown */
+		return 0;
+	}
+
+	return 1;
 }
 
 /* {{{ proto MongoWriteBatch MongoWriteBatch::__construct(MongoCollection $collection, long $batch_type)
@@ -223,13 +281,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 	HashTable *write_concern;
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
-	php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
-	int message_length;
-	int bytes_written;
 	int retval;
-	char *error_message;
-	mongo_connection *connection;
-	mongo_collection *collection;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -241,44 +293,17 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	//mongo_apply_implicit_write_options(&write_options, &link->servers->options, intern->zcollection_object TSRMLS_CC);
-	php_mongo_api_write_options_from_ht(&write_options, write_concern TSRMLS_CC);
-	message_length = php_mongo_api_write_end(&intern->buf, intern->container_pos, intern->batch_pos, 1024*1024*15 /* MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size)*/, &write_options TSRMLS_CC);
-
-	/* Overflowed the max_write_size */
-	if (message_length == 0) {
+	retval = php_mongo_batch_finalize(&intern->buf, intern->container_pos, intern->batch_pos, intern->zcollection_object, write_concern TSRMLS_CC);
+	if (retval == 0) {
 		RETURN_FALSE;
 	}
 
-#if MONGO_PHP_STREAMS
-	//mongo_log_stream_cmd_insert(connection, document, write_options, message_length, request_id, ns TSRMLS_CC);
-#endif
+	retval = php_mongo_batch_send_and_read(&intern->buf, intern->request_id, intern->zcollection_object, return_value TSRMLS_CC);
 
-	if (intern->request_id == 0) {
-		/* The document is greater then allowed limits, exception already thrown */
-		efree(intern->buf.start);
-		RETURN_FALSE;
-	}
-
-	collection = (mongo_collection*)zend_object_store_get_object(intern->zcollection_object TSRMLS_CC);
-	if ((connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
-		RETURN_FALSE;
-	}
-	bytes_written = MonGlo(manager)->send(connection, NULL /*server_options*/, intern->buf.start, intern->buf.pos - intern->buf.start, &error_message);
-
-	if (bytes_written < 1) {
-		/* Didn't write anything, something bad must have happened */
-		efree(intern->buf.start);
-		RETURN_FALSE;
-	}
-
-	retval = php_mongo_api_get_reply(MonGlo(manager), connection, NULL /*server_options*/, 0 /*socket_read_timeout*/, intern->request_id, &return_value TSRMLS_CC);
-	efree(intern->buf.start);
+	/* Reset the request_id, we use it to know if we need to free stuff during dtor */
 	intern->request_id = 0;
 
-	if (retval != 0) {
-		//mongo_manager_connection_deregister(MonGlo(manager), NULL/*connection*/);
-		/* Exception already thrown */
+	if (retval == 0) {
 		RETURN_FALSE;
 	}
 }
