@@ -501,6 +501,19 @@ typedef struct {
 	mongo_read_preference read_pref;
 } mongo_collection;
 
+#include "api/write.h"
+
+typedef struct {
+	zend_object             std;
+	php_mongodb_write_types batch_type;
+	int request_id;
+	int container_pos;
+	int batch_pos;
+	int item_count;
+	zval *zcollection_object;
+	mongo_buffer buf;
+} mongo_write_batch_object;
+
 
 #define BUF_REMAINING (buf->end-buf->pos)
 
@@ -525,6 +538,13 @@ void mongo_init_MongoCollection(TSRMLS_D);
 void mongo_init_MongoGridFS(TSRMLS_D);
 void mongo_init_MongoGridFSFile(TSRMLS_D);
 void mongo_init_MongoGridFSCursor(TSRMLS_D);
+
+#if PHP_VERSION_ID >= 50300
+void mongo_init_MongoWriteBatch(TSRMLS_D);
+void mongo_init_MongoInsertBatch(TSRMLS_D);
+void mongo_init_MongoUpdateBatch(TSRMLS_D);
+void mongo_init_MongoDeleteBatch(TSRMLS_D);
+#endif
 
 void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoCode(TSRMLS_D);
