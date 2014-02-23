@@ -188,6 +188,8 @@ PHP_METHOD(MongoWriteBatch, __construct)
 PHP_METHOD(MongoWriteBatch, add)
 {
 	zval *z_item;
+	mongo_connection *connection;
+	mongo_collection *collection;
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
 	php_mongodb_write_item        item;
@@ -202,6 +204,8 @@ PHP_METHOD(MongoWriteBatch, add)
 		return;
 	}
 
+	collection = (mongo_collection *)zend_object_store_get_object(intern->zcollection_object TSRMLS_CC);
+	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
 	item.type = intern->batch_type;
@@ -267,7 +271,7 @@ PHP_METHOD(MongoWriteBatch, add)
 			RETURN_FALSE;
 	}
 
-	if (!php_mongo_api_write_add(&intern->buf, intern->item_count++, &item, 1024*1024*15 /*connection->max_bson_size*/ TSRMLS_CC)) {
+	if (!php_mongo_api_write_add(&intern->buf, intern->item_count++, &item, connection->max_bson_size TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
 	RETURN_TRUE;
