@@ -244,17 +244,6 @@ int php_mongo_api_write_start(mongo_buffer *buf, php_mongodb_write_types type, c
 }
 /* }}}  */
 
-/* Adds a new document to write. Must be called after php_mongo_api_write_start(), and
- * can be called many many times.
- * n: The index of the document (eg: n=0 for first document, n=1 for second doc in a batch)
- * document: The actual document to insert
- * max_document_size: The max document size allowed
- *
- * Will add _id to the document if not present.
- * Throws mongo_ce_Exception on failure (not UTF-8, \0 in key.., overflow max_document_size)
- *
- * NOTE: It is the callers responsibility to "unwind" the document from buf if it wants to
- * keep the existing buffer and ship it without the new document */
 int php_mongo_api_insert_add(mongo_buffer *buf, int n, HashTable *document, int max_document_size TSRMLS_DC) /* {{{  */
 {
 	char *number;
@@ -358,18 +347,55 @@ int php_mongo_api_delete_add(mongo_buffer *buf, int n, php_mongodb_write_delete_
 }
 /* }}}  */
 
+/* Adds a new document to write. Must be called after php_mongo_api_write_start(), and
+ * can be called many many times.
+ * n: The index of the document (eg: n=0 for first document, n=1 for second doc in a batch)
+ * document: The actual document to insert
+ * max_document_size: The max document size allowed
+ *
+ * Will add _id to the document if not present.
+ * Throws mongo_ce_Exception on failure (not UTF-8, \0 in key.., overflow max_document_size)
+ *
+ *
+ * If document will overflow the allowed wire transfer size, the buffer position will be
+ * reset to its original location and we pretend nothing was ever done
+ *
+ * Returns:
+ * SUCCESS on success
+ * FAILURE on failure serilization validation failure
+ * 2 when document would overflow wire transfer size, and will not be added
+ */
 int php_mongo_api_write_add(mongo_buffer *buf, int n, php_mongodb_write_item *item, int max_document_size TSRMLS_DC) /* {{{  */
 {
+	int retval;
+	int rollbackpos = buf->pos - buf->start;
+
 	switch(item->type) {
 		case MONGODB_API_COMMAND_INSERT:
-			return php_mongo_api_insert_add(buf, n, item->write.insert, max_document_size TSRMLS_CC);
+			retval = php_mongo_api_insert_add(buf, n, item->write.insert, max_document_size TSRMLS_CC);
+			break;
 
 		case MONGODB_API_COMMAND_UPDATE:
-			return php_mongo_api_update_add(buf, n, item->write.update, max_document_size TSRMLS_CC);
+			retval = php_mongo_api_update_add(buf, n, item->write.update, max_document_size TSRMLS_CC);
+			break;
 
 		case MONGODB_API_COMMAND_DELETE:
-			return php_mongo_api_delete_add(buf, n, item->write.delete, max_document_size TSRMLS_CC);
+			retval = php_mongo_api_delete_add(buf, n, item->write.delete, max_document_size TSRMLS_CC);
+			break;
 	}
+
+	/* Writing the object to the buffer failed and raised an exception, bail out */
+	if (retval == 0) {
+		return FAILURE;
+	}
+
+	/* Rollback the buffer, effectively removing this document from it */
+	if (buf->pos - buf->start > MAX_BSON_WIRE_OBJECT_SIZE(max_document_size)) {
+		buf->pos = buf->start + rollbackpos;
+		return 2;
+	}
+
+	return SUCCESS;
 }
 /* }}} */
 

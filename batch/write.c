@@ -199,6 +199,7 @@ PHP_METHOD(MongoWriteBatch, add)
 	php_mongodb_write_item        item;
 	php_mongodb_write_update_args update_args;
 	php_mongodb_write_delete_args delete_args;
+	int status;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -279,10 +280,20 @@ PHP_METHOD(MongoWriteBatch, add)
 			RETURN_FALSE;
 	}
 
-	if (!php_mongo_api_write_add(&intern->buf, intern->item_count++, &item, connection->max_bson_size TSRMLS_CC)) {
+	status = php_mongo_api_write_add(&intern->buf, intern->item_count++, &item, connection->max_bson_size TSRMLS_CC);
+
+	if (status == FAILURE) {
+		/* exception thrown */
 		RETURN_FALSE;
 	}
-	RETURN_TRUE;
+
+	if (status == SUCCESS) {
+		RETURN_TRUE;
+	}
+
+	/* Its in a limbo. It didn't fail, but it did overflow the buffer. */
+	RETURN_FALSE;
+
 }
 /* }}} */
 
