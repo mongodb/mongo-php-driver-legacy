@@ -31,7 +31,7 @@ extern zend_object_handlers mongo_type_object_handlers;
 
 zend_class_entry *mongo_ce_WriteBatch = NULL;
 
-void php_mongo_write_batch_object_free(void *object TSRMLS_DC)
+void php_mongo_write_batch_object_free(void *object TSRMLS_DC) /* {{{ */
 {
 	mongo_write_batch_object *intern = (mongo_write_batch_object *)object;
 
@@ -50,8 +50,9 @@ void php_mongo_write_batch_object_free(void *object TSRMLS_DC)
 		efree(intern);
 	}
 }
+/* }}} */
 
-zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type TSRMLS_DC)
+zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type TSRMLS_DC) /* {{{ */
 {
 	zend_object_value retval;
 	mongo_write_batch_object *intern;
@@ -69,8 +70,9 @@ zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type 
 
 	return retval;
 }
+/* }}} */
 
-void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC)
+void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
 {
 	mongo_db *db;
 	char *cmd_ns;
@@ -90,8 +92,9 @@ void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollect
 	intern->batch_pos     = php_mongo_api_write_start(&intern->buf, type, Z_STRVAL_P(collection->name) TSRMLS_CC);
 	efree(cmd_ns);
 }
+/* }}} */
 
-int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, zval *zcollection_object, HashTable *write_concern TSRMLS_DC)
+int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, zval *zcollection_object, HashTable *write_concern TSRMLS_DC) /* {{{ */
 {
 	php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 	int message_length;
@@ -114,8 +117,9 @@ int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos
 	}
 	return message_length;
 }
+/* }}} */
 
-int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, zval *zcollection_object, zval *return_value TSRMLS_DC)
+int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, zval *zcollection_object, zval *return_value TSRMLS_DC) /* {{{ */
 {
 	mongo_connection *connection;
 	mongo_collection *collection;
