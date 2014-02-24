@@ -101,7 +101,7 @@ PHP_METHOD(MongoWriteBatch, __construct)
 		case MONGODB_API_COMMAND_DELETE:
 			break;
 		default:
-			zend_throw_exception(mongo_ce_Exception, "Invalid argument, must one of the write methods", 1 TSRMLS_CC);
+			zend_throw_exception_ex(mongo_ce_Exception, 1 TSRMLS_CC, "Invalid batch type specified: %ld", batch_type);
 			return;
 	}
 
