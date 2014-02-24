@@ -304,6 +304,10 @@ PHP_METHOD(MongoWriteBatch, execute)
 	}
 
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	if (!intern->request_id) {
+		zend_throw_exception(mongo_ce_Exception, "Batch already executed", 1 TSRMLS_CC);
+		return;
+	}
 
 	retval = php_mongo_batch_finalize(&intern->buf, intern->container_pos, intern->batch_pos, intern->zcollection_object, write_concern TSRMLS_CC);
 	if (retval == 0) {
