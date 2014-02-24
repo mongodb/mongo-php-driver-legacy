@@ -208,6 +208,10 @@ PHP_METHOD(MongoWriteBatch, add)
 	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
+	if (intern->item_count > connection->max_write_batch_size) {
+		zend_throw_exception(mongo_ce_Exception, "Adding to many operations to this batch. Please execute it first", 22 /*BATCH_ERR_TO_MANY_OPS*/ TSRMLS_CC);
+	}
+
 	item.type = intern->batch_type;
 	switch(intern->batch_type) {
 		case MONGODB_API_COMMAND_INSERT:

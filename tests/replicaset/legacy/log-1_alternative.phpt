@@ -48,6 +48,7 @@ CON     FINE: ismaster: %s minWireVersion%sto %d
 CON     FINE: ismaster: %s maxWireVersion%sto %d
 CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
 CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     FINE: ismaster: %s maxWriteBatchSize%s
 CON     INFO: ismaster: set name: REPLICASET, ismaster: 1, secondary: 0, is_arbiter: 0
 CON     FINE: ismaster: added tag dc:%s
 CON     FINE: ismaster: added tag server:%d
@@ -78,6 +79,7 @@ CON     FINE: ismaster: %s minWireVersion%sto %d
 CON     FINE: ismaster: %s maxWireVersion%sto %d
 CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
 CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     FINE: ismaster: %s maxWriteBatchSize%s
 CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
 CON     FINE: ismaster: added tag dc:%s
 CON     FINE: ismaster: added tag server:%d
@@ -100,6 +102,7 @@ CON     FINE: ismaster: %s minWireVersion%sto %d
 CON     FINE: ismaster: %s maxWireVersion%sto %d
 CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
 CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     FINE: ismaster: %s maxWriteBatchSize%s
 CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
 CON     FINE: ismaster: added tag dc:%s
 CON     FINE: ismaster: added tag server:%d
@@ -122,6 +125,7 @@ CON     FINE: ismaster: %s minWireVersion%sto %d
 CON     FINE: ismaster: %s maxWireVersion%sto %d
 CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
 CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     FINE: ismaster: %s maxWriteBatchSize%s
 CON     INFO: ismaster: set name: REPLICASET, ismaster: 0, secondary: 1, is_arbiter: 0
 CON     FINE: ismaster: added tag dc:%s
 CON     FINE: ismaster: added tag server:%d
