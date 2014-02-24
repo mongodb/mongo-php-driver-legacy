@@ -506,12 +506,9 @@ typedef struct {
 typedef struct {
 	zend_object             std;
 	php_mongodb_write_types batch_type;
-	int request_id;
-	int container_pos;
-	int batch_pos;
 	int item_count;
 	zval *zcollection_object;
-	mongo_buffer buf;
+	php_mongodb_batch batch;
 } mongo_write_batch_object;
 
 

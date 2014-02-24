@@ -42,8 +42,8 @@ void php_mongo_write_batch_object_free(void *object TSRMLS_DC) /* {{{ */
 		}
 
 		/* We only need to clean the buffer if we never executed it */
-		if (intern->request_id) {
-			efree(intern->buf.start);
+		if (intern->batch.request_id) {
+			efree(intern->batch.buffer.start);
 		}
 
 		zend_object_std_dtor(&intern->std TSRMLS_CC);
@@ -84,12 +84,12 @@ void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollect
 	collection = (mongo_collection*)zend_object_store_get_object(zcollection TSRMLS_CC);
 	db = (mongo_db*)zend_object_store_get_object(collection->parent TSRMLS_CC);
 
-	CREATE_BUF(intern->buf, INITIAL_BUF_SIZE);
-	intern->request_id = MonGlo(request_id);
+	CREATE_BUF(intern->batch.buffer, INITIAL_BUF_SIZE);
+	intern->batch.request_id = MonGlo(request_id);
 
 	spprintf(&cmd_ns, 0, "%s.$cmd", Z_STRVAL_P(db->name));
-	intern->container_pos = php_mongo_api_write_header(&intern->buf, cmd_ns TSRMLS_CC);
-	intern->batch_pos     = php_mongo_api_write_start(&intern->buf, type, Z_STRVAL_P(collection->name) TSRMLS_CC);
+	intern->batch.container_pos = php_mongo_api_write_header(&intern->batch.buffer, cmd_ns TSRMLS_CC);
+	intern->batch.batch_pos     = php_mongo_api_write_start(&intern->batch.buffer, type, Z_STRVAL_P(collection->name) TSRMLS_CC);
 	efree(cmd_ns);
 }
 /* }}} */
@@ -281,7 +281,7 @@ PHP_METHOD(MongoWriteBatch, add)
 			RETURN_FALSE;
 	}
 
-	status = php_mongo_api_write_add(&intern->buf, intern->item_count++, &item, connection->max_bson_size TSRMLS_CC);
+	status = php_mongo_api_write_add(&intern->batch.buffer, intern->item_count++, &item, connection->max_bson_size TSRMLS_CC);
 
 	if (status == FAILURE) {
 		/* exception thrown */
@@ -316,20 +316,20 @@ PHP_METHOD(MongoWriteBatch, execute)
 	}
 
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
-	if (!intern->request_id) {
+	if (!intern->batch.request_id) {
 		zend_throw_exception(mongo_ce_Exception, "Batch already executed", 1 TSRMLS_CC);
 		return;
 	}
 
-	retval = php_mongo_batch_finalize(&intern->buf, intern->container_pos, intern->batch_pos, intern->zcollection_object, write_concern TSRMLS_CC);
+	retval = php_mongo_batch_finalize(&intern->batch.buffer, intern->batch.container_pos, intern->batch.batch_pos, intern->zcollection_object, write_concern TSRMLS_CC);
 	if (retval == 0) {
 		RETURN_FALSE;
 	}
 
-	retval = php_mongo_batch_send_and_read(&intern->buf, intern->request_id, intern->zcollection_object, return_value TSRMLS_CC);
+	retval = php_mongo_batch_send_and_read(&intern->batch.buffer, intern->batch.request_id, intern->zcollection_object, return_value TSRMLS_CC);
 
 	/* Reset the request_id, we use it to know if we need to free stuff during dtor */
-	intern->request_id = 0;
+	intern->batch.request_id = 0;
 
 	if (retval == 0) {
 		RETURN_FALSE;
