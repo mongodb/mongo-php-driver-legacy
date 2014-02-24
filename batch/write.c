@@ -153,6 +153,7 @@ int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, zval *zcoll
 
 	return 1;
 }
+/* }}} */
 
 /* {{{ proto MongoWriteBatch MongoWriteBatch::__construct(MongoCollection $collection, long $batch_type)
    Constructs a new Write Batch of $batch_type operations */
