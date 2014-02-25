@@ -52,7 +52,7 @@ zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type 
 {
 	zend_object_value retval;
 	mongo_write_batch_object *intern;
-	php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
+	php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 
 	intern = (mongo_write_batch_object *)emalloc(sizeof(mongo_write_batch_object));
 	memset(intern, 0, sizeof(mongo_write_batch_object));
@@ -114,9 +114,9 @@ PHP_METHOD(MongoWriteBatch, add)
 	mongo_collection *collection;
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
-	php_mongodb_write_item        item;
-	php_mongodb_write_update_args update_args;
-	php_mongodb_write_delete_args delete_args;
+	php_mongo_write_item        item;
+	php_mongo_write_update_args update_args;
+	php_mongo_write_delete_args delete_args;
 	int status;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
@@ -266,7 +266,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 	intern->batch = intern->batch->first;
 	array_init(return_value);
 	do {
-		php_mongodb_batch *batch = intern->batch;
+		php_mongo_batch *batch = intern->batch;
 		int status = php_mongo_api_batch_execute(batch, &intern->write_options, connection, &link->servers->options, return_value TSRMLS_CC);
 
 		if (status) {

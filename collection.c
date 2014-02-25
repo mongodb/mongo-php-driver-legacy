@@ -261,7 +261,7 @@ PHP_METHOD(MongoCollection, drop)
 	add_assoc_zval(cmd, "drop", c->name);
 	zval_add_ref(&c->name);
 
-	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	RETURN_ZVAL(retval, 0, 1);
@@ -289,7 +289,7 @@ PHP_METHOD(MongoCollection, validate)
 	add_assoc_string(cmd, "validate", Z_STRVAL_P(c->name), 1);
 	add_assoc_bool(cmd, "full", scan_data);
 
-	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	RETURN_ZVAL(retval, 0, 1);
@@ -736,7 +736,7 @@ int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection 
 	return retval;
 }
 
-void mongo_convert_write_api_return_to_legacy_retval(zval *return_value, php_mongodb_write_types type, int write_concern TSRMLS_DC)
+void mongo_convert_write_api_return_to_legacy_retval(zval *return_value, php_mongo_write_types type, int write_concern TSRMLS_DC)
 {
 	zval **ok, **err, **errmsg, **n;
 
@@ -781,7 +781,7 @@ void mongo_convert_write_api_return_to_legacy_retval(zval *return_value, php_mon
 	}
 }
 
-void mongo_apply_implicit_write_options(php_mongodb_write_options *write_options, mongo_server_options *server_options, zval *collection TSRMLS_DC)
+void mongo_apply_implicit_write_options(php_mongo_write_options *write_options, mongo_server_options *server_options, zval *collection TSRMLS_DC)
 {
 	if (write_options->fsync == -1) {
 		write_options->fsync = server_options->default_fsync;
@@ -851,7 +851,7 @@ int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_
 	return server_options->socketTimeoutMS;
 }
 
-int mongo_collection_delete_api(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *server_options, int socket_read_timeout, php_mongodb_write_delete_args *delete_options, php_mongodb_write_options *write_options, char *dbname, zval *collection, zval *return_value TSRMLS_DC)
+int mongo_collection_delete_api(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *server_options, int socket_read_timeout, php_mongo_write_delete_args *delete_options, php_mongo_write_options *write_options, char *dbname, zval *collection, zval *return_value TSRMLS_DC)
 {
 	char *command_ns;
 	char *error_message;
@@ -894,7 +894,7 @@ int mongo_collection_delete_api(mongo_con_manager *manager, mongo_connection *co
 	return 1;
 }
 
-int mongo_collection_update_api(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *server_options, int socket_read_timeout, php_mongodb_write_update_args *update_options, php_mongodb_write_options *write_options, char *dbname, zval *collection, zval *return_value TSRMLS_DC)
+int mongo_collection_update_api(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *server_options, int socket_read_timeout, php_mongo_write_update_args *update_options, php_mongo_write_options *write_options, char *dbname, zval *collection, zval *return_value TSRMLS_DC)
 {
 	char *command_ns;
 	char *error_message;
@@ -940,7 +940,7 @@ int mongo_collection_update_api(mongo_con_manager *manager, mongo_connection *co
 /* Returns 0 on failure, throwing exception?
  * Returns 1 on success, setting zval return_value to the return document
  */
-int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *server_options, int socket_read_timeout, php_mongodb_write_options *write_options, char *dbname, zval *collection, zval *document, zval *return_value TSRMLS_DC)
+int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *server_options, int socket_read_timeout, php_mongo_write_options *write_options, char *dbname, zval *collection, zval *document, zval *return_value TSRMLS_DC)
 {
 	char *command_ns;
 	char *error_message;
@@ -1007,7 +1007,7 @@ PHP_METHOD(MongoCollection, insert)
 	}
 
 	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
-		php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
+		php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 		int retval;
 		mongo_db *db;
 		int socket_read_timeout = 0;
@@ -1214,7 +1214,7 @@ PHP_METHOD(MongoCollection, findAndModify)
 		zend_hash_merge(HASH_P(cmd), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 	}
 
-	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	/* TODO: If we can get the command's connection, we can use it when throwing
 	 * an exception on command failure instead of passing NULL. */
@@ -1263,7 +1263,7 @@ PHP_METHOD(MongoCollection, commandCursor)
 /* }}} */
 
 /* Takes OP_UPDATE flags (bit vector) and sets the correct update_args options */
-static void mongo_apply_update_options_from_bits(php_mongodb_write_update_args *update_options, int bits)
+static void mongo_apply_update_options_from_bits(php_mongo_write_update_args *update_options, int bits)
 {
 	update_options->upsert = bits & (1 << 0) ? 1 : 0;
 	update_options->multi  = bits & (1 << 1) ? 1 : 0;
@@ -1299,8 +1299,8 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 	}
 
 	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
-		php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
-		php_mongodb_write_update_args update_options = { NULL, NULL, -1, -1 };
+		php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
+		php_mongo_write_update_args update_options = { NULL, NULL, -1, -1 };
 		mongo_collection *c;
 		mongoclient *link;
 		int retval;
@@ -1377,7 +1377,7 @@ PHP_METHOD(MongoCollection, update)
 }
 /* }}} */
 
-static void mongo_apply_delete_options_from_bits(php_mongodb_write_delete_args *delete_options, int bits)
+static void mongo_apply_delete_options_from_bits(php_mongo_write_delete_args *delete_options, int bits)
 {
 	delete_options->limit = bits & (1 << 0) ? 1 : 0;
 }
@@ -1414,8 +1414,8 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 	}
 
 	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
-		php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
-		php_mongodb_write_delete_args delete_options = { NULL, -1 };
+		php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
+		php_mongo_write_delete_args delete_options = { NULL, -1 };
 		mongo_collection *c;
 		mongoclient *link;
 		int retval;
@@ -1524,7 +1524,7 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	/* get the system.indexes collection */
 	db = c->parent;
 
-	collection = php_mongodb_selectcollection(db, "system.indexes", strlen("system.indexes") TSRMLS_CC);
+	collection = php_mongo_selectcollection(db, "system.indexes", strlen("system.indexes") TSRMLS_CC);
 	PHP_MONGO_CHECK_EXCEPTION2(&keys, &collection);
 
 	/* set up data */
@@ -1631,7 +1631,7 @@ PHP_METHOD(MongoCollection, deleteIndex)
 	zval_add_ref(&c->name);
 	add_assoc_string(cmd, "index", key_str, 1);
 
-	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	efree(key_str);
@@ -1657,7 +1657,7 @@ PHP_METHOD(MongoCollection, deleteIndexes)
 	add_assoc_string(cmd, "deleteIndexes", Z_STRVAL_P(c->name), 1);
 	add_assoc_string(cmd, "index", "*", 1);
 
-	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	RETURN_ZVAL(retval, 0, 1);
@@ -1672,7 +1672,7 @@ PHP_METHOD(MongoCollection, getIndexInfo)
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	collection = php_mongodb_selectcollection(c->parent, "system.indexes", strlen("system.indexes") TSRMLS_CC);
+	collection = php_mongo_selectcollection(c->parent, "system.indexes", strlen("system.indexes") TSRMLS_CC);
 	PHP_MONGO_CHECK_EXCEPTION1(&collection);
 
 	MAKE_STD_ZVAL(query);
@@ -1736,7 +1736,7 @@ PHP_METHOD(MongoCollection, count)
 		add_assoc_long(cmd, "skip", skip);
 	}
 
-	response = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	response = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 
@@ -2063,7 +2063,7 @@ PHP_METHOD(MongoCollection, aggregate)
 	}
 	efree(argv);
 
-	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	c->read_pref.type = original_rp;
 	zval_ptr_dtor(&cmd);
@@ -2105,7 +2105,7 @@ PHP_METHOD(MongoCollection, distinct)
 		zval_add_ref(&query);
 	}
 
-	tmp = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	tmp = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values") + 1, (void **)&values) == SUCCESS) {
 #ifdef array_init_size
@@ -2200,7 +2200,7 @@ PHP_METHOD(MongoCollection, group)
 	array_init(cmd);
 	add_assoc_zval(cmd, "group", group);
 
-	retval = php_mongodb_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	zval_ptr_dtor(&reduce);
@@ -2238,7 +2238,7 @@ PHP_METHOD(MongoCollection, __get)
 	full_name_len = spprintf(&full_name, 0, "%s.%s", Z_STRVAL_P(c->name), name);
 
 	/* select this collection */
-	collection = php_mongodb_selectcollection(c->parent, full_name, full_name_len TSRMLS_CC);
+	collection = php_mongo_selectcollection(c->parent, full_name, full_name_len TSRMLS_CC);
 	if (collection) {
 		/* Only copy the zval into return_value if it worked. If collection is
 		 * NULL here, an exception is set */

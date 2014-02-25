@@ -814,7 +814,7 @@ PHP_METHOD(MongoClient, selectCollection)
 	zval_ptr_dtor(&db_name);
 	PHP_MONGO_CHECK_EXCEPTION1(&temp_db);
 
-	collection = php_mongodb_selectcollection(temp_db, coll, coll_len TSRMLS_CC);
+	collection = php_mongo_selectcollection(temp_db, coll, coll_len TSRMLS_CC);
 	if (collection) {
 		/* Only copy the zval into return_value if it worked. If collection is
 		 * NULL here, an exception is set */
@@ -911,7 +911,7 @@ PHP_METHOD(MongoClient, listDBs)
 	array_init(cmd);
 	add_assoc_long(cmd, "listDatabases", 1);
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	zval_ptr_dtor(&zdb);

@@ -26,9 +26,9 @@ extern zend_class_entry *mongo_ce_Exception;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
-void php_mongo_api_batch_make(mongo_write_batch_object *intern, char *dbname, char *collectionname, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
+void php_mongo_api_batch_make(mongo_write_batch_object *intern, char *dbname, char *collectionname, php_mongo_write_types type TSRMLS_DC) /* {{{ */
 {
-	php_mongodb_batch *batch = ecalloc(1, sizeof(php_mongodb_batch));
+	php_mongo_batch *batch = ecalloc(1, sizeof(php_mongo_batch));
 	char *cmd_ns;
 
 	CREATE_BUF(batch->buffer, INITIAL_BUF_SIZE);
@@ -50,7 +50,7 @@ void php_mongo_api_batch_make(mongo_write_batch_object *intern, char *dbname, ch
 }
 /* }}} */
 
-void php_mongo_api_batch_make_easy(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
+void php_mongo_api_batch_make_easy(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type TSRMLS_DC) /* {{{ */
 {
 	mongo_db *db;
 	mongo_collection *collection;
@@ -62,10 +62,10 @@ void php_mongo_api_batch_make_easy(mongo_write_batch_object *intern, zval *zcoll
 }
 /* }}} */
 
-void php_mongo_api_batch_free(php_mongodb_batch *batch) /* {{{ */
+void php_mongo_api_batch_free(php_mongo_batch *batch) /* {{{ */
 {
 	while(1) {
-		php_mongodb_batch *prev;
+		php_mongo_batch *prev;
 
 		prev = batch;
 		batch = batch->next;
@@ -79,7 +79,7 @@ void php_mongo_api_batch_free(php_mongodb_batch *batch) /* {{{ */
 }
 /* }}} */
 
-void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type, HashTable *write_concern TSRMLS_DC) /* {{{ */
+void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type, HashTable *write_concern TSRMLS_DC) /* {{{ */
 {
 	mongo_db *db;
 	mongoclient      *link;
@@ -99,7 +99,7 @@ void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollectio
 
 /* }}} */
 
-int php_mongo_api_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, int max_bson_size, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
+int php_mongo_api_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, int max_bson_size, php_mongo_write_options *write_options TSRMLS_DC) /* {{{ */
 {
 	int message_length;
 	message_length = php_mongo_api_write_end(buf, container_pos, batch_pos, MAX_BSON_WIRE_OBJECT_SIZE(max_bson_size), write_options TSRMLS_CC);
@@ -141,7 +141,7 @@ int php_mongo_api_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_c
 }
 /* }}} */
 
-int php_mongo_api_batch_execute(php_mongodb_batch *batch, php_mongodb_write_options *write_options, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
+int php_mongo_api_batch_execute(php_mongo_batch *batch, php_mongo_write_options *write_options, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
 {
 	int retval;
 	zval *batch_retval;

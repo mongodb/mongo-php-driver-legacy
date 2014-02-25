@@ -1151,7 +1151,7 @@ PHP_METHOD(MongoCursor, count)
 		add_assoc_long(cmd, "skip", cursor->skip);
 	}
 
-	response = php_mongodb_runcommand(cursor->zmongoclient, &cursor->read_pref, dbname, strlen(dbname), cmd, NULL, 0, NULL TSRMLS_CC);
+	response = php_mongo_runcommand(cursor->zmongoclient, &cursor->read_pref, dbname, strlen(dbname), cmd, NULL, 0, NULL TSRMLS_CC);
 	zval_ptr_dtor(&cmd);
 	efree(dbname);
 
@@ -1160,7 +1160,7 @@ PHP_METHOD(MongoCursor, count)
 		return;
 	}
 
-	/* FIXME: Refactor into php_mongodb_count() */
+	/* FIXME: Refactor into php_mongo_count() */
 	if (zend_hash_find(HASH_P(response), "n", 2, (void**)&n) == SUCCESS) {
 		convert_to_long(*n);
 		RETVAL_ZVAL(*n, 1, 0);
