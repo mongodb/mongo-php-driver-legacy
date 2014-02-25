@@ -19,7 +19,7 @@
 #include "../php_mongo.h"
 #include "../bson.h"
 #include "../collection.h" /* mongo_apply_implicit_write_options() */
-/*#include "batch.h"*/
+#include "batch.h"
 
 /* Exceptions thrown */
 extern zend_class_entry *mongo_ce_Exception;
