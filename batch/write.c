@@ -133,7 +133,7 @@ PHP_METHOD(MongoWriteBatch, add)
 
 	/* If we haven't allocated a batch yet, or need to start a new one */
 	if (intern->total_items == 0 || intern->batch->item_count >= connection->max_write_batch_size) {
-		php_mongo_api_batch_make_easy(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
+		php_mongo_api_batch_make_from_collection_object(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
 	}
 
 	item.type = intern->batch_type;
@@ -213,7 +213,7 @@ PHP_METHOD(MongoWriteBatch, add)
 
 	/* Its in a limbo. It didn't fail, but it did overflow the buffer. */
 	intern->batch->item_count--;
-	php_mongo_api_batch_make_easy(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
+	php_mongo_api_batch_make_from_collection_object(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
 
 	status = php_mongo_api_write_add(&intern->batch->buffer, intern->batch->item_count++, &item, connection->max_bson_size TSRMLS_CC);
 

@@ -17,7 +17,7 @@
 #define __API_BATCH_H__ 1
 
 void php_mongo_api_batch_make(mongo_write_batch_object *intern, char *dbname, char *collectionname, php_mongo_write_types type TSRMLS_DC);
-void php_mongo_api_batch_make_easy(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type TSRMLS_DC);
+void php_mongo_api_batch_make_from_collection_object(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type TSRMLS_DC);
 void php_mongo_api_batch_free(php_mongo_batch *batch);
 void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type, HashTable *write_concern TSRMLS_DC);
 int php_mongo_api_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, int max_bson_size, php_mongo_write_options *write_options TSRMLS_DC);

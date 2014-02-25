@@ -50,7 +50,7 @@ void php_mongo_api_batch_make(mongo_write_batch_object *intern, char *dbname, ch
 }
 /* }}} */
 
-void php_mongo_api_batch_make_easy(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type TSRMLS_DC) /* {{{ */
+void php_mongo_api_batch_make_from_collection_object(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type TSRMLS_DC) /* {{{ */
 {
 	mongo_db *db;
 	mongo_collection *collection;
