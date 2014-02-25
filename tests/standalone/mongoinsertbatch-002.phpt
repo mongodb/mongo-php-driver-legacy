@@ -1,7 +1,8 @@
 --TEST--
-MongoInsertBatch Batch Splitting, overflowing maxBsonSize
+MongoInsertBatch: Batch Splitting, overflowing maxBsonSize
 --SKIPIF--
 <?php $needs = "2.5.5"; ?>
+<?php if ( ! class_exists('MongoWriteBatch')) { exit('skip This test requires MongoWriteBatch classes'); } ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php

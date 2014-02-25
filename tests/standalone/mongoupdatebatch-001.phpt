@@ -2,6 +2,7 @@
 MongoUpdateBatch: Adding documents to Update Batch
 --SKIPIF--
 <?php $needs = "2.5.5"; ?>
+===DONE===
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
