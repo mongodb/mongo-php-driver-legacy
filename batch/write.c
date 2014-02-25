@@ -33,6 +33,8 @@ extern zend_object_handlers mongo_type_object_handlers;
 
 zend_class_entry *mongo_ce_WriteBatch = NULL;
 
+/* frees an mongo_write_batch_object allocated by php_mongo_write_batch_object_new
+ * This is an internal method to PHP and shall not be used explicitly */
 void php_mongo_write_batch_object_free(void *object TSRMLS_DC) /* {{{ */
 {
 	mongo_write_batch_object *intern = (mongo_write_batch_object *)object;
@@ -49,6 +51,8 @@ void php_mongo_write_batch_object_free(void *object TSRMLS_DC) /* {{{ */
 }
 /* }}} */
 
+/* Allocates a new mongo_write_batch_object.
+ * This is an internal method to PHP and shall not be used explicitly */
 zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type TSRMLS_DC) /* {{{ */
 {
 	zend_object_value retval;

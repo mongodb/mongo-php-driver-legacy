@@ -26,6 +26,8 @@ extern zend_class_entry *mongo_ce_Exception;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
+/* Allocates and bootstraps a new php_mongo_batch and its mongo_buffer.
+ * The buffer is ready for adding documents as the wire header and command start has been written */
 void php_mongo_api_batch_make(mongo_write_batch_object *intern, char *dbname, char *collectionname, php_mongo_write_types type TSRMLS_DC) /* {{{ */
 {
 	php_mongo_batch *batch = ecalloc(1, sizeof(php_mongo_batch));
@@ -50,6 +52,8 @@ void php_mongo_api_batch_make(mongo_write_batch_object *intern, char *dbname, ch
 }
 /* }}} */
 
+/* Wrapper for php_mongo_api_batch_make(), taking MongoCollection zval to extract
+ * the database and collection names */
 void php_mongo_api_batch_make_from_collection_object(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type TSRMLS_DC) /* {{{ */
 {
 	mongo_db *db;
@@ -62,6 +66,9 @@ void php_mongo_api_batch_make_from_collection_object(mongo_write_batch_object *i
 }
 /* }}} */
 
+/* Recursively free()s php_mongo_batch and leftover buffers.
+ * Should only be called on batch failure, the *current* buffer will not be efree()d
+ * (it is already free()d on write failure) */
 void php_mongo_api_batch_free(php_mongo_batch *batch) /* {{{ */
 {
 	while(1) {
@@ -79,6 +86,9 @@ void php_mongo_api_batch_free(php_mongo_batch *batch) /* {{{ */
 }
 /* }}} */
 
+/*
+ * Initializes a new mongo_write_batch_object with write options, inherited through
+ * MongoCollection and default server options - overwritable by the write_options argument */
 void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type, HashTable *write_options TSRMLS_DC) /* {{{ */
 {
 	mongo_db *db;
@@ -99,6 +109,13 @@ void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollectio
 
 /* }}} */
 
+/*
+ * Puts the final touches on a mongo_buffer batch by ending the bulk array and write the
+ * write options into the buffer
+ *
+ * Returns:
+ * 0: Failed to wrap up the buffer
+ * >0 The full message length */
 int php_mongo_api_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, int max_bson_size, php_mongo_write_options *write_options TSRMLS_DC) /* {{{ */
 {
 	int message_length;
@@ -112,6 +129,12 @@ int php_mongo_api_batch_finalize(mongo_buffer *buf, int container_pos, int batch
 }
 /* }}} */
 
+/*
+ * Sends the mongo_buffer over the wire and writes the server return value of request_id into return_value
+ *
+ * Returns:
+ * 0 on failure
+ * 1 on success */
 int php_mongo_api_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
 {
 	int               bytes_written;
@@ -141,6 +164,13 @@ int php_mongo_api_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_c
 }
 /* }}} */
 
+/*
+ * Executes a php_mongo_batch
+ *
+ * Returns:
+ * 0 On success
+ * 1 On failure when we should not attempt to recover from
+ * 2 On failure, but it is ok to send more batches */
 int php_mongo_api_batch_execute(php_mongo_batch *batch, php_mongo_write_options *write_options, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
 {
 	int retval;
