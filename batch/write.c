@@ -103,7 +103,7 @@ void php_mongo_make_batch_easy(mongo_write_batch_object *intern, zval *zcollecti
 	collection = (mongo_collection *)zend_object_store_get_object(zcollection TSRMLS_CC);
 	db         = (mongo_db *)zend_object_store_get_object(collection->parent TSRMLS_CC);
 
-	php_mongo_make_batch(intern, Z_STRVAL_P(db->name), Z_STRVAL_P(collection->name), type);
+	php_mongo_make_batch(intern, Z_STRVAL_P(db->name), Z_STRVAL_P(collection->name), type TSRMLS_CC);
 }
 /* }}} */
 
@@ -140,7 +140,7 @@ void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollect
 	mongo_apply_implicit_write_options(&intern->write_options, &link->servers->options, zcollection TSRMLS_CC);
 	php_mongo_api_write_options_from_ht(&intern->write_options, write_concern TSRMLS_CC);
 
-	php_mongo_make_batch(intern, Z_STRVAL_P(db->name), Z_STRVAL_P(collection->name), type);
+	php_mongo_make_batch(intern, Z_STRVAL_P(db->name), Z_STRVAL_P(collection->name), type TSRMLS_CC);
 }
 
 /* }}} */
