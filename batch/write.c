@@ -73,7 +73,7 @@ zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type 
 }
 /* }}} */
 
-/* {{{ proto MongoWriteBatch MongoWriteBatch::__construct(MongoCollection $collection, long $batch_type, [array writeOptions])
+/* {{{ proto MongoWriteBatch MongoWriteBatch::__construct(MongoCollection $collection, long $batch_type, [array $write_options])
    Constructs a new Write Batch of $batch_type operations */
 PHP_METHOD(MongoWriteBatch, __construct)
 {
@@ -228,11 +228,11 @@ PHP_METHOD(MongoWriteBatch, add)
 }
 /* }}} */
 
-/* {{{ proto array MongoWriteBatch::execute(array $writeConcern)
+/* {{{ proto array MongoWriteBatch::execute(array $write_options)
    Executes the constructed batch. Returns the server response */
 PHP_METHOD(MongoWriteBatch, execute)
 {
-	HashTable *write_concern;
+	HashTable *write_options;
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
 	mongo_collection *collection;
@@ -242,7 +242,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "h", &write_concern) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "h", &write_options) == FAILURE) {
 		zend_restore_error_handling(&error_handling TSRMLS_CC);
 		return;
 	}
@@ -262,7 +262,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 	/* Reset the item counter */
 	intern->total_items = 0;
 
-	php_mongo_api_write_options_from_ht(&intern->write_options, write_concern TSRMLS_CC);
+	php_mongo_api_write_options_from_ht(&intern->write_options, write_options TSRMLS_CC);
 
 	intern->batch = intern->batch->first;
 	array_init(return_value);
@@ -290,7 +290,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_OBJ_INFO(0, collection, MongoCollection, 0)
 	ZEND_ARG_INFO(0, batch_type)
-	ZEND_ARG_ARRAY_INFO(0, writeConcern, 0)
+	ZEND_ARG_ARRAY_INFO(0, write_options, 0)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_add, 0, ZEND_RETURN_VALUE, 1)
@@ -298,7 +298,7 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_add, 0, ZEND_RETURN_VALUE, 1
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, writeConcern, 0)
+	ZEND_ARG_ARRAY_INFO(0, write_options, 0)
 ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoWriteBatch_methods[] = {

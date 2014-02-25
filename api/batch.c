@@ -79,7 +79,7 @@ void php_mongo_api_batch_free(php_mongo_batch *batch) /* {{{ */
 }
 /* }}} */
 
-void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type, HashTable *write_concern TSRMLS_DC) /* {{{ */
+void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type, HashTable *write_options TSRMLS_DC) /* {{{ */
 {
 	mongo_db *db;
 	mongoclient      *link;
@@ -94,7 +94,7 @@ void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollectio
 	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
 
 	mongo_apply_implicit_write_options(&intern->write_options, &link->servers->options, zcollection TSRMLS_CC);
-	php_mongo_api_write_options_from_ht(&intern->write_options, write_concern TSRMLS_CC);
+	php_mongo_api_write_options_from_ht(&intern->write_options, write_options TSRMLS_CC);
 }
 
 /* }}} */

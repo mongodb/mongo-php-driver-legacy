@@ -34,7 +34,7 @@ extern zend_class_entry *mongo_ce_Collection;
 /* See batch/write.c */
 extern zend_class_entry *mongo_ce_WriteBatch;
 
-/* {{{ proto MongoUpdateBatch MongoUpdateBatch::__construct(MongoCollection $collection [, array writeOptions])
+/* {{{ proto MongoUpdateBatch MongoUpdateBatch::__construct(MongoCollection $collection [, array $write_options])
    Constructs a new Write Batch of $batch_type operations */
 PHP_METHOD(MongoUpdateBatch, __construct)
 {
@@ -58,7 +58,7 @@ PHP_METHOD(MongoUpdateBatch, __construct)
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_OBJ_INFO(0, collection, MongoCollection, 0)
-	ZEND_ARG_ARRAY_INFO(0, writeConcern, 0)
+	ZEND_ARG_ARRAY_INFO(0, write_options, 0)
 ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoUpdateBatch_methods[] = {
