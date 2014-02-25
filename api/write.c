@@ -357,12 +357,12 @@ int php_mongo_api_delete_add(mongo_buffer *buf, int n, php_mongo_write_delete_ar
  * Throws mongo_ce_Exception on failure (not UTF-8, \0 in key.., overflow max_document_size)
  *
  *
- * If document will overflow the allowed wire transfer size, the buffer position will be
+ * If the document overflows the allowed wire transfer size, the buffer position will be
  * reset to its original location and we pretend nothing was ever done
  *
  * Returns:
  * SUCCESS on success
- * FAILURE on failure serilization validation failure
+ * FAILURE on failure serialization validation failure
  * 2 when document would overflow wire transfer size, and will not be added
  */
 int php_mongo_api_write_add(mongo_buffer *buf, int n, php_mongo_write_item *item, int max_document_size TSRMLS_DC) /* {{{  */
