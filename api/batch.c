@@ -118,7 +118,7 @@ int php_mongo_api_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_c
 	char             *error_message;
 	int               success;
 
-	if (connection == 0) {
+	if (!connection) {
 		return 0;
 	}
 

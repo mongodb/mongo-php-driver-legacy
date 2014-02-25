@@ -235,7 +235,7 @@ PHP_METHOD(MongoCursor, hasNext)
 		RETURN_TRUE;
 	} else if (cursor->cursor_id == 0) {
 		RETURN_FALSE;
-	} else if (cursor->connection == 0) {
+	} else if (!cursor->connection) {
 		/* if we have a cursor_id, we should have a server */
 		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 18 TSRMLS_CC, "trying to get more, but cannot find server");
 		return;

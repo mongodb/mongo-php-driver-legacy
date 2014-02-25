@@ -525,7 +525,7 @@ mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC
 	link = (mongoclient*)zend_object_store_get_object((c->link) TSRMLS_CC);
 	if (!link) {
 		zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
-		return 0;
+		return NULL;
 	}
 
 	/* TODO: Fix better error message */
@@ -536,7 +536,7 @@ mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC
 		} else {
 			php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 16 TSRMLS_CC, "Couldn't get connection");
 		}
-		return 0;
+		return NULL;
 	}
 
 	return connection;
@@ -1002,7 +1002,7 @@ PHP_METHOD(MongoCollection, insert)
 	PHP_MONGO_GET_COLLECTION(getThis());
 	link = (mongoclient*)zend_object_store_get_object(c->link TSRMLS_CC);
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		RETURN_FALSE;
 	}
 
@@ -1080,7 +1080,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
@@ -1293,7 +1293,7 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 		array_init(z_write_options);
 	}
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		zval_ptr_dtor(&z_write_options);
 		RETURN_FALSE;
 	}
@@ -1407,7 +1407,7 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 		array_init(z_write_options);
 	}
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == 0) {
+	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		zval_ptr_dtor(&z_write_options);
 		zval_ptr_dtor(&criteria);
 		RETURN_FALSE;
