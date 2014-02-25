@@ -58,7 +58,6 @@ zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type 
 	intern = (mongo_write_batch_object *)emalloc(sizeof(mongo_write_batch_object));
 	memset(intern, 0, sizeof(mongo_write_batch_object));
 
-
 	zend_object_std_init(&intern->std, class_type TSRMLS_CC);
 	init_properties(intern);
 
@@ -212,12 +211,11 @@ PHP_METHOD(MongoWriteBatch, add)
 		RETURN_TRUE;
 	}
 
-	/* Its in a limbo. It didn't fail, but it did overflow the buffer. */
+	/* It is in a limbo. It didn't fail, but it did overflow the buffer. */
 	intern->batch->item_count--;
 	php_mongo_api_batch_make_from_collection_object(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
 
 	status = php_mongo_api_write_add(&intern->batch->buffer, intern->batch->item_count++, &item, connection->max_bson_size TSRMLS_CC);
-
 
 	if (status == SUCCESS) {
 		intern->total_items++;
@@ -258,7 +256,6 @@ PHP_METHOD(MongoWriteBatch, execute)
 	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
 	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
 
-
 	/* Reset the item counter */
 	intern->total_items = 0;
 
@@ -285,7 +282,6 @@ PHP_METHOD(MongoWriteBatch, execute)
 	} while(intern->batch);
 }
 /* }}} */
-
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_OBJ_INFO(0, collection, MongoCollection, 0)

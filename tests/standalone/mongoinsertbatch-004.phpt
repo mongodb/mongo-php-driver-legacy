@@ -80,14 +80,14 @@ $collection->drop();
 <?php exit(0); ?>
 --EXPECTF--
 string(26) "MongoDuplicateKeyException"
-string(141) "127.0.0.1:30000: insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
+string(141) "%s:%d: insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
 int(1)
 Ordered=false should continue inserting
 string(26) "MongoDuplicateKeyException"
-string(141) "127.0.0.1:30000: insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
+string(141) "%s:%d: insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
 int(3000)
 Ordered=true should stop inserting
 string(26) "MongoDuplicateKeyException"
-string(141) "127.0.0.1:30000: insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
+string(141) "%s:%d: insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
 int(2003)
 ===DONE===
