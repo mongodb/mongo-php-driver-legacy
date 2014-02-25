@@ -160,7 +160,7 @@ PHP_METHOD(MongoDB, __toString)
 
 /* Selects a collection and returns it as zval. If the return value is no, an
  * Exception is set. This only happens if the passed in DB was invalid. */
-zval *php_mongodb_selectcollection(zval *this, char *collection, int collection_len TSRMLS_DC)
+zval *php_mongo_selectcollection(zval *this, char *collection, int collection_len TSRMLS_DC)
 {
 	zval *z_collection;
 	zval *return_value;
@@ -198,7 +198,7 @@ PHP_METHOD(MongoDB, selectCollection)
 		return;
 	}
 
-	collection = php_mongodb_selectcollection(getThis(), name, name_len TSRMLS_CC);
+	collection = php_mongo_selectcollection(getThis(), name, name_len TSRMLS_CC);
 	if (collection) {
 		/* Only copy the zval into return_value if it worked. If collection is
 		 * NULL here, an exception is set */
@@ -362,7 +362,7 @@ PHP_METHOD(MongoDB, setProfilingLevel)
 	array_init(cmd);
 	add_assoc_long(cmd, "profile", level);
 
-	cmd_return = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	cmd_return = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 
@@ -400,7 +400,7 @@ PHP_METHOD(MongoDB, drop)
 	array_init(cmd);
 	add_assoc_long(cmd, "dropDatabase", 1);
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 
@@ -427,7 +427,7 @@ PHP_METHOD(MongoDB, repair)
 	add_assoc_bool(cmd, "preserveClonedFilesOnFailure", cloned);
 	add_assoc_bool(cmd, "backupOriginalFiles", original);
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 
@@ -483,7 +483,7 @@ PHP_METHOD(MongoDB, createCollection)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	temp = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
+	temp = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	if (temp) {
@@ -494,7 +494,7 @@ PHP_METHOD(MongoDB, createCollection)
 		zval *zcollection;
 
 		/* get the collection we just created */
-		zcollection = php_mongodb_selectcollection(getThis(), collection, collection_len TSRMLS_CC);
+		zcollection = php_mongo_selectcollection(getThis(), collection, collection_len TSRMLS_CC);
 		if (zcollection) {
 			/* Only copy the zval into return_value if it worked. If
 			 * zcollection is NULL here, an exception is set */
@@ -514,7 +514,7 @@ PHP_METHOD(MongoDB, dropCollection)
 	}
 
 	if (Z_TYPE_P(collection) == IS_STRING) {
-		collection = php_mongodb_selectcollection(getThis(), Z_STRVAL_P(collection), Z_STRLEN_P(collection) TSRMLS_CC);
+		collection = php_mongo_selectcollection(getThis(), Z_STRVAL_P(collection), Z_STRLEN_P(collection) TSRMLS_CC);
 		if (!collection) {
 			/* An exception is set in this case */
 			return;
@@ -542,7 +542,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 	}
 
 	/* select db.system.namespaces collection */
-	system_collection = php_mongodb_selectcollection(getThis(), "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
+	system_collection = php_mongo_selectcollection(getThis(), "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
 	if (!system_collection) {
 		/* An exception is set in this case */
 		return;
@@ -610,7 +610,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 		}
 
 		if (full_collection) {
-			c = php_mongodb_selectcollection(getThis(), name, strlen(name) TSRMLS_CC);
+			c = php_mongo_selectcollection(getThis(), name, strlen(name) TSRMLS_CC);
 			/* No need to test for c here, as this was already covered in
 			 * system_collection above */
 			add_next_index_zval(list, c);
@@ -727,7 +727,7 @@ PHP_METHOD(MongoDB, execute)
 	}
 
 	PHP_MONGO_GET_DB(getThis());
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
 	if (retval) {
@@ -772,7 +772,7 @@ PHP_METHOD(MongoDB, command)
 
 	PHP_MONGO_GET_DB(getThis());
 
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 	if (retval) {
 		RETVAL_ZVAL(retval, 0, 1);
 	}
@@ -783,7 +783,7 @@ PHP_METHOD(MongoDB, command)
  *
  * This function can return NULL but *only* if an exception is set. So please
  * check for NULL and/or EG(exception) in the calling function. */
-zval *php_mongodb_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int is_cmd_cursor, mongo_connection **used_connection TSRMLS_DC)
+zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int is_cmd_cursor, mongo_connection **used_connection TSRMLS_DC)
 {
 	zval *temp, *cursor, *ns, *retval;
 	mongo_cursor *cursor_tmp;
@@ -997,7 +997,7 @@ static void run_err(char *cmd, zval *return_value, zval *dbobj TSRMLS_DC)
 	add_assoc_long(command, cmd, 1);
 
 	PHP_MONGO_GET_DB(dbobj);
-	retval = php_mongodb_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), command, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), command, NULL, 0, NULL TSRMLS_CC);
 	clear_exception(return_value TSRMLS_CC);
 
 	zval_ptr_dtor(&command);
@@ -1051,7 +1051,7 @@ PHP_METHOD(MongoDB, __get)
 	}
 
 	/* select this collection */
-	collection = php_mongodb_selectcollection(getThis(), name, name_len TSRMLS_CC);
+	collection = php_mongo_selectcollection(getThis(), name, name_len TSRMLS_CC);
 	if (collection) {
 		/* Only copy the zval into return_value if it worked. If collection is
 		 * NULL here, an exception is set */

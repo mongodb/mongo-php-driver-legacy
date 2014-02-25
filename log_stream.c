@@ -551,7 +551,7 @@ void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor
 	}
 }
 
-void mongo_log_stream_write_reply(mongo_connection *connection, mongo_msg_header *header, php_mongodb_reply *reply TSRMLS_DC)
+void mongo_log_stream_write_reply(mongo_connection *connection, mongo_msg_header *header, php_mongo_reply *reply TSRMLS_DC)
 {
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
 
@@ -589,7 +589,7 @@ void mongo_log_stream_write_reply(mongo_connection *connection, mongo_msg_header
 	}
 }
 
-void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC)
+void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, php_mongo_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC)
 {
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
 
@@ -625,7 +625,7 @@ void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, p
 	}
 }
 
-void php_update_options_to_zval(php_mongodb_write_update_args *update_options, zval *z_update_options)
+void php_update_options_to_zval(php_mongo_write_update_args *update_options, zval *z_update_options)
 {
 	add_assoc_bool(z_update_options, "multi", update_options->multi);
 	add_assoc_bool(z_update_options, "upsert", update_options->upsert);
@@ -633,7 +633,7 @@ void php_update_options_to_zval(php_mongodb_write_update_args *update_options, z
 	ADD_ASSOC_ZVAL_ADDREF(z_update_options, "u", update_options->update);
 }
 
-void mongo_log_stream_cmd_update(mongo_connection *connection, php_mongodb_write_update_args *update_options, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC)
+void mongo_log_stream_cmd_update(mongo_connection *connection, php_mongo_write_update_args *update_options, php_mongo_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC)
 {
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
 
@@ -674,13 +674,13 @@ void mongo_log_stream_cmd_update(mongo_connection *connection, php_mongodb_write
 	}
 }
 
-void php_delete_options_to_zval(php_mongodb_write_delete_args *delete_options, zval *z_delete_options)
+void php_delete_options_to_zval(php_mongo_write_delete_args *delete_options, zval *z_delete_options)
 {
 	add_assoc_long(z_delete_options, "limit", delete_options->limit);
 	ADD_ASSOC_ZVAL_ADDREF(z_delete_options, "q", delete_options->query);
 }
 
-void mongo_log_stream_cmd_delete(mongo_connection *connection, php_mongodb_write_delete_args *delete_options, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC)
+void mongo_log_stream_cmd_delete(mongo_connection *connection, php_mongo_write_delete_args *delete_options, php_mongo_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC)
 {
 	php_stream_context *context = ((php_stream *)connection->socket)->context;
 

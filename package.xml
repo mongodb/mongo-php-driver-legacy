@@ -143,8 +143,11 @@
    <dir baseinstalldir="/" name="api">
     <file role="src" name="wire_version.c"/>
     <file role="src" name="wire_version.h"/>
+    <file role="src" name="batch.c"/>
+    <file role="src" name="batch.h"/>
     <file role="src" name="write.c"/>
     <file role="src" name="write.h"/>
+    <file role="src" name="write_private.h"/>
    </dir>
 
    <dir baseinstalldir="/" name="exceptions">

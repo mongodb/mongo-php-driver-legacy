@@ -65,13 +65,13 @@ foreach($c->getIndexInfo() as $index) {
 Notice: MongoCollection::ensureIndex(): Boolean false ordering is ascending in %s on line %d
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; null given in %s on line %d
-%d: 127.0.0.1:30000: %SUnknown index plugin 'invalidPlugin'%S
+%d: %s:%d: %SUnknown index plugin 'invalidPlugin'%S
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; array given in %s on line %d
-%d: 127.0.0.1:30000: bad index key pattern { array: [ 1 ] }%S
+%d: %s:%d: bad index key pattern { array: [ 1 ] }%S
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; object given in %s on line %d
-%d: 127.0.0.1:30000: bad index key pattern { object: {} }%S
+%d: %s:%d: bad index key pattern { object: {} }%S
 array(2) {
   ["key"]=>
   array(1) {

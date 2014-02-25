@@ -55,10 +55,10 @@ void mongo_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor
 void mongo_log_stream_killcursor(mongo_connection *connection, int64_t cursor_id TSRMLS_DC);
 void mongo_log_stream_batchinsert(mongo_connection *connection, zval *docs, zval *options, int flags TSRMLS_DC);
 void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC);
-void mongo_log_stream_write_reply(mongo_connection *connection, mongo_msg_header *header, php_mongodb_reply *reply TSRMLS_DC);
-void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
-void mongo_log_stream_cmd_update(mongo_connection *connection, php_mongodb_write_update_args *update_options, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
-void mongo_log_stream_cmd_delete(mongo_connection *connection, php_mongodb_write_delete_args *delete_options, php_mongodb_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
+void mongo_log_stream_write_reply(mongo_connection *connection, mongo_msg_header *header, php_mongo_reply *reply TSRMLS_DC);
+void mongo_log_stream_cmd_insert(mongo_connection *connection, zval *document, php_mongo_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
+void mongo_log_stream_cmd_update(mongo_connection *connection, php_mongo_write_update_args *update_options, php_mongo_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
+void mongo_log_stream_cmd_delete(mongo_connection *connection, php_mongo_write_delete_args *delete_options, php_mongo_write_options *write_options, int message_length, int request_id, char *ns TSRMLS_DC);
 #endif
 
 /*

@@ -166,7 +166,7 @@ PHP_METHOD(MongoDBRef, get)
 	}
 
 	/* get the collection */
-	collection = php_mongodb_selectcollection(zdb, Z_STRVAL_PP(ns), Z_STRLEN_PP(ns) TSRMLS_CC);
+	collection = php_mongo_selectcollection(zdb, Z_STRVAL_PP(ns), Z_STRLEN_PP(ns) TSRMLS_CC);
 	if (!collection) {
 		if (alloced_db) {
 			zval_ptr_dtor(&zdb);
