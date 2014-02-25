@@ -504,11 +504,11 @@ typedef struct {
 #include "api/write.h"
 
 typedef struct {
-	zend_object             std;
-	php_mongodb_write_types batch_type;
-	int item_count;
-	zval *zcollection_object;
-	php_mongodb_batch batch;
+	zend_object              std;
+	php_mongodb_write_types  batch_type;
+	zval                    *zcollection_object;
+	php_mongodb_batch       *batch;
+	int                      total_items;
 } mongo_write_batch_object;
 
 

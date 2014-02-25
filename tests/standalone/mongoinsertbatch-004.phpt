@@ -1,5 +1,5 @@
 --TEST--
-MongoInsertBatch
+MongoInsertBatch: Execute the same batch twice
 --SKIPIF--
 <?php $needs = "2.5.5"; ?>
 <?php require_once "tests/utils/standalone.inc" ?>
@@ -16,26 +16,22 @@ $collection->drop();
 
 
 $insertdoc1 = array("my" => "demo");
-$insertdoc2 = array("is" => "working");
-$insertdoc3 = array("pretty" => "well");
 
 $batch = new MongoInsertBatch($collection);
 $addretval = $batch->add($insertdoc1);
-var_dump($addretval);
-$addretval = $batch->add($insertdoc2);
-var_dump($addretval);
-$addretval = $batch->add($insertdoc3);
-var_dump($addretval);
 $exeretval = $batch->execute(array("w" => 1));
 
-var_dump($exeretval[0]["ok"], $exeretval[0]["n"]);
+try {
+    $exeretval = $batch->execute(array("w" => 1));
+    echo "FAILED - That should have thrown an exception\n";
+} catch(MongoException $e) {
+    var_dump(get_class($e), $e->getMessage());
+}
 ?>
 ===DONE===
 <?php exit(0); ?>
 --EXPECTF--
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-int(3)
+string(14) "MongoException"
+string(17) "No items in batch"
 ===DONE===
+

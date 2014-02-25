@@ -1,5 +1,5 @@
 --TEST--
-MongoInsertBatch: Execute the same batch twice
+MongoInsertBatch Batch Splitting, overflowing maxWriteBatchSize
 --SKIPIF--
 <?php $needs = "2.5.5"; ?>
 <?php require_once "tests/utils/standalone.inc" ?>
@@ -15,23 +15,50 @@ $collection = $mc->selectCollection("test", "insertbatch");
 $collection->drop();
 
 
-$insertdoc1 = array("my" => "demo");
-
 $batch = new MongoInsertBatch($collection);
-$addretval = $batch->add($insertdoc1);
-$exeretval = $batch->execute(array("w" => 1));
 
-try {
-    $exeretval = $batch->execute(array("w" => 1));
-    echo "FAILED - That should have thrown an exception\n";
-} catch(MongoException $e) {
-    var_dump(get_class($e), $e->getMessage());
+for ($i=1; $i<=3001; $i++) {
+    $retval = $batch->add(array("document" => $i));
 }
+
+
+echo "Executing the batch now\n";
+$retval = $batch->execute(array("w" => 1));
+var_dump($retval);
+
 ?>
 ===DONE===
 <?php exit(0); ?>
 --EXPECTF--
-string(14) "MongoException"
-string(22) "Batch already executed"
+Executing the batch now
+array(4) {
+  [0]=>
+  array(2) {
+    ["ok"]=>
+    bool(true)
+    ["n"]=>
+    int(1000)
+  }
+  [1]=>
+  array(2) {
+    ["ok"]=>
+    bool(true)
+    ["n"]=>
+    int(1000)
+  }
+  [2]=>
+  array(2) {
+    ["ok"]=>
+    bool(true)
+    ["n"]=>
+    int(1000)
+  }
+  [3]=>
+  array(2) {
+    ["ok"]=>
+    bool(true)
+    ["n"]=>
+    int(1)
+  }
+}
 ===DONE===
-

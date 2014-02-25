@@ -57,12 +57,13 @@ typedef struct {
 } php_mongodb_write_item;
 
 typedef struct _php_mongodb_batch {
-	struct php_mongodb_batch *first;
-	struct php_mongodb_batch *next;
+	struct _php_mongodb_batch *first;
+	struct _php_mongodb_batch *next;
 	mongo_buffer buffer;
 	int request_id;
 	int container_pos;
 	int batch_pos;
+	int item_count;
 } php_mongodb_batch;
 
 typedef struct {
