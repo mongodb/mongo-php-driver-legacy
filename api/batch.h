@@ -16,14 +16,13 @@
 #ifndef __API_BATCH_H__
 #define __API_BATCH_H__ 1
 
-
-void php_mongo_make_batch(mongo_write_batch_object *intern, char *dbname, char *collectionname, php_mongodb_write_types type TSRMLS_DC);
-void php_mongo_make_batch_easy(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC);
-void php_mongo_free_batch(php_mongodb_batch *batch);
-void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type, HashTable *write_concern TSRMLS_DC);
-int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, int max_bson_size, php_mongodb_write_options *write_options TSRMLS_DC);
-int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC);
-int php_mongo_batch_execute(php_mongodb_batch *batch, php_mongodb_write_options *write_options, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC);
+void php_mongo_api_batch_make(mongo_write_batch_object *intern, char *dbname, char *collectionname, php_mongodb_write_types type TSRMLS_DC);
+void php_mongo_api_batch_make_easy(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC);
+void php_mongo_api_batch_free(php_mongodb_batch *batch);
+void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type, HashTable *write_concern TSRMLS_DC);
+int php_mongo_api_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, int max_bson_size, php_mongodb_write_options *write_options TSRMLS_DC);
+int php_mongo_api_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC);
+int php_mongo_api_batch_execute(php_mongodb_batch *batch, php_mongodb_write_options *write_options, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC);
 
 #endif
 

@@ -101,7 +101,7 @@ PHP_METHOD(MongoWriteBatch, __construct)
 			return;
 	}
 
-	php_mongo_write_batch_ctor(intern, zcollection, batch_type, write_options TSRMLS_CC);
+	php_mongo_api_batch_ctor(intern, zcollection, batch_type, write_options TSRMLS_CC);
 }
 /* }}} */
 
@@ -133,7 +133,7 @@ PHP_METHOD(MongoWriteBatch, add)
 
 	/* If we haven't allocated a batch yet, or need to start a new one */
 	if (intern->total_items == 0 || intern->batch->item_count >= connection->max_write_batch_size) {
-		php_mongo_make_batch_easy(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
+		php_mongo_api_batch_make_easy(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
 	}
 
 	item.type = intern->batch_type;
@@ -213,7 +213,7 @@ PHP_METHOD(MongoWriteBatch, add)
 
 	/* Its in a limbo. It didn't fail, but it did overflow the buffer. */
 	intern->batch->item_count--;
-	php_mongo_make_batch_easy(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
+	php_mongo_api_batch_make_easy(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
 
 	status = php_mongo_api_write_add(&intern->batch->buffer, intern->batch->item_count++, &item, connection->max_bson_size TSRMLS_CC);
 
@@ -267,12 +267,12 @@ PHP_METHOD(MongoWriteBatch, execute)
 	array_init(return_value);
 	do {
 		php_mongodb_batch *batch = intern->batch;
-		int status = php_mongo_batch_execute(batch, &intern->write_options, connection, &link->servers->options, return_value TSRMLS_CC);
+		int status = php_mongo_api_batch_execute(batch, &intern->write_options, connection, &link->servers->options, return_value TSRMLS_CC);
 
 		if (status) {
 			if (status == 1) {
 				zval_dtor(return_value);
-				php_mongo_free_batch(batch);
+				php_mongo_api_batch_free(batch);
 			} else {
 				efree(batch);
 			}

@@ -53,7 +53,7 @@ PHP_METHOD(MongoUpdateBatch, __construct)
 	}
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	php_mongo_write_batch_ctor(intern, zcollection, MONGODB_API_COMMAND_UPDATE, write_options TSRMLS_CC);
+	php_mongo_api_batch_ctor(intern, zcollection, MONGODB_API_COMMAND_UPDATE, write_options TSRMLS_CC);
 }
 /* }}} */
 

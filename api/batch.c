@@ -26,7 +26,7 @@ extern zend_class_entry *mongo_ce_Exception;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
-void php_mongo_make_batch(mongo_write_batch_object *intern, char *dbname, char *collectionname, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
+void php_mongo_api_batch_make(mongo_write_batch_object *intern, char *dbname, char *collectionname, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
 {
 	php_mongodb_batch *batch = ecalloc(1, sizeof(php_mongodb_batch));
 	char *cmd_ns;
@@ -50,7 +50,7 @@ void php_mongo_make_batch(mongo_write_batch_object *intern, char *dbname, char *
 }
 /* }}} */
 
-void php_mongo_make_batch_easy(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
+void php_mongo_api_batch_make_easy(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
 {
 	mongo_db *db;
 	mongo_collection *collection;
@@ -58,11 +58,11 @@ void php_mongo_make_batch_easy(mongo_write_batch_object *intern, zval *zcollecti
 	collection = (mongo_collection *)zend_object_store_get_object(zcollection TSRMLS_CC);
 	db         = (mongo_db *)zend_object_store_get_object(collection->parent TSRMLS_CC);
 
-	php_mongo_make_batch(intern, Z_STRVAL_P(db->name), Z_STRVAL_P(collection->name), type TSRMLS_CC);
+	php_mongo_api_batch_make(intern, Z_STRVAL_P(db->name), Z_STRVAL_P(collection->name), type TSRMLS_CC);
 }
 /* }}} */
 
-void php_mongo_free_batch(php_mongodb_batch *batch) /* {{{ */
+void php_mongo_api_batch_free(php_mongodb_batch *batch) /* {{{ */
 {
 	while(1) {
 		php_mongodb_batch *prev;
@@ -79,7 +79,7 @@ void php_mongo_free_batch(php_mongodb_batch *batch) /* {{{ */
 }
 /* }}} */
 
-void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type, HashTable *write_concern TSRMLS_DC) /* {{{ */
+void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type, HashTable *write_concern TSRMLS_DC) /* {{{ */
 {
 	mongo_db *db;
 	mongoclient      *link;
@@ -99,7 +99,7 @@ void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollect
 
 /* }}} */
 
-int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, int max_bson_size, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
+int php_mongo_api_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, int max_bson_size, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
 {
 	int message_length;
 	message_length = php_mongo_api_write_end(buf, container_pos, batch_pos, MAX_BSON_WIRE_OBJECT_SIZE(max_bson_size), write_options TSRMLS_CC);
@@ -112,7 +112,7 @@ int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos
 }
 /* }}} */
 
-int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
+int php_mongo_api_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
 {
 	int               bytes_written;
 	char             *error_message;
@@ -141,18 +141,18 @@ int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_conne
 }
 /* }}} */
 
-int php_mongo_batch_execute(php_mongodb_batch *batch, php_mongodb_write_options *write_options, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
+int php_mongo_api_batch_execute(php_mongodb_batch *batch, php_mongodb_write_options *write_options, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
 {
 	int retval;
 	zval *batch_retval;
 
-	retval = php_mongo_batch_finalize(&batch->buffer, batch->container_pos, batch->batch_pos, connection->max_bson_size, write_options TSRMLS_CC);
+	retval = php_mongo_api_batch_finalize(&batch->buffer, batch->container_pos, batch->batch_pos, connection->max_bson_size, write_options TSRMLS_CC);
 	if (retval == 0) {
 		return 2;
 	}
 
 	MAKE_STD_ZVAL(batch_retval);
-	retval = php_mongo_batch_send_and_read(&batch->buffer, batch->request_id, connection, server_options, batch_retval TSRMLS_CC);
+	retval = php_mongo_api_batch_send_and_read(&batch->buffer, batch->request_id, connection, server_options, batch_retval TSRMLS_CC);
 
 	if (retval == 0) {
 		zval_ptr_dtor(&batch_retval);
