@@ -19,6 +19,7 @@
 #include "../api/write.h"
 #include "../api/batch.h"
 #include "../batch/write.h"
+#include "../batch/write_private.h"
 #include "../collection.h" /* mongo_apply_implicit_write_options() */
 
 /* The Batch API is only available for 5.3.0+ */

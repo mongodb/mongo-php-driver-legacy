@@ -18,6 +18,7 @@
 #include "../php_mongo.h"
 #include "../api/batch.h"
 #include "../batch/write.h"
+#include "../batch/write_private.h"
 
 /* The Batch API is only available for 5.3.0+ */
 #if PHP_VERSION_ID >= 50300
@@ -32,8 +33,6 @@ extern zend_object_handlers mongo_type_object_handlers;
 extern zend_class_entry *mongo_ce_Collection;
 /* See batch/write.c */
 extern zend_class_entry *mongo_ce_WriteBatch;
-extern void php_mongo_write_batch_object_free(void *object TSRMLS_DC);
-extern zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type TSRMLS_DC);
 
 /* {{{ proto MongoDeleteBatch MongoDeleteBatch::__construct(MongoCollection $collection [, array writeOptions])
    Constructs a new Write Batch of $batch_type operations */
