@@ -349,6 +349,22 @@ function dbname() {
     return "test";
 }
 
+/**
+ * Return a collection name to use for the test file.
+ *
+ * The test file will be stripped of the base path to the test suite (prefix) as
+ * well as the PHP file extension (suffix).
+ *
+ * @param string $filename
+ * @return string
+ */
+function collname($filename) {
+    $filename = realpath($filename);
+    $prefix = realpath(dirname(__FILE__) . '/..') . '/';
+
+    return preg_replace(array(sprintf('/^%s/', preg_quote($prefix, '/')), '/\.php$/i'), '', $filename);
+}
+
 function hostname() {
     $config = MongoShellServer::getReplicaSetInfo();
     list($host, $port) = explode(":", $config["hosts"][0]);
