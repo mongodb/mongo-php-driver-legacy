@@ -23,29 +23,91 @@
   <email>bjori@php.net</email>
   <active>yes</active>
  </lead>
- <developer>
+ <lead>
   <name>Jeremy Mikola</name>
   <user>jmikola</user>
   <email>jmikola@php.net</email>
   <active>yes</active>
- </developer>
+ </lead>
 
- <date>2013-11-05</date>
- <time>09:05:05</time>
+ <date>2014-02-25</date>
+ <time>10:58:05</time>
  <version>
-  <release>1.4.5</release>
-  <api>1.4.5</api>
+  <release>1.5.0alpha1</release>
+  <api>1.5.0alpha1</api>
  </version>
  <stability>
-  <release>stable</release>
-  <api>stable</api>
+  <release>alpha</release>
+  <api>alpha</api>
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-915] - batchSize() can not be called after a cursor has been iterating contradicting documentation
-    * [PHP-925] - Reading a GridFS file from a secondary server using PHP requires write access
-    * [PHP-939] - Slow connection in 1.4+
+    * [PHP-722] - Segfault when passing null value to MongoCollection::find() and unclear other conditions are met, inaccurate error message
+    * [PHP-796] - Modifying MongoDate internal properties evilness
+    * [PHP-813] - IS_SCALAR_*() doesn't account for resources
+    * [PHP-815] - MongoCursor ctor doesn't validate the MongoClient object
+    * [PHP-833] - Add the MongoClient::killCursor method to kill a cursor on the server on 64-bit platforms
+    * [PHP-835] - Driver interprets 'err' property as MongoCursorException
+    * [PHP-848] - Invalid read in master
+    * [PHP-882] - mongo_connection_get_server_version memleaks
+    * [PHP-883] - php_mongo_dbref_create() doesn't handle MongoId values
+    * [PHP-888] - DBRef refactoring broke BC for $id parameter handling
+    * [PHP-902] - Segfault when unregistering broken server
+    * [PHP-949] - ensureIndex() creates wrong names
+    * [PHP-955] - Switch the default mongo.native_long to 1 for 64bit platforms
+    * [PHP-981] - Empty document should not throw exception
+
+** Improvement
+    * [PHP-578] - No need to call ismaster 2times
+    * [PHP-705] - Throw exception when overflowing message size in OP_INSERT batches
+    * [PHP-708] - WriteConcern failure exception should include the entire GLE document
+    * [PHP-712] - findAndModify returns empty array when nothing is found
+    * [PHP-774] - Deprecate the protected method MongoCollection::toIndexString
+    * [PHP-807] - Rewrite to_index_string to use smart_str and a real C function
+    * [PHP-812] - Remove unused MongoDBRef::$refKey and MongoDBRef::$idKey
+    * [PHP-837] - Handle cursor IDs for return with MongoCursor::info on 32bit platforms
+    * [PHP-851] - Add MONGO_HAVE_* constants and make sure MINFO contains this too
+    * [PHP-880] - New write operation method for insert, update, remove
+    * [PHP-886] - Add support for secondaryAcceptableLatencyMS
+    * [PHP-903] - Improve the Stream Notification API
+    * [PHP-941] - Throw MongoConnectionException on stream failures
+    * [PHP-942] - Throw MongoDuplicateKeyException on duplicate key errors
+    * [PHP-971] - Remove mongo.native_long for 32bit platforms
+    * [PHP-990] - Implement Batch Write API
+
+** New Feature
+    * [PHP-819] - Add Mongo[DB|Collection]->[get|set]WriteConcern()
+    * [PHP-831] - SASL Support (SASL Plain)
+    * [PHP-832] - SASL Support (SASL Kerberos) 
+    * [PHP-861] - Add maxTimeMS() method to MongoCursor to configure the maximum time a query can take
+    * [PHP-868] - Method to check if string is a valid ObjectId
+    * [PHP-873] - Support the MONGODB-X509 authentication mechanism
+    * [PHP-875] - Add support for cursor for aggregation
+    * [PHP-876] - Make the driver check for the server version upon connection
+    * [PHP-923] - Drivers should only talk to servers with overlapping wire versions
+    * [PHP-944] - Support $out aggregation pipeline operator
+    * [PHP-951] - Provide API for getting latest server version or isMaster response in driver
+    * [PHP-962] - Create constants for additional binary data subtypes
+    * [PHP-965] - Documentation for MongoId::isValid()
+
+** Task
+    * [PHP-657] - Add deprecation notice to MongoCursor::slaveOkay
+    * [PHP-714] - Convenience macro for getting mongoclient*
+    * [PHP-786] - Sort out includes
+    * [PHP-809] - Deprecate use of "safe" all over collection.c
+    * [PHP-844] - driver must authenticate before calling isMaster()
+    * [PHP-845] - Ability to use different SPN on the driver for Kerberos Authentication
+    * [PHP-983] - Change nUpdated to nMatched in bulk api results
+
+** Sub-task
+    * [PHP-763] - Create prototypes for MongoClient and Mongo classes
+    * [PHP-794] - Remove 'fd' property of MongoCursorException
+    * [PHP-797] - Deprecate public properties
+    * [PHP-798] - Rename "timeout" to "socketTimeoutMS" in $options
+    * [PHP-804] - Deprecate Mongo::connectUtil
+    * [PHP-818] - Deprecate "Mongo" in favour of MongoClient.
+    * [PHP-824] - Deprecate the "wtimeout" option in crud operations for wTimeoutMS
  </notes>
 
  <contents>
@@ -196,6 +258,26 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+
+  <release>
+   <date>2013-11-05</date>
+   <time>09:05:05</time>
+   <version>
+    <release>1.4.5</release>
+    <api>1.4.5</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-915] - batchSize() can not be called after a cursor has been iterating contradicting documentation
+    * [PHP-925] - Reading a GridFS file from a secondary server using PHP requires write access
+    * [PHP-939] - Slow connection in 1.4+
+   </notes>
+  </release>
 
   <release>
    <date>2013-09-25</date>
