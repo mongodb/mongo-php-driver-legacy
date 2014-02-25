@@ -235,7 +235,7 @@ PHP_METHOD(MongoCursor, hasNext)
 		RETURN_TRUE;
 	} else if (cursor->cursor_id == 0) {
 		RETURN_FALSE;
-	} else if (!cursor->connection) {
+	} else if (cursor->connection == NULL) {
 		/* if we have a cursor_id, we should have a server */
 		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 18 TSRMLS_CC, "trying to get more, but cannot find server");
 		return;
@@ -807,7 +807,7 @@ static int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 	mongo_read_preference_dtor(&rp);
 
 	/* Throw exception in case we have no connection */
-	if (!cursor->connection) {
+	if (cursor->connection == NULL) {
 		if (error_message) {
 			zend_throw_exception(mongo_ce_ConnectionException, error_message, 71 TSRMLS_CC);
 			free(error_message);
