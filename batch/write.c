@@ -51,12 +51,16 @@ zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type 
 {
 	zend_object_value retval;
 	mongo_write_batch_object *intern;
+	php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 
 	intern = (mongo_write_batch_object *)emalloc(sizeof(mongo_write_batch_object));
 	memset(intern, 0, sizeof(mongo_write_batch_object));
 
+
 	zend_object_std_init(&intern->std, class_type TSRMLS_CC);
 	init_properties(intern);
+
+	intern->write_options = write_options;
 
 	retval.handle = zend_objects_store_put(intern,
 		(zend_objects_store_dtor_t) zend_objects_destroy_object,
@@ -67,8 +71,9 @@ zend_object_value php_mongo_write_batch_object_new(zend_class_entry *class_type 
 }
 /* }}} */
 
-void php_mongo_make_batch(php_mongodb_batch *batch, char *dbname, char *collectionname, php_mongodb_write_types type) /* {{{ */
+void php_mongo_make_batch(mongo_write_batch_object *intern, char *dbname, char *collectionname, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
 {
+	php_mongodb_batch *batch = ecalloc(1, sizeof(php_mongodb_batch));
 	char *cmd_ns;
 
 	CREATE_BUF(batch->buffer, INITIAL_BUF_SIZE);
@@ -78,21 +83,6 @@ void php_mongo_make_batch(php_mongodb_batch *batch, char *dbname, char *collecti
 	batch->container_pos = php_mongo_api_write_header(&batch->buffer, cmd_ns TSRMLS_CC);
 	batch->batch_pos     = php_mongo_api_write_start(&batch->buffer, type, collectionname TSRMLS_CC);
 	efree(cmd_ns);
-} /* }}} */
-
-void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
-{
-	mongo_db *db;
-	mongo_collection *collection;
-	php_mongodb_batch *batch = ecalloc(1, sizeof(php_mongodb_batch));
-
-	intern->zcollection_object = zcollection;
-	Z_ADDREF_P(zcollection);
-
-	collection = (mongo_collection*)zend_object_store_get_object(zcollection TSRMLS_CC);
-	db = (mongo_db*)zend_object_store_get_object(collection->parent TSRMLS_CC);
-
-	php_mongo_make_batch(batch, Z_STRVAL_P(db->name), Z_STRVAL_P(collection->name), type);
 
 	if (intern->batch) {
 		batch->first = intern->batch->first;
@@ -103,25 +93,67 @@ void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollect
 		batch->first = intern->batch;
 	}
 }
+/* }}} */
+
+void php_mongo_make_batch_easy(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
+{
+	mongo_db *db;
+	mongo_collection *collection;
+
+	collection = (mongo_collection *)zend_object_store_get_object(zcollection TSRMLS_CC);
+	db         = (mongo_db *)zend_object_store_get_object(collection->parent TSRMLS_CC);
+
+	php_mongo_make_batch(intern, Z_STRVAL_P(db->name), Z_STRVAL_P(collection->name), type);
+}
+/* }}} */
+
+void php_mongo_free_batch(php_mongodb_batch *batch) /* {{{ */
+{
+	while(1) {
+		php_mongodb_batch *prev;
+
+		prev = batch;
+		batch = batch->next;
+		efree(prev);
+
+		if (!batch) {
+			break;
+		}
+		efree(batch->buffer.start);
+	}
+}
+/* }}} */
+
+void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongodb_write_types type, HashTable *write_concern TSRMLS_DC) /* {{{ */
+{
+	mongo_db *db;
+	mongoclient      *link;
+	mongo_collection *collection;
+
+	intern->zcollection_object = zcollection;
+	Z_ADDREF_P(zcollection);
+
+	collection = (mongo_collection *)zend_object_store_get_object(zcollection TSRMLS_CC);
+	db         = (mongo_db *)zend_object_store_get_object(collection->parent TSRMLS_CC);
+	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
+
+	mongo_apply_implicit_write_options(&intern->write_options, &link->servers->options, zcollection TSRMLS_CC);
+	php_mongo_api_write_options_from_ht(&intern->write_options, write_concern TSRMLS_CC);
+
+	php_mongo_make_batch(intern, Z_STRVAL_P(db->name), Z_STRVAL_P(collection->name), type);
+}
 
 /* }}} */
 
-int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, zval *zcollection_object, HashTable *write_concern TSRMLS_DC) /* {{{ */
+int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, zval *zcollection_object, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
 {
-	php_mongodb_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 	int message_length;
-	mongoclient      *link;
-	mongo_connection *connection;
 	mongo_collection *collection;
+	mongo_connection *connection;
 
-	collection = (mongo_collection *)zend_object_store_get_object(zcollection_object TSRMLS_CC);
-	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
-
-	mongo_apply_implicit_write_options(&write_options, &link->servers->options, zcollection_object TSRMLS_CC);
-	php_mongo_api_write_options_from_ht(&write_options, write_concern TSRMLS_CC);
-
+	collection = (mongo_collection*)zend_object_store_get_object(zcollection_object TSRMLS_CC);
 	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
-	message_length = php_mongo_api_write_end(buf, container_pos, batch_pos, MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size), &write_options TSRMLS_CC);
+	message_length = php_mongo_api_write_end(buf, container_pos, batch_pos, MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size), write_options TSRMLS_CC);
 
 	/* The document is greater then allowed limits, exception already thrown */
 	if (message_length == 0) {
@@ -167,19 +199,20 @@ int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, zval *zcoll
 }
 /* }}} */
 
-/* {{{ proto MongoWriteBatch MongoWriteBatch::__construct(MongoCollection $collection, long $batch_type)
+/* {{{ proto MongoWriteBatch MongoWriteBatch::__construct(MongoCollection $collection, long $batch_type, [array writeOptions])
    Constructs a new Write Batch of $batch_type operations */
 PHP_METHOD(MongoWriteBatch, __construct)
 {
 	long  batch_type;
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
+	HashTable *write_options;
 	zval *zcollection;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Ol", &zcollection, mongo_ce_Collection, &batch_type) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Ol|h", &zcollection, mongo_ce_Collection, &batch_type, &write_options) == FAILURE) {
 		zend_restore_error_handling(&error_handling TSRMLS_CC);
 		return;
 	}
@@ -196,7 +229,7 @@ PHP_METHOD(MongoWriteBatch, __construct)
 			return;
 	}
 
-	php_mongo_write_batch_ctor(intern, zcollection, batch_type TSRMLS_CC);
+	php_mongo_write_batch_ctor(intern, zcollection, batch_type, write_options TSRMLS_CC);
 }
 /* }}} */
 
@@ -227,7 +260,7 @@ PHP_METHOD(MongoWriteBatch, add)
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
 	if (intern->batch->item_count >= connection->max_write_batch_size) {
-		php_mongo_write_batch_ctor(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
+		php_mongo_make_batch_easy(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
 	}
 
 	item.type = intern->batch_type;
@@ -307,7 +340,7 @@ PHP_METHOD(MongoWriteBatch, add)
 
 	/* Its in a limbo. It didn't fail, but it did overflow the buffer. */
 	intern->batch->item_count--;
-	php_mongo_write_batch_ctor(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
+	php_mongo_make_batch_easy(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
 
 	status = php_mongo_api_write_add(&intern->batch->buffer, intern->batch->item_count++, &item, connection->max_bson_size TSRMLS_CC);
 
@@ -346,6 +379,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 	}
 	intern->total_items = 0;
 
+	php_mongo_api_write_options_from_ht(&intern->write_options, write_concern TSRMLS_CC);
 	array_init(return_value);
 	batch = intern->batch->first;
 	do {
@@ -354,7 +388,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 		MAKE_STD_ZVAL(batch_retval);
 
-		retval = php_mongo_batch_finalize(&batch->buffer, batch->container_pos, batch->batch_pos, intern->zcollection_object, write_concern TSRMLS_CC);
+		retval = php_mongo_batch_finalize(&batch->buffer, batch->container_pos, batch->batch_pos, intern->zcollection_object, &intern->write_options TSRMLS_CC);
 		if (retval == 0) {
 			RETURN_FALSE;
 		}
@@ -363,9 +397,18 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 
 		if (retval == 0) {
-			RETURN_FALSE;
+			zval_ptr_dtor(&batch_retval);
+
+			/* When executing an ordered batch we need to bail out as soon as we hit an error */
+			if (intern->write_options.ordered) {
+				zval_dtor(return_value);
+				php_mongo_free_batch(batch);
+				RETURN_FALSE;
+			}
+		} else {
+			/* Only add the results on success.. */
+			add_next_index_zval(return_value, batch_retval);
 		}
-		add_next_index_zval(return_value, batch_retval);
 
 		prev = batch;
 		batch = batch->next;
@@ -375,14 +418,6 @@ PHP_METHOD(MongoWriteBatch, execute)
 			break;
 		}
 
-		/*
-		 * When executing an ordered batch we need to bail out as soon as we hit an error
-		if (write_options.ordered && EG(exception)) {
-			// FIXME: Free the rest of the batch struct
-			break;
-		}
-		*/
-
 	} while(1);
 }
 /* }}} */
@@ -390,6 +425,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_OBJ_INFO(0, collection, MongoCollection, 0)
 	ZEND_ARG_INFO(0, batch_type)
+	ZEND_ARG_ARRAY_INFO(0, writeConcern, 0)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_add, 0, ZEND_RETURN_VALUE, 1)

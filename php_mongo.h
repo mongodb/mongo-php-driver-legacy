@@ -508,6 +508,7 @@ typedef struct {
 	php_mongodb_write_types  batch_type;
 	zval                    *zcollection_object;
 	php_mongodb_batch       *batch;
+	php_mongodb_write_options write_options;
 	int                      total_items;
 } mongo_write_batch_object;
 
