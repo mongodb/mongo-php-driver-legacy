@@ -91,7 +91,6 @@ void php_mongo_api_batch_free(php_mongo_batch *batch) /* {{{ */
  * MongoCollection and default server options - overwritable by the write_options argument */
 void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollection, php_mongo_write_types type, HashTable *write_options TSRMLS_DC) /* {{{ */
 {
-	mongo_db *db;
 	mongoclient      *link;
 	mongo_collection *collection;
 
@@ -100,7 +99,6 @@ void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollectio
 	Z_ADDREF_P(zcollection);
 
 	collection = (mongo_collection *)zend_object_store_get_object(zcollection TSRMLS_CC);
-	db         = (mongo_db *)zend_object_store_get_object(collection->parent TSRMLS_CC);
 	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
 
 	mongo_apply_implicit_write_options(&intern->write_options, &link->servers->options, zcollection TSRMLS_CC);

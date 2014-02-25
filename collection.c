@@ -1301,7 +1301,6 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
 		php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 		php_mongo_write_update_args update_options = { NULL, NULL, -1, -1 };
-		mongo_collection *c;
 		mongoclient *link;
 		int retval;
 		mongo_db *db;
@@ -1416,7 +1415,6 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
 		php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 		php_mongo_write_delete_args delete_options = { NULL, -1 };
-		mongo_collection *c;
 		mongoclient *link;
 		int retval;
 		mongo_db *db;
