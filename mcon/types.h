@@ -150,6 +150,7 @@ typedef struct _mongo_connection
 	int    max_wire_version; /* Maximum wire version supported by mongo[d|s] */
 	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
 	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
+	int    max_write_batch_size; /* Maximum operations in a batch */
 	int    tag_count;
 	char **tags;
 	char  *hash;             /* Duplicate of the hash that the manager knows this connection as */
@@ -163,6 +164,8 @@ typedef struct _mongo_connection
 /* Default wire versions for MongoDB pre-2.6 */
 #define MONGO_CONNECTION_DEFAULT_MIN_WIRE_VERSION 0
 #define MONGO_CONNECTION_DEFAULT_MAX_WIRE_VERSION 0
+/* Default max operations in a batch .. for 2.6 api */
+#define MONGO_CONNECTION_DEFAULT_MAX_WRITE_BATCH_SIZE 1000
 
 typedef struct _mongo_connection_blacklist
 {

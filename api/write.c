@@ -33,12 +33,12 @@ extern zend_class_entry *mongo_ce_DuplicateKeyException;
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *connection, zval *document TSRMLS_DC);
-static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write_options *write_options TSRMLS_DC);
+static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongo_write_options *write_options TSRMLS_DC);
 static void php_mongo_api_throw_exception(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC);
 static void php_mongo_api_throw_exception_from_server_code(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC);
 
 /* Wrapper for php_mongo_api_write_options_from_ht(), taking a zval rather then HashTable */
-void php_mongo_api_write_options_from_zval(php_mongodb_write_options *write_options, zval *z_write_options TSRMLS_DC) /* {{{ */
+void php_mongo_api_write_options_from_zval(php_mongo_write_options *write_options, zval *z_write_options TSRMLS_DC) /* {{{ */
 {
 
 	if (!z_write_options) {
@@ -50,8 +50,8 @@ void php_mongo_api_write_options_from_zval(php_mongodb_write_options *write_opti
 /* }}} */
 
 /* Converts a HashTable of $options (passed to ->insert(), ->update(), ...) and creates a
- * php_mongodb_write_options() from it */
-void php_mongo_api_write_options_from_ht(php_mongodb_write_options *write_options, HashTable *hindex TSRMLS_DC) /* {{{ */
+ * php_mongo_write_options() from it */
+void php_mongo_api_write_options_from_ht(php_mongo_write_options *write_options, HashTable *hindex TSRMLS_DC) /* {{{ */
 {
 	HashPosition pointer;
 	zval **data;
@@ -121,8 +121,8 @@ void php_mongo_api_write_options_from_ht(php_mongodb_write_options *write_option
 }
 /* }}} */
 
-/* Converts a php_mongodb_write_options to a zval representation of the structure */
-void php_mongo_api_write_options_to_zval(php_mongodb_write_options *write_options, zval *z_write_options) /* {{{ */
+/* Converts a php_mongo_write_options to a zval representation of the structure */
+void php_mongo_api_write_options_to_zval(php_mongo_write_options *write_options, zval *z_write_options) /* {{{ */
 {
 	zval *write_concern;
 
@@ -157,7 +157,7 @@ void php_mongo_api_write_options_to_zval(php_mongodb_write_options *write_option
 /* }}} */
 
 /* Internal helper: Writes the CRUD key from `type` to `buf` */
-void php_mongo_api_write_command_name(mongo_buffer *buf, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
+void php_mongo_api_write_command_name(mongo_buffer *buf, php_mongo_write_types type TSRMLS_DC) /* {{{ */
 {
 	switch(type) {
 		case MONGODB_API_COMMAND_INSERT:
@@ -174,7 +174,7 @@ void php_mongo_api_write_command_name(mongo_buffer *buf, php_mongodb_write_types
 /* }}} */
 
 /* Internal helper: Writes the batch keyname for that `type` to `buf` */
-void php_mongo_api_write_command_fieldname(mongo_buffer *buf, php_mongodb_write_types type TSRMLS_DC) /* {{{ */
+void php_mongo_api_write_command_fieldname(mongo_buffer *buf, php_mongo_write_types type TSRMLS_DC) /* {{{ */
 {
 	switch(type) {
 		case MONGODB_API_COMMAND_INSERT:
@@ -222,7 +222,7 @@ int php_mongo_api_write_header(mongo_buffer *buf, char *ns TSRMLS_DC) /* {{{ */
 /* Bootstraps a Write API message with the correct command format + fieldnames
  * Expects php_mongo_api_write_header() has been called successfully first.
  * Returns the position of the items object where the size needs to be filled in later */
-int php_mongo_api_write_start(mongo_buffer *buf, php_mongodb_write_types type, char *collection TSRMLS_DC) /* {{{ */
+int php_mongo_api_write_start(mongo_buffer *buf, php_mongo_write_types type, char *collection TSRMLS_DC) /* {{{ */
 {
 	int object_pos;
 
@@ -244,17 +244,6 @@ int php_mongo_api_write_start(mongo_buffer *buf, php_mongodb_write_types type, c
 }
 /* }}}  */
 
-/* Adds a new document to write. Must be called after php_mongo_api_write_start(), and
- * can be called many many times.
- * n: The index of the document (eg: n=0 for first document, n=1 for second doc in a batch)
- * document: The actual document to insert
- * max_document_size: The max document size allowed
- *
- * Will add _id to the document if not present.
- * Throws mongo_ce_Exception on failure (not UTF-8, \0 in key.., overflow max_document_size)
- *
- * NOTE: It is the callers responsibility to "unwind" the document from buf if it wants to
- * keep the existing buffer and ship it without the new document */
 int php_mongo_api_insert_add(mongo_buffer *buf, int n, HashTable *document, int max_document_size TSRMLS_DC) /* {{{  */
 {
 	char *number;
@@ -273,7 +262,7 @@ int php_mongo_api_insert_add(mongo_buffer *buf, int n, HashTable *document, int 
 }
 /* }}}  */
 
-int php_mongo_api_update_add(mongo_buffer *buf, int n, php_mongodb_write_update_args *update_args, int max_document_size TSRMLS_DC) /* {{{  */
+int php_mongo_api_update_add(mongo_buffer *buf, int n, php_mongo_write_update_args *update_args, int max_document_size TSRMLS_DC) /* {{{  */
 {
 	int argstart, document_end;
 	char *number;
@@ -321,7 +310,7 @@ int php_mongo_api_update_add(mongo_buffer *buf, int n, php_mongodb_write_update_
 }
 /* }}}  */
 
-int php_mongo_api_delete_add(mongo_buffer *buf, int n, php_mongodb_write_delete_args *delete_args, int max_document_size TSRMLS_DC) /* {{{  */
+int php_mongo_api_delete_add(mongo_buffer *buf, int n, php_mongo_write_delete_args *delete_args, int max_document_size TSRMLS_DC) /* {{{  */
 {
 	int argstart, document_end;
 	char *number;
@@ -358,18 +347,55 @@ int php_mongo_api_delete_add(mongo_buffer *buf, int n, php_mongodb_write_delete_
 }
 /* }}}  */
 
-int php_mongo_api_write_add(mongo_buffer *buf, int n, php_mongodb_write_item *item, int max_document_size TSRMLS_DC) /* {{{  */
+/* Adds a new document to write. Must be called after php_mongo_api_write_start(), and
+ * can be called many many times.
+ * n: The index of the document (eg: n=0 for first document, n=1 for second doc in a batch)
+ * document: The actual document to insert
+ * max_document_size: The max document size allowed
+ *
+ * Will add _id to the document if not present.
+ * Throws mongo_ce_Exception on failure (not UTF-8, \0 in key.., overflow max_document_size)
+ *
+ *
+ * If the document overflows the allowed wire transfer size, the buffer position will be
+ * reset to its original location and we pretend nothing was ever done
+ *
+ * Returns:
+ * SUCCESS on success
+ * FAILURE on failure serialization validation failure
+ * 2 when document would overflow wire transfer size, and will not be added
+ */
+int php_mongo_api_write_add(mongo_buffer *buf, int n, php_mongo_write_item *item, int max_document_size TSRMLS_DC) /* {{{  */
 {
+	int retval;
+	int rollbackpos = buf->pos - buf->start;
+
 	switch(item->type) {
 		case MONGODB_API_COMMAND_INSERT:
-			return php_mongo_api_insert_add(buf, n, item->write.insert, max_document_size TSRMLS_CC);
+			retval = php_mongo_api_insert_add(buf, n, item->write.insert, max_document_size TSRMLS_CC);
+			break;
 
 		case MONGODB_API_COMMAND_UPDATE:
-			return php_mongo_api_update_add(buf, n, item->write.update, max_document_size TSRMLS_CC);
+			retval = php_mongo_api_update_add(buf, n, item->write.update, max_document_size TSRMLS_CC);
+			break;
 
 		case MONGODB_API_COMMAND_DELETE:
-			return php_mongo_api_delete_add(buf, n, item->write.delete, max_document_size TSRMLS_CC);
+			retval = php_mongo_api_delete_add(buf, n, item->write.delete, max_document_size TSRMLS_CC);
+			break;
 	}
+
+	/* Writing the object to the buffer failed and raised an exception, bail out */
+	if (retval == 0) {
+		return FAILURE;
+	}
+
+	/* Rollback the buffer, effectively removing this document from it */
+	if (buf->pos - buf->start > MAX_BSON_WIRE_OBJECT_SIZE(max_document_size)) {
+		buf->pos = buf->start + rollbackpos;
+		return 2;
+	}
+
+	return SUCCESS;
 }
 /* }}} */
 
@@ -378,7 +404,7 @@ int php_mongo_api_write_add(mongo_buffer *buf, int n, php_mongodb_write_item *it
  * Use MAX_BSON_WIRE_OBJECT_SIZE(max_bson_size) to calculate the correct max_write_size
  * Returns the the full message length.
  * Throws mongo_ce_Exception if the buffer is larger then max_write_size */
-int php_mongo_api_write_end(mongo_buffer *buf, int container_pos, int batch_pos, int max_write_size, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{  */
+int php_mongo_api_write_end(mongo_buffer *buf, int container_pos, int batch_pos, int max_write_size, php_mongo_write_options *write_options TSRMLS_DC) /* {{{  */
 {
 
 	php_mongo_serialize_null(buf);
@@ -409,7 +435,7 @@ int php_mongo_api_write_end(mongo_buffer *buf, int container_pos, int batch_pos,
  * Does the _start() _add() _end() dance.
  * Returns the generated Protocol Request ID (>0) on success
  * Returns 0 on failure, and raises exception (see _add() and _end()) */
-int php_mongo_api_insert_single(mongo_buffer *buf, char *ns, char *collection, zval *document, php_mongodb_write_options *write_options, mongo_connection *connection TSRMLS_DC) /* {{{  */
+int php_mongo_api_insert_single(mongo_buffer *buf, char *ns, char *collection, zval *document, php_mongo_write_options *write_options, mongo_connection *connection TSRMLS_DC) /* {{{  */
 {
 	int request_id;
 	int container_pos, batch_pos;
@@ -447,7 +473,7 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 	char              *data;
 	char              *error_message;
 	mongo_msg_header   msg_header;
-	php_mongodb_reply  dbreply;
+	php_mongo_reply  dbreply;
 
 	status = manager->recv_header(connection, options, socket_read_timeout, buf, REPLY_HEADER_LEN, &error_message);
 	if (status < 0) {
@@ -507,7 +533,7 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 }
 /* }}} */
 
-int php_mongo_api_delete_single(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_delete_args *delete_args, php_mongodb_write_options *write_options, mongo_connection *connection TSRMLS_DC) /* {{{ */
+int php_mongo_api_delete_single(mongo_buffer *buf, char *ns, char *collection, php_mongo_write_delete_args *delete_args, php_mongo_write_options *write_options, mongo_connection *connection TSRMLS_DC) /* {{{ */
 {
 	int request_id;
 	int container_pos, batch_pos;
@@ -535,7 +561,7 @@ int php_mongo_api_delete_single(mongo_buffer *buf, char *ns, char *collection, p
 }
 /* }}} */
 
-int php_mongo_api_update_single(mongo_buffer *buf, char *ns, char *collection, php_mongodb_write_update_args *update_args, php_mongodb_write_options *write_options, mongo_connection *connection TSRMLS_DC) /* {{{ */
+int php_mongo_api_update_single(mongo_buffer *buf, char *ns, char *collection, php_mongo_write_update_args *update_args, php_mongo_write_options *write_options, mongo_connection *connection TSRMLS_DC) /* {{{ */
 {
 	int request_id;
 	int container_pos, batch_pos;
@@ -563,8 +589,8 @@ int php_mongo_api_update_single(mongo_buffer *buf, char *ns, char *collection, p
 }
 /* }}} */
 
-/* Internal helper: Writes the php_mongodb_write_options options to the buffer */
-static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{  */
+/* Internal helper: Writes the php_mongo_write_options options to the buffer */
+static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongo_write_options *write_options TSRMLS_DC) /* {{{  */
 {
 	int document_start, document_end;
 

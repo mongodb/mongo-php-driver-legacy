@@ -261,6 +261,7 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 	tmp->version.build = 0;
 	tmp->max_bson_size = MONGO_CONNECTION_DEFAULT_MAX_BSON_SIZE;
 	tmp->max_message_size = MONGO_CONNECTION_DEFAULT_MAX_MESSAGE_SIZE;
+	tmp->max_write_batch_size = MONGO_CONNECTION_DEFAULT_MAX_WRITE_BATCH_SIZE;
 	tmp->min_wire_version = MONGO_CONNECTION_DEFAULT_MIN_WIRE_VERSION;
 	tmp->max_wire_version = MONGO_CONNECTION_DEFAULT_MAX_WIRE_VERSION;
 
@@ -471,7 +472,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 {
 	mcon_str      *packet;
 	char          *data_buffer;
-	int32_t        max_bson_size = 0, max_message_size = 0;
+	int32_t        max_bson_size = 0, max_message_size = 0, max_write_batch_size = 0;
 	int32_t        min_wire_version = 0, max_wire_version = 0;
 	char          *set = NULL;      /* For replicaset in return */
 	char          *hosts, *passives = NULL, *ptr, *string;
@@ -534,6 +535,15 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	} else {
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: can't find maxMessageSizeBytes, defaulting to %d", con->max_message_size);
 	}
+
+	/* Find max batch item size */
+	if (bson_find_field_as_int32(ptr, "maxWriteBatchSize", &max_write_batch_size)) {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: setting maxWriteBatchSize to %d", max_write_batch_size);
+		con->max_write_batch_size = max_write_batch_size;
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: can't find maxWriteBatchSize, defaulting to %d", con->max_write_batch_size);
+	}
+
 
 	/* Check for flags */
 	bson_find_field_as_bool(ptr, "ismaster", &ismaster);
