@@ -130,6 +130,7 @@ void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollect
 	mongoclient      *link;
 	mongo_collection *collection;
 
+	intern->batch_type = type;
 	intern->zcollection_object = zcollection;
 	Z_ADDREF_P(zcollection);
 
@@ -143,15 +144,10 @@ void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollect
 
 /* }}} */
 
-int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, zval *zcollection_object, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
+int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos, int max_bson_size, php_mongodb_write_options *write_options TSRMLS_DC) /* {{{ */
 {
 	int message_length;
-	mongo_collection *collection;
-	mongo_connection *connection;
-
-	collection = (mongo_collection*)zend_object_store_get_object(zcollection_object TSRMLS_CC);
-	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
-	message_length = php_mongo_api_write_end(buf, container_pos, batch_pos, MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size), write_options TSRMLS_CC);
+	message_length = php_mongo_api_write_end(buf, container_pos, batch_pos, MAX_BSON_WIRE_OBJECT_SIZE(max_bson_size), write_options TSRMLS_CC);
 
 	/* The document is greater then allowed limits, exception already thrown */
 	if (message_length == 0) {
@@ -161,31 +157,24 @@ int php_mongo_batch_finalize(mongo_buffer *buf, int container_pos, int batch_pos
 }
 /* }}} */
 
-int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, zval *zcollection_object, zval *return_value TSRMLS_DC) /* {{{ */
+int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
 {
-	mongo_connection *connection;
-	mongo_collection *collection;
-	mongoclient      *link;
 	int               bytes_written;
 	char             *error_message;
 	int               success;
-
-	collection = (mongo_collection *)zend_object_store_get_object(zcollection_object TSRMLS_CC);
-	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
-	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
 
 	if (connection == 0) {
 		return 0;
 	}
 
-	bytes_written = MonGlo(manager)->send(connection, &link->servers->options, buf->start, buf->pos - buf->start, &error_message);
+	bytes_written = MonGlo(manager)->send(connection, server_options, buf->start, buf->pos - buf->start, &error_message);
 	if (bytes_written < 1) {
 		/* Didn't write anything, something bad must have happened */
 		efree(buf->start);
 		return 0;
 	}
 
-	success = php_mongo_api_get_reply(MonGlo(manager), connection, &link->servers->options, 0 /*socket_read_timeout*/, request_id, &return_value TSRMLS_CC);
+	success = php_mongo_api_get_reply(MonGlo(manager), connection, server_options, 0 /*socket_read_timeout*/, request_id, &return_value TSRMLS_CC);
 	efree(buf->start);
 
 	if (success != 0) {
@@ -194,6 +183,37 @@ int php_mongo_batch_send_and_read(mongo_buffer *buf, int request_id, zval *zcoll
 	}
 
 	return 1;
+}
+/* }}} */
+
+int php_mongo_batch_execute(php_mongodb_batch *batch, php_mongodb_write_options *write_options, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
+{
+	int retval;
+	zval *batch_retval;
+
+	MAKE_STD_ZVAL(batch_retval);
+
+	retval = php_mongo_batch_finalize(&batch->buffer, batch->container_pos, batch->batch_pos, connection->max_bson_size, write_options TSRMLS_CC);
+	if (retval == 0) {
+		return 2;
+	}
+
+	retval = php_mongo_batch_send_and_read(&batch->buffer, batch->request_id, connection, server_options, batch_retval TSRMLS_CC);
+
+	if (retval == 0) {
+		zval_ptr_dtor(&batch_retval);
+
+		/* When executing an ordered batch we need to bail out as soon as we hit an error */
+		if (write_options->ordered) {
+			zval_dtor(return_value);
+			return 1;
+		}
+	} else {
+		/* Only add the results on success.. */
+		add_next_index_zval(return_value, batch_retval);
+	}
+
+	return 0;
 }
 /* }}} */
 
@@ -220,7 +240,6 @@ PHP_METHOD(MongoWriteBatch, __construct)
 		case MONGODB_API_COMMAND_INSERT:
 		case MONGODB_API_COMMAND_UPDATE:
 		case MONGODB_API_COMMAND_DELETE:
-			intern->batch_type = batch_type;
 			break;
 		default:
 			zend_throw_exception(mongo_ce_Exception, "Invalid argument, must one of the write methods", 1 TSRMLS_CC);
@@ -360,8 +379,9 @@ PHP_METHOD(MongoWriteBatch, execute)
 	HashTable *write_concern;
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
-	php_mongodb_batch *batch;
-	int retval;
+	mongo_collection *collection;
+	mongo_connection *connection;
+	mongoclient      *link;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -377,53 +397,38 @@ PHP_METHOD(MongoWriteBatch, execute)
 		return;
 	}
 
+	collection = (mongo_collection*)zend_object_store_get_object(intern->zcollection_object TSRMLS_CC);
+
+	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
+	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+
+
 	/* Reset the item counter */
 	intern->total_items = 0;
 
 	php_mongo_api_write_options_from_ht(&intern->write_options, write_concern TSRMLS_CC);
+
+	intern->batch = intern->batch->first;
 	array_init(return_value);
-	batch = intern->batch->first;
 	do {
-		zval *batch_retval;
-		php_mongodb_batch *prev;
+		php_mongodb_batch *batch = intern->batch;
+		int status = php_mongo_batch_execute(batch, &intern->write_options, connection, &link->servers->options, return_value TSRMLS_CC);
 
-		MAKE_STD_ZVAL(batch_retval);
-
-		retval = php_mongo_batch_finalize(&batch->buffer, batch->container_pos, batch->batch_pos, intern->zcollection_object, &intern->write_options TSRMLS_CC);
-		if (retval == 0) {
-			RETURN_FALSE;
-		}
-
-		retval = php_mongo_batch_send_and_read(&batch->buffer, batch->request_id, intern->zcollection_object, batch_retval TSRMLS_CC);
-
-
-		if (retval == 0) {
-			zval_ptr_dtor(&batch_retval);
-
-			/* When executing an ordered batch we need to bail out as soon as we hit an error */
-			if (intern->write_options.ordered) {
-				zval_dtor(return_value);
+		if (status) {
+			if (status == 1) {
 				php_mongo_free_batch(batch);
-				intern->batch = NULL;
-				RETURN_FALSE;
+			} else {
+				efree(batch);
 			}
-		} else {
-			/* Only add the results on success.. */
-			add_next_index_zval(return_value, batch_retval);
-		}
-
-		prev = batch;
-		batch = batch->next;
-		efree(prev);
-
-		if (!batch) {
 			break;
 		}
 
-	} while(1);
-	intern->batch = NULL;
+		intern->batch = batch->next;
+		efree(batch);
+	} while(intern->batch);
 }
 /* }}} */
+
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_OBJ_INFO(0, collection, MongoCollection, 0)
