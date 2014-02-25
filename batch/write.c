@@ -139,8 +139,6 @@ void php_mongo_write_batch_ctor(mongo_write_batch_object *intern, zval *zcollect
 
 	mongo_apply_implicit_write_options(&intern->write_options, &link->servers->options, zcollection TSRMLS_CC);
 	php_mongo_api_write_options_from_ht(&intern->write_options, write_concern TSRMLS_CC);
-
-	php_mongo_make_batch(intern, Z_STRVAL_P(db->name), Z_STRVAL_P(collection->name), type TSRMLS_CC);
 }
 
 /* }}} */
@@ -259,7 +257,8 @@ PHP_METHOD(MongoWriteBatch, add)
 	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	if (intern->batch->item_count >= connection->max_write_batch_size) {
+	/* If we haven't allocated a batch yet, or need to start a new one */
+	if (intern->total_items == 0 || intern->batch->item_count >= connection->max_write_batch_size) {
 		php_mongo_make_batch_easy(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
 	}
 
@@ -377,6 +376,8 @@ PHP_METHOD(MongoWriteBatch, execute)
 		zend_throw_exception(mongo_ce_Exception, "No items in batch", 1 TSRMLS_CC);
 		return;
 	}
+
+	/* Reset the item counter */
 	intern->total_items = 0;
 
 	php_mongo_api_write_options_from_ht(&intern->write_options, write_concern TSRMLS_CC);
@@ -403,6 +404,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 			if (intern->write_options.ordered) {
 				zval_dtor(return_value);
 				php_mongo_free_batch(batch);
+				intern->batch = NULL;
 				RETURN_FALSE;
 			}
 		} else {
@@ -419,6 +421,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 		}
 
 	} while(1);
+	intern->batch = NULL;
 }
 /* }}} */
 
