@@ -1025,13 +1025,17 @@ PHP_METHOD(MongoClient, getConnections)
 		add_assoc_long(connection, "min_wire_version", con->min_wire_version);
 		add_assoc_long(connection, "max_wire_version", con->max_wire_version);
 
+		/* Add wire protocol and command limits */
+		add_assoc_long(connection, "max_bson_size", con->max_bson_size);
+		add_assoc_long(connection, "max_message_size", con->max_message_size);
+		add_assoc_long(connection, "max_write_batch_size", con->max_write_batch_size);
+
 		/* Grab connection info */
 		add_assoc_long(connection, "last_ping", con->last_ping);
 		add_assoc_long(connection, "last_ismaster", con->last_ismaster);
 		add_assoc_long(connection, "ping_ms", con->ping_ms);
 		add_assoc_long(connection, "connection_type", con->connection_type);
 		add_assoc_string(connection, "connection_type_desc", mongo_connection_type(con->connection_type), 1);
-		add_assoc_long(connection, "max_bson_size", con->max_bson_size);
 		add_assoc_long(connection, "tag_count", con->tag_count);
 		for (i = 0; i < con->tag_count; i++) {
 			add_next_index_string(tags, con->tags[i], 1);
