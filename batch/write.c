@@ -247,7 +247,7 @@ int php_mongo_api_return_value_get_int_del(zval *data, char *key)
 
 	return 0;
 }
-void php_mongo_dostuff(mongo_write_batch_object *intern, mongo_connection *connection, mongoclient *link, zval *return_value)
+void php_mongo_dostuff(mongo_write_batch_object *intern, mongo_connection *connection, mongoclient *link, zval *return_value TSRMLS_DC)
 {
 	int ok = 0, n = 0, nModified = 0;
 	int status;
@@ -307,7 +307,7 @@ void php_mongo_dostuff(mongo_write_batch_object *intern, mongo_connection *conne
 		ok += php_mongo_api_return_value_get_int_del(batch_retval, "ok");
 
 
-		php_array_merge(Z_ARRVAL_P(return_value), Z_ARRVAL_P(batch_retval), 1);
+		php_array_merge(Z_ARRVAL_P(return_value), Z_ARRVAL_P(batch_retval), 1 TSRMLS_CC);
 		intern->batch = batch->next;
 		efree(batch->buffer.start);
 		efree(batch);
@@ -359,7 +359,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 	array_init(return_value);
 	intern->batch = intern->batch->first;
-	php_mongo_dostuff(intern, connection, link, return_value);
+	php_mongo_dostuff(intern, connection, link, return_value TSRMLS_CC);
 	if (zend_hash_find(Z_ARRVAL_P(return_value), "writeErrors", strlen("writeErrors") + 1, (void**)&errors) == SUCCESS) {
 		zval *e = zend_throw_exception(mongo_ce_WriteConcernException, "Failed write", 911 TSRMLS_CC);
 		zend_update_property(mongo_ce_WriteConcernException, e, "document", strlen("document"), return_value TSRMLS_CC);
