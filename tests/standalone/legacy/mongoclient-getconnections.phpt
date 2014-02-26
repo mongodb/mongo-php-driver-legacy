@@ -36,10 +36,16 @@ array(1) {
       }
     }
     ["connection"]=>
-    array(10) {
+    array(12) {
       ["min_wire_version"]=>
       int(%d)
       ["max_wire_version"]=>
+      int(%d)
+      ["max_bson_size"]=>
+      int(%d)
+      ["max_message_size"]=>
+      int(%d)
+      ["max_write_batch_size"]=>
       int(%d)
       ["last_ping"]=>
       int(%d)
@@ -51,8 +57,6 @@ array(1) {
       int(1)
       ["connection_type_desc"]=>
       string(10) "STANDALONE"
-      ["max_bson_size"]=>
-      int(%d)
       ["tag_count"]=>
       int(0)
       ["tags"]=>
