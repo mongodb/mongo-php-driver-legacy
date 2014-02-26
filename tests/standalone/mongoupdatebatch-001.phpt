@@ -28,7 +28,7 @@ $batch = new MongoUpdateBatch($collection);
 
 $addretval = $batch->add($update1);
 $exeretval = $batch->execute(array("w" => 1));
-var_dump($addretval, $exeretval["ok"], $exeretval["n"]);
+var_dump($addretval, $exeretval);
 
 
 echo "Now with multi=true\n";
@@ -37,17 +37,33 @@ $batch = new MongoUpdateBatch($collection);
 
 $addretval = $batch->add($update1);
 $exeretval = $batch->execute(array("w" => 1));
-var_dump($addretval, $exeretval["ok"], $exeretval["n"]);
+var_dump($addretval, $exeretval);
 
 ?>
 ===DONE===
 <?php exit(0); ?>
 --EXPECTF--
 bool(true)
-bool(true)
-int(1)
+array(4) {
+  ["nMatched"]=>
+  int(1)
+  ["nModified"]=>
+  int(1)
+  ["nUpserted"]=>
+  int(0)
+  ["ok"]=>
+  bool(true)
+}
 Now with multi=true
 bool(true)
-bool(true)
-int(3)
+array(4) {
+  ["nMatched"]=>
+  int(3)
+  ["nModified"]=>
+  int(3)
+  ["nUpserted"]=>
+  int(0)
+  ["ok"]=>
+  bool(true)
+}
 ===DONE===

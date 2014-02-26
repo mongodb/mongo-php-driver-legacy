@@ -54,9 +54,9 @@ bool(true)
 bool(true)
 bool(true)
 array(2) {
+  ["nInserted"]=>
+  int(5)
   ["ok"]=>
   bool(true)
-  ["n"]=>
-  int(5)
 }
 ===DONE===

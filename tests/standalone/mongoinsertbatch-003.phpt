@@ -33,9 +33,9 @@ var_dump($retval);
 --EXPECTF--
 Executing the batch now
 array(2) {
+  ["nInserted"]=>
+  int(3001)
   ["ok"]=>
   bool(true)
-  ["n"]=>
-  int(3001)
 }
 ===DONE===

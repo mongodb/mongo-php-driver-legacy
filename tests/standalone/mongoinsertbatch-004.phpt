@@ -94,10 +94,10 @@ array(3) {
       string(124) "insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
     }
   }
+  ["nInserted"]=>
+  int(1)
   ["ok"]=>
   bool(true)
-  ["n"]=>
-  int(1)
 }
 int(1)
 Ordered=false should continue inserting
@@ -116,10 +116,10 @@ array(3) {
       string(124) "insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
     }
   }
+  ["nInserted"]=>
+  int(3000)
   ["ok"]=>
   bool(true)
-  ["n"]=>
-  int(3000)
 }
 int(3000)
 Ordered=true should stop inserting
@@ -138,10 +138,10 @@ array(3) {
       string(124) "insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
     }
   }
+  ["nInserted"]=>
+  int(2003)
   ["ok"]=>
   bool(true)
-  ["n"]=>
-  int(2003)
 }
 int(2003)
 ===DONE===
