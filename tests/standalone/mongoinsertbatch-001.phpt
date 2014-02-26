@@ -29,7 +29,7 @@ $addretval = $batch->add($insertdoc3);
 var_dump($addretval);
 $exeretval = $batch->execute(array("w" => 1));
 
-var_dump($exeretval[0]["ok"], $exeretval[0]["n"]);
+var_dump($exeretval["ok"], $exeretval["n"]);
 ?>
 ===DONE===
 <?php exit(0); ?>

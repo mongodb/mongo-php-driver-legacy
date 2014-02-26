@@ -15,6 +15,7 @@
  */
 #include <php.h>
 #include <zend_exceptions.h>
+#include <ext/standard/php_array.h>
 #include "../php_mongo.h"
 #include "../api/write.h"
 #include "../api/batch.h"
@@ -29,6 +30,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 extern zend_class_entry *mongo_ce_Collection;
 extern zend_class_entry *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_WriteConcernException;
 extern zend_object_handlers mongo_type_object_handlers;
 
 zend_class_entry *mongo_ce_WriteBatch = NULL;
@@ -230,6 +232,95 @@ PHP_METHOD(MongoWriteBatch, add)
 }
 /* }}} */
 
+int php_mongo_api_return_value_get_int_del(zval *data, char *key)
+{
+	zval **val;
+
+	if (zend_hash_find(Z_ARRVAL_P(data), key, strlen(key) + 1, (void**)&val) == SUCCESS) {
+		int retval = 0;
+		convert_to_long_ex(val);
+		retval = Z_LVAL_PP(val);
+
+		zend_hash_del_key_or_index(Z_ARRVAL_P(data), key, strlen(key) + 1, 0, HASH_DEL_KEY);
+		return retval;
+	}
+
+	return 0;
+}
+void php_mongo_dostuff(mongo_write_batch_object *intern, mongo_connection *connection, mongoclient *link, zval *return_value)
+{
+	int ok = 0, n = 0, nModified = 0;
+	int status;
+
+	do {
+		zval *batch_retval;
+		php_mongo_batch *batch = intern->batch;
+		zval **errors;
+
+		MAKE_STD_ZVAL(batch_retval);
+		array_init(batch_retval);
+		status = php_mongo_api_batch_execute(batch, &intern->write_options, connection, &link->servers->options, batch_retval TSRMLS_CC);
+
+		if (status) {
+			zval_ptr_dtor(&batch_retval);
+
+			if (status == 1) {
+				php_mongo_api_batch_free(batch);
+			}
+			break;
+		}
+
+		if (zend_hash_find(Z_ARRVAL_P(batch_retval), "writeErrors", strlen("writeErrors") + 1, (void**)&errors) == SUCCESS) {
+			HashPosition pointer;
+			zval **data;
+			char *key;
+			uint index_key_len;
+			ulong index;
+			HashTable *hindex = Z_ARRVAL_PP(errors);
+
+			for (
+					zend_hash_internal_pointer_reset_ex(hindex, &pointer);
+					zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
+					zend_hash_move_forward_ex(hindex, &pointer)
+				) {
+				uint key_type = zend_hash_get_current_key_ex(hindex, &key, &index_key_len, &index, NO_DUP, &pointer);
+				zval **index;
+
+				if (key_type != HASH_KEY_IS_LONG) {
+					continue;
+				}
+				if (zend_hash_find(Z_ARRVAL_PP(data), "index", strlen("index")+1, (void **)&index) == SUCCESS) {
+					convert_to_long(*index);
+					Z_LVAL_PP(index) += n;
+				}
+			}
+			if (intern->write_options.ordered) {
+				status = 1;
+			}
+		}
+
+		//printf("==> Got n: %d\n", n);
+		n += php_mongo_api_return_value_get_int_del(batch_retval, "n");
+		//printf("==> Got n: %d (+n)\n", n);
+		nModified += php_mongo_api_return_value_get_int_del(batch_retval, "nModified");
+		//printf("==> Got n: %d (+nModified)\n", n);
+		ok += php_mongo_api_return_value_get_int_del(batch_retval, "ok");
+
+
+		php_array_merge(Z_ARRVAL_P(return_value), Z_ARRVAL_P(batch_retval), 1);
+		intern->batch = batch->next;
+		efree(batch->buffer.start);
+		efree(batch);
+		zval_ptr_dtor(&batch_retval);
+	} while(intern->batch && status == 0);
+
+	if (intern->batch) {
+		php_mongo_api_batch_free(intern->batch);
+	}
+
+	add_assoc_bool(return_value, "ok", ok);
+	add_assoc_long(return_value, "n", n);
+}
 /* {{{ proto array MongoWriteBatch::execute(array $write_options)
    Executes the constructed batch. Returns the server response */
 PHP_METHOD(MongoWriteBatch, execute)
@@ -240,6 +331,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 	mongo_collection *collection;
 	mongo_connection *connection;
 	mongoclient      *link;
+	zval **errors;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -265,25 +357,13 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 	php_mongo_api_write_options_from_ht(&intern->write_options, write_options TSRMLS_CC);
 
-	intern->batch = intern->batch->first;
 	array_init(return_value);
-	do {
-		php_mongo_batch *batch = intern->batch;
-		int status = php_mongo_api_batch_execute(batch, &intern->write_options, connection, &link->servers->options, return_value TSRMLS_CC);
-
-		if (status) {
-			if (status == 1) {
-				zval_dtor(return_value);
-				php_mongo_api_batch_free(batch);
-			} else {
-				efree(batch);
-			}
-			break;
-		}
-
-		intern->batch = batch->next;
-		efree(batch);
-	} while(intern->batch);
+	intern->batch = intern->batch->first;
+	php_mongo_dostuff(intern, connection, link, return_value);
+	if (zend_hash_find(Z_ARRVAL_P(return_value), "writeErrors", strlen("writeErrors") + 1, (void**)&errors) == SUCCESS) {
+		zval *e = zend_throw_exception(mongo_ce_WriteConcernException, "Failed write", 911 TSRMLS_CC);
+		zend_update_property(mongo_ce_WriteConcernException, e, "document", strlen("document"), return_value TSRMLS_CC);
+	}
 }
 /* }}} */
 

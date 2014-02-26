@@ -32,7 +32,6 @@ extern zend_class_entry *mongo_ce_DuplicateKeyException;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
-static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *connection, zval *document TSRMLS_DC);
 static void php_mongo_api_add_write_options(mongo_buffer *buf, php_mongo_write_options *write_options TSRMLS_DC);
 static void php_mongo_api_throw_exception(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC);
 static void php_mongo_api_throw_exception_from_server_code(mongo_connection *connection, int code, char *error_message, zval *document TSRMLS_DC);
@@ -464,7 +463,8 @@ int php_mongo_api_insert_single(mongo_buffer *buf, char *ns, char *collection, z
 /* }}}  */
 
 /* Returns 0 on success
- * Returns 1 on failure, and sets EG(exception) */
+ * Returns 1 on failure, and sets EG(exception)
+ * Returns 2 on failure, and sets EG(exception), leaves retval dangling */
 int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, int socket_read_timeout, int request_id, zval **retval TSRMLS_DC) /* {{{  */
 {
 	int                status = 0;
@@ -521,13 +521,8 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 
 	manager->recv_data(connection, options, 0, data, data_len, &error_message);
 
-	array_init(*retval);
 	bson_to_zval(data, Z_ARRVAL_PP(retval), 0 TSRMLS_CC);
 	efree(data);
-
-	if (php_mongo_api_raise_exception_on_write_failure(connection, *retval TSRMLS_CC)) {
-		return 1;
-	}
 
 	return 0;
 }
@@ -705,37 +700,24 @@ static void php_mongo_api_raise_exception_it_array(mongo_connection *connection,
 }
 /* }}} */
 
-/* Internal helper: Raises an exception if needed
- * Returns 0 when write succeeded (ok=1)
+/* Parses an command response document to see if it contains errors
+ * Returns 0 when write succeeded (no write errors)
  * Returns 1 when write failed, and raises different exceptions depending on the error */
-static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *connection, zval *document TSRMLS_DC) /* {{{ */
+int php_mongo_api_raise_exception_on_write_failure(mongo_connection *connection, zval *document TSRMLS_DC) /* {{{ */
 {
-	zval **ok, **write_errors, **write_concern_error;
-
-	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void**)&ok) == SUCCESS) {
-		convert_to_boolean(*ok);
-
-		/* If ok=false we should have a top-level code and errmsg fields
-		 * These would be epic failures, authentication, parse errors.. */
-		if (!Z_BVAL_PP(ok)) {
-			php_mongo_api_raise_epic_write_failure_exception(connection, document TSRMLS_CC);
-			return 1;
-		}
-	} else {
-		/* Missing OK field... that can't be good! */
-		php_mongo_api_throw_exception_from_server_code(connection, 103, "Missing 'ok' field in response, don't know what to do", document TSRMLS_CC);
-		return 1;
-	}
+	zval **write_errors, **write_concern_error;
 
 	/* Check for Write Errors, such as duplicate key errors */
 	if (zend_hash_find(Z_ARRVAL_P(document), "writeErrors", strlen("writeErrors") + 1, (void**)&write_errors) == SUCCESS) {
 		if (Z_TYPE_PP(write_errors) == IS_ARRAY) {
 			php_mongo_api_raise_exception_it_array(connection, write_errors, document TSRMLS_CC);
 		} else {
-			php_mongo_api_throw_exception_from_server_code(connection, 104, "Got write errors, but don't know how to parse them", document TSRMLS_CC);
+			php_mongo_api_throw_exception_from_server_code(connection, 104, "Unexpected server response: 'writeErrors' is not an array", document TSRMLS_CC);
 		}
 		return 1;
 	}
+
+	/* Write Concern Error, such as wtimeout */
 	if (zend_hash_find(Z_ARRVAL_P(document), "writeConcernError", strlen("writeConcernError") + 1, (void**)&write_concern_error) == SUCCESS) {
 		zval **code = NULL, **errmsg = NULL;
 
@@ -750,8 +732,34 @@ static int php_mongo_api_raise_exception_on_write_failure(mongo_connection *conn
 			/* FIXME: There is also errorInfo.. Do we care? We include the full error document anyway.. */
 			php_mongo_api_throw_exception_from_server_code(connection, Z_LVAL_PP(code), Z_STRVAL_PP(errmsg), document TSRMLS_CC);
 		} else {
-			php_mongo_api_throw_exception_from_server_code(connection, 105, "Got write errors, but don't know how to parse them", document TSRMLS_CC);
+			php_mongo_api_throw_exception_from_server_code(connection, 105, "Unexpected server response: 'writeConcernError' is not an array", document TSRMLS_CC);
 		}
+		return 1;
+	}
+
+	return 0;
+}
+/* }}} */
+
+/* Parses a command response document and raises an exception on write command failure.
+ * Returns 0 when writecommand succeded (ok=1)
+ * Returns 1 on failure, and throws exception */
+int php_mongo_api_raise_exception_on_command_failure(mongo_connection *connection, zval *document TSRMLS_DC) /* {{{ */
+{
+	zval **ok;
+
+	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void**)&ok) == SUCCESS) {
+		convert_to_boolean(*ok);
+
+		/* If ok=false we should have a top-level code and errmsg fields
+		 * These would be epic failures, authentication, parse errors.. */
+		if (!Z_BVAL_PP(ok)) {
+			php_mongo_api_raise_epic_write_failure_exception(connection, document TSRMLS_CC);
+			return 1;
+		}
+	} else {
+		/* Missing OK field... that can't be good! */
+		php_mongo_api_throw_exception_from_server_code(connection, 103, "Unexpected server response: 'ok' field is not present", document TSRMLS_CC);
 		return 1;
 	}
 

@@ -66,14 +66,13 @@ void php_mongo_api_batch_make_from_collection_object(mongo_write_batch_object *i
 }
 /* }}} */
 
-/* Recursively free()s php_mongo_batch and leftover buffers.
- * Should only be called on batch failure, the *current* buffer will not be efree()d
- * (it is already free()d on write failure) */
+/* Recursively free()s php_mongo_batch and leftover buffers. */
 void php_mongo_api_batch_free(php_mongo_batch *batch) /* {{{ */
 {
 	while(1) {
 		php_mongo_batch *prev;
 
+		efree(batch->buffer.start);
 		prev = batch;
 		batch = batch->next;
 		efree(prev);
@@ -81,7 +80,6 @@ void php_mongo_api_batch_free(php_mongo_batch *batch) /* {{{ */
 		if (!batch) {
 			break;
 		}
-		efree(batch->buffer.start);
 	}
 }
 /* }}} */
@@ -120,9 +118,6 @@ int php_mongo_api_batch_finalize(mongo_buffer *buf, int container_pos, int batch
 	message_length = php_mongo_api_write_end(buf, container_pos, batch_pos, MAX_BSON_WIRE_OBJECT_SIZE(max_bson_size), write_options TSRMLS_CC);
 
 	/* The document is greater then allowed limits, exception already thrown */
-	if (message_length == 0) {
-		efree(buf->start);
-	}
 	return message_length;
 }
 /* }}} */
@@ -131,8 +126,11 @@ int php_mongo_api_batch_finalize(mongo_buffer *buf, int container_pos, int batch
  * Sends the mongo_buffer over the wire and writes the server return value of request_id into return_value
  *
  * Returns:
- * 0 on failure
- * 1 on success */
+ * 0 on success
+ * 1 on failure, missing connection.
+ * 2 on failure, couldn't write the data - buffer is efree()d
+ * 3 on failure, api_get_reply() failed catastrophicly, exception set
+ * 4 on failure, the command itself failed, return_value needs to be dealt with */
 int php_mongo_api_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
 {
 	int               bytes_written;
@@ -140,61 +138,57 @@ int php_mongo_api_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_c
 	int               success;
 
 	if (!connection) {
-		return 0;
+		return 1;
 	}
 
 	bytes_written = MonGlo(manager)->send(connection, server_options, buf->start, buf->pos - buf->start, &error_message);
 	if (bytes_written < 1) {
 		/* Didn't write anything, something bad must have happened */
-		efree(buf->start);
-		return 0;
+		return 2;
 	}
 
 	success = php_mongo_api_get_reply(MonGlo(manager), connection, server_options, 0 /*socket_read_timeout*/, request_id, &return_value TSRMLS_CC);
-	efree(buf->start);
 
 	if (success != 0) {
 		/* Exception already thrown */
-		return 0;
+		return 3;
 	}
 
-	return 1;
+	if (php_mongo_api_raise_exception_on_command_failure(connection, return_value TSRMLS_CC)) {
+		zval_dtor(return_value);
+		return 4;
+	}
+
+	return 0;
 }
 /* }}} */
 
+void php_mongo_api_merge_return_value(zval *return_value, zval *batch_item)
+{
+	add_next_index_zval(return_value, batch_item);
+}
 /*
  * Executes a php_mongo_batch
  *
  * Returns:
  * 0 On success
- * 1 On failure when we should not attempt to recover from
- * 2 On failure, but it is ok to send more batches */
+ * 1 On failure, couldn't finalize message */
 int php_mongo_api_batch_execute(php_mongo_batch *batch, php_mongo_write_options *write_options, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
 {
 	int retval;
-	zval *batch_retval;
 
 	retval = php_mongo_api_batch_finalize(&batch->buffer, batch->container_pos, batch->batch_pos, connection->max_bson_size, write_options TSRMLS_CC);
 	if (retval == 0) {
-		return 2;
+		return 1;
 	}
 
-	MAKE_STD_ZVAL(batch_retval);
-	retval = php_mongo_api_batch_send_and_read(&batch->buffer, batch->request_id, connection, server_options, batch_retval TSRMLS_CC);
+	retval = php_mongo_api_batch_send_and_read(&batch->buffer, batch->request_id, connection, server_options, return_value TSRMLS_CC);
 
 	if (retval == 0) {
-		zval_ptr_dtor(&batch_retval);
-
-		/* When executing an ordered batch we need to bail out as soon as we hit an error */
-		if (write_options->ordered) {
-			return 1;
-		}
-	} else {
-		/* Only add the results on success.. */
-		add_next_index_zval(return_value, batch_retval);
+		return 0;
 	}
 
-	return 0;
+	return 1;
 }
 /* }}} */
 

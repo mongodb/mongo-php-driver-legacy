@@ -32,34 +32,10 @@ var_dump($retval);
 <?php exit(0); ?>
 --EXPECTF--
 Executing the batch now
-array(4) {
-  [0]=>
-  array(2) {
-    ["ok"]=>
-    bool(true)
-    ["n"]=>
-    int(1000)
-  }
-  [1]=>
-  array(2) {
-    ["ok"]=>
-    bool(true)
-    ["n"]=>
-    int(1000)
-  }
-  [2]=>
-  array(2) {
-    ["ok"]=>
-    bool(true)
-    ["n"]=>
-    int(1000)
-  }
-  [3]=>
-  array(2) {
-    ["ok"]=>
-    bool(true)
-    ["n"]=>
-    int(1)
-  }
+array(2) {
+  ["ok"]=>
+  bool(true)
+  ["n"]=>
+  int(3001)
 }
 ===DONE===
