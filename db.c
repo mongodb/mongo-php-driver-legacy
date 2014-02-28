@@ -93,7 +93,7 @@ static int php_mongo_command_supports_rp(zval *cmd)
 			return 1;
 		}
 
-		if (strcmp(str, "mapreduce") == 0) {
+		if (strcmp(str, "mapreduce") == 0 || strcmp(str, "mapReduce") == 0) {
 			zval **value = NULL;
 			if (zend_hash_find(Z_ARRVAL_P(cmd), "out", 4, (void **)&value) == SUCCESS) {
 				if (Z_TYPE_PP(value) == IS_ARRAY) {

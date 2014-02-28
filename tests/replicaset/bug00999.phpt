@@ -27,6 +27,28 @@ $mc->setReadPreference(MongoClient::RP_SECONDARY_PREFERRED);
 $db = $mc->selectDB(dbname());
 $db->setReadPreference(MongoClient::RP_SECONDARY_PREFERRED);
 
+echo "Testing with 'mapReduce' command string\n";
+
+// Should be forced to primary ("inline" is a collection name)
+$db->command(array(
+    'mapReduce' => 'bug00999',
+    'map' => new MongoCode('function(){}'),
+    'reduce' => new MongoCode('function(key, value){ return 1; }'),
+    'out' => 'inline',
+));
+
+// Should support read preference
+$db->command(array(
+    'mapReduce' => 'bug00999',
+    'map' => new MongoCode('function(){}'),
+    'reduce' => new MongoCode('function(key, value){}'),
+    'out' => array('inline' => 1),
+));
+
+// Although the proper command is "mapReduce", the server also accepts "mapreduce", so we'll test that, too.
+
+echo "Testing with 'mapreduce' command string\n";
+
 // Should be forced to primary ("inline" is a collection name)
 $db->command(array(
     'mapreduce' => 'bug00999',
@@ -45,5 +67,9 @@ $db->command(array(
 
 ?>
 --EXPECTF--
+Testing with 'mapReduce' command string
+forcing primary for command
+command supports Read Preferences
+Testing with 'mapreduce' command string
 forcing primary for command
 command supports Read Preferences
