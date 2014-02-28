@@ -393,7 +393,9 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 	if (!intern->total_items) {
-		zend_throw_exception(mongo_ce_Exception, "No items in batch", 1 TSRMLS_CC);
+		array_init(return_value);
+		/* NOOP, fake the return value */
+		add_assoc_bool(return_value, "ok", 1);
 		return;
 	}
 
@@ -410,7 +412,11 @@ PHP_METHOD(MongoWriteBatch, execute)
 	array_init(return_value);
 	intern->batch = intern->batch->first;
 	php_mongo_dostuff(intern, connection, link, return_value TSRMLS_CC);
+
 	if (zend_hash_find(Z_ARRVAL_P(return_value), "writeErrors", strlen("writeErrors") + 1, (void**)&errors) == SUCCESS) {
+		zval *e = zend_throw_exception(mongo_ce_WriteConcernException, "Failed write", 911 TSRMLS_CC);
+		zend_update_property(mongo_ce_WriteConcernException, e, "document", strlen("document"), return_value TSRMLS_CC);
+	} else if (zend_hash_find(Z_ARRVAL_P(return_value), "writeConcernError", strlen("writeConcernError") + 1, (void**)&errors) == SUCCESS) {
 		zval *e = zend_throw_exception(mongo_ce_WriteConcernException, "Failed write", 911 TSRMLS_CC);
 		zend_update_property(mongo_ce_WriteConcernException, e, "document", strlen("document"), return_value TSRMLS_CC);
 	}
