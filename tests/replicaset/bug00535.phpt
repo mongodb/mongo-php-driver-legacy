@@ -62,23 +62,23 @@ echo "\nTesting aggregate\n";
 $result = $collection->aggregate(array('$match' => array('category' => 'fruit')));
 var_dump($result["ok"]);
 
-echo "\nTesting mapreduce\n";
+echo "\nTesting mapReduce\n";
 $map = new MongoCode('function() { emit(this.category, 1); }');
 $reduce = new MongoCode('function(k, vals) { var sum = 0; for (var i in vals) { sum += vals[i]; } return sum; }');
 $result = $db->command(array(
-    'mapreduce' => 'bug535',
+    'mapReduce' => 'bug535',
     'map' => $map,
     'reduce' => $reduce,
-    'out' => array('replace' => 'bug535.mapreduce'),
+    'out' => array('replace' => 'bug535.mapReduce'),
 ));
 var_dump($result['ok']);
 
-echo "\nTesting *inline* mapreduce\n";
+echo "\nTesting *inline* mapReduce\n";
 $result = $db->command(array(
-    'mapreduce' => 'bug535',
+    'mapReduce' => 'bug535',
     'map' => $map,
     'reduce' => $reduce,
-    'out' => 'inline',
+    'out' => array('inline' => 1),
 ));
 var_dump($result["ok"]);
 
@@ -122,10 +122,10 @@ Testing aggregate
 command supports Read Preferences
 float(1)
 
-Testing mapreduce
+Testing mapReduce
 forcing primary for command
 float(1)
 
-Testing *inline* mapreduce
+Testing *inline* mapReduce
 command supports Read Preferences
 float(1)
