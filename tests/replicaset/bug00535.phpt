@@ -78,7 +78,7 @@ $result = $db->command(array(
     'mapreduce' => 'bug535',
     'map' => $map,
     'reduce' => $reduce,
-    'out' => 'inline',
+    'out' => array('inline' => 1),
 ));
 var_dump($result["ok"]);
 
