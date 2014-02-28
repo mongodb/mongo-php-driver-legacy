@@ -22,6 +22,7 @@
 #include "../batch/write.h"
 #include "../batch/write_private.h"
 #include "../collection.h"
+#include "../log_stream.h"
 #include "../mcon/manager.h"
 
 /* The Batch API is only available for 5.3.0+ */
@@ -267,6 +268,11 @@ void php_mongo_writebatch_execute(mongo_write_batch_object *intern, mongo_connec
 		MAKE_STD_ZVAL(batch_retval);
 		array_init(batch_retval);
 		status = php_mongo_api_batch_execute(batch, &intern->write_options, connection, &link->servers->options, batch_retval TSRMLS_CC);
+
+#if MONGO_PHP_STREAMS
+		mongo_log_stream_write_batch(connection, &intern->write_options, batch->request_id, batch_retval TSRMLS_CC);
+#endif
+
 
 		if (status) {
 			zval_ptr_dtor(&batch_retval);
