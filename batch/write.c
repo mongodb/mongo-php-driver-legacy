@@ -22,6 +22,7 @@
 #include "../batch/write.h"
 #include "../batch/write_private.h"
 #include "../collection.h" /* mongo_apply_implicit_write_options() */
+#include "mcon/manager.h" /* mongo_manager_connection_deregister */
 
 /* The Batch API is only available for 5.3.0+ */
 #if PHP_VERSION_ID >= 50300
@@ -250,13 +251,14 @@ int php_mongo_api_return_value_get_int_del(zval *data, char *key)
 }
 void php_mongo_dostuff(mongo_write_batch_object *intern, mongo_connection *connection, mongoclient *link, zval *return_value TSRMLS_DC)
 {
+	php_mongo_batch *first = intern->batch->first;
 	int ok = 0, n = 0, nModified = 0, nUpserted = 0;
 	int status;
 
 	do {
 		zval *batch_retval;
 		php_mongo_batch *batch = intern->batch;
-		zval **errors, **werrors;
+		zval **errors;
 		zval **upserted;
 
 		MAKE_STD_ZVAL(batch_retval);
@@ -265,13 +267,10 @@ void php_mongo_dostuff(mongo_write_batch_object *intern, mongo_connection *conne
 
 		if (status) {
 			zval_ptr_dtor(&batch_retval);
-
-			if (status == 1) {
-				php_mongo_api_batch_free(intern->batch);
-			}
 			break;
 		}
 
+		/* writeErrors = continue when ordered =false */
 		if (zend_hash_find(Z_ARRVAL_P(batch_retval), "writeErrors", strlen("writeErrors") + 1, (void**)&errors) == SUCCESS) {
 			HashPosition pointer;
 			zval **data;
@@ -300,8 +299,11 @@ void php_mongo_dostuff(mongo_write_batch_object *intern, mongo_connection *conne
 				status = 1;
 			}
 		}
-		if (zend_hash_find(Z_ARRVAL_P(batch_retval), "writeConcernErrors", strlen("writeConcernErrors") + 1, (void**)&werrors) == SUCCESS) {
-		}
+
+		/* Always continue on writeConcernErrors, no matter ordered=true/false.
+		 * No need to do anything special there as we already array_merge() the batch_retval, and there is no
+		 * index rewrite needed */
+
 
 		if (zend_hash_find(Z_ARRVAL_P(batch_retval), "upserted", strlen("upserted") + 1, (void**)&upserted) == SUCCESS) {
 			HashPosition pointer;
@@ -341,11 +343,15 @@ void php_mongo_dostuff(mongo_write_batch_object *intern, mongo_connection *conne
 
 		php_array_merge(Z_ARRVAL_P(return_value), Z_ARRVAL_P(batch_retval), 1 TSRMLS_CC);
 
-		intern->batch = batch->next;
-		efree(batch->buffer.start);
-		efree(batch);
+		intern->batch = intern->batch->next;
 		zval_ptr_dtor(&batch_retval);
 	} while(intern->batch && status == 0);
+	php_mongo_api_batch_free(first);
+
+	/* Bad things happened to the socket when reading/writing it */
+	if (status == 2) {
+		mongo_manager_connection_deregister(MonGlo(manager), connection);
+	}
 
 	switch(intern->batch_type) {
 		case MONGODB_API_COMMAND_INSERT:

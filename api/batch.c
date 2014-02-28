@@ -42,8 +42,8 @@ void php_mongo_api_batch_make(mongo_write_batch_object *intern, char *dbname, ch
 	efree(cmd_ns);
 
 	if (intern->batch) {
-		batch->first = intern->batch->first;
 		intern->batch->next = batch;
+		batch->first = intern->batch->first;
 		intern->batch = batch;
 	} else {
 		intern->batch = batch;
@@ -172,7 +172,9 @@ void php_mongo_api_merge_return_value(zval *return_value, zval *batch_item)
  *
  * Returns:
  * 0 On success
- * 1 On failure, couldn't finalize message */
+ * 1 On failure, couldn't finalize message
+ * 2 On socket failure, we better close it
+ * */
 int php_mongo_api_batch_execute(php_mongo_batch *batch, php_mongo_write_options *write_options, mongo_connection *connection, mongo_server_options *server_options, zval *return_value TSRMLS_DC) /* {{{ */
 {
 	int retval;
@@ -183,12 +185,11 @@ int php_mongo_api_batch_execute(php_mongo_batch *batch, php_mongo_write_options 
 	}
 
 	retval = php_mongo_api_batch_send_and_read(&batch->buffer, batch->request_id, connection, server_options, return_value TSRMLS_CC);
-
-	if (retval == 0) {
-		return 0;
+	if (retval) {
+		return 2;
 	}
 
-	return 1;
+	return 0;
 }
 /* }}} */
 
