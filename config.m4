@@ -46,6 +46,14 @@ if test "$PHP_MONGO" != "no"; then
 
 fi
 
+AC_MSG_CHECKING([whether to enable JSON support])
+if test -f "$phpincludedir/ext/json/php_json.h"; then
+    AC_DEFINE(HAVE_JSON, 1, [JSON support])
+    AC_MSG_RESULT([yes, found $phpincludedir/ext/json/php_json.h])
+else
+    AC_MSG_RESULT([no, can't find header])
+fi
+
 PHP_ARG_ENABLE(coverage,  whether to include code coverage symbols,
 [  --enable-coverage         Mongo: Enable code coverage symbols, maintainers only!], no, no)
 
