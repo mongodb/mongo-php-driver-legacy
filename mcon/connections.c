@@ -322,7 +322,7 @@ void mongo_connection_destroy(mongo_con_manager *manager, void *data, int why)
 					ptr = ptr->next;
 					free(prev);
 					prev = NULL;
-				} while(1);
+				} while (1);
 				con->cleanup_list = NULL;
 			}
 			free(con->hash);
@@ -794,7 +794,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	char *nonce;
 	int   retval = 0;
 
-	switch(server_def->mechanism) {
+	switch (server_def->mechanism) {
 		case MONGO_AUTH_MECHANISM_MONGODB_CR:
 			if (!server_def->db || !server_def->username || !server_def->password) {
 				return 2;

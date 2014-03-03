@@ -876,7 +876,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 		ZVAL_NULL(value);
 
 		/* get value */
-		switch(type) {
+		switch (type) {
 			case BSON_OID: {
 				mongo_id *this_id;
 				char *tmp_id;

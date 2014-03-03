@@ -54,19 +54,9 @@ bool(true)
 bool(true)
 bool(true)
 array(2) {
-  [0]=>
-  array(2) {
-    ["ok"]=>
-    bool(true)
-    ["n"]=>
-    int(4)
-  }
-  [1]=>
-  array(2) {
-    ["ok"]=>
-    bool(true)
-    ["n"]=>
-    int(1)
-  }
+  ["nInserted"]=>
+  int(5)
+  ["ok"]=>
+  bool(true)
 }
 ===DONE===

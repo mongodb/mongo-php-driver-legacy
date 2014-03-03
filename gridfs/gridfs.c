@@ -377,7 +377,7 @@ static void cleanup_stale_chunks(INTERNAL_FUNCTION_PARAMETERS, zval *cleanup_ids
 	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 
 	zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(cleanup_ids), &pos);
-	while(zend_hash_get_current_data_ex(Z_ARRVAL_P(cleanup_ids), (void **) &tmp, &pos) == SUCCESS) {
+	while (zend_hash_get_current_data_ex(Z_ARRVAL_P(cleanup_ids), (void **) &tmp, &pos) == SUCCESS) {
 		zval *query, *cid;
 		MAKE_STD_ZVAL(query);
 		MAKE_STD_ZVAL(cid);

@@ -362,7 +362,7 @@ PHP_METHOD(MongoId, isValid)
 		return;
 	}
 
-	switch(Z_TYPE_PP(mongoid)) {
+	switch (Z_TYPE_PP(mongoid)) {
 		case IS_OBJECT:
 			if (instanceof_function(Z_OBJCE_PP(mongoid), mongo_ce_Id TSRMLS_CC)) {
 				RETURN_TRUE;
