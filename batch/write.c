@@ -346,7 +346,7 @@ void php_mongo_writebatch_execute(mongo_write_batch_object *intern, mongo_connec
 
 		intern->batch = intern->batch->next;
 		zval_ptr_dtor(&batch_retval);
-	} while(intern->batch && status == 0);
+	} while (intern->batch && status == 0);
 
 	php_mongo_api_batch_free(first);
 

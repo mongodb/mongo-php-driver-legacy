@@ -471,7 +471,7 @@ int mongo_deregister_callback_from_connection(mongo_connection *connection, void
 			}
 			prev = ptr;
 			ptr = ptr->next;
-		} while(ptr);
+		} while (ptr);
 	}
 	return 1;
 
@@ -535,7 +535,7 @@ mongo_connection *mongo_get_read_write_connection_with_callback(mongo_con_manage
 				break;
 			}
 			ptr = ptr->next;
-		} while(1);
+		} while (1);
 	} else {
 		connection->cleanup_list = cb;
 	}

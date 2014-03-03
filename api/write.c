@@ -158,7 +158,7 @@ void php_mongo_api_write_options_to_zval(php_mongo_write_options *write_options,
 /* Internal helper: Writes the CRUD key from `type` to `buf` */
 void php_mongo_api_write_command_name(mongo_buffer *buf, php_mongo_write_types type TSRMLS_DC) /* {{{ */
 {
-	switch(type) {
+	switch (type) {
 		case MONGODB_API_COMMAND_INSERT:
 			php_mongo_serialize_key(buf, "insert", strlen("insert"), 0 TSRMLS_CC);
 			break;
@@ -175,7 +175,7 @@ void php_mongo_api_write_command_name(mongo_buffer *buf, php_mongo_write_types t
 /* Internal helper: Writes the batch keyname for that `type` to `buf` */
 void php_mongo_api_write_command_fieldname(mongo_buffer *buf, php_mongo_write_types type TSRMLS_DC) /* {{{ */
 {
-	switch(type) {
+	switch (type) {
 		case MONGODB_API_COMMAND_INSERT:
 			php_mongo_serialize_key(buf, "documents", strlen("documents"), 0 TSRMLS_CC);
 			break;
@@ -369,7 +369,7 @@ int php_mongo_api_write_add(mongo_buffer *buf, int n, php_mongo_write_item *item
 	int retval;
 	int rollbackpos = buf->pos - buf->start;
 
-	switch(item->type) {
+	switch (item->type) {
 		case MONGODB_API_COMMAND_INSERT:
 			retval = php_mongo_api_insert_add(buf, n, item->write.insert, max_document_size TSRMLS_CC);
 			break;
@@ -794,7 +794,7 @@ static void php_mongo_api_throw_exception(mongo_connection *connection, int code
 	zval *exception;
 	zend_class_entry *ce;
 
-	switch(code) {
+	switch (code) {
 		case 2: /* old-style timeout? I don't know where this is coming from */
 		case 80: /* timeout, io_stream:php_mongo_io_stream_read() */
 			ce = mongo_ce_CursorTimeoutException; /* Cursor Exception for BC */

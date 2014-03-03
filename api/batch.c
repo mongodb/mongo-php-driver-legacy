@@ -69,7 +69,7 @@ void php_mongo_api_batch_make_from_collection_object(mongo_write_batch_object *i
 /* Recursively free()s php_mongo_batch and leftover buffers. */
 void php_mongo_api_batch_free(php_mongo_batch *batch) /* {{{ */
 {
-	while(1) {
+	while (1) {
 		php_mongo_batch *prev;
 
 		efree(batch->buffer.start);

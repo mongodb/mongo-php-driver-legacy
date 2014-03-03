@@ -270,7 +270,7 @@ void php_mongo_stream_notify_io(mongo_server_options *opts, int code, int sofar,
 
 	ctx = (php_stream_context *)opts->ctx;
 
-	switch(code) {
+	switch (code) {
 		case MONGO_STREAM_NOTIFY_IO_READ:
 		case MONGO_STREAM_NOTIFY_IO_WRITE:
 			ctx->notifier->progress = 0;
