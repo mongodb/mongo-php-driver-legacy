@@ -388,14 +388,12 @@ int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connectio
 
 	if (result != SASL_OK) {
 		sasl_dispose(&conn);
-		sasl_client_done();
 		*error_message = strdup("Could not initialize a client exchange (SASL) to MongoDB");
 		return 0;
 	}
 
 	conn = php_mongo_saslstart(manager, con, options, server_def, conn, &initpayload, &initpayload_len, &conversation_id, error_message);
 	if (!conn) {
-		sasl_client_done();
 		/* error message populate by php_mongo_saslstart() */
 		return 0;
 	}
@@ -404,7 +402,6 @@ int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connectio
 
 	free(initpayload);
 	sasl_dispose(&conn);
-	sasl_client_done();
 
 	return 1;
 }
