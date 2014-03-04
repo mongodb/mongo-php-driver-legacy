@@ -9,8 +9,8 @@ require_once "tests/utils/server.inc";
 ini_set('mongo.native_long', 1);
 ini_set('mongo.long_as_object', 0);
 
-$host = MongoShellServer::getShardInfo();
-$mc = new MongoClient($host[0]);
+$host = MongoShellServer::getStandaloneInfo();
+$mc = new MongoClient($host);
 $c = $mc->selectCollection(dbname(), 'info');
 $c->drop();
 
