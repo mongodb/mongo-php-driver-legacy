@@ -74,6 +74,22 @@ void php_mongo_stream_notify_meta(php_stream_context *ctx, int code, zval *args 
 	}
 }
 
+void php_mongo_stream_notify_meta_write_batch(php_stream_context *ctx, zval *server, zval *write_options, zval *batch, zval *protocol_options TSRMLS_DC)
+{
+	zval *args;
+
+	MAKE_STD_ZVAL(args);
+	array_init(args);
+
+	ADD_ASSOC_ZVAL_ADDREF(args, "server", server);
+	ADD_ASSOC_ZVAL_ADDREF(args, "batch_retval", batch);
+	ADD_ASSOC_ZVAL_ADDREF(args, "write_options", write_options);
+	ADD_ASSOC_ZVAL_ADDREF(args, "protocol_options", protocol_options);
+
+	php_mongo_stream_notify_meta(ctx, MONGO_STREAM_NOTIFY_LOG_WRITE_BATCH, args TSRMLS_CC);
+	zval_ptr_dtor(&args);
+}
+
 void php_mongo_stream_notify_meta_cmd_delete(php_stream_context *ctx, zval *server, zval *write_options, zval *delete_options, zval *protocol_options TSRMLS_DC)
 {
 	zval *args;
@@ -718,6 +734,40 @@ void mongo_log_stream_cmd_delete(mongo_connection *connection, php_mongo_write_d
 		zval_ptr_dtor(&protocol_options);
 		zval_ptr_dtor(&z_write_options);
 		zval_ptr_dtor(&z_delete_options);
+	}
+}
+
+void mongo_log_stream_write_batch(mongo_connection *connection, php_mongo_write_options *write_options, int request_id, zval *batch TSRMLS_DC)
+{
+	php_stream_context *context = ((php_stream *)connection->socket)->context;
+
+	if (CONTEXT_HAS_NOTIFY_OR_LOG(context, "log_write_batch")) {
+		zval **args[4];
+		zval *protocol_options, *server, *z_write_options;
+
+		server = php_log_get_server_info(connection);
+
+		MAKE_STD_ZVAL(protocol_options);
+		array_init(protocol_options);
+
+		MAKE_STD_ZVAL(z_write_options);
+		array_init(z_write_options);
+
+		php_mongo_api_write_options_to_zval(write_options, z_write_options);
+
+		add_assoc_long(protocol_options, "request_id", request_id);
+
+		args[0] = &server;
+		args[1] = &z_write_options;
+		args[2] = &batch;
+		args[3] = &protocol_options;
+
+		php_mongo_stream_notify_meta_write_batch(context, server, z_write_options, batch, protocol_options TSRMLS_CC);
+		php_mongo_stream_callback(context, "log_write_batch", 4, args TSRMLS_CC);
+
+		zval_ptr_dtor(&server);
+		zval_ptr_dtor(&protocol_options);
+		zval_ptr_dtor(&z_write_options);
 	}
 }
 
