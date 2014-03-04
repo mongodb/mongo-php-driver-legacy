@@ -24,14 +24,10 @@ zend_class_entry *mongo_ce_BinData = NULL;
 PHP_METHOD(MongoBinData, __construct)
 {
 	char *bin;
-	long bin_len, type = 2;
+	long bin_len, type = BIN_GENERIC;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &bin, &bin_len, &type) == FAILURE) {
 		return;
-	}
-
-	if (ZEND_NUM_ARGS() == 1) {
-		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The default value for type will change to 0 in the future. Please pass in '2' explicitly.");
 	}
 
 	zend_update_property_stringl(mongo_ce_BinData, getThis(), "bin", strlen("bin"), bin, bin_len TSRMLS_CC);
