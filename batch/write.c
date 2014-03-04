@@ -284,7 +284,7 @@ void php_mongo_writebatch_execute(mongo_write_batch_object *intern, mongo_connec
 			zval **data;
 			char *key;
 			uint index_key_len;
-			ulong index;
+			ulong uindex;
 			HashTable *hindex = Z_ARRVAL_PP(errors);
 
 			for (
@@ -292,15 +292,15 @@ void php_mongo_writebatch_execute(mongo_write_batch_object *intern, mongo_connec
 				zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
 				zend_hash_move_forward_ex(hindex, &pointer)
 			) {
-				uint key_type = zend_hash_get_current_key_ex(hindex, &key, &index_key_len, &index, NO_DUP, &pointer);
-				zval **index;
+				uint key_type = zend_hash_get_current_key_ex(hindex, &key, &index_key_len, &uindex, NO_DUP, &pointer);
+				zval **zindex;
 
 				if (key_type != HASH_KEY_IS_LONG) {
 					continue;
 				}
-				if (zend_hash_find(Z_ARRVAL_PP(data), "index", strlen("index")+1, (void **)&index) == SUCCESS) {
-					convert_to_long(*index);
-					Z_LVAL_PP(index) += n;
+				if (zend_hash_find(Z_ARRVAL_PP(data), "index", strlen("index")+1, (void **)&zindex) == SUCCESS) {
+					convert_to_long(*zindex);
+					Z_LVAL_PP(zindex) += n;
 				}
 			}
 			if (intern->write_options.ordered) {
@@ -317,7 +317,7 @@ void php_mongo_writebatch_execute(mongo_write_batch_object *intern, mongo_connec
 			zval **data;
 			char *key;
 			uint index_key_len;
-			ulong index;
+			ulong uindex;
 			HashTable *hindex = Z_ARRVAL_PP(upserted);
 
 			for (
@@ -325,15 +325,15 @@ void php_mongo_writebatch_execute(mongo_write_batch_object *intern, mongo_connec
 				zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
 				zend_hash_move_forward_ex(hindex, &pointer)
 			) {
-				uint key_type = zend_hash_get_current_key_ex(hindex, &key, &index_key_len, &index, NO_DUP, &pointer);
-				zval **index;
+				uint key_type = zend_hash_get_current_key_ex(hindex, &key, &index_key_len, &uindex, NO_DUP, &pointer);
+				zval **zindex;
 
 				if (key_type != HASH_KEY_IS_LONG) {
 					continue;
 				}
-				if (zend_hash_find(Z_ARRVAL_PP(data), "index", strlen("index")+1, (void **)&index) == SUCCESS) {
-					convert_to_long(*index);
-					Z_LVAL_PP(index) += n;
+				if (zend_hash_find(Z_ARRVAL_PP(data), "index", strlen("index")+1, (void **)&zindex) == SUCCESS) {
+					convert_to_long(*zindex);
+					Z_LVAL_PP(zindex) += n;
 				}
 			}
 			nUpserted += zend_hash_num_elements(Z_ARRVAL_PP(upserted));
