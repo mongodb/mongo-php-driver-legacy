@@ -288,7 +288,8 @@ void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *co
 int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
 {
 	if (result < 0) {
-		spprintf(error_message, 0, "Authentication error: %s", sasl_errdetail(conn));
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "Authentication error: %s", sasl_errdetail(conn));
 		return 1;
 	}
 
