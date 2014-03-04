@@ -87,6 +87,8 @@ int php_mongo_api_update_single(mongo_buffer *buf, char *ns, char *collection, p
 int php_mongo_api_delete_single(mongo_buffer *buf, char *ns, char *collection, php_mongo_write_delete_args *delete_args, php_mongo_write_options *write_options, mongo_connection *connection TSRMLS_DC);
 
 int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, int socket_read_timeout, int request_id, zval **retval TSRMLS_DC);
+int php_mongo_api_raise_exception_on_write_failure(mongo_connection *connection, zval *document TSRMLS_DC);
+int php_mongo_api_raise_exception_on_command_failure(mongo_connection *connection, zval *document TSRMLS_DC);
 
 /* SERVER-10643: maxBsonWireObjectSize isn't exposed yet, so we need to cruft the
  * additional padding we are allowed ourself (used for document overhead+write options) */

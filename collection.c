@@ -882,12 +882,21 @@ int mongo_collection_delete_api(mongo_con_manager *manager, mongo_connection *co
 		return 0;
 	}
 
+	array_init(return_value);
 	retval = php_mongo_api_get_reply(manager, connection, server_options, socket_read_timeout, request_id, &return_value TSRMLS_CC);
 	efree(buf.start);
 
 	if (retval != 0) {
 		mongo_manager_connection_deregister(manager, connection);
 		/* Exception already thrown */
+		return 0;
+	}
+
+	if (php_mongo_api_raise_exception_on_command_failure(connection, return_value TSRMLS_CC)) {
+		return 0;
+	}
+
+	if (php_mongo_api_raise_exception_on_write_failure(connection, return_value TSRMLS_CC)) {
 		return 0;
 	}
 
@@ -925,12 +934,21 @@ int mongo_collection_update_api(mongo_con_manager *manager, mongo_connection *co
 		return 0;
 	}
 
+	array_init(return_value);
 	retval = php_mongo_api_get_reply(manager, connection, server_options, socket_read_timeout, request_id, &return_value TSRMLS_CC);
 	efree(buf.start);
 
 	if (retval != 0) {
 		mongo_manager_connection_deregister(manager, connection);
 		/* Exception already thrown */
+		return 0;
+	}
+
+	if (php_mongo_api_raise_exception_on_command_failure(connection, return_value TSRMLS_CC)) {
+		return 0;
+	}
+
+	if (php_mongo_api_raise_exception_on_write_failure(connection, return_value TSRMLS_CC)) {
 		return 0;
 	}
 
@@ -971,12 +989,21 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 		return 0;
 	}
 
+	array_init(return_value);
 	retval = php_mongo_api_get_reply(manager, connection, server_options, socket_read_timeout, request_id, &return_value TSRMLS_CC);
 	efree(buf.start);
 
 	if (retval != 0) {
 		mongo_manager_connection_deregister(manager, connection);
 		/* Exception already thrown */
+		return 0;
+	}
+
+	if (php_mongo_api_raise_exception_on_command_failure(connection, return_value TSRMLS_CC)) {
+		return 0;
+	}
+
+	if (php_mongo_api_raise_exception_on_write_failure(connection, return_value TSRMLS_CC)) {
 		return 0;
 	}
 

@@ -15,12 +15,14 @@
  */
 #include <php.h>
 #include <zend_exceptions.h>
+#include <ext/standard/php_array.h>
 #include "../php_mongo.h"
 #include "../api/write.h"
 #include "../api/batch.h"
 #include "../batch/write.h"
 #include "../batch/write_private.h"
-#include "../collection.h" /* mongo_apply_implicit_write_options() */
+#include "../collection.h"
+#include "../mcon/manager.h"
 
 /* The Batch API is only available for 5.3.0+ */
 #if PHP_VERSION_ID >= 50300
@@ -29,6 +31,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 extern zend_class_entry *mongo_ce_Collection;
 extern zend_class_entry *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_WriteConcernException;
 extern zend_object_handlers mongo_type_object_handlers;
 
 zend_class_entry *mongo_ce_WriteBatch = NULL;
@@ -95,11 +98,12 @@ PHP_METHOD(MongoWriteBatch, __construct)
 	}
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 
-	switch(batch_type) {
+	switch (batch_type) {
 		case MONGODB_API_COMMAND_INSERT:
 		case MONGODB_API_COMMAND_UPDATE:
 		case MONGODB_API_COMMAND_DELETE:
 			break;
+
 		default:
 			zend_throw_exception_ex(mongo_ce_Exception, 1 TSRMLS_CC, "Invalid batch type specified: %ld", batch_type);
 			return;
@@ -119,8 +123,8 @@ PHP_METHOD(MongoWriteBatch, add)
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
 	php_mongo_write_item        item;
-	php_mongo_write_update_args update_args;
-	php_mongo_write_delete_args delete_args;
+	php_mongo_write_update_args update_args = { NULL, NULL, -1, -1 };
+	php_mongo_write_delete_args delete_args = { NULL, -1 };
 	int status;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
@@ -141,7 +145,7 @@ PHP_METHOD(MongoWriteBatch, add)
 	}
 
 	item.type = intern->batch_type;
-	switch(intern->batch_type) {
+	switch (intern->batch_type) {
 		case MONGODB_API_COMMAND_INSERT:
 			item.write.insert = Z_ARRVAL_P(z_item);
 			break;
@@ -186,14 +190,15 @@ PHP_METHOD(MongoWriteBatch, add)
 				return;
 			}
 
-			convert_to_array_ex(q);
-			delete_args.query = *q;
-
-			if (SUCCESS == zend_hash_find(Z_ARRVAL_P(z_item), "limit", strlen("limit") + 1, (void**) &limit)) {
-				convert_to_long_ex(limit);
-				delete_args.limit = Z_LVAL_PP(limit);
+			if (FAILURE == zend_hash_find(Z_ARRVAL_P(z_item), "limit", strlen("limit") + 1, (void**) &limit)) {
+				zend_throw_exception(mongo_ce_Exception, "Expected $item to contain 'limit' key", 0 TSRMLS_CC);
 				return;
 			}
+
+			convert_to_array_ex(q);
+			convert_to_long_ex(limit);
+			delete_args.query = *q;
+			delete_args.limit = Z_LVAL_PP(limit);
 
 			item.write.delete = &delete_args;
 			break;
@@ -230,6 +235,146 @@ PHP_METHOD(MongoWriteBatch, add)
 }
 /* }}} */
 
+int php_mongo_api_return_value_get_int_del(zval *data, char *key)
+{
+	zval **val;
+
+	if (zend_hash_find(Z_ARRVAL_P(data), key, strlen(key) + 1, (void**)&val) == SUCCESS) {
+		int retval = 0;
+		convert_to_long_ex(val);
+		retval = Z_LVAL_PP(val);
+
+		zend_hash_del_key_or_index(Z_ARRVAL_P(data), key, strlen(key) + 1, 0, HASH_DEL_KEY);
+		return retval;
+	}
+
+	return 0;
+}
+
+/* Executes the constructed MongoWriteBatch (Mongo[Insert|Update|Delete]Batch) */
+void php_mongo_writebatch_execute(mongo_write_batch_object *intern, mongo_connection *connection, mongoclient *link, zval *return_value TSRMLS_DC) /* {{{ */
+{
+	php_mongo_batch *first = intern->batch->first;
+	int ok = 0, n = 0, nModified = 0, nUpserted = 0;
+	int status;
+
+	do {
+		zval *batch_retval;
+		php_mongo_batch *batch = intern->batch;
+		zval **errors;
+		zval **upserted;
+
+		MAKE_STD_ZVAL(batch_retval);
+		array_init(batch_retval);
+		status = php_mongo_api_batch_execute(batch, &intern->write_options, connection, &link->servers->options, batch_retval TSRMLS_CC);
+
+		if (status) {
+			zval_ptr_dtor(&batch_retval);
+			break;
+		}
+
+		/* writeErrors = continue when ordered =false */
+		if (zend_hash_find(Z_ARRVAL_P(batch_retval), "writeErrors", strlen("writeErrors") + 1, (void**)&errors) == SUCCESS) {
+			HashPosition pointer;
+			zval **data;
+			char *key;
+			uint index_key_len;
+			ulong index;
+			HashTable *hindex = Z_ARRVAL_PP(errors);
+
+			for (
+				zend_hash_internal_pointer_reset_ex(hindex, &pointer);
+				zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
+				zend_hash_move_forward_ex(hindex, &pointer)
+			) {
+				uint key_type = zend_hash_get_current_key_ex(hindex, &key, &index_key_len, &index, NO_DUP, &pointer);
+				zval **index;
+
+				if (key_type != HASH_KEY_IS_LONG) {
+					continue;
+				}
+				if (zend_hash_find(Z_ARRVAL_PP(data), "index", strlen("index")+1, (void **)&index) == SUCCESS) {
+					convert_to_long(*index);
+					Z_LVAL_PP(index) += n;
+				}
+			}
+			if (intern->write_options.ordered) {
+				status = 1;
+			}
+		}
+
+		/* Always continue on writeConcernErrors, no matter ordered=true/false.
+		 * No need to do anything special there as we already array_merge() the batch_retval, and there is no
+		 * index rewrite needed */
+
+		if (zend_hash_find(Z_ARRVAL_P(batch_retval), "upserted", strlen("upserted") + 1, (void**)&upserted) == SUCCESS) {
+			HashPosition pointer;
+			zval **data;
+			char *key;
+			uint index_key_len;
+			ulong index;
+			HashTable *hindex = Z_ARRVAL_PP(upserted);
+
+			for (
+				zend_hash_internal_pointer_reset_ex(hindex, &pointer);
+				zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
+				zend_hash_move_forward_ex(hindex, &pointer)
+			) {
+				uint key_type = zend_hash_get_current_key_ex(hindex, &key, &index_key_len, &index, NO_DUP, &pointer);
+				zval **index;
+
+				if (key_type != HASH_KEY_IS_LONG) {
+					continue;
+				}
+				if (zend_hash_find(Z_ARRVAL_PP(data), "index", strlen("index")+1, (void **)&index) == SUCCESS) {
+					convert_to_long(*index);
+					Z_LVAL_PP(index) += n;
+				}
+			}
+			nUpserted += zend_hash_num_elements(Z_ARRVAL_PP(upserted));
+		}
+
+		n += php_mongo_api_return_value_get_int_del(batch_retval, "n");
+		/* As long as we have one ok=true then we return ok=true in our container */
+		ok += php_mongo_api_return_value_get_int_del(batch_retval, "ok");
+		/* Only available for updates though, but it has messed up logic */
+		nModified += php_mongo_api_return_value_get_int_del(batch_retval, "nModified");
+
+		zend_hash_del_key_or_index(Z_ARRVAL_P(batch_retval), "ok", strlen("ok") + 1, 0, HASH_DEL_KEY);
+
+		php_array_merge(Z_ARRVAL_P(return_value), Z_ARRVAL_P(batch_retval), 1 TSRMLS_CC);
+
+		intern->batch = intern->batch->next;
+		zval_ptr_dtor(&batch_retval);
+	} while (intern->batch && status == 0);
+
+	php_mongo_api_batch_free(first);
+
+	/* Bad things happened to the socket when reading/writing it */
+	if (status == 2) {
+		mongo_manager_connection_deregister(MonGlo(manager), connection);
+	}
+
+	switch (intern->batch_type) {
+		case MONGODB_API_COMMAND_INSERT:
+			add_assoc_long(return_value, "nInserted", n);
+			break;
+
+		case MONGODB_API_COMMAND_DELETE:
+			add_assoc_long(return_value, "nRemoved", n);
+			break;
+
+		case MONGODB_API_COMMAND_UPDATE:
+			add_assoc_long(return_value, "nMatched", n-nUpserted);
+			add_assoc_long(return_value, "nModified", nModified);
+			add_assoc_long(return_value, "nUpserted", nUpserted);
+			break;
+	}
+
+	add_assoc_bool(return_value, "ok", ok);
+}
+/* }}} */
+
 /* {{{ proto array MongoWriteBatch::execute(array $write_options)
    Executes the constructed batch. Returns the server response */
 PHP_METHOD(MongoWriteBatch, execute)
@@ -240,6 +385,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 	mongo_collection *collection;
 	mongo_connection *connection;
 	mongoclient      *link;
+	zval **errors;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -251,7 +397,9 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 	if (!intern->total_items) {
-		zend_throw_exception(mongo_ce_Exception, "No items in batch", 1 TSRMLS_CC);
+		array_init(return_value);
+		/* NOOP, fake the return value */
+		add_assoc_bool(return_value, "ok", 1);
 		return;
 	}
 
@@ -265,25 +413,17 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 	php_mongo_api_write_options_from_ht(&intern->write_options, write_options TSRMLS_CC);
 
-	intern->batch = intern->batch->first;
 	array_init(return_value);
-	do {
-		php_mongo_batch *batch = intern->batch;
-		int status = php_mongo_api_batch_execute(batch, &intern->write_options, connection, &link->servers->options, return_value TSRMLS_CC);
+	intern->batch = intern->batch->first;
+	php_mongo_writebatch_execute(intern, connection, link, return_value TSRMLS_CC);
 
-		if (status) {
-			if (status == 1) {
-				zval_dtor(return_value);
-				php_mongo_api_batch_free(batch);
-			} else {
-				efree(batch);
-			}
-			break;
-		}
-
-		intern->batch = batch->next;
-		efree(batch);
-	} while(intern->batch);
+	if (zend_hash_find(Z_ARRVAL_P(return_value), "writeErrors", strlen("writeErrors") + 1, (void**)&errors) == SUCCESS) {
+		zval *e = zend_throw_exception(mongo_ce_WriteConcernException, "Failed write", 911 TSRMLS_CC);
+		zend_update_property(mongo_ce_WriteConcernException, e, "document", strlen("document"), return_value TSRMLS_CC);
+	} else if (zend_hash_find(Z_ARRVAL_P(return_value), "writeConcernError", strlen("writeConcernError") + 1, (void**)&errors) == SUCCESS) {
+		zval *e = zend_throw_exception(mongo_ce_WriteConcernException, "Failed write", 911 TSRMLS_CC);
+		zend_update_property(mongo_ce_WriteConcernException, e, "document", strlen("document"), return_value TSRMLS_CC);
+	}
 }
 /* }}} */
 

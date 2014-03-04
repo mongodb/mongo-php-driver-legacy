@@ -28,22 +28,16 @@ var_dump($exeretval);
 ===DONE===
 <?php exit(0); ?>
 --EXPECTF--
-array(1) {
-  [0]=>
-  array(2) {
-    ["ok"]=>
-    bool(true)
-    ["n"]=>
-    int(1)
-  }
+array(2) {
+  ["nInserted"]=>
+  int(1)
+  ["ok"]=>
+  bool(true)
 }
-array(1) {
-  [0]=>
-  array(2) {
-    ["ok"]=>
-    bool(true)
-    ["n"]=>
-    int(1)
-  }
+array(2) {
+  ["nInserted"]=>
+  int(1)
+  ["ok"]=>
+  bool(true)
 }
 ===DONE===
