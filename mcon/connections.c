@@ -999,7 +999,7 @@ int mongo_connection_authenticate_saslcontinue(mongo_con_manager *manager, mongo
 		} else {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "SASL continue failed");
 			if (bson_find_field_as_string(ptr, "errmsg", &errmsg)) {
-				int errlen = strlen("SASL Authentication failed on database '':") + strlen(server_def->db) + strlen(errmsg);
+				int errlen = strlen("SASL Authentication failed on database '': ") + strlen(server_def->db) + strlen(errmsg);
 				*error_message = malloc(errlen);
 				snprintf(*error_message, errlen, "SASL Authentication failed on database '%s': %s", server_def->db, errmsg);
 			} else {
