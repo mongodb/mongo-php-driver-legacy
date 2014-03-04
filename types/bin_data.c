@@ -24,7 +24,7 @@ zend_class_entry *mongo_ce_BinData = NULL;
 PHP_METHOD(MongoBinData, __construct)
 {
 	char *bin;
-	long bin_len, type = BIN_GENERIC;
+	long bin_len, type = PHP_MONGO_BIN_GENERIC;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &bin, &bin_len, &type) == FAILURE) {
 		return;
@@ -64,15 +64,15 @@ void mongo_init_MongoBinData(TSRMLS_D)
 	zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 
 	/* constants */
-	zend_declare_class_constant_long(mongo_ce_BinData, "GENERIC", strlen("GENERIC"), BIN_GENERIC TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "GENERIC", strlen("GENERIC"), PHP_MONGO_BIN_GENERIC TSRMLS_CC);
 	/* can't use FUNCTION because it's a reserved word */
-	zend_declare_class_constant_long(mongo_ce_BinData, "FUNC", strlen("FUNC"), BIN_FUNC TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "FUNC", strlen("FUNC"), PHP_MONGO_BIN_FUNC TSRMLS_CC);
 	/* can't use ARRAY because it's a reserved word */
-	zend_declare_class_constant_long(mongo_ce_BinData, "BYTE_ARRAY", strlen("BYTE_ARRAY"), BIN_BYTE_ARRAY TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_BinData, "UUID", strlen("UUID"), BIN_UUID TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_BinData, "UUID_RFC4122", strlen("UUID_RFC4122"), BIN_UUID_RFC4122 TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_BinData, "MD5", strlen("MD5"), BIN_MD5 TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_BinData, "CUSTOM", strlen("CUSTOM"), BIN_CUSTOM TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "BYTE_ARRAY", strlen("BYTE_ARRAY"), PHP_MONGO_BIN_BYTE_ARRAY TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "UUID", strlen("UUID"), PHP_MONGO_BIN_UUID TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "UUID_RFC4122", strlen("UUID_RFC4122"), PHP_MONGO_BIN_UUID_RFC4122 TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "MD5", strlen("MD5"), PHP_MONGO_BIN_MD5 TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "CUSTOM", strlen("CUSTOM"), PHP_MONGO_BIN_CUSTOM TSRMLS_CC);
 }
 
 /*
