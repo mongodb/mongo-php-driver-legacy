@@ -289,7 +289,7 @@ int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
 {
 	if (result < 0) {
 		*error_message = malloc(256);
-		snprintf(*error_message, 256, "Authentication error: %s", sasl_errdetail(conn));
+		snprintf(*error_message, 256, "Authentication error: %s", sasl_errstring(result, NULL, NULL));
 		return 1;
 	}
 
