@@ -326,8 +326,6 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 	}
 
 	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, (char *)mechanism_selected, encoded_payload, encoded_payload_len + 1, out_payload, out_payload_len, conversation_id, error_message)) {
-		free(out_payload);
-		*error_message = strdup("saslStart failed miserably");
 		return NULL;
 	}
 
