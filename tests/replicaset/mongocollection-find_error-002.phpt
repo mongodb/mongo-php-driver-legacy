@@ -11,7 +11,7 @@ $mc = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname']));
 
 $c = $mc->selectCollection(dbname(), 'mongocollection-find_error-002');
 $c->drop();
-$c->insert(array('x' => 1), array('w' => 'majority'));
+$c->insert(array('x' => 1), array('w' => 4));
 
 // Use non-matching tags so query has no candidates
 try {
