@@ -350,6 +350,7 @@ int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mo
 		unsigned int outlen;
 		int result;
 
+		step_payload_len--; /* Remove the \0 from the string */
 		result = sasl_decode64(step_payload, step_payload_len, base_payload, sizeof(base_payload), &base_payload_len);
 		if (is_sasl_failure(conn, result, error_message)) {
 			return 0;
