@@ -1019,7 +1019,7 @@ int mongo_connection_authenticate_saslcontinue(mongo_con_manager *manager, mongo
 			free(data_buffer);
 			return 0;
 		}
-		bson_find_field_as_stringl(ptr, "payload", out_payload, out_payload_len, 0);
+		bson_find_field_as_stringl(ptr, "payload", out_payload, out_payload_len, 1);
 		bson_find_field_as_bool(ptr, "done", done);
 	}
 	free(data_buffer);
