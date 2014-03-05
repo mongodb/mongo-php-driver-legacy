@@ -51,6 +51,20 @@ int php_mongo_api_connection_supports_feature(mongo_connection *connection, int 
 	return 1;
 }
 
+int php_mongo_api_connection_min_server_version(mongo_connection *connection, int major, int minor, int mini)
+{
+	if (connection->version.major > major) {
+		return 1;
+	}
+	if (connection->version.major == major && connection->version.minor > minor) {
+		return 1;
+	}
+	if (connection->version.major == major && connection->version.minor == minor && connection->version.mini > mini) {
+		return 1;
+	}
+	return 0;
+}
+
 /*
  * Local variables:
  * tab-width: 4

@@ -34,6 +34,8 @@
 int php_mongo_api_supports_wire_version(int min_wire_version, int max_wire_version, char **error_message);
 int php_mongo_api_connection_supports_feature(mongo_connection *connection, int feature);
 
+int php_mongo_api_connection_min_server_version(mongo_connection *connection, int major, int minor, int mini);
+
 #endif
 
 /*
