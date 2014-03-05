@@ -153,7 +153,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	/* do query */
 	php_mongo_split_namespace(cmd_cursor->ns, &dbname, NULL);
-	result = php_mongo_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1, &cmd_cursor->connection TSRMLS_CC);
+	result = php_mongo_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1, NULL, &cmd_cursor->connection TSRMLS_CC);
 	efree(dbname);
 
 	if (php_mongo_trigger_error_on_command_failure(cmd_cursor->connection, result TSRMLS_CC) == FAILURE) {
