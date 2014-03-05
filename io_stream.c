@@ -333,7 +333,6 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 }
 
 int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char *step_payload, int step_payload_len, int32_t conversation_id, char **error_message) {
-	int result;
 	sasl_interact_t *client_interact=NULL;
 
 	do {
@@ -342,36 +341,43 @@ int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mo
 		unsigned char done;
 		const char *out;
 		unsigned int outlen;
+		int result;
 
 		result = sasl_decode64(step_payload, step_payload_len, base_payload, sizeof(base_payload), &base_payload_len);
 		if (is_sasl_failure(conn, result, error_message)) {
-			return result;
+			return 0;
 		}
 
 		result = sasl_client_step(conn, (const char *)base_payload, base_payload_len, &client_interact, &out, &outlen);
 		if (is_sasl_failure(conn, result, error_message)) {
-			return result;
+			return 0;
 		}
 
-		/* TODO : Deal with interaction */
+		if (result == SASL_INTERACT) {
+			/* TODO : Deal with interaction */
+			*error_message = strdup("Unexpected SASL interaction. Not implemented");
+			return 0;
+		}
 
+		/* sasl has decided we are authenticated */
 		if (result == SASL_OK) {
-			/* We are all done */
 			break;
 		}
 
 		result = sasl_encode64(out, outlen, payload, sizeof(base_payload), &payload_len);
 		if (is_sasl_failure(conn, result, error_message)) {
-			return result;
+			return 0;
 		}
 
 		if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, conversation_id, payload, payload_len + 1, &step_payload, &step_payload_len, &done, (char **)&error_message)) {
 			*error_message = strdup("saslStart failed miserably");
 			return result;
 		}
-	} while (result == SASL_INTERACT || result == SASL_CONTINUE);
 
-	return result;
+	} while (1);
+
+
+	return 1;
 }
 
 int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
@@ -396,7 +402,9 @@ int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connectio
 		return 0;
 	}
 
-	php_mongo_saslcontinue(manager, con, options, server_def, conn, initpayload, initpayload_len, conversation_id, error_message);
+	if (!php_mongo_saslcontinue(manager, con, options, server_def, conn, initpayload, initpayload_len, conversation_id, error_message)) {
+		return 0;
+	}
 
 	free(initpayload);
 	sasl_dispose(&conn);
