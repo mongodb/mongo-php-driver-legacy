@@ -334,11 +334,18 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 
 int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char *step_payload, int step_payload_len, int32_t conversation_id, char **error_message) {
 	sasl_interact_t *client_interact=NULL;
+	unsigned char done = 0;
+
+	/*
+	 * Snippet from sasl.h:
+	 *  4. client calls sasl_client_step()
+	 *  4b. If SASL error, goto 7 or 3
+	 *  4c. If SASL_OK, continue or goto 6 if last server response was success
+	 */
 
 	do {
 		char base_payload[4096], payload[4096];
 		unsigned int base_payload_len, payload_len;
-		unsigned char done;
 		const char *out;
 		unsigned int outlen;
 		int result;
@@ -359,8 +366,8 @@ int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mo
 			return 0;
 		}
 
-		/* sasl has decided we are authenticated */
-		if (result == SASL_OK) {
+		/* We have confirmed the server is good. The server has confirmed we are the good guy */
+		if (result == SASL_OK && done) {
 			break;
 		}
 
