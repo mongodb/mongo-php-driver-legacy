@@ -196,6 +196,9 @@ MongoCollection
     3: options (optional)
   Method commandCursor expects 1 parameters
     0: command
+  Method createIndex expects 2 parameters
+    0: array_of_keys
+    1: options (optional)
   Method ensureIndex expects 2 parameters
     0: key_OR_array_of_keys
     1: options (optional)

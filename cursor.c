@@ -174,6 +174,12 @@ PHP_METHOD(MongoCursor, __construct)
 	/* reset iteration pointer, just in case */
 	php_mongo_cursor_reset(cursor TSRMLS_CC);
 
+	/* Set initial connection to NULL. This allows us to override the cursor
+	 * just after construction. THis is useful as a temporary hack until we
+	 * have refactored to create cursors with an already configured cursor. See
+	 * also the other TODO in this file on this. */
+	cursor->connection = NULL;
+
 	cursor->at = 0;
 	cursor->num = 0;
 	cursor->special = 0;
@@ -1151,7 +1157,7 @@ PHP_METHOD(MongoCursor, count)
 		add_assoc_long(cmd, "skip", cursor->skip);
 	}
 
-	response = php_mongo_runcommand(cursor->zmongoclient, &cursor->read_pref, dbname, strlen(dbname), cmd, NULL, 0, NULL TSRMLS_CC);
+	response = php_mongo_runcommand(cursor->zmongoclient, &cursor->read_pref, dbname, strlen(dbname), cmd, NULL, 0, NULL, NULL TSRMLS_CC);
 	zval_ptr_dtor(&cmd);
 	efree(dbname);
 

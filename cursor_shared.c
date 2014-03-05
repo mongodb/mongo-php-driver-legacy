@@ -37,6 +37,7 @@ extern zend_class_entry *mongo_ce_CursorException;
 extern zend_class_entry *mongo_ce_CursorTimeoutException;
 extern zend_class_entry *mongo_ce_DuplicateKeyException;
 extern zend_class_entry *mongo_ce_ExecutionTimeoutException;
+extern zend_class_entry *mongo_ce_WriteConcernException;
 extern zend_class_entry *mongo_ce_Int64;
 extern zend_class_entry *mongo_ce_Exception, *mongo_ce_CursorException;
 
@@ -404,6 +405,9 @@ zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *c
 	switch (code) {
 		case 50:
 			exception_ce = mongo_ce_ExecutionTimeoutException;
+			break;
+		case 67:
+			exception_ce = mongo_ce_WriteConcernException;
 			break;
 		case 80:
 			exception_ce = mongo_ce_CursorTimeoutException;
