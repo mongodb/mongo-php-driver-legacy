@@ -369,13 +369,10 @@ int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mo
 			return 0;
 		}
 
-		if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, conversation_id, payload, payload_len + 1, &step_payload, &step_payload_len, &done, (char **)&error_message)) {
-			*error_message = strdup("saslStart failed miserably");
-			return result;
+		if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, conversation_id, payload, payload_len + 1, &step_payload, &step_payload_len, &done, error_message)) {
+			return 0;
 		}
-
 	} while (1);
-
 
 	return 1;
 }
