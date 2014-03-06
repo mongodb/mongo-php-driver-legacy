@@ -51,12 +51,12 @@ function showIndexes($res)
 }
 
 try {
-	createResults( $c->ensureIndex( array( "index" => 1, 'fieldA' => 1 ), array( 'timeout' => 1 )) );
+	createResults( $c->ensureIndex( array( "index" => 1, 'fieldA' => 1 ), array( 'socketTimeoutMS' => 1 )) );
 } catch ( MongoCursorTimeoutException $e ) {
 	echo $e->getCode(), ': ', $e->getMessage(), "\n";
 }
 try {
-	createResults( $c->createIndex( array( "index" => 1, 'fieldB' => 1 ), array( 'timeout' => 1 )) );
+	createResults( $c->createIndex( array( "index" => 1, 'fieldB' => 1 ), array( 'socketTimeoutMS' => 1 )) );
 } catch ( MongoCursorTimeoutException $e ) {
 	echo $e->getCode(), ': ', $e->getMessage(), "\n";
 }
