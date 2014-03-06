@@ -410,7 +410,7 @@ PHP_MSHUTDOWN_FUNCTION(mongo)
 	UNREGISTER_INI_ENTRIES();
 
 #if HAVE_MONGO_SASL
-	sasl_client_done();
+	sasl_done();
 #endif
 
 	return SUCCESS;

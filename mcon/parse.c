@@ -581,9 +581,11 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			 * value before setting it anyway. */
 			if (!servers->server[i]->db) {
 				servers->server[i]->db = strdup("admin");
-				/* Admin users always authenticate on the admin db, even when
-				 * using other databases */
-				servers->server[i]->authdb = strdup("admin");
+				if (!servers->server[i]->authdb) {
+					/* Admin users always authenticate on the admin db, even when
+					 * using other databases */
+					servers->server[i]->authdb = strdup("admin");
+				}
 			}
 		}
 		return 0;
