@@ -288,7 +288,8 @@ void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *co
 int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
 {
 	if (result < 0) {
-		spprintf(error_message, 0, "Authentication error: %s", sasl_errdetail(conn));
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "Authentication error: %s", sasl_errstring(result, NULL, NULL));
 		return 1;
 	}
 
@@ -310,8 +311,6 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 		return NULL;
 	}
 
-	/* TODO: Deal with interactions, if any, when mongod starts supporting such mechanisms */
-
 	if (result != SASL_CONTINUE) {
 		*error_message = strdup("Could not negotiate SASL mechanism");
 		return NULL;
@@ -325,8 +324,6 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 	}
 
 	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, (char *)mechanism_selected, encoded_payload, encoded_payload_len + 1, out_payload, out_payload_len, conversation_id, error_message)) {
-		free(out_payload);
-		*error_message = strdup("saslStart failed miserably");
 		return NULL;
 	}
 
@@ -334,45 +331,71 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 }
 
 int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char *step_payload, int step_payload_len, int32_t conversation_id, char **error_message) {
-	int result;
 	sasl_interact_t *client_interact=NULL;
+
+	/*
+	 * Snippet from sasl.h:
+	 *  4. client calls sasl_client_step()
+	 *  4b. If SASL error, goto 7 or 3
+	 *  4c. If SASL_OK, continue or goto 6 if last server response was success
+	 */
 
 	do {
 		char base_payload[4096], payload[4096];
 		unsigned int base_payload_len, payload_len;
-		unsigned char done;
 		const char *out;
 		unsigned int outlen;
+		unsigned char done = 0;
+		int result;
 
+		step_payload_len--; /* Remove the \0 from the string */
 		result = sasl_decode64(step_payload, step_payload_len, base_payload, sizeof(base_payload), &base_payload_len);
 		if (is_sasl_failure(conn, result, error_message)) {
-			return result;
+			return 0;
 		}
 
 		result = sasl_client_step(conn, (const char *)base_payload, base_payload_len, &client_interact, &out, &outlen);
 		if (is_sasl_failure(conn, result, error_message)) {
-			return result;
-		}
-
-		/* TODO : Deal with interaction */
-
-		if (result == SASL_OK) {
-			/* We are all done */
-			break;
+			return 0;
 		}
 
 		result = sasl_encode64(out, outlen, payload, sizeof(base_payload), &payload_len);
 		if (is_sasl_failure(conn, result, error_message)) {
-			return result;
+			return 0;
 		}
 
-		if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, conversation_id, payload, payload_len + 1, &step_payload, &step_payload_len, &done, (char **)&error_message)) {
-			*error_message = strdup("saslStart failed miserably");
-			return result;
+		if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, conversation_id, payload, payload_len + 1, &step_payload, &step_payload_len, &done, error_message)) {
+			return 0;
 		}
-	} while (result == SASL_INTERACT || result == SASL_CONTINUE);
 
-	return result;
+		if (done) {
+			break;
+		}
+	} while (1);
+
+	return 1;
+}
+
+static int sasl_interact(mongo_server_def *server_def, int id, const char **result, unsigned *len)
+{
+	switch (id) {
+		case SASL_CB_AUTHNAME:
+		case SASL_CB_USER:
+			*result = server_def->username;
+			if (len) {
+				*len = server_def->username ? strlen(server_def->username) : 0;
+			}
+			return SASL_OK;
+
+		case SASL_CB_PASS:
+			*result = server_def->password;
+			if (len) {
+				*len = server_def->password ? strlen(server_def->password) : 0;
+			}
+			return SASL_OK;
+	}
+
+	return SASL_FAIL;
 }
 
 int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
@@ -382,28 +405,33 @@ int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connectio
 	int initpayload_len;
 	sasl_conn_t *conn;
 	int32_t conversation_id;
+	sasl_callback_t client_interact [] = {
+		{ SASL_CB_AUTHNAME, sasl_interact, server_def },
+		{ SASL_CB_USER, sasl_interact, server_def },
+		{ SASL_CB_PASS, sasl_interact, server_def },
+		{ SASL_CB_LIST_END, NULL, NULL }
+	};
 
-	result = sasl_client_new(options->gssapiServiceName, server_def->host, NULL, NULL, NULL, 0, &conn);
+	result = sasl_client_new(options->gssapiServiceName, server_def->host, NULL, NULL, client_interact, 0, &conn);
 
 	if (result != SASL_OK) {
 		sasl_dispose(&conn);
-		sasl_client_done();
 		*error_message = strdup("Could not initialize a client exchange (SASL) to MongoDB");
 		return 0;
 	}
 
 	conn = php_mongo_saslstart(manager, con, options, server_def, conn, &initpayload, &initpayload_len, &conversation_id, error_message);
 	if (!conn) {
-		sasl_client_done();
 		/* error message populate by php_mongo_saslstart() */
 		return 0;
 	}
 
-	php_mongo_saslcontinue(manager, con, options, server_def, conn, initpayload, initpayload_len, conversation_id, error_message);
+	if (!php_mongo_saslcontinue(manager, con, options, server_def, conn, initpayload, initpayload_len, conversation_id, error_message)) {
+		return 0;
+	}
 
 	free(initpayload);
 	sasl_dispose(&conn);
-	sasl_client_done();
 
 	return 1;
 }
