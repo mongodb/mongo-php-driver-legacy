@@ -9,7 +9,6 @@ MongoWriteBatch: test nStuff counting
 require_once "tests/utils/server.inc";
 
 $host = MongoShellServer::getStandaloneInfo();
-$host = "localhost:27017";
 
 $mc = new MongoClient($host);
 
