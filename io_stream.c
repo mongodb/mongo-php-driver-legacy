@@ -376,8 +376,9 @@ int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mo
 	return 1;
 }
 
-static int sasl_interact(mongo_server_def *server_def, int id, const char **result, unsigned *len) {
-	switch(id) {
+static int sasl_interact(mongo_server_def *server_def, int id, const char **result, unsigned *len)
+{
+	switch (id) {
 		case SASL_CB_AUTHNAME:
 		case SASL_CB_USER:
 			*result = server_def->username;
