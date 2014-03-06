@@ -46,7 +46,7 @@ echo "-----\n";
 
 try {
 	$c->w = 2;
-	$retval = $c->insert( array( 'test' => 1 ), array( 'fsync' => false, 'safe' => 1, 'socketTimeoutMS' => M_PI * 100 ) );
+	$retval = $c->insert( array( 'test' => 1 ), array( 'fsync' => false, 'safe' => 1, 'socketTimeoutMS' => M_PI * 1000 ) );
 	var_dump($retval["ok"]);
 } catch ( Exception $e ) {
 	echo $e->getMessage(), "\n";
