@@ -147,7 +147,7 @@ typedef __int64 int64_t;
 #endif
 
 #if PHP_VERSION_ID > 50300
-# define ERROR_HANDLER_DECLARATION(varname) zend_error_handling varname
+# define ERROR_HANDLER_DECLARATION(varname) zend_error_handling varname;
 # define ERROR_HANDLER_REPLACE(varname, ex) zend_replace_error_handling(EH_THROW, ex, &varname TSRMLS_CC)
 # define ERROR_HANDLER_RESTORE(varname)     zend_restore_error_handling(&varname TSRMLS_CC)
 #else

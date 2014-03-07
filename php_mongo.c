@@ -56,7 +56,7 @@
 #endif
 
 #if MONGO_PHP_STREAMS
-#include <api/wire_version.h>
+#include "api/wire_version.h"
 #endif
 
 #if HAVE_MONGO_SASL
