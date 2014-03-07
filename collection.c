@@ -33,6 +33,8 @@
 #include "api/write.h"
 #include "api/wire_version.h"
 
+#undef fsync
+
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_DB, *mongo_ce_Cursor;
 extern zend_class_entry *mongo_ce_CommandCursor;
 extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception, *mongo_ce_ResultException;

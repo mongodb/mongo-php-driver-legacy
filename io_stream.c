@@ -51,7 +51,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	char *dsn;
 	int dsn_len;
 	int tcp_socket = 1;
-	ERROR_HANDLER_DECLARATION(error_handler);
+	ERROR_HANDLER_DECLARATION(error_handler)
 
 	TSRMLS_FETCH();
 
@@ -165,7 +165,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	/* this can return FAILED if there is just no more data from db */
 	while (received < size && num > 0) {
 		int len = 4096 < (size - received) ? 4096 : size - received;
-		ERROR_HANDLER_DECLARATION(error_handler);
+		ERROR_HANDLER_DECLARATION(error_handler)
 
 		ERROR_HANDLER_REPLACE(error_handler, mongo_ce_ConnectionException);
 		num = php_stream_read(con->socket, (char *) data, len);
@@ -242,7 +242,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int retval;
-	ERROR_HANDLER_DECLARATION(error_handler);
+	ERROR_HANDLER_DECLARATION(error_handler)
 	TSRMLS_FETCH();
 
 	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_WRITE, 0, size TSRMLS_CC);

@@ -47,12 +47,13 @@ void php_mongo_stream_notify_meta(php_stream_context *ctx, int code, zval *args 
 #endif
 
 #if HAVE_JSON
-#if PHP_VERSION_ID >= 50300
+# if PHP_VERSION_ID >= 50300
 		php_json_encode(&buf, args, 0 TSRMLS_CC);
-#else
+# else
 		php_json_encode(&buf, args TSRMLS_CC);
-#endif
+# endif
 #else
+# if PHP_VERSION_ID >= 50400
 		/* Workaround for a seemingly llvm bug?
 		 * Can only reproduce this with PHP 5.5 (like 5.5.3) and MacOSX
 		 * Apple clang version 3.1 (tags/Apple/clang-318.0.61) (based on LLVM 3.1svn)
@@ -62,7 +63,7 @@ void php_mongo_stream_notify_meta(php_stream_context *ctx, int code, zval *args 
 		if (BG(serialize).level == -1) {
 			BG(serialize).level = 0;
 		}
-
+# endif
 		PHP_VAR_SERIALIZE_INIT(var_hash);
 		php_var_serialize(&buf, &args, &var_hash TSRMLS_CC);
 		PHP_VAR_SERIALIZE_DESTROY(var_hash);

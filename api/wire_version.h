@@ -17,7 +17,7 @@
 #ifndef __API_WIRE_VERSION_H__
 #define __API_WIRE_VERSION_H__
 
-#include "mcon/types.h"
+#include "../mcon/types.h"
 
 /* Known wire versions:
  *     MongoDB 2.4.0: N/A

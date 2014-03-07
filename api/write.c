@@ -22,6 +22,8 @@
 #include "../log_stream.h"
 #include "write.h"
 
+#undef fsync
+
 /* Exceptions thrown */
 extern zend_class_entry *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_CursorException;
