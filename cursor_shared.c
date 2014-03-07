@@ -406,9 +406,6 @@ zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *c
 		case 50:
 			exception_ce = mongo_ce_ExecutionTimeoutException;
 			break;
-		case 67:
-			exception_ce = mongo_ce_WriteConcernException;
-			break;
 		case 80:
 			exception_ce = mongo_ce_CursorTimeoutException;
 			break;

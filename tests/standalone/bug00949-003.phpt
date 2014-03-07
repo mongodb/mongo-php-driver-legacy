@@ -28,7 +28,7 @@ $keys = array('d' => array(1));
 try {
     $retval = $c->ensureIndex($keys);
     echo "TEST FAILED\n";
-} catch(MongoWriteConcernException $e) {
+} catch(MongoResultException $e) {
     printf("%d: %s\n", $e->getCode(), $e->getMessage());
 }
 var_dump($keys);
@@ -37,7 +37,7 @@ $keys = array('e' => new stdClass);
 try {
     $retval = $c->ensureIndex($keys);
     echo "TEST FAILED\n";
-} catch(MongoWriteConcernException $e) {
+} catch(MongoResultException $e) {
     printf("%d: %s\n", $e->getCode(), $e->getMessage());
 }
 var_dump($keys);
@@ -61,7 +61,7 @@ array(1) {
 }
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; array given in %s on line %d
-%d: %s:%d: bad index key pattern { d: [ 1 ] }%S
+67: %s:%d: bad index key pattern { d: [ 1 ] }%S
 array(1) {
   ["d"]=>
   array(1) {
@@ -71,7 +71,7 @@ array(1) {
 }
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; object given in %s on line %d
-%d: %s:%d: bad index key pattern { e: {} }%S
+67: %s:%d: bad index key pattern { e: {} }%S
 array(1) {
   ["e"]=>
   object(stdClass)#%d (0) {
