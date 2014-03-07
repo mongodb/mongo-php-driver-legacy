@@ -1728,6 +1728,21 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, m
 	}
 
 	MONGO_METHOD2(MongoCollection, insert, return_value, system_indexes_collection, data, options);
+	/* Check for whether an exception was thrown. In the special case where
+	 * there is an index-adding problem, we need to change the exception to a
+	 * different one */
+	if (EG(exception)) {
+		long code = 0;
+		char *message;
+
+		code = Z_LVAL_P(zend_read_property(mongo_ce_Exception, EG(exception), "code", strlen("code"), NOISY TSRMLS_CC));
+		if (code == 10098 || code == 16734) {
+			message = estrdup(Z_STRVAL_P(zend_read_property(mongo_ce_Exception, EG(exception), "message", strlen("message"), NOISY TSRMLS_CC)));
+			zend_clear_exception(TSRMLS_C);
+			php_mongo_cursor_throw(mongo_ce_ResultException, NULL, 67 TSRMLS_CC, "%s", message);
+			efree(message);
+		}
+	}
 
 	zval_ptr_dtor(&options);
 	zval_ptr_dtor(&data);
