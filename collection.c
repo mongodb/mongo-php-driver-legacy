@@ -1548,7 +1548,7 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 		convert_to_string(keys);
 
 		if (Z_STRLEN_P(keys) == 0) {
-			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "empty string passed as key field");
+			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "empty string passed as key field");
 			zval_ptr_dtor(&cmd);
 			zval_ptr_dtor(&indexes);
 			zval_ptr_dtor(&index_spec);
@@ -1559,9 +1559,23 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 		array_init(key_array);
 		add_assoc_long(key_array, Z_STRVAL_P(keys), 1);
 		add_assoc_zval(index_spec, "key", key_array);
-	} else {
+	} else if (Z_TYPE_P(keys) == IS_ARRAY || Z_TYPE_P(keys) == IS_OBJECT) {
+		if (HASH_OF(keys)->nNumOfElements == 0) {
+			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has no elements");
+			zval_ptr_dtor(&cmd);
+			zval_ptr_dtor(&indexes);
+			zval_ptr_dtor(&index_spec);
+			return;
+		}
+
 		add_assoc_zval(index_spec, "key", keys);
 		Z_ADDREF_P(keys);
+	} else {
+		zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has to be an array");
+		zval_ptr_dtor(&cmd);
+		zval_ptr_dtor(&indexes);
+		zval_ptr_dtor(&index_spec);
+		return;
 	}
 
 	/* process options */
@@ -1642,6 +1656,7 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, m
 		convert_to_string(keys);
 
 		if (Z_STRLEN_P(keys) == 0) {
+			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "empty string passed as key field");
 			return;
 		}
 
@@ -1650,8 +1665,14 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, m
 		add_assoc_long(key_array, Z_STRVAL_P(keys), 1);
 
 		keys = key_array;
-	} else {
+	} else if (Z_TYPE_P(keys) == IS_ARRAY || Z_TYPE_P(keys) == IS_OBJECT) {
+		if (HASH_OF(keys)->nNumOfElements == 0) {
+			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has no elements");
+			return;
+		}
 		zval_add_ref(&keys);
+	} else {
+		zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has to be an array");
 	}
 
 	/* get the system.indexes collection */
