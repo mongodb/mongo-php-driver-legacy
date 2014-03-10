@@ -82,6 +82,11 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_R
 	ZEND_ARG_ARRAY_INFO(0, tags, 0)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setWriteConcern, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, w)
+	ZEND_ARG_INFO(0, wtimeout)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_dropDB, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, MongoDB_object_OR_database_name)
 ZEND_END_ARG_INFO()
@@ -100,6 +105,8 @@ static zend_function_entry mongo_methods[] = {
 	PHP_ME(MongoClient, selectCollection, arginfo_selectCollection, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, getWriteConcern, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoClient, setWriteConcern, arginfo_setWriteConcern, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, dropDB, arginfo_dropDB, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, listDBs, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoClient, getHosts, arginfo_no_parameters, ZEND_ACC_PUBLIC)
@@ -863,6 +870,70 @@ PHP_METHOD(MongoClient, setReadPreference)
 }
 /* }}} */
 
+/* {{{ array MongoClient::getWriteConcern()
+ * Get the MongoClient write concern, which will be inherited by constructed
+ * MongoDB and MongoCollection objects. */
+PHP_METHOD(MongoClient, getWriteConcern)
+{
+	mongoclient *link;
+
+	if (zend_parse_parameters_none()) {
+		return;
+	}
+
+	PHP_MONGO_GET_LINK(getThis());
+
+	array_init(return_value);
+
+	if (link->servers->options.default_wstring != NULL) {
+		add_assoc_string(return_value, "w", link->servers->options.default_wstring, 1);
+	} else {
+		add_assoc_long(return_value, "w", link->servers->options.default_w);
+	}
+
+	add_assoc_long(return_value, "wtimeout", link->servers->options.default_wtimeout);
+}
+/* }}} */
+
+/* {{{ bool MongoClient::setWriteConcern(mixed w [, int wtimeout])
+ * Set the MongoClient write concern, which will be inherited by constructed
+ * MongoDB and MongoCollection objects. */
+PHP_METHOD(MongoClient, setWriteConcern)
+{
+	mongoclient *link;
+	zval *write_concern;
+	long wtimeout;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|l", &write_concern, &wtimeout) == FAILURE) {
+		return;
+	}
+
+	if (Z_TYPE_P(write_concern) != IS_LONG && Z_TYPE_P(write_concern) != IS_STRING) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "expects parameter 1 to be an string or integer, %s given", zend_get_type_by_const(Z_TYPE_P(write_concern)));
+		RETURN_FALSE;
+	}
+
+	PHP_MONGO_GET_LINK(getThis());
+
+	if (link->servers->options.default_wstring) {
+		free(link->servers->options.default_wstring);
+	}
+
+	if (Z_TYPE_P(write_concern) == IS_LONG) {
+		link->servers->options.default_w = Z_LVAL_P(write_concern);
+		link->servers->options.default_wstring = NULL;
+	} else if (Z_TYPE_P(write_concern) == IS_STRING) {
+		link->servers->options.default_w = 1;
+		link->servers->options.default_wstring = strdup(Z_STRVAL_P(write_concern));
+	}
+
+	if (ZEND_NUM_ARGS() > 1) {
+		link->servers->options.default_wtimeout = wtimeout;
+	}
+
+	RETURN_TRUE;
+}
+/* }}} */
 
 /* {{{ proto array MongoClient::dropDB(void)
    Returns the results of the 'dropDatabase' command */

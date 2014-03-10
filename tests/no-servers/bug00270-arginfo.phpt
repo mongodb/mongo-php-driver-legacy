@@ -58,6 +58,10 @@ Mongo
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method getWriteConcern expects 0 parameters
+  Method setWriteConcern expects 2 parameters
+    0: w
+    1: wtimeout (optional)
   Method dropDB expects 1 parameters
     0: MongoDB_object_OR_database_name
   Method listDBs expects 0 parameters
@@ -84,6 +88,10 @@ MongoClient
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method getWriteConcern expects 0 parameters
+  Method setWriteConcern expects 2 parameters
+    0: w
+    1: wtimeout (optional)
   Method dropDB expects 1 parameters
     0: MongoDB_object_OR_database_name
   Method listDBs expects 0 parameters
