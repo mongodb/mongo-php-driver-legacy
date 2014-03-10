@@ -231,7 +231,7 @@ PHP_METHOD(MongoCollection, setWriteConcern)
 	}
 
 	if (Z_TYPE_P(write_concern) == IS_LONG) {
-		zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), 3 TSRMLS_CC);
+		zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_LVAL_P(write_concern) TSRMLS_CC);
 	} else if (Z_TYPE_P(write_concern) == IS_STRING) {
 		zend_update_property_stringl(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_STRVAL_P(write_concern), Z_STRLEN_P(write_concern) TSRMLS_CC);
 	} else {
