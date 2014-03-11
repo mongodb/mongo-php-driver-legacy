@@ -290,11 +290,10 @@ MongoCursor
     0: foundOnly (optional)
 
 MongoCommandCursor
-  Method __construct expects 4 parameters
+  Method __construct expects 3 parameters
     0: connection
     1: database_and_collection_name
     2: query (optional)
-    3: array_of_fields_OR_object (optional)
   Method batchSize expects 1 parameters
     0: number
   Method info expects 0 parameters
