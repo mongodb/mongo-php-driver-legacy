@@ -595,7 +595,15 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		/* Rough check to see whether this is a numeric string or not */
 		char *endptr;
 		long tmp_value;
-		
+
+		if (servers->options.default_wstring != NULL) {
+			free(servers->options.default_wstring);
+		}
+
+		/* Reassign defaults before we set default_w or default_wstring */
+		servers->options.default_w = -1;
+		servers->options.default_wstring = NULL;
+
 		tmp_value = strtol(option_value, &endptr, 10);
 		/* If no invalid character is found (endptr == 0), we consider the
 		 * option value as a number */
@@ -607,7 +615,6 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 				return 3;
 			}
 		} else {
-			servers->options.default_w = 1;
 			servers->options.default_wstring = strdup(option_value);
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': '%s'", servers->options.default_wstring);
 		}

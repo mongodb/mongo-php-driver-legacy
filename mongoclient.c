@@ -456,7 +456,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	}
 
 	/* If "w" was *not* set as an option, then assign the default */
-	if (link->servers->options.default_w == -1) {
+	if (link->servers->options.default_w == -1 && link->servers->options.default_wstring == NULL) {
 		if (bc) {
 			/* Default to WriteConcern=0 for Mongo */
 			link->servers->options.default_w = 0;
