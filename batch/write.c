@@ -130,6 +130,7 @@ PHP_METHOD(MongoWriteBatch, add)
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(intern->zcollection_object, MongoWriteBatch);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &z_item) == FAILURE) {
 		zend_restore_error_handling(&error_handling TSRMLS_CC);
@@ -394,6 +395,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(intern->zcollection_object, MongoWriteBatch);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "h", &write_options) == FAILURE) {
 		zend_restore_error_handling(&error_handling TSRMLS_CC);

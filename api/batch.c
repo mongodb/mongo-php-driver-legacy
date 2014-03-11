@@ -19,10 +19,12 @@
 #include "../php_mongo.h"
 #include "../bson.h"
 #include "../collection.h" /* mongo_apply_implicit_write_options() */
+#include "wire_version.h"
 #include "batch.h"
 
 /* Exceptions thrown */
 extern zend_class_entry *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_ProtocolException;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
@@ -91,13 +93,20 @@ void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollectio
 {
 	mongoclient      *link;
 	mongo_collection *collection;
+	mongo_connection *connection;
+
+	collection = (mongo_collection *)zend_object_store_get_object(zcollection TSRMLS_CC);
+	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
+
+	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+	if (!php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
+		zend_throw_exception(mongo_ce_ProtocolException, "Current primary does not have a Write API support", 1 TSRMLS_CC);
+		return;
+	}
 
 	intern->batch_type = type;
 	intern->zcollection_object = zcollection;
 	Z_ADDREF_P(zcollection);
-
-	collection = (mongo_collection *)zend_object_store_get_object(zcollection TSRMLS_CC);
-	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
 
 	mongo_apply_implicit_write_options(&intern->write_options, &link->servers->options, zcollection TSRMLS_CC);
 	php_mongo_api_write_options_from_ht(&intern->write_options, write_options TSRMLS_CC);

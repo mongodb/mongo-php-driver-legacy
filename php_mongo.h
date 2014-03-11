@@ -727,6 +727,9 @@ extern zend_module_entry mongo_module_entry;
  * 104: Got write errors, but don't know how to parse them
  * 105: Got write errors, but don't know how to parse them
  * (all other error codes are from mongod)
+ *
+ * MongoProtocolException:
+ * 1: Current primary does not have a Write API support
  */
 
 /*
