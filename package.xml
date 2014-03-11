@@ -147,7 +147,6 @@
     <file role="src" name="batch.h"/>
     <file role="src" name="write.c"/>
     <file role="src" name="write.h"/>
-    <file role="src" name="write_private.h"/>
    </dir>
 
    <dir baseinstalldir="/" name="exceptions">
@@ -238,6 +237,7 @@
     <file role="src" name="update.h"/>
     <file role="src" name="delete.c"/>
     <file role="src" name="delete.h"/>
+    <file role="src" name="write_private.h"/>
    </dir>
 
    <dir baseinstalldir="/" name="util">
