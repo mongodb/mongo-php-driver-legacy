@@ -38,21 +38,21 @@ $c->ensureIndex(array('null' => null));
 try {
     $c->ensureIndex(array('stringInvalidPlugin' => 'invalidPlugin'));
     echo "TEST FAILED\n";
-} catch(MongoWriteConcernException $e) {
+} catch(MongoResultException $e) {
     printf("%d: %s\n", $e->getCode(), $e->getMessage());
 }
 
 try {
     $c->ensureIndex(array('array' => array(1)));
     echo "TEST FAILED\n";
-} catch(MongoWriteConcernException $e) {
+} catch(MongoResultException $e) {
     printf("%d: %s\n", $e->getCode(), $e->getMessage());
 }
 
 try {
     $c->ensureIndex(array('object' => new stdClass));
     echo "TEST FAILED\n";
-} catch(MongoWriteConcernException $e) {
+} catch(MongoResultException $e) {
     printf("%d: %s\n", $e->getCode(), $e->getMessage());
 }
 
@@ -65,13 +65,13 @@ foreach($c->getIndexInfo() as $index) {
 Notice: MongoCollection::ensureIndex(): Boolean false ordering is ascending in %s on line %d
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; null given in %s on line %d
-%d: %s:%d: %SUnknown index plugin 'invalidPlugin'%S
+67: %s:%d: %SUnknown index plugin 'invalidPlugin'%S
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; array given in %s on line %d
-%d: %s:%d: bad index key pattern { array: [ 1 ] }%S
+67: %s:%d: bad index key pattern { array: [ 1 ] }%S
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; object given in %s on line %d
-%d: %s:%d: bad index key pattern { object: {} }%S
+67: %s:%d: bad index key pattern { object: {} }%S
 array(2) {
   ["key"]=>
   array(1) {

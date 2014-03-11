@@ -23,6 +23,7 @@
 #include "cursor.h"
 #include "cursor_shared.h"
 #include "bson.h"
+#include "db.h"
 #include "types/code.h"
 #include "types/db_ref.h"
 #include "db.h"
@@ -1516,17 +1517,138 @@ PHP_METHOD(MongoCollection, remove)
 }
 /* }}} */
 
-/* {{{ proto bool MongoCollection::ensureIndex(mixed keys [, array options])
-   Create the $keys index if it does not already exist */
-PHP_METHOD(MongoCollection, ensureIndex)
-{
-	zval *keys, *options = 0, *db, *collection, *data;
-	mongo_collection *c;
-	zend_bool done_name = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &keys, &options) == FAILURE) {
+static void mongo_collection_create_index_command(mongo_connection *connection, mongo_collection *collection, zval *keys, zval *options, zval *return_value TSRMLS_DC)
+{
+	zval *cmd, *indexes, *index_spec, *retval;
+	zend_bool done_name = 0;
+	mongo_db *db = (mongo_db*)zend_object_store_get_object(collection->parent TSRMLS_CC);
+
+	/* set up data */
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+
+	add_assoc_zval(cmd, "createIndexes", collection->name);
+	zval_add_ref(&collection->name);
+
+	/* set up "indexes" wrapper */
+	MAKE_STD_ZVAL(indexes);
+	array_init(indexes);
+	add_assoc_zval(cmd, "indexes", indexes);
+
+	/* set up index fields */
+	MAKE_STD_ZVAL(index_spec);
+	array_init(index_spec);
+	add_next_index_zval(indexes, index_spec);
+
+	/* add index keys */
+	if (IS_SCALAR_P(keys)) {
+		zval *key_array;
+
+		convert_to_string(keys);
+
+		if (Z_STRLEN_P(keys) == 0) {
+			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "empty string passed as key field");
+			zval_ptr_dtor(&cmd);
+			zval_ptr_dtor(&indexes);
+			zval_ptr_dtor(&index_spec);
+			return;
+		}
+
+		MAKE_STD_ZVAL(key_array);
+		array_init(key_array);
+		add_assoc_long(key_array, Z_STRVAL_P(keys), 1);
+		add_assoc_zval(index_spec, "key", key_array);
+	} else if (Z_TYPE_P(keys) == IS_ARRAY || Z_TYPE_P(keys) == IS_OBJECT) {
+		if (HASH_OF(keys)->nNumOfElements == 0) {
+			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has no elements");
+			zval_ptr_dtor(&cmd);
+			zval_ptr_dtor(&indexes);
+			zval_ptr_dtor(&index_spec);
+			return;
+		}
+
+		add_assoc_zval(index_spec, "key", keys);
+		Z_ADDREF_P(keys);
+	} else {
+		zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has to be an array");
+		zval_ptr_dtor(&cmd);
+		zval_ptr_dtor(&indexes);
+		zval_ptr_dtor(&index_spec);
 		return;
 	}
+
+	/* process options */
+	if (options) {
+		zval temp, **name, **timeout_pp;
+
+		zend_hash_merge(HASH_P(index_spec), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
+		
+		if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout_pp) == SUCCESS) {
+			zend_hash_del(HASH_P(cmd), "timeout", strlen("timeout") + 1);
+		}
+
+		if (zend_hash_find(HASH_P(options), "name", strlen("name") + 1, (void**)&name) == SUCCESS) {
+			if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
+				zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
+				zval_ptr_dtor(&cmd);
+				zval_ptr_dtor(&indexes);
+				zval_ptr_dtor(&index_spec);
+				return;
+			}
+			done_name = 1;
+			add_assoc_zval(index_spec, "name", *name);
+			Z_ADDREF_PP(name);
+		}
+	}
+
+	/* make sure we set the name, based on the keys, if no name was part of options */
+	if (!done_name) {
+		char *key_str;
+		int   key_str_len;
+
+		key_str = to_index_string(keys, &key_str_len TSRMLS_CC);
+		if (!key_str) {
+			zval_ptr_dtor(&cmd);
+			zval_ptr_dtor(&indexes);
+			zval_ptr_dtor(&index_spec);
+			return;
+		}
+
+		if (key_str_len > MAX_INDEX_NAME_LEN) {
+			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", key_str_len, MAX_INDEX_NAME_LEN);
+			efree(key_str);
+			zval_ptr_dtor(&cmd);
+			zval_ptr_dtor(&indexes);
+			zval_ptr_dtor(&index_spec);
+			return;
+		}
+
+		add_assoc_stringl(index_spec, "name", key_str, key_str_len, 0);
+	}
+
+	retval = php_mongo_runcommand(collection->link, &collection->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
+
+	zval_ptr_dtor(&cmd);
+ 
+	if (EG(exception)) {
+		zval_ptr_dtor(&retval);
+		return;
+	}
+
+	if (php_mongo_trigger_error_on_command_failure(connection, retval TSRMLS_CC) == SUCCESS) {
+		RETVAL_ZVAL(retval, 0, 1);
+	} else {
+		zval_ptr_dtor(&retval);
+	}
+}
+/* }}} */
+
+
+static void mongo_collection_create_index_legacy(mongo_connection *connection, mongo_collection *collection, zval *keys, zval *options, zval *return_value TSRMLS_DC)
+{
+	zval *db, *system_indexes_collection, *data;
+	zend_bool done_name = 0;
 
 	if (IS_SCALAR_P(keys)) {
 		zval *key_array;
@@ -1534,6 +1656,7 @@ PHP_METHOD(MongoCollection, ensureIndex)
 		convert_to_string(keys);
 
 		if (Z_STRLEN_P(keys) == 0) {
+			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "empty string passed as key field");
 			return;
 		}
 
@@ -1542,25 +1665,29 @@ PHP_METHOD(MongoCollection, ensureIndex)
 		add_assoc_long(key_array, Z_STRVAL_P(keys), 1);
 
 		keys = key_array;
-	} else {
+	} else if (Z_TYPE_P(keys) == IS_ARRAY || Z_TYPE_P(keys) == IS_OBJECT) {
+		if (HASH_OF(keys)->nNumOfElements == 0) {
+			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has no elements");
+			return;
+		}
 		zval_add_ref(&keys);
+	} else {
+		zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has to be an array");
 	}
 
-	PHP_MONGO_GET_COLLECTION(getThis());
-
 	/* get the system.indexes collection */
-	db = c->parent;
+	db = collection->parent;
 
-	collection = php_mongo_selectcollection(db, "system.indexes", strlen("system.indexes") TSRMLS_CC);
-	PHP_MONGO_CHECK_EXCEPTION2(&keys, &collection);
+	system_indexes_collection = php_mongo_selectcollection(db, "system.indexes", strlen("system.indexes") TSRMLS_CC);
+	PHP_MONGO_CHECK_EXCEPTION2(&keys, &system_indexes_collection);
 
 	/* set up data */
 	MAKE_STD_ZVAL(data);
 	array_init(data);
 
 	/* ns */
-	add_assoc_zval(data, "ns", c->ns);
-	zval_add_ref(&c->ns);
+	add_assoc_zval(data, "ns", collection->ns);
+	zval_add_ref(&collection->ns);
 	add_assoc_zval(data, "key", keys);
 	zval_add_ref(&keys);
 
@@ -1621,12 +1748,82 @@ PHP_METHOD(MongoCollection, ensureIndex)
 		add_assoc_stringl(data, "name", key_str, key_str_len, 0);
 	}
 
-	MONGO_METHOD2(MongoCollection, insert, return_value, collection, data, options);
+	MONGO_METHOD2(MongoCollection, insert, return_value, system_indexes_collection, data, options);
+	/* Check for whether an exception was thrown. In the special case where
+	 * there is an index-adding problem, we need to change the exception to a
+	 * different one */
+	if (EG(exception)) {
+		long code = 0;
+		char *message;
+
+		code = Z_LVAL_P(zend_read_property(mongo_ce_Exception, EG(exception), "code", strlen("code"), NOISY TSRMLS_CC));
+		if (code == 10098 || code == 16734) {
+			message = estrdup(Z_STRVAL_P(zend_read_property(mongo_ce_Exception, EG(exception), "message", strlen("message"), NOISY TSRMLS_CC)));
+			zend_clear_exception(TSRMLS_C);
+			php_mongo_cursor_throw(mongo_ce_ResultException, NULL, 67 TSRMLS_CC, "%s", message);
+			efree(message);
+		}
+	}
 
 	zval_ptr_dtor(&options);
 	zval_ptr_dtor(&data);
-	zval_ptr_dtor(&collection);
+	zval_ptr_dtor(&system_indexes_collection);
 	zval_ptr_dtor(&keys);
+}
+
+/* {{{ proto bool MongoCollection::createIndex(array keys [, array options])
+   Create the $keys index if it does not already exist */
+PHP_METHOD(MongoCollection, createIndex)
+{
+	zval *keys, *options = NULL;
+	mongo_connection *connection;
+	mongo_collection *c;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &keys, &options) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_COLLECTION(getThis());
+
+	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+		RETURN_FALSE;
+	}
+
+	if (php_mongo_api_connection_min_server_version(connection, 2, 5, 5)) {
+		mongo_collection_create_index_command(connection, c, keys, options, return_value TSRMLS_CC);
+	} else {
+		mongo_collection_create_index_legacy(connection, c, keys, options, return_value TSRMLS_CC);
+	}
+
+	PHP_MONGO_GET_COLLECTION(getThis());
+}
+/* }}} */
+
+/* {{{ proto bool MongoCollection::ensureIndex(mixed keys [, array options])
+   Create the $keys index if it does not already exist */
+PHP_METHOD(MongoCollection, ensureIndex)
+{
+	zval *keys, *options = NULL;
+	mongo_connection *connection;
+	mongo_collection *c;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &keys, &options) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_COLLECTION(getThis());
+
+	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+		RETURN_FALSE;
+	}
+
+	if (php_mongo_api_connection_min_server_version(connection, 2, 5, 5)) {
+		mongo_collection_create_index_command(connection, c, keys, options, return_value TSRMLS_CC);
+	} else {
+		mongo_collection_create_index_legacy(connection, c, keys, options, return_value TSRMLS_CC);
+	}
+
+	PHP_MONGO_GET_COLLECTION(getThis());
 }
 /* }}} */
 
@@ -2356,6 +2553,11 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_createIndex, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, array_of_keys)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_ensureIndex, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, key_OR_array_of_keys)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
@@ -2417,6 +2619,7 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, findOne, arginfo_find_one, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, findAndModify, arginfo_findandmodify, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, commandCursor, arginfo_commandcursor, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCollection, createIndex, arginfo_createIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, ensureIndex, arginfo_ensureIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, deleteIndex, arginfo_deleteIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, deleteIndexes, arginfo_no_parameters, ZEND_ACC_PUBLIC)

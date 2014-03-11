@@ -778,7 +778,19 @@ PHP_METHOD(MongoDB, command)
 	}
 }
 
-/* {{{ Command running helpers */
+static int is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
+{
+	if (
+		dbname_len == 0 ||
+		strchr(dbname, ' ') != 0 || strchr(dbname, '.') != 0 || strchr(dbname, '\\') != 0 ||
+		strchr(dbname, '/') != 0 || strchr(dbname, '$') != 0
+	) {
+		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", dbname);
+		return 0;
+	}
+	return 1;
+}
+
 /* Actually execute the command after doing a few extra checks.
  *
  * This function can return NULL but *only* if an exception is set. So please
@@ -790,12 +802,7 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	mongoclient *link;
 	char *cmd_ns;
 
-	if (
-		dbname_len == 0 ||
-		strchr(dbname, ' ') != 0 || strchr(dbname, '.') != 0 || strchr(dbname, '\\') != 0 ||
-		strchr(dbname, '/') != 0 || strchr(dbname, '$') != 0
-	) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", dbname);
+	if (!is_valid_dbname(dbname, dbname_len TSRMLS_CC)) {
 		return NULL;
 	}
 
@@ -836,7 +843,13 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	if (options) {
 		zval **timeout;
 
-		if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout) == SUCCESS) {
+		if (zend_hash_find(HASH_P(options), "socketTimeoutMS", strlen("socketTimeoutMS") + 1, (void**)&timeout) == SUCCESS) {
+			MAKE_STD_ZVAL(temp);
+			ZVAL_NULL(temp);
+			MONGO_METHOD1(MongoCursor, timeout, temp, cursor, *timeout);
+			zval_ptr_dtor(&temp);
+		} else if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout) == SUCCESS) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead");
 			MAKE_STD_ZVAL(temp);
 			ZVAL_NULL(temp);
 			MONGO_METHOD1(MongoCursor, timeout, temp, cursor, *timeout);
