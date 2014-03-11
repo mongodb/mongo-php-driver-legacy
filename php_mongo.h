@@ -689,6 +689,7 @@ extern zend_module_entry mongo_module_entry;
  * 29: Unknown query/get_more failure
  * 30: Cursor command response does not have the expected structure (no ID)
  * 31: Cursor command response does not have the expected structure (no first batch)
+ * 32: Cursor command structure is invalid
  *
  * MongoGridFSException:
  * 0: 
