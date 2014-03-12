@@ -73,19 +73,49 @@ IO      FINE: is_gle_op: no
 IO      FINE: is_gle_op: no
 
 - Setting w property to 1:
-IO      FINE: is_gle_op: no
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
 
 - Setting w property to 2:
-IO      FINE: is_gle_op: no
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: append_getlasterror: added w=2
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
 
 - Setting w property to 7:
-IO      FINE: is_gle_op: no
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: append_getlasterror: added w=7
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
+%s:%d: timeout%S
 
 - Setting w property to majority:
-IO      FINE: is_gle_op: no
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: append_getlasterror: added w='majority'
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
 
 - Setting w property to allDCs:
-IO      FINE: is_gle_op: no
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: append_getlasterror: added w='allDCs'
+IO      FINE: append_getlasterror: added wtimeout=100 (from collection property)
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
+%s:%d:%sunrecognized getLastError mode: allDCs
 
 Running string mongodb://%s/?w=1
 PARSE   INFO: Parsing mongodb://%s/?w=1
@@ -99,11 +129,7 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
 - Setting w property to 0:
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO      FINE: is_gle_op: no
 
 - Setting w property to 1:
 IO      FINE: is_gle_op: yes
@@ -164,11 +190,7 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
 - Setting w property to 0:
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO      FINE: is_gle_op: no
 
 - Setting w property to 1:
 IO      FINE: is_gle_op: yes
@@ -232,11 +254,7 @@ IO      FINE: getting cursor body
 %s:%d:%sunrecognized getLastError mode: allDCs
 
 - Setting w property to 0:
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO      FINE: is_gle_op: no
 
 - Setting w property to 1:
 IO      FINE: is_gle_op: yes
@@ -300,11 +318,7 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
 - Setting w property to 0:
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO      FINE: is_gle_op: no
 
 - Setting w property to 1:
 IO      FINE: is_gle_op: yes
