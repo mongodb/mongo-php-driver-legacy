@@ -141,6 +141,9 @@ class MongoShellServer {
         case "REPLICASET":
             $buildinfo = $this->verifyWrite("getReplicasetBuildInfo()");
             break;
+        case "SHARDING":
+            $buildinfo = $this->verifyWrite("getShardingBuildInfo()");
+            break;
         case "STANDALONE":
             $buildinfo = $this->verifyWrite("getBuildInfo()");
             break;

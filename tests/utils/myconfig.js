@@ -453,3 +453,7 @@ function getBuildInfo() {
 function getReplicasetBuildInfo() {
     return replTest.getMaster().getDB("admin")._adminCommand({ buildinfo: 1 });
 }
+
+function getShardingBuildInfo() {
+    return shardTest.getDB("admin")._adminCommand({ buildinfo: 1 });
+}
