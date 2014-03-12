@@ -47,7 +47,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_Collection = NULL;
 
-static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC);
+static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_options TSRMLS_DC);
 static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, mongo_buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
@@ -325,7 +325,7 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 		timeout = link->servers->options.socketTimeoutMS;
 	}
 
-    /* Get the default value for journalling */
+	/* Get the default value for journalling */
 	fsync = link->servers->options.default_fsync;
 	journal = link->servers->options.default_journal;
 
@@ -565,8 +565,8 @@ static int send_message(zval *this_ptr, mongo_connection *connection, mongo_buff
 		return 0;
 	}
 
-	if (is_gle_op(options, &link->servers->options TSRMLS_CC)) {
-		zval *cursor = append_getlasterror(getThis(), buf, options, connection TSRMLS_CC);
+	if (is_gle_op(this_ptr, options, &link->servers->options TSRMLS_CC)) {
+		zval *cursor = append_getlasterror(this_ptr, buf, options, connection TSRMLS_CC);
 		if (cursor) {
 			do_gle_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
 			zval_ptr_dtor(&cursor);
@@ -584,61 +584,98 @@ static int send_message(zval *this_ptr, mongo_connection *connection, mongo_buff
 	return retval;
 }
 
-
-static int is_gle_op(zval *options, mongo_server_options *server_options TSRMLS_DC)
+/* Determine if the operation should have a GLE command appended. This is based
+ * on whether a write concern ("w" or "safe") or fsync/journal options are
+ * specified.
+ */
+static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_options TSRMLS_DC)
 {
-	zval **gle_pp = 0, **fsync_pp = 0;
-	int    gle_op = 0;
+	int gle_op = 0, default_fsync, default_journal, coll_w = 0;
+	zval *z_coll_w;
 
-	/* First we check for the global (connection string) default */
-	if (server_options->default_w != -1) {
-		gle_op = server_options->default_w;
-	}
-	if (server_options->default_fsync || server_options->default_journal) {
-		gle_op = 1;
+	/* Get the fsync/journal defaults from the MongoClient server options */
+	default_fsync = server_options->default_fsync;
+	default_journal = server_options->default_journal;
+
+	/* Get the MongoCollection write concern instead of checking the MongoClient
+	 * server options, since MongoCollection will have inherited any defaults
+	 * through the MongoDB class. Additionally, this ensures that we respect a
+	 * write concern set directly on the MongoCollection instance. */
+	z_coll_w = zend_read_property(mongo_ce_Collection, coll, "w", strlen("w"), NOISY TSRMLS_CC);
+
+	if (Z_TYPE_P(z_coll_w) == IS_STRING) {
+		/* We don't actually care what the string is, only that it was specified */
+		coll_w = 1;
+	} else {
+		convert_to_long(z_coll_w);
+		coll_w = Z_LVAL_P(z_coll_w);
 	}
 
 	/* Then we check the options array that could overwrite the default */
 	if (options && Z_TYPE_P(options) == IS_ARRAY) {
-		zval **journal_pp;
+		zval **gle_pp, **fsync_pp, **journal_pp;
 
-		/* First we try "w", and if that is not found we check for "safe" */
-		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**) &gle_pp) == FAILURE) {
-			if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &gle_pp) == SUCCESS) {
-				php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
+		/* Check for "w" in the options array. If it is not found, consult the
+		 * "safe" option, followed by the MongoCollection write concern. */
+		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**) &gle_pp) == SUCCESS) {
+			switch (Z_TYPE_PP(gle_pp)) {
+				case IS_STRING:
+					gle_op = 1;
+					break;
+				case IS_BOOL:
+				case IS_LONG:
+					/* This is actually "wrong" for bools, but it works */
+					if (Z_LVAL_PP(gle_pp) >= 1) {
+						gle_op = 1;
+					}
+					break;
+				default:
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'w' option either needs to be a integer or string");
 			}
-		}
-		/* After that, gle_pp is either still NULL, or set to something if one of
-		 * the options was found */
-		if (gle_pp) {
-			/* Check for bool/int value >= 1 */
-			if ((Z_TYPE_PP(gle_pp) == IS_LONG || Z_TYPE_PP(gle_pp) == IS_BOOL)) {
-				gle_op = (Z_LVAL_PP(gle_pp) >= 1);
+		} else if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &gle_pp) == SUCCESS) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
 
-			/* Check for string value ("majority", or a tag) */
-			} else if (Z_TYPE_PP(gle_pp) == IS_STRING) {
-				gle_op = 1;
-
-			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'safe' option either needs to be a boolean or a string");
+			switch (Z_TYPE_PP(gle_pp)) {
+				case IS_STRING:
+					gle_op = 1;
+					break;
+				case IS_BOOL:
+				case IS_LONG:
+					/* This is actually "wrong" for bools, but it works */
+					if (Z_LVAL_PP(gle_pp) >= 1) {
+						gle_op = 1;
+					}
+					break;
+				default:
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'safe' option either needs to be a boolean or a string");
 			}
+		} else if (coll_w >= 1) {
+			gle_op = 1;
 		}
 
-		/* Check for "fsync" in options array */
+		/* Check for "fsync" in the options array. If it is not found, respect
+		 * the MongoClient "fsync" option. */
 		if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp) == SUCCESS) {
 			convert_to_boolean_ex(fsync_pp);
 			if (Z_BVAL_PP(fsync_pp)) {
 				gle_op = 1;
 			}
+		} else if (default_fsync) {
+			gle_op = 1;
 		}
 
-		/* Check for "j" in options array */
+		/* Check for "j" in the options array. If it is not found, respect the
+		 * MongoClient "journal" option. */
 		if (zend_hash_find(HASH_P(options), "j", strlen("j") + 1, (void**)&journal_pp) == SUCCESS) {
 			convert_to_boolean_ex(journal_pp);
 			if (Z_BVAL_PP(journal_pp)) {
 				gle_op = 1;
 			}
+		} else if (default_journal) {
+			gle_op = 1;
 		}
+	} else {
+		gle_op = (coll_w >= 1 || default_fsync || default_journal);
 	}
 
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "is_gle_op: %s", gle_op ? "yes" : "no");
