@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::commandCursor (with batchSize)
+MongoCollection::commandCursor (without batchSize)
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -20,11 +20,10 @@ $c = $d->cursorcmd;
 
 $r = $c->commandCursor(
 	array(
-		'aggregate' => 'cursorcmd', 
+		'aggregate' => 'cursorcmd',
 		'pipeline' => array( 
-			array( '$limit' => 2 ) 
-		), 
-		'cursor' => array( 'batchSize' => 2 )
+			array( '$limit' => 2 )
+		),
 	)
 );
 

@@ -41,7 +41,6 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_
 	ZEND_ARG_OBJ_INFO(0, connection, MongoClient, 0)
 	ZEND_ARG_INFO(0, database_and_collection_name)
 	ZEND_ARG_INFO(0, query)
-	ZEND_ARG_INFO(0, array_of_fields_OR_object)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
@@ -133,6 +132,43 @@ end:
 	return size;
 }
 
+static void enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
+{
+	zval **zcursor, **zbatchsize;
+
+	if (Z_TYPE_P(command) != IS_ARRAY) {
+		/* Technically we can not hit this, as the command should be an
+		 * array, but this is just here as a precaution. */
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 32 TSRMLS_CC, "The cursor command structure is not an array");
+		return;
+	}
+
+	if (zend_hash_find(HASH_P(command), "cursor", 7, (void**) &zcursor) == FAILURE) {
+		zval *tmp_cursor;
+
+		MAKE_STD_ZVAL(tmp_cursor);
+		array_init(tmp_cursor);
+		zcursor = &tmp_cursor;
+
+		add_assoc_zval(command, "cursor", tmp_cursor);
+	}
+
+	if (Z_TYPE_PP(zcursor) != IS_ARRAY) {
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 32 TSRMLS_CC, "The cursor command's 'cursor' element is not an array");
+		return;
+	}
+
+	if (zend_hash_find(HASH_PP(zcursor), "batchSize", 10, (void**) &zbatchsize) == FAILURE) {
+		zval *tmp_batchsize;
+
+		MAKE_STD_ZVAL(tmp_batchsize);
+		ZVAL_LONG(tmp_batchsize, size);
+		zbatchsize = &tmp_batchsize;
+
+		add_assoc_zval(*zcursor, "batchSize", tmp_batchsize);
+	}
+}
+
 /* {{{ array MongoCommandCursor::rewind()
    Resets the command cursor, executes the associated query and prepares the iterator. Returns the raw command document */
 PHP_METHOD(MongoCommandCursor, rewind)
@@ -150,6 +186,10 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	/* reads the batchsize through the command, or uses 101 when nothing is set */
 	cmd_cursor->batch_size = get_batch_size_from_command(cmd_cursor->query TSRMLS_CC);
+	enforce_batch_size_on_command(cmd_cursor->query, cmd_cursor->batch_size TSRMLS_CC);
+	if (EG(exception)) {
+		return;
+	}
 
 	/* do query */
 	php_mongo_split_namespace(cmd_cursor->ns, &dbname, NULL);
