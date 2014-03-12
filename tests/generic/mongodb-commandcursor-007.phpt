@@ -12,7 +12,7 @@ $m = new MongoClient($dsn);
 $d = $m->selectDB($dbname);
 $d->cursorcmd->drop();
 
-for ($i = 0; $i < 50; $i++) {
+for ($i = 0; $i < 10; $i++) {
 	$d->cursorcmd->insert(array('article_id' => $i));
 }
 

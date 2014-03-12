@@ -74,6 +74,7 @@ void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval 
 	/* flags */
 	php_mongo_cursor_force_command_cursor(cmd_cursor);
 
+	/* Pick up read preferences from link as initial setting */
 	mongo_read_preference_replace(&link->servers->read_pref, &cmd_cursor->read_pref);
 }
 

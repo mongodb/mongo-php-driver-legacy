@@ -12,7 +12,7 @@ $m = new MongoClient($dsn);
 $d = $m->selectDB($dbname);
 $d->cursorcmd->drop();
 
-for ($i = 0; $i < 500; $i++) {
+for ($i = 0; $i < 10; $i++) {
 	$d->cursorcmd->insert(array('article_id' => $i));
 }
 
@@ -21,7 +21,7 @@ $c = $d->cursorcmd;
 $r = $c->commandCursor(
 	array(
 		'aggregate' => 'cursorcmd',
-		'pipeline' => array( 
+		'pipeline' => array(
 			array( '$limit' => 2 )
 		),
 	)

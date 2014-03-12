@@ -10,9 +10,6 @@ Test for PHP-294: Workaround for sending commands to secondaries
 require_once 'tests/utils/server.inc';
 require_once "tests/utils/stream-notifications.inc";
 
-$host = MongoShellServer::getStandaloneInfo();
-
-
 $mn = new MongoNotifications;
 $ctx = stream_context_create(
     array(),
