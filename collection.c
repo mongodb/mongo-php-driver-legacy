@@ -199,8 +199,8 @@ PHP_METHOD(MongoCollection, setReadPreference)
 }
 /* }}} */
 
-/* {{{ bool MongoCollection::getWriteConcern()
-   Get the MongoCollection WriteConcern */
+/* {{{ array MongoCollection::getWriteConcern()
+ * Get the MongoCollection write concern. */
 PHP_METHOD(MongoCollection, getWriteConcern)
 {
 	zval *write_concern, *wtimeout;
@@ -221,7 +221,7 @@ PHP_METHOD(MongoCollection, getWriteConcern)
 /* }}} */
 
 /* {{{ bool MongoCollection::setWriteConcern(mixed w [, int wtimeout])
-   Sets the MongoCollection WriteConcern */
+ * Set the MongoCollection write concern. */
 PHP_METHOD(MongoCollection, setWriteConcern)
 {
 	zval *write_concern;

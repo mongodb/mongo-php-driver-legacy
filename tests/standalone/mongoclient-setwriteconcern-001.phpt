@@ -1,5 +1,5 @@
 --TEST--
-MongoDB::setWriteConcern() and MongoDB::getWriteConcern()
+MongoClient::setWriteConcern() and MongoClient::getWriteConcern()
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
@@ -9,18 +9,15 @@ require_once "tests/utils/server.inc";
 $host = MongoShellServer::getStandaloneInfo();
 $mc = new MongoClient($host, array('w' => 'majority', 'wTimeoutMS' => 400));
 
-$db = $mc->selectDB(dbname());
-
-var_dump($db->getWriteConcern());
-var_dump($db->setWriteConcern(0));
-var_dump($db->getWriteConcern());
-var_dump($db->setWriteConcern(1, 1000));
-var_dump($db->getWriteConcern());
-var_dump($db->setWriteConcern('majority'));
-var_dump($db->getWriteConcern());
+var_dump($mc->getWriteConcern());
+var_dump($mc->setWriteConcern(0));
+var_dump($mc->getWriteConcern());
+var_dump($mc->setWriteConcern(1, 1000));
+var_dump($mc->getWriteConcern());
+var_dump($mc->setWriteConcern('majority'));
+var_dump($mc->getWriteConcern());
 
 ?>
-===DONE===
 --EXPECT--
 array(2) {
   ["w"]=>
@@ -49,4 +46,3 @@ array(2) {
   ["wtimeout"]=>
   int(1000)
 }
-===DONE===

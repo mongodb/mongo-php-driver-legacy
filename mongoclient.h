@@ -38,6 +38,8 @@ PHP_METHOD(MongoClient, selectDB);
 PHP_METHOD(MongoClient, selectCollection);
 PHP_METHOD(MongoClient, getReadPreference);
 PHP_METHOD(MongoClient, setReadPreference);
+PHP_METHOD(MongoClient, getWriteConcern);
+PHP_METHOD(MongoClient, setWriteConcern);
 PHP_METHOD(MongoClient, dropDB);
 PHP_METHOD(MongoClient, lastError);
 PHP_METHOD(MongoClient, prevError);
