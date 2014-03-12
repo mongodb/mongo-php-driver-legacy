@@ -21,7 +21,7 @@ $c = $d->cursorcmd;
 $r = $c->commandCursor(
 	array(
 		'aggregate' => 'cursorcmd',
-		'pipeline' => array( 
+		'pipeline' => array(
 			array( '$limit' => 2 )
 		),
 	)

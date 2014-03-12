@@ -1321,11 +1321,11 @@ PHP_METHOD(MongoCollection, commandCursor)
 
 	object_init_ex(return_value, mongo_ce_CommandCursor);
 
-	/* Add read preferences to cursor */
 	cmd_cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
-	mongo_read_preference_replace(&c->read_pref, &cmd_cursor->read_pref);
-
 	mongo_command_cursor_init(cmd_cursor, Z_STRVAL_P(c->ns), c->link, command TSRMLS_CC);
+
+	/* Add read preferences to cursor, overriding the one set on the link */
+	mongo_read_preference_replace(&c->read_pref, &cmd_cursor->read_pref);
 }
 /* }}} */
 
