@@ -17,7 +17,7 @@ $m = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname']));
 $d = $m->selectDB($dbname);
 $d->cursorcmd->drop();
 
-for ($i = 0; $i < 5; $i++) {
+for ($i = 0; $i < 10; $i++) {
 	$d->cursorcmd->insert(array('article_id' => $i));
 }
 
