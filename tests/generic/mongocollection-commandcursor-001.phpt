@@ -20,10 +20,10 @@ $c = $d->cursorcmd;
 
 $r = $c->commandCursor(
 	array(
-		'aggregate' => 'cursorcmd', 
-		'pipeline' => array( 
-			array( '$limit' => 2 ) 
-		), 
+		'aggregate' => 'cursorcmd',
+		'pipeline' => array(
+			array( '$limit' => 2 )
+		),
 		'cursor' => array( 'batchSize' => 2 )
 	)
 );
