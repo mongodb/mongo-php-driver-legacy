@@ -87,7 +87,7 @@ PHP_METHOD(MongoWriteBatch, __construct)
 	long  batch_type;
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
-	HashTable *write_options;
+	HashTable *write_options = NULL;
 	zval *zcollection;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
@@ -465,6 +465,9 @@ void mongo_init_MongoWriteBatch(TSRMLS_D)
 	write_batch.create_object = php_mongo_write_batch_object_new;
 
 	mongo_ce_WriteBatch = zend_register_internal_class(&write_batch TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_WriteBatch, "COMMAND_INSERT", strlen("COMMAND_INSERT"), MONGODB_API_COMMAND_INSERT TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_WriteBatch, "COMMAND_UPDATE", strlen("COMMAND_UPDATE"), MONGODB_API_COMMAND_UPDATE TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_WriteBatch, "COMMAND_DELETE", strlen("COMMAND_DELETE"), MONGODB_API_COMMAND_DELETE TSRMLS_CC);
 }
 
 #endif /* PHP_VERSION_ID >= 50300 */
