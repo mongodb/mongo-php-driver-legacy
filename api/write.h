@@ -42,9 +42,9 @@ typedef struct {
 } php_mongo_write_delete_args;
 
 typedef enum {
-	MONGODB_API_COMMAND_INSERT,
-	MONGODB_API_COMMAND_UPDATE,
-	MONGODB_API_COMMAND_DELETE
+	MONGODB_API_COMMAND_INSERT = 1,
+	MONGODB_API_COMMAND_UPDATE = 2,
+	MONGODB_API_COMMAND_DELETE = 3
 } php_mongo_write_types;
 
 typedef struct {
