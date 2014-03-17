@@ -36,7 +36,7 @@ $host = MongoShellServer::getStandaloneInfo();
 
 $mc = new MongoClient($host);
 
-$collection = $mc->selectCollection("test", "insertbatch");
+$collection = $mc->selectCollection(dbname(), collname(__FILE__));
 $collection->drop();
 
 
