@@ -39,6 +39,8 @@ $info = $cursor->info();
 echo "connection type: ", $info['connection_type_desc'], "\n";
 ?>
 --EXPECTF--
+%s: MongoCollection::find(): The 'slaveOkay' option is deprecated. Please switch to read-preferences in %s on line %d
+
 %s: Function MongoCursor::slaveOkay() is deprecated in %s on line %d
 pick server: random element %d
 - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s
