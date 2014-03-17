@@ -47,9 +47,13 @@ $info = $cursor->info();
 echo "connection type: ", $info['connection_type_desc'], "\n";
 ?>
 --EXPECTF--
+
+%s: MongoCollection::find(): The 'slaveOkay' option is deprecated. Please switch to read-preferences in %s on line %d
 pick server: random element %d while ignoring the primary
 - connection: type: SECONDARY, socket: %d, ping: %d, hash: %s
 connection type: SECONDARY
+
+%s: MongoCollection::find(): The 'slaveOkay' option is deprecated. Please switch to read-preferences in %s on line %d
 pick server: random element %d
 - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s
 connection type: PRIMARY

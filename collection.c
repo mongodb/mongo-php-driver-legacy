@@ -317,7 +317,16 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 
 	timeout_p = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
 	convert_to_long(timeout_p);
-	timeout = Z_LVAL_P(timeout_p);
+
+	/* The value hasn't been modified from what we registered it as originally, but we do
+	 * need to set it to a real value */
+	if (Z_LVAL_P(timeout_p) == PHP_MONGO_DEPRECATED_SOCKET_TIMEOUT) {
+		timeout = PHP_MONGO_DEFAULT_SOCKET_TIMEOUT;
+	} else {
+		/* The value was modified, bad user, bad user! Tell him its deprecated */
+		timeout = Z_LVAL_P(timeout_p);
+		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead");
+	}
 
 	/* Overwrite the timeout if MongoCursor::$timeout is the default and we
 	 * passed in socketTimeoutMS in the connection string */

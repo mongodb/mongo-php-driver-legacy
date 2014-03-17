@@ -560,18 +560,21 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
-	if (Z_BVAL_P(slave_okay)) {
-		if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {
-			/* The server already has read preferences configured, but we're still
-			 * trying to set slave okay. The spec says that's an error, so we
-			 * throw an exception with code 23 (defined in php_mongo.h) */
-			zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 23 TSRMLS_CC);
-			return;
-		} else {
-			/* Old style option, that needs to be removed. For now, spec dictates
-			 * it needs to be ReadPreference=SECONDARY_PREFERRED */
-			link->servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
+	if (Z_TYPE_P(slave_okay) != IS_NULL) {
+		if (Z_BVAL_P(slave_okay)) {
+			if (link->servers->read_pref.type != MONGO_RP_PRIMARY) {
+				/* The server already has read preferences configured, but we're still
+				 * trying to set slave okay. The spec says that's an error, so we
+				 * throw an exception with code 23 (defined in php_mongo.h) */
+				zend_throw_exception(mongo_ce_ConnectionException, "You can not use both slaveOkay and read-preferences. Please switch to read-preferences.", 23 TSRMLS_CC);
+				return;
+			} else {
+				/* Old style option, that needs to be removed. For now, spec dictates
+				 * it needs to be ReadPreference=SECONDARY_PREFERRED */
+				link->servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
+			}
 		}
+		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'slaveOkay' option is deprecated. Please switch to read-preferences");
 	}
 
 	if (connect) {

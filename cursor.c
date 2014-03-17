@@ -187,7 +187,16 @@ PHP_METHOD(MongoCursor, __construct)
 
 	timeout = zend_read_static_property(mongo_ce_Cursor, "timeout", strlen("timeout"), NOISY TSRMLS_CC);
 	convert_to_long(timeout);
-	cursor->timeout = Z_LVAL_P(timeout);
+
+	/* The value hasn't been modified from what we registered it as originally, but we do
+	 * need to set it to a real value */
+	if (Z_LVAL_P(timeout) == PHP_MONGO_DEPRECATED_SOCKET_TIMEOUT) {
+		cursor->timeout = PHP_MONGO_DEFAULT_SOCKET_TIMEOUT;
+	} else {
+		cursor->timeout = Z_LVAL_P(timeout);
+		/* The value was modified, bad user, bad user! Tell him its deprecated */
+		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead");
+	}
 
 	/* Overwrite the timeout if MongoCursor::$timeout is the default and we
 	 * passed in socketTimeoutMS in the connection string */
@@ -202,7 +211,10 @@ PHP_METHOD(MongoCursor, __construct)
 		zval *zslaveokay;
 
 		zslaveokay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
-		cursor->read_pref.type = Z_BVAL_P(zslaveokay) ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
+		if (Z_TYPE_P(zslaveokay) != IS_NULL) {
+			cursor->read_pref.type = Z_BVAL_P(zslaveokay) ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'slaveOkay' option is deprecated. Please switch to read-preferences");
+		}
 	}
 
 	/* get rid of extra ref */
@@ -1327,8 +1339,8 @@ void mongo_init_MongoCursor(TSRMLS_D)
 	mongo_ce_Cursor = zend_register_internal_class(&ce TSRMLS_CC);
 	zend_class_implements(mongo_ce_Cursor TSRMLS_CC, 1, mongo_ce_CursorInterface);
 
-	zend_declare_property_bool(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), 0, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
-	zend_declare_property_long(mongo_ce_Cursor, "timeout", strlen("timeout"), PHP_MONGO_DEFAULT_SOCKET_TIMEOUT, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
+	zend_declare_property_long(mongo_ce_Cursor, "timeout", strlen("timeout"), PHP_MONGO_DEPRECATED_SOCKET_TIMEOUT, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC TSRMLS_CC);
 }
 
 /*

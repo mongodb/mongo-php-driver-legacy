@@ -102,6 +102,7 @@ typedef __int64 int64_t;
 
 #define PHP_MONGO_DEFAULT_WTIMEOUT 10000
 #define PHP_MONGO_DEFAULT_SOCKET_TIMEOUT 30000L
+#define PHP_MONGO_DEPRECATED_SOCKET_TIMEOUT -1
 
 /* if _id field should be added */
 #define PREP 1
