@@ -31,9 +31,8 @@ for ($i = 0; $i < 10; $i++) {
 // ==== begin tests, RP on MongoClient
 $m->setReadPreference(MongoClient::RP_SECONDARY);
 $d = $m->selectDB($dbname);
-$c = $d->cursorcmd;
 
-$r = $c->commandCursor( $command );
+$r = $d->commandCursor( $command );
 
 $r->rewind();
 $info = $r->info();
@@ -43,26 +42,13 @@ $m->setReadPreference(MongoClient::RP_PRIMARY);
 // ==== RP on MongoDB
 $d = $m->selectDB($dbname);
 $d->setReadPreference(MongoClient::RP_SECONDARY);
-$c = $d->cursorcmd;
 
-$r = $c->commandCursor( $command );
-
-$r->rewind();
-$info = $r->info();
-echo $info['connection_type_desc'], "\n";
-
-// ==== RP on MongoCollection
-$d = $m->selectDB($dbname);
-$c = $d->cursorcmd;
-$c->setReadPreference(MongoClient::RP_SECONDARY);
-
-$r = $c->commandCursor( $command );
+$r = $d->commandCursor( $command );
 
 $r->rewind();
 $info = $r->info();
 echo $info['connection_type_desc'], "\n";
 ?>
 --EXPECT--
-SECONDARY
 SECONDARY
 SECONDARY

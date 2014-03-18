@@ -17,7 +17,7 @@ for ($i = 0; $i < 10; $i++) {
 }
 
 $c = new MongoCommandCursor(
-	$m, "{$dbname}.cursorcmd",
+	$m, $dbname,
 	array(
 		'aggregate' => 'cursorcmd', 
 		'pipeline' => array( 

@@ -16,9 +16,7 @@ for ($i = 0; $i < 10; $i++) {
 	$d->cursorcmd->insert(array('article_id' => $i));
 }
 
-$c = $d->cursorcmd;
-
-$r = $c->commandCursor(
+$r = $d->commandCursor(
 	array(
 		'aggregate' => 'cursorcmd', 'pipeline' => array( array( '$limit' => 2 ) ),
 		'cursor' => 42

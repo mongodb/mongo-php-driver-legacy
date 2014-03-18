@@ -148,6 +148,8 @@ MongoDB
   Method command expects 2 parameters
     0: command
     1: options (optional)
+  Method commandCursor expects 1 parameters
+    0: command
   Method lastError expects 0 parameters
   Method prevError expects 0 parameters
   Method resetError expects 0 parameters
@@ -202,8 +204,6 @@ MongoCollection
     1: update (optional)
     2: fields (optional)
     3: options (optional)
-  Method commandCursor expects 1 parameters
-    0: command
   Method createIndex expects 2 parameters
     0: array_of_keys
     1: options (optional)

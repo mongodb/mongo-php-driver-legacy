@@ -50,14 +50,17 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VA
 	ZEND_ARG_INFO(0, number)
 ZEND_END_ARG_INFO()
 
-void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval *zlink, zval *zcommand TSRMLS_DC)
+void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *database_name, zval *zlink, zval *zcommand TSRMLS_DC)
 {
 	mongoclient *link;
 
 	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
 
-	/* ns */
-	cmd_cursor->ns = estrdup(ns);
+	/* temporary namespace, needed as we need to store the database name in the cursor,
+	 * so that we can run the command against the correct database. The namespace will
+	 * get replaced by a real one once we get the command's result. */
+	cmd_cursor->ns =  emalloc(strlen(database_name) + 1 + 3 + 1);
+	sprintf(cmd_cursor->ns, "%s.???", database_name);
 
 	/* db connection */
 	cmd_cursor->zmongoclient = zlink;
@@ -78,22 +81,17 @@ void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval 
 	mongo_read_preference_replace(&link->servers->read_pref, &cmd_cursor->read_pref);
 }
 
-/* {{{ MongoCommandCursor::__construct(MongoClient connection, string ns, array query)
+/* {{{ MongoCommandCursor::__construct(MongoClient connection, string database_name, array query)
    Constructs a MongoCommandCursor */
 PHP_METHOD(MongoCommandCursor, __construct)
 {
 	zval *zlink = NULL, *zcommand = NULL;
-	char *ns;
-	int   ns_len;
+	char *database_name;
+	int   database_name_len;
 	mongo_command_cursor *cmd_cursor;
 	mongoclient *link;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Osa", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zcommand) == FAILURE) {
-		return;
-	}
-
-	if (!php_mongo_is_valid_namespace(ns, ns_len)) {
-		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Osa", &zlink, mongo_ce_MongoClient, &database_name, &database_name_len, &zcommand) == FAILURE) {
 		return;
 	}
 
@@ -101,7 +99,7 @@ PHP_METHOD(MongoCommandCursor, __construct)
 	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(link->manager, MongoClient);
 
-	mongo_command_cursor_init(cmd_cursor, ns, zlink, zcommand TSRMLS_CC);
+	mongo_command_cursor_init(cmd_cursor, database_name, zlink, zcommand TSRMLS_CC);
 }
 /* }}} */
 
@@ -179,6 +177,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	int64_t cursor_id;
 	zval *exception;
 	zval *first_batch;
+	char *namespace;
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
@@ -203,15 +202,8 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	}
 
 	/* We need to parse the initial result, and see whether everything worked */
-	if (php_mongo_get_cursor_id(result, &cursor_id TSRMLS_CC) == FAILURE) {
+	if (php_mongo_get_cursor_info(result, &cursor_id, &first_batch, &namespace TSRMLS_CC) == FAILURE) {
 		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response (no ID)");
-		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), result TSRMLS_CC);
-		zval_ptr_dtor(&result);
-		return;
-	}
-
-	if (php_mongo_get_cursor_first_batch(result, &first_batch TSRMLS_CC) == FAILURE) {
-		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 31 TSRMLS_CC, "the command cursor did not return a correctly structured response (no first batch)");
 		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), result TSRMLS_CC);
 		zval_ptr_dtor(&result);
 		return;
@@ -219,6 +211,10 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	cmd_cursor->started_iterating = 1;
 	cmd_cursor->cursor_id = cursor_id;
+	if (cmd_cursor->ns) {
+		efree(cmd_cursor->ns);
+	}
+	cmd_cursor->ns = estrdup(namespace);
 	cmd_cursor->first_batch = first_batch;
 	Z_ADDREF_P(first_batch);
 	cmd_cursor->first_batch_at = 0;
