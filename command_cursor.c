@@ -196,6 +196,13 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	result = php_mongo_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1, &cmd_cursor->connection TSRMLS_CC);
 	efree(dbname);
 
+	if (EG(exception)) {
+		if (result) {
+			zval_ptr_dtor(&result);
+		}
+		return;
+	}
+
 	if (php_mongo_trigger_error_on_command_failure(cmd_cursor->connection, result TSRMLS_CC) == FAILURE) {
 		zval_ptr_dtor(&result);
 		return;
@@ -325,6 +332,10 @@ PHP_METHOD(MongoCommandCursor, valid)
 			NULL
 			TSRMLS_CC
 		);
+
+		if (php_mongo_cursor_handle_error(cmd_cursor TSRMLS_CC)) {
+			RETURN_FALSE;
+		}
 
 		if (EG(exception)) {
 			zval_ptr_dtor(&cmd_cursor->current);
