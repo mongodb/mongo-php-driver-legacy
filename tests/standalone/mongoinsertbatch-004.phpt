@@ -91,7 +91,7 @@ array(3) {
       ["code"]=>
       int(11000)
       ["errmsg"]=>
-      string(%d) "insertDocument :: caused by :: 11000 E11000 duplicate key error index: %s.%s.$_id_  dup key: { : "duplicatedid" }"
+      string(%d) "%s: %s.%s.$_id_  dup key: { : "duplicatedid" }"
     }
   }
   ["nInserted"]=>
@@ -113,7 +113,7 @@ array(3) {
       ["code"]=>
       int(11000)
       ["errmsg"]=>
-      string(%d) "insertDocument :: caused by :: 11000 E11000 duplicate key error index: %s.%s.$_id_  dup key: { : "duplicatedid" }"
+      string(%d) "%s: %s.%s.$_id_  dup key: { : "duplicatedid" }"
     }
   }
   ["nInserted"]=>
@@ -135,7 +135,7 @@ array(3) {
       ["code"]=>
       int(11000)
       ["errmsg"]=>
-      string(%d) "insertDocument :: caused by :: 11000 E11000 duplicate key error index: %s.%s.$_id_  dup key: { : "duplicatedid" }"
+      string(%d) "%s: %s.%s.$_id_  dup key: { : "duplicatedid" }"
     }
   }
   ["nInserted"]=>
