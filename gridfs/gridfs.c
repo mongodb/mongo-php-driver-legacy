@@ -858,14 +858,14 @@ cleanup_on_failure:
 }
 /* }}} */
 
-/* {{{ proto MongoGridFSFile MongoGridFS::findOne([array|string query = array() [, array|object fields = array()]])
+/* {{{ proto MongoGridFSFile MongoGridFS::findOne([array|string query [, array|object fields [, array options]]])
    Returns a single file matching the criteria. If $query is a string, it will
    be used to match documents by the filename field, which may not be unique. */
 PHP_METHOD(MongoGridFS, findOne)
 {
-	zval *zquery = 0, *zfields = 0, *file;
+	zval *zquery = 0, *zfields = 0, *zoptions = 0, *file;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &zquery, &zfields) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zza", &zquery, &zfields, &zoptions) == FAILURE) {
 		return;
 	}
 	MUST_BE_ARRAY_OR_OBJECT(2, zfields);
@@ -894,8 +894,15 @@ PHP_METHOD(MongoGridFS, findOne)
 		zval_add_ref(&zfields);
 	}
 
+	if (!zoptions) {
+		MAKE_STD_ZVAL(zoptions);
+		array_init(zoptions);
+	} else {
+		zval_add_ref(&zoptions);
+	}
+
 	MAKE_STD_ZVAL(file);
-	MONGO_METHOD2(MongoCollection, findOne, file, getThis(), zquery, zfields);
+	MONGO_METHOD3(MongoCollection, findOne, file, getThis(), zquery, zfields, zoptions);
 
 	if (Z_TYPE_P(file) == IS_NULL) {
 		RETVAL_NULL();
@@ -909,6 +916,7 @@ PHP_METHOD(MongoGridFS, findOne)
 	zval_ptr_dtor(&file);
 	zval_ptr_dtor(&zquery);
 	zval_ptr_dtor(&zfields);
+	zval_ptr_dtor(&zoptions);
 }
 /* }}} */
 
@@ -1168,6 +1176,7 @@ ZEND_END_ARG_INFO()
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)
 	ZEND_ARG_INFO(0, fields)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE, 0)
