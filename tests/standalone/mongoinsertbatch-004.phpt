@@ -12,7 +12,7 @@ $host = MongoShellServer::getStandaloneInfo();
 
 $mc = new MongoClient($host);
 
-$collection = $mc->selectCollection("test", "insertbatch");
+$collection = $mc->selectCollection(dbname(), collname(__FILE__));
 $collection->drop();
 
 
@@ -91,7 +91,7 @@ array(3) {
       ["code"]=>
       int(11000)
       ["errmsg"]=>
-      string(124) "insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
+      string(%d) "%s: %s.%s.$_id_  dup key: { : "duplicatedid" }"
     }
   }
   ["nInserted"]=>
@@ -113,7 +113,7 @@ array(3) {
       ["code"]=>
       int(11000)
       ["errmsg"]=>
-      string(124) "insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
+      string(%d) "%s: %s.%s.$_id_  dup key: { : "duplicatedid" }"
     }
   }
   ["nInserted"]=>
@@ -135,7 +135,7 @@ array(3) {
       ["code"]=>
       int(11000)
       ["errmsg"]=>
-      string(124) "insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.insertbatch.$_id_  dup key: { : "duplicatedid" }"
+      string(%d) "%s: %s.%s.$_id_  dup key: { : "duplicatedid" }"
     }
   }
   ["nInserted"]=>

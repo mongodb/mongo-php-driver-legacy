@@ -87,7 +87,7 @@ PHP_METHOD(MongoWriteBatch, __construct)
 	long  batch_type;
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
-	HashTable *write_options;
+	HashTable *write_options = NULL;
 	zval *zcollection;
 
 	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
@@ -381,11 +381,11 @@ void php_mongo_writebatch_execute(mongo_write_batch_object *intern, mongo_connec
 }
 /* }}} */
 
-/* {{{ proto array MongoWriteBatch::execute(array $write_options)
+/* {{{ proto array MongoWriteBatch::execute([array $write_options])
    Executes the constructed batch. Returns the server response */
 PHP_METHOD(MongoWriteBatch, execute)
 {
-	HashTable *write_options;
+	HashTable *write_options = NULL;
 	zend_error_handling error_handling;
 	mongo_write_batch_object *intern;
 	mongo_collection *collection;
@@ -397,7 +397,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(intern->zcollection_object, MongoWriteBatch);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "h", &write_options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|h", &write_options) == FAILURE) {
 		zend_restore_error_handling(&error_handling TSRMLS_CC);
 		return;
 	}
@@ -418,7 +418,9 @@ PHP_METHOD(MongoWriteBatch, execute)
 	/* Reset the item counter */
 	intern->total_items = 0;
 
-	php_mongo_api_write_options_from_ht(&intern->write_options, write_options TSRMLS_CC);
+	if (write_options) {
+		php_mongo_api_write_options_from_ht(&intern->write_options, write_options TSRMLS_CC);
+	}
 
 	array_init(return_value);
 	intern->batch = intern->batch->first;
@@ -434,7 +436,7 @@ PHP_METHOD(MongoWriteBatch, execute)
 }
 /* }}} */
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 1)
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, collection, MongoCollection, 0)
 	ZEND_ARG_INFO(0, batch_type)
 	ZEND_ARG_ARRAY_INFO(0, write_options, 0)
@@ -444,7 +446,7 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_add, 0, ZEND_RETURN_VALUE, 1
 	ZEND_ARG_ARRAY_INFO(0, item, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALUE, 1)
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_ARRAY_INFO(0, write_options, 0)
 ZEND_END_ARG_INFO()
 
@@ -463,6 +465,9 @@ void mongo_init_MongoWriteBatch(TSRMLS_D)
 	write_batch.create_object = php_mongo_write_batch_object_new;
 
 	mongo_ce_WriteBatch = zend_register_internal_class(&write_batch TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_WriteBatch, "COMMAND_INSERT", strlen("COMMAND_INSERT"), MONGODB_API_COMMAND_INSERT TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_WriteBatch, "COMMAND_UPDATE", strlen("COMMAND_UPDATE"), MONGODB_API_COMMAND_UPDATE TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_WriteBatch, "COMMAND_DELETE", strlen("COMMAND_DELETE"), MONGODB_API_COMMAND_DELETE TSRMLS_CC);
 }
 
 #endif /* PHP_VERSION_ID >= 50300 */

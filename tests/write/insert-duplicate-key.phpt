@@ -45,6 +45,6 @@ var_dump($tmp == $doc);
 ===DONE===
 <?php exit(0); ?>
 --EXPECTF--
-%s:%d: insertDocument :: caused by :: 11000 E11000 duplicate key error index: test.dupkey.$_id_  dup key: { : "DuplicateKeyError" }
+%s:%d: %s: test.dupkey.$_id_  dup key: { : "DuplicateKeyError" }
 bool(true)
 ===DONE===
