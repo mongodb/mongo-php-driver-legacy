@@ -9,7 +9,7 @@ require_once "tests/utils/server.inc";
 
 $host = MongoShellServer::getStandaloneInfo();
 
-$mc = new MongoClient($dsn);
+$mc = new MongoClient($host);
 $collection = $mc->selectCollection(dbname(), collname(__FILE__));
 $collection->drop();
 
