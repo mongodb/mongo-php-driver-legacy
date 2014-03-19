@@ -1,5 +1,5 @@
 --TEST--
-MongoCommandCursor iteration [2] (limit=5, batchSize=2)
+MongoCommandCursor (wrong namespaces)
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -16,28 +16,52 @@ for ($i = 0; $i < 10; $i++) {
 	$d->cursorcmd->insert(array('article_id' => $i));
 }
 
+// TEST with invalid ns
 $c = new MongoCommandCursor(
-	$m, $dbname,
+	$m, "unknown ns",
 	array(
-		'aggregate' => 'cursorcmd', 
-		'pipeline' => array( 
-			array( '$limit' => 5 ), 
-			array( '$sort' => array( 'article_id' => 1 ) ) 
-		), 
+		'aggregate' => 'cursorcmd',
+		'pipeline' => array(
+			array( '$limit' => 5 ),
+			array( '$sort' => array( 'article_id' => 1 ) )
+		),
 		'cursor' => array( 'batchSize' => 2 )
 	)
 );
 
-foreach ($c as $key => $record) {
-	var_dump($key);
-	var_dump($record);
+try {
+	$c->rewind();
+} catch (Exception $e) {
+	echo $e->getMessage(), "\n";
+}
+
+// TEST with unknown ns
+$c = new MongoCommandCursor(
+	$m, "{$dbname}.cursorcmd",
+	array(
+		'aggregate' => 'cursorcmd',
+		'pipeline' => array(
+			array( '$limit' => 5 ),
+			array( '$sort' => array( 'article_id' => 1 ) )
+		),
+		'cursor' => array( 'batchSize' => 2 )
+	)
+);
+
+try {
+	foreach ($c as $key => $result) {
+		var_dump($key, $result);
+	}
+} catch (Exception $e) {
+	echo $e->getMessage(), "\n";
 }
 ?>
 --EXPECTF--
+MongoDB::__construct(): invalid name unknown ns
 string(24) "5%s"
 array(2) {
   ["_id"]=>
-  object(MongoId)#8 (1) {
+  object(MongoId)#%d (1) {
     ["$id"]=>
     string(24) "5%s"
   }
@@ -47,7 +71,7 @@ array(2) {
 string(24) "5%s"
 array(2) {
   ["_id"]=>
-  object(MongoId)#9 (1) {
+  object(MongoId)#%d (1) {
     ["$id"]=>
     string(24) "5%s"
   }
@@ -57,7 +81,7 @@ array(2) {
 string(24) "5%s"
 array(2) {
   ["_id"]=>
-  object(MongoId)#8 (1) {
+  object(MongoId)#%d (1) {
     ["$id"]=>
     string(24) "5%s"
   }

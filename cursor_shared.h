@@ -63,8 +63,7 @@ void php_mongo_cursor_free(void *object TSRMLS_DC);
 signed int php_mongo_get_cursor_header(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC);
 int php_mongo_get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC);
 
-int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC);
-int php_mongo_get_cursor_first_batch(zval *document, zval **first_batch TSRMLS_DC);
+int php_mongo_get_cursor_info(zval *document, int64_t *cursor_id, zval **first_batch, char **ns TSRMLS_DC);
 
 /* Returns the actual limit to send over the wire, based on batch size, current
  * position, and user limit */
@@ -97,6 +96,7 @@ void php_mongo_cursor_force_primary(mongo_cursor *cursor);
  * Does nothing if an exception has already been thrown. */
 zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *connection, int code TSRMLS_DC, char *format, ...);
 
+int php_mongo_cursor_handle_error(mongo_cursor *cursor TSRMLS_DC);
 /* Returns whether a passed in namespace is a valid one */
 int php_mongo_is_valid_namespace(char *ns, int ns_len);
 /* Splits a namespace name into the database and collection names, allocated with estrdup. */

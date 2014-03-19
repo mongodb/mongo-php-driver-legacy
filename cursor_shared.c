@@ -247,9 +247,9 @@ int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 	return SUCCESS;
 }
 
-int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
+int php_mongo_get_cursor_info(zval *document, int64_t *cursor_id, zval **first_batch, char **ns TSRMLS_DC)
 {
-	zval **cursor = NULL, **id = NULL;
+	zval **cursor = NULL, **id = NULL, **first = NULL, **namespace = NULL;
 	zval  *id_value;
 
 	if (Z_TYPE_P(document) != IS_ARRAY) {
@@ -262,6 +262,8 @@ int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
 	if (Z_TYPE_PP(cursor) != IS_ARRAY) {
 		return FAILURE;
 	}
+
+	/* ID */
 	if (zend_hash_find(Z_ARRVAL_PP(cursor), "id", sizeof("id"), (void **)&id) == FAILURE) {
 		return FAILURE;
 	}
@@ -272,32 +274,26 @@ int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
 	if (Z_TYPE_P(id_value) != IS_STRING) {
 		return FAILURE;
 	}
-	*cursor_id = strtoll(Z_STRVAL_P(id_value), NULL, 10);
 
-	return SUCCESS;
-}
-
-int php_mongo_get_cursor_first_batch(zval *document, zval **first_batch TSRMLS_DC)
-{
-	zval **cursor = NULL, **first = NULL;
-
-	if (Z_TYPE_P(document) != IS_ARRAY) {
-		return FAILURE;
-	}
-
-	if (zend_hash_find(Z_ARRVAL_P(document), "cursor", sizeof("cursor"), (void **)&cursor) == FAILURE) {
-		return FAILURE;
-	}
-	if (Z_TYPE_PP(cursor) != IS_ARRAY) {
-		return FAILURE;
-	}
+	/* First batch */
 	if (zend_hash_find(Z_ARRVAL_PP(cursor), "firstBatch", sizeof("firstBatch"), (void **)&first) == FAILURE) {
 		return FAILURE;
 	}
 	if (Z_TYPE_PP(first) != IS_ARRAY) {
 		return FAILURE;
 	}
+
+	/* Namespace */
+	if (zend_hash_find(Z_ARRVAL_PP(cursor), "ns", sizeof("ns"), (void **)&namespace) == FAILURE) {
+		return FAILURE;
+	}
+	if (Z_TYPE_PP(namespace) != IS_STRING) {
+		return FAILURE;
+	}
+
+	*cursor_id = strtoll(Z_STRVAL_P(id_value), NULL, 10);
 	*first_batch = *first;
+	*ns = Z_STRVAL_PP(namespace);
 
 	return SUCCESS;
 }
@@ -434,6 +430,70 @@ zval* php_mongo_cursor_throw(zend_class_entry *exception_ce, mongo_connection *c
 	free(message);
 
 	return e;
+}
+
+/* Returns 1 when an error was found and *handled*, and it returns 0 if no
+ * error situation has ocurred on the cursor. If the error is handled, then an
+ * exception has been thrown as well. */
+int php_mongo_cursor_handle_error(mongo_cursor *cursor TSRMLS_DC)
+{
+	zval **err = NULL;
+
+	/* check for $err */
+	if (
+		cursor->current &&
+		zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err") + 1, (void**)&err) == SUCCESS
+	) {
+		zval **code_z, *exception;
+		/* default error code */
+		int code = 4;
+
+		/* check for error code */
+		if (zend_hash_find(Z_ARRVAL_P(cursor->current), "code", strlen("code") + 1, (void**)&code_z) == SUCCESS) {
+			convert_to_long_ex(code_z);
+			code = Z_LVAL_PP(code_z);
+		}
+
+		/* TODO: Determine if we need to throw MongoCursorTimeoutException
+		 * or MongoWriteConcernException here, depending on the code. */
+		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
+		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current TSRMLS_CC);
+		zval_ptr_dtor(&cursor->current);
+		cursor->current = 0;
+
+		/* We check for "not master" error codes. The source of those codes
+		 * is at https://github.com/mongodb/mongo/blob/master/docs/errors.md
+		 *
+		 * We should kill the connection so the next request doesn't do the
+		 * same wrong thing.
+		 *
+		 * Note: We need to mark the cursor as failed _after_ prepping the
+		 * exception, otherwise the exception won't include the servername
+		 * it hit for example. */
+		if (code == 10107 || code == 13435 || code == 13436 || code == 10054 || code == 10056 || code == 10058) {
+			php_mongo_cursor_failed(cursor TSRMLS_CC);
+		}
+
+		return 1;
+	}
+
+	if (cursor->flag & MONGO_OP_REPLY_ERROR_FLAGS) {
+		if (cursor->flag & MONGO_OP_REPLY_CURSOR_NOT_FOUND) {
+			php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 16336 TSRMLS_CC, "could not find cursor over collection %s", cursor->ns);
+			return 1;
+		}
+
+		if (cursor->flag & MONGO_OP_REPLY_QUERY_FAILURE) {
+			php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 2 TSRMLS_CC, "query failure");
+			return 1;
+		}
+
+		/* Default case */
+		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 29 TSRMLS_CC, "Unknown query/get_more failure");
+		return 1;
+	}
+
+	return 0;
 }
 
 /* Returns whether a passed in namespace is a valid one */

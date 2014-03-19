@@ -22,6 +22,7 @@
 
 #include "db.h"
 #include "collection.h"
+#include "command_cursor.h"
 #include "cursor.h"
 #include "cursor_shared.h"
 #include "gridfs/gridfs.h"
@@ -39,6 +40,7 @@ extern zend_class_entry *mongo_ce_Cursor, *mongo_ce_GridFS, *mongo_ce_Id;
 extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_Int64;
 extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_ResultException;
+extern zend_class_entry *mongo_ce_CommandCursor;
 
 extern zend_object_handlers mongo_default_handlers;
 
@@ -780,6 +782,30 @@ PHP_METHOD(MongoDB, command)
 	}
 }
 
+/* {{{ proto MongoCommandCursor MongoDB::commandCursor(array command)
+   Returns a command cursor after running the specified command. */
+PHP_METHOD(MongoDB, commandCursor)
+{
+	zval *command = NULL;
+	mongo_db *db;
+	mongo_cursor *cmd_cursor;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &command) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_DB(getThis());
+
+	object_init_ex(return_value, mongo_ce_CommandCursor);
+
+	cmd_cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
+	mongo_command_cursor_init(cmd_cursor, Z_STRVAL_P(db->name), db->link, command TSRMLS_CC);
+
+	/* Add read preferences to cursor, overriding the one set on the link */
+	mongo_read_preference_replace(&db->read_pref, &cmd_cursor->read_pref);
+}
+/* }}} */
+
 static int is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
 {
 	if (
@@ -1148,6 +1174,10 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_command, 0, ZEND_RETURN_VALU
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_commandcursor, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, command, 1)
+ZEND_END_ARG_INFO()
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_authenticate, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, username)
 	ZEND_ARG_INFO(0, password)
@@ -1182,6 +1212,7 @@ static zend_function_entry MongoDB_methods[] = {
 	PHP_ME(MongoDB, getDBRef, arginfo_getDBRef, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, execute, arginfo_execute, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, command, arginfo_command, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoDB, commandCursor, arginfo_commandcursor, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, lastError, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, prevError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)

@@ -26,7 +26,7 @@ function run_command($limit = 2, $batchSize = 1)
 	global $m, $dbname;
 
 	$c = new MongoCommandCursor(
-		$m, "{$dbname}.cursorcmd",
+		$m, $dbname,
 		array(
 			'aggregate' => 'cursorcmd', 
 			'pipeline' => array( 
