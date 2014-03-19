@@ -409,14 +409,6 @@ PHP_METHOD(MongoCommandCursor, key)
 }
 /* }}} */
 
-/* {{{ MongoCommandCursor::reset()
-   Does nothing yet. */
-PHP_METHOD(MongoCommandCursor, reset)
-{
-	printf("reset\n");
-}
-/* }}} */
-
 static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCommandCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
 
@@ -433,7 +425,6 @@ static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCommandCursor, next, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCommandCursor, rewind, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCommandCursor, valid, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCommandCursor, reset, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
 	PHP_FE_END
 };

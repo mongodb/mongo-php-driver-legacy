@@ -311,7 +311,6 @@ MongoCommandCursor
   Method next expects 0 parameters
   Method rewind expects 0 parameters
   Method valid expects 0 parameters
-  Method reset expects 0 parameters
 
 MongoPool
   Method info expects 0 parameters
