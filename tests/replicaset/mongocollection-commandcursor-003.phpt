@@ -35,7 +35,7 @@ $d = $m->selectDB($dbname);
 $c = $d->cursorcmd;
 
 $document = $d->command($command);
-$r = $c->commandCursor( $document["cursor"], $document["hash"] );
+$r = $d->commandCursor( $document["cursor"], $document["hash"] );
 
 $r->rewind();
 $info = $r->info();
@@ -48,7 +48,7 @@ $d->setReadPreference(MongoClient::RP_SECONDARY);
 $c = $d->cursorcmd;
 
 $document = $d->command($command);
-$r = $c->commandCursor( $document["cursor"], $document["hash"] );
+$r = $d->commandCursor( $document["cursor"], $document["hash"] );
 
 $r->rewind();
 $info = $r->info();

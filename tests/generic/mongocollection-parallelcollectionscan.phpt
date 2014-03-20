@@ -30,7 +30,7 @@ $document = $mc->selectDb(dbname())->command(array("parallelCollectionScan" => c
 var_dump($document);
 
 foreach($document["cursors"] as $retval) {
-    $cursor = $c->commandCursor($retval["cursor"], $document["hash"]);
+    $cursor = $d->commandCursor($retval["cursor"], $document["hash"]);
     var_dump($cursor);
 
     foreach($cursor as $entry) {

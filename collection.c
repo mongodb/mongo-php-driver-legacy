@@ -1314,29 +1314,6 @@ PHP_METHOD(MongoCollection, findAndModify)
 }
 /* }}} */
 
-/* {{{ proto MongoCommandCursor MongoCollection::commandCursor(array command)
-   Returns a command cursor after running the specified command. */
-PHP_METHOD(MongoCollection, commandCursor)
-{
-	zval *command = NULL;
-	mongo_cursor *cmd_cursor;
-	mongo_collection *c;
-	char *hash;
-	int hash_len;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "as", &command, &hash, &hash_len) == FAILURE) {
-		return;
-	}
-
-	PHP_MONGO_GET_COLLECTION(getThis());
-
-	object_init_ex(return_value, mongo_ce_CommandCursor);
-
-	cmd_cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
-	mongo_command_cursor_init_from_document(c->link, cmd_cursor, hash, command TSRMLS_CC);
-}
-/* }}} */
-
 /* Takes OP_UPDATE flags (bit vector) and sets the correct update_args options */
 static void mongo_apply_update_options_from_bits(php_mongo_write_update_args *update_options, int bits)
 {
@@ -2656,10 +2633,6 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_findandmodify, 0, ZEND_RETUR
 	ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_commandcursor, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, command, 1)
-ZEND_END_ARG_INFO()
-
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_update, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, old_array_of_fields_OR_object)
 	ZEND_ARG_INFO(0, new_array_of_fields_OR_object)
@@ -2741,7 +2714,6 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, find, arginfo_find, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, findOne, arginfo_find_one, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, findAndModify, arginfo_findandmodify, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCollection, commandCursor, arginfo_commandcursor, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, createIndex, arginfo_createIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, ensureIndex, arginfo_ensureIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, deleteIndex, arginfo_deleteIndex, ZEND_ACC_PUBLIC)

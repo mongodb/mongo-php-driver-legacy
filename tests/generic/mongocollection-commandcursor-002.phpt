@@ -28,7 +28,7 @@ $document = $d->command(
 	)
 );
 
-$r = $c->commandCursor($document["cursor"], $document["hash"]);
+$r = $d->commandCursor($document["cursor"], $document["hash"]);
 foreach ($r as $key => $record) {
 	var_dump($key);
 	var_dump($record);
