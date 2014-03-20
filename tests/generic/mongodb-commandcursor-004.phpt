@@ -4,7 +4,7 @@ MongoCommandCursor iteration [3] (limit=1, batchSize=5)
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/server.inc";
 $dsn = MongoShellServer::getStandaloneInfo();
 $dbname = dbname();
 
@@ -16,8 +16,7 @@ for ($i = 0; $i < 10; $i++) {
 	$d->cursorcmd->insert(array('article_id' => $i));
 }
 
-$c = new MongoCommandCursor(
-	$m, "{$dbname}.cursorcmd",
+$document = $d->command(
 	array(
 		'aggregate' => 'cursorcmd', 
 		'pipeline' => array( 
@@ -26,6 +25,9 @@ $c = new MongoCommandCursor(
 		), 
 		'cursor' => array( 'batchSize' => 5 )
 	)
+);
+$c = new MongoCommandCursor(
+	$m, $document["hash"], $document["cursor"]
 );
 
 foreach ($c as $key => $record) {
