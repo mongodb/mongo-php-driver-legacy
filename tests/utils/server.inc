@@ -478,6 +478,29 @@ function dump_these_keys($values, $keys) {
     var_dump($dump);
 }
 
+function configureFailPoint(MongoClient $mc, $failPoint, $mode, $data = null) {
+    if (is_integer($mode)) {
+        $mode = array('times' => $mode);
+    }
+
+    $command = array(
+        'configureFailPoint' => $failPoint,
+        'mode' => $mode,
+    );
+
+    if ($data !== null) {
+        $command['data'] = $data;
+    }
+
+    $result = $mc->admin->command($command);
+
+    if ( ! empty($result['ok'])) {
+        printf("Configured %s fail point\n", $failPoint);
+    } else {
+        printf("Error configuring %s fail point: %s\n", $failPoint, json_encode($result));
+    }
+}
+
 /*
 $config = MongoShellServer::getReplicaSetInfo();
 list($REPLICASET_SECONDARY, $REPLICASET_SECONDARY_PORT) = explode(":", $config["hosts"][2]);
