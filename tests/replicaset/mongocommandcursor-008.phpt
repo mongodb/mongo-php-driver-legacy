@@ -30,6 +30,7 @@ $r = new MongoCommandCursor(
 		'pipeline' => array( 
 			array( '$limit' => 2 ) 
 		), 
+		'cursor' => array( 'batchSize' => 101 ),
 	)
 );
 

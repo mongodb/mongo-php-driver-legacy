@@ -1347,30 +1347,6 @@ PHP_METHOD(MongoCollection, findAndModify)
 }
 /* }}} */
 
-/* {{{ proto MongoCommandCursor MongoCollection::commandCursor(array command)
-   Returns a command cursor after running the specified command. */
-PHP_METHOD(MongoCollection, commandCursor)
-{
-	zval *command = NULL;
-	mongo_collection *c;
-	mongo_cursor *cmd_cursor;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &command) == FAILURE) {
-		return;
-	}
-
-	PHP_MONGO_GET_COLLECTION(getThis());
-
-	object_init_ex(return_value, mongo_ce_CommandCursor);
-
-	cmd_cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
-	mongo_command_cursor_init(cmd_cursor, Z_STRVAL_P(c->ns), c->link, command TSRMLS_CC);
-
-	/* Add read preferences to cursor, overriding the one set on the link */
-	mongo_read_preference_replace(&c->read_pref, &cmd_cursor->read_pref);
-}
-/* }}} */
-
 /* Takes OP_UPDATE flags (bit vector) and sets the correct update_args options */
 static void mongo_apply_update_options_from_bits(php_mongo_write_update_args *update_options, int bits)
 {
@@ -2376,6 +2352,66 @@ PHP_METHOD(MongoCollection, aggregate)
 /* }}} */
 
 
+static zval* create_aggregate_command_from_pipeline(char *collname, zval *pipeline, zval *options TSRMLS_DC)
+{
+	zval *command;
+
+	MAKE_STD_ZVAL(command);
+	array_init(command);
+
+	/* Command entry */
+	add_assoc_string(command, "aggregate", collname, 1);
+
+	/* Pipeline */
+	add_assoc_zval(command, "pipeline", pipeline);
+	Z_ADDREF_P(pipeline);
+
+	if (options) {
+		zval *temp;
+		zend_hash_merge(HASH_P(command), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
+	}
+
+	/* Make sure we have a cursor/batchSize object, if this fails,
+	 * EG(exception) is set. */
+	if (!php_mongo_enforce_batch_size_on_command(command, MONGO_DEFAULT_COMMAND_BATCH_SIZE TSRMLS_CC)) {
+		zval_ptr_dtor(&command);
+		return NULL;
+	}
+
+	return command;
+}
+
+/* {{{ proto MongoCommandCursor MongoCollection::aggregateCursor(array pipeline [, array options ]])
+   Returns a command cursor after running the specified aggregation pipeline. */
+PHP_METHOD(MongoCollection, aggregateCursor)
+{
+	zval *pipeline = NULL, *options = NULL, *command = NULL;
+	mongo_collection *c;
+	mongo_cursor *cmd_cursor;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &pipeline, &options) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_COLLECTION(getThis());
+
+	command = create_aggregate_command_from_pipeline(Z_STRVAL_P(c->name), pipeline, options TSRMLS_CC);
+	if (!command) {
+		return;
+	}
+
+	object_init_ex(return_value, mongo_ce_CommandCursor);
+
+	cmd_cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
+	mongo_command_cursor_init(cmd_cursor, Z_STRVAL_P(c->ns), c->link, command TSRMLS_CC);
+	zval_ptr_dtor(&command);
+
+	/* Add read preferences to cursor, overriding the one set on the link */
+	mongo_read_preference_replace(&c->read_pref, &cmd_cursor->read_pref);
+}
+/* }}} */
+
+
 /* {{{ proto array MongoCollection::distinct(string key [, array query])
    Wrapper for distinct command. Returns a list of distinct values for the given
    key across a collection. An optional $query may be applied to filter the
@@ -2634,8 +2670,9 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_findandmodify, 0, ZEND_RETUR
 	ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_commandcursor, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, command, 1)
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregatecursor, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_ARRAY_INFO(0, pipeline, 1)
+	ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_update, 0, ZEND_RETURN_VALUE, 2)
@@ -2714,7 +2751,6 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, find, arginfo_find, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, findOne, arginfo_find_one, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, findAndModify, arginfo_findandmodify, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCollection, commandCursor, arginfo_commandcursor, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, createIndex, arginfo_createIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, ensureIndex, arginfo_ensureIndex, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, deleteIndex, arginfo_deleteIndex, ZEND_ACC_PUBLIC)
@@ -2728,6 +2764,7 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, group, arginfo_group, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, distinct, arginfo_distinct, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, aggregate, arginfo_aggregate, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCollection, aggregateCursor, arginfo_aggregatecursor, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };
 
