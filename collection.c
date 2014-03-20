@@ -2399,6 +2399,8 @@ PHP_METHOD(MongoCollection, group)
 {
 	zval *key, *initial, *options = 0, *group, *cmd, *reduce;
 	zval *retval;
+	zval **maxtimems = 0;
+	mongo_connection *used_connection;
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	mongo_db *db;
 
@@ -2455,7 +2457,12 @@ PHP_METHOD(MongoCollection, group)
 			add_assoc_zval(group, "finalize", *finalize);
 			zval_add_ref(finalize);
 		}
-		if (!condition && !finalize) {
+
+		/* The maxTimeMS option needs to be added to the cmd object, not group.
+		 * Check now, but add it to cmd later if the pointer is not null. */
+		zend_hash_find(HASH_P(options), "maxTimeMS", strlen("maxTimeMS") + 1, (void**)&maxtimems);
+
+		if (!condition && !finalize && !maxtimems) {
 			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Implicitly passing condition as $options will be removed in the future");
 			add_assoc_zval(group, "cond", options);
 			zval_add_ref(&options);
@@ -2469,7 +2476,16 @@ PHP_METHOD(MongoCollection, group)
 	array_init(cmd);
 	add_assoc_zval(cmd, "group", group);
 
-	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	if (maxtimems) {
+		add_assoc_zval(cmd, "maxTimeMS", *maxtimems);
+		zval_add_ref(maxtimems);
+	}
+
+	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, &used_connection TSRMLS_CC);
+
+	if (php_mongo_trigger_error_on_command_failure(used_connection, retval TSRMLS_CC) == FAILURE) {
+		RETVAL_FALSE;
+	}
 
 	zval_ptr_dtor(&cmd);
 	zval_ptr_dtor(&reduce);
