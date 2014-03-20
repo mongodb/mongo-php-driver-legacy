@@ -1319,19 +1319,23 @@ PHP_METHOD(MongoCollection, findAndModify)
 PHP_METHOD(MongoCollection, commandCursor)
 {
 	zval *command = NULL;
-	mongo_collection *c;
 	mongo_cursor *cmd_cursor;
+	mongo_collection *c;
+	char *hash;
+	int hash_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &command) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "as", &command, &hash, &hash_len) == FAILURE) {
 		return;
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
+
+
 	object_init_ex(return_value, mongo_ce_CommandCursor);
 
 	cmd_cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
-	mongo_command_cursor_init(cmd_cursor, Z_STRVAL_P(c->ns), c->link, command TSRMLS_CC);
+	mongo_command_cursor_init_from_document(c->link, cmd_cursor, hash, command TSRMLS_CC);
 
 	/* Add read preferences to cursor, overriding the one set on the link */
 	mongo_read_preference_replace(&c->read_pref, &cmd_cursor->read_pref);

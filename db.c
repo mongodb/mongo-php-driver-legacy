@@ -799,7 +799,7 @@ static int is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
  * check for NULL and/or EG(exception) in the calling function. */
 zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int is_cmd_cursor, mongo_connection **used_connection TSRMLS_DC)
 {
-	zval *temp, *cursor, *ns, *retval;
+	zval *temp, *cursor, *ns, *retval, **tmp;
 	mongo_cursor *cursor_tmp;
 	mongoclient *link;
 	char *cmd_ns;
@@ -883,6 +883,10 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	 * Yes, this is quite ugly but necessary for cursor commands. */
 	if (used_connection) {
 		*used_connection = cursor_tmp->connection;
+	}
+
+	if (Z_TYPE_P(retval) == IS_ARRAY && zend_hash_find(Z_ARRVAL_P(retval), "cursor", sizeof("cursor"), (void **)&tmp) == SUCCESS) {
+		add_assoc_string(retval, "hash", cursor_tmp->connection->hash, 1);
 	}
 
 	zend_objects_store_del_ref(cursor TSRMLS_CC);
