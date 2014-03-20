@@ -9,16 +9,7 @@ require_once "tests/utils/server.inc";
 $host = MongoShellServer::getStandaloneInfo();
 $mc = new MongoClient($host);
 
-$result = $mc->admin->command(array(
-    'configureFailPoint' => 'maxTimeAlwaysTimeOut',
-    'mode' => array('times' => 1),
-));
-
-if ( ! empty($result['ok'])) {
-    printf("Activated maxTimeAlwaysTimeOut fail point\n");
-} else {
-    printf("Error setting maxTimeAlwaysTimeOut fail point\n");
-}
+configureFailPoint($mc, 'maxTimeAlwaysTimeOut', 1);
 
 $collection = $mc->selectCollection(dbname(), collname(__FILE__));
 $collection->drop();
@@ -46,7 +37,7 @@ try {
 ?>
 ===DONE===
 --EXPECTF--
-Activated maxTimeAlwaysTimeOut fail point
+Configured maxTimeAlwaysTimeOut fail point
 
 Querying without maxTimeMS
 Found 2 documents

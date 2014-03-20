@@ -9,16 +9,7 @@ require_once "tests/utils/server.inc";
 function setFailPoint() {
     global $mc;
 
-    $result = $mc->admin->command(array(
-        'configureFailPoint' => 'maxTimeAlwaysTimeOut',
-        'mode' => array('times' => 1),
-    ));
-
-    if ( ! empty($result['ok'])) {
-        printf("Activated maxTimeAlwaysTimeOut fail point\n");
-    } else {
-        printf("Error setting maxTimeAlwaysTimeOut fail point\n");
-    }
+    configureFailPoint($mc, 'maxTimeAlwaysTimeOut', 1);
 }
 
 $ctx = stream_context_create(array(
@@ -54,7 +45,7 @@ try {
 --EXPECTF--
 Found document: 1
 Found document: 2
-Activated maxTimeAlwaysTimeOut fail point
+Configured maxTimeAlwaysTimeOut fail point
 exception class: MongoExecutionTimeoutException
 exception message: %s:%d: operation exceeded time limit
 exception code: 50
