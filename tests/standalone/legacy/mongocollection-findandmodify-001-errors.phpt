@@ -47,10 +47,11 @@ try {
         )
     );
 } catch(MongoResultException $e) {
-    echo $e->getCode(), " : ", $e->getMessage(), "\n";
+    printf("exception message: %s\n", $e->getMessage());
+    printf("exception code: %d\n", $e->getCode());
     $res = $e->getDocument();
     dump_these_keys($res["lastErrorObject"], array('err', 'code', 'n', 'connectionId', 'ok'));
-    var_dump($res["errmsg"], $res["ok"]);
+    dump_these_keys($res, array('errmsg', 'ok'));
 }
 
 
@@ -62,8 +63,9 @@ try {
          array("new" => true)
     );
 } catch(MongoResultException $e) {
-    echo $e->getCode(), " : ", $e->getMessage(), "\n";
-    var_dump($e->getDocument());
+    printf("exception message: %s\n", $e->getMessage());
+    printf("exception code: %d\n", $e->getCode());
+    dump_these_keys($e->getDocument(), array('errmsg', 'code', 'ok'));
 }
 
 
@@ -79,22 +81,24 @@ try {
     $col->remove();
 
 } catch(MongoResultException $e) {
-    echo $e->getCode(), " : ", $e->getMessage(), "\n";
-    var_dump($e->getDocument());
+    printf("exception message: %s\n", $e->getMessage());
+    printf("exception code: %d\n", $e->getCode());
+    dump_these_keys($e->getDocument(), array('errmsg', 'code', 'ok'));
 }
 
 try {
     $retval = $col->findAndModify(null);
     var_dump($retval);
 } catch(MongoResultException $e) {
-    echo $e->getCode(), " : ", $e->getMessage(), "\n";
-    $res = $e->getDocument();
-    var_dump($res["errmsg"], $res["ok"]);
+    printf("exception message: %s\n", $e->getMessage());
+    printf("exception code: %d\n", $e->getCode());
+    dump_these_keys($e->getDocument(), array('errmsg', 'ok'));
 }
 
 ?>
 --EXPECTF--
-2 : %s
+exception message: %s:%d: %s
+exception code: 2
 array(5) {
   ["err"]=>
   string(%d) "%s"
@@ -107,9 +111,14 @@ array(5) {
   ["ok"]=>
   float(1)
 }
-string(%d) "%s"
-float(0)
-13097 : exception: Unsupported projection option: $pop
+array(2) {
+  ["errmsg"]=>
+  string(%d) "%s"
+  ["ok"]=>
+  float(0)
+}
+exception message: %s:%d: exception: Unsupported projection option: $pop
+exception code: 13097
 array(3) {
   ["errmsg"]=>
   string(46) "exception: Unsupported projection option: $pop"
@@ -118,7 +127,8 @@ array(3) {
   ["ok"]=>
   float(0)
 }
-12515 : exception: can't remove and update
+exception message: %s:%d: exception: can't remove and update
+exception code: 12515
 array(3) {
   ["errmsg"]=>
   string(34) "exception: can't remove and update"
@@ -127,6 +137,11 @@ array(3) {
   ["ok"]=>
   float(0)
 }
-2 : need remove or update
-string(21) "need remove or update"
-float(0)
+exception message: %s:%d: need remove or update
+exception code: 2
+array(2) {
+  ["errmsg"]=>
+  string(21) "need remove or update"
+  ["ok"]=>
+  float(0)
+}

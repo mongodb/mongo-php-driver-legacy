@@ -85,9 +85,10 @@ try {
     $retval = $col->findAndModify(null);
     var_dump($retval);
 } catch(MongoResultException $e) {
-    echo $e->getCode(), " ", $e->getMessage(), "\n";
+    printf("exception message: %s\n", $e->getMessage());
+    printf("exception code: %d\n", $e->getCode());
     $err = $e->getDocument();
-    var_dump($err["errmsg"], $err["ok"]);
+    dump_these_keys($err, array('ok', 'errmsg'));
 }
 
 ?>
@@ -175,6 +176,11 @@ array(5) {
     string(12) "email report"
   }
 }
-2 need remove or update
-string(21) "need remove or update"
-float(0)
+exception message: %s:%d: need remove or update
+exception code: 2
+array(2) {
+  ["ok"]=>
+  float(0)
+  ["errmsg"]=>
+  string(21) "need remove or update"
+}
