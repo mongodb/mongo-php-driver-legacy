@@ -100,6 +100,12 @@ static int php_mongo_command_supports_rp(zval *cmd)
 		}
 		return 0;
 	}
+	if (str_len == 23) {
+		if (strcmp(str, "parallelCollectionScan") == 0) {
+			return 1;
+		}
+		return 0;
+	}
 
 	return 0;
 }
@@ -886,6 +892,8 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	}
 
 	if (Z_TYPE_P(retval) == IS_ARRAY && zend_hash_find(Z_ARRVAL_P(retval), "cursor", sizeof("cursor"), (void **)&tmp) == SUCCESS) {
+		add_assoc_string(retval, "hash", cursor_tmp->connection->hash, 1);
+	} else if (Z_TYPE_P(retval) == IS_ARRAY && zend_hash_find(Z_ARRVAL_P(retval), "cursors", sizeof("cursors"), (void **)&tmp) == SUCCESS) {
 		add_assoc_string(retval, "hash", cursor_tmp->connection->hash, 1);
 	}
 

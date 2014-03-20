@@ -2517,6 +2517,79 @@ PHP_METHOD(MongoCollection, __get)
 }
 /* }}} */
 
+/* {{{ proto array MongoCollection::parallelCollectionScan(int numCursors)
+   Returns . */
+PHP_METHOD(MongoCollection, parallelCollectionScan)
+{
+	zval *options = NULL;
+	long num_cursors = 0;
+	mongo_db *db;
+	mongo_connection *connection;
+	mongo_collection *c;
+	zval *cmd, *document;
+	zval **cursor_desc, **hash_info;
+	mongo_cursor *cmd_cursor;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|a", &num_cursors, &options) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_DB(c->parent);
+
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_zval(cmd, "parallelCollectionScan", c->name);
+	add_assoc_long(cmd, "numCursors", num_cursors);
+	zval_add_ref(&c->name);
+
+	document = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, &connection TSRMLS_CC);
+	zval_ptr_dtor(&cmd);
+	if (php_mongo_trigger_error_on_command_failure(connection, document TSRMLS_CC) == FAILURE) {
+		return;
+	}
+
+	if (zend_hash_find(Z_ARRVAL_P(document), "cursors", sizeof("cursors"), (void **)&cursor_desc) == FAILURE || Z_TYPE_PP(cursor_desc) != IS_ARRAY) {
+		zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Invalid cursor description");
+		return;
+	}
+
+	if (zend_hash_find(Z_ARRVAL_P(document), "hash", sizeof("hash"), (void **)&hash_info) == FAILURE || Z_TYPE_PP(hash_info) != IS_STRING) {
+		zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Invalid hash description");
+		return;
+	} else {
+		HashPosition pointer;
+		zval **cursor_doc;
+
+		array_init(return_value);
+		for (
+				zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(cursor_desc), &pointer);
+				zend_hash_get_current_data_ex(Z_ARRVAL_PP(cursor_desc), (void**)&cursor_doc, &pointer) == SUCCESS;
+				zend_hash_move_forward_ex(Z_ARRVAL_PP(cursor_desc), &pointer)
+			) {
+			zval *zcursor, **cursor_desc;
+
+			if (Z_TYPE_PP(cursor_doc) != IS_ARRAY) {
+				continue;
+			}
+			if (zend_hash_find(Z_ARRVAL_PP(cursor_doc), "cursor", sizeof("cursor"), (void **)&cursor_desc) == FAILURE || Z_TYPE_PP(cursor_desc) != IS_ARRAY) {
+				zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Invalid cursor description");
+				return;
+			}
+
+
+			MAKE_STD_ZVAL(zcursor);
+			object_init_ex(zcursor, mongo_ce_CommandCursor);
+
+			cmd_cursor = (mongo_cursor*)zend_object_store_get_object(zcursor TSRMLS_CC);
+			mongo_command_cursor_init_from_document(c->link, cmd_cursor, Z_STRVAL_PP(hash_info), *cursor_desc TSRMLS_CC);
+			Z_ADDREF_P(zcursor);
+
+			add_next_index_zval(return_value, zcursor);
+		}
+	}
+}
+/* }}} */
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, database, MongoDB, 0)
@@ -2643,6 +2716,11 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregate, 0, 0, 1)
 	ZEND_ARG_INFO(0, ...)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_parallelcollectionscan, 0, 0, 1)
+	ZEND_ARG_INFO(0, numCursors)
+	ZEND_ARG_ARRAY_INFO(0, optionas, 0)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, __toString, arginfo_no_parameters, ZEND_ACC_PUBLIC)
@@ -2677,6 +2755,7 @@ static zend_function_entry MongoCollection_methods[] = {
 	PHP_ME(MongoCollection, group, arginfo_group, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, distinct, arginfo_distinct, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCollection, aggregate, arginfo_aggregate, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCollection, parallelCollectionScan, arginfo_parallelcollectionscan, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };
 
