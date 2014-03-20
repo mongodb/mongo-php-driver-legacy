@@ -2328,6 +2328,7 @@ void php_mongodb_aggregate(zval *pipeline, zval *options, mongo_db *db, mongo_co
 	zval **op;
 	zval *cmd;
 	zval *retval;
+	mongo_connection *connection;
 
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);
@@ -2358,12 +2359,13 @@ void php_mongodb_aggregate(zval *pipeline, zval *options, mongo_db *db, mongo_co
 		zend_hash_merge(HASH_P(cmd), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 	}
 
-	retval = php_mongo_runcommand(collection->link, &collection->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(collection->link, &collection->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, &connection TSRMLS_CC);
+	if (php_mongo_trigger_error_on_command_failure(connection, retval TSRMLS_CC) == SUCCESS) {
+		RETVAL_ZVAL(retval, 0, 1);
+	}
 
 	collection->read_pref.type = original_rp;
 	zval_ptr_dtor(&cmd);
-
-	RETVAL_ZVAL(retval, 0, 1);
 }
 
 /* {{{ proto array MongoCollection::aggregate(array pipeline [, array  options ])

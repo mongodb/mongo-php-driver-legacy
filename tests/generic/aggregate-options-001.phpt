@@ -33,14 +33,20 @@ $retval = $c->aggregate(array($group, $project), array("explain" => true));
 var_dump($retval);
 
 echo "Multiple pipelines with invalid pipe operator explain\n";
-$retval = $c->aggregate($group, array("explain" => true));
-var_dump($retval);
+try {
+    $retval = $c->aggregate($group, array("explain" => true));
+    var_dump($retval);
+    echo "FAILED - THAT SHOULD HAVE THROWN EXCEPTION\n";
+} catch(MongoResultException $e) {
+    echo $e->getMessage(), "\n";
+}
+
 
 
 ?>
 ===DONE==
 <?php exit(0) ?>
---EXPECT--
+--EXPECTF--
 pipeline array
 array(2) {
   ["result"]=>
@@ -208,12 +214,5 @@ array(2) {
   float(1)
 }
 Multiple pipelines with invalid pipe operator explain
-array(3) {
-  ["errmsg"]=>
-  string(54) "exception: Unrecognized pipeline stage name: 'explain'"
-  ["code"]=>
-  int(16436)
-  ["ok"]=>
-  float(0)
-}
+%s:%d: exception: Unrecognized pipeline stage name: 'explain'
 ===DONE==
