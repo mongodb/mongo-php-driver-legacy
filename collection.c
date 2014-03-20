@@ -2284,23 +2284,112 @@ PHP_METHOD(MongoCollection, toIndexString)
 }
 /* }}} */
 
-/* {{{ proto array MongoCollection::aggregate(array pipeline, [, array op [, ...]])
+/*
+  php_mongo_is_numeric_array() is borrowed, slightly modifieid, from ext/json
+  json_determine_array_type()
+*/
+static int php_mongo_is_numeric_array(zval *val TSRMLS_DC)
+{
+	int i;
+	HashTable *myht = HASH_OF(val);
+
+	i = myht ? zend_hash_num_elements(myht) : 0;
+	if (i > 0) {
+		char *key;
+		ulong index, idx;
+		uint key_len;
+		HashPosition pos;
+
+		zend_hash_internal_pointer_reset_ex(myht, &pos);
+		idx = 0;
+		for (;; zend_hash_move_forward_ex(myht, &pos)) {
+			i = zend_hash_get_current_key_ex(myht, &key, &key_len, &index, 0, &pos);
+			if (i == HASH_KEY_NON_EXISTANT) {
+				break;
+			}
+
+			if (i == HASH_KEY_IS_STRING) {
+				return FAILURE;
+			} else {
+				if (index != idx) {
+					return FAILURE;
+				}
+			}
+			idx++;
+		}
+	}
+
+	return SUCCESS;
+}
+
+void php_mongodb_aggregate(zval *pipeline, zval *options, mongo_db *db, mongo_collection *collection, zval *return_value TSRMLS_DC)
+{
+	int original_rp;
+	zval **op;
+	zval *cmd;
+	zval *retval;
+
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+
+	add_assoc_zval(cmd, "aggregate", collection->name);
+	add_assoc_zval(cmd, "pipeline", pipeline);
+	zval_add_ref(&collection->name);
+	zval_add_ref(&pipeline);
+
+
+	original_rp = collection->read_pref.type;
+	zend_hash_internal_pointer_reset(HASH_OF(pipeline));
+	while (zend_hash_get_current_data(HASH_OF(pipeline), (void **)&op) == SUCCESS) {
+		if (zend_symtable_exists(Z_ARRVAL_PP(op), "$out", strlen("$out") + 1)) {
+			if (collection->read_pref.type > MONGO_RP_PRIMARY_PREFERRED) {
+				mongo_manager_log(MonGlo(manager), MLOG_RS, MLOG_WARN, "Forcing aggregate with $out to run on primary");
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Forcing aggregate with $out to run on primary");
+				collection->read_pref.type = MONGO_RP_PRIMARY;
+				break;
+			}
+		}
+		zend_hash_move_forward(HASH_OF(pipeline));
+	}
+	zend_hash_internal_pointer_reset(HASH_OF(pipeline));
+
+	if (options) {
+		zval *temp;
+		zend_hash_merge(HASH_P(cmd), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
+	}
+
+	retval = php_mongo_runcommand(collection->link, &collection->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+
+	collection->read_pref.type = original_rp;
+	zval_ptr_dtor(&cmd);
+
+	RETVAL_ZVAL(retval, 0, 1);
+}
+
+/* {{{ proto array MongoCollection::aggregate(array pipeline [, array  options ])
+       proto array MongoCollection::aggregate(array op [, array op [, array op]])
    Wrapper for aggregate command. The pipeline may be specified as a single
    array of operations or a variable number of operation arguments. Returns the
    database response for the command. Aggregation results will be stored in the
    "result" key of the response. */
 PHP_METHOD(MongoCollection, aggregate)
 {
-	zval ***argv, *pipeline, *cmd, *retval, *tmp;
-	int argc, i, original_rp;
-	mongo_collection *c;
+	zval ***argv, *pipeline, *tmp, *options = NULL;
+	int argc, i;
+	mongo_collection *collection;
 	mongo_db *db;
 
-	zpp_var_args(argv, argc);
+	collection = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(collection->ns, MongoCollection);
+	PHP_MONGO_GET_DB(collection->parent);
 
-	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(c->ns, MongoCollection);
-	PHP_MONGO_GET_DB(c->parent);
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &pipeline, &options) == SUCCESS && php_mongo_is_numeric_array(pipeline TSRMLS_CC) == SUCCESS) {
+		php_mongodb_aggregate(pipeline, options, db, collection, return_value TSRMLS_CC);
+		return;
+	}
+
+	/* array, array, array, array, .... */
+	zpp_var_args(argv, argc);
 
 	for (i = 0; i < argc; i++) {
 		tmp = *argv[i];
@@ -2310,68 +2399,30 @@ PHP_METHOD(MongoCollection, aggregate)
 			return;
 		}
 	}
-	original_rp = c->read_pref.type;
 
-	MAKE_STD_ZVAL(cmd);
-	array_init(cmd);
+	MAKE_STD_ZVAL(pipeline);
+	array_init(pipeline);
 
-	add_assoc_zval(cmd, "aggregate", c->name);
-	zval_add_ref(&c->name);
-
-	/* If the single array argument contains a zeroth index, consider it an
-	 * array of pipeline operators. Otherwise, assume it is a single pipeline
-	 * operator and allow it to be wrapped in an array. */
-	if (argc == 1 && zend_hash_index_exists(Z_ARRVAL_PP(argv[0]), 0)) {
-		zval      **op;
-		HashTable  *ops = Z_ARRVAL_PP(argv[0]);
-		Z_ADDREF_PP(*argv);
-
-		zend_hash_internal_pointer_reset(ops);
-		while (zend_hash_get_current_data(ops, (void **)&op) == SUCCESS) {
-			if (zend_symtable_exists(Z_ARRVAL_PP(op), "$out", strlen("$out") + 1)) {
-				if (c->read_pref.type > MONGO_RP_PRIMARY_PREFERRED) {
-					mongo_manager_log(MonGlo(manager), MLOG_RS, MLOG_WARN, "Forcing aggregate with $out to run on primary");
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Forcing aggregate with $out to run on primary");
-					c->read_pref.type = MONGO_RP_PRIMARY;
-					break;
-				}
-			}
-			zend_hash_move_forward(ops);
+	for (i = 0; i < argc; i++) {
+		tmp = *argv[i];
+		Z_ADDREF_P(tmp);
+		if (zend_hash_next_index_insert(Z_ARRVAL_P(pipeline), &tmp, sizeof(zval*), NULL) == FAILURE) {
+			Z_DELREF_P(tmp);
+			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create pipeline array");
+			efree(argv);
+			RETURN_FALSE;
 		}
-		zend_hash_internal_pointer_reset(ops);
-
-		add_assoc_zval(cmd, "pipeline", **argv);
-	} else {
-		MAKE_STD_ZVAL(pipeline);
-		array_init(pipeline);
-
-		for (i = 0; i < argc; i++) {
-			tmp = *argv[i];
-			Z_ADDREF_P(tmp);
-			if (zend_hash_next_index_insert(Z_ARRVAL_P(pipeline), &tmp, sizeof(zval*), NULL) == FAILURE) {
-				Z_DELREF_P(tmp);
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create pipeline array");
-				efree(argv);
-				RETURN_FALSE;
-			}
-			if (zend_symtable_exists(Z_ARRVAL_P(tmp), "$out", strlen("$out") + 1)) {
-				if (c->read_pref.type > MONGO_RP_PRIMARY_PREFERRED) {
-					mongo_manager_log(MonGlo(manager), MLOG_RS, MLOG_WARN, "Forcing aggregate with $out to run on primary");
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Forcing aggregate with $out to run on primary");
-					c->read_pref.type = MONGO_RP_PRIMARY;
-				}
+		if (zend_symtable_exists(Z_ARRVAL_P(tmp), "$out", strlen("$out") + 1)) {
+			if (collection->read_pref.type > MONGO_RP_PRIMARY_PREFERRED) {
+				mongo_manager_log(MonGlo(manager), MLOG_RS, MLOG_WARN, "Forcing aggregate with $out to run on primary");
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Forcing aggregate with $out to run on primary");
+				collection->read_pref.type = MONGO_RP_PRIMARY;
 			}
 		}
-		add_assoc_zval(cmd, "pipeline", pipeline);
 	}
+	php_mongodb_aggregate(pipeline, NULL, db, collection, return_value TSRMLS_CC);
+	zval_ptr_dtor(&pipeline);
 	efree(argv);
-
-	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
-
-	c->read_pref.type = original_rp;
-	zval_ptr_dtor(&cmd);
-
-	RETVAL_ZVAL(retval, 0, 1);
 }
 /* }}} */
 
