@@ -53,11 +53,6 @@ ZEND_END_ARG_INFO()
 
 void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, zval *zlink, mongo_connection *connection, zval *first_batch, char *ns, int64_t id TSRMLS_DC)
 {
-	mongoclient *link;
-
-	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
-
-
 	/* MongoClient instance */
 	cmd_cursor->zmongoclient = zlink;
 	zval_add_ref(&zlink);
@@ -77,9 +72,6 @@ void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, zval *zlink, mo
 
 	/* flags */
 	php_mongo_cursor_force_command_cursor(cmd_cursor);
-
-	/* Pick up read preferences from link as initial setting */
-	mongo_read_preference_replace(&link->servers->read_pref, &cmd_cursor->read_pref);
 }
 
 int mongo_extract_cursor_ns_and_id(zval *cursordoc, char **ns, int64_t *id)
