@@ -39,7 +39,7 @@ foreach ($c as $key => $record) {
 string(24) "5%s"
 array(2) {
   ["_id"]=>
-  object(MongoId)#8 (1) {
+  object(MongoId)#%d (1) {
     ["$id"]=>
     string(24) "5%s"
   }
