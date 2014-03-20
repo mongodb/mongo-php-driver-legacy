@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-914: MongoConnection::aggregate() needs an explain facility
 --SKIPIF--
+<?php $needs = "2.5.5"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
