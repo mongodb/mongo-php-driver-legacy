@@ -116,7 +116,7 @@ array(6) {
 }
 string(%d) "%s"
 float(0)
-13097 : exception: Unsupported projection option: $pop
+13097 %s:%d: exception: Unsupported projection option: $pop
 array(3) {
   ["errmsg"]=>
   string(46) "exception: Unsupported projection option: $pop"
@@ -125,7 +125,7 @@ array(3) {
   ["ok"]=>
   float(0)
 }
-12515 : exception: can't remove and update
+12515 %s:%d: exception: can't remove and update
 array(3) {
   ["errmsg"]=>
   string(34) "exception: can't remove and update"
@@ -134,6 +134,6 @@ array(3) {
   ["ok"]=>
   float(0)
 }
-2 : need remove or update
+2 %s:%d: need remove or update
 string(21) "need remove or update"
 float(0)
