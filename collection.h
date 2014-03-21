@@ -47,6 +47,7 @@ PHP_METHOD(MongoCollection, save);
 PHP_METHOD(MongoCollection, createDBRef);
 PHP_METHOD(MongoCollection, getDBRef);
 PHP_METHOD(MongoCollection, toIndexString);
+PHP_METHOD(MongoCollection, parallelCollectionScan);
 PHP_METHOD(MongoCollection, group);
 
 #endif /* MONGO_COLLECTION_H */

@@ -17,7 +17,8 @@
 #define __MONGO_CURSOR_H__ 1
 
 void mongo_init_MongoCommandCursor(TSRMLS_D);
-void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval *zlink, zval *zcommand TSRMLS_DC);
+int mongo_extract_cursor_ns_and_id(zval *cursordoc, char **ns, int64_t *id);
+void mongo_command_cursor_init_from_document(zval *link, mongo_command_cursor *cmd_cursor, char *hash, zval *cursordoc);
 #endif
 
 /*

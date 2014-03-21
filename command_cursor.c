@@ -22,6 +22,7 @@
 #include "cursor.h"
 #include "cursor_shared.h"
 #include "command_cursor.h"
+#include "mcon/manager.h"
 #include "db.h"
 #include "log_stream.h"
 
@@ -37,10 +38,10 @@ zend_class_entry *mongo_ce_CommandCursor = NULL;
 
 #define MONGO_DEFAULT_COMMAND_BATCH_SIZE 101
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 3)
 	ZEND_ARG_OBJ_INFO(0, connection, MongoClient, 0)
-	ZEND_ARG_INFO(0, database_and_collection_name)
-	ZEND_ARG_INFO(0, query)
+	ZEND_ARG_INFO(0, server_hash)
+	ZEND_ARG_ARRAY_INFO(0, cursordoc, 0)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
@@ -50,183 +51,108 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VA
 	ZEND_ARG_INFO(0, number)
 ZEND_END_ARG_INFO()
 
-void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval *zlink, zval *zcommand TSRMLS_DC)
+void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, zval *zlink, mongo_connection *connection, zval *first_batch, char *ns, int64_t id TSRMLS_DC)
 {
-	mongoclient *link;
-
-	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
-
-	/* ns */
-	cmd_cursor->ns = estrdup(ns);
-
-	/* db connection */
+	/* MongoClient instance */
 	cmd_cursor->zmongoclient = zlink;
 	zval_add_ref(&zlink);
-
-	/* query */
-	cmd_cursor->query = zcommand;
-	zval_add_ref(&zcommand);
 
 	/* reset iteration pointer and flags */
 	php_mongo_cursor_reset((mongo_cursor*)cmd_cursor TSRMLS_CC);
 	cmd_cursor->special = 0;
 
-	/* flags */
-	php_mongo_cursor_force_command_cursor(cmd_cursor);
-
-	/* Pick up read preferences from link as initial setting */
-	mongo_read_preference_replace(&link->servers->read_pref, &cmd_cursor->read_pref);
-}
-
-/* {{{ MongoCommandCursor::__construct(MongoClient connection, string ns, array query)
-   Constructs a MongoCommandCursor */
-PHP_METHOD(MongoCommandCursor, __construct)
-{
-	zval *zlink = NULL, *zcommand = NULL;
-	char *ns;
-	int   ns_len;
-	mongo_command_cursor *cmd_cursor;
-	mongoclient *link;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Osa", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zcommand) == FAILURE) {
-		return;
-	}
-
-	if (!php_mongo_is_valid_namespace(ns, ns_len)) {
-		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
-		return;
-	}
-
-	cmd_cursor = (mongo_command_cursor*) zend_object_store_get_object(getThis() TSRMLS_CC);
-	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(link->manager, MongoClient);
-
-	mongo_command_cursor_init(cmd_cursor, ns, zlink, zcommand TSRMLS_CC);
-}
-/* }}} */
-
-static int get_batch_size_from_command(zval *command TSRMLS_DC)
-{
-	int    size = MONGO_DEFAULT_COMMAND_BATCH_SIZE;
-	zval **zcursor, **zbatchsize;
-
-	if (Z_TYPE_P(command) != IS_ARRAY) {
-		goto end;
-	}
-
-	if (zend_hash_find(HASH_P(command), "cursor", 7, (void**) &zcursor) == FAILURE) {
-		goto end;
-	}
-
-	if (Z_TYPE_PP(zcursor) != IS_ARRAY) {
-		goto end;
-	}
-
-	if (zend_hash_find(HASH_PP(zcursor), "batchSize", 10, (void**) &zbatchsize) == FAILURE) {
-		goto end;
-	}
-
-	convert_to_long_ex(zbatchsize);
-	size = Z_LVAL_PP(zbatchsize);
-
-end:
-	return size;
-}
-
-static void enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
-{
-	zval **zcursor, **zbatchsize;
-
-	if (Z_TYPE_P(command) != IS_ARRAY) {
-		/* Technically we can not hit this, as the command should be an
-		 * array, but this is just here as a precaution. */
-		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 32 TSRMLS_CC, "The cursor command structure is not an array");
-		return;
-	}
-
-	if (zend_hash_find(HASH_P(command), "cursor", 7, (void**) &zcursor) == FAILURE) {
-		zval *tmp_cursor;
-
-		MAKE_STD_ZVAL(tmp_cursor);
-		array_init(tmp_cursor);
-		zcursor = &tmp_cursor;
-
-		add_assoc_zval(command, "cursor", tmp_cursor);
-	}
-
-	if (Z_TYPE_PP(zcursor) != IS_ARRAY) {
-		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 32 TSRMLS_CC, "The cursor command's 'cursor' element is not an array");
-		return;
-	}
-
-	if (zend_hash_find(HASH_PP(zcursor), "batchSize", 10, (void**) &zbatchsize) == FAILURE) {
-		zval *tmp_batchsize;
-
-		MAKE_STD_ZVAL(tmp_batchsize);
-		ZVAL_LONG(tmp_batchsize, size);
-		zbatchsize = &tmp_batchsize;
-
-		add_assoc_zval(*zcursor, "batchSize", tmp_batchsize);
-	}
-}
-
-/* {{{ array MongoCommandCursor::rewind()
-   Resets the command cursor, executes the associated query and prepares the iterator. Returns the raw command document */
-PHP_METHOD(MongoCommandCursor, rewind)
-{
-	char *dbname;
-	zval *result;
-	int64_t cursor_id;
-	zval *exception;
-	zval *first_batch;
-	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
-	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
-
-	php_mongo_cursor_reset((mongo_cursor*)cmd_cursor TSRMLS_CC);
-
-	/* reads the batchsize through the command, or uses 101 when nothing is set */
-	cmd_cursor->batch_size = get_batch_size_from_command(cmd_cursor->query TSRMLS_CC);
-	enforce_batch_size_on_command(cmd_cursor->query, cmd_cursor->batch_size TSRMLS_CC);
-	if (EG(exception)) {
-		return;
-	}
-
-	/* do query */
-	php_mongo_split_namespace(cmd_cursor->ns, &dbname, NULL);
-	result = php_mongo_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1, &cmd_cursor->connection TSRMLS_CC);
-	efree(dbname);
-
-	if (php_mongo_trigger_error_on_command_failure(cmd_cursor->connection, result TSRMLS_CC) == FAILURE) {
-		zval_ptr_dtor(&result);
-		return;
-	}
-
-	/* We need to parse the initial result, and see whether everything worked */
-	if (php_mongo_get_cursor_id(result, &cursor_id TSRMLS_CC) == FAILURE) {
-		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response (no ID)");
-		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), result TSRMLS_CC);
-		zval_ptr_dtor(&result);
-		return;
-	}
-
-	if (php_mongo_get_cursor_first_batch(result, &first_batch TSRMLS_CC) == FAILURE) {
-		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 31 TSRMLS_CC, "the command cursor did not return a correctly structured response (no first batch)");
-		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), result TSRMLS_CC);
-		zval_ptr_dtor(&result);
-		return;
-	}
-
-	cmd_cursor->started_iterating = 1;
-	cmd_cursor->cursor_id = cursor_id;
+	cmd_cursor->query = NULL;
+	cmd_cursor->connection = connection;
+	cmd_cursor->ns = estrdup(ns);
+	cmd_cursor->cursor_id = id;
 	cmd_cursor->first_batch = first_batch;
 	Z_ADDREF_P(first_batch);
 	cmd_cursor->first_batch_at = 0;
 	cmd_cursor->first_batch_num = HASH_OF(cmd_cursor->first_batch)->nNumOfElements;
 
-	/* We don't really *have* to return the value, but it makes testing easier,
-	 * and perhaps diagnostics as well. */
-	RETVAL_ZVAL(result, 0, 1);
+	/* flags */
+	php_mongo_cursor_force_command_cursor(cmd_cursor);
+}
+
+int mongo_extract_cursor_ns_and_id(zval *cursordoc, char **ns, int64_t *id)
+{
+	zval **zid, **zns;
+
+	if (zend_hash_find(Z_ARRVAL_P(cursordoc), "id", sizeof("id"), (void **)&zid) == FAILURE) {
+		return FAILURE;
+	}
+	convert_to_long_ex(zid);
+
+	if (zend_hash_find(Z_ARRVAL_P(cursordoc), "ns", sizeof("ns"), (void **)&zns) == FAILURE) {
+		return FAILURE;
+	}
+	convert_to_string_ex(zns);
+
+	*id = Z_LVAL_PP(zid);
+	*ns = Z_STRVAL_PP(zns);
+
+	return SUCCESS;
+}
+void mongo_command_cursor_init_from_document(zval *zlink, mongo_command_cursor *cmd_cursor, char *hash, zval *cursordoc)
+{
+	mongo_connection *connection;
+	mongoclient *link;
+	zval **first_batch;
+	char *ns;
+	int64_t id;
+
+	link = (mongoclient*)zend_object_store_get_object(zlink TSRMLS_CC);
+	if (!link) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
+		return;
+	}
+
+	connection = mongo_manager_connection_find_by_hash(link->manager, hash);
+	if (!connection) {
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "Cannot find connection associated with: '%s'", hash);
+		return;
+	}
+
+	if (zend_hash_find(Z_ARRVAL_P(cursordoc), "firstBatch", sizeof("firstBatch"), (void **)&first_batch) == FAILURE) {
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "Cursor description does not look real, missing firstBatch");
+		return;
+	}
+	if (mongo_extract_cursor_ns_and_id(cursordoc, &ns, &id) == FAILURE) {
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "Cursor description does not look real");
+		return;
+	}
+
+	mongo_command_cursor_init(cmd_cursor, zlink, connection, *first_batch, ns, id TSRMLS_CC);
+}
+
+/* {{{ MongoCommandCursor::__construct(MongoClient connection, string hash, array cursorsdoc)
+   Constructs a MongoCommandCursor */
+PHP_METHOD(MongoCommandCursor, __construct)
+{
+	zval *zlink = NULL, *cursordoc = NULL;
+	char *hash;
+	int   hash_len;
+	mongo_command_cursor *cmd_cursor;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Osa", &zlink, mongo_ce_MongoClient, &hash, &hash_len, &cursordoc) == FAILURE) {
+		return;
+	}
+
+	cmd_cursor = (mongo_command_cursor*) zend_object_store_get_object(getThis() TSRMLS_CC);
+	mongo_command_cursor_init_from_document(zlink, cmd_cursor, hash, cursordoc TSRMLS_CC);
+}
+/* }}} */
+
+/* {{{ array MongoCommandCursor::rewind()
+   Resets the command cursor, executes the associated query and prepares the iterator. Returns the raw command document */
+PHP_METHOD(MongoCommandCursor, rewind)
+{
+	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
+
+	cmd_cursor->started_iterating = 1;
+
+	RETURN_TRUE;
 }
 /* }}} */
 

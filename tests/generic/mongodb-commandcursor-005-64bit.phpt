@@ -5,7 +5,7 @@ MongoCommandCursor integer sizes
 <?php if (8 !== PHP_INT_SIZE) { die('skip Only for 64-bit platform'); } ?>
 --FILE--
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/server.inc";
 $dsn = MongoShellServer::getStandaloneInfo();
 $dbname = dbname();
 
@@ -25,8 +25,7 @@ function run_command($limit = 2, $batchSize = 1)
 {
 	global $m, $dbname;
 
-	$c = new MongoCommandCursor(
-		$m, "{$dbname}.cursorcmd",
+    $document = $m->selectDB($dbname)->command(
 		array(
 			'aggregate' => 'cursorcmd', 
 			'pipeline' => array( 
@@ -35,6 +34,9 @@ function run_command($limit = 2, $batchSize = 1)
 			), 
 			'cursor' => array( 'batchSize' => $batchSize )
 		)
+    );
+	$c = new MongoCommandCursor(
+		$m, $document["hash"], $document["cursor"]
 	);
 	return $c;
 }

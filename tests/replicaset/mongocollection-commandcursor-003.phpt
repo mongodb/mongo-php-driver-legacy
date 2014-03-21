@@ -4,7 +4,7 @@ MongoCollection::commandCursor (aggregate on secondary)
 <?php $needs = "2.5.3"; require_once "tests/utils/replicaset.inc";?>
 --FILE--
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/server.inc";
 $dbname = dbname();
 /*
 MongoLog::setLevel( MongoLog::ALL );
@@ -16,6 +16,7 @@ $command = array(
 	'pipeline' => array(
 		array( '$limit' => 2 )
 	),
+    "cursor" => (object)array(),
 );
 
 $rs = MongoShellServer::getReplicasetInfo();
@@ -33,7 +34,8 @@ $m->setReadPreference(MongoClient::RP_SECONDARY);
 $d = $m->selectDB($dbname);
 $c = $d->cursorcmd;
 
-$r = $c->commandCursor( $command );
+$document = $d->command($command);
+$r = $c->commandCursor( $document["cursor"], $document["hash"] );
 
 $r->rewind();
 $info = $r->info();
@@ -45,24 +47,14 @@ $d = $m->selectDB($dbname);
 $d->setReadPreference(MongoClient::RP_SECONDARY);
 $c = $d->cursorcmd;
 
-$r = $c->commandCursor( $command );
+$document = $d->command($command);
+$r = $c->commandCursor( $document["cursor"], $document["hash"] );
 
 $r->rewind();
 $info = $r->info();
 echo $info['connection_type_desc'], "\n";
 
-// ==== RP on MongoCollection
-$d = $m->selectDB($dbname);
-$c = $d->cursorcmd;
-$c->setReadPreference(MongoClient::RP_SECONDARY);
-
-$r = $c->commandCursor( $command );
-
-$r->rewind();
-$info = $r->info();
-echo $info['connection_type_desc'], "\n";
 ?>
 --EXPECT--
-SECONDARY
 SECONDARY
 SECONDARY

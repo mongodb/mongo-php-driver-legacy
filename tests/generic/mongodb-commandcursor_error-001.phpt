@@ -4,7 +4,7 @@ MongoCommandCursor: error in command
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/server.inc";
 $dsn = MongoShellServer::getStandaloneInfo();
 $dbname = dbname();
 
@@ -16,12 +16,10 @@ for ($i = 0; $i < 10; $i++) {
 	$d->cursorcmd->insert(array('article_id' => $i));
 }
 
-$c = new MongoCommandCursor(
-	$m, "{$dbname}.cursorcmd",
-	array( 'aggregate' => 'cursorcmd', 'pipeline' => array( array( '$limit' => 4 ), array( '$sort' => 1 ) ), 'cursor' => array('batchSize' => 2 ))
-);
-
 try {
+$document = $d->cursorcmd->aggregate(
+	array( array( '$limit' => 4 ), array( '$sort' => 1 ) ), array('cursor' => array('batchSize' => 2 ))
+);
 	foreach ($c as $key => $record) {
 		var_dump($key);
 		var_dump($record);
