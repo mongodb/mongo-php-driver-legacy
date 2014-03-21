@@ -194,9 +194,10 @@ MongoCollection
   Method find expects 2 parameters
     0: query (optional)
     1: fields (optional)
-  Method findOne expects 2 parameters
+  Method findOne expects 3 parameters
     0: query (optional)
     1: fields (optional)
+    2: options (optional)
   Method findAndModify expects 4 parameters
     0: query
     1: update (optional)

@@ -1222,28 +1222,62 @@ PHP_METHOD(MongoCollection, find)
 }
 /* }}} */
 
-/* {{{ proto array MongoCollection::findOne([array|object criteria [, array|object return_fields]])
+/* {{{ proto array MongoCollection::findOne([array|object criteria [, array|object return_fields [, array options]]])
    Return the first document that matches $criteria and use $return_fields as
    the projection. NULL will be returned if no document matches. */
 PHP_METHOD(MongoCollection, findOne)
 {
-	zval *query = 0, *fields = 0, *zcursor;
+	int find_num_args;
+	zval *query = 0, *fields = 0, *options = 0, *zcursor;
 	mongo_cursor *cursor;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zza", &query, &fields, &options) == FAILURE) {
 		return;
 	}
+
 	MUST_BE_ARRAY_OR_OBJECT(1, query);
 	MUST_BE_ARRAY_OR_OBJECT(2, fields);
 
 	MAKE_STD_ZVAL(zcursor);
-	MONGO_METHOD_BASE(MongoCollection, find)(ZEND_NUM_ARGS(), zcursor, NULL, getThis(), 0 TSRMLS_CC);
+	/* Do not pass third options argument (if present) to find() */
+	find_num_args = ZEND_NUM_ARGS() < 2 ? ZEND_NUM_ARGS() : 2;
+	MONGO_METHOD_BASE(MongoCollection, find)(find_num_args, zcursor, NULL, getThis(), 0 TSRMLS_CC);
 	PHP_MONGO_CHECK_EXCEPTION1(&zcursor);
 
 	PHP_MONGO_GET_CURSOR(zcursor);
 	php_mongo_cursor_set_limit(cursor, -1);
+
+	if (options) {
+		HashTable *hindex = HASH_P(options);
+		HashPosition pointer;
+		zval **data;
+		char *key;
+		uint key_type, index_key_len;
+		ulong index;
+
+		for (
+			zend_hash_internal_pointer_reset_ex(hindex, &pointer);
+			zend_hash_get_current_data_ex(hindex, (void**)&data, &pointer) == SUCCESS;
+			zend_hash_move_forward_ex(hindex, &pointer)
+		) {
+			key_type = zend_hash_get_current_key_ex(hindex, &key, &index_key_len, &index, NO_DUP, &pointer);
+
+			if (key_type == HASH_KEY_IS_LONG) {
+				continue;
+			}
+
+			if (zend_binary_strcasecmp(key, index_key_len, "maxTimeMS", strlen("maxTimeMS") + 1) == 0) {
+				convert_to_long_ex(data);
+				if ( ! php_mongo_cursor_add_option(cursor, "$maxTimeMS", *data TSRMLS_CC)) {
+					goto cleanup_on_failure;
+				}
+			}
+		}
+	}
+
 	MONGO_METHOD(MongoCursor, getNext, return_value, zcursor);
 
+cleanup_on_failure:
 	zend_objects_store_del_ref(zcursor TSRMLS_CC);
 	zval_ptr_dtor(&zcursor);
 }
@@ -2590,6 +2624,7 @@ ZEND_END_ARG_INFO()
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)
 	ZEND_ARG_INFO(0, fields)
+	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_findandmodify, 0, ZEND_RETURN_VALUE, 1)
