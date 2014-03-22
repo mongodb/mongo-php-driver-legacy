@@ -24,6 +24,7 @@
 #include "collection.h"
 #include "cursor.h"
 #include "cursor_shared.h"
+#include "command_cursor.h"
 #include "gridfs/gridfs.h"
 #include "types/code.h"
 #include "types/db_ref.h"
@@ -35,6 +36,7 @@
 #endif
 
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_Collection;
+extern zend_class_entry *mongo_ce_CommandCursor;
 extern zend_class_entry *mongo_ce_Cursor, *mongo_ce_GridFS, *mongo_ce_Id;
 extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_Int64;
@@ -97,6 +99,12 @@ static int php_mongo_command_supports_rp(zval *cmd)
 					}
 				}
 			}
+		}
+		return 0;
+	}
+	if (str_len == 23) {
+		if (strcmp(str, "parallelCollectionScan") == 0) {
+			return 1;
 		}
 		return 0;
 	}
@@ -780,6 +788,30 @@ PHP_METHOD(MongoDB, command)
 	}
 }
 
+/* {{{ proto MongoCommandCursor MongoCollection::commandCursor(array command)
+   Returns a command cursor after running the specified command. */
+PHP_METHOD(MongoDB, commandCursor)
+{
+	zval *command = NULL;
+	mongo_cursor *cmd_cursor;
+	mongo_db *db;
+	char *hash;
+	int hash_len;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "as", &command, &hash, &hash_len) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_DB(getThis());
+
+	object_init_ex(return_value, mongo_ce_CommandCursor);
+
+	cmd_cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
+	mongo_command_cursor_init_from_document(db->link, cmd_cursor, hash, command TSRMLS_CC);
+}
+/* }}} */
+
+
 static int is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
 {
 	if (
@@ -799,7 +831,7 @@ static int is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
  * check for NULL and/or EG(exception) in the calling function. */
 zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int is_cmd_cursor, mongo_connection **used_connection TSRMLS_DC)
 {
-	zval *temp, *cursor, *ns, *retval;
+	zval *temp, *cursor, *ns, *retval, **tmp;
 	mongo_cursor *cursor_tmp;
 	mongoclient *link;
 	char *cmd_ns;
@@ -883,6 +915,12 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	 * Yes, this is quite ugly but necessary for cursor commands. */
 	if (used_connection) {
 		*used_connection = cursor_tmp->connection;
+	}
+
+	if (Z_TYPE_P(retval) == IS_ARRAY && zend_hash_find(Z_ARRVAL_P(retval), "cursor", sizeof("cursor"), (void **)&tmp) == SUCCESS) {
+		add_assoc_string(retval, "hash", cursor_tmp->connection->hash, 1);
+	} else if (Z_TYPE_P(retval) == IS_ARRAY && zend_hash_find(Z_ARRVAL_P(retval), "cursors", sizeof("cursors"), (void **)&tmp) == SUCCESS) {
+		add_assoc_string(retval, "hash", cursor_tmp->connection->hash, 1);
 	}
 
 	zend_objects_store_del_ref(cursor TSRMLS_CC);
@@ -1148,6 +1186,12 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_command, 0, ZEND_RETURN_VALU
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_commandcursor, 0, ZEND_RETURN_VALUE, 2)
+	ZEND_ARG_ARRAY_INFO(0, command, 0)
+	ZEND_ARG_INFO(0, hash)
+ZEND_END_ARG_INFO()
+
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_authenticate, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, username)
 	ZEND_ARG_INFO(0, password)
@@ -1182,6 +1226,7 @@ static zend_function_entry MongoDB_methods[] = {
 	PHP_ME(MongoDB, getDBRef, arginfo_getDBRef, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, execute, arginfo_execute, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, command, arginfo_command, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoDB, commandCursor, arginfo_commandcursor, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, lastError, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, prevError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)

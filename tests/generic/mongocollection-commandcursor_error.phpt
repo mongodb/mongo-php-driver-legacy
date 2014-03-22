@@ -4,7 +4,7 @@ MongoCollection::commandCursor (broken cursor/batchsize structure)
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/server.inc";
 $dsn = MongoShellServer::getStandaloneInfo();
 $dbname = dbname();
 
@@ -18,20 +18,17 @@ for ($i = 0; $i < 10; $i++) {
 
 $c = $d->cursorcmd;
 
-$r = $c->commandCursor(
-	array(
-		'aggregate' => 'cursorcmd', 'pipeline' => array( array( '$limit' => 2 ) ),
-		'cursor' => 42
-	)
-);
 try {
-	foreach ($r as $key => $record) {}
-} catch (MongoCursorException $e) {
+$r = $c->aggregate(
+    array( array( '$limit' => 2 ) ),
+    array('cursor' => 42)
+);
+} catch (MongoResultException $e) {
 	echo $e->getCode(), "\n";
 	echo $e->getMessage(), "\n";
 }
 
 ?>
---EXPECT--
-32
-The cursor command's 'cursor' element is not an array
+--EXPECTF--
+16954
+%s:%d: exception: cursor field must be missing or an object

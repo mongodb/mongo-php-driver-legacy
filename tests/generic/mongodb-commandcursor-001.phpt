@@ -4,7 +4,7 @@ MongoCommandCursor rewind
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/server.inc";
 $dsn = MongoShellServer::getStandaloneInfo();
 $dbname = dbname();
 
@@ -16,57 +16,19 @@ for ($i = 0; $i < 10; $i++) {
 	$d->cursorcmd->insert(array('article_id' => $i));
 }
 
+$document = $d->cursorcmd->aggregate(array(), array('cursor' => array('batchSize' => 0 )));
 $c = new MongoCommandCursor(
-	$m, "{$dbname}.cursorcmd",
-	array( 'aggregate' => 'cursorcmd', 'cursor' => array('batchSize' => 0 ))
+	$m, $document["hash"], $document["cursor"]
 );
 $r = $c->rewind();
 var_dump($r);
 
 $c = new MongoCommandCursor(
-	$m, "{$dbname}.cursorcmd",
-	array( 'aggregate' => 'cursorcmd', 'cursor' => array('batchSize' => 2 ))
+	$m, $document["hash"], $document["cursor"]
 );
 $r = $c->rewind();
-var_dump($r['cursor']['firstBatch']);
+var_dump($r);
 ?>
---EXPECTF--
-array(2) {
-  ["cursor"]=>
-  array(3) {
-    ["id"]=>
-    object(MongoInt64)#%d (1) {
-      ["value"]=>
-      string(%d) "%d"
-    }
-    ["ns"]=>
-    string(14) "test.cursorcmd"
-    ["firstBatch"]=>
-    array(0) {
-    }
-  }
-  ["ok"]=>
-  float(1)
-}
-array(2) {
-  [0]=>
-  array(2) {
-    ["_id"]=>
-    object(MongoId)#%d (1) {
-      ["$id"]=>
-      string(24) "%s"
-    }
-    ["article_id"]=>
-    int(0)
-  }
-  [1]=>
-  array(2) {
-    ["_id"]=>
-    object(MongoId)#%d (1) {
-      ["$id"]=>
-      string(24) "%s"
-    }
-    ["article_id"]=>
-    int(1)
-  }
-}
+--EXPECT--
+bool(true)
+bool(true)

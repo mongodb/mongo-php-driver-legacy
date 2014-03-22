@@ -4,7 +4,7 @@ MongoCollection::commandCursor (without batchSize)
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
-require "tests/utils/server.inc";
+require_once "tests/utils/server.inc";
 $dsn = MongoShellServer::getStandaloneInfo();
 $dbname = dbname();
 
@@ -18,15 +18,17 @@ for ($i = 0; $i < 10; $i++) {
 
 $c = $d->cursorcmd;
 
-$r = $c->commandCursor(
+$document = $d->command(
 	array(
 		'aggregate' => 'cursorcmd',
 		'pipeline' => array(
 			array( '$limit' => 2 )
 		),
+        "cursor" => (object)array(),
 	)
 );
 
+$r = $d->commandCursor($document["cursor"], $document["hash"]);
 foreach ($r as $key => $record) {
 	var_dump($key);
 	var_dump($record);

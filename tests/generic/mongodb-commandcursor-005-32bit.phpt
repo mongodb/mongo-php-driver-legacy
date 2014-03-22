@@ -25,8 +25,7 @@ function run_command($limit = 2, $batchSize = 1)
 {
 	global $m, $dbname;
 
-	$c = new MongoCommandCursor(
-		$m, "{$dbname}.cursorcmd",
+    $document = $m->selectDB($dbname)->command(
 		array(
 			'aggregate' => 'cursorcmd', 
 			'pipeline' => array( 
@@ -35,6 +34,9 @@ function run_command($limit = 2, $batchSize = 1)
 			), 
 			'cursor' => array( 'batchSize' => $batchSize )
 		)
+    );
+	$c = new MongoCommandCursor(
+		$m, $document["hash"], $document["cursor"]
 	);
 	return $c;
 }

@@ -51,6 +51,7 @@ PHP_METHOD(MongoDB, createDBRef);
 PHP_METHOD(MongoDB, getDBRef);
 PHP_METHOD(MongoDB, execute);
 PHP_METHOD(MongoDB, command);
+PHP_METHOD(MongoDB, commandCursor);
 PHP_METHOD(MongoDB, lastError);
 PHP_METHOD(MongoDB, prevError);
 PHP_METHOD(MongoDB, resetError);
