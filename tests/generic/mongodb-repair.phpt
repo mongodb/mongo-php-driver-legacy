@@ -15,9 +15,14 @@ $db = $m->selectDb(dbname());
 var_dump($db->repair());
 ?>
 ===DONE===
---EXPECT--
-array(1) {
+--EXPECTF--
+array(2) {
   ["ok"]=>
   float(1)
+  ["$php"]=>
+  array(1) {
+    ["hash"]=>
+    string(%d) "%s:%d;-;.;%d"
+  }
 }
 ===DONE===

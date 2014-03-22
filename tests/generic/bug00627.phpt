@@ -26,12 +26,12 @@ var_dump($rs1 === $rs2);
 var_dump($rs2 === $rs3);
 var_dump($rs3 === $rs4);
 var_dump($rs1);
-
---EXPECT--
+?>
+--EXPECTF--
 bool(true)
 bool(true)
 bool(true)
-array(2) {
+array(3) {
   ["result"]=>
   array(1) {
     [0]=>
@@ -44,4 +44,9 @@ array(2) {
   }
   ["ok"]=>
   float(1)
+  ["$php"]=>
+  array(1) {
+    ["hash"]=>
+    string(%d) "%s:%d;-;.;%d"
+  }
 }
