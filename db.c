@@ -833,12 +833,9 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	/* limit: all commands need to have set a limit of -1 */
 	php_mongo_cursor_set_limit(cursor_tmp, -1);
 
-	/* Mark as a command cursor if requested. If done, this triggers special
-	 * BSON conversion to make sure that the cursor ID is represented as
-	 * MongoInt64. */
-	if (is_cmd_cursor) {
-		php_mongo_cursor_force_command_cursor(cursor_tmp);
-	}
+	/* Mark as a command cursor. If done, this triggers special BSON conversion
+	 * to make sure that the cursor ID is represented as MongoInt64. */
+	php_mongo_cursor_force_command_cursor(cursor_tmp);
 
 	zval_ptr_dtor(&temp);
 
@@ -883,6 +880,20 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	 * Yes, this is quite ugly but necessary for cursor commands. */
 	if (used_connection) {
 		*used_connection = cursor_tmp->connection;
+	}
+
+	/* Add the connection hash as return value as well, so we can pipe that
+	 * into MongoCommandCursor::createFromDocument(). In order to prevent
+	 * possible namespace clashes with the server, we're adding it as a meta
+	 * element around just "hash". This then also shows this element is not
+	 * coming from the server */
+	if (cursor_tmp->connection) {
+		zval *meta;
+
+		MAKE_STD_ZVAL(meta);
+		array_init(meta);
+		add_assoc_string(meta, "hash", cursor_tmp->connection->hash, 1);
+		add_assoc_zval(retval, "$php", meta);
 	}
 
 	zend_objects_store_del_ref(cursor TSRMLS_CC);

@@ -312,6 +312,10 @@ MongoCommandCursor
   Method next expects 0 parameters
   Method rewind expects 0 parameters
   Method valid expects 0 parameters
+  Method createFromDocument expects 3 parameters
+    0: connection
+    1: connection_hash
+    2: cursor_document
 
 MongoPool
   Method info expects 0 parameters

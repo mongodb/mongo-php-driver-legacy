@@ -453,6 +453,7 @@ typedef struct {
 	int64_t cursor_id;
 
 	zend_bool started_iterating;
+	zend_bool pre_created; /* Used for command cursors through createFromDocument */
 	zend_bool persist;
 
 	zval *current;
@@ -688,9 +689,9 @@ extern zend_module_entry mongo_module_entry;
  * 24: invalid code length for key "%s"
  * 28: recv_header() (abs()) recv_data() stream handlers error (timeout)
  * 29: Unknown query/get_more failure
- * 30: Cursor command response does not have the expected structure (no ID)
- * 31: Cursor command response does not have the expected structure (no first batch)
+ * 30: Cursor command response does not have the expected structure
  * 32: Cursor command structure is invalid
+ * 33: cannot iterate twice with command cursors created through createFromDocument
  *
  * MongoGridFSException:
  * 0: 

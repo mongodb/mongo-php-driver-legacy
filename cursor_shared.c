@@ -247,9 +247,9 @@ int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 	return SUCCESS;
 }
 
-int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
+int php_mongo_get_cursor_info(zval *document, int64_t *cursor_id, char **ns, zval **first_batch TSRMLS_DC)
 {
-	zval **cursor = NULL, **id = NULL;
+	zval **cursor = NULL, **id = NULL, **znamespace = NULL, **first = NULL;
 	zval  *id_value;
 
 	if (Z_TYPE_P(document) != IS_ARRAY) {
@@ -262,6 +262,8 @@ int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
 	if (Z_TYPE_PP(cursor) != IS_ARRAY) {
 		return FAILURE;
 	}
+
+	/* Cursor ID */
 	if (zend_hash_find(Z_ARRVAL_PP(cursor), "id", sizeof("id"), (void **)&id) == FAILURE) {
 		return FAILURE;
 	}
@@ -272,32 +274,27 @@ int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
 	if (Z_TYPE_P(id_value) != IS_STRING) {
 		return FAILURE;
 	}
-	*cursor_id = strtoll(Z_STRVAL_P(id_value), NULL, 10);
 
-	return SUCCESS;
-}
-
-int php_mongo_get_cursor_first_batch(zval *document, zval **first_batch TSRMLS_DC)
-{
-	zval **cursor = NULL, **first = NULL;
-
-	if (Z_TYPE_P(document) != IS_ARRAY) {
+	/* Namespace */
+	if (zend_hash_find(Z_ARRVAL_PP(cursor), "ns", sizeof("ns"), (void **)&znamespace) == FAILURE) {
+		return FAILURE;
+	}
+	if (Z_TYPE_PP(znamespace) != IS_STRING) {
 		return FAILURE;
 	}
 
-	if (zend_hash_find(Z_ARRVAL_P(document), "cursor", sizeof("cursor"), (void **)&cursor) == FAILURE) {
-		return FAILURE;
-	}
-	if (Z_TYPE_PP(cursor) != IS_ARRAY) {
-		return FAILURE;
-	}
+	/* First batch */
 	if (zend_hash_find(Z_ARRVAL_PP(cursor), "firstBatch", sizeof("firstBatch"), (void **)&first) == FAILURE) {
 		return FAILURE;
 	}
 	if (Z_TYPE_PP(first) != IS_ARRAY) {
 		return FAILURE;
 	}
+
+	/* Assign duplicates */
 	*first_batch = *first;
+	*ns = Z_STRVAL_PP(znamespace);
+	*cursor_id = strtoll(Z_STRVAL_P(id_value), NULL, 10);
 
 	return SUCCESS;
 }
