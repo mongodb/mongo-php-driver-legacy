@@ -2385,9 +2385,12 @@ PHP_METHOD(MongoCollection, aggregate)
 	MONGO_CHECK_INITIALIZED(collection->ns, MongoCollection);
 	PHP_MONGO_GET_DB(collection->parent);
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &pipeline, &options) == SUCCESS && php_mongo_is_numeric_array(pipeline TSRMLS_CC) == SUCCESS) {
-		php_mongodb_aggregate(pipeline, options, db, collection, return_value TSRMLS_CC);
-		return;
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &pipeline, &options) == SUCCESS) {
+		if (php_mongo_is_numeric_array(pipeline TSRMLS_CC) == SUCCESS) {
+			php_mongodb_aggregate(pipeline, options, db, collection, return_value TSRMLS_CC);
+			return;
+		}
+		/* If its not numeric array then we have $pipe, $pipe, $pipe, $pipe, ... */
 	}
 
 	/* array, array, array, array, .... */
