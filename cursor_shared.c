@@ -247,22 +247,32 @@ int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 	return SUCCESS;
 }
 
-int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
+int php_mongo_get_cursor_info_envelope(zval *document, zval **cursor TSRMLS_DC)
 {
-	zval **cursor = NULL, **id = NULL;
-	zval  *id_value;
+	zval **tmp;
 
 	if (Z_TYPE_P(document) != IS_ARRAY) {
 		return FAILURE;
 	}
 
-	if (zend_hash_find(Z_ARRVAL_P(document), "cursor", sizeof("cursor"), (void **)&cursor) == FAILURE) {
+	if (zend_hash_find(Z_ARRVAL_P(document), "cursor", sizeof("cursor"), (void **)&tmp) == FAILURE) {
 		return FAILURE;
 	}
-	if (Z_TYPE_PP(cursor) != IS_ARRAY) {
+	if (Z_TYPE_PP(tmp) != IS_ARRAY) {
 		return FAILURE;
 	}
-	if (zend_hash_find(Z_ARRVAL_PP(cursor), "id", sizeof("id"), (void **)&id) == FAILURE) {
+
+	*cursor = *tmp;
+	return SUCCESS;
+}
+
+int php_mongo_get_cursor_info(zval *cursor, int64_t *cursor_id, char **ns, zval **first_batch TSRMLS_DC)
+{
+	zval **id = NULL, **znamespace = NULL, **first = NULL;
+	zval  *id_value;
+
+	/* Cursor ID */
+	if (zend_hash_find(Z_ARRVAL_P(cursor), "id", sizeof("id"), (void **)&id) == FAILURE) {
 		return FAILURE;
 	}
 	if (Z_TYPE_PP(id) != IS_OBJECT || Z_OBJCE_PP(id) != mongo_ce_Int64) {
@@ -272,32 +282,27 @@ int php_mongo_get_cursor_id(zval *document, int64_t *cursor_id TSRMLS_DC)
 	if (Z_TYPE_P(id_value) != IS_STRING) {
 		return FAILURE;
 	}
-	*cursor_id = strtoll(Z_STRVAL_P(id_value), NULL, 10);
 
-	return SUCCESS;
-}
-
-int php_mongo_get_cursor_first_batch(zval *document, zval **first_batch TSRMLS_DC)
-{
-	zval **cursor = NULL, **first = NULL;
-
-	if (Z_TYPE_P(document) != IS_ARRAY) {
+	/* Namespace */
+	if (zend_hash_find(Z_ARRVAL_P(cursor), "ns", sizeof("ns"), (void **)&znamespace) == FAILURE) {
+		return FAILURE;
+	}
+	if (Z_TYPE_PP(znamespace) != IS_STRING) {
 		return FAILURE;
 	}
 
-	if (zend_hash_find(Z_ARRVAL_P(document), "cursor", sizeof("cursor"), (void **)&cursor) == FAILURE) {
-		return FAILURE;
-	}
-	if (Z_TYPE_PP(cursor) != IS_ARRAY) {
-		return FAILURE;
-	}
-	if (zend_hash_find(Z_ARRVAL_PP(cursor), "firstBatch", sizeof("firstBatch"), (void **)&first) == FAILURE) {
+	/* First batch */
+	if (zend_hash_find(Z_ARRVAL_P(cursor), "firstBatch", sizeof("firstBatch"), (void **)&first) == FAILURE) {
 		return FAILURE;
 	}
 	if (Z_TYPE_PP(first) != IS_ARRAY) {
 		return FAILURE;
 	}
+
+	/* Assign duplicates */
 	*first_batch = *first;
+	*ns = Z_STRVAL_PP(znamespace);
+	*cursor_id = strtoll(Z_STRVAL_P(id_value), NULL, 10);
 
 	return SUCCESS;
 }

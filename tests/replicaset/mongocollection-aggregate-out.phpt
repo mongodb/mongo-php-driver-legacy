@@ -85,21 +85,31 @@ $cout->drop();
 <?php exit(0); ?>
 --EXPECTF--
 Warning: MongoCollection::aggregate(): Forcing aggregate with $out to run on primary in %s on line %d
-array(2) {
+array(3) {
   ["result"]=>
   array(0) {
   }
   ["ok"]=>
   float(1)
+  ["$php"]=>
+  array(1) {
+    ["hash"]=>
+    string(%d) "%s:%d;REPLICASET;.;%d"
+  }
 }
 
 Warning: MongoCollection::aggregate(): Forcing aggregate with $out to run on primary in %s on line %d
-array(2) {
+array(3) {
   ["result"]=>
   array(0) {
   }
   ["ok"]=>
   float(1)
+  ["$php"]=>
+  array(1) {
+    ["hash"]=>
+    string(%d) "%s:%d;REPLICASET;.;%d"
+  }
 }
 array(2) {
   ["_id"]=>
