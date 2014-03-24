@@ -692,6 +692,7 @@ extern zend_module_entry mongo_module_entry;
  * 30: Cursor command response does not have the expected structure
  * 32: Cursor command structure is invalid
  * 33: cannot iterate twice with command cursors created through createFromDocument
+ * 34: Cursor structure is invalid
  *
  * MongoGridFSException:
  * 0: 
