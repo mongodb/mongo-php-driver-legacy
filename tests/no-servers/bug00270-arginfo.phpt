@@ -239,6 +239,9 @@ MongoCollection
     0: pipeline
     1: op (optional)
     2: ... (optional)
+  Method parallelCollectionScan expects 2 parameters
+    0: num_cursors
+    1: options (optional)
 
 MongoCursor
   Method __construct expects 4 parameters

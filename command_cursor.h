@@ -18,6 +18,7 @@
 
 void mongo_init_MongoCommandCursor(TSRMLS_D);
 void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval *zlink, zval *zcommand TSRMLS_DC);
+void php_mongo_command_cursor_init_from_document(zval *zlink, mongo_command_cursor *cmd_cursor, char *hash, zval *document TSRMLS_DC);
 #endif
 
 /*
