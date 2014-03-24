@@ -145,9 +145,10 @@ MongoDB
   Method execute expects 2 parameters
     0: javascript_code
     1: arguments (optional)
-  Method command expects 2 parameters
+  Method command expects 3 parameters
     0: command
     1: options (optional)
+    2: hash (optional)
   Method lastError expects 0 parameters
   Method prevError expects 0 parameters
   Method resetError expects 0 parameters

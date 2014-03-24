@@ -767,20 +767,30 @@ static char *get_cmd_ns(char *db, int db_len)
 	return cmd_ns;
 }
 
+/* {{{ proto array MongoDB::command(array cmd [, array options = null [, string &hash]])
+   Executes a database command. The options argument will default to null if not
+   provided. If the hash argument is provided, it will be set to the connection
+   hash of the server on which the command executes. */
 PHP_METHOD(MongoDB, command)
 {
-	zval *cmd, *retval, *options = NULL;
+	zval *cmd, *retval, *options = NULL, *hash = NULL;
+	mongo_connection *used_connection = NULL;
 	mongo_db *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a!z", &cmd, &options, &hash) == FAILURE) {
 		return;
 	}
 
 	MUST_BE_ARRAY_OR_OBJECT(1, cmd);
 
 	PHP_MONGO_GET_DB(getThis());
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, &used_connection TSRMLS_CC);
 
-	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
+	if (used_connection && ZEND_NUM_ARGS() >= 3) {
+		zval_dtor(hash);
+		ZVAL_STRING(hash, used_connection->hash, 1);
+	}
+
 	if (retval) {
 		RETVAL_ZVAL(retval, 0, 1);
 	}
@@ -1162,7 +1172,8 @@ ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_command, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, command)
-	ZEND_ARG_ARRAY_INFO(0, options, 0)
+	ZEND_ARG_ARRAY_INFO(0, options, 1)
+	ZEND_ARG_INFO(1, hash)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_authenticate, 0, ZEND_RETURN_VALUE, 2)
