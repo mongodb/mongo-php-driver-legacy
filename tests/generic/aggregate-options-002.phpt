@@ -25,15 +25,7 @@ var_dump($retval);
 
 
 
-$result = $mc->admin->command(array(
-    'configureFailPoint' => 'maxTimeAlwaysTimeOut',
-    'mode' => array('times' => 1),
-));
-if ( ! empty($result['ok'])) {
-    printf("Activated maxTimeAlwaysTimeOut fail point\n");
-} else {
-    printf("Error setting maxTimeAlwaysTimeOut fail point\n");
-}
+configureFailPoint($mc, 'maxTimeAlwaysTimeOut', 1);
 
 echo "pipeline array and options\n";
 try {
@@ -67,7 +59,7 @@ array(2) {
   ["ok"]=>
   float(1)
 }
-Activated maxTimeAlwaysTimeOut fail point
+Configured maxTimeAlwaysTimeOut fail point
 pipeline array and options
 %s:%d: operation exceeded time limit
 array(2) {
