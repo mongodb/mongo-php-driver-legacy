@@ -1036,7 +1036,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 			case BSON_LONG: {
 				int force_as_object = 0;
 
-				if (options && options->flag_cmd_cursor_as_int64 && options->level == 1 && strcmp(name, "id") == 0) {
+				if (options && options->flag_cmd_cursor_as_int64 && ((options->level == 1 && strcmp(name, "id") == 0) || (options->level == 3 && strcmp(name, "id") == 0))) {
 					force_as_object = 1;
 				}
 				CHECK_BUFFER_LEN(INT_64);
