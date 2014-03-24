@@ -47,7 +47,7 @@ echo md5_file('tests/data-files/gridfs-fseek2-data.txt'), "\n";
 echo md5($first . $second), "\n";
 ?>
 --EXPECT--
-262144
+261120
 3c1fbf79189651e9e0d81058cd3c6af6
 3c1fbf79189651e9e0d81058cd3c6af6
 856bebb64ad591da27e61a9d288a0dce
