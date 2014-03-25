@@ -47,7 +47,7 @@ object(MongoGridFSFile)#%d (3) {
     ["length"]=>
     int(%d)
     ["chunkSize"]=>
-    int(262144)
+    int(261120)
     ["md5"]=>
     string(32) "%s"
   }
