@@ -203,8 +203,6 @@ MongoCollection
     1: update (optional)
     2: fields (optional)
     3: options (optional)
-  Method commandCursor expects 1 parameters
-    0: command
   Method createIndex expects 2 parameters
     0: array_of_keys
     1: options (optional)
@@ -240,6 +238,9 @@ MongoCollection
     0: pipeline
     1: op (optional)
     2: ... (optional)
+  Method aggregateCursor expects 2 parameters
+    0: pipeline
+    1: options (optional)
 
 MongoCursor
   Method __construct expects 4 parameters

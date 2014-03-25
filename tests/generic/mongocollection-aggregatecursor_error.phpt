@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::commandCursor (broken cursor/batchsize structure)
+MongoCollection::aggregateCursor (broken cursor/batchsize structure)
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -18,14 +18,11 @@ for ($i = 0; $i < 10; $i++) {
 
 $c = $d->cursorcmd;
 
-$r = $c->commandCursor(
-	array(
-		'aggregate' => 'cursorcmd', 'pipeline' => array( array( '$limit' => 2 ) ),
-		'cursor' => 42
-	)
-);
 try {
-	foreach ($r as $key => $record) {}
+	$r = $c->aggregateCursor(
+		array( array( '$limit' => 2 ) ),
+		array( 'cursor' => 42 )
+	);
 } catch (MongoCursorException $e) {
 	echo $e->getCode(), "\n";
 	echo $e->getMessage(), "\n";

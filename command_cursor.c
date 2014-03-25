@@ -35,8 +35,6 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_CommandCursor = NULL;
 
-#define MONGO_DEFAULT_COMMAND_BATCH_SIZE 101
-
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, connection, MongoClient, 0)
 	ZEND_ARG_INFO(0, database_and_collection_name)
@@ -133,7 +131,7 @@ end:
 	return size;
 }
 
-static void enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
+int php_mongo_enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
 {
 	zval **zcursor, **zbatchsize;
 
@@ -141,7 +139,7 @@ static void enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
 		/* Technically we can not hit this, as the command should be an
 		 * array, but this is just here as a precaution. */
 		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 32 TSRMLS_CC, "The cursor command structure is not an array");
-		return;
+		return 0;
 	}
 
 	if (zend_hash_find(HASH_P(command), "cursor", 7, (void**) &zcursor) == FAILURE) {
@@ -156,7 +154,7 @@ static void enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
 
 	if (Z_TYPE_PP(zcursor) != IS_ARRAY) {
 		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 32 TSRMLS_CC, "The cursor command's 'cursor' element is not an array");
-		return;
+		return 0;
 	}
 
 	if (zend_hash_find(HASH_PP(zcursor), "batchSize", 10, (void**) &zbatchsize) == FAILURE) {
@@ -168,6 +166,8 @@ static void enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
 
 		add_assoc_zval(*zcursor, "batchSize", tmp_batchsize);
 	}
+
+	return 1;
 }
 
 /* {{{ array MongoCommandCursor::rewind()
@@ -187,7 +187,6 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	/* reads the batchsize through the command, or uses 101 when nothing is set */
 	cmd_cursor->batch_size = get_batch_size_from_command(cmd_cursor->query TSRMLS_CC);
-	enforce_batch_size_on_command(cmd_cursor->query, cmd_cursor->batch_size TSRMLS_CC);
 	if (EG(exception)) {
 		return;
 	}
