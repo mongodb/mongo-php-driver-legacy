@@ -1914,7 +1914,7 @@ PHP_METHOD(MongoCollection, deleteIndex)
 
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);
-	add_assoc_zval(cmd, "deleteIndexes", c->name);
+	add_assoc_zval(cmd, "dropIndexes", c->name);
 	zval_add_ref(&c->name);
 	add_assoc_string(cmd, "index", key_str, 1);
 
@@ -1941,7 +1941,7 @@ PHP_METHOD(MongoCollection, deleteIndexes)
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);
 
-	add_assoc_string(cmd, "deleteIndexes", Z_STRVAL_P(c->name), 1);
+	add_assoc_string(cmd, "dropIndexes", Z_STRVAL_P(c->name), 1);
 	add_assoc_string(cmd, "index", "*", 1);
 
 	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
