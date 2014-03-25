@@ -436,6 +436,67 @@ PHP_METHOD(MongoWriteBatch, execute)
 }
 /* }}} */
 
+/* {{{ proto array MongoWriteBatch::getItemCount()
+   Returns how many items have been added so far */
+PHP_METHOD(MongoWriteBatch, getItemCount)
+{
+	zend_error_handling error_handling;
+	mongo_write_batch_object *intern;
+
+	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
+	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(intern->zcollection_object, MongoWriteBatch);
+
+	if (zend_parse_parameters_none() == FAILURE) {
+		zend_restore_error_handling(&error_handling TSRMLS_CC);
+		return;
+	}
+
+	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	RETURN_LONG(intern->total_items);
+}
+/* }}} */
+
+/* {{{ proto array MongoWriteBatch::getBatchInfo()
+   Returns how many items are in individual batch and its size (in bytes) */
+PHP_METHOD(MongoWriteBatch, getBatchInfo)
+{
+	zend_error_handling error_handling;
+	mongo_write_batch_object *intern;
+	php_mongo_batch *batch;
+
+	zend_replace_error_handling(EH_THROW, NULL, &error_handling TSRMLS_CC);
+	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED(intern->zcollection_object, MongoWriteBatch);
+
+	if (zend_parse_parameters_none() == FAILURE) {
+		zend_restore_error_handling(&error_handling TSRMLS_CC);
+		return;
+	}
+	zend_restore_error_handling(&error_handling TSRMLS_CC);
+
+	array_init(return_value);
+	/* Either been cleared or never anything added */
+	if (!intern->total_items) {
+		return;
+	}
+
+	batch = intern->batch->first;
+	do {
+		zval *info;
+		ALLOC_ZVAL(info);
+		array_init(info);
+		INIT_PZVAL(info);
+
+		add_assoc_long(info, "count", batch->item_count);
+		add_assoc_long(info, "size", batch->buffer.pos - batch->buffer.start);
+		zend_hash_next_index_insert(Z_ARRVAL_P(return_value), &info, sizeof(zval *), NULL);
+		
+		batch = batch->next;
+	} while(batch);
+}
+/* }}} */
+
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, collection, MongoCollection, 0)
 	ZEND_ARG_INFO(0, batch_type)
@@ -450,10 +511,18 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALU
 	ZEND_ARG_ARRAY_INFO(0, write_options, 0)
 ZEND_END_ARG_INFO()
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getitemcount, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getbatchinfo, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry MongoWriteBatch_methods[] = {
 	PHP_ME(MongoWriteBatch, __construct, arginfo___construct, ZEND_ACC_PROTECTED)
 	PHP_ME(MongoWriteBatch, add, arginfo_add, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoWriteBatch, execute, arginfo_execute, ZEND_ACC_PUBLIC|ZEND_ACC_FINAL)
+	PHP_ME(MongoWriteBatch, getItemCount, arginfo_getitemcount, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoWriteBatch, getBatchInfo, arginfo_getbatchinfo, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };
 
