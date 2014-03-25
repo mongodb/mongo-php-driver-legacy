@@ -100,6 +100,12 @@ static int php_mongo_command_supports_rp(zval *cmd)
 		}
 		return 0;
 	}
+	if (str_len == 23) {
+		if (strcmp(str, "parallelCollectionScan") == 0) {
+			return 1;
+		}
+		return 0;
+	}
 
 	return 0;
 }
