@@ -148,13 +148,7 @@ int php_mongo_enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
 	}
 
 	if (zend_hash_find(HASH_PP(zcursor), "batchSize", 10, (void**) &zbatchsize) == FAILURE) {
-		zval *tmp_batchsize;
-
-		MAKE_STD_ZVAL(tmp_batchsize);
-		ZVAL_LONG(tmp_batchsize, size);
-		zbatchsize = &tmp_batchsize;
-
-		add_assoc_zval(*zcursor, "batchSize", tmp_batchsize);
+		add_assoc_long(*zcursor, "batchSize", size);
 	}
 
 	return 1;
