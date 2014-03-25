@@ -404,9 +404,9 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
 	if (!intern->total_items) {
-		array_init(return_value);
-		/* NOOP, fake the return value */
-		add_assoc_bool(return_value, "ok", 1);
+		/* Emulate the exception msg and code thrown by the server had this been a round-trip */
+		/* SEE PHP-1019 */
+		zend_throw_exception(mongo_ce_Exception, "No write ops were included in the batch", 16 TSRMLS_CC);
 		return;
 	}
 

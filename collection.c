@@ -1132,7 +1132,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 	mongo_connection *connection;
 	mongo_buffer buf;
 	int bit_opts = 0;
-	int retval;
+	int retval, count;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|z/", &docs, &options) == FAILURE) {
 		return;
@@ -1163,7 +1163,15 @@ PHP_METHOD(MongoCollection, batchInsert)
 
 	CREATE_BUF(buf, INITIAL_BUF_SIZE);
 
-	if (php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), bit_opts, docs, connection->max_bson_size, connection->max_message_size TSRMLS_CC) == FAILURE) {
+	count = php_mongo_write_batch_insert(&buf, Z_STRVAL_P(c->ns), bit_opts, docs, connection->max_bson_size, connection->max_message_size TSRMLS_CC);
+	if (count == FAILURE) {
+		efree(buf.start);
+		zval_ptr_dtor(&options);
+		return;
+	}
+	if (count == 0) {
+		/* Empty array, or just scalar data */
+		zend_throw_exception(mongo_ce_Exception, "No write ops were included in the batch", 16 TSRMLS_CC);
 		efree(buf.start);
 		zval_ptr_dtor(&options);
 		return;

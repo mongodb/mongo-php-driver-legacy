@@ -731,7 +731,10 @@ int php_mongo_write_batch_insert(mongo_buffer *buf, char *ns, int flags, zval *d
 		return FAILURE;
 	}
 
-	return php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC);
+	if (php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC) == FAILURE) {
+		return FAILURE;
+	}
+	return count;
 }
 
 int php_mongo_write_update(mongo_buffer *buf, char *ns, int flags, zval *criteria, zval *newobj, int max_document_size, int max_message_size TSRMLS_DC)
