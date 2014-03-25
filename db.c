@@ -885,6 +885,20 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 		*used_connection = cursor_tmp->connection;
 	}
 
+	/* Add the connection hash as return value as well, so we can pipe that
+	 * into MongoCommandCursor::createFromDocument(). In order to prevent
+	 * possible namespace clashes with the server, we're adding it as a meta
+	 * element around just "hash". This then also shows this element is not
+	 * coming from the server */
+	if (cursor_tmp->connection) {
+		zval *meta;
+
+		MAKE_STD_ZVAL(meta);
+		array_init(meta);
+		add_assoc_string(meta, "hash", cursor_tmp->connection->hash, 1);
+		add_assoc_zval(retval, "$php", meta);
+	}
+
 	zend_objects_store_del_ref(cursor TSRMLS_CC);
 	zval_ptr_dtor(&cursor);
 
