@@ -833,12 +833,9 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	/* limit: all commands need to have set a limit of -1 */
 	php_mongo_cursor_set_limit(cursor_tmp, -1);
 
-	/* Mark as a command cursor if requested. If done, this triggers special
-	 * BSON conversion to make sure that the cursor ID is represented as
-	 * MongoInt64. */
-	if (is_cmd_cursor) {
-		php_mongo_cursor_force_command_cursor(cursor_tmp);
-	}
+	/* Mark as a command cursor. If done, this triggers special BSON conversion
+	 * to make sure that the cursor ID is represented as MongoInt64. */
+	php_mongo_cursor_force_command_cursor(cursor_tmp);
 
 	zval_ptr_dtor(&temp);
 
