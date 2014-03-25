@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::commandCursor (aggregate on secondary)
+MongoCollection::aggregateCursor (aggregate on secondary)
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/replicaset.inc";?>
 --FILE--
@@ -12,10 +12,7 @@ MongoLog::setModule( MongoLog::ALL );
 MongoLog::setCallback( function( $a, $b, $c ) { echo $c, "\n"; } );
 */
 $command = array(
-	'aggregate' => 'cursorcmd',
-	'pipeline' => array(
-		array( '$limit' => 2 )
-	),
+	array( '$limit' => 2 )
 );
 
 $rs = MongoShellServer::getReplicasetInfo();
@@ -33,7 +30,7 @@ $m->setReadPreference(MongoClient::RP_SECONDARY);
 $d = $m->selectDB($dbname);
 $c = $d->cursorcmd;
 
-$r = $c->commandCursor( $command );
+$r = $c->aggregateCursor( $command );
 
 $r->rewind();
 $info = $r->info();
@@ -45,7 +42,7 @@ $d = $m->selectDB($dbname);
 $d->setReadPreference(MongoClient::RP_SECONDARY);
 $c = $d->cursorcmd;
 
-$r = $c->commandCursor( $command );
+$r = $c->aggregateCursor( $command );
 
 $r->rewind();
 $info = $r->info();
@@ -56,7 +53,7 @@ $d = $m->selectDB($dbname);
 $c = $d->cursorcmd;
 $c->setReadPreference(MongoClient::RP_SECONDARY);
 
-$r = $c->commandCursor( $command );
+$r = $c->aggregateCursor( $command );
 
 $r->rewind();
 $info = $r->info();

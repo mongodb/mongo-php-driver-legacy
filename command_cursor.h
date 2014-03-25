@@ -16,8 +16,12 @@
 #ifndef __MONGO_CURSOR_H__
 #define __MONGO_CURSOR_H__ 1
 
+#define MONGO_DEFAULT_COMMAND_BATCH_SIZE 101
+
 void mongo_init_MongoCommandCursor(TSRMLS_D);
 void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval *zlink, zval *zcommand TSRMLS_DC);
+int php_mongo_enforce_batch_size_on_command(zval *command, int size TSRMLS_DC);
+
 #endif
 
 /*
