@@ -768,9 +768,7 @@ static char *get_cmd_ns(char *db, int db_len)
 }
 
 /* {{{ proto array MongoDB::command(array cmd [, array options = null [, string &hash]])
-   Executes a database command. The options argument will default to null if not
-   provided. If the hash argument is provided, it will be set to the connection
-   hash of the server on which the command executes. */
+   Executes a database command and stores the used connection's hash in $hash. */
 PHP_METHOD(MongoDB, command)
 {
 	zval *cmd, *retval, *options = NULL, *hash = NULL;
@@ -896,20 +894,6 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	 * Yes, this is quite ugly but necessary for cursor commands. */
 	if (used_connection) {
 		*used_connection = cursor_tmp->connection;
-	}
-
-	/* Add the connection hash as return value as well, so we can pipe that
-	 * into MongoCommandCursor::createFromDocument(). In order to prevent
-	 * possible namespace clashes with the server, we're adding it as a meta
-	 * element around just "hash". This then also shows this element is not
-	 * coming from the server */
-	if (cursor_tmp->connection) {
-		zval *meta;
-
-		MAKE_STD_ZVAL(meta);
-		array_init(meta);
-		add_assoc_string(meta, "hash", cursor_tmp->connection->hash, 1);
-		add_assoc_zval(retval, "$php", meta);
 	}
 
 	zend_objects_store_del_ref(cursor TSRMLS_CC);

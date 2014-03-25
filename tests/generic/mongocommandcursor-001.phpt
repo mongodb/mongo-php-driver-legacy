@@ -31,7 +31,7 @@ $r = $c->rewind();
 var_dump($r['cursor']['firstBatch']);
 ?>
 --EXPECTF--
-array(3) {
+array(2) {
   ["cursor"]=>
   array(3) {
     ["id"]=>
@@ -47,11 +47,6 @@ array(3) {
   }
   ["ok"]=>
   float(1)
-  ["$php"]=>
-  array(1) {
-    ["hash"]=>
-    string(%d) "%s:%d;-;.;%d"
-  }
 }
 array(2) {
   [0]=>

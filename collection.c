@@ -2677,7 +2677,7 @@ PHP_METHOD(MongoCollection, parallelCollectionScan)
 	mongo_connection *connection;
 	mongo_collection *c;
 	zval *cmd, *document;
-	zval **cursor_desc, **hash_info, **php_info;
+	zval **cursor_desc;
 	mongo_cursor *cmd_cursor;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l|a", &num_cursors, &options) == FAILURE) {
@@ -2704,15 +2704,6 @@ PHP_METHOD(MongoCollection, parallelCollectionScan)
 		return;
 	}
 
-	if (zend_hash_find(Z_ARRVAL_P(document), "$php", sizeof("$php"), (void **)&php_info) == FAILURE || Z_TYPE_PP(php_info) != IS_ARRAY) {
-		zend_throw_exception_ex(mongo_ce_Exception, 30 TSRMLS_CC, "Cursor command response does not have the expected structure (invalid hash description)");
-	} else {
-		if (zend_hash_find(Z_ARRVAL_PP(php_info), "hash", sizeof("hash"), (void **)&hash_info) == FAILURE || Z_TYPE_PP(hash_info) != IS_STRING) {
-			zend_throw_exception_ex(mongo_ce_Exception, 30 TSRMLS_CC, "Cursor command response does not have the expected structure (invalid hash description)");
-			return;
-		}
-	}
-
 	{
 		HashPosition pointer;
 		zval **cursor_doc;
@@ -2737,7 +2728,7 @@ PHP_METHOD(MongoCollection, parallelCollectionScan)
 			object_init_ex(zcursor, mongo_ce_CommandCursor);
 
 			cmd_cursor = (mongo_cursor*)zend_object_store_get_object(zcursor TSRMLS_CC);
-			php_mongo_command_cursor_init_from_document(c->link, cmd_cursor, Z_STRVAL_PP(hash_info), *cursor_element TSRMLS_CC);
+			php_mongo_command_cursor_init_from_document(c->link, cmd_cursor, connection->hash, *cursor_element TSRMLS_CC);
 			Z_ADDREF_P(zcursor);
 
 			add_next_index_zval(return_value, zcursor);

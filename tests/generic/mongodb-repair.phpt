@@ -16,13 +16,8 @@ var_dump($db->repair());
 ?>
 ===DONE===
 --EXPECTF--
-array(2) {
+array(1) {
   ["ok"]=>
   float(1)
-  ["$php"]=>
-  array(1) {
-    ["hash"]=>
-    string(%d) "%s:%d;-;.;%d"
-  }
 }
 ===DONE===

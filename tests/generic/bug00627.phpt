@@ -31,7 +31,7 @@ var_dump($rs1);
 bool(true)
 bool(true)
 bool(true)
-array(3) {
+array(2) {
   ["result"]=>
   array(1) {
     [0]=>
@@ -44,9 +44,4 @@ array(3) {
   }
   ["ok"]=>
   float(1)
-  ["$php"]=>
-  array(1) {
-    ["hash"]=>
-    string(%d) "%s:%d;-;.;%d"
-  }
 }
