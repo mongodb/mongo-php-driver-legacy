@@ -27,11 +27,11 @@ foreach($document as $cursor) {
     var_dump($entry);
 }
 
-$document = $mc->selectDb(dbname())->command(array("parallelCollectionScan" => collname(__FILE__), "numCursors" => 4));
+$document = $mc->selectDb(dbname())->command(array("parallelCollectionScan" => collname(__FILE__), "numCursors" => 4), null, $hash);
 var_dump($document);
 
 foreach($document["cursors"] as $retval) {
-    $cursor = MongoCommandCursor::createFromDocument($mc, $document['$php']["hash"], $retval);
+    $cursor = MongoCommandCursor::createFromDocument($mc, $hash, $retval);
     var_dump($cursor);
 
     foreach($cursor as $entry) {
@@ -101,7 +101,7 @@ array(2) {
   ["x"]=>
   int(5000)
 }
-array(3) {
+array(2) {
   ["cursors"]=>
   array(4) {
     [0]=>
@@ -179,11 +179,6 @@ array(3) {
   }
   ["ok"]=>
   float(1)
-  ["$php"]=>
-  array(1) {
-    ["hash"]=>
-    string(%d) "%s:%d;-;.;%d"
-  }
 }
 object(MongoCommandCursor)#%d (0) {
 }

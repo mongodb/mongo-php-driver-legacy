@@ -23,12 +23,12 @@ $res = $d->command(
 			array( '$limit' => 7 ) 
 		), 
 		'cursor' => array( 'batchSize' => 3 )
-	)
+	),
+	null,
+	$hash
 );
 
-$c = MongoCommandCursor::createFromDocument(
-	$m, $res['$php']['hash'], $res
-);
+$c = MongoCommandCursor::createFromDocument($m, $hash, $res);
 $c->batchSize(3);
 
 foreach( $c as $res )

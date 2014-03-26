@@ -71,7 +71,7 @@ $retval = $c->aggregate((object)$ops);
 <?php exit(0); ?>
 --EXPECTF--
 bool(true)
-array(3) {
+array(2) {
   ["result"]=>
   array(2) {
     [0]=>
@@ -103,13 +103,8 @@ array(3) {
   }
   ["ok"]=>
   float(1)
-  ["$php"]=>
-  array(1) {
-    ["hash"]=>
-    string(%d) "%s:%d;-;.;%d"
-  }
 }
-array(3) {
+array(2) {
   ["result"]=>
   array(2) {
     [0]=>
@@ -141,11 +136,6 @@ array(3) {
   }
   ["ok"]=>
   float(1)
-  ["$php"]=>
-  array(1) {
-    ["hash"]=>
-    string(%d) "%s:%d;-;.;%d"
-  }
 }
 
 Warning: %s in %s on line %d
