@@ -25,14 +25,9 @@ array(1) {
   ["nolock"]=>
   bool(false)
 }
-array(3) {
+array(2) {
   ["retval"]=>
   string(23) "Goodbye, Joe, says Fred"
   ["ok"]=>
   float(1)
-  ["$php"]=>
-  array(1) {
-    ["hash"]=>
-    string(%d) "%s:%d;-;.;%d"
-  }
 }
