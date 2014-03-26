@@ -367,7 +367,7 @@ PHP_METHOD(MongoCommandCursor, current)
 /* }}} */
 
 /* {{{ mixed MongoCommandCursor::key()
-   Returns the key associated with the current cursor position. */
+   Returns the numeric index of the current cursor position. */
 PHP_METHOD(MongoCommandCursor, key)
 {
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -379,19 +379,10 @@ PHP_METHOD(MongoCommandCursor, key)
 		RETURN_NULL();
 	}
 
-	if (cmd_cursor->current && Z_TYPE_P(cmd_cursor->current) == IS_ARRAY && zend_hash_find(HASH_P(cmd_cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
-		if (Z_TYPE_PP(id) == IS_OBJECT) {
-			zend_std_cast_object_tostring(*id, return_value, IS_STRING TSRMLS_CC);
-		} else {
-			RETVAL_ZVAL(*id, 1, 0);
-			convert_to_string(return_value);
-		}
+	if (cmd_cursor->first_batch) {
+		RETURN_LONG(cmd_cursor->first_batch_at - 1);
 	} else {
-		if (cmd_cursor->first_batch) {
-			RETURN_LONG(cmd_cursor->first_batch_at - 1);
-		} else {
-			RETURN_LONG(cmd_cursor->first_batch_num + cmd_cursor->at - 1);
-		}
+		RETURN_LONG(cmd_cursor->first_batch_num + cmd_cursor->at - 1);
 	}
 }
 /* }}} */
