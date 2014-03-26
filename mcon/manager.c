@@ -31,6 +31,7 @@
 #include "parse.h"
 #include "read_preference.h"
 #include "io.h"
+#include "contrib/strndup.h"
 
 /* Forwards declarations */
 static void mongo_blacklist_destroy(mongo_con_manager *manager, void *data, int why);

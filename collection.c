@@ -33,6 +33,7 @@
 #include "log_stream.h"
 #include "api/write.h"
 #include "api/wire_version.h"
+#include "contrib/php-json.h"
 
 #undef fsync
 
@@ -2267,44 +2268,6 @@ PHP_METHOD(MongoCollection, toIndexString)
 	}
 }
 /* }}} */
-
-/*
-  php_mongo_is_numeric_array() is borrowed, slightly modifieid, from ext/json
-  json_determine_array_type()
-*/
-static int php_mongo_is_numeric_array(zval *val TSRMLS_DC)
-{
-	int i;
-	HashTable *myht = HASH_OF(val);
-
-	i = myht ? zend_hash_num_elements(myht) : 0;
-	if (i > 0) {
-		char *key;
-		ulong index, idx;
-		uint key_len;
-		HashPosition pos;
-
-		zend_hash_internal_pointer_reset_ex(myht, &pos);
-		idx = 0;
-		for (;; zend_hash_move_forward_ex(myht, &pos)) {
-			i = zend_hash_get_current_key_ex(myht, &key, &key_len, &index, 0, &pos);
-			if (i == HASH_KEY_NON_EXISTANT) {
-				break;
-			}
-
-			if (i == HASH_KEY_IS_STRING) {
-				return FAILURE;
-			} else {
-				if (index != idx) {
-					return FAILURE;
-				}
-			}
-			idx++;
-		}
-	}
-
-	return SUCCESS;
-}
 
 void php_mongodb_aggregate(zval *pipeline, zval *options, mongo_db *db, mongo_collection *collection, zval *return_value TSRMLS_DC)
 {
