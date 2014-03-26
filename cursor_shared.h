@@ -63,6 +63,7 @@ void php_mongo_cursor_free(void *object TSRMLS_DC);
 
 signed int php_mongo_get_cursor_header(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC);
 int php_mongo_get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char **error_message TSRMLS_DC);
+int php_mongo_get_more(mongo_cursor *cursor TSRMLS_DC);
 
 int php_mongo_get_cursor_info_envelope(zval *document, zval **cursor TSRMLS_DC);
 int php_mongo_get_cursor_info(zval *document, int64_t *cursor_id, char **ns, zval **first_batch TSRMLS_DC);

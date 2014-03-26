@@ -226,11 +226,7 @@ PHP_METHOD(MongoCursor, __construct)
  */
 PHP_METHOD(MongoCursor, hasNext)
 {
-	mongo_buffer buf;
-	int size;
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	char *error_message = NULL;
-	mongoclient *client;
 
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
@@ -259,36 +255,8 @@ PHP_METHOD(MongoCursor, hasNext)
 		return;
 	}
 
-	/* we have to go and check with the db */
-	size = 34 + strlen(cursor->ns);
-	CREATE_BUF(buf, size);
-
-	if (FAILURE == php_mongo_write_get_more(&buf, cursor TSRMLS_CC)) {
-		efree(buf.start);
-		return;
-	}
-#if MONGO_PHP_STREAMS
-	mongo_log_stream_getmore(cursor->connection, cursor TSRMLS_CC);
-#endif
-
-	PHP_MONGO_GET_MONGOCLIENT_FROM_CURSOR(cursor);
-
-	if (client->manager->send(cursor->connection, &client->servers->options, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
-		efree(buf.start);
-
-		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 1 TSRMLS_CC, "%s", error_message);
-		free(error_message);
-		php_mongo_cursor_failed(cursor TSRMLS_CC);
-		return;
-	}
-
-	efree(buf.start);
-
-	if (php_mongo_get_reply(cursor TSRMLS_CC) != SUCCESS) {
-		/* php_mongo_get_reply() throws exceptions */
-		free(error_message);
-		php_mongo_cursor_failed(cursor TSRMLS_CC);
-		return;
+	if (!php_mongo_get_more(cursor TSRMLS_CC)) {
+		RETURN_FALSE;
 	}
 
 	if (have_error_flags(cursor)) {
