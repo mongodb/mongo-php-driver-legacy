@@ -380,9 +380,9 @@ PHP_METHOD(MongoCommandCursor, key)
 	}
 
 	if (cmd_cursor->first_batch) {
-		RETURN_LONG(cmd_cursor->first_batch_at - 1);
+		RETURN_LONG(cmd_cursor->first_batch_at);
 	} else {
-		RETURN_LONG(cmd_cursor->first_batch_num + cmd_cursor->at - 1);
+		RETURN_LONG(cmd_cursor->first_batch_num + cmd_cursor->at);
 	}
 }
 /* }}} */
