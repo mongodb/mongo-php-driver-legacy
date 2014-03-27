@@ -22,6 +22,7 @@
 #include "utils.h"
 #include "manager.h"
 #include "read_preference.h"
+#include "contrib/strndup.h"
 
 /* Forward declarations */
 static void mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start);

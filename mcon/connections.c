@@ -21,7 +21,9 @@
 #include "connections.h"
 #include "io.h"
 #include "str.h"
+#include "contrib/strndup.h"
 #include "bson_helpers.h"
+#include "contrib/md5.h"
 #include "mini_bson.h"
 
 #include <stdlib.h>
