@@ -35,7 +35,7 @@ for ($i = 0; $i < 10; $i++) {
     $collection->insert(array('article_id' => $i));
 }
 
-/* The following tests where batchSize is not a number would normally trigger
+/* The following test where batchSize is not a number would normally trigger
  * error 16956 ("cursor.batchSize must be a number") errors, but the driver
  * casts the option to a long value in get_batch_size_from_command().
  *
