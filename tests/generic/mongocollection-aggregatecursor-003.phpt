@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::aggregateCursor() with limit equal to batchSize
+MongoCollection::aggregateCursor() with limit greater than batchSize
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -32,7 +32,7 @@ for ($i = 0; $i < 10; $i++) {
 }
 
 $cursor = $collection->aggregateCursor(
-    array(array('$limit' => 2)),
+    array(array('$limit' => 5)),
     array('cursor' => array('batchSize' => 2))
 );
 
@@ -70,4 +70,35 @@ array(2) {
   int(1)
 }
 Issuing getmore
+int(1)
+array(2) {
+  ["_id"]=>
+  object(MongoId)#%d (1) {
+    ["$id"]=>
+    string(24) "5%s"
+  }
+  ["article_id"]=>
+  int(2)
+}
+int(2)
+array(2) {
+  ["_id"]=>
+  object(MongoId)#%d (1) {
+    ["$id"]=>
+    string(24) "5%s"
+  }
+  ["article_id"]=>
+  int(3)
+}
+Issuing getmore
+int(3)
+array(2) {
+  ["_id"]=>
+  object(MongoId)#%d (1) {
+    ["$id"]=>
+    string(24) "5%s"
+  }
+  ["article_id"]=>
+  int(4)
+}
 ===DONE===
