@@ -24,7 +24,9 @@ for ($i=1; $i<=3001; $i++) {
 
 
 echo "Executing the batch now\n";
+var_dump($batch->getItemCount(), $batch->getBatchInfo());
 $retval = $batch->execute(array("w" => 1));
+var_dump($batch->getItemCount(), $batch->getBatchInfo());
 var_dump($retval);
 
 ?>
@@ -32,6 +34,40 @@ var_dump($retval);
 <?php exit(0); ?>
 --EXPECTF--
 Executing the batch now
+int(3001)
+array(4) {
+  [0]=>
+  array(2) {
+    ["count"]=>
+    int(1000)
+    ["size"]=>
+    int(44991)
+  }
+  [1]=>
+  array(2) {
+    ["count"]=>
+    int(1000)
+    ["size"]=>
+    int(44991)
+  }
+  [2]=>
+  array(2) {
+    ["count"]=>
+    int(1000)
+    ["size"]=>
+    int(44991)
+  }
+  [3]=>
+  array(2) {
+    ["count"]=>
+    int(1)
+    ["size"]=>
+    int(144)
+  }
+}
+int(0)
+array(0) {
+}
 array(2) {
   ["nInserted"]=>
   int(3001)
