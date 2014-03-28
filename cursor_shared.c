@@ -247,6 +247,47 @@ int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 	return SUCCESS;
 }
 
+int php_mongo_get_more(mongo_cursor *cursor TSRMLS_DC)
+{
+	mongo_buffer buf;
+	int          size;
+	char        *error_message;
+	mongoclient *client;
+
+	size = 34 + strlen(cursor->ns);
+	CREATE_BUF(buf, size);
+
+	if (FAILURE == php_mongo_write_get_more(&buf, cursor TSRMLS_CC)) {
+		efree(buf.start);
+		return 0;
+	}
+#if MONGO_PHP_STREAMS
+	mongo_log_stream_getmore(cursor->connection, cursor TSRMLS_CC);
+#endif
+
+	PHP_MONGO_GET_MONGOCLIENT_FROM_CURSOR(cursor);
+
+	if (client->manager->send(cursor->connection, &client->servers->options, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
+		efree(buf.start);
+
+		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 1 TSRMLS_CC, "%s", error_message);
+		free(error_message);
+		php_mongo_cursor_failed(cursor TSRMLS_CC);
+		return 0;
+	}
+
+	efree(buf.start);
+
+	if (php_mongo_get_reply(cursor TSRMLS_CC) != SUCCESS) {
+		free(error_message);
+		php_mongo_cursor_failed(cursor TSRMLS_CC);
+		return 0;
+	}
+
+	return 1;
+}
+
+
 int php_mongo_get_cursor_info_envelope(zval *document, zval **cursor TSRMLS_DC)
 {
 	zval **tmp;

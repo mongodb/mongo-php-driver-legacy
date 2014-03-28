@@ -2659,11 +2659,13 @@ PHP_METHOD(MongoCollection, parallelCollectionScan)
 	document = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, &connection TSRMLS_CC);
 	zval_ptr_dtor(&cmd);
 	if (php_mongo_trigger_error_on_command_failure(connection, document TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&document);
 		return;
 	}
 
 	if (zend_hash_find(Z_ARRVAL_P(document), "cursors", sizeof("cursors"), (void **)&cursor_desc) == FAILURE || Z_TYPE_PP(cursor_desc) != IS_ARRAY) {
 		zend_throw_exception_ex(mongo_ce_CursorException, 30 TSRMLS_CC, "Cursor command response does not have the expected structure");
+		zval_ptr_dtor(&document);
 		return;
 	}
 
@@ -2684,6 +2686,7 @@ PHP_METHOD(MongoCollection, parallelCollectionScan)
 			}
 			if (zend_hash_find(Z_ARRVAL_PP(cursor_doc), "cursor", sizeof("cursor"), (void **)&cursor_element) == FAILURE || Z_TYPE_PP(cursor_element) != IS_ARRAY) {
 				zend_throw_exception_ex(mongo_ce_Exception, 34 TSRMLS_CC, "Cursor structure is invalid");
+				zval_ptr_dtor(&document);
 				return;
 			}
 
@@ -2692,11 +2695,12 @@ PHP_METHOD(MongoCollection, parallelCollectionScan)
 
 			cmd_cursor = (mongo_cursor*)zend_object_store_get_object(zcursor TSRMLS_CC);
 			php_mongo_command_cursor_init_from_document(c->link, cmd_cursor, connection->hash, *cursor_element TSRMLS_CC);
-			Z_ADDREF_P(zcursor);
 
 			add_next_index_zval(return_value, zcursor);
 		}
 	}
+
+	zval_ptr_dtor(&document);
 }
 /* }}} */
 
