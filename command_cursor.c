@@ -312,6 +312,14 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	cmd_cursor->first_batch_at = 0;
 	cmd_cursor->first_batch_num = HASH_OF(cmd_cursor->first_batch)->nNumOfElements;
 
+	/* If the first batch is empty (as it is with parallelCollectionScan), then
+	 * we already read the first batch here on rewind */
+	if (cmd_cursor->first_batch_num == 0) {
+		zval_ptr_dtor(&cmd_cursor->first_batch);
+		cmd_cursor->first_batch = NULL;
+		php_mongo_get_more((mongo_cursor*) cmd_cursor TSRMLS_CC);
+	}
+
 	php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
 
 	/* We don't really *have* to return the value, but it makes testing easier,
