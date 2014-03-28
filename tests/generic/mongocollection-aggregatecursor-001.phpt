@@ -49,7 +49,7 @@ foreach ($cursor as $key => $record) {
 Issuing command: drop
 Cursor class: MongoCommandCursor
 Issuing command: aggregate
-int(-1)
+int(0)
 array(2) {
   ["_id"]=>
   object(MongoId)#%d (1) {

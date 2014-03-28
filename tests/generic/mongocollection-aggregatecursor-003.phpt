@@ -49,7 +49,7 @@ foreach ($cursor as $key => $record) {
 Issuing command: drop
 Cursor class: MongoCommandCursor
 Issuing command: aggregate
-int(-1)
+int(0)
 array(2) {
   ["_id"]=>
   object(MongoId)#%d (1) {
@@ -59,7 +59,7 @@ array(2) {
   ["article_id"]=>
   int(0)
 }
-int(0)
+int(1)
 array(2) {
   ["_id"]=>
   object(MongoId)#%d (1) {
@@ -70,7 +70,7 @@ array(2) {
   int(1)
 }
 Issuing getmore
-int(1)
+int(2)
 array(2) {
   ["_id"]=>
   object(MongoId)#%d (1) {
@@ -80,7 +80,7 @@ array(2) {
   ["article_id"]=>
   int(2)
 }
-int(2)
+int(3)
 array(2) {
   ["_id"]=>
   object(MongoId)#%d (1) {
@@ -91,7 +91,7 @@ array(2) {
   int(3)
 }
 Issuing getmore
-int(3)
+int(4)
 array(2) {
   ["_id"]=>
   object(MongoId)#%d (1) {
