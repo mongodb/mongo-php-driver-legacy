@@ -154,6 +154,84 @@ int php_mongo_enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
 	return 1;
 }
 
+/* {{{ MongoCommandCursor iteration helpers */
+static int php_mongocommandcursor_is_valid(mongo_command_cursor *cmd_cursor)
+{
+	return cmd_cursor->current != NULL;
+}
+
+static int php_mongocommandcursor_load_current_element(mongo_command_cursor *cmd_cursor TSRMLS_DC)
+{
+	/* Free the previous current item */
+	if (cmd_cursor->current) {
+		zval_ptr_dtor(&cmd_cursor->current);
+		cmd_cursor->current = NULL;
+	}
+	
+	/* Do processing of the first batch */
+	if (cmd_cursor->first_batch) {
+		zval **current;
+
+		if (zend_hash_index_find(HASH_OF(cmd_cursor->first_batch), cmd_cursor->first_batch_at, (void**) &current) == SUCCESS) {
+			cmd_cursor->current = *current;
+			Z_ADDREF_PP(current);
+			return SUCCESS;
+		}
+	}
+
+	/* Do processing of subsequent batches, like a normal cursor */
+	if (cmd_cursor->at >= cmd_cursor->num) {
+		return FAILURE;
+	}
+	MAKE_STD_ZVAL(cmd_cursor->current);
+	array_init(cmd_cursor->current);
+	cmd_cursor->buf.pos = bson_to_zval(
+		(char*)cmd_cursor->buf.pos,
+		Z_ARRVAL_P(cmd_cursor->current),
+		NULL
+		TSRMLS_CC
+	);
+
+	if (EG(exception)) {
+		zval_ptr_dtor(&cmd_cursor->current);
+		cmd_cursor->current = NULL;
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
+static int php_mongocommandcursor_advance(mongo_command_cursor *cmd_cursor TSRMLS_DC)
+{
+	if (cmd_cursor->first_batch) {
+		cmd_cursor->first_batch_at++;
+
+		if (cmd_cursor->first_batch_at >= cmd_cursor->first_batch_num) {
+			/* We're out of bounds for the first batch */
+			zval_ptr_dtor(&cmd_cursor->first_batch);
+			cmd_cursor->first_batch = NULL;
+
+			/* Now see whether we have a cursor ID, and if we do, call getmore */
+			if (cmd_cursor->cursor_id != 0) {
+				if (!php_mongo_get_more(cmd_cursor TSRMLS_CC)) {
+					return FAILURE;
+				}
+			}
+		}
+	} else {
+		cmd_cursor->at++;
+
+		if (cmd_cursor->at == cmd_cursor->num && cmd_cursor->cursor_id != 0) {
+			if (!php_mongo_get_more(cmd_cursor TSRMLS_CC)) {
+				cmd_cursor->cursor_id = 0;
+				return FAILURE;
+			}
+		}
+	}
+	return php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
+}
+/* }}} */
+
 /* {{{ array MongoCommandCursor::rewind()
    Resets the command cursor, executes the associated query and prepares the iterator. Returns the raw command document */
 PHP_METHOD(MongoCommandCursor, rewind)
@@ -175,7 +253,18 @@ PHP_METHOD(MongoCommandCursor, rewind)
 			zend_throw_exception(mongo_ce_CursorException, "cannot iterate twice with command cursors created through createFromDocument", 33 TSRMLS_CC);
 			return;
 		}
+
+		/* If the first batch is empty (as it is with parallelCollectionScan), then
+		 * we already read the first batch here on rewind */
+		if (cmd_cursor->first_batch_num == 0) {
+			zval_ptr_dtor(&cmd_cursor->first_batch);
+			cmd_cursor->first_batch = NULL;
+			php_mongo_get_more((mongo_cursor*) cmd_cursor TSRMLS_CC);
+		}
+		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
+
 		cmd_cursor->started_iterating = 1;
+
 		RETURN_TRUE;
 	}
 
@@ -223,59 +312,19 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	cmd_cursor->first_batch_at = 0;
 	cmd_cursor->first_batch_num = HASH_OF(cmd_cursor->first_batch)->nNumOfElements;
 
+	php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
+
 	/* We don't really *have* to return the value, but it makes testing easier,
 	 * and perhaps diagnostics as well. */
 	RETVAL_ZVAL(result, 0, 1);
 }
 /* }}} */
 
-static int fetch_next_batch(mongo_cursor *cursor TSRMLS_DC)
-{
-	mongo_buffer buf;
-	int          size;
-	char        *error_message;
-	mongoclient *client;
-
-	size = 34 + strlen(cursor->ns);
-	CREATE_BUF(buf, size);
-
-	if (FAILURE == php_mongo_write_get_more(&buf, cursor TSRMLS_CC)) {
-		efree(buf.start);
-		return 0;
-	}
-#if MONGO_PHP_STREAMS
-	mongo_log_stream_getmore(cursor->connection, cursor TSRMLS_CC);
-#endif
-
-	PHP_MONGO_GET_MONGOCLIENT_FROM_CURSOR(cursor);
-
-	if (client->manager->send(cursor->connection, &client->servers->options, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
-		efree(buf.start);
-
-		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 1 TSRMLS_CC, "%s", error_message);
-		free(error_message);
-		php_mongo_cursor_failed(cursor TSRMLS_CC);
-		return 0;
-	}
-
-	efree(buf.start);
-
-	if (php_mongo_get_reply(cursor TSRMLS_CC) != SUCCESS) {
-		free(error_message);
-		php_mongo_cursor_failed(cursor TSRMLS_CC);
-		return 0;
-	}
-
-	return 1;
-}
-
-
 /* {{{ bool MongoCommandCursor::valid()
    Returns whether the current iterator position is valid and fetches the key/value associated with the position. */
 PHP_METHOD(MongoCommandCursor, valid)
 {
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	zval **current;
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
 
@@ -283,63 +332,11 @@ PHP_METHOD(MongoCommandCursor, valid)
 		RETURN_FALSE;
 	}
 
-	/* Free the previous current item */
-	if (cmd_cursor->current) {
-		zval_ptr_dtor(&cmd_cursor->current);
-		cmd_cursor->current = NULL;
+	if (!php_mongocommandcursor_is_valid(cmd_cursor)) {
+		RETURN_FALSE;
 	}
 
-	/* Do processing of the first batch */
-	if (cmd_cursor->first_batch) {
-		if (cmd_cursor->first_batch_at < cmd_cursor->first_batch_num) {
-			if (zend_hash_index_find(HASH_OF(cmd_cursor->first_batch), cmd_cursor->first_batch_at, (void**) &current) == SUCCESS) {
-				cmd_cursor->current = *current;
-				Z_ADDREF_PP(current);
-				RETURN_TRUE;
-			}
-		} else {
-			/* We're out of bounds for the first batch */
-			zval_ptr_dtor(&cmd_cursor->first_batch);
-			cmd_cursor->first_batch = NULL;
-
-			/* Now see whether we have a cursor ID, and if we do, call getmore */
-			if (cmd_cursor->cursor_id != 0) {
-				if (!fetch_next_batch(cmd_cursor TSRMLS_CC)) {
-					RETURN_FALSE;
-				}
-			}
-		}
-	}
-
-	if (cmd_cursor->at == cmd_cursor->num && cmd_cursor->cursor_id != 0) {
-		if (!fetch_next_batch(cmd_cursor TSRMLS_CC)) {
-			cmd_cursor->cursor_id = 0;
-			RETURN_FALSE;
-		}
-	}
-
-	/* Check for the subsequent batches, this is like a normal cursor now */
-	if (cmd_cursor->at < cmd_cursor->num) {
-		MAKE_STD_ZVAL(cmd_cursor->current);
-		array_init(cmd_cursor->current);
-		cmd_cursor->buf.pos = bson_to_zval(
-			(char*)cmd_cursor->buf.pos,
-			Z_ARRVAL_P(cmd_cursor->current),
-			NULL
-			TSRMLS_CC
-		);
-
-		if (EG(exception)) {
-			zval_ptr_dtor(&cmd_cursor->current);
-			cmd_cursor->current = NULL;
-			RETURN_FALSE;
-		}
-
-		RETURN_TRUE;
-	}
-
-	cmd_cursor->dead = 1;
-	RETURN_FALSE;
+	RETURN_TRUE;
 }
 /* }}} */
 
@@ -351,16 +348,7 @@ PHP_METHOD(MongoCommandCursor, next)
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
 
-	if (!cmd_cursor->started_iterating) {
-		zend_throw_exception(mongo_ce_CursorException, "can only iterate after the command has been run.", 0 TSRMLS_CC); \
-	}
-
-	if (cmd_cursor->first_batch) {
-		cmd_cursor->first_batch_at++;
-		return;
-	}
-
-	cmd_cursor->at++;
+	php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC);
 }
 /* }}} */
 
