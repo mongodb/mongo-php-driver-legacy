@@ -66,7 +66,7 @@ void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval 
 	mongo_read_preference_replace(&link->servers->read_pref, &cmd_cursor->read_pref);
 }
 
-/* {{{ MongoCommandCursor::__construct(MongoClient connection, string ns, array query)
+/* {{{ proto MongoCommandCursor::__construct(MongoClient connection, string ns, array query)
    Constructs a MongoCommandCursor */
 PHP_METHOD(MongoCommandCursor, __construct)
 {
@@ -232,7 +232,7 @@ static int php_mongocommandcursor_advance(mongo_command_cursor *cmd_cursor TSRML
 }
 /* }}} */
 
-/* {{{ array MongoCommandCursor::rewind()
+/* {{{ proto array MongoCommandCursor::rewind()
    Resets the command cursor, executes the associated query and prepares the iterator. Returns the raw command document */
 PHP_METHOD(MongoCommandCursor, rewind)
 {
@@ -320,7 +320,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 }
 /* }}} */
 
-/* {{{ bool MongoCommandCursor::valid()
+/* {{{ proto bool MongoCommandCursor::valid()
    Returns whether the current iterator position is valid and fetches the key/value associated with the position. */
 PHP_METHOD(MongoCommandCursor, valid)
 {
@@ -340,7 +340,7 @@ PHP_METHOD(MongoCommandCursor, valid)
 }
 /* }}} */
 
-/* {{{ void MongoCommandCursor::next()
+/* {{{ proto void MongoCommandCursor::next()
    Advances the interal cursor position. */
 PHP_METHOD(MongoCommandCursor, next)
 {
@@ -352,7 +352,7 @@ PHP_METHOD(MongoCommandCursor, next)
 }
 /* }}} */
 
-/* {{{ mixed MongoCommandCursor::current()
+/* {{{ proto mixed MongoCommandCursor::current()
    Returns the data associated with the current cursor position. */
 PHP_METHOD(MongoCommandCursor, current)
 {
@@ -366,8 +366,8 @@ PHP_METHOD(MongoCommandCursor, current)
 }
 /* }}} */
 
-/* {{{ mixed MongoCommandCursor::key()
-   Returns the key associated with the current cursor position. */
+/* {{{ proto mixed MongoCommandCursor::key()
+   Returns the numeric index of the current cursor position. */
 PHP_METHOD(MongoCommandCursor, key)
 {
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -379,19 +379,10 @@ PHP_METHOD(MongoCommandCursor, key)
 		RETURN_NULL();
 	}
 
-	if (cmd_cursor->current && Z_TYPE_P(cmd_cursor->current) == IS_ARRAY && zend_hash_find(HASH_P(cmd_cursor->current), "_id", 4, (void**)&id) == SUCCESS) {
-		if (Z_TYPE_PP(id) == IS_OBJECT) {
-			zend_std_cast_object_tostring(*id, return_value, IS_STRING TSRMLS_CC);
-		} else {
-			RETVAL_ZVAL(*id, 1, 0);
-			convert_to_string(return_value);
-		}
+	if (cmd_cursor->first_batch) {
+		RETURN_LONG(cmd_cursor->first_batch_at - 1);
 	} else {
-		if (cmd_cursor->first_batch) {
-			RETURN_LONG(cmd_cursor->first_batch_at - 1);
-		} else {
-			RETURN_LONG(cmd_cursor->first_batch_num + cmd_cursor->at - 1);
-		}
+		RETURN_LONG(cmd_cursor->first_batch_num + cmd_cursor->at - 1);
 	}
 }
 /* }}} */
@@ -463,7 +454,7 @@ static zval *php_mongo_commandcursor_instantiate(zval *object TSRMLS_DC)
 	return object;
 }
 
-/* {{{ MongoCommandCursor::createFromDocument(MongoClient connection, string hash, array document)
+/* {{{ proto MongoCommandCursor::createFromDocument(MongoClient connection, string hash, array document)
    Constructs a MongoCommandCursor from a cursor document */
 PHP_METHOD(MongoCommandCursor, createFromDocument)
 {

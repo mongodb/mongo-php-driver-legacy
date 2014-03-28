@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::aggregateCursor() with limit equal to batchSize
+MongoCollection::aggregateCursor() with null batchSize option
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -8,6 +8,10 @@ require "tests/utils/server.inc";
 
 function log_query($server, $query, $info) {
     printf("Issuing command: %s\n", key($query));
+
+    if (isset($query['cursor']['batchSize'])) {
+        printf("Cursor batch size: %d\n", $query['cursor']['batchSize']);
+    }
 }
 
 function log_getmore($server, $info) {
@@ -31,43 +35,25 @@ for ($i = 0; $i < 10; $i++) {
     $collection->insert(array('article_id' => $i));
 }
 
+/* The following tests where batchSize is not a number would normally trigger
+ * error 16956 ("cursor.batchSize must be a number") errors, but the driver
+ * casts the option to a long value in get_batch_size_from_command().
+ *
+ * See: https://github.com/mongodb/mongo/commit/a51f2688fa05672d999c997170847a3ee29a223b#diff-264fb70c85a638c671570970f3752bf3R52
+ */
+
 $cursor = $collection->aggregateCursor(
     array(array('$limit' => 2)),
-    array('cursor' => array('batchSize' => 2))
+    array('cursor' => array('batchSize' => null))
 );
-
-printf("Cursor class: %s\n", get_class($cursor));
-
-foreach ($cursor as $key => $record) {
-    var_dump($key);
-    var_dump($record);
-}
+printf("Total results: %d\n", count(iterator_to_array($cursor)));
 
 ?>
 ===DONE===
 --EXPECTF--
 Issuing command: drop
-Cursor class: MongoCommandCursor
 Issuing command: aggregate
-int(-1)
-array(2) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "5%s"
-  }
-  ["article_id"]=>
-  int(0)
-}
-int(0)
-array(2) {
-  ["_id"]=>
-  object(MongoId)#%d (1) {
-    ["$id"]=>
-    string(24) "5%s"
-  }
-  ["article_id"]=>
-  int(1)
-}
+Cursor batch size: 0
 Issuing getmore
+Total results: 2
 ===DONE===

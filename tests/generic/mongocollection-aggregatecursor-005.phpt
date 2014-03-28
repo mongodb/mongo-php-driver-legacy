@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::aggregateCursor() with limit equal to batchSize
+MongoCollection::aggregateCursor() with limit and empty cursor options array
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -8,6 +8,10 @@ require "tests/utils/server.inc";
 
 function log_query($server, $query, $info) {
     printf("Issuing command: %s\n", key($query));
+
+    if (isset($query['cursor']['batchSize'])) {
+        printf("Cursor batch size: %d\n", $query['cursor']['batchSize']);
+    }
 }
 
 function log_getmore($server, $info) {
@@ -32,8 +36,8 @@ for ($i = 0; $i < 10; $i++) {
 }
 
 $cursor = $collection->aggregateCursor(
-    array(array('$limit' => 2)),
-    array('cursor' => array('batchSize' => 2))
+    array( array( '$limit' => 2 ) ),
+    array( 'cursor' => array() )
 );
 
 printf("Cursor class: %s\n", get_class($cursor));
@@ -49,6 +53,7 @@ foreach ($cursor as $key => $record) {
 Issuing command: drop
 Cursor class: MongoCommandCursor
 Issuing command: aggregate
+Cursor batch size: 101
 int(-1)
 array(2) {
   ["_id"]=>
@@ -69,5 +74,4 @@ array(2) {
   ["article_id"]=>
   int(1)
 }
-Issuing getmore
 ===DONE===

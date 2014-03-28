@@ -34,7 +34,7 @@ foreach ($c as $key => $record) {
 }
 ?>
 --EXPECTF--
-string(24) "5%s"
+int(-1)
 array(2) {
   ["_id"]=>
   object(MongoId)#8 (1) {
@@ -44,7 +44,7 @@ array(2) {
   ["article_id"]=>
   int(0)
 }
-string(24) "5%s"
+int(0)
 array(2) {
   ["_id"]=>
   object(MongoId)#9 (1) {
@@ -54,7 +54,7 @@ array(2) {
   ["article_id"]=>
   int(1)
 }
-string(24) "5%s"
+int(1)
 array(2) {
   ["_id"]=>
   object(MongoId)#8 (1) {
@@ -64,7 +64,7 @@ array(2) {
   ["article_id"]=>
   int(2)
 }
-string(24) "5%s"
+int(2)
 array(2) {
   ["_id"]=>
   object(MongoId)#%d (1) {
@@ -74,7 +74,7 @@ array(2) {
   ["article_id"]=>
   int(3)
 }
-string(24) "5%s"
+int(3)
 array(2) {
   ["_id"]=>
   object(MongoId)#%d (1) {
