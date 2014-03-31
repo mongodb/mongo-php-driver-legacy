@@ -1330,7 +1330,7 @@ PHP_METHOD(MongoCollection, findAndModify)
 		zval_add_ref(&fields);
 	}
 	if (options && zend_hash_num_elements(Z_ARRVAL_P(options)) > 0) {
-		zval temp;
+		zval *temp;
 		zend_hash_merge(HASH_P(cmd), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 	}
 
@@ -1644,7 +1644,7 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 
 	/* process options */
 	if (options) {
-		zval temp, **name, **timeout_pp;
+		zval *temp, **name, **timeout_pp;
 
 		zend_hash_merge(HASH_P(index_spec), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 		
@@ -1756,7 +1756,7 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, m
 	zval_add_ref(&keys);
 
 	if (options) {
-		zval temp, **gle_pp, **fsync_pp, **timeout_pp, **name;
+		zval *temp, **gle_pp, **fsync_pp, **timeout_pp, **name;
 
 		zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 
