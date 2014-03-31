@@ -938,7 +938,7 @@ int mongo_connection_authenticate_saslstart(mongo_con_manager *manager, mongo_co
 		return 0;
 	}
 
-	packet = bson_create_saslstart_packet(con, server_def->authdb, mechanism, payload, payload_len);
+	packet = bson_create_saslstart_packet(con, server_def->authdb ? server_def->authdb : server_def->db, mechanism, payload, payload_len);
 
 	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;
