@@ -379,7 +379,6 @@ PHP_METHOD(MongoCommandCursor, current)
 PHP_METHOD(MongoCommandCursor, key)
 {
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	zval **id;
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCursor);
 
