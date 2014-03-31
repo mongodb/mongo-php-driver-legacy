@@ -483,9 +483,9 @@ int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connectio
 	if (server_def->mechanism == MONGO_AUTH_MECHANISM_PLAIN) {
 		return php_mongo_io_authenticate_plain(manager, con, options, server_def, error_message);
 	}
-	*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR, MONGODB-X509, GSSAPI and PLAIN is supported by this build");
+	*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR, MONGODB-X509, GSSAPI and PLAIN are supported by this build");
 #else
-	*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR and MONGODB-X509 is supported by this build");
+	*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR and MONGODB-X509 are supported by this build");
 #endif
 
 	return 0;
