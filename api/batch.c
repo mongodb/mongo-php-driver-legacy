@@ -99,6 +99,10 @@ void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollectio
 	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
 
 	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+	if (!connection) {
+		/* Exception thrown by get_server() */
+		return;
+	}
 	if (!php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
 		zend_throw_exception(mongo_ce_ProtocolException, "Current primary does not have a Write API support", 1 TSRMLS_CC);
 		return;
