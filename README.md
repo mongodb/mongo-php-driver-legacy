@@ -13,6 +13,18 @@ Then, add the following to your `php.ini` file:
 
     extension=mongo.so
 
+### Enabling enterprise features
+
+To connect to MongoDB Enterprise using SASL (GSSAPI) or LDAP (PLAIN) you need
+to build the driver against cyrus-sasl2 (external library).
+This is done by passing --with-mongo-sasl to ./configure, optionally passing
+in the directory to where cyrus-sasl2 was installed:
+
+    phpize
+    ./configure --with-mongo-sasl=/usr/local
+    make
+    sudo make install
+
 ### Installing on Windows
 
 Windows builds are available through http://pecl.php.net/package/mongo.
