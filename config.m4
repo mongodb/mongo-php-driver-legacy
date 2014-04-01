@@ -20,7 +20,9 @@ if test "$PHP_MONGO" != "no"; then
   MONGO_ADD_DIR(gridfs)
   MONGO_ADD_DIR(types)
   MONGO_ADD_DIR(batch)
+  MONGO_ADD_DIR(contrib)
   MONGO_ADD_DIR(mcon)
+  MONGO_ADD_DIR(mcon/contrib)
 
   PHP_ADD_MAKEFILE_FRAGMENT([$ext_srcdir/Makefile.servers])
 

@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2014-03-11</date>
+ <date>2014-04-01</date>
  <time>09:58:05</time>
  <version>
-  <release>1.5.0RC1</release>
-  <api>1.5.0RC1</api>
+  <release>1.5.0RC2</release>
+  <api>1.5.0RC2</api>
  </version>
  <stability>
   <release>beta</release>
@@ -43,21 +43,42 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-995] - JSON detection
-    * [PHP-996] - Broken with cyrus-sals 2.1.23
-    * [PHP-999] - Inline mapReduce command ignores read preferences
-    * [PHP-1000] - RP support for "mapReduce" command, not just "mapreduce"
+    * [PHP-900] - Cannot switch from majority to lower WriteConcern
+    * [PHP-1010] - MongoCollection::commandCursor should not require batchSize option to be set manually
+    * [PHP-1011] - MongoDB and MongoCollection do not inherit string write concerns
+    * [PHP-1012] - MongoCollection doesn't respect its own write concern for GLE ops
+    * [PHP-1013] - Read preferences are not respected with command cursors
+    * [PHP-1019] - Empty Batch Insert should throw exception
+    * [PHP-1027] - Support maxTimeMS and exceptions in MongoCollection::group()
+    * [PHP-1034] - Ensure MongoCommandCursor implements Iterator interface properly
+    * [PHP-1037] - add allowDiskUse:true to the top-level of an aggregate command
+    * [PHP-1038] - Segfault in php_mongo_enforce_batch_size_on_command()
+    * [PHP-1041] - Off-by-one error in MongoCommandCursor::key() index
 
 ** Improvement
-    * [PHP-998] - Include maxWriteBatchSize and maxMessageSizeBytes in connection info
+    * [PHP-778] - Deprecate static properties
+    * [PHP-938] - please update description of 'fsync' write concern flag
+    * [PHP-1021] - Support maxTimeMS option on MongoCollection::findOne()
+    * [PHP-1026] - Include connection info in findAndModify exception messages
+    * [PHP-1028] - Support $options arg in MongoCollection::aggregate()
+    * [PHP-1039] - Use dropIndexes command instead of deleteIndexes
+
+** New Feature
+    * [PHP-1031] - Implement MongoWriteBatch method to return current batch size
+    * [PHP-1035] - Add third arg to MongoDB::command() to collect server hash by reference
 
 ** Task
-    * [PHP-407] - MongoBinData should default to type 0 instead of 2
-    * [PHP-960] - Use createIndexes command when available
-    * [PHP-987] - Use maxWriteBatchSize from ismaster for write command batch splitting.
-
-** Sub-task
-    * [PHP-993] - Merge batch return values into one return value
+    * [PHP-739] - Audit extension for deprecations of functionality to be removed in 1.5  
+    * [PHP-842] - Document core class [get|set]WriteConcern() methods
+    * [PHP-914] - aggregation: need an explain facility
+    * [PHP-1006] - Document deprecation of MongoCollection::ensureIndex()
+    * [PHP-1007] - Add MongoClient->[get|set]WriteConcern()
+    * [PHP-1015] - Document MongoWriteBatch and related classes
+    * [PHP-1016] - Document MongoCollection:createIndex()
+    * [PHP-1022] - Create MongoCollection::aggregateCursor() method
+    * [PHP-1030] - gridfs chunksize should be lowered to 255K
+    * [PHP-1033] - Organize third-party code and license information
+    * [PHP-1040] - MongoCommandCursor::key() should not return _id field
  </notes>
 
  <contents>
@@ -223,6 +244,38 @@
  <providesextension>mongo</providesextension>
  <extsrcrelease/>
  <changelog>
+
+  <release>
+   <date>2014-03-11</date>
+   <time>09:58:05</time>
+   <version>
+    <release>1.5.0RC1</release>
+    <api>1.5.0RC1</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-995] - JSON detection
+    * [PHP-996] - Broken with cyrus-sals 2.1.23
+    * [PHP-999] - Inline mapReduce command ignores read preferences
+    * [PHP-1000] - RP support for "mapReduce" command, not just "mapreduce"
+
+** Improvement
+    * [PHP-998] - Include maxWriteBatchSize and maxMessageSizeBytes in connection info
+
+** Task
+    * [PHP-407] - MongoBinData should default to type 0 instead of 2
+    * [PHP-960] - Use createIndexes command when available
+    * [PHP-987] - Use maxWriteBatchSize from ismaster for write command batch splitting.
+
+** Sub-task
+    * [PHP-993] - Merge batch return values into one return value
+   </notes>
+  </release>
 
   <release>
    <date>2014-02-25</date>
