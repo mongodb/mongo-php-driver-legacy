@@ -6,8 +6,8 @@ driver.
 
 ## Current branches
 
-* 1.3 is the current stable branch, critical fixes only allowed here
-* master is the development branch for new features (to become 1.4)
+* 1.5 is the current stable branch, critical fixes only allowed here
+* master is the development branch for new features
 
 
 ## Github
@@ -66,6 +66,8 @@ All tests
 
     $host = MongoShellServer::getStandaloneInfo();
     $mc = new MongoClient($host);
+    $db = $mc->selectDb(dbname());
+    $collection = $mc->selectCollection(dbname(), collname(__FILE__));
 
     /** Write your test code here **/
     ?>
@@ -77,7 +79,6 @@ All tests
 
 Some notes about the template:
 
-* Please use a collection named after the ticket number (for easier tracking)
 * The exit(0); statement allows you to run the testcase standalone from
   the command line (without running it via run-tests.php) and see what is going
   on without being flooded with hundred of lines from the --EXPECTF-- section.
