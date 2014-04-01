@@ -157,6 +157,7 @@ int php_mongo_api_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_c
 	bytes_written = MonGlo(manager)->send(connection, server_options, buf->start, buf->pos - buf->start, &error_message);
 	if (bytes_written < 1) {
 		/* Didn't write anything, something bad must have happened */
+		free(error_message);
 		return 2;
 	}
 
