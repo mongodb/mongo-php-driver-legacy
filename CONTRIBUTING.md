@@ -52,45 +52,9 @@ And finally, to execute the tests run:
 
 ## Writing tests
 
-All tests 
-
-
-## Test template for a Standalone MongoDB
-    --TEST--
-    Test for PHP-XYZ: The ticket title
-    --SKIPIF--
-    <?php require_once "tests/utils/standalone.inc"; ?>
-    --FILE--
-    <?php
-    require_once "tests/utils/server.inc";
-
-    $host = MongoShellServer::getStandaloneInfo();
-    $mc = new MongoClient($host);
-    $db = $mc->selectDb(dbname());
-    $collection = $mc->selectCollection(dbname(), collname(__FILE__));
-
-    /** Write your test code here **/
-    ?>
-    ===DONE===
-    <?php exit(0); ?>
-    --EXPECTF--
-    ** Expected output here **
-    ===DONE===
-
-Some notes about the template:
-
-* The exit(0); statement allows you to run the testcase standalone from
-  the command line (without running it via run-tests.php) and see what is going
-  on without being flooded with hundred of lines from the --EXPECTF-- section.
-* Other available skipif tests:
- * standalone.inc (MongoShellServer::getStandaloneInfo())
- * auth-standalone.inc (MongoShellServer::getStandaloneInfo(true))
- * replicaset.inc (MongoShellServer::getReplicasetInfo())
- * auth-replicaset.inc (MongoShellServer::getReplicasetInfo(true))
- * replicaset-failover.inc (MongoShellServer::getReplicasetInfo(true))
- * bridge.inc (MongoShellServer::getBridgeInfo())
- * mongos.inc (MongoShellServer::getShardInfo())
-
+Test templates are available in [tests/templates/*.phpt](tests/templates/).
+These target dedicated MongoDB environments, such as a ReplicaSet or a
+standalone MongoDB with authentication, or over mongos.
 
 ## Code coverage
 
