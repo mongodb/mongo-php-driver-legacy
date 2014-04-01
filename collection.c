@@ -928,6 +928,7 @@ int mongo_collection_delete_api(mongo_con_manager *manager, mongo_connection *co
 
 	if (bytes_written < 1) {
 		/* Didn't write anything, something bad must have happened */
+		free(error_message);
 		efree(buf.start);
 		return 0;
 	}
@@ -980,6 +981,7 @@ int mongo_collection_update_api(mongo_con_manager *manager, mongo_connection *co
 
 	if (bytes_written < 1) {
 		/* Didn't write anything, something bad must have happened */
+		free(error_message);
 		efree(buf.start);
 		return 0;
 	}
@@ -1035,6 +1037,7 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 
 	if (bytes_written < 1) {
 		/* Didn't write anything, something bad must have happened */
+		free(error_message);
 		efree(buf.start);
 		return 0;
 	}
