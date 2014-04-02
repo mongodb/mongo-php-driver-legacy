@@ -59,10 +59,12 @@ array(5) {
   ["request_id"]=>
   int(%d)
 }
-array(2) {
+array(3) {
   ["request_id"]=>
   int(%d)
   ["cursor_id"]=>
   int(%d)
+  ["batch_size"]=>
+  int(0)
 }
 There should be a getmore query above

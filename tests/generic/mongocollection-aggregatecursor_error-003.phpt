@@ -35,25 +35,23 @@ for ($i = 0; $i < 10; $i++) {
     $collection->insert(array('article_id' => $i));
 }
 
-/* The following test where batchSize is not a number would normally trigger
- * error 16956 ("cursor.batchSize must be a number") errors, but the driver
- * casts the option to a long value in get_batch_size_from_command().
- *
- * See: https://github.com/mongodb/mongo/commit/a51f2688fa05672d999c997170847a3ee29a223b#diff-264fb70c85a638c671570970f3752bf3R52
- */
-
 $cursor = $collection->aggregateCursor(
     array(array('$limit' => 2)),
     array('cursor' => array('batchSize' => null))
 );
-printf("Total results: %d\n", count(iterator_to_array($cursor)));
+
+try {
+	printf("Total results: %d\n", count(iterator_to_array($cursor)));
+} catch( MongoResultException $e ) {
+	echo $e->getCode(), "\n";
+	echo $e->getMessage(), "\n";
+}
 
 ?>
 ===DONE===
 --EXPECTF--
 Issuing command: drop
 Issuing command: aggregate
-Cursor batch size: 0
-Issuing getmore
-Total results: 2
+16956
+%s:%d: exception: cursor.batchSize must be a number
 ===DONE===
