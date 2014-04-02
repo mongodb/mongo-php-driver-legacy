@@ -695,6 +695,7 @@ int mongo_cursor_mark_dead(void *callback_data)
 	mongo_cursor *cursor = (mongo_cursor*) callback_data;
 
 	cursor->dead = 1;
+	cursor->cursor_id = 0;
 	cursor->connection = NULL;
 
 	return 1;
