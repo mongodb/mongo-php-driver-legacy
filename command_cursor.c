@@ -164,6 +164,12 @@ static int php_mongocommandcursor_load_current_element(mongo_command_cursor *cmd
 		TSRMLS_CC
 	);
 
+	if (php_mongo_handle_error(cmd_cursor TSRMLS_CC)) {
+		/* do not free anything here, as php_mongo_handle_error already does
+		 * that upon error */
+		return FAILURE;
+	}
+
 	if (EG(exception)) {
 		zval_ptr_dtor(&cmd_cursor->current);
 		cmd_cursor->current = NULL;
