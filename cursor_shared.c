@@ -247,6 +247,70 @@ int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 	return SUCCESS;
 }
 
+/* Returns 1 when an error was found and *handled*, and it returns 0 if no
+ * error situation has ocurred on the cursor. If the error is handled, then an
+ * exception has been thrown as well. */
+int php_mongo_handle_error(mongo_cursor *cursor TSRMLS_DC)
+{
+	zval **err = NULL;
+
+	/* check for $err */
+	if (
+		cursor->current &&
+		zend_hash_find(Z_ARRVAL_P(cursor->current), "$err", strlen("$err") + 1, (void**)&err) == SUCCESS
+	) {
+		zval **code_z, *exception;
+		/* default error code */
+		int code = 4;
+
+		/* check for error code */
+		if (zend_hash_find(Z_ARRVAL_P(cursor->current), "code", strlen("code") + 1, (void**)&code_z) == SUCCESS) {
+			convert_to_long_ex(code_z);
+			code = Z_LVAL_PP(code_z);
+		}
+
+		/* TODO: Determine if we need to throw MongoCursorTimeoutException
+		 * or MongoWriteConcernException here, depending on the code. */
+		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
+		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current TSRMLS_CC);
+		zval_ptr_dtor(&cursor->current);
+		cursor->current = NULL;
+
+		/* We check for "not master" error codes. The source of those codes
+		 * is at https://github.com/mongodb/mongo/blob/master/docs/errors.md
+		 *
+		 * We should kill the connection so the next request doesn't do the
+		 * same wrong thing.
+		 *
+		 * Note: We need to mark the cursor as failed _after_ prepping the
+		 * exception, otherwise the exception won't include the servername
+		 * it hit for example. */
+		if (code == 10107 || code == 13435 || code == 13436 || code == 10054 || code == 10056 || code == 10058) {
+			php_mongo_cursor_failed(cursor TSRMLS_CC);
+		}
+
+		return 1;
+	}
+
+	if (cursor->flag & MONGO_OP_REPLY_ERROR_FLAGS) {
+		if (cursor->flag & MONGO_OP_REPLY_CURSOR_NOT_FOUND) {
+			php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 16336 TSRMLS_CC, "could not find cursor over collection %s", cursor->ns);
+			return 1;
+		}
+
+		if (cursor->flag & MONGO_OP_REPLY_QUERY_FAILURE) {
+			php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 2 TSRMLS_CC, "query failure");
+			return 1;
+		}
+
+		/* Default case */
+		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 29 TSRMLS_CC, "Unknown query/get_more failure");
+		return 1;
+	}
+
+	return 0;
+}
+
 int php_mongo_get_more(mongo_cursor *cursor TSRMLS_DC)
 {
 	mongo_buffer buf;
