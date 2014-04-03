@@ -19,6 +19,7 @@ $rs = MongoShellServer::getReplicasetInfo();
 $m = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname']));
 
 $d = $m->selectDB($dbname);
+$d->setWriteConcern(4); // there are four data carrying nodes
 $d->cursorcmd->drop();
 
 for ($i = 0; $i < 10; $i++) {
