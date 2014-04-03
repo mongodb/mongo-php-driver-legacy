@@ -694,6 +694,9 @@ extern zend_module_entry mongo_module_entry;
  * 32: Cursor command structure is invalid
  * 33: cannot iterate twice with command cursors created through createFromDocument
  * 34: Cursor structure is invalid
+ * 35: Message size (%d) overflows valid message size (%d) php_mongo_api_get_reply()
+ * 36: request/response mismatch: %d vs %d php_mongo_api_get_reply()
+ * 37: Couldn't finish reading from network
  *
  * MongoGridFSException:
  * 0: 

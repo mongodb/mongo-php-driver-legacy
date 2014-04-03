@@ -556,6 +556,7 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 	} else if (status < INT_32*4) {
 		spprintf(&error_message, 256, "couldn't get full response header, got %d bytes but expected atleast %d", status, INT_32*4);
 		php_mongo_api_throw_exception(connection, 4, error_message, NULL TSRMLS_CC);
+		free(error_message);
 		return 1;
 	}
 
@@ -575,23 +576,31 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 	if (msg_header.length < REPLY_HEADER_SIZE) {
 		spprintf(&error_message, 256, "bad response length: %d, did the db assert?", msg_header.length);
 		php_mongo_api_throw_exception(connection, 6, error_message, NULL TSRMLS_CC);
+		free(error_message);
 		return 1;
 	}
 	if (msg_header.length > MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size)) {
 		spprintf(&error_message, 0, "Message size (%d) overflows valid message size (%d)", msg_header.length, MAX_BSON_WIRE_OBJECT_SIZE(connection->max_bson_size));
-		php_mongo_api_throw_exception(connection, 7, error_message, NULL TSRMLS_CC);
+		php_mongo_api_throw_exception(connection, 35, error_message, NULL TSRMLS_CC);
+		free(error_message);
 		return 1;
 	}
 	if (msg_header.response_to != request_id) {
 		spprintf(&error_message, 0, "request/response mismatch: %d vs %d", request_id, msg_header.response_to);
-		php_mongo_api_throw_exception(connection, 9, error_message, NULL TSRMLS_CC);
+		php_mongo_api_throw_exception(connection, 36, error_message, NULL TSRMLS_CC);
+		free(error_message);
 		return 1;
 	}
 
 	data_len = msg_header.length - REPLY_HEADER_LEN;
 	data = (char*)emalloc(data_len);
 
-	manager->recv_data(connection, options, 0, data, data_len, &error_message);
+	status = manager->recv_data(connection, options, 0, data, data_len, &error_message);
+	if (status < 0) {
+		php_mongo_api_throw_exception(connection, 37, error_message, NULL TSRMLS_CC);
+		free(error_message);
+		return 1;
+	}
 
 	bson_to_zval(data, Z_ARRVAL_PP(retval), 0 TSRMLS_CC);
 	efree(data);
@@ -823,8 +832,9 @@ static void php_mongo_api_throw_exception(mongo_connection *connection, int code
 			/* MongoCursorException for BC with pre-2.6 write API*/
 		case 4: /* couldn't get full response header, got %d bytes but expected atleast %d php_mongo_api_get_reply() */
 		case 6: /* bad response length: %d, did the db assert? php_mongo_api_get_reply() */
-		case 7: /* Message size (%d) overflows valid message size (%d) php_mongo_api_get_reply() */
-		case 9: /* request/response mismatch: %d vs %d php_mongo_api_get_reply() */
+		case 35: /* Message size (%d) overflows valid message size (%d) php_mongo_api_get_reply() */
+		case 36: /* request/response mismatch: %d vs %d php_mongo_api_get_reply() */
+		case 37: /* Couldn't finish reading from network */
 			ce = mongo_ce_CursorException; /* should be MongoProtocol error php_mongo_api_get_reply() */
 			break;
 
