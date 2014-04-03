@@ -469,6 +469,7 @@ void mongo_log_stream_getmore(mongo_connection *connection, mongo_cursor *cursor
 
 		add_assoc_long(info, "request_id", cursor->recv.request_id);
 		add_assoc_long(info, "cursor_id", cursor->cursor_id);
+		add_assoc_long(info, "batch_size", cursor->batch_size);
 
 		args[0] = &server;
 		args[1] = &info;

@@ -90,7 +90,6 @@ array(2) {
   ["article_id"]=>
   int(3)
 }
-Issuing getmore
 int(4)
 array(2) {
   ["_id"]=>
