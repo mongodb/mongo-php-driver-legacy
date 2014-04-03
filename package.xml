@@ -242,7 +242,9 @@
   </required>
  </dependencies>
  <providesextension>mongo</providesextension>
- <extsrcrelease/>
+ <extsrcrelease>
+  <configureoption name="with-mongo-sasl" prompt="Build with Cyrus SASL (MongoDB Enterprise Authentication) support?" default="no"/>
+ </extsrcrelease>
  <changelog>
 
   <release>
