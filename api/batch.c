@@ -99,6 +99,10 @@ void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollectio
 	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
 
 	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+	if (!connection) {
+		/* Exception thrown by get_server() */
+		return;
+	}
 	if (!php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
 		zend_throw_exception(mongo_ce_ProtocolException, "Current primary does not have a Write API support", 1 TSRMLS_CC);
 		return;
@@ -153,6 +157,7 @@ int php_mongo_api_batch_send_and_read(mongo_buffer *buf, int request_id, mongo_c
 	bytes_written = MonGlo(manager)->send(connection, server_options, buf->start, buf->pos - buf->start, &error_message);
 	if (bytes_written < 1) {
 		/* Didn't write anything, something bad must have happened */
+		free(error_message);
 		return 2;
 	}
 

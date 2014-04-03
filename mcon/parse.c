@@ -770,7 +770,7 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	to->options.ssl = from->options.ssl;
 
 	if (from->options.ctx) {
-		memcpy(to->options.ctx, from->options.ctx, sizeof(void *));
+		to->options.ctx = from->options.ctx;
 	}
 
 	mongo_read_preference_copy(&from->read_pref, &to->read_pref);

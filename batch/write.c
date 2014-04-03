@@ -136,6 +136,10 @@ PHP_METHOD(MongoWriteBatch, add)
 
 	collection = (mongo_collection *)zend_object_store_get_object(intern->zcollection_object TSRMLS_CC);
 	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+	if (!connection) {
+		/* Exception thrown by get_server() */
+		return;
+	}
 
 	/* If we haven't allocated a batch yet, or need to start a new one */
 	if (intern->total_items == 0 || intern->batch->item_count >= connection->max_write_batch_size) {
@@ -406,6 +410,10 @@ PHP_METHOD(MongoWriteBatch, execute)
 
 	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
 	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+	if (!connection) {
+		/* Exception thrown by get_server() */
+		return;
+	}
 
 	/* Reset the item counter */
 	intern->total_items = 0;
