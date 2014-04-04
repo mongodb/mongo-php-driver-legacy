@@ -36,6 +36,7 @@
  */
 
 #include <string.h>
+#include "md5.h"
 
 /* Forward declaration for the MD5 algorithm */
 typedef unsigned int MD5_u32plus;

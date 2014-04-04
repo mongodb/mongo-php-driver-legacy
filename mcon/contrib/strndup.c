@@ -33,6 +33,7 @@
 #ifndef WIN32
 #include <unistd.h>
 #endif
+#include "strndup.h"
 
 /* Compat function for systems that do not have strndup().
  * This is borrowed from FreeBSD's strndup.c, with minor CS changes */
