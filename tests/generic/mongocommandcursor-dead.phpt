@@ -26,6 +26,7 @@ $c = new MongoCommandCursor(
 		'cursor' => array( 'batchSize' => 2 )
 	)
 );
+$c->batchSize(2);
 
 $c->rewind();
 while ($c->valid()) {
