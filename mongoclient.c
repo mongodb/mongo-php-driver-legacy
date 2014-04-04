@@ -553,7 +553,11 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 			mongo_connection *con = mongo_manager_connection_find_by_server_definition(link->manager, link->servers->server[i]);
 
 			if (con) {
+#if PHP_VERSION_ID >= 50600
+				php_stream_context_set(con->socket, ctx TSRMLS_CC);
+#else
 				php_stream_context_set(con->socket, ctx);
+#endif
 			}
 		}
 	}
