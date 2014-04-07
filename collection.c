@@ -2482,6 +2482,12 @@ PHP_METHOD(MongoCollection, distinct)
 
 	tmp = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
+	if (!tmp) {
+		zval_ptr_dtor(&cmd);
+		/* Exception thrown */
+		return;
+	}
+
 	if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values") + 1, (void **)&values) == SUCCESS) {
 #ifdef array_init_size
 		array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
