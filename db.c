@@ -888,7 +888,11 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	/* query */
 	MAKE_STD_ZVAL(retval);
 	MONGO_METHOD(MongoCursor, getNext, retval, cursor);
-	clear_exception(retval TSRMLS_CC);
+	if (EG(exception)) {
+		zval_ptr_dtor(&retval);
+		zval_ptr_dtor(&cursor);
+		return NULL;
+	}
 
 	/* Before we destroy the cursor, we figure out which connection was used.
 	 * Yes, this is quite ugly but necessary for cursor commands. */
