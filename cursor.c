@@ -40,6 +40,7 @@ typedef __int64 int64_t;
 #include "util/log.h"
 #include "log_stream.h"
 #include "cursor_shared.h"
+#include "contrib/php-json.h"
 
 /* externs */
 extern zend_class_entry *mongo_ce_Id, *mongo_ce_MongoClient, *mongo_ce_DB;
@@ -122,8 +123,13 @@ PHP_METHOD(MongoCursor, __construct)
 	cursor->zmongoclient = zlink;
 	zval_add_ref(&zlink);
 
-	/* change ['x', 'y', 'z'] into {'x' : 1, 'y' : 1, 'z' : 1} */
-	if (Z_TYPE_P(zfields) == IS_ARRAY) {
+	/* Legacy handling where the projection is an array of field names to be
+	 * included (e.g. ['x', 'y', 'z'] is converted to {'x': 1, 'y': 1, 'z': 1}).
+	 * This behavior dates back to 0.9.4, but there is no record of it in the
+	 * extension's documentation. It should be deprecated/removed in the future,
+	 * as it conflicts with supporting some legitimate projections (PHP-1056).
+	 */
+	if (Z_TYPE_P(zfields) == IS_ARRAY && php_mongo_is_numeric_array(zfields TSRMLS_CC) == SUCCESS) {
 		HashPosition pointer;
 		zval *fields;
 
