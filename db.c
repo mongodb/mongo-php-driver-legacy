@@ -1031,7 +1031,11 @@ static void run_err(char *cmd, zval *return_value, zval *dbobj TSRMLS_DC)
 	clear_exception(return_value TSRMLS_CC);
 
 	zval_ptr_dtor(&command);
-	RETVAL_ZVAL(retval, 0, 1);
+	if (retval) {
+		RETVAL_ZVAL(retval, 0, 1);
+	} else {
+		RETVAL_NULL();
+	}
 }
 
 /* {{{ MongoDB->lastError()

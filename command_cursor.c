@@ -259,6 +259,10 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	result = php_mongo_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1, &cmd_cursor->connection TSRMLS_CC);
 	efree(dbname);
 
+	if (!result) {
+		return;
+	}
+
 	if (php_mongo_trigger_error_on_command_failure(cmd_cursor->connection, result TSRMLS_CC) == FAILURE) {
 		zval_ptr_dtor(&result);
 		return;
