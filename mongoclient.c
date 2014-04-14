@@ -990,7 +990,9 @@ PHP_METHOD(MongoClient, listDBs)
 	zval_ptr_dtor(&cmd);
 	zval_ptr_dtor(&zdb);
 
-	RETVAL_ZVAL(retval, 0, 1);
+	if (retval) {
+		RETVAL_ZVAL(retval, 0, 1);
+	}
 }
 /* }}} */
 
