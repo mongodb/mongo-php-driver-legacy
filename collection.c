@@ -815,16 +815,22 @@ void mongo_convert_write_api_return_to_legacy_retval(zval *return_value, php_mon
 			}
 			break;
 
-		case MONGODB_API_COMMAND_UPDATE:
+		case MONGODB_API_COMMAND_UPDATE: {
+			int updatedExisting = 0;
+
 			if (SUCCESS == zend_hash_find(HASH_P(return_value), "n", strlen("n") + 1, (void**) &n)) {
 				zval **nModified;
 
-				/* updatedExisting needs to be set to true when existing documents where modified */
-				if (SUCCESS == zend_hash_find(HASH_P(return_value), "nModified", strlen("nModified") + 1, (void**) &nModified)) {
-					add_assoc_bool(return_value, "updatedExisting", 1);
+				convert_to_long_ex(n);
+				if (Z_LVAL_PP(n) > 0) {
+					/* updatedExisting needs to be set to true when existing documents were modified */
+					if (FAILURE == zend_hash_find(HASH_P(return_value), "upserted", strlen("upserted") + 1, (void**) &nModified)) {
+						updatedExisting = 1;
+					}
 				}
 			}
-			break;
+			add_assoc_bool(return_value, "updatedExisting", updatedExisting);
+		} break;
 
 		case MONGODB_API_COMMAND_DELETE:
 			break;
