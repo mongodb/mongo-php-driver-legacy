@@ -159,8 +159,9 @@ void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC)
 		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
 	}
 	if (property_info && property_info->flags & MONGO_ACC_READ_ONLY) {
-		/* If its the object itself that is updating the property, then its OK */
-		if (EG(scope) != Z_OBJCE_P(object)) {
+		/* If its the object itself that is updating the property, or an
+		 * inherited class, then its OK */
+		if (!instanceof_function(Z_OBJCE_P(object), EG(scope) TSRMLS_CC)) {
 			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is read-only", Z_STRVAL_P(member));
 			if (member == &tmp_member) {
 				zval_dtor(member);
