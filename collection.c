@@ -266,9 +266,11 @@ PHP_METHOD(MongoCollection, drop)
 	zval_add_ref(&c->name);
 
 	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
-
 	zval_ptr_dtor(&cmd);
-	RETURN_ZVAL(retval, 0, 1);
+
+	if (retval) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
 }
 /* }}} */
 
@@ -294,9 +296,11 @@ PHP_METHOD(MongoCollection, validate)
 	add_assoc_bool(cmd, "full", scan_data);
 
 	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
-
 	zval_ptr_dtor(&cmd);
-	RETURN_ZVAL(retval, 0, 1);
+
+	if (retval) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
 }
 /* }}} */
 
@@ -1345,7 +1349,7 @@ PHP_METHOD(MongoCollection, findAndModify)
 
 	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, &used_connection TSRMLS_CC);
 
-	if (php_mongo_trigger_error_on_command_failure(used_connection, retval TSRMLS_CC) == SUCCESS) {
+	if (retval && php_mongo_trigger_error_on_command_failure(used_connection, retval TSRMLS_CC) == SUCCESS) {
 		if (zend_hash_find(Z_ARRVAL_P(retval), "value", strlen("value") + 1, (void **)&values) == SUCCESS) {
 			/* We may wind up with a NULL here if there simply aren't any results */
 			if (Z_TYPE_PP(values) == IS_ARRAY) {
@@ -1933,7 +1937,9 @@ PHP_METHOD(MongoCollection, deleteIndex)
 	zval_ptr_dtor(&cmd);
 	efree(key_str);
 
-	RETVAL_ZVAL(retval, 0, 1);
+	if (retval) {
+		RETVAL_ZVAL(retval, 0, 1);
+	}
 }
 /* }}} */
 
@@ -1957,7 +1963,10 @@ PHP_METHOD(MongoCollection, deleteIndexes)
 	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
-	RETURN_ZVAL(retval, 0, 1);
+
+	if (retval) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
 }
 /* }}} */
 
@@ -2316,7 +2325,7 @@ void php_mongodb_aggregate(zval *pipeline, zval *options, mongo_db *db, mongo_co
 	}
 
 	retval = php_mongo_runcommand(collection->link, &collection->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, &connection TSRMLS_CC);
-	if (php_mongo_trigger_error_on_command_failure(connection, retval TSRMLS_CC) == SUCCESS) {
+	if (retval && php_mongo_trigger_error_on_command_failure(connection, retval TSRMLS_CC) == SUCCESS) {
 		RETVAL_ZVAL(retval, 0, 1);
 	}
 
@@ -2482,6 +2491,12 @@ PHP_METHOD(MongoCollection, distinct)
 
 	tmp = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
 
+	if (!tmp) {
+		zval_ptr_dtor(&cmd);
+		/* Exception thrown */
+		return;
+	}
+
 	if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values") + 1, (void **)&values) == SUCCESS) {
 #ifdef array_init_size
 		array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
@@ -2589,14 +2604,16 @@ PHP_METHOD(MongoCollection, group)
 
 	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, &used_connection TSRMLS_CC);
 
-	if (php_mongo_trigger_error_on_command_failure(used_connection, retval TSRMLS_CC) == FAILURE) {
+	if (retval && php_mongo_trigger_error_on_command_failure(used_connection, retval TSRMLS_CC) == FAILURE) {
 		RETVAL_FALSE;
 	}
 
 	zval_ptr_dtor(&cmd);
 	zval_ptr_dtor(&reduce);
 
-	RETURN_ZVAL(retval, 0, 1);
+	if (retval) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
 }
 /* }}} */
 
@@ -2667,6 +2684,10 @@ PHP_METHOD(MongoCollection, parallelCollectionScan)
 
 	document = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, &connection TSRMLS_CC);
 	zval_ptr_dtor(&cmd);
+
+	if (!document) {
+		return;
+	}
 	if (php_mongo_trigger_error_on_command_failure(connection, document TSRMLS_CC) == FAILURE) {
 		zval_ptr_dtor(&document);
 		return;
