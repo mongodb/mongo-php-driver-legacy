@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-928: The 'w' property is read-only
+Test for PHP-928: The 'w' property is read-only (inherited method)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
@@ -10,6 +10,11 @@ class MyDb extends MongoDB {
 	function __construct($conn, $name)
 	{
 		parent::__construct($conn, $name);
+	}
+
+	function setW($w)
+	{
+		$this->w = $w;
 	}
 }
 
