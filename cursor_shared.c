@@ -343,7 +343,6 @@ int php_mongo_get_more(mongo_cursor *cursor TSRMLS_DC)
 	efree(buf.start);
 
 	if (php_mongo_get_reply(cursor TSRMLS_CC) != SUCCESS) {
-		free(error_message);
 		php_mongo_cursor_failed(cursor TSRMLS_CC);
 		return 0;
 	}
