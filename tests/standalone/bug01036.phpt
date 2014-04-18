@@ -2,6 +2,14 @@
 Test for PHP-1036: Segmentation Fault when querying large collection and the working set is not loaded
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
+<?php
+try {
+    $host = MongoShellServer::getStandaloneInfo();
+    $mc = new MongoClient($host, array("socketTimeoutMS" => 1));
+} catch(Exception $e) {
+    die("skip Can't connect to the server fast enough\n");
+}
+?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
