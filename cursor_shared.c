@@ -73,10 +73,10 @@ void php_mongo_cursor_free(void *object TSRMLS_DC)
 	mongo_cursor *cursor = (mongo_cursor*)object;
 
 	if (cursor) {
-		if (cursor->cursor_id != 0) {
-			php_mongo_kill_cursor(cursor->connection, cursor->cursor_id TSRMLS_CC);
-		}
 		if (cursor->connection) {
+			if (cursor->cursor_id != 0) {
+				php_mongo_kill_cursor(cursor->connection, cursor->cursor_id TSRMLS_CC);
+			}
 			mongo_deregister_callback_from_connection(cursor->connection, cursor);
 		}
 
@@ -343,7 +343,6 @@ int php_mongo_get_more(mongo_cursor *cursor TSRMLS_DC)
 	efree(buf.start);
 
 	if (php_mongo_get_reply(cursor TSRMLS_CC) != SUCCESS) {
-		free(error_message);
 		php_mongo_cursor_failed(cursor TSRMLS_CC);
 		return 0;
 	}
