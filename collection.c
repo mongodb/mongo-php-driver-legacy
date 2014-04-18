@@ -1709,7 +1709,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 	zval_ptr_dtor(&cmd);
  
 	if (EG(exception)) {
-		zval_ptr_dtor(&retval);
 		return;
 	}
 
