@@ -949,7 +949,12 @@ int mongo_collection_delete_api(mongo_con_manager *manager, mongo_connection *co
 
 	if (retval != 0) {
 		mongo_manager_connection_deregister(manager, connection);
-		/* Exception already thrown */
+		if (write_options->wtype == 1 && write_options->write_concern.w < 1) {
+			/* Clear out exception when w=0 */
+			zend_clear_exception(TSRMLS_C);
+			convert_to_boolean(return_value);
+			return 0;
+		}
 		return 0;
 	}
 
@@ -1002,7 +1007,12 @@ int mongo_collection_update_api(mongo_con_manager *manager, mongo_connection *co
 
 	if (retval != 0) {
 		mongo_manager_connection_deregister(manager, connection);
-		/* Exception already thrown */
+		if (write_options->wtype == 1 && write_options->write_concern.w < 1) {
+			/* Clear out exception when w=0 */
+			zend_clear_exception(TSRMLS_C);
+			convert_to_boolean(return_value);
+			return 0;
+		}
 		return 0;
 	}
 
@@ -1093,6 +1103,7 @@ PHP_METHOD(MongoCollection, insert)
 	link = (mongoclient*)zend_object_store_get_object(c->link TSRMLS_CC);
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+		zend_clear_exception(TSRMLS_C);
 		RETURN_FALSE;
 	}
 
@@ -1114,6 +1125,12 @@ PHP_METHOD(MongoCollection, insert)
 			/* Adds random "err", "code", "errmsg" empty fields to be compatible with
 			 * old-style return values */
 			mongo_convert_write_api_return_to_legacy_retval(return_value, MONGODB_API_COMMAND_INSERT, write_options.wtype == 1 ? write_options.write_concern.w : 1 TSRMLS_CC);
+		} else {
+			if (write_options.wtype == 1 && write_options.write_concern.w < 1) {
+				zend_clear_exception(TSRMLS_C);
+				convert_to_boolean(return_value);
+				return;
+			}
 		}
 		return;
 	} else if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
