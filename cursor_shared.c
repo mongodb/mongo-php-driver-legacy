@@ -332,6 +332,12 @@ int php_mongo_get_more(mongo_cursor *cursor TSRMLS_DC)
 	size = 34 + strlen(cursor->ns);
 	CREATE_BUF(buf, size);
 
+
+	if (cursor->connection == NULL) {
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 18 TSRMLS_CC, "trying to get more, but cannot find server");
+		return 0;
+	}
+
 	if (FAILURE == php_mongo_write_get_more(&buf, cursor TSRMLS_CC)) {
 		efree(buf.start);
 		return 0;
