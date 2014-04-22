@@ -512,16 +512,9 @@ mongo_connection *mongo_get_read_write_connection(mongo_con_manager *manager, mo
 	return NULL;
 }
 
-mongo_connection *mongo_get_read_write_connection_with_callback(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, void *callback_data, mongo_cleanup_t cleanup_cb, char **error_message)
+mongo_connection *mongo_manager_add_connection_callback(mongo_connection *connection, void *callback_data, mongo_cleanup_t cleanup_cb)
 {
-	mongo_connection *connection;
 	mongo_connection_deregister_callback *cb;
-	
-	connection = mongo_get_read_write_connection(manager, servers, connection_flags, error_message);
-
-	if (!connection) {
-		return NULL;
-	}
 
 	cb = calloc(1, sizeof(mongo_connection_deregister_callback));
 
@@ -541,6 +534,18 @@ mongo_connection *mongo_get_read_write_connection_with_callback(mongo_con_manage
 		connection->cleanup_list = cb;
 	}
 	return connection;
+}
+mongo_connection *mongo_get_read_write_connection_with_callback(mongo_con_manager *manager, mongo_servers *servers, int connection_flags, void *callback_data, mongo_cleanup_t cleanup_cb, char **error_message)
+{
+	mongo_connection *connection;
+
+	connection = mongo_get_read_write_connection(manager, servers, connection_flags, error_message);
+
+	if (!connection) {
+		return NULL;
+	}
+
+	return mongo_manager_add_connection_callback(connection, callback_data, cleanup_cb);
 }
 
 /* Connection management */
@@ -591,6 +596,13 @@ mongo_connection *mongo_manager_connection_find_by_server_definition(mongo_con_m
 	return con;
 }
 
+mongo_connection *mongo_manager_connection_find_by_hash_with_callback(mongo_con_manager *manager, char *hash, void *callback_data, mongo_cleanup_t cleanup_cb)
+{
+	mongo_connection *connection;
+
+	connection = mongo_manager_find_by_hash(manager, manager->connections, hash);
+	return mongo_manager_add_connection_callback(connection, callback_data, cleanup_cb);
+}
 mongo_connection *mongo_manager_connection_find_by_hash(mongo_con_manager *manager, char *hash)
 {
 	return mongo_manager_find_by_hash(manager, manager->connections, hash);
