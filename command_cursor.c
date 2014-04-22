@@ -30,6 +30,7 @@
 extern zend_class_entry *mongo_ce_MongoClient;
 extern zend_class_entry *mongo_ce_CursorInterface;
 extern zend_class_entry *mongo_ce_Exception, *mongo_ce_CursorException;
+extern zend_class_entry *mongo_ce_ConnectionException;
 extern zend_object_handlers mongo_default_handlers;
 
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
@@ -200,6 +201,10 @@ static int php_mongocommandcursor_advance(mongo_command_cursor *cmd_cursor TSRML
 		cmd_cursor->at++;
 
 		if (cmd_cursor->at == cmd_cursor->num && cmd_cursor->cursor_id != 0) {
+			if (cmd_cursor->dead) {
+				zend_throw_exception(mongo_ce_ConnectionException, "the connection has been terminated, and this cursor is dead", 12 TSRMLS_CC);
+				return FAILURE;
+			}
 			if (!php_mongo_get_more(cmd_cursor TSRMLS_CC)) {
 				cmd_cursor->cursor_id = 0;
 				return FAILURE;
@@ -232,6 +237,10 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
+	if (cmd_cursor->dead) {
+		zend_throw_exception(mongo_ce_ConnectionException, "the connection has been terminated, and this cursor is dead", 12 TSRMLS_CC);
+		return;
+	}
 
 	/* Shortcut in case we have a MongoCommandCursor created from a document. In this
 	 * case we *can not* iterate twice */
