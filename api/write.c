@@ -336,12 +336,12 @@ static int php_mongo_api_update_add(mongo_buffer *buf, int n, php_mongo_write_up
 
 	php_mongo_set_type(buf, BSON_OBJECT);
 	php_mongo_serialize_key(buf, "q", strlen("q"), 0 TSRMLS_CC);
-	if (zval_to_bson(buf, Z_ARRVAL_P(update_args->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE) {
+	if (zval_to_bson(buf, HASH_OF(update_args->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE) {
 		return 0;
 	}
 	php_mongo_set_type(buf, BSON_OBJECT);
 	php_mongo_serialize_key(buf, "u", strlen("u"), 0 TSRMLS_CC);
-	if (zval_to_bson(buf, Z_ARRVAL_P(update_args->update), NO_PREP, max_document_size TSRMLS_CC) == FAILURE) {
+	if (zval_to_bson(buf, HASH_OF(update_args->update), NO_PREP, max_document_size TSRMLS_CC) == FAILURE) {
 		return 0;
 	}
 
@@ -385,7 +385,7 @@ static int php_mongo_api_delete_add(mongo_buffer *buf, int n, php_mongo_write_de
 
 	php_mongo_set_type(buf, BSON_OBJECT);
 	php_mongo_serialize_key(buf, "q", strlen("q"), 0 TSRMLS_CC);
-	if (zval_to_bson(buf, Z_ARRVAL_P(delete_args->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE) {
+	if (zval_to_bson(buf, HASH_OF(delete_args->query), NO_PREP, max_document_size TSRMLS_CC) == FAILURE) {
 		return 0;
 	}
 
