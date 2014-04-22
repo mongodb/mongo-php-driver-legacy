@@ -202,7 +202,7 @@ static int php_mongocommandcursor_advance(mongo_command_cursor *cmd_cursor TSRML
 
 		if (cmd_cursor->at == cmd_cursor->num && cmd_cursor->cursor_id != 0) {
 			if (cmd_cursor->dead) {
-				zend_throw_exception(mongo_ce_ConnectionException, "the connection has been terminated, and this cursor is dead", 12 TSRMLS_CC);
+				php_mongo_cursor_throw(mongo_ce_ConnectionException, cmd_cursor->connection, 12 TSRMLS_CC, "the connection has been terminated, and this cursor is dead");
 				return FAILURE;
 			}
 			if (!php_mongo_get_more(cmd_cursor TSRMLS_CC)) {
@@ -238,7 +238,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
 	if (cmd_cursor->dead) {
-		zend_throw_exception(mongo_ce_ConnectionException, "the connection has been terminated, and this cursor is dead", 12 TSRMLS_CC);
+		php_mongo_cursor_throw(mongo_ce_ConnectionException, cmd_cursor->connection, 12 TSRMLS_CC, "the connection has been terminated, and this cursor is dead");
 		return;
 	}
 
