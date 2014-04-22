@@ -74,6 +74,7 @@ int php_mongo_get_cursor_info(zval *document, int64_t *cursor_id, char **ns, zva
 int php_mongo_calculate_next_request_limit(mongo_cursor *cursor);
 
 /* Tries to read the reply from the database */
+int php_mongo_cursor_mark_dead(void *callback_data);
 int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC);
 void php_mongo_make_special(mongo_cursor *cursor);
 

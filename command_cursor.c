@@ -389,7 +389,7 @@ void php_mongo_command_cursor_init_from_document(zval *zlink, mongo_command_curs
 	}
 
 	/* Find connection */
-	connection = mongo_manager_connection_find_by_hash(link->manager, hash);
+	connection = mongo_manager_connection_find_by_hash_with_callback(link->manager, hash, cmd_cursor, php_mongo_cursor_mark_dead);
 	if (!connection) {
 		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "Cannot find connection associated with: '%s'", hash);
 		return;
@@ -397,7 +397,7 @@ void php_mongo_command_cursor_init_from_document(zval *zlink, mongo_command_curs
 
 	/* Get cursor info from array with ID, namespace and first batch elements */
 	if (php_mongo_get_cursor_info(document, &cursor_id, &ns, &first_batch TSRMLS_CC) == FAILURE) {
-		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response");
+		exception = php_mongo_cursor_throw(mongo_ce_CursorException, connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response");
 		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), document TSRMLS_CC);
 		return;
 	}
