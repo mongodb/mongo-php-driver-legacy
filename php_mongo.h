@@ -21,10 +21,6 @@
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
-#else
-# if WIN32
-#  include "config-w32.h"
-# endif
 #endif
 
 #if defined(_MSC_VER)

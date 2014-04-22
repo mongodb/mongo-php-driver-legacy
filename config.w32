@@ -3,7 +3,9 @@
 
 ARG_ENABLE("mongo", "MongoDB support", "no");
 ARG_ENABLE("mongo-streams", "Mongo: Build with PHP streams wrapper support", "yes");
-ARG_WITH("mongo-sasl", "Mongo: Build against Cyrus-SASL", "no");
+ARG_WITH("mongo-sasl", "Mongo: Build against Cyrus-SASL", "yes");
+ADD_EXTENSION_DEP("mongo", "json", false);
+ADD_EXTENSION_DEP("mongo", "openssl", false);
 
 if (PHP_MONGO != "no") {
   EXTENSION('mongo', 'php_mongo.c mongo.c mongoclient.c bson.c collection.c command_cursor.c cursor.c cursor_shared.c db.c io_stream.c log_stream.c');
@@ -18,9 +20,17 @@ if (PHP_MONGO != "no") {
   ADD_SOURCES(configure_module_dirname + "/batch", "delete.c insert.c update.c write.c", "mongo");
 
   AC_DEFINE('HAVE_MONGO', 1);
-}
 
-if (PHP_MONGO_STREAMS != "no") {
-  AC_DEFINE('MONGO_PHP_STREAMS', 1)
+  if (PHP_MONGO_STREAMS != "no") {
+    ADD_FLAG("CFLAGS_MONGO", " /D MONGO_PHP_STREAMS=1");
+  }
+
+  if (PHP_MONGO_SASL != "no") {
+    if (CHECK_LIB("libsasl.lib", "mongo", PHP_MONGO)) {
+      ADD_FLAG("CFLAGS_MONGO", " /D HAVE_MONGO_SASL=1");
+    } else {
+      WARNING("mongo libsasl support not enabled, libs not found");
+    }
+  }
 }
 
