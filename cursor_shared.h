@@ -42,7 +42,7 @@
 /* Macro to check whether a cursor is dead, and if so, bailout */
 #define MONGO_CURSOR_CHECK_DEAD \
 	if (cursor->dead) { \
-		php_mongo_cursor_throw(mongo_ce_ConnectionException, cmd_cursor->connection, 12 TSRMLS_CC, "the connection has been terminated, and this cursor is dead"); \
+		php_mongo_cursor_throw(mongo_ce_ConnectionException, NULL, 12 TSRMLS_CC, "the connection has been terminated, and this cursor is dead"); \
 		return; \
 	}
 
