@@ -49,10 +49,6 @@
 #include "mcon/utils.h"
 #ifdef HAVE_CONFIG_H
 # include "config.h"
-#else
-# if WIN32
-#  include "config-w32.h"
-# endif
 #endif
 
 #if MONGO_PHP_STREAMS
