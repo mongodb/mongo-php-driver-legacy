@@ -34,7 +34,7 @@ $m = new MongoClient($dsn, array(), array( 'context' => $ctx ));
 $db = dbname();
 $c = $m->$db->test;
 
-$cursor = $c->find( array('ts' => time() - 86400 ))->setFlag(3); // oplog_reply
+$cursor = $c->find( array('ts' => array('$gt' => time() - 86400 )))->setFlag(3); // oplog_reply
 foreach( $cursor as $foo ) {}
 ?>
 --EXPECTF--
