@@ -695,18 +695,6 @@ PHP_METHOD(MongoCursor, doQuery)
 }
 /* }}} */
 
-/* Cursor helpers */
-int mongo_cursor_mark_dead(void *callback_data)
-{
-	mongo_cursor *cursor = (mongo_cursor*) callback_data;
-
-	cursor->dead = 1;
-	cursor->cursor_id = 0;
-	cursor->connection = NULL;
-
-	return 1;
-}
-
 /* Adds the $readPreference option to the query objects */
 void mongo_apply_mongos_rp(mongo_cursor *cursor)
 {
@@ -790,7 +778,7 @@ static int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 		link->servers,
 		cursor->cursor_options & MONGO_CURSOR_OPT_FORCE_PRIMARY ? MONGO_CON_FLAG_WRITE : MONGO_CON_FLAG_READ,
 		cursor,
-		mongo_cursor_mark_dead,
+		php_mongo_cursor_mark_dead,
 		(char**) &error_message
 	);
 

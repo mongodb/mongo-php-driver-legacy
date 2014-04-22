@@ -203,7 +203,18 @@ int php_mongo_get_cursor_body(mongo_connection *con, mongo_cursor *cursor, char 
 	return MonGlo(manager)->recv_data(con, &client->servers->options, cursor->timeout, cursor->buf.pos, cursor->recv.length, error_message);
 }
 
-/* Cursor helper function */
+/* Cursor helper functions */
+int php_mongo_cursor_mark_dead(void *callback_data)
+{
+	mongo_cursor *cursor = (mongo_cursor*) callback_data;
+
+	cursor->dead = 1;
+	cursor->cursor_id = 0;
+	cursor->connection = NULL;
+
+	return 1;
+}
+
 int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 {
 	int   status;
