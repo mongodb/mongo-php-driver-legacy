@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-1085: collection->update($query, $document) crashes if $document is an object
+Test for PHP-1084: collection->update($query, $document) crashes if $document is an object
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
