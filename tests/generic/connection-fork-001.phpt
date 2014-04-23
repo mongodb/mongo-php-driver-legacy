@@ -12,7 +12,7 @@ $m = mongo_standalone();
 $col = $m->selectDb("phpunit")->fork;
 
 $col->drop();
-$col->insert(array("parent" => time()), array("safe" => 1));
+$col->insert(array("parent" => time()), array("w" => 1));
 
 $pid = pcntl_fork();
 if ($pid == 0) {
@@ -22,7 +22,7 @@ if ($pid == 0) {
 
 $n = 0;
 while($n++ < 1000) {
-	$col->insert(array("parent" => time()), array("safe" => 1));
+	$col->insert(array("parent" => time()), array("w" => 1));
 }
 
 echo $col->count(), "\n";

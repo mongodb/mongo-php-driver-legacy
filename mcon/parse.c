@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@
 #include "utils.h"
 #include "manager.h"
 #include "read_preference.h"
+#include "contrib/strndup.h"
 
 /* Forward declarations */
-void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start);
-int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message);
+static void mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start);
+static int mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message);
 
 /* Parsing routine */
 mongo_servers* mongo_parse_init(void)
@@ -41,12 +42,14 @@ mongo_servers* mongo_parse_init(void)
 
 	servers->options.connectTimeoutMS = 0;
 	servers->options.socketTimeoutMS = -1;
+	servers->options.secondaryAcceptableLatencyMS = MONGO_RP_DEFAULT_ACCEPTABLE_LATENCY_MS;
 	servers->options.default_w = -1;
 	servers->options.default_wstring = NULL;
 	servers->options.default_wtimeout = -1;
 	servers->options.default_fsync = 0;
 	servers->options.default_journal = 0;
 	servers->options.ssl = MONGO_SSL_DISABLE;
+	servers->options.gssapiServiceName = strdup("mongodb");
 	servers->options.ctx = NULL;
 
 	return servers;
@@ -227,7 +230,7 @@ int mongo_parse_server_spec(mongo_con_manager *manager, mongo_servers *servers, 
 }
 
 /* Helpers */
-void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start)
+static void mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_servers *servers, char *host_start, char *host_end, char *port_start)
 {
 	mongo_server_def *tmp;
 
@@ -253,7 +256,7 @@ void static mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
  * 1 if either name or value was missing
  * 2 if the option didn't exist
  * 3 on logic errors */
-int static mongo_process_option(mongo_con_manager *manager, mongo_servers *servers, char *name, char *value, char *pos, char **error_message)
+static int mongo_process_option(mongo_con_manager *manager, mongo_servers *servers, char *name, char *value, char *pos, char **error_message)
 {
 	char *tmp_name;
 	char *tmp_value;
@@ -342,11 +345,12 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authMechanism': '%s'", option_value);
 		if (strcasecmp(option_value, "MONGODB-CR") == 0) {
 			mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
+		} else if (strcasecmp(option_value, "MONGODB-X509") == 0) {
+			mechanism = MONGO_AUTH_MECHANISM_MONGODB_X509;
 		} else if (strcasecmp(option_value, "GSSAPI") == 0) {
-			/* FIXME: GSSAPI isn't implemented yet */
 			mechanism = MONGO_AUTH_MECHANISM_GSSAPI;
-			*error_message = strdup("The authMechanism 'GSSAPI' is currently not supported. Only MONGODB-CR is available.");
-			return 3;
+		} else if (strcasecmp(option_value, "PLAIN") == 0) {
+			mechanism = MONGO_AUTH_MECHANISM_PLAIN;
 		} else {
 			int len = strlen(option_value) + sizeof("The authMechanism '' does not exist.");
 
@@ -486,6 +490,21 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		return 0;
 	}
 
+	if (strcasecmp(option_name, "gssapiServiceName") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'gssapiServiceName': '%s'", option_value);
+		free(servers->options.gssapiServiceName);
+		servers->options.gssapiServiceName = strdup(option_value);
+		return 0;
+	}
+
+	if (strcasecmp(option_name, "secondaryAcceptableLatencyMS") == 0) {
+		int value = atoi(option_value);
+
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'secondaryAcceptableLatencyMS': '%s'", option_value);
+		servers->options.secondaryAcceptableLatencyMS = value;
+		return 0;
+	}
+
 	if (strcasecmp(option_name, "slaveOkay") == 0) {
 		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'slaveOkay': true");
@@ -563,9 +582,11 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			 * value before setting it anyway. */
 			if (!servers->server[i]->db) {
 				servers->server[i]->db = strdup("admin");
-				/* Admin users always authenticate on the admin db, even when
-				 * using other databases */
-				servers->server[i]->authdb = strdup("admin");
+				if (!servers->server[i]->authdb) {
+					/* Admin users always authenticate on the admin db, even when
+					 * using other databases */
+					servers->server[i]->authdb = strdup("admin");
+				}
 			}
 		}
 		return 0;
@@ -575,7 +596,15 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		/* Rough check to see whether this is a numeric string or not */
 		char *endptr;
 		long tmp_value;
-		
+
+		if (servers->options.default_wstring != NULL) {
+			free(servers->options.default_wstring);
+		}
+
+		/* Reassign defaults before we set default_w or default_wstring */
+		servers->options.default_w = -1;
+		servers->options.default_wstring = NULL;
+
 		tmp_value = strtol(option_value, &endptr, 10);
 		/* If no invalid character is found (endptr == 0), we consider the
 		 * option value as a number */
@@ -587,7 +616,6 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 				return 3;
 			}
 		} else {
-			servers->options.default_w = 1;
 			servers->options.default_wstring = strdup(option_value);
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'w': '%s'", servers->options.default_wstring);
 		}
@@ -625,7 +653,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 /* Returns 0 if all options were processed without errors.
  * On failure, returns 1 and populates error_message */
-int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message)
+static int mongo_parse_options(mongo_con_manager *manager, mongo_servers *servers, char *options_string, char **error_message)
 {
 	int retval = 0;
 	char *name_start, *value_start = NULL, *pos;
@@ -652,7 +680,7 @@ int static mongo_parse_options(mongo_con_manager *manager, mongo_servers *server
 	return retval;
 }
 
-void static mongo_server_def_dump(mongo_con_manager *manager, mongo_server_def *server_def)
+static void mongo_server_def_dump(mongo_con_manager *manager, mongo_server_def *server_def)
 {
 	mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO,
 		"- host: %s; port: %d; username: %s, password: %s, database: %s, auth source: %s, mechanism: %d",
@@ -725,8 +753,11 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	if (from->options.repl_set_name) {
 		to->options.repl_set_name = strdup(from->options.repl_set_name);
 	}
+	if (from->options.gssapiServiceName) {
+		to->options.gssapiServiceName = strdup(from->options.gssapiServiceName);
+	}
 
-	to->options.connectTimeoutMS = from->options.connectTimeoutMS;
+	to->options.secondaryAcceptableLatencyMS = from->options.secondaryAcceptableLatencyMS;
 
 	to->options.default_w = from->options.default_w;
 	to->options.default_wtimeout = from->options.default_wtimeout;
@@ -739,7 +770,7 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 	to->options.ssl = from->options.ssl;
 
 	if (from->options.ctx) {
-		memcpy(to->options.ctx, from->options.ctx, sizeof(void *));
+		to->options.ctx = from->options.ctx;
 	}
 
 	mongo_read_preference_copy(&from->read_pref, &to->read_pref);
@@ -778,6 +809,9 @@ void mongo_servers_dtor(mongo_servers *servers)
 	}
 	if (servers->options.repl_set_name) {
 		free(servers->options.repl_set_name);
+	}
+	if (servers->options.gssapiServiceName) {
+		free(servers->options.gssapiServiceName);
 	}
 	if (servers->options.default_wstring) {
 		free(servers->options.default_wstring);

@@ -15,7 +15,7 @@ $opts = array(
     "password" => $creds["admin"]->password,
     "replicaSet" => $cfg["rsname"],
 );
-$m = new Mongo($cfg["dsn"], $opts+array("readPreference" => MongoClient::RP_SECONDARY_PREFERRED));
+$m = new MongoClient($cfg["dsn"], $opts+array("readPreference" => MongoClient::RP_SECONDARY_PREFERRED));
 
 $db = $m->selectDB("phpunit-unit");
 $c = $db->selectCollection("example");

@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-543: Mongo::connect() should return a bool value.
 --SKIPIF--
+<?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
@@ -11,7 +12,7 @@ var_dump($m->connect());
 
 try
 {
-	$m = new Mongo("mongodb://totallynonsense/", array( 'connect' => false ) );
+	$m = new MongoClient("mongodb://totallynonsense/", array( 'connect' => false ) );
 	var_dump(@$m->connect());
 }
 catch ( Exception $e )

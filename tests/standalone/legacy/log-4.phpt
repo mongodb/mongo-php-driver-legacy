@@ -16,19 +16,19 @@ echo "Warnings:\n";
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::WARNING);
 $dsn = MongoShellServer::getStandaloneInfo();
-$m = new Mongo("mongodb://$dsn");
+$m = new MongoClient("mongodb://$dsn");
 
 echo "Fine:\n";
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::FINE);
 $dsn = MongoShellServer::getStandaloneInfo();
-$m = new Mongo("mongodb://$dsn");
+$m = new MongoClient("mongodb://$dsn");
 
 echo "Info:\n";
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::INFO);
 $dsn = MongoShellServer::getStandaloneInfo();
-$m = new Mongo("mongodb://$dsn");
+$m = new MongoClient("mongodb://$dsn");
 MongoLog::setModule(0);
 MongoLog::setLevel(0);
 ?>
@@ -38,8 +38,10 @@ Fine:
 CON     FINE: found connection %s:%d;-;.;%d (looking for %s:%d;-;.;%d)
 CON     FINE: found connection %s:%d;-;.;%d (looking for %s:%d;-;.;%d)
 CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
+REPLSET FINE: - collect any
 REPLSET FINE: filter_connections: adding connections:
 REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;.;%d
 REPLSET FINE: filter_connections: done

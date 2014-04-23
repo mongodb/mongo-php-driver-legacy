@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 #include <php.h>
 #include <zend_exceptions.h>
 #include <ext/standard/md5.h>
-#include "ext/standard/php_smart_str.h"
+#include <ext/standard/php_smart_str.h>
 
 #include "php_mongo.h"
 
 #include "db.h"
 #include "collection.h"
 #include "cursor.h"
+#include "cursor_shared.h"
 #include "gridfs/gridfs.h"
 #include "types/code.h"
 #include "types/db_ref.h"
@@ -36,20 +37,14 @@
 extern zend_class_entry *mongo_ce_MongoClient, *mongo_ce_Collection;
 extern zend_class_entry *mongo_ce_Cursor, *mongo_ce_GridFS, *mongo_ce_Id;
 extern zend_class_entry *mongo_ce_Code, *mongo_ce_Exception;
-extern zend_class_entry  *mongo_ce_CursorException, *mongo_ce_ConnectionException;
-
-extern int le_pconnection, le_connection;
+extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_Int64;
+extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_ResultException;
 
 extern zend_object_handlers mongo_default_handlers;
 
 zend_class_entry *mongo_ce_DB = NULL;
 
 static void clear_exception(zval* return_value TSRMLS_DC);
-
-void php_mongo_connection_force_primary(mongo_cursor *cursor)
-{
-	cursor->force_primary = 1;
-}
 
 static int php_mongo_command_supports_rp(zval *cmd)
 {
@@ -59,7 +54,7 @@ static int php_mongo_command_supports_rp(zval *cmd)
 	long type;
 	ulong idx;
 
-	if (Z_TYPE_P(cmd) != IS_ARRAY) {
+	if (!cmd || Z_TYPE_P(cmd) != IS_ARRAY) {
 		return 0;
 	}
 
@@ -102,6 +97,12 @@ static int php_mongo_command_supports_rp(zval *cmd)
 					}
 				}
 			}
+		}
+		return 0;
+	}
+	if (str_len == 23) {
+		if (strcmp(str, "parallelCollectionScan") == 0) {
+			return 1;
 		}
 		return 0;
 	}
@@ -163,30 +164,54 @@ PHP_METHOD(MongoDB, __toString)
 	RETURN_ZVAL(db->name, 1, 0);
 }
 
-PHP_METHOD(MongoDB, selectCollection)
+/* Selects a collection and returns it as zval. If the return value is no, an
+ * Exception is set. This only happens if the passed in DB was invalid. */
+zval *php_mongo_selectcollection(zval *this, char *collection, int collection_len TSRMLS_DC)
 {
-	zval temp;
 	zval *z_collection;
-	char *collection;
-	int collection_len;
+	zval *return_value;
+	zval temp;
 	mongo_db *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &collection, &collection_len) == FAILURE) {
-		return;
+	db = (mongo_db*)zend_object_store_get_object(this TSRMLS_CC);
+	if (!(db->name)) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoDB object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return NULL;
 	}
 
 	MAKE_STD_ZVAL(z_collection);
 	ZVAL_STRINGL(z_collection, collection, collection_len, 1);
 
-	db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(db->name, MongoDB);
-
+	MAKE_STD_ZVAL(return_value);
 	object_init_ex(return_value, mongo_ce_Collection);
 
-	MONGO_METHOD2(MongoCollection, __construct, &temp, return_value, getThis(), z_collection);
+	MONGO_METHOD2(MongoCollection, __construct, &temp, return_value, this, z_collection);
 
 	zval_ptr_dtor(&z_collection);
+
+	return return_value;
 }
+
+/* {{{ proto MongoCollection MongoDB::selectCollection(string name)
+   Returns the "name" collection from the database */
+PHP_METHOD(MongoDB, selectCollection)
+{
+	char *name;
+	int   name_len;
+	zval *collection;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
+		return;
+	}
+
+	collection = php_mongo_selectcollection(getThis(), name, name_len TSRMLS_CC);
+	if (collection) {
+		/* Only copy the zval into return_value if it worked. If collection is
+		 * NULL here, an exception is set */
+		RETURN_ZVAL(collection, 0, 1);
+	}
+}
+/* }}} */
 
 PHP_METHOD(MongoDB, getGridFS)
 {
@@ -266,6 +291,58 @@ PHP_METHOD(MongoDB, setReadPreference)
 }
 /* }}} */
 
+/* {{{ array MongoDB::getWriteConcern()
+ * Get the MongoDB write concern, which will be inherited by constructed
+ * MongoCollection objects. */
+PHP_METHOD(MongoDB, getWriteConcern)
+{
+	zval *write_concern, *wtimeout;
+
+	if (zend_parse_parameters_none()) {
+		return;
+	}
+
+	write_concern = zend_read_property(mongo_ce_DB, getThis(), "w", strlen("w"), 0 TSRMLS_CC);
+	wtimeout      = zend_read_property(mongo_ce_DB, getThis(), "wtimeout", strlen("wtimeout"), 0 TSRMLS_CC);
+	Z_ADDREF_P(write_concern);
+	Z_ADDREF_P(wtimeout);
+
+	array_init(return_value);
+	add_assoc_zval(return_value, "w", write_concern);
+	add_assoc_zval(return_value, "wtimeout", wtimeout);
+}
+/* }}} */
+
+/* {{{ bool MongoDB::setWriteConcern(mixed w [, int wtimeout])
+ * Set the MongoDB write concern, which will be inherited by constructed
+ * MongoCollection objects. */
+PHP_METHOD(MongoDB, setWriteConcern)
+{
+	zval *write_concern;
+	long  wtimeout;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|l", &write_concern, &wtimeout) == FAILURE) {
+		return;
+	}
+
+	if (Z_TYPE_P(write_concern) == IS_LONG) {
+		zend_update_property_long(mongo_ce_DB, getThis(), "w", strlen("w"), Z_LVAL_P(write_concern) TSRMLS_CC);
+	} else if (Z_TYPE_P(write_concern) == IS_STRING) {
+		zend_update_property_stringl(mongo_ce_DB, getThis(), "w", strlen("w"), Z_STRVAL_P(write_concern), Z_STRLEN_P(write_concern) TSRMLS_CC);
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "expects parameter 1 to be an string or integer, %s given", zend_get_type_by_const(Z_TYPE_P(write_concern)));
+		RETURN_FALSE;
+	}
+
+	if (ZEND_NUM_ARGS() > 1) {
+		zend_update_property_long(mongo_ce_DB, getThis(), "wtimeout", strlen("wtimeout"), wtimeout TSRMLS_CC);
+	}
+
+	RETURN_TRUE;
+}
+/* }}} */
+
+
 PHP_METHOD(MongoDB, getProfilingLevel)
 {
 	zval l;
@@ -279,24 +356,28 @@ PHP_METHOD(MongoDB, getProfilingLevel)
 PHP_METHOD(MongoDB, setProfilingLevel)
 {
 	long level;
-	zval *data, *cmd_return;
+	zval *cmd, *cmd_return;
 	zval **ok;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &level) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_long(data, "profile", level);
+	PHP_MONGO_GET_DB(getThis());
 
-	MAKE_STD_ZVAL(cmd_return);
-	MONGO_CMD(cmd_return, getThis());
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_long(cmd, "profile", level);
 
-	zval_ptr_dtor(&data);
+	cmd_return = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+
+	zval_ptr_dtor(&cmd);
 
 	if (EG(exception)) {
-		zval_ptr_dtor(&cmd_return);
+		if (cmd_return) {
+			zval_ptr_dtor(&cmd_return);
+		}
 		return;
 	}
 
@@ -314,64 +395,80 @@ PHP_METHOD(MongoDB, setProfilingLevel)
 
 PHP_METHOD(MongoDB, drop)
 {
-	zval *data;
+	zval *cmd, *retval;
+	mongo_db *db;
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_long(data, "dropDatabase", 1);
+	PHP_MONGO_GET_DB(getThis());
 
-	MONGO_CMD(return_value, getThis());
-	zval_ptr_dtor(&data);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_long(cmd, "dropDatabase", 1);
+
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+
+	zval_ptr_dtor(&cmd);
+
+	if (retval) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
 }
 
 PHP_METHOD(MongoDB, repair)
 {
 	zend_bool cloned=0, original=0;
-	zval *data;
+	zval *cmd, *retval;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|bb", &cloned, &original) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_long(data, "repairDatabase", 1);
-	add_assoc_bool(data, "preserveClonedFilesOnFailure", cloned);
-	add_assoc_bool(data, "backupOriginalFiles", original);
+	PHP_MONGO_GET_DB(getThis());
 
-	MONGO_CMD(return_value, getThis());
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_long(cmd, "repairDatabase", 1);
+	add_assoc_bool(cmd, "preserveClonedFilesOnFailure", cloned);
+	add_assoc_bool(cmd, "backupOriginalFiles", original);
 
-	zval_ptr_dtor(&data);
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+
+	zval_ptr_dtor(&cmd);
+
+	if (retval) {
+		RETVAL_ZVAL(retval, 0, 1);
+	}
 }
 
 
 PHP_METHOD(MongoDB, createCollection)
 {
-	zval *data = NULL, *temp, *options = NULL;
+	zval *cmd = NULL, *temp, *options = NULL;
 	char *collection;
 	int   collection_len;
 	zend_bool capped = 0;
 	long size = 0, max = 0;
+	mongo_db *db;
 
 	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "s|bll", &collection, &collection_len, &capped, &size, &max) == SUCCESS) {
-		MAKE_STD_ZVAL(data);
-		array_init(data);
+		MAKE_STD_ZVAL(cmd);
+		array_init(cmd);
 
-		add_assoc_stringl(data, "create", collection, collection_len, 1);
+		add_assoc_stringl(cmd, "create", collection, collection_len, 1);
 
 		if (size) {
-			add_assoc_long(data, "size", size);
+			add_assoc_long(cmd, "size", size);
 		}
 
 		if (capped) {
 			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "This method now accepts arguments as an options array instead of the three optional arguments for capped, size and max elements");
-			add_assoc_bool(data, "capped", 1);
+			add_assoc_bool(cmd, "capped", 1);
 			if (max) {
-				add_assoc_long(data, "max", max);
+				add_assoc_long(cmd, "max", max);
 			}
 		}
 
@@ -381,34 +478,41 @@ PHP_METHOD(MongoDB, createCollection)
 		/* We create a new array here, instead of just tagging "create" =>
 		 * <name> at the end of the array. This is because MongoDB wants the
 		 * name of the command as first element in the array. */
-		MAKE_STD_ZVAL(data);
-		array_init(data);
-		add_assoc_stringl(data, "create", collection, collection_len, 1);
+		MAKE_STD_ZVAL(cmd);
+		array_init(cmd);
+		add_assoc_stringl(cmd, "create", collection, collection_len, 1);
 		if (options) {
-			zend_hash_merge(Z_ARRVAL_P(data), Z_ARRVAL_P(options), (copy_ctor_func_t) zval_add_ref, (void *) &tmp_copy, sizeof(zval *), 0);
+			zend_hash_merge(Z_ARRVAL_P(cmd), Z_ARRVAL_P(options), (copy_ctor_func_t) zval_add_ref, (void *) &tmp_copy, sizeof(zval *), 0);
 		}
 	} else {
 
 		return;
 	}
 
-	MAKE_STD_ZVAL(temp);
-	MONGO_METHOD1(MongoDB, command, temp, getThis(), data);
-	zval_ptr_dtor(&temp);
+	PHP_MONGO_GET_DB(getThis());
 
-	zval_ptr_dtor(&data);
+	temp = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
+
+	zval_ptr_dtor(&cmd);
+	if (temp) {
+		zval_ptr_dtor(&temp);
+	}
 
 	if (!EG(exception)) {
 		zval *zcollection;
 
 		/* get the collection we just created */
-		MAKE_STD_ZVAL(zcollection);
-		ZVAL_STRINGL(zcollection, collection, collection_len, 1);
-		MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), zcollection);
-		zval_ptr_dtor(&zcollection);
+		zcollection = php_mongo_selectcollection(getThis(), collection, collection_len TSRMLS_CC);
+		if (zcollection) {
+			/* Only copy the zval into return_value if it worked. If
+			 * zcollection is NULL here, an exception is set */
+			RETURN_ZVAL(zcollection, 0, 1);
+		}
 	}
 }
 
+/* {{{ proto MongoCollection MongoDB::dropCollection(string|MongoCollection collection)
+   Drops a collection and returns the database's response */
 PHP_METHOD(MongoDB, dropCollection)
 {
 	zval *collection;
@@ -417,36 +521,40 @@ PHP_METHOD(MongoDB, dropCollection)
 		return;
 	}
 
-	if (Z_TYPE_P(collection) != IS_OBJECT || Z_OBJCE_P(collection) != mongo_ce_Collection) {
-		zval *temp;
-
-		MAKE_STD_ZVAL(temp);
-		MONGO_METHOD1(MongoDB, selectCollection, temp, getThis(), collection);
-		collection = temp;
-	} else {
+	if (Z_TYPE_P(collection) == IS_STRING) {
+		collection = php_mongo_selectcollection(getThis(), Z_STRVAL_P(collection), Z_STRLEN_P(collection) TSRMLS_CC);
+		if (!collection) {
+			/* An exception is set in this case */
+			return;
+		}
+	} else if (Z_TYPE_P(collection) == IS_OBJECT && Z_OBJCE_P(collection) == mongo_ce_Collection) {
 		zval_add_ref(&collection);
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "expects parameter 1 to be an string or MongoCollection");
+		return;
 	}
 
 	MONGO_METHOD(MongoCollection, drop, return_value, collection);
 
 	zval_ptr_dtor(&collection);
 }
+/* }}} */
 
 static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int full_collection)
 {
 	zend_bool system_col = 0;
-	zval *nss, *collection, *cursor, *list, *next;
+	zval *system_collection, *cursor, *list, *next;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &system_col) == FAILURE) {
 		return;
 	}
 
 	/* select db.system.namespaces collection */
-	MAKE_STD_ZVAL(nss);
-	ZVAL_STRING(nss, "system.namespaces", 1);
-
-	MAKE_STD_ZVAL(collection);
-	MONGO_METHOD1(MongoDB, selectCollection, collection, getThis(), nss);
+	system_collection = php_mongo_selectcollection(getThis(), "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
+	if (!system_collection) {
+		/* An exception is set in this case */
+		return;
+	}
 
 	/* list to return */
 	MAKE_STD_ZVAL(list);
@@ -454,14 +562,14 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 
 	/* do find */
 	MAKE_STD_ZVAL(cursor);
-	MONGO_METHOD(MongoCollection, find, cursor, collection);
+	MONGO_METHOD(MongoCollection, find, cursor, system_collection);
 
 	/* populate list */
 	MAKE_STD_ZVAL(next);
 	MONGO_METHOD(MongoCursor, getNext, next, cursor);
 
-	while (!IS_SCALAR_P(next)) {
-		zval *c, *zname;
+	while (IS_ARRAY_OR_OBJECT_P(next)) {
+		zval *c;
 		zval **collection;
 		char *name, *first_dot, *system;
 
@@ -510,20 +618,10 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 		}
 
 		if (full_collection) {
-			MAKE_STD_ZVAL(c);
-			ZVAL_NULL(c);
-
-			MAKE_STD_ZVAL(zname);
-			ZVAL_NULL(zname);
-
-			/* name must be copied because it is a substring of a string that
-			 * will be garbage collected in a sec */
-			ZVAL_STRING(zname, name, 1);
-			MONGO_METHOD1(MongoDB, selectCollection, c, getThis(), zname);
-
+			c = php_mongo_selectcollection(getThis(), name, strlen(name) TSRMLS_CC);
+			/* No need to test for c here, as this was already covered in
+			 * system_collection above */
 			add_next_index_zval(list, c);
-
-			zval_ptr_dtor(&zname);
 		} else {
 			add_next_index_string(list, name, 1);
 		}
@@ -534,9 +632,8 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 	}
 
 	zval_ptr_dtor(&next);
-	zval_ptr_dtor(&nss);
 	zval_ptr_dtor(&cursor);
-	zval_ptr_dtor(&collection);
+	zval_ptr_dtor(&system_collection);
 
 	RETURN_ZVAL(list, 0, 1);
 }
@@ -553,23 +650,25 @@ PHP_METHOD(MongoDB, getCollectionNames)
 
 PHP_METHOD(MongoDB, createDBRef)
 {
-	zval *ns, *obj;
-	zval **id;
+	char *collection;
+	int collection_len;
+	zval *obj, *retval = NULL;
+	mongo_db *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &ns, &obj) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &collection, &collection_len, &obj) == FAILURE) {
 		return;
 	}
 
-	if (Z_TYPE_P(obj) == IS_ARRAY || Z_TYPE_P(obj) == IS_OBJECT) {
-		if (zend_hash_find(HASH_P(obj), "_id", 4, (void**)&id) == SUCCESS) {
-			MONGO_METHOD2(MongoDBRef, create, return_value, NULL, ns, *id);
-			return;
-		} else if (Z_TYPE_P(obj) == IS_ARRAY) {
-			return;
-		}
+	PHP_MONGO_GET_DB(getThis());
+
+	if (
+		(obj = php_mongo_dbref_resolve_id(obj TSRMLS_CC)) &&
+		(retval = php_mongo_dbref_create(obj, collection, NULL TSRMLS_CC))
+	) {
+		RETURN_ZVAL(retval, 0, 1);
 	}
 
-	MONGO_METHOD2(MongoDBRef, create, return_value, NULL, ns, obj);
+	RETURN_NULL();
 }
 
 PHP_METHOD(MongoDB, getDBRef)
@@ -586,7 +685,9 @@ PHP_METHOD(MongoDB, getDBRef)
 
 PHP_METHOD(MongoDB, execute)
 {
-	zval *code = NULL, *args = NULL, *options = NULL, *zdata;
+	zval *code = NULL, *args = NULL, *options = NULL;
+	zval *cmd, *retval;
+	mongo_db *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|aa", &code, &args, &options) == FAILURE) {
 		return;
@@ -600,7 +701,7 @@ PHP_METHOD(MongoDB, execute)
 
 			MAKE_STD_ZVAL(obj);
 			object_init_ex(obj, mongo_ce_Code);
-			MONGO_METHOD1(MongoCode, __construct, return_value, obj, code);
+			php_mongocode_populate(obj, Z_STRVAL_P(code), Z_STRLEN_P(code), NULL TSRMLS_CC);
 			code = obj;
 		} else { /* This is broken code */
 			php_error_docref(NULL TSRMLS_CC, E_ERROR, "The argument is neither an object of MongoCode or a string");
@@ -618,10 +719,10 @@ PHP_METHOD(MongoDB, execute)
 	}
 
 	/* create { $eval : code, args : [] } */
-	MAKE_STD_ZVAL(zdata);
-	array_init(zdata);
-	add_assoc_zval(zdata, "$eval", code);
-	add_assoc_zval(zdata, "args", args);
+	MAKE_STD_ZVAL(cmd);
+	array_init(cmd);
+	add_assoc_zval(cmd, "$eval", code);
+	add_assoc_zval(cmd, "args", args);
 	/* Check whether we have nolock as an option */
 	if (options) {
 		zval **nolock;
@@ -629,13 +730,17 @@ PHP_METHOD(MongoDB, execute)
 		if (zend_hash_find(HASH_P(options), "nolock", strlen("nolock") + 1, (void**) &nolock) == SUCCESS) {
 			convert_to_boolean_ex(nolock);
 			zval_add_ref(nolock);
-			add_assoc_zval(zdata, "nolock", *nolock);
+			add_assoc_zval(cmd, "nolock", *nolock);
 		}
 	}
 
-	MONGO_METHOD1(MongoDB, command, return_value, getThis(), zdata);
+	PHP_MONGO_GET_DB(getThis());
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 
-	zval_ptr_dtor(&zdata);
+	zval_ptr_dtor(&cmd);
+	if (retval) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
 }
 
 static char *get_cmd_ns(char *db, int db_len)
@@ -662,53 +767,102 @@ static char *get_cmd_ns(char *db, int db_len)
 	return cmd_ns;
 }
 
+/* {{{ proto array MongoDB::command(array cmd [, array options = null [, string &hash]])
+   Executes a database command and stores the used connection's hash in $hash. */
 PHP_METHOD(MongoDB, command)
 {
-	zval limit, *temp, *cmd, *cursor, *ns, *options = 0;
+	zval *cmd, *retval, *options = NULL, *hash = NULL;
+	mongo_connection *used_connection = NULL;
 	mongo_db *db;
-	mongoclient *link;
-	char *cmd_ns;
-	mongo_cursor *cursor_tmp;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &cmd, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a!z", &cmd, &options, &hash) == FAILURE) {
 		return;
 	}
 
 	MUST_BE_ARRAY_OR_OBJECT(1, cmd);
 
 	PHP_MONGO_GET_DB(getThis());
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, &used_connection TSRMLS_CC);
+
+	if (used_connection && ZEND_NUM_ARGS() >= 3) {
+		zval_dtor(hash);
+		ZVAL_STRING(hash, used_connection->hash, 1);
+	}
+
+	if (retval) {
+		RETVAL_ZVAL(retval, 0, 1);
+	}
+}
+
+static int is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
+{
+	if (
+		dbname_len == 0 ||
+		strchr(dbname, ' ') != 0 || strchr(dbname, '.') != 0 || strchr(dbname, '\\') != 0 ||
+		strchr(dbname, '/') != 0 || strchr(dbname, '$') != 0
+	) {
+		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", dbname);
+		return 0;
+	}
+	return 1;
+}
+
+/* Actually execute the command after doing a few extra checks.
+ *
+ * This function can return NULL but *only* if an exception is set. So please
+ * check for NULL and/or EG(exception) in the calling function. */
+zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int is_cmd_cursor, mongo_connection **used_connection TSRMLS_DC)
+{
+	zval *temp, *cursor, *ns, *retval;
+	mongo_cursor *cursor_tmp;
+	mongoclient *link;
+	char *cmd_ns;
+
+	if (!is_valid_dbname(dbname, dbname_len TSRMLS_CC)) {
+		return NULL;
+	}
+
+	link = (mongoclient*)zend_object_store_get_object(zmongoclient TSRMLS_CC);
 
 	/* create db.$cmd */
 	MAKE_STD_ZVAL(ns);
-	cmd_ns = get_cmd_ns(Z_STRVAL_P(db->name), Z_STRLEN_P(db->name));
+	cmd_ns = get_cmd_ns(dbname, dbname_len);
 	ZVAL_STRING(ns, cmd_ns, 0);
 
 	/* create cursor, with RP inherited from us */
 	MAKE_STD_ZVAL(cursor);
 	object_init_ex(cursor, mongo_ce_Cursor);
 	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
-	mongo_read_preference_replace(&db->read_pref, &cursor_tmp->read_pref);
+	mongo_read_preference_replace(read_preferences, &cursor_tmp->read_pref);
 	MAKE_STD_ZVAL(temp);
 	ZVAL_NULL(temp);
 
-	MONGO_METHOD3(MongoCursor, __construct, temp, cursor, db->link, ns, cmd);
+	MONGO_METHOD3(MongoCursor, __construct, temp, cursor, zmongoclient, ns, cmd);
 
 	zval_ptr_dtor(&ns);
 	zval_ptr_dtor(&temp);
 	MAKE_STD_ZVAL(temp);
 	ZVAL_NULL(temp);
 
-	// limit
-	Z_TYPE(limit) = IS_LONG;
-	Z_LVAL(limit) = -1;
-	MONGO_METHOD1(MongoCursor, limit, temp, cursor, &limit);
+	/* limit: all commands need to have set a limit of -1 */
+	php_mongo_cursor_set_limit(cursor_tmp, -1);
+
+	/* Mark as a command cursor. If done, this triggers special BSON conversion
+	 * to make sure that the cursor ID is represented as MongoInt64. */
+	php_mongo_cursor_force_command_cursor(cursor_tmp);
 
 	zval_ptr_dtor(&temp);
 
 	if (options) {
 		zval **timeout;
 
-		if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout) == SUCCESS) {
+		if (zend_hash_find(HASH_P(options), "socketTimeoutMS", strlen("socketTimeoutMS") + 1, (void**)&timeout) == SUCCESS) {
+			MAKE_STD_ZVAL(temp);
+			ZVAL_NULL(temp);
+			MONGO_METHOD1(MongoCursor, timeout, temp, cursor, *timeout);
+			zval_ptr_dtor(&temp);
+		} else if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout) == SUCCESS) {
+			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead");
 			MAKE_STD_ZVAL(temp);
 			ZVAL_NULL(temp);
 			MONGO_METHOD1(MongoCursor, timeout, temp, cursor, *timeout);
@@ -717,32 +871,47 @@ PHP_METHOD(MongoDB, command)
 	}
 
 	/* Make sure commands aren't be sent to slaves */
-	/* TODO: The read preferences spec has a list of commands that *can* be send
-	 * to slave */
 	/* This should be refactored alongside with the getLastError redirection in
 	 * collection.c/append_getlasterror. The Cursor creation should be done
 	 * through an init method. */
-	PHP_MONGO_GET_LINK(db->link);
+	if (!link->servers) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoClient object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return NULL;
+	}
 	if (php_mongo_command_supports_rp(cmd)) {
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "command supports Read Preferences");
 	} else {
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
-		php_mongo_connection_force_primary(cursor_tmp);
+		php_mongo_cursor_force_primary(cursor_tmp);
 	}
 
 	/* query */
-	MONGO_METHOD(MongoCursor, getNext, return_value, cursor);
-	clear_exception(return_value TSRMLS_CC);
+	MAKE_STD_ZVAL(retval);
+	MONGO_METHOD(MongoCursor, getNext, retval, cursor);
+	if (EG(exception)) {
+		zval_ptr_dtor(&retval);
+		zval_ptr_dtor(&cursor);
+		return NULL;
+	}
+
+	/* Before we destroy the cursor, we figure out which connection was used.
+	 * Yes, this is quite ugly but necessary for cursor commands. */
+	if (used_connection) {
+		*used_connection = cursor_tmp->connection;
+	}
 
 	zend_objects_store_del_ref(cursor TSRMLS_CC);
 	zval_ptr_dtor(&cursor);
+
+	return retval;
 }
+/* }}} */
 
 zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database, zval *cmd TSRMLS_DC)
 {
 	zval *cursor_zval;
 	mongo_cursor *cursor;
-	smart_str ns = { 0 };
+	smart_str ns = { NULL, 0, 0 };
 
 	MAKE_STD_ZVAL(cursor_zval);
 	object_init_ex(cursor_zval, mongo_ce_Cursor);
@@ -766,7 +935,9 @@ zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database,
 	cursor->skip = 0;
 	cursor->opts = 0;
 	cursor->current = 0;
-	cursor->timeout = 0;
+	cursor->timeout = PHP_MONGO_DEPRECATED_SOCKET_TIMEOUT;
+
+	php_mongo_cursor_force_command_cursor(cursor);
 
 	return cursor_zval;
 }
@@ -846,18 +1017,25 @@ static void clear_exception(zval* return_value TSRMLS_DC)
 }
 
 
-static void run_err(char *cmd, zval *return_value, zval *db TSRMLS_DC)
+static void run_err(char *cmd, zval *return_value, zval *dbobj TSRMLS_DC)
 {
-	zval *data;
+	zval *command, *retval;
+	mongo_db *db;
 
-	MAKE_STD_ZVAL(data);
-	array_init(data);
-	add_assoc_long(data, cmd, 1);
+	MAKE_STD_ZVAL(command);
+	array_init(command);
+	add_assoc_long(command, cmd, 1);
 
-	MONGO_CMD(return_value, db);
+	PHP_MONGO_GET_DB(dbobj);
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), command, NULL, 0, NULL TSRMLS_CC);
 	clear_exception(return_value TSRMLS_CC);
 
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&command);
+	if (retval) {
+		RETVAL_ZVAL(retval, 0, 1);
+	} else {
+		RETVAL_NULL();
+	}
 }
 
 /* {{{ MongoDB->lastError()
@@ -894,18 +1072,25 @@ PHP_METHOD(MongoDB, forceError)
 }
 /* }}} */
 
-/* {{{ MongoDB::__get
- */
+/* {{{ proto MongoCollection MongoDB::__get(string name)
+   Returns the "name" collection from the database */
 PHP_METHOD(MongoDB, __get)
 {
-	zval *name;
+	char *name;
+	int   name_len;
+	zval *collection;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &name) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
 		return;
 	}
 
 	/* select this collection */
-	MONGO_METHOD1(MongoDB, selectCollection, return_value, getThis(), name);
+	collection = php_mongo_selectcollection(getThis(), name, name_len TSRMLS_CC);
+	if (collection) {
+		/* Only copy the zval into return_value if it worked. If collection is
+		 * NULL here, an exception is set */
+		RETVAL_ZVAL(collection, 0, 1);
+	}
 }
 /* }}} */
 
@@ -932,6 +1117,14 @@ ZEND_END_ARG_INFO()
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, read_preference)
 	ZEND_ARG_ARRAY_INFO(0, tags, 0)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getWriteConcern, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setWriteConcern, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, w)
+	ZEND_ARG_INFO(0, wtimeout)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setProfilingLevel, 0, ZEND_RETURN_VALUE, 1)
@@ -971,7 +1164,8 @@ ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_command, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, command)
-	ZEND_ARG_ARRAY_INFO(0, options, 0)
+	ZEND_ARG_ARRAY_INFO(0, options, 1)
+	ZEND_ARG_INFO(1, hash)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_authenticate, 0, ZEND_RETURN_VALUE, 2)
@@ -993,6 +1187,8 @@ static zend_function_entry MongoDB_methods[] = {
 	PHP_ME(MongoDB, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoDB, getWriteConcern, arginfo_getWriteConcern, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoDB, setWriteConcern, arginfo_setWriteConcern, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, getProfilingLevel, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, setProfilingLevel, arginfo_setProfilingLevel, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, drop, arginfo_no_parameters, ZEND_ACC_PUBLIC)
@@ -1011,7 +1207,7 @@ static zend_function_entry MongoDB_methods[] = {
 	PHP_ME(MongoDB, resetError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, forceError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, authenticate, arginfo_authenticate, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 static void php_mongo_db_free(void *object TSRMLS_DC)
@@ -1050,8 +1246,8 @@ void mongo_init_MongoDB(TSRMLS_D)
 	zend_declare_class_constant_long(mongo_ce_DB, "PROFILING_SLOW", strlen("PROFILING_SLOW"), 1 TSRMLS_CC);
 	zend_declare_class_constant_long(mongo_ce_DB, "PROFILING_ON", strlen("PROFILING_ON"), 2 TSRMLS_CC);
 
-	zend_declare_property_long(mongo_ce_DB, "w", strlen("w"), 1, ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_long(mongo_ce_DB, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_WTIMEOUT, ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_long(mongo_ce_DB, "w", strlen("w"), 1, ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
+	zend_declare_property_long(mongo_ce_DB, "wtimeout", strlen("wtimeout"), PHP_MONGO_DEFAULT_WTIMEOUT, ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

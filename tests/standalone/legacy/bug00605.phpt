@@ -37,12 +37,14 @@ dump_these_keys($ret, array("n", "err", "ok"));
 --EXPECTF--
 array(3) {
   ["n"]=>
-  NULL
+  int(0)
   ["err"]=>
   NULL
   ["ok"]=>
-  NULL
+  float(1)
 }
+
+%s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %sbug00605.php on line %d
 array(3) {
   ["n"]=>
   int(0)
@@ -51,6 +53,8 @@ array(3) {
   ["ok"]=>
   float(1)
 }
+
+%s: %s: The Mongo class is deprecated, please use the MongoClient class in %sserver.inc on line %d
 bool(true)
 bool(true)
 array(3) {

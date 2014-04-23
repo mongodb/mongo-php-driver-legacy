@@ -7,7 +7,7 @@ Test for PHP-500: MongoCollection insert, update and remove no longer return boo
 require_once "tests/utils/server.inc";
 
 // Connect to mongo
-$m = mongo_standalone();
+$m = old_mongo_standalone();
 $c = $m->selectCollection(dbname(), 'crash');
 $c->drop();
 
@@ -17,12 +17,6 @@ $ret = $c->update( array( '_id' => 'yeah' ), array( 'value' => array( '$set' => 
 var_dump($ret);
 $ret = $c->remove( array( '_id' => 'yeah' ) );
 var_dump($ret);
-
-try {
-	var_dump( $c->insert( array() ) );
-} catch ( Exception $e ) {
-	echo "Exception: ", get_class( $e ) , ": ", $e->getMessage(), "\n";
-}
 
 $ret = $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ) );
 var_dump($ret);
@@ -49,10 +43,10 @@ $ret = $c->remove( array( '_id' => 'yeah' ), array( 'w' => true ) );
 dump_these_keys($ret, array("n", "err", "ok"));
 ?>
 --EXPECTF--
+%s: %s: The Mongo class is deprecated, please use the MongoClient class in %sserver.inc on line %d
 bool(true)
 bool(true)
 bool(true)
-Exception: MongoException: no elements in doc
 bool(true)
 bool(true)
 array(1) {

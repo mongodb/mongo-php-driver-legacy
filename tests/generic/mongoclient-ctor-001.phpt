@@ -16,7 +16,7 @@ $port = standalone_port();
 ini_set("mongo.default_host", $host);
 ini_set("mongo.default_port", $port);
 
-$m = new Mongo;
+$m = new MongoClient;
 foreach($m->getHosts() as $s) {
     if ($s["host"] == $host) {
         echo "Connected to correct host\n";

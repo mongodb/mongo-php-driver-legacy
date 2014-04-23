@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 #include <php.h>
 #include "../php_mongo.h"
+#include "bin_data.h"
 
 zend_class_entry *mongo_ce_BinData = NULL;
 
@@ -23,14 +24,10 @@ zend_class_entry *mongo_ce_BinData = NULL;
 PHP_METHOD(MongoBinData, __construct)
 {
 	char *bin;
-	long bin_len, type = 2;
+	long bin_len, type = PHP_MONGO_BIN_GENERIC;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &bin, &bin_len, &type) == FAILURE) {
 		return;
-	}
-
-	if (ZEND_NUM_ARGS() == 1) {
-		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The default value for type will change to 0 in the future. Please pass in '2' explicitly.");
 	}
 
 	zend_update_property_stringl(mongo_ce_BinData, getThis(), "bin", strlen("bin"), bin, bin_len TSRMLS_CC);
@@ -51,7 +48,7 @@ PHP_METHOD(MongoBinData, __toString)
 static zend_function_entry MongoBinData_methods[] = {
 	PHP_ME(MongoBinData, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoBinData, __toString, NULL, ZEND_ACC_PUBLIC)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 void mongo_init_MongoBinData(TSRMLS_D)
@@ -59,20 +56,23 @@ void mongo_init_MongoBinData(TSRMLS_D)
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "MongoBinData", MongoBinData_methods);
+	ce.create_object = php_mongo_type_object_new;
 	mongo_ce_BinData = zend_register_internal_class(&ce TSRMLS_CC);
 
 	/* fields */
-	zend_declare_property_string(mongo_ce_BinData, "bin", strlen("bin"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
-	zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_string(mongo_ce_BinData, "bin", strlen("bin"), "", ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
+	zend_declare_property_long(mongo_ce_BinData, "type", strlen("type"), 0, ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 
 	/* constants */
+	zend_declare_class_constant_long(mongo_ce_BinData, "GENERIC", strlen("GENERIC"), PHP_MONGO_BIN_GENERIC TSRMLS_CC);
 	/* can't use FUNCTION because it's a reserved word */
-	zend_declare_class_constant_long(mongo_ce_BinData, "FUNC", strlen("FUNC"), 0x01 TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "FUNC", strlen("FUNC"), PHP_MONGO_BIN_FUNC TSRMLS_CC);
 	/* can't use ARRAY because it's a reserved word */
-	zend_declare_class_constant_long(mongo_ce_BinData, "BYTE_ARRAY", strlen("BYTE_ARRAY"), 0x02 TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_BinData, "UUID", strlen("UUID"), 0x03 TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_BinData, "MD5", strlen("MD5"), 0x05 TSRMLS_CC);
-	zend_declare_class_constant_long(mongo_ce_BinData, "CUSTOM", strlen("CUSTOM"), 0x80 TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "BYTE_ARRAY", strlen("BYTE_ARRAY"), PHP_MONGO_BIN_BYTE_ARRAY TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "UUID", strlen("UUID"), PHP_MONGO_BIN_UUID TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "UUID_RFC4122", strlen("UUID_RFC4122"), PHP_MONGO_BIN_UUID_RFC4122 TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "MD5", strlen("MD5"), PHP_MONGO_BIN_MD5 TSRMLS_CC);
+	zend_declare_class_constant_long(mongo_ce_BinData, "CUSTOM", strlen("CUSTOM"), PHP_MONGO_BIN_CUSTOM TSRMLS_CC);
 }
 
 /*

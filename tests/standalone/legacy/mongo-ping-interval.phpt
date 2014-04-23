@@ -8,7 +8,7 @@ mongo.ping_interval=103
 <?php
 function error_handler($code, $message)
 {
-	if ( preg_match( '/left: (\d+)/', $message, $m ) )
+	if ( preg_match( '/is_ping.*left: (\d+)/', $message, $m ) )
 	{
 		echo "LEFT: {$m[1]}\n";
 	}

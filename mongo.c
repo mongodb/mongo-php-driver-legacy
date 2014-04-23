@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,10 +47,12 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setPoolSize, 0, ZEND_RETURN_
 ZEND_END_ARG_INFO()
 
 static zend_function_entry mongo_methods[] = {
+	/* Deprecated, but done through a check in php_mongoclient_new so that we
+	 * can control the deprecation message */
 	PHP_ME(Mongo, __construct, arginfo___construct, ZEND_ACC_PUBLIC)
 
 	/* All these methods only exist in Mongo, and no longer in MongoClient */
-	PHP_ME(Mongo, connectUtil, arginfo_no_parameters, ZEND_ACC_PROTECTED)
+	PHP_ME(Mongo, connectUtil, arginfo_no_parameters, ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, getSlaveOkay, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, setSlaveOkay, arginfo_setSlaveOkay, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, lastError, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
@@ -63,9 +65,8 @@ static zend_function_entry mongo_methods[] = {
 	PHP_ME(Mongo, getPoolSize, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(Mongo, poolDebug, arginfo_no_parameters, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_DEPRECATED)
 
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
-
 
 void mongo_init_Mongo(TSRMLS_D)
 {
@@ -84,21 +85,26 @@ void mongo_init_Mongo(TSRMLS_D)
 #endif
 }
 
-/* {{{ Mongo->__construct
-*/
+/* {{{ proto Mongo Mongo->__construct([string connection_string [, array mongo_options [, array driver_options]]])
+   Constructs a deprecated Mongo object */
 PHP_METHOD(Mongo, __construct)
 {
 	php_mongo_ctor(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
 }
 /* }}} */
 
+/* {{{ proto bool Mongo->getSlaveOkay(void)
+   Returns whether or not the slaveOkay bit is set */
 PHP_METHOD(Mongo, getSlaveOkay)
 {
 	mongoclient *link;
 	PHP_MONGO_GET_LINK(getThis());
 	RETURN_BOOL(link->servers->read_pref.type != MONGO_RP_PRIMARY);
 }
+/* }}} */
 
+/* {{{ proto string Mongo->getSlave(void)
+   Returns the hash of random secondary, probably the one we'll be using for slaveOkay queries */
 PHP_METHOD(Mongo, getSlave)
 {
 	mongoclient *link;
@@ -114,7 +120,10 @@ PHP_METHOD(Mongo, getSlave)
 
 	RETURN_STRING(con->hash, 1);
 }
+/* }}} */
 
+/* {{{ proto bool Mongo->getSlaveOkay([bool enable=true])
+   Sets ReadPreferences to SECONDARY_PREFERRED, returns the old slaveOkay setting */
 PHP_METHOD(Mongo, setSlaveOkay)
 {
 	zend_bool slave_okay = 1;
@@ -129,6 +138,7 @@ PHP_METHOD(Mongo, setSlaveOkay)
 	RETVAL_BOOL(link->servers->read_pref.type != MONGO_RP_PRIMARY);
 	link->servers->read_pref.type = slave_okay ? MONGO_RP_SECONDARY_PREFERRED : MONGO_RP_PRIMARY;
 }
+/* }}} */
 
 
 static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC)

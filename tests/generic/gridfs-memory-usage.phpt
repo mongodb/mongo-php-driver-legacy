@@ -19,7 +19,7 @@ $bytes = "";
 for ($i=0; $i < 200*1024; $i++) {
     $bytes .= sha1(rand(1, 1000000000));
 }
-$grid->storeBytes($bytes, array("filename" => "demo.txt"), array('safe' => true));
+$grid->storeBytes($bytes, array("filename" => "demo.txt"), array('w' => true));
 
 // fetch it
 $file = $grid->findOne(array('filename' => 'demo.txt'));

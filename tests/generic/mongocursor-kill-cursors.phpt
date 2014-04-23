@@ -15,7 +15,7 @@ $c = $d->killcursors;
 $c->drop();
 
 for ($i = 0; $i < 1000; $i++) {
-	$c->insert(array( '_id' => "d{$i}", 'v' => log(($i * 10) + 10) ), array( 'safe' => true ) );
+	$c->insert(array( '_id' => "d{$i}", 'v' => log(($i * 10) + 10) ), array( 'w' => true ) );
 }
 
 $tries = array(

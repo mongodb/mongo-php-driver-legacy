@@ -26,6 +26,7 @@ try {
     $opts["password"] .= "THIS-PASSWORD-IS-WRONG";
     printLogs(MongoLog::CON, MongoLog::WARNING);
     $m = new MongoClient($cfg["dsn"], $opts+array("readPreference" => MongoClient::RP_SECONDARY_PREFERRED));
+    echo "I still have a MongoClient object\n";
     // An exception should be thrown before the following code is executed
     $response = $m->admin->command(array('buildInfo' => 1));
     dump_these_keys($response, array('version', 'ok'));

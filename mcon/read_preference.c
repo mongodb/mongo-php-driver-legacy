@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -110,26 +110,35 @@ static mcon_collection *filter_connections(mongo_con_manager *manager, int types
 /* Wrappers for the different collection types */
 static mcon_collection *mongo_rp_collect_primary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- collect primary");
 	return filter_connections(manager, MONGO_NODE_PRIMARY, rp);
 }
 
 static mcon_collection *mongo_rp_collect_primary_and_secondary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- collect primary and secondaries");
 	return filter_connections(manager, MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY, rp);
 }
 
 static mcon_collection *mongo_rp_collect_secondary(mongo_con_manager *manager, mongo_read_preference *rp)
 {
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- collect secondaries");
 	return filter_connections(manager, MONGO_NODE_SECONDARY, rp);
+}
+
+static mcon_collection *mongo_rp_collect_nearest(mongo_con_manager *manager, mongo_read_preference *rp)
+{
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- collect nearest");
+	return filter_connections(manager, MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY, rp);
 }
 
 static mcon_collection *mongo_rp_collect_any(mongo_con_manager *manager, mongo_read_preference *rp)
 {
-	/* We add the MONGO_NODE_STANDALONE and MONGO_NODE_MONGOS here, because
-	 * that's needed for the MULTIPLE connection type. Right now, that only is
-	 * used for MONGO_RP_NEAREST, and MONGO_RP_NEAREST uses this function (see
-	 * below in mongo_find_all_candidate_servers(). */
-	return filter_connections(manager, MONGO_NODE_STANDALONE | MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY | MONGO_NODE_MONGOS, rp);
+	/* We add the MONGO_NODE_STANDALONE, MONGO_NODE_MONGOS and
+	 * MONGO_NODE_ARBITER here, because that's needed for the STANDALONE or
+	 * MULTIPLE connection type. */
+	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- collect any");
+	return filter_connections(manager, MONGO_NODE_STANDALONE | MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY | MONGO_NODE_MONGOS | MONGO_NODE_ARBITER, rp);
 }
 
 static mcon_collection* mongo_find_all_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
@@ -148,6 +157,9 @@ static mcon_collection* mongo_find_all_candidate_servers(mongo_con_manager *mana
 			return mongo_rp_collect_secondary(manager, rp);
 			break;
 		case MONGO_RP_NEAREST:
+			return mongo_rp_collect_nearest(manager, rp);
+			break;
+		case MONGO_RP_ANY:
 			return mongo_rp_collect_any(manager, rp);
 			break;
 		default:
@@ -197,7 +209,7 @@ static mcon_collection* mongo_filter_candidates_by_tagset(mongo_con_manager *man
 char *mongo_read_preference_squash_tagset(mongo_read_preference_tagset *tagset)
 {
 	int    i;
-	struct mcon_str str = { 0 };
+	struct mcon_str str = { 0, 0, 0 };
 
 	for (i = 0; i < tagset->tag_count; i++) {
 		if (i) {
@@ -458,7 +470,7 @@ mcon_collection *mongo_sort_servers(mongo_con_manager *manager, mcon_collection 
 	return col;
 }
 
-mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp)
+mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_collection *col, mongo_server_options *options, mongo_read_preference *rp)
 {
 	mcon_collection *filtered;
 	int              i, nearest_ping;
@@ -479,7 +491,7 @@ mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_c
 
 			/* FIXME: Change to iterator later */
 			for (i = 0; i < col->count; i++) {
-				if (((mongo_connection*)col->data[i])->ping_ms <= nearest_ping + MONGO_RP_CUTOFF) {
+				if (((mongo_connection*)col->data[i])->ping_ms <= nearest_ping + options->secondaryAcceptableLatencyMS) {
 					mcon_collection_add(filtered, col->data[i]);
 				}
 			}

@@ -46,21 +46,21 @@ PARSE   INFO: - Found option 'replicaSet': 'seta'
 PARSE   INFO: - Switching connection type: REPLSET
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 248
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
 CON     FINE: is_ping: pinging %s:%d;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     WARN: is_ping: last pinged at %d; time: %dms
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 277
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: added tag dc:east
-CON     FINE: get_server_flags: added tag use:reporting
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: added tag dc:east
+CON     FINE: ismaster: added tag use:reporting
 CON     FINE: is_ping: pinging %s:%d;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
@@ -80,12 +80,12 @@ CON     INFO: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;X;%d (looking for %s:%d;X;%d)
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 278
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: added tag dc:west
-CON     FINE: get_server_flags: added tag use:accounting
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: added tag dc:west
+CON     FINE: ismaster: added tag use:accounting
 CON     FINE: is_ping: pinging %s:%d;X;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17

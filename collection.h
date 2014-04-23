@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 #define MAX_INDEX_NAME_LEN 127
 
 zend_object_value php_mongo_collection_new(zend_class_entry* TSRMLS_DC);
+void mongo_apply_implicit_write_options(php_mongo_write_options *write_options, mongo_server_options *server_options, zval *collection TSRMLS_DC);
+mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC);
 
 PHP_METHOD(MongoCollection, __construct);
 PHP_METHOD(MongoCollection, __toString);
@@ -36,6 +38,7 @@ PHP_METHOD(MongoCollection, update);
 PHP_METHOD(MongoCollection, remove);
 PHP_METHOD(MongoCollection, find);
 PHP_METHOD(MongoCollection, findOne);
+PHP_METHOD(MongoCollection, createIndex);
 PHP_METHOD(MongoCollection, ensureIndex);
 PHP_METHOD(MongoCollection, deleteIndex);
 PHP_METHOD(MongoCollection, getIndexInfo);
@@ -45,6 +48,7 @@ PHP_METHOD(MongoCollection, createDBRef);
 PHP_METHOD(MongoCollection, getDBRef);
 PHP_METHOD(MongoCollection, toIndexString);
 PHP_METHOD(MongoCollection, group);
+PHP_METHOD(MongoCollection, parallelCollectionScan);
 
 #endif /* MONGO_COLLECTION_H */
 

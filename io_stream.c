@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,27 @@
  */
 
 #include "io_stream.h"
+#include "log_stream.h"
 #include "mcon/types.h"
 #include "mcon/utils.h"
 #include "mcon/manager.h"
+#include "mcon/connections.h"
 #include "php_mongo.h"
 
 #include <php.h>
 #include <main/php_streams.h>
 #include <main/php_network.h>
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#if HAVE_MONGO_SASL
+#include <sasl/sasl.h>
+#include <sasl/saslutil.h>
+#endif
+
+extern zend_class_entry *mongo_ce_ConnectionException;
 
 void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
@@ -31,10 +43,12 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	int errcode;
 	php_stream *stream;
 	char *hash = mongo_server_create_hash(server);
-	struct timeval ctimeout = {0};
+	struct timeval ctimeout = {0, 0};
 	char *dsn;
 	int dsn_len;
 	int tcp_socket = 1;
+	ERROR_HANDLER_DECLARATION(error_handler)
+
 	TSRMLS_FETCH();
 
 	if (server->host[0] == '/') {
@@ -50,7 +64,10 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		ctimeout.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
 	}
 
+	ERROR_HANDLER_REPLACE(error_handler, mongo_ce_ConnectionException);
 	stream = php_stream_xport_create(dsn, dsn_len, 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
+	ERROR_HANDLER_RESTORE(error_handler);
+
 	efree(dsn);
 	free(hash);
 
@@ -69,12 +86,21 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	}
 
 	if (options->ssl) {
+		int crypto_enabled;
+
+		ERROR_HANDLER_REPLACE(error_handler, mongo_ce_ConnectionException);
+
 		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_SSLv23_CLIENT, NULL TSRMLS_CC) < 0) {
+			ERROR_HANDLER_RESTORE(error_handler);
 			*error_message = strdup("Cannot setup SSL, is ext/openssl loaded?");
 			php_stream_close(stream);
 			return NULL;
 		}
-		if (php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0) {
+
+		crypto_enabled = php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC);
+		ERROR_HANDLER_RESTORE(error_handler);
+
+		if (crypto_enabled < 0) {
 			/* Setting up crypto failed. Thats only OK if we only preferred it */
 			if (options->ssl == MONGO_SSL_PREFER) {
 				/* FIXME: We can't actually get here because we reject setting
@@ -95,10 +121,8 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Not establishing SSL for %s:%d", server->host, server->port);
 	}
 
-	php_stream_notify_progress_init(stream->context, 0, 0);
-
 	if (options->socketTimeoutMS) {
-		struct timeval rtimeout = {0};
+		struct timeval rtimeout = {0, 0};
 		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
 		rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
 		php_stream_set_option(stream, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
@@ -109,6 +133,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 #if ZEND_DEBUG
 	stream->__exposed = 1;
 #endif
+
 	return stream;
 
 }
@@ -124,18 +149,23 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	TSRMLS_FETCH();
 
 	if (timeout > 0 && options->socketTimeoutMS != timeout) {
-		struct timeval rtimeout = {0};
+		struct timeval rtimeout = {0, 0};
 		rtimeout.tv_sec = timeout / 1000;
 		rtimeout.tv_usec = (timeout % 1000) * 1000;
 
 		php_stream_set_option(con->socket, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
 	}
 
+	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_READ, 0, size TSRMLS_CC);
+
 	/* this can return FAILED if there is just no more data from db */
 	while (received < size && num > 0) {
 		int len = 4096 < (size - received) ? 4096 : size - received;
+		ERROR_HANDLER_DECLARATION(error_handler)
 
+		ERROR_HANDLER_REPLACE(error_handler, mongo_ce_ConnectionException);
 		num = php_stream_read(con->socket, (char *) data, len);
+		ERROR_HANDLER_RESTORE(error_handler);
 
 		if (num < 0) {
 			/* Doesn't look like this can happen, php_sockop_read overwrites
@@ -156,7 +186,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 				if (zend_hash_find(Z_ARRVAL_P(metadata), "timed_out", sizeof("timed_out"), (void**)&tmp) == SUCCESS) {
 					convert_to_boolean_ex(tmp);
 					if (Z_BVAL_PP(tmp)) {
-						struct timeval rtimeout = {0};
+						struct timeval rtimeout = {0, 0};
 
 						if (timeout > 0 && options->socketTimeoutMS != timeout) {
 							rtimeout.tv_sec = timeout / 1000;
@@ -186,12 +216,16 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 		data = (char*)data + num;
 		received += num;
 	}
+	/* PHP may have sent notify-progress of *more then* 'received' in some
+	 * cases.
+	 * PHP will read 8192 byte chunks at a time, but if we request less data
+	 * then that PHP will just buffer the rest, which is fine.  It could
+	 * confuse users a little, why their progress update was higher then the
+	 * max-bytes-expected though... */
+	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, received, size TSRMLS_CC);
 
-	if (options && options->ctx) {
-		php_stream_notify_progress_increment((php_stream_context *)options->ctx, received, size);
-	}
 	if (timeout > 0 && options->socketTimeoutMS != timeout) {
-		struct timeval rtimeout = {0};
+		struct timeval rtimeout = {0, 0};
 		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
 		rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
 
@@ -204,9 +238,17 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message)
 {
 	int retval;
+	ERROR_HANDLER_DECLARATION(error_handler)
 	TSRMLS_FETCH();
 
+	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_WRITE, 0, size TSRMLS_CC);
+
+	ERROR_HANDLER_REPLACE(error_handler, mongo_ce_ConnectionException);
 	retval = php_stream_write(con->socket, (char *) data, size);
+	ERROR_HANDLER_RESTORE(error_handler);
+	if (retval >= size) {
+		php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, size, size TSRMLS_CC);
+	}
 
 	return retval;
 }
@@ -236,6 +278,213 @@ void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *co
 		zend_hash_del(&EG(persistent_list), con->hash, strlen(con->hash) + 1);
 		((php_stream *)con->socket)->in_free = 0;
 	}
+}
+
+#if HAVE_MONGO_SASL
+int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
+{
+	if (result < 0) {
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "Authentication error: %s", sasl_errstring(result, NULL, NULL));
+		return 1;
+	}
+
+	return 0;
+}
+
+sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char **out_payload, int *out_payload_len, int32_t *conversation_id, char **error_message)
+{
+	const char *raw_payload;
+	char encoded_payload[4096];
+	unsigned int raw_payload_len, encoded_payload_len;
+	int result;
+	char *mechanism_list = "GSSAPI";
+	const char *mechanism_selected;
+	sasl_interact_t *client_interact=NULL;
+
+	result = sasl_client_start(conn, mechanism_list, &client_interact, &raw_payload, &raw_payload_len, &mechanism_selected);
+	if (is_sasl_failure(conn, result, error_message)) {
+		return NULL;
+	}
+
+	if (result != SASL_CONTINUE) {
+		*error_message = strdup("Could not negotiate SASL mechanism");
+		return NULL;
+	}
+
+	mechanism_selected = "GSSAPI";
+
+	result = sasl_encode64(raw_payload, raw_payload_len, encoded_payload, sizeof(encoded_payload), &encoded_payload_len);
+	if (is_sasl_failure(conn, result, error_message)) {
+		return NULL;
+	}
+
+	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, (char *)mechanism_selected, encoded_payload, encoded_payload_len + 1, out_payload, out_payload_len, conversation_id, error_message)) {
+		return NULL;
+	}
+
+	return conn;
+}
+
+int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char *step_payload, int step_payload_len, int32_t conversation_id, char **error_message) {
+	sasl_interact_t *client_interact=NULL;
+
+	/*
+	 * Snippet from sasl.h:
+	 *  4. client calls sasl_client_step()
+	 *  4b. If SASL error, goto 7 or 3
+	 *  4c. If SASL_OK, continue or goto 6 if last server response was success
+	 */
+
+	do {
+		char base_payload[4096], payload[4096];
+		unsigned int base_payload_len, payload_len;
+		const char *out;
+		unsigned int outlen;
+		unsigned char done = 0;
+		int result;
+
+		step_payload_len--; /* Remove the \0 from the string */
+		result = sasl_decode64(step_payload, step_payload_len, base_payload, sizeof(base_payload), &base_payload_len);
+		if (is_sasl_failure(conn, result, error_message)) {
+			return 0;
+		}
+
+		result = sasl_client_step(conn, (const char *)base_payload, base_payload_len, &client_interact, &out, &outlen);
+		if (is_sasl_failure(conn, result, error_message)) {
+			return 0;
+		}
+
+		result = sasl_encode64(out, outlen, payload, sizeof(base_payload), &payload_len);
+		if (is_sasl_failure(conn, result, error_message)) {
+			return 0;
+		}
+
+		if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, conversation_id, payload, payload_len + 1, &step_payload, &step_payload_len, &done, error_message)) {
+			return 0;
+		}
+
+		if (done) {
+			break;
+		}
+	} while (1);
+
+	return 1;
+}
+
+static int sasl_interact(mongo_server_def *server_def, int id, const char **result, unsigned *len)
+{
+	switch (id) {
+		case SASL_CB_AUTHNAME:
+		case SASL_CB_USER:
+			*result = server_def->username;
+			if (len) {
+				*len = server_def->username ? strlen(server_def->username) : 0;
+			}
+			return SASL_OK;
+
+		case SASL_CB_PASS:
+			*result = server_def->password;
+			if (len) {
+				*len = server_def->password ? strlen(server_def->password) : 0;
+			}
+			return SASL_OK;
+	}
+
+	return SASL_FAIL;
+}
+
+int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
+{
+	int result;
+	char *initpayload;
+	int initpayload_len;
+	sasl_conn_t *conn;
+	int32_t conversation_id;
+	sasl_callback_t client_interact [] = {
+		{ SASL_CB_AUTHNAME, sasl_interact, server_def },
+		{ SASL_CB_USER, sasl_interact, server_def },
+		{ SASL_CB_PASS, sasl_interact, server_def },
+		{ SASL_CB_LIST_END, NULL, NULL }
+	};
+
+	result = sasl_client_new(options->gssapiServiceName, server_def->host, NULL, NULL, client_interact, 0, &conn);
+
+	if (result != SASL_OK) {
+		sasl_dispose(&conn);
+		*error_message = strdup("Could not initialize a client exchange (SASL) to MongoDB");
+		return 0;
+	}
+
+	conn = php_mongo_saslstart(manager, con, options, server_def, conn, &initpayload, &initpayload_len, &conversation_id, error_message);
+	if (!conn) {
+		/* error message populate by php_mongo_saslstart() */
+		return 0;
+	}
+
+	if (!php_mongo_saslcontinue(manager, con, options, server_def, conn, initpayload, initpayload_len, conversation_id, error_message)) {
+		return 0;
+	}
+
+	free(initpayload);
+	sasl_dispose(&conn);
+
+	return 1;
+}
+
+int php_mongo_io_authenticate_plain(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
+{
+	char step_payload[4096];
+	char *out, *plain;
+	char *mechanism = "PLAIN";
+	unsigned int step_payload_len, plain_len;
+	int outlen;
+	int32_t step_conversation_id;
+	int result;
+
+	plain_len = spprintf(&plain, 0, "%c%s%c%s", '\0', server_def->username, '\0', server_def->password);
+
+	result = sasl_encode64(plain, plain_len, step_payload, sizeof(step_payload), &step_payload_len);
+	if (result != SASL_OK) {
+		*error_message = strdup("SASL authentication: Could not base64 encode payload");
+		efree(plain);
+		return 0;
+	}
+	efree(plain);
+
+	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, mechanism, step_payload, step_payload_len + 1, &out, &outlen, &step_conversation_id, error_message)) {
+		return 0;
+	}
+	free(out);
+
+	return 1;
+}
+#endif
+
+int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
+{
+	/* Use the mcon implementation of MongoDB-CR (default) */
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_CR) {
+		return mongo_connection_authenticate(manager, con, options, server_def, error_message);
+	}
+	/* Use the mcon implementation of MongoDB-X509 */
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_X509) {
+		return mongo_connection_authenticate(manager, con, options, server_def, error_message);
+	}
+
+#if HAVE_MONGO_SASL
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_GSSAPI) {
+		return php_mongo_io_authenticate_gssapi(manager, con, options, server_def, error_message);
+	}
+	if (server_def->mechanism == MONGO_AUTH_MECHANISM_PLAIN) {
+		return php_mongo_io_authenticate_plain(manager, con, options, server_def, error_message);
+	}
+	*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR, MONGODB-X509, GSSAPI and PLAIN are supported by this build");
+#else
+	*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR and MONGODB-X509 are supported by this build");
+#endif
+
+	return 0;
 }
 
 /*

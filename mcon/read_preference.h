@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,23 +21,24 @@
 
 #define MONGO_RP_FIRST               0x00
 
+/* The order of these is significant. Do not change! */
 #define MONGO_RP_PRIMARY             0x00
 #define MONGO_RP_PRIMARY_PREFERRED   0x01
 #define MONGO_RP_SECONDARY           0x02
 #define MONGO_RP_SECONDARY_PREFERRED 0x03
 #define MONGO_RP_NEAREST             0x04
+#define MONGO_RP_ANY                 0x05
 
-#define MONGO_RP_LAST                0x04
+#define MONGO_RP_LAST                0x05
 
 
-/* TODO: Needs to be a setting through the connection string/options */
-#define MONGO_RP_CUTOFF  15
+#define MONGO_RP_DEFAULT_ACCEPTABLE_LATENCY_MS  15
 
 typedef int (mongo_connection_sort_t)(const void *a, const void *b);
 
 mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, mongo_servers *servers);
 mcon_collection *mongo_sort_servers(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp);
-mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp);
+mcon_collection *mongo_select_nearest_servers(mongo_con_manager *manager, mcon_collection *col, mongo_server_options *options, mongo_read_preference *rp);
 mongo_connection *mongo_pick_server_from_set(mongo_con_manager *manager, mcon_collection *col, mongo_read_preference *rp);
 
 /* Info helpers */

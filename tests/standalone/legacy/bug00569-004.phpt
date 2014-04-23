@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-569: Overriding with ->w on the MongoDb object.
 --SKIPIF--
+<?php $needs = "2.5.5"; $needsOp = "lt"; ?>
 <?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
@@ -50,7 +51,7 @@ foreach ( $strings as $string )
 		echo "\n- Setting w property to $test:\n";
 		try
 		{
-			$demo->w = $test;
+			$demo->setWriteConcern($test);
 			$demo->test->insert( array( '_id' => $key ) );
 		}
 		catch ( Exception $e )
@@ -79,19 +80,50 @@ IO      FINE: is_gle_op: no
 IO      FINE: is_gle_op: no
 
 - Setting w property to 1:
-IO      FINE: is_gle_op: no
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
 
 - Setting w property to 2:
-IO      FINE: is_gle_op: no
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: append_getlasterror: added w=2
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
+%s:%d:%s
 
 - Setting w property to 3:
-IO      FINE: is_gle_op: no
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: append_getlasterror: added w=3
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
+%s:%d:%s
 
 - Setting w property to majority:
-IO      FINE: is_gle_op: no
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: append_getlasterror: added w='majority'
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
 
 - Setting w property to allDCs:
-IO      FINE: is_gle_op: no
+IO      FINE: is_gle_op: yes
+IO      FINE: append_getlasterror
+IO      FINE: append_getlasterror: added w='allDCs'
+IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
+IO      FINE: getting reply
+IO      FINE: getting cursor header
+IO      FINE: getting cursor body
+%s:%d:%s
 
 Running string mongodb://%s/?w=1
 PARSE   INFO: Parsing mongodb://%s/?w=1
@@ -105,11 +137,7 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
 - Setting w property to 0:
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO      FINE: is_gle_op: no
 
 - Setting w property to 1:
 IO      FINE: is_gle_op: yes
@@ -172,11 +200,7 @@ IO      FINE: getting cursor body
 %s:%d:%s
 
 - Setting w property to 0:
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO      FINE: is_gle_op: no
 
 - Setting w property to 1:
 IO      FINE: is_gle_op: yes
@@ -242,11 +266,7 @@ IO      FINE: getting cursor body
 %s:%d:%s
 
 - Setting w property to 0:
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO      FINE: is_gle_op: no
 
 - Setting w property to 1:
 IO      FINE: is_gle_op: yes
@@ -311,11 +331,7 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
 - Setting w property to 0:
-IO      FINE: is_gle_op: yes
-IO      FINE: append_getlasterror
-IO      FINE: getting reply
-IO      FINE: getting cursor header
-IO      FINE: getting cursor body
+IO      FINE: is_gle_op: no
 
 - Setting w property to 1:
 IO      FINE: is_gle_op: yes

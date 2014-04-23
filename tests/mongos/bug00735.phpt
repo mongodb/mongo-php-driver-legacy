@@ -124,10 +124,7 @@ array(2) {
     ["aggregate"]=>
     string(10) "collection"
     ["pipeline"]=>
-    array(1) {
-      [0]=>
-      array(0) {
-      }
+    array(0) {
     }
   }
   ["$readPreference"]=>
@@ -152,10 +149,7 @@ array(2) {
     ["aggregate"]=>
     string(10) "collection"
     ["pipeline"]=>
-    array(1) {
-      [0]=>
-      array(0) {
-      }
+    array(0) {
     }
   }
   ["$readPreference"]=>
@@ -237,10 +231,7 @@ array(2) {
     ["aggregate"]=>
     string(10) "collection"
     ["pipeline"]=>
-    array(1) {
-      [0]=>
-      array(0) {
-      }
+    array(0) {
     }
   }
   ["$readPreference"]=>
@@ -277,10 +268,7 @@ array(2) {
     ["aggregate"]=>
     string(10) "collection"
     ["pipeline"]=>
-    array(1) {
-      [0]=>
-      array(0) {
-      }
+    array(0) {
     }
   }
   ["$readPreference"]=>
@@ -342,10 +330,7 @@ array(2) {
     ["aggregate"]=>
     string(10) "collection"
     ["pipeline"]=>
-    array(1) {
-      [0]=>
-      array(0) {
-      }
+    array(0) {
     }
   }
   ["$readPreference"]=>

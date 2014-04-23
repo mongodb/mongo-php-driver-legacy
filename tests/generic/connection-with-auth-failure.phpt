@@ -12,7 +12,7 @@ try {
     $pass = "failed password";
     $db   = dbname();
 
-    $m = new mongo(sprintf("mongodb://%s:%s@%s:%d/%s", $user, $pass, $host, $port, $db));
+    $m = new MongoClient(sprintf("mongodb://%s:%s@%s:%d/%s", $user, $pass, $host, $port, $db));
     echo "Have mongo client object\n";
     $m->$db->collection->findOne();
 } catch (Exception $e) {

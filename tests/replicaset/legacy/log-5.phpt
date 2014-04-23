@@ -30,13 +30,13 @@ PARSE   INFO: - Found option 'replicaSet': '%s'
 PARSE   INFO: - Switching connection type: REPLSET
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
-CON     FINE: get_server_flags: added tag dc:%s
-CON     FINE: get_server_flags: added tag server:%d
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     FINE: ismaster: added tag dc:%s
+CON     FINE: ismaster: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
@@ -58,39 +58,39 @@ CON     FINE: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;%s;.;%d (looking for %s:%d;%s;.;%d)
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
-CON     FINE: get_server_flags: added tag dc:%s
-CON     FINE: get_server_flags: added tag server:%d
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     FINE: ismaster: added tag dc:%s
+CON     FINE: ismaster: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
-CON     FINE: get_server_flags: added tag dc:%s
-CON     FINE: get_server_flags: added tag server:%d
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     FINE: ismaster: added tag dc:%s
+CON     FINE: ismaster: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     INFO: get_server_flags: start
+CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %s
-CON     FINE: get_server_flags: setting maxBsonObjectSize to 16777216
-CON     FINE: get_server_flags: %s maxMessageSizeBytes%s
-CON     FINE: get_server_flags: added tag dc:%s
-CON     FINE: get_server_flags: added tag server:%d
+CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
+CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     FINE: ismaster: added tag dc:%s
+CON     FINE: ismaster: added tag server:%d
 CON     INFO: is_ping: pinging %s:%d;REPLICASET;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
@@ -194,31 +194,31 @@ REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
-REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
-REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: selecting near servers: nearest is %dms
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: selecting near server: done

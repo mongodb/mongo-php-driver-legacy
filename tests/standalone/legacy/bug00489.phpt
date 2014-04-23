@@ -9,7 +9,7 @@ MongoLog::setLevel(MongoLog::WARNING);
 MongoLog::setModule(MongoLog::CON);
 $dsn = MongoShellServer::getStandaloneInfo();
 try {
-    $m = new Mongo($dsn, array("replicaSet" => true));
+    $m = new MongoClient($dsn, array("replicaSet" => true));
     echo "Have mongo object\n";
     $m->foo->bar->findOne();
 } catch(MongoConnectionException $e) {

@@ -1,8 +1,8 @@
 --TEST--
 "mongo.native_long" INI option has no effect on 32-bit integers
 --SKIPIF--
-<?php require_once "tests/utils/standalone.inc";?>
 <?php if (8 !== PHP_INT_SIZE) { die('skip Only for 64-bit platform'); } ?>
+<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

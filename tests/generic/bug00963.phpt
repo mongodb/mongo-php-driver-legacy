@@ -2,6 +2,8 @@
 Test for PHP-963: Requesting Info on Dead MongoCursor Causes Segfault.
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
+--INI--
+mongo.long_as_object=1
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
@@ -25,16 +27,16 @@ foreach($txlogs as $txlog) {
 echo ($txlogs->dead() ? "Dead" : "Not Dead") . "\n";
 
 $info = $txlogs->info();
-var_dump($info['id'], $info['at']);
+var_dump((string) $info['id'], $info['at']);
 echo "ALIVE";
 ?>
---EXPECT--
+--EXPECTF--
 Not Dead
 Not Dead
 Not Dead
 Not Dead
 Not Dead
 Dead
-int(0)
+string(1) "0"
 int(5)
 ALIVE

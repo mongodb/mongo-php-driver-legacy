@@ -10,7 +10,7 @@ require_once "tests/utils/server.inc";
 $dsn = MongoShellServer::getStandaloneInfo();
 
 
-function log_batchinsert($server, $docs, $info, $options) {
+function log_batchinsert($server, $docs, $options, $info) {
     echo __METHOD__, "\n";
 
     var_dump($server, count($docs), $info, $options);

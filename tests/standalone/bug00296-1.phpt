@@ -9,7 +9,7 @@ require_once "tests/utils/server.inc";
 
 $host = MongoShellServer::getStandaloneInfo();
 
-function log_batchinsert($server, $dosc, $flags, $insertopts) {
+function log_batchinsert($server, $dosc, $insertopts, $flags) {
     echo __METHOD__, "\n";
 
     var_dump($flags, $insertopts);

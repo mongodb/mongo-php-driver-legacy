@@ -27,7 +27,8 @@ try {
 } catch(MongoGridFSException $e) {
     var_dump($e->getMessage(), $e->getCode());
 }
+?>
 --EXPECTF--
 bool(true)
-string(%d) "Could not store file: %s:%d: timeout%S"
+string(%d) "Could not store file: %s:%d:%stime%S"
 int(%d)

@@ -21,7 +21,7 @@ $dsns = array(
 
 foreach ($dsns as $dsn) {
 	echo $dsn, "\n";
-	$m = new Mongo($dsn, array('connect' => false));
+	$m = new MongoClient($dsn, array('connect' => false));
 	echo "\n";
 }
 ?>

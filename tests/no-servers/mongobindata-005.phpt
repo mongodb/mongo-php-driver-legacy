@@ -4,15 +4,19 @@ MongoBinData type constants
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php
-echo MongoBinData::FUNC . "\n";
-echo MongoBinData::BYTE_ARRAY . "\n";
-echo MongoBinData::UUID . "\n";
-echo MongoBinData::MD5 . "\n";
-echo MongoBinData::CUSTOM . "\n";
+var_dump(MongoBinData::GENERIC);
+var_dump(MongoBinData::FUNC);
+var_dump(MongoBinData::BYTE_ARRAY);
+var_dump(MongoBinData::UUID);
+var_dump(MongoBinData::UUID_RFC4122);
+var_dump(MongoBinData::MD5);
+var_dump(MongoBinData::CUSTOM);
 ?>
 --EXPECT--
-1
-2
-3
-5
-128
+int(0)
+int(1)
+int(2)
+int(3)
+int(4)
+int(5)
+int(128)

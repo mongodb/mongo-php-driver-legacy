@@ -3,6 +3,8 @@ Test for PHP-639: MongoCursor::slaveOkay() has no effect (static on, then method
 --SKIPIF--
 <?php require_once "tests/utils/replicaset.inc"; ?>
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
+--INI--
+mongo.long_as_object=1
 --FILE--
 <?php
 $mentions = array(); 
@@ -37,6 +39,9 @@ $info = $cursor->info();
 echo "connection type: ", $info['connection_type_desc'], "\n";
 ?>
 --EXPECTF--
+%s: MongoCollection::find(): The 'slaveOkay' option is deprecated. Please switch to read-preferences in %s on line %d
+
+%s: Function MongoCursor::slaveOkay() is deprecated in %s on line %d
 pick server: random element %d
 - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s
 connection type: PRIMARY

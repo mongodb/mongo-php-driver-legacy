@@ -14,11 +14,6 @@ $coll->insert(array('int64' => new MongoInt64('123456789012345678901234567890'))
 
 ini_set('mongo.native_long', false);
 ini_set('mongo.long_as_object', false);
-$result = $coll->findOne();
-var_dump($result['int64']);
-
-ini_set('mongo.native_long', true);
-ini_set('mongo.long_as_object', false);
 try {
     $coll->findOne();
 } catch (Exception $e) {
@@ -29,14 +24,7 @@ ini_set('mongo.native_long', false);
 ini_set('mongo.long_as_object', true);
 $result = $coll->findOne();
 printf("%s(%s)\n", get_class($result['int64']), $result['int64']);
-
-ini_set('mongo.native_long', true);
-ini_set('mongo.long_as_object', true);
-$result = $coll->findOne();
-printf("%s(%s)\n", get_class($result['int64']), $result['int64']);
 ?>
 --EXPECT--
-float(9.2233720368548E+18)
-MongoCursorException: Can not natively represent the long 9223372036854775807 on this platform
-MongoInt64(9223372036854775807)
+MongoCursorException: Cannot natively represent the long 9223372036854775807 on this platform
 MongoInt64(9223372036854775807)

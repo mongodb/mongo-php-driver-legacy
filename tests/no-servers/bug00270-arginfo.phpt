@@ -8,6 +8,7 @@ $classes = array(
     'MongoDB',
     'MongoCollection',
     'MongoCursor',
+    'MongoCommandCursor',
     'MongoPool',
 );
 foreach ($classes as $class) {
@@ -57,11 +58,17 @@ Mongo
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method getWriteConcern expects 0 parameters
+  Method setWriteConcern expects 2 parameters
+    0: w
+    1: wtimeout (optional)
   Method dropDB expects 1 parameters
     0: MongoDB_object_OR_database_name
   Method listDBs expects 0 parameters
   Method getHosts expects 0 parameters
   Method close expects 0 parameters
+  Method killCursor expects 1 parameters
+    0: cursor_id
 
 MongoClient
   Method __construct expects 2 parameters
@@ -81,11 +88,17 @@ MongoClient
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method getWriteConcern expects 0 parameters
+  Method setWriteConcern expects 2 parameters
+    0: w
+    1: wtimeout (optional)
   Method dropDB expects 1 parameters
     0: MongoDB_object_OR_database_name
   Method listDBs expects 0 parameters
   Method getHosts expects 0 parameters
   Method close expects 0 parameters
+  Method killCursor expects 1 parameters
+    0: cursor_id
 
 MongoDB
   Method __construct expects 2 parameters
@@ -103,6 +116,10 @@ MongoDB
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method getWriteConcern expects 0 parameters
+  Method setWriteConcern expects 2 parameters
+    0: w
+    1: wtimeout (optional)
   Method getProfilingLevel expects 0 parameters
   Method setProfilingLevel expects 1 parameters
     0: level
@@ -128,9 +145,10 @@ MongoDB
   Method execute expects 2 parameters
     0: javascript_code
     1: arguments (optional)
-  Method command expects 2 parameters
+  Method command expects 3 parameters
     0: command
     1: options (optional)
+    2: hash (optional)
   Method lastError expects 0 parameters
   Method prevError expects 0 parameters
   Method resetError expects 0 parameters
@@ -154,6 +172,10 @@ MongoCollection
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method getWriteConcern expects 0 parameters
+  Method setWriteConcern expects 2 parameters
+    0: w
+    1: wtimeout (optional)
   Method drop expects 0 parameters
   Method validate expects 1 parameters
     0: validate (optional)
@@ -173,14 +195,18 @@ MongoCollection
   Method find expects 2 parameters
     0: query (optional)
     1: fields (optional)
-  Method findOne expects 2 parameters
+  Method findOne expects 3 parameters
     0: query (optional)
     1: fields (optional)
+    2: options (optional)
   Method findAndModify expects 4 parameters
     0: query
     1: update (optional)
     2: fields (optional)
     3: options (optional)
+  Method createIndex expects 2 parameters
+    0: array_of_keys
+    1: options (optional)
   Method ensureIndex expects 2 parameters
     0: key_OR_array_of_keys
     1: options (optional)
@@ -213,6 +239,12 @@ MongoCollection
     0: pipeline
     1: op (optional)
     2: ... (optional)
+  Method aggregateCursor expects 2 parameters
+    0: pipeline
+    1: options (optional)
+  Method parallelCollectionScan expects 2 parameters
+    0: num_cursors
+    1: options (optional)
 
 MongoCursor
   Method __construct expects 4 parameters
@@ -230,6 +262,8 @@ MongoCursor
     0: number
   Method fields expects 1 parameters
     0: fields
+  Method maxTimeMS expects 1 parameters
+    0: ms
   Method addOption expects 2 parameters
     0: key
     1: value
@@ -268,6 +302,25 @@ MongoCursor
   Method reset expects 0 parameters
   Method count expects 1 parameters
     0: foundOnly (optional)
+
+MongoCommandCursor
+  Method __construct expects 3 parameters
+    0: connection
+    1: database_and_collection_name
+    2: query (optional)
+  Method batchSize expects 1 parameters
+    0: number
+  Method info expects 0 parameters
+  Method dead expects 0 parameters
+  Method current expects 0 parameters
+  Method key expects 0 parameters
+  Method next expects 0 parameters
+  Method rewind expects 0 parameters
+  Method valid expects 0 parameters
+  Method createFromDocument expects 3 parameters
+    0: connection
+    1: connection_hash
+    2: cursor_document
 
 MongoPool
   Method info expects 0 parameters

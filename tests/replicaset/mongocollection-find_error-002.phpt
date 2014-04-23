@@ -10,7 +10,8 @@ $rs = MongoShellServer::getReplicasetInfo();
 $mc = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname']));
 
 $c = $mc->selectCollection(dbname(), 'mongocollection-find_error-002');
-$c->insert(array('x' => 1), array('w' => 'majority'));
+$c->drop();
+$c->insert(array('x' => 1), array('w' => 4));
 
 // Use non-matching tags so query has no candidates
 try {
@@ -33,7 +34,7 @@ try {
 ?>
 --EXPECTF--
 string(26) "No candidate servers found"
-int(71)
+%s(71)
 array(1) {
   ["x"]=>
   int(1)

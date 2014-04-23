@@ -6,19 +6,13 @@ Test for PHP-500: MongoCollection insert, update and remove no longer return boo
 <?php
 require_once "tests/utils/server.inc";
 // Connect to mongo
-$m = mongo();
+$m = old_mongo();
 $c = $m->selectCollection(dbname(), 'crash');
 $c->drop();
 
 var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ) ) );
 var_dump( $c->update( array( '_id' => 'yeah' ), array( 'value' => array( '$set' => 'yes!' ) ) ) );
 var_dump( $c->remove( array( '_id' => 'yeah' ) ) );
-
-try {
-	var_dump( $c->insert( array() ) );
-} catch ( Exception $e ) {
-	echo "Exception: ", get_class( $e ) , ": ", $e->getMessage(), "\n";
-}
 
 var_dump( $c->insert( array( '_id' => 'yeah', 'value' => 'maybe' ) ) );
 var_dump( $c->update( array( '_id' => 'yeah' ), array() ) );
@@ -38,10 +32,10 @@ $ret = $c->remove( array( '_id' => 'yeah' ), array( 'w' => true ) );
 dump_these_keys($ret, array("n", "err", "ok"));
 ?>
 --EXPECTF--
+%s: %s(): The Mongo class is deprecated, please use the MongoClient class in %sserver.inc on line %d
 bool(true)
 bool(true)
 bool(true)
-Exception: MongoException: no elements in doc
 bool(true)
 bool(true)
 array(1) {

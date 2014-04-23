@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,15 +23,22 @@
 
 #include "mongoclient.h"
 #include "mongo.h"
+#include "cursor_shared.h"
 #include "cursor.h"
+#include "command_cursor.h"
 #include "io_stream.h"
+#include "log_stream.h"
 
 #include "exceptions/exception.h"
 #include "exceptions/connection_exception.h"
 #include "exceptions/cursor_exception.h"
 #include "exceptions/cursor_timeout_exception.h"
+#include "exceptions/duplicate_key_exception.h"
+#include "exceptions/execution_timeout_exception.h"
 #include "exceptions/gridfs_exception.h"
+#include "exceptions/protocol_exception.h"
 #include "exceptions/result_exception.h"
+#include "exceptions/write_concern_exception.h"
 
 #include "types/id.h"
 
@@ -39,18 +46,34 @@
 #include "util/pool.h"
 
 #include "mcon/manager.h"
+#include "mcon/utils.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#if MONGO_PHP_STREAMS
+#include "api/wire_version.h"
+#endif
+
+#if HAVE_MONGO_SASL
+#include <sasl/sasl.h>
+#endif
 
 extern zend_object_handlers mongo_default_handlers, mongo_id_handlers;
+zend_object_handlers mongo_type_object_handlers;
 
 /** Classes */
-extern zend_class_entry *mongo_ce_CursorException, *mongo_ce_ResultException;
-extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_Exception;
+extern zend_class_entry *mongo_ce_ConnectionException;
+extern zend_class_entry *mongo_ce_CursorException;
+extern zend_class_entry *mongo_ce_CursorTimeoutException;
+extern zend_class_entry *mongo_ce_DuplicateKeyException;
 extern zend_class_entry *mongo_ce_GridFSException;
+extern zend_class_entry *mongo_ce_ProtocolException;
+extern zend_class_entry *mongo_ce_ResultException;
+extern zend_class_entry *mongo_ce_WriteConcernException;
 
 zend_class_entry *mongo_ce_MaxKey, *mongo_ce_MinKey;
-
-/** Resources */
-int le_cursor_list;
 
 static void mongo_init_MongoExceptions(TSRMLS_D);
 
@@ -59,20 +82,21 @@ ZEND_DECLARE_MODULE_GLOBALS(mongo)
 static PHP_GINIT_FUNCTION(mongo);
 static PHP_GSHUTDOWN_FUNCTION(mongo);
 
-#if WIN32
-extern HANDLE cursor_mutex;
-#endif
-
 zend_function_entry mongo_functions[] = {
 	PHP_FE(bson_encode, NULL)
 	PHP_FE(bson_decode, NULL)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 /* {{{ mongo_module_entry
  */
 static const zend_module_dep mongo_deps[] = {
 	ZEND_MOD_OPTIONAL("openssl")
+#if HAVE_JSON
+	ZEND_MOD_REQUIRED("json")
+#else
+	ZEND_MOD_OPTIONAL("json")
+#endif
 #if PHP_VERSION_ID >= 50307
 	ZEND_MOD_END
 #else /* pre-5.3.7 */
@@ -127,13 +151,33 @@ static PHP_INI_MH(OnUpdateIsMasterInterval)
 	return FAILURE;
 }
 
+#if SIZEOF_LONG == 4
+static PHP_INI_MH(OnUpdateNativeLong)
+{
+	long converted_val;
+
+	if (new_value && is_numeric_string(new_value, new_value_length, &converted_val, NULL, 0) == IS_LONG) {
+		if (converted_val != 0) {
+			php_error_docref(NULL TSRMLS_CC, E_CORE_ERROR, "To prevent data corruption, you are not allowed to turn on the mongo.native_long setting on 32-bit platforms");
+		}
+		return SUCCESS;
+	}
+
+	return FAILURE;
+}
+#endif
+
 /* {{{ PHP_INI */
 PHP_INI_BEGIN()
 	STD_PHP_INI_ENTRY("mongo.default_host", "localhost", PHP_INI_ALL, OnUpdateString, default_host, zend_mongo_globals, mongo_globals)
 	STD_PHP_INI_ENTRY("mongo.default_port", "27017", PHP_INI_ALL, OnUpdateLong, default_port, zend_mongo_globals, mongo_globals)
-	STD_PHP_INI_ENTRY("mongo.chunk_size", "262144", PHP_INI_ALL, OnUpdateLong, chunk_size, zend_mongo_globals, mongo_globals)
+	STD_PHP_INI_ENTRY("mongo.chunk_size", DEFAULT_CHUNK_SIZE_S, PHP_INI_ALL, OnUpdateLong, chunk_size, zend_mongo_globals, mongo_globals)
 	STD_PHP_INI_ENTRY("mongo.cmd", "$", PHP_INI_ALL, OnUpdateStringUnempty, cmd_char, zend_mongo_globals, mongo_globals)
-	STD_PHP_INI_ENTRY("mongo.native_long", "0", PHP_INI_ALL, OnUpdateLong, native_long, zend_mongo_globals, mongo_globals)
+#if SIZEOF_LONG == 4
+	STD_PHP_INI_ENTRY("mongo.native_long", "0", PHP_INI_ALL, OnUpdateNativeLong, native_long, zend_mongo_globals, mongo_globals)
+#else
+	STD_PHP_INI_ENTRY("mongo.native_long", "1", PHP_INI_ALL, OnUpdateLong, native_long, zend_mongo_globals, mongo_globals)
+#endif
 	STD_PHP_INI_ENTRY("mongo.long_as_object", "0", PHP_INI_ALL, OnUpdateLong, long_as_object, zend_mongo_globals, mongo_globals)
 	STD_PHP_INI_ENTRY("mongo.allow_empty_keys", "0", PHP_INI_ALL, OnUpdateLong, allow_empty_keys, zend_mongo_globals, mongo_globals)
 
@@ -150,17 +194,25 @@ PHP_MINIT_FUNCTION(mongo)
 	zend_class_entry max_key, min_key;
 
 	REGISTER_INI_ENTRIES();
-	le_cursor_list = zend_register_list_destructors_ex(NULL, php_mongo_cursor_list_pfree, PHP_CURSOR_LIST_RES_NAME, module_number);
 
 	mongo_init_MongoClient(TSRMLS_C);
 	mongo_init_Mongo(TSRMLS_C);
 	mongo_init_MongoDB(TSRMLS_C);
 	mongo_init_MongoCollection(TSRMLS_C);
+	mongo_init_MongoCursorInterface(TSRMLS_C);
 	mongo_init_MongoCursor(TSRMLS_C);
+	mongo_init_MongoCommandCursor(TSRMLS_C);
 
 	mongo_init_MongoGridFS(TSRMLS_C);
 	mongo_init_MongoGridFSFile(TSRMLS_C);
 	mongo_init_MongoGridFSCursor(TSRMLS_C);
+
+#if PHP_VERSION_ID >= 50300
+	mongo_init_MongoWriteBatch(TSRMLS_C);
+	mongo_init_MongoInsertBatch(TSRMLS_C);
+	mongo_init_MongoUpdateBatch(TSRMLS_C);
+	mongo_init_MongoDeleteBatch(TSRMLS_C);
+#endif
 
 	mongo_init_MongoId(TSRMLS_C);
 	mongo_init_MongoCode(TSRMLS_C);
@@ -190,27 +242,74 @@ PHP_MINIT_FUNCTION(mongo)
 	/* Make mongo objects uncloneable */
 	memcpy(&mongo_default_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 	mongo_default_handlers.clone_obj = NULL;
+	mongo_default_handlers.read_property = mongo_read_property;
+	mongo_default_handlers.write_property = mongo_write_property;
+
+	/* Mongo type objects */
+	memcpy(&mongo_type_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+	mongo_type_object_handlers.write_property = mongo_write_property;
 
 	/* Add compare_objects for MongoId */
 	memcpy(&mongo_id_handlers, &mongo_default_handlers, sizeof(zend_object_handlers));
 	mongo_id_handlers.compare_objects = php_mongo_compare_ids;
+	mongo_default_handlers.write_property = mongo_write_property;
 
 	/* Start random number generator */
 	srand(time(0));
 
-#ifdef WIN32
-	cursor_mutex = CreateMutex(NULL, FALSE, NULL);
-	if (cursor_mutex == NULL) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't create a mutex: %s", GetLastError());
+#if HAVE_MONGO_SASL
+	/* We need to bootstrap cyrus-sasl once per process */
+	if (sasl_client_init(NULL) != SASL_OK) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not initialize SASL library");
 		return FAILURE;
 	}
 #endif
 
 #if MONGO_PHP_STREAMS
 	REGISTER_LONG_CONSTANT("MONGO_STREAMS", 1, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_STREAMS", 1, CONST_PERSISTENT);
 #else
 	REGISTER_LONG_CONSTANT("MONGO_STREAMS", 0, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_STREAMS", 0, CONST_PERSISTENT);
 #endif
+
+#if MONGO_PHP_STREAMS && HAVE_OPENSSL_EXT
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_SSL", 1, CONST_PERSISTENT);
+#else
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_SSL", 0, CONST_PERSISTENT);
+#endif
+
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_MONGODB_CR", 1, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_MONGODB_X509", 1, CONST_PERSISTENT);
+#if HAVE_MONGO_SASL
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_GSSAPI", 1, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_PLAIN", 1, CONST_PERSISTENT);
+#else
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_GSSAPI", 0, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_AUTH_MECHANISM_PLAIN", 0, CONST_PERSISTENT);
+#endif
+
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_TYPE_IO_INIT", MONGO_STREAM_NOTIFY_TYPE_IO_INIT, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_TYPE_LOG", MONGO_STREAM_NOTIFY_TYPE_LOG, CONST_PERSISTENT);
+
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_IO_READ", MONGO_STREAM_NOTIFY_IO_READ, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_IO_WRITE", MONGO_STREAM_NOTIFY_IO_WRITE, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_IO_PROGRESS", MONGO_STREAM_NOTIFY_IO_PROGRESS, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_IO_COMPLETED", MONGO_STREAM_NOTIFY_IO_COMPLETED, CONST_PERSISTENT);
+
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_INSERT", MONGO_STREAM_NOTIFY_LOG_INSERT, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_QUERY", MONGO_STREAM_NOTIFY_LOG_QUERY, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_UPDATE", MONGO_STREAM_NOTIFY_LOG_UPDATE, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_DELETE", MONGO_STREAM_NOTIFY_LOG_DELETE, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_GETMORE", MONGO_STREAM_NOTIFY_LOG_GETMORE, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_KILLCURSOR", MONGO_STREAM_NOTIFY_LOG_KILLCURSOR, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_BATCHINSERT", MONGO_STREAM_NOTIFY_LOG_BATCHINSERT, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_RESPONSE_HEADER", MONGO_STREAM_NOTIFY_LOG_RESPONSE_HEADER, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_WRITE_REPLY", MONGO_STREAM_NOTIFY_LOG_WRITE_REPLY, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_CMD_INSERT", MONGO_STREAM_NOTIFY_LOG_CMD_INSERT, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_CMD_UPDATE", MONGO_STREAM_NOTIFY_LOG_CMD_UPDATE, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_CMD_DELETE", MONGO_STREAM_NOTIFY_LOG_CMD_DELETE, CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("MONGO_STREAM_NOTIFY_LOG_WRITE_BATCH", MONGO_STREAM_NOTIFY_LOG_WRITE_BATCH, CONST_PERSISTENT);
 
 	return SUCCESS;
 }
@@ -234,10 +333,7 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->chunk_size = DEFAULT_CHUNK_SIZE;
 	mongo_globals->cmd_char = "$";
 
-	mongo_globals->response_num = 0;
 	mongo_globals->errmsg = 0;
-
-	mongo_globals->pool_size = -1;
 
 	hostname = host_start;
 	/* from the gnu manual:
@@ -290,12 +386,14 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->manager->log_function = php_mcon_log_wrapper;
 
 #if MONGO_PHP_STREAMS
-	mongo_globals->manager->connect     = php_mongo_io_stream_connect;
-	mongo_globals->manager->recv_header = php_mongo_io_stream_read;
-	mongo_globals->manager->recv_data   = php_mongo_io_stream_read;
-	mongo_globals->manager->send        = php_mongo_io_stream_send;
-	mongo_globals->manager->close       = php_mongo_io_stream_close;
-	mongo_globals->manager->forget      = php_mongo_io_stream_forget;
+	mongo_globals->manager->connect               = php_mongo_io_stream_connect;
+	mongo_globals->manager->recv_header           = php_mongo_io_stream_read;
+	mongo_globals->manager->recv_data             = php_mongo_io_stream_read;
+	mongo_globals->manager->send                  = php_mongo_io_stream_send;
+	mongo_globals->manager->close                 = php_mongo_io_stream_close;
+	mongo_globals->manager->forget                = php_mongo_io_stream_forget;
+	mongo_globals->manager->authenticate          = php_mongo_io_stream_authenticate;
+	mongo_globals->manager->supports_wire_version = php_mongo_api_supports_wire_version;
 #endif
 }
 /* }}} */
@@ -311,12 +409,8 @@ PHP_MSHUTDOWN_FUNCTION(mongo)
 {
 	UNREGISTER_INI_ENTRIES();
 
-#if WIN32
-	/* 0 is failure */
-	if (CloseHandle(cursor_mutex) == 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Windows couldn't destroy a mutex: %s", GetLastError());
-		return FAILURE;
-	}
+#if HAVE_MONGO_SASL
+	sasl_done();
 #endif
 
 	return SUCCESS;
@@ -345,11 +439,26 @@ PHP_MINFO_FUNCTION(mongo)
 	php_info_print_table_header(2, "MongoDB Support", "enabled");
 	php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
 #if MONGO_PHP_STREAMS
-	php_info_print_table_row(2, "SSL Support", "enabled");
 	php_info_print_table_row(2, "Streams Support", "enabled");
 #else
-	php_info_print_table_row(2, "SSL Support", "disabled");
 	php_info_print_table_row(2, "Streams Support", "disabled");
+#endif
+
+#if MONGO_PHP_STREAMS && HAVE_OPENSSL_EXT
+	php_info_print_table_row(2, "SSL Support", "enabled");
+#else
+	php_info_print_table_row(2, "SSL Support", "disabled");
+#endif
+
+	php_info_print_table_colspan_header(2, "Supported Authentication Mechanisms");
+	php_info_print_table_row(2, "MONGODB-CR (default)", "enabled");
+	php_info_print_table_row(2, "MONGODB-X509", "enabled");
+#if HAVE_MONGO_SASL
+	php_info_print_table_row(2, "GSSAPI (Kerberos)", "enabled");
+	php_info_print_table_row(2, "PLAIN", "enabled");
+#else
+	php_info_print_table_row(2, "GSSAPI (Kerberos)", "disabled");
+	php_info_print_table_row(2, "PLAIN", "disabled");
 #endif
 
 	php_info_print_table_end();
@@ -366,7 +475,26 @@ static void mongo_init_MongoExceptions(TSRMLS_D)
 	mongo_init_MongoCursorTimeoutException(TSRMLS_C);
 	mongo_init_MongoGridFSException(TSRMLS_C);
 	mongo_init_MongoResultException(TSRMLS_C);
+	mongo_init_MongoWriteConcernException(TSRMLS_C);
+	mongo_init_MongoDuplicateKeyException(TSRMLS_C);
+	mongo_init_MongoExecutionTimeoutException(TSRMLS_C);
+	mongo_init_MongoProtocolException(TSRMLS_C);
 }
+
+/* {{{ Creating & freeing Mongo type objects */
+void php_mongo_type_object_free(void *object TSRMLS_DC)
+{
+	mongo_type_object *mto = (mongo_type_object*)object;
+
+	zend_object_std_dtor(&mto->std TSRMLS_CC);
+
+	efree(mto);
+}
+
+zend_object_value php_mongo_type_object_new(zend_class_entry *class_type TSRMLS_DC) {
+	PHP_MONGO_TYPE_OBJ_NEW(mongo_type_object);
+}
+/* }}} */
 
 /* Shared helper functions */
 static mongo_read_preference_tagset *get_tagset_from_array(int tagset_id, zval *ztagset TSRMLS_DC)
@@ -530,6 +658,102 @@ int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preferenc
 	return 1;
 }
 
+int php_mongo_trigger_error_on_command_failure(mongo_connection *connection, zval *document TSRMLS_DC)
+{
+	zval **tmpvalue;
+
+	if (Z_TYPE_P(document) != IS_ARRAY) {
+		zend_throw_exception(mongo_ce_ResultException, strdup("Unknown error executing command (empty document returned)"), 1 TSRMLS_CC);
+		return FAILURE;
+	}
+
+	if (zend_hash_find(Z_ARRVAL_P(document), "ok", strlen("ok") + 1, (void **) &tmpvalue) == SUCCESS) {
+		if ((Z_TYPE_PP(tmpvalue) == IS_LONG && Z_LVAL_PP(tmpvalue) < 1) || (Z_TYPE_PP(tmpvalue) == IS_DOUBLE && Z_DVAL_PP(tmpvalue) < 1)) {
+			zval **tmp, *error_doc, *exception;
+			char *message;
+			long code;
+
+			if (zend_hash_find(Z_ARRVAL_P(document), "errmsg", strlen("errmsg") + 1, (void **) &tmp) == SUCCESS) {
+				convert_to_string_ex(tmp);
+				message = Z_STRVAL_PP(tmp);
+			} else {
+				message = estrdup("Unknown error executing command");
+			}
+
+			if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &tmp) == SUCCESS) {
+				convert_to_long_ex(tmp);
+				code = Z_LVAL_PP(tmp);
+			} else {
+				code = 2;
+			}
+
+			exception = php_mongo_cursor_throw(mongo_ce_ResultException, connection, code TSRMLS_CC, "%s", message);
+
+			/* Since document may be a return_value (if this function is invoked
+			 * through php_mongo_trigger_error_on_gle() and not findAndModify),
+			 * copy it to a new zval before updating the exception property. */
+			MAKE_STD_ZVAL(error_doc);
+			array_init(error_doc);
+			zend_hash_copy(Z_ARRVAL_P(error_doc), Z_ARRVAL_P(document), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+			zend_update_property(Z_OBJCE_P(exception), exception, "document", strlen("document"), document TSRMLS_CC);
+			zval_ptr_dtor(&error_doc);
+
+			return FAILURE;
+		}
+	}
+	return SUCCESS;
+}
+
+int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document TSRMLS_DC)
+{
+	zval **err;
+	zend_class_entry *exception_ce = mongo_ce_WriteConcernException;
+
+	/* Check if the GLE command itself failed */
+	if (php_mongo_trigger_error_on_command_failure(connection, document TSRMLS_CC) == FAILURE) {
+		return FAILURE;
+	}
+
+	/* Check for an error message in the "err" field. Technically, a non-null
+	 * value indicates an error, but we'll check for a non-empty string. */
+	if (
+		zend_hash_find(Z_ARRVAL_P(document), "err", strlen("err") + 1, (void**) &err) == SUCCESS &&
+		Z_TYPE_PP(err) == IS_STRING && Z_STRLEN_PP(err) > 0
+	) {
+		zval *error_doc, *exception, **code_z, **wnote_z;
+		/* Default error code from handle_error() in cursor.c */
+		long code = 4;
+
+		/* Check for the error code in the "code" field. */
+		if (zend_hash_find(Z_ARRVAL_P(document), "code", strlen("code") + 1, (void **) &code_z) == SUCCESS) {
+			convert_to_long_ex(code_z);
+			code = Z_LVAL_PP(code_z);
+		}
+
+		/* If additional information is found in the "wnote" field, include it
+		 * in the exception message. Otherwise, just use "err". */
+		if (
+			zend_hash_find(Z_ARRVAL_P(document), "wnote", strlen("wnote") + 1, (void**) &wnote_z) == SUCCESS &&
+			Z_TYPE_PP(wnote_z) == IS_STRING && Z_STRLEN_PP(wnote_z) > 0
+		) {
+			exception = php_mongo_cursor_throw(exception_ce, connection, code TSRMLS_CC, "%s: %s", Z_STRVAL_PP(err), Z_STRVAL_PP(wnote_z));
+		} else {
+			exception = php_mongo_cursor_throw(exception_ce, connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
+		}
+
+		/* Since document is a return_value (thanks to MONGO_METHOD stuff), copy
+		 * it to a new zval before updating the exception property. */
+		MAKE_STD_ZVAL(error_doc);
+		array_init(error_doc);
+		zend_hash_copy(Z_ARRVAL_P(error_doc), Z_ARRVAL_P(document), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+		zend_update_property(mongo_ce_WriteConcernException, exception, "document", strlen("document"), error_doc TSRMLS_CC);
+		zval_ptr_dtor(&error_doc);
+
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
 /*
  * Local variables:
  * tab-width: 4

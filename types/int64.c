@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ PHP_METHOD(MongoInt64, __toString)
 static zend_function_entry MongoInt64_methods[] = {
 	PHP_ME(MongoInt64, __construct, NULL, ZEND_ACC_PUBLIC )
 	PHP_ME(MongoInt64, __toString, NULL, ZEND_ACC_PUBLIC )
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 
 void mongo_init_MongoInt64(TSRMLS_D)
@@ -54,9 +54,10 @@ void mongo_init_MongoInt64(TSRMLS_D)
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "MongoInt64", MongoInt64_methods);
+	ce.create_object = php_mongo_type_object_new;
 	mongo_ce_Int64 = zend_register_internal_class(&ce TSRMLS_CC);
 
-	zend_declare_property_string(mongo_ce_Int64, "value", strlen("value"), "", ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_string(mongo_ce_Int64, "value", strlen("value"), "", ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

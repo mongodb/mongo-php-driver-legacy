@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -383,7 +383,7 @@ static zend_function_entry MongoGridFSFile_methods[] = {
 	PHP_ME(MongoGridFSFile, write, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFSFile, getBytes, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFSFile, getResource, NULL, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 void mongo_init_MongoGridFSFile(TSRMLS_D)
@@ -393,9 +393,9 @@ void mongo_init_MongoGridFSFile(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoGridFSFile", MongoGridFSFile_methods);
 	mongo_ce_GridFSFile = zend_register_internal_class(&ce TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFSFile, "file", strlen("file"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFSFile, "file", strlen("file"), ZEND_ACC_PUBLIC|MONGO_ACC_READ_ONLY TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFSFile, "gridfs", strlen("gridfs"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFSFile, "gridfs", strlen("gridfs"), ZEND_ACC_PROTECTED|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

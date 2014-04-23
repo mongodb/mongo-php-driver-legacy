@@ -6,8 +6,8 @@ driver.
 
 ## Current branches
 
-* 1.3 is the current stable branch, critical fixes only allowed here
-* master is the development branch for new features (to become 1.4)
+* 1.5 is the current stable branch, critical fixes only allowed here
+* master is the development branch for new features
 
 
 ## Github
@@ -52,44 +52,9 @@ And finally, to execute the tests run:
 
 ## Writing tests
 
-All tests 
-
-
-## Test template for a Standalone MongoDB
-    --TEST--
-    Test for PHP-XYZ: The ticket title
-    --SKIPIF--
-    <?php require_once "tests/utils/standalone.inc"; ?>
-    --FILE--
-    <?php
-    require_once "tests/utils/server.inc";
-
-    $host = MongoShellServer::getStandaloneInfo();
-    $mc = new MongoClient($host);
-
-    /** Write your test code here **/
-    ?>
-    ===DONE===
-    <?php exit(0); ?>
-    --EXPECTF--
-    ** Expected output here **
-    ===DONE===
-
-Some notes about the template:
-
-* Please use a collection named after the ticket number (for easier tracking)
-* The exit(0); statement allows you to run the testcase standalone from
-  the command line (without running it via run-tests.php) and see what is going
-  on without being flooded with hundred of lines from the --EXPECTF-- section.
-* Other available skipif tests:
- * standalone.inc (MongoShellServer::getStandaloneInfo())
- * auth-standalone.inc (MongoShellServer::getStandaloneInfo(true))
- * replicaset.inc (MongoShellServer::getReplicasetInfo())
- * auth-replicaset.inc (MongoShellServer::getReplicasetInfo(true))
- * replicaset-failover.inc (MongoShellServer::getReplicasetInfo(true))
- * bridge.inc (MongoShellServer::getBridgeInfo())
- * mongos.inc (MongoShellServer::getShardInfo())
-
+Test templates are available in [tests/templates/*.phpt](tests/templates/).
+These target dedicated MongoDB environments, such as a ReplicaSet or a
+standalone MongoDB with authentication, or over mongos.
 
 ## Code coverage
 

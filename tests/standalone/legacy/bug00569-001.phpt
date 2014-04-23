@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-569: Mongo: Checking permutations to trigger GLE.
 --SKIPIF--
+<?php $needs = "2.5.5"; $needsOp = "lt"; ?>
 <?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php
@@ -45,15 +46,18 @@ foreach ( $tests as $key => $test )
 }
 ?>
 --EXPECTF--
+%s: The Mongo class is deprecated, please use the MongoClient class
 IO      FINE: is_gle_op: no
 
 Running test 0, with options: []:
 IO      FINE: is_gle_op: no
 
 Running test 1, with options: {"safe":0}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: no
 
 Running test 2, with options: {"safe":1}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: getting reply
@@ -61,6 +65,7 @@ IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 
 Running test 3, with options: {"safe":2}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w=2
@@ -71,6 +76,7 @@ IO      FINE: getting cursor body
 %s:%d:%s
 
 Running test 4, with options: {"safe":"majority"}:
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
 IO      FINE: append_getlasterror: added w='majority'

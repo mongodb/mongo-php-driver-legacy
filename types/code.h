@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 
 PHP_METHOD(MongoCode, __construct);
 PHP_METHOD(MongoCode, __toString);
+/* Returns 1 on success, 0 on failure and raises a warning */
+int php_mongocode_populate(zval *mongocode_object, char *code, int code_len, zval *scope TSRMLS_DC);
 
 #endif
 

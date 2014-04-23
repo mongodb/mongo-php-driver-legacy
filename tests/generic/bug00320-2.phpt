@@ -60,7 +60,7 @@ error code: 11000
 ######################################
 # Current documents in fs.files
 ######################################
-[file] [_id:file0] [filename:/tmp/GridFS_test.txt] [length:10] [chunkSize:262144]
+[file] [_id:file0] [filename:/tmp/GridFS_test.txt] [length:10] [chunkSize:261120]
 
 ######################################
 # Current documents in fs.chunks

@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,48 +43,64 @@
 
 #define GROW_SLOWLY 1048576
 
+/* Options used for conversion between zval and bson and v.v. */
+#define BSON_OPT_FORCE_LONG_AS_OBJECT   0x01
+
 #define CREATE_BUF_STATIC(n) char b[n];         \
 	buf.start = buf.pos = b;                    \
 	buf.end = b+n;
 
 /* driver */
-int php_mongo_serialize_element(const char* name, int name_len, zval**, buffer*, int TSRMLS_DC);
+int php_mongo_serialize_element(const char* name, int name_len, zval**, mongo_buffer*, int TSRMLS_DC);
 
 /* objects */
-void php_mongo_serialize_date(buffer*, zval* TSRMLS_DC);
-void php_mongo_serialize_regex(buffer*, zval* TSRMLS_DC);
-void php_mongo_serialize_code(buffer*, zval* TSRMLS_DC);
-void php_mongo_serialize_ts(buffer*, zval* TSRMLS_DC);
-void php_mongo_serialize_bin_data(buffer*, zval* TSRMLS_DC);
-void php_mongo_serialize_int32(buffer*, zval* TSRMLS_DC);
-void php_mongo_serialize_int64(buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_date(mongo_buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_regex(mongo_buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_code(mongo_buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_ts(mongo_buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_bin_data(mongo_buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_int32(mongo_buffer*, zval* TSRMLS_DC);
+void php_mongo_serialize_int64(mongo_buffer*, zval* TSRMLS_DC);
 
 /* simple types */
-void php_mongo_serialize_double(buffer*, double);
-void php_mongo_serialize_string(buffer*, char*, int);
-void php_mongo_serialize_long(buffer*, int64_t);
-void php_mongo_serialize_int(buffer*, int);
-void php_mongo_serialize_byte(buffer*, char);
-void php_mongo_serialize_bytes(buffer*, char*, int);
-void php_mongo_serialize_key(buffer*, const char*, int, int TSRMLS_DC);
-void php_mongo_serialize_ns(buffer*, char* TSRMLS_DC);
+void php_mongo_serialize_double(mongo_buffer*, double);
+void php_mongo_serialize_string(mongo_buffer*, char*, int);
+void php_mongo_serialize_long(mongo_buffer*, int64_t);
+void php_mongo_serialize_int(mongo_buffer*, int);
+void php_mongo_serialize_byte(mongo_buffer*, char);
+void php_mongo_serialize_bytes(mongo_buffer*, char*, int);
+void php_mongo_serialize_key(mongo_buffer*, const char*, int, int TSRMLS_DC);
+void php_mongo_serialize_ns(mongo_buffer*, char* TSRMLS_DC);
 
-int php_mongo_write_insert(buffer*, char*, zval*, int max_document_size, int max_message_size TSRMLS_DC);
-int php_mongo_write_batch_insert(buffer*, char*, int flags, zval*, int max_document_size, int max_message_size TSRMLS_DC);
-int php_mongo_write_query(buffer*, mongo_cursor*, int max_document_size, int max_message_size TSRMLS_DC);
-int php_mongo_write_get_more(buffer*, mongo_cursor* TSRMLS_DC);
-int php_mongo_write_delete(buffer*, char*, int, zval*, int max_document_size, int max_message_size TSRMLS_DC);
-int php_mongo_write_update(buffer*, char*, int, zval*, zval*, int max_document_size, int max_message_size TSRMLS_DC);
-int php_mongo_write_kill_cursors(buffer*, int64_t, int max_message_size TSRMLS_DC);
+/* End a complex type */
+int php_mongo_serialize_size(char *start, mongo_buffer *buf, int max_size TSRMLS_DC);
+
+int php_mongo_write_insert(mongo_buffer*, char*, zval*, int max_document_size, int max_message_size TSRMLS_DC);
+int php_mongo_write_batch_insert(mongo_buffer*, char*, int flags, zval*, int max_document_size, int max_message_size TSRMLS_DC);
+int php_mongo_write_query(mongo_buffer*, mongo_cursor*, int max_document_size, int max_message_size TSRMLS_DC);
+int php_mongo_write_get_more(mongo_buffer*, mongo_cursor* TSRMLS_DC);
+int php_mongo_write_delete(mongo_buffer*, char*, int, zval*, int max_document_size, int max_message_size TSRMLS_DC);
+int php_mongo_write_update(mongo_buffer*, char*, int, zval*, zval*, int max_document_size, int max_message_size TSRMLS_DC);
+int php_mongo_write_kill_cursors(mongo_buffer*, int64_t, int max_message_size TSRMLS_DC);
 
 #define php_mongo_set_type(buf, type) php_mongo_serialize_byte(buf, (char)type)
 #define php_mongo_serialize_null(buf) php_mongo_serialize_byte(buf, (char)0)
 #define php_mongo_serialize_bool(buf, b) php_mongo_serialize_byte(buf, (char)b)
 
-int resize_buf(buffer*, int);
+int resize_buf(mongo_buffer*, int);
 
-int zval_to_bson(buffer*, HashTable*, int, int max_document_size TSRMLS_DC);
-char* bson_to_zval(char*, HashTable* TSRMLS_DC);
+int zval_to_bson(mongo_buffer*, HashTable*, int, int max_document_size TSRMLS_DC);
+
+typedef struct {
+	int level;
+	int flag_cmd_cursor_as_int64;
+} mongo_bson_conversion_options;
+
+#define MONGO_BSON_CONVERSION_OPTIONS_INIT { 0, 0 }
+
+/* Converts a BSON document to a zval. The conversions options are a bitmask
+ * of the BSON_OPT_* constants */
+char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC);
 
 /* Initialize buffer to contain "\0", so mongo_buf_append will start appending
  * at the beginning. */
@@ -95,10 +111,7 @@ void mongo_buf_init(char *dest);
  * will not work for strings containing null characters (e.g., BSON). */
 void mongo_buf_append(char *dest, char *piece);
 
-/* Returns the actual limit to send over the wire, based on batch size, current
- * position, and user limit */
-int mongo_get_limit(mongo_cursor *cursor);
-
+void php_mongo_handle_int64(zval **value, int64_t nr, int force_as_object TSRMLS_DC);
 
 #if PHP_C_BIGENDIAN
 /* Reverse the bytes in an int, wheeee stupid byte tricks */

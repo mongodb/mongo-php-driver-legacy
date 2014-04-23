@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 #ifndef __MONGO_H__
 #define __MONGO_H__
-
-int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 
 void mongo_init_Mongo(TSRMLS_D);
 

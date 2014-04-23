@@ -16,17 +16,17 @@ set_error_handler('error_handler');
 echo "Warnings:\n";
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::WARNING);
-$m = new Mongo($config["hosts"][0], array("replicaSet" => $config["rsname"]));
+$m = new MongoClient($config["hosts"][0], array("replicaSet" => $config["rsname"]));
 
 echo "Fine:\n";
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::FINE);
-$m = new Mongo($config["hosts"][0], array("replicaSet" => $config["rsname"]));
+$m = new MongoClient($config["hosts"][0], array("replicaSet" => $config["rsname"]));
 
 echo "Info:\n";
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::INFO);
-$m = new Mongo("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
+$m = new MongoClient("mongodb://" . $config["hosts"][0], array("replicaSet" => $config["rsname"]));
 MongoLog::setModule(0);
 MongoLog::setLevel(0);
 ?>
@@ -42,6 +42,7 @@ CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
+REPLSET FINE: - collect nearest
 REPLSET FINE: filter_connections: adding connections:
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
@@ -85,31 +86,31 @@ REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
-REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
-REPLSET FINE: selecting near servers: nearest is 0ms
-REPLSET FINE: - connection: type: PRIMARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: selecting near servers: nearest is %dms
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
-REPLSET FINE: - connection: type: SECONDARY, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s
 REPLSET FINE:   - tag: server:%d
 REPLSET FINE: selecting near server: done

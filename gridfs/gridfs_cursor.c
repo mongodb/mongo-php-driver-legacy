@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include "../php_mongo.h"
 #include "../cursor.h"
+#include "../cursor_shared.h"
 #include "gridfs_cursor.h"
 #include "gridfs_file.h"
 
@@ -65,7 +66,7 @@ PHP_METHOD(MongoGridFSCursor, current)
 	zval *gridfs;
 	zval *flags;
 	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(cursor->resource, MongoGridFSCursor);
+	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoGridFSCursor);
 
 	if (!cursor->current) {
 		RETURN_NULL();
@@ -87,7 +88,7 @@ static zend_function_entry MongoGridFSCursor_methods[] = {
 	PHP_ME(MongoGridFSCursor, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFSCursor, getNext, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoGridFSCursor, current, NULL, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 void mongo_init_MongoGridFSCursor(TSRMLS_D)
@@ -97,7 +98,7 @@ void mongo_init_MongoGridFSCursor(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoGridFSCursor", MongoGridFSCursor_methods);
 	mongo_ce_GridFSCursor = zend_register_internal_class_ex(&ce, mongo_ce_Cursor, "MongoCursor" TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_GridFSCursor, "gridfs", strlen("gridfs"), ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_GridFSCursor, "gridfs", strlen("gridfs"), ZEND_ACC_PROTECTED|MONGO_ACC_READ_ONLY TSRMLS_CC);
 }
 
 /*

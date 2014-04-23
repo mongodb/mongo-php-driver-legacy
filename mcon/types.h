@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -140,13 +140,32 @@ typedef struct _mongo_connection
 	int    last_reqid;
 	void  *socket;           /* void* so we can support different "socket" backends */
 	int    connection_type;  /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */
+	struct {
+		int32_t major;
+		int32_t minor;
+		int32_t mini;
+		int32_t build;
+	} version;
+	int    min_wire_version; /* Minimum wire version supported by mongo[d|s] */
+	int    max_wire_version; /* Maximum wire version supported by mongo[d|s] */
 	int    max_bson_size;    /* Maximum size of each document. Store per connection, as it can actually differ. */
 	int    max_message_size; /* Maximum size of each data packet. Store per connection, as it can actually differ. */
+	int    max_write_batch_size; /* Maximum operations in a batch */
 	int    tag_count;
 	char **tags;
 	char  *hash;             /* Duplicate of the hash that the manager knows this connection as */
 	mongo_connection_deregister_callback *cleanup_list;
 } mongo_connection;
+
+/* MongoDB pre-1.8; Spec says default to 4 MB */
+#define MONGO_CONNECTION_DEFAULT_MAX_BSON_SIZE 4194304
+/* MongoDB pre-2.4; Spec says default to 2 * the maxBsonSize */
+#define MONGO_CONNECTION_DEFAULT_MAX_MESSAGE_SIZE 2 * MONGO_CONNECTION_DEFAULT_MAX_BSON_SIZE
+/* Default wire versions for MongoDB pre-2.6 */
+#define MONGO_CONNECTION_DEFAULT_MIN_WIRE_VERSION 0
+#define MONGO_CONNECTION_DEFAULT_MAX_WIRE_VERSION 0
+/* Default max operations in a batch .. for 2.6 api */
+#define MONGO_CONNECTION_DEFAULT_MAX_WRITE_BATCH_SIZE 1000
 
 typedef struct _mongo_connection_blacklist
 {
@@ -180,8 +199,10 @@ typedef struct _mongo_read_preference
 	mongo_read_preference_tagset **tagsets;
 } mongo_read_preference;
 
-#define MONGO_AUTH_MECHANISM_MONGODB_CR 1
-#define MONGO_AUTH_MECHANISM_GSSAPI     2
+#define MONGO_AUTH_MECHANISM_MONGODB_CR   1
+#define MONGO_AUTH_MECHANISM_GSSAPI       2
+#define MONGO_AUTH_MECHANISM_PLAIN        3
+#define MONGO_AUTH_MECHANISM_MONGODB_X509 4
 
 typedef struct _mongo_server_def
 {
@@ -202,12 +223,14 @@ typedef struct _mongo_server_options
 	char *repl_set_name;
 	int   connectTimeoutMS; /* How many milliseconds to wait for when connecting to nodes */
 	int   socketTimeoutMS;  /* How many milliseconds to wait for when reading/writing data to nodes */
+	int   secondaryAcceptableLatencyMS; /* Latency cutoff point for RP_NEAREST and RP_SECONDARY_PREFERRED */
 	int   default_w;        /* The number specifies the number of replica nodes */
 	char *default_wstring;  /* If the value for "w" is a string, then it means a getLastError error-mode */
 	int   default_wtimeout; /* How many milliseconds to wait for replication to "w" nodes */
 	int   default_fsync;    /* 1/0 send fsync=1 by default or not */
 	int   default_journal;  /* 1/0 send j=1 by default or not */
 	int   ssl;              /* If we should be using SSL */
+	char *gssapiServiceName;/* Service Principal Name (Kerberos) */
 	void *ctx;              /* Arbitrary implementation dependent options (MongoDB-PHP uses this for stream context) */
 } mongo_server_options;
 
@@ -245,7 +268,10 @@ typedef struct _mongo_con_manager
 	int   (*send)        (mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 	void  (*close)       (mongo_connection *con, int why);
 	void  (*forget)      (struct _mongo_con_manager *manager, mongo_connection *con);
+	int   (*authenticate)(struct _mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message);
 
+	/* Check if a wire version supported */
+	int (*supports_wire_version) (int min_wire_version, int max_wire_version, char **error_message);
 } mongo_con_manager;
 
 typedef void (mongo_con_manager_item_destroy_t)(mongo_con_manager *manager, void *item, int why);

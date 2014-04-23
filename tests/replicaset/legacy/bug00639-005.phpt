@@ -3,6 +3,8 @@ Test for PHP-639: MongoCursor::slaveOkay() has no effect (inherited from client)
 --SKIPIF--
 <?php require_once "tests/utils/replicaset.inc"; ?>
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
+--INI--
+mongo.long_as_object=1
 --FILE--
 <?php
 $mentions = array(); 
@@ -48,6 +50,8 @@ $info = $cursor->info();
 echo "connection type: ", $info['connection_type_desc'], "\n";
 ?>
 --EXPECTF--
+%s: %s: The Mongo class is deprecated, please use the MongoClient class in %sserver.inc on line %d
+
 Deprecated: Function Mongo::setSlaveOkay() is deprecated in %s
 pick server: random element %d while ignoring the primary
 - connection: type: SECONDARY, socket: %d, ping: %d, hash: %s

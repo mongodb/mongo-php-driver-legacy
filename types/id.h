@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 int php_mongo_id_serialize(zval*, unsigned char**, zend_uint*, zend_serialize_data* TSRMLS_DC);
 int php_mongo_id_unserialize(zval**, zend_class_entry*, const unsigned char*, zend_uint, zend_unserialize_data* TSRMLS_DC);
 int php_mongo_compare_ids(zval*, zval* TSRMLS_DC);
+void php_mongo_mongoid_populate(zval *this_ptr, zval *id TSRMLS_DC);
+char *php_mongo_mongoid_to_hex(char *id_str);
 
 PHP_METHOD(MongoId, __construct);
 PHP_METHOD(MongoId, __toString);
@@ -27,6 +29,7 @@ PHP_METHOD(MongoId, getTimestamp);
 PHP_METHOD(MongoId, getPID);
 PHP_METHOD(MongoId, getInc);
 PHP_METHOD(MongoId, getHostname);
+PHP_METHOD(MongoId, isValid);
 
 #endif
 

@@ -14,14 +14,14 @@ $c = $m->selectDB(dbname())->selectCollection("collection");
 
 try {
     $foo = array("foo" => time());
-    $result = $c->insert($foo, array("safe" => true, "timeout" => 1));
+    $result = $c->insert($foo, array("w" => true, "socketTimeoutMS" => 1));
 } catch(Exception $e) {
     var_dump(get_class($e), $e->getMessage(), $e->getCode());
     var_dump($foo);
 }
 try {
     $foo = array("foo" => "bar");
-    $c->insert($foo, array("safe" => true));
+    $c->insert($foo, array("w" => true));
     $result = $c->findOne(array("_id" => $foo["_id"]));
     var_dump($result);
 } catch(Exception $e) {

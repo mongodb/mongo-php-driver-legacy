@@ -21,7 +21,7 @@ $collection->insert( $doc );
 $doc = $collection->findOne(array('_id' => new MongoId('4ffe06d19da778b67809666a')));
 
 $collection->update(array('_id' => $doc['_id']), array('$set' => array('image.id' => new MongoId('50470e396e6adf8f4a000039'))));
-$res = $collection->save($doc, array('safe' => 1));
+$res = $collection->save($doc, array('w' => 1));
 dump_these_keys($res, array("updatedExisting", "n", "ok"));
 echo "DONE\n";
 ?>

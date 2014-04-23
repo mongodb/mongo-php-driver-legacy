@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,21 +23,34 @@ extern zend_class_entry *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_ResultException;
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getdocument, 0, 0, 0)
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoResultException_methods[] = {
-	PHP_ME(MongoResultException, getDocument, arginfo_getdocument, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	PHP_ME(MongoResultException, getDocument, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoResultException, getHost, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_FE_END
 };
 
-/* {{{ proto array MongoResultException::getDocument(void)
- * Returns the full result document from mongodb */
+/* {{{ proto array MongoResultException::getDocument()
+ * Returns the full result document from MongoDB */
 PHP_METHOD(MongoResultException, getDocument)
 {
 	zval *h;
 
 	h = zend_read_property(mongo_ce_ResultException, getThis(), "document", strlen("document"), NOISY TSRMLS_CC);
+
+	RETURN_ZVAL(h, 1, 0);
+}
+/* }}} */
+
+/* {{{ proto string MongoCursorException::getHost()
+   Get the host related to this exception */
+PHP_METHOD(MongoResultException, getHost)
+{
+	zval *h;
+
+	h = zend_read_property(mongo_ce_ResultException, getThis(), "host", strlen("host"), NOISY TSRMLS_CC);
 
 	RETURN_ZVAL(h, 1, 0);
 }
@@ -50,7 +63,8 @@ void mongo_init_MongoResultException(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoResultException", MongoResultException_methods);
 	mongo_ce_ResultException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_ResultException, "document", strlen("document"), ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED  TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_ResultException, "host", strlen("host"), ZEND_ACC_PRIVATE TSRMLS_CC);
 }
 
 /*

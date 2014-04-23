@@ -1,8 +1,8 @@
 --TEST--
 Test for PHP-744: Support the oplog_replay query flag
 --SKIPIF--
+<?php require_once "tests/utils/standalone.inc"; ?>
 <?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
-<?php require_once "tests/utils/generic.inc" ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
@@ -34,7 +34,7 @@ $m = new MongoClient($dsn, array(), array( 'context' => $ctx ));
 $db = dbname();
 $c = $m->$db->test;
 
-$cursor = $c->find( array('ts' => time() - 86400 ))->setFlag(3); // oplog_reply
+$cursor = $c->find( array('ts' => array('$gt' => time() - 86400 )))->setFlag(3); // oplog_reply
 foreach( $cursor as $foo ) {}
 ?>
 --EXPECTF--

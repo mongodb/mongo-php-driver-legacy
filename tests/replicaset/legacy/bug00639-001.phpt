@@ -3,6 +3,8 @@ Test for PHP-639: MongoCursor::slaveOkay() has no effect (method)
 --SKIPIF--
 <?php require_once "tests/utils/replicaset.inc"; ?>
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
+--INI--
+mongo.long_as_object=1
 --FILE--
 <?php
 $mentions = array(); 
@@ -47,12 +49,17 @@ $info = $cursor->info();
 echo "connection type: ", $info['connection_type_desc'], "\n";
 ?>
 --EXPECTF--
+%s: Function MongoCursor::slaveOkay() is deprecated in %sbug00639-001.php on line %d
 pick server: random element %d while ignoring the primary
 - connection: type: SECONDARY, socket: %d, ping: %d, hash: %s
 connection type: SECONDARY
+
+%s: Function MongoCursor::slaveOkay() is deprecated in %sbug00639-001.php on line %d
 pick server: random element %d
 - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s
 connection type: PRIMARY
+
+%s: Function MongoCursor::slaveOkay() is deprecated in %sbug00639-001.php on line %d
 pick server: random element %d while ignoring the primary
 - connection: type: SECONDARY, socket: %d, ping: %d, hash: %s
 connection type: SECONDARY

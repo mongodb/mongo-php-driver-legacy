@@ -26,8 +26,8 @@ var_dump($rs1 === $rs2);
 var_dump($rs2 === $rs3);
 var_dump($rs3 === $rs4);
 var_dump($rs1);
-
---EXPECT--
+?>
+--EXPECTF--
 bool(true)
 bool(true)
 bool(true)

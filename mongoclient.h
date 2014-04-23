@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013210gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 #ifndef __MONGOCLIENT_H__
 #define __MONGOCLIENT_H__
 
-int php_mongo_create_le(mongo_cursor *cursor, char *name TSRMLS_DC);
 zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC);
 void mongo_init_MongoClient(TSRMLS_D);
 void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc);
@@ -25,11 +24,6 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc);
 mongo_connection *php_mongo_connect(mongoclient *link, int flags TSRMLS_DC);
 HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC);
 
-#if PHP_VERSION_ID >= 50400
-zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC);
-#else
-zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC);
-#endif
 
 /* MongoClient class */
 PHP_METHOD(MongoClient, __construct);
@@ -44,6 +38,8 @@ PHP_METHOD(MongoClient, selectDB);
 PHP_METHOD(MongoClient, selectCollection);
 PHP_METHOD(MongoClient, getReadPreference);
 PHP_METHOD(MongoClient, setReadPreference);
+PHP_METHOD(MongoClient, getWriteConcern);
+PHP_METHOD(MongoClient, setWriteConcern);
 PHP_METHOD(MongoClient, dropDB);
 PHP_METHOD(MongoClient, lastError);
 PHP_METHOD(MongoClient, prevError);
@@ -52,6 +48,7 @@ PHP_METHOD(MongoClient, forceError);
 PHP_METHOD(MongoClient, close);
 PHP_METHOD(MongoClient, listDBs);
 PHP_METHOD(MongoClient, getHosts);
+PHP_METHOD(MongoClient, killCursor);
 
 #endif
 

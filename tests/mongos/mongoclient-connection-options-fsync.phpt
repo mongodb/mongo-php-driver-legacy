@@ -2,6 +2,7 @@
 Connection strings: Test fsync over mongos
 --SKIPIF--
 <?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
+<?php $needs = "2.5.3"; $needsOp = "lt" ?>
 <?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
 <?php

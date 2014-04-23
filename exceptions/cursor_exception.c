@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,11 +23,16 @@ extern zend_class_entry *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_CursorException;
 
+MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry MongoCursorException_methods[] = {
-	PHP_ME(MongoCursorException, getHost, NULL, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	PHP_ME(MongoCursorException, getHost, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_FE_END
 };
 
+/* {{{ proto string MongoCursorException::getHost()
+   Get the host related to this exception */
 PHP_METHOD(MongoCursorException, getHost)
 {
 	zval *h;
@@ -45,8 +50,7 @@ void mongo_init_MongoCursorException(TSRMLS_D)
 	INIT_CLASS_ENTRY(ce, "MongoCursorException", MongoCursorException_methods);
 	mongo_ce_CursorException = zend_register_internal_class_ex(&ce, mongo_ce_Exception, NULL TSRMLS_CC);
 
-	zend_declare_property_null(mongo_ce_CursorException, "host", strlen("host"), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_long(mongo_ce_CursorException, "fd", strlen("fd"), 0, ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_null(mongo_ce_CursorException, "host", strlen("host"), ZEND_ACC_PRIVATE|ZEND_ACC_DEPRECATED  TSRMLS_CC);
 }
 
 /*

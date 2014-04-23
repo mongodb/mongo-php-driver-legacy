@@ -1,5 +1,5 @@
 /**
- *  Copyright 2009-2013 10gen, Inc.
+ *  Copyright 2009-2014 MongoDB, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 #ifndef __IO_STREAM_H__
 #define __IO_STREAM_H__
 
-#include "php.h"
-#include "main/php_streams.h"
-#include "main/php_network.h"
+#include <php.h>
+#include <main/php_streams.h>
+#include <main/php_network.h>
 
 #include "mcon/types.h"
 
@@ -29,6 +29,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *options, void *data, int size, char **error_message);
 void php_mongo_io_stream_close(mongo_connection *con, int why);
 void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *con);
+int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message);
 #endif
 
 /*
