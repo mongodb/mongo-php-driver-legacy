@@ -316,7 +316,7 @@ static mongo_connection *mongo_get_read_write_connection_replicaset(mongo_con_ma
 		/* We just want to know if we have something to talk to, irregardless of RP */
 		mongo_read_preference tmp_rp;
 
-		tmp_rp.type = MONGO_RP_NEAREST;
+		tmp_rp.type = MONGO_RP_ANY;
 		tmp_rp.tagsets = NULL;
 		tmp_rp.tagset_count = 0;
 

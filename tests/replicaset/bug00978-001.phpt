@@ -39,7 +39,7 @@ INSERT DATA
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: ARBITER, socket: %d, ping: 0, hash: %s:%d;-;.;%d
 
-10058
+10%d
 %s:%d: not master
 
 RUNNING COMMAND
