@@ -757,6 +757,8 @@ void mongo_servers_copy(mongo_servers *to, mongo_servers *from, int flags)
 		to->options.gssapiServiceName = strdup(from->options.gssapiServiceName);
 	}
 
+	to->options.connectTimeoutMS = from->options.connectTimeoutMS;
+	to->options.socketTimeoutMS = from->options.socketTimeoutMS;
 	to->options.secondaryAcceptableLatencyMS = from->options.secondaryAcceptableLatencyMS;
 
 	to->options.default_w = from->options.default_w;
