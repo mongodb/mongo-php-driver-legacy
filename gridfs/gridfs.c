@@ -664,10 +664,10 @@ PHP_METHOD(MongoGridFS, storeFile)
 			}
 
 			stdio_fptr = (php_stdio_stream_data*)stream->abstract;
-			if (!stdio_fptr) {
-				zend_throw_exception_ex(mongo_ce_GridFSException, 6 TSRMLS_CC, "no file is associate with this filehandle");
-				return;
-			}
+		}
+		if (!stdio_fptr) {
+			zend_throw_exception_ex(mongo_ce_GridFSException, 6 TSRMLS_CC, "no file is associate with this filehandle");
+			return;
 		}
 
 		if (stdio_fptr->file) {
