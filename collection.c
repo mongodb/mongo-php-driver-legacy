@@ -1103,7 +1103,6 @@ PHP_METHOD(MongoCollection, insert)
 	link = (mongoclient*)zend_object_store_get_object(c->link TSRMLS_CC);
 
 	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
-		zend_clear_exception(TSRMLS_C);
 		RETURN_FALSE;
 	}
 
