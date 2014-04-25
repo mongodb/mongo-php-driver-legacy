@@ -1725,7 +1725,7 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 
 	zval_ptr_dtor(&cmd);
  
-	if (EG(exception)) {
+	if (!retval) {
 		return;
 	}
 
@@ -2062,8 +2062,7 @@ PHP_METHOD(MongoCollection, count)
 
 	zval_ptr_dtor(&cmd);
 
-	if (EG(exception) || Z_TYPE_P(response) != IS_ARRAY) {
-		zval_ptr_dtor(&response);
+	if (!response) {
 		return;
 	}
 
@@ -2506,9 +2505,9 @@ PHP_METHOD(MongoCollection, distinct)
 	}
 
 	tmp = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	zval_ptr_dtor(&cmd);
 
 	if (!tmp) {
-		zval_ptr_dtor(&cmd);
 		/* Exception thrown */
 		return;
 	}
@@ -2524,7 +2523,6 @@ PHP_METHOD(MongoCollection, distinct)
 		RETVAL_FALSE;
 	}
 
-	zval_ptr_dtor(&cmd);
 	zval_ptr_dtor(&tmp);
 }
 /* }}} */
