@@ -374,10 +374,7 @@ PHP_METHOD(MongoDB, setProfilingLevel)
 
 	zval_ptr_dtor(&cmd);
 
-	if (EG(exception)) {
-		if (cmd_return) {
-			zval_ptr_dtor(&cmd_return);
-		}
+	if (!cmd_return) {
 		return;
 	}
 
