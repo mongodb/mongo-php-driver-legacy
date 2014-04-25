@@ -1071,8 +1071,7 @@ PHP_METHOD(MongoCursor, count)
 	zval_ptr_dtor(&cmd);
 	efree(dbname);
 
-	if (EG(exception) || Z_TYPE_P(response) != IS_ARRAY) {
-		zval_ptr_dtor(&response);
+	if (!response) {
 		return;
 	}
 

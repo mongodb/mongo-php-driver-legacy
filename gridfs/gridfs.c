@@ -320,9 +320,13 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC)
 
 		/* run command */
 		response = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+		zval_ptr_dtor(&cmd);
+		if (!response) {
+			return;
+		}
 
 		/* make sure there wasn't an error */
-		if (!EG(exception) && zend_hash_find(HASH_P(response), "md5", strlen("md5") + 1, (void**)&md5) == SUCCESS) {
+		if (zend_hash_find(HASH_P(response), "md5", strlen("md5") + 1, (void**)&md5) == SUCCESS) {
 			add_assoc_zval(zfile, "md5", *md5);
 			/* Increment the refcount so it isn't cleaned up at the end of this
 			 * method */
@@ -330,10 +334,7 @@ static void add_md5(zval *zfile, zval *zid, mongo_collection *c TSRMLS_DC)
 		}
 
 		/* cleanup */
-		if (!EG(exception)) {
-			zval_ptr_dtor(&response);
-		}
-		zval_ptr_dtor(&cmd);
+		zval_ptr_dtor(&response);
 	}
 }
 
@@ -489,6 +490,12 @@ PHP_METHOD(MongoGridFS, storeBytes)
 
 		/* run command */
 		gle_retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+		zval_ptr_dtor(&cmd);
+
+		if (!gle_retval) {
+			revert = 1;
+			goto cleanup_on_failure;
+		}
 
 		if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
 			zval **err;
@@ -498,11 +505,9 @@ PHP_METHOD(MongoGridFS, storeBytes)
 				/* Intentionally not returning, the exception is checked a line later */
 			}
 		}
-		zval_ptr_dtor(&cmd);
 		zval_ptr_dtor(&gle_retval);
 
 		if (EG(exception)) {
-			revert = 1;
 			goto cleanup_on_failure;
 		}
 	}
@@ -775,7 +780,12 @@ PHP_METHOD(MongoGridFS, storeFile)
 
 			/* run command */
 			gle_retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+			zval_ptr_dtor(&cmd);
 
+			if (!gle_retval) {
+				revert = 1;
+				goto cleanup_on_failure;
+			}
 			if (Z_TYPE_P(gle_retval) == IS_ARRAY) {
 				zval **err;
 
@@ -784,7 +794,6 @@ PHP_METHOD(MongoGridFS, storeFile)
 					/* Intentionally not returning, the exception is checked a line later */
 				}
 			}
-			zval_ptr_dtor(&cmd);
 			zval_ptr_dtor(&gle_retval);
 			if (EG(exception)) {
 				revert = 1;
