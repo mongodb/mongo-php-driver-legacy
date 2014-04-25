@@ -6,7 +6,7 @@ driver.
 
 ## Current branches
 
-* 1.5 is the current stable branch, critical fixes only allowed here
+* v1.5 is the current stable branch, critical fixes only allowed here
 * master is the development branch for new features
 
 
