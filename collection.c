@@ -53,6 +53,19 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
 
+/**
+ * Unsets an option if it exists.
+ *
+ * @param zval *options
+ * @param const char *name
+ */
+#define DELETE_OPTION_IF_EXISTS(options, name) do { \
+	zval **tmp_option; \
+	if (zend_hash_find(HASH_P(options), name, strlen(name) + 1, (void**)&tmp_option) == SUCCESS) { \
+		zend_hash_del(HASH_P(options), name, strlen(name) + 1); \
+	} \
+} while(0);
+
 /* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
    Initializes a new MongoCollection */
 PHP_METHOD(MongoCollection, __construct)
@@ -1673,13 +1686,28 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 
 	/* process options */
 	if (options) {
-		zval *temp, **name, **timeout_pp;
+		zval *temp, **name, **maxtimems;
+
+		/* "maxTimeMS" belongs on top-level command document */
+		if (zend_hash_find(HASH_P(options), "maxTimeMS", strlen("maxTimeMS") + 1, (void**)&maxtimems) == SUCCESS) {
+			add_assoc_zval(cmd, "maxTimeMS", *maxtimems);
+			Z_ADDREF_PP(maxtimems);
+			zend_hash_del(HASH_P(options), "maxTimeMS", strlen("maxTimeMS") + 1);
+		}
+
+		/* Write concern options are not relevant to the createIndexes command */
+		DELETE_OPTION_IF_EXISTS(options, "fsync");
+		DELETE_OPTION_IF_EXISTS(options, "j");
+		DELETE_OPTION_IF_EXISTS(options, "safe");
+		DELETE_OPTION_IF_EXISTS(options, "w");
+		DELETE_OPTION_IF_EXISTS(options, "wtimeout");
+		DELETE_OPTION_IF_EXISTS(options, "wTimeoutMS");
 
 		zend_hash_merge(HASH_P(index_spec), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
-		
-		if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout_pp) == SUCCESS) {
-			zend_hash_del(HASH_P(cmd), "timeout", strlen("timeout") + 1);
-		}
+
+		/* "socketTimeoutMS" and "timeout" are php_mongo_runcommand() options */
+		DELETE_OPTION_IF_EXISTS(index_spec, "socketTimeoutMS");
+		DELETE_OPTION_IF_EXISTS(index_spec, "timeout");
 
 		if (zend_hash_find(HASH_P(options), "name", strlen("name") + 1, (void**)&name) == SUCCESS) {
 			if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
