@@ -33,12 +33,12 @@ if (!array_key_exists('ok', $result) || $result['ok'] == 0) {
 CREATING CONNECTION
 INSERT DATA
 REPLSET INFO: pick server: random element 0
-REPLSET INFO: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;.;%d
+REPLSET INFO: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET INFO:   - tag: dc:ny
 REPLSET INFO:   - tag: server:0
 RUNNING COMMAND
 REPLSET INFO: pick server: random element 0
-REPLSET INFO: - connection: type: PRIMARY, socket: %d, ping: 0, hash: %s:%d;REPLICASET;.;%d
+REPLSET INFO: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET INFO:   - tag: dc:ny
 REPLSET INFO:   - tag: server:0
 DONE WITH COMMAND
