@@ -42,6 +42,7 @@ CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: ismaster got skipped
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
+REPLSET FINE: - collect any
 REPLSET FINE: filter_connections: adding connections:
 REPLSET FINE: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
 REPLSET FINE:   - tag: dc:%s

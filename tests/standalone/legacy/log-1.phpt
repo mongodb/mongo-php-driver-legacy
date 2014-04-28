@@ -47,6 +47,7 @@ CON     INFO: ismaster: set name: (null), ismaster: 1, secondary: 0, is_arbiter:
 CON     INFO: ismaster: last ran at %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
+REPLSET FINE: - collect any
 REPLSET FINE: filter_connections: adding connections:
 REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;.;%d
 REPLSET FINE: filter_connections: done

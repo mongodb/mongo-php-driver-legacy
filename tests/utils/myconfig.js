@@ -284,7 +284,7 @@ function getBridgeConfig() {
  */
 function getIsMaster() {
 	var info = replTest.getMaster().getDB("admin").runCommand({ismaster: 1});
-	return [ info.ismaster, info.secondary, info.primary, info.hosts ];
+	return [ info.ismaster, info.secondary, info.primary, info.hosts, info.arbiters ];
 }
 
 /**
