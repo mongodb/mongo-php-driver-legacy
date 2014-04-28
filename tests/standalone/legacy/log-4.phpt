@@ -41,6 +41,7 @@ CON     FINE: is_ping: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
+REPLSET FINE: - collect any
 REPLSET FINE: filter_connections: adding connections:
 REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;.;%d
 REPLSET FINE: filter_connections: done
