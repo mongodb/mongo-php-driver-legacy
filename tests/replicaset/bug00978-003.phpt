@@ -41,27 +41,27 @@ $result = $c->findOne( array( 'foo' => 42 ) );
 ?>
 --EXPECTF--
 CREATING CONNECTION
-  REPLSET FINE: - connection: type: ARBITER, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
+  REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: limiting to servers with same replicaset name
-  REPLSET FINE: - connection: type: ARBITER, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
+  REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: limiting to servers with same replicaset name: done
   REPLSET FINE: limiting by credentials
-  REPLSET FINE: - connection: type: ARBITER, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
+  REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: limiting by credentials: done
   REPLSET FINE: sorting servers by priority and ping time
-  REPLSET FINE: - connection: type: ARBITER, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
+  REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
@@ -69,7 +69,7 @@ CREATING CONNECTION
   REPLSET FINE: sorting servers: done
   REPLSET FINE: selecting near servers
   REPLSET FINE: selecting near servers: nearest is %dms
-  REPLSET FINE: - connection: type: ARBITER, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
+  REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
   REPLSET FINE: - connection: type: %s, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
