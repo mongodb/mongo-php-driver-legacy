@@ -37,13 +37,13 @@ if (!array_key_exists('ok', $result) || $result['ok'] == 0) {
 CREATING CONNECTION
 INSERT DATA
 REPLSET INFO: pick server: random element 0
-REPLSET INFO: - connection: type: ARBITER, socket: %d, ping: 0, hash: %s:%d;-;.;%d
+REPLSET INFO: - connection: type: ARBITER, socket: %d, ping: %d, hash: %s:%d;-;.;%d
 
 10%d
 %s:%d: not master
 
 RUNNING COMMAND
 REPLSET INFO: pick server: random element 0
-REPLSET INFO: - connection: type: ARBITER, socket: %d, ping: 0, hash: %s:%d;-;.;%d
+REPLSET INFO: - connection: type: ARBITER, socket: %d, ping: %d, hash: %s:%d;-;.;%d
 DONE WITH COMMAND
 all is good
