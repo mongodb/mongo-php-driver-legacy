@@ -736,7 +736,7 @@ PHP_METHOD(MongoCursorInterface, info)
 
 		MAKE_STD_ZVAL(id_value);
 		ZVAL_NULL(id_value);
-		php_mongo_handle_int64(&id_value, cursor->cursor_id, 0 TSRMLS_CC);
+		php_mongo_handle_int64(&id_value, cursor->cursor_id, BSON_OPT_INT32_LONG_AS_OBJECT TSRMLS_CC);
 		add_assoc_zval(return_value, "id", id_value);
 
 		add_assoc_long(return_value, "at", cursor->at);
