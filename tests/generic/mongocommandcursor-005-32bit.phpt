@@ -57,28 +57,13 @@ do_test();
 ini_set('mongo.long_as_object', 1);
 do_test();
 
-ini_set('mongo.native_long', 1);
-ini_set('mongo.long_as_object', 0);
-
-/* Expected to fail, because the first batch contains int64s */
-try {
-	$c = run_command();
-	$c->doQuery();
-	$c->next();
-} catch (Exception $e) {
-	echo $e->getMessage(), "\n";
-}
-echo "====\n";
-
 /* Now doing it in such a way that the first batch doesn't contain any
  * documents. This should work. */
 $c = run_command(3, 0);
-var_dump($c->doQuery());
+var_dump($c->rewind());
 ini_set('mongo.long_as_object', 1);
-$c->batchSize(1);
-$c->valid();
-$c->next();
 var_dump($c->current());
+$c->batchSize(1);
 $c->valid();
 $c->next();
 var_dump($c->current());
@@ -95,7 +80,7 @@ array(3) {
   ["i32"]=>
   int(0)
   ["i64"]=>
-  float(0)
+  int(0)
 }
 array(3) {
   ["int"]=>
@@ -103,7 +88,7 @@ array(3) {
   ["i32"]=>
   int(1)
   ["i64"]=>
-  float(1)
+  int(1)
 }
 ====
 array(3) {
@@ -129,15 +114,13 @@ array(3) {
   }
 }
 ====
-Unknown error executing command (empty document returned)
-====
 array(2) {
   ["cursor"]=>
   array(3) {
     ["id"]=>
-    object(MongoInt64)#9 (1) {
+    object(MongoInt64)#%d (1) {
       ["value"]=>
-      string(18) "%s"
+      string(%d) "%s"
     }
     ["ns"]=>
     string(14) "test.cursorcmd"
@@ -150,7 +133,7 @@ array(2) {
 }
 array(4) {
   ["_id"]=>
-  object(MongoId)#9 (1) {
+  object(MongoId)#%d (1) {
     ["$id"]=>
     string(24) "5%s"
   }
@@ -159,14 +142,14 @@ array(4) {
   ["i32"]=>
   int(0)
   ["i64"]=>
-  object(MongoInt64)#5 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "0"
   }
 }
 array(4) {
   ["_id"]=>
-  object(MongoId)#5 (1) {
+  object(MongoId)#%d (1) {
     ["$id"]=>
     string(24) "5%s"
   }
@@ -175,7 +158,7 @@ array(4) {
   ["i32"]=>
   int(1)
   ["i64"]=>
-  object(MongoInt64)#9 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "1"
   }
@@ -187,7 +170,7 @@ array(3) {
   ["i32"]=>
   int(0)
   ["i64"]=>
-  object(MongoInt64)#14 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "0"
   }
@@ -198,7 +181,7 @@ array(3) {
   ["i32"]=>
   int(1)
   ["i64"]=>
-  object(MongoInt64)#12 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "1"
   }
