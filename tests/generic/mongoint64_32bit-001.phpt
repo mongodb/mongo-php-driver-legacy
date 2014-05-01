@@ -10,7 +10,7 @@ $mongo = mongo_standalone();
 $coll = $mongo->selectCollection('phpunit', 'mongoint64');
 $coll->drop();
 
-$coll->insert(array('int64' => new MongoInt64(1234567890)));
+$coll->insert(array('int64' => new MongoInt64(123456789012)));
 
 ini_set('mongo.native_long', false);
 ini_set('mongo.long_as_object', false);
@@ -26,5 +26,5 @@ $result = $coll->findOne();
 printf("%s(%s)\n", get_class($result['int64']), $result['int64']);
 ?>
 --EXPECT--
-MongoCursorException: Cannot natively represent the long 1234567890 on this platform
-MongoInt64(1234567890)
+MongoCursorException: Cannot natively represent the long 123456789012 on this platform
+MongoInt64(123456789012)
