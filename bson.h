@@ -44,7 +44,9 @@
 #define GROW_SLOWLY 1048576
 
 /* Options used for conversion between zval and bson and v.v. */
-#define BSON_OPT_FORCE_LONG_AS_OBJECT   0x01
+#define BSON_OPT_DONT_FORCE_LONG_AS_OBJECT  0x00
+#define BSON_OPT_FORCE_LONG_AS_OBJECT       0x01
+#define BSON_OPT_INT32_LONG_AS_OBJECT       0x02
 
 #define CREATE_BUF_STATIC(n) char b[n];         \
 	buf.start = buf.pos = b;                    \

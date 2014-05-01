@@ -1,9 +1,10 @@
 --TEST--
-MongoInsertBatch: Batch Splitting, overflowing maxWriteBatchSize
+MongoInsertBatch: Batch Splitting, overflowing maxWriteBatchSize (32bit)
 --SKIPIF--
 <?php $needs = "2.5.5"; ?>
 <?php if ( ! class_exists('MongoWriteBatch')) { exit('skip This test requires MongoWriteBatch classes'); } ?>
 <?php require_once "tests/utils/standalone.inc" ?>
+<?php if (4 !== PHP_INT_SIZE) { die('skip Only for 32-bit platform'); } ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
@@ -41,28 +42,28 @@ array(4) {
     ["count"]=>
     int(1000)
     ["size"]=>
-    int(44991)
+    int(40997)
   }
   [1]=>
   array(2) {
     ["count"]=>
     int(1000)
     ["size"]=>
-    int(44991)
+    int(40997)
   }
   [2]=>
   array(2) {
     ["count"]=>
     int(1000)
     ["size"]=>
-    int(44991)
+    int(40997)
   }
   [3]=>
   array(2) {
     ["count"]=>
     int(1)
     ["size"]=>
-    int(144)
+    int(146)
   }
 }
 int(0)
