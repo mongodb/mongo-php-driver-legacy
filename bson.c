@@ -1034,10 +1034,10 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 			}
 
 			case BSON_LONG: {
-				int force_as_object = 0;
+				int force_as_object = BSON_OPT_DONT_FORCE_LONG_AS_OBJECT;
 
 				if (options && options->flag_cmd_cursor_as_int64 && ((options->level == 1 && strcmp(name, "id") == 0) || (options->level == 3 && strcmp(name, "id") == 0))) {
-					force_as_object = 1;
+					force_as_object = BSON_OPT_FORCE_LONG_AS_OBJECT;
 				}
 				CHECK_BUFFER_LEN(INT_64);
 				php_mongo_handle_int64(
@@ -1435,9 +1435,15 @@ void mongo_buf_append(char *dest, char *piece)
 	memcpy(dest + pos, piece, strlen(piece) + 1);
 }
 
-void php_mongo_handle_int64(zval **value, int64_t nr, int force_as_object TSRMLS_DC)
+void php_mongo_handle_int64(zval **value, int64_t nr, int force_options TSRMLS_DC)
 {
-	if (force_as_object || MonGlo(long_as_object)) {
+	if (
+		(force_options == BSON_OPT_FORCE_LONG_AS_OBJECT || MonGlo(long_as_object))
+#if SIZEOF_LONG == 4
+		||
+		(force_options == BSON_OPT_INT32_LONG_AS_OBJECT)
+#endif
+	) {
 		char *tmp_string;
 
 #ifdef WIN32
