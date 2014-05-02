@@ -59,7 +59,7 @@ int php_mongo_api_connection_min_server_version(mongo_connection *connection, in
 	if (connection->version.major == major && connection->version.minor > minor) {
 		return 1;
 	}
-	if (connection->version.major == major && connection->version.minor == minor && connection->version.mini > mini) {
+	if (connection->version.major == major && connection->version.minor == minor && connection->version.mini >= mini) {
 		return 1;
 	}
 	return 0;
