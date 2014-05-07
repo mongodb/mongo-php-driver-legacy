@@ -400,7 +400,9 @@ static PHP_GINIT_FUNCTION(mongo)
 
 PHP_GSHUTDOWN_FUNCTION(mongo)
 {
-	mongo_deinit(mongo_globals->manager);
+	if (mongo_globals->manager) {
+		mongo_deinit(mongo_globals->manager);
+	}
 }
 
 /* {{{ PHP_MSHUTDOWN_FUNCTION
