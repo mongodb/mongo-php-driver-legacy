@@ -4,7 +4,6 @@
 ARG_ENABLE("mongo", "MongoDB support", "no");
 ARG_ENABLE("mongo-streams", "Mongo: Build with PHP streams wrapper support", "yes");
 ARG_WITH("mongo-sasl", "Mongo: Build against Cyrus-SASL", "yes");
-ADD_EXTENSION_DEP("mongo", "json", false);
 ADD_EXTENSION_DEP("mongo", "openssl", false);
 
 if (PHP_MONGO != "no") {
