@@ -21,49 +21,49 @@ MongoLog::setModule(0);
 MongoLog::setLevel(0);
 ?>
 --EXPECTF--
-PARSE   INFO: Parsing mongodb://%s:%d
-PARSE   INFO: - Found node: %s:%d
-PARSE   INFO: - Connection type: STANDALONE
+PARSE   INFO: Parsing mongodb://127.0.0.1:30000
+PARSE   INFO: - Found node: 127.0.0.1:30000
+PARSE   INFO: - Connection type: %s
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
-CON     INFO: connection_create: creating new connection for %s:%d
-CON     INFO: stream_connect: Not establishing SSL for %s:%d
-CON     INFO: get_server_version: start
-CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: %d
-CON     INFO: get_server_version: server version: %d.%d.%d (%i)
-CON     INFO: is_ping: pinging %s:%d;-;.;%d
-CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 17
-CON     INFO: is_ping: last pinged at %d; time: %dms
+CON     INFO: connection_create: creating new connection for 127.0.0.1:30000
+CON     INFO: stream_connect: Not establishing SSL for 127.0.0.1:30000
 CON     INFO: ismaster: start
-CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
-CON     FINE: ismaster: %s minWireVersion%sto %d
-CON     FINE: ismaster: %s maxWireVersion%sto %d
-CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
-CON     FINE: ismaster: %s maxMessageSizeBytes%s
-CON     FINE: ismaster: %s maxWriteBatchSize%s
+CON     FINE: ismaster: %sminWireVersion%s
+CON     FINE: ismaster: %smaxWireVersion%s
+CON     FINE: ismaster: %smaxBsonObjectSize%s
+CON     FINE: ismaster: %smaxMessageSizeBytes%s
+CON     FINE: ismaster: %smaxWriteBatchSize%s
 CON     INFO: ismaster: set name: (null), ismaster: 1, secondary: 0, is_arbiter: 0
 CON     INFO: ismaster: last ran at %d
+CON     INFO: get_server_version: start
+CON     FINE: send_packet: read from header: %d
+CON     FINE: send_packet: data_size: %d
+CON     INFO: get_server_version: server version: %s
+CON     INFO: is_ping: pinging 127.0.0.1:30000;-;.;%d
+CON     FINE: send_packet: read from header: %d
+CON     FINE: send_packet: data_size: %d
+CON     INFO: is_ping: last pinged at %d; time: %dms
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
 REPLSET FINE: - collect any
 REPLSET FINE: filter_connections: adding connections:
-REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: 127.0.0.1:30000;-;.;%d
 REPLSET FINE: filter_connections: done
 REPLSET FINE: limiting by seeded/discovered servers
-REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: 127.0.0.1:30000;-;.;%d
 REPLSET FINE: limiting by seeded/discovered servers: done
 REPLSET FINE: limiting by credentials
-REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: 127.0.0.1:30000;-;.;%d
 REPLSET FINE: limiting by credentials: done
 REPLSET FINE: sorting servers by priority and ping time
-REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: 127.0.0.1:30000;-;.;%d
 REPLSET FINE: sorting servers: done
 REPLSET FINE: selecting near servers
 REPLSET FINE: selecting near servers: nearest is %dms
-REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;.;%d
+REPLSET FINE: - connection: type: %s, socket: 42, ping: %d, hash: 127.0.0.1:30000;-;.;%d
 REPLSET FINE: selecting near server: done
-REPLSET INFO: pick server: random element 0
-REPLSET INFO: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;.;%d
-
+REPLSET INFO: pick server: random element %d
+REPLSET INFO: - connection: type: %s, socket: 42, ping: %d, hash: 127.0.0.1:30000;-;.;%d
