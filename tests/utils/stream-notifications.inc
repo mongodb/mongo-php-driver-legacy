@@ -14,7 +14,7 @@ class MongoNotifications {
     }
 
     function logMessage($code, $message) {
-        $data = json_decode($message, true);
+        $data = unserialize($message);
 
         switch($code) {
             case MONGO_STREAM_NOTIFY_LOG_CMD_INSERT:

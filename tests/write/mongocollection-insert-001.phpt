@@ -50,11 +50,11 @@ for($i = 1; $i <= 10; $i++) {
     $meta_id = $meta["document"]["_id"];
     unset($meta["document"]["_id"]);
 
-    if ($doc_id->{'$id'} ===  $meta_id['$id']) {
+    if ($doc_id->{'$id'} ===  $meta_id->{'$id'}) {
         echo "Inserted document#$i had the same ID :)\n";
     } else {
         echo "FAILED ID CHECK!\n";
-        var_dump($meta["document"], $meta_id['$id'], $doc, $doc_id->{'$id'});
+        var_dump($meta["document"], $meta_id->{'$id'}, $doc, $doc_id->{'$id'});
         throw new Exception("The documents didn't match!");
     }
     
