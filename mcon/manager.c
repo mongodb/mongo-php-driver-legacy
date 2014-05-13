@@ -94,6 +94,16 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	/* Since we didn't find an existing connection, lets make one! */
 	con = mongo_connection_create(manager, hash, server, options, error_message);
 	if (con) {
+		/* isMaster() _must_ be the first command on all new connections.
+		 * This is for node discovery so we don't issue f.e. authentication to nodes in STARTUP
+		 * state, or arbiters */
+		if (!mongo_connection_ismaster(manager, con, options, NULL, 0, NULL, error_message, NULL)) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "ismaster: error running ismaster: %s",  *error_message);
+			mongo_connection_destroy(manager, con, MONGO_CLOSE_BROKEN);
+			free(hash);
+			return NULL;
+		}
+
 		/* When we make a connection, we need to figure out the server version it is */
 		if (!mongo_connection_get_server_version(manager, con, options, error_message)) {
 			mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "server_version: error while getting the server version %s:%d: %s", server->host, server->port, *error_message);

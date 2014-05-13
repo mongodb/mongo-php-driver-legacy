@@ -137,6 +137,7 @@ typedef struct _mongo_connection
 	time_t last_ping;        /* The timestamp when ping was called last */
 	int    ping_ms;
 	int    last_ismaster;    /* The timestamp when ismaster/get_server_flags was called last */
+	int    last_replcheck;   /* The timestamp when ismaster/replicaset test was called last */
 	int    last_reqid;
 	void  *socket;           /* void* so we can support different "socket" backends */
 	int    connection_type;  /* MONGO_NODE_: PRIMARY, SECONDARY, ARBITER, MONGOS */

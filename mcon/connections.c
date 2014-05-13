@@ -486,7 +486,7 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 	int            retval = 1;
 
 	gettimeofday(&now, NULL);
-	if ((con->last_ismaster + manager->ismaster_interval) > now.tv_sec) {
+	if (((server ? con->last_replcheck : con->last_ismaster) + manager->ismaster_interval) > now.tv_sec) {
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "ismaster: skipping: last ran at %ld, now: %ld, time left: %ld", con->last_ismaster, now.tv_sec, con->last_ismaster + manager->ismaster_interval - now.tv_sec);
 		return 2;
 	}
@@ -692,6 +692,8 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "found host: %s (passive)", string);
 		}
 	}
+
+	con->last_replcheck = now.tv_sec;
 
 done:
 	free(data_buffer);
