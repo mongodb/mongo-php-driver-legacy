@@ -25,23 +25,24 @@ MongoLog::setLevel(0);
 ?>
 --EXPECTF--
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
-CON     INFO: connection_create: creating new connection for %s:%d
-CON     INFO: stream_connect: Not establishing SSL for %s:%d
-CON     INFO: get_server_version: start
-CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: %d
-CON     INFO: get_server_version: server version: %d.%d.%d (%i)
-CON     INFO: is_ping: pinging %s:%d;-;.;%d
-CON     FINE: send_packet: read from header: 36
-CON     FINE: send_packet: data_size: 17
-CON     INFO: is_ping: last pinged at %d; time: %dms
+CON     INFO: connection_create: creating new connection for %s:%d0
+CON     INFO: stream_connect: Not establishing SSL for %s:%d0
 CON     INFO: ismaster: start
-CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
-CON     FINE: ismaster: %s minWireVersion%sto %d
-CON     FINE: ismaster: %s maxWireVersion%sto %d
-CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
-CON     FINE: ismaster: %s maxMessageSizeBytes%s
-CON     FINE: ismaster: %s maxWriteBatchSize%s
+CON     FINE: ismaster: %sminWireVersion%s
+CON     FINE: ismaster: %smaxWireVersion%s
+CON     FINE: ismaster: %smaxBsonObjectSize%s
+CON     FINE: ismaster: %smaxMessageSizeBytes%s
+CON     FINE: ismaster: %smaxWriteBatchSize%s
 CON     INFO: ismaster: set name: (null), ismaster: 1, secondary: 0, is_arbiter: 0
 CON     INFO: ismaster: last ran at %d
+CON     INFO: get_server_version: start
+CON     FINE: send_packet: read from header: %d
+CON     FINE: send_packet: data_size: %d
+CON     INFO: get_server_version: server version: %s
+CON     INFO: is_ping: pinging %s:%d0;-;.;%d
+CON     FINE: send_packet: read from header: %d
+CON     FINE: send_packet: data_size: %d
+CON     INFO: is_ping: last pinged at %d; time: %dms
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
