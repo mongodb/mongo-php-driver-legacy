@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-1102: #1 php driver throws exception when connect string contains an unresolvable hostname
+Test for PHP-1102: php driver throws exception when connect string contains an unresolvable hostname (1)
 --SKIPIF--
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
 <?php require_once "tests/utils/replicaset.inc" ?>
