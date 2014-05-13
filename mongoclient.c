@@ -583,7 +583,10 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	}
 
 	if (connect) {
-		php_mongo_connect(link, MONGO_CON_FLAG_READ|MONGO_CON_FLAG_DONT_FILTER TSRMLS_CC);
+		/* Make sure we clear any exceptions thrown if have any usable connection */
+		if (php_mongo_connect(link, MONGO_CON_FLAG_READ|MONGO_CON_FLAG_DONT_FILTER TSRMLS_CC)) {
+			zend_clear_exception(TSRMLS_C);
+		}
 	}
 }
 /* }}} */
