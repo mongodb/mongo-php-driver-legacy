@@ -167,6 +167,8 @@ typedef struct _mongo_connection
 #define MONGO_CONNECTION_DEFAULT_MAX_WIRE_VERSION 0
 /* Default max operations in a batch .. for 2.6 api */
 #define MONGO_CONNECTION_DEFAULT_MAX_WRITE_BATCH_SIZE 1000
+/* Default socket timeout setting.. Not cool. But legacy */
+#define MONGO_CONNECTION_DEFAULT_SOCKET_TIMEOUT 30000L
 
 typedef struct _mongo_connection_blacklist
 {
