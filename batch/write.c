@@ -118,11 +118,11 @@ PHP_METHOD(MongoWriteBatch, __construct)
    Adds a new item to the batch. Throws MongoException if $item is missing required keys */
 PHP_METHOD(MongoWriteBatch, add)
 {
-	zval *z_item;
+	HashTable *ht_item;
 	mongo_connection *connection;
 	mongo_collection *collection;
 	mongo_write_batch_object *intern;
-	php_mongo_write_item        item;
+	php_mongo_write_item write_item;
 	php_mongo_write_update_args update_args = { NULL, NULL, -1, -1 };
 	php_mongo_write_delete_args delete_args = { NULL, -1 };
 	int status;
@@ -130,7 +130,7 @@ PHP_METHOD(MongoWriteBatch, add)
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(intern->zcollection_object, MongoWriteBatch);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &z_item) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "H", &ht_item) == FAILURE) {
 		return;
 	}
 
@@ -146,21 +146,21 @@ PHP_METHOD(MongoWriteBatch, add)
 		php_mongo_api_batch_make_from_collection_object(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
 	}
 
-	item.type = intern->batch_type;
+	write_item.type = intern->batch_type;
 	switch (intern->batch_type) {
 		case MONGODB_API_COMMAND_INSERT:
-			item.write.insert = Z_ARRVAL_P(z_item);
+			write_item.write.insert = ht_item;
 			break;
 
 		case MONGODB_API_COMMAND_UPDATE: {
 			zval **q, **u, **multi, **upsert;
 
-			if (FAILURE == zend_hash_find(Z_ARRVAL_P(z_item), "q", strlen("q") + 1, (void**) &q)) {
+			if (FAILURE == zend_hash_find(ht_item, "q", strlen("q") + 1, (void**) &q)) {
 				zend_throw_exception(mongo_ce_Exception, "Expected $item to contain 'q' key", 0 TSRMLS_CC);
 				return;
 			}
 
-			if (FAILURE == zend_hash_find(Z_ARRVAL_P(z_item), "u", strlen("u") + 1, (void**) &u)) {
+			if (FAILURE == zend_hash_find(ht_item, "u", strlen("u") + 1, (void**) &u)) {
 				zend_throw_exception(mongo_ce_Exception, "Expected $item to contain 'u' key", 0 TSRMLS_CC);
 				return;
 			}
@@ -170,29 +170,29 @@ PHP_METHOD(MongoWriteBatch, add)
 			update_args.query = *q;
 			update_args.update = *u;
 
-			if (SUCCESS == zend_hash_find(Z_ARRVAL_P(z_item), "multi", strlen("multi") + 1, (void**) &multi)) {
+			if (SUCCESS == zend_hash_find(ht_item, "multi", strlen("multi") + 1, (void**) &multi)) {
 				convert_to_boolean_ex(multi);
 				update_args.multi = Z_BVAL_PP(multi);
 			}
 
-			if (SUCCESS == zend_hash_find(Z_ARRVAL_P(z_item), "upsert", strlen("upsert") + 1, (void**) &upsert)) {
+			if (SUCCESS == zend_hash_find(ht_item, "upsert", strlen("upsert") + 1, (void**) &upsert)) {
 				convert_to_boolean_ex(upsert);
 				update_args.upsert = Z_BVAL_PP(upsert);
 			}
 
-			item.write.update = &update_args;
+			write_item.write.update = &update_args;
 			break;
 		 }
 
 		case MONGODB_API_COMMAND_DELETE: {
 			zval **q, **limit;
 
-			if (FAILURE == zend_hash_find(Z_ARRVAL_P(z_item), "q", strlen("q") + 1, (void**) &q)) {
+			if (FAILURE == zend_hash_find(ht_item, "q", strlen("q") + 1, (void**) &q)) {
 				zend_throw_exception(mongo_ce_Exception, "Expected $item to contain 'q' key", 0 TSRMLS_CC);
 				return;
 			}
 
-			if (FAILURE == zend_hash_find(Z_ARRVAL_P(z_item), "limit", strlen("limit") + 1, (void**) &limit)) {
+			if (FAILURE == zend_hash_find(ht_item, "limit", strlen("limit") + 1, (void**) &limit)) {
 				zend_throw_exception(mongo_ce_Exception, "Expected $item to contain 'limit' key", 0 TSRMLS_CC);
 				return;
 			}
@@ -202,7 +202,7 @@ PHP_METHOD(MongoWriteBatch, add)
 			delete_args.query = *q;
 			delete_args.limit = Z_LVAL_PP(limit);
 
-			item.write.delete = &delete_args;
+			write_item.write.delete = &delete_args;
 			break;
 		 }
 
@@ -210,7 +210,7 @@ PHP_METHOD(MongoWriteBatch, add)
 			RETURN_FALSE;
 	}
 
-	status = php_mongo_api_write_add(&intern->batch->buffer, intern->batch->item_count++, &item, connection->max_bson_size TSRMLS_CC);
+	status = php_mongo_api_write_add(&intern->batch->buffer, intern->batch->item_count++, &write_item, connection->max_bson_size TSRMLS_CC);
 
 	if (status == FAILURE) {
 		/* exception thrown */
@@ -226,7 +226,7 @@ PHP_METHOD(MongoWriteBatch, add)
 	intern->batch->item_count--;
 	php_mongo_api_batch_make_from_collection_object(intern, intern->zcollection_object, intern->batch_type TSRMLS_CC);
 
-	status = php_mongo_api_write_add(&intern->batch->buffer, intern->batch->item_count++, &item, connection->max_bson_size TSRMLS_CC);
+	status = php_mongo_api_write_add(&intern->batch->buffer, intern->batch->item_count++, &write_item, connection->max_bson_size TSRMLS_CC);
 
 	if (status == SUCCESS) {
 		intern->total_items++;
@@ -496,7 +496,7 @@ MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_add, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, item, 0)
+	ZEND_ARG_INFO(0, item)
 ZEND_END_ARG_INFO()
 
 MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALUE, 0)
