@@ -830,14 +830,29 @@ void mongo_convert_write_api_return_to_legacy_retval(zval *return_value, php_mon
 			int updatedExisting = 0;
 
 			if (SUCCESS == zend_hash_find(HASH_P(return_value), "n", strlen("n") + 1, (void**) &n)) {
-				zval **nModified;
+				zval **upserted;
 
 				convert_to_long_ex(n);
-				if (Z_LVAL_PP(n) > 0) {
-					/* updatedExisting needs to be set to true when existing documents were modified */
-					if (FAILURE == zend_hash_find(HASH_P(return_value), "upserted", strlen("upserted") + 1, (void**) &nModified)) {
-						updatedExisting = 1;
+				if (SUCCESS == zend_hash_find(HASH_P(return_value), "upserted", strlen("upserted") + 1, (void**) &upserted) && Z_TYPE_PP(upserted) == IS_ARRAY) {
+					zval **upserted_index;
+
+					if (SUCCESS == zend_hash_get_current_data(Z_ARRVAL_PP(upserted), (void **)&upserted_index)) {
+						zval **upserted_id;
+
+						/* upserted is an array of _ids in 2.6 */
+						if (SUCCESS == zend_hash_find(HASH_PP(upserted_index), "_id", strlen("_id") + 1, (void**) &upserted_id)) {
+							zval *id;
+
+							MAKE_STD_ZVAL(id);
+							MAKE_COPY_ZVAL(upserted_id, id);
+							zend_hash_del(HASH_OF(return_value), "upserted", strlen("upserted") + 1);
+							add_assoc_zval(return_value, "upserted", id);
+						}
 					}
+				}
+				else if (Z_LVAL_PP(n) > 0) {
+					/* updatedExisting needs to be set to true when existing documents were modified */
+					updatedExisting = 1;
 				}
 			}
 			add_assoc_bool(return_value, "updatedExisting", updatedExisting);
