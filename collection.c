@@ -338,18 +338,12 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 
 	/* The value hasn't been modified from what we registered it as originally, but we do
 	 * need to set it to a real value */
-	if (Z_LVAL_P(timeout_p) == PHP_MONGO_DEPRECATED_SOCKET_TIMEOUT) {
-		timeout = PHP_MONGO_DEFAULT_SOCKET_TIMEOUT;
+	if (Z_LVAL_P(timeout_p) == PHP_MONGO_STATIC_CURSOR_TIMEOUT_NOT_SET_INITIALIZER) {
+		timeout = link->servers->options.socketTimeoutMS;
 	} else {
 		/* The value was modified, bad user, bad user! Tell him its deprecated */
 		timeout = Z_LVAL_P(timeout_p);
 		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead");
-	}
-
-	/* Overwrite the timeout if MongoCursor::$timeout is the default and we
-	 * passed in socketTimeoutMS in the connection string */
-	if (timeout == PHP_MONGO_DEFAULT_SOCKET_TIMEOUT && link->servers->options.socketTimeoutMS > 0) {
-		timeout = link->servers->options.socketTimeoutMS;
 	}
 
 	/* Get the default value for journalling */

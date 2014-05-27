@@ -932,7 +932,7 @@ zval* mongo_db__create_fake_cursor(mongo_connection *connection, char *database,
 	cursor->skip = 0;
 	cursor->opts = 0;
 	cursor->current = 0;
-	cursor->timeout = PHP_MONGO_DEPRECATED_SOCKET_TIMEOUT;
+	cursor->timeout = PHP_MONGO_STATIC_CURSOR_TIMEOUT_NOT_SET_INITIALIZER;
 
 	php_mongo_cursor_force_command_cursor(cursor);
 

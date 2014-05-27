@@ -36,6 +36,7 @@
 #endif
 
 extern zend_class_entry *mongo_ce_ConnectionException;
+ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
@@ -59,13 +60,18 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	}
 
 
-	if (options->connectTimeoutMS) {
+	/* <= 0 means "no connection timeout".. except for the default_socket_timeout in PHP.ini)
+	 * PHP does not rewrite -1 to NULL for this option as it does normal READ timeouts */
+	if (options->connectTimeoutMS > 0) {
 		ctimeout.tv_sec = options->connectTimeoutMS / 1000;
 		ctimeout.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "Connecting to %s (%s) with connection timeout: %d.%06d", dsn, hash, ctimeout.tv_sec, ctimeout.tv_usec);
+	} else {
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "Connecting to %s (%s) without connection timeout", dsn, hash);
 	}
 
 	ERROR_HANDLER_REPLACE(error_handler, mongo_ce_ConnectionException);
-	stream = php_stream_xport_create(dsn, dsn_len, 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
+	stream = php_stream_xport_create(dsn, dsn_len, 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS > 0 ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
 	ERROR_HANDLER_RESTORE(error_handler);
 
 	efree(dsn);
@@ -123,9 +129,13 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 
 	if (options->socketTimeoutMS) {
 		struct timeval rtimeout = {0, 0};
-		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
-		rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
+		/* Convert timeout=-1 to -1second, which PHP interprets as no timeout */
+		int socketTimeoutMS = options->socketTimeoutMS == -1 ? -1000 : options->socketTimeoutMS;
+
+		rtimeout.tv_sec = socketTimeoutMS / 1000;
+		rtimeout.tv_usec = (socketTimeoutMS % 1000) * 1000;
 		php_stream_set_option(stream, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
+		mongo_manager_log(MonGlo(manager), MLOG_CON, MLOG_FINE, "Setting stream timeout to %d.%06d", rtimeout.tv_sec, rtimeout.tv_usec);
 	}
 
 
@@ -148,12 +158,19 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	int num = 1, received = 0;
 	TSRMLS_FETCH();
 
-	if (timeout > 0 && options->socketTimeoutMS != timeout) {
+	if (timeout && timeout != options->socketTimeoutMS) {
 		struct timeval rtimeout = {0, 0};
+		/* Convert timeout=-1 to -1second, which PHP interprets as no timeout */
+		timeout = timeout == -1 ? -1000 : timeout;
+
+
 		rtimeout.tv_sec = timeout / 1000;
 		rtimeout.tv_usec = (timeout % 1000) * 1000;
 
 		php_stream_set_option(con->socket, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
+		mongo_manager_log(MonGlo(manager), MLOG_CON, MLOG_FINE, "Setting the stream timeout to %d.%06d", rtimeout.tv_sec, rtimeout.tv_usec);
+	} else {
+		mongo_manager_log(MonGlo(manager), MLOG_CON, MLOG_FINE, "No timeout changes for %s", con->hash);
 	}
 
 	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_READ, 0, size TSRMLS_CC);
@@ -192,8 +209,10 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 							rtimeout.tv_sec = timeout / 1000;
 							rtimeout.tv_usec = (timeout % 1000) * 1000;
 						} else {
-							rtimeout.tv_sec = options->socketTimeoutMS / 1000;
-							rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
+							/* Convert timeout=-1 to -1second, which PHP interprets as no timeout */
+							int socketTimeoutMS = options->socketTimeoutMS == -1 ? -1000 : options->socketTimeoutMS;
+							rtimeout.tv_sec = socketTimeoutMS / 1000;
+							rtimeout.tv_usec = (socketTimeoutMS % 1000) * 1000;
 						}
 						*error_message = malloc(256);
 						snprintf(*error_message, 256, "Read timed out after reading %d bytes, waited for %d.%06d seconds", num, rtimeout.tv_sec, rtimeout.tv_usec);
@@ -224,12 +243,17 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	 * max-bytes-expected though... */
 	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, received, size TSRMLS_CC);
 
-	if (timeout > 0 && options->socketTimeoutMS != timeout) {
+	/* Revert to the default timeout */
+	if (timeout && options->socketTimeoutMS != timeout) {
 		struct timeval rtimeout = {0, 0};
-		rtimeout.tv_sec = options->socketTimeoutMS / 1000;
-		rtimeout.tv_usec = (options->socketTimeoutMS % 1000) * 1000;
+		/* Convert timeout=-1 to -1second, which PHP interprets as no timeout */
+		int socketTimeoutMS = options->socketTimeoutMS == -1 ? -1000 : options->socketTimeoutMS;
+
+		rtimeout.tv_sec = socketTimeoutMS / 1000;
+		rtimeout.tv_usec = (socketTimeoutMS % 1000) * 1000;
 
 		php_stream_set_option(con->socket, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
+		mongo_manager_log(MonGlo(manager), MLOG_CON, MLOG_FINE, "Now setting stream timeout back to %d.%06d", rtimeout.tv_sec, rtimeout.tv_usec);
 	}
 
 	return received;
