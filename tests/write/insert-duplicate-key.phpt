@@ -45,6 +45,6 @@ var_dump($tmp == $doc);
 ===DONE===
 <?php exit(0); ?>
 --EXPECTF--
-%s:%d: %s: test.dupkey.$_id_  dup key: { : "DuplicateKeyError" }
+%s:%d: %s: test.dupkey.$_id_%Sdup key: { : "DuplicateKeyError" }
 bool(true)
 ===DONE===
