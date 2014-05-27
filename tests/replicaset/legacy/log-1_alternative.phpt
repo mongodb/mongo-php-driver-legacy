@@ -30,10 +30,14 @@ PARSE   INFO: - Found option 'replicaSet': 'REPLICASET'
 PARSE   INFO: - Switching connection type: %s
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 CON     INFO: connection_create: creating new connection for %s:%d
+CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) without connection timeout
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
+CON     FINE: Setting stream timeout to 30.000000
 CON     INFO: ismaster: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: ismaster: %sminWireVersion%s
 CON     FINE: ismaster: %smaxWireVersion%s
 CON     FINE: ismaster: %smaxBsonObjectSize%s
@@ -44,18 +48,24 @@ CON     FINE: ismaster: added tag dc:ny
 CON     FINE: ismaster: added tag server:0
 CON     INFO: ismaster: last ran at %d
 CON     INFO: get_server_version: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: get_server_version: server version: %s
 CON     INFO: is_ping: pinging %s:%d;%s;.;%d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     FINE: discover_topology: checking ismaster for %s:%d;%s;.;%d
 CON     FINE: found connection %s:%d;%s;.;%d)
 CON     INFO: ismaster: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: ismaster: %sminWireVersion%s
 CON     FINE: ismaster: %smaxWireVersion%s
 CON     FINE: ismaster: %smaxBsonObjectSize%s
@@ -75,10 +85,14 @@ CON     FINE: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;%s;.;%d)
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
+CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) without connection timeout
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
+CON     FINE: Setting stream timeout to 30.000000
 CON     INFO: ismaster: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: ismaster: %sminWireVersion%s
 CON     FINE: ismaster: %smaxWireVersion%s
 CON     FINE: ismaster: %smaxBsonObjectSize%s
@@ -89,20 +103,28 @@ CON     FINE: ismaster: added tag dc:sf
 CON     FINE: ismaster: added tag server:2
 CON     INFO: ismaster: last ran at %d
 CON     INFO: get_server_version: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: get_server_version: server version: %s
 CON     INFO: is_ping: pinging %s:%d;%s;.;%d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
+CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) without connection timeout
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
+CON     FINE: Setting stream timeout to 30.000000
 CON     INFO: ismaster: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: ismaster: %sminWireVersion%s
 CON     FINE: ismaster: %smaxWireVersion%s
 CON     FINE: ismaster: %smaxBsonObjectSize%s
@@ -113,20 +135,28 @@ CON     FINE: ismaster: added tag dc:ny
 CON     FINE: ismaster: added tag server:1
 CON     INFO: ismaster: last ran at %d
 CON     INFO: get_server_version: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: get_server_version: server version: %s
 CON     INFO: is_ping: pinging %s:%d;%s;.;%d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
+CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) without connection timeout
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
+CON     FINE: Setting stream timeout to 30.000000
 CON     INFO: ismaster: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: ismaster: %sminWireVersion%s
 CON     FINE: ismaster: %smaxWireVersion%s
 CON     FINE: ismaster: %smaxBsonObjectSize%s
@@ -137,19 +167,25 @@ CON     FINE: ismaster: added tag dc:sf
 CON     FINE: ismaster: added tag server:3
 CON     INFO: ismaster: last ran at %d
 CON     INFO: get_server_version: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: get_server_version: server version: %s
 CON     INFO: is_ping: pinging %s:%d;%s;.;%d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;%s;.;%d
 CON     FINE: found connection %s:%d;%s;.;%d)
 CON     INFO: ismaster: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: ismaster: %sminWireVersion%s
 CON     FINE: ismaster: %smaxWireVersion%s
 CON     FINE: ismaster: %smaxBsonObjectSize%s
@@ -173,8 +209,10 @@ CON     FINE: found connection %s:%d;%s;.;%d)
 CON     FINE: discover_topology: checking ismaster for %s:%d;%s;.;%d
 CON     FINE: found connection %s:%d;%s;.;%d)
 CON     INFO: ismaster: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: ismaster: %sminWireVersion%s
 CON     FINE: ismaster: %smaxWireVersion%s
 CON     FINE: ismaster: %smaxBsonObjectSize%s
@@ -198,8 +236,10 @@ CON     FINE: found connection %s:%d;%s;.;%d)
 CON     FINE: discover_topology: checking ismaster for %s:%d;%s;.;%d
 CON     FINE: found connection %s:%d;%s;.;%d)
 CON     INFO: ismaster: start
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
+CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     FINE: ismaster: %sminWireVersion%s
 CON     FINE: ismaster: %smaxWireVersion%s
 CON     FINE: ismaster: %smaxBsonObjectSize%s
