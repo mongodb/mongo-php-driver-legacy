@@ -26,10 +26,10 @@ $c->drop();
 $res = $c->validate();
 var_dump($res["ok"], $res["errmsg"]);
 ?>
---EXPECT--
+--EXPECTF--
 bool(true)
 string(79) "Some checks omitted for speed. use {full:true} option to do more thorough scan."
 bool(false)
 float(0)
-string(12) "ns not found"
+string(%d) "%s not found"
 
