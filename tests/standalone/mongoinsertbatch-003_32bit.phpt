@@ -42,28 +42,28 @@ array(4) {
     ["count"]=>
     int(1000)
     ["size"]=>
-    int(40997)
+    int(%d)
   }
   [1]=>
   array(2) {
     ["count"]=>
     int(1000)
     ["size"]=>
-    int(40997)
+    int(%d)
   }
   [2]=>
   array(2) {
     ["count"]=>
     int(1000)
     ["size"]=>
-    int(40997)
+    int(%d)
   }
   [3]=>
   array(2) {
     ["count"]=>
     int(1)
     ["size"]=>
-    int(146)
+    int(%d)
   }
 }
 int(0)
