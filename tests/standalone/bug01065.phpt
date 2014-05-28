@@ -5,42 +5,38 @@ Test for PHP-1065: Mongo driver is crashing during getmore
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
-function log_getmore($server, $cursor_options)
-{
-    echo __METHOD__, "\n";
+
+function log_getmore($server, $cursor_options) {
+    printf("%s\n", __METHOD__);
 }
 
-$ctx = stream_context_create(
-    array(
-        "mongodb" => array( "log_getmore" => "log_getmore",)
-    )
-);
+$ctx = stream_context_create(array(
+    "mongodb" => array("log_getmore" => "log_getmore")
+));
 
 require_once "tests/utils/server.inc";
 
 $host = MongoShellServer::getStandaloneInfo();
-$mc = new MongoClient($host . "/test?socketTimeoutMS=10", array(), array("context" => $ctx));
-$db = $mc->selectDb(dbname());
+$mc = new MongoClient($host . "/test?socketTimeoutMS=1", array(), array("context" => $ctx));
+
 $collection = $mc->selectCollection(dbname(), collname(__FILE__));
 $collection->drop();
 
-
-
-foreach(range(0, 8196) as $i) {
-    $collection->insert(array("document" => $i, uniqid("aggr") => uniqid(), "sum" => $i*10), array("w" => 0));
+foreach(range(0, 1000) as $i) {
+    $collection->insert(array("x" => $i), array("w" => 0));
 }
 
-$pipeline = array(array(
-    '$match' => array("document" => array('$gt' => 3030)),
-));
+$pipeline = array(
+    array('$match' => array("x" => array('$gt' => 500))),
+);
 
 $cursor = $collection->aggregateCursor($pipeline, array("cursor" => array("batchSize" => 0)));
-$x = 0;
+
 try {
-    foreach($cursor as $row) {
+    foreach ($cursor as $row) {
+        // getmore should time out within 1ms, so this should never be reached
         echo "TEST FAILED\n";
     }
-    echo "The getmore should have timedout :( your system may have super powers?\n";
 } catch(Exception $e) {
     echo $e->getMessage(), "\n";
 }
@@ -51,4 +47,3 @@ try {
 log_getmore
 %s:%d: Read timed out after reading 0 bytes, waited for 0.%d seconds
 ===DONE===
-
