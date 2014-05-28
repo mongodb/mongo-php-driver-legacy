@@ -11,7 +11,7 @@ $ns = $d->selectCollection('system.namespaces');
 
 // create a collection by inserting a record
 $d->dropcoltest->insert(array('foo' => 'bar'));
-var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
+dump_these_keys($ns->findOne(array('name' => 'phpunit.dropcoltest')), array("name"));
 
 // drop the collection
 $d->dropCollection($d->dropcoltest);
