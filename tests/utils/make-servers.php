@@ -95,6 +95,10 @@ function makeServer($SERVERS, $server, $bit) {
         $cfg = $server->getShardConfig();
         $dsn = join(",", $cfg);
         break;
+    case MASTERSLAVE:
+        $cfg = $server->makeMasterSlave();
+        $dsn = 'localhost:30400,localhost:30401';
+        break;
     case REPLICASET:
     case REPLICASET_AUTH:
         $members = array(
@@ -139,6 +143,7 @@ $SERVERS = array(
     "MONGOS"            => 0x08,
     "REPLICASET"        => 0x10,
     "REPLICASET_AUTH"   => 0x20,
+    "MASTERSLAVE"       => 0x40,
 );
 
 $ALL_SERVERS = 0;
