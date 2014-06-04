@@ -21,8 +21,8 @@ $cursor = $collection->findOne();
 echo "findOne done\n";
 $cursor = $collection->find();
 
-echo "\n\nTimeout 2\n";
-$cursor->timeout(2);
+echo "\n\nTimeout 20\n";
+$cursor->timeout(20);
 iterator_to_array($cursor);
 
 echo "\n\nTimeout 42\n";
@@ -51,8 +51,8 @@ $cursor = $collection->findOne();
 echo "findOne done\n";
 $cursor = $collection->find();
 
-echo "\n\nTimeout 2\n";
-$cursor->timeout(2);
+echo "\n\nTimeout 20\n";
+$cursor->timeout(20);
 iterator_to_array($cursor);
 
 echo "\n\nTimeout 43\n";
@@ -88,8 +88,8 @@ $cursor = $collection->findOne();
 echo "findOne done\n";
 $cursor = $collection->find();
 
-echo "\n\nTimeout 2\n";
-$cursor->timeout(2);
+echo "\n\nTimeout 20\n";
+$cursor->timeout(20);
 iterator_to_array($cursor);
 
 echo "\n\nTimeout 43\n";
@@ -128,10 +128,10 @@ No timeout changes for %s:%d;-;.;%d
 findOne done
 
 
-Timeout 2
-Setting the stream timeout to 0.002000
+Timeout 20
+Setting the stream timeout to 0.020000
 Now setting stream timeout back to -1.000000
-Setting the stream timeout to 0.002000
+Setting the stream timeout to 0.020000
 Now setting stream timeout back to -1.000000
 
 
@@ -166,10 +166,10 @@ No timeout changes for %s:%d;-;.;%d
 findOne done
 
 
-Timeout 2
-Setting the stream timeout to 0.002000
+Timeout 20
+Setting the stream timeout to 0.020000
 Now setting stream timeout back to 0.042000
-Setting the stream timeout to 0.002000
+Setting the stream timeout to 0.020000
 Now setting stream timeout back to 0.042000
 
 
@@ -213,10 +213,10 @@ No timeout changes for %s:%d;-;.;%d
 findOne done
 
 
-Timeout 2
-Setting the stream timeout to 0.002000
+Timeout 20
+Setting the stream timeout to 0.020000
 Now setting stream timeout back to 30.000000
-Setting the stream timeout to 0.002000
+Setting the stream timeout to 0.020000
 Now setting stream timeout back to 30.000000
 
 
