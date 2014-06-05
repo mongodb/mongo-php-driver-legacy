@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2014-05-06</date>
- <time>12:44:05</time>
+ <date>2014-06-05</date>
+ <time>12:21:05</time>
  <version>
-  <release>1.5.2</release>
-  <api>1.5.2</api>
+  <release>1.5.3</release>
+  <api>1.5.3</api>
  </version>
  <stability>
   <release>stable</release>
@@ -42,37 +42,19 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-** Bug
-    * [PHP-922] - Read timed out after reading 0 bytes, waited for 0.000000 seconds
-    * [PHP-978] - Standalone connection to arbiter fails
-    * [PHP-1036] - Segmentation Fault when querying large collection and the working set is not loaded
-    * [PHP-1042] - Document missing MongoClient constructor options
-    * [PHP-1056] - Fix MongoCursor handling of projections with numeric field names 
-    * [PHP-1059] - updatedExisting is always true when updating
-    * [PHP-1065] - Mongo driver is crashing
-    * [PHP-1071] - Create Index test segfaults
-    * [PHP-1075] - close() with parallelCollectionScan() segfaults upon request shutdown
-    * [PHP-1080] - MongoCursor::$timeout=-1 doesn't work anymore
-    * [PHP-1083] - 2.6.1-rc0 requires $gt for OplogReplay
-    * [PHP-1084] - collection->update($query, $document) crashes if $document is an object
-    * [PHP-1085] - w=0 can return an unexpected exception on failure
-    * [PHP-1086] - Inserting documents with WriteConcern during failover broken
-    * [PHP-1087] - Travis build status incorrect in v1.5 branch
-    * [PHP-1088] - Coverity analysis defect 10700: Explicit null dereferenced
-    * [PHP-1090] - Coverity analysis defect 22173: Dereference null return value
-    * [PHP-1095] - Min server version check should use GTE comparison
-
-** Improvement
-    * [PHP-758] - Document stream context callbacks
-    * [PHP-1091] - Allow NumberLong numbers on 32-bit platforms if the number fits in the 32-bit int range
-    * [PHP-1094] - 32bit platform improvements
+    * [PHP-928] - The 'w' property is read-only
+    * [PHP-970] - Explain how to_index_string() creates names for ensureIndex() and deleteIndex()
+    * [PHP-1052] - Replace JSON encoding of stream notifications with standard PHP serialize encoding
+    * [PHP-1060] - "The '$id' property is read-only"
+    * [PHP-1096] - PHP crashes due to null pointer dereference on shutdown when JSON extension is not present
+    * [PHP-1099] - socketTimeoutMS=-1 doesn't work
+    * [PHP-1102] - php driver throws exception when connect string contains an unresolvable hostname
+    * [PHP-1104] - New Replica Set connections hang when secondaries are creating indexes during initialSync
+    * [PHP-1109] - Upsert should return _id instead of array of ids
 
 ** Task
-    * [PHP-935] - Document SSL connections
-    * [PHP-1023] - Document maxTimeMS option for findOne(), group(), aggregate(), and cursor
-    * [PHP-1058] - Add Cyrus SASL to automated PECL builds
-    * [PHP-1077] - Fix handling of timeout options for createIndexes command
-    * [PHP-1082] - CommandCursor segfaults when server is closed
+    * [PHP-1076] - Document deprecation notices for timeout and wtimeout options
+    * [PHP-1078] - Document wTimeoutMS, socketTimeoutMS, and maxTimeMS for ensure/createIndex
  </notes>
 
  <contents>
@@ -242,6 +224,53 @@
  </extsrcrelease>
 
  <changelog>
+
+  <release>
+   <date>2014-05-06</date>
+   <time>12:44:05</time>
+   <version>
+    <release>1.5.2</release>
+    <api>1.5.2</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-922] - Read timed out after reading 0 bytes, waited for 0.000000 seconds
+    * [PHP-978] - Standalone connection to arbiter fails
+    * [PHP-1036] - Segmentation Fault when querying large collection and the working set is not loaded
+    * [PHP-1042] - Document missing MongoClient constructor options
+    * [PHP-1056] - Fix MongoCursor handling of projections with numeric field names 
+    * [PHP-1059] - updatedExisting is always true when updating
+    * [PHP-1065] - Mongo driver is crashing
+    * [PHP-1071] - Create Index test segfaults
+    * [PHP-1075] - close() with parallelCollectionScan() segfaults upon request shutdown
+    * [PHP-1080] - MongoCursor::$timeout=-1 doesn't work anymore
+    * [PHP-1083] - 2.6.1-rc0 requires $gt for OplogReplay
+    * [PHP-1084] - collection->update($query, $document) crashes if $document is an object
+    * [PHP-1085] - w=0 can return an unexpected exception on failure
+    * [PHP-1086] - Inserting documents with WriteConcern during failover broken
+    * [PHP-1087] - Travis build status incorrect in v1.5 branch
+    * [PHP-1088] - Coverity analysis defect 10700: Explicit null dereferenced
+    * [PHP-1090] - Coverity analysis defect 22173: Dereference null return value
+    * [PHP-1095] - Min server version check should use GTE comparison
+
+** Improvement
+    * [PHP-758] - Document stream context callbacks
+    * [PHP-1091] - Allow NumberLong numbers on 32-bit platforms if the number fits in the 32-bit int range
+    * [PHP-1094] - 32bit platform improvements
+
+** Task
+    * [PHP-935] - Document SSL connections
+    * [PHP-1023] - Document maxTimeMS option for findOne(), group(), aggregate(), and cursor
+    * [PHP-1058] - Add Cyrus SASL to automated PECL builds
+    * [PHP-1077] - Fix handling of timeout options for createIndexes command
+    * [PHP-1082] - CommandCursor segfaults when server is closed
+   </notes>
+  </release>
 
   <release>
    <date>2014-04-04</date>
