@@ -570,12 +570,15 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 		con->connection_type = MONGO_NODE_SECONDARY;
 	} else if (arbiter) {
 		con->connection_type = MONGO_NODE_ARBITER;
+	} else if (!set) {
+		/* If there is no set, we assume this is an "old style" "slave" node */
+		con->connection_type = MONGO_NODE_SECONDARY;
 	} else {
 		con->connection_type = MONGO_NODE_INVALID;
 	}
 
 	if (con->connection_type == MONGO_NODE_INVALID) {
-		*error_message = strdup("get_server_flags: got unknown node type");
+		*error_message = strdup("ismaster: got unknown node type");
 		free(data_buffer);
 		return 0;
 	}
