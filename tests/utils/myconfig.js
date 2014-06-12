@@ -2,6 +2,7 @@ var replTest;
 var replTestAuth;
 var standaloneTest;
 var standaloneTestAuth;
+var masterSlaveTest;
 var shardTest;
 var shardTestAuth;
 var bridgeTest;
@@ -27,7 +28,7 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
     servers = typeof servers !== 'undefined' ? servers : 3;
     port = typeof port !== 'undefined' ? port : 28000;
 
-    // Do not reitinialize a replica set
+    // Do not reinitialize a replica set
     if ((keyFile && replTestAuth) || (!keyFile && replTest)) {
         return (keyFile ? replTestAuth : replTest);
     }
@@ -98,6 +99,37 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
 }
 
 /**
+ * Initialize a master slave setup.
+ *
+ * @param int       port    Starting port for replica set nodes
+ * @return ReplTest
+ */
+function initMasterSlave(port) {
+    port = typeof port !== 'undefined' ? port : 28000;
+
+    // Do not reinitialize a master/slave setup
+    if (masterSlaveTest) {
+        return masterSlaveTest;
+    }
+
+    var retval = new ReplTest("MASTERSLAVE", [ port, port+1 ]);
+
+    masterOptions = {
+        "oplogSize": 10,
+        "logpath": "/tmp/NODE.MS.master"
+    };
+    master = retval.start(true, masterOptions, false, false);
+
+    slaveOptions = masterOptions;
+    slaveOptions.logpath = "/tmp/NODE.MS.slave";
+    slave = retval.start(false, slaveOptions, false, false);
+
+    masterSlaveTest = { 'rv' : retval, 'master' :  master, 'slave' : slave };
+
+    return retval;
+}
+
+/**
  * Initialize a standalone server.
  *
  * If the number of servers is even, an additional member will be added to the
@@ -112,7 +144,7 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
 function initStandalone(port, auth, root, user) {
     port = typeof port !== 'undefined' ? port : 27000;
 
-    // Do not reitinialize a standalone server
+    // Do not reinitialize a standalone server
     if ((auth && standaloneTestAuth) || (!auth && standaloneTest)) {
         return (auth ? standaloneTestAuth : standaloneTest);
     }
@@ -278,6 +310,19 @@ function getBridgeConfig() {
 }
 
 /**
+ * Get master slave master host.
+ *
+ * @param boolean auth
+ * @return string Host/port of standalone server
+ */
+function getMasterSlaveConfig(auth) {
+    if (auth) {
+        return standaloneTestAuth ? standaloneTestAuth.host : null;
+    }
+    return standaloneTest ? standaloneTest.host : null;
+}
+
+/**
  * Get is master result
  *
  * @return array Is master result
@@ -285,6 +330,16 @@ function getBridgeConfig() {
 function getIsMaster() {
 	var info = replTest.getMaster().getDB("admin").runCommand({ismaster: 1});
 	return [ info.ismaster, info.secondary, info.primary, info.hosts, info.arbiters ];
+}
+
+/**
+ * Get is master result
+ *
+ * @return array Is master result
+ */
+function getMSIsMaster() {
+	var info = masterSlaveTest.master.getDB('admin').runCommand({ismaster: 1});
+	return [ info.ismaster ];
 }
 
 /**

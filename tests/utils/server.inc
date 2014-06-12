@@ -34,6 +34,12 @@ class MongoShellServer {
         return $this->verifyWrite("initRS($members, $port, $rsSettings, $auth, $root, $user)");
     }
 
+    public function makeMasterSlave($port = 30400) {
+        $this->setDBDIR();
+        return $this->verifyWrite("initMasterSlave($port)");
+    }
+
+
     public function makeStandalone($port = 30000, $auth = false) {
         $creds = $this->getCredentials();
         $auth = json_encode($auth);
@@ -96,6 +102,14 @@ class MongoShellServer {
             throw new DebugException(($auth ? "Authenticated " : "") . "Replicaset not initialized", $this->log);
         }
         return self::prettifyRSInfo($config);
+    }
+
+    public function getMasterSlaveConfig() {
+        $config = json_decode($this->verifyWrite("getMSIsMaster()"));
+        if (!$config) {
+            throw new DebugException("Master/Slave setup not initialized", $this->log);
+        }
+        return array( 'master' => 'localhost:30400', 'slave' => 'localhost:30401' );
     }
 
     public function getMaster() {
@@ -234,6 +248,13 @@ class MongoShellServer {
     public static function getReplicaSetInfo($auth = false) {
         $o = new self;
         $config = $o->getReplicaSetConfig($auth);
+        $o->close();
+        return $config;
+    }
+
+    public static function getMasterSlaveInfo($auth = false) {
+        $o = new self;
+        $config = $o->getMasterSlaveConfig($auth);
         $o->close();
         return $config;
     }
