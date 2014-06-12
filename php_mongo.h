@@ -597,6 +597,8 @@ ZEND_END_MODULE_GLOBALS(mongo)
 # define MonGlo(v) (mongo_globals.v)
 #endif
 
+#define phpext_mongo_ptr &mongo_module_entry
+
 extern zend_module_entry mongo_module_entry;
 
 #endif
