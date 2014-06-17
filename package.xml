@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2014-06-05</date>
- <time>12:21:05</time>
+ <date>2014-06-17</date>
+ <time>10:25:39</time>
  <version>
-  <release>1.5.3</release>
-  <api>1.5.3</api>
+  <release>1.5.4</release>
+  <api>1.5.4</api>
  </version>
  <stability>
   <release>stable</release>
@@ -42,19 +42,10 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-    * [PHP-928] - The 'w' property is read-only
-    * [PHP-970] - Explain how to_index_string() creates names for ensureIndex() and deleteIndex()
-    * [PHP-1052] - Replace JSON encoding of stream notifications with standard PHP serialize encoding
-    * [PHP-1060] - "The '$id' property is read-only"
-    * [PHP-1096] - PHP crashes due to null pointer dereference on shutdown when JSON extension is not present
-    * [PHP-1099] - socketTimeoutMS=-1 doesn't work
-    * [PHP-1102] - php driver throws exception when connect string contains an unresolvable hostname
-    * [PHP-1104] - New Replica Set connections hang when secondaries are creating indexes during initialSync
-    * [PHP-1109] - Upsert should return _id instead of array of ids
-
-** Task
-    * [PHP-1076] - Document deprecation notices for timeout and wtimeout options
-    * [PHP-1078] - Document wTimeoutMS, socketTimeoutMS, and maxTimeMS for ensure/createIndex
+** Bug
+    * [PHP-1111] - MongoClient constructor crashes on connection to slave 
+    * [PHP-1118] - Aggregate cursor on non-existing collection throws weird error
+    * [PHP-1120] - The mongo driver fails to build as static extension
  </notes>
 
  <contents>
@@ -224,6 +215,35 @@
  </extsrcrelease>
 
  <changelog>
+
+  <release>
+   <date>2014-06-05</date>
+   <time>12:21:05</time>
+   <version>
+    <release>1.5.3</release>
+    <api>1.5.3</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+    * [PHP-928] - The 'w' property is read-only
+    * [PHP-970] - Explain how to_index_string() creates names for ensureIndex() and deleteIndex()
+    * [PHP-1052] - Replace JSON encoding of stream notifications with standard PHP serialize encoding
+    * [PHP-1060] - "The '$id' property is read-only"
+    * [PHP-1096] - PHP crashes due to null pointer dereference on shutdown when JSON extension is not present
+    * [PHP-1099] - socketTimeoutMS=-1 doesn't work
+    * [PHP-1102] - php driver throws exception when connect string contains an unresolvable hostname
+    * [PHP-1104] - New Replica Set connections hang when secondaries are creating indexes during initialSync
+    * [PHP-1109] - Upsert should return _id instead of array of ids
+
+** Task
+    * [PHP-1076] - Document deprecation notices for timeout and wtimeout options
+    * [PHP-1078] - Document wTimeoutMS, socketTimeoutMS, and maxTimeMS for ensure/createIndex
+   </notes>
+  </release>
 
   <release>
    <date>2014-05-06</date>
