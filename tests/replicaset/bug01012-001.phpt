@@ -66,19 +66,6 @@ $c->remove(array(), array('j' => false));
 $c->setWriteConcern(0);
 $c->remove();
 
-echo "\nTesting MongoClient with all options requiring GLE\n";
-
-$mc = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname'], 'w' => 1, 'fsync' => true, 'journal' => true));
-$c = $mc->selectCollection(dbname(), collname(__FILE__));
-$c->remove();
-$c->remove(array(), array('w' => 0));
-$c->remove(array(), array('fsync' => false));
-$c->remove(array(), array('j' => false));
-$c->remove(array(), array('w' => 0, 'fsync' => false, 'j' => false));
-$c->setWriteConcern(0);
-$c->remove();
-$c->remove(array(), array('fsync' => false, 'j' => false));
-
 echo "\nTesting MongoCollection with write concern\n";
 
 $mc = new MongoClient($rs['dsn'], array('replicaSet' => $rs['rsname']));
@@ -129,15 +116,6 @@ is_gle_op: yes
 is_gle_op: yes
 is_gle_op: no
 is_gle_op: yes
-
-Testing MongoClient with all options requiring GLE
-is_gle_op: yes
-is_gle_op: yes
-is_gle_op: yes
-is_gle_op: yes
-is_gle_op: no
-is_gle_op: yes
-is_gle_op: no
 
 Testing MongoCollection with write concern
 is_gle_op: no
