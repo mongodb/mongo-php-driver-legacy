@@ -77,19 +77,19 @@ journal enabled by default
 array(2) {
   ["getlasterror"]=>
   int(1)
-  ["journal"]=>
+  ["j"]=>
   bool(true)
 }
 array(2) {
   ["getlasterror"]=>
   int(1)
-  ["journal"]=>
+  ["j"]=>
   bool(true)
 }
 array(2) {
   ["getlasterror"]=>
   int(1)
-  ["journal"]=>
+  ["j"]=>
   bool(true)
 }
 Setting it to false, per-query
@@ -123,19 +123,19 @@ Setting it to true, per-query
 array(2) {
   ["getlasterror"]=>
   int(1)
-  ["journal"]=>
+  ["j"]=>
   bool(true)
 }
 array(2) {
   ["getlasterror"]=>
   int(1)
-  ["journal"]=>
+  ["j"]=>
   bool(true)
 }
 array(2) {
   ["getlasterror"]=>
   int(1)
-  ["journal"]=>
+  ["j"]=>
   bool(true)
 }
 journal disabled by default, and gle
@@ -143,18 +143,18 @@ Setting it to true, per-query, with gle=0
 array(2) {
   ["getlasterror"]=>
   int(1)
-  ["journal"]=>
+  ["j"]=>
   bool(true)
 }
 array(2) {
   ["getlasterror"]=>
   int(1)
-  ["journal"]=>
+  ["j"]=>
   bool(true)
 }
 array(2) {
   ["getlasterror"]=>
   int(1)
-  ["journal"]=>
+  ["j"]=>
   bool(true)
 }

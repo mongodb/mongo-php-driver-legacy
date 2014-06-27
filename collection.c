@@ -488,8 +488,8 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 	}
 
 	if (journal) {
-		add_assoc_bool(cmd, "journal", 1);
-		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added journal=1");
+		add_assoc_bool(cmd, "j", 1);
+		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added j=1");
 	}
 
 	/* get cursor */
