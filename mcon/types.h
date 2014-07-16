@@ -136,6 +136,7 @@ typedef struct _mongo_connection
 {
 	time_t last_ping;        /* The timestamp when ping was called last */
 	int    ping_ms;
+	int    connected;        /* Whether the connection is connected. Used for establishing which timeout to use */
 	int    last_ismaster;    /* The timestamp when ismaster/get_server_flags was called last */
 	int    last_replcheck;   /* The timestamp when ismaster/replicaset test was called last */
 	int    last_reqid;
