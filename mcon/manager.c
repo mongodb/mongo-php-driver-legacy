@@ -134,6 +134,11 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	}
 
 	free(hash);
+
+	if (con) {
+		con->connected = 1;
+	}
+
 	return con;
 }
 

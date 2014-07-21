@@ -254,6 +254,7 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 	memset(tmp, 0, sizeof(mongo_connection));
 	tmp->last_reqid = rand();
 	tmp->connection_type = MONGO_NODE_STANDALONE;
+	tmp->connected = 0;
 
 	/* Default server options */
 	/* If we don't know the version, assume 1.8.0 */
@@ -357,7 +358,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 		return 0;
 	}
 	mcon_str_ptr_dtor(packet);
-	read = manager->recv_header(con, options, options->socketTimeoutMS, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
+	read = manager->recv_header(con, options, con->connected ? options->socketTimeoutMS : options->connectTimeoutMS, reply_buffer, MONGO_REPLY_HEADER_SIZE, error_message);
 	if (read < 0) {
 		/* Error already populated */
 		return 0;
