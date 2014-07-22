@@ -20,6 +20,8 @@ zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC);
 void mongo_init_MongoClient(TSRMLS_D);
 void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc);
 
+zval *php_mongo_selectdb(zval *zlink, char *name, int name_len TSRMLS_DC);
+
 /* Helper for connecting the servers */
 mongo_connection *php_mongo_connect(mongoclient *link, int flags TSRMLS_DC);
 HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC);
