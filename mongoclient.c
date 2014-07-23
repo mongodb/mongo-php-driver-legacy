@@ -1002,18 +1002,16 @@ PHP_METHOD(MongoClient, dropDB)
    Returns the results of the 'listDatabases' command, executed on the 'admin' database */
 PHP_METHOD(MongoClient, listDBs)
 {
-	zval *admin, *cmd, *zdb, *retval;
+	zval *cmd, *zdb, *retval;
 	mongo_db *db;
 
-	MAKE_STD_ZVAL(admin);
-	ZVAL_STRING(admin, "admin", 1);
+	zdb = php_mongo_selectdb(getThis(), "admin", 5 TSRMLS_CC);
 
-	MAKE_STD_ZVAL(zdb);
-
-	MONGO_METHOD1(MongoClient, selectDB, zdb, getThis(), admin);
+	if (!zdb) {
+		return;
+	}
 
 	PHP_MONGO_GET_DB(zdb);
-	zval_ptr_dtor(&admin);
 
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);
