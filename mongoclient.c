@@ -707,8 +707,7 @@ PHP_METHOD(MongoClient, __toString)
  * the database name is invalid. */
 zval *php_mongo_selectdb(zval *zlink, char *name, int name_len TSRMLS_DC)
 {
-	zval *zname, *return_value;
-	zval temp;
+	zval *zdb;
 	mongoclient *link;
 	int free_zlink_ptr = 0;
 
@@ -775,21 +774,19 @@ zval *php_mongo_selectdb(zval *zlink, char *name, int name_len TSRMLS_DC)
 		}
 	}
 
-	MAKE_STD_ZVAL(zname);
-	ZVAL_STRINGL(zname, name, name_len, 1);
+	MAKE_STD_ZVAL(zdb);
+	object_init_ex(zdb, mongo_ce_DB);
 
-	MAKE_STD_ZVAL(return_value);
-	object_init_ex(return_value, mongo_ce_DB);
-
-	MONGO_METHOD2(MongoDB, __construct, &temp, return_value, zlink, zname);
-
-	zval_ptr_dtor(&zname);
+	if (FAILURE == php_mongo_db_init(zdb, zlink, name, name_len TSRMLS_CC)) {
+		zval_ptr_dtor(&zdb);
+		zdb = NULL;
+	}
 
 	if (free_zlink_ptr) {
 		zval_ptr_dtor(&zlink);
 	}
 
-	return return_value;
+	return zdb;
 }
 
 /* {{{ proto MongoDB MongoClient->selectDB(string dbname)
