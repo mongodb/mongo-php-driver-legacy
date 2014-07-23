@@ -819,21 +819,21 @@ PHP_METHOD(MongoClient, selectDB)
    Returns a new MongoDB object for the specified database name */
 PHP_METHOD(MongoClient, __get)
 {
-	zval *name;
-	char *str;
-	int str_len;
+	char *name;
+	int   name_len;
+	zval *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(name);
-	ZVAL_STRINGL(name, str, str_len, 1);
+	db = php_mongo_selectdb(getThis(), name, name_len TSRMLS_CC);
 
-	/* select this db */
-	MONGO_METHOD1(MongoClient, selectDB, return_value, getThis(), name);
+	if (!db) {
+		return;
+	}
 
-	zval_ptr_dtor(&name);
+	RETURN_ZVAL(db, 0, 1);
 }
 /* }}} */
 
