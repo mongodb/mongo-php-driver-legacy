@@ -975,19 +975,20 @@ PHP_METHOD(MongoClient, setWriteConcern)
    Returns the results of the 'dropDatabase' command */
 PHP_METHOD(MongoClient, dropDB)
 {
-	zval *db, *temp_db;
+	zval *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &db) == FAILURE) {
 		RETURN_FALSE;
 	}
 
 	if (Z_TYPE_P(db) != IS_OBJECT || Z_OBJCE_P(db) != mongo_ce_DB) {
-		MAKE_STD_ZVAL(temp_db);
-		ZVAL_NULL(temp_db);
+		convert_to_string_ex(&db);
 
-		/* reusing db param from MongoClient::drop call */
-		MONGO_METHOD_BASE(MongoClient, selectDB)(1, temp_db, NULL, getThis(), 0 TSRMLS_CC);
-		db = temp_db;
+		db = php_mongo_selectdb(getThis(), Z_STRVAL_P(db), Z_STRLEN_P(db) TSRMLS_CC);
+
+		if (!db) {
+			return;
+		}
 	} else {
 		zval_add_ref(&db);
 	}
