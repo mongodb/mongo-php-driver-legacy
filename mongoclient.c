@@ -844,28 +844,27 @@ PHP_METHOD(MongoClient, selectCollection)
 {
 	char *db, *coll;
 	int db_len, coll_len;
-	zval *db_name, *temp_db, *collection;
+	zval *z_db, *z_collection;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &db, &db_len, &coll, &coll_len) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(db_name);
-	ZVAL_STRINGL(db_name, db, db_len, 1);
+	z_db = php_mongo_selectdb(getThis(), db, db_len TSRMLS_CC);
 
-	MAKE_STD_ZVAL(temp_db);
-	MONGO_METHOD1(MongoClient, selectDB, temp_db, getThis(), db_name);
-	zval_ptr_dtor(&db_name);
-	PHP_MONGO_CHECK_EXCEPTION1(&temp_db);
-
-	collection = php_mongo_selectcollection(temp_db, coll, coll_len TSRMLS_CC);
-	if (collection) {
-		/* Only copy the zval into return_value if it worked. If collection is
-		 * NULL here, an exception is set */
-		RETVAL_ZVAL(collection, 0, 1);
+	if (!z_db) {
+		return;
 	}
 
-	zval_ptr_dtor(&temp_db);
+	z_collection = php_mongo_selectcollection(z_db, coll, coll_len TSRMLS_CC);
+
+	if (z_collection) {
+		/* Only copy the zval into return_value if it worked. If collection is
+		 * NULL here, an exception is set */
+		RETVAL_ZVAL(z_collection, 0, 1);
+	}
+
+	zval_ptr_dtor(&z_db);
 }
 /* }}} */
 
