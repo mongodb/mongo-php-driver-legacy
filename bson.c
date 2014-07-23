@@ -948,6 +948,20 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 			case BSON_ARRAY: {
 				array_init(value);
 
+				/* These two if statements make sure that the cmd_cursor_as_int64 flag only
+				 * survives if previous conditions are also met. The check on level 0 is for
+				 * command cursors (the "cursor" check) and for parallelCollectionScan (the
+				 * "cursors" check). The check on level 2 is again only for
+				 * parallelCollectionScan. The _id values as returned for command cursors and
+				 * parallelCollectionScan have to be a MongoInt64() due to 32-bit platform
+				 * wonkyness */
+				if (options && options->flag_cmd_cursor_as_int64 && options->level == 0 && strcmp(name, "cursor") != 0 && strcmp(name, "cursors") != 0) {
+					options->flag_cmd_cursor_as_int64 = 0;
+				}
+				if (options && options->flag_cmd_cursor_as_int64 && options->level == 2 && strcmp(name, "cursor") != 0) {
+					options->flag_cmd_cursor_as_int64 = 0;
+				}
+
 				if (options) {
 					options->level++;
 				}
