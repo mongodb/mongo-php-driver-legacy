@@ -26,7 +26,7 @@ void php_mongo_connection_force_primary(mongo_cursor *cursor);
 
 zval *php_mongo_selectcollection(zval *this, char *collection, int collection_len TSRMLS_DC);
 
-int php_mongo_db_init(zval *zdb, zval *zlink, char *name, int name_len TSRMLS_DC);
+int php_mongodb_init(zval *zdb, zval *zlink, char *name, int name_len TSRMLS_DC);
 
 /* Runs a MongoDB command.
  * NOTE: Exceptions are cleared, and the entire result document/error is returned.

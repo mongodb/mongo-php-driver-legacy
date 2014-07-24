@@ -150,8 +150,8 @@ PHP_METHOD(MongoDBRef, get)
 		/* if the name in the $db field doesn't match the current db, make up
 		 * a new db */
 		if (strcmp(Z_STRVAL_PP(dbname), Z_STRVAL_P(db->name)) != 0) {
-			zdb = php_mongo_selectdb(db->link, Z_STRVAL_PP(dbname), Z_STRLEN_PP(dbname) TSRMLS_CC);
-			if (!zdb) {
+			zdb = php_mongoclient_selectdb(db->link, Z_STRVAL_PP(dbname), Z_STRLEN_PP(dbname) TSRMLS_CC);
+			if (zdb == NULL) {
 				return;
 			}
 

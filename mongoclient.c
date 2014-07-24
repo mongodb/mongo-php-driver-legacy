@@ -705,7 +705,7 @@ PHP_METHOD(MongoClient, __toString)
 /* Selects a database and returns it as zval. If the return value is NULL, an
  * exception is set. This should only happen if the passed client is invalid or
  * the database name is invalid. */
-zval *php_mongo_selectdb(zval *zlink, char *name, int name_len TSRMLS_DC)
+zval *php_mongoclient_selectdb(zval *zlink, char *name, int name_len TSRMLS_DC)
 {
 	zval *zdb;
 	mongoclient *link;
@@ -718,7 +718,7 @@ zval *php_mongo_selectdb(zval *zlink, char *name, int name_len TSRMLS_DC)
 
 	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
 
-	if (!(link->servers)) {
+	if (link == NULL || link->servers == NULL) {
 		zend_throw_exception(mongo_ce_Exception, "The MongoClient object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
 		return NULL;
 	}
@@ -777,7 +777,7 @@ zval *php_mongo_selectdb(zval *zlink, char *name, int name_len TSRMLS_DC)
 	MAKE_STD_ZVAL(zdb);
 	object_init_ex(zdb, mongo_ce_DB);
 
-	if (FAILURE == php_mongo_db_init(zdb, zlink, name, name_len TSRMLS_CC)) {
+	if (FAILURE == php_mongodb_init(zdb, zlink, name, name_len TSRMLS_CC)) {
 		zval_ptr_dtor(&zdb);
 		zdb = NULL;
 	}
@@ -801,13 +801,11 @@ PHP_METHOD(MongoClient, selectDB)
 		return;
 	}
 
-	db = php_mongo_selectdb(getThis(), name, name_len TSRMLS_CC);
+	db = php_mongoclient_selectdb(getThis(), name, name_len TSRMLS_CC);
 
-	if (!db) {
-		return;
+	if (db != NULL) {
+		RETURN_ZVAL(db, 0, 1);
 	}
-
-	RETURN_ZVAL(db, 0, 1);
 }
 /* }}} */
 
@@ -824,13 +822,11 @@ PHP_METHOD(MongoClient, __get)
 		return;
 	}
 
-	db = php_mongo_selectdb(getThis(), name, name_len TSRMLS_CC);
+	db = php_mongoclient_selectdb(getThis(), name, name_len TSRMLS_CC);
 
-	if (!db) {
-		return;
+	if (db != NULL) {
+		RETURN_ZVAL(db, 0, 1);
 	}
-
-	RETURN_ZVAL(db, 0, 1);
 }
 /* }}} */
 
@@ -847,15 +843,15 @@ PHP_METHOD(MongoClient, selectCollection)
 		return;
 	}
 
-	z_db = php_mongo_selectdb(getThis(), db, db_len TSRMLS_CC);
+	z_db = php_mongoclient_selectdb(getThis(), db, db_len TSRMLS_CC);
 
-	if (!z_db) {
+	if (z_db == NULL) {
 		return;
 	}
 
 	z_collection = php_mongo_selectcollection(z_db, coll, coll_len TSRMLS_CC);
 
-	if (z_collection) {
+	if (z_collection != NULL) {
 		/* Only copy the zval into return_value if it worked. If collection is
 		 * NULL here, an exception is set */
 		RETVAL_ZVAL(z_collection, 0, 1);
@@ -981,9 +977,9 @@ PHP_METHOD(MongoClient, dropDB)
 	if (Z_TYPE_P(db) != IS_OBJECT || Z_OBJCE_P(db) != mongo_ce_DB) {
 		convert_to_string_ex(&db);
 
-		db = php_mongo_selectdb(getThis(), Z_STRVAL_P(db), Z_STRLEN_P(db) TSRMLS_CC);
+		db = php_mongoclient_selectdb(getThis(), Z_STRVAL_P(db), Z_STRLEN_P(db) TSRMLS_CC);
 
-		if (!db) {
+		if (db == NULL) {
 			return;
 		}
 	} else {
@@ -1002,9 +998,9 @@ PHP_METHOD(MongoClient, listDBs)
 	zval *cmd, *zdb, *retval;
 	mongo_db *db;
 
-	zdb = php_mongo_selectdb(getThis(), "admin", 5 TSRMLS_CC);
+	zdb = php_mongoclient_selectdb(getThis(), "admin", 5 TSRMLS_CC);
 
-	if (!zdb) {
+	if (zdb == NULL) {
 		return;
 	}
 

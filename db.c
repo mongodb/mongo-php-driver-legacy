@@ -112,7 +112,7 @@ static int php_mongo_command_supports_rp(zval *cmd)
 
 /* Initializes a MongoDB object and returns SUCCESS or FAILURE. If FAILURE is
  * returned, an exception is set. */
-int php_mongo_db_init(zval *zdb, zval *zlink, char *name, int name_len TSRMLS_DC)
+int php_mongodb_init(zval *zdb, zval *zlink, char *name, int name_len TSRMLS_DC)
 {
 	mongo_db *db;
 	mongoclient *link;
@@ -128,7 +128,7 @@ int php_mongo_db_init(zval *zdb, zval *zlink, char *name, int name_len TSRMLS_DC
 
 	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
 
-	if (!(link->servers)) {
+	if (link == NULL || link->servers == NULL) {
 		zend_throw_exception(mongo_ce_Exception, "The MongoClient object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
 		return FAILURE;
 	}
@@ -168,7 +168,7 @@ PHP_METHOD(MongoDB, __construct)
 		return;
 	}
 
-	php_mongo_db_init(getThis(), zlink, name, name_len TSRMLS_CC);
+	php_mongodb_init(getThis(), zlink, name, name_len TSRMLS_CC);
 }
 /* }}} */
 

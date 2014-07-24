@@ -143,8 +143,9 @@ PHP_METHOD(Mongo, setSlaveOkay)
 /* {{{ Mongo->lastError() */
 PHP_METHOD(Mongo, lastError)
 {
-	zval *db = php_mongo_selectdb(getThis(), "admin", 5 TSRMLS_CC);
-	if (!db) {
+	zval *db = php_mongoclient_selectdb(getThis(), "admin", 5 TSRMLS_CC);
+
+	if (db == NULL) {
 		return;
 	}
 
@@ -156,8 +157,9 @@ PHP_METHOD(Mongo, lastError)
 /* {{{ Mongo->prevError() */
 PHP_METHOD(Mongo, prevError)
 {
-	zval *db = php_mongo_selectdb(getThis(), "admin", 5 TSRMLS_CC);
-	if (!db) {
+	zval *db = php_mongoclient_selectdb(getThis(), "admin", 5 TSRMLS_CC);
+
+	if (db == NULL) {
 		return;
 	}
 
@@ -169,8 +171,9 @@ PHP_METHOD(Mongo, prevError)
 /* {{{ Mongo->resetError() */
 PHP_METHOD(Mongo, resetError)
 {
-	zval *db = php_mongo_selectdb(getThis(), "admin", 5 TSRMLS_CC);
-	if (!db) {
+	zval *db = php_mongoclient_selectdb(getThis(), "admin", 5 TSRMLS_CC);
+
+	if (db == NULL) {
 		return;
 	}
 
@@ -182,8 +185,9 @@ PHP_METHOD(Mongo, resetError)
 /* {{{ Mongo->forceError() */
 PHP_METHOD(Mongo, forceError)
 {
-	zval *db = php_mongo_selectdb(getThis(), "admin", 5 TSRMLS_CC);
-	if (!db) {
+	zval *db = php_mongoclient_selectdb(getThis(), "admin", 5 TSRMLS_CC);
+
+	if (db == NULL) {
 		return;
 	}
 
