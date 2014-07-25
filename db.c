@@ -110,21 +110,12 @@ static int php_mongo_command_supports_rp(zval *cmd)
 	return 0;
 }
 
-/* {{{ MongoDB::__construct
- */
-PHP_METHOD(MongoDB, __construct)
+/* Initializes a MongoDB object and returns SUCCESS or FAILURE. If FAILURE is
+ * returned, an exception is set. */
+int php_mongodb_init(zval *zdb, zval *zlink, char *name, int name_len TSRMLS_DC)
 {
-	zval *zlink;
-	char *name;
-	int name_len;
 	mongo_db *db;
 	mongoclient *link;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &zlink, mongo_ce_MongoClient, &name, &name_len) == FAILURE) {
-		zval *object = getThis();
-		ZVAL_NULL(object);
-		return;
-	}
 
 	if (
 		name_len == 0 ||
@@ -132,28 +123,52 @@ PHP_METHOD(MongoDB, __construct)
 		memchr(name, '/', name_len) != 0 || memchr(name, '$', name_len) != 0 || memchr(name, '\0', name_len) != 0
 	) {
 		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name);
-		return;
+		return FAILURE;
 	}
 
-	db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
+
+	if (link == NULL || link->servers == NULL) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoClient object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return FAILURE;
+	}
+
+	db = (mongo_db*) zend_object_store_get_object(zdb TSRMLS_CC);
 
 	db->link = zlink;
 	zval_add_ref(&db->link);
 
-	PHP_MONGO_GET_LINK(zlink);
-
 	if (link->servers->options.default_w != -1) {
-		zend_update_property_long(mongo_ce_DB, getThis(), "w", strlen("w"), link->servers->options.default_w TSRMLS_CC);
+		zend_update_property_long(mongo_ce_DB, zdb, "w", strlen("w"), link->servers->options.default_w TSRMLS_CC);
 	} else if (link->servers->options.default_wstring != NULL) {
-		zend_update_property_string(mongo_ce_DB, getThis(), "w", strlen("w"), link->servers->options.default_wstring TSRMLS_CC);
+		zend_update_property_string(mongo_ce_DB, zdb, "w", strlen("w"), link->servers->options.default_wstring TSRMLS_CC);
 	}
 	if (link->servers->options.default_wtimeout != -1) {
-		zend_update_property_long(mongo_ce_DB, getThis(), "wtimeout", strlen("wtimeout"), link->servers->options.default_wtimeout TSRMLS_CC);
+		zend_update_property_long(mongo_ce_DB, zdb, "wtimeout", strlen("wtimeout"), link->servers->options.default_wtimeout TSRMLS_CC);
 	}
 	mongo_read_preference_copy(&link->servers->read_pref, &db->read_pref);
 
 	MAKE_STD_ZVAL(db->name);
 	ZVAL_STRING(db->name, name, 1);
+
+	return SUCCESS;
+}
+
+/* {{{ proto void MongoDB::__construct(MongoClient client, string name)
+   Constructs a new MongoDB instance */
+PHP_METHOD(MongoDB, __construct)
+{
+	zval *zlink;
+	char *name;
+	int name_len;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &zlink, mongo_ce_MongoClient, &name, &name_len) == FAILURE) {
+		zval *object = getThis();
+		ZVAL_NULL(object);
+		return;
+	}
+
+	php_mongodb_init(getThis(), zlink, name, name_len TSRMLS_CC);
 }
 /* }}} */
 

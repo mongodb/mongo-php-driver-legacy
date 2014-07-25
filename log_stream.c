@@ -367,6 +367,7 @@ void mongo_log_stream_query(mongo_connection *connection, mongo_cursor *cursor T
 		add_assoc_long(info, "limit", cursor->limit);
 		add_assoc_long(info, "options", cursor->opts);
 		add_assoc_long(info, "cursor_id", cursor->cursor_id);
+		add_assoc_string(info, "ns", cursor->ns, 1);
 
 		args[0] = &server;
 		args[1] = &cursor->query;
@@ -377,7 +378,6 @@ void mongo_log_stream_query(mongo_connection *connection, mongo_cursor *cursor T
 		php_mongo_stream_callback(context, "log_query", 3, args TSRMLS_CC);
 		zval_ptr_dtor(&server);
 		zval_ptr_dtor(&info);
-
 	}
 }
 

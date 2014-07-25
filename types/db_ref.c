@@ -150,15 +150,10 @@ PHP_METHOD(MongoDBRef, get)
 		/* if the name in the $db field doesn't match the current db, make up
 		 * a new db */
 		if (strcmp(Z_STRVAL_PP(dbname), Z_STRVAL_P(db->name)) != 0) {
-			zval *new_db_z;
-
-			MAKE_STD_ZVAL(new_db_z);
-			ZVAL_NULL(new_db_z);
-
-			MONGO_METHOD1(MongoClient, selectDB, new_db_z, db->link, *dbname);
-
-			/* make the new db the current one */
-			zdb = new_db_z;
+			zdb = php_mongoclient_selectdb(db->link, Z_STRVAL_PP(dbname), Z_STRLEN_PP(dbname) TSRMLS_CC);
+			if (zdb == NULL) {
+				return;
+			}
 
 			/* so we can dtor this later */
 			alloced_db = 1;

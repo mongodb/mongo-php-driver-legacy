@@ -111,11 +111,6 @@ typedef __int64 int64_t;
 #define DUP 1
 #define NO_DUP 0
 
-#define LAST_ERROR 0
-#define PREV_ERROR 1
-#define RESET_ERROR 2
-#define FORCE_ERROR 3
-
 #if PHP_VERSION_ID > 50300
 # define MONGO_ARGINFO_STATIC
 #else

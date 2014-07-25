@@ -702,49 +702,45 @@ PHP_METHOD(MongoClient, __toString)
 }
 /* }}} */
 
-
-/* {{{ proto MongoDB MongoClient->selectDB(string dbname)
-   Returns a new MongoDB object for the specified database name */
-PHP_METHOD(MongoClient, selectDB)
+/* Selects a database and returns it as zval. If the return value is NULL, an
+ * exception is set. This should only happen if the passed client is invalid or
+ * the database name is invalid. */
+zval *php_mongoclient_selectdb(zval *zlink, char *name, int name_len TSRMLS_DC)
 {
-	zval temp, *name;
-	char *db;
-	int db_len;
+	zval *zdb;
 	mongoclient *link;
-	int free_this_ptr = 0;
+	int free_zlink_ptr = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &db, &db_len) == FAILURE) {
-		return;
+	if (memchr(name, '\0', name_len) != NULL) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "'\\0' not allowed in database names: %s\\0...", name);
+		return NULL;
 	}
 
-	if (memchr(db, '\0', db_len) != NULL) {
-		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "'\\0' not allowed in database names: %s\\0...", db);
-		return;
+	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
+
+	if (link == NULL || link->servers == NULL) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoClient object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return NULL;
 	}
-
-	MAKE_STD_ZVAL(name);
-	ZVAL_STRINGL(name, db, db_len, 1);
-
-	PHP_MONGO_GET_LINK(getThis());
 
 	/* We need to check whether we are switching to a database that was not
 	 * part of the connection string. This is not a problem if we are not using
 	 * authentication, but it is if we are. If we are, we need to do some fancy
 	 * cloning and creating a new mongo_servers structure. Authentication is a
 	 * pain™ */
-	if (link->servers->server[0]->db && strcmp(link->servers->server[0]->db, db) != 0) {
+	if (link->servers->server[0]->db && strcmp(link->servers->server[0]->db, name) != 0) {
 		mongo_manager_log(
 			link->manager, MLOG_CON, MLOG_INFO,
 			"The requested database (%s) is not what we have in the link info (%s)",
-			db, link->servers->server[0]->db
+			name, link->servers->server[0]->db
 		);
 		/* So here we check if a username and password are used. If so, the
 		 * madness starts */
 		if (link->servers->server[0]->username && link->servers->server[0]->password) {
-			zval       *new_link;
-			mongoclient *tmp_link;
+			zval *zlink_tmp;
+			mongoclient *new_link;
 			int i;
-		
+
 			if (strcmp(link->servers->server[0]->db, "admin") == 0) {
 				mongo_manager_log(
 					link->manager, MLOG_CON, MLOG_FINE,
@@ -758,32 +754,57 @@ PHP_METHOD(MongoClient, selectDB)
 				);
 
 				/* Create the new link object */
-				MAKE_STD_ZVAL(new_link);
-				object_init_ex(new_link, mongo_ce_MongoClient);
-				tmp_link = (mongoclient*) zend_object_store_get_object(new_link TSRMLS_CC);
+				MAKE_STD_ZVAL(zlink_tmp);
+				object_init_ex(zlink_tmp, mongo_ce_MongoClient);
+				new_link = (mongoclient*) zend_object_store_get_object(zlink_tmp TSRMLS_CC);
 
-				tmp_link->manager = link->manager;
-				tmp_link->servers = calloc(1, sizeof(mongo_servers));
-				mongo_servers_copy(tmp_link->servers, link->servers, MONGO_SERVER_COPY_CREDENTIALS);
+				new_link->manager = link->manager;
+				new_link->servers = calloc(1, sizeof(mongo_servers));
+				mongo_servers_copy(new_link->servers, link->servers, MONGO_SERVER_COPY_CREDENTIALS);
 				/* We assume the previous credentials will work on this
 				 * database too, or if authSource is set, authenticate against
 				 * that database */
-				for (i = 0; i < tmp_link->servers->count; i++) {
-					tmp_link->servers->server[i]->db = strdup(db);
+				for (i = 0; i < new_link->servers->count; i++) {
+					new_link->servers->server[i]->db = strdup(name);
 				}
 
-				this_ptr = new_link;
-				free_this_ptr = 1;
+				zlink = zlink_tmp;
+				free_zlink_ptr = 1;
 			}
 		}
 	}
 
-	object_init_ex(return_value, mongo_ce_DB);
-	MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), name);
+	MAKE_STD_ZVAL(zdb);
+	object_init_ex(zdb, mongo_ce_DB);
 
-	zval_ptr_dtor(&name);
-	if (free_this_ptr) {
-		zval_ptr_dtor(&this_ptr);
+	if (FAILURE == php_mongodb_init(zdb, zlink, name, name_len TSRMLS_CC)) {
+		zval_ptr_dtor(&zdb);
+		zdb = NULL;
+	}
+
+	if (free_zlink_ptr) {
+		zval_ptr_dtor(&zlink);
+	}
+
+	return zdb;
+}
+
+/* {{{ proto MongoDB MongoClient->selectDB(string dbname)
+   Returns a new MongoDB object for the specified database name */
+PHP_METHOD(MongoClient, selectDB)
+{
+	char *name;
+	int   name_len;
+	zval *db;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
+		return;
+	}
+
+	db = php_mongoclient_selectdb(getThis(), name, name_len TSRMLS_CC);
+
+	if (db != NULL) {
+		RETURN_ZVAL(db, 0, 1);
 	}
 }
 /* }}} */
@@ -793,21 +814,19 @@ PHP_METHOD(MongoClient, selectDB)
    Returns a new MongoDB object for the specified database name */
 PHP_METHOD(MongoClient, __get)
 {
-	zval *name;
-	char *str;
-	int str_len;
+	char *name;
+	int   name_len;
+	zval *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(name);
-	ZVAL_STRINGL(name, str, str_len, 1);
+	db = php_mongoclient_selectdb(getThis(), name, name_len TSRMLS_CC);
 
-	/* select this db */
-	MONGO_METHOD1(MongoClient, selectDB, return_value, getThis(), name);
-
-	zval_ptr_dtor(&name);
+	if (db != NULL) {
+		RETURN_ZVAL(db, 0, 1);
+	}
 }
 /* }}} */
 
@@ -818,28 +837,27 @@ PHP_METHOD(MongoClient, selectCollection)
 {
 	char *db, *coll;
 	int db_len, coll_len;
-	zval *db_name, *temp_db, *collection;
+	zval *z_db, *z_collection;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &db, &db_len, &coll, &coll_len) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(db_name);
-	ZVAL_STRINGL(db_name, db, db_len, 1);
+	z_db = php_mongoclient_selectdb(getThis(), db, db_len TSRMLS_CC);
 
-	MAKE_STD_ZVAL(temp_db);
-	MONGO_METHOD1(MongoClient, selectDB, temp_db, getThis(), db_name);
-	zval_ptr_dtor(&db_name);
-	PHP_MONGO_CHECK_EXCEPTION1(&temp_db);
-
-	collection = php_mongo_selectcollection(temp_db, coll, coll_len TSRMLS_CC);
-	if (collection) {
-		/* Only copy the zval into return_value if it worked. If collection is
-		 * NULL here, an exception is set */
-		RETVAL_ZVAL(collection, 0, 1);
+	if (z_db == NULL) {
+		return;
 	}
 
-	zval_ptr_dtor(&temp_db);
+	z_collection = php_mongo_selectcollection(z_db, coll, coll_len TSRMLS_CC);
+
+	if (z_collection != NULL) {
+		/* Only copy the zval into return_value if it worked. If collection is
+		 * NULL here, an exception is set */
+		RETVAL_ZVAL(z_collection, 0, 1);
+	}
+
+	zval_ptr_dtor(&z_db);
 }
 /* }}} */
 
@@ -950,19 +968,20 @@ PHP_METHOD(MongoClient, setWriteConcern)
    Returns the results of the 'dropDatabase' command */
 PHP_METHOD(MongoClient, dropDB)
 {
-	zval *db, *temp_db;
+	zval *db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &db) == FAILURE) {
 		RETURN_FALSE;
 	}
 
 	if (Z_TYPE_P(db) != IS_OBJECT || Z_OBJCE_P(db) != mongo_ce_DB) {
-		MAKE_STD_ZVAL(temp_db);
-		ZVAL_NULL(temp_db);
+		convert_to_string_ex(&db);
 
-		/* reusing db param from MongoClient::drop call */
-		MONGO_METHOD_BASE(MongoClient, selectDB)(1, temp_db, NULL, getThis(), 0 TSRMLS_CC);
-		db = temp_db;
+		db = php_mongoclient_selectdb(getThis(), Z_STRVAL_P(db), Z_STRLEN_P(db) TSRMLS_CC);
+
+		if (db == NULL) {
+			return;
+		}
 	} else {
 		zval_add_ref(&db);
 	}
@@ -976,18 +995,16 @@ PHP_METHOD(MongoClient, dropDB)
    Returns the results of the 'listDatabases' command, executed on the 'admin' database */
 PHP_METHOD(MongoClient, listDBs)
 {
-	zval *admin, *cmd, *zdb, *retval;
+	zval *cmd, *zdb, *retval;
 	mongo_db *db;
 
-	MAKE_STD_ZVAL(admin);
-	ZVAL_STRING(admin, "admin", 1);
+	zdb = php_mongoclient_selectdb(getThis(), "admin", 5 TSRMLS_CC);
 
-	MAKE_STD_ZVAL(zdb);
-
-	MONGO_METHOD1(MongoClient, selectDB, zdb, getThis(), admin);
+	if (zdb == NULL) {
+		return;
+	}
 
 	PHP_MONGO_GET_DB(zdb);
-	zval_ptr_dtor(&admin);
 
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);

@@ -140,60 +140,59 @@ PHP_METHOD(Mongo, setSlaveOkay)
 }
 /* }}} */
 
-
-static void run_err(int err_type, zval *return_value, zval *this_ptr TSRMLS_DC)
-{
-	zval *db_name, *db;
-	MAKE_STD_ZVAL(db_name);
-	ZVAL_STRING(db_name, "admin", 1);
-
-	MAKE_STD_ZVAL(db);
-	MONGO_METHOD1(MongoClient, selectDB, db, getThis(), db_name);
-	zval_ptr_dtor(&db_name);
-
-	switch (err_type) {
-		case LAST_ERROR:
-			MONGO_METHOD(MongoDB, lastError, return_value, db);
-			break;
-		case PREV_ERROR:
-			MONGO_METHOD(MongoDB, prevError, return_value, db);
-			break;
-		case RESET_ERROR:
-			MONGO_METHOD(MongoDB, resetError, return_value, db);
-			break;
-		case FORCE_ERROR:
-			MONGO_METHOD(MongoDB, forceError, return_value, db);
-			break;
-	}
-
-	zval_ptr_dtor(&db);
-}
-
 /* {{{ Mongo->lastError() */
 PHP_METHOD(Mongo, lastError)
 {
-	run_err(LAST_ERROR, return_value, getThis() TSRMLS_CC);
+	zval *db = php_mongoclient_selectdb(getThis(), "admin", 5 TSRMLS_CC);
+
+	if (db == NULL) {
+		return;
+	}
+
+	MONGO_METHOD(MongoDB, lastError, return_value, db);
+	zval_ptr_dtor(&db);
 }
 /* }}} */
 
 /* {{{ Mongo->prevError() */
 PHP_METHOD(Mongo, prevError)
 {
-	run_err(PREV_ERROR, return_value, getThis() TSRMLS_CC);
+	zval *db = php_mongoclient_selectdb(getThis(), "admin", 5 TSRMLS_CC);
+
+	if (db == NULL) {
+		return;
+	}
+
+	MONGO_METHOD(MongoDB, prevError, return_value, db);
+	zval_ptr_dtor(&db);
 }
 /* }}} */
 
 /* {{{ Mongo->resetError() */
 PHP_METHOD(Mongo, resetError)
 {
-	run_err(RESET_ERROR, return_value, getThis() TSRMLS_CC);
+	zval *db = php_mongoclient_selectdb(getThis(), "admin", 5 TSRMLS_CC);
+
+	if (db == NULL) {
+		return;
+	}
+
+	MONGO_METHOD(MongoDB, resetError, return_value, db);
+	zval_ptr_dtor(&db);
 }
 /* }}} */
 
 /* {{{ Mongo->forceError() */
 PHP_METHOD(Mongo, forceError)
 {
-	run_err(FORCE_ERROR, return_value, getThis() TSRMLS_CC);
+	zval *db = php_mongoclient_selectdb(getThis(), "admin", 5 TSRMLS_CC);
+
+	if (db == NULL) {
+		return;
+	}
+
+	MONGO_METHOD(MongoDB, forceError, return_value, db);
+	zval_ptr_dtor(&db);
 }
 /* }}} */
 
