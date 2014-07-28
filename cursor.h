@@ -18,6 +18,10 @@
 
 #include "php_mongo.h"
 
+void php_mongo_runquery(mongo_cursor *cursor TSRMLS_DC);
+int php_mongocursor_is_valid(mongo_cursor *cursor);
+int php_mongocursor_load_current_element(mongo_cursor *cursor TSRMLS_DC);
+
 PHP_METHOD(MongoCursor, __construct);
 PHP_METHOD(MongoCursor, getNext);
 PHP_METHOD(MongoCursor, hasNext);
