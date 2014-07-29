@@ -16,21 +16,23 @@ set_error_handler('error_handler');
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::ALL);
 $config = MongoShellServer::getReplicasetInfo();
-$m = new MongoClient($config["hosts"][0] . "/?replicaSet=" . $config["rsname"]); 
+$m = new MongoClient($config["hosts"][0] . "/?replicaSet=" . $config["rsname"] . '&connectTimeoutMS=30000'); 
 MongoLog::setModule(0);
 MongoLog::setLevel(0);
 ?>
 ===DONE===
 <?php exit(0) ?>
 --EXPECTF--
-PARSE   INFO: Parsing %s:%d/?replicaSet=REPLICASET
+PARSE   INFO: Parsing %s:%d/?replicaSet=REPLICASET&connectTimeoutMS=30000
 PARSE   INFO: - Found node: %s:%d
 PARSE   INFO: - Connection type: %s
 PARSE   INFO: - Found option 'replicaSet': 'REPLICASET'
 PARSE   INFO: - Switching connection type: %s
+PARSE   INFO: - Found option 'connectTimeoutMS': 30000
+PARSE   WARN: - Replacing previously set value for 'connectTimeoutMS' (60000)
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) without connection timeout
+CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) with connection timeout: 30.000000
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
 CON     FINE: Setting stream timeout to 30.000000
 CON     INFO: ismaster: start
@@ -85,7 +87,7 @@ CON     FINE: discover_topology: ismaster worked
 CON     FINE: found connection %s:%d;%s;.;%d)
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) without connection timeout
+CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) with connection timeout: 30.000000
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
 CON     FINE: Setting stream timeout to 30.000000
 CON     INFO: ismaster: start
@@ -117,7 +119,7 @@ CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) without connection timeout
+CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) with connection timeout: 30.000000
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
 CON     FINE: Setting stream timeout to 30.000000
 CON     INFO: ismaster: start
@@ -149,7 +151,7 @@ CON     INFO: is_ping: last pinged at %d; time: %dms
 CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
-CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) without connection timeout
+CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) with connection timeout: 30.000000
 CON     INFO: stream_connect: Not establishing SSL for %s:%d
 CON     FINE: Setting stream timeout to 30.000000
 CON     INFO: ismaster: start
