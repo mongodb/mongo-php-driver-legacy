@@ -128,6 +128,7 @@ typedef __int64 int64_t;
 # define PUSH_EO_PARAM()
 # define POP_EO_PARAM()
 #else
+# define ZEND_VM_STACK_GROW_IF_NEEDED(x)
 # define PUSH_PARAM(arg) zend_ptr_stack_push(&EG(argument_stack), arg)
 # define POP_PARAM() (void)zend_ptr_stack_pop(&EG(argument_stack))
 # define PUSH_EO_PARAM() zend_ptr_stack_push(&EG(argument_stack), NULL)
@@ -194,24 +195,29 @@ typedef __int64 int64_t;
 	MONGO_METHOD_BASE(classname, name)(0, retval, NULL, thisptr, 0 TSRMLS_CC);
 
 #define MONGO_METHOD1(classname, name, retval, thisptr, param1)		\
+	ZEND_VM_STACK_GROW_IF_NEEDED(2); \
 	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 1, param1);
 
 #define MONGO_METHOD2(classname, name, retval, thisptr, param1, param2)	\
+	ZEND_VM_STACK_GROW_IF_NEEDED(3); \
 	PUSH_PARAM(param1);							\
 	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 2, param2);	\
 	POP_PARAM();
 
 #define MONGO_METHOD3(classname, name, retval, thisptr, param1, param2, param3) \
+	ZEND_VM_STACK_GROW_IF_NEEDED(4); \
 	PUSH_PARAM(param1); PUSH_PARAM(param2);				\
 	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 3, param3);	\
 	POP_PARAM(); POP_PARAM();
 
 #define MONGO_METHOD4(classname, name, retval, thisptr, param1, param2, param3, param4) \
+	ZEND_VM_STACK_GROW_IF_NEEDED(5); \
 	PUSH_PARAM(param1); PUSH_PARAM(param2); PUSH_PARAM(param3);		\
 	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 4, param4);	\
 	POP_PARAM(); POP_PARAM(); POP_PARAM();
 
 #define MONGO_METHOD5(classname, name, retval, thisptr, param1, param2, param3, param4, param5) \
+	ZEND_VM_STACK_GROW_IF_NEEDED(6); \
 	PUSH_PARAM(param1); PUSH_PARAM(param2); PUSH_PARAM(param3); PUSH_PARAM(param4); \
 	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 5, param5);	\
 	POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
