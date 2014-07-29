@@ -30,21 +30,26 @@ $m = new MongoClient($dsn, array("connect" => false, "connecttimeoutms" => 7));
 --EXPECTF--
 timeout only
 - Found option 'timeout' ('connectTimeoutMS'): 1
+- Replacing previously set value for 'connectTimeoutMS' (60000)
 
 %s: MongoClient::__construct(): The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead in %s on line %d
 timeout and connectTimeoutMS
 - Found option 'timeout' ('connectTimeoutMS'): 2
+- Replacing previously set value for 'connectTimeoutMS' (60000)
 
 %s: MongoClient::__construct(): The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead in %s on line %d
-- Replacing previously set value for 'connectTimeoutMS' (2)
 - Found option 'connectTimeoutMS': 3
+- Replacing previously set value for 'connectTimeoutMS' (2)
 connectTimeoutMS only
 - Found option 'connectTimeoutMS': 4
+- Replacing previously set value for 'connectTimeoutMS' (60000)
 connectTimeoutMS and timeout
 - Found option 'connectTimeoutMS': 5
-- Replacing previously set value for 'connectTimeoutMS' (5)
+- Replacing previously set value for 'connectTimeoutMS' (60000)
 - Found option 'timeout' ('connectTimeoutMS'): 6
+- Replacing previously set value for 'connectTimeoutMS' (5)
 
 %s: MongoClient::__construct(): The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead in %s on line %d
 connecttimeoutms lowercased
 - Found option 'connectTimeoutMS': 7
+- Replacing previously set value for 'connectTimeoutMS' (60000)
