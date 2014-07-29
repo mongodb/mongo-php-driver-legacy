@@ -89,6 +89,7 @@ void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *ser
 	socklen_t          sn;
 	int                family;
 	struct timeval     tval;
+	struct timeval*    tvalp;
 	int                connected;
 	int                status;
 	int                tmp_socket;
@@ -146,9 +147,16 @@ void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *ser
 #endif
 
 	/* TODO: Move this to within the loop & use real timeout setting */
-	/* connection timeout: set in ms (current default 1 sec) */
-	tval.tv_sec = options->connectTimeoutMS <= 0 ? 1 : options->connectTimeoutMS / 1000;
-	tval.tv_usec = options->connectTimeoutMS <= 0 ? 0 : (options->connectTimeoutMS % 1000) * 1000;
+	/* Connect timeout defaults to 60000ms in mongo_parse_init(). Disable
+	 * timeout (i.e. block indefinitely) for non-positive values, which is
+	 * comparable to existing behavior in php_mongo_io_stream_connect(). */
+	if (options->connectTimeoutMS > 0) {
+		tval.tv_sec = options->connectTimeoutMS / 1000;
+		tval.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
+		tvalp = &tval;
+	} else {
+		tvalp = NULL;
+	}
 
 	/* get addresses */
 	if (mongo_util_connect__sockaddr(sa, family, server->host, server->port, error_message) == 0) {
@@ -187,7 +195,7 @@ void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *ser
 			FD_ZERO(&eset);
 			FD_SET(tmp_socket, &eset);
 
-			if (select(tmp_socket+1, &rset, &wset, &eset, &tval) == 0) {
+			if (select(tmp_socket+1, &rset, &wset, &eset, tvalp) == 0) {
 				*error_message = malloc(256);
 				snprintf(*error_message, 256, "Timed out after %d ms", options->connectTimeoutMS);
 				goto error;
@@ -387,7 +395,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 
 	/* Read data */
 	*data_buffer = malloc(data_size + 1);
-	if (manager->recv_data(con, options, options->socketTimeoutMS, *data_buffer, data_size, error_message) <= 0) {
+	if (manager->recv_data(con, options, con->connected ? options->socketTimeoutMS : options->connectTimeoutMS, *data_buffer, data_size, error_message) <= 0) {
 		free(*data_buffer);
 		return 0;
 	}

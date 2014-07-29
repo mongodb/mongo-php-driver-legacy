@@ -16,7 +16,7 @@ set_error_handler('error_handler');
 MongoLog::setModule(MongoLog::ALL);
 MongoLog::setLevel(MongoLog::ALL);
 $dsn = MongoShellServer::getStandaloneInfo();
-$m = new MongoClient("mongodb://$dsn");
+$m = new MongoClient("mongodb://$dsn", array('connectTimeoutMS' => 30000));
 MongoLog::setModule(0);
 MongoLog::setLevel(0);
 ?>
@@ -24,9 +24,11 @@ MongoLog::setLevel(0);
 PARSE   INFO: Parsing mongodb://127.0.0.1:30000
 PARSE   INFO: - Found node: 127.0.0.1:30000
 PARSE   INFO: - Connection type: %s
+PARSE   INFO: - Found option 'connectTimeoutMS': 30000
+PARSE   WARN: - Replacing previously set value for 'connectTimeoutMS' (60000)
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     INFO: connection_create: creating new connection for 127.0.0.1:30000
-CON     FINE: Connecting to tcp://127.0.0.1:30000 (127.0.0.1:30000;-;.;%d) without connection timeout
+CON     FINE: Connecting to tcp://127.0.0.1:30000 (127.0.0.1:30000;-;.;%d) with connection timeout: 30.000000
 CON     INFO: stream_connect: Not establishing SSL for 127.0.0.1:30000
 CON     FINE: Setting stream timeout to 30.000000
 CON     INFO: ismaster: start

@@ -18,7 +18,7 @@ MongoLog::setLevel(MongoLog::ALL);
 
 
 $host = MongoShellServer::getStandaloneInfo();
-$m = new MongoClient($host);
+$m = new MongoClient($host, array('connectTimeoutMS' => 30000));
 
 MongoLog::setModule(0);
 MongoLog::setLevel(0);
@@ -26,7 +26,7 @@ MongoLog::setLevel(0);
 --EXPECTF--
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     INFO: connection_create: creating new connection for %s:%d0
-CON     FINE: Connecting to tcp://127.0.0.1:30000 (%s:%d;-;.;%d) without connection timeout
+CON     FINE: Connecting to tcp://127.0.0.1:30000 (%s:%d;-;.;%d) with connection timeout: 30.000000
 CON     INFO: stream_connect: Not establishing SSL for %s:%d0
 CON     FINE: Setting stream timeout to 30.000000
 CON     INFO: ismaster: start
