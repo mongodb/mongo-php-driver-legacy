@@ -1,5 +1,5 @@
 --TEST--
-PHP-1107: Use lower socket time out for connection phase
+PHP-1107: Connection with connectTimeoutMS and socketTimeoutMS options
 --SKIPIF--
 <?php if (version_compare(phpversion(), "5.3.0", "lt")) exit("skip setCallback and closures are 5.3+"); ?>
 <?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
@@ -19,8 +19,8 @@ $opts = array(
     "db" => "test",
     "username" => $creds["user"]->username,
     "password" => $creds["user"]->password,
-	"socketTimeoutMS" => 30987,
-	"connectTimeoutMS" => 1234,
+    "socketTimeoutMS" => 30987,
+    "connectTimeoutMS" => 1234,
 );
 
 $mc = new MongoClient($host, $opts);
@@ -38,22 +38,27 @@ Setting stream timeout to 30.987000
 ismaster: start
 Setting the stream timeout to 1.234000
 Now setting stream timeout back to 30.987000
-No timeout changes for %s:%d;-;%s;%d
+Setting the stream timeout to 1.234000
+Now setting stream timeout back to 30.987000
 get_server_version: start
 Setting the stream timeout to 1.234000
 Now setting stream timeout back to 30.987000
-No timeout changes for %s:%d;-;%s;%d
+Setting the stream timeout to 1.234000
+Now setting stream timeout back to 30.987000
 getnonce: start
 Setting the stream timeout to 1.234000
 Now setting stream timeout back to 30.987000
-No timeout changes for %s:%d;-;%s;%d
+Setting the stream timeout to 1.234000
+Now setting stream timeout back to 30.987000
 authenticate: start
 Setting the stream timeout to 1.234000
 Now setting stream timeout back to 30.987000
-No timeout changes for %s:%d;-;%s;%d
 Setting the stream timeout to 1.234000
 Now setting stream timeout back to 30.987000
-No timeout changes for %s:%d;-;%s;%d
+Setting the stream timeout to 1.234000
+Now setting stream timeout back to 30.987000
+Setting the stream timeout to 1.234000
+Now setting stream timeout back to 30.987000
 Dummy query
 No timeout changes for %s:%d;-;%s;%d
 No timeout changes for %s:%d;-;%s;%d
