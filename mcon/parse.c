@@ -40,7 +40,7 @@ mongo_servers* mongo_parse_init(void)
 	servers->options.repl_set_name = NULL;
 	servers->options.con_type = MONGO_CON_TYPE_STANDALONE;
 
-	servers->options.connectTimeoutMS = 0;
+	servers->options.connectTimeoutMS = MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT;
 	servers->options.socketTimeoutMS = MONGO_CONNECTION_DEFAULT_SOCKET_TIMEOUT;
 	servers->options.secondaryAcceptableLatencyMS = MONGO_RP_DEFAULT_ACCEPTABLE_LATENCY_MS;
 	servers->options.default_w = -1;
