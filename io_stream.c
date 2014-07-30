@@ -25,6 +25,7 @@
 #include <php.h>
 #include <main/php_streams.h>
 #include <main/php_network.h>
+#include <ext/standard/file.h>
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -165,15 +166,18 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	int num = 1, received = 0;
 	TSRMLS_FETCH();
 
+	int socketTimeoutMS = options->socketTimeoutMS ? options->socketTimeoutMS : FG(default_socket_timeout) * 1000;
+
+	/* Convert negative values to -1 second, which implies no timeout */
+	socketTimeoutMS = socketTimeoutMS < 0 ? -1000 : socketTimeoutMS;
+	timeout = timeout < 0 ? -1000 : timeout;
+
 	/* Socket timeout behavior varies based on the following:
 	 * - Negative => no timeout (i.e. block indefinitely)
 	 * - Zero => not specified (no changes to existing configuration)
 	 * - Positive => used specified timeout (revert to previous value later) */
-	if (timeout && timeout != options->socketTimeoutMS) {
+	if (timeout && timeout != socketTimeoutMS) {
 		struct timeval rtimeout = {0, 0};
-
-		/* Convert negative value to -1 second, which implies no timeout */
-		timeout = timeout < 0 ? -1000 : timeout;
 
 		rtimeout.tv_sec = timeout / 1000;
 		rtimeout.tv_usec = (timeout % 1000) * 1000;
@@ -255,11 +259,13 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, received, size TSRMLS_CC);
 
 	/* If the timeout was changed, revert to the previous value now */
-	if (timeout && timeout != options->socketTimeoutMS) {
+	if (timeout && timeout != socketTimeoutMS) {
 		struct timeval rtimeout = {0, 0};
 
-		/* Convert negative value to -1 second, which implies no timeout. */
-		int socketTimeoutMS = options->socketTimeoutMS < 0 ? -1000 : options->socketTimeoutMS;
+		/* If socketTimeoutMS was never specified, revert to default_socket_timeout */
+		if (options->socketTimeoutMS == 0) {
+			mongo_manager_log(MonGlo(manager), MLOG_CON, MLOG_FINE, "Stream timeout will be reverted to default_socket_timeout (%d)", FG(default_socket_timeout));
+		}
 
 		rtimeout.tv_sec = socketTimeoutMS / 1000;
 		rtimeout.tv_usec = (socketTimeoutMS % 1000) * 1000;
