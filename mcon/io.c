@@ -38,19 +38,32 @@
  * 0 on success
  * -1 on failure, but not critical enough to throw an exception
  * 1.. on failure, and throw an exception. The return value is the error code */
-int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
+int mongo_io_wait_with_timeout(int sock, int timeout, char **error_message)
 {
-	/* No socket timeout.. But we default to 1 second for historical reasons */
-	if (to < 1) {
-		to = 1000;
+	/* Socket timeout behavior varies based on the following:
+	 * - Negative => no timeout (i.e. block indefinitely)
+	 * - Zero => not specified (use default)
+	 * - Positive => used specified timeout
+	 *
+	 * Note: MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT is used as the default
+	 * because it is consistent with default_socket_value (used by streams). We
+	 * don't actually reference the INI option here, since mcon has no PHP
+	 * dependencies. */
+	if (timeout < 0) {
+		timeout = -1;
 	}
+
+	if (timeout == 0) {
+		timeout = MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT;
+	}
+
 	while (1) {
 		struct pollfd fds[1];
 		int status;
 
 		fds[0].fd = sock;
 		fds[0].events = POLLIN | POLLHUP | POLLERR;
-		status = poll(fds, 1, to);
+		status = poll(fds, 1, timeout);
 
 		if (status == -1) {
 			/* on EINTR, retry - this resets the timeout however to its full length */
@@ -67,7 +80,7 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 			snprintf(
 				*error_message, 256,
 				"cursor timed out (timeout: %d, status: %d)",
-				to, status
+				timeout, status
 			);
 			return 80;
 		}
@@ -84,15 +97,25 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 #else
 
 /* Win32 doesn't have a working poll(), so we use the old select() branch. */
-int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
+int mongo_io_wait_with_timeout(int sock, int timeout, char **error_message)
 {
-	/* No socket timeout.. But we default to 1 second for historical reasons */
-	if (to < 1) {
-		to = 1000;
+	/* Socket timeout behavior varies based on the following:
+	 * - Negative => no timeout (i.e. block indefinitely)
+	 * - Zero => not specified (use default)
+	 * - Positive => used specified timeout
+	 *
+	 * Note: MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT is used as the default
+	 * because it is consistent with default_socket_value (used by streams). We
+	 * don't actually reference the INI option here, since mcon has no PHP
+	 * dependencies. */
+	if (timeout == 0) {
+		timeout = MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT;
 	}
+
+
 	while (1) {
 		int status;
-		struct timeval timeout;
+		struct timeval tval;
 		fd_set readfds, exceptfds;
 
 		FD_ZERO(&readfds);
@@ -100,10 +123,12 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 		FD_ZERO(&exceptfds);
 		FD_SET(sock, &exceptfds);
 
-		timeout.tv_sec = to / 1000 ;
-		timeout.tv_usec = (to % 1000) * 1000;
+		if (timeout >= 0) {
+			tval.tv_sec = timeout / 1000;
+			tval.tv_usec = (timeout % 1000) * 1000;
+		}
 
-		status = select(sock+1, &readfds, NULL, &exceptfds, &timeout);
+		status = select(sock+1, &readfds, NULL, &exceptfds, timeout >= 0 ? &tval : NULL);
 
 		if (status == -1) {
 			/* on EINTR, retry - this resets the timeout however to its full length */
@@ -125,7 +150,7 @@ int mongo_io_wait_with_timeout(int sock, int to, char **error_message)
 			snprintf(
 				*error_message, 256,
 				"cursor timed out (timeout: %d, time left: %ld:%ld, status: %d)",
-				to, (long) timeout.tv_sec, (long) timeout.tv_usec, status
+				timeout, (long) tval.tv_sec, (long) tval.tv_usec, status
 			);
 			return 80;
 		}

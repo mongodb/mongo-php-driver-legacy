@@ -60,14 +60,19 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	}
 
 
-	/* <= 0 means "no connection timeout".. except for the default_socket_timeout in PHP.ini)
-	 * PHP does not rewrite -1 to NULL for this option as it does normal READ timeouts */
-	if (options->connectTimeoutMS > 0) {
-		ctimeout.tv_sec = options->connectTimeoutMS / 1000;
-		ctimeout.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
+	/* Connection timeout behavior varies based on the following:
+	 * - Negative => no timeout (i.e. block indefinitely)
+	 * - Zero => not specified (PHP will use default_socket_timeout)
+	 * - Positive => used specified timeout */
+	if (options->connectTimeoutMS) {
+		/* Convert negative value to -1 second, which implies no timeout */
+		int connectTimeoutMS = options->connectTimeoutMS < 0 ? -1000 : options->connectTimeoutMS;
+
+		ctimeout.tv_sec = connectTimeoutMS / 1000;
+		ctimeout.tv_usec = (connectTimeoutMS % 1000) * 1000;
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "Connecting to %s (%s) with connection timeout: %d.%06d", dsn, hash, ctimeout.tv_sec, ctimeout.tv_usec);
 	} else {
-		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "Connecting to %s (%s) without connection timeout", dsn, hash);
+		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "Connecting to %s (%s) without connection timeout (default_socket_timeout will be used)", dsn, hash);
 	}
 
 	ERROR_HANDLER_REPLACE(error_handler, mongo_ce_ConnectionException);
@@ -127,10 +132,12 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Not establishing SSL for %s:%d", server->host, server->port);
 	}
 
+	/* Socket timeout behavior uses the same logic as connectTimeoutMS */
 	if (options->socketTimeoutMS) {
 		struct timeval rtimeout = {0, 0};
-		/* Convert timeout=-1 to -1second, which PHP interprets as no timeout */
-		int socketTimeoutMS = options->socketTimeoutMS == -1 ? -1000 : options->socketTimeoutMS;
+
+		/* Convert negative value to -1 second, which implies no timeout */
+		int socketTimeoutMS = options->socketTimeoutMS < 0 ? -1000 : options->socketTimeoutMS;
 
 		rtimeout.tv_sec = socketTimeoutMS / 1000;
 		rtimeout.tv_usec = (socketTimeoutMS % 1000) * 1000;
@@ -158,11 +165,15 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	int num = 1, received = 0;
 	TSRMLS_FETCH();
 
+	/* Socket timeout behavior varies based on the following:
+	 * - Negative => no timeout (i.e. block indefinitely)
+	 * - Zero => not specified (no changes to existing configuration)
+	 * - Positive => used specified timeout (revert to previous value later) */
 	if (timeout && timeout != options->socketTimeoutMS) {
 		struct timeval rtimeout = {0, 0};
-		/* Convert timeout=-1 to -1second, which PHP interprets as no timeout */
-		timeout = timeout == -1 ? -1000 : timeout;
 
+		/* Convert negative value to -1 second, which implies no timeout */
+		timeout = timeout < 0 ? -1000 : timeout;
 
 		rtimeout.tv_sec = timeout / 1000;
 		rtimeout.tv_usec = (timeout % 1000) * 1000;
@@ -243,11 +254,12 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	 * max-bytes-expected though... */
 	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, received, size TSRMLS_CC);
 
-	/* Revert to the default timeout */
-	if (timeout && options->socketTimeoutMS != timeout) {
+	/* If the timeout was changed, revert to the previous value now */
+	if (timeout && timeout != options->socketTimeoutMS) {
 		struct timeval rtimeout = {0, 0};
-		/* Convert timeout=-1 to -1second, which PHP interprets as no timeout */
-		int socketTimeoutMS = options->socketTimeoutMS == -1 ? -1000 : options->socketTimeoutMS;
+
+		/* Convert negative value to -1 second, which implies no timeout. */
+		int socketTimeoutMS = options->socketTimeoutMS < 0 ? -1000 : options->socketTimeoutMS;
 
 		rtimeout.tv_sec = socketTimeoutMS / 1000;
 		rtimeout.tv_usec = (socketTimeoutMS % 1000) * 1000;
