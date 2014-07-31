@@ -380,10 +380,11 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'connectTimeoutMS': %d", value);
 
-		if (servers->options.connectTimeoutMS != value) {
+		if (servers->options.connectTimeoutMS != MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT) {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Replacing previously set value for 'connectTimeoutMS' (%d)", servers->options.connectTimeoutMS);
-			servers->options.connectTimeoutMS = value;
 		}
+
+		servers->options.connectTimeoutMS = value;
 
 		return 0;
 	}
@@ -566,10 +567,11 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'timeout' ('connectTimeoutMS'): %d", value);
 
-		if (servers->options.connectTimeoutMS != value) {
+		if (servers->options.connectTimeoutMS != MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT) {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Replacing previously set value for 'connectTimeoutMS' (%d)", servers->options.connectTimeoutMS);
-			servers->options.connectTimeoutMS = value;
 		}
+
+		servers->options.connectTimeoutMS = value;
 
 		return -1;
 	}
