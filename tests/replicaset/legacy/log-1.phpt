@@ -29,7 +29,6 @@ PARSE   INFO: - Connection type: STANDALONE
 PARSE   INFO: - Found option 'replicaSet': '%s'
 PARSE   INFO: - Switching connection type: REPLSET
 PARSE   INFO: - Found option 'connectTimeoutMS': 30000
-PARSE   WARN: - Replacing previously set value for 'connectTimeoutMS' (60000)
 CON     INFO: mongo_get_read_write_connection: finding a REPLSET connection (read)
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     FINE: Connecting to tcp://%s:%d (%s:%d;%s;.;%d) with connection timeout: 30.000000
