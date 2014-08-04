@@ -1,0 +1,73 @@
+--TEST--
+Test for PHP-1155: Revert to default_socket_timeout if socketTimeoutMS is zero (default connectTimeoutMS)
+--SKIPIF--
+<?php require_once "tests/utils/standalone.inc" ?>
+<?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
+--FILE--
+<?php
+require_once "tests/utils/server.inc";
+
+printLogs(MongoLog::CON, MongoLog::FINE, "/timeout/");
+
+$host = MongoShellServer::getStandaloneInfo();
+$mc = new MongoClient($host, array('socketTimeoutMS' => 0));
+echo "Connected\n";
+
+echo "\nDropping collection\n";
+$collection = $mc->selectCollection(dbname(), collname(__FILE__));
+$collection->drop();
+
+echo "\nExecuting find() with default timeout\n";
+$cursor = $collection->find();
+iterator_to_array($cursor);
+
+echo "\nExecuting find() with MongoCursor::timeout(): 1000\n";
+$cursor = $collection->find();
+$cursor->timeout(1000);
+iterator_to_array($cursor);
+
+echo "\nExecuting find() with MongoCursor::\$timeout: 1000\n";
+MongoCursor::$timeout = 1000;
+$cursor = $collection->find();
+iterator_to_array($cursor);
+
+?>
+===DONE===
+<?php exit(0); ?>
+--EXPECTF--
+Connecting to tcp://%s:%d (%s:%d;-;.;%d) with connection timeout: 60.000000
+No timeout changes for %s:%d;-;.;%d
+No timeout changes for %s:%d;-;.;%d
+No timeout changes for %s:%d;-;.;%d
+No timeout changes for %s:%d;-;.;%d
+No timeout changes for %s:%d;-;.;%d
+No timeout changes for %s:%d;-;.;%d
+Connected
+
+Dropping collection
+No timeout changes for %s:%d;-;.;%d
+No timeout changes for %s:%d;-;.;%d
+
+Executing find() with default timeout
+No timeout changes for %s:%d;-;.;%d
+No timeout changes for %s:%d;-;.;%d
+
+Executing find() with MongoCursor::timeout(): 1000
+Setting the stream timeout to 1.000000
+Stream timeout will be reverted to default_socket_timeout (60)
+Now setting stream timeout back to 60.000000
+Setting the stream timeout to 1.000000
+Stream timeout will be reverted to default_socket_timeout (60)
+Now setting stream timeout back to 60.000000
+
+Executing find() with MongoCursor::$timeout: 1000
+
+%s: The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead in %s on line %d
+Setting the stream timeout to 1.000000
+Stream timeout will be reverted to default_socket_timeout (60)
+Now setting stream timeout back to 60.000000
+Setting the stream timeout to 1.000000
+Stream timeout will be reverted to default_socket_timeout (60)
+Now setting stream timeout back to 60.000000
+===DONE===

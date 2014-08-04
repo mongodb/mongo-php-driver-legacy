@@ -43,7 +43,7 @@ iterator_to_array($cursor);
 ===DONE===
 <?php exit(0); ?>
 --EXPECTF--
-Connecting to tcp://%s:%d (%s:%d;-;.;%d) without connection timeout
+Connecting to tcp://%s:%d (%s:%d;-;.;%d) with connection timeout: -1.000000
 Setting stream timeout to -1.000000
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
