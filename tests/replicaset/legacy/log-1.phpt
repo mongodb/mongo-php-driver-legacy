@@ -116,7 +116,7 @@ CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
 CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: is_ping: last pinged at %d; time: %dms
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     FINE: Connecting to tcp://%s:%d (l%s:%d;%s;.;%d) with connection timeout: 30.000000
@@ -148,7 +148,7 @@ CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
 CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: is_ping: last pinged at %d; time: %dms
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     INFO: discover_topology: found new host: %s:%d
 CON     INFO: connection_create: creating new connection for %s:%d
 CON     FINE: Connecting to tcp://%s:%d (l%s:%d;%s;.;%d) with connection timeout: 30.000000
@@ -180,7 +180,7 @@ CON     FINE: send_packet: read from header: %d
 CON     FINE: send_packet: data_size: %d
 CON     FINE: No timeout changes for %s:%d;%s;.;%d
 CON     INFO: is_ping: last pinged at %d; time: %dms
-CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: 15
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 CON     FINE: discover_topology: checking ismaster for %s:%d;%s;.;%d
 CON     FINE: found connection %s:%d;%s;.;%d (looking for %s:%d;%s;.;%d)
 CON     INFO: ismaster: start
