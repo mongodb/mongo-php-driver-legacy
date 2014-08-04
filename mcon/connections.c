@@ -89,7 +89,6 @@ void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *ser
 	socklen_t          sn;
 	int                family;
 	struct timeval     tval;
-	struct timeval*    tvalp;
 	int                connected;
 	int                status;
 	int                tmp_socket;
@@ -146,18 +145,6 @@ void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *ser
 	}
 #endif
 
-	/* TODO: Move this to within the loop & use real timeout setting */
-	/* Connect timeout defaults to 60000ms in mongo_parse_init(). Disable
-	 * timeout (i.e. block indefinitely) for non-positive values, which is
-	 * comparable to existing behavior in php_mongo_io_stream_connect(). */
-	if (options->connectTimeoutMS > 0) {
-		tval.tv_sec = options->connectTimeoutMS / 1000;
-		tval.tv_usec = (options->connectTimeoutMS % 1000) * 1000;
-		tvalp = &tval;
-	} else {
-		tvalp = NULL;
-	}
-
 	/* get addresses */
 	if (mongo_util_connect__sockaddr(sa, family, server->host, server->port, error_message) == 0) {
 		goto error;
@@ -195,7 +182,23 @@ void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *ser
 			FD_ZERO(&eset);
 			FD_SET(tmp_socket, &eset);
 
-			if (select(tmp_socket+1, &rset, &wset, &eset, tvalp) == 0) {
+			/* Connection timeout behavior varies based on the following:
+			 * - Negative => no timeout (i.e. block indefinitely)
+			 * - Zero => not specified (use default)
+			 * - Positive => used specified timeout
+			 *
+			 * Timeout struct is reinitialized here in case select(2) alters its
+			 * argument. */
+			if (options->connectTimeoutMS >= 0) {
+				/* Default to MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT, which is
+				 * the same as default_socket_timeout's default value, to be
+				 * consistent with streams. We don't actually reference the INI
+				 * option here, since mcon has no PHP dependencies. */
+				tval.tv_sec = (options->connectTimeoutMS ? options->connectTimeoutMS : MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT) / 1000;
+				tval.tv_usec = ((options->connectTimeoutMS ? options->connectTimeoutMS : MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT) % 1000) * 1000;
+			}
+
+			if (select(tmp_socket+1, &rset, &wset, &eset, options->connectTimeoutMS >= 0 ? &tval : NULL) == 0) {
 				*error_message = malloc(256);
 				snprintf(*error_message, 256, "Timed out after %d ms", options->connectTimeoutMS);
 				goto error;
