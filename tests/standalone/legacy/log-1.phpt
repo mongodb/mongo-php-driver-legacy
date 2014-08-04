@@ -25,7 +25,6 @@ PARSE   INFO: Parsing mongodb://127.0.0.1:30000
 PARSE   INFO: - Found node: 127.0.0.1:30000
 PARSE   INFO: - Connection type: %s
 PARSE   INFO: - Found option 'connectTimeoutMS': 30000
-PARSE   WARN: - Replacing previously set value for 'connectTimeoutMS' (60000)
 CON     INFO: mongo_get_read_write_connection: finding a STANDALONE connection
 CON     INFO: connection_create: creating new connection for 127.0.0.1:30000
 CON     FINE: Connecting to tcp://127.0.0.1:30000 (127.0.0.1:30000;-;.;%d) with connection timeout: 30.000000
