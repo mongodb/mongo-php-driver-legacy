@@ -18,6 +18,7 @@
 
 #include "php_mongo.h"
 
+int php_mongocursor_create(mongo_cursor *cursor, zval *zlink, char *ns, int ns_len, zval *zquery, zval *zfields);
 void php_mongo_runquery(mongo_cursor *cursor TSRMLS_DC);
 int php_mongocursor_is_valid(mongo_cursor *cursor);
 int php_mongocursor_load_current_element(mongo_cursor *cursor TSRMLS_DC);

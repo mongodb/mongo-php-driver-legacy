@@ -71,32 +71,21 @@ static int mongo_cursor__do_query(mongo_cursor *cursor TSRMLS_DC);
 		return; \
 	}
 
-/* {{{ MongoCursor->__construct(MongoClient connection, string ns [, array query [, array fields]])
-   Constructs a MongoCursor */
-PHP_METHOD(MongoCursor, __construct)
+/* Returns FAILURE if something went wrong, but an exception is set too. DO NOT
+ * CONTINUE in the calling method if this one returns FAILURE. */
+int php_mongocursor_create(mongo_cursor *cursor, zval *zlink, char *ns, int ns_len, zval *zquery, zval *zfields)
 {
-	zval *zlink = 0, *zquery = 0, *zfields = 0, *empty, *timeout;
-	char *ns;
-	int   ns_len;
+	zval *empty, *timeout;
 	zval **data;
-	mongo_cursor *cursor;
 	mongoclient  *link;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os|zz", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zquery, &zfields) == FAILURE) {
-		return;
-	}
+	link = (mongoclient*)zend_object_store_get_object(zlink TSRMLS_CC);
+	MONGO_CHECK_INITIALIZED_C(link->manager, MongoClient);
 
 	if (!php_mongo_is_valid_namespace(ns, ns_len)) {
 		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 21 TSRMLS_CC, "An invalid 'ns' argument is given (%s)", ns);
-		return;
+		return FAILURE;
 	}
-
-	MUST_BE_ARRAY_OR_OBJECT(3, zquery);
-	MUST_BE_ARRAY_OR_OBJECT(4, zfields);
-
-	cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-	link = (mongoclient*)zend_object_store_get_object(zlink TSRMLS_CC);
-	MONGO_CHECK_INITIALIZED(link->manager, MongoClient);
 
 	/* if query or fields weren't passed, make them default to an empty array */
 	MAKE_STD_ZVAL(empty);
@@ -147,7 +136,7 @@ PHP_METHOD(MongoCursor, __construct)
 					zval_ptr_dtor(&empty);
 					zval_ptr_dtor(&fields);
 					zend_throw_exception(mongo_ce_Exception, "field names must be strings", 8 TSRMLS_CC);
-					return;
+					return FAILURE;
 				}
 			} else {
 				add_assoc_zval(fields, key, *data);
@@ -213,6 +202,29 @@ PHP_METHOD(MongoCursor, __construct)
 
 	/* get rid of extra ref */
 	zval_ptr_dtor(&empty);
+
+	return SUCCESS;
+}
+
+/* {{{ MongoCursor->__construct(MongoClient connection, string ns [, array query [, array fields]])
+   Constructs a MongoCursor */
+PHP_METHOD(MongoCursor, __construct)
+{
+	zval *zlink = NULL, *zquery = NULL, *zfields = NULL;
+	char *ns;
+	int   ns_len;
+	mongo_cursor *cursor;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os|zz", &zlink, mongo_ce_MongoClient, &ns, &ns_len, &zquery, &zfields) == FAILURE) {
+		return;
+	}
+
+	MUST_BE_ARRAY_OR_OBJECT(3, zquery);
+	MUST_BE_ARRAY_OR_OBJECT(4, zfields);
+
+	cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	php_mongocursor_create(cursor, zlink, ns, ns_len, zquery, zfields);	
 }
 /* }}} */
 

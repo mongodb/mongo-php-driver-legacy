@@ -1249,7 +1249,6 @@ PHP_METHOD(MongoCollection, find)
 {
 	zval *query = 0, *fields = 0;
 	mongo_collection *c;
-	zval temp;
 	mongo_cursor *cursor;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
@@ -1267,15 +1266,7 @@ PHP_METHOD(MongoCollection, find)
 	cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
 	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
 
-	/* TODO: Don't call an internal function like this, but add a new C-level
-	 * function for instantiating cursors */
-	if (!query) {
-		MONGO_METHOD2(MongoCursor, __construct, &temp, return_value, c->link, c->ns);
-	} else if (!fields) {
-		MONGO_METHOD3(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query);
-	} else {
-		MONGO_METHOD4(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query, fields);
-	}
+	php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields);
 }
 /* }}} */
 
@@ -1284,9 +1275,9 @@ PHP_METHOD(MongoCollection, find)
    the projection. NULL will be returned if no document matches. */
 PHP_METHOD(MongoCollection, findOne)
 {
-	int find_num_args;
-	zval *query = 0, *fields = 0, *options = 0, *zcursor;
+	zval *query = NULL, *fields = NULL, *options = NULL, *zcursor = NULL;
 	mongo_cursor *cursor;
+	mongo_collection *c;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zza", &query, &fields, &options) == FAILURE) {
 		return;
@@ -1294,14 +1285,22 @@ PHP_METHOD(MongoCollection, findOne)
 
 	MUST_BE_ARRAY_OR_OBJECT(1, query);
 	MUST_BE_ARRAY_OR_OBJECT(2, fields);
+	
+	PHP_MONGO_GET_COLLECTION(getThis());
 
 	MAKE_STD_ZVAL(zcursor);
-	/* Do not pass third options argument (if present) to find() */
-	find_num_args = ZEND_NUM_ARGS() < 2 ? ZEND_NUM_ARGS() : 2;
-	MONGO_METHOD_BASE(MongoCollection, find)(find_num_args, zcursor, NULL, getThis(), 0 TSRMLS_CC);
-	PHP_MONGO_CHECK_EXCEPTION1(&zcursor);
+	object_init_ex(zcursor, mongo_ce_Cursor);
 
-	PHP_MONGO_GET_CURSOR(zcursor);
+	/* Add read preferences to cursor */
+	cursor = (mongo_cursor*)zend_object_store_get_object(zcursor TSRMLS_CC);
+	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
+
+	if (php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields) == FAILURE) {
+		zval_ptr_dtor(&zcursor);
+		return;
+	}
+
+	/* Set limit to 1 */
 	php_mongo_cursor_set_limit(cursor, -1);
 
 	if (options) {
@@ -1332,7 +1331,31 @@ PHP_METHOD(MongoCollection, findOne)
 		}
 	}
 
-	MONGO_METHOD(MongoCursor, getNext, return_value, zcursor);
+
+	/* query */
+	php_mongo_runquery(cursor TSRMLS_CC);
+	if (EG(exception)) {
+		zval_ptr_dtor(&zcursor);
+		RETURN_NULL();
+	}
+
+	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
+		/* do not free anything here, as php_mongo_handle_error already does
+		 * that upon error */
+		RETURN_NULL();
+	}
+
+	/* Find return value */
+	if (php_mongocursor_load_current_element(cursor TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&zcursor);
+		RETURN_NULL();
+	}
+	if (php_mongocursor_is_valid(cursor) == FAILURE) {
+		zval_ptr_dtor(&zcursor);
+		RETURN_NULL();
+	}
+	ZVAL_ZVAL(return_value, cursor->current, 0, 1);
+
 
 cleanup_on_failure:
 	zend_objects_store_del_ref(zcursor TSRMLS_CC);

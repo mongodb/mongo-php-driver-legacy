@@ -894,6 +894,7 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 		php_mongo_cursor_force_primary(cursor_tmp);
 	}
 
+
 	/* query */
 	php_mongo_runquery(cursor_tmp TSRMLS_CC);
 	if (EG(exception)) {
@@ -918,6 +919,7 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	}
 	MAKE_STD_ZVAL(retval);
 	ZVAL_ZVAL(retval, cursor_tmp->current, 0, 1);
+
 
 	/* Before we destroy the cursor, we figure out which connection was used.
 	 * Yes, this is quite ugly but necessary for cursor commands. */
