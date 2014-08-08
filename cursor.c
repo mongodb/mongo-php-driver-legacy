@@ -288,6 +288,8 @@ int php_mongocursor_is_valid(mongo_cursor *cursor)
 
 int php_mongocursor_load_current_element(mongo_cursor *cursor TSRMLS_DC)
 {
+	mongo_bson_conversion_options cmd_options = MONGO_BSON_CONVERSION_OPTIONS_INIT;
+
 	/* Free the previous current item */
 	if (cursor->current) {
 		zval_ptr_dtor(&cursor->current);
@@ -298,12 +300,19 @@ int php_mongocursor_load_current_element(mongo_cursor *cursor TSRMLS_DC)
 	if (cursor->at >= cursor->num) {
 		return FAILURE;
 	}
+
+	/* Deal with options for command cursor */
+	if (cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) {
+		cmd_options.flag_cmd_cursor_as_int64 = 1;
+	}
+
+	/* Init and convert */
 	MAKE_STD_ZVAL(cursor->current);
 	array_init(cursor->current);
 	cursor->buf.pos = bson_to_zval(
 		(char*)cursor->buf.pos,
 		Z_ARRVAL_P(cursor->current),
-		NULL
+		&cmd_options
 		TSRMLS_CC
 	);
 
