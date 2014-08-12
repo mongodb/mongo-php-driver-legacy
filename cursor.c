@@ -360,9 +360,11 @@ PHP_METHOD(MongoCursor, getNext)
 			return;
 		}
 		cursor->started_iterating = 1;
+		php_mongocursor_load_current_element(cursor TSRMLS_CC);
+	} else {
+		php_mongocursor_advance(cursor TSRMLS_CC);
 	}
 
-	php_mongocursor_advance(cursor TSRMLS_CC);
 	if (!php_mongocursor_is_valid(cursor)) {
 		RETURN_NULL();
 	}
@@ -1006,9 +1008,11 @@ PHP_METHOD(MongoCursor, next)
 			return;
 		}
 		cursor->started_iterating = 1;
+		php_mongocursor_load_current_element(cursor TSRMLS_CC);
+	} else {
+		php_mongocursor_advance(cursor TSRMLS_CC);
 	}
 
-	php_mongocursor_advance(cursor TSRMLS_CC);
 	if (!php_mongocursor_is_valid(cursor)) {
 		return;
 	}
