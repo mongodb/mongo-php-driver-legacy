@@ -334,6 +334,10 @@ int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 			php_mongo_cursor_throw(mongo_ce_ConnectionException, cursor->connection, 12 TSRMLS_CC, "the connection has been terminated, and this cursor is dead");
 			return FAILURE;
 		}
+		/* Limit reached */
+		if (cursor->at >= cursor->limit) {
+			return FAILURE;
+		}
 		if (!php_mongo_get_more(cursor TSRMLS_CC)) {
 			cursor->cursor_id = 0;
 			return FAILURE;
