@@ -47,14 +47,17 @@ No timeout changes for %s:%d;-;.;%d
 Connected
 
 Dropping collection
+Initializing cursor timeout to 0 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 
 Executing find() with default timeout
+Initializing cursor timeout to 0 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 
 Executing find() with MongoCursor::timeout(): 4321
+Initializing cursor timeout to 0 (from connection options)
 Setting the stream timeout to 4.321000
 Stream timeout will be reverted to default_socket_timeout (20)
 Now setting stream timeout back to 20.000000

@@ -63,20 +63,24 @@ Now setting stream timeout back to -1.000000
 Connected
 
 Dropping collection
+Initializing cursor timeout to -1 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 
 Executing find() with default timeout
+Initializing cursor timeout to -1 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 
 Executing find() with MongoCursor::timeout(): -2
+Initializing cursor timeout to -1 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 
 Executing find() with MongoCursor::$timeout: -3
 
 %s: The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead in %s on line %d
+Initializing cursor timeout to -3 (from deprecated static property)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 ===DONE===

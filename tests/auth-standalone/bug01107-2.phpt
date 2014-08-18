@@ -58,6 +58,7 @@ Now setting stream timeout back to 30.000000
 Setting the stream timeout to 60.000000
 Now setting stream timeout back to 30.000000
 Dummy query
+Initializing cursor timeout to 30000 (from connection options)
 No timeout changes for %s:%d;-;%s;%d
 No timeout changes for %s:%d;-;%s;%d
 I'm alive
