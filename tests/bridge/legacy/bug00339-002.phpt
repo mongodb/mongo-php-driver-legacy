@@ -30,6 +30,9 @@ try {
 ?>
 ===DONE===
 --EXPECTF--
+%s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %s on line %d
+
+%s: MongoCollection::insert(): The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead in %s on line %d
 string(27) "MongoCursorTimeoutException"
 string(%d) "%s:%d: Timed out waiting for header data"
 int(80)
@@ -42,6 +45,8 @@ array(2) {
     string(24) "%s"
   }
 }
+
+%s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %s on line %d
 array(2) {
   ["_id"]=>
   object(MongoId)#%d (1) {
