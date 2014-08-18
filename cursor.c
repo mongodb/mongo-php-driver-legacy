@@ -196,12 +196,12 @@ PHP_METHOD(MongoCursor, __construct)
 	/* The value hasn't been modified from what we registered it as originally */
 	if (Z_LVAL_P(timeout) == PHP_MONGO_STATIC_CURSOR_TIMEOUT_NOT_SET_INITIALIZER) {
 		cursor->timeout = link->servers->options.socketTimeoutMS;
-		mongo_manager_log(link->manager, MLOG_CON, MLOG_FINE, "Using %d from default with", cursor->timeout);
+		mongo_manager_log(link->manager, MLOG_CON, MLOG_FINE, "Initializing cursor timeout to %d (from connection options)", cursor->timeout);
 	} else {
 		cursor->timeout = Z_LVAL_P(timeout);
 		/* The value was modified, bad user, bad user! Tell him its deprecated */
 		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead");
-		mongo_manager_log(link->manager, MLOG_CON, MLOG_FINE, "Using %d from deprecated with", cursor->timeout);
+		mongo_manager_log(link->manager, MLOG_CON, MLOG_FINE, "Initializing cursor timeout to %d (from deprecated static property)", cursor->timeout);
 	}
 
 

@@ -17,15 +17,17 @@ $host = MongoShellServer::getStandaloneInfo();
 $dsn = "mongodb://$host/";
 $mc = new MongoClient($dsn);
 echo "Connected\n";
+
 $db = $mc->selectDb(dbname());
 $collection = $mc->selectCollection(dbname(), collname(__FILE__));
 $collection->drop();
+echo "Dropped\n";
 
 $cursor = $collection->findOne();
 echo "findOne done\n";
-$cursor = $collection->find();
 
 echo "\n\nTimeout 20\n";
+$cursor = $collection->find();
 $cursor->timeout(20);
 iterator_to_array($cursor);
 
@@ -63,14 +65,18 @@ Now setting stream timeout back to 30.000000
 Setting the stream timeout to 60.000000
 Now setting stream timeout back to 30.000000
 Connected
+Initializing cursor timeout to 30000 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
+Dropped
+Initializing cursor timeout to 30000 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 findOne done
 
 
 Timeout 20
+Initializing cursor timeout to 30000 (from connection options)
 Setting the stream timeout to 0.020000
 Now setting stream timeout back to 30.000000
 Setting the stream timeout to 0.020000
@@ -80,6 +86,7 @@ Now setting stream timeout back to 30.000000
 Timeout 43
 
 %s: The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead in %s on line %d
+Initializing cursor timeout to 43 (from deprecated static property)
 Setting the stream timeout to 0.043000
 Now setting stream timeout back to 30.000000
 Setting the stream timeout to 0.043000
@@ -89,6 +96,7 @@ Now setting stream timeout back to 30.000000
 Timeout -1
 
 %s: The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead in %s on line %d
+Initializing cursor timeout to 43 (from deprecated static property)
 Setting the stream timeout to -1.000000
 Now setting stream timeout back to 30.000000
 Setting the stream timeout to -1.000000
@@ -98,6 +106,7 @@ Now setting stream timeout back to 30.000000
 Timeout 42
 
 %s: The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead in %s on line %d
+Initializing cursor timeout to 43 (from deprecated static property)
 Setting the stream timeout to 0.042000
 Now setting stream timeout back to 30.000000
 Setting the stream timeout to 0.042000
