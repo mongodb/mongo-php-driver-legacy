@@ -1,7 +1,8 @@
 --TEST--
-Test for PHP-798: socketTimeoutMS
+Test for PHP-798: socketTimeoutMS (streams)
 --SKIPIF--
 <?php require_once "tests/utils/bridge.inc";?>
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
