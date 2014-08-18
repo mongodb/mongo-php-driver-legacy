@@ -3,6 +3,7 @@ Test for PHP-1065: Mongo driver is crashing during getmore
 --SKIPIF--
 <?php $needs = "2.6.0"; $needsOp = "ge"; ?>
 <?php require_once "tests/utils/standalone.inc" ?>
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 --FILE--
 <?php
 
