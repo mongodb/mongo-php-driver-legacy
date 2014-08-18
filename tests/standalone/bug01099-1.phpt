@@ -17,15 +17,17 @@ $host = MongoShellServer::getStandaloneInfo();
 $dsn = "mongodb://$host/?socketTimeoutMS=-1&connectTimeoutMS=-1";
 $mc = new MongoClient($dsn);
 echo "Connected\n";
+
 $db = $mc->selectDb(dbname());
 $collection = $mc->selectCollection(dbname(), collname(__FILE__));
 $collection->drop();
+echo "Dropped\n";
 
 $cursor = $collection->findOne();
 echo "findOne done\n";
-$cursor = $collection->find();
 
 echo "\n\nTimeout 20\n";
+$cursor = $collection->find();
 $cursor->timeout(20);
 iterator_to_array($cursor);
 
@@ -52,14 +54,18 @@ No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 Connected
+Initializing cursor timeout to -1 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
+Dropped
+Initializing cursor timeout to -1 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 findOne done
 
 
 Timeout 20
+Initializing cursor timeout to -1 (from connection options)
 Setting the stream timeout to 0.020000
 Now setting stream timeout back to -1.000000
 Setting the stream timeout to 0.020000
@@ -69,6 +75,7 @@ Now setting stream timeout back to -1.000000
 Timeout 42
 
 %s: The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead in %s on line %d
+Initializing cursor timeout to 42 (from deprecated static property)
 Setting the stream timeout to 0.042000
 Now setting stream timeout back to -1.000000
 Setting the stream timeout to 0.042000
@@ -78,6 +85,7 @@ Now setting stream timeout back to -1.000000
 Timeout -1
 
 %s: The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead in %s on line %d
+Initializing cursor timeout to 42 (from deprecated static property)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 ===DONE===

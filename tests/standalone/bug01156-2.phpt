@@ -54,6 +54,7 @@ No timeout changes for %s:%d;-;.;%d
 Connected
 
 Dropping collection
+Initializing cursor timeout to 0 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 
@@ -62,6 +63,7 @@ No timeout changes for %s:%d;-;.;%d
 No timeout changes for %s:%d;-;.;%d
 
 Executing find() with 4-second sleep and no timeout
+Initializing cursor timeout to 0 (from connection options)
 Setting the stream timeout to -1.000000
 Stream timeout will be reverted to default_socket_timeout (1)
 Now setting stream timeout back to 1.000000
@@ -70,6 +72,7 @@ Stream timeout will be reverted to default_socket_timeout (1)
 Now setting stream timeout back to 1.000000
 
 Executing find() with 4-second sleep and default timeout
+Initializing cursor timeout to 0 (from connection options)
 No timeout changes for %s:%d;-;.;%d
 find() timed out as expected
 ===DONE===
