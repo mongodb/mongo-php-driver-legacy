@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-522: Setting per-insert options. (no streams)
 --SKIPIF--
+<?php $needs = "2.5.5"; $needsOp = "lt"; ?>
 <?php if (MONGO_STREAMS) { echo "skip This test requires streams support to be disabled"; } ?>
 <?php require_once "tests/utils/replicaset.inc";?>
 --FILE--
@@ -64,6 +65,7 @@ echo "-----\n";
 --EXPECTF--
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
+MongoCollection::insert(): The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead
 IO      FINE: append_getlasterror: added w=4
 IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: append_getlasterror: added fsync=1
@@ -73,6 +75,7 @@ IO      FINE: getting cursor header
 -----
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
+MongoCollection::insert(): The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead
 IO      FINE: append_getlasterror: added w=4
 IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: append_getlasterror: added fsync=1
@@ -80,15 +83,19 @@ IO      FINE: getting reply
 IO      FINE: getting cursor header
 %s:%d: Timed out waiting for header data
 -----
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
+MongoCollection::insert(): The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead
 IO      FINE: getting reply
 IO      FINE: getting cursor header
 IO      FINE: getting cursor body
 float(1)
 -----
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
+MongoCollection::insert(): The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead
 IO      FINE: append_getlasterror: added w=5
 IO      FINE: append_getlasterror: added wtimeout=10000 (from collection property)
 IO      FINE: append_getlasterror: added fsync=1
@@ -96,8 +103,10 @@ IO      FINE: getting reply
 IO      FINE: getting cursor header
 %s:%d: Timed out waiting for header data
 -----
+MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead
 IO      FINE: is_gle_op: yes
 IO      FINE: append_getlasterror
+MongoCollection::insert(): The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead
 IO      FINE: append_getlasterror: added w='allDCs'
 IO      FINE: append_getlasterror: added wtimeout=4500 (from collection property)
 IO      FINE: getting reply
