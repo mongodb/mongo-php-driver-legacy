@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-1156: Negative values for timeouts should block indefinitely (streams)
 --SKIPIF--
+<?php $needs = "2.5.5"; ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 <?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>

@@ -2,6 +2,7 @@
 MongoCollection::aggregateCursor() with different initial and getmore batch size
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 --FILE--
 <?php
 require "tests/utils/server.inc";
