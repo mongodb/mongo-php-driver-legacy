@@ -539,6 +539,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 	}
 #endif
 
+#if MONGO_PHP_STREAMS
 	{
 		int i = 0;
 		zval **zcontext;
@@ -562,6 +563,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 			}
 		}
 	}
+#endif
 
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);

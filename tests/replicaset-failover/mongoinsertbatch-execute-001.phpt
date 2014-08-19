@@ -2,6 +2,7 @@
 MongoInsertBatch::execute() during failover
 --SKIPIF--
 <?php $needs = "2.5.5"; ?>
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php if ( ! class_exists('MongoWriteBatch')) { exit('skip This test requires MongoWriteBatch classes'); } ?>
 <?php require_once "tests/utils/replicaset-failover.inc" ?>
 --FILE--

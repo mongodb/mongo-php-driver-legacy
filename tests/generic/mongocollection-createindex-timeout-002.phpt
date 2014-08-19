@@ -1,7 +1,8 @@
 --TEST--
-MongoCollection::createIndex() options
+MongoCollection::createIndex() options (non-streams)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
+<?php if (MONGO_STREAMS) { echo "skip This test requires non-stream connections"; } ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
@@ -67,8 +68,8 @@ showIndexes($d->system->indexes->find( array('ns' => $ns) ));
 --EXPECTF--
 SETUP
 DONE
-80: %s:%d: Read timed out after reading 0 bytes, waited for 0.001000 seconds
-80: %s:%d: Read timed out after reading 0 bytes, waited for 0.001000 seconds
+%s:%d: Timed out waiting for header data
+%s:%d: Timed out waiting for header data
 Indexes:
  - _id_: {"_id":1}
  - index_1_fieldA_1: {"index":1,"fieldA":1}

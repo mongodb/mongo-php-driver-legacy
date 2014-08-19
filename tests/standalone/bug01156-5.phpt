@@ -8,6 +8,7 @@ run-tests.php, since the query in this test blocks for 61 seconds.
 <?php require_once "tests/utils/standalone.inc" ?>
 <?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
 <?php if (MONGO_STREAMS) { echo "skip This test requires non-stream connections"; } ?>
+skip Manual test
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

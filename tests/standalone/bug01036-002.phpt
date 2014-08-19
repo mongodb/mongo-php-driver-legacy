@@ -1,7 +1,8 @@
 --TEST--
-Test for PHP-1036: Segmentation Fault when querying large collection and the working set is not loaded
+Test for PHP-1036: Segmentation Fault when querying large collection and the working set is not loaded (non-streams)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
+<?php if (MONGO_STREAMS) { echo "skip This test requires non-stream connections"; } ?>
 <?php
 try {
     $host = MongoShellServer::getStandaloneInfo();
@@ -44,6 +45,6 @@ echo "I'm alive!\n";
 ===DONE===
 <?php exit(0); ?>
 --EXPECTF--
-%s:%d: Read timed out after reading %d bytes, waited for 0.%d seconds
+%s:%d: Timed out waiting for header data
 I'm alive!
 ===DONE===

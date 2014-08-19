@@ -1,6 +1,7 @@
 --TEST--
 Test for MongoLog
 --SKIPIF--
+<?php $needs = "2.5.5" ?>
 <?php if (MONGO_STREAMS) { echo "skip This test requires streams support disabled"; } ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
@@ -21,6 +22,7 @@ MongoLog::setModule(0);
 MongoLog::setLevel(0);
 ?>
 --EXPECTF--
+%s(): The Mongo class is deprecated, please use the MongoClient class
 PARSE   INFO: Parsing mongodb://%s:%d
 PARSE   INFO: - Found node: %s:%d
 PARSE   INFO: - Connection type: STANDALONE
@@ -29,14 +31,25 @@ CON     INFO: connection_create: creating new connection for %s:%d
 CON     INFO: ismaster: start
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: %d
+CON     FINE: ismaster: setting minWireVersion to 0
+CON     FINE: ismaster: setting maxWireVersion to 2
 CON     FINE: ismaster: setting maxBsonObjectSize to 16777216
-CON     FINE: ismaster: %s maxMessageSizeBytes%s
+CON     FINE: ismaster: setting maxMessageSizeBytes to 48000000
+CON     FINE: ismaster: setting maxWriteBatchSize to 1000
+CON     INFO: ismaster: set name: (null), ismaster: 1, secondary: 0, is_arbiter: 0
+CON     INFO: ismaster: last ran at %d
+CON     INFO: get_server_version: start
+CON     FINE: send_packet: read from header: 36
+CON     FINE: send_packet: data_size: %d
+CON     INFO: get_server_version: server version: %s
 CON     INFO: is_ping: pinging %s:%d;-;.;%d
 CON     FINE: send_packet: read from header: 36
 CON     FINE: send_packet: data_size: 17
 CON     INFO: is_ping: last pinged at %d; time: %dms
+CON     FINE: ismaster: skipping: last ran at %d, now: %d, time left: %d
 REPLSET FINE: finding candidate servers
 REPLSET FINE: - all servers
+REPLSET FINE: - collect any
 REPLSET FINE: filter_connections: adding connections:
 REPLSET FINE: - connection: type: STANDALONE, socket: %d, ping: %d, hash: %s:%d;-;.;%d
 REPLSET FINE: filter_connections: done

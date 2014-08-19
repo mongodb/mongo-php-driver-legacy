@@ -2,6 +2,7 @@
 MongoCursor::batchSize() after iteration start
 --SKIPIF--
 <?php require "tests/utils/standalone.inc"; ?>
+<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 --FILE--
 <?php
 require "tests/utils/server.inc";
