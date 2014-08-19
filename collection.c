@@ -66,6 +66,20 @@ static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
 	} \
 } while(0);
 
+static int is_valid_collectionname(char *colname, int colname_len TSRMLS_DC)
+{
+	if (
+		colname_len == 0 ||
+		/* strchr(colname, '$') != 0 || — we can not exclude this as we need it to run commands */
+		memchr(colname, '\0', colname_len) != 0
+	) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "invalid collection name '%s'", colname);
+		return 0;
+	}
+	return 1;
+}
+
+
 /* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
    Initializes a new MongoCollection */
 PHP_METHOD(MongoCollection, __construct)
@@ -83,11 +97,7 @@ PHP_METHOD(MongoCollection, __construct)
 	}
 
 	/* check for empty and invalid collection names */
-	if (
-		name_len == 0 ||
-		memchr(name_str, '\0', name_len) != 0
-	) {
-		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
+	if (!is_valid_collectionname(name_str, name_len TSRMLS_CC)) {
 		return;
 	}
 

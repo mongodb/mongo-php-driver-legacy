@@ -34,8 +34,8 @@ try {
 ?>
 --EXPECTF--
 int(2)
-string(39) "MongoDB::__construct(): invalid name fo"
+string(28) "invalid collection name 'fo'"
 int(2)
-string(39) "MongoDB::__construct(): invalid name fo"
+string(28) "invalid collection name 'fo'"
 int(2)
-string(39) "MongoDB::__construct(): invalid name fo"
+string(28) "invalid collection name 'fo'"
