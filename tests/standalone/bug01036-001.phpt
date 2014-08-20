@@ -2,7 +2,6 @@
 Test for PHP-1036: Segmentation Fault when querying large collection and the working set is not loaded (streams)
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php
 try {
     $host = MongoShellServer::getStandaloneInfo();

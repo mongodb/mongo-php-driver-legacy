@@ -30,7 +30,6 @@
 #include "collection.h"
 #include "parse.h"
 #include "read_preference.h"
-#include "io.h"
 #include "contrib/strndup.h"
 
 /* Forwards declarations */
@@ -766,14 +765,14 @@ mongo_con_manager *mongo_init(void)
 	tmp->ping_interval = MONGO_MANAGER_DEFAULT_PING_INTERVAL;
 	tmp->ismaster_interval = MONGO_MANAGER_DEFAULT_MASTER_INTERVAL;
 
-	tmp->connect               = mongo_connection_connect;
-	tmp->recv_header           = mongo_io_recv_header;
-	tmp->recv_data             = mongo_io_recv_data;
-	tmp->send                  = mongo_io_send;
-	tmp->close                 = mongo_connection_close;
-	tmp->forget                = mongo_connection_forget;
-	tmp->authenticate          = mongo_connection_authenticate;
-	tmp->supports_wire_version = mongo_mcon_supports_wire_version;
+	tmp->connect               = NULL;
+	tmp->recv_header           = NULL;
+	tmp->recv_data             = NULL;
+	tmp->send                  = NULL;
+	tmp->close                 = NULL;
+	tmp->forget                = NULL;
+	tmp->authenticate          = NULL;
+	tmp->supports_wire_version = NULL;
 
 	return tmp;
 }

@@ -520,26 +520,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 		}
 	}
 
-#if !MONGO_PHP_STREAMS
-	if (link->servers->options.ssl) {
-		zend_throw_exception(mongo_ce_ConnectionException, "SSL support is only available when compiled against PHP Streams", 26 TSRMLS_CC);
-		return;
-	}
-	if (link->servers->server[0]->mechanism == MONGO_AUTH_MECHANISM_GSSAPI) {
-		zend_throw_exception(mongo_ce_ConnectionException, "GSSAPI authentication mechanism is only available when compiled against PHP Streams", 28 TSRMLS_CC);
-		return;
-	}
-	if (link->servers->server[0]->mechanism == MONGO_AUTH_MECHANISM_PLAIN) {
-		zend_throw_exception(mongo_ce_ConnectionException, "Plain authentication mechanism is only available when compiled against PHP Streams", 29 TSRMLS_CC);
-		return;
-	}
-	if (zdoptions) {
-		zend_throw_exception(mongo_ce_ConnectionException, "Driver options are only available when compiled against PHP Streams", 27 TSRMLS_CC);
-		return;
-	}
-#endif
 
-#if MONGO_PHP_STREAMS
 	{
 		int i = 0;
 		zval **zcontext;
@@ -563,8 +544,6 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 			}
 		}
 	}
-#endif
-
 
 	slave_okay = zend_read_static_property(mongo_ce_Cursor, "slaveOkay", strlen("slaveOkay"), NOISY TSRMLS_CC);
 	if (Z_TYPE_P(slave_okay) != IS_NULL) {

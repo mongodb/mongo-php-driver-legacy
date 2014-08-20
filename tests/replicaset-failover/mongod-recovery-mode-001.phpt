@@ -1,7 +1,6 @@
 --TEST--
 Test for PHP-751: When a secondary goes into recovery mode, we should disconnect from it
 --SKIPIF--
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/replicaset-failover.inc" ?>
 --FILE--
 <?php

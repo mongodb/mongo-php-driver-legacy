@@ -1,7 +1,6 @@
 --TEST--
 Test for MongoLog (connection only)
 --SKIPIF--
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require "tests/utils/replicaset.inc"; ?>
 --FILE--
 <?php

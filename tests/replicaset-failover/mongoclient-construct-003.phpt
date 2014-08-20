@@ -1,7 +1,6 @@
 --TEST--
 MongoClient::__construct() during failover (3)
 --SKIPIF--
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/replicaset-failover.inc" ?>
 --FILE--
 <?php

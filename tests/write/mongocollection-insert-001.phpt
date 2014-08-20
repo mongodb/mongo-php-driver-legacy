@@ -2,7 +2,6 @@
 MongoCollection->insert() #001
 --SKIPIF--
 <?php $needs = "2.5.4"; ?>
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php

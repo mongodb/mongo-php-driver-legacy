@@ -19,7 +19,6 @@
 #include "parse.h"
 #include "manager.h"
 #include "connections.h"
-#include "io.h"
 #include "str.h"
 #include "contrib/strndup.h"
 #include "bson_helpers.h"
@@ -36,224 +35,11 @@
 
 #define MONGO_REPLY_FLAG_QUERY_FAILURE 0x02
 
-static void mongo_close_socket(int socket, int why);
-
 /* Helper functions */
 int mongo_connection_get_reqid(mongo_connection *con)
 {
 	con->last_reqid++;
 	return con->last_reqid;
-}
-
-static int mongo_util_connect__sockaddr(struct sockaddr *sa, int family, char *host, int port, char **errmsg)
-{
-#ifndef WIN32
-	if (family == AF_UNIX) {
-		struct sockaddr_un* su = (struct sockaddr_un*)(sa);
-		su->sun_family = AF_UNIX;
-		strncpy(su->sun_path, host, sizeof(su->sun_path));
-	} else {
-#endif
-		struct hostent *hostinfo;
-		struct sockaddr_in* si = (struct sockaddr_in*)(sa);
-
-		si->sin_family = AF_INET;
-		si->sin_port = htons(port);
-		hostinfo = (struct hostent*)gethostbyname(host);
-
-		if (hostinfo == NULL) {
-			*errmsg = malloc(256);
-			snprintf(*errmsg, 256, "Couldn't get host info for %s", host);
-			return 0;
-		}
-
-#ifndef WIN32
-		si->sin_addr = *((struct in_addr*)hostinfo->h_addr);
-	}
-#else
-	si->sin_addr.s_addr = ((struct in_addr*)(hostinfo->h_addr))->s_addr;
-#endif
-
-	return 1;
-}
-
-/* This function does the actual connecting The results of this function are
- * stored in mongo_connection->socket, which is a void* to be able to store
- * various different backends (f.e. the PHP io_streams stores a php_stream*)
- *
- * Returns an integer (masquerading as a void*) on success, NULL on failure. */
-void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
-{
-	struct sockaddr*   sa;
-	struct sockaddr_in si;
-	socklen_t          sn;
-	int                family;
-	struct timeval     tval;
-	int                connected;
-	int                status;
-	int                tmp_socket;
-
-#ifdef WIN32
-	WORD       version;
-	WSADATA    wsaData;
-	int        size, error;
-	u_long     no = 0;
-	const char yes = 1;
-#else
-	struct sockaddr_un su;
-	uint               size;
-	int                yes = 1;
-#endif
-
-	*error_message = NULL;
-
-#ifdef WIN32
-	family = AF_INET;
-	sa = (struct sockaddr*)(&si);
-	sn = sizeof(si);
-
-	version = MAKEWORD(2,2);
-	error = WSAStartup(version, &wsaData);
-
-	if (error != 0) {
-		return NULL;
-	}
-
-	/* create socket */
-	tmp_socket = socket(family, SOCK_STREAM, 0);
-	if (tmp_socket == INVALID_SOCKET) {
-		*error_message = strdup(strerror(errno));
-		return NULL;
-	}
-
-#else
-	/* domain socket */
-	if (server->port == 0) {
-		family = AF_UNIX;
-		sa = (struct sockaddr*)(&su);
-		sn = sizeof(su);
-	} else {
-		family = AF_INET;
-		sa = (struct sockaddr*)(&si);
-		sn = sizeof(si);
-	}
-
-	/* create socket */
-	if ((tmp_socket = socket(family, SOCK_STREAM, 0)) == -1) {
-		*error_message = strdup(strerror(errno));
-		return NULL;
-	}
-#endif
-
-	/* get addresses */
-	if (mongo_util_connect__sockaddr(sa, family, server->host, server->port, error_message) == 0) {
-		goto error;
-	}
-
-	setsockopt(tmp_socket, SOL_SOCKET, SO_KEEPALIVE, &yes, INT_32);
-	setsockopt(tmp_socket, IPPROTO_TCP, TCP_NODELAY, &yes, INT_32);
-
-#ifdef WIN32
-	ioctlsocket(tmp_socket, FIONBIO, (u_long*)&yes);
-#else
-	fcntl(tmp_socket, F_SETFL, FLAGS|O_NONBLOCK);
-#endif
-
-	/* connect */
-	status = connect(tmp_socket, sa, sn);
-	if (status < 0) {
-#ifdef WIN32
-		errno = WSAGetLastError();
-		if (errno != WSAEINPROGRESS && errno != WSAEWOULDBLOCK) {
-#else
-		if (errno != EINPROGRESS) {
-#endif
-			*error_message = strdup(strerror(errno));
-			goto error;
-		}
-
-		while (1) {
-			fd_set rset, wset, eset;
-
-			FD_ZERO(&rset);
-			FD_SET(tmp_socket, &rset);
-			FD_ZERO(&wset);
-			FD_SET(tmp_socket, &wset);
-			FD_ZERO(&eset);
-			FD_SET(tmp_socket, &eset);
-
-			/* Connection timeout behavior varies based on the following:
-			 * - Negative => no timeout (i.e. block indefinitely)
-			 * - Zero => not specified (use default)
-			 * - Positive => used specified timeout
-			 *
-			 * Timeout struct is reinitialized here in case select(2) alters its
-			 * argument. */
-			if (options->connectTimeoutMS >= 0) {
-				/* Default to MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT, which is
-				 * the same as default_socket_timeout's default value, to be
-				 * consistent with streams. We don't actually reference the INI
-				 * option here, since mcon has no PHP dependencies. */
-				tval.tv_sec = (options->connectTimeoutMS ? options->connectTimeoutMS : MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT) / 1000;
-				tval.tv_usec = ((options->connectTimeoutMS ? options->connectTimeoutMS : MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT) % 1000) * 1000;
-			}
-
-			if (select(tmp_socket+1, &rset, &wset, &eset, options->connectTimeoutMS >= 0 ? &tval : NULL) == 0) {
-				*error_message = malloc(256);
-				snprintf(*error_message, 256, "Timed out after %d ms", options->connectTimeoutMS);
-				goto error;
-			}
-
-			/* if our descriptor has an error */
-			if (FD_ISSET(tmp_socket, &eset)) {
-				*error_message = strdup(strerror(errno));
-				goto error;
-			}
-
-			/* if our descriptor is ready break out */
-			if (FD_ISSET(tmp_socket, &wset) || FD_ISSET(tmp_socket, &rset)) {
-				break;
-			}
-		}
-
-		size = sn;
-
-		connected = getpeername(tmp_socket, sa, &size);
-		if (connected == -1) {
-			*error_message = strdup(strerror(errno));
-			goto error;
-		}
-	}
-
-	/* reset flags */
-#ifdef WIN32
-	ioctlsocket(tmp_socket, FIONBIO, &no);
-#else
-	fcntl(tmp_socket, F_SETFL, FLAGS);
-#endif
-
-	return (void *) (long) tmp_socket;
-
-error:
-	mongo_close_socket(tmp_socket, MONGO_CLOSE_BROKEN);
-	return NULL;
-}
-
-static void mongo_close_socket(int socket, int why)
-{
-#ifdef WIN32
-	shutdown(socket, SD_BOTH);
-	closesocket(socket);
-	WSACleanup();
-#else
-	shutdown(socket, SHUT_RDWR);
-	close(socket);
-#endif
-}
-
-void mongo_connection_close(mongo_connection *con, int why)
-{
-	mongo_close_socket((int) (long) con->socket, why);
 }
 
 mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash, mongo_server_def *server_def, mongo_server_options *options, char **error_message)
@@ -345,11 +131,6 @@ void mongo_connection_destroy(mongo_con_manager *manager, void *data, int why)
 	} else {
 		mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "mongo_connection_destroy: The process pid (%d) for %s doesn't match the connection pid (%d).", current_pid, con->hash, connection_pid);
 	}
-}
-
-void mongo_connection_forget(mongo_con_manager *manager, mongo_connection *con)
-{
-	/* FIXME: Should we remove it from our connection registry ? */
 }
 
 #define MONGO_REPLY_HEADER_SIZE 36

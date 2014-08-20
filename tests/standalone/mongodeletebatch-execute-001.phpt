@@ -4,7 +4,6 @@ MongoDeleteBatch::execute() Deleting one and multiple documents in separate batc
 This tests batches consisting of single delete operations.
 --SKIPIF--
 <?php $needs = "2.5.5"; ?>
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php if ( ! class_exists('MongoWriteBatch')) { exit('skip This test requires MongoWriteBatch classes'); } ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--

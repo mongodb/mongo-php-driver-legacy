@@ -462,9 +462,7 @@ int php_mongo_api_insert_single(mongo_buffer *buf, char *ns, char *collection, z
 		return 0;
 	}
 
-#if MONGO_PHP_STREAMS
 	mongo_log_stream_cmd_insert(connection, document, write_options, message_length, request_id, ns TSRMLS_CC);
-#endif
 
 	return request_id;
 }
@@ -494,9 +492,7 @@ int php_mongo_api_delete_single(mongo_buffer *buf, char *ns, char *collection, p
 		return 0;
 	}
 
-#if MONGO_PHP_STREAMS
 	mongo_log_stream_cmd_delete(connection, delete_args, write_options, message_length, request_id, ns TSRMLS_CC);
-#endif
 
 	return request_id;
 }
@@ -526,9 +522,7 @@ int php_mongo_api_update_single(mongo_buffer *buf, char *ns, char *collection, p
 		return 0;
 	}
 
-#if MONGO_PHP_STREAMS
 	mongo_log_stream_cmd_update(connection, update_args, write_options, message_length, request_id, ns TSRMLS_CC);
-#endif
 
 	return request_id;
 }
@@ -569,9 +563,7 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 	dbreply.start          = MONGO_32(*(int*)(buf + INT_32*5 + INT_64));
 	dbreply.returned       = MONGO_32(*(int*)(buf + INT_32*6 + INT_64));
 
-#if MONGO_PHP_STREAMS
 	mongo_log_stream_write_reply(connection, &msg_header, &dbreply TSRMLS_CC);
-#endif
 
 	if (msg_header.length < REPLY_HEADER_SIZE) {
 		spprintf(&error_message, 256, "bad response length: %d, did the db assert?", msg_header.length);

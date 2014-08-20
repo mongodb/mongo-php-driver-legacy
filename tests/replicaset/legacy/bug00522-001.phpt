@@ -1,7 +1,6 @@
 --TEST--
 Test for PHP-522: Setting per-insert options. (streams)
 --SKIPIF--
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php $needs = "2.5.5"; $needsOp = "lt" ?>
 <?php require_once "tests/utils/replicaset.inc";?>
 --FILE--

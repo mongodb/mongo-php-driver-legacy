@@ -237,8 +237,6 @@
     <file role="src" name="collection.h"/>
     <file role="src" name="connections.c"/>
     <file role="src" name="connections.h"/>
-    <file role="src" name="io.c"/>
-    <file role="src" name="io.h"/>
     <file role="src" name="manager.c"/>
     <file role="src" name="manager.h"/>
     <file role="src" name="mini_bson.c"/>

@@ -270,9 +270,7 @@ void php_mongo_writebatch_execute(mongo_write_batch_object *intern, mongo_connec
 		array_init(batch_retval);
 		status = php_mongo_api_batch_execute(batch, &intern->write_options, connection, &link->servers->options, batch_retval TSRMLS_CC);
 
-#if MONGO_PHP_STREAMS
 		mongo_log_stream_write_batch(connection, &intern->write_options, batch->request_id, batch_retval TSRMLS_CC);
-#endif
 
 		if (status) {
 			zval_ptr_dtor(&batch_retval);
