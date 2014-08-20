@@ -163,10 +163,13 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
  */
 int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message)
 {
-	int num = 1, received = 0;
+	int num = 1, received = 0, socketTimeoutMS = options->socketTimeoutMS;
 	TSRMLS_FETCH();
 
-	int socketTimeoutMS = options->socketTimeoutMS ? options->socketTimeoutMS : FG(default_socket_timeout) * 1000;
+	/* Use default_socket_timeout INI setting if zero */
+	if (socketTimeoutMS == 0) {
+		socketTimeoutMS = FG(default_socket_timeout) * 1000;
+	}
 
 	/* Convert negative values to -1 second, which implies no timeout */
 	socketTimeoutMS = socketTimeoutMS < 0 ? -1000 : socketTimeoutMS;
