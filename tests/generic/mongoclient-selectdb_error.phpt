@@ -27,7 +27,7 @@ Warning: MongoClient::selectDB() expects exactly 1 parameter, 0 given in %smongo
 
 Warning: MongoClient::selectDB() expects parameter 1 to be string, array given in %smongoclient-selectdb_error.php on line %d
 0
-MongoDB::__construct(): invalid name .
+invalid database name ''.
 
 Warning: MongoClient::selectDB() expects parameter 1 to be string, object given in %smongoclient-selectdb_error.php on line %d
 0

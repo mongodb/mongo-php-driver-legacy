@@ -46,6 +46,21 @@ zend_class_entry *mongo_ce_DB = NULL;
 
 static void clear_exception(zval* return_value TSRMLS_DC);
 
+static int is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
+{
+	if (
+		dbname_len == 0 || dbname_len >= 64 ||
+		strchr(dbname, ' ') != 0 || strchr(dbname, '.') != 0 || strchr(dbname, '\\') != 0 ||
+		strchr(dbname, '/') != 0 || strchr(dbname, '"') != 0 ||
+		memchr(dbname, '\0', dbname_len) != 0
+	) {
+		zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "invalid database name '%s'", dbname);
+		return 0;
+	}
+	return 1;
+}
+
+
 static int php_mongo_command_supports_rp(zval *cmd)
 {
 	HashPosition pos;
@@ -117,13 +132,8 @@ int php_mongodb_init(zval *zdb, zval *zlink, char *name, int name_len TSRMLS_DC)
 	mongo_db *db;
 	mongoclient *link;
 
-	if (
-		name_len == 0 ||
-		memchr(name, ' ', name_len) != 0 || memchr(name, '.', name_len) != 0 || memchr(name, '\\', name_len) != 0 ||
-		memchr(name, '/', name_len) != 0 || memchr(name, '$', name_len) != 0 || memchr(name, '\0', name_len) != 0
-	) {
-		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name);
-		return FAILURE;
+	if (!is_valid_dbname(name, name_len TSRMLS_CC)) {
+		return;
 	}
 
 	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);
@@ -804,19 +814,6 @@ PHP_METHOD(MongoDB, command)
 	if (retval) {
 		RETVAL_ZVAL(retval, 0, 1);
 	}
-}
-
-static int is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
-{
-	if (
-		dbname_len == 0 ||
-		strchr(dbname, ' ') != 0 || strchr(dbname, '.') != 0 || strchr(dbname, '\\') != 0 ||
-		strchr(dbname, '/') != 0 || strchr(dbname, '$') != 0
-	) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", dbname);
-		return 0;
-	}
-	return 1;
 }
 
 /* Actually execute the command after doing a few extra checks.
