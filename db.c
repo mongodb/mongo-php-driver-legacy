@@ -140,7 +140,7 @@ int php_mongodb_init(zval *zdb, zval *zlink, char *name, int name_len TSRMLS_DC)
 
 	if (link == NULL || link->servers == NULL) {
 		zend_throw_exception(mongo_ce_Exception, "The MongoClient object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
-		return;
+		return FAILURE;
 	}
 
 	db = (mongo_db*) zend_object_store_get_object(zdb TSRMLS_CC);
