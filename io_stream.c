@@ -163,7 +163,8 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
  */
 int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *options, int timeout, void *data, int size, char **error_message)
 {
-	int num = 1, received = 0, socketTimeoutMS = options->socketTimeoutMS;
+	int num = 1, received = 0, revert_timeout = 0;
+	int socketTimeoutMS = options->socketTimeoutMS;
 	struct timeval rtimeout = {0, 0};
 	TSRMLS_FETCH();
 
@@ -184,6 +185,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 		rtimeout.tv_sec = timeout / 1000;
 		rtimeout.tv_usec = (timeout % 1000) * 1000;
 
+		revert_timeout = 1; /* We'll want to revert to the old timeout later */
 		php_stream_set_option(con->socket, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
 		mongo_manager_log(MonGlo(manager), MLOG_CON, MLOG_FINE, "Setting the stream timeout to %d.%06d", rtimeout.tv_sec, rtimeout.tv_usec);
 	} else {
@@ -254,7 +256,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, received, size TSRMLS_CC);
 
 	/* If the timeout was changed, revert to the previous value now */
-	if (timeout && timeout != socketTimeoutMS) {
+	if (revert_timeout) {
 		/* If socketTimeoutMS was never specified, revert to default_socket_timeout */
 		if (options->socketTimeoutMS == 0) {
 			mongo_manager_log(MonGlo(manager), MLOG_CON, MLOG_FINE, "Stream timeout will be reverted to default_socket_timeout (%d)", FG(default_socket_timeout));
