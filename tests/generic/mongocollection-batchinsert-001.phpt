@@ -1,7 +1,6 @@
 --TEST--
 MongoCollection::batchInsert() sets continueOnError flag
 --SKIPIF--
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php

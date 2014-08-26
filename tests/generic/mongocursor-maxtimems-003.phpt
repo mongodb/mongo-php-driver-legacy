@@ -2,7 +2,6 @@
 MongoCursor::maxTimeMS() times out during OP_GETMORE
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc" ?>
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 --FILE--
 <?php
 require_once "tests/utils/server.inc";

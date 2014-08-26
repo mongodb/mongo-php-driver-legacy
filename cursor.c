@@ -16,7 +16,6 @@
 #include <php.h>
 #include <zend_interfaces.h>
 #include <zend_exceptions.h>
-#include "mcon/io.h"
 #include "mcon/manager.h"
 #include "mcon/utils.h"
 #include "exceptions/duplicate_key_exception.h"
@@ -805,9 +804,8 @@ static int mongo_cursor__do_query(zval *this_ptr, zval *return_value TSRMLS_DC)
 		efree(buf.start);
 		return FAILURE;
 	}
-#if MONGO_PHP_STREAMS
+
 	mongo_log_stream_query(cursor->connection, cursor TSRMLS_CC);
-#endif
 
 	if (link->manager->send(cursor->connection, &link->servers->options, buf.start, buf.pos - buf.start, (char **) &error_message) == -1) {
 		if (error_message) {

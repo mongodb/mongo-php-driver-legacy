@@ -1,7 +1,6 @@
 --TEST--
 Test for PHP-296: MongoCollection->update() doesn't check option types
 --SKIPIF--
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 <?php if (version_compare(PHP_VERSION, "5.3.0", "lt")) { exit("skip doesn't work on 5.2"); }?>
 --FILE--

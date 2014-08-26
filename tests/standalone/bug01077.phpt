@@ -3,7 +3,6 @@ Test for PHP-1077: Option handling for createIndexes command
 --SKIPIF--
 <?php $needs = "2.6.0"; $needsOp = "ge"; ?>
 <?php require_once "tests/utils/standalone.inc" ?>
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 --FILE--
 <?php
 function log_query($server, $query, $info)

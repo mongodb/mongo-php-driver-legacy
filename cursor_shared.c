@@ -17,7 +17,6 @@
 #include <php.h>
 #include <zend_exceptions.h>
 #include <zend_interfaces.h>
-#include "mcon/io.h"
 #include "mcon/manager.h"
 #include "mcon/utils.h"
 
@@ -58,9 +57,8 @@ void php_mongo_kill_cursor(mongo_connection *con, int64_t cursor_id TSRMLS_DC)
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_WARN, "Killing unfinished cursor %ld", cursor_id);
 
 	php_mongo_write_kill_cursors(&buf, cursor_id, MONGO_DEFAULT_MAX_MESSAGE_SIZE TSRMLS_CC);
-#if MONGO_PHP_STREAMS
+
 	mongo_log_stream_killcursor(con, cursor_id TSRMLS_CC);
-#endif
 
 	if (MonGlo(manager)->send(con, NULL, buf.start, buf.pos - buf.start, (char**) &error_message) == -1) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't kill cursor %lld: %s", (long long int) cursor_id, error_message);
@@ -167,9 +165,7 @@ signed int php_mongo_get_cursor_header(mongo_connection *con, mongo_cursor *curs
 	cursor->start            = MONGO_32(*(int*)(buf + INT_32*5 + INT_64));
 	num_returned             = MONGO_32(*(int*)(buf + INT_32*6 + INT_64));
 
-#if MONGO_PHP_STREAMS
 	mongo_log_stream_response_header(con, cursor TSRMLS_CC);
-#endif
 
 	/* cursor->num is the total of the elements we've retrieved (elements
 	 * already iterated through + elements in db response but not yet iterated
@@ -342,9 +338,8 @@ int php_mongo_get_more(mongo_cursor *cursor TSRMLS_DC)
 		efree(buf.start);
 		return 0;
 	}
-#if MONGO_PHP_STREAMS
+
 	mongo_log_stream_getmore(cursor->connection, cursor TSRMLS_CC);
-#endif
 
 	PHP_MONGO_GET_MONGOCLIENT_FROM_CURSOR(cursor);
 

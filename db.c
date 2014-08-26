@@ -133,7 +133,7 @@ int php_mongodb_init(zval *zdb, zval *zlink, char *name, int name_len TSRMLS_DC)
 	mongoclient *link;
 
 	if (!is_valid_dbname(name, name_len TSRMLS_CC)) {
-		return;
+		return FAILURE;
 	}
 
 	link = (mongoclient*) zend_object_store_get_object(zlink TSRMLS_CC);

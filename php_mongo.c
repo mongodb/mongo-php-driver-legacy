@@ -51,9 +51,7 @@
 # include "config.h"
 #endif
 
-#if MONGO_PHP_STREAMS
 #include "api/wire_version.h"
-#endif
 
 #if HAVE_MONGO_SASL
 #include <sasl/sasl.h>
@@ -260,15 +258,10 @@ PHP_MINIT_FUNCTION(mongo)
 	}
 #endif
 
-#if MONGO_PHP_STREAMS
 	REGISTER_LONG_CONSTANT("MONGO_STREAMS", 1, CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_STREAMS", 1, CONST_PERSISTENT);
-#else
-	REGISTER_LONG_CONSTANT("MONGO_STREAMS", 0, CONST_PERSISTENT);
-	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_STREAMS", 0, CONST_PERSISTENT);
-#endif
 
-#if MONGO_PHP_STREAMS && HAVE_OPENSSL_EXT
+#if HAVE_OPENSSL_EXT
 	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_SSL", 1, CONST_PERSISTENT);
 #else
 	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_SSL", 0, CONST_PERSISTENT);
@@ -380,7 +373,6 @@ static PHP_GINIT_FUNCTION(mongo)
 	TSRMLS_SET_CTX(mongo_globals->manager->log_context);
 	mongo_globals->manager->log_function = php_mcon_log_wrapper;
 
-#if MONGO_PHP_STREAMS
 	mongo_globals->manager->connect               = php_mongo_io_stream_connect;
 	mongo_globals->manager->recv_header           = php_mongo_io_stream_read;
 	mongo_globals->manager->recv_data             = php_mongo_io_stream_read;
@@ -389,7 +381,6 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->manager->forget                = php_mongo_io_stream_forget;
 	mongo_globals->manager->authenticate          = php_mongo_io_stream_authenticate;
 	mongo_globals->manager->supports_wire_version = php_mongo_api_supports_wire_version;
-#endif
 }
 /* }}} */
 
@@ -435,16 +426,10 @@ PHP_MINFO_FUNCTION(mongo)
 
 	php_info_print_table_header(2, "MongoDB Support", "enabled");
 	php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
-#if MONGO_PHP_STREAMS
 	php_info_print_table_row(2, "Streams Support", "enabled");
-#else
-	php_info_print_table_row(2, "Streams Support", "disabled");
-#endif
 
-#if MONGO_PHP_STREAMS && HAVE_OPENSSL_EXT
+#if HAVE_OPENSSL_EXT
 	php_info_print_table_row(2, "SSL Support", "enabled");
-#else
-	php_info_print_table_row(2, "SSL Support", "disabled");
 #endif
 
 	php_info_print_table_colspan_header(2, "Supported Authentication Mechanisms");

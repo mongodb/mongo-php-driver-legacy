@@ -28,7 +28,6 @@
 #include "types/db_ref.h"
 #include "db.h"
 #include "mcon/manager.h"
-#include "mcon/io.h"
 #include "mcon/utils.h"
 #include "log_stream.h"
 #include "api/write.h"
@@ -536,9 +535,7 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 	response = php_mongo_write_query(buf, cursor, max_document_size, max_message_size TSRMLS_CC);
 	zval_ptr_dtor(&cmd_ns_z);
 
-#if MONGO_PHP_STREAMS
 	mongo_log_stream_query(connection, cursor TSRMLS_CC);
-#endif
 
 	if (FAILURE == response) {
 		zval_ptr_dtor(&cursor_z);
@@ -796,9 +793,7 @@ int mongo_collection_insert_opcode(mongo_con_manager *manager, mongo_connection 
 		return 0;
 	}
 
-#if MONGO_PHP_STREAMS
 	mongo_log_stream_insert(connection, document, write_options TSRMLS_CC);
-#endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
 	 * either set return_value or thrown an exception via do_gle_op(). */
@@ -1239,9 +1234,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 		return;
 	}
 
-#if MONGO_PHP_STREAMS
 	mongo_log_stream_batchinsert(connection, docs, options, bit_opts TSRMLS_CC);
-#endif
 
 	/* retval == -1 means a GLE response was received, so send_message() has
 	 * either set return_value or thrown an exception via do_gle_op(). */
@@ -1492,9 +1485,7 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 			return;
 		}
 
-#if MONGO_PHP_STREAMS
 		mongo_log_stream_update(connection, c->ns, criteria, newobj, z_write_options, bit_opts TSRMLS_CC);
-#endif
 
 		/* retval == -1 means a GLE response was received, so send_message() has
 		 * either set return_value or thrown an exception via do_gle_op(). */
@@ -1606,9 +1597,7 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 			zval_ptr_dtor(&z_write_options);
 			return;
 		}
-#if MONGO_PHP_STREAMS
 		mongo_log_stream_delete(connection, c->ns, criteria, z_write_options, bit_opts TSRMLS_CC);
-#endif
 
 		/* retval == -1 means a GLE response was received, so send_message() has
 		 * either set return_value or thrown an exception via do_gle_op(). */

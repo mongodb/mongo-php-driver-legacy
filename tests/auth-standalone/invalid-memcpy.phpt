@@ -1,7 +1,6 @@
 --TEST--
 CID-13261: sizeof() mismatch duplicating context
 --SKIPIF--
-<?php if (!MONGO_STREAMS) { echo "skip This test requires streams support"; } ?>
 <?php require_once "tests/utils/auth-standalone.inc" ?>
 --FILE--
 <?php
