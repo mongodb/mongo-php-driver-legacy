@@ -764,16 +764,17 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 
 	cursor->started_iterating = 1;
 
-	MONGO_METHOD(MongoCursor, getNext, return_value, cursor_z);
+	php_mongocursor_load_current_element(cursor TSRMLS_CC);
 
 	/* MongoCursor::getNext() threw an exception */
-	if (EG(exception) || (Z_TYPE_P(return_value) == IS_BOOL && Z_BVAL_P(return_value) == 0)) {
+	if (EG(exception) || (Z_TYPE_P(cursor->current) == IS_BOOL && Z_BVAL_P(cursor->current) == 0)) {
 		cursor->connection = NULL;
 		return;
 	}
 
 	/* Check if either the GLE command or the previous write operation failed */
-	php_mongo_trigger_error_on_gle(cursor->connection, return_value TSRMLS_CC);
+	php_mongo_trigger_error_on_gle(cursor->connection, cursor->current TSRMLS_CC);
+	ZVAL_ZVAL(return_value, cursor->current, 0, 1);
 
 	cursor->connection = NULL;
 	return;
