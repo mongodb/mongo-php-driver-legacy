@@ -82,7 +82,6 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
     }
 
     retval.initiate(cfg);
-    retval.awaitReplication();
 
     if (keyFile) {
         admindb = retval.getMaster().getDB("admin");
@@ -94,6 +93,7 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
 
         replTestAuth = retval;
     } else {
+        retval.awaitReplication();
         replTest = retval;
     }
 
