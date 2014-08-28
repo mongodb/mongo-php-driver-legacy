@@ -68,10 +68,10 @@ Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; null give
 67: %s:%d: %SUnknown index plugin 'invalidPlugin'%S
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; array given in %s on line %d
-67: %s:%d: bad index key pattern { array: [ 1 ] }%S
+67: %s:%d: %Sbad index key pattern { array: [ 1 ] }%S
 
 Warning: MongoCollection::ensureIndex(): Key orderings must be scalar; object given in %s on line %d
-67: %s:%d: bad index key pattern { object: {} }%S
+67: %s:%d: %Sbad index key pattern { object: {} }%S
 array(2) {
   ["key"]=>
   array(1) {
