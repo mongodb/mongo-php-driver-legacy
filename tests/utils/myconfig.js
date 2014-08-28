@@ -85,9 +85,13 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
     retval.awaitReplication();
 
     if (keyFile) {
-        retval.getMaster().getDB("admin").addUser(root.username, root.password);
-        retval.getMaster().getDB("admin").auth(root.username, root.password);
-        retval.getMaster().getDB("test").addUser(user.username, user.password);
+        admindb = retval.getMaster().getDB("admin");
+
+        makeAdminUser(admindb, root.username, root.password);
+        admindb.auth(root.username, root.password);
+
+        makeNormalUser(retval.getMaster().getDB("test"), user.username, user.password);
+
         replTestAuth = retval;
     } else {
         replTest = retval;
@@ -171,9 +175,13 @@ function initStandalone(port, auth, root, user) {
     }, "unable to connect to mongo program on port " + port, 600 * 1000);
 
     if (auth) {
-        retval.getDB("admin").addUser(root.username, root.password);
-        retval.getDB("admin").auth(root.username, root.password);
-        retval.getDB("test").addUser(user.username, user.password);
+        admindb = retval.getDB("admin");
+
+        makeAdminUser(admindb, root.username, root.password);
+        admindb.auth(root.username, root.password);
+
+        makeNormalUser(retval.getDB("test"), user.username, user.password);
+
         standaloneTestAuth = retval;
     } else {
         standaloneTest = retval;
@@ -469,7 +477,22 @@ function addReplicasetUser(loginUser, newUser) {
  */
 function _addUser(conn, loginUser, newUser) {
     conn.getDB(loginUser.db).auth(loginUser.username, loginUser.password);
-    return conn.getDB(newUser.db).addUser(newUser.username, newUser.password);
+    return makeNormalUser(conn.getDB(newUser.db), newUser.username, newUser.password);
+}
+
+function makeAdminUser(db, username, password) {
+	adminroles = [ { role: "readWrite",       db: "test" },
+	               "root", "clusterAdmin", "readWrite", "readAnyDatabase"
+	             ];
+	adminroles = [ "root" ];
+	return makeUser(db, username, password, adminroles);
+}
+function makeNormalUser(db, username, password) {
+	normalroles = [ "readWrite", "dbAdmin" ];
+	return makeUser(db, username, password, normalroles);
+}
+function makeUser(db, username, password, roles) {
+	return db.createUser({user: username, pwd: password, roles: roles})
 }
 
 /**
