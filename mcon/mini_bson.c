@@ -235,16 +235,16 @@ mcon_str *bson_create_saslstart_packet(mongo_connection *con, char *database, ch
 	return str;
 }
 
-mcon_str *bson_create_saslcontinue_packet(mongo_connection *con, int32_t conversation_id, char *payload, int payload_len)
+mcon_str *bson_create_saslcontinue_packet(mongo_connection *con, char *database, int32_t conversation_id, char *payload, int payload_len)
 {
 	struct mcon_str *str;
 	char  *ns;
 	int    hdr, length;
 
 	/* We use the $external database to construct the namespace */
-	length = 9 + 5 + 1;
+	length = strlen(database) + 5 + 1;
 	ns = malloc(length);
-	snprintf(ns, length, "$external.$cmd");
+	snprintf(ns, length, "%s.$cmd", database);
 	str = create_simple_header(con, ns);
 	free(ns);
 
