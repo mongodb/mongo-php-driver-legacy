@@ -492,7 +492,11 @@ function makeNormalUser(db, username, password) {
 	return makeUser(db, username, password, normalroles);
 }
 function makeUser(db, username, password, roles) {
-	return db.createUser({user: username, pwd: password, roles: roles})
+    try {
+        return db.createUser({user: username, pwd: password, roles: roles});
+    } catch(e) {
+        return db.addUser(username, password);
+    }
 }
 
 /**
