@@ -159,9 +159,18 @@ function initStandalone(port, auth, root, user) {
 
     if (auth) {
         opts.auth = "";
+        opts.setParameter = "authenticationMechanisms=MONGODB-CR,SCRAM-SHA-1,CRAM-MD5";
     }
 
-    var retval = startMongodTest(port, false, false, opts);
+    /* Try launching with all interesting mechanisms by default */
+    var retval;
+    try {
+        retval = startMongodTest(port, false, false, opts);
+    } catch(e) {
+        delete opts.setParameter;
+        retval = startMongodTest(port, false, false, opts);
+    }
+
     retval.port = port;
 
     assert.soon(function() {
