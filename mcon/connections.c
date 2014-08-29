@@ -636,6 +636,7 @@ char *mongo_authenticate_hash_user_password(char *username, char *password)
 
 	return hash;
 }
+
 /**
  * Authenticates a connection using MONGODB-CR
  *

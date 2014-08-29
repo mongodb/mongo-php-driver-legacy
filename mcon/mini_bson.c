@@ -207,7 +207,7 @@ mcon_str *bson_create_saslstart_packet(mongo_connection *con, char *database, ch
 	char  *ns;
 	int    hdr, length;
 
-	/* We use the $external database to construct the namespace */
+	/* We use the selected database to construct the namespace */
 	length = strlen(database) + 5 + 1;
 	ns = malloc(length);
 	snprintf(ns, length, "%s.$cmd", database);
@@ -241,7 +241,7 @@ mcon_str *bson_create_saslcontinue_packet(mongo_connection *con, char *database,
 	char  *ns;
 	int    hdr, length;
 
-	/* We use the $external database to construct the namespace */
+	/* We use the selected database to construct the namespace */
 	length = strlen(database) + 5 + 1;
 	ns = malloc(length);
 	snprintf(ns, length, "%s.$cmd", database);

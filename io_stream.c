@@ -422,6 +422,7 @@ int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mo
 	return 1;
 }
 
+/* Callback function used by SASL when requesting the password */
 static int sasl_interact_secret(sasl_conn_t *conn, mongo_server_def *server_def, int id, sasl_secret_t **psecret)
 {
 	switch (id) {
@@ -447,6 +448,8 @@ static int sasl_interact_secret(sasl_conn_t *conn, mongo_server_def *server_def,
 
 	return SASL_FAIL;
 }
+
+/* Callback function used by SASL when requesting the username/authname */
 static int sasl_interact_simple(mongo_server_def *server_def, int id, const char **result, unsigned *len)
 {
 	switch (id) {
@@ -537,7 +540,7 @@ int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connectio
 	switch(server_def->mechanism) {
 		case MONGO_AUTH_MECHANISM_MONGODB_CR:
 		case MONGO_AUTH_MECHANISM_MONGODB_X509:
-		/* Use the mcon implementation of MongoDB-CR (current default) and MongoDB-X509 */
+			/* Use the mcon implementation of MongoDB-CR (current default) and MongoDB-X509 */
 			return mongo_connection_authenticate(manager, con, options, server_def, error_message);
 
 #if HAVE_MONGO_SASL
