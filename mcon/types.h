@@ -209,6 +209,7 @@ typedef struct _mongo_read_preference
 #define MONGO_AUTH_MECHANISM_GSSAPI       2
 #define MONGO_AUTH_MECHANISM_PLAIN        3
 #define MONGO_AUTH_MECHANISM_MONGODB_X509 4
+#define MONGO_AUTH_MECHANISM_SCRAM_SHA1   5
 
 typedef struct _mongo_server_def
 {

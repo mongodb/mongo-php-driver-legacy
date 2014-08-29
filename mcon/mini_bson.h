@@ -25,7 +25,7 @@ mcon_str *bson_create_rs_status_packet(mongo_connection *con);
 mcon_str *bson_create_getnonce_packet(mongo_connection *con);
 mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *mechanism, char *database, char *username, char *nonce, char *key);
 mcon_str *bson_create_saslstart_packet(mongo_connection *con, char *database, char *mechanism, char *payload, int payload_len);
-mcon_str *bson_create_saslcontinue_packet(mongo_connection *con, int32_t conversation_id, char *payload, int payload_len);
+mcon_str *bson_create_saslcontinue_packet(mongo_connection *con, char *database, int32_t conversation_id, char *payload, int payload_len);
 
 char *bson_skip_field_name(char *data);
 int bson_find_field_as_array(char *buffer, char *field, char **data);

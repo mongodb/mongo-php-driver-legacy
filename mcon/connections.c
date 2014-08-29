@@ -621,6 +621,22 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	return retval;
 }
 
+char *mongo_authenticate_hash_user_password(char *username, char *password)
+{
+	char          *salted;
+	int            length;
+	char          *hash;
+
+	/* Calculate hash=md5(${username}:mongo:${password}) */
+	length = strlen(username) + 7 + strlen(password) + 1;
+	salted = malloc(length);
+	snprintf(salted, length, "%s:mongo:%s", username, password);
+	hash = mongo_util_md5_hex(salted, length - 1); /* -1 to chop off \0 */
+	free(salted);
+
+	return hash;
+}
+
 /**
  * Authenticates a connection using MONGODB-CR
  *
@@ -637,12 +653,7 @@ int mongo_connection_authenticate_mongodb_cr(mongo_con_manager *manager, mongo_c
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "authenticate: start");
 
-	/* Calculate hash=md5(${username}:mongo:${password}) */
-	length = strlen(username) + 7 + strlen(password) + 1;
-	salted = malloc(length);
-	snprintf(salted, length, "%s:mongo:%s", username, password);
-	hash = mongo_util_md5_hex(salted, length - 1); /* -1 to chop off \0 */
-	free(salted);
+	hash = mongo_authenticate_hash_user_password(username, password);
 	mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "authenticate: hash=md5(%s:mongo:%s) = %s", username, password, hash);
 
 	/* Calculate key=md5(${nonce}${username}${hash}) */
@@ -784,7 +795,8 @@ int mongo_connection_authenticate_saslcontinue(mongo_con_manager *manager, mongo
 
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_authenticate_saslcontinue: continuing SASL authentication to '%s'", con->hash);
 
-	packet = bson_create_saslcontinue_packet(con, conversation_id, payload, payload_len);
+	/*  GSSAPI=$external, all other use the actual dbname */
+	packet = bson_create_saslcontinue_packet(con, server_def->authdb, conversation_id, payload, payload_len);
 
 	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;

@@ -23,6 +23,7 @@
 #endif
 
 
+char *mongo_authenticate_hash_user_password(char *username, char *password);
 void mongo_connection_close(mongo_connection *con, int why);
 void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message);
 mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash, mongo_server_def *server_def, mongo_server_options *options, char **error_message);

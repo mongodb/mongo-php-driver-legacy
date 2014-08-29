@@ -335,9 +335,23 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 	char encoded_payload[4096];
 	unsigned int raw_payload_len, encoded_payload_len;
 	int result;
-	char *mechanism_list = "GSSAPI";
+	char *mechanism_list;
 	const char *mechanism_selected;
 	sasl_interact_t *client_interact=NULL;
+
+	/* Intentionally only send the mechanism we expect to authenticate with, rather then
+	 * list of all supported ones. This is because MongoDB doesn't support negotiating */
+	switch(server_def->mechanism) {
+		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
+			/* cyrus-sasl calls it just "SCRAM" */
+			mechanism_list = "SCRAM";
+			break;
+
+		case MONGO_AUTH_MECHANISM_GSSAPI:
+		default:
+			mechanism_list = "GSSAPI";
+
+	}
 
 	result = sasl_client_start(conn, mechanism_list, &client_interact, &raw_payload, &raw_payload_len, &mechanism_selected);
 	if (is_sasl_failure(conn, result, error_message)) {
@@ -349,14 +363,13 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 		return NULL;
 	}
 
-	mechanism_selected = "GSSAPI";
-
 	result = sasl_encode64(raw_payload, raw_payload_len, encoded_payload, sizeof(encoded_payload), &encoded_payload_len);
 	if (is_sasl_failure(conn, result, error_message)) {
 		return NULL;
 	}
 
-	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, (char *)mechanism_selected, encoded_payload, encoded_payload_len + 1, out_payload, out_payload_len, conversation_id, error_message)) {
+	/* We don't care for whatever was mechanism_selected, we carry on with mechanism_list as that contains the only mechanism we want to use */
+	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, mechanism_list, encoded_payload, encoded_payload_len + 1, out_payload, out_payload_len, conversation_id, error_message)) {
 		return NULL;
 	}
 
@@ -409,7 +422,35 @@ int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mo
 	return 1;
 }
 
-static int sasl_interact(mongo_server_def *server_def, int id, const char **result, unsigned *len)
+/* Callback function used by SASL when requesting the password */
+static int sasl_interact_secret(sasl_conn_t *conn, mongo_server_def *server_def, int id, sasl_secret_t **psecret)
+{
+	switch (id) {
+		case SASL_CB_PASS: {
+			char *password;
+			int len;
+
+			/* MongoDB uses the legacy MongoDB-CR hash as the SCRAM-SHA-1 password */
+			if (server_def->mechanism == MONGO_AUTH_MECHANISM_SCRAM_SHA1) {
+				password = mongo_authenticate_hash_user_password(server_def->username, server_def->password);
+			} else {
+				password = server_def->password;
+			}
+
+			len = strlen(password);
+			*psecret = malloc(sizeof(sasl_secret_t) + len);
+			(*psecret)->len = len;
+			memcpy((*psecret)->data, password, (*psecret)->len);
+
+			return SASL_OK;
+		}
+	}
+
+	return SASL_FAIL;
+}
+
+/* Callback function used by SASL when requesting the username/authname */
+static int sasl_interact_simple(mongo_server_def *server_def, int id, const char **result, unsigned *len)
 {
 	switch (id) {
 		case SASL_CB_AUTHNAME:
@@ -420,18 +461,14 @@ static int sasl_interact(mongo_server_def *server_def, int id, const char **resu
 			}
 			return SASL_OK;
 
-		case SASL_CB_PASS:
-			*result = server_def->password;
-			if (len) {
-				*len = server_def->password ? strlen(server_def->password) : 0;
-			}
-			return SASL_OK;
+		case SASL_CB_LANGUAGE: /* NOT SUPPORTED */
+			break;
 	}
 
 	return SASL_FAIL;
 }
 
-int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
+int php_mongo_io_authenticate_sasl(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
 {
 	int result;
 	char *initpayload;
@@ -439,9 +476,9 @@ int php_mongo_io_authenticate_gssapi(mongo_con_manager *manager, mongo_connectio
 	sasl_conn_t *conn;
 	int32_t conversation_id;
 	sasl_callback_t client_interact [] = {
-		{ SASL_CB_AUTHNAME, sasl_interact, server_def },
-		{ SASL_CB_USER, sasl_interact, server_def },
-		{ SASL_CB_PASS, sasl_interact, server_def },
+		{ SASL_CB_AUTHNAME, sasl_interact_simple, server_def },
+		{ SASL_CB_USER,     sasl_interact_simple, server_def },
+		{ SASL_CB_PASS,     sasl_interact_secret, server_def },
 		{ SASL_CB_LIST_END, NULL, NULL }
 	};
 
@@ -500,26 +537,29 @@ int php_mongo_io_authenticate_plain(mongo_con_manager *manager, mongo_connection
 
 int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
 {
-	/* Use the mcon implementation of MongoDB-CR (default) */
-	if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_CR) {
-		return mongo_connection_authenticate(manager, con, options, server_def, error_message);
-	}
-	/* Use the mcon implementation of MongoDB-X509 */
-	if (server_def->mechanism == MONGO_AUTH_MECHANISM_MONGODB_X509) {
-		return mongo_connection_authenticate(manager, con, options, server_def, error_message);
-	}
+	switch(server_def->mechanism) {
+		case MONGO_AUTH_MECHANISM_MONGODB_CR:
+		case MONGO_AUTH_MECHANISM_MONGODB_X509:
+			/* Use the mcon implementation of MongoDB-CR (current default) and MongoDB-X509 */
+			return mongo_connection_authenticate(manager, con, options, server_def, error_message);
 
 #if HAVE_MONGO_SASL
-	if (server_def->mechanism == MONGO_AUTH_MECHANISM_GSSAPI) {
-		return php_mongo_io_authenticate_gssapi(manager, con, options, server_def, error_message);
-	}
-	if (server_def->mechanism == MONGO_AUTH_MECHANISM_PLAIN) {
-		return php_mongo_io_authenticate_plain(manager, con, options, server_def, error_message);
-	}
-	*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR, MONGODB-X509, GSSAPI and PLAIN are supported by this build");
-#else
-	*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR and MONGODB-X509 are supported by this build");
+		case MONGO_AUTH_MECHANISM_GSSAPI:
+		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
+			return php_mongo_io_authenticate_sasl(manager, con, options, server_def, error_message);
+
+		case MONGO_AUTH_MECHANISM_PLAIN:
+			return php_mongo_io_authenticate_plain(manager, con, options, server_def, error_message);
+
 #endif
+
+		default:
+#if HAVE_MONGO_SASL
+			*error_message = strdup("Unknown authentication mechanism. Only SCRAM-SHA-1, MongoDB-CR, MONGODB-X509, GSSAPI and PLAIN are supported by this build");
+#else
+			*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR and MONGODB-X509 are supported by this build");
+#endif
+	}
 
 	return 0;
 }
