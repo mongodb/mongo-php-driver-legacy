@@ -27,7 +27,7 @@ var_dump($slave_col->findOne());
 ?>
 ===DONE===
 --EXPECTF--
-100
+100%S
 %s:%d: not master
 array(2) {
   ["_id"]=>
