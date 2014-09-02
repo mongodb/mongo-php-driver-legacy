@@ -19,6 +19,8 @@
 PHP_METHOD(MongoDate, __construct);
 PHP_METHOD(MongoDate, __toString);
 PHP_METHOD(MongoDate, __set_state);
+PHP_METHOD(MongoDate, toDateTime);
+
 void php_mongo_mongodate_populate(zval *mongocode_object, long sec, long usec TSRMLS_DC);
 void php_mongo_mongodate_make_now(long *sec, long *usec);
 
