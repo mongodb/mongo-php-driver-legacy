@@ -1,7 +1,7 @@
 --TEST--
+<?php $needs = "2.7.0"; $needsOp = "gt"; ?>
 MongoCollection::createIndex() options
 --SKIPIF--
-<?php $needs = "2.7.0"; $needsOp = "lt"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
@@ -43,9 +43,6 @@ function showIndexes($res)
 		if (array_key_exists( 'unique', $index ) && $index['unique'] == true ) {
 			echo "unique ";
 		}
-		if (array_key_exists( 'dropDups', $index ) && $index['dropDups'] == true ) {
-			echo "dropDups ";
-		}
 		if (array_key_exists( 'sparse', $index ) && $index['sparse'] == true ) {
 			echo "sparse ";
 		}
@@ -58,9 +55,6 @@ function showIndexes($res)
 
 createResults( $c->ensureIndex( array( "indexE1" => 1 ), array( 'unique' => 1 )) );
 createResults( $c->createIndex( array( "indexC1" => 1 ), array( 'unique' => 1 )) );
-
-createResults( $c->ensureIndex( array( "indexE2" => 1 ), array( 'dropDups' => 1 )) );
-createResults( $c->createIndex( array( "indexC2" => 1 ), array( 'dropDups' => 1 )) );
 
 createResults( $c->ensureIndex( array( "indexE3" => 1 ), array( 'sparse' => 1 )) );
 createResults( $c->createIndex( array( "indexC3" => 1 ), array( 'sparse' => 1 )) );
@@ -82,14 +76,10 @@ OK
 OK
 OK
 OK
-OK
-OK
 Indexes:
  - _id_: {"_id":1}
  - indexE1_1: unique {"indexE1":1}
  - indexC1_1: unique {"indexC1":1}
- - indexE2_1: dropDups {"indexE2":1}
- - indexC2_1: dropDups {"indexC2":1}
  - indexE3_1: sparse {"indexE3":1}
  - indexC3_1: sparse {"indexC3":1}
  - indexE4_1: expireAfterSeconds(42) {"indexE4":1}
