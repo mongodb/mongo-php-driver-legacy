@@ -109,10 +109,36 @@ PHP_METHOD(MongoDate, __toString)
 }
 /* }}} */
 
+/* {{{ MongoDate::__set_state()
+ */
+PHP_METHOD(MongoDate, __set_state)
+{
+	zval *state, **sec, **usec;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &state) == FAILURE) {
+		return;
+	}
+
+	if (zend_hash_find(HASH_P(state), "sec", strlen("sec") + 1, (void**) &sec) == FAILURE) {
+		return;
+	}
+
+	if (zend_hash_find(HASH_P(state), "usec", strlen("usec") + 1, (void**) &usec) == FAILURE) {
+		return;
+	}
+
+	convert_to_long(*sec);
+	convert_to_long(*usec);
+	object_init_ex(return_value, mongo_ce_Date);
+	php_mongo_mongodate_populate(return_value, Z_LVAL_PP(sec), Z_LVAL_PP(usec) TSRMLS_CC);
+}
+/* }}} */
+
 
 static zend_function_entry MongoDate_methods[] = {
 	PHP_ME(MongoDate, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDate, __toString, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoDate, __set_state, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_FE_END
 };
 
