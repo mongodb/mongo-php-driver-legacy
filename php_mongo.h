@@ -46,13 +46,6 @@
 # define Z_UNSET_ISREF_P(pz)      pz->is_ref = 0
 #endif
 
-#if PHP_VERSION_ID < 50300
-# define MAKE_COPY_ZVAL(ppzv, pzv) \
-    *(pzv) = **(ppzv);            \
-    zval_copy_ctor((pzv));        \
-    INIT_PZVAL((pzv));
-#endif
-
 #ifdef WIN32
 # ifndef int64_t
 typedef __int64 int64_t;
@@ -111,42 +104,13 @@ typedef __int64 int64_t;
 #define DUP 1
 #define NO_DUP 0
 
-#if PHP_VERSION_ID > 50300
-# define MONGO_ARGINFO_STATIC
-#else
-# define MONGO_ARGINFO_STATIC static
-#endif
+#define PUSH_PARAM(arg) zend_vm_stack_push(arg TSRMLS_CC)
+#define POP_PARAM() (void)zend_vm_stack_pop(TSRMLS_C)
+#define PUSH_EO_PARAM()
+#define POP_EO_PARAM()
 
-#if PHP_VERSION_ID >= 50300
-# define PUSH_PARAM(arg) zend_vm_stack_push(arg TSRMLS_CC)
-# define POP_PARAM() (void)zend_vm_stack_pop(TSRMLS_C)
-# define PUSH_EO_PARAM()
-# define POP_EO_PARAM()
-#else
-# define ZEND_VM_STACK_GROW_IF_NEEDED(x)
-# define PUSH_PARAM(arg) zend_ptr_stack_push(&EG(argument_stack), arg)
-# define POP_PARAM() (void)zend_ptr_stack_pop(&EG(argument_stack))
-# define PUSH_EO_PARAM() zend_ptr_stack_push(&EG(argument_stack), NULL)
-# define POP_EO_PARAM() (void)zend_ptr_stack_pop(&EG(argument_stack))
-#endif
-
-#if PHP_VERSION_ID >= 50300
-# define MONGO_E_DEPRECATED E_DEPRECATED
-#else
-# define MONGO_E_DEPRECATED E_STRICT
-#endif
 #if PHP_VERSION_ID < 50307
 # define PHP_FE_END         { NULL, NULL, NULL, 0, 0 }
-#endif
-
-#if PHP_VERSION_ID > 50300
-# define ERROR_HANDLER_DECLARATION(varname) zend_error_handling varname;
-# define ERROR_HANDLER_REPLACE(varname, ex) zend_replace_error_handling(EH_THROW, ex, &varname TSRMLS_CC)
-# define ERROR_HANDLER_RESTORE(varname)     zend_restore_error_handling(&varname TSRMLS_CC)
-#else
-# define ERROR_HANDLER_DECLARATION(varname)
-# define ERROR_HANDLER_REPLACE(varname, ex) php_set_error_handling(EH_THROW, ex TSRMLS_CC)
-# define ERROR_HANDLER_RESTORE(varname)     php_set_error_handling(EH_NORMAL, NULL TSRMLS_CC)
 #endif
 
 #define MUST_BE_ARRAY_OR_OBJECT(num, arg) do { \
@@ -155,26 +119,6 @@ typedef __int64 int64_t;
 		RETURN_NULL(); \
 	} \
 } while(0);
-
-#if PHP_VERSION_ID < 50300
-#define zpp_var_args(argv, argc) do { \
-	if (ZEND_NUM_ARGS() < 1) { \
-		WRONG_PARAM_COUNT; \
-	} \
-	argv = (zval ***)safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval **), 0); \
-	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), argv) == FAILURE) { \
-		efree(argv); \
-		WRONG_PARAM_COUNT; \
-	} \
-	argc = ZEND_NUM_ARGS(); \
-} while(0);
-#else
-#define zpp_var_args(argv, argc) do { \
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &argv, &argc) == FAILURE) { \
-		return; \
-	} \
-} while(0);
-#endif
 
 #define MONGO_METHOD_BASE(classname, name) zim_##classname##_##name
 
@@ -536,12 +480,10 @@ void mongo_init_MongoGridFS(TSRMLS_D);
 void mongo_init_MongoGridFSFile(TSRMLS_D);
 void mongo_init_MongoGridFSCursor(TSRMLS_D);
 
-#if PHP_VERSION_ID >= 50300
 void mongo_init_MongoWriteBatch(TSRMLS_D);
 void mongo_init_MongoInsertBatch(TSRMLS_D);
 void mongo_init_MongoUpdateBatch(TSRMLS_D);
 void mongo_init_MongoDeleteBatch(TSRMLS_D);
-#endif
 
 void mongo_init_MongoId(TSRMLS_D);
 void mongo_init_MongoCode(TSRMLS_D);

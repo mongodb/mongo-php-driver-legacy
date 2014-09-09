@@ -627,10 +627,10 @@ int php_mongo_cursor_failed(mongo_cursor *cursor TSRMLS_DC)
 /* }}} */
 
 /* {{{ MongoCursorInterface */
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, number)
 ZEND_END_ARG_INFO()
 

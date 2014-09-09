@@ -24,9 +24,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static long set_value(char *setting, zval *return_value TSRMLS_DC);
 static void get_value(char *setting, zval *return_value TSRMLS_DC);
-#if PHP_VERSION_ID >= 50300
 static void userland_callback(int module, int level, char *message TSRMLS_DC);
-#endif
 
 
 static zend_function_entry mongo_log_methods[] = {
@@ -34,10 +32,8 @@ static zend_function_entry mongo_log_methods[] = {
 	PHP_ME(MongoLog, getLevel, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(MongoLog, setModule, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(MongoLog, getModule, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-#if PHP_VERSION_ID >= 50300
 	PHP_ME(MongoLog, setCallback, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(MongoLog, getCallback, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-#endif
 	PHP_FE_END
 };
 
@@ -101,7 +97,6 @@ PHP_METHOD(MongoLog, setModule)
 	MonGlo(log_module) = set_value("module", return_value TSRMLS_CC);
 }
 
-#if PHP_VERSION_ID >= 50300
 static void userland_callback(int module, int level, char *message TSRMLS_DC)
 {
 	zval **params[3];
@@ -155,7 +150,6 @@ PHP_METHOD(MongoLog, getCallback)
 		RETURN_FALSE;
 	}
 }
-#endif
 
 PHP_METHOD(MongoLog, getModule)
 {
@@ -194,15 +188,11 @@ void php_mongo_log(const int module, const int level TSRMLS_DC, const char *form
 		vsnprintf(tmp, 256, format, args);
 		va_end(args);
 
-#if PHP_VERSION_ID >= 50300
 		if (MonGlo(log_callback_info).function_name) {
 			userland_callback(module, level, tmp TSRMLS_CC);
 		} else {
-#endif
 			php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
-#if PHP_VERSION_ID >= 50300
 		}
-#endif
 
 		free(tmp);
 	}
@@ -220,15 +210,11 @@ void php_mcon_log_wrapper(int module, int level, void *context, char *format, va
 		vsnprintf(tmp, 256, format, tmp_args);
 		va_end(tmp_args);
 
-#if PHP_VERSION_ID >= 50300
 		if (MonGlo(log_callback_info).function_name) {
 			userland_callback(module, level, tmp TSRMLS_CC);
 		} else {
-#endif
 			php_error(E_NOTICE, "%s %s: %s", module_name(module), level_name(level), tmp);
-#if PHP_VERSION_ID >= 50300
 		}
-#endif
 
 		free(tmp);
 	}

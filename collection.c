@@ -352,7 +352,7 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 	} else {
 		/* The value was modified, bad user, bad user! Tell him its deprecated */
 		timeout = Z_LVAL_P(timeout_p);
-		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead");
+		php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead");
 	}
 
 	/* Get the default value for journalling */
@@ -438,7 +438,7 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 			convert_to_long(*timeout_pp);
 			timeout = Z_LVAL_PP(timeout_pp);
 		} else if (SUCCESS == zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**) &timeout_pp)) {
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead");
+			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead");
 			convert_to_long(*timeout_pp);
 			timeout = Z_LVAL_PP(timeout_pp);
 		}
@@ -479,7 +479,7 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 			add_assoc_long(cmd, "wtimeout", Z_LVAL_PP(wtimeout_pp));
 			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d (wTimeoutMS from options array)", Z_LVAL_PP(wtimeout_pp));
 		} else if (options && zend_hash_find(HASH_P(options), "wtimeout", strlen("wtimeout") + 1, (void **)&wtimeout_pp) == SUCCESS) {
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'wtimeout' option is deprecated, please use 'wTimeoutMS' instead");
+			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'wtimeout' option is deprecated, please use 'wTimeoutMS' instead");
 			convert_to_long(*wtimeout_pp);
 			add_assoc_long(cmd, "wtimeout", Z_LVAL_PP(wtimeout_pp));
 			mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added wtimeout=%d (wtimeout from options array)", Z_LVAL_PP(wtimeout_pp));
@@ -661,7 +661,7 @@ static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_opt
 					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'w' option either needs to be a integer or string");
 			}
 		} else if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &gle_pp) == SUCCESS) {
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
+			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
 
 			switch (Z_TYPE_PP(gle_pp)) {
 				case IS_STRING:
@@ -710,12 +710,6 @@ static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_opt
 	return gle_op;
 }
 
-#if PHP_VERSION_ID >= 50300
-# define MONGO_ERROR_G EG
-#else
-# define MONGO_ERROR_G PG
-#endif
-
 /* This wrapper temporarily turns off the exception throwing bit if it has been
  * set (by calling php_mongo_cursor_throw() before). We can't call
  * php_mongo_cursor_throw after deregister as it frees up bits of memory that
@@ -732,12 +726,12 @@ static void connection_deregister_wrapper(mongo_con_manager *manager, mongo_conn
 
 	/* Save EG/PG(error_handling) so that we can show log messages when we have
 	 * already thrown an exception */
-	orig_error_handling = MONGO_ERROR_G(error_handling);
-	MONGO_ERROR_G(error_handling) = EH_NORMAL;
+	orig_error_handling = EG(error_handling);
+	EG(error_handling) = EH_NORMAL;
 
 	mongo_manager_connection_deregister(manager, connection);
 
-	MONGO_ERROR_G(error_handling) = orig_error_handling;
+	EG(error_handling) = orig_error_handling;
 }
 
 static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, mongo_buffer *buf, zval *return_value TSRMLS_DC)
@@ -929,7 +923,7 @@ int mongo_get_socket_read_timeout(mongo_server_options *server_options, zval *z_
 			convert_to_long(*timeout_pp);
 			return Z_LVAL_PP(timeout_pp);
 		} else if (SUCCESS == zend_hash_find(HASH_P(z_write_options), "timeout", strlen("timeout") + 1, (void**) &timeout_pp)) {
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead");
+			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead");
 			convert_to_long(*timeout_pp);
 			return Z_LVAL_PP(timeout_pp);
 		}
@@ -2409,7 +2403,9 @@ PHP_METHOD(MongoCollection, aggregate)
 	}
 
 	/* array, array, array, array, .... */
-	zpp_var_args(argv, argc);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &argv, &argc) == FAILURE) {
+		return;
+	}
 
 	for (i = 0; i < argc; i++) {
 		tmp = *argv[i];
@@ -2633,7 +2629,7 @@ PHP_METHOD(MongoCollection, group)
 		zend_hash_find(HASH_P(options), "maxTimeMS", strlen("maxTimeMS") + 1, (void**)&maxtimems);
 
 		if (!condition && !finalize && !maxtimems) {
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "Implicitly passing condition as $options will be removed in the future");
+			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "Implicitly passing condition as $options will be removed in the future");
 			add_assoc_zval(group, "cond", options);
 			zval_add_ref(&options);
 		}
@@ -2783,134 +2779,134 @@ PHP_METHOD(MongoCollection, parallelCollectionScan)
 }
 /* }}} */
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, database, MongoDB, 0)
 	ZEND_ARG_INFO(0, collection_name)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_distinct, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_distinct, 0, 0, 1)
 	ZEND_ARG_INFO(0, key)
 	ZEND_ARG_INFO(0, query)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setSlaveOkay, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, slave_okay)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, read_preference)
 	ZEND_ARG_ARRAY_INFO(0, tags, 0) /* Yes, this should be an array */
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getWriteConcern, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getWriteConcern, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setWriteConcern, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setWriteConcern, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, w)
 	ZEND_ARG_INFO(0, wtimeout)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_validate, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_validate, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, validate)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_insert, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_insert, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, array_of_fields_OR_object)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_batchInsert, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_batchInsert, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_ARRAY_INFO(0, documents, 0) /* Array of documents */
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_find, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_find, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)
 	ZEND_ARG_INFO(0, fields)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)
 	ZEND_ARG_INFO(0, fields)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_findandmodify, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_findandmodify, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_ARRAY_INFO(0, query, 1)
 	ZEND_ARG_ARRAY_INFO(0, update, 1)
 	ZEND_ARG_ARRAY_INFO(0, fields, 1)
 	ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregatecursor, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregatecursor, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_ARRAY_INFO(0, pipeline, 1)
 	ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_update, 0, ZEND_RETURN_VALUE, 2)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_update, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_INFO(0, old_array_of_fields_OR_object)
 	ZEND_ARG_INFO(0, new_array_of_fields_OR_object)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, array_of_fields_OR_object)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_createIndex, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_createIndex, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, array_of_keys)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_ensureIndex, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ensureIndex, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, key_OR_array_of_keys)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_deleteIndex, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_deleteIndex, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, string_OR_array_of_keys)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_count, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_count, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query_AS_array_of_fields_OR_object)
 	ZEND_ARG_INFO(0, limit)
 	ZEND_ARG_INFO(0, skip)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_createDBRef, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_createDBRef, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, array_with_id_fields_OR_MongoID)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getDBRef, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getDBRef, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, reference)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_toIndexString, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_toIndexString, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, string_OR_array_of_keys)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_group, 0, ZEND_RETURN_VALUE, 3)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_group, 0, ZEND_RETURN_VALUE, 3)
 	ZEND_ARG_INFO(0, keys_or_MongoCode)
 	ZEND_ARG_INFO(0, initial_value)
 	ZEND_ARG_INFO(0, array_OR_MongoCode)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregate, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_aggregate, 0, 0, 1)
 	ZEND_ARG_INFO(0, pipeline)
 	ZEND_ARG_INFO(0, op)
 	ZEND_ARG_INFO(0, ...)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_parallelcollectionscan, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_parallelcollectionscan, 0, 0, 1)
 	ZEND_ARG_INFO(0, num_cursors)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
