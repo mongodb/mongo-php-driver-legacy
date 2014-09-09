@@ -1,7 +1,6 @@
 --TEST--
 Test for PHP-999: mapReduce with inline output should respect read preference
 --SKIPIF--
-<?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
 <?php require_once 'tests/utils/replicaset.inc' ?>
 --FILE--
 <?php
