@@ -16,6 +16,7 @@
 #include <php.h>
 #include "../php_mongo.h"
 #include "date.h"
+#include <ext/date/php_date.h>
 
 zend_class_entry *mongo_ce_Date = NULL;
 zend_object_handlers mongo_date_handlers;
@@ -83,6 +84,13 @@ PHP_METHOD(MongoDate, __construct)
 }
 /* }}} */
 
+static void mongo_date_to_parts(mongo_date *date, int64_t *sec, int64_t *usec, double *dusec)
+{
+	*usec  = (int64_t) ((((date->datetime * 1000) % 1000000) + 1000000) % 1000000);
+	*sec   = (int64_t) ((date->datetime/1000) - (date->datetime < 0 && *usec));
+	*dusec = (double) *usec / 1000000;
+}
+
 /* {{{ MongoDate::__toString()
  */
 PHP_METHOD(MongoDate, __toString)
@@ -92,20 +100,18 @@ PHP_METHOD(MongoDate, __toString)
 	int64_t     usec;
 	double      dusec;
 	char       *str;
+	int         str_len;
 
 	date = (mongo_date*) zend_object_store_get_object(getThis() TSRMLS_CC);
-
-	usec  = (int64_t) ((((date->datetime * 1000) % 1000000) + 1000000) % 1000000);
-	sec   = (int64_t) ((date->datetime/1000) - (date->datetime < 0 && usec));
-	dusec = (double) usec / 1000000;
+	mongo_date_to_parts(date, &sec, &usec, &dusec);
 
 #ifdef WIN32
-	spprintf(&str, 0, "%.8f %I64d", dusec, (int64_t) sec);
+	str_len = spprintf(&str, 0, "%.8f %I64d", dusec, (int64_t) sec);
 #else
-	spprintf(&str, 0, "%.8f %lld", dusec, (long long int) sec);
+	str_len = spprintf(&str, 0, "%.8f %lld", dusec, (long long int) sec);
 #endif
 
-	RETURN_STRING(str, 0);
+	RETURN_STRINGL(str, str_len, 0);
 }
 /* }}} */
 
@@ -134,11 +140,46 @@ PHP_METHOD(MongoDate, __set_state)
 }
 /* }}} */
 
+/* {{{ MongoDate::toDateTime()
+ * Returns a DateTime object with the same information as the MongoDate object */
+PHP_METHOD(MongoDate, toDateTime)
+{
+	mongo_date *date;
+	int64_t     sec;
+	int64_t     usec;
+	double      dusec;
+	char       *str;
+	int         str_len;
+	zval        datetime_object;
+	php_date_obj *datetime_obj;
+	zval *datetime_object_ptr = &datetime_object;
+
+	date = (mongo_date*) zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	php_date_instantiate(php_date_get_date_ce(), &datetime_object TSRMLS_CC);
+	mongo_date_to_parts(date, &sec, &usec, &dusec);
+
+#ifdef WIN32
+	str_len = spprintf(&str, 0, "@%I64d", (int64_t) sec);
+#else
+	str_len = spprintf(&str, 0, "@%lld", (long long int) sec);
+#endif
+
+	datetime_obj = zend_object_store_get_object(&datetime_object TSRMLS_CC);
+	php_date_initialize(datetime_obj, str, str_len, NULL, NULL, 0 TSRMLS_CC);
+	efree(str);
+	datetime_obj->time->f = dusec;
+
+	RETVAL_ZVAL(datetime_object_ptr, 0, 0);
+}
+/* }}} */
+
 
 static zend_function_entry MongoDate_methods[] = {
 	PHP_ME(MongoDate, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDate, __toString, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDate, __set_state, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	PHP_ME(MongoDate, toDateTime, NULL, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };
 
