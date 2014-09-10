@@ -1,7 +1,6 @@
 --TEST--
 MongoClient should throw exception on unresolvable hostname
 --SKIPIF--
-<?php if (!version_compare(phpversion(), "5.3", '>=')) echo "skip >= PHP 5.3 needed\n"; ?>
 <?php require_once dirname(__FILE__) . "/skipif.inc"; ?>
 --FILE--
 <?php

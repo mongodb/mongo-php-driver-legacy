@@ -87,7 +87,7 @@ PHP_METHOD(MongoGridFS, __construct)
 	}
 
 	if (chunks) {
-		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'chunks' argument is deprecated and ignored");
+		php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'chunks' argument is deprecated and ignored");
 	}
 
 	if (files) {
@@ -1177,18 +1177,18 @@ PHP_METHOD(MongoGridFS, put)
 }
 /* }}} */
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_find, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_find, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)
 	ZEND_ARG_INFO(0, fields)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query)
 	ZEND_ARG_INFO(0, fields)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_remove, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, filename_OR_fields_OR_object)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()

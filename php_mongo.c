@@ -200,12 +200,10 @@ PHP_MINIT_FUNCTION(mongo)
 	mongo_init_MongoGridFSFile(TSRMLS_C);
 	mongo_init_MongoGridFSCursor(TSRMLS_C);
 
-#if PHP_VERSION_ID >= 50300
 	mongo_init_MongoWriteBatch(TSRMLS_C);
 	mongo_init_MongoInsertBatch(TSRMLS_C);
 	mongo_init_MongoUpdateBatch(TSRMLS_C);
 	mongo_init_MongoDeleteBatch(TSRMLS_C);
-#endif
 
 	mongo_init_MongoId(TSRMLS_C);
 	mongo_init_MongoCode(TSRMLS_C);
@@ -366,10 +364,8 @@ static PHP_GINIT_FUNCTION(mongo)
 	mongo_globals->ts_inc = 0;
 	mongo_globals->inc = rand() & 0xFFFFFF;
 
-#if PHP_VERSION_ID >= 50300
 	mongo_globals->log_callback_info = empty_fcall_info;
 	mongo_globals->log_callback_info_cache = empty_fcall_info_cache;
-#endif
 
 	mongo_globals->manager = mongo_init();
 	TSRMLS_SET_CTX(mongo_globals->manager->log_context);

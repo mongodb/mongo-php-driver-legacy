@@ -25,9 +25,6 @@
 #include "../log_stream.h"
 #include "../mcon/manager.h"
 
-/* The Batch API is only available for 5.3.0+ */
-#if PHP_VERSION_ID >= 50300
-
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 extern zend_class_entry *mongo_ce_Collection;
@@ -487,24 +484,24 @@ PHP_METHOD(MongoWriteBatch, getBatchInfo)
 }
 /* }}} */
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, collection, MongoCollection, 0)
 	ZEND_ARG_INFO(0, batch_type)
 	ZEND_ARG_ARRAY_INFO(0, write_options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_add, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_add, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, item)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_execute, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_ARRAY_INFO(0, write_options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getitemcount, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getitemcount, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_getbatchinfo, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_getbatchinfo, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
 static zend_function_entry MongoWriteBatch_methods[] = {
@@ -528,8 +525,6 @@ void mongo_init_MongoWriteBatch(TSRMLS_D)
 	zend_declare_class_constant_long(mongo_ce_WriteBatch, "COMMAND_UPDATE", strlen("COMMAND_UPDATE"), MONGODB_API_COMMAND_UPDATE TSRMLS_CC);
 	zend_declare_class_constant_long(mongo_ce_WriteBatch, "COMMAND_DELETE", strlen("COMMAND_DELETE"), MONGODB_API_COMMAND_DELETE TSRMLS_CC);
 }
-
-#endif /* PHP_VERSION_ID >= 50300 */
 
 /*
  * Local variables:

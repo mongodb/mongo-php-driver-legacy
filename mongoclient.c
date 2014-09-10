@@ -56,42 +56,42 @@ zend_class_entry *mongo_ce_MongoClient;
 extern zend_class_entry *mongo_ce_DB, *mongo_ce_Cursor, *mongo_ce_Exception;
 extern zend_class_entry *mongo_ce_ConnectionException, *mongo_ce_Mongo, *mongo_ce_Int64;
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, server)
 	ZEND_ARG_ARRAY_INFO(0, options, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo___get, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_selectDB, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_selectDB, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, database_name)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_selectCollection, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_selectCollection, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, database_name)
 	ZEND_ARG_INFO(0, collection_name)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, read_preference)
 	ZEND_ARG_ARRAY_INFO(0, tags, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setWriteConcern, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setWriteConcern, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, w)
 	ZEND_ARG_INFO(0, wtimeout)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_dropDB, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_dropDB, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, MongoDB_object_OR_database_name)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_killCursor, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_killCursor, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, cursor_id)
 ZEND_END_ARG_INFO()
 
@@ -156,13 +156,13 @@ void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC)
 	property_info = zend_get_property_info(Z_OBJCE_P(object), member, 1 TSRMLS_CC);
 
 	if (property_info && property_info->flags & ZEND_ACC_DEPRECATED) {
-		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
+		php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
 	}
 	if (property_info && property_info->flags & MONGO_ACC_READ_ONLY) {
 		/* If its the object itself that is updating the property, or an
 		 * inherited class, then its OK */
 		if (!instanceof_function(Z_OBJCE_P(object), EG(scope) TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is read-only", Z_STRVAL_P(member));
+			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The '%s' property is read-only", Z_STRVAL_P(member));
 			if (member == &tmp_member) {
 				zval_dtor(member);
 			}
@@ -203,7 +203,7 @@ zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 	property_info = zend_get_property_info(Z_OBJCE_P(object), member, 1 TSRMLS_CC);
 
 	if (property_info && property_info->flags & ZEND_ACC_DEPRECATED) {
-		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
+		php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
 	}
 
 	if (instanceof_function(Z_OBJCE_P(object), mongo_ce_MongoClient TSRMLS_CC) && strcmp(Z_STRVAL_P(member), "connected") == 0) {
@@ -290,7 +290,7 @@ zend_object_value php_mongoclient_new(zend_class_entry *class_type TSRMLS_DC)
 	mongoclient *intern;
 
 	if (class_type == mongo_ce_Mongo) {
-		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The Mongo class is deprecated, please use the MongoClient class");
+		php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The Mongo class is deprecated, please use the MongoClient class");
 	}
 
 	intern = (mongoclient*)emalloc(sizeof(mongoclient));
@@ -490,9 +490,9 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 					switch (error_code) {
 						case -1: /* Deprecated options */
 							if (strcasecmp(opt_key, "slaveOkay") == 0) {
-								php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'slaveOkay' option is deprecated. Please switch to read-preferences");
+								php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'slaveOkay' option is deprecated. Please switch to read-preferences");
 							} else if (strcasecmp(opt_key, "timeout") == 0) {
-								php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead");
+								php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'timeout' option is deprecated. Please use 'connectTimeoutMS' instead");
 							}
 							break;
 						case 4: /* Special options parameters, invalid for URL parsing - only possiblity is 'connect' for now */
@@ -560,7 +560,7 @@ void php_mongo_ctor(INTERNAL_FUNCTION_PARAMETERS, int bc)
 				link->servers->read_pref.type = MONGO_RP_SECONDARY_PREFERRED;
 			}
 		}
-		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'slaveOkay' option is deprecated. Please switch to read-preferences");
+		php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'slaveOkay' option is deprecated. Please switch to read-preferences");
 	}
 
 	if (connect) {

@@ -485,20 +485,20 @@ PHP_METHOD(MongoCommandCursor, createFromDocument)
 }
 /* }}} */
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, ZEND_RETURN_VALUE, 2)
 	ZEND_ARG_OBJ_INFO(0, connection, MongoClient, 0)
 	ZEND_ARG_INFO(0, database_and_collection_name)
 	ZEND_ARG_INFO(0, query)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_no_parameters, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, number)
 ZEND_END_ARG_INFO()
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_createfromdocument, 0, ZEND_RETURN_VALUE, 3)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_createfromdocument, 0, ZEND_RETURN_VALUE, 3)
 	ZEND_ARG_OBJ_INFO(0, connection, MongoClient, 0)
 	ZEND_ARG_INFO(0, connection_hash)
 	ZEND_ARG_INFO(0, cursor_document)

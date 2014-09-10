@@ -415,7 +415,7 @@ int php_mongo_id_unserialize(zval **rval, zend_class_entry *ce, const unsigned c
 	return SUCCESS;
 }
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_isValid, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_isValid, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, id)
 ZEND_END_ARG_INFO()
 

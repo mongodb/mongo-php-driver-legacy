@@ -54,11 +54,7 @@ extern zend_class_entry *mongo_ce_BinData,
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static int prep_obj_for_db(mongo_buffer *buf, HashTable *array TSRMLS_DC);
-#if PHP_VERSION_ID >= 50300
 static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key);
-#else
-static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key);
-#endif
 static int is_utf8(const char *s, int len);
 static int insert_helper(mongo_buffer *buf, zval *doc, int max TSRMLS_DC);
 
@@ -129,11 +125,7 @@ int zval_to_bson(mongo_buffer *buf, HashTable *hash, int prep, int max_document_
 			num++;
 		}
 
-#if PHP_VERSION_ID >= 50300
 		zend_hash_apply_with_arguments(hash TSRMLS_CC, (apply_func_args_t)apply_func_args_wrapper, 3, buf, prep, &num);
-#else
-		zend_hash_apply_with_arguments(hash, (apply_func_args_t)apply_func_args_wrapper, 4, buf, prep, &num TSRMLS_CC);
-#endif
 	}
 
 	php_mongo_serialize_null(buf);
@@ -141,18 +133,11 @@ int zval_to_bson(mongo_buffer *buf, HashTable *hash, int prep, int max_document_
 	return EG(exception) ? FAILURE : num;
 }
 
-#if PHP_VERSION_ID >= 50300
 static int apply_func_args_wrapper(void **data TSRMLS_DC, int num_args, va_list args, zend_hash_key *key)
-#else
-static int apply_func_args_wrapper(void **data, int num_args, va_list args, zend_hash_key *key)
-#endif
 {
 	mongo_buffer *buf = va_arg(args, mongo_buffer*);
 	int prep = va_arg(args, int);
 	int *num = va_arg(args, int*);
-#if ZTS && PHP_VERSION_ID < 50300
-	void ***tsrm_ls = va_arg(args, void***);
-#endif
 
 	if (key->nKeyLength) {
 		return php_mongo_serialize_element(key->arKey, key->nKeyLength - 1, (zval**)data, buf, prep TSRMLS_CC);

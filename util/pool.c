@@ -21,7 +21,7 @@
 
 zend_class_entry *mongo_ce_Pool;
 
-MONGO_ARGINFO_STATIC ZEND_BEGIN_ARG_INFO_EX(arginfo_setPoolSize, 0, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setPoolSize, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, size)
 ZEND_END_ARG_INFO()
 

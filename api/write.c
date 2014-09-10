@@ -92,12 +92,12 @@ void php_mongo_api_write_options_from_ht(php_mongo_write_options *write_options,
 			write_options->wtimeout = Z_LVAL_PP(data);
 		}
 		else if (zend_binary_strcasecmp(key, index_key_len, "wtimeout", strlen("wtimeout") + 1) == 0) {
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'wtimeout' option is deprecated, please use 'wTimeoutMS' instead");
+			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'wtimeout' option is deprecated, please use 'wTimeoutMS' instead");
 			convert_to_long_ex(data);
 			write_options->wtimeout = Z_LVAL_PP(data);
 		}
 		else if (zend_binary_strcasecmp(key, index_key_len, "safe", strlen("safe") + 1) == 0) {
-			php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
+			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
 			if (Z_TYPE_PP(data) == IS_LONG || Z_TYPE_PP(data) == IS_BOOL) {
 				if (write_options->wtype == 1 && write_options->write_concern.w > Z_LVAL_PP(data)) {
 					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Using w=%d rather than w=%ld as suggested by deprecated 'safe' value", write_options->write_concern.w, Z_LVAL_PP(data));
