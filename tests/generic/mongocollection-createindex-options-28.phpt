@@ -1,7 +1,7 @@
 --TEST--
-<?php $needs = "2.7.0"; $needsOp = "gt"; ?>
 MongoCollection::createIndex() options
 --SKIPIF--
+<?php $needs = "2.7.0"; $needsOp = "gt"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
