@@ -142,6 +142,39 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	return con;
 }
 
+static inline int mongo_strings_equal_or_null(const char *s1, const char *s2)
+{
+	return (
+		(s1 == NULL && s2 == NULL) ||
+		(s1 != NULL && s2 != NULL && strcmp(s1, s2) == 0)
+	);
+}
+
+static int mongo_servers_contains(const mongo_servers *servers, const mongo_server_def *def)
+{
+	int i;
+
+	for (i = 0; i < servers->count; i++) {
+		mongo_server_def *tmp = servers->server[i];
+
+		if (
+			tmp->mechanism == def->mechanism &&
+			tmp->port == def->port &&
+			strcmp(tmp->host, def->host) == 0 &&
+			/* Compare optional strings, which may be NULL */
+			mongo_strings_equal_or_null(tmp->repl_set_name, def->repl_set_name) && 
+			mongo_strings_equal_or_null(tmp->db, def->db) && 
+			mongo_strings_equal_or_null(tmp->authdb, def->authdb) && 
+			mongo_strings_equal_or_null(tmp->username, def->username) && 
+			mongo_strings_equal_or_null(tmp->password, def->password)
+		) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 /* Topology discovery */
 
 /* - Helpers */
@@ -250,15 +283,15 @@ static int mongo_discover_topology(mongo_con_manager *manager, mongo_servers *se
 									mongo_manager_connection_deregister(manager, new_con);
 									new_con = NULL;
 							}
-						}
-
-						if (new_con) {
-							servers->server[servers->count] = tmp_def;
-							servers->count++;
 						} else {
 							mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "discover_topology: could not connect to new host: %s:%d: %s", tmp_def->host, tmp_def->port, con_error_message);
 							free(con_error_message);
 						}
+					}
+
+					if (!mongo_servers_contains(servers, tmp_def)) {
+						servers->server[servers->count] = tmp_def;
+						servers->count++;
 					} else {
 						mongo_server_def_dtor(tmp_def);
 					}
