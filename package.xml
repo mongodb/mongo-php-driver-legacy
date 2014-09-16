@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2014-07-30</date>
- <time>12:10:39</time>
+ <date>2014-09-16</date>
+ <time>10:10:39</time>
  <version>
-  <release>1.5.5</release>
-  <api>1.5.5</api>
+  <release>1.5.6</release>
+  <api>1.5.6</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,16 +43,20 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-722] - Segfault when passing null value to MongoCollection::find() and unclear other conditions are met, inaccurate error message
-    * [PHP-1105] - long_as_object = 0 no effect
-    * [PHP-1107] - Connections to server hangs when indexes are being created
-    * [PHP-1131] - Journal option should set "j" field in GLE instead of "journal"
+    * [PHP-1155] - php_mongo_io_stream_read() should revert to default_socket_timeout if socketTimeoutMS was zero
+    * [PHP-1156] - Use default and block indefinitely for zero and negative connect/socket timeouts, respectively
+    * [PHP-1158] - Driver emits warnings after setting connectTimeoutMS
+    * [PHP-1220] - Client doesn't find Primary after election
+
+** Improvement
+    * [PHP-1154] - Make connect/read timeouts for blocking and defaults consistent
 
 ** Documentation
-    * [PHP-840] - Document deprecated MongoClient properties
-    * [PHP-1081] - MongoId $id property is not documented correctly
-    * [PHP-1147] - Clean up GridFS insert/delete method documentation
-    * [PHP-1148] - Add "ssl" connection option to MongoClient changelog
+    * [PHP-1157] - Fix documentation for MongoCursor::timeout() default
+    * [PHP-1159] - Document that users may need to copy libsasl.dll to lib path for Windows installs
+    * [PHP-1162] - Update documentation for MongoLog constants
+    * [PHP-1167] - Clarify that $snapshot only prevents duplicates in documentation
+    * [PHP-1216] - Clarify that RS connections to non-canonical hostnames are not kept
  </notes>
 
  <contents>
@@ -240,6 +244,33 @@
     * [PHP-1111] - MongoClient constructor crashes on connection to slave 
     * [PHP-1118] - Aggregate cursor on non-existing collection throws weird error
     * [PHP-1120] - The mongo driver fails to build as static extension
+   </notes>
+  </release>
+
+  <release>
+   <date>2014-07-30</date>
+   <time>12:10:39</time>
+   <version>
+    <release>1.5.5</release>
+    <api>1.5.5</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-722] - Segfault when passing null value to MongoCollection::find() and unclear other conditions are met, inaccurate error message
+    * [PHP-1105] - long_as_object = 0 no effect
+    * [PHP-1107] - Connections to server hangs when indexes are being created
+    * [PHP-1131] - Journal option should set "j" field in GLE instead of "journal"
+
+** Documentation
+    * [PHP-840] - Document deprecated MongoClient properties
+    * [PHP-1081] - MongoId $id property is not documented correctly
+    * [PHP-1147] - Clean up GridFS insert/delete method documentation
+    * [PHP-1148] - Add "ssl" connection option to MongoClient changelog
    </notes>
   </release>
 
