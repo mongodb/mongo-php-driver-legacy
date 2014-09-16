@@ -31,10 +31,10 @@
  </lead>
 
  <date>2014-09-16</date>
- <time>10:10:39</time>
+ <time>13:10:39</time>
  <version>
-  <release>1.5.6</release>
-  <api>1.5.6</api>
+  <release>1.5.7</release>
+  <api>1.5.7</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,20 +43,7 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-1155] - php_mongo_io_stream_read() should revert to default_socket_timeout if socketTimeoutMS was zero
-    * [PHP-1156] - Use default and block indefinitely for zero and negative connect/socket timeouts, respectively
-    * [PHP-1158] - Driver emits warnings after setting connectTimeoutMS
-    * [PHP-1220] - Client doesn't find Primary after election
-
-** Improvement
-    * [PHP-1154] - Make connect/read timeouts for blocking and defaults consistent
-
-** Documentation
-    * [PHP-1157] - Fix documentation for MongoCursor::timeout() default
-    * [PHP-1159] - Document that users may need to copy libsasl.dll to lib path for Windows installs
-    * [PHP-1162] - Update documentation for MongoLog constants
-    * [PHP-1167] - Clarify that $snapshot only prevents duplicates in documentation
-    * [PHP-1216] - Clarify that RS connections to non-canonical hostnames are not kept
+    * Windows compile fixes.
  </notes>
 
  <contents>
@@ -226,6 +213,37 @@
  </extsrcrelease>
 
  <changelog>
+
+  <release>
+   <date>2014-09-16</date>
+   <time>13:10:39</time>
+   <version>
+    <release>1.5.6</release>
+    <api>1.5.6</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-1155] - php_mongo_io_stream_read() should revert to default_socket_timeout if socketTimeoutMS was zero
+    * [PHP-1156] - Use default and block indefinitely for zero and negative connect/socket timeouts, respectively
+    * [PHP-1158] - Driver emits warnings after setting connectTimeoutMS
+    * [PHP-1220] - Client doesn't find Primary after election
+
+** Improvement
+    * [PHP-1154] - Make connect/read timeouts for blocking and defaults consistent
+
+** Documentation
+    * [PHP-1157] - Fix documentation for MongoCursor::timeout() default
+    * [PHP-1159] - Document that users may need to copy libsasl.dll to lib path for Windows installs
+    * [PHP-1162] - Update documentation for MongoLog constants
+    * [PHP-1167] - Clarify that $snapshot only prevents duplicates in documentation
+    * [PHP-1216] - Clarify that RS connections to non-canonical hostnames are not kept
+   </notes>
+  </release>
 
   <release>
    <date>2014-06-17</date>
