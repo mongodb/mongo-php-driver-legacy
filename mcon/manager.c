@@ -141,7 +141,7 @@ static mongo_connection *mongo_get_connection_single(mongo_con_manager *manager,
 	return con;
 }
 
-static inline int mongo_strings_equal_or_null(const char *s1, const char *s2)
+static int mongo_strings_equal_or_null(const char *s1, const char *s2)
 {
 	return (
 		(s1 == NULL && s2 == NULL) ||
