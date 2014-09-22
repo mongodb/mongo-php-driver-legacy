@@ -591,11 +591,11 @@ char *mongo_connection_getnonce(mongo_con_manager *manager, mongo_connection *co
  */
 int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
 {
-	char *nonce;
 	int   retval = 0;
 
 	switch (server_def->mechanism) {
-		case MONGO_AUTH_MECHANISM_MONGODB_CR:
+		case MONGO_AUTH_MECHANISM_MONGODB_CR: {
+			char *nonce;
 			if (!server_def->db || !server_def->username || !server_def->password) {
 				return 2;
 			}
@@ -607,10 +607,14 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 
 			retval = mongo_connection_authenticate_mongodb_cr(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, server_def->password, nonce, error_message);
 			free(nonce);
-			break;
+			} break;
 
 		case MONGO_AUTH_MECHANISM_MONGODB_X509:
 			retval = mongo_connection_authenticate_mongodb_x509(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, error_message);
+			break;
+
+		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
+			retval = mongo_connection_authenticate_mongodb_scram_sha1(manager, con, options, server_def, error_message);
 			break;
 
 		default:
@@ -672,6 +676,7 @@ int mongo_connection_authenticate_mongodb_cr(mongo_con_manager *manager, mongo_c
 
 	return mongo_connection_authenticate_cmd(manager, con, options, database, username, packet, error_message);
 }
+
 
 /**
  * Authenticates a connection using MONGODB-X509
@@ -796,7 +801,7 @@ int mongo_connection_authenticate_saslcontinue(mongo_con_manager *manager, mongo
 	mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "connection_authenticate_saslcontinue: continuing SASL authentication to '%s'", con->hash);
 
 	/*  GSSAPI=$external, all other use the actual dbname */
-	packet = bson_create_saslcontinue_packet(con, server_def->authdb, conversation_id, payload, payload_len);
+	packet = bson_create_saslcontinue_packet(con, server_def->authdb ? server_def->authdb : server_def->db, conversation_id, payload, payload_len);
 
 	if (!mongo_connect_send_packet(manager, con, options, packet, &data_buffer, error_message)) {
 		return 0;
