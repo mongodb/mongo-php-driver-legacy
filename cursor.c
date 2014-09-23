@@ -335,7 +335,7 @@ int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 			return FAILURE;
 		}
 		/* Limit reached */
-		if (cursor->at >= cursor->limit) {
+		if (cursor->limit != 0 && cursor->at >= cursor->limit) {
 			return FAILURE;
 		}
 		if (!php_mongo_get_more(cursor TSRMLS_CC)) {
