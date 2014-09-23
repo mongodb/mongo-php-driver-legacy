@@ -1340,17 +1340,17 @@ PHP_METHOD(MongoCollection, findOne)
 		RETURN_NULL();
 	}
 
-	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
-		/* do not free anything here, as php_mongo_handle_error already does
-		 * that upon error */
-		RETURN_NULL();
-	}
-
 	/* Find return value */
 	if (php_mongocursor_load_current_element(cursor TSRMLS_CC) == FAILURE) {
 		zval_ptr_dtor(&zcursor);
 		RETURN_NULL();
 	}
+
+	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
+		zval_ptr_dtor(&zcursor);
+		RETURN_NULL();
+	}
+
 	if (php_mongocursor_is_valid(cursor) == FAILURE) {
 		zval_ptr_dtor(&zcursor);
 		RETURN_NULL();
