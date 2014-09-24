@@ -774,18 +774,6 @@ PHP_METHOD(MongoCursor, doQuery)
 }
 /* }}} */
 
-/* Cursor helpers */
-int mongo_cursor_mark_dead(void *callback_data)
-{
-	mongo_cursor *cursor = (mongo_cursor*) callback_data;
-
-	cursor->dead = 1;
-	cursor->cursor_id = 0;
-	cursor->connection = NULL;
-
-	return 1;
-}
-
 /* Adds the $readPreference option to the query objects */
 void mongo_apply_mongos_rp(mongo_cursor *cursor)
 {
@@ -1024,75 +1012,6 @@ PHP_METHOD(MongoCursor, next)
 	if (cursor->current) {
 		RETURN_ZVAL(cursor->current, 1, 0);
 	}
-#if 0
-	zval has_next;
-	mongo_cursor *cursor;
-
-	PHP_MONGO_GET_CURSOR(getThis());
-	MONGO_CURSOR_CHECK_DEAD;
-
-	if (!cursor->started_iterating) {
-		MONGO_METHOD(MongoCursor, doQuery, return_value, getThis());
-		if (EG(exception)) {
-			return;
-		}
-		cursor->started_iterating = 1;
-	}
-
-	/* destroy old current */
-	if (cursor->current) {
-		zval_ptr_dtor(&cursor->current);
-		cursor->current = 0;
-	}
-
-	/* check for results */
-	MONGO_METHOD(MongoCursor, hasNext, &has_next, getThis());
-	if (EG(exception)) {
-		return;
-	}
-
-	if (!Z_BVAL(has_next)) {
-		/* we're out of results */
-		/* Might throw an exception */
-		php_mongo_handle_error(cursor TSRMLS_CC);
-		RETURN_NULL();
-	}
-
-	/* we got more results */
-	if (cursor->at < cursor->num) {
-		mongo_bson_conversion_options options = MONGO_BSON_CONVERSION_OPTIONS_INIT;
-
-		if (cursor->cursor_options & MONGO_CURSOR_OPT_CMD_CURSOR) {
-			options.level = 0;
-			options.flag_cmd_cursor_as_int64 = 1;
-		}
-
-		MAKE_STD_ZVAL(cursor->current);
-		array_init(cursor->current);
-		cursor->buf.pos = bson_to_zval(
-			(char*)cursor->buf.pos,
-			Z_ARRVAL_P(cursor->current),
-			&options
-			TSRMLS_CC
-		);
-
-		if (EG(exception)) {
-			zval_ptr_dtor(&cursor->current);
-			cursor->current = 0;
-			return;
-		}
-
-		/* increment cursor position */
-		cursor->at++;
-
-		/* Might throw an exception */
-		if (php_mongo_handle_error(cursor TSRMLS_CC)) {
-			RETURN_NULL();
-		}
-	}
-
-	RETURN_NULL();
-#endif
 }
 /* }}} */
 
