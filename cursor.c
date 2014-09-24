@@ -336,10 +336,11 @@ int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 		}
 		/* Limit reached */
 		if (cursor->limit != 0 && cursor->at >= cursor->limit) {
+			php_mongo_cursor_mark_dead(cursor);
 			return FAILURE;
 		}
 		if (!php_mongo_get_more(cursor TSRMLS_CC)) {
-			cursor->cursor_id = 0;
+			php_mongo_cursor_mark_dead(cursor);
 			return FAILURE;
 		}
 	}
@@ -922,6 +923,10 @@ PHP_METHOD(MongoCursor, valid)
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
 	if (!cursor->started_iterating) {
+		RETURN_FALSE;
+	}
+
+	if (cursor->dead) {
 		RETURN_FALSE;
 	}
 
