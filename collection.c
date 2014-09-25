@@ -774,7 +774,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 
 	/* Check if either the GLE command or the previous write operation failed */
 	php_mongo_trigger_error_on_gle(cursor->connection, cursor->current TSRMLS_CC);
-	ZVAL_ZVAL(return_value, cursor->current, 0, 1);
+	ZVAL_ZVAL(return_value, cursor->current, 1, 0);
 
 	cursor->connection = NULL;
 	return;
@@ -1355,7 +1355,7 @@ PHP_METHOD(MongoCollection, findOne)
 		zval_ptr_dtor(&zcursor);
 		RETURN_NULL();
 	}
-	ZVAL_ZVAL(return_value, cursor->current, 0, 1);
+	ZVAL_ZVAL(return_value, cursor->current, 1, 0);
 
 
 cleanup_on_failure:
@@ -1682,8 +1682,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 		if (Z_STRLEN_P(keys) == 0) {
 			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "empty string passed as key field");
 			zval_ptr_dtor(&cmd);
-			zval_ptr_dtor(&indexes);
-			zval_ptr_dtor(&index_spec);
 			return;
 		}
 
@@ -1695,8 +1693,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 		if (HASH_OF(keys)->nNumOfElements == 0) {
 			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has no elements");
 			zval_ptr_dtor(&cmd);
-			zval_ptr_dtor(&indexes);
-			zval_ptr_dtor(&index_spec);
 			return;
 		}
 
@@ -1705,8 +1701,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 	} else {
 		zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has to be an array");
 		zval_ptr_dtor(&cmd);
-		zval_ptr_dtor(&indexes);
-		zval_ptr_dtor(&index_spec);
 		return;
 	}
 
@@ -1739,8 +1733,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 			if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
 				zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
 				zval_ptr_dtor(&cmd);
-				zval_ptr_dtor(&indexes);
-				zval_ptr_dtor(&index_spec);
 				return;
 			}
 			done_name = 1;
@@ -1757,8 +1749,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 		key_str = to_index_string(keys, &key_str_len TSRMLS_CC);
 		if (!key_str) {
 			zval_ptr_dtor(&cmd);
-			zval_ptr_dtor(&indexes);
-			zval_ptr_dtor(&index_spec);
 			return;
 		}
 
@@ -1766,8 +1756,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", key_str_len, MAX_INDEX_NAME_LEN);
 			efree(key_str);
 			zval_ptr_dtor(&cmd);
-			zval_ptr_dtor(&indexes);
-			zval_ptr_dtor(&index_spec);
 			return;
 		}
 

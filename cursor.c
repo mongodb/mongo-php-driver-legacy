@@ -341,10 +341,14 @@ int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 		}
 		/* Limit reached */
 		if (cursor->limit != 0 && cursor->at >= cursor->limit) {
+			mongo_deregister_callback_from_connection(cursor->connection, cursor);
 			php_mongo_cursor_mark_dead(cursor);
 			return FAILURE;
 		}
 		if (!php_mongo_get_more(cursor TSRMLS_CC)) {
+			if (cursor->connection) {
+				mongo_deregister_callback_from_connection(cursor->connection, cursor);
+			}
 			php_mongo_cursor_mark_dead(cursor);
 			return FAILURE;
 		}

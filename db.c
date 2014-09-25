@@ -918,7 +918,7 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 		return NULL;
 	}
 	MAKE_STD_ZVAL(retval);
-	ZVAL_ZVAL(retval, cursor_tmp->current, 0, 1);
+	ZVAL_ZVAL(retval, cursor_tmp->current, 1, 0);
 
 
 	/* Before we destroy the cursor, we figure out which connection was used.
