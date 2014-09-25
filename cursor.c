@@ -330,6 +330,8 @@ int php_mongocursor_load_current_element(mongo_cursor *cursor TSRMLS_DC)
 
 int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 {
+	int retrieved;
+
 	cursor->at++;
 
 	if (cursor->at == cursor->num && cursor->cursor_id != 0) {
@@ -346,11 +348,14 @@ int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 			php_mongo_cursor_mark_dead(cursor);
 			return FAILURE;
 		}
-		if (php_mongo_handle_error(cursor)) {
-			return FAILURE;
-		}
 	}
-	return php_mongocursor_load_current_element(cursor TSRMLS_CC);
+	retrieved = php_mongocursor_load_current_element(cursor TSRMLS_CC);
+
+	if (php_mongo_handle_error(cursor)) {
+		return FAILURE;
+	}
+
+	return retrieved;
 }
 /* }}} */
 
