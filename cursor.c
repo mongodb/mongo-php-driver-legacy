@@ -264,6 +264,9 @@ PHP_METHOD(MongoCursor, hasNext)
 	if (!php_mongo_get_more(cursor TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
+	if (php_mongo_handle_error(cursor)) {
+		RETURN_FALSE;
+	}
 
 	if (have_error_flags(cursor)) {
 		RETURN_TRUE;
@@ -341,6 +344,9 @@ int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 		}
 		if (!php_mongo_get_more(cursor TSRMLS_CC)) {
 			php_mongo_cursor_mark_dead(cursor);
+			return FAILURE;
+		}
+		if (php_mongo_handle_error(cursor)) {
 			return FAILURE;
 		}
 	}
