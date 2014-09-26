@@ -1267,7 +1267,7 @@ PHP_METHOD(MongoCollection, find)
 	cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
 	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
 
-	php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields);
+	php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields TSRMLS_CC);
 }
 /* }}} */
 
@@ -1296,7 +1296,7 @@ PHP_METHOD(MongoCollection, findOne)
 	cursor = (mongo_cursor*)zend_object_store_get_object(zcursor TSRMLS_CC);
 	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
 
-	if (php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields) == FAILURE) {
+	if (php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields TSRMLS_CC) == FAILURE) {
 		zval_ptr_dtor(&zcursor);
 		return;
 	}

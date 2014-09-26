@@ -73,7 +73,7 @@ static int mongo_cursor__do_query(mongo_cursor *cursor TSRMLS_DC);
 
 /* Returns FAILURE if something went wrong, but an exception is set too. DO NOT
  * CONTINUE in the calling method if this one returns FAILURE. */
-int php_mongocursor_create(mongo_cursor *cursor, zval *zlink, char *ns, int ns_len, zval *zquery, zval *zfields)
+int php_mongocursor_create(mongo_cursor *cursor, zval *zlink, char *ns, int ns_len, zval *zquery, zval *zfields TSRMLS_DC)
 {
 	zval *empty, *timeout;
 	zval **data;
@@ -224,7 +224,7 @@ PHP_METHOD(MongoCursor, __construct)
 
 	cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
-	php_mongocursor_create(cursor, zlink, ns, ns_len, zquery, zfields);	
+	php_mongocursor_create(cursor, zlink, ns, ns_len, zquery, zfields TSRMLS_CC);	
 }
 /* }}} */
 
@@ -264,7 +264,7 @@ PHP_METHOD(MongoCursor, hasNext)
 	if (!php_mongo_get_more(cursor TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
-	if (php_mongo_handle_error(cursor)) {
+	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
 
@@ -355,7 +355,7 @@ int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 	}
 	retrieved = php_mongocursor_load_current_element(cursor TSRMLS_CC);
 
-	if (php_mongo_handle_error(cursor)) {
+	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
 		return FAILURE;
 	}
 
