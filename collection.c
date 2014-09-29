@@ -774,7 +774,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 
 	/* Check if either the GLE command or the previous write operation failed */
 	php_mongo_trigger_error_on_gle(cursor->connection, cursor->current TSRMLS_CC);
-	ZVAL_ZVAL(return_value, cursor->current, 1, 0);
+	RETVAL_ZVAL(cursor->current, 1, 0);
 
 	cursor->connection = NULL;
 	return;
@@ -1355,8 +1355,7 @@ PHP_METHOD(MongoCollection, findOne)
 		zval_ptr_dtor(&zcursor);
 		RETURN_NULL();
 	}
-	ZVAL_ZVAL(return_value, cursor->current, 1, 0);
-
+	RETVAL_ZVAL(cursor->current, 1, 0);
 
 cleanup_on_failure:
 	zend_objects_store_del_ref(zcursor TSRMLS_CC);

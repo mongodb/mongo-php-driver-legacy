@@ -372,7 +372,7 @@ PHP_METHOD(MongoCursor, getNext)
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 	MONGO_CURSOR_CHECK_DEAD;
 
-	/* Ideally, next() shouldn't be doing then. Instead users should use
+	/* Ideally, next() shouldn't be doing this. Instead users should use
 	 * doQuery() themselves. But, BC */
 	if (!cursor->started_iterating) {
 		php_mongo_runquery(cursor TSRMLS_CC);
@@ -1012,12 +1012,12 @@ PHP_METHOD(MongoCursor, next)
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 	MONGO_CURSOR_CHECK_DEAD;
 
-	/* Ideally, next() shouldn't be doing then. Instead users should use
+	/* Ideally, next() shouldn't be doing this. Instead users should use
 	 * doQuery() themselves. But, BC */
 	if (!cursor->started_iterating) {
 		php_mongo_runquery(cursor TSRMLS_CC);
 		if (EG(exception)) {
-			return;
+			RETURN_NULL();
 		}
 		cursor->started_iterating = 1;
 		php_mongocursor_load_current_element(cursor TSRMLS_CC);
@@ -1026,7 +1026,7 @@ PHP_METHOD(MongoCursor, next)
 	}
 
 	if (!php_mongocursor_is_valid(cursor)) {
-		return;
+		RETURN_NULL();
 	}
 
 	if (cursor->current) {
