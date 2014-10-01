@@ -704,30 +704,22 @@ PHP_METHOD(MongoClient, __toString)
 }
 /* }}} */
 
-
-/* {{{ proto MongoDB MongoClient->selectDB(string dbname)
-   Returns a new MongoDB object for the specified database name */
-PHP_METHOD(MongoClient, selectDB)
+zval *php_mongo_client_selectdb(zval *this, char *db, int db_len TSRMLS_DC)
 {
-	zval temp, *name;
-	char *db;
-	int db_len;
 	mongoclient *link;
 	int free_this_ptr = 0;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &db, &db_len) == FAILURE) {
-		return;
-	}
+	zval *return_value;
 
 	if (memchr(db, '\0', db_len) != NULL) {
 		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "'\\0' not allowed in database names: %s\\0...", db);
-		return;
+		return NULL;
 	}
-
-	MAKE_STD_ZVAL(name);
-	ZVAL_STRINGL(name, db, db_len, 1);
-
-	PHP_MONGO_GET_LINK(getThis());
+	
+	link = (mongoclient*)zend_object_store_get_object(this TSRMLS_CC);
+	if (!(link->servers)) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoDB object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return NULL;
+	}
 
 	/* We need to check whether we are switching to a database that was not
 	 * part of the connection string. This is not a problem if we are not using
@@ -774,18 +766,39 @@ PHP_METHOD(MongoClient, selectDB)
 					tmp_link->servers->server[i]->db = strdup(db);
 				}
 
-				this_ptr = new_link;
+				this = new_link;
 				free_this_ptr = 1;
 			}
 		}
 	}
 
+	MAKE_STD_ZVAL(return_value);
 	object_init_ex(return_value, mongo_ce_DB);
-	MONGO_METHOD2(MongoDB, __construct, &temp, return_value, getThis(), name);
+	php_mongo_db_construct(return_value, this, db, db_len TSRMLS_CC);
 
-	zval_ptr_dtor(&name);
 	if (free_this_ptr) {
-		zval_ptr_dtor(&this_ptr);
+		zval_ptr_dtor(&this);
+	}
+
+	return return_value;
+}
+
+
+/* {{{ proto MongoDB MongoClient->selectDB(string dbname)
+   Returns a new MongoDB object for the specified database name */
+PHP_METHOD(MongoClient, selectDB)
+{
+	char *db;
+	int db_len;
+	zval *z_db;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &db, &db_len) == FAILURE) {
+		return;
+	}
+
+	z_db = php_mongo_client_selectdb(getThis(), db, db_len TSRMLS_CC);
+	if (z_db) {
+		RETURN_ZVAL(z_db, 0, 1);
 	}
 }
 /* }}} */
@@ -795,21 +808,18 @@ PHP_METHOD(MongoClient, selectDB)
    Returns a new MongoDB object for the specified database name */
 PHP_METHOD(MongoClient, __get)
 {
-	zval *name;
 	char *str;
 	int str_len;
+	zval *z_db;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(name);
-	ZVAL_STRINGL(name, str, str_len, 1);
-
-	/* select this db */
-	MONGO_METHOD1(MongoClient, selectDB, return_value, getThis(), name);
-
-	zval_ptr_dtor(&name);
+	z_db = php_mongo_client_selectdb(getThis(), str, str_len TSRMLS_CC);
+	if (z_db) {
+		RETURN_ZVAL(z_db, 0, 1);
+	}
 }
 /* }}} */
 
@@ -820,21 +830,18 @@ PHP_METHOD(MongoClient, selectCollection)
 {
 	char *db, *coll;
 	int db_len, coll_len;
-	zval *db_name, *temp_db, *collection;
+	zval *temp_db, *collection;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &db, &db_len, &coll, &coll_len) == FAILURE) {
 		return;
 	}
 
-	MAKE_STD_ZVAL(db_name);
-	ZVAL_STRINGL(db_name, db, db_len, 1);
+	temp_db = php_mongo_client_selectdb(getThis(), db, db_len TSRMLS_CC);
+	if (!temp_db) {
+		return;
+	}
 
-	MAKE_STD_ZVAL(temp_db);
-	MONGO_METHOD1(MongoClient, selectDB, temp_db, getThis(), db_name);
-	zval_ptr_dtor(&db_name);
-	PHP_MONGO_CHECK_EXCEPTION1(&temp_db);
-
-	collection = php_mongo_selectcollection(temp_db, coll, coll_len TSRMLS_CC);
+	collection = php_mongo_db_selectcollection(temp_db, coll, coll_len TSRMLS_CC);
 	if (collection) {
 		/* Only copy the zval into return_value if it worked. If collection is
 		 * NULL here, an exception is set */

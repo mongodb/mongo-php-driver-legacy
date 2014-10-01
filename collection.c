@@ -66,21 +66,12 @@ static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
 	} \
 } while(0);
 
-/* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
-   Initializes a new MongoCollection */
-PHP_METHOD(MongoCollection, __construct)
+void php_mongo_collection_construct(zval *this, zval *parent, char *name_str, int name_len TSRMLS_DC)
 {
-	zval *parent, *name, *zns, *w, *wtimeout;
+	zval *name, *zns, *w, *wtimeout;
 	mongo_collection *c;
 	mongo_db *db;
-	char *ns, *name_str;
-	int name_len;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &parent, mongo_ce_DB, &name_str, &name_len) == FAILURE) {
-		zval *object = getThis();
-		ZVAL_NULL(object);
-		return;
-	}
+	char *ns;
 
 	/* check for empty and invalid collection names */
 	if (
@@ -91,9 +82,13 @@ PHP_METHOD(MongoCollection, __construct)
 		return;
 	}
 
-	c = (mongo_collection*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	c = (mongo_collection*)zend_object_store_get_object(this TSRMLS_CC);
 
-	PHP_MONGO_GET_DB(parent);
+	db = (mongo_db*)zend_object_store_get_object(parent TSRMLS_CC);
+	if (!(db->name)) {
+		zend_throw_exception(mongo_ce_Exception, "The MongoDB object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+		return;
+	}
 
 	c->link = db->link;
 	zval_add_ref(&db->link);
@@ -114,15 +109,32 @@ PHP_METHOD(MongoCollection, __construct)
 
 	w = zend_read_property(mongo_ce_DB, parent, "w", strlen("w"), NOISY TSRMLS_CC);
 	if (Z_TYPE_P(w) == IS_STRING) {
-		zend_update_property_string(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_STRVAL_P(w) TSRMLS_CC);
+		zend_update_property_string(mongo_ce_Collection, this, "w", strlen("w"), Z_STRVAL_P(w) TSRMLS_CC);
 	} else {
 		convert_to_long(w);
-		zend_update_property_long(mongo_ce_Collection, getThis(), "w", strlen("w"), Z_LVAL_P(w) TSRMLS_CC);
+		zend_update_property_long(mongo_ce_Collection, this, "w", strlen("w"), Z_LVAL_P(w) TSRMLS_CC);
 	}
 
 	wtimeout = zend_read_property(mongo_ce_DB, parent, "wtimeout", strlen("wtimeout"), NOISY TSRMLS_CC);
 	convert_to_long(wtimeout);
-	zend_update_property_long(mongo_ce_Collection, getThis(), "wtimeout", strlen("wtimeout"), Z_LVAL_P(wtimeout) TSRMLS_CC);
+	zend_update_property_long(mongo_ce_Collection, this, "wtimeout", strlen("wtimeout"), Z_LVAL_P(wtimeout) TSRMLS_CC);
+}
+
+/* {{{ proto MongoCollection MongoCollection::__construct(MongoDB db, string name)
+   Initializes a new MongoCollection */
+PHP_METHOD(MongoCollection, __construct)
+{
+	zval *parent;
+	char *name_str;
+	int name_len;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &parent, mongo_ce_DB, &name_str, &name_len) == FAILURE) {
+		zval *object = getThis();
+		ZVAL_NULL(object);
+		return;
+	}
+
+	php_mongo_collection_construct(getThis(), parent, name_str, name_len TSRMLS_CC);
 }
 /* }}} */
 
@@ -1807,7 +1819,7 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, m
 	/* get the system.indexes collection */
 	db = collection->parent;
 
-	system_indexes_collection = php_mongo_selectcollection(db, "system.indexes", strlen("system.indexes") TSRMLS_CC);
+	system_indexes_collection = php_mongo_db_selectcollection(db, "system.indexes", strlen("system.indexes") TSRMLS_CC);
 	PHP_MONGO_CHECK_EXCEPTION2(&keys, &system_indexes_collection);
 
 	/* set up data */
@@ -2030,7 +2042,7 @@ PHP_METHOD(MongoCollection, getIndexInfo)
 	mongo_collection *c;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	collection = php_mongo_selectcollection(c->parent, "system.indexes", strlen("system.indexes") TSRMLS_CC);
+	collection = php_mongo_db_selectcollection(c->parent, "system.indexes", strlen("system.indexes") TSRMLS_CC);
 	PHP_MONGO_CHECK_EXCEPTION1(&collection);
 
 	MAKE_STD_ZVAL(query);
@@ -2696,7 +2708,7 @@ PHP_METHOD(MongoCollection, __get)
 	full_name_len = spprintf(&full_name, 0, "%s.%s", Z_STRVAL_P(c->name), name);
 
 	/* select this collection */
-	collection = php_mongo_selectcollection(c->parent, full_name, full_name_len TSRMLS_CC);
+	collection = php_mongo_db_selectcollection(c->parent, full_name, full_name_len TSRMLS_CC);
 	if (collection) {
 		/* Only copy the zval into return_value if it worked. If collection is
 		 * NULL here, an exception is set */
