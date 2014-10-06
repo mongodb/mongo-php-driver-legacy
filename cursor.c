@@ -934,7 +934,13 @@ static int mongo_cursor__do_query(mongo_cursor *cursor TSRMLS_DC)
  */
 PHP_METHOD(MongoCursor, valid)
 {
-	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+	mongo_cursor *cursor;
+
+	if (zend_parse_parameters_none()) {
+		return;
+	}
+
+	cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
 	if (!cursor->started_iterating) {

@@ -767,7 +767,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 	php_mongocursor_load_current_element(cursor TSRMLS_CC);
 
 	/* MongoCursor::getNext() threw an exception */
-	if (EG(exception) || (Z_TYPE_P(cursor->current) == IS_BOOL && Z_BVAL_P(cursor->current) == 0)) {
+	if (EG(exception)) {
 		cursor->connection = NULL;
 		return;
 	}
