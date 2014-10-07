@@ -29,6 +29,6 @@ try {
 ?>
 --EXPECTF--
 int(2)
-string(44) "'\0' not allowed in database names: f0o\0..."
+string(68) "MongoDB::__construct(): '\0' not allowed in database names: f0o\0..."
 int(2)
-string(44) "'\0' not allowed in database names: f1o\0..."
+string(68) "MongoDB::__construct(): '\0' not allowed in database names: f1o\0..."

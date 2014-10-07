@@ -710,8 +710,7 @@ zval *php_mongo_client_selectdb(zval *this, char *db, int db_len TSRMLS_DC)
 	int free_this_ptr = 0;
 	zval *return_value;
 
-	if (memchr(db, '\0', db_len) != NULL) {
-		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "'\\0' not allowed in database names: %s\\0...", db);
+	if (!php_mongo_db_is_valid_dbname(db, db_len TSRMLS_CC)) {
 		return NULL;
 	}
 	
@@ -775,6 +774,10 @@ zval *php_mongo_client_selectdb(zval *this, char *db, int db_len TSRMLS_DC)
 	MAKE_STD_ZVAL(return_value);
 	object_init_ex(return_value, mongo_ce_DB);
 	php_mongo_db_construct(return_value, this, db, db_len TSRMLS_CC);
+	if (EG(exception)) {
+		zval_ptr_dtor(&return_value);
+		return_value = NULL;
+	}
 
 	if (free_this_ptr) {
 		zval_ptr_dtor(&this);

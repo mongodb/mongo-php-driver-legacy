@@ -110,21 +110,34 @@ static int php_mongo_command_supports_rp(zval *cmd)
 	return 0;
 }
 
-void php_mongo_db_construct(zval *this, zval *zlink, char *name, int name_len TSRMLS_DC)
+int php_mongo_db_is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
+{
+	if (memchr(dbname, '\0', dbname_len) != NULL) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): '\\0' not allowed in database names: %s\\0...", dbname);
+	}
+
+	if (
+		dbname_len == 0 ||
+		memchr(dbname, ' ', dbname_len) != 0 || memchr(dbname, '.', dbname_len) != 0 || memchr(dbname, '\\', dbname_len) != 0 ||
+		memchr(dbname, '/', dbname_len) != 0 || memchr(dbname, '$', dbname_len) != 0
+	) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", dbname);
+		return 0;
+	}
+	return 1;
+}
+
+
+void php_mongo_db_construct(zval *z_client, zval *zlink, char *name, int name_len TSRMLS_DC)
 {
 	mongo_db *db;
 	mongoclient *link;
 
-	if (
-		name_len == 0 ||
-		memchr(name, ' ', name_len) != 0 || memchr(name, '.', name_len) != 0 || memchr(name, '\\', name_len) != 0 ||
-		memchr(name, '/', name_len) != 0 || memchr(name, '$', name_len) != 0 || memchr(name, '\0', name_len) != 0
-	) {
-		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name);
+	if (!php_mongo_db_is_valid_dbname(name, name_len TSRMLS_CC)) {
 		return;
 	}
 
-	db = (mongo_db*)zend_object_store_get_object(this TSRMLS_CC);
+	db = (mongo_db*)zend_object_store_get_object(z_client TSRMLS_CC);
 
 	db->link = zlink;
 	zval_add_ref(&db->link);
@@ -136,12 +149,12 @@ void php_mongo_db_construct(zval *this, zval *zlink, char *name, int name_len TS
 	}
 
 	if (link->servers->options.default_w != -1) {
-		zend_update_property_long(mongo_ce_DB, this, "w", strlen("w"), link->servers->options.default_w TSRMLS_CC);
+		zend_update_property_long(mongo_ce_DB, z_client, "w", strlen("w"), link->servers->options.default_w TSRMLS_CC);
 	} else if (link->servers->options.default_wstring != NULL) {
-		zend_update_property_string(mongo_ce_DB, this, "w", strlen("w"), link->servers->options.default_wstring TSRMLS_CC);
+		zend_update_property_string(mongo_ce_DB, z_client, "w", strlen("w"), link->servers->options.default_wstring TSRMLS_CC);
 	}
 	if (link->servers->options.default_wtimeout != -1) {
-		zend_update_property_long(mongo_ce_DB, this, "wtimeout", strlen("wtimeout"), link->servers->options.default_wtimeout TSRMLS_CC);
+		zend_update_property_long(mongo_ce_DB, z_client, "wtimeout", strlen("wtimeout"), link->servers->options.default_wtimeout TSRMLS_CC);
 	}
 	mongo_read_preference_copy(&link->servers->read_pref, &db->read_pref);
 
@@ -176,13 +189,13 @@ PHP_METHOD(MongoDB, __toString)
 
 /* Selects a collection and returns it as zval. If the return value is no, an
  * Exception is set. This only happens if the passed in DB was invalid. */
-zval *php_mongo_db_selectcollection(zval *this, char *collection, int collection_len TSRMLS_DC)
+zval *php_mongo_db_selectcollection(zval *z_client, char *collection, int collection_len TSRMLS_DC)
 {
 	zval *z_collection;
 	zval *return_value;
 	mongo_db *db;
 
-	db = (mongo_db*)zend_object_store_get_object(this TSRMLS_CC);
+	db = (mongo_db*)zend_object_store_get_object(z_client TSRMLS_CC);
 	if (!(db->name)) {
 		zend_throw_exception(mongo_ce_Exception, "The MongoDB object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
 		return NULL;
@@ -194,7 +207,11 @@ zval *php_mongo_db_selectcollection(zval *this, char *collection, int collection
 	MAKE_STD_ZVAL(return_value);
 	object_init_ex(return_value, mongo_ce_Collection);
 
-	php_mongo_collection_construct(return_value, this, collection, collection_len TSRMLS_CC);
+	php_mongo_collection_construct(return_value, z_client, collection, collection_len TSRMLS_CC);
+	if (EG(exception)) {
+		zval_ptr_dtor(&return_value);
+		return_value = NULL;
+	}
 
 	zval_ptr_dtor(&z_collection);
 
@@ -800,19 +817,6 @@ PHP_METHOD(MongoDB, command)
 	}
 }
 
-static int is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
-{
-	if (
-		dbname_len == 0 ||
-		strchr(dbname, ' ') != 0 || strchr(dbname, '.') != 0 || strchr(dbname, '\\') != 0 ||
-		strchr(dbname, '/') != 0 || strchr(dbname, '$') != 0
-	) {
-		zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", dbname);
-		return 0;
-	}
-	return 1;
-}
-
 /* Actually execute the command after doing a few extra checks.
  *
  * This function can return NULL but *only* if an exception is set. So please
@@ -824,7 +828,7 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	mongoclient *link;
 	char *cmd_ns;
 
-	if (!is_valid_dbname(dbname, dbname_len TSRMLS_CC)) {
+	if (!php_mongo_db_is_valid_dbname(dbname, dbname_len TSRMLS_CC)) {
 		return NULL;
 	}
 

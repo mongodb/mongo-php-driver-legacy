@@ -124,17 +124,17 @@ void php_mongo_collection_construct(zval *this, zval *parent, char *name_str, in
    Initializes a new MongoCollection */
 PHP_METHOD(MongoCollection, __construct)
 {
-	zval *parent;
+	zval *db;
 	char *name_str;
 	int name_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &parent, mongo_ce_DB, &name_str, &name_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os", &db, mongo_ce_DB, &name_str, &name_len) == FAILURE) {
 		zval *object = getThis();
 		ZVAL_NULL(object);
 		return;
 	}
 
-	php_mongo_collection_construct(getThis(), parent, name_str, name_len TSRMLS_CC);
+	php_mongo_collection_construct(getThis(), db, name_str, name_len TSRMLS_CC);
 }
 /* }}} */
 
