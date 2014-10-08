@@ -937,6 +937,7 @@ PHP_METHOD(MongoGridFS, remove)
 	zval *criteria = 0, *options = 0, *zfields, *zcursor, *chunks, *next, chunktemp;
 	zval **tmp;
 	int justOne = -1;
+	int options_created = 0;
 
 	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 	php_mongo_ensure_gridfs_index(&chunktemp, chunks TSRMLS_CC);
@@ -964,6 +965,7 @@ PHP_METHOD(MongoGridFS, remove)
 	if (!options) {
 		MAKE_STD_ZVAL(options);
 		array_init(options);
+		options_created = 1;
 	}
 
 	/* { _id : 1 } */
@@ -978,7 +980,7 @@ PHP_METHOD(MongoGridFS, remove)
 	PHP_MONGO_CHECK_EXCEPTION3(&zcursor, &criteria, &options);
 
 	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, getNext, next, zcursor);
+	MONGO_METHOD(MongoCursor, next, next, zcursor);
 	PHP_MONGO_CHECK_EXCEPTION4(&next, &zcursor, &criteria, &options);
 
 	/* Temporarily ignore the justOne option while cleaning the data by _id */
@@ -1012,7 +1014,7 @@ PHP_METHOD(MongoGridFS, remove)
 		PHP_MONGO_CHECK_EXCEPTION3(&zcursor, &criteria, &options);
 
 		MAKE_STD_ZVAL(next);
-		MONGO_METHOD(MongoCursor, getNext, next, zcursor);
+		MONGO_METHOD(MongoCursor, next, next, zcursor);
 		PHP_MONGO_CHECK_EXCEPTION4(&next, &zcursor, &criteria, &options);
 	}
 	zval_ptr_dtor(&next);
@@ -1025,7 +1027,9 @@ PHP_METHOD(MongoGridFS, remove)
 	MONGO_METHOD2(MongoCollection, remove, return_value, getThis(), criteria, options);
 
 	zval_ptr_dtor(&criteria);
-	zval_ptr_dtor(&options);
+	if (options_created) {
+		zval_ptr_dtor(&options);
+	}
 }
 /* }}} */
 

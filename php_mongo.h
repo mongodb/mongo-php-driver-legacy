@@ -285,6 +285,12 @@ typedef struct {
 		RETURN_FALSE; \
 	}
 
+#define MONGO_CHECK_INITIALIZED_C(member, class_name) \
+	if (!(member)) { \
+		zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \
+		return FAILURE; \
+	}
+
 #define MONGO_CHECK_INITIALIZED_STRING(member, class_name) \
 	if (!(member)) { \
 		zend_throw_exception(mongo_ce_Exception, "The " #class_name " object has not been correctly initialized by its constructor", 0 TSRMLS_CC); \

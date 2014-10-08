@@ -53,7 +53,19 @@ PHP_METHOD(MongoGridFSCursor, __construct)
    Return the next file to which this cursor points, and advance the cursor */
 PHP_METHOD(MongoGridFSCursor, getNext)
 {
-	MONGO_METHOD(MongoCursor, next, return_value, getThis());
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	if (!cursor->started_iterating) {
+		php_mongo_runquery(cursor TSRMLS_CC);
+		if (EG(exception)) {
+			return;
+		}
+		cursor->started_iterating = 1;
+		php_mongocursor_load_current_element(cursor TSRMLS_CC);
+	} else {
+		php_mongocursor_advance(cursor TSRMLS_CC);
+	}
+
 	MONGO_METHOD(MongoGridFSCursor, current, return_value, getThis());
 }
 /* }}} */

@@ -588,7 +588,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 
 	/* populate list */
 	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, getNext, next, cursor);
+	MONGO_METHOD(MongoCursor, next, next, cursor);
 
 	while (IS_ARRAY_OR_OBJECT_P(next)) {
 		zval *c;
@@ -607,7 +607,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 			MAKE_STD_ZVAL(next);
 			ZVAL_NULL(next);
 
-			MONGO_METHOD(MongoCursor, getNext, next, cursor);
+			MONGO_METHOD(MongoCursor, next, next, cursor);
 			continue;
 		}
 
@@ -622,7 +622,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 			MAKE_STD_ZVAL(next);
 			ZVAL_NULL(next);
 
-			MONGO_METHOD(MongoCursor, getNext, next, cursor);
+			MONGO_METHOD(MongoCursor, next, next, cursor);
 			continue;
 		}
 
@@ -635,7 +635,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 			MAKE_STD_ZVAL(next);
 			ZVAL_NULL(next);
 
-			MONGO_METHOD(MongoCursor, getNext, next, cursor);
+			MONGO_METHOD(MongoCursor, next, next, cursor);
 			continue;
 		}
 
@@ -650,7 +650,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 		zval_ptr_dtor(&next);
 		MAKE_STD_ZVAL(next);
 
-		MONGO_METHOD(MongoCursor, getNext, next, cursor);
+		MONGO_METHOD(MongoCursor, next, next, cursor);
 	}
 
 	zval_ptr_dtor(&next);
@@ -822,7 +822,7 @@ PHP_METHOD(MongoDB, command)
  * check for NULL and/or EG(exception) in the calling function. */
 zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_preferences, char *dbname, int dbname_len, zval *cmd, zval *options, int is_cmd_cursor, mongo_connection **used_connection TSRMLS_DC)
 {
-	zval *temp, *cursor, *ns, *retval;
+	zval *temp, *cursor, *ns, *retval = NULL;
 	mongo_cursor *cursor_tmp;
 	mongoclient *link;
 	char *cmd_ns;
@@ -894,14 +894,32 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 		php_mongo_cursor_force_primary(cursor_tmp);
 	}
 
+
 	/* query */
-	MAKE_STD_ZVAL(retval);
-	MONGO_METHOD(MongoCursor, getNext, retval, cursor);
+	php_mongo_runquery(cursor_tmp TSRMLS_CC);
 	if (EG(exception)) {
-		zval_ptr_dtor(&retval);
 		zval_ptr_dtor(&cursor);
 		return NULL;
 	}
+
+	if (php_mongo_handle_error(cursor_tmp TSRMLS_CC)) {
+		/* do not free anything here, as php_mongo_handle_error already does
+		 * that upon error */
+		return NULL;
+	}
+
+	/* Find return value */
+	if (php_mongocursor_load_current_element(cursor_tmp TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&cursor);
+		return NULL;
+	}
+	if (php_mongocursor_is_valid(cursor_tmp) == FAILURE) {
+		zval_ptr_dtor(&cursor);
+		return NULL;
+	}
+	MAKE_STD_ZVAL(retval);
+	ZVAL_ZVAL(retval, cursor_tmp->current, 1, 0);
+
 
 	/* Before we destroy the cursor, we figure out which connection was used.
 	 * Yes, this is quite ugly but necessary for cursor commands. */

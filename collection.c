@@ -764,16 +764,17 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 
 	cursor->started_iterating = 1;
 
-	MONGO_METHOD(MongoCursor, getNext, return_value, cursor_z);
+	php_mongocursor_load_current_element(cursor TSRMLS_CC);
 
-	/* MongoCursor::getNext() threw an exception */
-	if (EG(exception) || (Z_TYPE_P(return_value) == IS_BOOL && Z_BVAL_P(return_value) == 0)) {
+	/* MongoCursor::next() threw an exception */
+	if (EG(exception)) {
 		cursor->connection = NULL;
 		return;
 	}
 
 	/* Check if either the GLE command or the previous write operation failed */
-	php_mongo_trigger_error_on_gle(cursor->connection, return_value TSRMLS_CC);
+	php_mongo_trigger_error_on_gle(cursor->connection, cursor->current TSRMLS_CC);
+	RETVAL_ZVAL(cursor->current, 1, 0);
 
 	cursor->connection = NULL;
 	return;
@@ -1249,7 +1250,6 @@ PHP_METHOD(MongoCollection, find)
 {
 	zval *query = 0, *fields = 0;
 	mongo_collection *c;
-	zval temp;
 	mongo_cursor *cursor;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zz", &query, &fields) == FAILURE) {
@@ -1267,15 +1267,7 @@ PHP_METHOD(MongoCollection, find)
 	cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
 	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
 
-	/* TODO: Don't call an internal function like this, but add a new C-level
-	 * function for instantiating cursors */
-	if (!query) {
-		MONGO_METHOD2(MongoCursor, __construct, &temp, return_value, c->link, c->ns);
-	} else if (!fields) {
-		MONGO_METHOD3(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query);
-	} else {
-		MONGO_METHOD4(MongoCursor, __construct, &temp, return_value, c->link, c->ns, query, fields);
-	}
+	php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields TSRMLS_CC);
 }
 /* }}} */
 
@@ -1284,9 +1276,9 @@ PHP_METHOD(MongoCollection, find)
    the projection. NULL will be returned if no document matches. */
 PHP_METHOD(MongoCollection, findOne)
 {
-	int find_num_args;
-	zval *query = 0, *fields = 0, *options = 0, *zcursor;
+	zval *query = NULL, *fields = NULL, *options = NULL, *zcursor = NULL;
 	mongo_cursor *cursor;
+	mongo_collection *c;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zza", &query, &fields, &options) == FAILURE) {
 		return;
@@ -1294,14 +1286,22 @@ PHP_METHOD(MongoCollection, findOne)
 
 	MUST_BE_ARRAY_OR_OBJECT(1, query);
 	MUST_BE_ARRAY_OR_OBJECT(2, fields);
+	
+	PHP_MONGO_GET_COLLECTION(getThis());
 
 	MAKE_STD_ZVAL(zcursor);
-	/* Do not pass third options argument (if present) to find() */
-	find_num_args = ZEND_NUM_ARGS() < 2 ? ZEND_NUM_ARGS() : 2;
-	MONGO_METHOD_BASE(MongoCollection, find)(find_num_args, zcursor, NULL, getThis(), 0 TSRMLS_CC);
-	PHP_MONGO_CHECK_EXCEPTION1(&zcursor);
+	object_init_ex(zcursor, mongo_ce_Cursor);
 
-	PHP_MONGO_GET_CURSOR(zcursor);
+	/* Add read preferences to cursor */
+	cursor = (mongo_cursor*)zend_object_store_get_object(zcursor TSRMLS_CC);
+	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
+
+	if (php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&zcursor);
+		return;
+	}
+
+	/* Set limit to 1 */
 	php_mongo_cursor_set_limit(cursor, -1);
 
 	if (options) {
@@ -1332,7 +1332,30 @@ PHP_METHOD(MongoCollection, findOne)
 		}
 	}
 
-	MONGO_METHOD(MongoCursor, getNext, return_value, zcursor);
+
+	/* query */
+	php_mongo_runquery(cursor TSRMLS_CC);
+	if (EG(exception)) {
+		zval_ptr_dtor(&zcursor);
+		RETURN_NULL();
+	}
+
+	/* Find return value */
+	if (php_mongocursor_load_current_element(cursor TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&zcursor);
+		RETURN_NULL();
+	}
+
+	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
+		zval_ptr_dtor(&zcursor);
+		RETURN_NULL();
+	}
+
+	if (php_mongocursor_is_valid(cursor) == FAILURE) {
+		zval_ptr_dtor(&zcursor);
+		RETURN_NULL();
+	}
+	RETVAL_ZVAL(cursor->current, 1, 0);
 
 cleanup_on_failure:
 	zend_objects_store_del_ref(zcursor TSRMLS_CC);
@@ -1658,8 +1681,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 		if (Z_STRLEN_P(keys) == 0) {
 			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "empty string passed as key field");
 			zval_ptr_dtor(&cmd);
-			zval_ptr_dtor(&indexes);
-			zval_ptr_dtor(&index_spec);
 			return;
 		}
 
@@ -1671,8 +1692,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 		if (HASH_OF(keys)->nNumOfElements == 0) {
 			zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has no elements");
 			zval_ptr_dtor(&cmd);
-			zval_ptr_dtor(&indexes);
-			zval_ptr_dtor(&index_spec);
 			return;
 		}
 
@@ -1681,8 +1700,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 	} else {
 		zend_throw_exception_ex(mongo_ce_Exception, 22 TSRMLS_CC, "index specification has to be an array");
 		zval_ptr_dtor(&cmd);
-		zval_ptr_dtor(&indexes);
-		zval_ptr_dtor(&index_spec);
 		return;
 	}
 
@@ -1715,8 +1732,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 			if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
 				zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
 				zval_ptr_dtor(&cmd);
-				zval_ptr_dtor(&indexes);
-				zval_ptr_dtor(&index_spec);
 				return;
 			}
 			done_name = 1;
@@ -1733,8 +1748,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 		key_str = to_index_string(keys, &key_str_len TSRMLS_CC);
 		if (!key_str) {
 			zval_ptr_dtor(&cmd);
-			zval_ptr_dtor(&indexes);
-			zval_ptr_dtor(&index_spec);
 			return;
 		}
 
@@ -1742,8 +1755,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", key_str_len, MAX_INDEX_NAME_LEN);
 			efree(key_str);
 			zval_ptr_dtor(&cmd);
-			zval_ptr_dtor(&indexes);
-			zval_ptr_dtor(&index_spec);
 			return;
 		}
 
@@ -2040,14 +2051,14 @@ PHP_METHOD(MongoCollection, getIndexInfo)
 	array_init(return_value);
 
 	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, getNext, next, cursor);
+	MONGO_METHOD(MongoCursor, next, next, cursor);
 	PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
 
 	while (Z_TYPE_P(next) != IS_NULL) {
 		add_next_index_zval(return_value, next);
 
 		MAKE_STD_ZVAL(next);
-		MONGO_METHOD(MongoCursor, getNext, next, cursor);
+		MONGO_METHOD(MongoCursor, next, next, cursor);
 		PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
 	}
 
