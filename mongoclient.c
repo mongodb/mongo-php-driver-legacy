@@ -692,8 +692,7 @@ zval *php_mongoclient_selectdb(zval *zlink, char *name, int name_len TSRMLS_DC)
 	mongoclient *link;
 	int free_zlink_ptr = 0;
 
-	if (memchr(name, '\0', name_len) != NULL) {
-		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "'\\0' not allowed in database names: %s\\0...", name);
+	if (!php_mongo_db_is_valid_dbname(name, name_len TSRMLS_CC)) {
 		return NULL;
 	}
 
@@ -757,8 +756,8 @@ zval *php_mongoclient_selectdb(zval *zlink, char *name, int name_len TSRMLS_DC)
 
 	MAKE_STD_ZVAL(zdb);
 	object_init_ex(zdb, mongo_ce_DB);
-
-	if (FAILURE == php_mongodb_init(zdb, zlink, name, name_len TSRMLS_CC)) {
+	php_mongo_db_construct(zdb, zlink, name, name_len TSRMLS_CC);
+	if (EG(exception)) {
 		zval_ptr_dtor(&zdb);
 		zdb = NULL;
 	}
@@ -830,7 +829,7 @@ PHP_METHOD(MongoClient, selectCollection)
 		return;
 	}
 
-	z_collection = php_mongo_selectcollection(z_db, coll, coll_len TSRMLS_CC);
+	z_collection = php_mongo_db_selectcollection(z_db, coll, coll_len TSRMLS_CC);
 
 	if (z_collection != NULL) {
 		/* Only copy the zval into return_value if it worked. If collection is
