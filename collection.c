@@ -766,7 +766,7 @@ static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, 
 
 	php_mongocursor_load_current_element(cursor TSRMLS_CC);
 
-	/* MongoCursor::getNext() threw an exception */
+	/* MongoCursor::next() threw an exception */
 	if (EG(exception)) {
 		cursor->connection = NULL;
 		return;
@@ -2051,14 +2051,14 @@ PHP_METHOD(MongoCollection, getIndexInfo)
 	array_init(return_value);
 
 	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, getNext, next, cursor);
+	MONGO_METHOD(MongoCursor, next, next, cursor);
 	PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
 
 	while (Z_TYPE_P(next) != IS_NULL) {
 		add_next_index_zval(return_value, next);
 
 		MAKE_STD_ZVAL(next);
-		MONGO_METHOD(MongoCursor, getNext, next, cursor);
+		MONGO_METHOD(MongoCursor, next, next, cursor);
 		PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
 	}
 

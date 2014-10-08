@@ -980,7 +980,7 @@ PHP_METHOD(MongoGridFS, remove)
 	PHP_MONGO_CHECK_EXCEPTION3(&zcursor, &criteria, &options);
 
 	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, getNext, next, zcursor);
+	MONGO_METHOD(MongoCursor, next, next, zcursor);
 	PHP_MONGO_CHECK_EXCEPTION4(&next, &zcursor, &criteria, &options);
 
 	/* Temporarily ignore the justOne option while cleaning the data by _id */
@@ -1014,7 +1014,7 @@ PHP_METHOD(MongoGridFS, remove)
 		PHP_MONGO_CHECK_EXCEPTION3(&zcursor, &criteria, &options);
 
 		MAKE_STD_ZVAL(next);
-		MONGO_METHOD(MongoCursor, getNext, next, zcursor);
+		MONGO_METHOD(MongoCursor, next, next, zcursor);
 		PHP_MONGO_CHECK_EXCEPTION4(&next, &zcursor, &criteria, &options);
 	}
 	zval_ptr_dtor(&next);

@@ -588,7 +588,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 
 	/* populate list */
 	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, getNext, next, cursor);
+	MONGO_METHOD(MongoCursor, next, next, cursor);
 
 	while (IS_ARRAY_OR_OBJECT_P(next)) {
 		zval *c;
@@ -607,7 +607,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 			MAKE_STD_ZVAL(next);
 			ZVAL_NULL(next);
 
-			MONGO_METHOD(MongoCursor, getNext, next, cursor);
+			MONGO_METHOD(MongoCursor, next, next, cursor);
 			continue;
 		}
 
@@ -622,7 +622,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 			MAKE_STD_ZVAL(next);
 			ZVAL_NULL(next);
 
-			MONGO_METHOD(MongoCursor, getNext, next, cursor);
+			MONGO_METHOD(MongoCursor, next, next, cursor);
 			continue;
 		}
 
@@ -635,7 +635,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 			MAKE_STD_ZVAL(next);
 			ZVAL_NULL(next);
 
-			MONGO_METHOD(MongoCursor, getNext, next, cursor);
+			MONGO_METHOD(MongoCursor, next, next, cursor);
 			continue;
 		}
 
@@ -650,7 +650,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 		zval_ptr_dtor(&next);
 		MAKE_STD_ZVAL(next);
 
-		MONGO_METHOD(MongoCursor, getNext, next, cursor);
+		MONGO_METHOD(MongoCursor, next, next, cursor);
 	}
 
 	zval_ptr_dtor(&next);

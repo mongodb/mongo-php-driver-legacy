@@ -363,40 +363,6 @@ int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 }
 /* }}} */
 
-/* {{{ MongoCursor::getNext
- */
-PHP_METHOD(MongoCursor, getNext)
-{
-	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
-	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
-	MONGO_CURSOR_CHECK_DEAD;
-
-	/* Ideally, next() shouldn't be doing this. Instead users should use
-	 * doQuery() themselves. But, BC */
-	if (!cursor->started_iterating) {
-		php_mongo_runquery(cursor TSRMLS_CC);
-		if (EG(exception)) {
-			return;
-		}
-		cursor->started_iterating = 1;
-		php_mongocursor_load_current_element(cursor TSRMLS_CC);
-	} else {
-		php_mongocursor_advance(cursor TSRMLS_CC);
-	}
-
-	if (!php_mongocursor_is_valid(cursor)) {
-		RETURN_NULL();
-	}
-
-	if (cursor->current) {
-		RETURN_ZVAL(cursor->current, 1, 0);
-	}
-
-	RETURN_NULL();
-}
-/* }}} */
-
 /* {{{ MongoCursor::limit
  */
 PHP_METHOD(MongoCursor, limit)
@@ -752,7 +718,7 @@ PHP_METHOD(MongoCursor, explain)
 
 	zval_ptr_dtor(&yes);
 
-	MONGO_METHOD(MongoCursor, getNext, return_value, getThis());
+	MONGO_METHOD(MongoCursor, next, return_value, getThis());
 
 	/* reset cursor to original state */
 	cursor->limit = temp_limit;
@@ -1222,7 +1188,7 @@ ZEND_END_ARG_INFO()
 static zend_function_entry MongoCursor_methods[] = {
 	PHP_ME(MongoCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, hasNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, getNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_MALIAS(MongoCursor, getNext, next, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
 	/* options */
 	PHP_ME(MongoCursor, limit, arginfo_limit, ZEND_ACC_PUBLIC)

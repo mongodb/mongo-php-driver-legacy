@@ -304,7 +304,7 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
 	zval *next;
 
 	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, getNext, next, cursor);
+	MONGO_METHOD(MongoCursor, next, next, cursor);
 
 	if (EG(exception)) {
 		return FAILURE;
@@ -368,7 +368,7 @@ static int apply_to_cursor(zval *cursor, apply_copy_func_t apply_copy_func, void
 		/* get ready for the next iteration */
 		zval_ptr_dtor(&next);
 		MAKE_STD_ZVAL(next);
-		MONGO_METHOD(MongoCursor, getNext, next, cursor);
+		MONGO_METHOD(MongoCursor, next, next, cursor);
 	}
 	zval_ptr_dtor(&next);
 
