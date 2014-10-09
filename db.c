@@ -564,17 +564,16 @@ PHP_METHOD(MongoDB, dropCollection)
 }
 /* }}} */
 
-static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int full_collection)
+void mongo_db_list_collections_command(zval *this_ptr, int include_system_collections, int full_collection_object,  zval *return_value TSRMLS_DC)
 {
-	zend_bool system_col = 0;
+}
+
+void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collections, int full_collection_object, zval *return_value TSRMLS_DC)
+{
 	zval *system_collection, *cursor, *list, *next;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &system_col) == FAILURE) {
-		return;
-	}
-
 	/* select db.system.namespaces collection */
-	system_collection = php_mongo_db_selectcollection(getThis(), "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
+	system_collection = php_mongo_db_selectcollection(this_ptr, "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
 	if (!system_collection) {
 		/* An exception is set in this case */
 		return;
@@ -617,7 +616,7 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 		first_dot = strchr(Z_STRVAL_PP(collection), '.');
 		system = strstr(Z_STRVAL_PP(collection), ".system.");
 		if (
-			(!system_col && (system && first_dot == system)) ||
+			(!include_system_collections && (system && first_dot == system)) ||
 			(name = strchr(Z_STRVAL_PP(collection), '.')) == 0)
 		{
 			zval_ptr_dtor(&next);
@@ -641,8 +640,8 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 			continue;
 		}
 
-		if (full_collection) {
-			c = php_mongo_db_selectcollection(getThis(), name, strlen(name) TSRMLS_CC);
+		if (full_collection_object) {
+			c = php_mongo_db_selectcollection(this_ptr, name, strlen(name) TSRMLS_CC);
 			/* No need to test for c here, as this was already covered in
 			 * system_collection above */
 			add_next_index_zval(list, c);
@@ -660,6 +659,31 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 	zval_ptr_dtor(&system_collection);
 
 	RETURN_ZVAL(list, 0, 1);
+}
+
+static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int full_collection_object)
+{
+	zend_bool include_system_collections = 0;
+	mongo_connection *connection;
+	mongo_db *db;
+	mongoclient *link;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &include_system_collections) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_DB(getThis());
+	PHP_MONGO_GET_LINK(db->link);
+
+	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+		RETURN_FALSE;
+	}
+
+	if (php_mongo_api_connection_min_server_version(connection, 2, 7, 5)) {
+		mongo_db_list_collections_command(getThis(), include_system_collections, full_collection_object, return_value TSRMLS_CC);
+	} else {
+		mongo_db_list_collections_legacy(getThis(), include_system_collections, full_collection_object, return_value TSRMLS_CC);
+	}
 }
 
 PHP_METHOD(MongoDB, listCollections)
