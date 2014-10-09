@@ -559,13 +559,11 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 
 /* Returns a connection for the operation.
  * Connection flags (connection_flags) are MONGO_CON_TYPE_READ and MONGO_CON_TYPE_WRITE. */
-mongo_connection* get_server(mongo_collection *c, int connection_flags TSRMLS_DC)
+mongo_connection* php_mongo_collection_get_server(mongoclient *link, int connection_flags TSRMLS_DC)
 {
-	mongoclient *link;
 	mongo_connection *connection;
 	char *error_message = NULL;
 
-	link = (mongoclient*)zend_object_store_get_object((c->link) TSRMLS_CC);
 	if (!link) {
 		zend_throw_exception(mongo_ce_Exception, "The MongoCollection object has not been correctly initialized by its constructor", 17 TSRMLS_CC);
 		return NULL;
@@ -1136,7 +1134,7 @@ PHP_METHOD(MongoCollection, insert)
 	PHP_MONGO_GET_COLLECTION(getThis());
 	link = (mongoclient*)zend_object_store_get_object(c->link TSRMLS_CC);
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		RETURN_FALSE;
 	}
 
@@ -1197,6 +1195,7 @@ PHP_METHOD(MongoCollection, batchInsert)
 	mongo_buffer buf;
 	int bit_opts = 0;
 	int retval, count;
+	mongoclient *link;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|z/", &docs, &options) == FAILURE) {
 		return;
@@ -1219,8 +1218,9 @@ PHP_METHOD(MongoCollection, batchInsert)
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_LINK(c->link);
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		zval_ptr_dtor(&options);
 		RETURN_FALSE;
 	}
@@ -1450,6 +1450,7 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 {
 	int bit_opts = 0;
 	mongo_connection *connection;
+	mongoclient *link;
 
 	if (z_write_options) {
 		zval **upsert = 0, **multiple = 0;
@@ -1470,7 +1471,8 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 		array_init(z_write_options);
 	}
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+	PHP_MONGO_GET_LINK(c->link);
+	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		zval_ptr_dtor(&z_write_options);
 		RETURN_FALSE;
 	}
@@ -1478,7 +1480,6 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
 		php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 		php_mongo_write_update_args update_options = { NULL, NULL, -1, -1 };
-		mongoclient *link;
 		int retval;
 		mongo_db *db;
 		int socket_read_timeout = 0;
@@ -1486,7 +1487,6 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 		PHP_MONGO_GET_COLLECTION(getThis());
 		PHP_MONGO_GET_DB(c->parent);
 
-		link = (mongoclient*)zend_object_store_get_object(c->link TSRMLS_CC);
 		update_options.query  = criteria;
 		update_options.update = newobj;
 
@@ -1560,6 +1560,7 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 {
 	int bit_opts = 0;
 	mongo_connection *connection;
+	mongoclient *link;
 
 	if (!criteria) {
 		MAKE_STD_ZVAL(criteria);
@@ -1581,7 +1582,8 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 		array_init(z_write_options);
 	}
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+	PHP_MONGO_GET_LINK(c->link);
+	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		zval_ptr_dtor(&z_write_options);
 		zval_ptr_dtor(&criteria);
 		RETURN_FALSE;
@@ -1590,7 +1592,6 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
 		php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 		php_mongo_write_delete_args delete_options = { NULL, -1 };
-		mongoclient *link;
 		int retval;
 		mongo_db *db;
 		int socket_read_timeout = 0;
@@ -1598,7 +1599,6 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 		PHP_MONGO_GET_COLLECTION(getThis());
 		PHP_MONGO_GET_DB(c->parent);
 
-		link = (mongoclient*)zend_object_store_get_object(c->link TSRMLS_CC);
 		delete_options.query  = criteria;
 
 		mongo_apply_delete_options_from_bits(&delete_options, bit_opts);
@@ -1923,6 +1923,7 @@ PHP_METHOD(MongoCollection, createIndex)
 	zval *keys, *options = NULL;
 	mongo_connection *connection;
 	mongo_collection *c;
+	mongoclient *link;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &keys, &options) == FAILURE) {
 		return;
@@ -1930,7 +1931,8 @@ PHP_METHOD(MongoCollection, createIndex)
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+	PHP_MONGO_GET_LINK(c->link);
+	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		RETURN_FALSE;
 	}
 
@@ -1951,6 +1953,7 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	zval *keys, *options = NULL;
 	mongo_connection *connection;
 	mongo_collection *c;
+	mongoclient *link;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &keys, &options) == FAILURE) {
 		return;
@@ -1958,7 +1961,8 @@ PHP_METHOD(MongoCollection, ensureIndex)
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+	PHP_MONGO_GET_LINK(c->link);
+	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		RETURN_FALSE;
 	}
 

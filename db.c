@@ -28,6 +28,7 @@
 #include "types/code.h"
 #include "types/db_ref.h"
 #include "mcon/manager.h"
+#include "api/wire_version.h"
 
 #ifndef zend_parse_parameters_none
 #define zend_parse_parameters_none()    \
