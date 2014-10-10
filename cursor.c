@@ -1223,7 +1223,7 @@ static zend_function_entry MongoCursor_methods[] = {
 
 	/* query */
 	PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoCursor, doQuery, arginfo_no_parameters, ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED)
+	PHP_ME(MongoCursor, doQuery, arginfo_no_parameters, ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED|ZEND_ACC_FINAL)
 	PHP_ME(MongoCursorInterface, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursorInterface, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
