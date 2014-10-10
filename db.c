@@ -570,7 +570,7 @@ void mongo_db_list_collections_command(zval *this_ptr, int include_system_collec
 
 void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collections, int full_collection_object, zval *return_value TSRMLS_DC)
 {
-	zval *z_system_collection, *z_cursor, *list, *next;
+	zval *z_system_collection, *z_cursor, *list;
 	mongo_cursor *cursor;
 	mongo_collection *collection;
 
@@ -591,31 +591,32 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 	cursor = (mongo_cursor*)zend_object_store_get_object(z_cursor TSRMLS_CC);
 	collection = (mongo_collection*)zend_object_store_get_object(z_system_collection TSRMLS_CC);
 
-	/* Add read preferences to cursor */
 	php_mongo_collection_find(cursor, collection, NULL, NULL TSRMLS_CC);
 
-	/* populate list */
-	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, next, next, z_cursor);
+	php_mongo_runquery(cursor TSRMLS_CC);
+	if (EG(exception)) {
+		zval_ptr_dtor(&z_cursor);
+		zval_ptr_dtor(&z_system_collection);
+		RETURN_ZVAL(list, 0, 1);
+	}
 
-	while (IS_ARRAY_OR_OBJECT_P(next)) {
+	/* populate list */
+	php_mongocursor_load_current_element(cursor TSRMLS_CC);
+
+	while (php_mongocursor_is_valid(cursor)) {
 		zval *c;
 		zval **collection_name;
 		char *name, *first_dot, *system;
 
 		/* check that the ns is valid and not an index (contains $) */
 		if (
-			zend_hash_find(HASH_P(next), "name", 5, (void**)&collection_name) == FAILURE ||
+			zend_hash_find(HASH_P(cursor->current), "name", 5, (void**)&collection_name) == FAILURE ||
 			(
 				Z_TYPE_PP(collection_name) == IS_STRING &&
 				strchr(Z_STRVAL_PP(collection_name), '$')
 			)
 		) {
-			zval_ptr_dtor(&next);
-			MAKE_STD_ZVAL(next);
-			ZVAL_NULL(next);
-
-			MONGO_METHOD(MongoCursor, next, next, z_cursor);
+			php_mongocursor_advance(cursor TSRMLS_CC);
 			continue;
 		}
 
@@ -626,11 +627,7 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 			(!include_system_collections && (system && first_dot == system)) ||
 			(name = strchr(Z_STRVAL_PP(collection_name), '.')) == 0)
 		{
-			zval_ptr_dtor(&next);
-			MAKE_STD_ZVAL(next);
-			ZVAL_NULL(next);
-
-			MONGO_METHOD(MongoCursor, next, next, z_cursor);
+			php_mongocursor_advance(cursor TSRMLS_CC);
 			continue;
 		}
 
@@ -639,11 +636,7 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 
 		/* "foo." was allowed in earlier versions */
 		if (name == '\0') {
-			zval_ptr_dtor(&next);
-			MAKE_STD_ZVAL(next);
-			ZVAL_NULL(next);
-
-			MONGO_METHOD(MongoCursor, next, next, z_cursor);
+			php_mongocursor_advance(cursor TSRMLS_CC);
 			continue;
 		}
 
@@ -655,13 +648,10 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 		} else {
 			add_next_index_string(list, name, 1);
 		}
-		zval_ptr_dtor(&next);
-		MAKE_STD_ZVAL(next);
 
-		MONGO_METHOD(MongoCursor, next, next, z_cursor);
+		php_mongocursor_advance(cursor TSRMLS_CC);
 	}
 
-	zval_ptr_dtor(&next);
 	zval_ptr_dtor(&z_cursor);
 	zval_ptr_dtor(&z_system_collection);
 
