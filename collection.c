@@ -1255,6 +1255,13 @@ PHP_METHOD(MongoCollection, batchInsert)
 }
 /* }}} */
 
+int php_mongo_collection_find(mongo_cursor *cursor, mongo_collection *c, zval *query, zval *fields TSRMLS_DC)
+{
+	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
+	return php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields TSRMLS_CC);
+}
+
+
 /* {{{ proto array MongoCollection::find([array|object criteria [, array|object return_fields]])
    Query this collection for documents matching $criteria and use $return_fields
    as the projection. Return a MongoCursor for the result set. */
@@ -1274,12 +1281,9 @@ PHP_METHOD(MongoCollection, find)
 	PHP_MONGO_GET_COLLECTION(getThis());
 
 	object_init_ex(return_value, mongo_ce_Cursor);
-
-	/* Add read preferences to cursor */
 	cursor = (mongo_cursor*)zend_object_store_get_object(return_value TSRMLS_CC);
-	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
 
-	php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields TSRMLS_CC);
+	php_mongo_collection_find(cursor, c, query, fields TSRMLS_CC);
 }
 /* }}} */
 
@@ -1303,12 +1307,9 @@ PHP_METHOD(MongoCollection, findOne)
 
 	MAKE_STD_ZVAL(zcursor);
 	object_init_ex(zcursor, mongo_ce_Cursor);
-
-	/* Add read preferences to cursor */
 	cursor = (mongo_cursor*)zend_object_store_get_object(zcursor TSRMLS_CC);
-	mongo_read_preference_replace(&c->read_pref, &cursor->read_pref);
 
-	if (php_mongocursor_create(cursor, c->link, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), query, fields TSRMLS_CC) == FAILURE) {
+	if (php_mongo_collection_find(cursor, c, query, fields TSRMLS_CC) == FAILURE) {
 		zval_ptr_dtor(&zcursor);
 		return;
 	}
