@@ -570,11 +570,13 @@ void mongo_db_list_collections_command(zval *this_ptr, int include_system_collec
 
 void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collections, int full_collection_object, zval *return_value TSRMLS_DC)
 {
-	zval *system_collection, *cursor, *list, *next;
+	zval *z_system_collection, *z_cursor, *list, *next;
+	mongo_cursor *cursor;
+	mongo_collection *collection;
 
 	/* select db.system.namespaces collection */
-	system_collection = php_mongo_db_selectcollection(this_ptr, "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
-	if (!system_collection) {
+	z_system_collection = php_mongo_db_selectcollection(this_ptr, "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
+	if (!z_system_collection) {
 		/* An exception is set in this case */
 		return;
 	}
@@ -584,46 +586,51 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 	array_init(list);
 
 	/* do find */
-	MAKE_STD_ZVAL(cursor);
-	MONGO_METHOD(MongoCollection, find, cursor, system_collection);
+	MAKE_STD_ZVAL(z_cursor);
+	object_init_ex(z_cursor, mongo_ce_Cursor);
+	cursor = (mongo_cursor*)zend_object_store_get_object(z_cursor TSRMLS_CC);
+	collection = (mongo_collection*)zend_object_store_get_object(z_system_collection TSRMLS_CC);
+
+	/* Add read preferences to cursor */
+	php_mongo_collection_find(cursor, collection, NULL, NULL TSRMLS_CC);
 
 	/* populate list */
 	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, next, next, cursor);
+	MONGO_METHOD(MongoCursor, next, next, z_cursor);
 
 	while (IS_ARRAY_OR_OBJECT_P(next)) {
 		zval *c;
-		zval **collection;
+		zval **collection_name;
 		char *name, *first_dot, *system;
 
 		/* check that the ns is valid and not an index (contains $) */
 		if (
-			zend_hash_find(HASH_P(next), "name", 5, (void**)&collection) == FAILURE ||
+			zend_hash_find(HASH_P(next), "name", 5, (void**)&collection_name) == FAILURE ||
 			(
-				Z_TYPE_PP(collection) == IS_STRING &&
-				strchr(Z_STRVAL_PP(collection), '$')
+				Z_TYPE_PP(collection_name) == IS_STRING &&
+				strchr(Z_STRVAL_PP(collection_name), '$')
 			)
 		) {
 			zval_ptr_dtor(&next);
 			MAKE_STD_ZVAL(next);
 			ZVAL_NULL(next);
 
-			MONGO_METHOD(MongoCursor, next, next, cursor);
+			MONGO_METHOD(MongoCursor, next, next, z_cursor);
 			continue;
 		}
 
 		/* check that this isn't a system ns */
-		first_dot = strchr(Z_STRVAL_PP(collection), '.');
-		system = strstr(Z_STRVAL_PP(collection), ".system.");
+		first_dot = strchr(Z_STRVAL_PP(collection_name), '.');
+		system = strstr(Z_STRVAL_PP(collection_name), ".system.");
 		if (
 			(!include_system_collections && (system && first_dot == system)) ||
-			(name = strchr(Z_STRVAL_PP(collection), '.')) == 0)
+			(name = strchr(Z_STRVAL_PP(collection_name), '.')) == 0)
 		{
 			zval_ptr_dtor(&next);
 			MAKE_STD_ZVAL(next);
 			ZVAL_NULL(next);
 
-			MONGO_METHOD(MongoCursor, next, next, cursor);
+			MONGO_METHOD(MongoCursor, next, next, z_cursor);
 			continue;
 		}
 
@@ -636,7 +643,7 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 			MAKE_STD_ZVAL(next);
 			ZVAL_NULL(next);
 
-			MONGO_METHOD(MongoCursor, next, next, cursor);
+			MONGO_METHOD(MongoCursor, next, next, z_cursor);
 			continue;
 		}
 
@@ -651,12 +658,12 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 		zval_ptr_dtor(&next);
 		MAKE_STD_ZVAL(next);
 
-		MONGO_METHOD(MongoCursor, next, next, cursor);
+		MONGO_METHOD(MongoCursor, next, next, z_cursor);
 	}
 
 	zval_ptr_dtor(&next);
-	zval_ptr_dtor(&cursor);
-	zval_ptr_dtor(&system_collection);
+	zval_ptr_dtor(&z_cursor);
+	zval_ptr_dtor(&z_system_collection);
 
 	RETURN_ZVAL(list, 0, 1);
 }
