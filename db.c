@@ -566,6 +566,78 @@ PHP_METHOD(MongoDB, dropCollection)
 
 void mongo_db_list_collections_command(zval *this_ptr, int include_system_collections, int full_collection_object,  zval *return_value TSRMLS_DC)
 {
+	zval *z_cmd, *list, **collections;
+	mongo_db *db;
+	mongo_connection *connection;
+	zval *retval;
+
+	/* list to return */
+	MAKE_STD_ZVAL(list);
+	array_init(list);
+
+	MAKE_STD_ZVAL(z_cmd);
+	array_init(z_cmd);
+	add_assoc_long(z_cmd, "listCollections", 1);
+
+	PHP_MONGO_GET_DB(getThis());
+
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), z_cmd, NULL, 0, &connection TSRMLS_CC);
+	
+	zval_ptr_dtor(&z_cmd);
+	
+	if (!retval) {
+		return;
+	}
+
+	if (php_mongo_trigger_error_on_command_failure(connection, retval TSRMLS_CC) == FAILURE) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
+
+	if (zend_hash_find(Z_ARRVAL_P(retval), "collections", strlen("collections") + 1, (void **)&collections) == FAILURE) {
+		zval_ptr_dtor(&retval);
+		RETURN_FALSE;
+	}
+
+	{
+		HashPosition pointer;
+		zval **collection_doc;
+
+		for (
+				zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(collections), &pointer);
+				zend_hash_get_current_data_ex(Z_ARRVAL_PP(collections), (void**)&collection_doc, &pointer) == SUCCESS;
+				zend_hash_move_forward_ex(Z_ARRVAL_PP(collections), &pointer)
+		) {
+			zval *c;
+			zval **collection_name;
+			char *system;
+
+			/* check that the ns is valid and not an index (contains $) */
+			if (zend_hash_find(Z_ARRVAL_PP(collection_doc), "name", 5, (void**)&collection_name) == FAILURE) {
+				continue;
+			}
+
+			/* check that this isn't a system ns */
+			system = strstr(Z_STRVAL_PP(collection_name), "system.");
+			if (
+				(!include_system_collections && (system == Z_STRVAL_PP(collection_name)))
+			) {
+				continue;
+			}
+
+			if (full_collection_object) {
+				c = php_mongo_db_selectcollection(this_ptr, Z_STRVAL_PP(collection_name), Z_STRLEN_PP(collection_name) TSRMLS_CC);
+				/* No need to test for c here, as this was already covered in
+				 * system_collection above */
+				add_next_index_zval(list, c);
+			} else {
+				add_next_index_string(list, Z_STRVAL_PP(collection_name), 1);
+			}
+		}
+	}
+
+	zval_ptr_dtor(&retval);
+
+	RETURN_ZVAL(list, 0, 1);
 }
 
 void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collections, int full_collection_object, zval *return_value TSRMLS_DC)
