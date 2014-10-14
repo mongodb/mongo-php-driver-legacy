@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::listCollections() Run against secondary directly
+MongoDB::listCollections() Run against secondary directly
 --SKIPIF--
 <?php $needs = "2.7.5"; ?>
 <?php require_once 'tests/utils/replicaset.inc' ?>

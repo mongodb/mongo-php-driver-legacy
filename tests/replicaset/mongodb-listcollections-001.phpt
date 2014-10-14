@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::listCollections() Run against primary (legacy mode)
+MongoDB::listCollections() Run against primary (legacy mode)
 --SKIPIF--
 <?php $needs = "2.7.5"; $needsOp = "lt"; ?>
 <?php require_once 'tests/utils/replicaset.inc' ?>

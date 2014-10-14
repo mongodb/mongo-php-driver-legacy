@@ -1,5 +1,5 @@
 --TEST--
-MongoCollection::listCollections() Run against secondary directly with RP secondary (legacy mode)
+MongoDB::listCollections() Run against secondary directly with RP secondary (legacy mode)
 --SKIPIF--
 <?php $needs = "2.7.5"; $needsOp = "lt"; ?>
 <?php require_once 'tests/utils/replicaset.inc' ?>
@@ -29,7 +29,7 @@ MongoLog::setCallback( function($a, $b, $c) {
 	}
 } );
 
-$l = $d->getCollectionNames();
+$l = $d->listCollections();
 ?>
 DONE
 --EXPECTF--
