@@ -1064,14 +1064,20 @@ PHP_METHOD(MongoCursor, count)
 	add_assoc_string(cmd, "count", cname, 0);
 
 	if (cursor->query) {
-		zval **inner_query = 0;
+		if (cursor->special) {
+			zval **query = NULL, **hint = NULL;
 
-		if (!cursor->special) {
+			if (zend_hash_find(HASH_P(cursor->query), ZEND_STRS("$query"), (void**)&query) == SUCCESS) {
+				add_assoc_zval(cmd, "query", *query);
+				zval_add_ref(query);
+			}
+			if (zend_hash_find(HASH_P(cursor->query), ZEND_STRS("$hint"), (void**)&hint) == SUCCESS) {
+				add_assoc_zval(cmd, "hint", *hint);
+				zval_add_ref(hint);
+			}
+		} else {
 			add_assoc_zval(cmd, "query", cursor->query);
 			zval_add_ref(&cursor->query);
-		} else if (zend_hash_find(HASH_P(cursor->query), "$query", strlen("$query") + 1, (void**)&inner_query) == SUCCESS) {
-			add_assoc_zval(cmd, "query", *inner_query);
-			zval_add_ref(inner_query);
 		}
 	}
 
