@@ -2198,17 +2198,22 @@ PHP_METHOD(MongoCollection, getIndexInfo)
 }
 /* }}} */
 
-/* {{{ proto MongoCollection::count([array criteria [, int limit [, int skip]]])
-   Count all documents matching $criteria with an optional limit and/or skip */
+/* {{{ proto MongoCollection::count([array criteria [, array options])
+   Count all documents matching $criteria. For legacy compatibility, "limit" and
+   "skip" are accepted as the second and third arguments, respectively. */
 PHP_METHOD(MongoCollection, count)
 {
-	zval *response, *cmd, *query=0;
 	long limit = 0, skip = 0;
+	HashTable *query = 0, *options = 0;
+	zval *response, *cmd, *zquery = 0;
 	zval **n;
 	mongo_collection *c;
 	mongo_db *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zll", &query, &limit, &skip) == FAILURE) {
+	if (
+		zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "|Hll", &query, &limit, &skip) == FAILURE &&
+		zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|Hh", &query, &options) == FAILURE
+	) {
 		return;
 	}
 
@@ -2218,13 +2223,23 @@ PHP_METHOD(MongoCollection, count)
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);
 	add_assoc_string(cmd, "count", Z_STRVAL_P(c->name), 1);
+
 	if (query) {
-		add_assoc_zval(cmd, "query", query);
-		zval_add_ref(&query);
+		MAKE_STD_ZVAL(zquery);
+		array_init(zquery);
+		zend_hash_copy(HASH_P(zquery), query, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+		add_assoc_zval(cmd, "query", zquery);
 	}
+
+	if (options) {
+		zval *temp;
+		zend_hash_merge(HASH_P(cmd), options, (copy_ctor_func_t) zval_add_ref, &temp, sizeof(zval*), 1);
+	}
+
 	if (limit) {
 		add_assoc_long(cmd, "limit", limit);
 	}
+
 	if (skip) {
 		add_assoc_long(cmd, "skip", skip);
 	}
