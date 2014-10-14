@@ -980,7 +980,8 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 		}
 	}
 
-	/* Make sure commands aren't be sent to slaves */
+	/* Make sure commands are sent to primaries if supported, but only if we
+	 * have a replica set connection. */
 	/* This should be refactored alongside with the getLastError redirection in
 	 * collection.c/append_getlasterror. The Cursor creation should be done
 	 * through an init method. */
@@ -990,11 +991,10 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	}
 	if (php_mongo_command_supports_rp(cmd)) {
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "command supports Read Preferences");
-	} else {
+	} else if (link->servers->options.con_type == MONGO_CON_TYPE_REPLSET) {
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
 		php_mongo_cursor_force_primary(cursor_tmp);
 	}
-
 
 	/* query */
 	php_mongo_runquery(cursor_tmp TSRMLS_CC);
