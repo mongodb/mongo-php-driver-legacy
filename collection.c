@@ -2112,40 +2112,63 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 
 void mongo_collection_list_indexes_legacy(zval *this_ptr, zval *return_value TSRMLS_DC)
 {
-	zval *collection, *query, *cursor, *next;
-	mongo_collection *c;
+	zval *z_system_collection, *query, *z_cursor, *list;
+	mongo_collection *c, *system_collection;
+	mongo_cursor *cursor;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	collection = php_mongo_db_selectcollection(c->parent, "system.indexes", strlen("system.indexes") TSRMLS_CC);
-	PHP_MONGO_CHECK_EXCEPTION1(&collection);
+	/* select db.system.namespaces collection */
+	z_system_collection = php_mongo_db_selectcollection(c->parent, "system.indexes", strlen("system.indexes") TSRMLS_CC);
+	if (!z_system_collection) {
+		/* An exception is set in this case */
+		return;
+	}
 
 	MAKE_STD_ZVAL(query);
 	array_init(query);
 	add_assoc_string(query, "ns", Z_STRVAL_P(c->ns), 1);
 
-	MAKE_STD_ZVAL(cursor);
-	MONGO_METHOD1(MongoCollection, find, cursor, collection, query);
-	PHP_MONGO_CHECK_EXCEPTION3(&collection, &query, &cursor);
+	/* list to return */
+	MAKE_STD_ZVAL(list);
+	array_init(list);
 
+	/* do find */
+	MAKE_STD_ZVAL(z_cursor);
+	object_init_ex(z_cursor, mongo_ce_Cursor);
+	cursor = (mongo_cursor*)zend_object_store_get_object(z_cursor TSRMLS_CC);
+	system_collection = (mongo_collection*)zend_object_store_get_object(z_system_collection TSRMLS_CC);
+
+	php_mongo_collection_find(cursor, system_collection, query, NULL TSRMLS_CC);
+
+	php_mongo_runquery(cursor TSRMLS_CC);
 	zval_ptr_dtor(&query);
-	zval_ptr_dtor(&collection);
 
-	array_init(return_value);
-
-	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, next, next, cursor);
-	PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
-
-	while (Z_TYPE_P(next) != IS_NULL) {
-		add_next_index_zval(return_value, next);
-
-		MAKE_STD_ZVAL(next);
-		MONGO_METHOD(MongoCursor, next, next, cursor);
-		PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
+	if (EG(exception)) {
+		zval_ptr_dtor(&z_cursor);
+		zval_ptr_dtor(&z_system_collection);
+		RETURN_ZVAL(list, 0, 1);
 	}
 
-	zval_ptr_dtor(&next);
-	zval_ptr_dtor(&cursor);
+	/* populate list */
+	php_mongocursor_load_current_element(cursor TSRMLS_CC);
+
+	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
+		zval_ptr_dtor(&z_cursor);
+		zval_ptr_dtor(&z_system_collection);
+		RETURN_ZVAL(list, 0, 1);
+	}
+
+	while (php_mongocursor_is_valid(cursor)) {
+		Z_ADDREF_P(cursor->current);
+		add_next_index_zval(list, cursor->current);
+
+		php_mongocursor_advance(cursor TSRMLS_CC);
+	}
+
+	zval_ptr_dtor(&z_cursor);
+	zval_ptr_dtor(&z_system_collection);
+
+	RETURN_ZVAL(list, 0, 1);
 }
 
 /* {{{ proto MongoCollection::getIndexInfo()
@@ -2163,7 +2186,7 @@ PHP_METHOD(MongoCollection, getIndexInfo)
 	PHP_MONGO_GET_COLLECTION(getThis());
 	PHP_MONGO_GET_LINK(c->link);
 
-	if ((connection = get_server(c, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		RETURN_FALSE;
 	}
 
