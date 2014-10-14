@@ -675,6 +675,12 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 	/* populate list */
 	php_mongocursor_load_current_element(cursor TSRMLS_CC);
 
+	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
+		zval_ptr_dtor(&z_cursor);
+		zval_ptr_dtor(&z_system_collection);
+		RETURN_ZVAL(list, 0, 1);
+	}
+
 	while (php_mongocursor_is_valid(cursor)) {
 		zval *c;
 		zval **collection_name;
