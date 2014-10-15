@@ -22,5 +22,5 @@ try {
 ?>
 --EXPECTF--
 exception class: Mongo%SException
-exception message: %s:%d:%S unrecognized getLastError mode: nonsense
+exception message: %s:%d:%Snonsense%S
 exception code: %d

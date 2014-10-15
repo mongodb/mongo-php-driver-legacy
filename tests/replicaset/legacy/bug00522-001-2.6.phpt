@@ -138,7 +138,7 @@ array(1) {
 -----
 
 %s: MongoCollection::insert(): The 'safe' option is deprecated, please use 'w' instead in %s on line %d
-%s:%d:%sunrecognized getLastError mode: allDCs
+%s:%d:%SallDCs%S
 array(1) {
   ["writeConcern"]=>
   array(4) {
