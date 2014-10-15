@@ -47,7 +47,29 @@ setting, you may need to specify its full path.
 See [the PHP manual](http://php.net/mongo).
 
 
-## Support / Feedback
+## How To Ask For Help
+
+When asking for support, or while providing feedback in the form of bugs or
+feature requestes, please include the following relevant information:
+
+ - Detailed steps on how to reproduce the problem, including a script that
+   reproduces your problem, if possible. 
+ - The exact PHP version used. You can find this by running `php -v` on the
+   command line, or by checking the output of `phpinfo();` in a script
+   requested through a web server.
+ - The exact version of the MongoDB driver for PHP. You can find this by
+   running `php --ri mongo | grep Version` on the command line, or by running
+   a script containing `<?php echo phpversion("mongo"); ?>`.
+ - The operating system and version (e.g. Windows 7, OSX 10.8, ...).
+ - How you installed the driver, either via your distribution's package
+   management, with "brew", with an \*AMP installation package, or through a
+   manual source compile and install.
+ - With connection and replica set selection issues, please also provide a
+   full debug log. See further down on how to make one.
+
+
+
+### Support / Feedback
 
 For issues with, questions about, or feedback for the PHP driver, please look
 into our [support channels](http://www.mongodb.org/about/support). Please do
@@ -57,15 +79,15 @@ questions—you're more likely to get an answer on the
 Groups.
 
 
-## Bugs / Feature Requests
+### Bugs / Feature Requests
 
 Think you have found a bug? Want to see a new feature in the driver? Please
 open a case in our issue management tool, JIRA:
 
  - Create an account and login (https://jira.mongodb.org).
  - Navigate to [the PHP project](https://jira.mongodb.org/browse/PHP).
- - Click **Create Issue** - Please provide as much information as possible
-   about the issue type and how to reproduce it.
+ - Click **Create Issue** - Please provide all the information as outlined 
+   above.
 
 Bug reports in JIRA for all driver projects, as well as for the MongoDB server
 project, are **public**. Please do not add private information to bug reports.
@@ -84,6 +106,87 @@ The tests are not available as part of the PECL package, but they are available
 on [Github](http://www.github.com/mongodb/mongo-php-driver/tree/master/tests).  
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to run and create new tests.
+
+
+## Full debug log
+
+You can make a full debug log by using the following code:
+
+
+```php
+<?php
+/*
+ * This script will catch all internal driver logging for MongoDB and log them
+ * to a file /tmp/MONGO-PHP-LOG.<unix-timestamp>. This log will give the
+ * driver developers more or less all the information they'll need to debug
+ * this issue
+ */
+ 
+function module2string($module)
+{
+    switch ($module) {
+        case MongoLog::RS: return "REPLSET";
+        case MongoLog::CON: return "CON";
+        case MongoLog::IO: return "IO";
+        case MongoLog::SERVER: return "SERVER";
+        case MongoLog::PARSE: return "PARSE";
+        default: return $module;
+    }
+}
+ 
+function level2string($level)
+{
+    switch ($level) {
+        case MongoLog::WARNING: return "WARN";
+        case MongoLog::INFO: return "INFO";
+        case MongoLog::FINE: return "FINE";
+        default: return $level;
+    }
+}
+ 
+function logMongo($module, $level, $message, $save = false) {
+    static $log = "";
+    $log .= sprintf("%s :: %s (%s): %s\n", date('Y-m-d H:i:s',time()), module2string($module), level2string($level), $message);
+ 
+    if ($save) {
+        file_put_contents("/tmp/MONGO-PHP-LOG." . time(), $log);
+        $log = "";
+    }
+}
+ 
+function saveMongoLog($errno, $errstr, $errfile, $errline, $errctx) {
+    $modules = array(
+        MongoLog::RS, MongoLog::CON, MongoLog::IO, MongoLog::SERVER, MongoLog::PARSE,
+    );
+    foreach($modules as $const) {
+        if (strncmp($errstr, module2string($const), strlen(module2string($const))) == 0) {
+            logMongo($const, "HANDLER", $errstr);
+            return true;
+        }
+    }
+    return false;
+}
+ 
+function saveMongoLogException($ex) {
+    if ($ex instanceof MongoException) {
+        $msg = sprintf("Uncaught exception: %s, %s\n",  get_class($ex), $ex->getMessage());
+        logMongo(get_class($ex), "ERROR", $ex->getMessage(), true);
+    }
+    throw $ex;
+}
+ 
+ 
+MongoLog::setLevel(MongoLog::ALL);
+MongoLog::setModule(MongoLog::ALL);
+ 
+MongoLog::setCallback("logMongo");
+ 
+/* If an global exception handler is used, or a default exception handler is
+ * already registered, please comment out this line and put into your catch
+ * block: saveMongoLogException($exception); */
+set_exception_handler("saveMongoLogException");
+?>
+```
 
 
 ## Credits
