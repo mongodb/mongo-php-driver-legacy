@@ -3034,7 +3034,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_count, 0, ZEND_RETURN_VALUE, 0)
 	ZEND_ARG_INFO(0, query_AS_array_of_fields_OR_object)
-	ZEND_ARG_INFO(0, limit)
+	ZEND_ARG_INFO(0, options_OR_limit)
 	ZEND_ARG_INFO(0, skip)
 ZEND_END_ARG_INFO()
 
