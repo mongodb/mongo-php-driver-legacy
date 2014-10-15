@@ -172,12 +172,9 @@ array(2) {
 command supports Read Preferences
 array(2) {
   ["$query"]=>
-  array(2) {
+  array(1) {
     ["count"]=>
     string(10) "collection"
-    ["query"]=>
-    object(stdClass)#%d (0) {
-    }
   }
   ["$readPreference"]=>
   array(1) {
@@ -209,12 +206,9 @@ array(1) {
 command supports Read Preferences
 array(2) {
   ["$query"]=>
-  array(2) {
+  array(1) {
     ["count"]=>
     string(10) "collection"
-    ["query"]=>
-    array(0) {
-    }
   }
   ["$readPreference"]=>
   array(1) {
@@ -241,12 +235,9 @@ array(2) {
 command supports Read Preferences
 array(2) {
   ["$query"]=>
-  array(2) {
+  array(1) {
     ["count"]=>
     string(10) "collection"
-    ["query"]=>
-    array(0) {
-    }
   }
   ["$readPreference"]=>
   array(1) {
@@ -291,12 +282,9 @@ array(2) {
 command supports Read Preferences
 array(2) {
   ["$query"]=>
-  array(2) {
+  array(1) {
     ["count"]=>
     string(10) "collection"
-    ["query"]=>
-    object(stdClass)#%d (0) {
-    }
   }
   ["$readPreference"]=>
   array(1) {
@@ -340,12 +328,9 @@ array(2) {
 command supports Read Preferences
 array(2) {
   ["$query"]=>
-  array(2) {
+  array(1) {
     ["count"]=>
     string(10) "collection"
-    ["query"]=>
-    object(stdClass)#%d (0) {
-    }
   }
   ["$readPreference"]=>
   array(1) {

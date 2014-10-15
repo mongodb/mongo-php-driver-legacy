@@ -2224,7 +2224,7 @@ PHP_METHOD(MongoCollection, count)
 	array_init(cmd);
 	add_assoc_string(cmd, "count", Z_STRVAL_P(c->name), 1);
 
-	if (query) {
+	if (query && zend_hash_num_elements(query) > 0) {
 		MAKE_STD_ZVAL(zquery);
 		array_init(zquery);
 		zend_hash_copy(HASH_P(zquery), query, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
