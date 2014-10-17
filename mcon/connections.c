@@ -173,14 +173,12 @@ void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *ser
 		}
 
 		while (1) {
-			fd_set rset, wset, eset;
+			fd_set rset, wset;
 
 			FD_ZERO(&rset);
 			FD_SET(tmp_socket, &rset);
 			FD_ZERO(&wset);
 			FD_SET(tmp_socket, &wset);
-			FD_ZERO(&eset);
-			FD_SET(tmp_socket, &eset);
 
 			/* Connection timeout behavior varies based on the following:
 			 * - Negative => no timeout (i.e. block indefinitely)
@@ -198,16 +196,14 @@ void* mongo_connection_connect(mongo_con_manager *manager, mongo_server_def *ser
 				tval.tv_usec = ((options->connectTimeoutMS ? options->connectTimeoutMS : MONGO_CONNECTION_DEFAULT_CONNECT_TIMEOUT) % 1000) * 1000;
 			}
 
-			if (select(tmp_socket+1, &rset, &wset, &eset, options->connectTimeoutMS >= 0 ? &tval : NULL) == 0) {
-				*error_message = malloc(256);
-				snprintf(*error_message, 256, "Timed out after %d ms", options->connectTimeoutMS);
-				goto error;
-			}
-
-			/* if our descriptor has an error */
-			if (FD_ISSET(tmp_socket, &eset)) {
-				*error_message = strdup(strerror(errno));
-				goto error;
+			switch (select(tmp_socket+1, &rset, &wset, NULL, options->connectTimeoutMS >= 0 ? &tval : NULL)) {
+				case 0:
+					*error_message = malloc(256);
+					snprintf(*error_message, 256, "Timed out after %d ms", options->connectTimeoutMS);
+					goto error;
+				case -1:
+					*error_message = strdup(strerror(errno));
+					goto error;
 			}
 
 			/* if our descriptor is ready break out */
