@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-1155: Cannot find primary (not in seed list) after election
+Test for PHP-1220: Cannot find primary (not in seed list) after election
 --SKIPIF--
 <?php require_once "tests/utils/replicaset-failover.inc" ?>
 --INI--
