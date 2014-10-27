@@ -1045,7 +1045,7 @@ PHP_METHOD(MongoCursor, reset)
 PHP_METHOD(MongoCursor, count)
 {
 	zend_bool all = 0;
-	zval *response, *cmd, **n;
+	zval *response, *cmd, *options, **n;
 	mongo_cursor *cursor;
 	mongoclient *link;
 	char *cname, *dbname;
@@ -1080,8 +1080,13 @@ PHP_METHOD(MongoCursor, count)
 		add_assoc_long(cmd, "skip", cursor->skip);
 	}
 
-	response = php_mongo_runcommand(cursor->zmongoclient, &cursor->read_pref, dbname, strlen(dbname), cmd, NULL, 0, NULL TSRMLS_CC);
+	MAKE_STD_ZVAL(options);
+	array_init(options);
+	add_assoc_long(options, "socketTimeoutMS", cursor->timeout);
+
+	response = php_mongo_runcommand(cursor->zmongoclient, &cursor->read_pref, dbname, strlen(dbname), cmd, options, 0, NULL TSRMLS_CC);
 	zval_ptr_dtor(&cmd);
+	zval_ptr_dtor(&options);
 	efree(dbname);
 
 	if (!response) {
