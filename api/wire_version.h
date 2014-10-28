@@ -26,10 +26,11 @@
 #define PHP_MONGO_API_RELEASE_2_4_AND_BEFORE 0
 #define PHP_MONGO_API_AGGREGATE_CURSOR       1
 #define PHP_MONGO_API_WRITE_API              2
+#define PHP_MONGO_API_RELEASE_2_8            3
 
 /* Wire version this release of the driver supports */
 #define PHP_MONGO_API_MIN_WIRE_VERSION 0
-#define PHP_MONGO_API_MAX_WIRE_VERSION 2
+#define PHP_MONGO_API_MAX_WIRE_VERSION 3
 
 int php_mongo_api_supports_wire_version(int min_wire_version, int max_wire_version, char **error_message);
 int php_mongo_api_connection_supports_feature(mongo_connection *connection, int feature);
