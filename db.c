@@ -595,7 +595,7 @@ void mongo_db_list_collections_command(zval *this_ptr, int include_system_collec
 
 	if (zend_hash_find(Z_ARRVAL_P(retval), "collections", strlen("collections") + 1, (void **)&collections) == FAILURE) {
 		zval_ptr_dtor(&retval);
-		RETURN_FALSE;
+		RETURN_ZVAL(list, 0, 1);
 	}
 
 	{
@@ -603,15 +603,14 @@ void mongo_db_list_collections_command(zval *this_ptr, int include_system_collec
 		zval **collection_doc;
 
 		for (
-				zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(collections), &pointer);
-				zend_hash_get_current_data_ex(Z_ARRVAL_PP(collections), (void**)&collection_doc, &pointer) == SUCCESS;
-				zend_hash_move_forward_ex(Z_ARRVAL_PP(collections), &pointer)
+			zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(collections), &pointer);
+			zend_hash_get_current_data_ex(Z_ARRVAL_PP(collections), (void**)&collection_doc, &pointer) == SUCCESS;
+			zend_hash_move_forward_ex(Z_ARRVAL_PP(collections), &pointer)
 		) {
 			zval *c;
 			zval **collection_name;
 			char *system;
 
-			/* check that the ns is valid and not an index (contains $) */
 			if (zend_hash_find(Z_ARRVAL_PP(collection_doc), "name", 5, (void**)&collection_name) == FAILURE) {
 				continue;
 			}
@@ -626,8 +625,6 @@ void mongo_db_list_collections_command(zval *this_ptr, int include_system_collec
 
 			if (full_collection_object) {
 				c = php_mongo_db_selectcollection(this_ptr, Z_STRVAL_PP(collection_name), Z_STRLEN_PP(collection_name) TSRMLS_CC);
-				/* No need to test for c here, as this was already covered in
-				 * system_collection above */
 				add_next_index_zval(list, c);
 			} else {
 				add_next_index_string(list, Z_STRVAL_PP(collection_name), 1);
@@ -669,7 +666,8 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 	if (EG(exception)) {
 		zval_ptr_dtor(&z_cursor);
 		zval_ptr_dtor(&z_system_collection);
-		RETURN_ZVAL(list, 0, 1);
+		zval_ptr_dtor(&list);
+		RETURN_NULL();
 	}
 
 	/* populate list */
@@ -678,7 +676,8 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
 		zval_ptr_dtor(&z_cursor);
 		zval_ptr_dtor(&z_system_collection);
-		RETURN_ZVAL(list, 0, 1);
+		zval_ptr_dtor(&list);
+		RETURN_NULL();
 	}
 
 	while (php_mongocursor_is_valid(cursor)) {
