@@ -110,7 +110,7 @@ typedef unsigned __int64 uint64_t;
 /* FIXME: This should be dynamic. Although mongod doesn't allow more then 12
  * replicaset members, there is nothing preventing us from connecting to 20
  * mongos' */
-#define MAX_SERVERS_LIMIT   16
+#define MAX_SERVERS_LIMIT   64
 
 /* To track why we are closing a connection */
 #define MONGO_CLOSE_SHUTDOWN 1 /* In our shutdown procedures */
