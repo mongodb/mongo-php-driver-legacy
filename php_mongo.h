@@ -93,6 +93,8 @@ typedef __int64 int64_t;
 #define PHP_MONGO_DEFAULT_WTIMEOUT 10000
 #define PHP_MONGO_STATIC_CURSOR_TIMEOUT_NOT_SET_INITIALIZER -2
 
+#define PHP_MONGO_COLLECTION_DOES_NOT_EXIST 26
+
 /* if _id field should be added */
 #define PREP 1
 #define NO_PREP 0

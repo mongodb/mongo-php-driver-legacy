@@ -29,6 +29,7 @@
 #include "db.h"
 #include "mcon/manager.h"
 #include "mcon/utils.h"
+#include "mcon/connections.h"
 #include "log_stream.h"
 #include "api/write.h"
 #include "api/wire_version.h"
@@ -2043,44 +2044,157 @@ PHP_METHOD(MongoCollection, deleteIndexes)
 }
 /* }}} */
 
-/* {{{ proto MongoCollection::getIndexInfo()
-   Get all indexes for this collection */
-PHP_METHOD(MongoCollection, getIndexInfo)
+void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TSRMLS_DC)
 {
-	zval *collection, *query, *cursor, *next;
+	zval *z_cmd, *list, **indexes;
 	mongo_collection *c;
+	mongo_db *db;
+	mongo_connection *connection;
+	zval *retval;
+
+	PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_DB(c->parent);
+
+	MAKE_STD_ZVAL(z_cmd);
+	array_init(z_cmd);
+	add_assoc_string(z_cmd, "listIndexes", Z_STRVAL_P(c->name), 1);
+
+	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), z_cmd, NULL, 0, &connection TSRMLS_CC);
+	
+	zval_ptr_dtor(&z_cmd);
+	
+	if (!retval) {
+		return;
+	}
+
+	if (php_mongo_trigger_error_on_command_failure(connection, retval TSRMLS_CC) == FAILURE) {
+		/* The command method throws an error if the collection does not exist.
+		 * If we hit that condition, we just clear the exception (and return an
+		 * empty list) */
+		if (EG(exception)) {
+			zval *code;
+
+			code = zend_read_property(mongo_ce_ResultException, EG(exception), "code", strlen("code"), 0 TSRMLS_CC);
+			if (Z_TYPE_P(code) == IS_LONG && Z_LVAL_P(code) == PHP_MONGO_COLLECTION_DOES_NOT_EXIST) {
+				zend_clear_exception(TSRMLS_C);
+			}
+		}
+		RETURN_ZVAL(retval, 0, 1);
+	}
+	
+	/* list to return */
+	MAKE_STD_ZVAL(list);
+	array_init(list);
+
+	if (zend_hash_find(Z_ARRVAL_P(retval), "indexes", strlen("indexes") + 1, (void **)&indexes) == FAILURE) {
+		zval_ptr_dtor(&retval);
+		RETURN_FALSE;
+	}
+
+	{
+		HashPosition pointer;
+		zval **index_doc;
+
+		for (
+				zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(indexes), &pointer);
+				zend_hash_get_current_data_ex(Z_ARRVAL_PP(indexes), (void**)&index_doc, &pointer) == SUCCESS;
+				zend_hash_move_forward_ex(Z_ARRVAL_PP(indexes), &pointer)
+		) {
+			Z_ADDREF_PP(index_doc);
+			add_next_index_zval(list, *index_doc);
+		}
+	}
+
+	zval_ptr_dtor(&retval);
+
+	RETURN_ZVAL(list, 0, 1);
+}
+
+void mongo_collection_list_indexes_legacy(zval *this_ptr, zval *return_value TSRMLS_DC)
+{
+	zval *z_system_collection, *query, *z_cursor, *list;
+	mongo_collection *c, *system_collection;
+	mongo_cursor *cursor;
 	PHP_MONGO_GET_COLLECTION(getThis());
 
-	collection = php_mongo_db_selectcollection(c->parent, "system.indexes", strlen("system.indexes") TSRMLS_CC);
-	PHP_MONGO_CHECK_EXCEPTION1(&collection);
+	/* select db.system.namespaces collection */
+	z_system_collection = php_mongo_db_selectcollection(c->parent, "system.indexes", strlen("system.indexes") TSRMLS_CC);
+	if (!z_system_collection) {
+		/* An exception is set in this case */
+		return;
+	}
 
 	MAKE_STD_ZVAL(query);
 	array_init(query);
 	add_assoc_string(query, "ns", Z_STRVAL_P(c->ns), 1);
 
-	MAKE_STD_ZVAL(cursor);
-	MONGO_METHOD1(MongoCollection, find, cursor, collection, query);
-	PHP_MONGO_CHECK_EXCEPTION3(&collection, &query, &cursor);
+	/* list to return */
+	MAKE_STD_ZVAL(list);
+	array_init(list);
 
+	/* do find */
+	MAKE_STD_ZVAL(z_cursor);
+	object_init_ex(z_cursor, mongo_ce_Cursor);
+	cursor = (mongo_cursor*)zend_object_store_get_object(z_cursor TSRMLS_CC);
+	system_collection = (mongo_collection*)zend_object_store_get_object(z_system_collection TSRMLS_CC);
+
+	php_mongo_collection_find(cursor, system_collection, query, NULL TSRMLS_CC);
+
+	php_mongo_runquery(cursor TSRMLS_CC);
 	zval_ptr_dtor(&query);
-	zval_ptr_dtor(&collection);
 
-	array_init(return_value);
-
-	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, next, next, cursor);
-	PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
-
-	while (Z_TYPE_P(next) != IS_NULL) {
-		add_next_index_zval(return_value, next);
-
-		MAKE_STD_ZVAL(next);
-		MONGO_METHOD(MongoCursor, next, next, cursor);
-		PHP_MONGO_CHECK_EXCEPTION2(&cursor, &next);
+	if (EG(exception)) {
+		zval_ptr_dtor(&z_cursor);
+		zval_ptr_dtor(&z_system_collection);
+		RETURN_ZVAL(list, 0, 1);
 	}
 
-	zval_ptr_dtor(&next);
-	zval_ptr_dtor(&cursor);
+	/* populate list */
+	php_mongocursor_load_current_element(cursor TSRMLS_CC);
+
+	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
+		zval_ptr_dtor(&z_cursor);
+		zval_ptr_dtor(&z_system_collection);
+		RETURN_ZVAL(list, 0, 1);
+	}
+
+	while (php_mongocursor_is_valid(cursor)) {
+		Z_ADDREF_P(cursor->current);
+		add_next_index_zval(list, cursor->current);
+
+		php_mongocursor_advance(cursor TSRMLS_CC);
+	}
+
+	zval_ptr_dtor(&z_cursor);
+	zval_ptr_dtor(&z_system_collection);
+
+	RETURN_ZVAL(list, 0, 1);
+}
+
+/* {{{ proto MongoCollection::getIndexInfo()
+   Get all indexes for this collection */
+PHP_METHOD(MongoCollection, getIndexInfo)
+{
+	mongo_connection *connection;
+	mongo_collection *c;
+	mongoclient *link;
+
+	if (zend_parse_parameters_none() == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_LINK(c->link);
+
+	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+		return;
+	}
+
+	if (php_mongo_api_connection_min_server_version(connection, 2, 7, 5)) {
+		mongo_collection_list_indexes_command(getThis(), return_value TSRMLS_CC);
+	} else {
+		mongo_collection_list_indexes_legacy(getThis(), return_value TSRMLS_CC);
+	}
 }
 /* }}} */
 
