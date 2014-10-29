@@ -28,6 +28,7 @@
 #include "types/code.h"
 #include "types/db_ref.h"
 #include "mcon/manager.h"
+#include "api/wire_version.h"
 
 #ifndef zend_parse_parameters_none
 #define zend_parse_parameters_none()    \
@@ -563,18 +564,88 @@ PHP_METHOD(MongoDB, dropCollection)
 }
 /* }}} */
 
-static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int full_collection)
+void mongo_db_list_collections_command(zval *this_ptr, int include_system_collections, int full_collection_object,  zval *return_value TSRMLS_DC)
 {
-	zend_bool system_col = 0;
-	zval *system_collection, *cursor, *list, *next;
+	zval *z_cmd, *list, **collections;
+	mongo_db *db;
+	mongo_connection *connection;
+	zval *retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &system_col) == FAILURE) {
+	/* list to return */
+	MAKE_STD_ZVAL(list);
+	array_init(list);
+
+	MAKE_STD_ZVAL(z_cmd);
+	array_init(z_cmd);
+	add_assoc_long(z_cmd, "listCollections", 1);
+
+	PHP_MONGO_GET_DB(getThis());
+
+	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), z_cmd, NULL, 0, &connection TSRMLS_CC);
+	
+	zval_ptr_dtor(&z_cmd);
+	
+	if (!retval) {
 		return;
 	}
 
+	if (php_mongo_trigger_error_on_command_failure(connection, retval TSRMLS_CC) == FAILURE) {
+		RETURN_ZVAL(retval, 0, 1);
+	}
+
+	if (zend_hash_find(Z_ARRVAL_P(retval), "collections", strlen("collections") + 1, (void **)&collections) == FAILURE) {
+		zval_ptr_dtor(&retval);
+		RETURN_ZVAL(list, 0, 1);
+	}
+
+	{
+		HashPosition pointer;
+		zval **collection_doc;
+
+		for (
+			zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(collections), &pointer);
+			zend_hash_get_current_data_ex(Z_ARRVAL_PP(collections), (void**)&collection_doc, &pointer) == SUCCESS;
+			zend_hash_move_forward_ex(Z_ARRVAL_PP(collections), &pointer)
+		) {
+			zval *c;
+			zval **collection_name;
+			char *system;
+
+			if (zend_hash_find(Z_ARRVAL_PP(collection_doc), "name", 5, (void**)&collection_name) == FAILURE) {
+				continue;
+			}
+
+			/* check that this isn't a system ns */
+			system = strstr(Z_STRVAL_PP(collection_name), "system.");
+			if (
+				(!include_system_collections && (system == Z_STRVAL_PP(collection_name)))
+			) {
+				continue;
+			}
+
+			if (full_collection_object) {
+				c = php_mongo_db_selectcollection(this_ptr, Z_STRVAL_PP(collection_name), Z_STRLEN_PP(collection_name) TSRMLS_CC);
+				add_next_index_zval(list, c);
+			} else {
+				add_next_index_string(list, Z_STRVAL_PP(collection_name), 1);
+			}
+		}
+	}
+
+	zval_ptr_dtor(&retval);
+
+	RETURN_ZVAL(list, 0, 1);
+}
+
+void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collections, int full_collection_object, zval *return_value TSRMLS_DC)
+{
+	zval *z_system_collection, *z_cursor, *list;
+	mongo_cursor *cursor;
+	mongo_collection *collection;
+
 	/* select db.system.namespaces collection */
-	system_collection = php_mongo_db_selectcollection(getThis(), "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
-	if (!system_collection) {
+	z_system_collection = php_mongo_db_selectcollection(this_ptr, "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
+	if (!z_system_collection) {
 		/* An exception is set in this case */
 		return;
 	}
@@ -584,46 +655,56 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 	array_init(list);
 
 	/* do find */
-	MAKE_STD_ZVAL(cursor);
-	MONGO_METHOD(MongoCollection, find, cursor, system_collection);
+	MAKE_STD_ZVAL(z_cursor);
+	object_init_ex(z_cursor, mongo_ce_Cursor);
+	cursor = (mongo_cursor*)zend_object_store_get_object(z_cursor TSRMLS_CC);
+	collection = (mongo_collection*)zend_object_store_get_object(z_system_collection TSRMLS_CC);
+
+	php_mongo_collection_find(cursor, collection, NULL, NULL TSRMLS_CC);
+
+	php_mongo_runquery(cursor TSRMLS_CC);
+	if (EG(exception)) {
+		zval_ptr_dtor(&z_cursor);
+		zval_ptr_dtor(&z_system_collection);
+		zval_ptr_dtor(&list);
+		RETURN_NULL();
+	}
 
 	/* populate list */
-	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, next, next, cursor);
+	php_mongocursor_load_current_element(cursor TSRMLS_CC);
 
-	while (IS_ARRAY_OR_OBJECT_P(next)) {
+	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
+		zval_ptr_dtor(&z_cursor);
+		zval_ptr_dtor(&z_system_collection);
+		zval_ptr_dtor(&list);
+		RETURN_NULL();
+	}
+
+	while (php_mongocursor_is_valid(cursor)) {
 		zval *c;
-		zval **collection;
+		zval **collection_name;
 		char *name, *first_dot, *system;
 
 		/* check that the ns is valid and not an index (contains $) */
 		if (
-			zend_hash_find(HASH_P(next), "name", 5, (void**)&collection) == FAILURE ||
+			zend_hash_find(HASH_P(cursor->current), "name", 5, (void**)&collection_name) == FAILURE ||
 			(
-				Z_TYPE_PP(collection) == IS_STRING &&
-				strchr(Z_STRVAL_PP(collection), '$')
+				Z_TYPE_PP(collection_name) == IS_STRING &&
+				strchr(Z_STRVAL_PP(collection_name), '$')
 			)
 		) {
-			zval_ptr_dtor(&next);
-			MAKE_STD_ZVAL(next);
-			ZVAL_NULL(next);
-
-			MONGO_METHOD(MongoCursor, next, next, cursor);
+			php_mongocursor_advance(cursor TSRMLS_CC);
 			continue;
 		}
 
 		/* check that this isn't a system ns */
-		first_dot = strchr(Z_STRVAL_PP(collection), '.');
-		system = strstr(Z_STRVAL_PP(collection), ".system.");
+		first_dot = strchr(Z_STRVAL_PP(collection_name), '.');
+		system = strstr(Z_STRVAL_PP(collection_name), ".system.");
 		if (
-			(!system_col && (system && first_dot == system)) ||
-			(name = strchr(Z_STRVAL_PP(collection), '.')) == 0)
+			(!include_system_collections && (system && first_dot == system)) ||
+			(name = strchr(Z_STRVAL_PP(collection_name), '.')) == 0)
 		{
-			zval_ptr_dtor(&next);
-			MAKE_STD_ZVAL(next);
-			ZVAL_NULL(next);
-
-			MONGO_METHOD(MongoCursor, next, next, cursor);
+			php_mongocursor_advance(cursor TSRMLS_CC);
 			continue;
 		}
 
@@ -632,33 +713,51 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 
 		/* "foo." was allowed in earlier versions */
 		if (name == '\0') {
-			zval_ptr_dtor(&next);
-			MAKE_STD_ZVAL(next);
-			ZVAL_NULL(next);
-
-			MONGO_METHOD(MongoCursor, next, next, cursor);
+			php_mongocursor_advance(cursor TSRMLS_CC);
 			continue;
 		}
 
-		if (full_collection) {
-			c = php_mongo_db_selectcollection(getThis(), name, strlen(name) TSRMLS_CC);
+		if (full_collection_object) {
+			c = php_mongo_db_selectcollection(this_ptr, name, strlen(name) TSRMLS_CC);
 			/* No need to test for c here, as this was already covered in
 			 * system_collection above */
 			add_next_index_zval(list, c);
 		} else {
 			add_next_index_string(list, name, 1);
 		}
-		zval_ptr_dtor(&next);
-		MAKE_STD_ZVAL(next);
 
-		MONGO_METHOD(MongoCursor, next, next, cursor);
+		php_mongocursor_advance(cursor TSRMLS_CC);
 	}
 
-	zval_ptr_dtor(&next);
-	zval_ptr_dtor(&cursor);
-	zval_ptr_dtor(&system_collection);
+	zval_ptr_dtor(&z_cursor);
+	zval_ptr_dtor(&z_system_collection);
 
 	RETURN_ZVAL(list, 0, 1);
+}
+
+static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int full_collection_object)
+{
+	zend_bool include_system_collections = 0;
+	mongo_connection *connection;
+	mongo_db *db;
+	mongoclient *link;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &include_system_collections) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_DB(getThis());
+	PHP_MONGO_GET_LINK(db->link);
+
+	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
+		RETURN_FALSE;
+	}
+
+	if (php_mongo_api_connection_min_server_version(connection, 2, 7, 5)) {
+		mongo_db_list_collections_command(getThis(), include_system_collections, full_collection_object, return_value TSRMLS_CC);
+	} else {
+		mongo_db_list_collections_legacy(getThis(), include_system_collections, full_collection_object, return_value TSRMLS_CC);
+	}
 }
 
 PHP_METHOD(MongoDB, listCollections)
@@ -880,7 +979,8 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 		}
 	}
 
-	/* Make sure commands aren't be sent to slaves */
+	/* Make sure commands are sent to primaries if supported, but only if we
+	 * have a replica set connection. */
 	/* This should be refactored alongside with the getLastError redirection in
 	 * collection.c/append_getlasterror. The Cursor creation should be done
 	 * through an init method. */
@@ -890,11 +990,10 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	}
 	if (php_mongo_command_supports_rp(cmd)) {
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "command supports Read Preferences");
-	} else {
+	} else if (link->servers->options.con_type == MONGO_CON_TYPE_REPLSET) {
 		mongo_manager_log(link->manager, MLOG_CON, MLOG_INFO, "forcing primary for command");
 		php_mongo_cursor_force_primary(cursor_tmp);
 	}
-
 
 	/* query */
 	php_mongo_runquery(cursor_tmp TSRMLS_CC);

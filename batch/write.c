@@ -123,6 +123,7 @@ PHP_METHOD(MongoWriteBatch, add)
 	php_mongo_write_update_args update_args = { NULL, NULL, -1, -1 };
 	php_mongo_write_delete_args delete_args = { NULL, -1 };
 	int status;
+	mongoclient *link;
 
 	intern = (mongo_write_batch_object*)zend_object_store_get_object(getThis() TSRMLS_CC);
 	MONGO_CHECK_INITIALIZED(intern->zcollection_object, MongoWriteBatch);
@@ -132,9 +133,11 @@ PHP_METHOD(MongoWriteBatch, add)
 	}
 
 	collection = (mongo_collection *)zend_object_store_get_object(intern->zcollection_object TSRMLS_CC);
-	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+
+	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
+	connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC);
 	if (!connection) {
-		/* Exception thrown by get_server() */
+		/* Exception thrown by php_mongo_collection_get_server() */
 		return;
 	}
 
@@ -404,9 +407,9 @@ PHP_METHOD(MongoWriteBatch, execute)
 	collection = (mongo_collection*)zend_object_store_get_object(intern->zcollection_object TSRMLS_CC);
 
 	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
-	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+	connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC);
 	if (!connection) {
-		/* Exception thrown by get_server() */
+		/* Exception thrown by php_mongo_collection_get_server() */
 		return;
 	}
 

@@ -98,9 +98,9 @@ void php_mongo_api_batch_ctor(mongo_write_batch_object *intern, zval *zcollectio
 	collection = (mongo_collection *)zend_object_store_get_object(zcollection TSRMLS_CC);
 	link       = (mongoclient *)zend_object_store_get_object(collection->link TSRMLS_CC);
 
-	connection = get_server(collection, MONGO_CON_FLAG_WRITE TSRMLS_CC);
+	connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC);
 	if (!connection) {
-		/* Exception thrown by get_server() */
+		/* Exception thrown by php_mongo_collection_get_server() */
 		return;
 	}
 	if (!php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
