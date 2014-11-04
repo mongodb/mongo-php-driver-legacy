@@ -594,6 +594,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 	int   retval = 0;
 
 	switch (server_def->mechanism) {
+		case MONGO_AUTH_MECHANISM_MONGODB_DEFAULT:
 		case MONGO_AUTH_MECHANISM_MONGODB_CR: {
 			char *nonce;
 			if (!server_def->db || !server_def->username || !server_def->password) {
