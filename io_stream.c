@@ -774,6 +774,8 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	efree(client_final_message_base64);
 	free(server_final_message_base64);
 
+	/* FIXME: We are supposed to check server_final_message_base64 and see if it matches our records! */
+
 	/* Extra roundtrip to let the server know we trust her */
 	if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, step_conversation_id, "", 1, &server_final_message_base64, &server_final_message_base64_len, &done, error_message)) {
 		free(server_final_message_base64);
