@@ -645,6 +645,9 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	int32_t step_conversation_id;
 	unsigned char done = 0;
 
+	if (!server_def->db || !server_def->username || !server_def->password) {
+		return 2;
+	}
 
 	php_mongo_io_make_nonce(cnonce);
 
