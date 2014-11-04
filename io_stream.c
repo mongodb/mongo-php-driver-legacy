@@ -570,15 +570,15 @@ client-final-message-without-proof =
      ServerSignature := HMAC(ServerKey, AuthMessage)
 */
 
-int php_mongo_io_make_client_proof(char *username, char *password, unsigned char *salt_base64, int salt_base64_len, int iterations, char **return_value, int *return_value_len, char *server_first_message, unsigned char *cnonce, char *snonce TSRMLS_DC)
+int php_mongo_io_make_client_proof(char *username, char *password, unsigned char *salt_base64, int salt_base64_len, int iterations, char **return_value, int *return_value_len, char *server_first_message, unsigned char *cnonce, char *snonce, unsigned char *server_signature, int *server_signature_len TSRMLS_DC)
 {
 	unsigned char stored_key[PHP_MONGO_SCRAM_HASH_SIZE], client_proof[PHP_MONGO_SCRAM_HASH_SIZE], client_signature[PHP_MONGO_SCRAM_HASH_SIZE];
-	unsigned char salted_password[PHP_MONGO_SCRAM_HASH_SIZE], client_key[PHP_MONGO_SCRAM_HASH_SIZE], server_key[PHP_MONGO_SCRAM_HASH_SIZE], server_signature[PHP_MONGO_SCRAM_HASH_SIZE];
+	unsigned char salted_password[PHP_MONGO_SCRAM_HASH_SIZE], client_key[PHP_MONGO_SCRAM_HASH_SIZE], server_key[PHP_MONGO_SCRAM_HASH_SIZE];
 	unsigned char *salt;
 	long salted_password_len;
 	int salt_len, client_key_len, server_key_len;
 	char *auth_message;
-	int auth_message_len, client_signature_len, server_signature_len;
+	int auth_message_len, client_signature_len;
 	int i;
 
 
@@ -609,10 +609,10 @@ int php_mongo_io_make_client_proof(char *username, char *password, unsigned char
 	}
 
 	/* ServerKey       := HMAC(SaltedPassword, "Server Key") */
-	php_mongo_hmac((unsigned char *)PHP_MONGO_SCRAM_SERVER_KEY, PHP_MONGO_SCRAM_HASH_SIZE, (char *)salted_password, salted_password_len, (unsigned char *)server_key, &server_key_len);
+	php_mongo_hmac((unsigned char *)PHP_MONGO_SCRAM_SERVER_KEY, strlen((char *)PHP_MONGO_SCRAM_SERVER_KEY), (char *)salted_password, salted_password_len, (unsigned char *)server_key, &server_key_len);
 
 	/* ServerSignature := HMAC(ServerKey, AuthMessage) */
-	php_mongo_hmac((unsigned char *)auth_message, auth_message_len, (char *)server_key, PHP_MONGO_SCRAM_HASH_SIZE, server_signature, &server_signature_len);
+	php_mongo_hmac((unsigned char *)auth_message, auth_message_len, (char *)server_key, PHP_MONGO_SCRAM_HASH_SIZE, server_signature, server_signature_len);
 	efree(auth_message);
 
 	*return_value = (char *)php_base64_encode(client_proof, PHP_MONGO_SCRAM_HASH_SIZE, return_value_len);
@@ -635,9 +635,9 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	int client_final_message_len, client_final_message_base64_len;
 
 	char *server_first_message, *server_first_message_base64, *server_first_message_dup;
-	char *server_final_message_base64;
+	char *server_final_message, *server_final_message_base64;
 	int server_first_message_len, server_first_message_base64_len;
-	int server_final_message_base64_len;
+	int server_final_message_len, server_final_message_base64_len;
 
 	char *rnonce, *password, *tok, *proof = NULL;
 	char *iterationsstr, *salt_base64;
@@ -647,6 +647,9 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	unsigned char done = 0;
 	char *username;
 	int username_len;
+	unsigned char server_signature[PHP_MONGO_SCRAM_HASH_SIZE];
+	unsigned char *server_signature_base64;
+	int server_signature_len, server_signature_base64_len;
 	TSRMLS_FETCH();
 
 	if (!server_def->db || !server_def->username || !server_def->password) {
@@ -724,7 +727,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	iterations = strtoll(iterationsstr, NULL, 10);
 	/* MongoDB uses the legacy MongoDB-CR hash as the SCRAM-SHA-1 password */
 	password = mongo_authenticate_hash_user_password(username, server_def->password);
-	php_mongo_io_make_client_proof(username, password, (unsigned char*)salt_base64, strlen(salt_base64), iterations, &proof, &proof_len, server_first_message, cnonce, rnonce TSRMLS_CC);
+	php_mongo_io_make_client_proof(username, password, (unsigned char*)salt_base64, strlen(salt_base64), iterations, &proof, &proof_len, server_first_message, cnonce, rnonce, server_signature, &server_signature_len TSRMLS_CC);
 	efree(server_first_message);
 	free(password);
 
@@ -773,7 +776,6 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	 */
 	client_final_message_len = spprintf(&client_final_message, 0, "c=biws,%s,p=%s", rnonce, proof);
 	free(server_first_message_dup);
-	free(proof);
 	/* base64 for the server (payload), or BSON Binary encode.. simpler to base64 */
 	client_final_message_base64 = (char *)php_base64_encode((unsigned char*)client_final_message, client_final_message_len, &client_final_message_base64_len);
 
@@ -783,9 +785,18 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	}
 	efree(client_final_message);
 	efree(client_final_message_base64);
-	free(server_final_message_base64);
 
-	/* FIXME: We are supposed to check server_final_message_base64 and see if it matches our records! */
+	/* Verify the server signature */
+	server_final_message = (char *)php_base64_decode((unsigned char*)server_final_message_base64, server_final_message_base64_len, &server_final_message_len);
+	server_signature_base64 = php_base64_encode((unsigned char*)server_signature, server_signature_len, &server_signature_base64_len);
+	if (strncmp(server_final_message+2, (char *)server_signature_base64, server_signature_base64_len) != 0) {
+		efree(server_final_message);
+		*error_message = strdup("Server returned wrong ServerSignature");
+		return 0;
+	}
+	efree(server_final_message);
+	efree(server_signature_base64);
+	free(server_final_message_base64);
 
 	/* Extra roundtrip to let the server know we trust her */
 	if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, step_conversation_id, "", 1, &server_final_message_base64, &server_final_message_base64_len, &done, error_message)) {
