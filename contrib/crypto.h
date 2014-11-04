@@ -40,6 +40,9 @@ typedef struct _php_hash_ops {
 	int context_size;
 } php_hash_ops;
 
+void php_mongo_sha1(const unsigned char *data, int data_len, unsigned char *return_value);
+void php_mongo_hmac(unsigned char *data, int data_len, char *key, int key_len, unsigned char *return_value, int *return_value_len);
+int php_mongo_hash_pbkdf2_sha1(char *password, int password_len, unsigned char *salt, int salt_len, long iterations, unsigned char *return_value, long *return_value_len);
 
 #endif
 
@@ -51,4 +54,4 @@ typedef struct _php_hash_ops {
  * End:
  * vim600: noet sw=4 ts=4 fdm=marker
  * vim<600: noet sw=4 ts=4
- /
+ */

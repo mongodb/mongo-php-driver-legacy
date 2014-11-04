@@ -76,116 +76,59 @@ static inline void php_hash_hmac_round(unsigned char *final, const php_hash_ops 
 }
 
 
-
-
-
-
-static void php_hash_do_hash_hmac(INTERNAL_FUNCTION_PARAMETERS, int isfilename, zend_bool raw_output_default) /* {{{ */
+void php_mongo_hmac(unsigned char *data, int data_len, char *key, int key_len, unsigned char *return_value, int *return_value_len)
 {
-	char *algo, *data, *digest, *key, *K;
-	int algo_len, data_len, key_len;
-	zend_bool raw_output = raw_output_default;
-	const php_hash_ops *ops;
+	char *K;
 	void *context;
-	php_stream *stream = NULL;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sss|b", &algo, &algo_len, &data, &data_len, 
-																  &key, &key_len, &raw_output) == FAILURE) {
-		return;
-	}
-
-	ops = php_hash_fetch_ops(algo, algo_len);
-	if (!ops) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unknown hashing algorithm: %s", algo);
-		RETURN_FALSE;
-	}
-	if (isfilename) {
-		stream = php_stream_open_wrapper_ex(data, "rb", REPORT_ERRORS, NULL, DEFAULT_CONTEXT);
-		if (!stream) {
-			/* Stream will report errors opening file */
-			RETURN_FALSE;
-		}
-	}
+	const php_hash_ops *ops = &sha1_hash_ops;
 
 	context = emalloc(ops->context_size);
 
 	K = emalloc(ops->block_size);
-	digest = emalloc(ops->digest_size + 1);
 
-	php_hash_hmac_prep_key((unsigned char *) K, ops, context, (unsigned char *) key, key_len);		
+	php_hash_hmac_prep_key((unsigned char *) K, ops, context, (unsigned char *) key, key_len);
 
-	if (isfilename) {
-		char buf[1024];
-		int n;
-		ops->hash_init(context);
-		ops->hash_update(context, (unsigned char *) K, ops->block_size);
-		while ((n = php_stream_read(stream, buf, sizeof(buf))) > 0) {
-			ops->hash_update(context, (unsigned char *) buf, n);
-		}
-		php_stream_close(stream);
-		ops->hash_final((unsigned char *) digest, context);
-	} else {
-		php_hash_hmac_round((unsigned char *) digest, ops, context, (unsigned char *) K, (unsigned char *) data, data_len);
-	}
+	php_hash_hmac_round((unsigned char *) return_value, ops, context, (unsigned char *) K, (unsigned char *) data, data_len);
 
 	php_hash_string_xor_char((unsigned char *) K, (unsigned char *) K, 0x6A, ops->block_size);
 
-	php_hash_hmac_round((unsigned char *) digest, ops, context, (unsigned char *) K, (unsigned char *) digest, ops->digest_size);
+	php_hash_hmac_round((unsigned char *) return_value, ops, context, (unsigned char *) K, (unsigned char *) return_value, ops->digest_size);
 
 	/* Zero the key */
 	memset(K, 0, ops->block_size);
 	efree(K);
 	efree(context);
 
-	if (raw_output) {
-		digest[ops->digest_size] = 0;
-		RETURN_STRINGL(digest, ops->digest_size, 0);
-	} else {
-		char *hex_digest = safe_emalloc(ops->digest_size, 2, 1);
-
-		php_hash_bin2hex(hex_digest, (unsigned char *) digest, ops->digest_size);
-		hex_digest[2 * ops->digest_size] = 0;
-		efree(digest);
-		RETURN_STRINGL(hex_digest, 2 * ops->digest_size, 0);
-	}
+	*return_value_len = ops->digest_size;
 }
-/* }}} */
-/* {{{ proto string hash_pbkdf2(string algo, string password, string salt, int iterations [, int length = 0, bool raw_output = false])
-Generate a PBKDF2 hash of the given password and salt
-Returns lowercase hexits by default */
-PHP_FUNCTION(hash_pbkdf2)
+
+void php_mongo_sha1(const unsigned char *data, int data_len, unsigned char *return_value)
 {
-	char *returnval, *algo, *salt, *pass;
+	PHP_SHA1_CTX context;
+
+	PHP_SHA1Init(&context);
+	PHP_SHA1Update(&context, data, data_len);
+	PHP_SHA1Final(return_value, &context);
+}
+
+/*  Generate a PBKDF2 hash of the given password and salt */
+int php_mongo_hash_pbkdf2_sha1(char *password, int password_len, unsigned char *salt, int salt_len, long iterations, unsigned char *return_value, long *return_value_len)
+{
 	unsigned char *computed_salt, *digest, *temp, *result, *K1, *K2;
-	long loops, i, j, iterations, length = 0, digest_length;
-	int algo_len, pass_len, salt_len;
-	zend_bool raw_output = 0;
-	const php_hash_ops *ops;
+	long loops, i, j, length = 0, digest_length;
+	zend_bool raw_output = 1;
 	void *context;
+	const php_hash_ops *ops = &sha1_hash_ops;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssl|lb", &algo, &algo_len, &pass, &pass_len, &salt, &salt_len, &iterations, &length, &raw_output) == FAILURE) {
-		return;
-	}
-
-	ops = php_hash_fetch_ops(algo, algo_len);
-	if (!ops) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unknown hashing algorithm: %s", algo);
-		RETURN_FALSE;
-	}
 
 	if (iterations <= 0) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Iterations must be a positive integer: %ld", iterations);
-		RETURN_FALSE;
-	}
-
-	if (length < 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Length must be greater than or equal to 0: %ld", length);
-		RETURN_FALSE;
+		return 0;
 	}
 
 	if (salt_len > INT_MAX - 4) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Supplied salt is too long, max of INT_MAX - 4 bytes: %d supplied", salt_len);
-		RETURN_FALSE;
+		return 0;
 	}
 
 	context = emalloc(ops->context_size);
@@ -197,7 +140,7 @@ PHP_FUNCTION(hash_pbkdf2)
 	temp = emalloc(ops->digest_size);
 
 	/* Setup Keys that will be used for all hmac rounds */
-	php_hash_hmac_prep_key(K1, ops, context, (unsigned char *) pass, pass_len);
+	php_hash_hmac_prep_key(K1, ops, context, (unsigned char *) password, password_len);
 	/* Convert K1 to opad -- 0x6A = 0x36 ^ 0x5C */
 	php_hash_string_xor_char(K2, K1, 0x6A, ops->block_size);
 
@@ -236,7 +179,7 @@ PHP_FUNCTION(hash_pbkdf2)
 		/* temp = digest */
 		memcpy(temp, digest, ops->digest_size);
 
-		/* 
+		/*
 		 * Note that the loop starting at 1 is intentional, since we've already done
 		 * the first round of the algorithm.
 		 */
@@ -262,18 +205,12 @@ PHP_FUNCTION(hash_pbkdf2)
 	efree(digest);
 	efree(temp);
 
-	returnval = safe_emalloc(length, 1, 1);
-	if (raw_output) {
-		memcpy(returnval, result, length);
-	} else {
-		php_hash_bin2hex(returnval, result, digest_length);
-	}
-	returnval[length] = 0;
-	efree(result);
-	RETURN_STRINGL(returnval, length, 0);
-}
-/* }}} */
+	memcpy(return_value, result, length);
+	*return_value_len = length;
 
+	efree(result);
+	return 1;
+}
 
 /*
  * Local variables:
