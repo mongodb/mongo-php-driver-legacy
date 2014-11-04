@@ -30,6 +30,7 @@
 #include <ext/standard/file.h>
 #include <ext/standard/sha1.h>
 #include <ext/standard/base64.h>
+#include <ext/standard/php_string.h>
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -644,11 +645,23 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	unsigned char cnonce[41];
 	int32_t step_conversation_id;
 	unsigned char done = 0;
+	char *username;
+	int username_len;
 	TSRMLS_FETCH();
 
 	if (!server_def->db || !server_def->username || !server_def->password) {
 		return 2;
 	}
+
+	username = strdup(server_def->username);
+	/*
+	 * The characters ',' or '=' in usernames are sent as '=2C' and
+	 * '=3D' respectively.  If the server receives a username that
+	 * contains '=' not followed by either '2C' or '3D', then the
+	 * server MUST fail the authentication
+	 */
+	username = php_str_to_str(username, strlen(username), "=", 1, "=3D", 3, &username_len);
+	username = php_str_to_str(username, strlen(username), ",", 1, "=2C", 3, &username_len);
 
 	php_mongo_io_make_nonce(cnonce TSRMLS_CC);
 
@@ -665,7 +678,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	 * We don't support GS2 stuffz, so that becomes "n,,"
 	 * example: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
 	 */
-	client_first_message_len = spprintf(&client_first_message, 0, "n,,n=%s,r=%s", server_def->username, cnonce);
+	client_first_message_len = spprintf(&client_first_message, 0, "n,,n=%s,r=%s", username, cnonce);
 	client_first_message_base64 = (char *)php_base64_encode((unsigned char *)client_first_message, client_first_message_len, &client_first_message_base64_len);
 
 	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, "SCRAM-SHA-1", client_first_message_base64, client_first_message_base64_len+1, &server_first_message_base64, &server_first_message_base64_len, &step_conversation_id, error_message)) {
@@ -691,7 +704,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	server_first_message_dup = strdup(server_first_message);
 
 	/* the r= from the client_first_message appended with more chars from the server */
-	rskip = strlen(server_def->username)+6;
+	rskip = username_len+6;
 
 	rnonce = php_strtok_r(server_first_message_dup, ",", &tok);
 	salt_base64 = php_strtok_r(NULL, ",", &tok)+2;
@@ -710,8 +723,8 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 
 	iterations = strtoll(iterationsstr, NULL, 10);
 	/* MongoDB uses the legacy MongoDB-CR hash as the SCRAM-SHA-1 password */
-	password = mongo_authenticate_hash_user_password(server_def->username, server_def->password);
-	php_mongo_io_make_client_proof(server_def->username, password, (unsigned char*)salt_base64, strlen(salt_base64), iterations, &proof, &proof_len, server_first_message, cnonce, rnonce TSRMLS_CC);
+	password = mongo_authenticate_hash_user_password(username, server_def->password);
+	php_mongo_io_make_client_proof(username, password, (unsigned char*)salt_base64, strlen(salt_base64), iterations, &proof, &proof_len, server_first_message, cnonce, rnonce TSRMLS_CC);
 	efree(server_first_message);
 	free(password);
 
