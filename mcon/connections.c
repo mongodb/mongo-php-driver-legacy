@@ -613,10 +613,6 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 			retval = mongo_connection_authenticate_mongodb_x509(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, error_message);
 			break;
 
-		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
-			retval = mongo_connection_authenticate_mongodb_scram_sha1(manager, con, options, server_def, error_message);
-			break;
-
 		default:
 			*error_message = strdup("Only MongoDB-CR and MONGODB-X509 authentication mechanisms is supported by this build");
 		return 0;

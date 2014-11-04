@@ -22,6 +22,7 @@
 #include "mcon/connections.h"
 #include "php_mongo.h"
 #include "contrib/crypto.h"
+#include "api/wire_version.h"
 
 #include <php.h>
 #include <main/php_streams.h>
@@ -349,7 +350,7 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 	/* Intentionally only send the mechanism we expect to authenticate with, rather then
 	 * list of all supported ones. This is because MongoDB doesn't support negotiating */
 	switch(server_def->mechanism) {
-		/* NOTE: We don't use the cyrus for SCRAM-SHA-1, but its left here as its easier to support multiple SASL mechanisms this way */
+		/* NOTE: We don't use cyrus-sasl for SCRAM-SHA-1, but its left here as its easier to support multiple SASL mechanisms this way */
 		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
 			/* cyrus-sasl calls it just "SCRAM" */
 			mechanism_list = "SCRAM";
@@ -783,11 +784,20 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
 {
 	switch(server_def->mechanism) {
+		case MONGO_AUTH_MECHANISM_MONGODB_DEFAULT:
+			if (php_mongo_api_connection_supports_feature(con, PHP_MONGO_API_RELEASE_2_8)) {
+				return mongo_connection_authenticate_mongodb_scram_sha1(manager, con, options, server_def, error_message);
+			}
+			return mongo_connection_authenticate(manager, con, options, server_def, error_message);
+
 		case MONGO_AUTH_MECHANISM_MONGODB_CR:
 		case MONGO_AUTH_MECHANISM_MONGODB_X509:
-		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
-			/* Use the mcon implementation of MongoDB-CR (current default), SCRAM-SHA-1 (upcoming default) and MongoDB-X509 */
+			/* Use the mcon implementation of MongoDB-CR and MongoDB-X509 */
 			return mongo_connection_authenticate(manager, con, options, server_def, error_message);
+
+		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
+			return mongo_connection_authenticate_mongodb_scram_sha1(manager, con, options, server_def, error_message);
+			break;
 
 #if HAVE_MONGO_SASL
 		case MONGO_AUTH_MECHANISM_GSSAPI:

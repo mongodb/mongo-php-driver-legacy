@@ -237,7 +237,7 @@ static void mongo_add_parsed_server_addr(mongo_con_manager *manager, mongo_serve
 	tmp = malloc(sizeof(mongo_server_def));
 	memset(tmp, 0, sizeof(mongo_server_def));
 	tmp->username = tmp->password = tmp->db = tmp->authdb = NULL;
-	tmp->mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR; /* MONGODB-CR is the default authentication mechanism */
+	tmp->mechanism = MONGO_AUTH_MECHANISM_MONGODB_DEFAULT;
 	tmp->port = 27017;
 
 	tmp->host = mcon_strndup(host_start, host_end - host_start);
@@ -720,7 +720,7 @@ void mongo_servers_dump(mongo_con_manager *manager, mongo_servers *servers)
 static void mongo_server_def_copy(mongo_server_def *to, mongo_server_def *from, int flags)
 {
 	to->host = to->repl_set_name = to->db = to->authdb = to->username = to->password = NULL;
-	to->mechanism = MONGO_AUTH_MECHANISM_MONGODB_CR;
+	to->mechanism = MONGO_AUTH_MECHANISM_MONGODB_DEFAULT;
 	if (from->host) {
 		to->host = strdup(from->host);
 	}
