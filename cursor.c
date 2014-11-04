@@ -1065,7 +1065,7 @@ PHP_METHOD(MongoCursor, count)
 
 	if (cursor->query) {
 		if (cursor->special) {
-			zval **query = NULL, **hint = NULL;
+			zval **query = NULL, **hint = NULL, **maxTimeMS = NULL;
 
 			if (zend_hash_find(HASH_P(cursor->query), ZEND_STRS("$query"), (void**)&query) == SUCCESS) {
 				/* If the query hash is empty, don't include it in the count. as
@@ -1080,6 +1080,9 @@ PHP_METHOD(MongoCursor, count)
 			if (zend_hash_find(HASH_P(cursor->query), ZEND_STRS("$hint"), (void**)&hint) == SUCCESS) {
 				add_assoc_zval(cmd, "hint", *hint);
 				zval_add_ref(hint);
+			}
+			if (zend_hash_find(HASH_P(cursor->query), ZEND_STRS("$maxTimeMS"), (void**)&maxTimeMS) == SUCCESS) {
+				add_assoc_long(cmd, "maxTimeMS", Z_LVAL_PP(maxTimeMS));
 			}
 		} else {
 			if (zend_hash_num_elements(HASH_P(cursor->query)) > 0) {
