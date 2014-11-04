@@ -112,7 +112,7 @@ void php_mongo_sha1(const unsigned char *data, int data_len, unsigned char *retu
 }
 
 /*  Generate a PBKDF2 hash of the given password and salt */
-int php_mongo_hash_pbkdf2_sha1(char *password, int password_len, unsigned char *salt, int salt_len, long iterations, unsigned char *return_value, long *return_value_len)
+int php_mongo_hash_pbkdf2_sha1(char *password, int password_len, unsigned char *salt, int salt_len, long iterations, unsigned char *return_value, long *return_value_len TSRMLS_DC)
 {
 	unsigned char *computed_salt, *digest, *temp, *result, *K1, *K2;
 	long loops, i, j, length = 0, digest_length;

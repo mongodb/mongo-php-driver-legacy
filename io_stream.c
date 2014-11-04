@@ -569,7 +569,7 @@ client-final-message-without-proof =
      ServerSignature := HMAC(ServerKey, AuthMessage)
 */
 
-int php_mongo_io_make_client_proof(char *username, char *password, unsigned char *salt_base64, int salt_base64_len, int iterations, char **return_value, int *return_value_len, char *server_first_message, unsigned char *cnonce, char *snonce)
+int php_mongo_io_make_client_proof(char *username, char *password, unsigned char *salt_base64, int salt_base64_len, int iterations, char **return_value, int *return_value_len, char *server_first_message, unsigned char *cnonce, char *snonce TSRMLS_DC)
 {
 	unsigned char stored_key[PHP_MONGO_SCRAM_HASH_SIZE], client_proof[PHP_MONGO_SCRAM_HASH_SIZE], client_signature[PHP_MONGO_SCRAM_HASH_SIZE];
 	unsigned char salted_password[PHP_MONGO_SCRAM_HASH_SIZE], client_key[PHP_MONGO_SCRAM_HASH_SIZE], server_key[PHP_MONGO_SCRAM_HASH_SIZE], server_signature[PHP_MONGO_SCRAM_HASH_SIZE];
@@ -584,7 +584,7 @@ int php_mongo_io_make_client_proof(char *username, char *password, unsigned char
 	salt = php_base64_decode(salt_base64, salt_base64_len, &salt_len);
 
 	/* SaltedPassword  := Hi(Normalize(password), salt, i) */
-	php_mongo_hash_pbkdf2_sha1(password, strlen(password), salt, salt_len, iterations, salted_password, &salted_password_len);
+	php_mongo_hash_pbkdf2_sha1(password, strlen(password), salt, salt_len, iterations, salted_password, &salted_password_len TSRMLS_CC);
 	efree(salt);
 
 	/* ClientKey       := HMAC(SaltedPassword, "Client Key") */
@@ -644,12 +644,13 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	unsigned char cnonce[41];
 	int32_t step_conversation_id;
 	unsigned char done = 0;
+	TSRMLS_FETCH();
 
 	if (!server_def->db || !server_def->username || !server_def->password) {
 		return 2;
 	}
 
-	php_mongo_io_make_nonce(cnonce);
+	php_mongo_io_make_nonce(cnonce TSRMLS_CC);
 
 	/*
 	 * client-first-message      = gs2-header client-first-message-bare
@@ -711,7 +712,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	iterations = strtoll(iterationsstr, NULL, 10);
 	/* MongoDB uses the legacy MongoDB-CR hash as the SCRAM-SHA-1 password */
 	password = mongo_authenticate_hash_user_password(server_def->username, server_def->password);
-	php_mongo_io_make_client_proof(server_def->username, password, (unsigned char*)salt_base64, strlen(salt_base64), iterations, &proof, &proof_len, server_first_message, cnonce, rnonce);
+	php_mongo_io_make_client_proof(server_def->username, password, (unsigned char*)salt_base64, strlen(salt_base64), iterations, &proof, &proof_len, server_first_message, cnonce, rnonce TSRMLS_CC);
 	efree(server_first_message);
 	free(password);
 
@@ -824,7 +825,7 @@ int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connectio
 	return 0;
 }
 
-void php_mongo_io_make_nonce(unsigned char *sha1str) /* {{{ */
+void php_mongo_io_make_nonce(unsigned char *sha1str TSRMLS_DC) /* {{{ */
 {
 	unsigned char digest[20];
 	PHP_SHA1_CTX sha1_context;
