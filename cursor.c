@@ -1064,14 +1064,28 @@ PHP_METHOD(MongoCursor, count)
 	add_assoc_string(cmd, "count", cname, 0);
 
 	if (cursor->query) {
-		zval **inner_query = 0;
+		if (cursor->special) {
+			zval **query = NULL, **hint = NULL;
 
-		if (!cursor->special) {
-			add_assoc_zval(cmd, "query", cursor->query);
-			zval_add_ref(&cursor->query);
-		} else if (zend_hash_find(HASH_P(cursor->query), "$query", strlen("$query") + 1, (void**)&inner_query) == SUCCESS) {
-			add_assoc_zval(cmd, "query", *inner_query);
-			zval_add_ref(inner_query);
+			if (zend_hash_find(HASH_P(cursor->query), ZEND_STRS("$query"), (void**)&query) == SUCCESS) {
+				/* If the query hash is empty, don't include it in the count. as
+				 * we do for MongoCollection::count(); however, if the user
+				 * somehow stores a non-hash as the query (e.g. via addOption),
+				 * include it as-is and allow the server to raise an error. */
+				if ((Z_TYPE_PP(query) != IS_ARRAY && Z_TYPE_PP(query) != IS_OBJECT) || zend_hash_num_elements(HASH_PP(query)) > 0) {
+					add_assoc_zval(cmd, "query", *query);
+					zval_add_ref(query);
+				}
+			}
+			if (zend_hash_find(HASH_P(cursor->query), ZEND_STRS("$hint"), (void**)&hint) == SUCCESS) {
+				add_assoc_zval(cmd, "hint", *hint);
+				zval_add_ref(hint);
+			}
+		} else {
+			if (zend_hash_num_elements(HASH_P(cursor->query)) > 0) {
+				add_assoc_zval(cmd, "query", cursor->query);
+				zval_add_ref(&cursor->query);
+			}
 		}
 	}
 

@@ -216,7 +216,7 @@ MongoCollection
   Method getIndexInfo expects 0 parameters
   Method count expects 3 parameters
     0: query_AS_array_of_fields_OR_object (optional)
-    1: limit (optional)
+    1: options_OR_limit (optional)
     2: skip (optional)
   Method save expects 2 parameters
     0: array_of_fields_OR_object
