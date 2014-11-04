@@ -669,7 +669,6 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	client_first_message_base64 = (char *)php_base64_encode((unsigned char *)client_first_message, client_first_message_len, &client_first_message_base64_len);
 
 	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, "SCRAM-SHA-1", client_first_message_base64, client_first_message_base64_len+1, &server_first_message_base64, &server_first_message_base64_len, &step_conversation_id, error_message)) {
-		free(server_first_message_base64);
 		efree(client_first_message_base64);
 		return 0;
 	}
@@ -767,8 +766,6 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 
 	if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, step_conversation_id, client_final_message_base64, client_final_message_base64_len+1, &server_final_message_base64, &server_final_message_base64_len, &done, error_message)) {
 		efree(client_final_message);
-		efree(client_final_message_base64);
-		free(server_final_message_base64);
 		return 0;
 	}
 	efree(client_final_message);
