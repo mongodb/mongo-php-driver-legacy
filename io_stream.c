@@ -656,14 +656,13 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 		return 2;
 	}
 
-	username = strdup(server_def->username);
 	/*
 	 * The characters ',' or '=' in usernames are sent as '=2C' and
 	 * '=3D' respectively.  If the server receives a username that
 	 * contains '=' not followed by either '2C' or '3D', then the
 	 * server MUST fail the authentication
 	 */
-	username = php_str_to_str(username, strlen(username), "=", 1, "=3D", 3, &username_len);
+	username = php_str_to_str(server_def->username, strlen(server_def->username), "=", 1, "=3D", 3, &username_len);
 	username = php_str_to_str(username, strlen(username), ",", 1, "=2C", 3, &username_len);
 
 	php_mongo_io_make_nonce(cnonce TSRMLS_CC);
@@ -686,6 +685,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 
 	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, "SCRAM-SHA-1", client_first_message_base64, client_first_message_base64_len+1, &server_first_message_base64, &server_first_message_base64_len, &step_conversation_id, error_message)) {
 		efree(client_first_message_base64);
+		efree(username);
 		return 0;
 	}
 	efree(client_first_message_base64);
@@ -720,6 +720,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 		/* the server didn't return our hash, bail out */
 		*error_message = strdup("Server return invalid hash");
 		mongo_manager_log(manager, MLOG_CON, MLOG_SERVER, "server-first-message: DID NOT MATCH WHAT WE WANTED: %s vs ", server_first_message );
+		efree(username);
 		return 0;
 	}
 	efree(client_first_message);
@@ -728,6 +729,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	/* MongoDB uses the legacy MongoDB-CR hash as the SCRAM-SHA-1 password */
 	password = mongo_authenticate_hash_user_password(username, server_def->password);
 	php_mongo_io_make_client_proof(username, password, (unsigned char*)salt_base64, strlen(salt_base64), iterations, &proof, &proof_len, server_first_message, cnonce, rnonce, server_signature, &server_signature_len TSRMLS_CC);
+	efree(username);
 	efree(server_first_message);
 	free(password);
 
@@ -775,6 +777,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	 * example: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
 	 */
 	client_final_message_len = spprintf(&client_final_message, 0, "c=biws,%s,p=%s", rnonce, proof);
+	efree(proof);
 	free(server_first_message_dup);
 	/* base64 for the server (payload), or BSON Binary encode.. simpler to base64 */
 	client_final_message_base64 = (char *)php_base64_encode((unsigned char*)client_final_message, client_final_message_len, &client_final_message_base64_len);
