@@ -110,8 +110,8 @@ int(13435)
 
 Testing primary count
 Bit 2 (SlaveOk) is not set
-string(%d) "Cannot run command count(): not master"
-int(20)
+string(%d) "%s:%d: not master"
+int(2)
 
 ----
 

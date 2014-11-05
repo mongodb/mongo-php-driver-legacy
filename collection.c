@@ -2207,6 +2207,7 @@ PHP_METHOD(MongoCollection, count)
 	HashTable *query = 0, *options = 0;
 	zval *response, *cmd, *zquery = 0;
 	zval **n;
+	mongo_connection *used_connection;
 	mongo_collection *c;
 	mongo_db *db;
 
@@ -2244,29 +2245,20 @@ PHP_METHOD(MongoCollection, count)
 		add_assoc_long(cmd, "skip", skip);
 	}
 
-	response = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
+	response = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, &used_connection TSRMLS_CC);
+
+	if (response && php_mongo_trigger_error_on_command_failure(used_connection, response TSRMLS_CC) == SUCCESS) {
+		if (zend_hash_find(HASH_P(response), ZEND_STRS("n"), (void**)&n) == SUCCESS) {
+			convert_to_long(*n);
+			RETVAL_ZVAL(*n, 1, 0);
+		} else {
+			php_mongo_cursor_throw(mongo_ce_ResultException, used_connection, 20 TSRMLS_CC, "Number of matched documents missing from count command response");
+		}
+
+		zval_ptr_dtor(&response);
+	}
 
 	zval_ptr_dtor(&cmd);
-
-	if (!response) {
-		return;
-	}
-
-	if (zend_hash_find(HASH_P(response), "n", 2, (void**)&n) == SUCCESS) {
-		convert_to_long(*n);
-		RETVAL_ZVAL(*n, 1, 0);
-		zval_ptr_dtor(&response);
-	} else {
-		zval **errmsg;
-
-		/* The command failed, try to find an error message */
-		if (zend_hash_find(HASH_P(response), "errmsg", strlen("errmsg") + 1 , (void**)&errmsg) == SUCCESS) {
-			zend_throw_exception_ex(mongo_ce_Exception, 20 TSRMLS_CC, "Cannot run command count(): %s", Z_STRVAL_PP(errmsg));
-		} else {
-			zend_throw_exception(mongo_ce_Exception, "Cannot run command count()", 20 TSRMLS_CC);
-		}
-		zval_ptr_dtor(&response);
-	}
 }
 /* }}} */
 
