@@ -706,6 +706,15 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	rnonce = php_strtok_r(server_first_message_dup, ",", &tok);
 	salt_base64 = php_strtok_r(NULL, ",", &tok)+2;
 	iterationsstr = php_strtok_r(NULL, ",", &tok)+2;
+	if (rnonce == NULL || salt_base64 == NULL || iterationsstr == NULL) {
+		efree(server_first_message);
+		free(server_first_message_dup);
+		efree(client_first_message);
+		/* the server didn't return our hash, bail out */
+		*error_message = strdup("Server return payload in wrong format");
+		efree(username);
+		return 0;
+	}
 
 	if (strncmp(rnonce, client_first_message+rskip, 41-rskip) != 0) {
 		efree(server_first_message);
@@ -713,7 +722,6 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 		efree(client_first_message);
 		/* the server didn't return our hash, bail out */
 		*error_message = strdup("Server return invalid hash");
-		mongo_manager_log(manager, MLOG_CON, MLOG_SERVER, "server-first-message: DID NOT MATCH WHAT WE WANTED: %s vs ", server_first_message );
 		efree(username);
 		return 0;
 	}
