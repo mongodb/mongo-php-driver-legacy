@@ -569,10 +569,9 @@ int php_mongo_io_make_client_proof(char *username, char *password, unsigned char
 {
 	unsigned char stored_key[PHP_MONGO_SCRAM_HASH_SIZE], client_proof[PHP_MONGO_SCRAM_HASH_SIZE], client_signature[PHP_MONGO_SCRAM_HASH_SIZE];
 	unsigned char salted_password[PHP_MONGO_SCRAM_HASH_SIZE], client_key[PHP_MONGO_SCRAM_HASH_SIZE], server_key[PHP_MONGO_SCRAM_HASH_SIZE];
-	unsigned char *salt;
+	unsigned char *salt, *auth_message;
 	long salted_password_len;
 	int salt_len, client_key_len, server_key_len;
-	char *auth_message;
 	int auth_message_len, client_signature_len;
 	int i;
 
@@ -593,10 +592,10 @@ int php_mongo_io_make_client_proof(char *username, char *password, unsigned char
 	 *                    server-first-message + "," +
 	 *                    client-final-message-without-proof
 	 */
-	auth_message_len  = spprintf(&auth_message, 0, "n=%s,r=%s,%s,c=biws,%s", username, cnonce, server_first_message, snonce);
+	auth_message_len  = spprintf((char **)&auth_message, 0, "n=%s,r=%s,%s,c=biws,%s", username, cnonce, server_first_message, snonce);
 
 	/* ClientSignature := HMAC(StoredKey, AuthMessage) */
-	php_mongo_hmac((unsigned char *)auth_message, auth_message_len, (char *)stored_key, PHP_MONGO_SCRAM_HASH_SIZE, (unsigned char *)client_signature, &client_signature_len);
+	php_mongo_hmac(auth_message, auth_message_len, (char *)stored_key, PHP_MONGO_SCRAM_HASH_SIZE, (unsigned char *)client_signature, &client_signature_len);
 
 	/* ClientProof := ClientKey XOR ClientSignature */
 	for (i = 0; i < PHP_MONGO_SCRAM_HASH_SIZE; i++) {
@@ -607,7 +606,7 @@ int php_mongo_io_make_client_proof(char *username, char *password, unsigned char
 	php_mongo_hmac((unsigned char *)PHP_MONGO_SCRAM_SERVER_KEY, strlen((char *)PHP_MONGO_SCRAM_SERVER_KEY), (char *)salted_password, salted_password_len, (unsigned char *)server_key, &server_key_len);
 
 	/* ServerSignature := HMAC(ServerKey, AuthMessage) */
-	php_mongo_hmac((unsigned char *)auth_message, auth_message_len, (char *)server_key, PHP_MONGO_SCRAM_HASH_SIZE, server_signature, server_signature_len);
+	php_mongo_hmac(auth_message, auth_message_len, (char *)server_key, PHP_MONGO_SCRAM_HASH_SIZE, server_signature, server_signature_len);
 	efree(auth_message);
 
 	*return_value = (char *)php_base64_encode(client_proof, PHP_MONGO_SCRAM_HASH_SIZE, return_value_len);
@@ -660,7 +659,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	username = php_str_to_str(server_def->username, strlen(server_def->username), "=", 1, "=3D", 3, &username_len);
 	username = php_str_to_str(username, strlen(username), ",", 1, "=2C", 3, &username_len);
 
-	php_mongo_io_make_nonce(cnonce TSRMLS_CC);
+	php_mongo_io_make_nonce((char *)cnonce TSRMLS_CC);
 
 	/*
 	 * client-first-message      = gs2-header client-first-message-bare
@@ -844,7 +843,7 @@ int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connectio
 	return 0;
 }
 
-void php_mongo_io_make_nonce(unsigned char *sha1str TSRMLS_DC) /* {{{ */
+void php_mongo_io_make_nonce(char *sha1str TSRMLS_DC) /* {{{ */
 {
 	unsigned char digest[20];
 	PHP_SHA1_CTX sha1_context;
