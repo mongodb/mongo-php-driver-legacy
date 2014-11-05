@@ -639,7 +639,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	unsigned char cnonce[41];
 	int32_t step_conversation_id;
 	unsigned char done = 0;
-	char *username;
+	char *tmp, *username;
 	int username_len;
 	unsigned char server_signature[PHP_MONGO_SCRAM_HASH_SIZE];
 	unsigned char *server_signature_base64;
@@ -656,8 +656,9 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	 * contains '=' not followed by either '2C' or '3D', then the
 	 * server MUST fail the authentication
 	 */
-	username = php_str_to_str(server_def->username, strlen(server_def->username), "=", 1, "=3D", 3, &username_len);
-	username = php_str_to_str(username, strlen(username), ",", 1, "=2C", 3, &username_len);
+	tmp = php_str_to_str(server_def->username, strlen(server_def->username), "=", 1, "=3D", 3, &username_len);
+	username = php_str_to_str(tmp, strlen(tmp), ",", 1, "=2C", 3, &username_len);
+	efree(tmp);
 
 	php_mongo_io_make_nonce((char *)cnonce TSRMLS_CC);
 
@@ -678,6 +679,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	client_first_message_base64 = (char *)php_base64_encode((unsigned char *)client_first_message, client_first_message_len, &client_first_message_base64_len);
 
 	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, "SCRAM-SHA-1", client_first_message_base64, client_first_message_base64_len+1, &server_first_message_base64, &server_first_message_base64_len, &step_conversation_id, error_message)) {
+		efree(client_first_message);
 		efree(client_first_message_base64);
 		efree(username);
 		return 0;
@@ -786,6 +788,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 
 	if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, step_conversation_id, client_final_message_base64, client_final_message_base64_len+1, &server_final_message_base64, &server_final_message_base64_len, &done, error_message)) {
 		efree(client_final_message);
+		efree(client_final_message_base64);
 		return 0;
 	}
 	efree(client_final_message);
