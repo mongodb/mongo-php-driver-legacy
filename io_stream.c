@@ -546,28 +546,23 @@ int php_mongo_io_authenticate_plain(mongo_con_manager *manager, mongo_connection
 #endif
 
 /*
-client-first-message-bare =
-                     username "," nonce ["," extensions]
-
-   client-first-message =
-                     gs2-header client-first-message-bare
-server-first-message =
-                     [reserved-mext ","] nonce "," salt ","
-                     iteration-count ["," extensions]
-client-final-message-without-proof =
-                     channel-binding "," nonce [","
-                     extensions]
-
-     SaltedPassword  := Hi(Normalize(password), salt, i)
-     ClientKey       := HMAC(SaltedPassword, "Client Key")
-     StoredKey       := H(ClientKey)
-     AuthMessage     := client-first-message-bare + "," +
-                        server-first-message + "," +
-                        client-final-message-without-proof
-     ClientSignature := HMAC(StoredKey, AuthMessage)
-     ClientProof     := ClientKey XOR ClientSignature
-     ServerKey       := HMAC(SaltedPassword, "Server Key")
-     ServerSignature := HMAC(ServerKey, AuthMessage)
+ * client-first-message-bare          = username "," nonce ["," extensions]
+ *
+ * client-first-message               = gs2-header client-first-message-bare
+ * server-first-message               = [reserved-mext ","] nonce "," salt ","
+ *                                      iteration-count ["," extensions]
+ * client-final-message-without-proof = channel-binding "," nonce ["," extensions]
+ *
+ * SaltedPassword                    := Hi(Normalize(password), salt, i)
+ * ClientKey                         := HMAC(SaltedPassword, "Client Key")
+ * StoredKey                         := H(ClientKey)
+ * AuthMessage                       := client-first-message-bare + "," +
+ *                                          server-first-message + "," +
+ *                                          client-final-message-without-proof
+ * ClientSignature                   := HMAC(StoredKey, AuthMessage)
+ * ClientProof                       := ClientKey XOR ClientSignature
+ * ServerKey                         := HMAC(SaltedPassword, "Server Key")
+ * ServerSignature                   := HMAC(ServerKey, AuthMessage)
 */
 
 int php_mongo_io_make_client_proof(char *username, char *password, unsigned char *salt_base64, int salt_base64_len, int iterations, char **return_value, int *return_value_len, char *server_first_message, unsigned char *cnonce, char *snonce, unsigned char *server_signature, int *server_signature_len TSRMLS_DC)
@@ -677,7 +672,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	 * s-nonce                   = printable (server appending nonce)
 	 * gs2-header                = gs2-cbind-flag "," [ authzid ] ","
 	 *
-	 * We don't support GS2 stuffz, so that becomes "n,,"
+	 * We don't support GS2, so that becomes "n,,"
 	 * example: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
 	 */
 	client_first_message_len = spprintf(&client_first_message, 0, "n,,n=%s,r=%s", username, cnonce);
@@ -772,7 +767,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	 * channel-binding = "c=" base64
 	 *                   ;; base64 encoding of cbind-input.
 	 *
-	 * cbind-input     = (stuffz we don't support, see 'c:' explaination above)
+	 * cbind-input     = (we don't support these things, see 'c:' explaination above)
 	 *
 	 * example: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
 	 */
