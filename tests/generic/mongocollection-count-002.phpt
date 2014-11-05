@@ -2,7 +2,6 @@
 MongoCollection::count() with hint option
 --SKIPIF--
 <?php $needs = "2.6.0"; require_once "tests/utils/standalone.inc";?>
-<?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php require_once "tests/utils/server.inc"; ?>
 <?php
