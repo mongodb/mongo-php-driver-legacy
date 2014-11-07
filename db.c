@@ -112,18 +112,24 @@ static int php_mongo_command_supports_rp(zval *cmd)
 
 int php_mongo_db_is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
 {
+	if (dbname_len == 0) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "Database name cannot be empty");
+		return 0;
+	}
+
 	if (memchr(dbname, '\0', dbname_len) != NULL) {
-		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): '\\0' not allowed in database names: %s\\0...", dbname);
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "Database name cannot contain null bytes: %s\\0...", dbname);
+		return 0;
 	}
 
 	if (
-		dbname_len == 0 ||
 		memchr(dbname, ' ', dbname_len) != 0 || memchr(dbname, '.', dbname_len) != 0 || memchr(dbname, '\\', dbname_len) != 0 ||
 		memchr(dbname, '/', dbname_len) != 0 || memchr(dbname, '$', dbname_len) != 0
 	) {
-		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", dbname);
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "Database name contains invalid characters: %s", dbname);
 		return 0;
 	}
+
 	return 1;
 }
 

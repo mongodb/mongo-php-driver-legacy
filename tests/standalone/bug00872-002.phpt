@@ -32,10 +32,10 @@ try {
 	var_dump($e->getMessage());
 }
 ?>
---EXPECTF--
+--EXPECT--
 int(2)
-string(39) "MongoDB::__construct(): invalid name fo"
+string(50) "Collection name cannot contain null bytes: fo\0..."
 int(2)
-string(39) "MongoDB::__construct(): invalid name fo"
+string(50) "Collection name cannot contain null bytes: fo\0..."
 int(2)
-string(39) "MongoDB::__construct(): invalid name fo"
+string(50) "Collection name cannot contain null bytes: fo\0..."
