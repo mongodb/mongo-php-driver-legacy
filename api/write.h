@@ -50,9 +50,9 @@ typedef enum {
 typedef struct {
 	php_mongo_write_types type;
 	union {
-		HashTable *insert;
-		php_mongo_write_update_args *update;
-		php_mongo_write_delete_args *delete;
+		HashTable *insert_doc;
+		php_mongo_write_update_args *update_args;
+		php_mongo_write_delete_args *delete_args;
 	} write;
 } php_mongo_write_item;
 

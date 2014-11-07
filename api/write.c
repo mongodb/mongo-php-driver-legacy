@@ -273,15 +273,15 @@ int php_mongo_api_write_add(mongo_buffer *buf, int n, php_mongo_write_item *item
 
 	switch (item->type) {
 		case MONGODB_API_COMMAND_INSERT:
-			retval = php_mongo_api_insert_add(buf, n, item->write.insert, max_document_size TSRMLS_CC);
+			retval = php_mongo_api_insert_add(buf, n, item->write.insert_doc, max_document_size TSRMLS_CC);
 			break;
 
 		case MONGODB_API_COMMAND_UPDATE:
-			retval = php_mongo_api_update_add(buf, n, item->write.update, max_document_size TSRMLS_CC);
+			retval = php_mongo_api_update_add(buf, n, item->write.update_args, max_document_size TSRMLS_CC);
 			break;
 
 		case MONGODB_API_COMMAND_DELETE:
-			retval = php_mongo_api_delete_add(buf, n, item->write.delete, max_document_size TSRMLS_CC);
+			retval = php_mongo_api_delete_add(buf, n, item->write.delete_args, max_document_size TSRMLS_CC);
 			break;
 	}
 

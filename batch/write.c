@@ -149,7 +149,7 @@ PHP_METHOD(MongoWriteBatch, add)
 	write_item.type = intern->batch_type;
 	switch (intern->batch_type) {
 		case MONGODB_API_COMMAND_INSERT:
-			write_item.write.insert = ht_item;
+			write_item.write.insert_doc = ht_item;
 			break;
 
 		case MONGODB_API_COMMAND_UPDATE: {
@@ -180,7 +180,7 @@ PHP_METHOD(MongoWriteBatch, add)
 				update_args.upsert = Z_BVAL_PP(upsert);
 			}
 
-			write_item.write.update = &update_args;
+			write_item.write.update_args = &update_args;
 			break;
 		 }
 
@@ -202,7 +202,7 @@ PHP_METHOD(MongoWriteBatch, add)
 			delete_args.query = *q;
 			delete_args.limit = Z_LVAL_PP(limit);
 
-			write_item.write.delete = &delete_args;
+			write_item.write.delete_args = &delete_args;
 			break;
 		 }
 
