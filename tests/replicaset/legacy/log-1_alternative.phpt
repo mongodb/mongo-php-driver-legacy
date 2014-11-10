@@ -1,6 +1,7 @@
 --TEST--
 Test for MongoLog
 --SKIPIF--
+<?php $needsmin = "2.4.0"; $needsmax = "2.7.0" ?>
 <?php require "tests/utils/replicaset.inc"; ?>
 --FILE--
 <?php

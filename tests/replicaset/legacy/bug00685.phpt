@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-685: wtimeout option is not supported per-query
 --SKIPIF--
+<?php $needsmin = "2.4.0"; $needsmax = "2.7.0" ?>
 <?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
 <?php
