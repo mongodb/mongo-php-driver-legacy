@@ -647,7 +647,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	TSRMLS_FETCH();
 
 	if (!server_def->db || !server_def->username || !server_def->password) {
-		return 2;
+		return 0;
 	}
 
 	/*
