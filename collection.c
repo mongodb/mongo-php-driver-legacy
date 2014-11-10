@@ -74,11 +74,13 @@ void php_mongo_collection_construct(zval *this, zval *parent, char *name_str, in
 	char *ns;
 
 	/* check for empty and invalid collection names */
-	if (
-		name_len == 0 ||
-		memchr(name_str, '\0', name_len) != 0
-	) {
-		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "MongoDB::__construct(): invalid name %s", name_str);
+	if (name_len == 0) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "Collection name cannot be empty");
+		return;
+	}
+
+	if (memchr(name_str, '\0', name_len) != 0) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "Collection name cannot contain null bytes: %s\\0...", name_str);
 		return;
 	}
 
