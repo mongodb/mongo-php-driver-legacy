@@ -11,6 +11,18 @@ try {
             throw new Exception("Needs MongoDB $needsOp $needs, but is running $serverversion");
         }
     }
+    if (isset($needsmin)) {
+        $serverversion = $server->getServerVersion("REPLICASET");
+        if ( ! version_compare($serverversion, $needs, ">=")) {
+            throw new Exception("Needs MongoDB atleast $needsmin, but is running $serverversion");
+        }
+    }
+    if (isset($needsmax)) {
+        $serverversion = $server->getServerVersion("REPLICASET");
+        if ( ! version_compare($serverversion, $needs, "<")) {
+            throw new Exception("Needs MongoDB less then $needsmax, but is running $serverversion");
+        }
+    }
     $server->close();
 } catch(Exception $e) {
     exit("skip " . $e->getMessage());
