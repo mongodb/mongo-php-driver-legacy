@@ -42,12 +42,12 @@ array(2) {
   ["ok"]=>
   float(1)
 }
-authentication failed
-Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth %s
-authentication failed
-Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth %s
-authentication failed
-Couldn't connect to '%s:%d': Authentication failed on database 'admin' with username 'root': auth %s
+%s failed
+Couldn't connect to '%s:%d': %sfailed on database 'admin'%s
+%s failed
+Couldn't connect to '%s:%d': %sfailed on database 'admin'%s
+%s failed
+Couldn't connect to '%s:%d': %s failed on database 'admin'%s
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d
 discover_topology: couldn't create a connection for %s:%d;-;admin/root/%s;%d

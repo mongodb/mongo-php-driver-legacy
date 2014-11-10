@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-676: Collection level write concern overwritten by deprecated "safe" option
 --SKIPIF--
+<?php $needsmin = "2.4.0"; $needsmax = "2.7.0" ?>
 <?php require_once "tests/utils/replicaset.inc" ?>
 --INI--
 error_reporting=0

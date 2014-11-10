@@ -44,7 +44,7 @@ bool(true)
 bool(true)
 array(2) {
   ["n"]=>
-  float(1)
+  %s(1)
   ["ok"]=>
   float(1)
 }

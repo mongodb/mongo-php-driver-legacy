@@ -21,11 +21,16 @@
 #include "mcon/manager.h"
 #include "mcon/connections.h"
 #include "php_mongo.h"
+#include "contrib/crypto.h"
+#include "api/wire_version.h"
 
 #include <php.h>
 #include <main/php_streams.h>
 #include <main/php_network.h>
 #include <ext/standard/file.h>
+#include <ext/standard/sha1.h>
+#include <ext/standard/base64.h>
+#include <ext/standard/php_string.h>
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -35,6 +40,11 @@
 #include <sasl/sasl.h>
 #include <sasl/saslutil.h>
 #endif
+
+#define PHP_MONGO_SCRAM_HASH_1     "SCRAM-SHA-1"
+#define PHP_MONGO_SCRAM_SERVER_KEY "Server Key"
+#define PHP_MONGO_SCRAM_CLIENT_KEY "Client Key"
+#define PHP_MONGO_SCRAM_HASH_SIZE 20
 
 extern zend_class_entry *mongo_ce_ConnectionException;
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
@@ -342,6 +352,7 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 	/* Intentionally only send the mechanism we expect to authenticate with, rather then
 	 * list of all supported ones. This is because MongoDB doesn't support negotiating */
 	switch(server_def->mechanism) {
+		/* NOTE: We don't use cyrus-sasl for SCRAM-SHA-1, but it's left here as it's easier to support multiple SASL mechanisms this way */
 		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
 			/* cyrus-sasl calls it just "SCRAM" */
 			mechanism_list = "SCRAM";
@@ -535,17 +546,297 @@ int php_mongo_io_authenticate_plain(mongo_con_manager *manager, mongo_connection
 }
 #endif
 
+/*
+ * client-first-message-bare          = username "," nonce ["," extensions]
+ *
+ * client-first-message               = gs2-header client-first-message-bare
+ * server-first-message               = [reserved-mext ","] nonce "," salt ","
+ *                                      iteration-count ["," extensions]
+ * client-final-message-without-proof = channel-binding "," nonce ["," extensions]
+ *
+ * SaltedPassword                    := Hi(Normalize(password), salt, i)
+ * ClientKey                         := HMAC(SaltedPassword, "Client Key")
+ * StoredKey                         := H(ClientKey)
+ * AuthMessage                       := client-first-message-bare + "," +
+ *                                          server-first-message + "," +
+ *                                          client-final-message-without-proof
+ * ClientSignature                   := HMAC(StoredKey, AuthMessage)
+ * ClientProof                       := ClientKey XOR ClientSignature
+ * ServerKey                         := HMAC(SaltedPassword, "Server Key")
+ * ServerSignature                   := HMAC(ServerKey, AuthMessage)
+*/
+
+int php_mongo_io_make_client_proof(char *username, char *password, unsigned char *salt_base64, int salt_base64_len, int iterations, char **return_value, int *return_value_len, char *server_first_message, unsigned char *cnonce, char *snonce, unsigned char *server_signature, int *server_signature_len TSRMLS_DC)
+{
+	unsigned char stored_key[PHP_MONGO_SCRAM_HASH_SIZE], client_proof[PHP_MONGO_SCRAM_HASH_SIZE], client_signature[PHP_MONGO_SCRAM_HASH_SIZE];
+	unsigned char salted_password[PHP_MONGO_SCRAM_HASH_SIZE], client_key[PHP_MONGO_SCRAM_HASH_SIZE], server_key[PHP_MONGO_SCRAM_HASH_SIZE];
+	unsigned char *salt, *auth_message;
+	long salted_password_len;
+	int salt_len, client_key_len, server_key_len;
+	int auth_message_len, client_signature_len;
+	int i;
+
+
+	salt = php_base64_decode(salt_base64, salt_base64_len, &salt_len);
+
+	/* SaltedPassword  := Hi(Normalize(password), salt, i) */
+	php_mongo_hash_pbkdf2_sha1(password, strlen(password), salt, salt_len, iterations, salted_password, &salted_password_len TSRMLS_CC);
+	efree(salt);
+
+	/* ClientKey       := HMAC(SaltedPassword, "Client Key") */
+	php_mongo_hmac((unsigned char *)PHP_MONGO_SCRAM_CLIENT_KEY, strlen((char *)PHP_MONGO_SCRAM_CLIENT_KEY), (char *)salted_password, salted_password_len, client_key, &client_key_len);
+
+	/* StoredKey       := H(ClientKey) */
+	php_mongo_sha1(client_key, client_key_len, stored_key);
+
+	/* AuthMessage     := client-first-message-bare + "," +
+	 *                    server-first-message + "," +
+	 *                    client-final-message-without-proof
+	 */
+	auth_message_len  = spprintf((char **)&auth_message, 0, "n=%s,r=%s,%s,c=biws,%s", username, cnonce, server_first_message, snonce);
+
+	/* ClientSignature := HMAC(StoredKey, AuthMessage) */
+	php_mongo_hmac(auth_message, auth_message_len, (char *)stored_key, PHP_MONGO_SCRAM_HASH_SIZE, (unsigned char *)client_signature, &client_signature_len);
+
+	/* ClientProof := ClientKey XOR ClientSignature */
+	for (i = 0; i < PHP_MONGO_SCRAM_HASH_SIZE; i++) {
+		client_proof[i] = client_key[i] ^ client_signature[i];
+	}
+
+	/* ServerKey       := HMAC(SaltedPassword, "Server Key") */
+	php_mongo_hmac((unsigned char *)PHP_MONGO_SCRAM_SERVER_KEY, strlen((char *)PHP_MONGO_SCRAM_SERVER_KEY), (char *)salted_password, salted_password_len, (unsigned char *)server_key, &server_key_len);
+
+	/* ServerSignature := HMAC(ServerKey, AuthMessage) */
+	php_mongo_hmac(auth_message, auth_message_len, (char *)server_key, PHP_MONGO_SCRAM_HASH_SIZE, server_signature, server_signature_len);
+	efree(auth_message);
+
+	*return_value = (char *)php_base64_encode(client_proof, PHP_MONGO_SCRAM_HASH_SIZE, return_value_len);
+
+	return 1;
+}
+
+/**
+ * Authenticates a connection using SCRAM-SHA-1
+ *
+ * Returns:
+ * 0: when it didn't work - with the error_message set.
+ * 1: when it worked
+ */
+int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
+{
+	char *client_first_message, *client_first_message_base64;
+	char *client_final_message, *client_final_message_base64;
+	int client_first_message_len, client_first_message_base64_len;
+	int client_final_message_len, client_final_message_base64_len;
+
+	char *server_first_message, *server_first_message_base64, *server_first_message_dup;
+	char *server_final_message, *server_final_message_base64;
+	int server_first_message_len, server_first_message_base64_len;
+	int server_final_message_len, server_final_message_base64_len;
+
+	char *rnonce, *password, *tok, *proof = NULL;
+	char *iterationsstr, *salt_base64;
+	int rskip, iterations, proof_len;
+	unsigned char cnonce[41];
+	int32_t step_conversation_id;
+	unsigned char done = 0;
+	char *tmp, *username;
+	int username_len;
+	unsigned char server_signature[PHP_MONGO_SCRAM_HASH_SIZE];
+	unsigned char *server_signature_base64;
+	int server_signature_len, server_signature_base64_len;
+	TSRMLS_FETCH();
+
+	if (!server_def->db || !server_def->username || !server_def->password) {
+		return 0;
+	}
+
+	/*
+	 * The characters ',' or '=' in usernames are sent as '=2C' and
+	 * '=3D' respectively.  If the server receives a username that
+	 * contains '=' not followed by either '2C' or '3D', then the
+	 * server MUST fail the authentication
+	 */
+	tmp = php_str_to_str(server_def->username, strlen(server_def->username), "=", 1, "=3D", 3, &username_len);
+	username = php_str_to_str(tmp, strlen(tmp), ",", 1, "=2C", 3, &username_len);
+	efree(tmp);
+
+	php_mongo_io_make_nonce((char *)cnonce TSRMLS_CC);
+
+	/*
+	 * client-first-message      = gs2-header client-first-message-bare
+	 * client-first-message-bare = username "," nonce
+	 * username                  = "n=" saslname
+	 * nonce                     = "r=" c-nonce [s-nonce]
+	 *                             ;; Second part provided by server.
+	 * c-nonce                   = printable (client generated nonce)
+	 * s-nonce                   = printable (server appending nonce)
+	 * gs2-header                = gs2-cbind-flag "," [ authzid ] ","
+	 *
+	 * We don't support GS2, so that becomes "n,,"
+	 * example: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
+	 */
+	client_first_message_len = spprintf(&client_first_message, 0, "n,,n=%s,r=%s", username, cnonce);
+	client_first_message_base64 = (char *)php_base64_encode((unsigned char *)client_first_message, client_first_message_len, &client_first_message_base64_len);
+
+	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, PHP_MONGO_SCRAM_HASH_1, client_first_message_base64, client_first_message_base64_len+1, &server_first_message_base64, &server_first_message_base64_len, &step_conversation_id, error_message)) {
+		efree(client_first_message);
+		efree(client_first_message_base64);
+		efree(username);
+		return 0;
+	}
+	efree(client_first_message_base64);
+
+
+	/*
+	 * server-first-message = nonce "," salt "," iteration-count
+	 * nonce                     = "r=" c-nonce [s-nonce]
+	 *                             ;; Second part provided by server.
+	 * c-nonce                   = printable (client generated nonce)
+	 * s-nonce                   = printable (server appending nonce)
+	 * salt                 = "s=" base64
+	 * iteration-count      = "i=" posit-number
+	 *
+	 * example: r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=10000
+	 */
+	server_first_message = (char *)php_base64_decode((unsigned char *)server_first_message_base64, server_first_message_base64_len, &server_first_message_len);
+	free(server_first_message_base64);
+	server_first_message_dup = estrdup(server_first_message);
+
+	/* the r= from the client_first_message appended with more chars from the server */
+	rskip = username_len+6; /* n,,n= and the coma before r */
+
+	rnonce = php_strtok_r(server_first_message_dup, ",", &tok);
+	salt_base64 = php_strtok_r(NULL, ",", &tok)+2;
+	iterationsstr = php_strtok_r(NULL, ",", &tok)+2;
+	if (rnonce == NULL || salt_base64 == NULL || iterationsstr == NULL) {
+		efree(server_first_message);
+		efree(server_first_message_dup);
+		efree(client_first_message);
+		/* the server didn't return our hash, bail out */
+		*error_message = strdup("Server return payload in wrong format");
+		efree(username);
+		return 0;
+	}
+
+	if (strncmp(rnonce, client_first_message+rskip, (PHP_MONGO_SCRAM_HASH_SIZE*2)+1-rskip) != 0) {
+		efree(server_first_message);
+		efree(server_first_message_dup);
+		efree(client_first_message);
+		/* the server didn't return our hash, bail out */
+		*error_message = strdup("Server return invalid hash");
+		efree(username);
+		return 0;
+	}
+	efree(client_first_message);
+
+	iterations = strtoll(iterationsstr, NULL, 10);
+	/* MongoDB uses the legacy MongoDB-CR hash as the SCRAM-SHA-1 password */
+	password = mongo_authenticate_hash_user_password(username, server_def->password);
+	php_mongo_io_make_client_proof(username, password, (unsigned char*)salt_base64, strlen(salt_base64), iterations, &proof, &proof_len, server_first_message, cnonce, rnonce, server_signature, &server_signature_len TSRMLS_CC);
+	efree(username);
+	efree(server_first_message);
+	free(password);
+
+	/*
+	 * c: This REQUIRED attribute specifies the base64-encoded GS2 header
+	 *    and channel binding data.  It is sent by the client in its second
+	 *    authentication message.  The attribute data consist of:...
+	 *    We don't support GS2 nor channel binding, so set this to:
+	 *        biws == base64_encode("n,,")
+	 *
+	 * r: This attribute specifies a sequence of random printable ASCII
+	 *    characters excluding ',' (which forms the nonce used as input to
+	 *    the hash function).  No quoting is applied to this string.  As
+	 *    described earlier, the client supplies an initial value in its
+	 *    first message, and the server augments that value with its own
+	 *    nonce in its first response.  It is important that this value be
+	 *    different for each authentication (see [RFC4086] for more details
+	 *    on how to achieve this).  The client MUST verify that the initial
+	 *    part of the nonce used in subsequent messages is the same as the
+	 *    nonce it initially specified.  The server MUST verify that the
+	 *    nonce sent by the client in the second message is the same as the
+	 *    one sent by the server in its first message.
+	 *
+	 * p: This attribute specifies a base64-encoded ClientProof.  The
+	 *    client computes this value as described in the overview and sends
+	 *    it to the server.
+	 */
+	/*
+	 * client-final-message =
+	 *                      client-final-message-without-proof "," proof
+	 *
+	 * client-final-message-without-proof =
+	 *                      channel-binding "," nonce ["," extensions]
+	 *
+	 * proof           = "p=" base64
+	 *
+	 * nonce           = "r=" c-nonce [s-nonce]
+	 *                   ;; Second part provided by server.
+	 *
+	 * channel-binding = "c=" base64
+	 *                   ;; base64 encoding of cbind-input.
+	 *
+	 * cbind-input     = (we don't support these things, see 'c:' explaination above)
+	 *
+	 * example: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
+	 */
+	client_final_message_len = spprintf(&client_final_message, 0, "c=biws,%s,p=%s", rnonce, proof);
+	efree(proof);
+	efree(server_first_message_dup);
+	/* base64 for the server (payload), or BSON Binary encode.. simpler to base64 */
+	client_final_message_base64 = (char *)php_base64_encode((unsigned char*)client_final_message, client_final_message_len, &client_final_message_base64_len);
+
+	if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, step_conversation_id, client_final_message_base64, client_final_message_base64_len+1, &server_final_message_base64, &server_final_message_base64_len, &done, error_message)) {
+		efree(client_final_message);
+		efree(client_final_message_base64);
+		return 0;
+	}
+	efree(client_final_message);
+	efree(client_final_message_base64);
+
+	/* Verify the server signature */
+	server_final_message = (char *)php_base64_decode((unsigned char*)server_final_message_base64, server_final_message_base64_len, &server_final_message_len);
+	server_signature_base64 = php_base64_encode((unsigned char*)server_signature, server_signature_len, &server_signature_base64_len);
+	if (strncmp(server_final_message+2, (char *)server_signature_base64, server_signature_base64_len) != 0) {
+		efree(server_final_message);
+		*error_message = strdup("Server returned wrong ServerSignature");
+		return 0;
+	}
+	efree(server_final_message);
+	efree(server_signature_base64);
+	free(server_final_message_base64);
+
+	/* Extra roundtrip to let the server know we trust her */
+	if (!mongo_connection_authenticate_saslcontinue(manager, con, options, server_def, step_conversation_id, "", 1, &server_final_message_base64, &server_final_message_base64_len, &done, error_message)) {
+		free(server_final_message_base64);
+		return 0;
+	}
+	free(server_final_message_base64);
+
+	return 1;
+}
+
 int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
 {
 	switch(server_def->mechanism) {
+		case MONGO_AUTH_MECHANISM_MONGODB_DEFAULT:
+			if (php_mongo_api_connection_supports_feature(con, PHP_MONGO_API_RELEASE_2_8)) {
+				return mongo_connection_authenticate_mongodb_scram_sha1(manager, con, options, server_def, error_message);
+			}
+			return mongo_connection_authenticate(manager, con, options, server_def, error_message);
+
 		case MONGO_AUTH_MECHANISM_MONGODB_CR:
 		case MONGO_AUTH_MECHANISM_MONGODB_X509:
-			/* Use the mcon implementation of MongoDB-CR (current default) and MongoDB-X509 */
+			/* Use the mcon implementation of MongoDB-CR and MongoDB-X509 */
 			return mongo_connection_authenticate(manager, con, options, server_def, error_message);
+
+		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
+			return mongo_connection_authenticate_mongodb_scram_sha1(manager, con, options, server_def, error_message);
+			break;
 
 #if HAVE_MONGO_SASL
 		case MONGO_AUTH_MECHANISM_GSSAPI:
-		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
 			return php_mongo_io_authenticate_sasl(manager, con, options, server_def, error_message);
 
 		case MONGO_AUTH_MECHANISM_PLAIN:
@@ -557,12 +848,51 @@ int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connectio
 #if HAVE_MONGO_SASL
 			*error_message = strdup("Unknown authentication mechanism. Only SCRAM-SHA-1, MongoDB-CR, MONGODB-X509, GSSAPI and PLAIN are supported by this build");
 #else
-			*error_message = strdup("Unknown authentication mechanism. Only MongoDB-CR and MONGODB-X509 are supported by this build");
+			*error_message = strdup("Unknown authentication mechanism. Only SCRAM-SHA-1, MongoDB-CR and MONGODB-X509 are supported by this build");
 #endif
 	}
 
 	return 0;
 }
+
+void php_mongo_io_make_nonce(char *sha1str TSRMLS_DC) /* {{{ */
+{
+	unsigned char digest[20];
+	PHP_SHA1_CTX sha1_context;
+
+#ifdef PHP_WIN32
+	unsigned char rbuf[2048];
+	size_t toread = PS(entropy_length);
+
+	PHP_SHA1Init(&sha1_context);
+	if (php_win32_get_random_bytes(rbuf, MIN(toread, sizeof(rbuf))) == SUCCESS){
+		PHP_SHA1Update(&sha1_context, rbuf, toread);
+	}
+#else
+	int fd;
+
+	PHP_SHA1Init(&sha1_context);
+	fd = VCWD_OPEN("/dev/urandom", O_RDONLY);
+	if (fd >= 0) {
+		unsigned char rbuf[2048];
+		int n;
+		int to_read = 32;
+
+		while (to_read > 0) {
+			n = read(fd, rbuf, MIN(to_read, sizeof(rbuf)));
+			if (n <= 0) break;
+
+			PHP_SHA1Update(&sha1_context, rbuf, n);
+			to_read -= n;
+		}
+		close(fd);
+	}
+#endif
+
+	PHP_SHA1Final(digest, &sha1_context);
+	make_sha1_digest(sha1str, digest);
+}
+/* }}} */
 
 /*
  * Local variables:

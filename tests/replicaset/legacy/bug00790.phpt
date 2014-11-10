@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-790: MongoCollection write operation wtimeout option inconsistent with connection string wTimeoutMS option
 --SKIPIF--
+<?php $needsmin = "2.4.0"; $needsmax = "2.7.0" ?>
 <?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
 <?php

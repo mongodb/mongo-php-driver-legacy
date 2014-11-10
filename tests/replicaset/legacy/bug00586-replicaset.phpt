@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-586: GridFS should only do one GLE
 --SKIPIF--
+<?php $needsmax = "2.7.0" ?>
 <?php require_once "tests/utils/replicaset.inc" ?>
 --FILE--
 <?php

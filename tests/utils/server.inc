@@ -161,6 +161,9 @@ class MongoShellServer {
         case "STANDALONE":
             $buildinfo = $this->verifyWrite("getBuildInfo()");
             break;
+        case "STANDALONE-AUTH":
+            $buildinfo = $this->verifyWrite("getAuthBuildInfo()");
+            break;
         default:
             throw new Exception("Getting the server version for $which isn't implemented yet, fix it!");
         }

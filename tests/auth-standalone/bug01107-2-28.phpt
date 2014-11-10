@@ -1,7 +1,7 @@
 --TEST--
 PHP-1107: Connection without connectTimeoutMS and socketTimeoutMS options
 --SKIPIF--
-<?php $needsmax = "2.7.0" ?>
+<?php $needs = "2.7.0" ?>
 <?php require_once "tests/utils/auth-standalone.inc" ?>
 --FILE--
 <?php

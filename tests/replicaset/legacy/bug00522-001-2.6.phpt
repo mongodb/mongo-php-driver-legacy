@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-522: Setting per-insert options. (streams)
 --SKIPIF--
-<?php $needs = "2.5.5"; ?>
+<?php $needsmin = "2.5.5"; $needsmax = "2.7.0" ?>
 <?php require_once "tests/utils/replicaset.inc";?>
 --FILE--
 <?php
