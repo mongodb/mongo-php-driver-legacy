@@ -20,4 +20,4 @@ try {
 }
 ?>
 --EXPECTF--
-Failed to connect to: %s:%d: Authentication failed on database '%s' with username '%S': auth%S
+Failed to connect to: %s:%d:%sAuthentication failed on database '%s'%s
