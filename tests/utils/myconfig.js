@@ -537,6 +537,10 @@ function shutdownEverything(callback) {
     }
 }
 
+function getAuthBuildInfo() {
+    return standaloneTestAuth.adminCommand({buildinfo: 1})
+}
+
 function getBuildInfo() {
     return standaloneTest.adminCommand({buildinfo: 1})
 }
