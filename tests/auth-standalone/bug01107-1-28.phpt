@@ -1,7 +1,7 @@
 --TEST--
 PHP-1107: Connection with connectTimeoutMS and socketTimeoutMS options
 --SKIPIF--
-<?php $needsmax = "2.7.0" ?>
+<?php $needs = "2.7.0" ?>
 <?php require_once "tests/utils/auth-standalone.inc" ?>
 --FILE--
 <?php
@@ -44,12 +44,10 @@ Setting the stream timeout to 1.234000
 Now setting stream timeout back to 30.987000
 Setting the stream timeout to 1.234000
 Now setting stream timeout back to 30.987000
-getnonce: start
 Setting the stream timeout to 1.234000
 Now setting stream timeout back to 30.987000
 Setting the stream timeout to 1.234000
 Now setting stream timeout back to 30.987000
-authenticate: start
 Setting the stream timeout to 1.234000
 Now setting stream timeout back to 30.987000
 Setting the stream timeout to 1.234000
