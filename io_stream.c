@@ -41,6 +41,7 @@
 #include <sasl/saslutil.h>
 #endif
 
+#define PHP_MONGO_SCRAM_HASH_1     "SCRAM-SHA-1"
 #define PHP_MONGO_SCRAM_SERVER_KEY "Server Key"
 #define PHP_MONGO_SCRAM_CLIENT_KEY "Client Key"
 #define PHP_MONGO_SCRAM_HASH_SIZE 20
@@ -351,7 +352,7 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 	/* Intentionally only send the mechanism we expect to authenticate with, rather then
 	 * list of all supported ones. This is because MongoDB doesn't support negotiating */
 	switch(server_def->mechanism) {
-		/* NOTE: We don't use cyrus-sasl for SCRAM-SHA-1, but its left here as its easier to support multiple SASL mechanisms this way */
+		/* NOTE: We don't use cyrus-sasl for SCRAM-SHA-1, but it's left here as it's easier to support multiple SASL mechanisms this way */
 		case MONGO_AUTH_MECHANISM_SCRAM_SHA1:
 			/* cyrus-sasl calls it just "SCRAM" */
 			mechanism_list = "SCRAM";
@@ -678,7 +679,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	client_first_message_len = spprintf(&client_first_message, 0, "n,,n=%s,r=%s", username, cnonce);
 	client_first_message_base64 = (char *)php_base64_encode((unsigned char *)client_first_message, client_first_message_len, &client_first_message_base64_len);
 
-	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, "SCRAM-SHA-1", client_first_message_base64, client_first_message_base64_len+1, &server_first_message_base64, &server_first_message_base64_len, &step_conversation_id, error_message)) {
+	if (!mongo_connection_authenticate_saslstart(manager, con, options, server_def, PHP_MONGO_SCRAM_HASH_1, client_first_message_base64, client_first_message_base64_len+1, &server_first_message_base64, &server_first_message_base64_len, &step_conversation_id, error_message)) {
 		efree(client_first_message);
 		efree(client_first_message_base64);
 		efree(username);
@@ -700,17 +701,17 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	 */
 	server_first_message = (char *)php_base64_decode((unsigned char *)server_first_message_base64, server_first_message_base64_len, &server_first_message_len);
 	free(server_first_message_base64);
-	server_first_message_dup = strdup(server_first_message);
+	server_first_message_dup = estrdup(server_first_message);
 
 	/* the r= from the client_first_message appended with more chars from the server */
-	rskip = username_len+6;
+	rskip = username_len+6; /* n,,n= and the coma before r */
 
 	rnonce = php_strtok_r(server_first_message_dup, ",", &tok);
 	salt_base64 = php_strtok_r(NULL, ",", &tok)+2;
 	iterationsstr = php_strtok_r(NULL, ",", &tok)+2;
 	if (rnonce == NULL || salt_base64 == NULL || iterationsstr == NULL) {
 		efree(server_first_message);
-		free(server_first_message_dup);
+		efree(server_first_message_dup);
 		efree(client_first_message);
 		/* the server didn't return our hash, bail out */
 		*error_message = strdup("Server return payload in wrong format");
@@ -718,9 +719,9 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 		return 0;
 	}
 
-	if (strncmp(rnonce, client_first_message+rskip, 41-rskip) != 0) {
+	if (strncmp(rnonce, client_first_message+rskip, (PHP_MONGO_SCRAM_HASH_SIZE*2)+1-rskip) != 0) {
 		efree(server_first_message);
-		free(server_first_message_dup);
+		efree(server_first_message_dup);
 		efree(client_first_message);
 		/* the server didn't return our hash, bail out */
 		*error_message = strdup("Server return invalid hash");
@@ -782,7 +783,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	 */
 	client_final_message_len = spprintf(&client_final_message, 0, "c=biws,%s,p=%s", rnonce, proof);
 	efree(proof);
-	free(server_first_message_dup);
+	efree(server_first_message_dup);
 	/* base64 for the server (payload), or BSON Binary encode.. simpler to base64 */
 	client_final_message_base64 = (char *)php_base64_encode((unsigned char*)client_final_message, client_final_message_len, &client_final_message_base64_len);
 
