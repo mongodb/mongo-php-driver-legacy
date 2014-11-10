@@ -16,7 +16,7 @@ foreach ($names as $name) {
 }
 ?>
 --EXPECT--
-\: MongoDB::__construct(): invalid name \
-$: MongoDB::__construct(): invalid name $
-/: MongoDB::__construct(): invalid name /
-foo.bar: MongoDB::__construct(): invalid name foo.bar
+\: Database name contains invalid characters: \
+$: Database name contains invalid characters: $
+/: Database name contains invalid characters: /
+foo.bar: Database name contains invalid characters: foo.bar

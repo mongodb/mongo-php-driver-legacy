@@ -9,7 +9,7 @@ require_once "tests/utils/server.inc";
 $host = MongoShellServer::getStandaloneInfo();
 $m = new MongoClient($host);
 
-$faulty = 'f0o' . chr(0) . 'o';
+$faulty = 'fo' . chr(0) . 'o';
 
 try {
 	$d = $m->$faulty;
@@ -18,8 +18,6 @@ try {
 	var_dump($e->getMessage());
 }
 
-$faulty = 'f1o' . chr(0) . 'o';
-
 try {
 	$c = $m->selectDb($faulty);
 } catch( MongoException $e ) {
@@ -27,8 +25,8 @@ try {
 	var_dump($e->getMessage());
 }
 ?>
---EXPECTF--
+--EXPECT--
 int(2)
-string(68) "MongoDB::__construct(): '\0' not allowed in database names: f0o\0..."
+string(48) "Database name cannot contain null bytes: fo\0..."
 int(2)
-string(68) "MongoDB::__construct(): '\0' not allowed in database names: f1o\0..."
+string(48) "Database name cannot contain null bytes: fo\0..."

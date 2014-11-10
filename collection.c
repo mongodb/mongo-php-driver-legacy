@@ -68,14 +68,19 @@ static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
 
 static int is_valid_collectionname(char *colname, int colname_len TSRMLS_DC)
 {
+	if (colname_len == 0) {
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "Collection name cannot be empty");
+		return 0;
+	}
+
 	if (
-		colname_len == 0 ||
 		/* strchr(colname, '$') != 0 || — we can not exclude this as we need it to run commands */
 		memchr(colname, '\0', colname_len) != 0
 	) {
-		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "invalid collection name '%s'", colname);
+		zend_throw_exception_ex(mongo_ce_Exception, 2 TSRMLS_CC, "Collection name cannot contain null bytes: %s\\0...", colname);
 		return 0;
 	}
+
 	return 1;
 }
 
