@@ -319,6 +319,344 @@
  <changelog>
 
   <release>
+   <date>2014-11-11</date>
+   <time>19:17:00</time>
+   <version>
+    <release>1.5.8</release>
+    <api>1.5.8</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-1126] - Do not allow invalid limit values in MongoDeleteBatch
+    * [PHP-1231] - Using MongoDB::selectCollection crashes inside generators
+    * [PHP-1249] - MongoCursor::count() should use cursor's socket timeout
+    * [PHP-1265] - Exception messages for invalid db/collection names are not helpful
+
+** Improvement
+    * [PHP-1168] - Add "How to Ask for Help" section to Github readme
+    * [PHP-1264] - Rename 'delete' field to allow compilation with C++
+
+** Task
+    * [PHP-1205] - Remove dropDups support from index building
+   </notes>
+  </release>
+
+
+  <release>
+   <date>2014-09-16</date>
+   <time>13:10:39</time>
+   <version>
+    <release>1.5.7</release>
+    <api>1.5.7</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * Windows compile fixes.
+   </notes>
+  </release>
+
+  <release>
+   <date>2014-09-16</date>
+   <time>13:10:39</time>
+   <version>
+    <release>1.5.6</release>
+    <api>1.5.6</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-1155] - php_mongo_io_stream_read() should revert to default_socket_timeout if socketTimeoutMS was zero
+    * [PHP-1156] - Use default and block indefinitely for zero and negative connect/socket timeouts, respectively
+    * [PHP-1158] - Driver emits warnings after setting connectTimeoutMS
+    * [PHP-1220] - Client doesn&apos;t find Primary after election
+
+** Improvement
+    * [PHP-1154] - Make connect/read timeouts for blocking and defaults consistent
+
+** Documentation
+    * [PHP-1157] - Fix documentation for MongoCursor::timeout() default
+    * [PHP-1159] - Document that users may need to copy libsasl.dll to lib path for Windows installs
+    * [PHP-1162] - Update documentation for MongoLog constants
+    * [PHP-1167] - Clarify that $snapshot only prevents duplicates in documentation
+    * [PHP-1216] - Clarify that RS connections to non-canonical hostnames are not kept
+   </notes>
+  </release>
+  <release>
+   <date>2014-06-17</date>
+   <time>10:25:39</time>
+   <version>
+    <release>1.5.4</release>
+    <api>1.5.4</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-1111] - MongoClient constructor crashes on connection to slave 
+    * [PHP-1118] - Aggregate cursor on non-existing collection throws weird error
+    * [PHP-1120] - The mongo driver fails to build as static extension
+   </notes>
+  </release>
+  <release>
+   <date>2014-07-30</date>
+   <time>12:10:39</time>
+   <version>
+    <release>1.5.5</release>
+    <api>1.5.5</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-722] - Segfault when passing null value to MongoCollection::find() and unclear other conditions are met, inaccurate error message
+    * [PHP-1105] - long_as_object = 0 no effect
+    * [PHP-1107] - Connections to server hangs when indexes are being created
+    * [PHP-1131] - Journal option should set &quot;j&quot; field in GLE instead of &quot;journal&quot;
+
+** Documentation
+    * [PHP-840] - Document deprecated MongoClient properties
+    * [PHP-1081] - MongoId $id property is not documented correctly
+    * [PHP-1147] - Clean up GridFS insert/delete method documentation
+    * [PHP-1148] - Add &quot;ssl&quot; connection option to MongoClient changelog
+   </notes>
+  </release>
+  <release>
+   <date>2014-06-05</date>
+   <time>12:21:05</time>
+   <version>
+    <release>1.5.3</release>
+    <api>1.5.3</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+* [PHP-928] - The &apos;w&apos; property is read-only
+* [PHP-970] - Explain how to_index_string() creates names for ensureIndex() and deleteIndex()
+* [PHP-1052] - Replace JSON encoding of stream notifications with standard PHP serialize encoding
+* [PHP-1060] - &quot;The &apos;$id&apos; property is read-only&quot;
+* [PHP-1096] - PHP crashes due to null pointer dereference on shutdown when JSON extension is not present
+* [PHP-1099] - socketTimeoutMS=-1 doesn&apos;t work
+* [PHP-1102] - php driver throws exception when connect string contains an unresolvable hostname
+* [PHP-1104] - New Replica Set connections hang when secondaries are creating indexes during initialSync
+* [PHP-1109] - Upsert should return _id instead of array of ids
+
+** Task
+* [PHP-1076] - Document deprecation notices for timeout and wtimeout options
+* [PHP-1078] - Document wTimeoutMS, socketTimeoutMS, and maxTimeMS for ensure/createIndex
+   </notes>
+  </release>
+  <release>
+   <date>2014-05-06</date>
+   <time>12:44:05</time>
+   <version>
+    <release>1.5.2</release>
+    <api>1.5.2</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-922] - Read timed out after reading 0 bytes, waited for 0.000000 seconds
+    * [PHP-978] - Standalone connection to arbiter fails
+    * [PHP-1036] - Segmentation Fault when querying large collection and the working set is not loaded
+    * [PHP-1042] - Document missing MongoClient constructor options
+    * [PHP-1056] - Fix MongoCursor handling of projections with numeric field names 
+    * [PHP-1059] - updatedExisting is always true when updating
+    * [PHP-1065] - Mongo driver is crashing
+    * [PHP-1071] - Create Index test segfaults
+    * [PHP-1075] - close() with parallelCollectionScan() segfaults upon request shutdown
+    * [PHP-1080] - MongoCursor::$timeout=-1 doesn&apos;t work anymore
+    * [PHP-1083] - 2.6.1-rc0 requires $gt for OplogReplay
+    * [PHP-1084] - collection-&gt;update($query, $document) crashes if $document is an object
+    * [PHP-1085] - w=0 can return an unexpected exception on failure
+    * [PHP-1086] - Inserting documents with WriteConcern during failover broken
+    * [PHP-1087] - Travis build status incorrect in v1.5 branch
+    * [PHP-1088] - Coverity analysis defect 10700: Explicit null dereferenced
+    * [PHP-1090] - Coverity analysis defect 22173: Dereference null return value
+    * [PHP-1095] - Min server version check should use GTE comparison
+
+** Improvement
+    * [PHP-758] - Document stream context callbacks
+    * [PHP-1091] - Allow NumberLong numbers on 32-bit platforms if the number fits in the 32-bit int range
+    * [PHP-1094] - 32bit platform improvements
+
+** Task
+    * [PHP-935] - Document SSL connections
+    * [PHP-1023] - Document maxTimeMS option for findOne(), group(), aggregate(), and cursor
+    * [PHP-1058] - Add Cyrus SASL to automated PECL builds
+    * [PHP-1077] - Fix handling of timeout options for createIndexes command
+    * [PHP-1082] - CommandCursor segfaults when server is closed
+   </notes>
+  </release>
+  <release>
+   <date>2014-04-04</date>
+   <time>13:40:05</time>
+   <version>
+    <release>1.5.1</release>
+    <api>1.5.1</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-1053] - Windows build broken
+   </notes>
+  </release>
+  <release>
+   <date>2014-04-04</date>
+   <time>08:28:05</time>
+   <version>
+    <release>1.5.0</release>
+    <api>1.5.0</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-722] - Segfault when passing null value to MongoCollection::find() and unclear other conditions are met, inaccurate error message
+    * [PHP-796] - Modifying MongoDate internal properties evilness
+    * [PHP-813] - IS_SCALAR_*() doesn&apos;t account for resources
+    * [PHP-815] - MongoCursor ctor doesn&apos;t validate the MongoClient object
+    * [PHP-833] - Add the MongoClient::killCursor method to kill a cursor on the server on 64-bit platforms
+    * [PHP-835] - Driver interprets &apos;err&apos; property as MongoCursorException
+    * [PHP-848] - Invalid read in master
+    * [PHP-882] - mongo_connection_get_server_version memleaks
+    * [PHP-883] - php_mongo_dbref_create() doesn&apos;t handle MongoId values
+    * [PHP-888] - DBRef refactoring broke BC for $id parameter handling
+    * [PHP-900] - Cannot switch from majority to lower WriteConcern
+    * [PHP-902] - Segfault when unregistering broken server
+    * [PHP-949] - ensureIndex() creates wrong names
+    * [PHP-955] - Switch the default mongo.native_long to 1 for 64bit platforms
+    * [PHP-981] - Empty document should not throw exception
+    * [PHP-995] - JSON detection
+    * [PHP-996] - Broken with cyrus-sals 2.1.23
+    * [PHP-1010] - MongoCollection::commandCursor should not require batchSize option to be set manually
+    * [PHP-1011] - MongoDB and MongoCollection do not inherit string write concerns
+    * [PHP-1012] - MongoCollection doesn&apos;t respect its own write concern for GLE ops
+    * [PHP-1013] - Read preferences are not respected with command cursors
+    * [PHP-1019] - Empty Batch Insert should throw exception
+    * [PHP-1027] - Support maxTimeMS and exceptions in MongoCollection::group()
+    * [PHP-1034] - Ensure MongoCommandCursor implements Iterator interface properly
+    * [PHP-1037] - add allowDiskUse:true to the top-level of an aggregate command
+    * [PHP-1038] - Segfault in php_mongo_enforce_batch_size_on_command()
+    * [PHP-1041] - Off-by-one error in MongoCommandCursor::key() index
+    * [PHP-1046] - Command cursor doesn&apos;t check if cursor exists
+    * [PHP-1047] - Index order can&apos;t be boolean
+    * [PHP-1048] - Segfault during shutdown after mongodb failover
+    * [PHP-1049] - MongoCollection::aggregateCursor batch size defaults should be: 101, 0 (server default)
+    * [PHP-1050] - MongoCommandCursor-&gt;dead() changes
+
+** Improvement
+    * [PHP-578] - No need to call ismaster 2times
+    * [PHP-705] - Throw exception when overflowing message size in OP_INSERT batches
+    * [PHP-708] - WriteConcern failure exception should include the entire GLE document
+    * [PHP-712] - findAndModify returns empty array when nothing is found
+    * [PHP-774] - Deprecate the protected method MongoCollection::toIndexString
+    * [PHP-778] - Deprecate static properties
+    * [PHP-807] - Rewrite to_index_string to use smart_str and a real C function
+    * [PHP-812] - Remove unused MongoDBRef::$refKey and MongoDBRef::$idKey
+    * [PHP-837] - Handle cursor IDs for return with MongoCursor::info on 32bit platforms
+    * [PHP-851] - Add MONGO_HAVE_* constants and make sure MINFO contains this too
+    * [PHP-880] - New write operation method for insert, update, remove
+    * [PHP-886] - Add support for secondaryAcceptableLatencyMS
+    * [PHP-903] - Improve the Stream Notification API
+    * [PHP-938] - please update description of &apos;fsync&apos; write concern flag
+    * [PHP-941] - Throw MongoConnectionException on stream failures
+    * [PHP-942] - Throw MongoDuplicateKeyException on duplicate key errors
+    * [PHP-971] - Remove mongo.native_long for 32bit platforms
+    * [PHP-972] - Support parallelCollectionScan command
+    * [PHP-990] - Implement Batch Write API
+    * [PHP-998] - Include maxWriteBatchSize and maxMessageSizeBytes in connection info
+    * [PHP-1021] - Support maxTimeMS option on MongoCollection::findOne()
+    * [PHP-1026] - Include connection info in findAndModify exception messages
+    * [PHP-1028] - Support $options arg in MongoCollection::aggregate()
+    * [PHP-1039] - Use dropIndexes command instead of deleteIndexes
+
+** New Feature
+    * [PHP-819] - Add Mongo[DB|Collection]-&gt;[get|set]WriteConcern()
+    * [PHP-831] - SASL Support (SASL Plain)
+    * [PHP-832] - SASL Support (SASL Kerberos) 
+    * [PHP-861] - Add maxTimeMS() method to MongoCursor to configure the maximum time a query can take
+    * [PHP-868] - Method to check if string is a valid ObjectId
+    * [PHP-873] - Support the MONGODB-X509 authentication mechanism
+    * [PHP-875] - Add support for cursor for aggregation
+    * [PHP-876] - Make the driver check for the server version upon connection
+    * [PHP-923] - Drivers should only talk to servers with overlapping wire versions
+    * [PHP-944] - Support $out aggregation pipeline operator
+    * [PHP-951] - Provide API for getting latest server version or isMaster response in driver
+    * [PHP-962] - Create constants for additional binary data subtypes
+    * [PHP-965] - Documentation for MongoId::isValid()
+    * [PHP-1031] - Implement MongoWriteBatch method to return current batch size
+    * [PHP-1035] - Add third arg to MongoDB::command() to collect server hash by reference
+
+** Task
+    * [PHP-407] - MongoBinData should default to type 0 instead of 2
+    * [PHP-657] - Add deprecation notice to MongoCursor::slaveOkay
+    * [PHP-714] - Convenience macro for getting mongoclient*
+    * [PHP-739] - Audit extension for deprecations of functionality to be removed in 1.5  
+    * [PHP-786] - Sort out includes
+    * [PHP-809] - Deprecate use of &quot;safe&quot; all over collection.c
+    * [PHP-842] - Document core class [get|set]WriteConcern() methods
+    * [PHP-844] - driver must authenticate before calling isMaster()
+    * [PHP-845] - Ability to use different SPN on the driver for Kerberos Authentication
+    * [PHP-914] - aggregation: need an explain facility
+    * [PHP-960] - Use createIndexes command when available
+    * [PHP-983] - Change nUpdated to nMatched in bulk api results
+    * [PHP-987] - Use maxWriteBatchSize from ismaster for write command batch splitting.
+    * [PHP-1006] - Document deprecation of MongoCollection::ensureIndex()
+    * [PHP-1007] - Add MongoClient-&gt;[get|set]WriteConcern()
+    * [PHP-1015] - Document MongoWriteBatch and related classes
+    * [PHP-1016] - Document MongoCollection:createIndex()
+    * [PHP-1022] - Create MongoCollection::aggregateCursor() method
+    * [PHP-1030] - gridfs chunksize should be lowered to 255K
+    * [PHP-1033] - Organize third-party code and license information
+    * [PHP-1040] - MongoCommandCursor::key() should not return _id field
+
+** Sub-task
+    * [PHP-763] - Create prototypes for MongoClient and Mongo classes
+    * [PHP-794] - Remove &apos;fd&apos; property of MongoCursorException
+    * [PHP-797] - Deprecate public properties
+    * [PHP-798] - Rename &quot;timeout&quot; to &quot;socketTimeoutMS&quot; in $options
+    * [PHP-804] - Deprecate Mongo::connectUtil
+    * [PHP-818] - Deprecate &quot;Mongo&quot; in favour of MongoClient.
+    * [PHP-824] - Deprecate the &quot;wtimeout&quot; option in crud operations for wTimeoutMS
+    * [PHP-993] - Merge batch return values into one return value
+   </notes>
+  </release>
+
+  <release>
    <date>2014-04-01</date>
    <time>09:58:05</time>
    <version>
