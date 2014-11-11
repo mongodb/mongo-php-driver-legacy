@@ -863,12 +863,12 @@ void php_mongo_io_make_nonce(char *sha1_str TSRMLS_DC) /* {{{ */
 {
 	unsigned char digest[20];
 	PHP_SHA1_CTX sha1_context;
-	unsigned char rbuf[2048];
 	size_t to_read = 32;
+	unsigned char rbuf[64];
 
 #ifdef PHP_WIN32
 	PHP_SHA1Init(&sha1_context);
-	if (php_win32_get_random_bytes(rbuf, MIN(to_read, sizeof(rbuf))) == SUCCESS){
+	if (php_win32_get_random_bytes(rbuf, to_read) == SUCCESS){
 		PHP_SHA1Update(&sha1_context, rbuf, to_read);
 	}
 #else
@@ -880,7 +880,7 @@ void php_mongo_io_make_nonce(char *sha1_str TSRMLS_DC) /* {{{ */
 		int n;
 
 		while (to_read > 0) {
-			n = read(fd, rbuf, MIN(to_read, sizeof(rbuf)));
+			n = read(fd, rbuf, to_read);
 			if (n <= 0) break;
 
 			PHP_SHA1Update(&sha1_context, rbuf, n);
