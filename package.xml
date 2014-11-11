@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2014-09-16</date>
- <time>13:10:39</time>
+ <date>2014-11-11</date>
+ <time>19:17:00</time>
  <version>
-  <release>1.5.7</release>
-  <api>1.5.7</api>
+  <release>1.5.8</release>
+  <api>1.5.8</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,7 +43,17 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * Windows compile fixes.
+    * [PHP-1126] - Do not allow invalid limit values in MongoDeleteBatch
+    * [PHP-1231] - Using MongoDB::selectCollection crashes inside generators
+    * [PHP-1249] - MongoCursor::count() should use cursor's socket timeout
+    * [PHP-1265] - Exception messages for invalid db/collection names are not helpful
+
+** Improvement
+    * [PHP-1168] - Add "How to Ask for Help" section to Github readme
+    * [PHP-1264] - Rename 'delete' field to allow compilation with C++
+
+** Task
+    * [PHP-1205] - Remove dropDups support from index building
  </notes>
 
  <contents>
@@ -213,6 +223,24 @@
  </extsrcrelease>
 
  <changelog>
+
+  <release>
+   <date>2014-09-16</date>
+   <time>13:10:39</time>
+   <version>
+    <release>1.5.7</release>
+    <api>1.5.7</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * Windows compile fixes.
+   </notes>
+  </release>
 
   <release>
    <date>2014-09-16</date>
