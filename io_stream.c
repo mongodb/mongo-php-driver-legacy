@@ -859,7 +859,7 @@ int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connectio
 	return 0;
 }
 
-void php_mongo_io_make_nonce(char *sha1str TSRMLS_DC) /* {{{ */
+void php_mongo_io_make_nonce(char *sha1_str TSRMLS_DC) /* {{{ */
 {
 	unsigned char digest[20];
 	PHP_SHA1_CTX sha1_context;
@@ -891,7 +891,7 @@ void php_mongo_io_make_nonce(char *sha1str TSRMLS_DC) /* {{{ */
 #endif
 
 	PHP_SHA1Final(digest, &sha1_context);
-	make_sha1_digest(sha1str, digest);
+	make_sha1_digest(sha1_str, digest);
 }
 /* }}} */
 
