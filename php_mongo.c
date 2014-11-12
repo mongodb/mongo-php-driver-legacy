@@ -430,9 +430,15 @@ PHP_MINFO_FUNCTION(mongo)
 #endif
 
 	php_info_print_table_colspan_header(2, "Supported Authentication Mechanisms");
-	php_info_print_table_row(2, "MONGODB-CR (default)", "enabled");
+	php_info_print_table_row(2, "MONGODB-CR", "enabled");
 	php_info_print_table_row(2, "SCRAM-SHA-1", "enabled");
+
+#if HAVE_OPENSSL_EXT
 	php_info_print_table_row(2, "MONGODB-X509", "enabled");
+#else
+	php_info_print_table_row(2, "MONGODB-X509", "disabled");
+#endif
+
 #if HAVE_MONGO_SASL
 	php_info_print_table_row(2, "GSSAPI (Kerberos)", "enabled");
 	php_info_print_table_row(2, "PLAIN", "enabled");
