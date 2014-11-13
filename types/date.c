@@ -140,6 +140,7 @@ PHP_METHOD(MongoDate, __set_state)
 }
 /* }}} */
 
+#if PHP_VERSION_ID >= 50304
 /* {{{ MongoDate::toDateTime()
  * Returns a DateTime object with the same information as the MongoDate object */
 PHP_METHOD(MongoDate, toDateTime)
@@ -173,13 +174,16 @@ PHP_METHOD(MongoDate, toDateTime)
 	RETVAL_ZVAL(datetime_object_ptr, 0, 0);
 }
 /* }}} */
+#endif
 
 
 static zend_function_entry MongoDate_methods[] = {
 	PHP_ME(MongoDate, __construct, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDate, __toString, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDate, __set_state, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+#if PHP_VERSION_ID >= 50304
 	PHP_ME(MongoDate, toDateTime, NULL, ZEND_ACC_PUBLIC)
+#endif
 	PHP_FE_END
 };
 

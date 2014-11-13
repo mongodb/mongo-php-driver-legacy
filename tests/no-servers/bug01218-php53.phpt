@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-1218: Add MongoDate->toDateTime to allow creation of DateTime object from MongoDate
 --SKIPIF--
+<?php if (!version_compare(phpversion(), "5.3.4", '>=')) echo "skip >= PHP 5.3.4 needed\n"; ?>
 <?php if (!version_compare(phpversion(), "5.4", '<')) echo "skip < PHP 5.4 needed\n"; ?>
 --INI--
 date.timezone=UTC
