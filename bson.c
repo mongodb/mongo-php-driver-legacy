@@ -25,6 +25,7 @@
 
 #include "php_mongo.h"
 #include "bson.h"
+#include "types/bin_data.h"
 #include "types/date.h"
 #include "types/id.h"
 #include "cursor_shared.h"
@@ -469,11 +470,11 @@ void php_mongo_serialize_bin_data(mongo_buffer *buf, zval *bin TSRMLS_DC)
 	 *  length     bindata
 	 *        type
 	 */
-	if (Z_LVAL_P(ztype) == 2) {
+	if (Z_LVAL_P(ztype) == PHP_MONGO_BIN_BYTE_ARRAY) {
 		/* length */
 		php_mongo_serialize_int(buf, Z_STRLEN_P(zbin) + 4);
 		/* 02 */
-		php_mongo_serialize_byte(buf, 2);
+		php_mongo_serialize_byte(buf, PHP_MONGO_BIN_BYTE_ARRAY);
 		/* length */
 		php_mongo_serialize_int(buf, Z_STRLEN_P(zbin));
 	} else {
