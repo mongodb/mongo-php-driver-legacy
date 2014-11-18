@@ -14,8 +14,11 @@
  *  limitations under the License.
  */
 #include <php.h>
+#include <zend_exceptions.h>
 #include "../php_mongo.h"
 #include "bin_data.h"
+
+extern zend_class_entry *mongo_ce_Exception;
 
 zend_class_entry *mongo_ce_BinData = NULL;
 
@@ -24,9 +27,15 @@ zend_class_entry *mongo_ce_BinData = NULL;
 PHP_METHOD(MongoBinData, __construct)
 {
 	char *bin;
-	long bin_len, type = PHP_MONGO_BIN_GENERIC;
+	int bin_len;
+	long type = PHP_MONGO_BIN_GENERIC;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &bin, &bin_len, &type) == FAILURE) {
+		return;
+	}
+
+	if (type == PHP_MONGO_BIN_UUID_RFC4122 && bin_len != PHP_MONGO_BIN_UUID_RFC4122_SIZE) {
+		zend_throw_exception_ex(mongo_ce_Exception, 25 TSRMLS_CC, "RFC4122 UUID must be %d bytes; actually: %d", PHP_MONGO_BIN_UUID_RFC4122_SIZE, bin_len);
 		return;
 	}
 

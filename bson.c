@@ -25,6 +25,7 @@
 
 #include "php_mongo.h"
 #include "bson.h"
+#include "types/bin_data.h"
 #include "types/date.h"
 #include "types/id.h"
 #include "cursor_shared.h"
@@ -453,6 +454,14 @@ void php_mongo_serialize_bin_data(mongo_buffer *buf, zval *bin TSRMLS_DC)
 	zbin = zend_read_property(mongo_ce_BinData, bin, "bin", 3, 0 TSRMLS_CC);
 	ztype = zend_read_property(mongo_ce_BinData, bin, "type", 4, 0 TSRMLS_CC);
 
+	if (
+		Z_LVAL_P(ztype) == PHP_MONGO_BIN_UUID_RFC4122 &&
+		Z_STRLEN_P(zbin) != PHP_MONGO_BIN_UUID_RFC4122_SIZE
+	) {
+		zend_throw_exception_ex(mongo_ce_Exception, 25 TSRMLS_CC, "RFC4122 UUID must be %d bytes; actually: %d", PHP_MONGO_BIN_UUID_RFC4122_SIZE, Z_STRLEN_P(zbin));
+		return;
+	}
+
 	/*
 	 * type 2 has the redundant structure:
 	 *
@@ -469,11 +478,11 @@ void php_mongo_serialize_bin_data(mongo_buffer *buf, zval *bin TSRMLS_DC)
 	 *  length     bindata
 	 *        type
 	 */
-	if (Z_LVAL_P(ztype) == 2) {
+	if (Z_LVAL_P(ztype) == PHP_MONGO_BIN_BYTE_ARRAY) {
 		/* length */
 		php_mongo_serialize_int(buf, Z_STRLEN_P(zbin) + 4);
 		/* 02 */
-		php_mongo_serialize_byte(buf, 2);
+		php_mongo_serialize_byte(buf, PHP_MONGO_BIN_BYTE_ARRAY);
 		/* length */
 		php_mongo_serialize_int(buf, Z_STRLEN_P(zbin));
 	} else {
@@ -1003,6 +1012,12 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 				}
 
 				CHECK_BUFFER_LEN(len);
+
+				if (subtype == PHP_MONGO_BIN_UUID_RFC4122 && len != PHP_MONGO_BIN_UUID_RFC4122_SIZE) {
+					zval_ptr_dtor(&value);
+					zend_throw_exception_ex(mongo_ce_CursorException, 25 TSRMLS_CC, "RFC4122 UUID must be %d bytes; actually: %d", PHP_MONGO_BIN_UUID_RFC4122_SIZE, len);
+					return 0;
+				}
 
 				object_init_ex(value, mongo_ce_BinData);
 

@@ -582,6 +582,7 @@ extern zend_module_entry mongo_module_entry;
  * 20: Cannot run command count(): (error message from MongoDB)
  * 21: Namespace field is invalid.
  * 22: invalid index specification
+ * 25: invalid RFC4122 UUID size
  *
  * MongoConnectionException:
  * 0: connection to <host> failed: <errmsg>
@@ -636,6 +637,7 @@ extern zend_module_entry mongo_module_entry;
  * 22: invalid binary length for key "%s"
  * 23: Can not natively represent the long %llu on this platform
  * 24: invalid code length for key "%s"
+ * 25: invalid RFC4122 UUID size
  * 28: recv_header() (abs()) recv_data() stream handlers error (timeout)
  * 29: Unknown query/get_more failure
  * 30: Cursor command response does not have the expected structure

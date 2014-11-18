@@ -24,6 +24,8 @@
 #define PHP_MONGO_BIN_MD5          0x05
 #define PHP_MONGO_BIN_CUSTOM       0x80
 
+#define PHP_MONGO_BIN_UUID_RFC4122_SIZE 16
+
 PHP_METHOD(MongoBinData, __construct);
 PHP_METHOD(MongoBinData, __toString);
 
