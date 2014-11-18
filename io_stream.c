@@ -32,6 +32,10 @@
 #include <ext/standard/base64.h>
 #include <ext/standard/php_string.h>
 
+#if PHP_WIN32
+# include "win32/winutil.h"
+#endif
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -855,18 +859,17 @@ int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connectio
 	return 0;
 }
 
-void php_mongo_io_make_nonce(char *sha1str TSRMLS_DC) /* {{{ */
+void php_mongo_io_make_nonce(char *sha1_str TSRMLS_DC) /* {{{ */
 {
 	unsigned char digest[20];
 	PHP_SHA1_CTX sha1_context;
+	size_t to_read = 32;
+	unsigned char rbuf[64];
 
 #ifdef PHP_WIN32
-	unsigned char rbuf[2048];
-	size_t toread = PS(entropy_length);
-
 	PHP_SHA1Init(&sha1_context);
-	if (php_win32_get_random_bytes(rbuf, MIN(toread, sizeof(rbuf))) == SUCCESS){
-		PHP_SHA1Update(&sha1_context, rbuf, toread);
+	if (php_win32_get_random_bytes(rbuf, to_read) == SUCCESS){
+		PHP_SHA1Update(&sha1_context, rbuf, to_read);
 	}
 #else
 	int fd;
@@ -874,12 +877,10 @@ void php_mongo_io_make_nonce(char *sha1str TSRMLS_DC) /* {{{ */
 	PHP_SHA1Init(&sha1_context);
 	fd = VCWD_OPEN("/dev/urandom", O_RDONLY);
 	if (fd >= 0) {
-		unsigned char rbuf[2048];
 		int n;
-		int to_read = 32;
 
 		while (to_read > 0) {
-			n = read(fd, rbuf, MIN(to_read, sizeof(rbuf)));
+			n = read(fd, rbuf, to_read);
 			if (n <= 0) break;
 
 			PHP_SHA1Update(&sha1_context, rbuf, n);
@@ -890,7 +891,7 @@ void php_mongo_io_make_nonce(char *sha1str TSRMLS_DC) /* {{{ */
 #endif
 
 	PHP_SHA1Final(digest, &sha1_context);
-	make_sha1_digest(sha1str, digest);
+	make_sha1_digest(sha1_str, digest);
 }
 /* }}} */
 

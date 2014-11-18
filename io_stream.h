@@ -30,7 +30,7 @@ int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *option
 void php_mongo_io_stream_close(mongo_connection *con, int why);
 void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *con);
 int php_mongo_io_stream_authenticate(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message);
-void php_mongo_io_make_nonce(char *sha1str TSRMLS_DC);
+void php_mongo_io_make_nonce(char *sha1_str TSRMLS_DC);
 #endif
 
 /*
