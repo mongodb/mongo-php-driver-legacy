@@ -625,6 +625,7 @@ int php_mongo_io_make_client_proof(char *username, char *password, unsigned char
  * Returns:
  * 0: when it didn't work - with the error_message set.
  * 1: when it worked
+ * 2: when no need to authenticate (i.e. no credentials provided)
  */
 int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
 {
@@ -652,7 +653,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	TSRMLS_FETCH();
 
 	if (!server_def->db || !server_def->username || !server_def->password) {
-		return 0;
+		return 2;
 	}
 
 	/*
