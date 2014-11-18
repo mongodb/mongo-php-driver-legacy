@@ -1400,6 +1400,9 @@ PHP_FUNCTION(bson_encode)
 				php_mongo_serialize_ts(&buf, z TSRMLS_CC);
 				RETURN_STRINGL(buf.start, 8, 1);
 				break;
+			} else if (clazz == mongo_ce_MaxKey || clazz == mongo_ce_MinKey) {
+				RETURN_STRING("", 1);
+				break;
 			}
 		}
 
