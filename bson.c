@@ -1396,11 +1396,9 @@ PHP_FUNCTION(bson_encode)
 				efree(buf.start);
 				break;
 			} else if (clazz == mongo_ce_Timestamp) {
-				CREATE_BUF(buf, 9);
-				buf.pos[8] = (char)0;
-
-				php_mongo_serialize_bin_data(&buf, z TSRMLS_CC);
-				RETURN_STRINGL(buf.start, 8, 0);
+				CREATE_BUF_STATIC(9);
+				php_mongo_serialize_ts(&buf, z TSRMLS_CC);
+				RETURN_STRINGL(buf.start, 8, 1);
 				break;
 			}
 		}
