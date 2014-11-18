@@ -85,9 +85,7 @@ Think you have found a bug? Want to see a new feature in the driver? Please
 open a case in our issue management tool, JIRA:
 
  - Create an account and login (https://jira.mongodb.org).
- - Navigate to [the PHP project](https://jira.mongodb.org/browse/PHP).
- - Click **Create Issue** - Please provide all the information as outlined 
-   above.
+ - [Create a new issue](https://jira.mongodb.org/secure/CreateIssue!default.jspa?pid=10007).
 
 Bug reports in JIRA for all driver projects, as well as for the MongoDB server
 project, are **public**. Please do not add private information to bug reports.
