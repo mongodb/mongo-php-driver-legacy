@@ -2252,12 +2252,14 @@ PHP_METHOD(MongoCollection, count)
 
 	response = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, &used_connection TSRMLS_CC);
 
-	if (response && php_mongo_trigger_error_on_command_failure(used_connection, response TSRMLS_CC) == SUCCESS) {
-		if (zend_hash_find(HASH_P(response), ZEND_STRS("n"), (void**)&n) == SUCCESS) {
-			convert_to_long(*n);
-			RETVAL_ZVAL(*n, 1, 0);
-		} else {
-			php_mongo_cursor_throw(mongo_ce_ResultException, used_connection, 20 TSRMLS_CC, "Number of matched documents missing from count command response");
+	if (response) {
+		if (php_mongo_trigger_error_on_command_failure(used_connection, response TSRMLS_CC) == SUCCESS) {
+			if (zend_hash_find(HASH_P(response), ZEND_STRS("n"), (void**)&n) == SUCCESS) {
+				convert_to_long(*n);
+				RETVAL_ZVAL(*n, 1, 1);
+			} else {
+				php_mongo_cursor_throw(mongo_ce_ResultException, used_connection, 20 TSRMLS_CC, "Number of matched documents missing from count command response");
+			}
 		}
 
 		zval_ptr_dtor(&response);
