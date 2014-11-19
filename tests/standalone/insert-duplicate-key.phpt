@@ -46,6 +46,6 @@ var_dump($tmp == $doc);
 <?php exit(0); ?>
 --EXPECTF--
 int(11000)
-%s:%d:%S E11000 duplicate key error index: %s.dupkey.$_id_%Sdup key: { : "DuplicateKeyError" }
+%s:%d:%s { : "DuplicateKeyError" }
 bool(true)
 ===DONE===
