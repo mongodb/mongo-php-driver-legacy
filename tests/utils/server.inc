@@ -1,6 +1,8 @@
 <?php
 
 class MongoShellServer {
+    const DEFAULT_STORAGE_ENGINE = "mmapv1";
+
     protected $fp;
     protected $log = "";
 
@@ -212,6 +214,30 @@ class MongoShellServer {
             "adminjs" => $adminjs,
             "userjs"  => $userjs,
         );
+    }
+
+    public function getStorageEngine() {
+        include dirname(__FILE__) . "/cfg.inc";
+
+        if (isset($STORAGE_ENGINE)) {
+            return $STORAGE_ENGINE;
+        }
+
+        /* Its the default engine if nothing is provided */
+        return self::DEFAULT_STORAGE_ENGINE;
+    }
+
+    public function setStorageEngine() {
+        $storage = $this->getStorageEngine();
+
+        /* Only set it if explicitly provided in the config as the flag isn't supported pre 2.8 */
+        if ($storage != self::DEFAULT_STORAGE_ENGINE) {
+            $engine = json_encode($STORAGE_ENGINE);
+            $retval = $this->verifyWrite("setStorageEngine($engine)");
+            return $retval;
+        }
+
+
     }
 
     public function setDBDIR() {

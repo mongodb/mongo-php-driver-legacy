@@ -6,6 +6,11 @@ var masterSlaveTest;
 var shardTest;
 var shardTestAuth;
 var bridgeTest;
+var storageEngine;
+
+function setStorageEngine(engine) {
+	storageEngine = engine;
+}
 
 /**
  * Initialize a replica set.
@@ -52,13 +57,19 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
     var retval = new ReplSetTest(testOpts);
     print("Now setting logpath");
     for ( var i = 0; i < retval.numNodes; i++ ) {
-        retval.nodeOptions[ "n" + i ] = Object.merge(retval.nodeOptions[ "n" + i ], {
+        var o =  {
             "nojournal" : "",
             "nopreallocj": "",
             "quiet": "",
             "oplogSize": 10,
             "logpath": "/tmp/NODE." + (keyFile ? "-AUTH" : "") + i
-        });
+        };
+
+        if (storageEngine) {
+            o.storageEngine = storageEngine;
+        }
+
+        retval.nodeOptions[ "n" + i ] = Object.merge(retval.nodeOptions[ "n" + i ],o);
         if (keyFile) {
             retval.nodeOptions[ "n" + i ].keyFile = keyFile;
         }
@@ -161,6 +172,9 @@ function initStandalone(port, auth, root, user) {
         opts.auth = "";
         opts.setParameter = "authenticationMechanisms=MONGODB-CR,SCRAM-SHA-1,CRAM-MD5";
     }
+    if (storageEngine) {
+        opts.storageEngine = storageEngine;
+    }
 
     /* Try launching with all interesting mechanisms by default */
     var retval;
@@ -220,6 +234,9 @@ function initShard(mongoscount, rsOptions, rsSettings) {
         "useHostname": false,
         "useHostName": false,
         "oplogSize": 10
+    }
+    if (storageEngine) {
+        rs.storageEngine = storageEngine;
     }
 
     shardTest = new ShardingTest({

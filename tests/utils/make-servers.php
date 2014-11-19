@@ -200,6 +200,7 @@ try {
     }
 }
 
+$server->setStorageEngine();
 foreach($SERVERS as $k => $bit) {
     if ($BOOTSTRAP & $bit) {
         try {

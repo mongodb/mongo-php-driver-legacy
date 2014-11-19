@@ -11,6 +11,7 @@ if (!defined("DEBUG")) {
 $mongo = trim(shell_exec("which mongo"));
 $SHELL = $mongo;
 $DBDIR = "/data/db/";
+$STORAGE_ENGINE = "mmapv1";
 
 
 /* You probably don't want to change this */
