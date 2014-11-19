@@ -20,4 +20,4 @@ try {
 }
 ?>
 --EXPECTF--
-Could not store file:%sE11000 duplicate key error index: %s.fs.chunks.$files_id_1_n_1%Sdup key: { : 1, : 0 }
+Could not store file:%s { : 1, : 0 }
