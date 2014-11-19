@@ -1,6 +1,7 @@
 --TEST--
 Database: Profiling (turning on and off)
 --SKIPIF--
+<?php $engine = "mmapv1"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
