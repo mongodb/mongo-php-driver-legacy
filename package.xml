@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2014-11-11</date>
- <time>11:12:13</time>
+ <date>2014-11-19</date>
+ <time>09:45:44</time>
  <version>
-  <release>1.6.0RC1</release>
-  <api>1.6.0RC1</api>
+  <release>1.6.0RC2</release>
+  <api>1.6.0RC2</api>
  </version>
  <stability>
   <release>beta</release>
@@ -42,34 +42,11 @@
  </stability>
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
-** New Feature
-    * [PHP-1161] - Implement the SCRAM-SHA-1 SASL Mechanism
-    * [PHP-1257] - Support 50 replicaset members
-
-** Improvement
-    * [PHP-904] - Implement MongoDate::__set_state
-    * [PHP-1160] - Allow count to work with query hints
-    * [PHP-1219] - Drop support for PHP 5.2.
-    * [PHP-1263] - MongoCollection::count() should throw MongoExecutionTimeoutException on maxTimeMS timeout
-
 ** Bug
-    * [PHP-977] - An iteration on a MongoCursor object with yield produces a memory leak.
-    * [PHP-1063] - Refactor cursor logic to follow MongoCommandCursor
-    * [PHP-1145] - Clean up MONGO_METHOD calls in db_ref.c
-    * [PHP-1146] - Clean up MONGO_METHOD calls in mongo.c
-    * [PHP-1149] - Fix database and collection name validation
-    * [PHP-1218] - Add MongoDate->toDateTime to allow creation of DateTime object from MongoDate
-    * [PHP-1231] - Using MongoDB::selectCollection crashes inside generators
-    * [PHP-1251] - MongoCursor::count() should use cursor's maxTimeMS
-
-** Task
-    * [PHP-1151] - Remove support for compiling without PHP streams
-    * [PHP-1225] - Use listCollections command for MongoDB::listCollections and MongoDB::getCollectionNames
-    * [PHP-1226] - Use listIndexes command for MongoCollection::getIndexInfo()
-    * [PHP-1227] - Bump maxWireProtocolVersion for 2.8 features
-    * [PHP-1241] - Change MongoCursor::info()['at'] to zero-based indexing
-    * [PHP-1244] - Mark MongoCursor::doQuery as final
-
+    * [PHP-1266] - phpinfo() lists a default authentication mechanism (which may not be the default)
+    * [PHP-1267] - Windows build failure
+    * [PHP-1269] - Validate encoding and decoding of MongoBinData::UUID_RFC4122
+    * [PHP-1270] - MongoDate->toDateTime is only supported for PHP 5.3.4 and later.
  </notes>
 
  <contents>
@@ -236,6 +213,49 @@
   <configureoption name="with-mongo-sasl" prompt="Build with Cyrus SASL (MongoDB Enterprise Authentication) support?" default="no"/>
  </extsrcrelease>
  <changelog>
+
+  <release>
+   <date>2014-11-11</date>
+   <time>11:12:13</time>
+   <version>
+    <release>1.6.0RC1</release>
+    <api>1.6.0RC1</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** New Feature
+    * [PHP-1161] - Implement the SCRAM-SHA-1 SASL Mechanism
+    * [PHP-1257] - Support 50 replicaset members
+
+** Improvement
+    * [PHP-904] - Implement MongoDate::__set_state
+    * [PHP-1160] - Allow count to work with query hints
+    * [PHP-1219] - Drop support for PHP 5.2.
+    * [PHP-1263] - MongoCollection::count() should throw MongoExecutionTimeoutException on maxTimeMS timeout
+
+** Bug
+    * [PHP-977] - An iteration on a MongoCursor object with yield produces a memory leak.
+    * [PHP-1063] - Refactor cursor logic to follow MongoCommandCursor
+    * [PHP-1145] - Clean up MONGO_METHOD calls in db_ref.c
+    * [PHP-1146] - Clean up MONGO_METHOD calls in mongo.c
+    * [PHP-1149] - Fix database and collection name validation
+    * [PHP-1218] - Add MongoDate->toDateTime to allow creation of DateTime object from MongoDate
+    * [PHP-1231] - Using MongoDB::selectCollection crashes inside generators
+    * [PHP-1251] - MongoCursor::count() should use cursor's maxTimeMS
+
+** Task
+    * [PHP-1151] - Remove support for compiling without PHP streams
+    * [PHP-1225] - Use listCollections command for MongoDB::listCollections and MongoDB::getCollectionNames
+    * [PHP-1226] - Use listIndexes command for MongoCollection::getIndexInfo()
+    * [PHP-1227] - Bump maxWireProtocolVersion for 2.8 features
+    * [PHP-1241] - Change MongoCursor::info()['at'] to zero-based indexing
+    * [PHP-1244] - Mark MongoCursor::doQuery as final
+   </notes>
+  </release>
 
   <release>
    <date>2014-11-11</date>
