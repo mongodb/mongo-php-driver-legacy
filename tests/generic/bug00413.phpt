@@ -34,6 +34,6 @@ try {
 }
 ?>
 --EXPECTF--
-Failed to connect to: %s:%d:%sAuthentication failed on database 'test'%s
-Failed to connect to: %s:%d:%sAuthentication failed on database 'test'%s
-Failed to connect to: %s:%d:%sAuthentication failed on database 'test'%s
+Failed to connect to: %s:%d:%s
+Failed to connect to: %s:%d:%s
+Failed to connect to: %s:%d:%s

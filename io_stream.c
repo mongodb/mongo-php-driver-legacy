@@ -688,6 +688,8 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 		efree(client_first_message);
 		efree(client_first_message_base64);
 		efree(username);
+		/* starting sasl failed, bail out */
+		*error_message = strdup("Starting SASL failed");
 		return 0;
 	}
 	efree(client_first_message_base64);

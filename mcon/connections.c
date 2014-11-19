@@ -603,6 +603,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 
 			nonce = mongo_connection_getnonce(manager, con, options, error_message);
 			if (!nonce) {
+				*error_message = strdup("Nonce could not be created");
 				return 0;
 			}
 
