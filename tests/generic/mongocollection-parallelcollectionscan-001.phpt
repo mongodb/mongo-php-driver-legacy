@@ -1,7 +1,8 @@
 --TEST--
 MongoConnection::parallelCollectionScan()
 --SKIPIF--
-<?php $needs = "2.5.5"; ?>
+<?php $needsmin = "2.5.5"; ?>
+<?php $needsmax = "2.7.5"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
