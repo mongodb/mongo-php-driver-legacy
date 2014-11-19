@@ -20,6 +20,11 @@ try {
             throw new Exception("Needs MongoDB less then $needsmax, but is running $serverversion");
         }
     }
+    if (isset($engine)) {
+        if ($server->getStorageEngine() != $engine) {
+            throw new Exception("Needs MongoDB running $engine StorageEngine, but is running " . $server->getStorageEngine());
+        }
+    }
     $server->close();
 } catch(Exception $e) {
     exit("skip " . $e->getMessage());
