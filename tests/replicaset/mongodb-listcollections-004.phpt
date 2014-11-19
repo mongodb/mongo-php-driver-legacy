@@ -9,7 +9,7 @@ require_once 'tests/utils/server.inc';
 
 $rs = MongoShellServer::getReplicaSetInfo();
 $dsn = MongoShellServer::getASecondaryNode();
-$m = new MongoClient($dsn);
+$m = new MongoClient($dsn, array("readPreference" => MongoClient::RP_SECONDARY));
 $d = $m->selectDB(dbname());
 
 MongoLog::setModule( MongoLog::ALL );
