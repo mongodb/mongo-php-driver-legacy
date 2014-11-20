@@ -332,7 +332,7 @@ void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *co
 }
 
 #if HAVE_MONGO_SASL
-int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
+static int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
 {
 	if (result < 0) {
 		*error_message = malloc(256);
@@ -343,7 +343,7 @@ int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
 	return 0;
 }
 
-sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char **out_payload, int *out_payload_len, int32_t *conversation_id, char **error_message)
+static sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char **out_payload, int *out_payload_len, int32_t *conversation_id, char **error_message)
 {
 	const char *raw_payload;
 	char encoded_payload[4096];
@@ -391,7 +391,8 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 	return conn;
 }
 
-int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char *step_payload, int step_payload_len, int32_t conversation_id, char **error_message) {
+static int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char *step_payload, int step_payload_len, int32_t conversation_id, char **error_message)
+{
 	sasl_interact_t *client_interact=NULL;
 
 	/*
