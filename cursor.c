@@ -731,13 +731,16 @@ PHP_METHOD(MongoCursor, explain)
 
 void php_mongo_runquery(mongo_cursor *cursor TSRMLS_DC)
 {
+	int ns_len;
+
 	php_mongo_cursor_reset(cursor TSRMLS_CC);
 
 	if (mongo_cursor__do_query(cursor TSRMLS_CC) == SUCCESS || EG(exception)) {
 		return;
 	}
 
-	if (strcmp(".$cmd", cursor->ns+(strlen(cursor->ns)-5)) == 0) {
+	ns_len = strlen(cursor->ns);
+	if (ns_len >= 5 && strcmp(".$cmd", cursor->ns + (ns_len - 5)) == 0) {
 		php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, 19 TSRMLS_CC, "couldn't send command");
 		return;
 	}
