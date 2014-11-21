@@ -332,7 +332,7 @@ void php_mongo_io_stream_forget(mongo_con_manager *manager, mongo_connection *co
 }
 
 #if HAVE_MONGO_SASL
-int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
+static int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
 {
 	if (result < 0) {
 		*error_message = malloc(256);
@@ -343,7 +343,7 @@ int is_sasl_failure(sasl_conn_t *conn, int result, char **error_message)
 	return 0;
 }
 
-sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char **out_payload, int *out_payload_len, int32_t *conversation_id, char **error_message)
+static sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char **out_payload, int *out_payload_len, int32_t *conversation_id, char **error_message)
 {
 	const char *raw_payload;
 	char encoded_payload[4096];
@@ -391,7 +391,8 @@ sasl_conn_t *php_mongo_saslstart(mongo_con_manager *manager, mongo_connection *c
 	return conn;
 }
 
-int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char *step_payload, int step_payload_len, int32_t conversation_id, char **error_message) {
+static int php_mongo_saslcontinue(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, sasl_conn_t *conn, char *step_payload, int step_payload_len, int32_t conversation_id, char **error_message)
+{
 	sasl_interact_t *client_interact=NULL;
 
 	/*
@@ -625,6 +626,7 @@ int php_mongo_io_make_client_proof(char *username, char *password, unsigned char
  * Returns:
  * 0: when it didn't work - with the error_message set.
  * 1: when it worked
+ * 2: when no need to authenticate (i.e. no credentials provided)
  */
 int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager, mongo_connection *con, mongo_server_options *options, mongo_server_def *server_def, char **error_message)
 {
@@ -652,7 +654,7 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 	TSRMLS_FETCH();
 
 	if (!server_def->db || !server_def->username || !server_def->password) {
-		return 0;
+		return 2;
 	}
 
 	/*
@@ -687,6 +689,8 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 		efree(client_first_message);
 		efree(client_first_message_base64);
 		efree(username);
+		/* starting sasl failed, bail out */
+		*error_message = strdup("Starting SASL failed");
 		return 0;
 	}
 	efree(client_first_message_base64);

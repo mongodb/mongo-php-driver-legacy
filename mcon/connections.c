@@ -603,12 +603,13 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 
 			nonce = mongo_connection_getnonce(manager, con, options, error_message);
 			if (!nonce) {
+				*error_message = strdup("Nonce could not be created");
 				return 0;
 			}
 
 			retval = mongo_connection_authenticate_mongodb_cr(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, server_def->password, nonce, error_message);
 			free(nonce);
-			} break;
+		} break;
 
 		case MONGO_AUTH_MECHANISM_MONGODB_X509:
 			retval = mongo_connection_authenticate_mongodb_x509(manager, con, options, server_def->authdb ? server_def->authdb : server_def->db, server_def->username, error_message);
@@ -616,7 +617,7 @@ int mongo_connection_authenticate(mongo_con_manager *manager, mongo_connection *
 
 		default:
 			*error_message = strdup("Only MongoDB-CR and MONGODB-X509 authentication mechanisms is supported by this build");
-		return 0;
+			return 0;
 	}
 
 	return retval;
