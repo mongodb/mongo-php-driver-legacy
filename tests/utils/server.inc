@@ -232,7 +232,7 @@ class MongoShellServer {
 
         /* Only set it if explicitly provided in the config as the flag isn't supported pre 2.8 */
         if ($storage != self::DEFAULT_STORAGE_ENGINE) {
-            $engine = json_encode($STORAGE_ENGINE);
+            $engine = json_encode($storage);
             $retval = $this->verifyWrite("setStorageEngine($engine)");
             return $retval;
         }
