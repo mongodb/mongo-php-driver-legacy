@@ -133,6 +133,11 @@ function initMasterSlave(port) {
         "oplogSize": 10,
         "logpath": "/tmp/NODE.MS.master"
     };
+
+    if (storageEngine) {
+        masterOptions.storageEngine = storageEngine;
+    }
+
     master = retval.start(true, masterOptions, false, false);
 
     slaveOptions = masterOptions;
