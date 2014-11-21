@@ -46,6 +46,6 @@ try{
 }
 ?>
 --EXPECTF--
-error message: Could not store file: %s:%d:%sE11000 duplicate key error index: phpunit.test_prefix.files.$filename_1%Sdup key: { : "test.txt" }
+error message: Could not store file: %s:%d:%s { : "test.txt" }
 error code: 11000
 

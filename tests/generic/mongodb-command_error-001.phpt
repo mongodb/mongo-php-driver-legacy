@@ -11,8 +11,8 @@ $db = $m->selectDb('phpunit');
 $retval = $db->command(array());
 var_dump($retval["errmsg"], $retval["bad cmd"], $retval["ok"]);
 ?>
---EXPECT--
-string(13) "no such cmd: "
+--EXPECTF--
+string(%d) "no such c%s: "
 array(0) {
 }
 float(0)

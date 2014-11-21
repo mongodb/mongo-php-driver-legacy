@@ -57,9 +57,9 @@ $m = new_mongo_standalone("phpunit");
 # Saving files to GridFS
 ######################################
 [Saved file] New file id:file0
-error message: Could not store file: %s:%d:%sE11000 duplicate key error index: phpunit.fs.files.$filename_1%Sdup key: { : "/tmp/GridFS_test.txt" }
+error message: Could not store file: %s:%d:%s { : "/tmp/GridFS_test.txt" }
 error code: 11000
-error message: Could not store file: %s:%d:%sE11000 duplicate key error index: phpunit.fs.files.$filename_1%Sdup key: { : "/tmp/GridFS_test.txt" }
+error message: Could not store file: %s:%d:%s { : "/tmp/GridFS_test.txt" }
 error code: 11000
 array(1) {
   ["w"]=>

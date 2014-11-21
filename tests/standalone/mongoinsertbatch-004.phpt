@@ -91,7 +91,7 @@ array(3) {
       ["code"]=>
       int(11000)
       ["errmsg"]=>
-      string(%d) "%s: %s.%s.$_id_%Sdup key: { : "duplicatedid" }"
+      string(%d) "%s { : "duplicatedid" }"
     }
   }
   ["nInserted"]=>
@@ -113,7 +113,7 @@ array(3) {
       ["code"]=>
       int(11000)
       ["errmsg"]=>
-      string(%d) "%s: %s.%s.$_id_%Sdup key: { : "duplicatedid" }"
+      string(%d) "%s { : "duplicatedid" }"
     }
   }
   ["nInserted"]=>
@@ -135,7 +135,7 @@ array(3) {
       ["code"]=>
       int(11000)
       ["errmsg"]=>
-      string(%d) "%s: %s.%s.$_id_%Sdup key: { : "duplicatedid" }"
+      string(%d) "%s { : "duplicatedid" }"
     }
   }
   ["nInserted"]=>

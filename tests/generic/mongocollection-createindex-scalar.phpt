@@ -1,6 +1,7 @@
 --TEST--
 MongoCollection::createIndex() (scalar field/array of fields)
 --SKIPIF--
+<?php $engine = "mmapv1"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php

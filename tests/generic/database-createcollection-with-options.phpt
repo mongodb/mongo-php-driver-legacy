@@ -1,6 +1,7 @@
 --TEST--
 Database: Create collection with options array
 --SKIPIF--
+<?php $engine = "mmapv1"; ?>
 <?php require "tests/utils/standalone.inc";?>
 --FILE--
 <?php

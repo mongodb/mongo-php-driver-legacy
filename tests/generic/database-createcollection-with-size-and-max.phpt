@@ -1,6 +1,7 @@
 --TEST--
 Database: Create collection with max size and items
 --SKIPIF--
+<?php $engine = "mmapv1"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php

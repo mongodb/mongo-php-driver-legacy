@@ -42,12 +42,14 @@ Setting the stream timeout to 60.000000
 Now setting stream timeout back to 30.000000
 Setting the stream timeout to 60.000000
 Now setting stream timeout back to 30.000000
-getnonce: start
 Setting the stream timeout to 60.000000
 Now setting stream timeout back to 30.000000
 Setting the stream timeout to 60.000000
 Now setting stream timeout back to 30.000000
-authenticate: start
+Setting the stream timeout to 60.000000
+Now setting stream timeout back to 30.000000
+Setting the stream timeout to 60.000000
+Now setting stream timeout back to 30.000000
 Setting the stream timeout to 60.000000
 Now setting stream timeout back to 30.000000
 Setting the stream timeout to 60.000000
