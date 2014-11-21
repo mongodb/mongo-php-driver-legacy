@@ -223,6 +223,11 @@ class MongoShellServer {
             return $STORAGE_ENGINE;
         }
 
+        $env_engine = getenv('MONGO_STORAGE_ENGINE');
+        if ($env_engine !== false) {
+            return $env_engine;
+        }
+
         /* Its the default engine if nothing is provided */
         return self::DEFAULT_STORAGE_ENGINE;
     }
