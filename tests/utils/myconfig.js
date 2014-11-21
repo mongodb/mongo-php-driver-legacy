@@ -240,11 +240,8 @@ function initShard(mongoscount, rsOptions, rsSettings) {
         "useHostName": false,
         "oplogSize": 10
     }
-    if (storageEngine) {
-        rs.storageEngine = storageEngine;
-    }
 
-    shardTest = new ShardingTest({
+    shardOptions = {
         "name": "SHARDING",
         "useHostname": false,
         "useHostName": false,
@@ -258,7 +255,16 @@ function initShard(mongoscount, rsOptions, rsSettings) {
                 "logpath": "/dev/null"
             }
         }
-    });
+    }
+
+    if (storageEngine) {
+        rs.storageEngine = storageEngine;
+        shardOptions.other.configOptions = {
+            "storageEngine": storageEngine
+        }
+    }
+
+    shardTest = new ShardingTest(shardOptions);
 
     if (typeof rsOptions !== 'undefined') {
         cfg = shardTest.rs0.getReplSetConfig();
