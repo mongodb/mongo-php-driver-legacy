@@ -689,8 +689,9 @@ int mongo_connection_authenticate_mongodb_scram_sha1(mongo_con_manager *manager,
 		efree(client_first_message);
 		efree(client_first_message_base64);
 		efree(username);
-		/* starting sasl failed, bail out */
-		*error_message = strdup("Starting SASL failed");
+		/* starting sasl failed, bail out, we do not need to send an error message, as
+		 * mongo_connection_authenticate_saslstart already does so when returning a 0
+		 * error value. */
 		return 0;
 	}
 	efree(client_first_message_base64);

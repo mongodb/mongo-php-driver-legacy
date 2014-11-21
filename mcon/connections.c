@@ -147,6 +147,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	/* Send and wait for reply */
 	if (manager->send(con, options, packet->d, packet->l, error_message) == -1) {
 		mcon_str_ptr_dtor(packet);
+		/* Error already populated */
 		return 0;
 	}
 	mcon_str_ptr_dtor(packet);
@@ -181,6 +182,7 @@ static int mongo_connect_send_packet(mongo_con_manager *manager, mongo_connectio
 	*data_buffer = malloc(data_size + 1);
 	if (manager->recv_data(con, options, con->connected ? options->socketTimeoutMS : options->connectTimeoutMS, *data_buffer, data_size, error_message) <= 0) {
 		free(*data_buffer);
+		/* Error already populated */
 		return 0;
 	}
 
