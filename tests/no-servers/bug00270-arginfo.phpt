@@ -137,6 +137,8 @@ MongoDB
     0: includeSystemCollections (optional)
   Method getCollectionNames expects 1 parameters
     0: includeSystemCollections (optional)
+  Method getCollectionInfo expects 1 parameters
+    0: includeSystemCollections (optional)
   Method createDBRef expects 2 parameters
     0: collection_name
     1: array_with_id_fields_OR_MongoID

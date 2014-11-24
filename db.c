@@ -575,7 +575,7 @@ PHP_METHOD(MongoDB, dropCollection)
 }
 /* }}} */
 
-void mongo_db_list_collections_command(zval *this_ptr, int include_system_collections, int full_collection_object,  zval *return_value TSRMLS_DC)
+void mongo_db_list_collections_command(zval *this_ptr, int include_system_collections, int return_type,  zval *return_value TSRMLS_DC)
 {
 	zval *z_cmd, *list, **collections;
 	mongo_db *db;
@@ -634,11 +634,20 @@ void mongo_db_list_collections_command(zval *this_ptr, int include_system_collec
 				continue;
 			}
 
-			if (full_collection_object) {
-				c = php_mongo_db_selectcollection(this_ptr, Z_STRVAL_PP(collection_name), Z_STRLEN_PP(collection_name) TSRMLS_CC);
-				add_next_index_zval(list, c);
-			} else {
-				add_next_index_string(list, Z_STRVAL_PP(collection_name), 1);
+			switch (return_type) {
+				case MONGO_COLLECTION_RETURN_TYPE_NAME:
+					add_next_index_string(list, Z_STRVAL_PP(collection_name), 1);
+					break;
+
+				case MONGO_COLLECTION_RETURN_TYPE_OBJECT:
+					c = php_mongo_db_selectcollection(this_ptr, Z_STRVAL_PP(collection_name), Z_STRLEN_PP(collection_name) TSRMLS_CC);
+					add_next_index_zval(list, c);
+					break;
+
+				case MONGO_COLLECTION_RETURN_TYPE_INFO_ARRAY:
+					Z_ADDREF_P(*collection_doc);
+					add_assoc_zval(list, Z_STRVAL_PP(collection_name), *collection_doc);
+					break;
 			}
 		}
 	}
@@ -648,7 +657,7 @@ void mongo_db_list_collections_command(zval *this_ptr, int include_system_collec
 	RETURN_ZVAL(list, 0, 1);
 }
 
-void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collections, int full_collection_object, zval *return_value TSRMLS_DC)
+void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collections, int return_type, zval *return_value TSRMLS_DC)
 {
 	zval *z_system_collection, *z_cursor, *list;
 	mongo_cursor *cursor;
@@ -728,13 +737,22 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 			continue;
 		}
 
-		if (full_collection_object) {
-			c = php_mongo_db_selectcollection(this_ptr, name, strlen(name) TSRMLS_CC);
-			/* No need to test for c here, as this was already covered in
-			 * system_collection above */
-			add_next_index_zval(list, c);
-		} else {
-			add_next_index_string(list, name, 1);
+		switch (return_type) {
+			case MONGO_COLLECTION_RETURN_TYPE_NAME:
+				add_next_index_string(list, name, 1);
+				break;
+
+			case MONGO_COLLECTION_RETURN_TYPE_OBJECT:
+				c = php_mongo_db_selectcollection(this_ptr, name, strlen(name) TSRMLS_CC);
+				/* No need to test for c here, as this was already covered in
+				 * system_collection above */
+				add_next_index_zval(list, c);
+				break;
+
+			case MONGO_COLLECTION_RETURN_TYPE_INFO_ARRAY:
+				Z_ADDREF_P(cursor->current);
+				add_assoc_zval(list, name, cursor->current);
+				break;
 		}
 
 		php_mongocursor_advance(cursor TSRMLS_CC);
@@ -746,7 +764,12 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
 	RETURN_ZVAL(list, 0, 1);
 }
 
-static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int full_collection_object)
+/* Return types:
+ * 0: Collection name
+ * 1: MongoCollection object
+ * 2: Array containing collection name and options
+ */
+static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int return_type)
 {
 	zend_bool include_system_collections = 0;
 	mongo_connection *connection;
@@ -765,15 +788,20 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int fu
 	}
 
 	if (php_mongo_api_connection_min_server_version(connection, 2, 7, 5)) {
-		mongo_db_list_collections_command(getThis(), include_system_collections, full_collection_object, return_value TSRMLS_CC);
+		mongo_db_list_collections_command(getThis(), include_system_collections, return_type, return_value TSRMLS_CC);
 	} else {
-		mongo_db_list_collections_legacy(getThis(), include_system_collections, full_collection_object, return_value TSRMLS_CC);
+		mongo_db_list_collections_legacy(getThis(), include_system_collections, return_type, return_value TSRMLS_CC);
 	}
 }
 
 PHP_METHOD(MongoDB, listCollections)
 {
 	php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
+}
+
+PHP_METHOD(MongoDB, getCollectionInfo)
+{
+	php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAM_PASSTHRU, 2);
 }
 
 PHP_METHOD(MongoDB, getCollectionNames)
@@ -1336,6 +1364,7 @@ static zend_function_entry MongoDB_methods[] = {
 	PHP_ME(MongoDB, dropCollection, arginfo_dropCollection, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, listCollections, arginfo_systemCollections, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, getCollectionNames, arginfo_systemCollections, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoDB, getCollectionInfo, arginfo_systemCollections, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, createDBRef, arginfo_createDBRef, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, getDBRef, arginfo_getDBRef, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, execute, arginfo_execute, ZEND_ACC_PUBLIC)
