@@ -5,16 +5,18 @@ Database: Create collection with max size
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+require_once "tests/utils/collection-info.inc";
+
 $a = mongo_standalone();
-$d = $a->selectDb("phpunit");
+$d = $a->selectDb(dbname());
 $ns = $d->selectCollection('system.namespaces');
 
 // cleanup
 $d->dropCollection('create-col1');
-var_dump($ns->findOne(array('name' => 'phpunit.create-col1')));
+var_dump(findCollection($d, 'create-col1'));
 
 $c = $d->createCollection('create-col1', array('size' => 4096, 'capped' => true));
-$retval = $ns->findOne(array('name' => 'phpunit.create-col1'));
+$retval = findCollection($d, 'create-col1');
 var_dump($retval['name']);
 dump_these_keys($retval['options'], array('size', 'capped'));
 
@@ -27,7 +29,7 @@ var_dump($c->count() < 125); // 4096 / (33-byte BSON documents) = 124.12
 ?>
 --EXPECTF--
 NULL
-string(19) "phpunit.create-col1"
+string(%d) "%s.create-col1"
 array(2) {
   ["size"]=>
   int(4096)

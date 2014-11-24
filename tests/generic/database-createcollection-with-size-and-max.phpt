@@ -5,19 +5,20 @@ Database: Create collection with max size and items
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+require_once "tests/utils/collection-info.inc";
 
 $a = mongo_standalone();
-$d = $a->selectDb("phpunit");
+$d = $a->selectDb(dbname());
 
 // cleanup
 $d->selectCollection("createcol1")->drop();
 
 $ns = $d->selectCollection('system.namespaces');
-var_dump($ns->findOne(array('name' => 'phpunit.createcol1')));
+var_dump(findCollection($d, 'createcol1'));
 
 // create
 $c = $d->createCollection('createcol1', array('capped' => true, 'size' => 1000, 'max' => 5));
-$retval = $ns->findOne(array('name' => 'phpunit.createcol1'));
+$retval = findCollection($d, 'createcol1');
 var_dump($retval["name"]);
 
 // test cap
@@ -29,9 +30,9 @@ foreach($c->find() as $res) {
 }
 var_dump($c->count());
 ?>
---EXPECT--
+--EXPECTF--
 NULL
-string(18) "phpunit.createcol1"
+string(%d) "%s.createcol1"
 int(5)
 int(6)
 int(7)
