@@ -2256,7 +2256,7 @@ PHP_METHOD(MongoCollection, count)
 		if (php_mongo_trigger_error_on_command_failure(used_connection, response TSRMLS_CC) == SUCCESS) {
 			if (zend_hash_find(HASH_P(response), ZEND_STRS("n"), (void**)&n) == SUCCESS) {
 				convert_to_long(*n);
-				RETVAL_ZVAL(*n, 1, 1);
+				RETVAL_ZVAL(*n, 1, 0);
 			} else {
 				php_mongo_cursor_throw(mongo_ce_ResultException, used_connection, 20 TSRMLS_CC, "Number of matched documents missing from count command response");
 			}
