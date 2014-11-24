@@ -16,6 +16,10 @@
 #ifndef MONGO_DB_H
 #define MONGO_DB_H
 
+#define MONGO_COLLECTION_RETURN_TYPE_NAME       0
+#define MONGO_COLLECTION_RETURN_TYPE_OBJECT     1
+#define MONGO_COLLECTION_RETURN_TYPE_INFO_ARRAY 2
+
 zend_object_value mongo_init_MongoDB_new(zend_class_entry* TSRMLS_DC);
 
 /* Create a fake cursor that can be used to query the db from C. */
