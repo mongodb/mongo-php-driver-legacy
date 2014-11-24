@@ -13,11 +13,11 @@ $ns = $d->selectCollection('system.indexes');
 $c->drop();
 
 $c->ensureIndex( array( 'surname' => 1, 'name' => 1 ) );
-var_dump( count(iterator_to_array( $ns->find( array( 'ns' => "$name.deleteIndex" ) ) ) ) );
+var_dump( count( $c->getIndexInfo() ) );
 
 echo "Wrong argument\n";
 $c->deleteIndex( 42 );
-var_dump( count(iterator_to_array( $ns->find( array( 'ns' => "$name.deleteIndex" ) ) ) ) );
+var_dump( count( $c->getIndexInfo() ) );
 ?>
 --EXPECTF--
 int(2)

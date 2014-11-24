@@ -49,7 +49,7 @@ createResults( $c->createIndex("indexC1") );
 createResults( $c->ensureIndex( array( "indexE2" => 1 )) );
 createResults( $c->createIndex( array( "indexC2" => 1 )) );
 
-showIndexes($d->system->indexes->find( array('ns' => $ns) ));
+showIndexes( $c->getIndexInfo() );
 
 dropResults( $c->deleteIndex("indexE1") );
 dropResults( $c->deleteIndex("indexC1") );
@@ -57,7 +57,7 @@ dropResults( $c->deleteIndex("indexC1") );
 dropResults( $c->deleteIndex( array( "indexE2" => 1 )) );
 dropResults( $c->deleteIndex( array( "indexC2" => 1 )) );
 
-showIndexes($d->system->indexes->find( array('ns' => $ns) ));
+showIndexes( $c->getIndexInfo() );
 ?>
 --EXPECTF--
 OK

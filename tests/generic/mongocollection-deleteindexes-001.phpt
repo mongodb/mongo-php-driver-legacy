@@ -14,16 +14,16 @@ $c->drop();
 
 echo "Delete all (except the _id index)\n";
 $c->ensureIndex( array( 'surname' => 1, 'name' => 1 ) );
-var_dump( count(iterator_to_array( $ns->find( array( 'ns' => "$name.deleteIndex" ) ) ) ) );
+var_dump( count( $c->getIndexInfo() ) );
 $c->deleteIndexes();
-var_dump( count(iterator_to_array( $ns->find( array( 'ns' => "$name.deleteIndex" ) ) ) ) );
+var_dump( count( $c->getIndexInfo() ) );
 
 echo "Delete two\n";
 $c->ensureIndex( array( 'name' => 1 ) );
 $c->ensureIndex( array( 'surname' => 1, 'name' => 1 ) );
-var_dump( count(iterator_to_array( $ns->find( array( 'ns' => "$name.deleteIndex" ) ) ) ) );
+var_dump( count( $c->getIndexInfo() ) );
 $c->deleteIndexes();
-var_dump( count(iterator_to_array( $ns->find( array( 'ns' => "$name.deleteIndex" ) ) ) ) );
+var_dump( count( $c->getIndexInfo() ) );
 ?>
 --EXPECT--
 Delete all (except the _id index)
