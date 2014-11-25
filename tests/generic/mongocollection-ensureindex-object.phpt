@@ -56,7 +56,7 @@ $i->indexC3 = '2d';
 $i->indexC2 = -1;
 createResults( $c->ensureIndex( $i ) );
 
-showIndexes($d->system->indexes->find( array('ns' => $ns) ));
+showIndexes( $c->getIndexInfo() );
 ?>
 --EXPECT--
 OK

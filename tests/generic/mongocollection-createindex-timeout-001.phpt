@@ -61,7 +61,7 @@ try {
 	echo $e->getCode(), ': ', $e->getMessage(), "\n";
 }
 sleep(3);
-showIndexes($d->system->indexes->find( array('ns' => $ns) ));
+showIndexes( $c->getIndexInfo() );
 
 ?>
 --EXPECTF--

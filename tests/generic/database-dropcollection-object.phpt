@@ -5,26 +5,27 @@ Database: Dropping collections (object)
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+require_once "tests/utils/collection-info.inc";
+
 $a = mongo_standalone();
-$d = $a->selectDb("phpunit");
-$ns = $d->selectCollection('system.namespaces');
+$d = $a->selectDb(dbname());
 
 // create a collection by inserting a record
 $d->dropcoltest->insert(array('foo' => 'bar'));
-dump_these_keys($ns->findOne(array('name' => 'phpunit.dropcoltest')), array("name"));
+dump_these_keys(findCollection($d, 'dropcoltest'), array("name"));
 
 // drop the collection
 $d->dropCollection($d->dropcoltest);
-var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
+var_dump(findCollection($d, 'dropcoltest'));
 
 // dropping the new non-existant collection
 $d->dropCollection($d->dropcoltest);
-var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
+var_dump(findCollection($d, 'dropcoltest'));
 ?>
 --EXPECTF--
 array(1) {
   ["name"]=>
-  string(19) "phpunit.dropcoltest"
+  string(%d) "%s.dropcoltest"
 }
 NULL
 NULL

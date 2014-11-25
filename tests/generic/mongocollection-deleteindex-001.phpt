@@ -9,22 +9,21 @@ $m = mongo_standalone();
 $name = dbname();
 $d = $m->$name;
 $c = $d->deleteIndex;
-$ns = $d->selectCollection('system.indexes');
 $c->drop();
 
 echo "Delete with keys\n";
 $c->ensureIndex( array( 'surname' => 1, 'name' => 1 ) );
-var_dump( count(iterator_to_array( $ns->find( array( 'ns' => "$name.deleteIndex" ) ) ) ) );
+var_dump( count( $c->getIndexInfo() ) );
 $c->deleteIndex( array( 'surname' => 1, 'name' => 1 ) );
-var_dump( count(iterator_to_array( $ns->find( array( 'ns' => "$name.deleteIndex" ) ) ) ) );
+var_dump( count( $c->getIndexInfo() ) );
 
 echo "Delete with name\n";
 $c->ensureIndex( array( 'surname' => 1, 'name' => 1 ) );
-var_dump( count(iterator_to_array( $ns->find( array( 'ns' => "$name.deleteIndex" ) ) ) ) );
+var_dump( count( $c->getIndexInfo() ) );
 /* This is actually cheating, as for some annoying (but documented) reason, a
  * string is not an index name, but a field name. */
 $c->deleteIndex( 'surname_1_name');
-var_dump( count(iterator_to_array( $ns->find( array( 'ns' => "$name.deleteIndex" ) ) ) ) );
+var_dump( count( $c->getIndexInfo() ) );
 ?>
 --EXPECT--
 Delete with keys

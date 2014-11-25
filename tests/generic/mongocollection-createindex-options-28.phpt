@@ -65,7 +65,7 @@ createResults( $c->createIndex( array( "indexC4" => 1 ), array( 'expireAfterSeco
 createResults( $c->ensureIndex( array( "indexE5" => 1 ), array( 'name' => 'index_E_five' )) );
 createResults( $c->createIndex( array( "indexC5" => 1 ), array( 'name' => 'index_C_five' )) );
 
-showIndexes($d->system->indexes->find( array('ns' => $ns) ));
+showIndexes($c->getIndexInfo());
 ?>
 --EXPECT--
 OK

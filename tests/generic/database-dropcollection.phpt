@@ -5,27 +5,28 @@ Database: Dropping collections (name-as-string)
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+require_once "tests/utils/collection-info.inc";
+
 $a = mongo_standalone();
-$d = $a->selectDb("phpunit");
+$d = $a->selectDb(dbname());
 $c = $d->selectCollection("dropcoltest");
-$ns = $d->selectCollection('system.namespaces');
 
 // create a collection by inserting a record
 $c->insert(array('foo' => 'bar'));
-dump_these_keys($ns->findOne(array('name' => 'phpunit.dropcoltest')), array("name"));
+dump_these_keys(findCollection($d, 'dropcoltest'), array("name"));
 
 // drop the collection
 $d->dropCollection('dropcoltest');
-var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
+var_dump(findCollection($d, 'dropcoltest'));
 
 // dropping the new non-existant collection
 $d->dropCollection('dropcoltest');
-var_dump($ns->findOne(array('name' => 'phpunit.dropcoltest')));
+var_dump(findCollection($d, 'dropcoltest'));
 ?>
 --EXPECTF--
 array(1) {
   ["name"]=>
-  string(19) "phpunit.dropcoltest"
+  string(%d) "%s.dropcoltest"
 }
 NULL
 NULL

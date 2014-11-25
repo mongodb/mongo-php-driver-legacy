@@ -5,18 +5,19 @@ Database: Create collection with options array
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+require_once "tests/utils/collection-info.inc";
+
 $dsn = MongoShellServer::getStandaloneInfo();
 
 $a = new MongoClient($dsn);
-$d = $a->selectDb("phpunit");
-$ns = $d->selectCollection('system.namespaces');
+$d = $a->selectDb(dbname());
 
 // cleanup
 $d->dropCollection('create-col1');
-var_dump($ns->findOne(array('name' => 'phpunit.create-col1')));
+var_dump(findCollection($d, 'create-col1'));
 
 $c = $d->createCollection('create-col1', array('size' => 4096, 'capped' => true, 'autoIndexId' => true, 'max' => 5));
-$retval = $ns->findOne(array('name' => 'phpunit.create-col1'));
+$retval = findCollection($d, 'create-col1');
 var_dump($retval['name']);
 dump_these_keys($retval['options'], array('size', 'capped', 'autoIndexId', 'max'));
 
@@ -36,7 +37,7 @@ var_dump($c->count());
 ?>
 --EXPECTF--
 NULL
-string(19) "phpunit.create-col1"
+string(%d) "%s.create-col1"
 array(4) {
   ["size"]=>
   int(4096)

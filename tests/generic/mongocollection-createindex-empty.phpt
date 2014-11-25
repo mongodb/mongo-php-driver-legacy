@@ -37,6 +37,9 @@ function dropResults($result)
 function showIndexes($res)
 {
     echo "Indexes:\n";
+    if (isset($res['ok']) && $res['ok'] == 0) {
+        return;
+    }
     foreach ( $res as $index ) {
         echo ' - ', $index['name'], ': ';
         echo json_encode( $index['key'] ), "\n";
@@ -56,12 +59,12 @@ try {
 	echo $e->getMessage(), "\n";
 }
 
-showIndexes($d->system->indexes->find( array('ns' => $ns) ));
+showIndexes($c->getIndexInfo());
 
 createResults( $c->ensureIndex( array("indexE1" => 1), array() ) );
 createResults( $c->createIndex( array("indexC1" => 1), array() ) );
 
-showIndexes($d->system->indexes->find( array('ns' => $ns) ));
+showIndexes($c->getIndexInfo());
 ?>
 --EXPECTF--
 22
