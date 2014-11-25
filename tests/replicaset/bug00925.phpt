@@ -1,6 +1,7 @@
 --TEST--
 Test for PHP-925: GridFS read methods issue a write through ensureIndex().
 --SKIPIF--
+<?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
 <?php require_once 'tests/utils/replicaset.inc' ?>
 --FILE--
 <?php
@@ -20,7 +21,7 @@ $g = $d->getGridFS();
 $id = $g->storeBytes("foo");
 
 /* Sleep to fight replication lag */
-sleep(1);
+sleep(3);
 
 /* And secondary for read test */
 $s = new MongoClient($secondary);
