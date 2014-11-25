@@ -1,7 +1,7 @@
 --TEST--
 MongoConnection::parallelCollectionScan()
 --SKIPIF--
-<?php $needs = "2.5.5"; ?>
+<?php $needs = "2.5.5"; $engine = 'mmapv1'; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
