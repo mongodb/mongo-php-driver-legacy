@@ -17,6 +17,7 @@ $d->listcol->insert(array('_id' => 'test'));
 
 echo "without flag\n";
 $collections = $d->listCollections();
+sort( $collections );
 foreach( $collections as $col )
 {
 	if ($col->getName() == 'system.profile' || $col->getName() == 'listcol') {
@@ -24,8 +25,14 @@ foreach( $collections as $col )
 	}
 }
 
+function sortObject( $a, $b )
+{
+	return strcmp( $a->getName(), $b->getName() );
+}
+
 echo "with flag\n";
 $collections = $d->listCollections(true);
+usort( $collections, 'sortObject' );
 foreach( $collections as $col )
 {
 	if ($col->getName() == 'system.profile' || $col->getName() == 'listcol') {

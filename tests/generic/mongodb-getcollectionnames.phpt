@@ -17,6 +17,7 @@ $d->listcol->insert(array('_id' => 'test'));
 
 echo "without flag\n";
 $collections = $d->getCollectionNames();
+sort( $collections );
 foreach( $collections as $col )
 {
 	if ($col == 'system.profile' || $col == 'listcol') {
@@ -26,6 +27,7 @@ foreach( $collections as $col )
 
 echo "with flag\n";
 $collections = $d->getCollectionNames(true);
+sort( $collections );
 foreach( $collections as $col )
 {
 	if ($col == 'system.profile' || $col == 'listcol') {
