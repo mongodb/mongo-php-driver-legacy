@@ -235,7 +235,7 @@ zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 	return retval;
 }
 
-#if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3
+#if PHP_VERSION_ID >= 50300
 HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC)
 {
 	HashPosition pos;
@@ -322,7 +322,7 @@ void mongo_init_MongoClient(TSRMLS_D)
 	mongoclient_handlers.clone_obj = NULL;
 	mongoclient_handlers.read_property = mongo_read_property;
 	mongoclient_handlers.write_property = mongo_write_property;
-#if PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 3
+#if PHP_VERSION_ID >= 50300
 	mongoclient_handlers.get_debug_info = mongo_get_debug_info;
 #endif
 
