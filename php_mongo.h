@@ -179,21 +179,6 @@ typedef __int64 int64_t;
 }
 #endif
 
-#define PHP_MONGO_TYPE_OBJ_NEW(mongo_obj)                    \
-	zend_object_value retval;                           \
-	mongo_obj *intern;                                  \
-	                                                    \
-	intern = (mongo_obj*)emalloc(sizeof(mongo_obj));               \
-	memset(intern, 0, sizeof(mongo_obj));                          \
-	                                                               \
-	zend_object_std_init(&intern->std, class_type TSRMLS_CC);      \
-	init_properties(intern);                                       \
-	                                                               \
-	retval.handle = zend_objects_store_put(intern,(zend_objects_store_dtor_t) zend_objects_destroy_object, php_##mongo_obj##_free, NULL TSRMLS_CC); \
-	retval.handlers = &mongo_type_object_handlers;                     \
-	                                                               \
-	return retval;
-
 #define PHP_MONGO_OBJ_NEW(mongo_obj)                    \
 	zend_object_value retval;                           \
 	mongo_obj *intern;                                  \
