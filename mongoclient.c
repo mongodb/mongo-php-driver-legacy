@@ -183,6 +183,9 @@ void mongo_write_property(zval *object, zval *member, zval *value TSRMLS_DC)
 	}
 }
 
+#define PHP_MONGO_DEBUG_INFO_MASK              0x00FF
+#define PHP_MONGO_DEBUG_INFO_IGNORE_DEPRECATED 0x0100
+
 #if PHP_VERSION_ID >= 50400
 zval *mongo_read_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC)
 #else
@@ -202,7 +205,7 @@ zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 
 	property_info = zend_get_property_info(Z_OBJCE_P(object), member, 1 TSRMLS_CC);
 
-	if (property_info && property_info->flags & ZEND_ACC_DEPRECATED) {
+	if (!(type & PHP_MONGO_DEBUG_INFO_IGNORE_DEPRECATED) && property_info && property_info->flags & ZEND_ACC_DEPRECATED) {
 		php_error_docref(NULL TSRMLS_CC, MONGO_E_DEPRECATED, "The '%s' property is deprecated", Z_STRVAL_P(member));
 	}
 
@@ -221,9 +224,9 @@ zval *mongo_read_property(zval *object, zval *member, int type TSRMLS_DC)
 	}
 
 #if PHP_VERSION_ID >= 50400
-	retval = (zend_get_std_object_handlers())->read_property(object, member, type, key TSRMLS_CC);
+	retval = (zend_get_std_object_handlers())->read_property(object, member, type & PHP_MONGO_DEBUG_INFO_MASK, key TSRMLS_CC);
 #else
-	retval = (zend_get_std_object_handlers())->read_property(object, member, type TSRMLS_CC);
+	retval = (zend_get_std_object_handlers())->read_property(object, member, type & PHP_MONGO_DEBUG_INFO_MASK TSRMLS_CC);
 #endif
 	if (member == &tmp_member) {
 		zval_dtor(member);
@@ -255,9 +258,9 @@ HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC)
 					ZVAL_STRINGL(&member, key, key_len - 1, 0);
 
 #if PHP_VERSION_ID >= 50400
-					tmp = mongo_read_property(object, &member, BP_VAR_IS, NULL TSRMLS_CC);
+					tmp = mongo_read_property(object, &member, BP_VAR_IS | PHP_MONGO_DEBUG_INFO_IGNORE_DEPRECATED, NULL TSRMLS_CC);
 #else
-					tmp = mongo_read_property(object, &member, BP_VAR_IS TSRMLS_CC);
+					tmp = mongo_read_property(object, &member, BP_VAR_IS | PHP_MONGO_DEBUG_INFO_IGNORE_DEPRECATED TSRMLS_CC);
 #endif
 					convert_to_boolean_ex(entry);
 					ZVAL_BOOL(*entry, Z_BVAL_P(tmp));
