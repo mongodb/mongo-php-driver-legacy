@@ -488,8 +488,9 @@ void php_mongo_type_object_free(void *object TSRMLS_DC)
 	efree(mto);
 }
 
-zend_object_value php_mongo_type_object_new(zend_class_entry *class_type TSRMLS_DC) {
-	PHP_MONGO_TYPE_OBJ_NEW(mongo_type_object);
+zend_object_value php_mongo_type_object_new(zend_class_entry *class_type TSRMLS_DC)
+{
+	PHP_MONGO_OBJ_NEW(mongo_type_object);
 }
 /* }}} */
 
