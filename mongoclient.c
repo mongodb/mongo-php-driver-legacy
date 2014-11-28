@@ -252,7 +252,7 @@ HashTable *mongo_get_debug_info(zval *object, int *is_temp TSRMLS_DC)
 					zval member;
 					zval *tmp;
 					INIT_ZVAL(member);
-					ZVAL_STRINGL(&member, key, key_len, 0);
+					ZVAL_STRINGL(&member, key, key_len - 1, 0);
 
 #if PHP_VERSION_ID >= 50400
 					tmp = mongo_read_property(object, &member, BP_VAR_IS, NULL TSRMLS_CC);
