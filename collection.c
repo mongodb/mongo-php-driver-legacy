@@ -1121,7 +1121,7 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 	return 1;
 }
 
-static void php_mongo_collection_insert(zval *return_value, zval *z_collection, zval *document, zval *z_write_options TSRMLS_DC)
+static void php_mongo_collection_insert(zval *z_collection, zval *document, zval *z_write_options, zval *return_value TSRMLS_DC)
 {
 	mongoclient *link;
 	mongo_collection *c;
@@ -1192,7 +1192,7 @@ PHP_METHOD(MongoCollection, insert)
 	}
 	MUST_BE_ARRAY_OR_OBJECT(1, document);
 
-	php_mongo_collection_insert(return_value, getThis(), document, z_write_options TSRMLS_CC);
+	php_mongo_collection_insert(getThis(), document, z_write_options, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -1915,7 +1915,7 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, z
 		add_assoc_stringl(data, "name", key_str, key_str_len, 0);
 	}
 
-	php_mongo_collection_insert(return_value, system_indexes_collection, data, options TSRMLS_CC);
+	php_mongo_collection_insert(system_indexes_collection, data, options, return_value TSRMLS_CC);
 
 	/* Check for whether an exception was thrown. In the special case where
 	 * there is an index-adding problem, we need to change the exception to a
@@ -2326,7 +2326,7 @@ PHP_METHOD(MongoCollection, save)
 		return;
 	}
 
-	php_mongo_collection_insert(return_value, this_ptr, a, options TSRMLS_CC);
+	php_mongo_collection_insert(this_ptr, a, options, return_value TSRMLS_CC);
 	zval_ptr_dtor(&options);
 }
 /* }}} */
