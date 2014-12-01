@@ -1915,7 +1915,8 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, z
 		add_assoc_stringl(data, "name", key_str, key_str_len, 0);
 	}
 
-	MONGO_METHOD2(MongoCollection, insert, return_value, system_indexes_collection, data, options);
+	php_mongo_collection_insert(return_value, system_indexes_collection, data, options TSRMLS_CC);
+
 	/* Check for whether an exception was thrown. In the special case where
 	 * there is an index-adding problem, we need to change the exception to a
 	 * different one */
