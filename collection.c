@@ -2326,7 +2326,7 @@ PHP_METHOD(MongoCollection, save)
 		return;
 	}
 
-	MONGO_METHOD2(MongoCollection, insert, return_value, getThis(), a, options);
+	php_mongo_collection_insert(return_value, this_ptr, a, options TSRMLS_CC);
 	zval_ptr_dtor(&options);
 }
 /* }}} */
