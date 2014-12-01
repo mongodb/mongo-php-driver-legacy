@@ -1675,18 +1675,23 @@ PHP_METHOD(MongoCollection, remove)
 /* }}} */
 
 
-static void mongo_collection_create_index_command(mongo_connection *connection, mongo_collection *collection, zval *keys, zval *options, zval *return_value TSRMLS_DC)
+static void mongo_collection_create_index_command(mongo_connection *connection, zval *z_collection, zval *keys, zval *options, zval *return_value TSRMLS_DC)
 {
 	zval *cmd, *indexes, *index_spec, *retval;
 	zend_bool done_name = 0;
-	mongo_db *db = (mongo_db*)zend_object_store_get_object(collection->parent TSRMLS_CC);
+	mongo_db *db;
+	mongo_collection *c;
+
+	PHP_MONGO_GET_COLLECTION(z_collection);
+
+	db = (mongo_db*)zend_object_store_get_object(c->parent TSRMLS_CC);
 
 	/* set up data */
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);
 
-	add_assoc_zval(cmd, "createIndexes", collection->name);
-	zval_add_ref(&collection->name);
+	add_assoc_zval(cmd, "createIndexes", c->name);
+	zval_add_ref(&c->name);
 
 	/* set up "indexes" wrapper */
 	MAKE_STD_ZVAL(indexes);
@@ -1787,7 +1792,7 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 		add_assoc_stringl(index_spec, "name", key_str, key_str_len, 0);
 	}
 
-	retval = php_mongo_runcommand(collection->link, &collection->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
+	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
  
@@ -1804,10 +1809,13 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 /* }}} */
 
 
-static void mongo_collection_create_index_legacy(mongo_connection *connection, mongo_collection *collection, zval *keys, zval *options, zval *return_value TSRMLS_DC)
+static void mongo_collection_create_index_legacy(mongo_connection *connection, zval *z_collection, zval *keys, zval *options, zval *return_value TSRMLS_DC)
 {
 	zval *db, *system_indexes_collection, *data;
 	zend_bool done_name = 0;
+	mongo_collection *c;
+
+	PHP_MONGO_GET_COLLECTION(z_collection);
 
 	if (IS_SCALAR_P(keys)) {
 		zval *key_array;
@@ -1835,7 +1843,7 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, m
 	}
 
 	/* get the system.indexes collection */
-	db = collection->parent;
+	db = c->parent;
 
 	system_indexes_collection = php_mongo_db_selectcollection(db, "system.indexes", strlen("system.indexes") TSRMLS_CC);
 	PHP_MONGO_CHECK_EXCEPTION2(&keys, &system_indexes_collection);
@@ -1845,8 +1853,8 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, m
 	array_init(data);
 
 	/* ns */
-	add_assoc_zval(data, "ns", collection->ns);
-	zval_add_ref(&collection->ns);
+	add_assoc_zval(data, "ns", c->ns);
+	zval_add_ref(&c->ns);
 	add_assoc_zval(data, "key", keys);
 	zval_add_ref(&keys);
 
@@ -1951,9 +1959,9 @@ PHP_METHOD(MongoCollection, createIndex)
 	}
 
 	if (php_mongo_api_connection_min_server_version(connection, 2, 5, 5)) {
-		mongo_collection_create_index_command(connection, c, keys, options, return_value TSRMLS_CC);
+		mongo_collection_create_index_command(connection, getThis(), keys, options, return_value TSRMLS_CC);
 	} else {
-		mongo_collection_create_index_legacy(connection, c, keys, options, return_value TSRMLS_CC);
+		mongo_collection_create_index_legacy(connection, getThis(), keys, options, return_value TSRMLS_CC);
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
@@ -1981,9 +1989,9 @@ PHP_METHOD(MongoCollection, ensureIndex)
 	}
 
 	if (php_mongo_api_connection_min_server_version(connection, 2, 5, 5)) {
-		mongo_collection_create_index_command(connection, c, keys, options, return_value TSRMLS_CC);
+		mongo_collection_create_index_command(connection, getThis(), keys, options, return_value TSRMLS_CC);
 	} else {
-		mongo_collection_create_index_legacy(connection, c, keys, options, return_value TSRMLS_CC);
+		mongo_collection_create_index_legacy(connection, getThis(), keys, options, return_value TSRMLS_CC);
 	}
 
 	PHP_MONGO_GET_COLLECTION(getThis());
