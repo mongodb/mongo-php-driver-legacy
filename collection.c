@@ -1121,24 +1121,14 @@ int mongo_collection_insert_api(mongo_con_manager *manager, mongo_connection *co
 	return 1;
 }
 
-/* {{{ proto bool|array MongoCollection::insert(array|object document [, array options])
-   Insert a document into the collection and return the database response if
-   the write concern is >= 1. Otherwise, boolean true is returned if the
-   document is not empty. */
-PHP_METHOD(MongoCollection, insert)
+static void php_mongo_collection_insert(zval *return_value, zval *z_collection, zval *document, zval *z_write_options TSRMLS_DC)
 {
-	zval *document, *z_write_options = 0;
 	mongoclient *link;
-	mongo_connection *connection;
 	mongo_collection *c;
+	mongo_connection *connection;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &document, &z_write_options) == FAILURE) {
-		return;
-	}
-	MUST_BE_ARRAY_OR_OBJECT(1, document);
-
-	PHP_MONGO_GET_COLLECTION(getThis());
-	link = (mongoclient*)zend_object_store_get_object(c->link TSRMLS_CC);
+	PHP_MONGO_GET_COLLECTION(z_collection);
+	PHP_MONGO_GET_LINK(c->link);
 
 	if ((connection = php_mongo_collection_get_server(link, MONGO_CON_FLAG_WRITE TSRMLS_CC)) == NULL) {
 		RETURN_FALSE;
@@ -1152,11 +1142,11 @@ PHP_METHOD(MongoCollection, insert)
 
 		PHP_MONGO_GET_DB(c->parent);
 
-		mongo_apply_implicit_write_options(&write_options, &link->servers->options, getThis() TSRMLS_CC);
+		mongo_apply_implicit_write_options(&write_options, &link->servers->options, z_collection TSRMLS_CC);
 		php_mongo_api_write_options_from_zval(&write_options, z_write_options TSRMLS_CC);
 		socket_read_timeout = mongo_get_socket_read_timeout(&link->servers->options, z_write_options TSRMLS_CC);
 
-		retval = mongo_collection_insert_api(link->manager, connection, &link->servers->options, socket_read_timeout, &write_options, Z_STRVAL_P(db->name), getThis(), document, return_value TSRMLS_CC);
+		retval = mongo_collection_insert_api(link->manager, connection, &link->servers->options, socket_read_timeout, &write_options, Z_STRVAL_P(db->name), z_collection, document, return_value TSRMLS_CC);
 
 		if (retval) {
 			/* Adds random "err", "code", "errmsg" empty fields to be compatible with
@@ -1175,7 +1165,7 @@ PHP_METHOD(MongoCollection, insert)
 		mongo_buffer buf;
 
 		CREATE_BUF(buf, INITIAL_BUF_SIZE);
-		retval = mongo_collection_insert_opcode(link->manager, connection, &link->servers->options, z_write_options, getThis(), &buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), document, return_value TSRMLS_CC);
+		retval = mongo_collection_insert_opcode(link->manager, connection, &link->servers->options, z_write_options, z_collection, &buf, Z_STRVAL_P(c->ns), Z_STRLEN_P(c->ns), document, return_value TSRMLS_CC);
 
 		/* retval == -1 means a GLE response was received, so send_message() has
 		* either set return_value or thrown an exception via do_gle_op(). */
@@ -1185,7 +1175,24 @@ PHP_METHOD(MongoCollection, insert)
 		efree(buf.start);
 	} else {
 		zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Cannot determine how to write documents to the server");
+		return;
 	}
+}
+
+/* {{{ proto bool|array MongoCollection::insert(array|object document [, array options])
+   Insert a document into the collection and return the database response if
+   the write concern is >= 1. Otherwise, boolean true is returned if the
+   document is not empty. */
+PHP_METHOD(MongoCollection, insert)
+{
+	zval *document, *z_write_options = NULL;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &document, &z_write_options) == FAILURE) {
+		return;
+	}
+	MUST_BE_ARRAY_OR_OBJECT(1, document);
+
+	php_mongo_collection_insert(return_value, getThis(), document, z_write_options TSRMLS_CC);
 }
 /* }}} */
 
