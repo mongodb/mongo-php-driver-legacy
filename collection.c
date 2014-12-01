@@ -1809,9 +1809,9 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 /* }}} */
 
 
-static void mongo_collection_create_index_legacy(mongo_connection *connection, zval *z_collection, zval *keys, zval *options, zval *return_value TSRMLS_DC)
+static void mongo_collection_create_index_legacy(mongo_connection *connection, zval *z_collection, zval *keys, zval *z_options, zval *return_value TSRMLS_DC)
 {
-	zval *db, *system_indexes_collection, *data;
+	zval *db, *system_indexes_collection, *document;
 	zend_bool done_name = 0;
 	mongo_collection *c;
 
@@ -1848,49 +1848,49 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, z
 	system_indexes_collection = php_mongo_db_selectcollection(db, "system.indexes", strlen("system.indexes") TSRMLS_CC);
 	PHP_MONGO_CHECK_EXCEPTION2(&keys, &system_indexes_collection);
 
-	/* set up data */
-	MAKE_STD_ZVAL(data);
-	array_init(data);
+	/* set up document */
+	MAKE_STD_ZVAL(document);
+	array_init(document);
 
 	/* ns */
-	add_assoc_zval(data, "ns", c->ns);
+	add_assoc_zval(document, "ns", c->ns);
 	zval_add_ref(&c->ns);
-	add_assoc_zval(data, "key", keys);
+	add_assoc_zval(document, "key", keys);
 	zval_add_ref(&keys);
 
-	if (options) {
+	if (z_options) {
 		zval *temp, **gle_pp, **fsync_pp, **timeout_pp, **name;
 
-		zend_hash_merge(HASH_P(data), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
+		zend_hash_merge(HASH_P(document), HASH_P(z_options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 
-		if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**)&gle_pp) == SUCCESS) {
-			zend_hash_del(HASH_P(data), "safe", strlen("safe") + 1);
+		if (zend_hash_find(HASH_P(z_options), "safe", strlen("safe") + 1, (void**)&gle_pp) == SUCCESS) {
+			zend_hash_del(HASH_P(document), "safe", strlen("safe") + 1);
 		}
-		if (zend_hash_find(HASH_P(options), "w", strlen("w") + 1, (void**)&gle_pp) == SUCCESS) {
-			zend_hash_del(HASH_P(data), "w", strlen("w") + 1);
+		if (zend_hash_find(HASH_P(z_options), "w", strlen("w") + 1, (void**)&gle_pp) == SUCCESS) {
+			zend_hash_del(HASH_P(document), "w", strlen("w") + 1);
 		}
-		if (zend_hash_find(HASH_P(options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp) == SUCCESS) {
-			zend_hash_del(HASH_P(data), "fsync", strlen("fsync") + 1);
+		if (zend_hash_find(HASH_P(z_options), "fsync", strlen("fsync") + 1, (void**)&fsync_pp) == SUCCESS) {
+			zend_hash_del(HASH_P(document), "fsync", strlen("fsync") + 1);
 		}
-		if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout_pp) == SUCCESS) {
-			zend_hash_del(HASH_P(data), "timeout", strlen("timeout") + 1);
+		if (zend_hash_find(HASH_P(z_options), "timeout", strlen("timeout") + 1, (void**)&timeout_pp) == SUCCESS) {
+			zend_hash_del(HASH_P(document), "timeout", strlen("timeout") + 1);
 		}
 
-		if (zend_hash_find(HASH_P(options), "name", strlen("name") + 1, (void**)&name) == SUCCESS) {
+		if (zend_hash_find(HASH_P(z_options), "name", strlen("name") + 1, (void**)&name) == SUCCESS) {
 			if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
-				zval_ptr_dtor(&data);
+				zval_ptr_dtor(&document);
 				zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
 				return;
 			}
 			done_name = 1;
 		}
-		zval_add_ref(&options);
+		zval_add_ref(&z_options);
 	} else {
 		zval *opts;
 
 		MAKE_STD_ZVAL(opts);
 		array_init(opts);
-		options = opts;
+		z_options = opts;
 	}
 
 	if (!done_name) {
@@ -1899,23 +1899,23 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, z
 
 		key_str = to_index_string(keys, &key_str_len TSRMLS_CC);
 		if (!key_str) {
-			zval_ptr_dtor(&data);
-			zval_ptr_dtor(&options);
+			zval_ptr_dtor(&document);
+			zval_ptr_dtor(&z_options);
 			return;
 		}
 
 		if (key_str_len > MAX_INDEX_NAME_LEN) {
-			zval_ptr_dtor(&data);
+			zval_ptr_dtor(&document);
 			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", key_str_len, MAX_INDEX_NAME_LEN);
 			efree(key_str);
-			zval_ptr_dtor(&options);
+			zval_ptr_dtor(&z_options);
 			return;
 		}
 
-		add_assoc_stringl(data, "name", key_str, key_str_len, 0);
+		add_assoc_stringl(document, "name", key_str, key_str_len, 0);
 	}
 
-	php_mongo_collection_insert(system_indexes_collection, data, options, return_value TSRMLS_CC);
+	php_mongo_collection_insert(system_indexes_collection, document, z_options, return_value TSRMLS_CC);
 
 	/* Check for whether an exception was thrown. In the special case where
 	 * there is an index-adding problem, we need to change the exception to a
@@ -1933,8 +1933,8 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, z
 		}
 	}
 
-	zval_ptr_dtor(&options);
-	zval_ptr_dtor(&data);
+	zval_ptr_dtor(&z_options);
+	zval_ptr_dtor(&document);
 	zval_ptr_dtor(&system_indexes_collection);
 	zval_ptr_dtor(&keys);
 }
@@ -2292,23 +2292,23 @@ PHP_METHOD(MongoCollection, count)
    document is not empty. */
 PHP_METHOD(MongoCollection, save)
 {
-	zval *a, *options = 0;
+	zval *document, *z_options = NULL;
 	zval **id;
 	mongo_collection *c;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a/", &a, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a/", &document, &z_options) == FAILURE) {
 		return;
 	}
-	MUST_BE_ARRAY_OR_OBJECT(1, a);
+	MUST_BE_ARRAY_OR_OBJECT(1, document);
 
-	if (!options) {
-		MAKE_STD_ZVAL(options);
-		array_init(options);
+	if (!z_options) {
+		MAKE_STD_ZVAL(z_options);
+		array_init(z_options);
 	} else {
-		Z_ADDREF_P(options);
+		Z_ADDREF_P(z_options);
 	}
 
-	if (zend_hash_find(HASH_P(a), "_id", 4, (void**)&id) == SUCCESS) {
+	if (zend_hash_find(HASH_P(document), "_id", 4, (void**)&id) == SUCCESS) {
 		zval *criteria;
 
 		MAKE_STD_ZVAL(criteria);
@@ -2316,18 +2316,18 @@ PHP_METHOD(MongoCollection, save)
 		add_assoc_zval(criteria, "_id", *id);
 		zval_add_ref(id);
 
-		add_assoc_bool(options, "upsert", 1);
+		add_assoc_bool(z_options, "upsert", 1);
 
 		PHP_MONGO_GET_COLLECTION(getThis());
-		php_mongocollection_update(this_ptr, c, criteria, a, options, return_value TSRMLS_CC);
+		php_mongocollection_update(this_ptr, c, criteria, document, z_options, return_value TSRMLS_CC);
 
 		zval_ptr_dtor(&criteria);
-		zval_ptr_dtor(&options);
+		zval_ptr_dtor(&z_options);
 		return;
 	}
 
-	php_mongo_collection_insert(this_ptr, a, options, return_value TSRMLS_CC);
-	zval_ptr_dtor(&options);
+	php_mongo_collection_insert(this_ptr, document, z_options, return_value TSRMLS_CC);
+	zval_ptr_dtor(&z_options);
 }
 /* }}} */
 
