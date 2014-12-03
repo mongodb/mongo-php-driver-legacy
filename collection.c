@@ -1187,7 +1187,7 @@ PHP_METHOD(MongoCollection, insert)
 {
 	zval *document, *z_write_options = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &document, &z_write_options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a", &document, &z_write_options) == FAILURE) {
 		return;
 	}
 	MUST_BE_ARRAY_OR_OBJECT(1, document);
