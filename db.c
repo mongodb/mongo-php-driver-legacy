@@ -982,13 +982,11 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 	object_init_ex(cursor, mongo_ce_Cursor);
 	cursor_tmp = (mongo_cursor*)zend_object_store_get_object(cursor TSRMLS_CC);
 	mongo_read_preference_replace(read_preferences, &cursor_tmp->read_pref);
-	MAKE_STD_ZVAL(temp);
-	ZVAL_NULL(temp);
 
-	MONGO_METHOD3(MongoCursor, __construct, temp, cursor, zmongoclient, ns, cmd);
+	php_mongocursor_create(cursor_tmp, zmongoclient, Z_STRVAL_P(ns), Z_STRLEN_P(ns), cmd, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&ns);
-	zval_ptr_dtor(&temp);
+
 	MAKE_STD_ZVAL(temp);
 	ZVAL_NULL(temp);
 

@@ -348,7 +348,7 @@ PHP_METHOD(MongoCollection, validate)
  * getlasterror query to the buffer and alloc & inits the cursor zval. */
 static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC)
 {
-	zval *cmd_ns_z, *cmd, *cursor_z, *temp, *timeout_p;
+	zval *cmd_ns_z, *cmd, *cursor_z, *timeout_p;
 	char *cmd_ns, *w_str = NULL;
 	mongo_cursor *cursor;
 	mongo_collection *c = (mongo_collection*)zend_object_store_get_object(coll TSRMLS_CC);
@@ -523,18 +523,15 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 	MAKE_STD_ZVAL(cursor_z);
 	object_init_ex(cursor_z, mongo_ce_Cursor);
 
-	MAKE_STD_ZVAL(temp);
-	ZVAL_NULL(temp);
-	MONGO_METHOD2(MongoCursor, __construct, temp, cursor_z, c->link, cmd_ns_z);
-	zval_ptr_dtor(&temp);
+	cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
+	php_mongocursor_create(cursor, c->link, Z_STRVAL_P(cmd_ns_z), Z_STRLEN_P(cmd_ns_z), cmd, NULL TSRMLS_CC);
+
 	if (EG(exception)) {
 		zval_ptr_dtor(&cursor_z);
 		zval_ptr_dtor(&cmd_ns_z);
 		zval_ptr_dtor(&cmd);
 		return 0;
 	}
-
-	cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
 
 	/* Make sure the "getLastError" also gets send to a primary. This should
 	 * be refactored alongside with the getLastError redirection in
@@ -546,8 +543,6 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 	cursor->limit = -1;
 	cursor->timeout = timeout;
 	zval_ptr_dtor(&cursor->query);
-	/* cmd is now part of cursor, so it shouldn't be dtored until cursor is */
-	cursor->query = cmd;
 
 	/* append the query */
 	response = php_mongo_write_query(buf, cursor, max_document_size, max_message_size TSRMLS_CC);
