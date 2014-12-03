@@ -524,7 +524,7 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 	object_init_ex(cursor_z, mongo_ce_Cursor);
 
 	cursor = (mongo_cursor*)zend_object_store_get_object(cursor_z TSRMLS_CC);
-	php_mongocursor_create(cursor, c->link, Z_STRVAL_P(cmd_ns_z), Z_STRLEN_P(cmd_ns_z), NULL, NULL TSRMLS_CC);
+	php_mongocursor_create(cursor, c->link, Z_STRVAL_P(cmd_ns_z), Z_STRLEN_P(cmd_ns_z), cmd, NULL TSRMLS_CC);
 
 	if (EG(exception)) {
 		zval_ptr_dtor(&cursor_z);
@@ -543,8 +543,6 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 	cursor->limit = -1;
 	cursor->timeout = timeout;
 	zval_ptr_dtor(&cursor->query);
-	/* cmd is now part of cursor, so it shouldn't be dtored until cursor is */
-	cursor->query = cmd;
 
 	/* append the query */
 	response = php_mongo_write_query(buf, cursor, max_document_size, max_message_size TSRMLS_CC);
