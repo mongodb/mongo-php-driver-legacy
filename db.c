@@ -1015,16 +1015,13 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 		zval **timeout;
 
 		if (zend_hash_find(HASH_P(options), "socketTimeoutMS", strlen("socketTimeoutMS") + 1, (void**)&timeout) == SUCCESS) {
-			MAKE_STD_ZVAL(temp);
-			ZVAL_NULL(temp);
-			MONGO_METHOD1(MongoCursor, timeout, temp, cursor, *timeout);
-			zval_ptr_dtor(&temp);
+			convert_to_long(*timeout);
+			cursor_tmp->timeout = Z_LVAL_PP(timeout);
 		} else if (zend_hash_find(HASH_P(options), "timeout", strlen("timeout") + 1, (void**)&timeout) == SUCCESS) {
 			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'timeout' option is deprecated, please use 'socketTimeoutMS' instead");
-			MAKE_STD_ZVAL(temp);
-			ZVAL_NULL(temp);
-			MONGO_METHOD1(MongoCursor, timeout, temp, cursor, *timeout);
-			zval_ptr_dtor(&temp);
+
+			convert_to_long(*timeout);
+			cursor_tmp->timeout = Z_LVAL_PP(timeout);
 		}
 	}
 
