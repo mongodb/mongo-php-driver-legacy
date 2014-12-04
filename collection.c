@@ -2371,7 +2371,7 @@ PHP_METHOD(MongoCollection, getDBRef)
 	MUST_BE_ARRAY_OR_OBJECT(1, ref);
 
 	PHP_MONGO_GET_COLLECTION(getThis());
-	MONGO_METHOD2(MongoDBRef, get, return_value, NULL, c->parent, ref);
+	php_mongo_dbref_get(c->parent, ref, return_value TSRMLS_CC);
 }
 /* }}} */
 
