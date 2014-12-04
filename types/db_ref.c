@@ -169,7 +169,7 @@ void php_mongo_dbref_get(zval *zdb, zval *ref, zval *return_value TSRMLS_DC)
 	zval_add_ref(id);
 
 	/* return whatever's there */
-	MONGO_METHOD1(MongoCollection, findOne, return_value, collection, query);
+	php_mongo_collection_findone(collection, query, NULL, NULL, return_value TSRMLS_CC);
 
 	/* cleanup */
 	zval_ptr_dtor(&collection);

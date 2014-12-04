@@ -1300,22 +1300,12 @@ PHP_METHOD(MongoCollection, find)
 }
 /* }}} */
 
-/* {{{ proto array MongoCollection::findOne([array|object criteria [, array|object return_fields [, array options]]])
-   Return the first document that matches $criteria and use $return_fields as
-   the projection. NULL will be returned if no document matches. */
-PHP_METHOD(MongoCollection, findOne)
+void php_mongo_collection_findone(zval *this_ptr, zval *query, zval *fields, zval *options, zval *return_value TSRMLS_DC)
 {
-	zval *query = NULL, *fields = NULL, *options = NULL, *zcursor = NULL;
 	mongo_cursor *cursor;
 	mongo_collection *c;
+	zval *zcursor = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zza", &query, &fields, &options) == FAILURE) {
-		return;
-	}
-
-	MUST_BE_ARRAY_OR_OBJECT(1, query);
-	MUST_BE_ARRAY_OR_OBJECT(2, fields);
-	
 	PHP_MONGO_GET_COLLECTION(getThis());
 
 	MAKE_STD_ZVAL(zcursor);
@@ -1386,6 +1376,23 @@ PHP_METHOD(MongoCollection, findOne)
 cleanup_on_failure:
 	zend_objects_store_del_ref(zcursor TSRMLS_CC);
 	zval_ptr_dtor(&zcursor);
+}
+
+/* {{{ proto array MongoCollection::findOne([array|object criteria [, array|object return_fields [, array options]]])
+   Return the first document that matches $criteria and use $return_fields as
+   the projection. NULL will be returned if no document matches. */
+PHP_METHOD(MongoCollection, findOne)
+{
+	zval *query = NULL, *fields = NULL, *options = NULL;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|zza", &query, &fields, &options) == FAILURE) {
+		return;
+	}
+
+	MUST_BE_ARRAY_OR_OBJECT(1, query);
+	MUST_BE_ARRAY_OR_OBJECT(2, fields);
+
+	php_mongo_collection_findone(getThis(), query, fields, options, return_value TSRMLS_CC);
 }
 /* }}} */
 
