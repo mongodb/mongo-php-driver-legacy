@@ -289,15 +289,13 @@ PHP_METHOD(MongoCollection, setWriteConcern)
 }
 /* }}} */
 
-/* {{{ proto array MongoCollection::drop()
-   Drops the current collection and returns the database response */
-PHP_METHOD(MongoCollection, drop)
+void php_mongocollection_drop(zval *collection, zval *return_value TSRMLS_DC)
 {
 	zval *cmd, *retval;
 	mongo_collection *c;
 	mongo_db *db;
 
-	PHP_MONGO_GET_COLLECTION(getThis());
+	PHP_MONGO_GET_COLLECTION(collection);
 	PHP_MONGO_GET_DB(c->parent);
 
 	MAKE_STD_ZVAL(cmd);
@@ -311,6 +309,13 @@ PHP_METHOD(MongoCollection, drop)
 	if (retval) {
 		RETURN_ZVAL(retval, 0, 1);
 	}
+}
+
+/* {{{ proto array MongoCollection::drop()
+   Drops the current collection and returns the database response */
+PHP_METHOD(MongoCollection, drop)
+{
+	php_mongocollection_drop(getThis(), return_value TSRMLS_CC);
 }
 /* }}} */
 

@@ -581,7 +581,7 @@ PHP_METHOD(MongoDB, dropCollection)
 		return;
 	}
 
-	MONGO_METHOD(MongoCollection, drop, return_value, collection);
+	php_mongocollection_drop(collection, return_value TSRMLS_CC);
 
 	zval_ptr_dtor(&collection);
 }

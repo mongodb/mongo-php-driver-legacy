@@ -21,6 +21,7 @@
 zend_object_value php_mongo_collection_new(zend_class_entry* TSRMLS_DC);
 void php_mongo_collection_construct(zval *this, zval *parent, char *name_str, int name_len TSRMLS_DC);
 int php_mongo_collection_find(mongo_cursor *cursor, mongo_collection *c, zval *query, zval *fields TSRMLS_DC);
+void php_mongocollection_drop(zval *collection, zval *return_value TSRMLS_DC);
 void mongo_apply_implicit_write_options(php_mongo_write_options *write_options, mongo_server_options *server_options, zval *collection TSRMLS_DC);
 mongo_connection* php_mongo_collection_get_server(mongoclient *link, int connection_flags TSRMLS_DC);
 
