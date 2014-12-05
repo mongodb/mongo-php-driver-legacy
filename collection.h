@@ -16,8 +16,6 @@
 #ifndef MONGO_COLLECTION_H
 #define MONGO_COLLECTION_H
 
-#define MAX_INDEX_NAME_LEN 127
-
 zend_object_value php_mongo_collection_new(zend_class_entry* TSRMLS_DC);
 void php_mongo_collection_construct(zval *this, zval *parent, char *name_str, int name_len TSRMLS_DC);
 int php_mongo_collection_find(mongo_cursor *cursor, mongo_collection *c, zval *query, zval *fields TSRMLS_DC);
