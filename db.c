@@ -853,7 +853,7 @@ PHP_METHOD(MongoDB, getDBRef)
 	}
 	MUST_BE_ARRAY_OR_OBJECT(1, ref);
 
-	MONGO_METHOD2(MongoDBRef, get, return_value, NULL, getThis(), ref);
+	php_mongo_dbref_get(getThis(), ref, return_value TSRMLS_CC);
 }
 
 PHP_METHOD(MongoDB, execute)

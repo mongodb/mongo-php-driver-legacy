@@ -24,6 +24,8 @@
  */
 zval *php_mongo_dbref_create(zval *zid, char *collection, char *db TSRMLS_DC);
 
+void php_mongo_dbref_get(zval *zdb, zval *ref, zval *return_value TSRMLS_DC);
+
 /* Resolves a document or ID parameter provided to the collection/db createDBRef
  * methods. If the argument is an array or object, we'll attempt to return its
  * _id field, otherwise, the argument is returned as-is.

@@ -110,20 +110,13 @@ PHP_METHOD(MongoDBRef, isRef)
 	RETURN_FALSE;
 }
 /* }}} */
-
-/* {{{ MongoDBRef::get()
- */
-PHP_METHOD(MongoDBRef, get)
+	
+void php_mongo_dbref_get(zval *zdb, zval *ref, zval *return_value TSRMLS_DC)
 {
-	zval *zdb, *ref, *collection, *query;
+	zval *collection, *query;
 	zval **ns, **id, **dbname;
 	zend_bool alloced_db = 0;
 	mongo_db *db;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &zdb, mongo_ce_DB, &ref) == FAILURE) {
-		return;
-	}
-		
 	PHP_MONGO_GET_DB(zdb);
 
 	if (
@@ -176,7 +169,7 @@ PHP_METHOD(MongoDBRef, get)
 	zval_add_ref(id);
 
 	/* return whatever's there */
-	MONGO_METHOD1(MongoCollection, findOne, return_value, collection, query);
+	php_mongo_collection_findone(collection, query, NULL, NULL, return_value TSRMLS_CC);
 
 	/* cleanup */
 	zval_ptr_dtor(&collection);
@@ -184,6 +177,19 @@ PHP_METHOD(MongoDBRef, get)
 	if (alloced_db) {
 		zval_ptr_dtor(&zdb);
 	}
+}
+
+/* {{{ MongoDBRef::get(MongoDB $db, array $ref)
+ * Fetches the object pointed to by a reference */
+PHP_METHOD(MongoDBRef, get)
+{
+	zval *zdb, *ref;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Oz", &zdb, mongo_ce_DB, &ref) == FAILURE) {
+		return;
+	}
+
+	php_mongo_dbref_get(zdb, ref, return_value TSRMLS_CC);
 }
 /* }}} */
 
