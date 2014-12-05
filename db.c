@@ -380,7 +380,7 @@ PHP_METHOD(MongoDB, setWriteConcern)
 }
 /* }}} */
 
-static php_mongo_db_profiling_level(INTERNAL_FUNCTION_PARAMETERS, int get)
+static void php_mongo_db_profiling_level(INTERNAL_FUNCTION_PARAMETERS, int get)
 {
 	long level;
 	zval *cmd, *cmd_return;
