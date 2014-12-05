@@ -686,16 +686,51 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 static void mongo_db_list_collections_legacy(zval *this_ptr, zval *options, int return_type, zval *return_value TSRMLS_DC)
 {
 	zend_bool include_system_collections = 0;
-	zval *z_system_collection, *z_cursor, *list;
+	zval *z_system_collection, *z_cursor, *list, *filter = NULL;
 	mongo_cursor *cursor;
 	mongo_collection *collection;
 
 	if (options) {
-		zval **include_system_collections_pp;
+		zval **include_system_collections_pp, **filter_pp;
 
 		if (zend_hash_find(HASH_P(options), ZEND_STRS("includeSystemCollections"), (void**)&include_system_collections_pp) == SUCCESS) {
 			convert_to_boolean(*include_system_collections_pp);
 			include_system_collections = Z_BVAL_PP(include_system_collections_pp);
+		}
+
+		if (zend_hash_find(HASH_P(options), ZEND_STRS("filter"), (void**)&filter_pp) == SUCCESS) {
+			if (Z_TYPE_PP(filter_pp) != IS_ARRAY && Z_TYPE_PP(filter_pp) != IS_OBJECT) {
+				zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Expected filter to be array or object, %s given", zend_get_type_by_const(Z_TYPE_PP(filter_pp)));
+				RETURN_NULL();
+			}
+
+			filter = *filter_pp;
+		}
+	}
+
+	if (filter) {
+		zval **name_pp;
+
+		if (zend_hash_find(HASH_P(filter), ZEND_STRS("name"), (void**)&name_pp) == SUCCESS) {
+			mongo_db *db;
+			int prefixed_name_len;
+			char *prefixed_name;
+
+			if (Z_TYPE_PP(name_pp) != IS_STRING) {
+				zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Filter \"name\" must be a string, %s given", zend_get_type_by_const(Z_TYPE_PP(name_pp)));
+				RETURN_NULL();
+			}
+
+			db = (mongo_db*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+			if (!(db->name)) {
+				zend_throw_exception(mongo_ce_Exception, "The MongoDB object has not been correctly initialized by its constructor", 0 TSRMLS_CC);
+				RETURN_NULL();
+			}
+
+			prefixed_name_len = spprintf(&prefixed_name, 0, "%s.%s", Z_STRVAL_P(db->name), Z_STRVAL_PP(name_pp));
+			add_assoc_stringl(filter, "name", prefixed_name, prefixed_name_len, 1);
+			efree(prefixed_name);
 		}
 	}
 
@@ -716,7 +751,7 @@ static void mongo_db_list_collections_legacy(zval *this_ptr, zval *options, int 
 	cursor = (mongo_cursor*)zend_object_store_get_object(z_cursor TSRMLS_CC);
 	collection = (mongo_collection*)zend_object_store_get_object(z_system_collection TSRMLS_CC);
 
-	php_mongo_collection_find(cursor, collection, NULL, NULL TSRMLS_CC);
+	php_mongo_collection_find(cursor, collection, filter, NULL TSRMLS_CC);
 
 	php_mongo_runquery(cursor TSRMLS_CC);
 	if (EG(exception)) {
