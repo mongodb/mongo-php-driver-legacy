@@ -587,8 +587,9 @@ PHP_METHOD(MongoDB, dropCollection)
 }
 /* }}} */
 
-void mongo_db_list_collections_command(zval *this_ptr, int include_system_collections, int return_type,  zval *return_value TSRMLS_DC)
+static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int return_type,  zval *return_value TSRMLS_DC)
 {
+	zend_bool include_system_collections = 0;
 	zval *z_cmd, *list, **collections;
 	mongo_db *db;
 	mongo_connection *connection;
@@ -601,6 +602,19 @@ void mongo_db_list_collections_command(zval *this_ptr, int include_system_collec
 	MAKE_STD_ZVAL(z_cmd);
 	array_init(z_cmd);
 	add_assoc_long(z_cmd, "listCollections", 1);
+
+	if (options) {
+		zval *temp, **include_system_collections_pp;
+
+		/* "includeSystemCollections" should not be included in the command document */
+		if (zend_hash_find(HASH_P(options), ZEND_STRS("includeSystemCollections"), (void**)&include_system_collections_pp) == SUCCESS) {
+			convert_to_boolean(*include_system_collections_pp);
+			include_system_collections = Z_BVAL_PP(include_system_collections_pp);
+			zend_hash_del(HASH_P(options), "includeSystemCollections", strlen("includeSystemCollections") + 1);
+		}
+
+		zend_hash_merge(HASH_P(z_cmd), HASH_P(options), (copy_ctor_func_t) zval_add_ref, &temp, sizeof(zval*), 1);
+	}
 
 	PHP_MONGO_GET_DB(getThis());
 
@@ -669,11 +683,21 @@ void mongo_db_list_collections_command(zval *this_ptr, int include_system_collec
 	RETURN_ZVAL(list, 0, 1);
 }
 
-void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collections, int return_type, zval *return_value TSRMLS_DC)
+static void mongo_db_list_collections_legacy(zval *this_ptr, zval *options, int return_type, zval *return_value TSRMLS_DC)
 {
+	zend_bool include_system_collections = 0;
 	zval *z_system_collection, *z_cursor, *list;
 	mongo_cursor *cursor;
 	mongo_collection *collection;
+
+	if (options) {
+		zval **include_system_collections_pp;
+
+		if (zend_hash_find(HASH_P(options), ZEND_STRS("includeSystemCollections"), (void**)&include_system_collections_pp) == SUCCESS) {
+			convert_to_boolean(*include_system_collections_pp);
+			include_system_collections = Z_BVAL_PP(include_system_collections_pp);
+		}
+	}
 
 	/* select db.system.namespaces collection */
 	z_system_collection = php_mongo_db_selectcollection(this_ptr, "system.namespaces", strlen("system.namespaces") TSRMLS_CC);
@@ -783,12 +807,12 @@ void mongo_db_list_collections_legacy(zval *this_ptr, int include_system_collect
  */
 static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int return_type)
 {
-	zend_bool include_system_collections = 0;
+	zval *options = NULL;
 	mongo_connection *connection;
 	mongo_db *db;
 	mongoclient *link;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &include_system_collections) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|z", &options) == FAILURE) {
 		return;
 	}
 
@@ -799,10 +823,21 @@ static void php_mongo_enumerate_collections(INTERNAL_FUNCTION_PARAMETERS, int re
 		RETURN_FALSE;
 	}
 
+	/* Convert non-hash parameter to "includeSystemCollections" option */
+	if (options && Z_TYPE_P(options) != IS_ARRAY && Z_TYPE_P(options) != IS_OBJECT) {
+		zend_bool include_system_collections;
+
+		convert_to_boolean(options);
+		include_system_collections = Z_BVAL_P(options);
+
+		array_init(options);
+		add_assoc_bool(options, "includeSystemCollections", include_system_collections);
+	}
+
 	if (php_mongo_api_connection_min_server_version(connection, 2, 7, 5)) {
-		mongo_db_list_collections_command(getThis(), include_system_collections, return_type, return_value TSRMLS_CC);
+		mongo_db_list_collections_command(getThis(), options, return_type, return_value TSRMLS_CC);
 	} else {
-		mongo_db_list_collections_legacy(getThis(), include_system_collections, return_type, return_value TSRMLS_CC);
+		mongo_db_list_collections_legacy(getThis(), options, return_type, return_value TSRMLS_CC);
 	}
 }
 
