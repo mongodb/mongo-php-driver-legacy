@@ -237,7 +237,10 @@ PHP_METHOD(MongoCursor, hasNext)
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 
 	if (!cursor->started_iterating) {
-		MONGO_METHOD(MongoCursor, doQuery, return_value, getThis());
+		php_mongo_runquery(cursor TSRMLS_CC);
+		if (EG(exception)) {
+			RETURN_NULL();
+		}
 		cursor->started_iterating = 1;
 	}
 
