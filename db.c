@@ -380,26 +380,22 @@ PHP_METHOD(MongoDB, setWriteConcern)
 }
 /* }}} */
 
-
-PHP_METHOD(MongoDB, getProfilingLevel)
-{
-	zval l;
-
-	Z_TYPE(l) = IS_LONG;
-	Z_LVAL(l) = -1;
-
-	MONGO_METHOD1(MongoDB, setProfilingLevel, return_value, getThis(), &l);
-}
-
-PHP_METHOD(MongoDB, setProfilingLevel)
+static php_mongo_db_profiling_level(INTERNAL_FUNCTION_PARAMETERS, int get)
 {
 	long level;
 	zval *cmd, *cmd_return;
 	zval **ok;
 	mongo_db *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &level) == FAILURE) {
-		return;
+	if (get) {
+		if (zend_parse_parameters_none() == FAILURE) {
+			return;
+		}
+		level = -1;
+	} else {
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &level) == FAILURE) {
+			return;
+		}
 	}
 
 	PHP_MONGO_GET_DB(getThis());
@@ -427,6 +423,22 @@ PHP_METHOD(MongoDB, setProfilingLevel)
 	}
 	zval_ptr_dtor(&cmd_return);
 }
+
+/* {{{ proto array MongoDB::getProfilingLevel()
+   Gets this database's profiling level. */
+PHP_METHOD(MongoDB, getProfilingLevel)
+{
+	php_mongo_db_profiling_level(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
+}
+/* }}} */
+
+/* {{{ proto array MongoDB::setProfilingLevel(int level)
+   Sets this database's profiling level. */
+PHP_METHOD(MongoDB, setProfilingLevel)
+{
+	php_mongo_db_profiling_level(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
+}
+/* }}} */
 
 PHP_METHOD(MongoDB, drop)
 {
