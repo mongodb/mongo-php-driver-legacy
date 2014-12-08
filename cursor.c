@@ -57,6 +57,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
 static int have_error_flags(mongo_cursor *cursor);
+static void php_mongocursor_next(mongo_cursor *cursor, zval *return_value TSRMLS_DC);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
 
@@ -720,8 +721,7 @@ PHP_METHOD(MongoCursor, explain)
 	}
 
 	zval_ptr_dtor(&yes);
-
-	MONGO_METHOD(MongoCursor, next, return_value, getThis());
+	php_mongocursor_next(cursor, return_value TSRMLS_CC);
 
 	/* reset cursor to original state */
 	cursor->limit = temp_limit;
@@ -981,15 +981,10 @@ static int have_error_flags(mongo_cursor *cursor)
 	return 0;
 }
 
-/* {{{ MongoCursor->next
- */
-PHP_METHOD(MongoCursor, next)
+static void php_mongocursor_next(mongo_cursor *cursor, zval *return_value TSRMLS_DC)
 {
-	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
-
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursor);
 	MONGO_CURSOR_CHECK_DEAD;
-
 	/* Ideally, next() shouldn't be doing this. Instead users should use
 	 * doQuery() themselves. But, BC */
 	if (!cursor->started_iterating) {
@@ -1010,6 +1005,19 @@ PHP_METHOD(MongoCursor, next)
 	if (cursor->current) {
 		RETURN_ZVAL(cursor->current, 1, 0);
 	}
+}
+
+/* {{{ MongoCursor->next(void)
+ * Advances the cursor to the next result, and returns that result */
+PHP_METHOD(MongoCursor, next)
+{
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	if (zend_parse_parameters_none() == FAILURE) {
+		return;
+	}
+
+	php_mongocursor_next(cursor, return_value TSRMLS_CC);
 }
 /* }}} */
 
