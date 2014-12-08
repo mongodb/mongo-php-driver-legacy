@@ -1767,11 +1767,6 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 		DELETE_OPTION_IF_EXISTS(index_spec, "timeout");
 
 		if (zend_hash_find(HASH_P(options), "name", strlen("name") + 1, (void**)&name) == SUCCESS) {
-			if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
-				zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
-				zval_ptr_dtor(&cmd);
-				return;
-			}
 			done_name = 1;
 			add_assoc_zval(index_spec, "name", *name);
 			Z_ADDREF_PP(name);
@@ -1789,20 +1784,13 @@ static void mongo_collection_create_index_command(mongo_connection *connection, 
 			return;
 		}
 
-		if (key_str_len > MAX_INDEX_NAME_LEN) {
-			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", key_str_len, MAX_INDEX_NAME_LEN);
-			efree(key_str);
-			zval_ptr_dtor(&cmd);
-			return;
-		}
-
 		add_assoc_stringl(index_spec, "name", key_str, key_str_len, 0);
 	}
 
 	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, options, 0, NULL TSRMLS_CC);
 
 	zval_ptr_dtor(&cmd);
- 
+
 	if (!retval) {
 		return;
 	}
@@ -1884,11 +1872,6 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, z
 		}
 
 		if (zend_hash_find(HASH_P(z_options), "name", strlen("name") + 1, (void**)&name) == SUCCESS) {
-			if (Z_TYPE_PP(name) == IS_STRING && Z_STRLEN_PP(name) > MAX_INDEX_NAME_LEN) {
-				zval_ptr_dtor(&document);
-				zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", Z_STRLEN_PP(name), MAX_INDEX_NAME_LEN);
-				return;
-			}
 			done_name = 1;
 		}
 		zval_add_ref(&z_options);
@@ -1907,14 +1890,6 @@ static void mongo_collection_create_index_legacy(mongo_connection *connection, z
 		key_str = to_index_string(keys, &key_str_len TSRMLS_CC);
 		if (!key_str) {
 			zval_ptr_dtor(&document);
-			zval_ptr_dtor(&z_options);
-			return;
-		}
-
-		if (key_str_len > MAX_INDEX_NAME_LEN) {
-			zval_ptr_dtor(&document);
-			zend_throw_exception_ex(mongo_ce_Exception, 14 TSRMLS_CC, "index name too long: %d, max %d characters", key_str_len, MAX_INDEX_NAME_LEN);
-			efree(key_str);
 			zval_ptr_dtor(&z_options);
 			return;
 		}
