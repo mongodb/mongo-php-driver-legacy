@@ -700,7 +700,7 @@ static void mongo_db_list_collections_legacy(zval *this_ptr, zval *options, int 
 
 		if (zend_hash_find(HASH_P(options), ZEND_STRS("filter"), (void**)&filter_pp) == SUCCESS) {
 			if (Z_TYPE_PP(filter_pp) != IS_ARRAY && Z_TYPE_PP(filter_pp) != IS_OBJECT) {
-				zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Expected filter to be array or object, %s given", zend_get_type_by_const(Z_TYPE_PP(filter_pp)));
+				zend_throw_exception_ex(mongo_ce_Exception, 26 TSRMLS_CC, "Expected filter to be array or object, %s given", zend_get_type_by_const(Z_TYPE_PP(filter_pp)));
 				RETURN_NULL();
 			}
 
@@ -717,7 +717,7 @@ static void mongo_db_list_collections_legacy(zval *this_ptr, zval *options, int 
 			char *prefixed_name;
 
 			if (Z_TYPE_PP(name_pp) != IS_STRING) {
-				zend_throw_exception_ex(mongo_ce_Exception, 0 TSRMLS_CC, "Filter \"name\" must be a string, %s given", zend_get_type_by_const(Z_TYPE_PP(name_pp)));
+				zend_throw_exception_ex(mongo_ce_Exception, 27 TSRMLS_CC, "Filter \"name\" must be a string for MongoDB <2.8, %s given", zend_get_type_by_const(Z_TYPE_PP(name_pp)));
 				RETURN_NULL();
 			}
 

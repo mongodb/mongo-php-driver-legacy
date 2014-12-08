@@ -26,6 +26,6 @@ try {
 ?>
 ===DONE===
 --EXPECT--
-error message: Filter "name" must be a string, object given
-error code: 0
+error message: Filter "name" must be a string for MongoDB <2.8, object given
+error code: 27
 ===DONE===

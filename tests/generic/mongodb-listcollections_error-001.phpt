@@ -25,5 +25,5 @@ try {
 ===DONE===
 --EXPECT--
 error message: Expected filter to be array or object, integer given
-error code: 0
+error code: 26
 ===DONE===

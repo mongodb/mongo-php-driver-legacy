@@ -568,6 +568,8 @@ extern zend_module_entry mongo_module_entry;
  * 21: Namespace field is invalid.
  * 22: invalid index specification
  * 25: invalid RFC4122 UUID size
+ * 26: Invalid type of "filter" option for collection enumeration method
+ * 27: Invalid type of "filter" option "name" criteria for collection enumeration method on MongoDB <2.8
  *
  * MongoConnectionException:
  * 0: connection to <host> failed: <errmsg>
