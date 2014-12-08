@@ -2762,7 +2762,7 @@ PHP_METHOD(MongoCollection, group)
 		MAKE_STD_ZVAL(code);
 		object_init_ex(code, mongo_ce_Code);
 
-		MONGO_METHOD1(MongoCode, __construct, return_value, code, reduce);
+		php_mongocode_populate(code, Z_STRVAL_P(reduce), Z_STRLEN_P(reduce), NULL TSRMLS_CC);
 
 		reduce = code;
 	} else {
