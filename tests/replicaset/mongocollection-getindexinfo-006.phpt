@@ -33,6 +33,6 @@ $l = $c->getIndexInfo();
 ?>
 DONE
 --EXPECTF--
-- connection: type: SECONDARY, socket: %d, ping: 0, hash: %s:%d;-;.;%d
-- connection: type: SECONDARY, socket: %d, ping: 0, hash: %s:%d;-;.;%d
+- connection: type: SECONDARY, socket: %d, ping: %d, hash: %s:%d;-;.;%d
+- connection: type: SECONDARY, socket: %d, ping: %d, hash: %s:%d;-;.;%d
 DONE
