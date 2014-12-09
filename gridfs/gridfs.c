@@ -21,6 +21,7 @@
 #include "../php_mongo.h"
 #include "../collection.h"
 #include "../cursor.h"
+#include "../cursor_shared.h"
 #include "../db.h"
 #include "gridfs_cursor.h"
 #include "gridfs_file.h"
@@ -979,16 +980,23 @@ PHP_METHOD(MongoGridFS, remove)
 	zval_ptr_dtor(&zfields);
 	PHP_MONGO_CHECK_EXCEPTION3(&zcursor, &criteria, &options);
 
-	MAKE_STD_ZVAL(next);
-	MONGO_METHOD(MongoCursor, next, next, zcursor);
-	PHP_MONGO_CHECK_EXCEPTION4(&next, &zcursor, &criteria, &options);
-
-	/* Temporarily ignore the justOne option while cleaning the data by _id */
+	/* Chunk deletions should use the same write options as file deletions, but
+	 * we need to temporarily disable the justOne option while doing so. If we
+	 * are deleting a single file, we should also specify a cursor limit. */
 	if (zend_hash_find(Z_ARRVAL_P(options), "justOne", strlen("justOne") + 1, (void**)&tmp) == SUCCESS) {
 		convert_to_boolean(*tmp);
 		justOne = Z_BVAL_PP(tmp);
 		add_assoc_bool(options, "justOne", 0);
 	}
+
+	if (justOne > 0) {
+		mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(zcursor TSRMLS_CC);
+		php_mongo_cursor_set_limit(cursor, 1);
+	}
+
+	MAKE_STD_ZVAL(next);
+	MONGO_METHOD(MongoCursor, next, next, zcursor);
+	PHP_MONGO_CHECK_EXCEPTION4(&next, &zcursor, &criteria, &options);
 
 	while (Z_TYPE_P(next) != IS_NULL) {
 		zval **id;
@@ -997,6 +1005,14 @@ PHP_METHOD(MongoGridFS, remove)
 		if (zend_hash_find(HASH_P(next), "_id", 4, (void**)&id) == FAILURE) {
 			/* uh oh */
 			continue;
+		}
+
+		/* If we're deleting a single file, change the criteria to the file's
+		 * _id to ensure the very same file is deleted after its chunks. */
+		if (justOne > 0) {
+			zend_hash_clean(Z_ARRVAL_P(criteria));
+			zval_add_ref(id);
+			add_assoc_zval(criteria, "_id", *id);
 		}
 
 		MAKE_STD_ZVAL(temp);
