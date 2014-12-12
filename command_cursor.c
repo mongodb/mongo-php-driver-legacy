@@ -512,6 +512,7 @@ static zend_function_entry MongoCommandCursor_methods[] = {
 	PHP_ME(MongoCursorInterface, batchSize, arginfo_batchsize, ZEND_ACC_PUBLIC)
 
 	/* query, code is shared through MongoCursorInterface */
+	PHP_ME(MongoCursorInterface, timeout, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursorInterface, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursorInterface, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 

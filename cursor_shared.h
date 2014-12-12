@@ -120,6 +120,7 @@ void mongo_init_MongoCursorInterface(TSRMLS_D);
 PHP_METHOD(MongoCursorInterface, batchSize);
 PHP_METHOD(MongoCursorInterface, dead);
 PHP_METHOD(MongoCursorInterface, info);
+PHP_METHOD(MongoCursorInterface, timeout);
 
 /*
  * Local variables:

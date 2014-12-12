@@ -641,6 +641,7 @@ static const zend_function_entry mongo_cursor_funcs_interface[] = {
 	/* query */
 	PHP_ABSTRACT_ME(MongoCursorInterface, info, arginfo_no_parameters)
 	PHP_ABSTRACT_ME(MongoCursorInterface, dead, arginfo_no_parameters)
+	PHP_ABSTRACT_ME(MongoCursorInterface, timeout, arginfo_no_parameters)
 
 	PHP_FE_END
 };
@@ -752,6 +753,26 @@ PHP_METHOD(MongoCursorInterface, info)
 			add_assoc_long(return_value, "firstBatchNumReturned", cursor->first_batch_num);
 		}
 	}
+}
+/* }}} */
+
+
+/* {{{ MongoCursor::timeout
+ */
+PHP_METHOD(MongoCursorInterface, timeout)
+{
+	long timeout;
+	mongo_cursor *cursor;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timeout) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_CURSOR(getThis());
+
+	cursor->timeout = timeout;
+
+	RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
 
