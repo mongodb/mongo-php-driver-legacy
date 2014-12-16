@@ -1,5 +1,5 @@
 --TEST--
-MongoCommandCursor::timeout [1]
+MongoCommandCursor::timeout [2]
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -8,6 +8,8 @@ require_once "tests/utils/server.inc";
 
 $host = MongoShellServer::getStandaloneInfo();
 $m = new MongoClient($host);
+
+$ns = dbname() . '.' . collname(__FILE__);
 
 $c = $m->selectCollection(dbname(), collname(__FILE__));
 $c->drop();
@@ -27,7 +29,7 @@ $pipeline = array(
     )),
 );
 
-$cursor = $c->aggregateCursor($pipeline, array('cursor' => array('batchSize' => 0)));
+$cursor = new MongoCommandCursor( $m, $ns, array( 'aggregate' => collname(__FILE__), 'pipeline' => $pipeline, 'cursor' => array('batchSize' => 0)) );
 $cursor->timeout(1);
 
 try {

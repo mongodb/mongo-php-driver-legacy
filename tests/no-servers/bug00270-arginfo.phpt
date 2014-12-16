@@ -312,6 +312,7 @@ MongoCommandCursor
     2: query (optional)
   Method batchSize expects 1 parameters
     0: number
+  Method timeout expects 0 parameters
   Method info expects 0 parameters
   Method dead expects 0 parameters
   Method current expects 0 parameters
