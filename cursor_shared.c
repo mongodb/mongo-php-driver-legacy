@@ -634,6 +634,10 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, number)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timeout, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, timeoutMS)
+ZEND_END_ARG_INFO()
+
 static const zend_function_entry mongo_cursor_funcs_interface[] = {
 	/* options */
 	PHP_ABSTRACT_ME(MongoCursorInterface, batchSize, arginfo_batchsize)
@@ -641,7 +645,7 @@ static const zend_function_entry mongo_cursor_funcs_interface[] = {
 	/* query */
 	PHP_ABSTRACT_ME(MongoCursorInterface, info, arginfo_no_parameters)
 	PHP_ABSTRACT_ME(MongoCursorInterface, dead, arginfo_no_parameters)
-	PHP_ABSTRACT_ME(MongoCursorInterface, timeout, arginfo_no_parameters)
+	PHP_ABSTRACT_ME(MongoCursorInterface, timeout, arginfo_timeout)
 
 	PHP_FE_END
 };
