@@ -568,25 +568,6 @@ PHP_METHOD(MongoCursor, partial)
 /* }}} */
 /* }}} */
 
-
-/* {{{ MongoCursor::timeout
- */
-PHP_METHOD(MongoCursor, timeout) {
-	long timeout;
-	mongo_cursor *cursor;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timeout) == FAILURE) {
-		return;
-	}
-
-	PHP_MONGO_GET_CURSOR(getThis());
-
-	cursor->timeout = timeout;
-
-	RETURN_ZVAL(getThis(), 1, 0);
-}
-/* }}} */
-
 PHP_METHOD(MongoCursor, getReadPreference)
 {
 	mongo_cursor *cursor;
@@ -1221,6 +1202,10 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_ARRAY_INFO(0, tags, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timeout, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, timeoutMS)
+ZEND_END_ARG_INFO()
+
 static zend_function_entry MongoCursor_methods[] = {
 	PHP_ME(MongoCursor, __construct, arginfo___construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, hasNext, arginfo_no_parameters, ZEND_ACC_PUBLIC)
@@ -1253,7 +1238,7 @@ static zend_function_entry MongoCursor_methods[] = {
 	PHP_ME(MongoCursor, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
 
 	/* query */
-	PHP_ME(MongoCursor, timeout, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCursorInterface, timeout, arginfo_timeout, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursor, doQuery, arginfo_no_parameters, ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED|ZEND_ACC_FINAL)
 	PHP_ME(MongoCursorInterface, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursorInterface, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
