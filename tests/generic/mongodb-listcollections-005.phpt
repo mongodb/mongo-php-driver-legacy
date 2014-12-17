@@ -1,7 +1,7 @@
 --TEST--
 MongoDB::listCollections() with "filter" option (command mode)
 --SKIPIF--
-<?php $needs = "2.7.5"; $needsOp = "ge"; ?>
+<?php $needs = "2.8.0-rc3"; $needsOp = "ge"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
