@@ -16,7 +16,7 @@ try {
     }
     if (isset($needsmax)) {
         $serverversion = $server->getServerVersion("REPLICASET");
-        if ( ! version_compare($serverversion, $needs, "<")) {
+        if ( ! version_compare($serverversion, $needsmax, "<")) {
             throw new Exception("Needs MongoDB less then $needsmax, but is running $serverversion");
         }
     }
