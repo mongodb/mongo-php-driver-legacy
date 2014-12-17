@@ -23,6 +23,7 @@
 #include "db.h"
 #include "collection.h"
 #include "cursor.h"
+#include "command_cursor.h"
 #include "cursor_shared.h"
 #include "gridfs/gridfs.h"
 #include "types/code.h"
@@ -590,10 +591,12 @@ PHP_METHOD(MongoDB, dropCollection)
 static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int return_type,  zval *return_value TSRMLS_DC)
 {
 	zend_bool include_system_collections = 0;
-	zval *z_cmd, *list, **collections;
+	zval *z_cmd, *list;
 	mongo_db *db;
 	mongo_connection *connection;
-	zval *retval;
+	zval *cursor_env, *retval;
+	zval *tmp_iterator, *exception;
+	mongo_cursor *cmd_cursor;
 
 	/* list to return */
 	MAKE_STD_ZVAL(list);
@@ -602,6 +605,7 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 	MAKE_STD_ZVAL(z_cmd);
 	array_init(z_cmd);
 	add_assoc_long(z_cmd, "listCollections", 1);
+	php_mongo_enforce_batch_size_on_command(z_cmd, 0 TSRMLS_CC);
 
 	if (options) {
 		zval *temp, **include_system_collections_pp;
@@ -630,25 +634,36 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 		RETURN_ZVAL(retval, 0, 1);
 	}
 
-	if (zend_hash_find(Z_ARRVAL_P(retval), "collections", strlen("collections") + 1, (void **)&collections) == FAILURE) {
-		zval_ptr_dtor(&retval);
-		RETURN_ZVAL(list, 0, 1);
+	MAKE_STD_ZVAL(tmp_iterator);
+	php_mongo_commandcursor_instantiate(tmp_iterator TSRMLS_CC);
+	cmd_cursor = (mongo_command_cursor*) zend_object_store_get_object(tmp_iterator TSRMLS_CC);
+
+	/* We need to parse the initial result, and find the "cursor" element in the result */
+	if (php_mongo_get_cursor_info_envelope(retval, &cursor_env TSRMLS_CC) == FAILURE) {
+		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response");
+		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), retval TSRMLS_CC);
+		zval_ptr_dtor(&tmp_iterator);
+		return;
 	}
 
-	{
-		HashPosition pointer;
+	php_mongo_command_cursor_init_from_document(db->link, cmd_cursor, connection->hash, cursor_env TSRMLS_CC);
+	if (php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC) == FAILURE) {
+		return;
+	}
+
+	while (php_mongocommandcursor_is_valid(cmd_cursor)) {
 		zval **collection_doc;
 
-		for (
-			zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(collections), &pointer);
-			zend_hash_get_current_data_ex(Z_ARRVAL_PP(collections), (void**)&collection_doc, &pointer) == SUCCESS;
-			zend_hash_move_forward_ex(Z_ARRVAL_PP(collections), &pointer)
-		) {
+		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
+		collection_doc = &cmd_cursor->current;
+
+		{
 			zval *c;
 			zval **collection_name;
 			char *system;
 
 			if (zend_hash_find(Z_ARRVAL_PP(collection_doc), "name", 5, (void**)&collection_name) == FAILURE) {
+				php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC);
 				continue;
 			}
 
@@ -657,6 +672,7 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 			if (
 				(!include_system_collections && (system == Z_STRVAL_PP(collection_name)))
 			) {
+				php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC);
 				continue;
 			}
 
@@ -676,9 +692,12 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 					break;
 			}
 		}
+
+		php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC);
 	}
 
 	zval_ptr_dtor(&retval);
+	zval_ptr_dtor(&tmp_iterator);
 
 	RETURN_ZVAL(list, 0, 1);
 }
