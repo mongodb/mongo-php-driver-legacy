@@ -144,25 +144,12 @@ function level2string($level)
  
 function logMongo($module, $level, $message, $save = false) {
     static $log = "";
-    $log .= sprintf("%s :: %s (%s): %s\n", date('Y-m-d H:i:s',time()), module2string($module), level2string($level), $message);
+    $log .= sprintf("%s | %s (%s): %s\n", date('Y-m-d H:i:s',time()), module2string($module), level2string($level), $message);
  
     if ($save) {
         file_put_contents("/tmp/MONGO-PHP-LOG." . time(), $log);
         $log = "";
     }
-}
- 
-function saveMongoLog($errno, $errstr, $errfile, $errline, $errctx) {
-    $modules = array(
-        MongoLog::RS, MongoLog::CON, MongoLog::IO, MongoLog::SERVER, MongoLog::PARSE,
-    );
-    foreach($modules as $const) {
-        if (strncmp($errstr, module2string($const), strlen(module2string($const))) == 0) {
-            logMongo($const, "HANDLER", $errstr);
-            return true;
-        }
-    }
-    return false;
 }
  
 function saveMongoLogException($ex) {
@@ -172,12 +159,16 @@ function saveMongoLogException($ex) {
     }
     throw $ex;
 }
- 
+
+function saveMongoLog() {
+    logMongo("EXIT", "EXIT", "EXIT", true);
+}
  
 MongoLog::setLevel(MongoLog::ALL);
 MongoLog::setModule(MongoLog::ALL);
- 
 MongoLog::setCallback("logMongo");
+
+register_shutdown_function("saveMongoLog");
  
 /* If an global exception handler is used, or a default exception handler is
  * already registered, please comment out this line and put into your catch
