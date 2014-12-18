@@ -1,8 +1,6 @@
 --TEST--
 MongoDB::listCollections() with deprecated boolean argument
 --SKIPIF--
-<?php require_once "tests/utils/server.inc"; ?>
-<?php $server = new MongoShellServer; $server->getStandaloneConfig(); $serverversion = $server->getServerVersion("STANDALONE"); if (version_compare($serverversion, "2.7.0", ">=") && version_compare($serverversion, "2.8.0-rc2", "<=")) { echo "skip only MongoDB < 2.7.0 or >= 2.8.0-rc3"; }; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
