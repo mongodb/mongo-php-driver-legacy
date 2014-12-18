@@ -598,10 +598,6 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 	zval *tmp_iterator, *exception;
 	mongo_cursor *cmd_cursor;
 
-	/* list to return */
-	MAKE_STD_ZVAL(list);
-	array_init(list);
-
 	MAKE_STD_ZVAL(z_cmd);
 	array_init(z_cmd);
 	add_assoc_long(z_cmd, "listCollections", 1);
@@ -633,6 +629,10 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 	if (php_mongo_trigger_error_on_command_failure(connection, retval TSRMLS_CC) == FAILURE) {
 		RETURN_ZVAL(retval, 0, 1);
 	}
+
+	/* list to return */
+	MAKE_STD_ZVAL(list);
+	array_init(list);
 
 	/* Handle inline command response from server >= 2.7.5 and < 2.8.0-RC3. */
 	if (zend_hash_find(Z_ARRVAL_P(retval), "collections", strlen("collections") + 1, (void **)&collections) == SUCCESS) {
