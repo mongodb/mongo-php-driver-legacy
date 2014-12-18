@@ -696,6 +696,7 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 
 	php_mongo_command_cursor_init_from_document(db->link, cmd_cursor, connection->hash, cursor_env TSRMLS_CC);
 	if (php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&tmp_iterator);
 		return;
 	}
 
