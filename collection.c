@@ -2053,7 +2053,9 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 	mongo_collection *c;
 	mongo_db *db;
 	mongo_connection *connection;
-	zval *retval;
+	zval *cursor_env, *retval;
+	zval *tmp_iterator, *exception;
+	mongo_cursor *cmd_cursor;
 
 	PHP_MONGO_GET_COLLECTION(getThis());
 	PHP_MONGO_GET_DB(c->parent);
@@ -2061,6 +2063,7 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 	MAKE_STD_ZVAL(z_cmd);
 	array_init(z_cmd);
 	add_assoc_string(z_cmd, "listIndexes", Z_STRVAL_P(c->name), 1);
+	php_mongo_enforce_batch_size_on_command(z_cmd, 0 TSRMLS_CC);
 
 	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), z_cmd, NULL, 0, &connection TSRMLS_CC);
 	
@@ -2089,12 +2092,8 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 	MAKE_STD_ZVAL(list);
 	array_init(list);
 
-	if (zend_hash_find(Z_ARRVAL_P(retval), "indexes", strlen("indexes") + 1, (void **)&indexes) == FAILURE) {
-		zval_ptr_dtor(&retval);
-		RETURN_FALSE;
-	}
-
-	{
+	/* Handle inline command response from server >= 2.7.5 and < 2.8.0-RC3. */
+	if (zend_hash_find(Z_ARRVAL_P(retval), "indexes", strlen("indexes") + 1, (void **)&indexes) == SUCCESS) {
 		HashPosition pointer;
 		zval **index_doc;
 
@@ -2106,9 +2105,44 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 			Z_ADDREF_PP(index_doc);
 			add_next_index_zval(list, *index_doc);
 		}
+
+		zval_ptr_dtor(&retval);
+
+		RETURN_ZVAL(list, 0, 1);
+	}
+
+	MAKE_STD_ZVAL(tmp_iterator);
+	php_mongo_commandcursor_instantiate(tmp_iterator TSRMLS_CC);
+	cmd_cursor = (mongo_command_cursor*) zend_object_store_get_object(tmp_iterator TSRMLS_CC);
+
+	/* We need to parse the initial result, and find the "cursor" element in the result */
+	if (php_mongo_get_cursor_info_envelope(retval, &cursor_env TSRMLS_CC) == FAILURE) {
+		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cmd_cursor->connection, 30 TSRMLS_CC, "the command cursor did not return a correctly structured response");
+		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), retval TSRMLS_CC);
+		zval_ptr_dtor(&tmp_iterator);
+		return;
+	}
+
+	php_mongo_command_cursor_init_from_document(db->link, cmd_cursor, connection->hash, cursor_env TSRMLS_CC);
+	if (php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC) == FAILURE) {
+		zval_ptr_dtor(&tmp_iterator);
+		return;
+	}
+
+	while (php_mongocommandcursor_is_valid(cmd_cursor)) {
+		zval **index_doc;
+
+		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
+		index_doc = &cmd_cursor->current;
+
+		Z_ADDREF_PP(index_doc);
+		add_next_index_zval(list, *index_doc);
+
+		php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC);
 	}
 
 	zval_ptr_dtor(&retval);
+	zval_ptr_dtor(&tmp_iterator);
 
 	RETURN_ZVAL(list, 0, 1);
 }
