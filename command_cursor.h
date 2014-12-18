@@ -19,7 +19,11 @@
 #define MONGO_DEFAULT_COMMAND_BATCH_SIZE 101
 
 void mongo_init_MongoCommandCursor(TSRMLS_D);
+zval *php_mongo_commandcursor_instantiate(zval *object TSRMLS_DC);
 void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval *zlink, zval *zcommand TSRMLS_DC);
+int php_mongocommandcursor_is_valid(mongo_command_cursor *cmd_cursor);
+int php_mongocommandcursor_load_current_element(mongo_command_cursor *cmd_cursor TSRMLS_DC);
+int php_mongocommandcursor_advance(mongo_command_cursor *cmd_cursor TSRMLS_DC);
 int php_mongo_enforce_batch_size_on_command(zval *command, int size TSRMLS_DC);
 
 void php_mongo_command_cursor_init_from_document(zval *zlink, mongo_command_cursor *cmd_cursor, char *hash, zval *document TSRMLS_DC);

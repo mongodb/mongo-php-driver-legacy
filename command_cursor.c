@@ -128,12 +128,12 @@ int php_mongo_enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
 }
 
 /* {{{ MongoCommandCursor iteration helpers */
-static int php_mongocommandcursor_is_valid(mongo_command_cursor *cmd_cursor)
+int php_mongocommandcursor_is_valid(mongo_command_cursor *cmd_cursor)
 {
 	return cmd_cursor->current != NULL;
 }
 
-static int php_mongocommandcursor_load_current_element(mongo_command_cursor *cmd_cursor TSRMLS_DC)
+int php_mongocommandcursor_load_current_element(mongo_command_cursor *cmd_cursor TSRMLS_DC)
 {
 	/* Free the previous current item */
 	if (cmd_cursor->current) {
@@ -180,7 +180,7 @@ static int php_mongocommandcursor_load_current_element(mongo_command_cursor *cmd
 	return SUCCESS;
 }
 
-static int php_mongocommandcursor_advance(mongo_command_cursor *cmd_cursor TSRMLS_DC)
+int php_mongocommandcursor_advance(mongo_command_cursor *cmd_cursor TSRMLS_DC)
 {
 	if (cmd_cursor->first_batch) {
 		cmd_cursor->first_batch_at++;
@@ -438,7 +438,7 @@ void php_mongo_command_cursor_init_from_document(zval *zlink, mongo_command_curs
 	cmd_cursor->pre_created = 1;
 }
 
-static zval *php_mongo_commandcursor_instantiate(zval *object TSRMLS_DC)
+zval *php_mongo_commandcursor_instantiate(zval *object TSRMLS_DC)
 {
 	Z_TYPE_P(object) = IS_OBJECT;
 	object_init_ex(object, mongo_ce_CommandCursor);
