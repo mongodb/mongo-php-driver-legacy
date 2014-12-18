@@ -591,7 +591,7 @@ PHP_METHOD(MongoDB, dropCollection)
 static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int return_type,  zval *return_value TSRMLS_DC)
 {
 	zend_bool include_system_collections = 0;
-	zval *z_cmd, *list;
+	zval *z_cmd, *list, **collections;
 	mongo_db *db;
 	mongo_connection *connection;
 	zval *cursor_env, *retval;
@@ -632,6 +632,54 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 
 	if (php_mongo_trigger_error_on_command_failure(connection, retval TSRMLS_CC) == FAILURE) {
 		RETURN_ZVAL(retval, 0, 1);
+	}
+
+	/* Handle inline command response from server >= 2.7.5 and < 2.8.0-RC3. */
+	if (zend_hash_find(Z_ARRVAL_P(retval), "collections", strlen("collections") + 1, (void **)&collections) == SUCCESS) {
+		HashPosition pointer;
+		zval **collection_doc;
+
+		for (
+			zend_hash_internal_pointer_reset_ex(Z_ARRVAL_PP(collections), &pointer);
+			zend_hash_get_current_data_ex(Z_ARRVAL_PP(collections), (void**)&collection_doc, &pointer) == SUCCESS;
+			zend_hash_move_forward_ex(Z_ARRVAL_PP(collections), &pointer)
+		) {
+			zval *c;
+			zval **collection_name;
+			char *system;
+
+			if (zend_hash_find(Z_ARRVAL_PP(collection_doc), "name", 5, (void**)&collection_name) == FAILURE) {
+				continue;
+			}
+
+			/* check that this isn't a system ns */
+			system = strstr(Z_STRVAL_PP(collection_name), "system.");
+			if (
+				(!include_system_collections && (system == Z_STRVAL_PP(collection_name)))
+			) {
+				continue;
+			}
+
+			switch (return_type) {
+				case MONGO_COLLECTION_RETURN_TYPE_NAME:
+					add_next_index_string(list, Z_STRVAL_PP(collection_name), 1);
+					break;
+
+				case MONGO_COLLECTION_RETURN_TYPE_OBJECT:
+					c = php_mongo_db_selectcollection(this_ptr, Z_STRVAL_PP(collection_name), Z_STRLEN_PP(collection_name) TSRMLS_CC);
+					add_next_index_zval(list, c);
+					break;
+
+				case MONGO_COLLECTION_RETURN_TYPE_INFO_ARRAY:
+					Z_ADDREF_P(*collection_doc);
+					add_assoc_zval(list, Z_STRVAL_PP(collection_name), *collection_doc);
+					break;
+			}
+		}
+
+		zval_ptr_dtor(&retval);
+
+		RETURN_ZVAL(list, 0, 1);
 	}
 
 	MAKE_STD_ZVAL(tmp_iterator);
