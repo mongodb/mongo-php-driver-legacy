@@ -695,12 +695,12 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 	}
 
 	php_mongo_command_cursor_init_from_document(db->link, cmd_cursor, connection->hash, cursor_env TSRMLS_CC);
-	if (php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC) == FAILURE) {
-		zval_ptr_dtor(&tmp_iterator);
-		return;
-	}
 
-	while (php_mongocommandcursor_is_valid(cmd_cursor)) {
+	for (
+		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
+		php_mongocommandcursor_is_valid(cmd_cursor);
+		php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC)
+	) {
 		zval **collection_doc;
 
 		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
@@ -712,7 +712,6 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 			char *system;
 
 			if (zend_hash_find(Z_ARRVAL_PP(collection_doc), "name", 5, (void**)&collection_name) == FAILURE) {
-				php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC);
 				continue;
 			}
 
@@ -721,7 +720,6 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 			if (
 				(!include_system_collections && (system == Z_STRVAL_PP(collection_name)))
 			) {
-				php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC);
 				continue;
 			}
 
@@ -741,8 +739,6 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 					break;
 			}
 		}
-
-		php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC);
 	}
 
 	zval_ptr_dtor(&retval);

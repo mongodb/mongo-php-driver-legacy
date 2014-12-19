@@ -2083,6 +2083,8 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 			code = zend_read_property(mongo_ce_ResultException, EG(exception), "code", strlen("code"), 0 TSRMLS_CC);
 			if (Z_TYPE_P(code) == IS_LONG && Z_LVAL_P(code) == PHP_MONGO_COLLECTION_DOES_NOT_EXIST) {
 				zend_clear_exception(TSRMLS_C);
+				zval_ptr_dtor(&retval);
+				array_init(retval);
 			}
 		}
 		RETURN_ZVAL(retval, 0, 1);
@@ -2124,12 +2126,12 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 	}
 
 	php_mongo_command_cursor_init_from_document(db->link, cmd_cursor, connection->hash, cursor_env TSRMLS_CC);
-	if (php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC) == FAILURE) {
-		zval_ptr_dtor(&tmp_iterator);
-		return;
-	}
 
-	while (php_mongocommandcursor_is_valid(cmd_cursor)) {
+	for (
+		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
+		php_mongocommandcursor_is_valid(cmd_cursor);
+		php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC)
+	) {
 		zval **index_doc;
 
 		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
@@ -2137,8 +2139,6 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 
 		Z_ADDREF_PP(index_doc);
 		add_next_index_zval(list, *index_doc);
-
-		php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC);
 	}
 
 	zval_ptr_dtor(&retval);
