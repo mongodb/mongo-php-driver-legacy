@@ -2126,12 +2126,12 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 	}
 
 	php_mongo_command_cursor_init_from_document(db->link, cmd_cursor, connection->hash, cursor_env TSRMLS_CC);
-	if (php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC) == FAILURE) {
-		zval_ptr_dtor(&tmp_iterator);
-		return;
-	}
 
-	while (php_mongocommandcursor_is_valid(cmd_cursor)) {
+	for (
+		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
+		php_mongocommandcursor_is_valid(cmd_cursor);
+		php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC)
+	) {
 		zval **index_doc;
 
 		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
@@ -2139,8 +2139,6 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 
 		Z_ADDREF_PP(index_doc);
 		add_next_index_zval(list, *index_doc);
-
-		php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC);
 	}
 
 	zval_ptr_dtor(&retval);
