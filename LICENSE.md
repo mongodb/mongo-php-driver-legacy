@@ -17,7 +17,7 @@ limitations under the License.
 Portions of this code base are borrowed from other projects under the following
 licenses:
 
- * contrib/php-json.c:
+contrib/php-json.c:
 
     /*
       +----------------------------------------------------------------------+
@@ -37,7 +37,7 @@ licenses:
       +----------------------------------------------------------------------+
     */
 
- * mcon/contrib/md5.c:
+mcon/contrib/md5.c:
 
     /*
      * This is an OpenSSL-compatible implementation of the RSA Data Security, Inc.
@@ -76,7 +76,7 @@ licenses:
      * compile-time configuration.
      */
 
-  * mcon/contrib/strndup.c:
+mcon/contrib/strndup.c:
 
     /*
      * Copyright (c) 1988, 1993
