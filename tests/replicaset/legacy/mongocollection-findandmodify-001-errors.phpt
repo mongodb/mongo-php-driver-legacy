@@ -50,7 +50,6 @@ try {
     printf("exception message: %s\n", $e->getMessage());
     printf("exception code: %d\n", $e->getCode());
     $res = $e->getDocument();
-    dump_these_keys($res["lastErrorObject"], array('err', 'code', 'n', 'lastOp', 'connectionId', 'ok'));
     dump_these_keys($res, array('errmsg', 'ok'));
 }
 
@@ -70,23 +69,6 @@ try {
 
 
 try {
-    $col->findAndModify(
-        null,
-        array("asdf"),
-        null,
-        array("sort" => array("priority" => -1), "remove" => true)
-    );
-    $retval = $col->find();
-    var_dump(iterator_to_array($retval));
-    $col->remove();
-
-} catch(MongoResultException $e) {
-    printf("exception message: %s\n", $e->getMessage());
-    printf("exception code: %d\n", $e->getCode());
-    dump_these_keys($e->getDocument(), array('errmsg', 'code', 'ok'));
-}
-
-try {
     $retval = $col->findAndModify(null);
     var_dump($retval);
 } catch(MongoResultException $e) {
@@ -98,26 +80,7 @@ try {
 ?>
 --EXPECTF--
 exception message: %s:%d: %s
-exception code: 2
-array(6) {
-  ["err"]=>
-  string(%d) "%s"
-  ["code"]=>
-  int(%d)
-  ["n"]=>
-  int(0)
-  ["lastOp"]=>
-  object(MongoTimestamp)#%d (2) {
-    ["sec"]=>
-    int(%d)
-    ["inc"]=>
-    int(%d)
-  }
-  ["connectionId"]=>
-  int(%d)
-  ["ok"]=>
-  float(1)
-}
+exception code: %r(2|52)%r
 array(2) {
   ["errmsg"]=>
   string(%d) "%s"
@@ -131,16 +94,6 @@ array(3) {
   string(46) "exception: Unsupported projection option: $pop"
   ["code"]=>
   int(13097)
-  ["ok"]=>
-  float(0)
-}
-exception message: %s:%d: exception: can't remove and update
-exception code: 12515
-array(3) {
-  ["errmsg"]=>
-  string(34) "exception: can't remove and update"
-  ["code"]=>
-  int(12515)
   ["ok"]=>
   float(0)
 }
