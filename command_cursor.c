@@ -214,7 +214,7 @@ int php_mongocommandcursor_advance(mongo_command_cursor *cmd_cursor TSRMLS_DC)
 }
 /* }}} */
 
-static void fetch_batch_if_first_is_empty(mongo_cursor *cmd_cursor TSRMLS_DC)
+void php_mongocommandcursor_fetch_batch_if_first_is_empty(mongo_cursor *cmd_cursor TSRMLS_DC)
 {
 	if (cmd_cursor->first_batch_num == 0 && cmd_cursor->cursor_id != 0) {
 		zval_ptr_dtor(&cmd_cursor->first_batch);
@@ -251,7 +251,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 		/* If the first batch is empty (as it is with parallelCollectionScan), then
 		 * we already read the first batch here on rewind */
-		fetch_batch_if_first_is_empty(cmd_cursor TSRMLS_CC);
+		php_mongocommandcursor_fetch_batch_if_first_is_empty(cmd_cursor TSRMLS_CC);
 
 		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
 
@@ -304,7 +304,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	/* If the first batch is empty (as it is with parallelCollectionScan), then
 	 * we already read the first batch here on rewind */
-	fetch_batch_if_first_is_empty(cmd_cursor TSRMLS_CC);
+	php_mongocommandcursor_fetch_batch_if_first_is_empty(cmd_cursor TSRMLS_CC);
 
 	php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
 
