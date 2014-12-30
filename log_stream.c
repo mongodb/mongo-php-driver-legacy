@@ -528,9 +528,20 @@ void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor
 
 	if (CONTEXT_HAS_NOTIFY_OR_LOG(context, "log_response_header")) {
 		zval **args[3];
-		zval *server, *info;
+		zval *server, *query, *info;
+		int free_query = 0;
 
 		server = php_log_get_server_info(connection);
+
+		/* Command cursors created from a command result document will lack the
+		 * original query document. Allocate a null zval in that case. */
+		if (cursor->query) {
+			query = cursor->query;
+		} else {
+			MAKE_STD_ZVAL(query);
+			ZVAL_NULL(query);
+			free_query = 1;
+		}
 
 		MAKE_STD_ZVAL(info);
 		array_init(info);
@@ -544,13 +555,15 @@ void mongo_log_stream_response_header(mongo_connection *connection, mongo_cursor
 		add_assoc_long(info, "start", cursor->start);
 
 		args[0] = &server;
-		args[1] = &cursor->query;
+		args[1] = cursor->query ? &cursor->query : &query;
 		args[2] = &info;
 
-
-		php_mongo_stream_notify_meta_response_header(context, server, cursor->query, info TSRMLS_CC);
+		php_mongo_stream_notify_meta_response_header(context, server, query, info TSRMLS_CC);
 		php_mongo_stream_callback(context, "log_response_header", 3, args TSRMLS_CC);
 		zval_ptr_dtor(&server);
+		if (free_query) {
+			zval_ptr_dtor(&query);
+		}
 		zval_ptr_dtor(&info);
 	}
 }
