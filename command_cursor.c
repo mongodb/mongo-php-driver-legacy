@@ -96,7 +96,7 @@ PHP_METHOD(MongoCommandCursor, __construct)
 
 int php_mongo_enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
 {
-	zval **zcursor, **zbatchsize;
+	zval *zcursor, **tmp_cursor;
 
 	if (Z_TYPE_P(command) != IS_ARRAY) {
 		/* Technically we can not hit this, as the command should be an
@@ -105,23 +105,28 @@ int php_mongo_enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
 		return 0;
 	}
 
-	if (zend_hash_find(HASH_P(command), "cursor", 7, (void**) &zcursor) == FAILURE) {
-		zval *tmp_cursor;
+	if (zend_hash_find(HASH_P(command), "cursor", 7, (void**) &tmp_cursor) == SUCCESS) {
+		zcursor = *tmp_cursor;
+	} else {
+		MAKE_STD_ZVAL(zcursor);
+		array_init(zcursor);
 
-		MAKE_STD_ZVAL(tmp_cursor);
-		array_init(tmp_cursor);
-		zcursor = &tmp_cursor;
-
-		add_assoc_zval(command, "cursor", tmp_cursor);
+		add_assoc_zval(command, "cursor", zcursor);
 	}
 
-	if (Z_TYPE_PP(zcursor) != IS_ARRAY) {
-		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 32 TSRMLS_CC, "The cursor command's 'cursor' element is not an array");
+	if (Z_TYPE_P(zcursor) != IS_ARRAY && Z_TYPE_P(zcursor) != IS_OBJECT) {
+		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 32 TSRMLS_CC, "The cursor command's 'cursor' element is not an array or object");
 		return 0;
 	}
 
-	if (zend_hash_find(HASH_PP(zcursor), "batchSize", 10, (void**) &zbatchsize) == FAILURE) {
-		add_assoc_long(*zcursor, "batchSize", size);
+	if (!zend_hash_exists(HASH_P(zcursor), "batchSize", 10)) {
+		zval *tmp_batchsize;
+
+		MAKE_STD_ZVAL(tmp_batchsize);
+		ZVAL_LONG(tmp_batchsize, size);
+
+		/* Use hash functions here, since "cursor" option may be an object */
+		zend_hash_add(HASH_P(zcursor), "batchSize", 10, &tmp_batchsize, sizeof(zval*), NULL);
 	}
 
 	return 1;
