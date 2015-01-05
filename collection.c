@@ -2063,7 +2063,6 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 	MAKE_STD_ZVAL(z_cmd);
 	array_init(z_cmd);
 	add_assoc_string(z_cmd, "listIndexes", Z_STRVAL_P(c->name), 1);
-	php_mongo_enforce_batch_size_on_command(z_cmd, 0 TSRMLS_CC);
 
 	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), z_cmd, NULL, 0, &connection TSRMLS_CC);
 	

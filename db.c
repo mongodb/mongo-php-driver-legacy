@@ -601,7 +601,6 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 	MAKE_STD_ZVAL(z_cmd);
 	array_init(z_cmd);
 	add_assoc_long(z_cmd, "listCollections", 1);
-	php_mongo_enforce_batch_size_on_command(z_cmd, 0 TSRMLS_CC);
 
 	if (options) {
 		zval *temp, **include_system_collections_pp;
