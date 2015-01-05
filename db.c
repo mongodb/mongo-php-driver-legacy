@@ -1192,7 +1192,7 @@ zval *php_mongo_runcommand(zval *zmongoclient, mongo_read_preference *read_prefe
 		zval_ptr_dtor(&cursor);
 		return NULL;
 	}
-	if (php_mongocursor_is_valid(cursor_tmp) == FAILURE) {
+	if (!php_mongocursor_is_valid(cursor_tmp)) {
 		zval_ptr_dtor(&cursor);
 		return NULL;
 	}

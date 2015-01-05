@@ -1367,7 +1367,7 @@ void php_mongo_collection_findone(zval *this_ptr, zval *query, zval *fields, zva
 		RETURN_NULL();
 	}
 
-	if (php_mongocursor_is_valid(cursor) == FAILURE) {
+	if (!php_mongocursor_is_valid(cursor)) {
 		zval_ptr_dtor(&zcursor);
 		RETURN_NULL();
 	}
