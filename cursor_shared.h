@@ -78,6 +78,9 @@ int php_mongo_cursor_mark_dead(void *callback_data);
 int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC);
 void php_mongo_make_special(mongo_cursor *cursor);
 
+/* Clears the cursor's current element if it is set */
+void php_mongo_cursor_clear_current_element(mongo_cursor *cursor);
+
 /* Set a Cursor Option */
 int php_mongo_cursor_add_option(mongo_cursor *cursor, char *key, zval *value TSRMLS_DC);
 

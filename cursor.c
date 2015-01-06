@@ -298,10 +298,7 @@ int php_mongocursor_load_current_element(mongo_cursor *cursor TSRMLS_DC)
 	mongo_bson_conversion_options cmd_options = MONGO_BSON_CONVERSION_OPTIONS_INIT;
 
 	/* Free the previous current item */
-	if (cursor->current) {
-		zval_ptr_dtor(&cursor->current);
-		cursor->current = NULL;
-	}
+	php_mongo_cursor_clear_current_element(cursor);
 
 	/* Do processing of subsequent batches, like a normal cursor */
 	if (cursor->at >= cursor->num) {
@@ -324,8 +321,7 @@ int php_mongocursor_load_current_element(mongo_cursor *cursor TSRMLS_DC)
 	);
 
 	if (EG(exception)) {
-		zval_ptr_dtor(&cursor->current);
-		cursor->current = NULL;
+		php_mongo_cursor_clear_current_element(cursor);
 		return FAILURE;
 	}
 
@@ -335,6 +331,9 @@ int php_mongocursor_load_current_element(mongo_cursor *cursor TSRMLS_DC)
 int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 {
 	int retrieved;
+
+	/* Free the previous current item */
+	php_mongo_cursor_clear_current_element(cursor);
 
 	cursor->at++;
 

@@ -136,11 +136,8 @@ int php_mongocommandcursor_is_valid(mongo_command_cursor *cmd_cursor)
 int php_mongocommandcursor_load_current_element(mongo_command_cursor *cmd_cursor TSRMLS_DC)
 {
 	/* Free the previous current item */
-	if (cmd_cursor->current) {
-		zval_ptr_dtor(&cmd_cursor->current);
-		cmd_cursor->current = NULL;
-	}
-	
+	php_mongo_cursor_clear_current_element(cmd_cursor);
+
 	/* Do processing of the first batch */
 	if (cmd_cursor->first_batch) {
 		zval **current;
@@ -172,8 +169,7 @@ int php_mongocommandcursor_load_current_element(mongo_command_cursor *cmd_cursor
 	}
 
 	if (EG(exception)) {
-		zval_ptr_dtor(&cmd_cursor->current);
-		cmd_cursor->current = NULL;
+		php_mongo_cursor_clear_current_element(cmd_cursor);
 		return FAILURE;
 	}
 
@@ -182,6 +178,9 @@ int php_mongocommandcursor_load_current_element(mongo_command_cursor *cmd_cursor
 
 int php_mongocommandcursor_advance(mongo_command_cursor *cmd_cursor TSRMLS_DC)
 {
+	/* Free the previous current item */
+	php_mongo_cursor_clear_current_element(cmd_cursor);
+
 	if (cmd_cursor->first_batch) {
 		cmd_cursor->first_batch_at++;
 
