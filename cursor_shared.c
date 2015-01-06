@@ -211,6 +211,14 @@ int php_mongo_cursor_mark_dead(void *callback_data)
 	return 1;
 }
 
+void php_mongo_cursor_clear_current_element(mongo_cursor *cursor)
+{
+	if (cursor->current) {
+		zval_ptr_dtor(&cursor->current);
+		cursor->current = NULL;
+	}
+}
+
 int php_mongo_get_reply(mongo_cursor *cursor TSRMLS_DC)
 {
 	int   status;
@@ -280,8 +288,7 @@ int php_mongo_handle_error(mongo_cursor *cursor TSRMLS_DC)
 		 * or MongoWriteConcernException here, depending on the code. */
 		exception = php_mongo_cursor_throw(mongo_ce_CursorException, cursor->connection, code TSRMLS_CC, "%s", Z_STRVAL_PP(err));
 		zend_update_property(mongo_ce_CursorException, exception, "doc", strlen("doc"), cursor->current TSRMLS_CC);
-		zval_ptr_dtor(&cursor->current);
-		cursor->current = NULL;
+		php_mongo_cursor_clear_current_element(cursor);
 
 		/* We check for "not master" error codes. The source of those codes
 		 * is at https://github.com/mongodb/mongo/blob/master/docs/errors.md

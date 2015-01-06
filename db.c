@@ -695,48 +695,47 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 
 	php_mongo_command_cursor_init_from_document(db->link, cmd_cursor, connection->hash, cursor_env TSRMLS_CC);
 
+	/* TODO: Refactor to use MongoCommandCursor::rewind() once it is extracted
+	 * into its own C function (see PHP-1362) */
+	php_mongocommandcursor_fetch_batch_if_first_is_empty(cmd_cursor TSRMLS_CC);
+	cmd_cursor->started_iterating = 1;
+
 	for (
 		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
 		php_mongocommandcursor_is_valid(cmd_cursor);
 		php_mongocommandcursor_advance(cmd_cursor TSRMLS_CC)
 	) {
-		zval **collection_doc;
+		zval **collection_name;
+		zval **collection_doc = &cmd_cursor->current;
+		char *system;
 
-		php_mongocommandcursor_load_current_element(cmd_cursor TSRMLS_CC);
-		collection_doc = &cmd_cursor->current;
+		if (zend_hash_find(Z_ARRVAL_PP(collection_doc), "name", 5, (void**)&collection_name) == FAILURE) {
+			continue;
+		}
 
-		{
-			zval *c;
-			zval **collection_name;
-			char *system;
+		/* check that this isn't a system ns */
+		system = strstr(Z_STRVAL_PP(collection_name), "system.");
+		if (
+			(!include_system_collections && (system == Z_STRVAL_PP(collection_name)))
+		) {
+			continue;
+		}
 
-			if (zend_hash_find(Z_ARRVAL_PP(collection_doc), "name", 5, (void**)&collection_name) == FAILURE) {
-				continue;
+		switch (return_type) {
+			case MONGO_COLLECTION_RETURN_TYPE_NAME:
+				add_next_index_string(list, Z_STRVAL_PP(collection_name), 1);
+				break;
+
+			case MONGO_COLLECTION_RETURN_TYPE_OBJECT: {
+				zval *c = php_mongo_db_selectcollection(this_ptr, Z_STRVAL_PP(collection_name), Z_STRLEN_PP(collection_name) TSRMLS_CC);
+				add_next_index_zval(list, c);
+				break;
 			}
 
-			/* check that this isn't a system ns */
-			system = strstr(Z_STRVAL_PP(collection_name), "system.");
-			if (
-				(!include_system_collections && (system == Z_STRVAL_PP(collection_name)))
-			) {
-				continue;
-			}
-
-			switch (return_type) {
-				case MONGO_COLLECTION_RETURN_TYPE_NAME:
-					add_next_index_string(list, Z_STRVAL_PP(collection_name), 1);
-					break;
-
-				case MONGO_COLLECTION_RETURN_TYPE_OBJECT:
-					c = php_mongo_db_selectcollection(this_ptr, Z_STRVAL_PP(collection_name), Z_STRLEN_PP(collection_name) TSRMLS_CC);
-					add_next_index_zval(list, c);
-					break;
-
-				case MONGO_COLLECTION_RETURN_TYPE_INFO_ARRAY:
-					Z_ADDREF_P(*collection_doc);
-					add_assoc_zval(list, Z_STRVAL_PP(collection_name), *collection_doc);
-					break;
-			}
+			case MONGO_COLLECTION_RETURN_TYPE_INFO_ARRAY:
+				Z_ADDREF_P(*collection_doc);
+				add_assoc_zval(list, Z_STRVAL_PP(collection_name), *collection_doc);
+				break;
 		}
 	}
 
