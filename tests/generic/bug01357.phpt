@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-1357: Command cursor may cause log_response_header callback to segfault
 --SKIPIF--
-<?php $needs = "2.8.0-RC3"; $needsOp = "ge"; ?>
+<?php $needs = "2.8.0-RC4"; $needsOp = "ge"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
@@ -53,4 +53,6 @@ Response header received, query is not null
 Issuing command: listCollections
 Cursor batch size: 0
 Response header received, query is not null
+Issuing getmore
+Response header received, query is null
 ===DONE===
