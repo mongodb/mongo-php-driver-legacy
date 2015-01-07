@@ -31,7 +31,7 @@ $collection = $db->selectCollection(collname(__FILE__));
 $collection->drop();
 $collection->insert(array('x' => 1));
 
-echo "\nTesting aggregate command enforces default batch size:\n";
+echo "\nTesting aggregate command with empty cursor option:\n";
 
 $cursor = $collection->aggregateCursor(
     array(array('$match' => array('x' => 1))),
@@ -47,7 +47,7 @@ $cursor = $collection->aggregateCursor(
 );
 $cursor->rewind();
 
-echo "\nTesting listCollections command enforces its own batch size:\n";
+echo "\nTesting listCollections command with empty cursor option:\n";
 
 $collections = $db->listCollections(
     array('cursor' => (object) array())
@@ -64,12 +64,10 @@ $collections = $db->listCollections(
 --EXPECTF--
 Issuing command: drop
 
-Testing aggregate command enforces default batch size:
+Testing aggregate command with empty cursor option:
 Issuing command: aggregate
 Cursor option:
-object(stdClass)#%d (1) {
-  ["batchSize"]=>
-  int(101)
+object(stdClass)#%d (0) {
 }
 
 Testing aggregate command with custom batch size:
@@ -80,7 +78,7 @@ object(stdClass)#%d (1) {
   int(1)
 }
 
-Testing listCollections command enforces its own batch size:
+Testing listCollections command with empty cursor option:
 Issuing command: listCollections
 Cursor option:
 object(stdClass)#%d (0) {

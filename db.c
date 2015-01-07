@@ -615,6 +615,13 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 		zend_hash_merge(HASH_P(z_cmd), HASH_P(options), (copy_ctor_func_t) zval_add_ref, &temp, sizeof(zval*), 1);
 	}
 
+	/* Ensure that the command's cursor option, if set, is valid. If this fails,
+	 * EG(exception) is set. */
+	if (!php_mongo_validate_cursor_on_command(z_cmd TSRMLS_CC)) {
+		zval_ptr_dtor(&z_cmd);
+		return;
+	}
+
 	PHP_MONGO_GET_DB(getThis());
 
 	retval = php_mongo_runcommand(db->link, &db->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), z_cmd, NULL, 0, &connection TSRMLS_CC);

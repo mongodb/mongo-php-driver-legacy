@@ -37,8 +37,6 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_CommandCursor = NULL;
 
-#define MONGO_DEFAULT_COMMAND_BATCH_SIZE 101
-
 void mongo_command_cursor_init(mongo_command_cursor *cmd_cursor, char *ns, zval *zlink, zval *zcommand TSRMLS_DC)
 {
 	mongoclient *link;
@@ -94,9 +92,13 @@ PHP_METHOD(MongoCommandCursor, __construct)
 }
 /* }}} */
 
-int php_mongo_enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
+/* Validates that the command's cursor field is an array or object if it exists.
+ * If it is an empty array, it will also be converted to an object to ensure
+ * proper BSON serialization (the server requires an object type). This function
+ * should be used after merging options into the command document. */
+int php_mongo_validate_cursor_on_command(zval *command TSRMLS_DC)
 {
-	zval *zcursor, **tmp_cursor;
+	zval **zcursor;
 
 	if (Z_TYPE_P(command) != IS_ARRAY) {
 		/* Technically we can not hit this, as the command should be an
@@ -105,28 +107,38 @@ int php_mongo_enforce_batch_size_on_command(zval *command, int size TSRMLS_DC)
 		return 0;
 	}
 
-	if (zend_hash_find(HASH_P(command), "cursor", 7, (void**) &tmp_cursor) == SUCCESS) {
-		zcursor = *tmp_cursor;
-	} else {
-		MAKE_STD_ZVAL(zcursor);
-		array_init(zcursor);
-
-		add_assoc_zval(command, "cursor", zcursor);
+	if (zend_hash_find(HASH_P(command), "cursor", 7, (void**) &zcursor) == FAILURE) {
+		return 1;
 	}
 
-	if (Z_TYPE_P(zcursor) != IS_ARRAY && Z_TYPE_P(zcursor) != IS_OBJECT) {
+	if (Z_TYPE_PP(zcursor) != IS_ARRAY && Z_TYPE_PP(zcursor) != IS_OBJECT) {
 		php_mongo_cursor_throw(mongo_ce_CursorException, NULL, 32 TSRMLS_CC, "The cursor command's 'cursor' element is not an array or object");
 		return 0;
 	}
 
-	if (!zend_hash_exists(HASH_P(zcursor), "batchSize", 10)) {
-		zval *tmp_batchsize;
+	if (Z_TYPE_PP(zcursor) == IS_ARRAY && zend_hash_num_elements(Z_ARRVAL_PP(zcursor)) == 0) {
+		convert_to_object(*zcursor);
+	}
 
-		MAKE_STD_ZVAL(tmp_batchsize);
-		ZVAL_LONG(tmp_batchsize, size);
+	return 1;
+}
 
-		/* Use hash functions here, since "cursor" option may be an object */
-		zend_hash_add(HASH_P(zcursor), "batchSize", 10, &tmp_batchsize, sizeof(zval*), NULL);
+/* Validates that the command's cursor field is an array or object. If it does
+ * not exist, it will be set with an empty object. This function should be used
+ * after merging options into the command document. */
+int php_mongo_enforce_cursor_on_command(zval *command TSRMLS_DC)
+{
+	if (!php_mongo_validate_cursor_on_command(command TSRMLS_CC)) {
+		return 0;
+	}
+
+	if (!zend_hash_exists(HASH_P(command), "cursor", 7)) {
+		zval *zcursor;
+
+		MAKE_STD_ZVAL(zcursor);
+		object_init(zcursor);
+
+		add_assoc_zval(command, "cursor", zcursor);
 	}
 
 	return 1;

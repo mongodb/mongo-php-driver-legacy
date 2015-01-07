@@ -9,8 +9,9 @@ require "tests/utils/server.inc";
 function log_query($server, $query, $info) {
     printf("Issuing command: %s\n", key($query));
 
-    if (isset($query['cursor']['batchSize'])) {
-        printf("Cursor batch size: %d\n", $query['cursor']['batchSize']);
+    if (isset($query['cursor'])) {
+        echo "Cursor option:\n";
+        var_dump($query['cursor']);
     }
 }
 
@@ -38,6 +39,7 @@ for ($i = 0; $i < 103; $i++) {
     $collection->insert(array('article_id' => $i));
 }
 
+// This assumes that the server's batch size defaults to 101 for aggregate
 $cursor = $collection->aggregateCursor(
     array(array('$limit' => 105))
 );
@@ -54,7 +56,9 @@ foreach ($cursor as $key => $record) {
 Issuing command: drop
 Cursor class: MongoCommandCursor
 Issuing command: aggregate
-Cursor batch size: 101
+Cursor option:
+object(stdClass)#4 (0) {
+}
 0
 1
 2

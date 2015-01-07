@@ -9,8 +9,9 @@ require "tests/utils/server.inc";
 function log_query($server, $query, $info) {
     printf("Issuing command: %s\n", key($query));
 
-    if (isset($query['cursor']['batchSize'])) {
-        printf("Cursor batch size: %d\n", $query['cursor']['batchSize']);
+    if (isset($query['cursor'])) {
+        echo "Cursor option:\n";
+        var_dump($query['cursor']);
     }
 }
 
@@ -52,7 +53,9 @@ foreach ($cursor as $key => $record) {
 Issuing command: drop
 Cursor class: MongoCommandCursor
 Issuing command: aggregate
-Cursor batch size: 101
+Cursor option:
+object(stdClass)#4 (0) {
+}
 int(0)
 array(2) {
   ["_id"]=>
