@@ -29,6 +29,6 @@ try {
 ?>
 ===DONE===
 --EXPECT--
-exception message: The cursor command's 'cursor' element is not an array
+exception message: The cursor command's 'cursor' element is not an array or object
 exception code: 32
 ===DONE===
