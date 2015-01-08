@@ -2698,6 +2698,15 @@ PHP_METHOD(MongoCollection, aggregateCursor)
 
 	/* Add read preferences to cursor, overriding the one set on the link */
 	mongo_read_preference_replace(&c->read_pref, &cmd_cursor->read_pref);
+
+	if (
+		cmd_cursor->read_pref.type != MONGO_RP_PRIMARY &&
+		php_mongodb_pipeline_ends_with_out(pipeline TSRMLS_CC)
+	) {
+		mongo_manager_log(MonGlo(manager), MLOG_RS, MLOG_WARN, "Forcing aggregate with $out to run on primary");
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Forcing aggregate with $out to run on primary");
+		cmd_cursor->read_pref.type = MONGO_RP_PRIMARY;
+	}
 }
 /* }}} */
 
