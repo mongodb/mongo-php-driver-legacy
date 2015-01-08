@@ -2545,10 +2545,10 @@ static int php_mongodb_pipeline_ends_with_out(zval *pipeline TSRMLS_DC)
 
 void php_mongodb_aggregate(zval *pipeline, zval *options, mongo_db *db, mongo_collection *collection, zval *return_value TSRMLS_DC)
 {
-	int original_rp;
 	zval *cmd;
 	zval *retval;
 	mongo_connection *connection;
+	mongo_read_preference *original_rp = NULL;
 
 	MAKE_STD_ZVAL(cmd);
 	array_init(cmd);
@@ -2558,14 +2558,17 @@ void php_mongodb_aggregate(zval *pipeline, zval *options, mongo_db *db, mongo_co
 	zval_add_ref(&collection->name);
 	zval_add_ref(&pipeline);
 
-	original_rp = collection->read_pref.type;
-
 	if (
 		collection->read_pref.type != MONGO_RP_PRIMARY &&
 		php_mongodb_pipeline_ends_with_out(pipeline TSRMLS_CC)
 	) {
 		mongo_manager_log(MonGlo(manager), MLOG_RS, MLOG_WARN, "Forcing aggregate with $out to run on primary");
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Forcing aggregate with $out to run on primary");
+		/* Save the original read pref to ensure we replace it with a primary
+		 * read pref that does not contain tag sets (PHP-1369) */
+		original_rp = ecalloc(1, sizeof(mongo_read_preference));
+		mongo_read_preference_copy(&collection->read_pref, original_rp);
+		mongo_read_preference_dtor(&collection->read_pref);
 		collection->read_pref.type = MONGO_RP_PRIMARY;
 	}
 
@@ -2579,7 +2582,13 @@ void php_mongodb_aggregate(zval *pipeline, zval *options, mongo_db *db, mongo_co
 		RETVAL_ZVAL(retval, 0, 1);
 	}
 
-	collection->read_pref.type = original_rp;
+	/* Restore the collection's original read pref if we previously overrode it */
+	if (original_rp != NULL) {
+		mongo_read_preference_copy(original_rp, &collection->read_pref);
+		mongo_read_preference_dtor(original_rp);
+		efree(original_rp);
+	}
+
 	zval_ptr_dtor(&cmd);
 }
 
@@ -2705,6 +2714,8 @@ PHP_METHOD(MongoCollection, aggregateCursor)
 	) {
 		mongo_manager_log(MonGlo(manager), MLOG_RS, MLOG_WARN, "Forcing aggregate with $out to run on primary");
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Forcing aggregate with $out to run on primary");
+		/* Destroy the read pref to ensure tag sets are cleared (PHP-1369) */
+		mongo_read_preference_dtor(&cmd_cursor->read_pref);
 		cmd_cursor->read_pref.type = MONGO_RP_PRIMARY;
 	}
 }
