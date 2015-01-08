@@ -2064,6 +2064,9 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 	array_init(z_cmd);
 	add_assoc_string(z_cmd, "listIndexes", Z_STRVAL_P(c->name), 1);
 
+	/* Note: when this function is enhanced to support command options,
+	 * php_mongo_validate_cursor_on_command() should be used here. */
+
 	retval = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), z_cmd, NULL, 0, &connection TSRMLS_CC);
 	
 	zval_ptr_dtor(&z_cmd);
@@ -2651,9 +2654,9 @@ static zval* create_aggregate_command_from_pipeline(char *collname, zval *pipeli
 		zend_hash_merge(HASH_P(command), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
 	}
 
-	/* Make sure we have a cursor/batchSize object, if this fails,
+	/* Ensure that the command's cursor option is set and valid. If this fails,
 	 * EG(exception) is set. */
-	if (!php_mongo_enforce_batch_size_on_command(command, MONGO_DEFAULT_COMMAND_BATCH_SIZE TSRMLS_CC)) {
+	if (!php_mongo_enforce_cursor_on_command(command TSRMLS_CC)) {
 		zval_ptr_dtor(&command);
 		return NULL;
 	}

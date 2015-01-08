@@ -9,8 +9,9 @@ require "tests/utils/server.inc";
 function log_query($server, $query, $info) {
     printf("Issuing command: %s\n", key($query));
 
-    if (isset($query['cursor']['batchSize'])) {
-        printf("Cursor batch size: %d\n", $query['cursor']['batchSize']);
+    if (isset($query['cursor'])) {
+        echo "Cursor option:\n";
+        var_dump($query['cursor']);
     }
 }
 
@@ -46,7 +47,11 @@ printf("Total results: %d\n", count(iterator_to_array($cursor)));
 --EXPECTF--
 Issuing command: drop
 Issuing command: aggregate
-Cursor batch size: 0
+Cursor option:
+array(1) {
+  ["batchSize"]=>
+  int(0)
+}
 Issuing getmore
 Total results: 2
 ===DONE===
