@@ -641,6 +641,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_batchsize, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, number)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, read_preference)
+	ZEND_ARG_ARRAY_INFO(0, tags, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timeout, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, timeoutMS)
 ZEND_END_ARG_INFO()
@@ -653,6 +658,10 @@ static const zend_function_entry mongo_cursor_funcs_interface[] = {
 	PHP_ABSTRACT_ME(MongoCursorInterface, info, arginfo_no_parameters)
 	PHP_ABSTRACT_ME(MongoCursorInterface, dead, arginfo_no_parameters)
 	PHP_ABSTRACT_ME(MongoCursorInterface, timeout, arginfo_timeout)
+
+	/* read preferences */
+	PHP_ABSTRACT_ME(MongoCursorInterface, getReadPreference, arginfo_no_parameters)
+	PHP_ABSTRACT_ME(MongoCursorInterface, setReadPreference, arginfo_setReadPreference)
 
 	PHP_FE_END
 };
@@ -705,6 +714,38 @@ PHP_METHOD(MongoCursorInterface, dead)
 	MONGO_CHECK_INITIALIZED(cursor->zmongoclient, MongoCursorInterface);
 
 	RETURN_BOOL(cursor->dead || (cursor->started_iterating && cursor->cursor_id == 0));
+}
+/* }}} */
+
+/* {{{ proto array MongoCursorInterface::getReadPreference()
+   Returns an array describing the read preference for this cursor. Tag sets will be included if available. */
+PHP_METHOD(MongoCursorInterface, getReadPreference)
+{
+	mongo_cursor *cursor = (mongo_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+	array_init(return_value);
+	add_assoc_string(return_value, "type", mongo_read_preference_type_to_name(cursor->read_pref.type), 1);
+	php_mongo_add_tagsets(return_value, &cursor->read_pref);
+}
+/* }}} */
+
+/* {{{ proto bool MongoCursorInterface::setReadPreference(string read_preference [, array tags ])
+   Sets the read preference for this cursor */
+PHP_METHOD(MongoCursorInterface, setReadPreference)
+{
+	char *read_preference;
+	int   read_preference_len;
+	mongo_cursor *cursor;
+	HashTable  *tags = NULL;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|h", &read_preference, &read_preference_len, &tags) == FAILURE) {
+		return;
+	}
+
+	PHP_MONGO_GET_CURSOR(getThis());
+
+	php_mongo_set_readpreference(&cursor->read_pref, read_preference, tags TSRMLS_CC);
+	RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
 
