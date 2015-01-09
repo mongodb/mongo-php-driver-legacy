@@ -24,7 +24,7 @@ $tagParams = array(
 foreach ($modes as $mode) {
     foreach ($tagParams as $tagParam) {
         $m = new MongoClient($baseString . $mode . $tagParam, array('connect' => false));
-        $rp = $m->phpunit->test->getReadPreference();
+        $rp = $m->phpunit->test->find()->getReadPreference();
         var_dump($rp);
         echo "---\n";
     }
