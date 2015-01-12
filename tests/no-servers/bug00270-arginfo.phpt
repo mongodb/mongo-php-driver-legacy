@@ -317,6 +317,10 @@ MongoCommandCursor
     0: timeoutMS
   Method info expects 0 parameters
   Method dead expects 0 parameters
+  Method getReadPreference expects 0 parameters
+  Method setReadPreference expects 2 parameters
+    0: read_preference
+    1: tags (optional)
   Method current expects 0 parameters
   Method key expects 0 parameters
   Method next expects 0 parameters

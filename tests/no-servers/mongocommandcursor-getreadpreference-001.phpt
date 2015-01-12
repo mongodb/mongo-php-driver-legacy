@@ -1,16 +1,13 @@
 --TEST--
-MongoCursor::getReadPreference() returns read preferences
+MongoCommandCursor::getReadPreference() returns read preferences
 --SKIPIF--
-<?php require_once "tests/utils/standalone.inc"; ?>
+<?php require_once __DIR__ . "/skipif.inc"; ?>
 --FILE--
-<?php require_once "tests/utils/server.inc"; ?>
 <?php
 
-$baseString = sprintf("mongodb://%s:%d/%s?readPreference=", standalone_hostname(), standalone_port(), dbname());
-
 $modes = array(
-    'primary',
-    'secondary',
+    MongoClient::RP_PRIMARY,
+    MongoClient::RP_SECONDARY,
 );
 
 $tagParams = array(
@@ -23,13 +20,16 @@ $tagParams = array(
 
 foreach ($modes as $mode) {
     foreach ($tagParams as $tagParam) {
-        $m = new MongoClient($baseString . $mode . $tagParam, array('connect' => false));
-        $rp = $m->phpunit->test->find()->getReadPreference();
-        var_dump($rp);
+        $uri = sprintf('mongodb://localhost:27017/?readPreference=%s%s', $mode, $tagParam);
+        $mc = new MongoClient($uri, array('connect' => false));
+        $cc = new MongoCommandCursor($mc, 'test.foo', array());
+        var_dump($cc->getReadPreference());
         echo "---\n";
     }
 }
+
 ?>
+===DONE===
 --EXPECT--
 array(1) {
   ["type"]=>
@@ -159,3 +159,4 @@ array(2) {
   }
 }
 ---
+===DONE===

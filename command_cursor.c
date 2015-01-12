@@ -520,6 +520,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_createfromdocument, 0, ZEND_RETURN_VALUE, 3)
 	ZEND_ARG_INFO(0, cursor_document)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_setReadPreference, 0, ZEND_RETURN_VALUE, 1)
+	ZEND_ARG_INFO(0, read_preference)
+	ZEND_ARG_ARRAY_INFO(0, tags, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timeout, 0, ZEND_RETURN_VALUE, 1)
 	ZEND_ARG_INFO(0, timeoutMS)
 ZEND_END_ARG_INFO()
@@ -530,10 +535,14 @@ static zend_function_entry MongoCommandCursor_methods[] = {
 	/* options, code is reused from MongoCursor */
 	PHP_ME(MongoCursorInterface, batchSize, arginfo_batchsize, ZEND_ACC_PUBLIC)
 
-	/* query, code is shared through MongoCursorInterface */
+	/* timeout and diagnostics, code is shared through MongoCursorInterface */
 	PHP_ME(MongoCursorInterface, timeout, arginfo_timeout, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursorInterface, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursorInterface, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+
+	/* read preferences, code is shared through MongoCursorInterface */
+	PHP_ME(MongoCursorInterface, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoCursorInterface, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
 
 	/* iterator funcs */
 	PHP_ME(MongoCommandCursor, current, arginfo_no_parameters, ZEND_ACC_PUBLIC)

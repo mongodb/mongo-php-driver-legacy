@@ -124,6 +124,8 @@ PHP_METHOD(MongoCursorInterface, batchSize);
 PHP_METHOD(MongoCursorInterface, dead);
 PHP_METHOD(MongoCursorInterface, info);
 PHP_METHOD(MongoCursorInterface, timeout);
+PHP_METHOD(MongoCursorInterface, getReadPreference);
+PHP_METHOD(MongoCursorInterface, setReadPreference);
 
 /*
  * Local variables:
