@@ -292,9 +292,9 @@ MongoCursor
   Method setReadPreference expects 2 parameters
     0: read_preference
     1: tags (optional)
+  Method doQuery expects 0 parameters
   Method timeout expects 1 parameters
     0: timeoutMS
-  Method doQuery expects 0 parameters
   Method info expects 0 parameters
   Method dead expects 0 parameters
   Method current expects 0 parameters
