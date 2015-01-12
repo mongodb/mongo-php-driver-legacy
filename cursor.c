@@ -1206,9 +1206,11 @@ static zend_function_entry MongoCursor_methods[] = {
 	PHP_ME(MongoCursorInterface, getReadPreference, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursorInterface, setReadPreference, arginfo_setReadPreference, ZEND_ACC_PUBLIC)
 
-	/* query, code is shared through MongoCursorInterface */
-	PHP_ME(MongoCursorInterface, timeout, arginfo_timeout, ZEND_ACC_PUBLIC)
+	/* query */
 	PHP_ME(MongoCursor, doQuery, arginfo_no_parameters, ZEND_ACC_PROTECTED|ZEND_ACC_DEPRECATED|ZEND_ACC_FINAL)
+
+	/* timeout and diagnostics, code is shared through MongoCursorInterface */
+	PHP_ME(MongoCursorInterface, timeout, arginfo_timeout, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursorInterface, info, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoCursorInterface, dead, arginfo_no_parameters, ZEND_ACC_PUBLIC)
 
