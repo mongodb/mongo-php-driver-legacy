@@ -285,6 +285,62 @@ static int mongo_process_option(mongo_con_manager *manager, mongo_servers *serve
 }
 
 /* Option parser helpers */
+
+/* Sets auth mechanism properties.
+ * Returns:
+ * 0 if it worked
+ * 2 if the option didn't exist
+ * 3 on logical errors.
+ *
+ * On logical errors, the error_message will be populated with the reason. */
+static int parse_auth_mechanism_properties(mongo_con_manager *manager, mongo_servers *servers, char *value, char **error_message)
+{
+	char *start, *end, *colon, *prop_name, *prop_value;
+
+	/* ignore empty value */
+	if (strlen(value) == 0) {
+		return 0;
+	}
+
+	start = value;
+
+	do {
+		end = strchr(start, ',');
+		colon = strchr(start, ':');
+
+		if (!colon) {
+			int len = strlen(start) + sizeof("Error while trying to parse auth mechanism properties: No separator for ''");
+
+			*error_message = malloc(len + 1);
+			snprintf(*error_message, len, "Error while trying to parse auth mechanism properties: No separator for '%s'", start);
+			return 3;
+		}
+
+		prop_name = mcon_strndup(start, colon - start);
+		prop_value = mcon_strndup(colon + 1, end - colon - 1);
+
+		if (strcasecmp(prop_name, "SERVICE_NAME") == 0) {
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found auth mechanism property '%s': '%s'", prop_name, prop_value);
+			free(servers->options.gssapiServiceName);
+			servers->options.gssapiServiceName = prop_value;
+
+			/* Skip freeing of prop_value, since we assigned it to a server option */
+			free(prop_name);
+			start = end + 1;
+			continue;
+		}
+
+		*error_message = malloc(256);
+		snprintf(*error_message, 256, "- Found unknown auth mechanism property '%s' with value '%s'", prop_name, prop_value);
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_WARN, "- Found unknown auth mechanism property '%s' with value '%s'", prop_name, prop_value);
+		free(prop_name);
+		free(prop_value);
+		return 2;
+	} while (end);
+
+	return 0;
+}
+
 static int parse_read_preference_tags(mongo_con_manager *manager, mongo_servers *servers, char *value, char **error_message)
 {
 	mongo_read_preference_tagset *tmp_ts = calloc(1, sizeof(mongo_read_preference_tagset));
@@ -364,6 +420,11 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			servers->server[i]->mechanism = mechanism;
 		}
 		return 0;
+	}
+
+	if (strcasecmp(option_name, "authMechanismProperties") == 0) {
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'authMechanismProperties': '%s'", option_value);
+		return parse_auth_mechanism_properties(manager, servers, option_value, error_message);
 	}
 
 	if (strcasecmp(option_name, "authSource") == 0) {
