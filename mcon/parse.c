@@ -321,7 +321,9 @@ static int parse_auth_mechanism_properties(mongo_con_manager *manager, mongo_ser
 
 		if (strcasecmp(prop_name, "SERVICE_NAME") == 0) {
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found auth mechanism property '%s': '%s'", prop_name, prop_value);
-			free(servers->options.gssapiServiceName);
+			if (servers->options.gssapiServiceName) {
+				free(servers->options.gssapiServiceName);
+			}
 			servers->options.gssapiServiceName = prop_value;
 
 			/* Skip freeing of prop_value, since we assigned it to a server option */
@@ -565,7 +567,9 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 
 	if (strcasecmp(option_name, "gssapiServiceName") == 0) {
 		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'gssapiServiceName': '%s'", option_value);
-		free(servers->options.gssapiServiceName);
+		if (servers->options.gssapiServiceName) {
+			free(servers->options.gssapiServiceName);
+		}
 		servers->options.gssapiServiceName = strdup(option_value);
 		return 0;
 	}
