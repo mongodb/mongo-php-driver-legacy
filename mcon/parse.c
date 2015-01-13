@@ -341,6 +341,12 @@ static int parse_auth_mechanism_properties(mongo_con_manager *manager, mongo_ser
 	return 0;
 }
 
+/* Sets read preference tags.
+ * Returns:
+ * 0 if it worked
+ * 3 on logical errors.
+ *
+ * On logical errors, the error_message will be populated with the reason. */
 static int parse_read_preference_tags(mongo_con_manager *manager, mongo_servers *servers, char *value, char **error_message)
 {
 	mongo_read_preference_tagset *tmp_ts = calloc(1, sizeof(mongo_read_preference_tagset));
@@ -387,6 +393,7 @@ static int parse_read_preference_tags(mongo_con_manager *manager, mongo_servers 
 /* Sets server options.
  * Returns:
  * 0 if it worked
+ * -1 if the option was parsed, but is deprecated
  * 2 if the option didn't exist
  * 3 on logical errors.
  *
