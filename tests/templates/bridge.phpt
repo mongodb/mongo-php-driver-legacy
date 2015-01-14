@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-xxx: Description
 --SKIPIF--
-<?php $needs = "2.0.0"; $needsOp = "gt"; ?>
+<?php $needs = "2.0.0"; $needsOp = ">="; ?>
 <?php require_once "tests/utils/bridge.inc" ?>
 <?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
 --FILE--

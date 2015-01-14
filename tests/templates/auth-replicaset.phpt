@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-xxx: Description
 --SKIPIF--
-<?php $needs = "2.0.0"; $needsOp = "gt"; ?>
+<?php $needs = "2.0.0"; $needsOp = ">="; ?>
 <?php require_once "tests/utils/auth-replicaset.inc" ?>
 --FILE--
 <?php

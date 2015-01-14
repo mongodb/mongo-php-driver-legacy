@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-1059: updatedExisting is always true when updating
 --SKIPIF--
-<?php $needs = "2.6.0"; $needsOp = "gt"; ?>
+<?php $needs = "2.6.0"; $needsOp = ">="; ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php
