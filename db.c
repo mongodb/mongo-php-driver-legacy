@@ -892,6 +892,8 @@ static void mongo_db_list_collections_legacy(zval *this_ptr, zval *options, int 
 			case MONGO_COLLECTION_RETURN_TYPE_INFO_ARRAY:
 				Z_ADDREF_P(cursor->current);
 				add_assoc_zval(list, name, cursor->current);
+				/* Replace the collection's namespace with the trimmed name */
+				add_assoc_string(cursor->current, "name", name, 1);
 				break;
 		}
 

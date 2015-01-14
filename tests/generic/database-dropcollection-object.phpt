@@ -22,10 +22,10 @@ var_dump(findCollection($d, 'dropcoltest'));
 $d->dropCollection($d->dropcoltest);
 var_dump(findCollection($d, 'dropcoltest'));
 ?>
---EXPECTF--
+--EXPECT--
 array(1) {
   ["name"]=>
-  string(%d) "%s.dropcoltest"
+  string(11) "dropcoltest"
 }
 NULL
 NULL

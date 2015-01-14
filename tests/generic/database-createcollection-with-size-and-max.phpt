@@ -30,9 +30,9 @@ foreach($c->find() as $res) {
 }
 var_dump($c->count());
 ?>
---EXPECTF--
+--EXPECT--
 NULL
-string(%d) "%s.createcol1"
+string(10) "createcol1"
 int(5)
 int(6)
 int(7)

@@ -20,6 +20,6 @@ $retval = findCollection($d, 'create-col1');
 var_dump($retval['name']);
 
 ?>
---EXPECTF--
+--EXPECT--
 NULL
-string(%d) "%s.create-col1"
+string(11) "create-col1"

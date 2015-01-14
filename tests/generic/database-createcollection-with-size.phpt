@@ -29,7 +29,7 @@ var_dump($c->count() < 125); // 4096 / (33-byte BSON documents) = 124.12
 ?>
 --EXPECTF--
 NULL
-string(%d) "%s.create-col1"
+string(11) "create-col1"
 array(2) {
   ["size"]=>
   int(4096)

@@ -32,15 +32,15 @@ $prev = $d->setProfilingLevel(MongoDB::PROFILING_OFF);
 $d->dropCollection('system.profile');
 var_dump(findCollection($d, 'system.profile'));
 ?>
---EXPECTF--
-string(%d) "%s.system.profile"
+--EXPECT--
+string(14) "system.profile"
 array(2) {
   ["size"]=>
   int(4096)
   ["capped"]=>
   bool(true)
 }
-string(%d) "%s.system.profile"
+string(14) "system.profile"
 array(2) {
   ["size"]=>
   int(4096)

@@ -31,7 +31,7 @@ var_dump($c->count() < 125); // 4096 / (33-byte BSON documents) = 124.12
 NULL
 
 %s: MongoDB::createCollection(): This method now accepts arguments as an options array instead of the three optional arguments for capped, size and max elements in %sdatabase-createcollection-with-size-old.php on line %d
-string(%d) "%s.create-col1"
+string(11) "create-col1"
 array(2) {
   ["size"]=>
   int(4096)
