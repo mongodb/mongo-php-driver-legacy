@@ -21,15 +21,11 @@ $db->selectCollection('test')->insert(array('_id' => 1));
 echo "Testing with includeSystemCollections=false:\n";
 
 $collections = $db->getCollectionInfo();
-ksort($collections);
+usort($collections, function($a, $b) { return strcmp($a['name'], $b['name']); });
 
-foreach ($collections as $name => $info) {
-    if ($name != $info['name']) {
-        printf("FAILED: '%s' does not match '%s'\n", $name, $info['name']);
-    }
-
-    if ($name == 'system.profile' || $name == 'test') {
-        echo $name, "\n";
+foreach ($collections as $info) {
+    if ($info['name'] == 'system.profile' || $info['name'] == 'test') {
+        echo $info['name'], "\n";
     }
 
     /* We don't assert the structure of the $info array as it may vary between
@@ -40,15 +36,11 @@ foreach ($collections as $name => $info) {
 echo "\nTesting with includeSystemCollections=true:\n";
 
 $collections = $db->getCollectionInfo(array('includeSystemCollections' => true));
-ksort($collections);
+usort($collections, function($a, $b) { return strcmp($a['name'], $b['name']); });
 
-foreach ($collections as $name => $info) {
-    if ($name != $info['name']) {
-        printf("FAILED: '%s' does not match '%s'\n", $name, $info['name']);
-    }
-
-    if ($name == 'system.profile' || $name == 'test') {
-        echo $name, "\n";
+foreach ($collections as $info) {
+    if ($info['name'] == 'system.profile' || $info['name'] == 'test') {
+        echo $info['name'], "\n";
     }
 }
 

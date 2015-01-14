@@ -2,7 +2,10 @@
 
 function findCollection($db, $name)
 {
-    $collections = $db->getCollectionInfo(array('includeSystemCollections' => true));
+    $collections = $db->getCollectionInfo(array(
+        'includeSystemCollections' => true,
+        'filter' => array('name' => $name),
+    ));
 
-    return isset($collections[$name]) ? $collections[$name] : null;
+    return reset($collections) !== false ? current($collections) : null;
 }
