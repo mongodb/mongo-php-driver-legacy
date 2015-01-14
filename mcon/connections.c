@@ -42,6 +42,21 @@ int mongo_connection_get_reqid(mongo_connection *con)
 	return con->last_reqid;
 }
 
+static void mongo_connection_destroy_tags(mongo_connection *con)
+{
+	int i;
+
+	for (i = 0; i < con->tag_count; i++) {
+		free(con->tags[i]);
+	}
+	if (con->tags) {
+		free(con->tags);
+	}
+
+	con->tag_count = 0;
+	con->tags = NULL;
+}
+
 mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash, mongo_server_def *server_def, mongo_server_options *options, char **error_message)
 {
 	mongo_connection *tmp;
@@ -85,7 +100,6 @@ mongo_connection *mongo_connection_create(mongo_con_manager *manager, char *hash
 void mongo_connection_destroy(mongo_con_manager *manager, void *data, int why)
 {
 	int current_pid, connection_pid;
-	int i;
 	mongo_connection *con = (mongo_connection *)data;
 
 	current_pid = getpid();
@@ -100,10 +114,7 @@ void mongo_connection_destroy(mongo_con_manager *manager, void *data, int why)
 			manager->close(con, why);
 			con->socket = NULL;
 
-			for (i = 0; i < con->tag_count; i++) {
-				free(con->tags[i]);
-			}
-			free(con->tags);
+			mongo_connection_destroy_tags(con);
 
 			if (con->cleanup_list) {
 				mongo_connection_deregister_callback *ptr = con->cleanup_list;
@@ -378,9 +389,10 @@ int mongo_connection_ismaster(mongo_con_manager *manager, mongo_connection *con,
 		return 0;
 	}
 
+	/* Unset tags that could have been previously set */
+	mongo_connection_destroy_tags(con);
+
 	/* Find read preferences tags */
-	con->tag_count = 0;
-	con->tags = NULL;
 	if (bson_find_field_as_document(ptr, "tags", (char**) &tags)) {
 		char *it, *name, *value;
 		int   length;
