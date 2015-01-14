@@ -1,7 +1,7 @@
 --TEST--
 MongoDB::listCollections() with "filter" option (legacy mode)
 --SKIPIF--
-<?php $needs = "2.7.5"; $needsOp = "lt"; ?>
+<?php $needs = "2.7.5"; $needsOp = "<"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php

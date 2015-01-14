@@ -1,7 +1,7 @@
 --TEST--
 Connection strings: Test fsync over standalone server
 --SKIPIF--
-<?php $needs = "2.5.5"; $needsOp = "lt" ?>
+<?php $needs = "2.5.5"; $needsOp = "<" ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php

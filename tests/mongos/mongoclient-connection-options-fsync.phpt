@@ -1,7 +1,7 @@
 --TEST--
 Connection strings: Test fsync over mongos
 --SKIPIF--
-<?php $needs = "2.5.3"; $needsOp = "lt" ?>
+<?php $needs = "2.5.3"; $needsOp = "<" ?>
 <?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
 <?php

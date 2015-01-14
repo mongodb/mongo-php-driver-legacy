@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-522: Checking error conditions in insert options
 --SKIPIF--
-<?php $needs = "2.5.5"; $needsOp = "lt"; ?>
+<?php $needs = "2.5.5"; $needsOp = "<"; ?>
 <?php require_once "tests/utils/standalone.inc";?>
 --FILE--
 <?php

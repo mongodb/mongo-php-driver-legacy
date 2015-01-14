@@ -1,7 +1,7 @@
 --TEST--
 MongoCollection::getIndexInfo() Run against secondary directly (legacy mode)
 --SKIPIF--
-<?php $needs = "2.7.5"; $needsOp = "lt"; ?>
+<?php $needs = "2.7.5"; $needsOp = "<"; ?>
 <?php require_once 'tests/utils/replicaset.inc' ?>
 --FILE--
 <?php
