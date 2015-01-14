@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-569: Mongo: Checking permutations to trigger GLE.
 --SKIPIF--
-<?php $needs = "2.5.5"; $needsOp = "lt"; ?>
+<?php $needs = "2.5.5"; $needsOp = "<"; ?>
 <?php require_once "tests/utils/replicaset.inc";?>
 --FILE--
 <?php

@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-1082: CommandCursor segfaults when server is closed
 --SKIPIF--
-<?php $needs = "2.6.0"; $needsOp = "gt"; ?>
+<?php $needs = "2.6.0"; $needsOp = ">="; ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
 <?php

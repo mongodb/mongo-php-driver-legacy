@@ -1,7 +1,7 @@
 --TEST--
 Test for PHP-569: Overriding with ->w on the MongoDb object.
 --SKIPIF--
-<?php $needs = "2.5.5"; $needsOp = "lt"; ?>
+<?php $needs = "2.5.5"; $needsOp = "<"; ?>
 <?php require_once "tests/utils/replicaset.inc";?>
 --FILE--
 <?php

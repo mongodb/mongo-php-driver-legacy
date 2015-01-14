@@ -1,7 +1,7 @@
 --TEST--
 MongoDB::listCollections() requires "filter" option's "name" criteria to be a string (legacy mode)
 --SKIPIF--
-<?php $needs = "2.7.5"; $needsOp = "lt"; ?>
+<?php $needs = "2.7.5"; $needsOp = "<"; ?>
 <?php require_once "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php

@@ -1,7 +1,7 @@
 --TEST--
 MongoClient::__construct(): Connecting to one mongos (1)
 --SKIPIF--
-<?php $needs = "2.5.5"; $needsOp = "lt" ?>
+<?php $needs = "2.5.5"; $needsOp = "<" ?>
 <?php require_once "tests/utils/mongos.inc" ?>
 --FILE--
 <?php

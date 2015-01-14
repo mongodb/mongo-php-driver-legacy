@@ -1,7 +1,7 @@
 --TEST--
 MongoWriteBatch: Throw exception on invalid wire version
 --SKIPIF--
-<?php $needs = "2.5.0"; $needsOp = "lt"; ?>
+<?php $needs = "2.5.0"; $needsOp = "<"; ?>
 <?php if ( ! class_exists('MongoWriteBatch')) { exit('skip This test requires MongoWriteBatch classes'); } ?>
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
