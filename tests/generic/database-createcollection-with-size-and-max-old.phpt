@@ -33,7 +33,7 @@ var_dump($c->count());
 NULL
 
 %s: MongoDB::createCollection(): This method now accepts arguments as an options array instead of the three optional arguments for capped, size and max elements in %sdatabase-createcollection-with-size-and-max-old.php on line 14
-string(%d) "%s.createcol1"
+string(10) "createcol1"
 int(5)
 int(6)
 int(7)

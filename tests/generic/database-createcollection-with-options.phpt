@@ -35,9 +35,9 @@ foreach($c->find() as $res) {
 }
 var_dump($c->count());
 ?>
---EXPECTF--
+--EXPECT--
 NULL
-string(%d) "%s.create-col1"
+string(11) "create-col1"
 array(4) {
   ["size"]=>
   int(4096)
@@ -58,7 +58,7 @@ array(3) {
     int(1)
   }
   ["ns"]=>
-  string(%d) "%s.create-col1"
+  string(16) "test.create-col1"
 }
 int(5)
 int(6)

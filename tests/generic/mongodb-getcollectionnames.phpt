@@ -5,39 +5,48 @@ MongoDB::getCollectionNames()
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
-$a = mongo_standalone();
-$d = $a->selectDb(dbname());
 
-$d->setProfilingLevel(MongoDB::PROFILING_OFF);
-$d->system->profile->drop();
-$d->createCollection("system.profile", array('capped' => true, 'size' => 5000));
+$host = MongoShellServer::getStandaloneInfo();
 
-$d->listcol->drop();
-$d->listcol->insert(array('_id' => 'test'));
+$mc = new MongoClient($host);
+$db = $mc->selectDB(dbname());
 
-echo "without flag\n";
-$collections = $d->getCollectionNames();
-sort( $collections );
-foreach( $collections as $col )
-{
-	if ($col == 'system.profile' || $col == 'listcol') {
-		echo $col, "\n";
-	}
+$db->setProfilingLevel(MongoDB::PROFILING_OFF);
+$db->selectCollection('system.profile')->drop();
+$db->createCollection('system.profile', array('capped' => true, 'size' => 5000));
+
+$db->selectCollection('test')->drop();
+$db->selectCollection('test')->insert(array('_id' => 1));
+
+echo "Testing with includeSystemCollections=false:\n";
+
+$collections = $db->getCollectionNames();
+sort($collections);
+
+foreach ($collections as $name) {
+    if ($name == 'system.profile' || $name == 'test') {
+        echo $name, "\n";
+    }
 }
 
-echo "with flag\n";
-$collections = $d->getCollectionNames(true);
-sort( $collections );
-foreach( $collections as $col )
-{
-	if ($col == 'system.profile' || $col == 'listcol') {
-		echo $col, "\n";
-	}
+echo "\nTesting with includeSystemCollections=true:\n";
+
+$collections = $db->getCollectionNames(array('includeSystemCollections' => true));
+sort($collections);
+
+foreach ($collections as $name) {
+    if ($name == 'system.profile' || $name == 'test') {
+        echo $name, "\n";
+    }
 }
+
 ?>
---EXPECT--
-without flag
-listcol
-with flag
-listcol
+===DONE===
+--EXPECTF--
+Testing with includeSystemCollections=false:
+test
+
+Testing with includeSystemCollections=true:
 system.profile
+test
+===DONE===
