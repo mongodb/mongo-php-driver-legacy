@@ -741,7 +741,7 @@ static void mongo_db_list_collections_command(zval *this_ptr, zval *options, int
 
 			case MONGO_COLLECTION_RETURN_TYPE_INFO_ARRAY:
 				Z_ADDREF_P(*collection_doc);
-				add_assoc_zval(list, Z_STRVAL_PP(collection_name), *collection_doc);
+				add_next_index_zval(list, *collection_doc);
 				break;
 		}
 	}
