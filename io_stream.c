@@ -207,6 +207,10 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 		rtimeout.tv_sec = socketTimeoutMS / 1000;
 		rtimeout.tv_usec = (socketTimeoutMS % 1000) * 1000;
 
+		/* Apply socketTimeoutMS in case the timeout was altered by another
+		 * MongoClient (the stream may be a persistent connection). From the
+		 * perspective of this MongoClient, the timeout is not changing. */
+		php_stream_set_option(con->socket, PHP_STREAM_OPTION_READ_TIMEOUT, 0, &rtimeout);
 		mongo_manager_log(MonGlo(manager), MLOG_CON, MLOG_FINE, "No timeout changes for %s", con->hash);
 	}
 
