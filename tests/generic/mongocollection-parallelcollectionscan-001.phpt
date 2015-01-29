@@ -28,9 +28,10 @@ foreach($document as $cursor) {
 }
 
 $document = $mc->selectDb(dbname())->command(array("parallelCollectionScan" => collname(__FILE__), "numCursors" => 4), null, $hash);
-var_dump($document);
 
-foreach($document["cursors"] as $retval) {
+foreach($document["cursors"] as $key => $retval) {
+	echo "Cursor {$key}:\n";
+	dump_these_keys($retval['cursor'], array('ns', 'firstBatch'));
     $cursor = MongoCommandCursor::createFromDocument($mc, $hash, $retval);
     var_dump($cursor);
 
@@ -101,86 +102,15 @@ array(2) {
   ["x"]=>
   int(5000)
 }
+Cursor 0:
 array(2) {
-  ["cursors"]=>
-  array(4) {
-    [0]=>
-    array(2) {
-      ["cursor"]=>
-      array(3) {
-        ["firstBatch"]=>
-        array(0) {
-        }
-        ["ns"]=>
-        string(%d) "%s"
-        ["id"]=>
-        object(MongoInt64)#%d (1) {
-          ["value"]=>
-          string(%d) "%d"
-        }
-      }
-      ["ok"]=>
-      bool(true)
-    }
-    [1]=>
-    array(2) {
-      ["cursor"]=>
-      array(3) {
-        ["firstBatch"]=>
-        array(0) {
-        }
-        ["ns"]=>
-        string(%d) "%s"
-        ["id"]=>
-        object(MongoInt64)#%d (1) {
-          ["value"]=>
-          string(%d) "%d"
-        }
-      }
-      ["ok"]=>
-      bool(true)
-    }
-    [2]=>
-    array(2) {
-      ["cursor"]=>
-      array(3) {
-        ["firstBatch"]=>
-        array(0) {
-        }
-        ["ns"]=>
-        string(%d) "%s"
-        ["id"]=>
-        object(MongoInt64)#%d (1) {
-          ["value"]=>
-          string(%d) "%d"
-        }
-      }
-      ["ok"]=>
-      bool(true)
-    }
-    [3]=>
-    array(2) {
-      ["cursor"]=>
-      array(3) {
-        ["firstBatch"]=>
-        array(0) {
-        }
-        ["ns"]=>
-        string(%d) "%s"
-        ["id"]=>
-        object(MongoInt64)#%d (1) {
-          ["value"]=>
-          string(%d) "%d"
-        }
-      }
-      ["ok"]=>
-      bool(true)
-    }
+  ["ns"]=>
+  string(55) "test.generic/mongocollection-parallelcollectionscan-001"
+  ["firstBatch"]=>
+  array(0) {
   }
-  ["ok"]=>
-  float(1)
 }
-object(MongoCommandCursor)#%d (0) {
+object(MongoCommandCursor)#10 (0) {
 }
 array(2) {
   ["_id"]=>
@@ -191,7 +121,15 @@ array(2) {
   ["x"]=>
   int(125)
 }
-object(MongoCommandCursor)#%d (0) {
+Cursor 1:
+array(2) {
+  ["ns"]=>
+  string(55) "test.generic/mongocollection-parallelcollectionscan-001"
+  ["firstBatch"]=>
+  array(0) {
+  }
+}
+object(MongoCommandCursor)#11 (0) {
 }
 array(2) {
   ["_id"]=>
@@ -202,7 +140,15 @@ array(2) {
   ["x"]=>
   int(634)
 }
-object(MongoCommandCursor)#%d (0) {
+Cursor 2:
+array(2) {
+  ["ns"]=>
+  string(55) "test.generic/mongocollection-parallelcollectionscan-001"
+  ["firstBatch"]=>
+  array(0) {
+  }
+}
+object(MongoCommandCursor)#10 (0) {
 }
 array(2) {
   ["_id"]=>
@@ -213,7 +159,15 @@ array(2) {
   ["x"]=>
   int(2679)
 }
-object(MongoCommandCursor)#%d (0) {
+Cursor 3:
+array(2) {
+  ["ns"]=>
+  string(55) "test.generic/mongocollection-parallelcollectionscan-001"
+  ["firstBatch"]=>
+  array(0) {
+  }
+}
+object(MongoCommandCursor)#11 (0) {
 }
 array(2) {
   ["_id"]=>

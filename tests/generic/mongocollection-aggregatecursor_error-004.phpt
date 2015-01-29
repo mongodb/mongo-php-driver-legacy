@@ -53,6 +53,6 @@ try {
 Issuing command: drop
 Issuing command: aggregate
 Cursor batch size: 0
-16956
+%r(14|16956)%r
 %s:%d: exception: cursor.batchSize must be a number
 ===DONE===
