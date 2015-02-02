@@ -38,6 +38,7 @@
 #define MONGO_CURSOR_OPT_CMD_CURSOR         2
 #define MONGO_CURSOR_OPT_FORCE_PRIMARY      4
 #define MONGO_CURSOR_FIRST_BATCH_EMPTY_OKAY 8
+#define MONGO_CURSOR_OPT_DONT_ADVANCE_ON_FIRST_NEXT 16
 
 /* Macro to check whether a cursor is dead, and if so, bailout */
 #define MONGO_CURSOR_CHECK_DEAD \
