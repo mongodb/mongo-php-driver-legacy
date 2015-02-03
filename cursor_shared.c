@@ -619,6 +619,7 @@ void php_mongo_cursor_reset(mongo_cursor *cursor TSRMLS_DC)
 	cursor->persist = 0;
 	cursor->first_batch_at = 0;
 	cursor->first_batch_num = 0;
+	cursor->cursor_options &= ~MONGO_CURSOR_OPT_DONT_ADVANCE_ON_FIRST_NEXT;
 }
 
 /* Resets cursor and disconnects connection.  Always returns FAILURE (so it can
