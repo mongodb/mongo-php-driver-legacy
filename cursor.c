@@ -243,6 +243,13 @@ PHP_METHOD(MongoCursor, hasNext)
 			RETURN_NULL();
 		}
 		cursor->started_iterating = 1;
+		/* This is a special case. If hasNext() is called, and we have to
+		 * trigger the query to run, then the cursor position is aready at the
+		 * "first" item. However, nothing should have been advanced yet and
+		 * hence the pointer is one too far. In order to prevent it from being
+		 * one too far, this flag prevents the pointer from being increased in
+		 * php_mongocursor_advance. */
+		cursor->cursor_options |= MONGO_CURSOR_OPT_DONT_ADVANCE_ON_FIRST_NEXT;
 	}
 
 	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
@@ -255,7 +262,9 @@ PHP_METHOD(MongoCursor, hasNext)
 		RETURN_FALSE;
 	}
 
-	if (cursor->at < cursor->num) {
+	/* We need to look for one less than the end, because after this check, we
+	 * still would need to be able to advance to the next item. */
+	if (cursor->at < cursor->num - 1) {
 		RETURN_TRUE;
 	} else if (cursor->cursor_id == 0) {
 		RETURN_FALSE;
@@ -335,7 +344,11 @@ int php_mongocursor_advance(mongo_cursor *cursor TSRMLS_DC)
 	/* Free the previous current item */
 	php_mongo_cursor_clear_current_element(cursor);
 
-	cursor->at++;
+	if (cursor->cursor_options & MONGO_CURSOR_OPT_DONT_ADVANCE_ON_FIRST_NEXT) {
+		cursor->cursor_options &= ~MONGO_CURSOR_OPT_DONT_ADVANCE_ON_FIRST_NEXT;
+	} else {
+		cursor->at++;
+	}
 
 	if (cursor->at == cursor->num && cursor->cursor_id != 0) {
 		if (cursor->dead) {
