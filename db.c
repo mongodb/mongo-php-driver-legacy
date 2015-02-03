@@ -872,7 +872,7 @@ static void mongo_db_list_collections_legacy(zval *this_ptr, zval *options, int 
 		name++;
 
 		/* "foo." was allowed in earlier versions */
-		if (name == '\0') {
+		if (*name == '\0') {
 			php_mongocursor_advance(cursor TSRMLS_CC);
 			continue;
 		}
