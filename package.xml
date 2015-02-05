@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2015-01-29</date>
- <time>12:15:44</time>
+ <date>2015-02-05</date>
+ <time>10:43:05</time>
  <version>
-  <release>1.6.0</release>
-  <api>1.6.0</api>
+  <release>1.6.1</release>
+  <api>1.6.1</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,80 +43,8 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-953] - MongoCollection::ensureIndex() should not validate namespace length
-    * [PHP-977] - An iteration on a MongoCursor object with yield produces a memory leak.
-    * [PHP-1063] - Refactor cursor logic to follow MongoCommandCursor
-    * [PHP-1145] - Clean up MONGO_METHOD calls in db_ref.c
-    * [PHP-1146] - Clean up MONGO_METHOD calls in mongo.c
-    * [PHP-1149] - Fix database and collection name validation
-    * [PHP-1218] - Add MongoDate->toDateTime to allow creation of DateTime object from MongoDate
-    * [PHP-1229] - MongoGridFS::remove() ignores justOne option when deleting chunks
-    * [PHP-1237] - Possible to read memory before mongo_cursor.ns pointer
-    * [PHP-1245] - MONGO_METHOD calls within generators cause segfaults
-    * [PHP-1247] - MongoClient should not inherit timeout of persistent connection
-    * [PHP-1251] - MongoCursor::count() should use cursor's maxTimeMS
-    * [PHP-1266] - phpinfo() lists a default authentication mechanism (which may not be the default)
-    * [PHP-1267] - Windows build failure
-    * [PHP-1268] - Fix uninitialized variable usages with deprecated properties
-    * [PHP-1269] - Validate encoding and decoding of MongoBinData::UUID_RFC4122
-    * [PHP-1270] - MongoDate->toDateTime is only supported for PHP 5.3.4 and later.
-    * [PHP-1272] - bson_encode() segfaults with some BSON type classes
-    * [PHP-1273] - bson_encode() MongoTimestamp erroneously creates BSON date
-    * [PHP-1275] - Memory leak with 2x MongoClient 
-    * [PHP-1276] - Fix tests for 2.8
-    * [PHP-1277] - bson_encode() does not handle MongoMaxKey and MongoMinKey
-    * [PHP-1278] - runcommand memory leak
-    * [PHP-1280] - Can not connect without authentication credentials (results in segfault)
-    * [PHP-1285] - Add MongoDB::getCollectionInfo as per SPEC-54
-    * [PHP-1286] - MongoCollection::count() segfaults due to a double free
-    * [PHP-1297] - Memory read errors with deprecated properties.
-    * [PHP-1351] - Handle listCollections and listIndexes results for non-existent databases and collections
-    * [PHP-1355] - Collection and index enumeration fails if cursor's first batch is empty
-    * [PHP-1357] - Command cursor may cause log_response_header callback to segfault
-    * [PHP-1360] - Do not compare php_mongocursor_is_valid() result to FAILURE constant
-    * [PHP-1361] - php_mongo_runcommand() should load current element before handling errors
-    * [PHP-1366] - aggregateCursor() with $out does not force primary selection
-    * [PHP-1367] - aggregate() with var args does not restore read pref after forcing primary for $out
-    * [PHP-1368] - Force primary read pref over primaryPreferred if pipeline ends with $out
-    * [PHP-1369] - Clear tag sets when forcing primary read pref for aggregate
-    * [PHP-1370] - Implement get/setReadPreference() for MongoCommandCursor
-    * [PHP-1371] - Resolve memory leak with connection replica set tags
-    * [PHP-1372] - explicitly null-terminate buffer written by gethostname()
-    * [PHP-1376] - MongoDB::getCollectionInfo() should trim database prefix when querying system.namespaces
-
-** Improvement
-    * [PHP-904] - Implement MongoDate::__set_state
-    * [PHP-1160] - Allow count to work with query hints
-    * [PHP-1219] - Drop support for PHP 5.2.
-    * [PHP-1256] - Implement MongoCommandCursor::timeout()
-    * [PHP-1263] - MongoCollection::count() should throw MongoExecutionTimeoutException on maxTimeMS timeout
-    * [PHP-1321] - Support cursor in listCollections and listIndexes commands
-    * [PHP-1356] - Do not enforce batch size for collection and index enumeration commands
-    * [PHP-1358] - Allow command cursor option to be array or object
-    * [PHP-1378] - MongoDB::getCollectionInfo() should return a numerically indexed array
-
-** New Feature
-    * [PHP-1161] - Implement the SCRAM-SHA-1 SASL Mechanism
-    * [PHP-1257] - Support 50 replicaset members
-    * [PHP-1259] - MongoDB::listCollections() should support filter option
-
-** Task
-    * [PHP-1151] - Remove support for compiling without PHP streams
-    * [PHP-1225] - Use listCollections command for MongoDB::listCollections and MongoDB::getCollectionNames
-    * [PHP-1226] - Use listIndexes command for MongoCollection::getIndexInfo()
-    * [PHP-1227] - Bump maxWireProtocolVersion for 2.8 features
-    * [PHP-1238] - Support authMechanismProperties MongoClient option
-    * [PHP-1241] - Change MongoCursor::info()['at'] to zero-based indexing
-    * [PHP-1244] - Mark MongoCursor::doQuery as final
-    * [PHP-1258] - Test against non-mmapv1 storage engines (heap + wiredtiger)
-    * [PHP-1318] - Document options for collection enumeration methods
-    * [PHP-1328] - Document MongoCursorInterface
-    * [PHP-1330] - Document MongoDB::command() $hash by-reference parameter
-    * [PHP-1354] - MongoCommandCursor::key() returns an integer
-    * [PHP-1363] - Move MongoCursor::valid() checks to php_mongocursor_is_valid()
-    * [PHP-1365] - Do not enforce batch size on cursor commands
-    * [PHP-1374] - Clarify that MongoTimestamp is for internal use only
-    * [PHP-1375] - Clarify that MongoMaxKey and MongoMinKey are primarily for internal use
+    * [PHP-1382] - MongoCursor::getNext() returns null, despite hasNext() returning true
+    * [PHP-1388] - Incorrect string comparison in mongo_db_list_collections_legacy()
  </notes>
 
  <contents>
@@ -283,6 +211,97 @@
   <configureoption name="with-mongo-sasl" prompt="Build with Cyrus SASL (MongoDB Enterprise Authentication) support?" default="no"/>
  </extsrcrelease>
  <changelog>
+
+  <release>
+   <date>2015-01-29</date>
+   <time>12:15:44</time>
+   <version>
+    <release>1.6.0</release>
+    <api>1.6.0</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-953] - MongoCollection::ensureIndex() should not validate namespace length
+    * [PHP-977] - An iteration on a MongoCursor object with yield produces a memory leak.
+    * [PHP-1063] - Refactor cursor logic to follow MongoCommandCursor
+    * [PHP-1145] - Clean up MONGO_METHOD calls in db_ref.c
+    * [PHP-1146] - Clean up MONGO_METHOD calls in mongo.c
+    * [PHP-1149] - Fix database and collection name validation
+    * [PHP-1218] - Add MongoDate->toDateTime to allow creation of DateTime object from MongoDate
+    * [PHP-1229] - MongoGridFS::remove() ignores justOne option when deleting chunks
+    * [PHP-1237] - Possible to read memory before mongo_cursor.ns pointer
+    * [PHP-1245] - MONGO_METHOD calls within generators cause segfaults
+    * [PHP-1247] - MongoClient should not inherit timeout of persistent connection
+    * [PHP-1251] - MongoCursor::count() should use cursor's maxTimeMS
+    * [PHP-1266] - phpinfo() lists a default authentication mechanism (which may not be the default)
+    * [PHP-1267] - Windows build failure
+    * [PHP-1268] - Fix uninitialized variable usages with deprecated properties
+    * [PHP-1269] - Validate encoding and decoding of MongoBinData::UUID_RFC4122
+    * [PHP-1270] - MongoDate->toDateTime is only supported for PHP 5.3.4 and later.
+    * [PHP-1272] - bson_encode() segfaults with some BSON type classes
+    * [PHP-1273] - bson_encode() MongoTimestamp erroneously creates BSON date
+    * [PHP-1275] - Memory leak with 2x MongoClient 
+    * [PHP-1276] - Fix tests for 2.8
+    * [PHP-1277] - bson_encode() does not handle MongoMaxKey and MongoMinKey
+    * [PHP-1278] - runcommand memory leak
+    * [PHP-1280] - Can not connect without authentication credentials (results in segfault)
+    * [PHP-1285] - Add MongoDB::getCollectionInfo as per SPEC-54
+    * [PHP-1286] - MongoCollection::count() segfaults due to a double free
+    * [PHP-1297] - Memory read errors with deprecated properties.
+    * [PHP-1351] - Handle listCollections and listIndexes results for non-existent databases and collections
+    * [PHP-1355] - Collection and index enumeration fails if cursor's first batch is empty
+    * [PHP-1357] - Command cursor may cause log_response_header callback to segfault
+    * [PHP-1360] - Do not compare php_mongocursor_is_valid() result to FAILURE constant
+    * [PHP-1361] - php_mongo_runcommand() should load current element before handling errors
+    * [PHP-1366] - aggregateCursor() with $out does not force primary selection
+    * [PHP-1367] - aggregate() with var args does not restore read pref after forcing primary for $out
+    * [PHP-1368] - Force primary read pref over primaryPreferred if pipeline ends with $out
+    * [PHP-1369] - Clear tag sets when forcing primary read pref for aggregate
+    * [PHP-1370] - Implement get/setReadPreference() for MongoCommandCursor
+    * [PHP-1371] - Resolve memory leak with connection replica set tags
+    * [PHP-1372] - explicitly null-terminate buffer written by gethostname()
+    * [PHP-1376] - MongoDB::getCollectionInfo() should trim database prefix when querying system.namespaces
+
+** Improvement
+    * [PHP-904] - Implement MongoDate::__set_state
+    * [PHP-1160] - Allow count to work with query hints
+    * [PHP-1219] - Drop support for PHP 5.2.
+    * [PHP-1256] - Implement MongoCommandCursor::timeout()
+    * [PHP-1263] - MongoCollection::count() should throw MongoExecutionTimeoutException on maxTimeMS timeout
+    * [PHP-1321] - Support cursor in listCollections and listIndexes commands
+    * [PHP-1356] - Do not enforce batch size for collection and index enumeration commands
+    * [PHP-1358] - Allow command cursor option to be array or object
+    * [PHP-1378] - MongoDB::getCollectionInfo() should return a numerically indexed array
+
+** New Feature
+    * [PHP-1161] - Implement the SCRAM-SHA-1 SASL Mechanism
+    * [PHP-1257] - Support 50 replicaset members
+    * [PHP-1259] - MongoDB::listCollections() should support filter option
+
+** Task
+    * [PHP-1151] - Remove support for compiling without PHP streams
+    * [PHP-1225] - Use listCollections command for MongoDB::listCollections and MongoDB::getCollectionNames
+    * [PHP-1226] - Use listIndexes command for MongoCollection::getIndexInfo()
+    * [PHP-1227] - Bump maxWireProtocolVersion for 2.8 features
+    * [PHP-1238] - Support authMechanismProperties MongoClient option
+    * [PHP-1241] - Change MongoCursor::info()['at'] to zero-based indexing
+    * [PHP-1244] - Mark MongoCursor::doQuery as final
+    * [PHP-1258] - Test against non-mmapv1 storage engines (heap + wiredtiger)
+    * [PHP-1318] - Document options for collection enumeration methods
+    * [PHP-1328] - Document MongoCursorInterface
+    * [PHP-1330] - Document MongoDB::command() $hash by-reference parameter
+    * [PHP-1354] - MongoCommandCursor::key() returns an integer
+    * [PHP-1363] - Move MongoCursor::valid() checks to php_mongocursor_is_valid()
+    * [PHP-1365] - Do not enforce batch size on cursor commands
+    * [PHP-1374] - Clarify that MongoTimestamp is for internal use only
+    * [PHP-1375] - Clarify that MongoMaxKey and MongoMinKey are primarily for internal use
+   </notes>
+  </release>
 
   <release>
    <date>2014-12-19</date>
