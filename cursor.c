@@ -262,6 +262,14 @@ PHP_METHOD(MongoCursor, hasNext)
 		RETURN_FALSE;
 	}
 
+	/* This is a special case. If hasNext() is called and triggers the query to
+	 * run, cursor->at is 0 but we have not actually advanced to the first
+	 * element (unlike rewind()) and will not do so until getNext() is called.
+	 * Check for this special case rather than using -1 as our position. */
+	if (cursor->cursor_options & MONGO_CURSOR_OPT_DONT_ADVANCE_ON_FIRST_NEXT && cursor->at == cursor->num - 1) {
+		RETURN_TRUE;
+	}
+
 	/* We need to look for one less than the end, because after this check, we
 	 * still would need to be able to advance to the next item. */
 	if (cursor->at < cursor->num - 1) {
