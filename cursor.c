@@ -285,12 +285,24 @@ PHP_METHOD(MongoCursor, hasNext)
 	if (!php_mongo_get_more(cursor TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
+
 	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
 
 	if (have_error_flags(cursor)) {
 		RETURN_TRUE;
+	}
+
+	/* Another special case. Because we had tested for *one more* above, we do
+	 * need to check whether there are actually more results before we
+	 * conclusively can say there are more results on the cursor. We try to run
+	 * getMore here, and then check whether it had changed the "num" from the
+	 * last value. The last value of "num" is now "start", so that's why we
+	 * compare it with that. And of course, only if the cursor ID is now 0 (no
+	 * more results after this). */
+	if (cursor->cursor_id == 0 && cursor->start == cursor->num) {
+		RETURN_FALSE;
 	}
 
 	/* if cursor_id != 0, server should stay the same */
