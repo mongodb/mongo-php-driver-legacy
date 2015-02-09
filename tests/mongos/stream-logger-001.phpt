@@ -107,7 +107,7 @@ array(3) {
   ["wtimeout"]=>
   int(10000)
 }
-array(5) {
+array(6) {
   ["request_id"]=>
   int(4)
   ["skip"]=>
@@ -118,6 +118,8 @@ array(5) {
   int(0)
   ["cursor_id"]=>
   int(0)
+  ["ns"]=>
+  string(12) "phpunit.$cmd"
 }
 
 
@@ -154,7 +156,7 @@ array(2) {
     string(9) "secondary"
   }
 }
-array(5) {
+array(6) {
   ["request_id"]=>
   int(5)
   ["skip"]=>
@@ -165,6 +167,8 @@ array(5) {
   int(4)
   ["cursor_id"]=>
   int(0)
+  ["ns"]=>
+  string(12) "phpunit.$cmd"
 }
 
 
@@ -196,7 +200,7 @@ array(2) {
     string(9) "secondary"
   }
 }
-array(5) {
+array(6) {
   ["request_id"]=>
   int(6)
   ["skip"]=>
@@ -207,6 +211,8 @@ array(5) {
   int(4)
   ["cursor_id"]=>
   int(0)
+  ["ns"]=>
+  string(12) "phpunit.jobs"
 }
 
 
@@ -270,7 +276,7 @@ array(1) {
   ["getlasterror"]=>
   int(1)
 }
-array(5) {
+array(6) {
   ["request_id"]=>
   int(8)
   ["skip"]=>
@@ -281,6 +287,8 @@ array(5) {
   int(0)
   ["cursor_id"]=>
   int(0)
+  ["ns"]=>
+  string(12) "phpunit.$cmd"
 }
 
 
@@ -335,7 +343,7 @@ array(3) {
   ["wtimeout"]=>
   int(10000)
 }
-array(5) {
+array(6) {
   ["request_id"]=>
   int(10)
   ["skip"]=>
@@ -346,6 +354,8 @@ array(5) {
   int(0)
   ["cursor_id"]=>
   int(0)
+  ["ns"]=>
+  string(12) "phpunit.$cmd"
 }
 
 
