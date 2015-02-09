@@ -299,9 +299,8 @@ PHP_METHOD(MongoCursor, hasNext)
 	 * conclusively can say there are more results on the cursor. We try to run
 	 * getMore here, and then check whether it had changed the "num" from the
 	 * last value. The last value of "num" is now "start", so that's why we
-	 * compare it with that. And of course, only if the cursor ID is now 0 (no
-	 * more results after this). */
-	if (cursor->cursor_id == 0 && cursor->start == cursor->num) {
+	 * compare it with that. */
+	if (cursor->start == cursor->num) {
 		RETURN_FALSE;
 	}
 
