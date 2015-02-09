@@ -290,6 +290,10 @@ PHP_METHOD(MongoCursor, hasNext)
 		RETURN_FALSE;
 	}
 
+	/* Note: this is a candidate for removal in future refactoring. Any error
+	 * flags should cause php_mongo_handle_error() to throw an exception and
+	 * return true, which in turn would have hasNext() return in the previous
+	 * conditional. */
 	if (have_error_flags(cursor)) {
 		RETURN_TRUE;
 	}
