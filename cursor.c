@@ -56,7 +56,6 @@ extern zend_object_handlers mongo_default_handlers;
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
-static int have_error_flags(mongo_cursor *cursor);
 static void php_mongocursor_next(mongo_cursor *cursor, zval *return_value TSRMLS_DC);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
@@ -288,14 +287,6 @@ PHP_METHOD(MongoCursor, hasNext)
 
 	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
 		RETURN_FALSE;
-	}
-
-	/* Note: this is a candidate for removal in future refactoring. Any error
-	 * flags should cause php_mongo_handle_error() to throw an exception and
-	 * return true, which in turn would have hasNext() return in the previous
-	 * conditional. */
-	if (have_error_flags(cursor)) {
-		RETURN_TRUE;
 	}
 
 	/* Another special case. Because we had tested for *one more* above, we do
@@ -958,17 +949,6 @@ PHP_METHOD(MongoCursor, key)
 	}
 }
 /* }}} */
-
-/* Returns 1 when an error was found and it returns 0 if no error
- * situation has ocurred on the cursor */
-static int have_error_flags(mongo_cursor *cursor)
-{
-	if (cursor->flag & MONGO_OP_REPLY_ERROR_FLAGS) {
-		return 1;
-	}
-
-	return 0;
-}
 
 static void php_mongocursor_next(mongo_cursor *cursor, zval *return_value TSRMLS_DC)
 {
