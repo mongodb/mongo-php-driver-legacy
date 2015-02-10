@@ -1,5 +1,5 @@
 --TEST--
-MongoCursor::tailable().
+MongoCursor::tailable() with awaitData()
 --SKIPIF--
 <?php if (getenv('SKIP_SLOW_TESTS')) die('skip slow tests excluded by request'); ?>
 <?php require_once "tests/utils/standalone.inc" ?>
@@ -29,5 +29,5 @@ for ( $i = 0; $i < 12; $i++ )
 echo microtime( true ) - $start > 2 ? "AWAIT DATA WAITED\n" : "NO WAITING\n";
 ?>
 --EXPECTF--
-%s: MongoDB::createCollection(): This method now accepts arguments as an options array instead of the three optional arguments for capped, size and max elements in %smongocursor-tailable.php on line %d
+%s: MongoDB::createCollection(): This method now accepts arguments as an options array instead of the three optional arguments for capped, size and max elements in %smongocursor-tailable-001.php on line %d
 AWAIT DATA WAITED

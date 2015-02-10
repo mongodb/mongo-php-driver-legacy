@@ -25,6 +25,7 @@ $c->drop();
 $c->save(array('_id' => 'test1'));
 $c->save(array('_id' => 'test2'));
 $c->save(array('_id' => 'test3'));
+$c->save(array('_id' => 'test4'));
 $cur = $c->find(array(), array('_id'))->batchSize(2);
 while (true) {
 	$info = $cur->info(); echo 'a: ', @$info['at'], ' - ', @$info['numReturned'], "\n";
@@ -46,6 +47,10 @@ b: 1 - 2
 string(5) "test2"
 a: 1 - 2
 Issuing getmore
-b: 2 - 3
+b: 2 - 4
 string(5) "test3"
-a: 2 - 3
+a: 2 - 4
+b: 3 - 4
+string(5) "test4"
+a: 3 - 4
+Issuing getmore

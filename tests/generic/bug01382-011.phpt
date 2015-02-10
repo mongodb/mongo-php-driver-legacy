@@ -25,27 +25,33 @@ $c->drop();
 $c->save(array('_id' => 'test1'));
 $c->save(array('_id' => 'test2'));
 $c->save(array('_id' => 'test3'));
+$c->save(array('_id' => 'test4'));
 $cur = $c->find(array(), array('_id'))->batchSize(2);
 while (true) {
-	$info = $cur->info(); echo 'a: ', @$info['at'], ' - ', @$info['numReturned'], "\n";
+	$info = $cur->info(); echo 'a: ', @$info['at'], ' - ', @$info['numReturned'], ' - ', @$info['id'], "\n";
 	$arr = $cur->getNext();
+	$info = $cur->info(); echo 'b: ', @$info['at'], ' - ', @$info['numReturned'], ' - ', @$info['id'], "\n";
 	if ($arr === NULL) {
 		break;
 	}
-	$info = $cur->info(); echo 'b: ', @$info['at'], ' - ', @$info['numReturned'], "\n";
 	var_dump($arr['_id']);
 }
 
 ?>
---EXPECT--
-a:  - 
-b: 0 - 2
+--EXPECTF--
+a:  -  - 
+b: 0 - 2 - %d
 string(5) "test1"
-a: 0 - 2
-b: 1 - 2
+a: 0 - 2 - %d
+b: 1 - 2 - %d
 string(5) "test2"
-a: 1 - 2
+a: 1 - 2 - %d
 Issuing getmore
-b: 2 - 3
+b: 2 - 4 - %d
 string(5) "test3"
-a: 2 - 3
+a: 2 - 4 - %d
+b: 3 - 4 - %d
+string(5) "test4"
+a: 3 - 4 - %d
+Issuing getmore
+b: 4 - 4 - 0
