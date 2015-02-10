@@ -90,7 +90,7 @@ Dropping collection
 
 Loop iteration: 3
 Issuing getmore
-Exception: %squery failure%S
+Exception: %s
 Cursor is dead
 Breaking loop
 ===DONE===
