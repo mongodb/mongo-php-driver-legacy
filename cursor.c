@@ -56,7 +56,6 @@ extern zend_object_handlers mongo_default_handlers;
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 static zend_object_value php_mongo_cursor_new(zend_class_entry *class_type TSRMLS_DC);
-static int have_error_flags(mongo_cursor *cursor);
 static void php_mongocursor_next(mongo_cursor *cursor, zval *return_value TSRMLS_DC);
 
 zend_class_entry *mongo_ce_Cursor = NULL;
@@ -262,6 +261,14 @@ PHP_METHOD(MongoCursor, hasNext)
 		RETURN_FALSE;
 	}
 
+	/* This is a special case. If hasNext() is called and triggers the query to
+	 * run, cursor->at is 0 but we have not actually advanced to the first
+	 * element (unlike rewind()) and will not do so until getNext() is called.
+	 * Check for this special case rather than using -1 as our position. */
+	if (cursor->cursor_options & MONGO_CURSOR_OPT_DONT_ADVANCE_ON_FIRST_NEXT && cursor->at == cursor->num - 1) {
+		RETURN_TRUE;
+	}
+
 	/* We need to look for one less than the end, because after this check, we
 	 * still would need to be able to advance to the next item. */
 	if (cursor->at < cursor->num - 1) {
@@ -277,21 +284,36 @@ PHP_METHOD(MongoCursor, hasNext)
 	if (!php_mongo_get_more(cursor TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
+
+	/* Since we're not advancing, this function will only detect errors
+	 * indicated in the OP_REPLY error flags. Any error indicated with an $err
+	 * field in the first response document will be picked up during a
+	 * subsequent call to getNext(), which will call php_mongo_handle_error()
+	 * again via php_mongocursor_advance(). */
 	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
 
-	if (have_error_flags(cursor)) {
-		RETURN_TRUE;
+	/* Another special case. Because we had tested for *one more* above, we do
+	 * need to check whether there are actually more results before we
+	 * conclusively can say there are more results on the cursor. We try to run
+	 * getMore here, and then check whether it had changed the "num" from the
+	 * last value. The last value of "num" is now "start", so that's why we
+	 * compare it with that. */
+	if (cursor->start == cursor->num) {
+		RETURN_FALSE;
 	}
 
-	/* if cursor_id != 0, server should stay the same */
-	/* sometimes we'll have a cursor_id but there won't be any more results */
-	if (cursor->at >= cursor->num) {
-		RETVAL_FALSE;
+	/* Since we just issued a getMore, we repeat the same checks as earlier. If
+	 * our position before the last element we return true. Otherwise, we return
+	 * false. If the cursor was closed remotely, its id is zero and cursor->num
+	 * will not have advanced, so false will still be returned. We needn't worry
+	 * about checking for a null connection, as php_mongo_get_more() would have
+	 * thrown an exception for that case. */
+	if (cursor->at < cursor->num - 1) {
+		RETURN_TRUE;
 	} else {
-		/* but sometimes there will be */
-		RETVAL_TRUE;
+		RETURN_FALSE;
 	}
 }
 /* }}} */
@@ -932,17 +954,6 @@ PHP_METHOD(MongoCursor, key)
 	}
 }
 /* }}} */
-
-/* Returns 1 when an error was found and it returns 0 if no error
- * situation has ocurred on the cursor */
-static int have_error_flags(mongo_cursor *cursor)
-{
-	if (cursor->flag & MONGO_OP_REPLY_ERROR_FLAGS) {
-		return 1;
-	}
-
-	return 0;
-}
 
 static void php_mongocursor_next(mongo_cursor *cursor, zval *return_value TSRMLS_DC)
 {

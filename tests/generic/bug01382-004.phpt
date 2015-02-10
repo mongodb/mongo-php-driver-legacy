@@ -19,7 +19,6 @@ $ctx = stream_context_create(array(
 $host = MongoShellServer::getStandaloneInfo();
 $m = new MongoClient($host, array(), array('context' => $ctx));
 
-$d = $m->selectDb(dbname());
 $c = $m->selectCollection(dbname(), collname(__FILE__));
 $c->drop();
 
