@@ -308,13 +308,16 @@ PHP_METHOD(MongoCursor, hasNext)
 		RETURN_FALSE;
 	}
 
-	/* if cursor_id != 0, server should stay the same */
-	/* sometimes we'll have a cursor_id but there won't be any more results */
-	if (cursor->at >= cursor->num) {
-		RETVAL_FALSE;
+	/* Since we just issued a getMore, we repeat the same checks as earlier. If
+	 * our position before the last element we return true. Otherwise, we return
+	 * false. If the cursor was closed remotely, its id is zero and cursor->num
+	 * will not have advanced, so false will still be returned. We needn't worry
+	 * about checking for a null connection, as php_mongo_get_more() would have
+	 * thrown an exception for that case. */
+	if (cursor->at < cursor->num - 1) {
+		RETURN_TRUE;
 	} else {
-		/* but sometimes there will be */
-		RETVAL_TRUE;
+		RETURN_FALSE;
 	}
 }
 /* }}} */
