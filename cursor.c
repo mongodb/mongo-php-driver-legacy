@@ -285,6 +285,11 @@ PHP_METHOD(MongoCursor, hasNext)
 		RETURN_FALSE;
 	}
 
+	/* Since we're not advancing, this function will only detect errors
+	 * indicated in the OP_REPLY error flags. Any error indicated with an $err
+	 * field in the first response document will be picked up during a
+	 * subsequent call to getNext(), which will call php_mongo_handle_error()
+	 * again via php_mongocursor_advance(). */
 	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
