@@ -25,7 +25,7 @@ $c->drop();
 $c->save(array('_id' => 'test1'));
 $c->save(array('_id' => 'test2'));
 $c->save(array('_id' => 'test3'));
-$cur = $c->find(array(), array('_id'))->batchSize(2);
+$cur = $c->find(array(), array('_id' => 1))->batchSize(2);
 while ($cur->hasNext()) {
 	$info = $cur->info(); echo 'a: ', @$info['at'], ' - ', @$info['numReturned'], "\n";
 	$arr = $cur->getNext();
