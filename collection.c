@@ -1456,7 +1456,9 @@ PHP_METHOD(MongoCollection, findAndModify)
 	}
 
 	zval_ptr_dtor(&cmd);
-	zval_ptr_dtor(&retval);
+	if (retval) {
+		zval_ptr_dtor(&retval);
+	}
 }
 /* }}} */
 
