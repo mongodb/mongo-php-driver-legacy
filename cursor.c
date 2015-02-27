@@ -253,20 +253,20 @@ PHP_METHOD(MongoCursor, hasNext)
 
 	MONGO_CHECK_INITIALIZED(cursor->connection, MongoCursor);
 
-	if ((cursor->limit > 0 && cursor->at >= cursor->limit - 1) || cursor->num == 0) {
-		if (cursor->cursor_id != 0) {
-			php_mongo_kill_cursor(cursor->connection, cursor->cursor_id TSRMLS_CC);
-			cursor->cursor_id = 0;
-		}
-		RETURN_FALSE;
-	}
-
 	/* This is a special case. If hasNext() is called and triggers the query to
 	 * run, cursor->at is 0 but we have not actually advanced to the first
 	 * element (unlike rewind()) and will not do so until getNext() is called.
 	 * Check for this special case rather than using -1 as our position. */
 	if (cursor->cursor_options & MONGO_CURSOR_OPT_DONT_ADVANCE_ON_FIRST_NEXT && cursor->at == cursor->num - 1) {
 		RETURN_TRUE;
+	}
+
+	if ((cursor->limit > 0 && cursor->at >= cursor->limit - 1) || cursor->num == 0) {
+		if (cursor->cursor_id != 0) {
+			php_mongo_kill_cursor(cursor->connection, cursor->cursor_id TSRMLS_CC);
+			cursor->cursor_id = 0;
+		}
+		RETURN_FALSE;
 	}
 
 	/* We need to look for one less than the end, because after this check, we
