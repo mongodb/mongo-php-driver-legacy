@@ -11,8 +11,8 @@ $host = MongoShellServer::getStandaloneInfo();
 $mc = new MongoClient($host);
 $coll = $mc->selectCollection(dbname(), collname(__FILE__));
 $coll->remove();
-$coll->save(['_id' => 'test1']);
-$cur = $coll->find(['_id' => new MongoRegex('/^test.*$/')], ['_id'])->limit(1);
+$coll->save(array('_id' => 'test1'));
+$cur = $coll->find(array('_id' => new MongoRegex('/^test.*$/')), array('_id' => 1))->limit(1);
 
 while ($cur->hasNext()) {
     $arr = $cur->getNext();
