@@ -37,7 +37,7 @@ $c->save(array('_id' => 'test2'));
 $c->save(array('_id' => 'test3'));
 $c->save(array('_id' => 'test4'));
 $showQuery = true;
-$cur = $c->find(array(), array('_id'))->limit(2);
+$cur = $c->find(array(), array('_id' => 1))->limit(2);
 $c = 0; while($cur->hasNext()) { $cur->getNext(); $c++; } var_dump($c);
 var_dump(count(iterator_to_array($cur)));
 

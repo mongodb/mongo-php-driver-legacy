@@ -25,7 +25,7 @@ $c->drop();
 $c->save(array('_id' => 'test1'));
 $c->save(array('_id' => 'test2'));
 $c->save(array('_id' => 'test3'));
-$cur = $c->find(array(), array('_id'));
+$cur = $c->find(array(), array('_id' => 1));
 foreach ($cur as $arr) {
 	$info = $cur->info(); echo @$info['at'], ' - ', @$info['numReturned'], "\n";
 	var_dump($arr['_id']);
