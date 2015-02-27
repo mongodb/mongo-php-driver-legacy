@@ -98,11 +98,7 @@ array(2) {
   ["ordered"]=>
   bool(true)
   ["writeConcern"]=>
-  array(4) {
-    ["fsync"]=>
-    bool(false)
-    ["j"]=>
-    bool(false)
+  array(2) {
     ["wtimeout"]=>
     int(1000)
     ["w"]=>
@@ -125,11 +121,7 @@ array(2) {
   ["ordered"]=>
   bool(true)
   ["writeConcern"]=>
-  array(4) {
-    ["fsync"]=>
-    bool(false)
-    ["j"]=>
-    bool(false)
+  array(2) {
     ["wtimeout"]=>
     int(1000)
     ["w"]=>
@@ -152,11 +144,7 @@ array(2) {
   ["ordered"]=>
   bool(true)
   ["writeConcern"]=>
-  array(4) {
-    ["fsync"]=>
-    bool(false)
-    ["j"]=>
-    bool(false)
+  array(2) {
     ["wtimeout"]=>
     int(1000)
     ["w"]=>
@@ -179,11 +167,7 @@ array(2) {
   ["ordered"]=>
   bool(true)
   ["writeConcern"]=>
-  array(4) {
-    ["fsync"]=>
-    bool(false)
-    ["j"]=>
-    bool(false)
+  array(2) {
     ["wtimeout"]=>
     int(1000)
     ["w"]=>
@@ -206,11 +190,7 @@ array(2) {
   ["ordered"]=>
   bool(true)
   ["writeConcern"]=>
-  array(4) {
-    ["fsync"]=>
-    bool(false)
-    ["j"]=>
-    bool(false)
+  array(2) {
     ["wtimeout"]=>
     int(1000)
     ["w"]=>
@@ -233,11 +213,7 @@ array(2) {
   ["ordered"]=>
   bool(true)
   ["writeConcern"]=>
-  array(4) {
-    ["fsync"]=>
-    bool(false)
-    ["j"]=>
-    bool(false)
+  array(2) {
     ["wtimeout"]=>
     int(1000)
     ["w"]=>
@@ -260,11 +236,7 @@ array(2) {
   ["ordered"]=>
   bool(true)
   ["writeConcern"]=>
-  array(4) {
-    ["fsync"]=>
-    bool(false)
-    ["j"]=>
-    bool(false)
+  array(2) {
     ["wtimeout"]=>
     int(1000)
     ["w"]=>
@@ -287,11 +259,7 @@ array(2) {
   ["ordered"]=>
   bool(true)
   ["writeConcern"]=>
-  array(4) {
-    ["fsync"]=>
-    bool(false)
-    ["j"]=>
-    bool(false)
+  array(2) {
     ["wtimeout"]=>
     int(1000)
     ["w"]=>
@@ -314,11 +282,7 @@ array(2) {
   ["ordered"]=>
   bool(true)
   ["writeConcern"]=>
-  array(4) {
-    ["fsync"]=>
-    bool(false)
-    ["j"]=>
-    bool(false)
+  array(2) {
     ["wtimeout"]=>
     int(1000)
     ["w"]=>
@@ -341,11 +305,7 @@ array(2) {
   ["ordered"]=>
   bool(true)
   ["writeConcern"]=>
-  array(4) {
-    ["fsync"]=>
-    bool(false)
-    ["j"]=>
-    bool(false)
+  array(2) {
     ["wtimeout"]=>
     int(1000)
     ["w"]=>

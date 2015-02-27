@@ -46,8 +46,8 @@ mongo_servers* mongo_parse_init(void)
 	servers->options.default_w = -1;
 	servers->options.default_wstring = NULL;
 	servers->options.default_wtimeout = -1;
-	servers->options.default_fsync = 0;
-	servers->options.default_journal = 0;
+	servers->options.default_fsync = -1;
+	servers->options.default_journal = -1;
 	servers->options.ssl = MONGO_SSL_DISABLE;
 	servers->options.gssapiServiceName = strdup("mongodb");
 	servers->options.ctx = NULL;
