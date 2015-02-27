@@ -514,12 +514,12 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 		}
 	}
 
-	if (fsync != -1 ) {
+	if (fsync == 1) {
 		add_assoc_bool(cmd, "fsync", 1);
 		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added fsync=1");
 	}
 
-	if (journal != -1 ) {
+	if (journal == 1) {
 		add_assoc_bool(cmd, "j", 1);
 		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added j=1");
 	}
