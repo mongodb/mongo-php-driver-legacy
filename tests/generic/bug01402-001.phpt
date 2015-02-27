@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-1402: Fix for PHP-1394 caused hasNext() regression error [PHP-1382] when limiting to 1
+Test for PHP-1402: Fix for PHP-1394 caused hasNext() regression error from PHP-1382 when limiting to 1
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc" ?>
 --FILE--
