@@ -98,175 +98,133 @@ dump_writeConcern($mn);
 ?>
 --EXPECTF--
 journal enabled by default
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(true)
   ["w"]=>
   int(1)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(true)
   ["w"]=>
   int(1)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(true)
   ["w"]=>
   int(1)
 }
 Setting it to false, per-query
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
 Setting it to false, per-query, and w=0 to force no-gle
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
 journal disabled by default
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
 Setting it to true, per-query
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(true)
   ["w"]=>
   int(1)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(true)
   ["w"]=>
   int(1)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(true)
   ["w"]=>
   int(1)
 }
 journal disabled by default, and gle
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
 Setting it to true, per-query, with gle=0
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(true)
   ["w"]=>
   int(0)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(true)
   ["w"]=>
   int(0)
 }
-array(3) {
-  ["fsync"]=>
-  bool(false)
+array(2) {
   ["j"]=>
   bool(true)
   ["w"]=>

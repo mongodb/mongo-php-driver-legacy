@@ -97,177 +97,135 @@ dump_writeConcern($mn);
 ?>
 --EXPECTF--
 Fsync enabled by default
-array(3) {
+array(2) {
   ["fsync"]=>
   bool(true)
-  ["j"]=>
-  bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
   bool(true)
-  ["j"]=>
-  bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
   bool(true)
-  ["j"]=>
-  bool(false)
   ["w"]=>
   int(1)
 }
 Setting it to false, per-query
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
 Setting it to false, per-query, and w=0 to force no-gle
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
 Fsync disabled by default
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(1)
 }
 Setting it to true, per-query
-array(3) {
+array(2) {
   ["fsync"]=>
   bool(true)
-  ["j"]=>
-  bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
   bool(true)
-  ["j"]=>
-  bool(false)
   ["w"]=>
   int(1)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
   bool(true)
-  ["j"]=>
-  bool(false)
   ["w"]=>
   int(1)
 }
 Fsync disabled by default, and gle
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
-  bool(false)
-  ["j"]=>
   bool(false)
   ["w"]=>
   int(0)
 }
 Setting it to true, per-query, with gle=0
-array(3) {
+array(2) {
   ["fsync"]=>
   bool(true)
-  ["j"]=>
-  bool(false)
   ["w"]=>
   int(0)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
   bool(true)
-  ["j"]=>
-  bool(false)
   ["w"]=>
   int(0)
 }
-array(3) {
+array(2) {
   ["fsync"]=>
   bool(true)
-  ["j"]=>
-  bool(false)
   ["w"]=>
   int(0)
 }
