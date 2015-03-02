@@ -514,12 +514,12 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 		}
 	}
 
-	if (fsync) {
+	if (fsync == 1) {
 		add_assoc_bool(cmd, "fsync", 1);
 		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added fsync=1");
 	}
 
-	if (journal) {
+	if (journal == 1) {
 		add_assoc_bool(cmd, "j", 1);
 		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "append_getlasterror: added j=1");
 	}
@@ -704,7 +704,7 @@ static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_opt
 			if (Z_BVAL_PP(fsync_pp)) {
 				gle_op = 1;
 			}
-		} else if (default_fsync) {
+		} else if (default_fsync == 1) {
 			gle_op = 1;
 		}
 
@@ -715,11 +715,11 @@ static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_opt
 			if (Z_BVAL_PP(journal_pp)) {
 				gle_op = 1;
 			}
-		} else if (default_journal) {
+		} else if (default_journal == 1) {
 			gle_op = 1;
 		}
 	} else {
-		gle_op = (coll_w >= 1 || default_fsync || default_journal);
+		gle_op = (coll_w >= 1 || default_fsync == 1 || default_journal == 1);
 	}
 
 	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "is_gle_op: %s", gle_op ? "yes" : "no");
