@@ -1,6 +1,7 @@
 --TEST--
 MongoCollection::findAndModify() helper
 --SKIPIF--
+<?php $needsmax = '3.0.0-RC7'; /* Causes mongod segfault on 3.0.0-RC8+ (SERVER-17387) */ ?>
 <?php require "tests/utils/standalone.inc"; ?>
 --FILE--
 <?php
