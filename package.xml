@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2015-02-18</date>
- <time>09:13:05</time>
+ <date>2015-03-03</date>
+ <time>08:22:05</time>
  <version>
-  <release>1.6.3</release>
-  <api>1.6.3</api>
+  <release>1.6.4</release>
+  <api>1.6.4</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,8 +43,12 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-1394] - hasNext() stops one item too late when limit is present
-    * [PHP-1395] - Can't iterate twice over a cursor
+    * [PHP-1400] - Default writeConcern not write safe on standalone node
+    * [PHP-1401] - Segfault in findAndModify test running against 3.0.0-rc11
+    * [PHP-1402] - MongoCollection::hasNext() returns false for limit=1 result
+
+** Task
+    * [PHP-1405] - Create regression tests for batchSize(1) and batchSize(-1) behavior
  </notes>
 
  <contents>
@@ -211,6 +215,25 @@
   <configureoption name="with-mongo-sasl" prompt="Build with Cyrus SASL (MongoDB Enterprise Authentication) support?" default="no"/>
  </extsrcrelease>
  <changelog>
+
+  <release>
+   <date>2015-02-18</date>
+   <time>09:13:05</time>
+   <version>
+    <release>1.6.3</release>
+    <api>1.6.3</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-1394] - hasNext() stops one item too late when limit is present
+    * [PHP-1395] - Can't iterate twice over a cursor
+   </notes>
+  </release>
 
   <release>
    <date>2015-02-10</date>
