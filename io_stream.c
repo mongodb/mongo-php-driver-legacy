@@ -95,6 +95,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	int dsn_len;
 	int tcp_socket = 1;
 	zend_error_handling error_handler;
+	zval **verify = NULL;
 
 	TSRMLS_FETCH();
 
@@ -122,7 +123,8 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	}
 #if PHP_VERSION_ID < 50600
 	/* Capture the server certificate, if SSL is enabled, so we can do hostname verification */
-	if (options->ssl) {
+
+	if (options->ssl && options->ctx && php_stream_context_get_option(options->ctx, "ssl", "verify_peer_name", &verify) == SUCCESS && zend_is_true(*verify)) {
 		zval *capture = NULL;
 		MAKE_STD_ZVAL(capture);
 		ZVAL_BOOL(capture, 1);
@@ -186,13 +188,14 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 			}
 		} else {
 #if PHP_VERSION_ID < 50600
-			if (php_mongo_verify_hostname(manager, stream, server TSRMLS_CC) == FAILURE) {
-				*error_message = strdup("Hostname doesn't match");
-				php_stream_close(stream);
-				return NULL;
+			if (verify && zend_is_true(*verify)) {
+				if (php_mongo_verify_hostname(manager, stream, server TSRMLS_CC) == FAILURE) {
+					*error_message = strdup("Hostname doesn't match");
+					php_stream_close(stream);
+					return NULL;
+				}
 			}
 #endif
-
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Establish SSL for %s:%d", server->host, server->port);
 		}
 	} else {
