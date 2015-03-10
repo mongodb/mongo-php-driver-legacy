@@ -116,6 +116,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 
 		zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handler TSRMLS_CC);
 
+		/* PHP 5.6.0 until 5.6.7 screwed things a bit, see https://bugs.php.net/bug.php?id=69195 */
 #if PHP_VERSION_ID >= 50600 && PHP_VERSION_ID < 50607
 		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_ANY_CLIENT, NULL TSRMLS_CC) < 0) {
 #else
