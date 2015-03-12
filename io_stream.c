@@ -116,7 +116,11 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 
 		zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handler TSRMLS_CC);
 
+#if PHP_VERSION_ID >= 50600 && PHP_VERSION_ID < 50607
+		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_ANY_CLIENT, NULL TSRMLS_CC) < 0) {
+#else
 		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_SSLv23_CLIENT, NULL TSRMLS_CC) < 0) {
+#endif
 			zend_restore_error_handling(&error_handler TSRMLS_CC);;
 			*error_message = strdup("Cannot setup SSL, is ext/openssl loaded?");
 			php_stream_close(stream);
