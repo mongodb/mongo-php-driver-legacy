@@ -22,6 +22,7 @@
 #include "mcon/connections.h"
 #include "php_mongo.h"
 #include "contrib/crypto.h"
+#include "contrib/php-ssl.h"
 #include "api/wire_version.h"
 
 #include <php.h>
@@ -53,6 +54,36 @@
 extern zend_class_entry *mongo_ce_ConnectionException;
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
+#if PHP_VERSION_ID < 50600
+int php_mongo_verify_hostname(mongo_con_manager *manager, php_stream *stream, mongo_server_def *server TSRMLS_DC)
+{
+	zval **zcert;
+
+	if (php_stream_context_get_option(stream->context, "ssl", "peer_certificate", &zcert) == SUCCESS && Z_TYPE_PP(zcert) == IS_RESOURCE) {
+		int resource_type;
+		X509 *cert;
+		int type;
+
+
+		zend_list_find(Z_LVAL_PP(zcert), &resource_type);
+		cert = (X509 *)zend_fetch_resource(zcert TSRMLS_CC, -1, "OpenSSL X.509", &type, 1, resource_type);
+
+		if (!cert) {
+			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "Could not capture certificate of %s:%d", server->host, server->port);
+			return FAILURE;
+		}
+
+		if (php_mongo_matches_san_list(cert, server->host) == SUCCESS) {
+			return SUCCESS;
+		} else if (php_mongo_matches_common_name(cert, server->host TSRMLS_CC) == SUCCESS) {
+			return SUCCESS;
+		}
+	}
+
+	return FAILURE;
+}
+#endif
+
 void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
 {
 	char *errmsg;
@@ -64,6 +95,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	int dsn_len;
 	int tcp_socket = 1;
 	zend_error_handling error_handler;
+	zval **verify = NULL;
 
 	TSRMLS_FETCH();
 
@@ -89,6 +121,16 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 	} else {
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "Connecting to %s (%s) without connection timeout (default_socket_timeout will be used)", dsn, hash);
 	}
+#if PHP_VERSION_ID < 50600
+	/* Capture the server certificate, if SSL is enabled, so we can do hostname verification */
+
+	if (options->ssl && options->ctx && php_stream_context_get_option(options->ctx, "ssl", "verify_peer_name", &verify) == SUCCESS && zend_is_true(*verify)) {
+		zval *capture = NULL;
+		MAKE_STD_ZVAL(capture);
+		ZVAL_BOOL(capture, 1);
+		php_stream_context_set_option(options->ctx, "ssl", "capture_peer_cert", capture);
+	}
+#endif
 
 	zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handler TSRMLS_CC);
 	stream = php_stream_xport_create(dsn, dsn_len, 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS > 0 ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
@@ -116,6 +158,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 
 		zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handler TSRMLS_CC);
 
+		/* PHP 5.6.0 until 5.6.7 screwed things a bit, see https://bugs.php.net/bug.php?id=69195 */
 #if PHP_VERSION_ID >= 50600 && PHP_VERSION_ID < 50607
 		if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_ANY_CLIENT, NULL TSRMLS_CC) < 0) {
 #else
@@ -145,6 +188,15 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 				return NULL;
 			}
 		} else {
+#if PHP_VERSION_ID < 50600
+			if (verify && zend_is_true(*verify)) {
+				if (php_mongo_verify_hostname(manager, stream, server TSRMLS_CC) == FAILURE) {
+					*error_message = strdup("Hostname doesn't match");
+					php_stream_close(stream);
+					return NULL;
+				}
+			}
+#endif
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Establish SSL for %s:%d", server->host, server->port);
 		}
 	} else {
