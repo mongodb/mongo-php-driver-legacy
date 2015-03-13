@@ -79,11 +79,9 @@ echo "-----\n";
 %s:%d: Read timed out after reading 0 bytes, waited for 0.001000 seconds
 array(1) {
   ["writeConcern"]=>
-  array(3) {
+  array(2) {
     ["fsync"]=>
     bool(true)
-    ["j"]=>
-    bool(false)
     ["w"]=>
     int(4)
   }
@@ -94,11 +92,9 @@ array(1) {
 %s:%d: Read timed out after reading 0 bytes, waited for 0.001000 seconds
 array(1) {
   ["writeConcern"]=>
-  array(3) {
+  array(2) {
     ["fsync"]=>
     bool(true)
-    ["j"]=>
-    bool(false)
     ["w"]=>
     int(4)
   }
@@ -111,10 +107,8 @@ array(1) {
 float(1)
 array(1) {
   ["writeConcern"]=>
-  array(3) {
+  array(2) {
     ["fsync"]=>
-    bool(false)
-    ["j"]=>
     bool(false)
     ["w"]=>
     int(2)
@@ -126,11 +120,9 @@ array(1) {
 %s:%d: Read timed out after reading 0 bytes, waited for 3.141000 seconds
 array(1) {
   ["writeConcern"]=>
-  array(3) {
+  array(2) {
     ["fsync"]=>
     bool(true)
-    ["j"]=>
-    bool(false)
     ["w"]=>
     int(5)
   }
@@ -141,10 +133,8 @@ array(1) {
 %s:%d:%SallDCs%S
 array(1) {
   ["writeConcern"]=>
-  array(4) {
+  array(3) {
     ["fsync"]=>
-    bool(false)
-    ["j"]=>
     bool(false)
     ["wtimeout"]=>
     int(4500)
