@@ -83,6 +83,8 @@
    <dir baseinstalldir="/" name="contrib">
     <file role="src" name="php-json.c"/>
     <file role="src" name="php-json.h"/>
+    <file role="src" name="php-ssl.c"/>
+    <file role="src" name="php-ssl.h"/>
     <file role="src" name="crypto.c"/>
     <file role="src" name="crypto.h"/>
    </dir>
