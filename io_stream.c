@@ -63,7 +63,8 @@
 extern zend_class_entry *mongo_ce_ConnectionException;
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
-#if PHP_VERSION_ID < 50600
+#ifdef HAVE_OPENSSL_EXT
+# if PHP_VERSION_ID < 50600
 int php_mongo_verify_hostname(mongo_server_def *server, X509 *cert TSRMLS_DC)
 {
 	if (php_mongo_matches_san_list(cert, server->host) == SUCCESS) {
@@ -76,6 +77,7 @@ int php_mongo_verify_hostname(mongo_server_def *server, X509 *cert TSRMLS_DC)
 
 	return FAILURE;
 }
+# endif
 #endif
 
 void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *server, mongo_server_options *options, char **error_message)
