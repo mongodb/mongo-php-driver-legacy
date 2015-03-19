@@ -177,7 +177,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 				php_stream_close(stream);
 				return NULL;
 			}
-		} else {
+		} else if (stream->context) {
 #ifdef HAVE_OPENSSL_EXT
 			zval **zcert;
 
