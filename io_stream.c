@@ -117,13 +117,6 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 		mongo_manager_log(manager, MLOG_CON, MLOG_FINE, "Connecting to %s (%s) without connection timeout (default_socket_timeout will be used)", dsn, hash);
 	}
 
-	/* Capture the server certificate, if SSL is enabled, so we can do further verification */
-	if (options->ssl && options->ctx) {
-		zval capture;
-		ZVAL_BOOL(&capture, 1);
-		php_stream_context_set_option(options->ctx, "ssl", "capture_peer_cert", &capture);
-	}
-
 	zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handler TSRMLS_CC);
 	stream = php_stream_xport_create(dsn, dsn_len, 0, STREAM_XPORT_CLIENT | STREAM_XPORT_CONNECT, hash, options->connectTimeoutMS > 0 ? &ctimeout : NULL, (php_stream_context *)options->ctx, &errmsg, &errcode);
 	zend_restore_error_handling(&error_handler TSRMLS_CC);
@@ -147,6 +140,13 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 
 	if (options->ssl) {
 		int crypto_enabled;
+
+		/* Capture the server certificate so we can do further verification */
+		if (stream->context) {
+			zval capture;
+			ZVAL_BOOL(&capture, 1);
+			php_stream_context_set_option(stream->context, "ssl", "capture_peer_cert", &capture);
+		}
 
 		zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handler TSRMLS_CC);
 
@@ -202,7 +202,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 
 #if PHP_VERSION_ID < 50600
 				/* This option is available since PHP 5.6.0 */
-				if (php_stream_context_get_option(options->ctx, "ssl", "verify_peer_name", &verify_peer_name) == SUCCESS && zend_is_true(*verify_peer_name)) {
+				if (php_stream_context_get_option(stream->context, "ssl", "verify_peer_name", &verify_peer_name) == SUCCESS && zend_is_true(*verify_peer_name)) {
 					if (php_mongo_verify_hostname(server, cert TSRMLS_CC) == FAILURE) {
 						*error_message = strdup("Cannot verify remote certificate: Hostname doesn't match");
 						mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Remote certificate SubjectAltName or CN does not match '%s'", server->host);
@@ -214,7 +214,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 					mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Not verifying peer name for %s:%d, please use 'verify_peer_name' SSL context option", server->host, server->port);
 				}
 #endif
-				if (php_stream_context_get_option(options->ctx, "ssl", "verify_expiry", &verify_expiry) == SUCCESS && zend_is_true(*verify_expiry)) {
+				if (php_stream_context_get_option(stream->context, "ssl", "verify_expiry", &verify_expiry) == SUCCESS && zend_is_true(*verify_expiry)) {
 					time_t current = time(NULL);
 					time_t valid_from  = php_mongo_asn1_time_to_time_t(X509_get_notBefore(cert) TSRMLS_CC);
 					time_t valid_until = php_mongo_asn1_time_to_time_t(X509_get_notAfter(cert) TSRMLS_CC);
