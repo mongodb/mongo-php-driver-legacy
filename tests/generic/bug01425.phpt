@@ -22,7 +22,11 @@ try
 catch ( MongoCursorException $e )
 {
 	echo $e->getCode(), "\n";
+
+	$m->admin->command( array( 'setParameter' => 1, 'notablescan' => 0 ) );
 }
+
+$m->admin->command( array( 'setParameter' => 1, 'notablescan' => 0 ) );
 ?>
 --EXPECT--
 17007
