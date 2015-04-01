@@ -17,16 +17,26 @@ $c->drop();
 $c->insert( array( 'foo' => 'bar' ) );
 try
 {
-	$c->find( array( 'foo' => 'bar' ) )->explain();
+    $c->find( array( 'foo' => 'bar' ) )->explain();
+    echo "FAILED: MongoCursorException should have been thrown\n";
 }
 catch ( MongoCursorException $e )
 {
-	echo $e->getCode(), "\n";
-
-	$m->admin->command( array( 'setParameter' => 1, 'notablescan' => 0 ) );
+    // Error message and code vary between server versions, so don't assert their values
+    echo "MongoCursorException was thrown\n";
 }
 
-$m->admin->command( array( 'setParameter' => 1, 'notablescan' => 0 ) );
 ?>
---EXPECT--
-17007
+===DONE===
+--CLEAN--
+<?php
+require_once "tests/utils/server.inc";
+
+$host = MongoShellServer::getStandaloneInfo();
+$m = new MongoClient($host);
+$m->admin->command(array('setParameter' => 1, 'notablescan' => 0));
+
+?>
+--EXPECTF--
+MongoCursorException was thrown
+===DONE===
