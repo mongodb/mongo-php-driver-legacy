@@ -708,6 +708,10 @@ PHP_METHOD(MongoCursor, explain)
 	zval_ptr_dtor(&yes);
 	php_mongocursor_next(cursor, return_value TSRMLS_CC);
 
+	if (php_mongo_handle_error(cursor TSRMLS_CC)) {
+		return;
+	}
+
 	/* reset cursor to original state */
 	cursor->limit = temp_limit;
 	zend_hash_del(HASH_P(cursor->query), "$explain", strlen("$explain") + 1);
