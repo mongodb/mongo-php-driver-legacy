@@ -129,6 +129,11 @@ int php_mongo_db_is_valid_dbname(char *dbname, int dbname_len TSRMLS_DC)
 		return 0;
 	}
 
+	/* We allow the special case "$external" as database name (PHP-1431) */
+	if (strcmp("$external", dbname) == 0) {
+		return 1;
+	}
+
 	if (
 		memchr(dbname, ' ', dbname_len) != 0 || memchr(dbname, '.', dbname_len) != 0 || memchr(dbname, '\\', dbname_len) != 0 ||
 		memchr(dbname, '/', dbname_len) != 0 || memchr(dbname, '$', dbname_len) != 0

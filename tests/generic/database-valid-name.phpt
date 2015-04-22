@@ -6,10 +6,11 @@ Database: valid name checks
 <?php
 require_once "tests/utils/server.inc";
 $a = mongo_standalone();
-$names = array("\\", "\$", "/", "foo.bar");
+$names = array("\\", "\$", "/", "foo.bar", '$external', 'run$fores');
 foreach ($names as $name) {
 	try {
 		$d = new MongoDB($a, $name);
+		echo $name, ": OK\n";
 	} catch (Exception $e) {
 		echo $name, ": ", $e->getMessage(), "\n";
 	}
@@ -20,3 +21,5 @@ foreach ($names as $name) {
 $: Database name contains invalid characters: $
 /: Database name contains invalid characters: /
 foo.bar: Database name contains invalid characters: foo.bar
+$external: OK
+run$fores: Database name contains invalid characters: run$fores
