@@ -2733,11 +2733,12 @@ PHP_METHOD(MongoCollection, distinct)
 {
 	char *key;
 	int key_len;
-	zval *cmd, **values, *tmp, *query = NULL;
+	HashTable *query = NULL;
+	zval *cmd, **values, *tmp, *zquery = NULL;
 	mongo_collection *c;
 	mongo_db *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a!", &key, &key_len, &query) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|H!", &key, &key_len, &query) == FAILURE) {
 		return;
 	}
 
@@ -2752,9 +2753,11 @@ PHP_METHOD(MongoCollection, distinct)
 	zval_add_ref(&c->name);
 	add_assoc_stringl(cmd, "key", key, key_len, 1);
 
-	if (query) {
-		add_assoc_zval(cmd, "query", query);
-		zval_add_ref(&query);
+	if (query && zend_hash_num_elements(query) > 0) {
+		MAKE_STD_ZVAL(zquery);
+		array_init(zquery);
+		zend_hash_copy(HASH_P(zquery), query, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+		add_assoc_zval(cmd, "query", zquery);
 	}
 
 	tmp = php_mongo_runcommand(c->link, &c->read_pref, Z_STRVAL_P(db->name), Z_STRLEN_P(db->name), cmd, NULL, 0, NULL TSRMLS_CC);
