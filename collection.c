@@ -2088,6 +2088,7 @@ void mongo_collection_list_indexes_command(zval *this_ptr, zval *return_value TS
 			if (Z_TYPE_P(code) == IS_LONG && Z_LVAL_P(code) == PHP_MONGO_COLLECTION_DOES_NOT_EXIST) {
 				zend_clear_exception(TSRMLS_C);
 				zval_ptr_dtor(&retval);
+				MAKE_STD_ZVAL(retval);
 				array_init(retval);
 			}
 		}
