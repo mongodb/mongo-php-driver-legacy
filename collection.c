@@ -1400,13 +1400,14 @@ PHP_METHOD(MongoCollection, findOne)
    Atomically update and return a document */
 PHP_METHOD(MongoCollection, findAndModify)
 {
-	zval *query, *update = 0, *fields = 0, *options = 0;
+	HashTable *query = NULL, *update = NULL, *fields = NULL;
+	zval *zquery = NULL, *zupdate = NULL, *zfields = NULL, *options = NULL;
 	zval *cmd, *retval, **values;
 	mongo_connection *used_connection;
 	mongo_collection *c;
 	mongo_db *db;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a!|a!a!a!", &query, &update, &fields, &options) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "H!|H!H!a!", &query, &update, &fields, &options) == FAILURE) {
 		return;
 	}
 
@@ -1421,18 +1422,27 @@ PHP_METHOD(MongoCollection, findAndModify)
 	add_assoc_zval(cmd, "findandmodify", c->name);
 	zval_add_ref(&c->name);
 
-	if (query && zend_hash_num_elements(Z_ARRVAL_P(query)) > 0) {
-		add_assoc_zval(cmd, "query", query);
-		zval_add_ref(&query);
+	if (query && zend_hash_num_elements(query) > 0) {
+		MAKE_STD_ZVAL(zquery);
+		array_init(zquery);
+		zend_hash_copy(HASH_P(zquery), query, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+		add_assoc_zval(cmd, "query", zquery);
 	}
-	if (update && zend_hash_num_elements(Z_ARRVAL_P(update)) > 0) {
-		add_assoc_zval(cmd, "update", update);
-		zval_add_ref(&update);
+
+	if (update && zend_hash_num_elements(update) > 0) {
+		MAKE_STD_ZVAL(zupdate);
+		array_init(zupdate);
+		zend_hash_copy(HASH_P(zupdate), update, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+		add_assoc_zval(cmd, "update", zupdate);
 	}
-	if (fields && zend_hash_num_elements(Z_ARRVAL_P(fields)) > 0) {
-		add_assoc_zval(cmd, "fields", fields);
-		zval_add_ref(&fields);
+
+	if (fields && zend_hash_num_elements(fields) > 0) {
+		MAKE_STD_ZVAL(zfields);
+		array_init(zfields);
+		zend_hash_copy(HASH_P(zfields), fields, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+		add_assoc_zval(cmd, "fields", zfields);
 	}
+
 	if (options && zend_hash_num_elements(Z_ARRVAL_P(options)) > 0) {
 		zval *temp;
 		zend_hash_merge(HASH_P(cmd), HASH_P(options), (void (*)(void*))zval_add_ref, &temp, sizeof(zval*), 1);
@@ -3064,9 +3074,9 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_find_one, 0, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_findandmodify, 0, ZEND_RETURN_VALUE, 1)
-	ZEND_ARG_ARRAY_INFO(0, query, 1)
-	ZEND_ARG_ARRAY_INFO(0, update, 1)
-	ZEND_ARG_ARRAY_INFO(0, fields, 1)
+	ZEND_ARG_INFO(0, query)
+	ZEND_ARG_INFO(0, update)
+	ZEND_ARG_INFO(0, fields)
 	ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
 
