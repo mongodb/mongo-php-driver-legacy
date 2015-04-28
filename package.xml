@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2015-03-24</date>
- <time>10:46:05</time>
+ <date>2015-04-28</date>
+ <time>17:05:00</time>
  <version>
-  <release>1.6.6</release>
-  <api>1.6.6</api>
+  <release>1.6.7</release>
+  <api>1.6.7</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,8 +43,14 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-1413] - Driver segfaults with SSL connection and no context options
-    * [PHP-1414] - SSL peer verification should reference stream->context options
+    * [PHP-1425] - explain() does not raise appropriate exception for $err conditions
+    * [PHP-1431] - Fix database name validation to include '$external', to allow execution of user admin commands
+    * [PHP-1435] - MongoCollection::getIndexInfo on non-existing collection makes segmentation fault
+
+** Improvement
+    * [PHP-1427] - MongoCollection::distinct() should ensure query is serialized as BSON object
+    * [PHP-1433] - MongoCollection::distinct() should allow array or object for query
+    * [PHP-1434] - MongoCollection::findAndModify() should allow array or object for query, update, and fields
  </notes>
 
  <contents>
@@ -213,6 +219,25 @@
   <configureoption name="with-mongo-sasl" prompt="Build with Cyrus SASL (MongoDB Enterprise Authentication) support?" default="no"/>
  </extsrcrelease>
  <changelog>
+
+  <release>
+   <date>2015-03-24</date>
+   <time>10:46:05</time>
+   <version>
+    <release>1.6.6</release>
+    <api>1.6.6</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-1413] - Driver segfaults with SSL connection and no context options
+    * [PHP-1414] - SSL peer verification should reference stream->context options
+   </notes>
+  </release>
 
   <release>
    <date>2015-03-13</date>
