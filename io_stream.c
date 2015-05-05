@@ -310,7 +310,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 		mongo_manager_log(MonGlo(manager), MLOG_CON, MLOG_FINE, "No timeout changes for %s", con->hash);
 	}
 
-	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_READ, 0, size TSRMLS_CC);
+	php_mongo_stream_notify_io(con->socket, MONGO_STREAM_NOTIFY_IO_READ, 0, size TSRMLS_CC);
 
 	/* this can return FAILED if there is just no more data from db */
 	while (received < size && num > 0) {
@@ -367,7 +367,7 @@ int php_mongo_io_stream_read(mongo_connection *con, mongo_server_options *option
 	 * then that PHP will just buffer the rest, which is fine.  It could
 	 * confuse users a little, why their progress update was higher then the
 	 * max-bytes-expected though... */
-	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, received, size TSRMLS_CC);
+	php_mongo_stream_notify_io(con->socket, MONGO_STREAM_NOTIFY_IO_COMPLETED, received, size TSRMLS_CC);
 
 	/* If the timeout was changed, revert to the previous value now */
 	if (revert_timeout) {
@@ -392,13 +392,13 @@ int php_mongo_io_stream_send(mongo_connection *con, mongo_server_options *option
 	zend_error_handling error_handler;
 	TSRMLS_FETCH();
 
-	php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_WRITE, 0, size TSRMLS_CC);
+	php_mongo_stream_notify_io(con->socket, MONGO_STREAM_NOTIFY_IO_WRITE, 0, size TSRMLS_CC);
 
 	zend_replace_error_handling(EH_THROW, mongo_ce_ConnectionException, &error_handler TSRMLS_CC);
 	retval = php_stream_write(con->socket, (char *) data, size);
 	zend_restore_error_handling(&error_handler TSRMLS_CC);;
 	if (retval >= size) {
-		php_mongo_stream_notify_io(options, MONGO_STREAM_NOTIFY_IO_COMPLETED, size, size TSRMLS_CC);
+		php_mongo_stream_notify_io(con->socket, MONGO_STREAM_NOTIFY_IO_COMPLETED, size, size TSRMLS_CC);
 	}
 
 	return retval;
