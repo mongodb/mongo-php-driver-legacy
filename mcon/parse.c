@@ -616,9 +616,6 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
 			value = MONGO_SSL_ENABLE;
 			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': true");
-		} else if (strcasecmp(option_value, "false") == 0 || strcmp(option_value, "0") == 0) {
-			value = MONGO_SSL_DISABLE;
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': false");
 		} else if (strcasecmp(option_value, "prefer") == 0 || atoi(option_value) == MONGO_SSL_PREFER) {
 			/* FIXME: MongoDB doesn't support "connection promotion" to SSL at
 			 * the moment, so we can't support this option properly */
@@ -627,9 +624,8 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 			*error_message = strdup("SSL=prefer is currently not supported by mongod");
 			return 3;
 		} else {
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': '%s'", option_name);
-			*error_message = strdup("SSL can only be 'true' or 'false'");
-			return 3;
+			value = MONGO_SSL_DISABLE;
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': false");
 		}
 
 		servers->options.ssl = value;
