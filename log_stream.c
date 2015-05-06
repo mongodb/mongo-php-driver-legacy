@@ -262,16 +262,13 @@ void php_mongo_stream_notify_meta_write_reply(php_stream_context *ctx, zval *ser
 	zval_ptr_dtor(&args);
 }
 
-void php_mongo_stream_notify_io(mongo_server_options *opts, int code, int sofar, int max TSRMLS_DC)
+void php_mongo_stream_notify_io(php_stream *stream, int code, int sofar, int max TSRMLS_DC)
 {
-	php_stream_context *ctx;
+	php_stream_context *ctx = stream->context;
 
-
-	if (!(opts && (opts)->ctx && ((php_stream_context *)opts->ctx)->notifier)) {
+	if (!ctx || !ctx->notifier) {
 		return;
 	}
-
-	ctx = (php_stream_context *)opts->ctx;
 
 	switch (code) {
 		case MONGO_STREAM_NOTIFY_IO_READ:
