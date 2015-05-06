@@ -47,7 +47,7 @@
 #define MONGO_STREAM_NOTIFY_LOG_CMD_DELETE      222
 #define MONGO_STREAM_NOTIFY_LOG_WRITE_BATCH     223
 
-void php_mongo_stream_notify_io(mongo_server_options *opts, int code, int sofar, int max TSRMLS_DC);
+void php_mongo_stream_notify_io(php_stream *stream, int code, int sofar, int max TSRMLS_DC);
 void mongo_log_stream_insert(mongo_connection *connection, zval *document, zval *options TSRMLS_DC);
 void mongo_log_stream_query(mongo_connection *connection, mongo_cursor *cursor TSRMLS_DC);
 void mongo_log_stream_update(mongo_connection *connection, zval *ns, zval *criteria, zval *newobj, zval *options, int flags TSRMLS_DC);
