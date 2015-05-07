@@ -481,7 +481,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		} else {
 			servers->options.default_fsync = 0;
 		}
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'fsync': %d", servers->options.default_fsync);
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'fsync': '%s' (parsed as: %s)", option_value, servers->options.default_fsync ? "true" : "false");
 		return 0;
 	}
 
@@ -491,7 +491,7 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 		} else {
 			servers->options.default_journal = 0;
 		}
-		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'journal': %d", servers->options.default_journal);
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'journal': '%s' (parsed as: %s)", option_value, servers->options.default_journal ? "true" : "false");
 		return 0;
 	}
 
@@ -612,23 +612,19 @@ int mongo_store_option(mongo_con_manager *manager, mongo_servers *servers, char 
 	}
 
 	if (strcasecmp(option_name, "ssl") == 0) {
-		int value = 0;
 		if (strcasecmp(option_value, "true") == 0 || strcmp(option_value, "1") == 0) {
-			value = MONGO_SSL_ENABLE;
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': true");
+			servers->options.ssl = MONGO_SSL_ENABLE;
 		} else if (strcasecmp(option_value, "prefer") == 0 || atoi(option_value) == MONGO_SSL_PREFER) {
 			/* FIXME: MongoDB doesn't support "connection promotion" to SSL at
 			 * the moment, so we can't support this option properly */
-			value = MONGO_SSL_PREFER;
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': prefer");
+			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': '%s'", option_value);
 			*error_message = strdup("SSL=prefer is currently not supported by mongod");
 			return 3;
 		} else {
-			value = MONGO_SSL_DISABLE;
-			mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': false");
+			servers->options.ssl = MONGO_SSL_DISABLE;
 		}
 
-		servers->options.ssl = value;
+		mongo_manager_log(manager, MLOG_PARSE, MLOG_INFO, "- Found option 'ssl': '%s' (parsed as: %s)", option_value, servers->options.ssl ? "true" : "false");
 		return 0;
 	}
 
