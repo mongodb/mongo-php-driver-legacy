@@ -38,12 +38,12 @@ try {
 ===DONE===
 --EXPECT--
 Testing ssl=prefer:
-- Found option 'ssl': prefer
+- Found option 'ssl': 'prefer'
 Exception: SSL=prefer is currently not supported by mongod
-- Found option 'ssl': prefer
+- Found option 'ssl': '2'
 Exception: SSL=prefer is currently not supported by mongod
-- Found option 'ssl': prefer
+- Found option 'ssl': 'prefer'
 Exception: SSL=prefer is currently not supported by mongod
-- Found option 'ssl': prefer
+- Found option 'ssl': '2'
 Exception: SSL=prefer is currently not supported by mongod
 ===DONE===

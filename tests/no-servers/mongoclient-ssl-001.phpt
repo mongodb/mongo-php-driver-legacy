@@ -27,17 +27,17 @@ new MongoClient('mongodb://localhost:27017/', array('ssl' => false, 'connect' =>
 ===DONE===
 --EXPECT--
 Testing ssl=true:
-- Found option 'ssl': true
-- Found option 'ssl': true
-- Found option 'ssl': true
-- Found option 'ssl': true
-- Found option 'ssl': true
+- Found option 'ssl': 'true' (parsed as: true)
+- Found option 'ssl': '1' (parsed as: true)
+- Found option 'ssl': 'true' (parsed as: true)
+- Found option 'ssl': '1' (parsed as: true)
+- Found option 'ssl': '1' (parsed as: true)
 
 Testing ssl=false:
-- Found option 'ssl': false
-- Found option 'ssl': false
-- Found option 'ssl': false
-- Found option 'ssl': false
-- Found option 'ssl': false
-- Found option 'ssl': false
+- Found option 'ssl': 'false' (parsed as: false)
+- Found option 'ssl': '0' (parsed as: false)
+- Found option 'ssl': '' (parsed as: false)
+- Found option 'ssl': 'false' (parsed as: false)
+- Found option 'ssl': '0' (parsed as: false)
+- Found option 'ssl': '' (parsed as: false)
 ===DONE===
