@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2015-04-28</date>
- <time>17:05:00</time>
+ <date>2015-05-11</date>
+ <time>20:56:00</time>
  <version>
-  <release>1.6.7</release>
-  <api>1.6.7</api>
+  <release>1.6.8</release>
+  <api>1.6.8</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,14 +43,11 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-1425] - explain() does not raise appropriate exception for $err conditions
-    * [PHP-1431] - Fix database name validation to include '$external', to allow execution of user admin commands
-    * [PHP-1435] - MongoCollection::getIndexInfo on non-existing collection makes segmentation fault
+    * [PHP-1442] - php_mongo_stream_notify_io() segfault with stream context options
+    * [PHP-1445] - MongoClient does not accept boolean false as "ssl" option
 
 ** Improvement
-    * [PHP-1427] - MongoCollection::distinct() should ensure query is serialized as BSON object
-    * [PHP-1433] - MongoCollection::distinct() should allow array or object for query
-    * [PHP-1434] - MongoCollection::findAndModify() should allow array or object for query, update, and fields
+    * [PHP-1446] - Log original string values for parsed boolean options
  </notes>
 
  <contents>
@@ -219,6 +216,31 @@
   <configureoption name="with-mongo-sasl" prompt="Build with Cyrus SASL (MongoDB Enterprise Authentication) support?" default="no"/>
  </extsrcrelease>
  <changelog>
+
+  <release>
+   <date>2015-04-28</date>
+   <time>17:05:00</time>
+   <version>
+    <release>1.6.7</release>
+    <api>1.6.7</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-1425] - explain() does not raise appropriate exception for $err conditions
+    * [PHP-1431] - Fix database name validation to include '$external', to allow execution of user admin commands
+    * [PHP-1435] - MongoCollection::getIndexInfo on non-existing collection makes segmentation fault
+
+** Improvement
+    * [PHP-1427] - MongoCollection::distinct() should ensure query is serialized as BSON object
+    * [PHP-1433] - MongoCollection::distinct() should allow array or object for query
+    * [PHP-1434] - MongoCollection::findAndModify() should allow array or object for query, update, and fields
+   </notes>
+  </release>
 
   <release>
    <date>2015-03-24</date>
