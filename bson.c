@@ -856,7 +856,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 		return 0;
 	}
 
-	buf_end = buf + MONGO_32(*((int*)buf));
+	buf_end = buf + MONGO_32(*((int32_t*)buf));
 
 	/* for size */
 	buf += INT_32;
@@ -921,7 +921,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 				CHECK_BUFFER_LEN(INT_32);
 
-				len = MONGO_32(*((int*)buf));
+				len = MONGO_32(*((int32_t*)buf));
 				buf += INT_32;
 
 				/* len includes \0 */
@@ -977,7 +977,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 				CHECK_BUFFER_LEN(INT_32);
 
-				len = MONGO_32(*(int*)buf);
+				len = MONGO_32(*(int32_t*)buf);
 				buf += INT_32;
 
 				CHECK_BUFFER_LEN(BYTE_8);
@@ -995,7 +995,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 					CHECK_BUFFER_LEN(INT_32);
 
-					len2 = MONGO_32(*(int*)buf);
+					len2 = MONGO_32(*(int32_t*)buf);
 
 					/* If the lengths match, the data is to spec, so we use
 					 * len2 as the true length. */
@@ -1042,7 +1042,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 			case BSON_INT: {
 				CHECK_BUFFER_LEN(INT_32);
-				ZVAL_LONG(value, MONGO_32(*((int*)buf)));
+				ZVAL_LONG(value, MONGO_32(*((int32_t*)buf)));
 				buf += INT_32;
 				break;
 			}
@@ -1117,7 +1117,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 				CHECK_BUFFER_LEN(INT_32);
 
-				code_len = MONGO_32(*(int*)buf);
+				code_len = MONGO_32(*(int32_t*)buf);
 				buf += INT_32;
 
 				/* length of code (includes \0) */
@@ -1137,7 +1137,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 					/* Peek at the scope's document length before recursing */
 					CHECK_BUFFER_LEN(INT_32);
-					scope_len = MONGO_32(*(int*)buf);
+					scope_len = MONGO_32(*(int32_t*)buf);
 
 					CHECK_BUFFER_LEN(scope_len);
 
@@ -1181,7 +1181,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 				CHECK_BUFFER_LEN(INT_32);
 
-				ns_len = *(int*)buf;
+				ns_len = *(int32_t*)buf;
 				buf += INT_32;
 
 				/* length of namespace (includes \0) */
@@ -1224,9 +1224,9 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 			case BSON_TIMESTAMP: {
 				CHECK_BUFFER_LEN(INT_64);
 				object_init_ex(value, mongo_ce_Timestamp);
-				zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), MONGO_32(*(int*)buf) TSRMLS_CC);
+				zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), MONGO_32(*(int32_t*)buf) TSRMLS_CC);
 				buf += INT_32;
-				zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), MONGO_32(*(int*)buf) TSRMLS_CC);
+				zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), MONGO_32(*(int32_t*)buf) TSRMLS_CC);
 				buf += INT_32;
 				break;
 			}
