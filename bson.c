@@ -1181,7 +1181,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 				CHECK_BUFFER_LEN(INT_32);
 
-				ns_len = *(int32_t*)buf;
+				ns_len = MONGO_32(*(int32_t*)buf);
 				buf += INT_32;
 
 				/* length of namespace (includes \0) */
