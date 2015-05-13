@@ -1165,6 +1165,7 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 
 					buf = bson_to_zval(buf, scope_len, HASH_P(zcope), options TSRMLS_CC);
 					if (EG(exception)) {
+						zval_ptr_dtor(&value);
 						zval_ptr_dtor(&zcope);
 						return 0;
 					}
@@ -1300,6 +1301,7 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 				}
 				/* sprintf 0-terminates the string */
 
+				zval_ptr_dtor(&value);
 				zend_throw_exception(mongo_ce_Exception, msg, 17 TSRMLS_CC);
 				efree(msg);
 				return 0;
