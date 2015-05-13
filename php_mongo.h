@@ -581,7 +581,7 @@ extern zend_module_entry mongo_module_entry;
  * 10: failed to get host from <substr> of <str>
  * 11: failed to get port from <substr> of <str>
  * 12: lost db connection
- * 2X: Parsing errors (ununsed)
+ * 2X: Parsing errors (unused)
  * 21: Empty option name or value
  * 22: Unknown connection string option
  * 23: Logical error (conflicting options)
