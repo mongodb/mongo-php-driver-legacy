@@ -841,7 +841,7 @@ int php_mongo_write_get_more(mongo_buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 }
 
 
-char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
+char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
 {
 	/* buf_start is used for debugging
 	 *
@@ -853,6 +853,16 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 	unsigned char type;
 
 	if (buf == 0) {
+		return 0;
+	}
+
+	if (buf_len < 5) {
+		zend_throw_exception_ex(mongo_ce_CursorException, 38 TSRMLS_CC, "BSON buffer is %u bytes, but should be >= 5 (i.e. empty document)", buf_len);
+		return 0;
+	}
+
+	if (buf_len < (size_t) MONGO_32(*((int32_t*)buf))) {
+		zend_throw_exception_ex(mongo_ce_CursorException, 39 TSRMLS_CC, "BSON buffer is %u bytes, but document length is %u", buf_len, MONGO_32(*((int32_t*)buf)));
 		return 0;
 	}
 
@@ -940,6 +950,14 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 			case BSON_OBJECT:
 			case BSON_ARRAY: {
+				int doc_len;
+
+				/* Peek at the document's length before recursing */
+				CHECK_BUFFER_LEN(INT_32);
+				doc_len = MONGO_32(*(int32_t*)buf);
+
+				CHECK_BUFFER_LEN(doc_len);
+
 				array_init(value);
 
 				/* These two if statements make sure that the cmd_cursor_as_int64 flag only
@@ -959,7 +977,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 				if (options) {
 					options->level++;
 				}
-				buf = bson_to_zval(buf, Z_ARRVAL_P(value), options TSRMLS_CC);
+				buf = bson_to_zval(buf, doc_len, Z_ARRVAL_P(value), options TSRMLS_CC);
 				if (options) {
 					options->level--;
 				}
@@ -1145,7 +1163,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 					MAKE_STD_ZVAL(zcope);
 					array_init(zcope);
 
-					buf = bson_to_zval(buf, HASH_P(zcope), options TSRMLS_CC);
+					buf = bson_to_zval(buf, scope_len, HASH_P(zcope), options TSRMLS_CC);
 					if (EG(exception)) {
 						zval_ptr_dtor(&zcope);
 						return 0;
@@ -1435,7 +1453,7 @@ PHP_FUNCTION(bson_decode)
 	}
 
 	array_init(return_value);
-	bson_to_zval(str, HASH_P(return_value), 0 TSRMLS_CC);
+	bson_to_zval(str, str_len, HASH_P(return_value), 0 TSRMLS_CC);
 }
 /* }}} */
 

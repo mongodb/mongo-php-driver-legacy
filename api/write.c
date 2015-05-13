@@ -534,9 +534,9 @@ int php_mongo_api_update_single(mongo_buffer *buf, char *ns, char *collection, p
 int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connection, mongo_server_options *options, int socket_read_timeout, int request_id, zval **retval TSRMLS_DC) /* {{{  */
 {
 	int                status = 0;
-	int                data_len = 0;
 	char               buf[REPLY_HEADER_SIZE];
 	char              *data;
+	size_t             data_len = 0;
 	char              *error_message;
 	mongo_msg_header   msg_header;
 	php_mongo_reply  dbreply;
@@ -594,7 +594,7 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 		return 1;
 	}
 
-	bson_to_zval(data, Z_ARRVAL_PP(retval), 0 TSRMLS_CC);
+	bson_to_zval(data, data_len, Z_ARRVAL_PP(retval), 0 TSRMLS_CC);
 	efree(data);
 
 	return 0;

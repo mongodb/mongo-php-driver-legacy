@@ -174,6 +174,7 @@ int php_mongocommandcursor_load_current_element(mongo_command_cursor *cmd_cursor
 	array_init(cmd_cursor->current);
 	cmd_cursor->buf.pos = bson_to_zval(
 		(char*)cmd_cursor->buf.pos,
+		cmd_cursor->buf.end - cmd_cursor->buf.pos,
 		Z_ARRVAL_P(cmd_cursor->current),
 		NULL
 		TSRMLS_CC
