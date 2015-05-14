@@ -147,12 +147,12 @@ array(1) {
 Testing undersized element buffer (null byte read for next element type):
      0 : 12 00 00 00 02 66 6f 6f 00 03 00 00 00 62 61 72  [.....foo.....bar]
     10 : 00 00                                            [..]
-MongoCursorException: BSON buffer actually 18 bytes, but null terminator found at 17
+MongoCursorException: string for key "foo" is not null-terminated
 
 Testing undersized element buffer (non-null byte read for next element type):
      0 : 12 00 00 00 02 66 6f 6f 00 02 00 00 00 62 61 72  [.....foo.....bar]
     10 : 00 00                                            [..]
-MongoException: type 0x72 not supported: 12 00 00 00 02 66 6f 6f 00 02 00 00 00 62 61 72 00
+MongoCursorException: string for key "foo" is not null-terminated
 
 Testing undersized document buffer (smaller than 5-bytes):
      0 : 12 00 00 00                                      [....]

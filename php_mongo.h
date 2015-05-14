@@ -638,6 +638,7 @@ extern zend_module_entry mongo_module_entry;
  * 38: BSON buffer actually %u bytes, but should be at least 5 (i.e. empty document)
  * 39: BSON buffer actually %u bytes, but it reported size %u
  * 40: BSON buffer actually %u bytes, but null terminator found at %u
+ * 41: string for key "%s" is not null-terminated
  *
  * MongoGridFSException:
  * 0: 

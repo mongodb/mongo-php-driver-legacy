@@ -951,6 +951,13 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 
 				CHECK_BUFFER_LEN(len);
 
+				/* ensure that string is null-terminated */
+				if (buf[len - 1] != '\0') {
+					zval_ptr_dtor(&value);
+					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "string for key \"%s\" is not null-terminated", name);
+					return 0;
+				}
+
 				ZVAL_STRINGL(value, buf, len-1, 1);
 				buf += len;
 				break;
@@ -1155,6 +1162,13 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 
 				CHECK_BUFFER_LEN(code_len);
 
+				/* ensure that string is null-terminated */
+				if (buf[code_len - 1] != '\0') {
+					zval_ptr_dtor(&value);
+					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "code string for key \"%s\" is not null-terminated", name);
+					return 0;
+				}
+
 				code = buf;
 				buf += code_len;
 
@@ -1219,6 +1233,13 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 				}
 
 				CHECK_BUFFER_LEN(ns_len);
+
+				/* ensure that string is null-terminated */
+				if (buf[ns_len - 1] != '\0') {
+					zval_ptr_dtor(&value);
+					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "namespace string for key \"%s\" is not null-terminated", name);
+					return 0;
+				}
 
 				ns = buf;
 				buf += ns_len;
