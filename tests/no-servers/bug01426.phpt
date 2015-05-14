@@ -161,7 +161,7 @@ MongoCursorException: BSON buffer is 4 bytes, but should be >= 5 (i.e. empty doc
 Testing undersized document buffer (smaller than field name):
      0 : 06 00 00 00 02 66 6f 6f 00 04 00 00 00 62 61 72  [.....foo.....bar]
     10 : 00 00                                            [..]
-MongoCursorException: BSON buffer actually 18 bytes, but it reported size 6
+MongoCursorException: Reading key name for type 02 would exceed buffer
 
 Testing undersized document buffer (larger than field name):
      0 : 11 00 00 00 02 66 6f 6f 00 04 00 00 00 62 61 72  [.....foo.....bar]

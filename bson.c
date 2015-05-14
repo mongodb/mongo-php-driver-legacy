@@ -873,11 +873,19 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 
 	while ((type = *buf++) != 0) {
 		char *name;
+		size_t name_len;
 		zval *value;
 
 		name = buf;
+		name_len = strlen(name);
+
+		if (buf + name_len >= buf_end) {
+			zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "Reading key name for type %02x would exceed buffer", (unsigned char) type);
+			return 0;
+		}
+
 		/* get past field name */
-		buf += strlen(buf) + 1;
+		buf += name_len + 1;
 
 		MAKE_STD_ZVAL(value);
 		ZVAL_NULL(value);
