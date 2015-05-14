@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-1426: bson_decode() memory corruption
+Test for PHP-1426: bson_decode() buffer overflow and null-termination checks
 --SKIPIF--
 <?php require dirname(__FILE__) ."/skipif.inc"; ?>
 --FILE--
