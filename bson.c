@@ -61,7 +61,7 @@ static int insert_helper(mongo_buffer *buf, zval *doc, int max TSRMLS_DC);
 
 /* The position is not increased, we are just filling in the first 4 bytes with
  * the size.  */
-int php_mongo_serialize_size(char *start, mongo_buffer *buf, int max_size TSRMLS_DC)
+int php_mongo_serialize_size(char *start, const mongo_buffer *buf, int max_size TSRMLS_DC)
 {
 	int total = MONGO_32((buf->pos - start));
 
@@ -523,7 +523,7 @@ void php_mongo_serialize_byte(mongo_buffer *buf, char b)
 	buf->pos += 1;
 }
 
-void php_mongo_serialize_bytes(mongo_buffer *buf, char *str, int str_len)
+void php_mongo_serialize_bytes(mongo_buffer *buf, const char *str, int str_len)
 {
 	if (BUF_REMAINING <= str_len) {
 		resize_buf(buf, str_len);
@@ -532,7 +532,7 @@ void php_mongo_serialize_bytes(mongo_buffer *buf, char *str, int str_len)
 	buf->pos += str_len;
 }
 
-void php_mongo_serialize_string(mongo_buffer *buf, char *str, int str_len)
+void php_mongo_serialize_string(mongo_buffer *buf, const char *str, int str_len)
 {
 	if (BUF_REMAINING <= str_len + 1) {
 		resize_buf(buf, str_len + 1);
@@ -628,7 +628,7 @@ void php_mongo_serialize_key(mongo_buffer *buf, const char *str, int str_len, in
  * TODO: this doesn't handle main.$oplog-type situations (if
  * MonGlo(cmd_char) is set)
  */
-void php_mongo_serialize_ns(mongo_buffer *buf, char *str TSRMLS_DC)
+void php_mongo_serialize_ns(mongo_buffer *buf, const char *str TSRMLS_DC)
 {
 	char *collection = strchr(str, '.') + 1;
 
@@ -674,7 +674,7 @@ static int insert_helper(mongo_buffer *buf, zval *doc, int max_document_size TSR
 	return (php_mongo_serialize_size(buf->start + start, buf, max_document_size TSRMLS_CC) == SUCCESS) ? 0 : -3;
 }
 
-int php_mongo_write_insert(mongo_buffer *buf, char *ns, zval *doc, int max_document_size, int max_message_size TSRMLS_DC)
+int php_mongo_write_insert(mongo_buffer *buf, const char *ns, zval *doc, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 	int start = buf->pos - buf->start;
@@ -688,7 +688,7 @@ int php_mongo_write_insert(mongo_buffer *buf, char *ns, zval *doc, int max_docum
 	return php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC);
 }
 
-int php_mongo_write_batch_insert(mongo_buffer *buf, char *ns, int flags, zval *docs, int max_document_size, int max_message_size TSRMLS_DC)
+int php_mongo_write_batch_insert(mongo_buffer *buf, const char *ns, int flags, zval *docs, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	int start = buf->pos - buf->start, count = 0;
 	HashPosition pointer;
@@ -731,7 +731,7 @@ int php_mongo_write_batch_insert(mongo_buffer *buf, char *ns, int flags, zval *d
 	return count;
 }
 
-int php_mongo_write_update(mongo_buffer *buf, char *ns, int flags, zval *criteria, zval *newobj, int max_document_size, int max_message_size TSRMLS_DC)
+int php_mongo_write_update(mongo_buffer *buf, const char *ns, int flags, zval *criteria, zval *newobj, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 	int start = buf->pos - buf->start;
@@ -752,7 +752,7 @@ int php_mongo_write_update(mongo_buffer *buf, char *ns, int flags, zval *criteri
 	return php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC);
 }
 
-int php_mongo_write_delete(mongo_buffer *buf, char *ns, int flags, zval *criteria, int max_document_size, int max_message_size TSRMLS_DC)
+int php_mongo_write_delete(mongo_buffer *buf, const char *ns, int flags, zval *criteria, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 	int start = buf->pos - buf->start;
@@ -841,7 +841,7 @@ int php_mongo_write_get_more(mongo_buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 }
 
 
-char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
+const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
 {
 	/* buf_start is used for debugging
 	 *
@@ -849,7 +849,7 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 	 * bytes to that point.
 	 *
 	 * We lose buf's position as we iterate, so we need buf_start to save it. */
-	char *buf_start = buf, *buf_end;
+	const char *buf_start = buf, *buf_end;
 	unsigned char type;
 
 	if (buf == 0) {
@@ -872,7 +872,7 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 	buf += INT_32;
 
 	while ((type = *buf++) != 0) {
-		char *name;
+		const char *name;
 		size_t name_len;
 		zval *value;
 
@@ -894,7 +894,7 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 		switch (type) {
 			case BSON_OID: {
 				mongo_id *this_id;
-				char *tmp_id;
+				const char *tmp_id;
 				zval *str = 0;
 
 				CHECK_BUFFER_LEN(OID_SIZE);
@@ -1112,7 +1112,7 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 			}
 
 			case BSON_REGEX: {
-				char *regex, *flags;
+				const char *regex, *flags;
 				int regex_len, flags_len;
 
 				/* Ensure we can read at least one null byte */
@@ -1141,7 +1141,7 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 			case BSON_CODE__D: {
 				zval *zcope;
 				int code_len;
-				char *code;
+				const char *code;
 
 				/* CODE has a useless total size field */
 				if (type == BSON_CODE) {
@@ -1215,8 +1215,7 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 			 * into the new type (array('$ref' => ..., $id => ...)). */
 			case BSON_DBREF: {
 				int ns_len;
-				char *ns;
-				zval *zoid;
+				zval *zns, *zoid;
 				char *str = NULL;
 				mongo_id *this_id;
 
@@ -1241,7 +1240,8 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 					return 0;
 				}
 
-				ns = buf;
+				MAKE_STD_ZVAL(zns);
+				ZVAL_STRINGL(zns, buf, ns_len - 1, 1);
 				buf += ns_len;
 
 				CHECK_BUFFER_LEN(OID_SIZE);
@@ -1260,7 +1260,7 @@ char* bson_to_zval(char *buf, size_t buf_len, HashTable *result, mongo_bson_conv
 
 				/* put it all together */
 				array_init(value);
-				add_assoc_stringl(value, "$ref", ns, ns_len-1, 1);
+				add_assoc_zval(value, "$ref", zns);
 				add_assoc_zval(value, "$id", zoid);
 				break;
 			}
@@ -1476,7 +1476,7 @@ PHP_FUNCTION(bson_encode)
    Takes a serialized BSON object and turns it into a PHP array. This only deserializes entire documents! */
 PHP_FUNCTION(bson_decode)
 {
-	char *str;
+	const char *str;
 	int str_len;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
@@ -1493,7 +1493,7 @@ void mongo_buf_init(char *dest)
 	dest[0] = '\0';
 }
 
-void mongo_buf_append(char *dest, char *piece)
+void mongo_buf_append(char *dest, const char *piece)
 {
 	int pos = strlen(dest);
 	memcpy(dest + pos, piece, strlen(piece) + 1);
