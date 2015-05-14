@@ -1,5 +1,5 @@
 --TEST--
-MongoCursor::dead()
+MongoCursor::dead() with collection size greater than limit
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
 --INI--
@@ -8,11 +8,12 @@ mongo.long_as_object=1
 <?php
 require_once "tests/utils/server.inc";
 $m = mongo_standalone();
-$db = $m->selectDB(dbname());
-$c = $db->segfault;
+$c = $m->selectCollection(dbname(), collname(__FILE__));
+$c->drop();
 
 $c->insert(array('test' => 1));
 $c->insert(array('test' => 2));
+$c->insert(array('test' => 3));
 
 $txlogs = $c->find()->limit(2);
 
