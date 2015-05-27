@@ -1223,6 +1223,7 @@ const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mon
 			case BSON_DBPOINTER: {
 				int ns_len;
 				zval *zns, *zoid;
+				const char *ns;
 				char *str = NULL;
 				mongo_id *this_id;
 
@@ -1247,11 +1248,13 @@ const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mon
 					return 0;
 				}
 
-				MAKE_STD_ZVAL(zns);
-				ZVAL_STRINGL(zns, buf, ns_len - 1, 1);
+				ns = buf;
 				buf += ns_len;
 
 				CHECK_BUFFER_LEN(OID_SIZE);
+
+				MAKE_STD_ZVAL(zns);
+				ZVAL_STRINGL(zns, ns, ns_len - 1, 1);
 
 				MAKE_STD_ZVAL(zoid);
 				object_init_ex(zoid, mongo_ce_Id);
