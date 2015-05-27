@@ -31,7 +31,7 @@
 #define BSON_DATE      0x09
 #define BSON_NULL      0x0A
 #define BSON_REGEX     0x0B
-#define BSON_DBREF     0x0C
+#define BSON_DBPOINTER 0x0C
 #define BSON_CODE__D   0x0D
 #define BSON_SYMBOL    0x0E
 #define BSON_CODE      0x0F

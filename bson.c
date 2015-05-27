@@ -1207,13 +1207,20 @@ const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mon
 			}
 
 			/* DEPRECATED
-			 * database reference (12)
-			 *   - 4 bytes ns length (includes trailing \0)
-			 *   - ns + \0
-			 *   - 12 bytes MongoId
-			 * This converts the deprecated, old-style db ref type
-			 * into the new type (array('$ref' => ..., $id => ...)). */
-			case BSON_DBREF: {
+			 *
+			 * This is a deprecated BSON type (since early 1.x server versions)
+			 * used for referencing another document. It consists of:
+			 *
+			 *   - 4-byte namespace length (includes trailing \0)
+			 *   - namespace + \0
+			 *   - 12-byte ObjectId
+			 *
+			 * Since there is no PHP class for this type, we silently convert it
+			 * to a DBRef document (e.g. ['$ref' => ..., '$id' => ... ]).
+			 *
+			 * See: http://docs.mongodb.org/manual/reference/database-references/#dbrefs
+			 */
+			case BSON_DBPOINTER: {
 				int ns_len;
 				zval *zns, *zoid;
 				char *str = NULL;
