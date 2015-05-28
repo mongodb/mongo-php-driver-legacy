@@ -639,6 +639,7 @@ extern zend_module_entry mongo_module_entry;
  * 39: Document length (%d bytes) should be at least 5 (i.e. empty document)
  * 40: Document length (%d bytes) exceeds buffer (%u bytes)
  * 41: string for key "%s" is not null-terminated
+ * 42: Document length (%u bytes) is not equal to buffer (%u bytes)
  *
  * MongoGridFSException:
  * 0: 

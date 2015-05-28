@@ -841,7 +841,33 @@ int php_mongo_write_get_more(mongo_buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 }
 
 
+/* Parses a single document from the BSON buffer and throws an exception if the
+ * the buffer is not exhausted (in addition to any errors from bson_to_zval_ex).
+ */
 const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
+{
+	const char *buf_end;
+
+	buf_end = bson_to_zval_ex(buf, buf_len, result, options TSRMLS_CC);
+
+	if (EG(exception)) {
+		return 0;
+	}
+
+	if (buf + buf_len != buf_end) {
+		zend_throw_exception_ex(mongo_ce_CursorException, 42 TSRMLS_CC, "Document length (%u bytes) is not equal to buffer (%u bytes)", buf_end - buf, buf_len);
+		return 0;
+	}
+
+	return buf_end;
+}
+
+
+/* Parses a single document from the BSON buffer and returns a pointer to the
+ * buffer position immediately following the document. If the buffer is invalid,
+ * an exception will be thrown and NULL will be returned.
+ */
+const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
 {
 	/* buf_start is used for debugging
 	 *
