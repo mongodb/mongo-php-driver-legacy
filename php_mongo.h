@@ -635,9 +635,9 @@ extern zend_module_entry mongo_module_entry;
  * 35: Message size (%d) overflows valid message size (%d) php_mongo_api_get_reply()
  * 36: request/response mismatch: %d vs %d php_mongo_api_get_reply()
  * 37: Couldn't finish reading from network
- * 38: BSON buffer actually %u bytes, but should be at least 5 (i.e. empty document)
- * 39: BSON buffer actually %u bytes, but it reported size %u
- * 40: BSON buffer actually %u bytes, but null terminator found at %u
+ * 38: Reading document length would exceed buffer (%u bytes)
+ * 39: Document length (%d bytes) should be at least 5 (i.e. empty document)
+ * 40: Document length (%d bytes) exceeds buffer (%u bytes)
  * 41: string for key "%s" is not null-terminated
  *
  * MongoGridFSException:

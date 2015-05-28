@@ -22,6 +22,6 @@ try {
 ===DONE===
 <?php exit(0); ?>
 --EXPECT--
-MongoCursorException: BSON buffer is 18 bytes, but document length is 285212671
-MongoCursorException: BSON buffer is 18 bytes, but document length is 285212671
+MongoCursorException: Document length (285212671 bytes) exceeds buffer (18 bytes)
+MongoCursorException: Document length (285212671 bytes) exceeds buffer (18 bytes)
 ===DONE===

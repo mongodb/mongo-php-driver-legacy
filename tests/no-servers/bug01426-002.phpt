@@ -156,7 +156,7 @@ MongoCursorException: string for key "foo" is not null-terminated
 
 Testing undersized document buffer (smaller than 5-bytes):
      0 : 12 00 00 00                                      [....]
-MongoCursorException: BSON buffer is 4 bytes, but should be >= 5 (i.e. empty document)
+MongoCursorException: Reading document length would exceed buffer (4 bytes)
 
 Testing undersized document buffer (smaller than field name):
      0 : 06 00 00 00 02 66 6f 6f 00 04 00 00 00 62 61 72  [.....foo.....bar]
@@ -171,5 +171,5 @@ MongoCursorException: Reading data for type 02 would exceed buffer for key "foo"
 Testing oversized document buffer:
      0 : 13 00 00 00 02 66 6f 6f 00 04 00 00 00 62 61 72  [.....foo.....bar]
     10 : 00 00                                            [..]
-MongoCursorException: BSON buffer is 18 bytes, but document length is 19
+MongoCursorException: Document length (19 bytes) exceeds buffer (18 bytes)
 ===DONE===

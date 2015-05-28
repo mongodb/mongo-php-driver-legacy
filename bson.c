@@ -851,22 +851,30 @@ const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mon
 	 * We lose buf's position as we iterate, so we need buf_start to save it. */
 	const char *buf_start = buf, *buf_end;
 	unsigned char type;
+	int doc_len;
 
 	if (buf == 0) {
 		return 0;
 	}
 
 	if (buf_len < 5) {
-		zend_throw_exception_ex(mongo_ce_CursorException, 38 TSRMLS_CC, "BSON buffer is %u bytes, but should be >= 5 (i.e. empty document)", buf_len);
+		zend_throw_exception_ex(mongo_ce_CursorException, 38 TSRMLS_CC, "Reading document length would exceed buffer (%u bytes)", buf_len);
 		return 0;
 	}
 
-	if (buf_len < (size_t) MONGO_32(*((int32_t*)buf))) {
-		zend_throw_exception_ex(mongo_ce_CursorException, 39 TSRMLS_CC, "BSON buffer is %u bytes, but document length is %u", buf_len, MONGO_32(*((int32_t*)buf)));
+	doc_len = MONGO_32(*((int32_t*)buf));
+
+	if (doc_len < 5) {
+		zend_throw_exception_ex(mongo_ce_CursorException, 39 TSRMLS_CC, "Document length (%d bytes) should be at least 5 (i.e. empty document)", doc_len);
 		return 0;
 	}
 
-	buf_end = buf + MONGO_32(*((int32_t*)buf));
+	if (buf_len < (size_t) doc_len) {
+		zend_throw_exception_ex(mongo_ce_CursorException, 40 TSRMLS_CC, "Document length (%d bytes) exceeds buffer (%u bytes)", doc_len, buf_len);
+		return 0;
+	}
+
+	buf_end = buf + doc_len;
 
 	/* for size */
 	buf += INT_32;
@@ -965,13 +973,13 @@ const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mon
 
 			case BSON_OBJECT:
 			case BSON_ARRAY: {
-				int doc_len;
+				int embedded_doc_len;
 
-				/* Peek at the document's length before recursing */
+				/* Peek at the embedded document's length before recursing */
 				CHECK_BUFFER_LEN(INT_32);
-				doc_len = MONGO_32(*(int32_t*)buf);
+				embedded_doc_len = MONGO_32(*(int32_t*)buf);
 
-				CHECK_BUFFER_LEN(doc_len);
+				CHECK_BUFFER_LEN(embedded_doc_len);
 
 				array_init(value);
 
@@ -992,7 +1000,7 @@ const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mon
 				if (options) {
 					options->level++;
 				}
-				buf = bson_to_zval(buf, doc_len, Z_ARRVAL_P(value), options TSRMLS_CC);
+				buf = bson_to_zval(buf, embedded_doc_len, Z_ARRVAL_P(value), options TSRMLS_CC);
 				if (options) {
 					options->level--;
 				}
