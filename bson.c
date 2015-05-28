@@ -913,7 +913,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 		name = buf;
 		name_len = strlen(name);
 
-		if (buf + name_len >= buf_end) {
+		if (buf + name_len + 1 >= buf_end) {
 			zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "Reading key name for type %02x would exceed buffer", (unsigned char) type);
 			return 0;
 		}

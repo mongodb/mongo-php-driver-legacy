@@ -25,8 +25,14 @@ assertInvalid("\x05\x00\x00\x00");
 echo "\nBSON buffer contains an extra, trailing null byte\n";
 assertInvalid("\x05\x00\x00\x00\x00\x00");
 
-echo "\nDocument length is too small and string length is too large\n";
+echo "\nDocument is missing null byte after last field\n";
+assertInvalid("\x09\x00\x00\x00\x0afoo\x00");
+
+echo "\nDocument length only covers the key's null terminator byte\n";
 assertInvalid("\x07\x00\x00\x00\x02a\x00\x78\x56\x34\x12");
+
+echo "\nDocument length is too small and string length is too large\n";
+assertInvalid("\x08\x00\x00\x00\x02a\x00\x78\x56\x34\x12");
 
 echo "\nInteger data is one byte but we expected four bytes\n";
 assertInvalid("\x09\x00\x00\x00\x10a\x00\x05\x00");
@@ -66,6 +72,12 @@ MongoCursorException: Reading document length would exceed buffer (4 bytes)
 
 BSON buffer contains an extra, trailing null byte
 MongoCursorException: Document length (5 bytes) is not equal to buffer (6 bytes)
+
+Document is missing null byte after last field
+MongoCursorException: Reading key name for type 0a would exceed buffer
+
+Document length only covers the key's null terminator byte
+MongoCursorException: Reading key name for type 02 would exceed buffer
 
 Document length is too small and string length is too large
 MongoCursorException: Reading data for type 02 would exceed buffer for key "a"
