@@ -1243,7 +1243,7 @@ const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mon
 				/* length of namespace (includes \0) */
 				if (ns_len < 1) {
 					zval_ptr_dtor(&value);
-					zend_throw_exception_ex(mongo_ce_CursorException, 3 TSRMLS_CC, "invalid dbref length for key \"%s\": %d", name, ns_len);
+					zend_throw_exception_ex(mongo_ce_CursorException, 3 TSRMLS_CC, "invalid DBPointer namespace length for key \"%s\": %d", name, ns_len);
 					return 0;
 				}
 
@@ -1252,7 +1252,7 @@ const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mon
 				/* ensure that string is null-terminated */
 				if (buf[ns_len - 1] != '\0') {
 					zval_ptr_dtor(&value);
-					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "namespace string for key \"%s\" is not null-terminated", name);
+					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "DBPointer namespace string for key \"%s\" is not null-terminated", name);
 					return 0;
 				}
 

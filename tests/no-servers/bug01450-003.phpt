@@ -70,5 +70,5 @@ array(1) {
 }
 
 Testing invalid document:
-MongoCursorException: namespace string for key "foo" is not null-terminated
+MongoCursorException: DBPointer namespace string for key "foo" is not null-terminated
 ===DONE===
