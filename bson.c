@@ -1149,18 +1149,18 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 				const char *regex, *flags;
 				int regex_len, flags_len;
 
-				/* Ensure we can read at least one null byte */
-				CHECK_BUFFER_LEN(BYTE_8);
-
 				regex = buf;
 				regex_len = strlen(buf);
-				buf += regex_len + 1;
+				CHECK_BUFFER_LEN(regex_len + 1);
 
-				/* Ensure we can read at least one null byte */
-				CHECK_BUFFER_LEN(BYTE_8);
+				/* get past pattern */
+				buf += regex_len + 1;
 
 				flags = buf;
 				flags_len = strlen(buf);
+				CHECK_BUFFER_LEN(flags_len + 1);
+
+				/* get past flags */
 				buf += flags_len + 1;
 
 				object_init_ex(value, mongo_ce_Regex);
