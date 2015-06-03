@@ -63,7 +63,7 @@ coverage before compiling the driver
 
     $ phpize
     $ ./configure --enable-coverage
-    $ make clean all tests
+    $ make clean all test
 
 Then you should have a coverage/ folder with the juicy details.
 
