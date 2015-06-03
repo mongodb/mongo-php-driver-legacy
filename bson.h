@@ -103,7 +103,7 @@ typedef struct {
 /* Converts a BSON document to a zval. The conversions options are a bitmask
  * of the BSON_OPT_* constants */
 const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC);
-const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC);
+const char* bson_to_zval_iter(const char *buf, size_t buf_len, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC);
 
 /* Initialize buffer to contain "\0", so mongo_buf_append will start appending
  * at the beginning. */

@@ -594,7 +594,7 @@ int php_mongo_api_get_reply(mongo_con_manager *manager, mongo_connection *connec
 		return 1;
 	}
 
-	bson_to_zval_ex(data, data_len, Z_ARRVAL_PP(retval), 0 TSRMLS_CC);
+	bson_to_zval_iter(data, data_len, Z_ARRVAL_PP(retval), 0 TSRMLS_CC);
 	efree(data);
 
 	return 0;
