@@ -35,7 +35,7 @@
 		if (buf + (len) >= buf_end) { \
 			zval_ptr_dtor(&value); \
 			zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "Reading data for type %02x would exceed buffer for key \"%s\"", (unsigned char) type, name); \
-			return 0; \
+			return NULL; \
 		} \
 	} while (0)
 
@@ -851,12 +851,12 @@ const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mon
 	buf_end = bson_to_zval_ex(buf, buf_len, result, options TSRMLS_CC);
 
 	if (EG(exception)) {
-		return 0;
+		return NULL;
 	}
 
 	if (buf + buf_len != buf_end) {
 		zend_throw_exception_ex(mongo_ce_CursorException, 42 TSRMLS_CC, "Document length (%u bytes) is not equal to buffer (%u bytes)", buf_end - buf, buf_len);
-		return 0;
+		return NULL;
 	}
 
 	return buf_end;
@@ -880,24 +880,24 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 	int doc_len;
 
 	if (buf == 0) {
-		return 0;
+		return NULL;
 	}
 
 	if (buf_len < 5) {
 		zend_throw_exception_ex(mongo_ce_CursorException, 38 TSRMLS_CC, "Reading document length would exceed buffer (%u bytes)", buf_len);
-		return 0;
+		return NULL;
 	}
 
 	doc_len = MONGO_32(*((int32_t*)buf));
 
 	if (doc_len < 5) {
 		zend_throw_exception_ex(mongo_ce_CursorException, 39 TSRMLS_CC, "Document length (%d bytes) should be at least 5 (i.e. empty document)", doc_len);
-		return 0;
+		return NULL;
 	}
 
 	if (buf_len < (size_t) doc_len) {
 		zend_throw_exception_ex(mongo_ce_CursorException, 40 TSRMLS_CC, "Document length (%d bytes) exceeds buffer (%u bytes)", doc_len, buf_len);
-		return 0;
+		return NULL;
 	}
 
 	buf_end = buf + doc_len;
@@ -915,7 +915,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 
 		if (buf + name_len + 1 >= buf_end) {
 			zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "Reading key name for type %02x would exceed buffer", (unsigned char) type);
-			return 0;
+			return NULL;
 		}
 
 		/* get past field name */
@@ -980,7 +980,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 				if (len < 1) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "invalid string length for key \"%s\": %d", name, len);
-					return 0;
+					return NULL;
 				}
 
 				CHECK_BUFFER_LEN(len);
@@ -989,7 +989,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 				if (buf[len - 1] != '\0') {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "string for key \"%s\" is not null-terminated", name);
-					return 0;
+					return NULL;
 				}
 
 				ZVAL_STRINGL(value, buf, len-1, 1);
@@ -1033,7 +1033,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 
 				if (EG(exception)) {
 					zval_ptr_dtor(&value);
-					return 0;
+					return NULL;
 				}
 				break;
 			}
@@ -1075,7 +1075,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 				if (len < 0) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 22 TSRMLS_CC, "invalid binary length for key \"%s\": %d", name, len);
-					return 0;
+					return NULL;
 				}
 
 				CHECK_BUFFER_LEN(len);
@@ -1083,7 +1083,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 				if (subtype == PHP_MONGO_BIN_UUID_RFC4122 && len != PHP_MONGO_BIN_UUID_RFC4122_SIZE) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 25 TSRMLS_CC, "RFC4122 UUID must be %d bytes; actually: %d", PHP_MONGO_BIN_UUID_RFC4122_SIZE, len);
-					return 0;
+					return NULL;
 				}
 
 				object_init_ex(value, mongo_ce_BinData);
@@ -1191,7 +1191,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 				if (code_len < 1) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 24 TSRMLS_CC, "invalid code length for key \"%s\": %d", name, code_len);
-					return 0;
+					return NULL;
 				}
 
 				CHECK_BUFFER_LEN(code_len);
@@ -1200,7 +1200,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 				if (buf[code_len - 1] != '\0') {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "code string for key \"%s\" is not null-terminated", name);
-					return 0;
+					return NULL;
 				}
 
 				code = buf;
@@ -1223,7 +1223,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 					if (EG(exception)) {
 						zval_ptr_dtor(&value);
 						zval_ptr_dtor(&zcope);
-						return 0;
+						return NULL;
 					}
 				} else {
 					/* initialize an empty scope array */
@@ -1270,7 +1270,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 				if (ns_len < 1) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 3 TSRMLS_CC, "invalid DBPointer namespace length for key \"%s\": %d", name, ns_len);
-					return 0;
+					return NULL;
 				}
 
 				CHECK_BUFFER_LEN(ns_len);
@@ -1279,7 +1279,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 				if (buf[ns_len - 1] != '\0') {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "DBPointer namespace string for key \"%s\" is not null-terminated", name);
-					return 0;
+					return NULL;
 				}
 
 				ns = buf;
@@ -1374,7 +1374,7 @@ const char* bson_to_zval_ex(const char *buf, size_t buf_len, HashTable *result, 
 				zval_ptr_dtor(&value);
 				zend_throw_exception(mongo_ce_Exception, msg, 17 TSRMLS_CC);
 				efree(msg);
-				return 0;
+				return NULL;
 			}
 		}
 
