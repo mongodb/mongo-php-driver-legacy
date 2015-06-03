@@ -20,16 +20,16 @@ $mentions = array();
 // Normal find
 $ret = $db->safe->find(array("doc" => 1));
 iterator_to_array($ret);
-var_dump($mentions); $mentions = array();
+ksort($mentions); var_dump($mentions); $mentions = array();
  
 // Force primary for command
 $db->setProfilingLevel(42);
-var_dump($mentions); $mentions = array();
+ksort($mentions); var_dump($mentions); $mentions = array();
  
 // Normal find
 $ret = $db->safe->find(array("doc" => 1));
 iterator_to_array($ret);
-var_dump($mentions); $mentions = array();
+ksort($mentions); var_dump($mentions); $mentions = array();
 ?>
 --EXPECTF--
 Deprecated: Function MongoDB::setSlaveOkay() is deprecated in %sbug00511.php on line %d

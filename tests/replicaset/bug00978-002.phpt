@@ -34,12 +34,12 @@ CREATING CONNECTION
 INSERT DATA
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
-REPLSET INFO:   - tag: dc:ny
-REPLSET INFO:   - tag: server:0
+REPLSET INFO:   - tag: dc:%s
+REPLSET INFO:   - tag: server:%d
 RUNNING COMMAND
 REPLSET INFO: pick server: random element 0
 REPLSET INFO: - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
-REPLSET INFO:   - tag: dc:ny
-REPLSET INFO:   - tag: server:0
+REPLSET INFO:   - tag: dc:%s
+REPLSET INFO:   - tag: server:%d
 DONE WITH COMMAND
 all is good

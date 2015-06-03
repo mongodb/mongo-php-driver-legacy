@@ -41,5 +41,5 @@ $c->findOne();
 candidate_matches_tags: added primary regardless of tags: %s:%d;REPLICASET;.;%d
 pick server: the primary
 - connection: type: PRIMARY, socket: %d, ping: %d, hash: %s:%d;REPLICASET;.;%d
-  - tag: dc:ny
-  - tag: server:0
+  - tag: dc:%s
+  - tag: server:%d
