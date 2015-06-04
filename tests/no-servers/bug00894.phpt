@@ -134,5 +134,5 @@ string(%d) "invalid string length for key "x": 0"
 int(21)
 
 Testing deprecated DBPointer type
-string(%d) "invalid dbref length for key "x": 0"
+string(%d) "invalid DBPointer namespace length for key "x": 0"
 int(3)

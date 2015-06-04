@@ -344,8 +344,9 @@ int php_mongocursor_load_current_element(mongo_cursor *cursor TSRMLS_DC)
 	/* Init and convert */
 	MAKE_STD_ZVAL(cursor->current);
 	array_init(cursor->current);
-	cursor->buf.pos = bson_to_zval(
+	cursor->buf.pos = (char*) bson_to_zval_iter(
 		(char*)cursor->buf.pos,
+		cursor->buf.end - cursor->buf.pos,
 		Z_ARRVAL_P(cursor->current),
 		&cmd_options
 		TSRMLS_CC
