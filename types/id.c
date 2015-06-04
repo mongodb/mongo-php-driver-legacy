@@ -157,7 +157,10 @@ static zend_object_value php_mongo_id_new(zend_class_entry *class_type TSRMLS_DC
 	return retval;
 }
 
-char *php_mongo_mongoid_to_hex(char *id_str)
+/* Converts a 12-byte ObjectId buffer into a hexadecimal string. This function
+ * expects id_str to be a valid buffer >= 12 bytes. The returned string will be
+ * 25 bytes (24 hex characters + null byte) and must be freed by the caller. */
+char *php_mongo_mongoid_to_hex(const char *id_str)
 {
 	int i;
 	char *id = (char*)emalloc(25);

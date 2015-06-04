@@ -1,5 +1,5 @@
 --TEST--
-Test for PHP-963: Requesting Info on Dead MongoCursor Causes Segfault.
+MongoCursor::dead() with collection size equal to limit
 --SKIPIF--
 <?php require_once "tests/utils/standalone.inc"; ?>
 --INI--
@@ -13,13 +13,8 @@ $c->drop();
 
 $c->insert(array('test' => 1));
 $c->insert(array('test' => 2));
-$c->insert(array('test' => 3));
-$c->insert(array('test' => 4));
-$c->insert(array('test' => 5));
-$c->insert(array('test' => 6));
-$c->insert(array('test' => 7));
 
-$txlogs = $c->find()->limit(5);
+$txlogs = $c->find()->limit(2);
 
 foreach($txlogs as $txlog) {
 	echo ($txlogs->dead() ? "Dead" : "Not Dead") . "\n";
@@ -27,16 +22,10 @@ foreach($txlogs as $txlog) {
 echo ($txlogs->dead() ? "Dead" : "Not Dead") . "\n";
 
 $info = $txlogs->info();
-var_dump((string) $info['id'], $info['at']);
-echo "ALIVE";
+var_dump((string) $info['id']);
 ?>
 --EXPECTF--
-Not Dead
-Not Dead
-Not Dead
-Not Dead
-Not Dead
 Dead
-string(1) "0"
-int(5)
-ALIVE
+Dead
+Dead
+%s(1) "0"

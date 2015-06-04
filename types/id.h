@@ -20,7 +20,7 @@ int php_mongo_id_serialize(zval*, unsigned char**, zend_uint*, zend_serialize_da
 int php_mongo_id_unserialize(zval**, zend_class_entry*, const unsigned char*, zend_uint, zend_unserialize_data* TSRMLS_DC);
 int php_mongo_compare_ids(zval*, zval* TSRMLS_DC);
 void php_mongo_mongoid_populate(zval *this_ptr, zval *id TSRMLS_DC);
-char *php_mongo_mongoid_to_hex(char *id_str);
+char *php_mongo_mongoid_to_hex(const char *id_str);
 
 PHP_METHOD(MongoId, __construct);
 PHP_METHOD(MongoId, __toString);

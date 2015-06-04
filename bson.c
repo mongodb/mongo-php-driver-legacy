@@ -35,7 +35,7 @@
 		if (buf + (len) >= buf_end) { \
 			zval_ptr_dtor(&value); \
 			zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "Reading data for type %02x would exceed buffer for key \"%s\"", (unsigned char) type, name); \
-			return 0; \
+			return NULL; \
 		} \
 	} while (0)
 
@@ -61,7 +61,7 @@ static int insert_helper(mongo_buffer *buf, zval *doc, int max TSRMLS_DC);
 
 /* The position is not increased, we are just filling in the first 4 bytes with
  * the size.  */
-int php_mongo_serialize_size(char *start, mongo_buffer *buf, int max_size TSRMLS_DC)
+int php_mongo_serialize_size(char *start, const mongo_buffer *buf, int max_size TSRMLS_DC)
 {
 	int total = MONGO_32((buf->pos - start));
 
@@ -523,7 +523,7 @@ void php_mongo_serialize_byte(mongo_buffer *buf, char b)
 	buf->pos += 1;
 }
 
-void php_mongo_serialize_bytes(mongo_buffer *buf, char *str, int str_len)
+void php_mongo_serialize_bytes(mongo_buffer *buf, const char *str, int str_len)
 {
 	if (BUF_REMAINING <= str_len) {
 		resize_buf(buf, str_len);
@@ -532,7 +532,7 @@ void php_mongo_serialize_bytes(mongo_buffer *buf, char *str, int str_len)
 	buf->pos += str_len;
 }
 
-void php_mongo_serialize_string(mongo_buffer *buf, char *str, int str_len)
+void php_mongo_serialize_string(mongo_buffer *buf, const char *str, int str_len)
 {
 	if (BUF_REMAINING <= str_len + 1) {
 		resize_buf(buf, str_len + 1);
@@ -628,7 +628,7 @@ void php_mongo_serialize_key(mongo_buffer *buf, const char *str, int str_len, in
  * TODO: this doesn't handle main.$oplog-type situations (if
  * MonGlo(cmd_char) is set)
  */
-void php_mongo_serialize_ns(mongo_buffer *buf, char *str TSRMLS_DC)
+void php_mongo_serialize_ns(mongo_buffer *buf, const char *str TSRMLS_DC)
 {
 	char *collection = strchr(str, '.') + 1;
 
@@ -674,7 +674,7 @@ static int insert_helper(mongo_buffer *buf, zval *doc, int max_document_size TSR
 	return (php_mongo_serialize_size(buf->start + start, buf, max_document_size TSRMLS_CC) == SUCCESS) ? 0 : -3;
 }
 
-int php_mongo_write_insert(mongo_buffer *buf, char *ns, zval *doc, int max_document_size, int max_message_size TSRMLS_DC)
+int php_mongo_write_insert(mongo_buffer *buf, const char *ns, zval *doc, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 	int start = buf->pos - buf->start;
@@ -688,7 +688,7 @@ int php_mongo_write_insert(mongo_buffer *buf, char *ns, zval *doc, int max_docum
 	return php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC);
 }
 
-int php_mongo_write_batch_insert(mongo_buffer *buf, char *ns, int flags, zval *docs, int max_document_size, int max_message_size TSRMLS_DC)
+int php_mongo_write_batch_insert(mongo_buffer *buf, const char *ns, int flags, zval *docs, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	int start = buf->pos - buf->start, count = 0;
 	HashPosition pointer;
@@ -731,7 +731,7 @@ int php_mongo_write_batch_insert(mongo_buffer *buf, char *ns, int flags, zval *d
 	return count;
 }
 
-int php_mongo_write_update(mongo_buffer *buf, char *ns, int flags, zval *criteria, zval *newobj, int max_document_size, int max_message_size TSRMLS_DC)
+int php_mongo_write_update(mongo_buffer *buf, const char *ns, int flags, zval *criteria, zval *newobj, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 	int start = buf->pos - buf->start;
@@ -752,7 +752,7 @@ int php_mongo_write_update(mongo_buffer *buf, char *ns, int flags, zval *criteri
 	return php_mongo_serialize_size(buf->start + start, buf, max_message_size TSRMLS_CC);
 }
 
-int php_mongo_write_delete(mongo_buffer *buf, char *ns, int flags, zval *criteria, int max_document_size, int max_message_size TSRMLS_DC)
+int php_mongo_write_delete(mongo_buffer *buf, const char *ns, int flags, zval *criteria, int max_document_size, int max_message_size TSRMLS_DC)
 {
 	mongo_msg_header header;
 	int start = buf->pos - buf->start;
@@ -841,7 +841,33 @@ int php_mongo_write_get_more(mongo_buffer *buf, mongo_cursor *cursor TSRMLS_DC)
 }
 
 
-char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
+/* Parses a single document from the BSON buffer and throws an exception if the
+ * the buffer is not exhausted (in addition to errors from bson_to_zval_iter).
+ */
+const char* bson_to_zval(const char *buf, size_t buf_len, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
+{
+	const char *buf_end;
+
+	buf_end = bson_to_zval_iter(buf, buf_len, result, options TSRMLS_CC);
+
+	if (EG(exception)) {
+		return NULL;
+	}
+
+	if (buf + buf_len != buf_end) {
+		zend_throw_exception_ex(mongo_ce_CursorException, 42 TSRMLS_CC, "Document length (%u bytes) is not equal to buffer (%u bytes)", buf_end - buf, buf_len);
+		return NULL;
+	}
+
+	return buf_end;
+}
+
+
+/* Parses a single document from the BSON buffer and returns a pointer to the
+ * buffer position immediately following the document. If the buffer is invalid,
+ * an exception will be thrown and NULL will be returned.
+ */
+const char* bson_to_zval_iter(const char *buf, size_t buf_len, HashTable *result, mongo_bson_conversion_options *options TSRMLS_DC)
 {
 	/* buf_start is used for debugging
 	 *
@@ -849,25 +875,51 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 	 * bytes to that point.
 	 *
 	 * We lose buf's position as we iterate, so we need buf_start to save it. */
-	char *buf_start = buf, *buf_end;
+	const char *buf_start = buf, *buf_end;
 	unsigned char type;
+	int doc_len;
 
 	if (buf == 0) {
-		return 0;
+		return NULL;
 	}
 
-	buf_end = buf + MONGO_32(*((int*)buf));
+	if (buf_len < 5) {
+		zend_throw_exception_ex(mongo_ce_CursorException, 38 TSRMLS_CC, "Reading document length would exceed buffer (%u bytes)", buf_len);
+		return NULL;
+	}
+
+	doc_len = MONGO_32(*((int32_t*)buf));
+
+	if (doc_len < 5) {
+		zend_throw_exception_ex(mongo_ce_CursorException, 39 TSRMLS_CC, "Document length (%d bytes) should be at least 5 (i.e. empty document)", doc_len);
+		return NULL;
+	}
+
+	if (buf_len < (size_t) doc_len) {
+		zend_throw_exception_ex(mongo_ce_CursorException, 40 TSRMLS_CC, "Document length (%d bytes) exceeds buffer (%u bytes)", doc_len, buf_len);
+		return NULL;
+	}
+
+	buf_end = buf + doc_len;
 
 	/* for size */
 	buf += INT_32;
 
 	while ((type = *buf++) != 0) {
-		char *name;
+		const char *name;
+		size_t name_len;
 		zval *value;
 
 		name = buf;
+		name_len = strlen(name);
+
+		if (buf + name_len + 1 >= buf_end) {
+			zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "Reading key name for type %02x would exceed buffer", (unsigned char) type);
+			return NULL;
+		}
+
 		/* get past field name */
-		buf += strlen(buf) + 1;
+		buf += name_len + 1;
 
 		MAKE_STD_ZVAL(value);
 		ZVAL_NULL(value);
@@ -876,7 +928,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 		switch (type) {
 			case BSON_OID: {
 				mongo_id *this_id;
-				char *tmp_id;
+				const char *tmp_id;
 				zval *str = 0;
 
 				CHECK_BUFFER_LEN(OID_SIZE);
@@ -921,17 +973,24 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 				CHECK_BUFFER_LEN(INT_32);
 
-				len = MONGO_32(*((int*)buf));
+				len = MONGO_32(*((int32_t*)buf));
 				buf += INT_32;
 
 				/* len includes \0 */
 				if (len < 1) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 21 TSRMLS_CC, "invalid string length for key \"%s\": %d", name, len);
-					return 0;
+					return NULL;
 				}
 
 				CHECK_BUFFER_LEN(len);
+
+				/* ensure that string is null-terminated */
+				if (buf[len - 1] != '\0') {
+					zval_ptr_dtor(&value);
+					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "string for key \"%s\" is not null-terminated", name);
+					return NULL;
+				}
 
 				ZVAL_STRINGL(value, buf, len-1, 1);
 				buf += len;
@@ -940,6 +999,14 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 			case BSON_OBJECT:
 			case BSON_ARRAY: {
+				int embedded_doc_len;
+
+				/* Peek at the embedded document's length before recursing */
+				CHECK_BUFFER_LEN(INT_32);
+				embedded_doc_len = MONGO_32(*(int32_t*)buf);
+
+				CHECK_BUFFER_LEN(embedded_doc_len);
+
 				array_init(value);
 
 				/* These two if statements make sure that the cmd_cursor_as_int64 flag only
@@ -959,14 +1026,14 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 				if (options) {
 					options->level++;
 				}
-				buf = bson_to_zval(buf, Z_ARRVAL_P(value), options TSRMLS_CC);
+				buf = bson_to_zval(buf, embedded_doc_len, Z_ARRVAL_P(value), options TSRMLS_CC);
 				if (options) {
 					options->level--;
 				}
 
 				if (EG(exception)) {
 					zval_ptr_dtor(&value);
-					return 0;
+					return NULL;
 				}
 				break;
 			}
@@ -977,7 +1044,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 				CHECK_BUFFER_LEN(INT_32);
 
-				len = MONGO_32(*(int*)buf);
+				len = MONGO_32(*(int32_t*)buf);
 				buf += INT_32;
 
 				CHECK_BUFFER_LEN(BYTE_8);
@@ -995,7 +1062,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 					CHECK_BUFFER_LEN(INT_32);
 
-					len2 = MONGO_32(*(int*)buf);
+					len2 = MONGO_32(*(int32_t*)buf);
 
 					/* If the lengths match, the data is to spec, so we use
 					 * len2 as the true length. */
@@ -1008,7 +1075,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 				if (len < 0) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 22 TSRMLS_CC, "invalid binary length for key \"%s\": %d", name, len);
-					return 0;
+					return NULL;
 				}
 
 				CHECK_BUFFER_LEN(len);
@@ -1016,7 +1083,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 				if (subtype == PHP_MONGO_BIN_UUID_RFC4122 && len != PHP_MONGO_BIN_UUID_RFC4122_SIZE) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 25 TSRMLS_CC, "RFC4122 UUID must be %d bytes; actually: %d", PHP_MONGO_BIN_UUID_RFC4122_SIZE, len);
-					return 0;
+					return NULL;
 				}
 
 				object_init_ex(value, mongo_ce_BinData);
@@ -1042,7 +1109,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 			case BSON_INT: {
 				CHECK_BUFFER_LEN(INT_32);
-				ZVAL_LONG(value, MONGO_32(*((int*)buf)));
+				ZVAL_LONG(value, MONGO_32(*((int32_t*)buf)));
 				buf += INT_32;
 				break;
 			}
@@ -1079,21 +1146,21 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 			}
 
 			case BSON_REGEX: {
-				char *regex, *flags;
+				const char *regex, *flags;
 				int regex_len, flags_len;
-
-				/* Ensure we can read at least one null byte */
-				CHECK_BUFFER_LEN(BYTE_8);
 
 				regex = buf;
 				regex_len = strlen(buf);
-				buf += regex_len + 1;
+				CHECK_BUFFER_LEN(regex_len + 1);
 
-				/* Ensure we can read at least one null byte */
-				CHECK_BUFFER_LEN(BYTE_8);
+				/* get past pattern */
+				buf += regex_len + 1;
 
 				flags = buf;
 				flags_len = strlen(buf);
+				CHECK_BUFFER_LEN(flags_len + 1);
+
+				/* get past flags */
 				buf += flags_len + 1;
 
 				object_init_ex(value, mongo_ce_Regex);
@@ -1108,7 +1175,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 			case BSON_CODE__D: {
 				zval *zcope;
 				int code_len;
-				char *code;
+				const char *code;
 
 				/* CODE has a useless total size field */
 				if (type == BSON_CODE) {
@@ -1117,17 +1184,24 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 				CHECK_BUFFER_LEN(INT_32);
 
-				code_len = MONGO_32(*(int*)buf);
+				code_len = MONGO_32(*(int32_t*)buf);
 				buf += INT_32;
 
 				/* length of code (includes \0) */
 				if (code_len < 1) {
 					zval_ptr_dtor(&value);
 					zend_throw_exception_ex(mongo_ce_CursorException, 24 TSRMLS_CC, "invalid code length for key \"%s\": %d", name, code_len);
-					return 0;
+					return NULL;
 				}
 
 				CHECK_BUFFER_LEN(code_len);
+
+				/* ensure that string is null-terminated */
+				if (buf[code_len - 1] != '\0') {
+					zval_ptr_dtor(&value);
+					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "code string for key \"%s\" is not null-terminated", name);
+					return NULL;
+				}
 
 				code = buf;
 				buf += code_len;
@@ -1137,7 +1211,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 					/* Peek at the scope's document length before recursing */
 					CHECK_BUFFER_LEN(INT_32);
-					scope_len = MONGO_32(*(int*)buf);
+					scope_len = MONGO_32(*(int32_t*)buf);
 
 					CHECK_BUFFER_LEN(scope_len);
 
@@ -1145,10 +1219,11 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 					MAKE_STD_ZVAL(zcope);
 					array_init(zcope);
 
-					buf = bson_to_zval(buf, HASH_P(zcope), options TSRMLS_CC);
+					buf = bson_to_zval(buf, scope_len, HASH_P(zcope), options TSRMLS_CC);
 					if (EG(exception)) {
+						zval_ptr_dtor(&value);
 						zval_ptr_dtor(&zcope);
-						return 0;
+						return NULL;
 					}
 				} else {
 					/* initialize an empty scope array */
@@ -1166,32 +1241,46 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 			}
 
 			/* DEPRECATED
-			 * database reference (12)
-			 *   - 4 bytes ns length (includes trailing \0)
-			 *   - ns + \0
-			 *   - 12 bytes MongoId
-			 * This converts the deprecated, old-style db ref type
-			 * into the new type (array('$ref' => ..., $id => ...)). */
-			case BSON_DBREF: {
+			 *
+			 * This is a deprecated BSON type (since early 1.x server versions)
+			 * used for referencing another document. It consists of:
+			 *
+			 *   - 4-byte namespace length (includes trailing \0)
+			 *   - namespace + \0
+			 *   - 12-byte ObjectId
+			 *
+			 * Since there is no PHP class for this type, we silently convert it
+			 * to a DBRef document (e.g. ['$ref' => ..., '$id' => ... ]).
+			 *
+			 * See: http://docs.mongodb.org/manual/reference/database-references/#dbrefs
+			 */
+			case BSON_DBPOINTER: {
 				int ns_len;
-				char *ns;
 				zval *zoid;
+				const char *ns;
 				char *str = NULL;
 				mongo_id *this_id;
 
 				CHECK_BUFFER_LEN(INT_32);
 
-				ns_len = *(int*)buf;
+				ns_len = MONGO_32(*(int32_t*)buf);
 				buf += INT_32;
 
 				/* length of namespace (includes \0) */
 				if (ns_len < 1) {
 					zval_ptr_dtor(&value);
-					zend_throw_exception_ex(mongo_ce_CursorException, 3 TSRMLS_CC, "invalid dbref length for key \"%s\": %d", name, ns_len);
-					return 0;
+					zend_throw_exception_ex(mongo_ce_CursorException, 3 TSRMLS_CC, "invalid DBPointer namespace length for key \"%s\": %d", name, ns_len);
+					return NULL;
 				}
 
 				CHECK_BUFFER_LEN(ns_len);
+
+				/* ensure that string is null-terminated */
+				if (buf[ns_len - 1] != '\0') {
+					zval_ptr_dtor(&value);
+					zend_throw_exception_ex(mongo_ce_CursorException, 41 TSRMLS_CC, "DBPointer namespace string for key \"%s\" is not null-terminated", name);
+					return NULL;
+				}
 
 				ns = buf;
 				buf += ns_len;
@@ -1212,7 +1301,7 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 
 				/* put it all together */
 				array_init(value);
-				add_assoc_stringl(value, "$ref", ns, ns_len-1, 1);
+				add_assoc_stringl(value, "$ref", (char*) ns, ns_len-1, 1);
 				add_assoc_zval(value, "$id", zoid);
 				break;
 			}
@@ -1224,9 +1313,9 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 			case BSON_TIMESTAMP: {
 				CHECK_BUFFER_LEN(INT_64);
 				object_init_ex(value, mongo_ce_Timestamp);
-				zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), MONGO_32(*(int*)buf) TSRMLS_CC);
+				zend_update_property_long(mongo_ce_Timestamp, value, "inc", strlen("inc"), MONGO_32(*(int32_t*)buf) TSRMLS_CC);
 				buf += INT_32;
-				zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), MONGO_32(*(int*)buf) TSRMLS_CC);
+				zend_update_property_long(mongo_ce_Timestamp, value, "sec", strlen("sec"), MONGO_32(*(int32_t*)buf) TSRMLS_CC);
 				buf += INT_32;
 				break;
 			}
@@ -1282,9 +1371,10 @@ char* bson_to_zval(char *buf, HashTable *result, mongo_bson_conversion_options *
 				}
 				/* sprintf 0-terminates the string */
 
+				zval_ptr_dtor(&value);
 				zend_throw_exception(mongo_ce_Exception, msg, 17 TSRMLS_CC);
 				efree(msg);
-				return 0;
+				return NULL;
 			}
 		}
 
@@ -1427,7 +1517,7 @@ PHP_FUNCTION(bson_encode)
    Takes a serialized BSON object and turns it into a PHP array. This only deserializes entire documents! */
 PHP_FUNCTION(bson_decode)
 {
-	char *str;
+	const char *str;
 	int str_len;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
@@ -1435,7 +1525,7 @@ PHP_FUNCTION(bson_decode)
 	}
 
 	array_init(return_value);
-	bson_to_zval(str, HASH_P(return_value), 0 TSRMLS_CC);
+	bson_to_zval(str, str_len, HASH_P(return_value), 0 TSRMLS_CC);
 }
 /* }}} */
 
@@ -1444,7 +1534,7 @@ void mongo_buf_init(char *dest)
 	dest[0] = '\0';
 }
 
-void mongo_buf_append(char *dest, char *piece)
+void mongo_buf_append(char *dest, const char *piece)
 {
 	int pos = strlen(dest);
 	memcpy(dest + pos, piece, strlen(piece) + 1);
