@@ -13,7 +13,7 @@ $m = new_mongo_standalone();
 $c = $m->selectCollection(dbname(), 'bug667');
 $c->drop();
 
-$mongoDate = new MongoDate(strtotime('1900-01-01 America/New_York'));
+$mongoDate = new MongoDate(strtotime('1900-01-01 UTC'));
 $c->insert(array('date' => $mongoDate));
 
 $document = $c->findOne();
@@ -22,5 +22,5 @@ printf("%s\n", $mongoDate);
 printf("%s\n", $document['date']);
 
 --EXPECT--
-0.00000000 -2208970800
-0.00000000 -2208970800
+0.00000000 -2208988800
+0.00000000 -2208988800
