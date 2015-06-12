@@ -163,8 +163,8 @@ typedef __int64 int64_t;
 	MONGO_METHOD_HELPER(classname, name, retval, thisptr, 5, param5);	\
 	POP_PARAM(); POP_PARAM(); POP_PARAM(); POP_PARAM();
 
-#define HASH_P(a) (Z_TYPE_P(a) == IS_ARRAY ? Z_ARRVAL_P(a) : Z_OBJPROP_P(a))
-#define HASH_PP(a) (Z_TYPE_PP(a) == IS_ARRAY ? Z_ARRVAL_PP(a) : Z_OBJPROP_PP(a))
+#define HASH_P(a) (Z_TYPE_P(a) == IS_ARRAY ? Z_ARRVAL_P(a) : php_mongo_get_docobj_properties(a))
+#define HASH_PP(a) (Z_TYPE_PP(a) == IS_ARRAY ? Z_ARRVAL_PP(a) : php_mongo_get_docobj_properties(*a))
 
 #define IS_SCALAR_P(a) (Z_TYPE_P(a) == IS_NULL || Z_TYPE_P(a) == IS_LONG || Z_TYPE_P(a) == IS_DOUBLE || Z_TYPE_P(a) == IS_BOOL || Z_TYPE_P(a) == IS_STRING)
 #define IS_SCALAR_PP(a) IS_SCALAR_P(*a)
@@ -494,6 +494,7 @@ void php_mongo_add_tagsets(zval *return_value, mongo_read_preference *rp);
 int php_mongo_set_readpreference(mongo_read_preference *rp, char *read_preference, HashTable *tags TSRMLS_DC);
 int php_mongo_trigger_error_on_command_failure(mongo_connection *connection, zval *document TSRMLS_DC);
 int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document TSRMLS_DC);
+HashTable *php_mongo_get_docobj_properties(zval *doc TSRMLS_CC);
 
 ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	/* php.ini options */
