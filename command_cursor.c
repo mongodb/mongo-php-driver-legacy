@@ -223,7 +223,6 @@ int php_mongocommandcursor_advance(mongo_command_cursor *cmd_cursor TSRMLS_DC)
 				return FAILURE;
 			}
 			if (!php_mongo_get_more(cmd_cursor TSRMLS_CC)) {
-				cmd_cursor->cursor_id = 0;
 				return FAILURE;
 			}
 		}
