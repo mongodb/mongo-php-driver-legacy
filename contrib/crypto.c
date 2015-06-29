@@ -21,7 +21,7 @@
 #include "crypto.h"
 #include <ext/standard/sha1.h>
 
-int php_hash_copy(const void *ops, void *orig_context, void *dest_context) /* {{{ */
+static int php_hash_copy(const void *ops, void *orig_context, void *dest_context) /* {{{ */
 {
 	php_hash_ops *hash_ops = (php_hash_ops *)ops;
 
