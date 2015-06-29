@@ -23,22 +23,22 @@
 
 #include "php.h"
 
-typedef void (*php_hash_init_func_t)(void *context);
-typedef void (*php_hash_update_func_t)(void *context, const unsigned char *buf, unsigned int count);
-typedef void (*php_hash_final_func_t)(unsigned char *digest, void *context);
-typedef int  (*php_hash_copy_func_t)(const void *ops, void *orig_context, void *dest_context);
+typedef void (*php_mongo_hash_init_func_t)(void *context);
+typedef void (*php_mongo_hash_update_func_t)(void *context, const unsigned char *buf, unsigned int count);
+typedef void (*php_mongo_hash_final_func_t)(unsigned char *digest, void *context);
+typedef int  (*php_mongo_hash_copy_func_t)(const void *ops, void *orig_context, void *dest_context);
 
 
-typedef struct _php_hash_ops {
-	php_hash_init_func_t hash_init;
-	php_hash_update_func_t hash_update;
-	php_hash_final_func_t hash_final;
-	php_hash_copy_func_t hash_copy;
+typedef struct _php_mongo_hash_ops {
+	php_mongo_hash_init_func_t hash_init;
+	php_mongo_hash_update_func_t hash_update;
+	php_mongo_hash_final_func_t hash_final;
+	php_mongo_hash_copy_func_t hash_copy;
 
 	int digest_size;
 	int block_size;
 	int context_size;
-} php_hash_ops;
+} php_mongo_hash_ops;
 
 void php_mongo_sha1(const unsigned char *data, int data_len, unsigned char *return_value);
 void php_mongo_hmac(unsigned char *data, int data_len, char *key, int key_len, unsigned char *return_value, int *return_value_len);
