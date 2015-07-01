@@ -152,7 +152,7 @@ void php_mongo_ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC)
 {
 	zval *index, *options;
 
-	/* ensure index on chunks.n */
+	/* ensure unique index on chunks collection's "files_id" and "n" fields */
 	MAKE_STD_ZVAL(index);
 	array_init(index);
 	add_assoc_long(index, "files_id", 1);
@@ -161,7 +161,6 @@ void php_mongo_ensure_gridfs_index(zval *return_value, zval *this_ptr TSRMLS_DC)
 	MAKE_STD_ZVAL(options);
 	array_init(options);
 	add_assoc_bool(options, "unique", 1);
-	add_assoc_bool(options, "dropDups", 1);
 
 	MONGO_METHOD2(MongoCollection, ensureIndex, return_value, getThis(), index, options);
 
@@ -427,6 +426,12 @@ PHP_METHOD(MongoGridFS, storeBytes)
 	php_mongo_ensure_gridfs_index(&temp, chunks TSRMLS_CC);
 	zval_dtor(&temp);
 
+	/* Abort if we could not create the unique index on fs.chunks */
+	if (EG(exception)) {
+		gridfs_rewrite_cursor_exception(TSRMLS_C);
+		RETURN_FALSE;
+	}
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|aa/", &bytes, &bytes_len, &extra, &options) == FAILURE) {
 		return;
 	}
@@ -653,6 +658,12 @@ PHP_METHOD(MongoGridFS, storeFile)
 
 	php_mongo_ensure_gridfs_index(&temp, chunks TSRMLS_CC);
 	zval_dtor(&temp);
+
+	/* Abort if we could not create the unique index on fs.chunks */
+	if (EG(exception)) {
+		gridfs_rewrite_cursor_exception(TSRMLS_C);
+		RETURN_FALSE;
+	}
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|aa/", &fh, &extra, &options) == FAILURE) {
 		return;
@@ -943,6 +954,12 @@ PHP_METHOD(MongoGridFS, remove)
 	chunks = zend_read_property(mongo_ce_GridFS, getThis(), "chunks", strlen("chunks"), NOISY TSRMLS_CC);
 	php_mongo_ensure_gridfs_index(&chunktemp, chunks TSRMLS_CC);
 	zval_dtor(&chunktemp);
+
+	/* Abort if we could not create the unique index on fs.chunks */
+	if (EG(exception)) {
+		gridfs_rewrite_cursor_exception(TSRMLS_C);
+		RETURN_FALSE;
+	}
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|za/", &criteria, &options) == FAILURE) {
 		return;
