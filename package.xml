@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2015-06-09</date>
- <time>20:43:00</time>
+ <date>2015-07-02</date>
+ <time>18:25:00</time>
  <version>
-  <release>1.6.9</release>
-  <api>1.6.9</api>
+  <release>1.6.10</release>
+  <api>1.6.10</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,14 +43,9 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-1426] - Ensure buffer lengths are checked in bson_to_zval()
-    * [PHP-1448] - Ensure DBPointer namespace length reads as little-endian
-    * [PHP-1450] - Ensure strings are null-terminated in bson_to_zval()
-    * [PHP-1453] - Ensure BSON buffer is checked before reading regex pattern/flags
-
-** Improvement
-    * [PHP-1449] - Ensure value is freed when bson_to_zval() encounters an error
-    * [PHP-1452] - bson_decode() should require exactly one document in buffer
+    * [PHP-1460] - Query with limit leaves open cursors on server
+    * [PHP-1462] - Fix static compilation
+    * [PHP-1464] - GridFS should not drop dupes when creating index
  </notes>
 
  <contents>
@@ -219,6 +214,31 @@
   <configureoption name="with-mongo-sasl" prompt="Build with Cyrus SASL (MongoDB Enterprise Authentication) support?" default="no"/>
  </extsrcrelease>
  <changelog>
+
+  <release>
+   <date>2015-06-09</date>
+   <time>20:43:00</time>
+   <version>
+    <release>1.6.9</release>
+    <api>1.6.9</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+  ** Bug
+      * [PHP-1426] - Ensure buffer lengths are checked in bson_to_zval()
+      * [PHP-1448] - Ensure DBPointer namespace length reads as little-endian
+      * [PHP-1450] - Ensure strings are null-terminated in bson_to_zval()
+      * [PHP-1453] - Ensure BSON buffer is checked before reading regex pattern/flags
+
+  ** Improvement
+      * [PHP-1449] - Ensure value is freed when bson_to_zval() encounters an error
+      * [PHP-1452] - bson_decode() should require exactly one document in buffer
+   </notes>
+  </release>
 
   <release>
    <date>2015-05-11</date>
