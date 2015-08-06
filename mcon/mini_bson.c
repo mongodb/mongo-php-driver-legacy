@@ -472,7 +472,7 @@ int bson_find_field_as_stringl(char *buffer, char *field, char **data, int32_t *
 	char* tmp = bson_find_field(buffer, field, BSON_STRING);
 
 	if (tmp) {
-		*length = ((int32_t*)tmp)[0];
+		*length = MONGO_32( ((int32_t*)tmp)[0] );
 		*data = duplicate ? strdup(tmp + 4) : tmp + 4; /* int32 for length */
 		return 1;
 	}
