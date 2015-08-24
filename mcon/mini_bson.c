@@ -89,9 +89,9 @@ mcon_str *bson_create_ping_packet(mongo_connection *con)
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
 
 	/* Set length */
-	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+	((int*) (&(str->d[hdr])))[0] = MONGO_32(str->l - hdr);
 
-	((int*) str->d)[0] = str->l;
+	((int*) str->d)[0] = MONGO_32(str->l);
 	return str;
 }
 
@@ -106,9 +106,9 @@ mcon_str *bson_create_ismaster_packet(mongo_connection *con)
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
 
 	/* Set length */
-	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+	((int*) (&(str->d[hdr])))[0] = MONGO_32(str->l - hdr);
 
-	((int*) str->d)[0] = str->l;
+	((int*) str->d)[0] = MONGO_32(str->l);
 	return str;
 }
 
@@ -123,9 +123,9 @@ mcon_str *bson_create_buildinfo_packet(mongo_connection *con)
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
 
 	/* Set length */
-	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+	((int*) (&(str->d[hdr])))[0] = MONGO_32(str->l - hdr);
 
-	((int*) str->d)[0] = str->l;
+	((int*) str->d)[0] = MONGO_32(str->l);
 	return str;
 }
 
@@ -140,9 +140,9 @@ mcon_str *bson_create_rs_status_packet(mongo_connection *con)
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
 
 	/* Set length */
-	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+	((int*) (&(str->d[hdr])))[0] = MONGO_32(str->l - hdr);
 
-	((int*) str->d)[0] = str->l;
+	((int*) str->d)[0] = MONGO_32(str->l);
 	return str;
 }
 
@@ -157,9 +157,9 @@ mcon_str *bson_create_getnonce_packet(mongo_connection *con)
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
 
 	/* Set length */
-	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+	((int*) (&(str->d[hdr])))[0] = MONGO_32(str->l - hdr);
 
-	((int*) str->d)[0] = str->l;
+	((int*) str->d)[0] = MONGO_32(str->l);
 	return str;
 }
 
@@ -194,9 +194,9 @@ mcon_str *bson_create_authenticate_packet(mongo_connection *con, char *mechanism
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
 
 	/* Set length */
-	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+	((int*) (&(str->d[hdr])))[0] = MONGO_32(str->l - hdr);
 
-	((int*) str->d)[0] = str->l;
+	((int*) str->d)[0] = MONGO_32(str->l);
 	return str;
 }
 
@@ -229,9 +229,9 @@ mcon_str *bson_create_saslstart_packet(mongo_connection *con, char *database, ch
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
 
 	/* Set length */
-	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+	((int*) (&(str->d[hdr])))[0] = MONGO_32(str->l - hdr);
 
-	((int*) str->d)[0] = str->l;
+	((int*) str->d)[0] = MONGO_32(str->l);
 	return str;
 }
 
@@ -257,9 +257,9 @@ mcon_str *bson_create_saslcontinue_packet(mongo_connection *con, char *database,
 	mcon_str_addl(str, "", 1, 0); /* Trailing 0x00 */
 
 	/* Set length */
-	((int*) (&(str->d[hdr])))[0] = str->l - hdr;
+	((int*) (&(str->d[hdr])))[0] = MONGO_32(str->l - hdr);
 
-	((int*) str->d)[0] = str->l;
+	((int*) str->d)[0] = MONGO_32(str->l);
 	return str;
 }
 
@@ -428,7 +428,7 @@ int bson_find_field_as_double(char *buffer, char *field, double *data)
 	char *tmp = (char*) bson_find_field(buffer, field, BSON_DOUBLE);
 
 	if (tmp) {
-		*data = ((double*)tmp)[0];
+		*data = (double) MONGO_64( ((int64_t*)tmp)[0] );
 		return 1;
 	}
 	return 0;
@@ -450,7 +450,7 @@ int bson_find_field_as_int32(char *buffer, char *field, int32_t *data)
 	char *tmp = (char*) bson_find_field(buffer, field, BSON_INT32);
 
 	if (tmp) {
-		*data = ((int32_t*)tmp)[0];
+		*data = MONGO_32( ((int32_t*)tmp)[0] );
 		return 1;
 	}
 	return 0;
@@ -461,7 +461,7 @@ int bson_find_field_as_int64(char *buffer, char *field, int64_t *data)
 	char *tmp = (char*) bson_find_field(buffer, field, BSON_INT64);
 
 	if (tmp) {
-		*data = ((int64_t*)tmp)[0];
+		*data = MONGO_64( ((int64_t*)tmp)[0] );
 		return 1;
 	}
 	return 0;
@@ -472,7 +472,7 @@ int bson_find_field_as_stringl(char *buffer, char *field, char **data, int32_t *
 	char* tmp = bson_find_field(buffer, field, BSON_STRING);
 
 	if (tmp) {
-		*length = ((int32_t*)tmp)[0];
+		*length = MONGO_32( ((int32_t*)tmp)[0] );
 		*data = duplicate ? strdup(tmp + 4) : tmp + 4; /* int32 for length */
 		return 1;
 	}
@@ -515,7 +515,7 @@ int bson_array_find_next_int32(char **buffer, char **field, int32_t *data)
 
 	return_data = bson_get_current(*buffer, &read_field, &read_type);
 	if (read_type == BSON_INT32) {
-		*data = ((int32_t*) return_data)[0];
+		*data = MONGO_32( ((int32_t*) return_data)[0] );
 		if (field) {
 			*field = strdup(read_field);
 		}
