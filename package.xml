@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2015-07-02</date>
- <time>18:25:00</time>
+ <date>2015-08-25</date>
+ <time>16:54:00</time>
  <version>
-  <release>1.6.10</release>
-  <api>1.6.10</api>
+  <release>1.6.11</release>
+  <api>1.6.11</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,9 +43,7 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-1460] - Query with limit leaves open cursors on server
-    * [PHP-1462] - Fix static compilation
-    * [PHP-1464] - GridFS should not drop dupes when creating index
+    * [PHP-1467] - PHP driver on big endian platform not connecting to MongoDB
  </notes>
 
  <contents>
@@ -214,6 +212,26 @@
   <configureoption name="with-mongo-sasl" prompt="Build with Cyrus SASL (MongoDB Enterprise Authentication) support?" default="no"/>
  </extsrcrelease>
  <changelog>
+
+  <release>
+   <date>2015-07-02</date>
+   <time>18:25:00</time>
+   <version>
+    <release>1.6.10</release>
+    <api>1.6.10</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+  ** Bug
+      * [PHP-1460] - Query with limit leaves open cursors on server
+      * [PHP-1462] - Fix static compilation
+      * [PHP-1464] - GridFS should not drop dupes when creating index
+   </notes>
+  </release>
 
   <release>
    <date>2015-06-09</date>
