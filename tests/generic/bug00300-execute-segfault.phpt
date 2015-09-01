@@ -10,4 +10,6 @@ $db = $m->phpunit;
 $db->execute(array());
 ?>
 --EXPECTF--
+Deprecated: Function MongoDB::execute() is deprecated in %s on line %d
+
 Fatal error: MongoDB::execute(): The argument is neither an object of MongoCode or a string in %s on line %d

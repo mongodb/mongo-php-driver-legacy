@@ -1521,7 +1521,7 @@ static zend_function_entry MongoDB_methods[] = {
 	PHP_ME(MongoDB, getCollectionInfo, arginfo_systemCollections, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, createDBRef, arginfo_createDBRef, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, getDBRef, arginfo_getDBRef, ZEND_ACC_PUBLIC)
-	PHP_ME(MongoDB, execute, arginfo_execute, ZEND_ACC_PUBLIC)
+	PHP_ME(MongoDB, execute, arginfo_execute, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
 	PHP_ME(MongoDB, command, arginfo_command, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, lastError, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(MongoDB, prevError, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DEPRECATED)
