@@ -21,6 +21,7 @@ $response = $db->execute($code, array("Goodbye", "Joe"), $opts);
 var_dump($opts, $response);
 ?>
 --EXPECTF--
+Deprecated: Function MongoDB::execute() is deprecated in %s on line %d
 array(1) {
   ["nolock"]=>
   bool(false)
