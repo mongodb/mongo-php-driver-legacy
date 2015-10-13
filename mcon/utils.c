@@ -60,16 +60,23 @@ char *mongo_server_create_hash(mongo_server_def *server_def)
 	/* Replica set name */
 	if (server_def->repl_set_name) {
 		size += strlen(server_def->repl_set_name) + 1;
+	} else {
+		size += 2;
 	}
 
 	/* Database, username and hashed password */
 	if (server_def->db && server_def->username && server_def->password) {
 		hash = mongo_server_create_hashed_password(server_def->username, server_def->password);
 		size += strlen(server_def->db) + 1 + strlen(server_def->username) + 1 + strlen(hash) + 1;
+	} else {
+		size += 2;
 	}
 
 	/* PID (assume max size, a signed 32bit int) */
 	size += 10;
+
+	/* Add one for the \0 at the end */
+	size += 1;
 
 	/* Allocate and fill */
 	tmp = malloc(size);
