@@ -83,5 +83,5 @@ array(2) {
 multiple pipelines in an array and options
 int(3)
 Multiple pipelines with invalid pipe operator explain
-%s:%d: exception: Unrecognized pipeline stage name: 'explain'
+%s:%d:%sUnrecognized pipeline stage name: 'explain'
 ===DONE==
