@@ -30,7 +30,7 @@ echo "I'm alive\n";
 
 ?>
 --EXPECTF--
-Connecting to tcp://%s:%d (127.0.0.1:%d;-;%s;%d) with connection timeout: 60.000000
+Connecting to tcp://%s:%d (%s:%d;-;%s;%d) with connection timeout: 60.000000
 Setting stream timeout to 30.000000
 ismaster: start
 Setting the stream timeout to 60.000000
