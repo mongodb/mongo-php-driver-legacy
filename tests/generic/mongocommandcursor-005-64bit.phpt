@@ -85,28 +85,28 @@ array(3) {
 ====
 array(3) {
   ["int"]=>
-  object(MongoInt64)#9 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "0"
   }
   ["i32"]=>
   int(0)
   ["i64"]=>
-  object(MongoInt64)#10 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "0"
   }
 }
 array(3) {
   ["int"]=>
-  object(MongoInt64)#5 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "1"
   }
   ["i32"]=>
   int(1)
   ["i64"]=>
-  object(MongoInt64)#8 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "1"
   }
@@ -131,28 +131,28 @@ array(3) {
 ====
 array(3) {
   ["int"]=>
-  object(MongoInt64)#9 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "0"
   }
   ["i32"]=>
   int(0)
   ["i64"]=>
-  object(MongoInt64)#7 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "0"
   }
 }
 array(3) {
   ["int"]=>
-  object(MongoInt64)#3 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "1"
   }
   ["i32"]=>
   int(1)
   ["i64"]=>
-  object(MongoInt64)#10 (1) {
+  object(MongoInt64)#%d (1) {
     ["value"]=>
     string(1) "1"
   }
