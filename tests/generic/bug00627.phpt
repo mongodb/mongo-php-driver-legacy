@@ -25,7 +25,7 @@ $rs4 = $c->aggregate(array($group, $project));
 var_dump($rs1 === $rs2);
 var_dump($rs2 === $rs3);
 var_dump($rs3 === $rs4);
-var_dump($rs1);
+dump_these_keys($rs1, array('result', 'ok') );
 ?>
 --EXPECTF--
 bool(true)
