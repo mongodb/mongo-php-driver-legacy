@@ -36,7 +36,7 @@ $explain = $cmd->find(array('count' => 'php294'))->limit(1)->explain();
 
 $cmd->setReadPreference(MongoClient::RP_SECONDARY);
 $explain = $cmd->find(array('count' => 'php294'))->limit(1)->explain();
-var_dump($explain);
+dump_these_keys($explain, array('n', 'ok'));
 
 ?>
 --EXPECTF--
