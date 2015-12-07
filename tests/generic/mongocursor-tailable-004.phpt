@@ -94,7 +94,7 @@ Inserted: x=3
 
 Loop iteration: 3
 Issuing getmore
-Exception: %scould not find cursor over collection%S
+Exception: %s
 Cursor is dead
 Breaking loop
 ===DONE===
