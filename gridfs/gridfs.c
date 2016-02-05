@@ -742,7 +742,7 @@ PHP_METHOD(MongoGridFS, storeFile)
 		char *buf;
 		zval *chunk_id = NULL;
 
-		int chunk_size = size-pos >= global_chunk_size || fp == 0 ? global_chunk_size : size-pos;
+		long chunk_size = size-pos >= global_chunk_size || fp == 0 ? global_chunk_size : size-pos;
 		buf = (char*)emalloc(chunk_size);
 
 		if (fp) {
