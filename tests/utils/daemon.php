@@ -8,7 +8,7 @@ function d($msg) {
 }
 
 
-$socket = stream_socket_server("tcp://0.0.0.0:8000", $errno, $errstr);
+$socket = stream_socket_server("tcp://localhost:8000", $errno, $errstr);
 if (!$socket) {
     echo "$errstr ($errno)\n";
     exit(1);
