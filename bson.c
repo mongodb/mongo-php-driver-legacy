@@ -1335,41 +1335,46 @@ const char* bson_to_zval_iter(const char *buf, size_t buf_len, HashTable *result
 			}
 
 			default: {
-				/* If we run into a type we don't recognize, there's either been
-				 * some corruption or we've messed up on the parsing.  Either way,
-				 * it's helpful to know the situation that led us here, so this
-				 * dumps the buffer up to this point to stdout and returns.
+				/* If we run into a type we don't recognize, it's possible that
+				 * there is data corruption or we've encountered an unsupported
+				 * BSON type. Either way, it's helpful to know the situation
+				 * that led us here, so include a hex dump of the BSON buffer up
+				 * to this point in the exception message.
 				 *
 				 * We can't dump any more of the buffer, unfortunately, because we
 				 * don't keep track of the size.  Besides, if it is corrupt, the
 				 * size might be messed up, too. */
 				char *msg, *pos, *template;
-				int i, width, len;
-				unsigned char t = type;
+				int i, hex_byte_len, buf_dump_len, template_len;
+				size_t msg_len;
 
-				template = "type 0x00 not supported:";
+				template = "Detected unknown BSON type 0x%02hhx for fieldname \"%s\". If this is an unsupported type and not data corruption, consider upgrading to the \"mongodb\" extension. BSON buffer:";
 
-				/* each byte is " xx" (3 chars) */
-				width = 3;
-				len = (buf - buf_start) * width;
+				/* Each dumped byte is 3 characters (e.g. " ff") */
+				hex_byte_len = 3;
+				buf_dump_len = (buf - buf_start) * hex_byte_len;
 
-				msg = (char*)emalloc(strlen(template) + len + 1);
-				memcpy(msg, template, strlen(template));
-				pos = msg + 7;
+				/* Subtract from template's length to account for the difference
+				 * between the format directives and formatted output. We
+				 * substract 6 because:
+				 *
+				 *  * %02hhx is 4 extra characters (replaced with 2 characters)
+				 *  * %s is 2 extra characters (replaced by name, and we already
+				 *    count name_len)
+				 *
+				 * Finally, add 1 for a terminating null byte. */
+				msg_len = strlen(template) - 6 + name_len + buf_dump_len + 1;
+				msg = (char*) emalloc(msg_len);
+				template_len = snprintf(msg, msg_len, template, type, name);
 
-				sprintf(pos++, "%x", t / 16);
-				t = t % 16;
-				sprintf(pos++, "%x", t);
-				/* remove '\0' added by sprintf */
-				*(pos) = ' ';
-
-				/* jump to end of template */
-				pos = msg + strlen(template);
-				for (i=0; i<buf-buf_start; i++) {
-					sprintf(pos, " %02x", (unsigned char)buf_start[i]);
-					pos += width;
+				/* Jump to the end of the printed template to dump BSON */
+				pos = msg + template_len;
+				for (i = 0; i < buf - buf_start; i++) {
+					snprintf(pos, hex_byte_len + 1, " %02hhx", (unsigned char) buf_start[i]);
+					pos += hex_byte_len;
 				}
-				/* sprintf 0-terminates the string */
+				/* Ensure the message is null-terminated */
+				msg[msg_len - 1] = '\0';
 
 				zval_ptr_dtor(&value);
 				zend_throw_exception(mongo_ce_Exception, msg, 17 TSRMLS_CC);

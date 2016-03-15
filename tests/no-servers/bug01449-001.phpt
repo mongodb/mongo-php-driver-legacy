@@ -67,5 +67,5 @@ array(1) {
 }
 
 Testing invalid document:
-MongoException: type 0xfe not supported: 0a 00 00 00 fe 66 6f 6f 00
+MongoException: Detected unknown BSON type 0xfe for fieldname "foo". If this is an unsupported type and not data corruption, consider upgrading to the "mongodb" extension. BSON buffer: 0a 00 00 00 fe 66 6f 6f 00
 ===DONE===
