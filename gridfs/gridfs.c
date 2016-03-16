@@ -70,7 +70,7 @@ typedef struct {
 	struct stat sb;
 } php_stdio_stream_data;
 
-static int setup_file_fields(zval *zfile, char *filename, int size TSRMLS_DC);
+static int setup_file_fields(zval *zfile, char *filename, long size TSRMLS_DC);
 static zval* insert_chunk(zval *chunks, zval *zid, int chunk_num, char *buf, int chunk_size, zval *options TSRMLS_DC);
 
 /* {{{ proto MongoGridFS::__construct(MongoDB db [, string prefix = "fs"])
@@ -444,7 +444,7 @@ PHP_METHOD(MongoGridFS, storeBytes)
 
 	/* merge extra & zfile and add _id if needed */
 	zid = setup_extra(zfile, extra TSRMLS_CC);
-	setup_file_fields(zfile, NULL, bytes_len TSRMLS_CC);
+	setup_file_fields(zfile, NULL, (long) bytes_len TSRMLS_CC);
 
 	/* chunkSize */
 	global_chunk_size = get_chunk_size(zfile TSRMLS_CC);
@@ -550,7 +550,7 @@ cleanup_on_failure:
  * - upload date
  * - length
  * these fields are only added if the user hasn't defined them. */
-static int setup_file_fields(zval *zfile, char *filename, int length TSRMLS_DC)
+static int setup_file_fields(zval *zfile, char *filename, long length TSRMLS_DC)
 {
 	/* filename */
 	if (filename && !zend_hash_exists(HASH_P(zfile), "filename", strlen("filename") + 1)) {
@@ -738,15 +738,15 @@ PHP_METHOD(MongoGridFS, storeFile)
 
 	/* insert chunks */
 	while (pos < size || fp == 0) {
-		int result = 0;
+		ssize_t result = 0;
 		char *buf;
 		zval *chunk_id = NULL;
 
-		int chunk_size = size-pos >= global_chunk_size || fp == 0 ? global_chunk_size : size-pos;
+		size_t chunk_size = size-pos >= global_chunk_size || fp == 0 ? global_chunk_size : size-pos;
 		buf = (char*)emalloc(chunk_size);
 
 		if (fp) {
-			int retval = (int)fread(buf, 1, chunk_size, fp);
+			size_t retval = fread(buf, 1, chunk_size, fp);
 			if (retval < chunk_size) {
 				zend_throw_exception_ex(mongo_ce_GridFSException, 9 TSRMLS_CC, "error reading file %s", filename);
 				revert = 1;
