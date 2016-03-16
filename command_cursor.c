@@ -236,7 +236,7 @@ void php_mongocommandcursor_fetch_batch_if_first_is_empty(mongo_cursor *cmd_curs
 	if (cmd_cursor->first_batch_num == 0 && cmd_cursor->cursor_id != 0) {
 		zval_ptr_dtor(&cmd_cursor->first_batch);
 		cmd_cursor->first_batch = NULL;
-		php_mongo_get_more((mongo_cursor*) cmd_cursor TSRMLS_CC);
+		php_mongo_get_more(cmd_cursor TSRMLS_CC);
 	}
 }
 
