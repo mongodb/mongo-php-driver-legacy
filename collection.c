@@ -2779,11 +2779,7 @@ PHP_METHOD(MongoCollection, distinct)
 	}
 
 	if (zend_hash_find(Z_ARRVAL_P(tmp), "values", strlen("values") + 1, (void **)&values) == SUCCESS) {
-#ifdef array_init_size
 		array_init_size(return_value, zend_hash_num_elements(Z_ARRVAL_PP(values)));
-#else
-		array_init(return_value);
-#endif
 		zend_hash_copy(Z_ARRVAL_P(return_value), Z_ARRVAL_PP(values), (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
 	} else {
 		RETVAL_FALSE;
