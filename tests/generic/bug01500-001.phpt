@@ -1,5 +1,5 @@
 --TEST--
-MongoCommandCursor::timeout [1]
+Test for PHP-1500: Socket timeout does not apply to initial command cursor query [1]
 --SKIPIF--
 <?php $needs = "2.5.3"; require_once "tests/utils/standalone.inc";?>
 --FILE--
@@ -8,10 +8,6 @@ require_once "tests/utils/server.inc";
 
 function log_query($server, $query, $info) {
     printf("Issuing command: %s\n", key($query));
-
-    if (isset($query['cursor']['batchSize'])) {
-        printf("Cursor batch size: %d\n", $query['cursor']['batchSize']);
-    }
 }
 
 function log_getmore($server, $info) {
@@ -48,7 +44,7 @@ $pipeline = array(
 
 printLogs(MongoLog::CON, MongoLog::ALL, '/stream timeout/');
 
-$cursor = $c->aggregateCursor($pipeline, array('cursor' => array('batchSize' => 0)));
+$cursor = $c->aggregateCursor($pipeline, array('cursor' => new stdClass));
 $cursor->timeout(1);
 
 try {
@@ -62,12 +58,6 @@ try {
 --EXPECTF--
 Issuing command: drop
 Issuing command: aggregate
-Cursor batch size: 0
-Setting the stream timeout to 0.001000
-Now setting stream timeout back to 30.000000
-Setting the stream timeout to 0.001000
-Now setting stream timeout back to 30.000000
-Issuing getmore
 Setting the stream timeout to 0.001000
 80: %s:%d: Read timed out after reading 0 bytes, waited for 0.001000 seconds
 ==DONE==
