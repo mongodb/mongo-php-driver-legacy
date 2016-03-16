@@ -292,8 +292,16 @@ static mcon_collection *mongo_filter_candidates_by_credentials(mongo_con_manager
 		db = username = auth_hash = hashed = NULL;
 		mongo_server_split_hash(((mongo_connection *) candidates->data[i])->hash, NULL, NULL, NULL, &db, &username, &auth_hash, NULL);
 		if (servers->server[0]->username && servers->server[0]->password && servers->server[0]->db) {
+			if (!db) {
+				mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- skipping '%s', database didn't match (NULL vs '%s')", ((mongo_connection *) candidates->data[i])->hash, servers->server[0]->db);
+				goto skip;
+			}
 			if (strcmp(db, servers->server[0]->db) != 0) {
 				mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- skipping '%s', database didn't match ('%s' vs '%s')", ((mongo_connection *) candidates->data[i])->hash, db, servers->server[0]->db);
+				goto skip;
+			}
+			if (!username) {
+				mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- skipping '%s', username didn't match (NULL vs '%s')", ((mongo_connection *) candidates->data[i])->hash, servers->server[0]->username);
 				goto skip;
 			}
 			if (strcmp(username, servers->server[0]->username) != 0) {
