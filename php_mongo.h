@@ -500,7 +500,7 @@ ZEND_BEGIN_MODULE_GLOBALS(mongo)
 	char *default_host;
 	long default_port;
 	long request_id;
-	int chunk_size;
+	long chunk_size;
 
 	/* $ alternative */
 	char *cmd_char;
