@@ -236,7 +236,7 @@ void php_mongocommandcursor_fetch_batch_if_first_is_empty(mongo_cursor *cmd_curs
 	if (cmd_cursor->first_batch_num == 0 && cmd_cursor->cursor_id != 0) {
 		zval_ptr_dtor(&cmd_cursor->first_batch);
 		cmd_cursor->first_batch = NULL;
-		php_mongo_get_more((mongo_cursor*) cmd_cursor TSRMLS_CC);
+		php_mongo_get_more(cmd_cursor TSRMLS_CC);
 	}
 }
 
@@ -250,6 +250,7 @@ PHP_METHOD(MongoCommandCursor, rewind)
 	zval *exception;
 	zval *first_batch;
 	zval *cursor_env;
+	zval *command_options = NULL;
 	mongo_command_cursor *cmd_cursor = (mongo_command_cursor*)zend_object_store_get_object(getThis() TSRMLS_CC);
 
 	MONGO_CHECK_INITIALIZED(cmd_cursor->zmongoclient, MongoCommandCursor);
@@ -279,10 +280,21 @@ PHP_METHOD(MongoCommandCursor, rewind)
 
 	php_mongo_cursor_reset((mongo_cursor*)cmd_cursor TSRMLS_CC);
 
+	/* Apply socket timeout if specified (i.e. not zero) */
+	if (cmd_cursor->timeout) {
+		MAKE_STD_ZVAL(command_options);
+		array_init_size(command_options, 1);
+		add_assoc_long(command_options, "socketTimeoutMS", cmd_cursor->timeout);
+	}
+
 	/* do query */
 	php_mongo_split_namespace(cmd_cursor->ns, &dbname, NULL);
-	result = php_mongo_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, NULL, 1, &cmd_cursor->connection TSRMLS_CC);
+	result = php_mongo_runcommand(cmd_cursor->zmongoclient, &cmd_cursor->read_pref, dbname, strlen(dbname), cmd_cursor->query, command_options, 1, &cmd_cursor->connection TSRMLS_CC);
 	efree(dbname);
+
+	if (command_options) {
+		zval_ptr_dtor(&command_options);
+	}
 
 	if (!result) {
 		return;
