@@ -52,7 +52,7 @@ echo "Test completed\n";
 Killing master after 100
 Killing done
 Restarting done
-MongoCursorException: localhost:%d: Remote server has closed the connection
+MongoCursorException: %s:%d: Remote server has closed the connection
 MongoConnectionException: the connection has been terminated, and this cursor is dead
 Test completed
 ===DONE===
