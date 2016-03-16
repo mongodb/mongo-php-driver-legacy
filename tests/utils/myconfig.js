@@ -58,6 +58,7 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
     print("Now setting logpath");
     for ( var i = 0; i < retval.numNodes; i++ ) {
         var o =  {
+            "ipv6": "",
             "nojournal" : "",
             "nopreallocj": "",
             "quiet": "",
@@ -131,6 +132,7 @@ function initMasterSlave(port) {
 
     masterOptions = {
         "oplogSize": 10,
+        "ipv6": "",
         "logpath": "/tmp/NODE.MS.master"
     };
 
@@ -170,7 +172,8 @@ function initStandalone(port, auth, root, user) {
     }
 
     var opts = {
-        "dbpath" : MongoRunner.dataPath + port
+        "dbpath" : MongoRunner.dataPath + port,
+        "ipv6": ""
     };
 
     if (auth) {
@@ -235,6 +238,7 @@ function initShard(mongoscount, rsOptions, rsSettings) {
 
     rs = {
         "nodes": 3,
+        "ipv6": "",
         "logpath": "/tmp/NODE.RS",
         "useHostname": false,
         "useHostName": false,
@@ -252,6 +256,7 @@ function initShard(mongoscount, rsOptions, rsSettings) {
         "mongos": mongoscount,
         "other": {
             "mongosOptions": {
+                "ipv6": "",
                 "logpath": "/dev/null"
             }
         }
