@@ -223,7 +223,7 @@ PHP_METHOD(MongoGridFS, find)
 }
 /* }}} */
 
-static int get_chunk_size(zval *array TSRMLS_DC)
+static long get_chunk_size(zval *array TSRMLS_DC)
 {
 	zval **zchunk_size = 0;
 
@@ -408,8 +408,8 @@ static void cleanup_stale_chunks(INTERNAL_FUNCTION_PARAMETERS, zval *cleanup_ids
 PHP_METHOD(MongoGridFS, storeBytes)
 {
 	char *bytes = 0;
-	int bytes_len = 0, chunk_num = 0, chunk_size = 0, global_chunk_size = 0,
-	pos = 0;
+	int bytes_len = 0, chunk_num = 0;
+	long global_chunk_size = 0, pos = 0;
 	int revert = 0;
 
 	zval temp;
@@ -466,7 +466,7 @@ PHP_METHOD(MongoGridFS, storeBytes)
 
 	/* insert chunks */
 	while (pos < bytes_len) {
-		chunk_size = bytes_len - pos >= global_chunk_size ? global_chunk_size : bytes_len - pos;
+		size_t chunk_size = bytes_len - pos >= global_chunk_size ? global_chunk_size : bytes_len - pos;
 
 		if (!(chunk_id = insert_chunk(chunks, zid, chunk_num, bytes + pos, chunk_size, options TSRMLS_CC))) {
 			revert = 1;
@@ -641,8 +641,8 @@ PHP_METHOD(MongoGridFS, storeFile)
 {
 	zval *fh, *extra = 0, *options = 0;
 	char *filename = 0;
-	int chunk_num = 0, global_chunk_size = 0, fd = -1;
-	long size = 0, pos = 0;
+	int chunk_num = 0, fd = -1;
+	long global_chunk_size = 0, size = 0, pos = 0;
 	int revert = 0;
 	FILE *fp = 0;
 
