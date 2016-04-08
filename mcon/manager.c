@@ -428,11 +428,9 @@ static mongo_connection *mongo_get_connection_multiple(mongo_con_manager *manage
 					/* If it failed because of wire version, we have to bail out completely
 					 * later on, but we should continue to aggregate the errors in case more
 					 * servers are unsupported */
+					mongo_manager_connection_deregister(manager, tmp);
 					if (ismaster_error == 4) {
-						mongo_manager_connection_deregister(manager, tmp);
 						found_supported_wire_version = 0;
-					} else {
-						mongo_connection_destroy(manager, tmp, MONGO_CLOSE_BROKEN);
 					}
 					tmp = NULL;
 					found_connected_server--;
