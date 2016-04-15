@@ -1126,6 +1126,7 @@ static void php_mongo_collection_insert(zval *z_collection, zval *document, zval
 	mongoclient *link;
 	mongo_collection *c;
 	mongo_connection *connection;
+	int is_acknowledged, supports_command, supports_opcode;
 
 	PHP_MONGO_GET_COLLECTION(z_collection);
 	PHP_MONGO_GET_LINK(c->link);
@@ -1134,7 +1135,14 @@ static void php_mongo_collection_insert(zval *z_collection, zval *document, zval
 		RETURN_FALSE;
 	}
 
-	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
+	is_acknowledged = is_gle_op(z_collection, z_write_options, &link->servers->options TSRMLS_CC);
+	supports_command = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API);
+	supports_opcode = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE);
+
+	/* Allow unacknowledged writes to be routed through legacy opcodes for
+	 * performance, unless the server no longer supports the legacy opcode.
+	 * This applies to the insert(), remove(), save(), and update() methods. */
+	if (supports_command && (is_acknowledged || !supports_opcode)) {
 		php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 		int retval;
 		mongo_db *db;
@@ -1160,7 +1168,7 @@ static void php_mongo_collection_insert(zval *z_collection, zval *document, zval
 			}
 		}
 		return;
-	} else if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
+	} else if (supports_opcode) {
 		int retval;
 		mongo_buffer buf;
 
@@ -1481,7 +1489,7 @@ static void mongo_apply_update_options_from_bits(php_mongo_write_update_args *up
 
 static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval *criteria, zval *newobj, zval *z_write_options, zval *return_value TSRMLS_DC)
 {
-	int bit_opts = 0;
+	int bit_opts = 0, is_acknowledged, supports_command, supports_opcode;
 	mongo_connection *connection;
 	mongoclient *link;
 
@@ -1510,7 +1518,14 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 		RETURN_FALSE;
 	}
 
-	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
+	is_acknowledged = is_gle_op(this_ptr, z_write_options, &link->servers->options TSRMLS_CC);
+	supports_command = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API);
+	supports_opcode = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE);
+
+	/* Allow unacknowledged writes to be routed through legacy opcodes for
+	 * performance, unless the server no longer supports the legacy opcode.
+	 * This applies to the insert(), remove(), save(), and update() methods. */
+	if (supports_command && (is_acknowledged || !supports_opcode)) {
 		php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 		php_mongo_write_update_args update_options = { NULL, NULL, -1, -1 };
 		int retval;
@@ -1536,7 +1551,7 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 			mongo_convert_write_api_return_to_legacy_retval(return_value, MONGODB_API_COMMAND_UPDATE, write_options.wtype == 1 ? write_options.write_concern.w : 1 TSRMLS_CC);
 		}
 		zval_ptr_dtor(&z_write_options);
-	} else if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
+	} else if (supports_opcode) {
 		int retval = 1;
 		mongo_buffer buf;
 
@@ -1591,7 +1606,7 @@ static void mongo_apply_delete_options_from_bits(php_mongo_write_delete_args *de
 
 static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval *criteria, zval *z_write_options, zval *return_value TSRMLS_DC)
 {
-	int bit_opts = 0;
+	int bit_opts = 0, is_acknowledged, supports_command, supports_opcode;
 	mongo_connection *connection;
 	mongoclient *link;
 
@@ -1622,7 +1637,14 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 		RETURN_FALSE;
 	}
 
-	if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API)) {
+	is_acknowledged = is_gle_op(this_ptr, z_write_options, &link->servers->options TSRMLS_CC);
+	supports_command = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API);
+	supports_opcode = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE);
+
+	/* Allow unacknowledged writes to be routed through legacy opcodes for
+	 * performance, unless the server no longer supports the legacy opcode.
+	 * This applies to the insert(), remove(), save(), and update() methods. */
+	if (supports_command && (is_acknowledged || !supports_opcode)) {
 		php_mongo_write_options write_options = {-1, {-1}, -1, -1, -1, -1};
 		php_mongo_write_delete_args delete_options = { NULL, -1 };
 		int retval;
@@ -1648,7 +1670,7 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 		}
 		zval_ptr_dtor(&z_write_options);
 		zval_ptr_dtor(&criteria);
-	} else if (php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE)) {
+	} else if (supports_opcode) {
 		mongo_buffer buf;
 		int retval = 1;
 
