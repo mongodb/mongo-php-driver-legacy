@@ -48,7 +48,7 @@ ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
 zend_class_entry *mongo_ce_Collection = NULL;
 
-static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_options TSRMLS_DC);
+static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_options, int silent TSRMLS_DC);
 static void do_gle_op(mongo_con_manager *manager, mongo_connection *connection, zval *cursor_z, mongo_buffer *buf, zval *return_value TSRMLS_DC);
 static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, mongo_connection *connection TSRMLS_DC);
 static char *to_index_string(zval *zkeys, int *key_len TSRMLS_DC);
@@ -609,7 +609,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, mongo_buff
 		return 0;
 	}
 
-	if (is_gle_op(this_ptr, options, &link->servers->options TSRMLS_CC)) {
+	if (is_gle_op(this_ptr, options, &link->servers->options, NOISY TSRMLS_CC)) {
 		zval *cursor = append_getlasterror(this_ptr, buf, options, connection TSRMLS_CC);
 		if (cursor) {
 			do_gle_op(link->manager, connection, cursor, buf, return_value TSRMLS_CC);
@@ -632,7 +632,7 @@ static int send_message(zval *this_ptr, mongo_connection *connection, mongo_buff
  * on whether a write concern ("w" or "safe") or fsync/journal options are
  * specified.
  */
-static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_options TSRMLS_DC)
+static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_options, int silent TSRMLS_DC)
 {
 	int gle_op = 0, default_fsync, default_journal, coll_w = 0;
 	zval *z_coll_w;
@@ -674,10 +674,14 @@ static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_opt
 					}
 					break;
 				default:
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'w' option either needs to be a integer or string");
+					if (silent == NOISY) {
+						php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'w' option either needs to be a integer or string");
+					}
 			}
 		} else if (zend_hash_find(HASH_P(options), "safe", strlen("safe") + 1, (void**) &gle_pp) == SUCCESS) {
-			php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
+			if (silent == NOISY) {
+				php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'safe' option is deprecated, please use 'w' instead");
+			}
 
 			switch (Z_TYPE_PP(gle_pp)) {
 				case IS_STRING:
@@ -691,7 +695,9 @@ static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_opt
 					}
 					break;
 				default:
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'safe' option either needs to be a boolean or a string");
+					if (silent == NOISY) {
+						php_error_docref(NULL TSRMLS_CC, E_WARNING, "The value of the 'safe' option either needs to be a boolean or a string");
+					}
 			}
 		} else if (coll_w >= 1) {
 			gle_op = 1;
@@ -722,7 +728,9 @@ static int is_gle_op(zval *coll, zval *options, mongo_server_options *server_opt
 		gle_op = (coll_w >= 1 || default_fsync == 1 || default_journal == 1);
 	}
 
-	mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "is_gle_op: %s", gle_op ? "yes" : "no");
+	if (silent == NOISY) {
+		mongo_manager_log(MonGlo(manager), MLOG_IO, MLOG_FINE, "is_gle_op: %s", gle_op ? "yes" : "no");
+	}
 	return gle_op;
 }
 
@@ -1135,7 +1143,7 @@ static void php_mongo_collection_insert(zval *z_collection, zval *document, zval
 		RETURN_FALSE;
 	}
 
-	is_acknowledged = is_gle_op(z_collection, z_write_options, &link->servers->options TSRMLS_CC);
+	is_acknowledged = is_gle_op(z_collection, z_write_options, &link->servers->options, QUIET TSRMLS_CC);
 	supports_command = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API);
 	supports_opcode = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE);
 
@@ -1518,7 +1526,7 @@ static void php_mongocollection_update(zval *this_ptr, mongo_collection *c, zval
 		RETURN_FALSE;
 	}
 
-	is_acknowledged = is_gle_op(this_ptr, z_write_options, &link->servers->options TSRMLS_CC);
+	is_acknowledged = is_gle_op(this_ptr, z_write_options, &link->servers->options, QUIET TSRMLS_CC);
 	supports_command = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API);
 	supports_opcode = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE);
 
@@ -1637,7 +1645,7 @@ static void php_mongocollection_remove(zval *this_ptr, mongo_collection *c, zval
 		RETURN_FALSE;
 	}
 
-	is_acknowledged = is_gle_op(this_ptr, z_write_options, &link->servers->options TSRMLS_CC);
+	is_acknowledged = is_gle_op(this_ptr, z_write_options, &link->servers->options, QUIET TSRMLS_CC);
 	supports_command = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_WRITE_API);
 	supports_opcode = php_mongo_api_connection_supports_feature(connection, PHP_MONGO_API_RELEASE_2_4_AND_BEFORE);
 
