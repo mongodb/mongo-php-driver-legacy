@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2016-03-17</date>
- <time>19:06:00</time>
+ <date>2016-04-26</date>
+ <time>16:07:00</time>
  <version>
-  <release>1.6.13</release>
-  <api>1.6.13</api>
+  <release>1.6.14</release>
+  <api>1.6.14</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,11 +43,11 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-1483] - GridFS file storage fails on big endian platform
-    * [PHP-1500] - Socket timeout not applied to initial command cursor query
-    * [PHP-1501] - Rephrase unsupported/corrupt BSON messages
-    * [PHP-1504] - Segfault connecting to authenticated RS after non-auth connections
-    * [PHP-1505] - negative files.length when storing file with size > 2GB in gridfs
+    * [PHP-1468] - Segfault on node with high network latency
+    * [PHP-1511] - append_getlasterror() should ignore unset fsync/journal from link
+
+** Improvement
+    * [PHP-1510] - Route unacknowledged writes through legacy op codes
  </notes>
 
  <contents>
@@ -217,6 +217,28 @@
   <configureoption name="with-mongo-sasl" prompt="Build with Cyrus SASL (MongoDB Enterprise Authentication) support?" default="no"/>
  </extsrcrelease>
  <changelog>
+
+  <release>
+   <date>2016-03-17</date>
+   <time>19:06:00</time>
+   <version>
+    <release>1.6.13</release>
+    <api>1.6.13</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+    * [PHP-1483] - GridFS file storage fails on big endian platform
+    * [PHP-1500] - Socket timeout not applied to initial command cursor query
+    * [PHP-1501] - Rephrase unsupported/corrupt BSON messages
+    * [PHP-1504] - Segfault connecting to authenticated RS after non-auth connections
+    * [PHP-1505] - negative files.length when storing file with size > 2GB in gridfs
+   </notes>
+  </release>
 
   <release>
    <date>2015-11-25</date>
