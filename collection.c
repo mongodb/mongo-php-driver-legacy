@@ -378,11 +378,13 @@ static zval* append_getlasterror(zval *coll, mongo_buffer *buf, zval *options, m
 		php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'MongoCursor::$timeout' static property is deprecated, please call MongoCursor->timeout() instead");
 	}
 
-	/* Get the default value for journalling */
-	fsync = link->servers->options.default_fsync;
-	journal = link->servers->options.default_journal;
-
 	/* Read the default_* properties from the link */
+	if (link->servers->options.default_fsync != -1) {
+		fsync = link->servers->options.default_fsync;
+	}
+	if (link->servers->options.default_journal != -1) {
+		journal = link->servers->options.default_journal;
+	}
 	if (link->servers->options.default_w != -1) {
 		w = link->servers->options.default_w;
 	}
