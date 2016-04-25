@@ -8,14 +8,14 @@ Test for PHP-1085: w=0 returns unexpected exception on failure (socketTimeoutMS 
 
 require_once "tests/utils/server.inc";
 
-function assertFalse($value) {
+function assertTrue($value) {
     if ( ! is_bool($value)) {
         printf("Expected boolean type but received %s\n", gettype($value));
         return;
     }
 
-    if ($value !== false) {
-        echo "Expected boolean false but received boolean true\n";
+    if ($value !== true) {
+        echo "Expected boolean true but received boolean false\n";
     }
 }
 
@@ -32,7 +32,7 @@ for ($i = 0; $i < 10; ++$i) {
         array('x' => $i, 'y' => str_repeat('a', 4*1024*1024)),
         array('w' => 0, 'socketTimeoutMS' => 1)
     );
-    assertFalse($retval);
+    assertTrue($retval);
 }
 
 echo "Testing update() with w=0\n";
@@ -42,7 +42,7 @@ $retval = $collection->update(
     array('$set' => array('y' => 1)),
     array('w' => 0, 'socketTimeoutMS' => 1)
 );
-assertFalse($retval);
+assertTrue($retval);
 
 echo "Testing remove() with w=0\n";
 
@@ -50,7 +50,7 @@ $retval = $collection->remove(
     array('$where' => 'sleep(1) && false'),
     array('w' => 0, 'socketTimeoutMS' => 1)
 );
-assertFalse($retval);
+assertTrue($retval);
 
 echo "Testing update() with w=1\n";
 
