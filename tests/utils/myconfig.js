@@ -331,7 +331,8 @@ function initBridge(port, delay) {
         return bridgeTest;
     }
 
-    var bridgePort = allocatePorts(1)[0];
+    // The following is equivalent to: allocatePorts(1, port)[0]
+    var bridgePort = port + 1;
     bridgeTest = startMongoProgram("mongobridge", "--port", bridgePort, "--dest", "localhost:" + port, "--delay", delay);
     bridgeTest.port = bridgePort;
 
