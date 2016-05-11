@@ -67,7 +67,8 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
             "nopreallocj": "",
             "quiet": "",
             "oplogSize": 10,
-            "logpath": "/tmp/NODE." + (keyFile ? "-AUTH" : "") + i
+            "logpath": "/tmp/NODE." + (keyFile ? "-AUTH" : "") + i,
+            "nohttpinterface": ""
         };
 
         if (storageEngine) {
@@ -137,7 +138,8 @@ function initMasterSlave(port) {
     masterOptions = {
         "oplogSize": 10,
         "ipv6": "",
-        "logpath": "/tmp/NODE.MS.master"
+        "logpath": "/tmp/NODE.MS.master",
+        "nohttpinterface": ""
     };
 
     if (storageEngine) {
@@ -177,7 +179,8 @@ function initStandalone(port, auth, root, user) {
 
     var opts = {
         "dbpath" : MongoRunner.dataPath + port,
-        "ipv6": ""
+        "ipv6": "",
+        "nohttpinterface": ""
     };
 
     if (auth) {
@@ -247,7 +250,8 @@ function initShard(mongoscount, rsOptions, rsSettings) {
         "logpath": "/tmp/NODE.RS",
         "useHostname": false,
         "useHostName": false,
-        "oplogSize": 10
+        "oplogSize": 10,
+        "nohttpinterface": ""
     }
 
     shardOptions = {
@@ -262,7 +266,8 @@ function initShard(mongoscount, rsOptions, rsSettings) {
         "other": {
             "mongosOptions": {
                 "ipv6": "",
-                "logpath": "/dev/null"
+                "logpath": "/dev/null",
+                "nohttpinterface": ""
             }
         }
     }
