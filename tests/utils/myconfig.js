@@ -13,7 +13,7 @@ if (ReplSetTest.getPrimary === undefined) {
 }
 
 function setStorageEngine(engine) {
-	storageEngine = engine;
+    storageEngine = engine;
 }
 
 /**
@@ -194,7 +194,7 @@ function initStandalone(port, auth, root, user) {
     if (storageEngine) {
         opts.storageEngine = storageEngine;
     }
-	opts.port = port;
+    opts.port = port;
 
     /* Try launching with all interesting mechanisms by default */
     var retval;
@@ -393,8 +393,8 @@ function getMasterSlaveConfig(auth) {
  * @return array Is master result
  */
 function getIsMaster() {
-	var info = replTest.getPrimary().getDB("admin").runCommand({ismaster: 1});
-	return [ info.ismaster, info.secondary, info.primary, info.hosts, info.arbiters ];
+    var info = replTest.getPrimary().getDB("admin").runCommand({ismaster: 1});
+    return [ info.ismaster, info.secondary, info.primary, info.hosts, info.arbiters ];
 }
 
 /**
@@ -403,8 +403,8 @@ function getIsMaster() {
  * @return array Is master result
  */
 function getMSIsMaster() {
-	var info = masterSlaveTest.master.getDB('admin').runCommand({ismaster: 1});
-	return [ info.ismaster ];
+    var info = masterSlaveTest.master.getDB('admin').runCommand({ismaster: 1});
+    return [ info.ismaster ];
 }
 
 /**
@@ -538,15 +538,15 @@ function _addUser(conn, loginUser, newUser) {
 }
 
 function makeAdminUser(db, username, password) {
-	adminroles = [ { role: "readWrite",       db: "test" },
-	               "root", "clusterAdmin", "readWrite", "readAnyDatabase"
-	             ];
-	adminroles = [ "root" ];
-	return makeUser(db, username, password, adminroles);
+    adminroles = [ { role: "readWrite",       db: "test" },
+                   "root", "clusterAdmin", "readWrite", "readAnyDatabase"
+                 ];
+    adminroles = [ "root" ];
+    return makeUser(db, username, password, adminroles);
 }
 function makeNormalUser(db, username, password) {
-	normalroles = [ "readWrite", "dbAdmin" ];
-	return makeUser(db, username, password, normalroles);
+    normalroles = [ "readWrite", "dbAdmin" ];
+    return makeUser(db, username, password, normalroles);
 }
 function makeUser(db, username, password, roles) {
     try {
