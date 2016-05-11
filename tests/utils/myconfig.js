@@ -8,6 +8,10 @@ var shardTestAuth;
 var bridgeTest;
 var storageEngine;
 
+if (ReplSetTest.getPrimary === undefined) {
+    ReplSetTest.getPrimary = ReplSetTest.getMaster;
+}
+
 function setStorageEngine(engine) {
 	storageEngine = engine;
 }
