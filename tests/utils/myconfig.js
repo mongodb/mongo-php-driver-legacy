@@ -185,26 +185,13 @@ function initStandalone(port, auth, root, user) {
 
     if (auth) {
         opts.auth = "";
-        if (/^3\./.test(version())) {
-            opts.setParameter = "authenticationMechanisms=MONGODB-CR,SCRAM-SHA-1";
-        } else if (/^2\.6\./.test(version())) {
-            opts.setParameter = "authenticationMechanisms=MONGODB-CR";
-        }
     }
     if (storageEngine) {
         opts.storageEngine = storageEngine;
     }
     opts.port = port;
 
-    /* Try launching with all interesting mechanisms by default */
-    var retval;
-    try {
-        retval = MongoRunner.runMongod(opts);
-    } catch(e) {
-        delete opts.setParameter;
-        retval = MongoRunner.runMongod(opts);
-    }
-
+    retval = MongoRunner.runMongod(opts);
     retval.port = port;
 
     assert.soon(function() {
