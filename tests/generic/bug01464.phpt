@@ -85,13 +85,13 @@ $mc->selectDB(dbname())->getGridFS()->drop();
 ?>
 --EXPECTF--
 MongoGridFS::storeBytes():
-Could not store file: %s:%d: %SE11000 duplicate key error index: %s.fs.chunks.$files_id_1_n_1%sdup key: { : ObjectId('000000000000000000000001'), : 0 }
+Could not store file: %s:%d: %SE11000 duplicate key error %s: %sfiles_id%sdup key: { : ObjectId('000000000000000000000001'), : 0 }
 
 MongoGridFS::storeFile():
-Could not store file: %s:%d: %SE11000 duplicate key error index: %s.fs.chunks.$files_id_1_n_1%sdup key: { : ObjectId('000000000000000000000001'), : 0 }
+Could not store file: %s:%d: %SE11000 duplicate key error %s: %sfiles_id%sdup key: { : ObjectId('000000000000000000000001'), : 0 }
 
 MongoGridFS::remove():
-Could not store file: %s:%d: %SE11000 duplicate key error index: %s.fs.chunks.$files_id_1_n_1%sdup key: { : ObjectId('000000000000000000000001'), : 0 }
+Could not store file: %s:%d: %SE11000 duplicate key error %s: %sfiles_id%sdup key: { : ObjectId('000000000000000000000001'), : 0 }
 
 Dumping fs.files:
 

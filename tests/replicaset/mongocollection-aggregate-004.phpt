@@ -71,10 +71,10 @@ $ops = array(
 
 
 $alone = $c->aggregate($ops);
-var_dump($alone);
+dump_these_keys($alone, array('result', 'ok'));
 reset($ops);
 $multiple = $c->aggregate(current($ops), next($ops), next($ops), next($ops));
-var_dump($multiple);
+dump_these_keys($multiple, array('result', 'ok'));
 $cout->setReadPreference(MongoClient::RP_PRIMARY);
 var_dump($cout->findOne());
 $c->drop();

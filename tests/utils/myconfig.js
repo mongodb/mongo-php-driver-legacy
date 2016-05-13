@@ -96,12 +96,12 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
     retval.initiate(cfg);
 
     if (keyFile) {
-        admindb = retval.getMaster().getDB("admin");
+        admindb = retval.getPrimary().getDB("admin");
 
         makeAdminUser(admindb, root.username, root.password);
         admindb.auth(root.username, root.password);
 
-        makeNormalUser(retval.getMaster().getDB("test"), user.username, user.password);
+        makeNormalUser(retval.getPrimary().getDB("test"), user.username, user.password);
 
         replTestAuth = retval;
     } else {
@@ -109,7 +109,7 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
         replTest = retval;
     }
 
-    retval.getMaster().getDB("test").fixtures.insert({example: "document"});
+    retval.getPrimary().getDB("test").fixtures.insert({example: "document"});
 
     return retval;
 }
@@ -178,19 +178,20 @@ function initStandalone(port, auth, root, user) {
 
     if (auth) {
         opts.auth = "";
-        opts.setParameter = "authenticationMechanisms=MONGODB-CR,SCRAM-SHA-1,CRAM-MD5";
+        opts.setParameter = "authenticationMechanisms=MONGODB-CR,SCRAM-SHA-1";
     }
     if (storageEngine) {
         opts.storageEngine = storageEngine;
     }
+	opts.port = port;
 
     /* Try launching with all interesting mechanisms by default */
     var retval;
     try {
-        retval = startMongodTest(port, false, false, opts);
+        retval = MongoRunner.runMongod(opts);
     } catch(e) {
         delete opts.setParameter;
-        retval = startMongodTest(port, false, false, opts);
+        retval = MongoRunner.runMongod(opts);
     }
 
     retval.port = port;
@@ -280,7 +281,7 @@ function initShard(mongoscount, rsOptions, rsSettings) {
         // Version isn't set yet so we can't just ++ it
         cfg.version = 3;
         try {
-            shardTest.rs0.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
+            shardTest.rs0.getPrimary().getDB("admin")._adminCommand({ replSetReconfig : cfg });
             /* Will close all the open connections, we don't care */
         } catch(ex) {}
 
@@ -291,15 +292,15 @@ function initShard(mongoscount, rsOptions, rsSettings) {
         cfg.settings = rsSettings[1];
         cfg.version = 3;
         try {
-            shardTest.rs1.getMaster().getDB("admin")._adminCommand({ replSetReconfig : cfg });
+            shardTest.rs1.getPrimary().getDB("admin")._adminCommand({ replSetReconfig : cfg });
         } catch(ex) {}
     }
 
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs0.getSecondaries(), { ok : true, secondary : true });
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs1.getSecondaries(), { ok : true, secondary : true });
     ReplSetTest.awaitRSClientHosts(shardTest.s, shardTest.rs1.getPrimary(), { ok : true, ismaster : true });
-    shardTest.rs0.getMaster().getDB("test").fixtures.insert({example: "document"});
-    shardTest.rs1.getMaster().getDB("test").fixtures.insert({example: "document"});
+    shardTest.rs0.getPrimary().getDB("test").fixtures.insert({example: "document"});
+    shardTest.rs1.getPrimary().getDB("test").fixtures.insert({example: "document"});
 
     return shardTest;
 }
@@ -378,7 +379,7 @@ function getMasterSlaveConfig(auth) {
  * @return array Is master result
  */
 function getIsMaster() {
-	var info = replTest.getMaster().getDB("admin").runCommand({ismaster: 1});
+	var info = replTest.getPrimary().getDB("admin").runCommand({ismaster: 1});
 	return [ info.ismaster, info.secondary, info.primary, info.hosts, info.arbiters ];
 }
 
@@ -406,15 +407,15 @@ function getShardConfig() {
  */
 function killMaster() {
     // Step down for 5seconds, and prevent elections for 6 seconds so we can do some tests without primary
-    printjson(replTest.getMaster().getDB("admin")._adminCommand({ replSetStepDown: 5, force: true }));
-    printjson(replTest.getMaster().getDB("admin")._adminCommand({ replSetFreeze: 6 }));
+    printjson(replTest.getPrimary().getDB("admin")._adminCommand({ replSetStepDown: 5, force: true }));
+    printjson(replTest.getPrimary().getDB("admin")._adminCommand({ replSetFreeze: 6 }));
 }
 
 /**
  * Set maintenance mode for all secondaries
  */
 function setMaintenanceForSecondaries(maintenance) {
-    replTest.getMaster(); // Wait for a primary to be selected
+    replTest.getPrimary(); // Wait for a primary to be selected
     var slaves = replTest.liveNodes.slaves;
     slaves.forEach(function(slave) {
         var isMaster = slave.getDB("admin").runCommand({ismaster: 1});
@@ -446,7 +447,7 @@ function killRS() {
  */
 function restartMaster() {
     // Just wait until we get a master
-    printjson(replTest.getMaster());
+    printjson(replTest.getPrimary());
 }
 
 /**
@@ -462,10 +463,10 @@ function awaitSecondaryNodes() {
 function awaitUnhealthySecondaryNodes() {
     var timeout = 60000;
 
-    replTest.getMaster(); // Wait for a primary to be selected.
+    replTest.getPrimary(); // Wait for a primary to be selected.
 
     assert.soon(function() {
-        replTest.getMaster(); // Reload who the current slaves are.
+        replTest.getPrimary(); // Reload who the current slaves are.
         var slaves = replTest.liveNodes.slaves;
         var ready = true;
         slaves.forEach(function(slave) {
@@ -504,7 +505,7 @@ function addStandaloneUser(loginUser, newUser) {
  * @see _addUser()
  */
 function addReplicasetUser(loginUser, newUser) {
-    return _addUser(replTestAuth.getMaster(), loginUser, newUser);
+    return _addUser(replTestAuth.getPrimary(), loginUser, newUser);
 }
 
 /**
@@ -579,7 +580,7 @@ function getBuildInfo() {
 }
 
 function getReplicasetBuildInfo() {
-    return replTest.getMaster().getDB("admin")._adminCommand({ buildinfo: 1 });
+    return replTest.getPrimary().getDB("admin")._adminCommand({ buildinfo: 1 });
 }
 
 function getShardingBuildInfo() {

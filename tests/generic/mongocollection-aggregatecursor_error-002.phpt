@@ -59,6 +59,6 @@ try {
 Issuing command: drop
 Issuing command: aggregate
 Cursor batch size: -1
-exception message: %s:%d: exception: %sursor%sbatchSize must not be negative
+exception message: %s:%d:%s%sursor%sbatchSize must not be negative
 exception code: %r(2|16957)%r
 ===DONE===
