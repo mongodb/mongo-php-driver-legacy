@@ -21,14 +21,14 @@ $project = array('$project' => array('count' => 1));
 
 echo "pipeline array\n";
 $retval = $c->aggregate(array($group));
-var_dump($retval);
+dump_these_keys($retval, array('result', 'ok'));
 echo "pipeline array and options\n";
 $retval = $c->aggregate(array($group), array("explain" => true));
 var_dump(count($retval["stages"]));
 
 echo "multiple pipelines in an array\n";
 $retval = $c->aggregate(array($group, $project));
-var_dump($retval);
+dump_these_keys($retval, array('result', 'ok'));
 echo "multiple pipelines in an array and options\n";
 $retval = $c->aggregate(array($group, $project), array("explain" => true));
 var_dump(count($retval["stages"]));
@@ -83,5 +83,5 @@ array(2) {
 multiple pipelines in an array and options
 int(3)
 Multiple pipelines with invalid pipe operator explain
-%s:%d: exception: Unrecognized pipeline stage name: 'explain'
+%s:%d:%sUnrecognized pipeline stage name: 'explain'
 ===DONE==

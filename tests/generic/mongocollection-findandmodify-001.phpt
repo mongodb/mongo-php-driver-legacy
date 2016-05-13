@@ -176,11 +176,11 @@ array(5) {
     string(12) "email report"
   }
 }
-exception message: %s:%d: need remove or update
-exception code: 2
+exception message: %s:%d: %s
+exception code: %r(2|9)%r
 array(2) {
   ["ok"]=>
   float(0)
   ["errmsg"]=>
-  string(21) "need remove or update"
+  string(%d) "%s"
 }

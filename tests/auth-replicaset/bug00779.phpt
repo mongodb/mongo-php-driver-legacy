@@ -110,8 +110,8 @@ int(13435)
 
 Testing primary count
 Bit 2 (SlaveOk) is not set
-string(%d) "%s:%d: not master"
-int(2)
+string(%d) "%s:%d: not master%S"
+int(%r(2|13435)%r)
 
 ----
 

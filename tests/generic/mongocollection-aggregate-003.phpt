@@ -59,7 +59,9 @@ $ops = array(
 
 $alone = $c->aggregate($ops);
 $multiple = $c->aggregate(current($ops), next($ops), next($ops));
-var_dump($alone == $multiple, $alone, $multiple);
+var_dump($alone == $multiple);
+dump_these_keys($alone, array('result', 'ok'));
+dump_these_keys($multiple, array('result', 'ok'));
 $c->drop();
 
 $c->aggregate();
