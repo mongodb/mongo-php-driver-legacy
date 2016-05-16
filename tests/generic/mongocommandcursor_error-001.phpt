@@ -33,4 +33,4 @@ try {
 ?>
 --EXPECTF--
 15973
-%s:%d: exception:  the $sort key specification must be an object
+%s:%d:%sthe $sort key specification must be an object

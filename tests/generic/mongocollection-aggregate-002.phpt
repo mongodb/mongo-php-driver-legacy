@@ -21,7 +21,7 @@ $project = array('$project' => array('count' => 1));
 
 echo "pipeline array\n";
 $retval = $c->aggregate(array($group));
-var_dump($retval);
+dump_these_keys($retval, array('result', 'ok'));
 
 
 
@@ -37,7 +37,7 @@ try {
 }
 
 $retval = $c->aggregate(array($group), array("maxTimeMS" => 100));
-var_dump($retval);
+dump_these_keys($retval, array('result', 'ok'));
 
 
 ?>
