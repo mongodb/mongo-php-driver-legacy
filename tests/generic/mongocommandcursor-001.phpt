@@ -21,7 +21,7 @@ $c = new MongoCommandCursor(
 	array( 'aggregate' => 'cursorcmd', 'cursor' => array('batchSize' => 0 ))
 );
 $r = $c->rewind();
-var_dump($r);
+dump_these_keys($r, array('cursor', 'ok'));
 
 $c = new MongoCommandCursor(
 	$m, "{$dbname}.cursorcmd",

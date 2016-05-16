@@ -9,10 +9,8 @@ require "tests/utils/server.inc";
 $m = mongo_standalone();
 $db = $m->selectDb('phpunit');
 $retval = $db->command(array());
-var_dump($retval["errmsg"], $retval["bad cmd"], $retval["ok"]);
+var_dump($retval["errmsg"], $retval["ok"]);
 ?>
 --EXPECTF--
-string(%d) "no such c%s: "
-array(0) {
-}
+string(%d) "no such c%s"
 float(0)
