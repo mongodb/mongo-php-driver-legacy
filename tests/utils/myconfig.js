@@ -8,8 +8,12 @@ var shardTestAuth;
 var bridgeTest;
 var storageEngine;
 
+if (ReplSetTest.getPrimary === undefined) {
+    ReplSetTest.getPrimary = ReplSetTest.getMaster;
+}
+
 function setStorageEngine(engine) {
-	storageEngine = engine;
+    storageEngine = engine;
 }
 
 /**
@@ -63,7 +67,8 @@ function initRS(servers, port, rsSettings, keyFile, root, user) {
             "nopreallocj": "",
             "quiet": "",
             "oplogSize": 10,
-            "logpath": "/tmp/NODE." + (keyFile ? "-AUTH" : "") + i
+            "logpath": "/tmp/NODE." + (keyFile ? "-AUTH" : "") + i,
+            "nohttpinterface": ""
         };
 
         if (storageEngine) {
@@ -133,7 +138,8 @@ function initMasterSlave(port) {
     masterOptions = {
         "oplogSize": 10,
         "ipv6": "",
-        "logpath": "/tmp/NODE.MS.master"
+        "logpath": "/tmp/NODE.MS.master",
+        "nohttpinterface": ""
     };
 
     if (storageEngine) {
@@ -173,27 +179,19 @@ function initStandalone(port, auth, root, user) {
 
     var opts = {
         "dbpath" : MongoRunner.dataPath + port,
-        "ipv6": ""
+        "ipv6": "",
+        "nohttpinterface": ""
     };
 
     if (auth) {
         opts.auth = "";
-        opts.setParameter = "authenticationMechanisms=MONGODB-CR,SCRAM-SHA-1";
     }
     if (storageEngine) {
         opts.storageEngine = storageEngine;
     }
-	opts.port = port;
+    opts.port = port;
 
-    /* Try launching with all interesting mechanisms by default */
-    var retval;
-    try {
-        retval = MongoRunner.runMongod(opts);
-    } catch(e) {
-        delete opts.setParameter;
-        retval = MongoRunner.runMongod(opts);
-    }
-
+    retval = MongoRunner.runMongod(opts);
     retval.port = port;
 
     assert.soon(function() {
@@ -243,7 +241,8 @@ function initShard(mongoscount, rsOptions, rsSettings) {
         "logpath": "/tmp/NODE.RS",
         "useHostname": false,
         "useHostName": false,
-        "oplogSize": 10
+        "oplogSize": 10,
+        "nohttpinterface": ""
     }
 
     shardOptions = {
@@ -258,7 +257,8 @@ function initShard(mongoscount, rsOptions, rsSettings) {
         "other": {
             "mongosOptions": {
                 "ipv6": "",
-                "logpath": "/dev/null"
+                "logpath": "/dev/null",
+                "nohttpinterface": ""
             }
         }
     }
@@ -318,7 +318,8 @@ function initBridge(port, delay) {
         return bridgeTest;
     }
 
-    var bridgePort = allocatePorts(1)[0];
+    // The following is equivalent to: allocatePorts(1, port)[0]
+    var bridgePort = port + 1;
     bridgeTest = startMongoProgram("mongobridge", "--port", bridgePort, "--dest", "localhost:" + port, "--delay", delay);
     bridgeTest.port = bridgePort;
 
@@ -379,8 +380,8 @@ function getMasterSlaveConfig(auth) {
  * @return array Is master result
  */
 function getIsMaster() {
-	var info = replTest.getPrimary().getDB("admin").runCommand({ismaster: 1});
-	return [ info.ismaster, info.secondary, info.primary, info.hosts, info.arbiters ];
+    var info = replTest.getPrimary().getDB("admin").runCommand({ismaster: 1});
+    return [ info.ismaster, info.secondary, info.primary, info.hosts, info.arbiters ];
 }
 
 /**
@@ -389,8 +390,8 @@ function getIsMaster() {
  * @return array Is master result
  */
 function getMSIsMaster() {
-	var info = masterSlaveTest.master.getDB('admin').runCommand({ismaster: 1});
-	return [ info.ismaster ];
+    var info = masterSlaveTest.master.getDB('admin').runCommand({ismaster: 1});
+    return [ info.ismaster ];
 }
 
 /**
@@ -524,15 +525,15 @@ function _addUser(conn, loginUser, newUser) {
 }
 
 function makeAdminUser(db, username, password) {
-	adminroles = [ { role: "readWrite",       db: "test" },
-	               "root", "clusterAdmin", "readWrite", "readAnyDatabase"
-	             ];
-	adminroles = [ "root" ];
-	return makeUser(db, username, password, adminroles);
+    adminroles = [ { role: "readWrite",       db: "test" },
+                   "root", "clusterAdmin", "readWrite", "readAnyDatabase"
+                 ];
+    adminroles = [ "root" ];
+    return makeUser(db, username, password, adminroles);
 }
 function makeNormalUser(db, username, password) {
-	normalroles = [ "readWrite", "dbAdmin" ];
-	return makeUser(db, username, password, normalroles);
+    normalroles = [ "readWrite", "dbAdmin" ];
+    return makeUser(db, username, password, normalroles);
 }
 function makeUser(db, username, password, roles) {
     try {
