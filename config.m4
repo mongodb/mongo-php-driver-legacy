@@ -3,6 +3,9 @@ PHP_ARG_ENABLE(mongo, whether to enable Mongo extension,
 
 PHP_MONGO_CFLAGS="-I@ext_builddir@/util"
 
+AC_CHECK_SIZEOF([long])
+AC_CHECK_SIZEOF([size_t])
+
 AC_DEFUN([MONGO_ADD_DIR], [
   PHP_ADD_BUILD_DIR([$ext_builddir/$1], 1)
   PHP_ADD_INCLUDE([$ext_builddir/$1])
