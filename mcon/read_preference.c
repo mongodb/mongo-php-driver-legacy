@@ -123,6 +123,14 @@ static mcon_collection *mongo_rp_collect_secondary(mongo_con_manager *manager, m
 	return filter_connections(manager, MONGO_NODE_SECONDARY, rp);
 }
 
+static mcon_collection *mongo_rp_collect_writable(mongo_con_manager *manager, mongo_read_preference *rp)
+{
+	/* In somecases where we have a MULTIPLE connection we do have a node that isn't writable
+	 * (such as a slave in the master/slave setup). When we are doing write operations we need to make
+	 * we don't accidentally send the write to that node */
+	return filter_connections(manager, MONGO_NODE_STANDALONE | MONGO_NODE_PRIMARY | MONGO_NODE_MONGOS, rp);
+}
+
 static mcon_collection *mongo_rp_collect_any(mongo_con_manager *manager, mongo_read_preference *rp)
 {
 	/* We add the MONGO_NODE_STANDALONE and MONGO_NODE_MONGOS here, because
@@ -132,7 +140,7 @@ static mcon_collection *mongo_rp_collect_any(mongo_con_manager *manager, mongo_r
 	return filter_connections(manager, MONGO_NODE_STANDALONE | MONGO_NODE_PRIMARY | MONGO_NODE_SECONDARY | MONGO_NODE_MONGOS, rp);
 }
 
-static mcon_collection* mongo_find_all_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp)
+static mcon_collection* mongo_find_all_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, int connection_flags)
 {
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "- all servers");
 	/* Depending on read preference type, run the correct algorithm */
@@ -148,7 +156,11 @@ static mcon_collection* mongo_find_all_candidate_servers(mongo_con_manager *mana
 			return mongo_rp_collect_secondary(manager, rp);
 			break;
 		case MONGO_RP_NEAREST:
-			return mongo_rp_collect_any(manager, rp);
+			if (connection_flags & MONGO_CON_FLAG_WRITE) {
+				return mongo_rp_collect_writable(manager, rp);
+			} else {
+				return mongo_rp_collect_any(manager, rp);
+			}
 			break;
 		default:
 			return NULL;
@@ -316,13 +328,13 @@ skip:
 	return filtered;
 }
 
-mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, mongo_servers *servers)
+mcon_collection* mongo_find_candidate_servers(mongo_con_manager *manager, mongo_read_preference *rp, mongo_servers *servers, int connection_flags)
 {
 	int              i;
 	mcon_collection *all, *filtered;
 
 	mongo_manager_log(manager, MLOG_RS, MLOG_FINE, "finding candidate servers");
-	all = mongo_find_all_candidate_servers(manager, rp);
+	all = mongo_find_all_candidate_servers(manager, rp, connection_flags);
 
 	if (servers->options.con_type == MONGO_CON_TYPE_REPLSET) {
 		filtered = mongo_filter_candidates_by_replicaset_name(manager, all, servers);
