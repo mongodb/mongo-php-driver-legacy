@@ -742,6 +742,64 @@ int php_mongo_trigger_error_on_gle(mongo_connection *connection, zval *document 
 
 	return SUCCESS;
 }
+
+HashTable *php_mongo_get_docobj_properties(zval *doc TSRMLS_CC)
+{
+    HashTable *retval;
+    HashTable *properties;
+    HashPosition pos;
+    zval **value;
+    char *key;
+    const char *prop_name, *class_name;
+    uint key_len;
+    ulong num_index;
+    zend_property_info *prop_info;
+    zend_class_entry *ce;
+    zval member;
+
+    ALLOC_HASHTABLE(retval);
+    zend_hash_init(retval, 128, NULL, NULL, 0);
+
+    if (Z_TYPE_P(doc) != IS_OBJECT) {
+        return retval;
+    }
+    
+    if (Z_OBJ_HT_P(doc)->get_properties == NULL) {
+        return retval;
+    }
+
+    properties = Z_OBJ_HT_P(doc)->get_properties(doc TSRMLS_CC);
+
+    if (properties == NULL) {
+        return retval;
+    }
+    
+    ce = zend_get_class_entry(doc TSRMLS_CC);
+    
+    if (!ce) {
+        return retval;
+    }
+    
+    zend_hash_internal_pointer_reset_ex(properties, &pos);
+    
+    while (zend_hash_get_current_data_ex(properties, (void **) &value, &pos) == SUCCESS) {
+        if (zend_hash_get_current_key_ex(properties, &key, &key_len, &num_index, 0, &pos) == HASH_KEY_IS_STRING) {
+            ZVAL_STRINGL(&member, key, key_len - 1, 0);
+            prop_info = zend_get_property_info(ce, &member, 1 TSRMLS_CC);
+
+            if (prop_info && !(prop_info->flags & (ZEND_ACC_PROTECTED | ZEND_ACC_PRIVATE))) {
+                zend_unmangle_property_name(key, key_len-1, &class_name, &prop_name);
+                Z_ADDREF_PP(value);
+                zend_hash_add(retval, prop_name,strlen(prop_name)+1, *value, sizeof(zval*), NULL);
+            }
+
+        }
+        zend_hash_move_forward_ex(properties, &pos);
+    }
+    
+    return retval;
+}
+
 /*
  * Local variables:
  * tab-width: 4
