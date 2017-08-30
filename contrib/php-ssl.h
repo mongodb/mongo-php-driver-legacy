@@ -27,7 +27,7 @@
 # include <php_config.h>
 #endif
 
-#ifdef HAVE_OPENSSL_EXT
+#ifdef HAVE_MONGO_OPENSSL
 
 #include "php.h"
 #include <openssl/evp.h>
@@ -39,6 +39,6 @@ int php_mongo_matches_san_list(X509 *peer, const char *subject_name);
 int php_mongo_matches_common_name(X509 *peer, const char *subject_name TSRMLS_DC);
 time_t php_mongo_asn1_time_to_time_t(ASN1_UTCTIME * timestr TSRMLS_DC);
 
-#endif /* HAVE_OPENSSL_EXT */
+#endif /* HAVE_MONGO_OPENSSL */
 #endif 
 

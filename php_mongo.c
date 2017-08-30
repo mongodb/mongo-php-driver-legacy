@@ -259,7 +259,7 @@ PHP_MINIT_FUNCTION(mongo)
 	REGISTER_LONG_CONSTANT("MONGO_STREAMS", 1, CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_STREAMS", 1, CONST_PERSISTENT);
 
-#if HAVE_OPENSSL_EXT
+#if HAVE_MONGO_OPENSSL
 	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_SSL", 1, CONST_PERSISTENT);
 #else
 	REGISTER_LONG_CONSTANT("MONGO_SUPPORTS_SSL", 0, CONST_PERSISTENT);
@@ -426,7 +426,7 @@ PHP_MINFO_FUNCTION(mongo)
 	php_info_print_table_row(2, "Version", PHP_MONGO_VERSION);
 	php_info_print_table_row(2, "Streams Support", "enabled");
 
-#if HAVE_OPENSSL_EXT
+#if HAVE_MONGO_OPENSSL
 	php_info_print_table_row(2, "SSL Support", "enabled");
 #endif
 
@@ -434,7 +434,7 @@ PHP_MINFO_FUNCTION(mongo)
 	php_info_print_table_row(2, "MONGODB-CR", "enabled");
 	php_info_print_table_row(2, "SCRAM-SHA-1", "enabled");
 
-#if HAVE_OPENSSL_EXT
+#if HAVE_MONGO_OPENSSL
 	php_info_print_table_row(2, "MONGODB-X509", "enabled");
 #else
 	php_info_print_table_row(2, "MONGODB-X509", "disabled");

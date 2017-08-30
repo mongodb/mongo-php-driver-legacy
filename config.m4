@@ -30,6 +30,7 @@ if test "$PHP_MONGO" != "no"; then
 
   if test "$PHP_OPENSSL" != "no" || test "$PHP_OPENSSL_DIR" != "no"; then
     PHP_SETUP_OPENSSL(MONGO_SHARED_LIBADD)
+    AC_DEFINE(HAVE_MONGO_OPENSSL, 1, [Mongo OpenSSL support])
   fi
 
   PHP_ADD_MAKEFILE_FRAGMENT([$ext_srcdir/Makefile.servers])
