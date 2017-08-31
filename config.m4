@@ -1,5 +1,7 @@
 PHP_ARG_ENABLE(mongo, whether to enable Mongo extension,
 [  --enable-mongo          Enable the MongoDB extension])
+PHP_ARG_WITH(openssl-dir, Build with OpenSSL support,
+[  --with-openssl-dir[=DIR]    Mongo: Include OpenSSL support], yes, no)
 
 PHP_MONGO_CFLAGS="-I@ext_builddir@/util"
 
@@ -23,6 +25,13 @@ if test "$PHP_MONGO" != "no"; then
   MONGO_ADD_DIR(contrib)
   MONGO_ADD_DIR(mcon)
   MONGO_ADD_DIR(mcon/contrib)
+
+  test -z "$PHP_OPENSSL" && PHP_OPENSSL=no
+
+  if test "$PHP_OPENSSL" != "no" || test "$PHP_OPENSSL_DIR" != "no"; then
+    PHP_SETUP_OPENSSL(MONGO_SHARED_LIBADD)
+    AC_DEFINE(HAVE_MONGO_OPENSSL, 1, [Mongo OpenSSL support])
+  fi
 
   PHP_ADD_MAKEFILE_FRAGMENT([$ext_srcdir/Makefile.servers])
 
@@ -142,5 +151,8 @@ if test "$PHP_MONGO_SASL" != "no"; then
   ], [
     -L$MONGO_SASL_DIR/$PHP_LIBDIR
   ])
+fi
+
+if test "$PHP_MONGO" != "no"; then
   PHP_SUBST(MONGO_SHARED_LIBADD)
 fi
