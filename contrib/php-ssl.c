@@ -25,7 +25,7 @@
 # include <php_config.h>
 #endif
 
-#ifdef HAVE_OPENSSL_EXT
+#ifdef HAVE_MONGO_OPENSSL
 #include "php-ssl.h"
 
 int php_mongo_matches_wildcard_name(const char *subjectname, const char *certname) /* {{{ */
@@ -233,5 +233,5 @@ time_t php_mongo_asn1_time_to_time_t(ASN1_UTCTIME * timestr TSRMLS_DC) /* {{{ */
 }
 /* }}} */
 
-#endif /* HAVE_OPENSSL_EXT */
+#endif /* HAVE_MONGO_OPENSSL */
 

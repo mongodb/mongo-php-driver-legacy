@@ -30,7 +30,7 @@
 # include <php_config.h>
 #endif
 
-#ifdef HAVE_OPENSSL_EXT
+#ifdef HAVE_MONGO_OPENSSL
 # include "contrib/php-ssl.h"
 #endif
 
@@ -63,7 +63,7 @@
 extern zend_class_entry *mongo_ce_ConnectionException;
 ZEND_EXTERN_MODULE_GLOBALS(mongo)
 
-#ifdef HAVE_OPENSSL_EXT
+#ifdef HAVE_MONGO_OPENSSL
 # if PHP_VERSION_ID < 50600
 int php_mongo_verify_hostname(mongo_server_def *server, X509 *cert TSRMLS_DC)
 {
@@ -180,7 +180,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 				return NULL;
 			}
 		} else if (stream->context) {
-#ifdef HAVE_OPENSSL_EXT
+#ifdef HAVE_MONGO_OPENSSL
 			zval **zcert;
 
 			if (php_stream_context_get_option(stream->context, "ssl", "peer_certificate", &zcert) == SUCCESS && Z_TYPE_PP(zcert) == IS_RESOURCE) {
@@ -236,7 +236,7 @@ void* php_mongo_io_stream_connect(mongo_con_manager *manager, mongo_server_def *
 					mongo_manager_log(manager, MLOG_CON, MLOG_WARN, "Certificate expiration checks disabled");
 				}
 			}
-#endif /* HAVE_OPENSSL_EXT */
+#endif /* HAVE_MONGO_OPENSSL */
 			mongo_manager_log(manager, MLOG_CON, MLOG_INFO, "stream_connect: Establish SSL for %s:%d", server->host, server->port);
 		}
 	} else {
