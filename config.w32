@@ -29,7 +29,7 @@ if (PHP_MONGO != "no") {
   }
 
   if (CHECK_LIB("ssleay32.lib", "mongo", PHP_MONGO) && CHECK_LIB("libeay32.lib", "mongo", PHP_MONGO)) {
-    ADD_FLAG("CFLAGS_MONGO", " /D HAVE_MONGO_SSLLIB=1");
+    ADD_FLAG("CFLAGS_MONGO", " /D HAVE_MONGO_OPENSSL=1");
   }
 }
 
