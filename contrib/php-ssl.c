@@ -18,6 +18,9 @@
   +----------------------------------------------------------------------+
 */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #ifdef PHP_WIN32
 # include "config.w32.h"
