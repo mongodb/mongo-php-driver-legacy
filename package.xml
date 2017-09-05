@@ -30,11 +30,11 @@
   <active>yes</active>
  </lead>
 
- <date>2017-09-01</date>
- <time>17:00:00</time>
+ <date>2017-09-05</date>
+ <time>13:40:00</time>
  <version>
-  <release>1.6.15</release>
-  <api>1.6.15</api>
+  <release>1.6.16</release>
+  <api>1.6.16</api>
  </version>
  <stability>
   <release>stable</release>
@@ -43,8 +43,7 @@
  <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
  <notes>
 ** Bug
-    * [PHP-1489] - Can't run the test suite against MongoDB 3.1.2 or later
-    * [PHP-1528] - Extension should link OpenSSL during compilation
+    * [PHP-1529] - undefined symbol: php_mongo_asn1_time_to_time_t
  </notes>
 
  <contents>
@@ -214,6 +213,25 @@
   <configureoption name="with-mongo-sasl" prompt="Build with Cyrus SASL (MongoDB Enterprise Authentication) support?" default="no"/>
  </extsrcrelease>
  <changelog>
+
+  <release>
+   <date>2017-09-01</date>
+   <time>17:00:00</time>
+   <version>
+    <release>1.6.15</release>
+    <api>1.6.15</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache License</license>
+   <notes>
+** Bug
+      * [PHP-1489] - Can't run the test suite against MongoDB 3.1.2 or later
+      * [PHP-1528] - Extension should link OpenSSL during compilation
+   </notes>
+  </release>
 
   <release>
    <date>2016-04-26</date>
