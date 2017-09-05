@@ -30,10 +30,6 @@
 # include <php_config.h>
 #endif
 
-#ifdef HAVE_MONGO_OPENSSL
-# include "contrib/php-ssl.h"
-#endif
-
 #include <php.h>
 #include <main/php_streams.h>
 #include <main/php_network.h>
@@ -48,6 +44,10 @@
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
+#endif
+
+#ifdef HAVE_MONGO_OPENSSL
+# include "contrib/php-ssl.h"
 #endif
 
 #if HAVE_MONGO_SASL

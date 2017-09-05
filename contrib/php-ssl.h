@@ -21,6 +21,10 @@
 #ifndef MONGO_CONTRIB_SSL_H
 #define MONGO_CONTRIB_SSL_H
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #ifdef PHP_WIN32
 # include "config.w32.h"
 #else
