@@ -5,8 +5,10 @@ Test for PHP-487: Connect to replicaset member using standalone connection
 --FILE--
 <?php
 require_once "tests/utils/server.inc";
+
+// The fourth member should be configured with priority=0 (never primary)
 $cfg = MongoShellServer::getReplicasetInfo();
-$m = new Mongo($cfg["hosts"][2]);
+$m = new Mongo($cfg["hosts"][3]);
 
 try {
     $c = $m->selectDb(dbname())->test;
